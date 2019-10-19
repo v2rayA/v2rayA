@@ -8,7 +8,7 @@ import (
 	"v2rayW/models"
 )
 
-func ResolveSubscription(source string) (infos []*models.NodeData,err error) {
+func ResolveSubscription(source string) (infos []*models.NodeData, err error) {
 	// get请求source
 	res, err := http.Get(source)
 	if err != nil {
@@ -27,7 +27,8 @@ func ResolveSubscription(source string) (infos []*models.NodeData,err error) {
 	// 解析
 	infos = make([]*models.NodeData, 0)
 	for _, row := range rows {
-		data, err := ResolveVmessURL(row)
+		var data *models.NodeData
+		data, err = ResolveVmessURL(row)
 		if err != nil {
 			return
 		}
