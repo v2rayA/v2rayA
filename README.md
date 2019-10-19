@@ -10,13 +10,15 @@ V2Ray 项目地址：https://github.com/v2ray/v2ray-core
 
 一个v2ray的web GUI。
 
-尽管v2ray的GUI很多，但Linux却基本上没有拿得出手的。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个Linux GUI，但更新频率较慢，无法满足我对用户体验的较高要求，因此开此项目，仅作学习和研究使用。
+尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个Linux GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目，仅作个人学习和研究使用。
 
 # 感谢
 
-+ [jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
+[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
 
-+ [2dust/v2rayN](https://github.com/2dust/v2rayN)
+[2dust/v2rayN](https://github.com/2dust/v2rayN)
+
+[hq450/fancyss](https://github.com/hq450/fancyss)
 
 # 协议
 

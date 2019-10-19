@@ -14,5 +14,6 @@ require (
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/stevenroose/gonfig v0.1.4
+	github.com/tidwall/gjson v1.3.2
 	mellium.im/sasl v0.2.1 // indirect
 )
