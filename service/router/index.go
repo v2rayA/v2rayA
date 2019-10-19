@@ -10,7 +10,7 @@ import (
 )
 
 func Run() {
-	app := config.Get()
+	app := config.GetServiceConfig()
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()

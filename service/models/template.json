@@ -26,83 +26,62 @@
         "streamSettings": null
       }
     ],
-    "outbound": {
-      "tag": "proxy",
-      "protocol": "vmess",
-      "settings": {
-        "vnext": [
-          {
-            "address": "address",
-            "port": 443,
-            "users": [
-              {
-                "id": "id",
-                "alterId": 64,
-                "security": "auto"
-              }
-            ]
-          }
-        ],
-        "servers": null
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "",
-        "tlsSettings": null,
-        "tcpSettings": null,
-        "kcpSettings": null,
-        "wsSettings": null,
-        "httpSettings": null
-      },
-      "mux": {
-        "enabled": false,
-        "concurrency": 8
+    "outbounds": [
+      {
+        "tag": "proxy",
+        "protocol": "vmess",
+        "settings": {
+          "vnext": null,
+          "servers": null
+        },
+        "streamSettings": null,
+        "mux": null
       }
-    }
-  },
-  "tcpSettings": {
-    "connectionReuse": true,
-    "header": {
-      "type": "http",
-      "request": {
-        "version": "1.1",
-        "method": "GET",
-        "path": [
-          "/"
-        ],
-        "headers": {
-          "Host": [
-            "host"
+    ],
+    "tcpSettings": {
+      "connectionReuse": true,
+      "header": {
+        "type": "http",
+        "request": {
+          "version": "1.1",
+          "method": "GET",
+          "path": [
+            "/"
           ],
-          "User-Agent": [
-            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
-          ],
-          "Accept-Encoding": [
-            "gzip, deflate"
-          ],
-          "Connection": [
-            "keep-alive"
-          ],
-          "Pragma": "no-cache"
-        }
-      },
-      "response": {
-        "version": "1.1",
-        "status": "200",
-        "reason": "OK",
-        "headers": {
-          "Content-Type": [
-            "application/octet-stream",
-            "video/mpeg"
-          ],
-          "Transfer-Encoding": [
-            "chunked"
-          ],
-          "Connection": [
-            "keep-alive"
-          ],
-          "Pragma": "no-cache"
+          "headers": {
+            "Host": [
+              "host"
+            ],
+            "User-Agent": [
+              "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
+              "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
+            ],
+            "Accept-Encoding": [
+              "gzip, deflate"
+            ],
+            "Connection": [
+              "keep-alive"
+            ],
+            "Pragma": "no-cache"
+          }
+        },
+        "response": {
+          "version": "1.1",
+          "status": "200",
+          "reason": "OK",
+          "headers": {
+            "Content-Type": [
+              "application/octet-stream",
+              "video/mpeg"
+            ],
+            "Transfer-Encoding": [
+              "chunked"
+            ],
+            "Connection": [
+              "keep-alive"
+            ],
+            "Pragma": "no-cache"
+          }
         }
       }
     }
@@ -137,5 +116,18 @@
     "host": [
       "host"
     ]
+  },
+  "streamSettings": {
+    "network": "ws",
+    "security": "",
+    "tlsSettings": null,
+    "tcpSettings": null,
+    "kcpSettings": null,
+    "wsSettings": null,
+    "httpSettings": null
+  },
+  "mux": {
+    "enabled": false,
+    "concurrency": 8
   }
 }
