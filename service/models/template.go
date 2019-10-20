@@ -48,15 +48,15 @@ type Inbound struct {
 	} `json:"settings"`
 	StreamSettings interface{} `json:"streamSettings"`
 }
-type Users struct {
+type User struct {
 	ID       string `json:"id"`
 	AlterID  int    `json:"alterId"`
 	Security string `json:"security"`
 }
 type Vnext struct {
-	Address string  `json:"address"`
-	Port    int     `json:"port"`
-	Users   []Users `json:"users"`
+	Address string `json:"address"`
+	Port    int    `json:"port"`
+	Users   []User `json:"users"`
 }
 type Server struct {
 	Address  string `json:"address"`
@@ -160,7 +160,7 @@ func NewTemplate() (tmpl *Template) {
 */
 func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 	var tmplJson TmplJson
-	// 读入模板json，该json是精心准备过的，直接unmarshal到tmpljson上
+	// 读入模板json
 	raw, err := ioutil.ReadFile("models/template.json")
 	if err != nil {
 		log.Fatal(err)
@@ -184,7 +184,7 @@ func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 			{
 				Address: v.Add,
 				Port:    port,
-				Users: []Users{
+				Users: []User{
 					{
 						ID:       v.ID,
 						AlterID:  aid,

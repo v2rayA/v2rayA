@@ -1,6 +1,6 @@
 package main
 
-import "v2rayW/router"
+import "v2rayA/router"
 
 func main() {
 	router.Run()

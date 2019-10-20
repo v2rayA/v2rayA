@@ -5,8 +5,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"log"
-	"v2rayW/config"
-	"v2rayW/handlers"
+	"v2rayA/config"
+	"v2rayA/handlers"
 )
 
 func Run() {
@@ -19,6 +19,7 @@ func Run() {
 	g := engine.Group("api")
 	{
 		g.GET("version", handlers.Version)
+		g.GET("resolving", handlers.Resolving)
 	}
 	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"strings"
-	"v2rayW/models"
+	"v2rayA/models"
 )
 
 func ResolveSubscription(source string) (infos []*models.NodeData, err error) {

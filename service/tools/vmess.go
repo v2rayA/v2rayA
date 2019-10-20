@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"v2rayW/models"
+	"v2rayA/models"
 )
 
 /*
@@ -77,13 +77,14 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 		err = errors.New("this address is not begin with ss://")
 		return
 	}
-	// 尝试按ss://method:password@server:port#name格式进行解析
+	// 该函数尝试对ss://链接进行解析
 	resolveFormat := func(content string) (subMatch []string, ok bool) {
+		// 尝试按ss://method:password@server:port#name格式进行解析
 		re := regexp.MustCompile(`(.+):(.+)@(\d+\.\d+\.\d+\.\d+):(\d+)(#.+)?`)
 		subMatch = re.FindStringSubmatch(content)
 		if len(subMatch) == 0 {
 			// 尝试按ss://BASE64(method:password)@server:port#name格式进行解析
-			re = regexp.MustCompile(`(.+)()@(\d+\.\d+\.\d+\.\d+):(\d+)(#.+)?`) //留个空组，保证subMatch长度统一
+			re = regexp.MustCompile(`(.+)()@(\d+\.\d+\.\d+\.\d+):(\d+)(#.+)?`) //留个空组，确保subMatch长度统一
 			subMatch = re.FindStringSubmatch(content)
 			if len(subMatch) > 0 {
 				raw, err := Base64StdDecode(subMatch[1])
@@ -104,7 +105,7 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 		subMatch []string
 		ok       bool
 	)
-	//如果已满足格式，就不需要第一层的base64解码了
+	// 尝试解析ss://链接，失败则先base64解码
 	if subMatch, ok = resolveFormat(content); !ok {
 		// 进行base64解码，并unmarshal到VmessInfo上
 		content, err = Base64StdDecode(content)
@@ -118,13 +119,14 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 		return
 	}
 	log.Println(content, subMatch)
-	var info models.VmessInfo
-	info.Protocol = "shadowsocks"
-	info.Type = subMatch[1]
-	info.ID = subMatch[2]
-	info.Add = subMatch[3]
-	info.Port = subMatch[4]
-	info.Ps = subMatch[5]
+	info := models.VmessInfo{
+		Protocol: "shadowsocks",
+		Type:     subMatch[1],
+		ID:       subMatch[2],
+		Add:      subMatch[3],
+		Port:     subMatch[4],
+		Ps:       subMatch[5],
+	}
 	log.Println(info)
 	// 填充模板并处理结果
 	tmpl := models.NewTemplate()

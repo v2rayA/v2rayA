@@ -1,4 +1,4 @@
-module v2rayW
+module v2rayA
 
 go 1.12
 
