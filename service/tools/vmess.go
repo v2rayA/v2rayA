@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"v2rayA/models"
+	"V2RayA/models"
 )
 
 /*

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"strings"
-	"v2rayA/models"
-	"v2rayA/tools"
+	"V2RayA/models"
+	"V2RayA/tools"
 )
 
 /*

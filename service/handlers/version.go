@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"v2rayA/tools"
+	"V2RayA/tools"
 )
 
 func Version(ctx *gin.Context) {
