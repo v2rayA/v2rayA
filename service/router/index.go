@@ -5,8 +5,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"log"
-	"v2rayA/config"
-	"v2rayA/handlers"
+	"V2RayA/config"
+	"V2RayA/handlers"
 )
 
 func Run() {

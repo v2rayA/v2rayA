@@ -1,4 +1,4 @@
-# v2ray
+# V2Ray
 
 V2Ray 是 Project V 下的一个工具。Project V 包含一系列工具，帮助你打造专属的定制网络体系。而 V2Ray 属于最核心的一个。 简单地说，V2Ray 是一个与 Shadowsocks 类似的代理软件，但比Shadowsocks更具优势
 
@@ -20,7 +20,7 @@ V2RayA是一个V2Ray的Web GUI。
 
 [hq450/fancyss](https://github.com/hq450/fancyss)
 
-# similar projects
+# Similar projects
 
 [v2raywebui/V2RayWebUI](https://github.com/v2raywebui/V2RayWebUI)
 

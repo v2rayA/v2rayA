@@ -1,4 +1,4 @@
-# v2rayW-GUI
+# V2RayA-GUI
 
 ## Project setup
 ```

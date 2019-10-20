@@ -3,7 +3,7 @@
     <b-navbar fixed-top shadow type="is-light" ref="navs">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="./assets/logo.png" alt="V2RayA" class="logo" />
+          <img src="./assets/logo.png" alt="V2RayA" class="logo no-select" />
         </b-navbar-item>
       </template>
       <template slot="start">
@@ -47,7 +47,7 @@
           style="margin-right:10px"
         >
           <a class="navbar-item" slot="trigger" role="button">
-            <span>mzz2017</span>
+            <span class="no-select">mzz2017</span>
             <i
               class="iconfont icon-caret-down"
               style="position: relative; top: 1px; left:2px"
@@ -58,7 +58,11 @@
             Logged as <b>mzz2017</b>
           </b-dropdown-item>
           <hr class="dropdown-divider" />
-          <b-dropdown-item value="logout" aria-role="menuitem">
+          <b-dropdown-item
+            value="logout"
+            aria-role="menuitem"
+            class="no-select"
+          >
             <i
               class="iconfont icon-logout"
               style="position: relative;top:1px;"
@@ -112,5 +116,13 @@ html {
     margin: auto;
     transform: unset !important;
   }
+}
+.dropdown-item:focus {
+  // 不要丑丑的outline
+  outline: none !important;
+}
+.no-select {
+  user-select: none;
+  -webkit-user-drag: none;
 }
 </style>
