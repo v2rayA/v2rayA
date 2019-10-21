@@ -10,7 +10,42 @@ V2Ray 项目地址：https://github.com/v2ray/v2ray-core
 
 V2RayA是一个V2Ray的Web GUI。
 
-尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个Linux GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目，仅作个人学习和研究使用。
+尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个Linux GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目。
+
+## 使用(under development)
+
+有如下使用方法：
+
+1. 在本地用docker-compose部署service，在[GUI](https://v2ray.mzz.pub)使用（或手动部署前端GUI）。
+   
+   ```bash
+   docker-compose up -d
+   ```
+   
+1. 用docker拉取镜像部署service，在[GUI](https://v2ray.mzz.pub)使用（或手动部署前端GUI）。
+
+   ```bash
+   docker pull mzz2017/V2RayA
+   docker run -d -p 1080-1082:1080-1082 --restart=always mzz2017/V2Ray
+   ```
+
+其中三个端口分别为：
+
+1080: SOCKS协议
+
+1081: HTTP协议
+
+1082: 带PAC的HTTP协议
+
+用户可通过docker将上述端口映射到本地的任意端口。
+
+## 注意
+
+应用不会将任何用户数据保存在云端，所有用户数据存放在docker容器中，当docker容器被清除时配置也将随之消失。
+
+提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本Github项目自动部署完成的，如果担心安全性可以自行部署。
+
+不要将本项目用于不合法用途，作者仅将该项目用于学习研究和内网穿透的用途。
 
 # 感谢
 
