@@ -30,5 +30,12 @@ module.exports = {
   // publicPath:process.env.NODE_ENV === 'production'
   // ? '/V2RayA/'
   // : '/',
-  outputDir: "../web"
+  outputDir: "../web",
+  pwa:{
+    name:"V2RayA",
+    themeColor: '#4DBA87',
+    msTileColor: '#000000',
+    appleMobileWebAppCapable: 'yes',
+    appleMobileWebAppStatusBarStyle: 'black',
+  }
 };

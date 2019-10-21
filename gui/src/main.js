@@ -5,7 +5,7 @@ import router from "./router";
 import store from "./store";
 import axios from "axios";
 import "normalize.css";
-import "@/assets/font_1467288_zafhp5y171/iconfont.css";
+import "./registerServiceWorker";
 
 Vue.prototype.$axios = axios;
 
