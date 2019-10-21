@@ -40,6 +40,6 @@ func Resolving(ctx *gin.Context) {
 		return
 	}
 	var m map[string]interface{}
-	json.Unmarshal([]byte(n.Config), &m)
+	_ = json.Unmarshal([]byte(n.Config), &m)
 	tools.ResponseSuccess(ctx, gin.H{"config": m})
 }
