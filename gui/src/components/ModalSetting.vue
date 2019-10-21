@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 500px;margin:auto">
+  <div class="modal-card" style="max-width: 520px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">设置</p>
     </header>
@@ -37,16 +37,27 @@
           >更新</b-button
         ></b-field
       >
-      <b-field label="每日定时更新" label-position="on-border">
-        <b-select expanded v-model="regularUpdateMode">
-          <option value="none">不进行</option>
+      <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
+      <b-field label="PAC模式使用" label-position="on-border">
+        <b-select expanded v-model="pacMode">
           <option value="gfwlist">GFWList</option>
           <option value="whitelist">大陆白名单</option>
-          <option value="both">GFWList + 大陆白名单</option>
+          <option value="custom">自定义PAC</option>
+        </b-select>
+        <b-input
+          v-if="pacMode === 'custom'"
+          v-model="customPac"
+          placeholder="AutoProxy Rule List URL"
+        ></b-input>
+      </b-field>
+      <b-field label="每日定时检查更新" label-position="on-border">
+        <b-select expanded v-model="regularUpdateMode">
+          <option value="none">不进行</option>
+          <option value="update">更新PAC模式对应文件</option>
         </b-select>
         <b-clockpicker
           v-if="regularUpdateMode !== 'none'"
-          placeholder="Click to select..."
+          placeholder="选择每日更新时间点"
           icon=" iconfont icon-clock2"
           hour-format="24"
           position="is-bottom-left"
@@ -54,7 +65,6 @@
         >
         </b-clockpicker>
       </b-field>
-      <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
       <b-field label="获取订阅时使用" label-position="on-border">
         <b-select expanded v-model="subscriptionMode">
           <option value="direct">直连模式</option>
@@ -78,6 +88,7 @@ export default {
   data: () => ({
     subscriptionMode: "direct",
     regularUpdateMode: "none",
+    pacMode: "gfwlist",
     showClockPicker: true
   }),
   methods: {}
@@ -91,6 +102,7 @@ export default {
 .modal-setting-label {
   width: 7em;
   padding: 0 !important;
+  text-align: left !important;
 }
 .modal-setting-clockpicker {
   .background {
