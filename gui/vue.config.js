@@ -8,7 +8,7 @@ module.exports = {
       return {
         plugins: [
           new webpack.DefinePlugin({
-            apiRoot: "'http://localhost:8080/api'"
+            apiRoot: "'http://localhost:2017/api'"
           })
         ]
       };
@@ -17,7 +17,7 @@ module.exports = {
       return {
         plugins: [
           new webpack.DefinePlugin({
-            apiRoot: "'http://service:8080/api'"
+            apiRoot: "'http://localhost:2017/api'"
           })
         ]
       };
@@ -31,11 +31,14 @@ module.exports = {
   // ? '/V2RayA/'
   // : '/',
   outputDir: "../web",
-  pwa:{
-    name:"V2RayA",
-    themeColor: '#4DBA87',
-    msTileColor: '#000000',
-    appleMobileWebAppCapable: 'yes',
-    appleMobileWebAppStatusBarStyle: 'black',
+  pwa: {
+    name: "V2RayA",
+    themeColor: "#FFDD57",
+    msTileColor: "#000000",
+    appleMobileWebAppCapable: "yes",
+    appleMobileWebAppStatusBarStyle: "black",
+    workboxOptions: {
+      skipWaiting: true
+    }
   }
 };
