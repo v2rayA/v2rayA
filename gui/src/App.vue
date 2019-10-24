@@ -1,19 +1,29 @@
 <template>
   <div id="app">
-    <b-navbar fixed-top shadow type="is-light" ref="navs">
+    <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
           <img src="./assets/logo.png" alt="V2RayA" class="logo no-select" />
         </b-navbar-item>
       </template>
       <template slot="start">
-        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">
-          <i class="iconfont icon-cloud" style="font-size: 1.4em"></i>
-          节点
+        <b-navbar-item tag="div">
+          V2Ray状态：<b-tag
+            id="statusTag"
+            :type="statusMap[running]"
+            @mouseenter.native="handleOnStatusMouseEnter"
+            @mouseleave.native="handleOnStatusMouseLeave"
+            @click.native="handleClickStatus"
+            >{{ coverStatusText ? coverStatusText : running }}</b-tag
+          >
         </b-navbar-item>
       </template>
 
       <template slot="end">
+        <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
+        <!--          <i class="iconfont icon-cloud" style="font-size: 1.4em"></i>-->
+        <!--          节点-->
+        <!--        </b-navbar-item>-->
         <b-navbar-item tag="a" @click.native="handleClickSetting">
           <i class="iconfont icon-setting" style="font-size: 1.25em"></i>
           设置
@@ -28,7 +38,7 @@
           style="margin-right:10px"
           class="menudropdown"
         >
-          <a class="navbar-item" slot="trigger" role="button">
+          <a slot="trigger" class="navbar-item" role="button">
             <span class="no-select">mzz2017</span>
             <i
               class="iconfont icon-caret-down"
@@ -39,30 +49,6 @@
           <b-dropdown-item custom aria-role="menuitem">
             Logged as <b>mzz2017</b>
           </b-dropdown-item>
-          <hr class="dropdown-divider" />
-          <b-dropdown-item aria-role="menuitem" custom>
-            V2Ray状态：<b-tag
-              :type="statusMap[V2RayStatus]"
-              @mouseenter.native="handleOnStatusMouseEnter"
-              @mouseleave.native="handleOnStatusMouseLeave"
-              id="statusTag"
-              >{{ coverStatusText ? coverStatusText : V2RayStatus }}</b-tag
-            >
-          </b-dropdown-item>
-          <template v-if="V2RayStatus === '正在运行'">
-            <b-dropdown-item aria-role="menuitem" custom>
-              节点名称：{{ nodeInfo.name }}
-            </b-dropdown-item>
-            <b-dropdown-item aria-role="menuitem" custom>
-              节点地址：{{ nodeInfo.address }}
-            </b-dropdown-item>
-            <b-dropdown-item aria-role="menuitem" custom>
-              Ping时延：{{ pingLatency }}
-            </b-dropdown-item>
-            <b-dropdown-item aria-role="menuitem" custom>
-              HTTP时延：{{ httpLatency }}
-            </b-dropdown-item>
-          </template>
           <hr class="dropdown-divider" />
           <b-dropdown-item
             value="logout"
@@ -83,33 +69,26 @@
 </template>
 
 <script>
+import CONST from "@/assets/const";
 import { mapState } from "vuex";
 import ModalSetting from "@/components/ModalSetting";
 export default {
   data() {
     return {
       statusMap: {
-        检测中: "is-light",
-        尚未运行: "is-warning",
-        正在运行: "is-success"
+        [CONST.INSPECTING_RUNNING]: "is-light",
+        [CONST.NOT_RUNNING]: "is-danger",
+        [CONST.IS_RUNNING]: "is-success"
       },
-      V2RayStatus: "正在运行",
-      coverStatusText: "",
-      nodeInfo: {
-        name: "神出鬼没之无敌小豆豆",
-        address: "192.168.50.111:12345"
-      },
-      pingLatency: "...",
-      httpLatency: "1237ms"
+      coverStatusText: ""
     };
   },
-  computed: mapState(["nav"]),
-  watch: {},
+  computed: mapState(["nav", "running"]),
   methods: {
     handleOnStatusMouseEnter() {
-      if (this.V2RayStatus === "正在运行") {
+      if (this.running === CONST.IS_RUNNING) {
         this.coverStatusText = "　关闭　";
-      } else if (this.V2RayStatus === "尚未运行") {
+      } else if (this.running === CONST.NOT_RUNNING) {
         this.coverStatusText = "　启动　";
       }
     },
@@ -147,13 +126,55 @@ export default {
                 </div>
 `
       );
+    },
+    handleClickStatus() {
+      if (this.running === CONST.NOT_RUNNING) {
+        this.$axios({
+          url: apiRoot + "/v2ray",
+          method: "post"
+        }).then(res => {
+          if (res.data.code === "SUCCESS") {
+            //务必先设置CONNECTED_SERVER
+            this.$store.commit(
+              "CONNECTED_SERVER",
+              res.data.data.connectedServer
+            );
+            this.$store.commit("RUNNING", CONST.IS_RUNNING);
+          } else {
+            this.$buefy.snackbar.open({
+              message: res.data.message,
+              type: "is-warning",
+              position: "is-top"
+            });
+          }
+        });
+      } else if (this.running === CONST.IS_RUNNING) {
+        this.$axios({
+          url: apiRoot + "/v2ray",
+          method: "delete"
+        }).then(res => {
+          if (res.data.code === "SUCCESS") {
+            this.$store.commit(
+              "CONNECTED_SERVER",
+              res.data.data.connectedServer
+            );
+            this.$store.commit("RUNNING", CONST.NOT_RUNNING);
+          } else {
+            this.$buefy.snackbar.open({
+              message: res.data.message,
+              type: "is-warning",
+              position: "is-top"
+            });
+          }
+        });
+      }
     }
   }
 };
 </script>
 
 <style lang="scss" scoped>
-@import "https://at.alicdn.com/t/font_1467288_5oe9ao15lkp.css";
+@import "https://at.alicdn.com/t/font_1467288_i3pvm4jajs.css";
 #app {
   margin: 0;
 }
@@ -173,11 +194,15 @@ export default {
 
 <style lang="scss">
 html {
-  overflow-scrolling: touch;
-  -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar {
     // 去掉讨厌的滚动条
     display: none;
+  }
+  #app {
+    height: calc(100vh - 3.25rem);
+    overflow-y: auto;
+    overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch;
   }
 }
 @media screen and (max-width: 1023px) {
@@ -218,7 +243,7 @@ a.navbar-item.is-active,
 .navbar-link.is-active,
 .is-link,
 a {
-  $twitter: #4099ff;
-  color: $twitter;
+  $success: #506da4;
+  color: $success;
 }
 </style>

@@ -1,13 +1,13 @@
 package tools
 
 import (
+	"V2RayA/models"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
-	"V2RayA/models"
 )
 
 /*
@@ -63,7 +63,7 @@ func ResolveVmessURL(vmess string) (nodeData *models.NodeData, err error) {
 	err = tmpl.FillWithVmessInfo(info)
 
 	nodeData = new(models.NodeData)
-	b, err := json.Marshal(tmpl)
+	b := tmpl.ToConfigBytes()
 	nodeData.Config = string(b)
 	nodeData.VmessInfo = info
 	return
@@ -121,7 +121,7 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 	log.Println(content, subMatch)
 	info := models.VmessInfo{
 		Protocol: "shadowsocks",
-		Type:     subMatch[1],
+		Net:      subMatch[1],
 		ID:       subMatch[2],
 		Add:      subMatch[3],
 		Port:     subMatch[4],
@@ -133,8 +133,22 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 	err = tmpl.FillWithVmessInfo(info)
 
 	nodeData = new(models.NodeData)
-	b, err := json.Marshal(tmpl)
+	b := tmpl.ToConfigBytes()
 	nodeData.Config = string(b)
 	nodeData.VmessInfo = info
+	return
+}
+func ResolveURL(u string) (n *models.NodeData, err error) {
+	if strings.HasPrefix(u, "vmess://") {
+		n, err = ResolveVmessURL(u)
+	} else if strings.HasPrefix(u, "ss://") {
+		n, err = ResolveSSURL(u)
+	} else {
+		err = errors.New("不支持该协议，目前只支持ss和vmess协议")
+		return
+	}
+	if err != nil {
+		return
+	}
 	return
 }

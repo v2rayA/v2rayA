@@ -3,11 +3,143 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"log"
 	"strconv"
 	"strings"
 )
+
+const templateJson = `{
+  "template": {
+    "log": {
+      "access": "/dev/null",
+      "error": "/dev/null",
+      "loglevel": "/dev/null"
+    },
+    "inbounds": [
+      {
+        "port": 1080,
+        "listen": "0.0.0.0",
+        "protocol": "socks",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "ip": null,
+          "clients": null
+        },
+        "streamSettings": null
+      }
+    ],
+    "outbounds": [
+      {
+        "tag": "proxy",
+        "protocol": "vmess",
+        "settings": {
+          "vnext": null,
+          "servers": null
+        },
+        "streamSettings": null,
+        "mux": null
+      }
+    ],
+    "tcpSettings": {
+      "connectionReuse": true,
+      "header": {
+        "type": "http",
+        "request": {
+          "version": "1.1",
+          "method": "GET",
+          "path": [
+            "/"
+          ],
+          "headers": {
+            "Host": [
+              "host"
+            ],
+            "User-Agent": [
+              "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
+              "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
+            ],
+            "Accept-Encoding": [
+              "gzip, deflate"
+            ],
+            "Connection": [
+              "keep-alive"
+            ],
+            "Pragma": "no-cache"
+          }
+        },
+        "response": {
+          "version": "1.1",
+          "status": "200",
+          "reason": "OK",
+          "headers": {
+            "Content-Type": [
+              "application/octet-stream",
+              "video/mpeg"
+            ],
+            "Transfer-Encoding": [
+              "chunked"
+            ],
+            "Connection": [
+              "keep-alive"
+            ],
+            "Pragma": "no-cache"
+          }
+        }
+      }
+    }
+  },
+  "wsSettings": {
+    "connectionReuse": true,
+    "path": "",
+    "headers": {
+      "Host": "host"
+    }
+  },
+  "tlsSettings": {
+    "allowInsecure": true,
+    "serverName": null
+  },
+  "kcpSettings": {
+    "mtu": 1350,
+    "tti": 50,
+    "uplinkCapacity": 12,
+    "downlinkCapacity": 100,
+    "congestion": false,
+    "readBufferSize": 2,
+    "writeBufferSize": 2,
+    "header": {
+      "type": "none",
+      "request": null,
+      "response": null
+    }
+  },
+  "httpSettings": {
+    "path": "path",
+    "host": [
+      "host"
+    ]
+  },
+  "streamSettings": {
+    "network": "ws",
+    "security": "",
+    "tlsSettings": null,
+    "tcpSettings": null,
+    "kcpSettings": null,
+    "wsSettings": null,
+    "httpSettings": null
+  },
+  "mux": {
+    "enabled": false,
+    "concurrency": 8
+  }
+}`
 
 /*对应template.json*/
 type TmplJson struct {
@@ -156,16 +288,13 @@ func NewTemplate() (tmpl *Template) {
 
 /*
 根据传入的 VmessInfo 填充模板
-当协议是shadowsocks时，v.Type对应Method，v.ID对应Password
+当协议是shadowsocks时，v.Net对应Method，v.ID对应Password
 */
 func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 	var tmplJson TmplJson
 	// 读入模板json
-	raw, err := ioutil.ReadFile("models/template.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = json.Unmarshal(raw, &tmplJson)
+	raw := []byte(templateJson)
+	err := json.Unmarshal(raw, &tmplJson)
 	if err != nil {
 		return err
 	}
@@ -224,7 +353,7 @@ func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 			{
 				Address:  v.Add,
 				Port:     port,
-				Method:   v.Type,
+				Method:   v.Net,
 				Password: v.ID,
 				Ota:      false, //避免chacha20无法工作
 			},
@@ -233,4 +362,9 @@ func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 		return errors.New("不支持的协议: " + v.Protocol)
 	}
 	return nil
+}
+
+func (t *Template) ToConfigBytes() []byte {
+	b, _ := json.Marshal(t)
+	return b
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="modal-card" style="max-width: 520px;margin:auto">
     <header class="modal-card-head">
-      <p class="modal-card-title">设置</p>
+      <p class="modal-card-title">设置(正在开发)</p>
     </header>
     <section class="modal-card-body">
       <b-field
@@ -39,7 +39,7 @@
       >
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
       <b-field label="PAC模式使用" label-position="on-border">
-        <b-select expanded v-model="pacMode">
+        <b-select v-model="pacMode" expanded>
           <option value="gfwlist">GFWList</option>
           <option value="whitelist">大陆白名单</option>
           <option value="custom">自定义PAC</option>
@@ -51,7 +51,7 @@
         ></b-input>
       </b-field>
       <b-field label="每日定时检查更新" label-position="on-border">
-        <b-select expanded v-model="regularUpdateMode">
+        <b-select v-model="regularUpdateMode" expanded>
           <option value="none">不进行</option>
           <option value="update">更新PAC模式对应文件</option>
         </b-select>
@@ -66,10 +66,16 @@
         </b-clockpicker>
       </b-field>
       <b-field label="获取订阅时使用" label-position="on-border">
-        <b-select expanded v-model="subscriptionMode">
+        <b-select v-model="subscriptionMode" expanded>
           <option value="direct">直连模式</option>
           <option value="pac">PAC模式</option>
           <option value="proxy">代理模式</option>
+        </b-select>
+      </b-field>
+      <b-field label="SERVER列表" label-position="on-border">
+        <b-select v-model="serverListMode" expanded>
+          <option value="noSubscription">仅显示非订阅节点</option>
+          <option value="all">显示全部节点</option>
         </b-select>
       </b-field>
     </section>
@@ -89,7 +95,8 @@ export default {
     subscriptionMode: "direct",
     regularUpdateMode: "none",
     pacMode: "gfwlist",
-    showClockPicker: true
+    showClockPicker: true,
+    serverListMode: "noSubscription"
   }),
   methods: {}
 };
