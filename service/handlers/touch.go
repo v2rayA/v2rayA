@@ -31,7 +31,7 @@ func GetTouch(ctx *gin.Context) {
 }
 
 func DeleteTouch(ctx *gin.Context) {
-	// TODO: 特判删除connected节点
+	// TODO: 特判删除connected节点时的情况
 	var data models.WhichTouches
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {

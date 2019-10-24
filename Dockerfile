@@ -8,5 +8,5 @@ FROM mzz2017/v2ray-service
 WORKDIR /v2raya
 COPY --from=builder /service/V2RayA /v2raya/
 ENV GIN_MODE=release
-EXPOSE 8080
+EXPOSE 2017 1080-1082
 ENTRYPOINT ["/v2raya/V2RayA"]
