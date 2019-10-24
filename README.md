@@ -22,10 +22,18 @@ V2RayA是一个V2Ray的Web GUI。
 - [x] 连接节点
 - [ ] 支持PAC模式（GFWList、大陆白名单、自定义规则）
 - [ ] 登陆
-- [ ] 手动添加节点
+- [ ] 手动添加/修改节点
 - [ ] 二维码、地址分享
 - [ ] 测试节点Ping时延
 - [ ] 测试节点HTTP时延
+
+## 图片(PWA模式下)
+
+![](http://mzzeast.shumsg.cn/FmRwCDP74Afr8GTj75zI_TL2rrwm)
+
+![](http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-)
+
+![](http://mzzeast.shumsg.cn/FnWz1AWvPoTEDFOvax0jihMVTdr2)
 
 ## 使用(under development)
 
