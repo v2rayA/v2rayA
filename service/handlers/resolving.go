@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"V2RayA/models"
+	"V2RayA/tools"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"strings"
-	"V2RayA/models"
-	"V2RayA/tools"
 )
+
+
 
 /*
 RequestData: {
@@ -27,14 +28,7 @@ func Resolving(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	if strings.HasPrefix(u, "vmess://") {
-		n, err = tools.ResolveVmessURL(u)
-	} else if strings.HasPrefix(u, "ss://") {
-		n, err = tools.ResolveSSURL(u)
-	} else {
-		tools.ResponseError(ctx, errors.New("不支持的协议"))
-		return
-	}
+	n, err = tools.ResolveURL(u)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

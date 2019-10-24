@@ -12,6 +12,21 @@ V2RayA是一个V2Ray的Web GUI。
 
 尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个Linux GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目。
 
+## 功能清单
+
+- [x] 检查/启动/关闭V2Ray服务
+- [x] 导入vmess地址
+- [x] 导入ss地址
+- [x] 导入订阅地址
+- [x] 删除节点/删除订阅
+- [x] 连接节点
+- [ ] 支持PAC模式（GFWList、大陆白名单、自定义规则）
+- [ ] 登陆
+- [ ] 手动添加节点
+- [ ] 二维码、地址分享
+- [ ] 测试节点Ping时延
+- [ ] 测试节点HTTP时延
+
 ## 使用(under development)
 
 有如下使用方法：

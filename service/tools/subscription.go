@@ -1,10 +1,11 @@
 package tools
 
 import (
+	"V2RayA/models"
 	"bytes"
+	"log"
 	"net/http"
 	"strings"
-	"V2RayA/models"
 )
 
 func ResolveSubscription(source string) (infos []*models.NodeData, err error) {
@@ -13,23 +14,25 @@ func ResolveSubscription(source string) (infos []*models.NodeData, err error) {
 	if err != nil {
 		return
 	}
-	defer res.Body.Close()
 	buf := new(bytes.Buffer)
 	_, _ = buf.ReadFrom(res.Body)
+	defer res.Body.Close()
 	// base64解码, raw是多行vmess
 	raw, err := Base64StdDecode(buf.String())
 	if err != nil {
 		return
 	}
 	// 切分raw
-	rows := strings.Split(raw, "\n")
+	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析
 	infos = make([]*models.NodeData, 0)
 	for _, row := range rows {
 		var data *models.NodeData
-		data, err = ResolveVmessURL(row)
+		data, err = ResolveURL(row)
 		if err != nil {
-			return
+			log.Println(row, err)
+			err = nil
+			continue
 		}
 		infos = append(infos, data)
 	}

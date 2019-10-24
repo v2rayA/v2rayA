@@ -1,15 +1,8 @@
 version: "3"
 services:
-  frontend:
-    ports:
-      - 30003:3000
-    restart: always
-    build: frontend/
-    environment:
-      API_URL: http://backend:9090/api/
-      API_URL_BROWSER: /api/
   backend:
     ports:
-      - 30004:9090
+      - 2017:2017
+      - 2080-2082:1080-1082
     restart: always
-    build: backend/src/
+    build: .

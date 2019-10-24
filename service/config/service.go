@@ -5,6 +5,10 @@ import (
 	"log"
 )
 
+type Param struct {
+	Address string `id:"address" short:"a" default:"0.0.0.0" desc:"listening address"`
+	Port    string `id:"port" short:"p" default:"2017" desc:"listening port"`
+}
 var param Param
 
 func init() {
@@ -17,4 +21,8 @@ func init() {
 			log.Fatal(err)
 		}
 	}
+}
+
+func GetServiceConfig() *Param {
+	return &param
 }
