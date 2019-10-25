@@ -65,11 +65,12 @@ func DeleteTouch(ctx *gin.Context) {
 	tr.Lock() //写操作需要上锁
 	defer tr.Unlock()
 	for _, v := range touches {
+		ind := v.ID - 1
 		switch v.TYPE {
 		case models.SubscriptionType:
-			tr.Subscriptions = append(tr.Subscriptions[:v.ID], tr.Subscriptions[v.ID+1:]...)
+			tr.Subscriptions = append(tr.Subscriptions[:ind], tr.Subscriptions[ind+1:]...)
 		case models.ServerType:
-			tr.Servers = append(tr.Servers[:v.ID], tr.Servers[v.ID+1:]...)
+			tr.Servers = append(tr.Servers[:ind], tr.Servers[ind+1:]...)
 		}
 	}
 	err = tr.WriteToFile()

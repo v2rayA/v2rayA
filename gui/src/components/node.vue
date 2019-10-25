@@ -7,8 +7,9 @@
         style="margin-bottom: 1rem;position: relative"
       >
         <button
-          v-show="!!checkedRows.length"
-          class="button field is-delete"
+          :class="
+            `button field is-delete ${checkedRows.length ? '' : 'not-show'}`
+          "
           @click="handleClickDelete"
         >
           <i class="iconfont icon-delete"></i>
@@ -26,8 +27,97 @@
         </div>
       </b-field>
 
+      <b-collapse
+        v-if="!tableData.subscriptions.length && !tableData.servers.length"
+        class="card"
+        aria-id="contentIdForA11y3"
+      >
+        <div
+          slot="trigger"
+          slot-scope="props"
+          class="card-header"
+          role="button"
+          aria-controls="contentIdForA11y3"
+        >
+          <p class="card-header-title">
+            初来乍到，请多关照
+          </p>
+          <a class="card-header-icon">
+            <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"> </b-icon>
+          </a>
+        </div>
+        <div class="card-content">
+          <div class="content">
+            <p>我们发现你还没有创建或导入任何节点、订阅。</p>
+            <p>
+              我们支持以ss、vmess地址，或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！
+            </p>
+          </div>
+        </div>
+        <footer class="card-footer">
+          <a class="card-footer-item">创建</a>
+          <a class="card-footer-item" @click="handleClickImport">导入</a>
+        </footer>
+      </b-collapse>
+
       <b-tabs v-model="tab" position="is-centered" type="is-toggle-rounded">
-        <b-tab-item label="SERVER">
+        <b-tab-item
+          :visible="!!tableData.subscriptions.length"
+          label="SUBSCRIPTION"
+        >
+          <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
+            <b-table
+              :data="tableData.subscriptions"
+              :checked-rows.sync="checkedRows"
+              :row-class="(row, index) => row.connected && 'is-connected'"
+              checkable
+            >
+              <template slot-scope="props">
+                <b-table-column field="id" label="ID" numeric>
+                  {{ props.row.id }}
+                </b-table-column>
+                <b-table-column field="host" label="域名">
+                  {{ props.row.host }}
+                </b-table-column>
+                <b-table-column field="status" label="更新状态">
+                  {{ props.row.status }}
+                </b-table-column>
+                <b-table-column label="节点数">
+                  {{ props.row.servers.length }}
+                </b-table-column>
+                <b-table-column label="操作">
+                  <div class="operate-box">
+                    <b-button
+                      size="is-small"
+                      icon-left=" github-circle iconfont icon-sync"
+                      outlined
+                      type="is-warning"
+                    >
+                      更新
+                    </b-button>
+                    <b-button
+                      size="is-small"
+                      icon-left=" github-circle iconfont icon-wendangxiugai"
+                      :outlined="!props.row.connected"
+                      type="is-info"
+                    >
+                      修改
+                    </b-button>
+                    <b-button
+                      size="is-small"
+                      icon-left=" github-circle iconfont icon-share"
+                      outlined
+                      type="is-success"
+                    >
+                      分享
+                    </b-button>
+                  </div>
+                </b-table-column>
+              </template>
+            </b-table>
+          </b-field>
+        </b-tab-item>
+        <b-tab-item :visible="!!tableData.servers.length" label="SERVER">
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
               :data="tableData.servers"
@@ -83,59 +173,6 @@
                       size="is-small"
                       icon-left=" github-circle iconfont icon-share"
                       :outlined="!props.row.connected"
-                      type="is-success"
-                    >
-                      分享
-                    </b-button>
-                  </div>
-                </b-table-column>
-              </template>
-            </b-table>
-          </b-field>
-        </b-tab-item>
-        <b-tab-item label="SUBSCRIPTION">
-          <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
-            <b-table
-              :data="tableData.subscriptions"
-              :checked-rows.sync="checkedRows"
-              :row-class="(row, index) => row.connected && 'is-connected'"
-              checkable
-            >
-              <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric>
-                  {{ props.row.id }}
-                </b-table-column>
-                <b-table-column field="host" label="域名">
-                  {{ props.row.host }}
-                </b-table-column>
-                <b-table-column field="status" label="更新状态">
-                  {{ props.row.status }}
-                </b-table-column>
-                <b-table-column label="节点数">
-                  {{ props.row.servers.length }}
-                </b-table-column>
-                <b-table-column label="操作">
-                  <div class="operate-box">
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-sync"
-                      outlined
-                      type="is-warning"
-                    >
-                      更新
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-wendangxiugai"
-                      :outlined="!props.row.connected"
-                      type="is-info"
-                    >
-                      修改
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-share"
-                      outlined
                       type="is-success"
                     >
                       分享
@@ -310,7 +347,7 @@ export default {
         this.tab = sub + 2;
         console.log("locate to", whichServer);
       } else if (whichServer._type === "server") {
-        this.tab = 0;
+        this.tab = 1;
       }
     },
     handleClickImport() {
@@ -427,6 +464,10 @@ export default {
     }
   }
 }
+.card {
+  max-width: 500px;
+  margin: auto;
+}
 </style>
 
 <style lang="scss">
@@ -449,5 +490,8 @@ tr.is-connected {
   font-size: 2.5rem;
   color: rgba(0, 0, 0, 0.45);
   animation: loading-rotate 2s infinite linear;
+}
+.not-show {
+  opacity: 0;
 }
 </style>
