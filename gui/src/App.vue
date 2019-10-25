@@ -10,11 +10,13 @@
         <b-navbar-item tag="div">
           V2Ray状态：<b-tag
             id="statusTag"
-            :type="statusMap[running]"
+            :type="statusMap[runningState.running]"
             @mouseenter.native="handleOnStatusMouseEnter"
             @mouseleave.native="handleOnStatusMouseLeave"
             @click.native="handleClickStatus"
-            >{{ coverStatusText ? coverStatusText : running }}</b-tag
+            >{{
+              coverStatusText ? coverStatusText : runningState.running
+            }}</b-tag
           >
         </b-navbar-item>
       </template>
@@ -64,15 +66,17 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <router-view />
+    <node v-model="runningState" />
   </div>
 </template>
 
 <script>
 import CONST from "@/assets/const";
-import { mapState } from "vuex";
 import ModalSetting from "@/components/ModalSetting";
+import node from "@/components/node";
+
 export default {
+  components: { node },
   data() {
     return {
       statusMap: {
@@ -80,15 +84,19 @@ export default {
         [CONST.NOT_RUNNING]: "is-danger",
         [CONST.IS_RUNNING]: "is-success"
       },
-      coverStatusText: ""
+      coverStatusText: "",
+      runningState: {
+        running: CONST.INSPECTING_RUNNING,
+        connectedServer: null,
+        lastConnectedServer: null
+      }
     };
   },
-  computed: mapState(["nav", "running"]),
   methods: {
     handleOnStatusMouseEnter() {
-      if (this.running === CONST.IS_RUNNING) {
+      if (this.runningState.running === CONST.IS_RUNNING) {
         this.coverStatusText = "　关闭　";
-      } else if (this.running === CONST.NOT_RUNNING) {
+      } else if (this.runningState.running === CONST.NOT_RUNNING) {
         this.coverStatusText = "　启动　";
       }
     },
@@ -128,18 +136,17 @@ export default {
       );
     },
     handleClickStatus() {
-      if (this.running === CONST.NOT_RUNNING) {
+      if (this.runningState.running === CONST.NOT_RUNNING) {
         this.$axios({
           url: apiRoot + "/v2ray",
           method: "post"
         }).then(res => {
           if (res.data.code === "SUCCESS") {
-            //务必先设置CONNECTED_SERVER
-            this.$store.commit(
-              "CONNECTED_SERVER",
-              res.data.data.connectedServer
-            );
-            this.$store.commit("RUNNING", CONST.IS_RUNNING);
+            Object.assign(this.runningState, {
+              running: CONST.IS_RUNNING,
+              connectedServer: res.data.data.connectedServer,
+              lastConnectedServer: null
+            });
           } else {
             this.$buefy.snackbar.open({
               message: res.data.message,
@@ -148,7 +155,7 @@ export default {
             });
           }
         });
-      } else if (this.running === CONST.IS_RUNNING) {
+      } else if (this.runningState.running === CONST.IS_RUNNING) {
         this.$axios({
           url: apiRoot + "/v2ray",
           method: "delete"
@@ -158,7 +165,13 @@ export default {
               "CONNECTED_SERVER",
               res.data.data.connectedServer
             );
-            this.$store.commit("RUNNING", CONST.NOT_RUNNING);
+
+            Object.assign(this.runningState, {
+              running: CONST.NOT_RUNNING,
+              connectedServer: null,
+              lastConnectedServer: res.data.data.lastConnectedServer
+            });
+            console.log(this.runningState);
           } else {
             this.$buefy.snackbar.open({
               message: res.data.message,

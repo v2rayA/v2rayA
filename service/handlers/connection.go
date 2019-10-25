@@ -17,6 +17,7 @@ func PostConnection(ctx *gin.Context) {
 	}
 	//定位Server
 	tr := config.GetTouchRaw()
+	lastConnectedServer := tr.ConnectedServer
 	tsr, err := tr.LocateServer(&data)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("无效的参数"))
@@ -40,16 +41,21 @@ func PostConnection(ctx *gin.Context) {
 		return
 	}
 	config.SetTouchRaw(&tr)
-	tools.ResponseSuccess(ctx, gin.H{"ConnectedServer": tr.ConnectedServer})
+	tools.ResponseSuccess(ctx, gin.H{"connectedServer": tr.ConnectedServer, "lastConnectedServer": lastConnectedServer})
 }
 
 func DeleteConnection(ctx *gin.Context) {
 	tr := config.GetTouchRaw()
-	cs:=tr.ConnectedServer
+	cs := tr.ConnectedServer
 	tr.Lock() //写操作加锁
 	defer tr.Unlock()
 	tr.SetDisConnect()
 	err := tr.WriteToFile()
+	if err != nil {
+		tools.ResponseError(ctx, err)
+		return
+	}
+	err = tools.StopV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
@@ -60,5 +66,5 @@ func DeleteConnection(ctx *gin.Context) {
 		return
 	}
 	config.SetTouchRaw(&tr)
-	tools.ResponseSuccess(ctx, gin.H{"ConnectedServer": cs})
+	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": cs})
 }

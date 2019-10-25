@@ -223,7 +223,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { locateServer } from "@/assets/js/utils";
 import CONST from "@/assets/const";
 export default {
   name: "Node",
@@ -231,36 +231,26 @@ export default {
     return {
       tableData: {
         servers: [],
-        subscriptions: []
+        subscriptions: [],
+        connectedServer: {}
       },
       checkedRows: [],
       ready: false,
-      tab: 0
+      tab: 0,
+      runningState: {
+        running: CONST.INSPECTING_RUNNING,
+        connectedServer: null,
+        lastConnectedServer: null
+      }
     };
   },
-  computed: mapState(["running", "connectedServer"]),
   watch: {
-    running(val) {
-      let that = this;
-      let setConnected = function(val) {
-        let ind = that.connectedServer.id - 1;
-        let sub = that.connectedServer.sub;
-        if (that.connectedServer._type === "server") {
-          that.tableData.servers[ind].connected = val;
-        } else if (that.connectedServer._type === "subscription") {
-          that.tableData.subscriptions[sub].servers[ind].connected = val;
-        }
-      };
-      console.log(val);
-      if (val === CONST.IS_RUNNING) {
-        setConnected(true);
-        let sub = this.connectedServer.sub;
-        if (this.connectedServer._type === "subscription") {
-          this.tab = sub + 2;
-        }
-      } else if (val === CONST.NOT_RUNNING) {
-        setConnected(false);
-      }
+    "runningState.running"() {
+      console.log("watch runningState.running:", this.runningState);
+      let val = this.runningState;
+      this.updateConnectView(val);
+      this.locateTabToConnected(val.connectedServer);
+      this.$emit("input", this.runningState);
     }
   },
   created() {
@@ -269,20 +259,13 @@ export default {
     })
       .then(res => {
         this.tableData = res.data.data.touch;
-        if (this.tableData.connectedServer) {
-          let sub = this.tableData.connectedServer.sub;
-          if (this.tableData.connectedServer._type === "subscription") {
-            this.tab = sub + 2;
-          } else if (this.tableData.connectedServer._type === "server") {
-            this.tab = 0;
-          }
-        } else {
-          this.tab = 0;
-        }
-        this.$store.commit(
-          "RUNNING",
-          res.data.data.running ? CONST.IS_RUNNING : CONST.NOT_RUNNING
-        );
+        // this.$store.commit("CONNECTED_SERVER", this.tableData.connectedServer);
+        this.runningState = {
+          running: res.data.data.running ? CONST.IS_RUNNING : CONST.NOT_RUNNING,
+          connectedServer: this.tableData.connectedServer,
+          lastConnectedServer: null
+        };
+        this.locateTabToConnected();
         this.ready = true;
       })
       .catch(err => {
@@ -297,6 +280,39 @@ export default {
       });
   },
   methods: {
+    updateConnectView(runningState) {
+      if (!runningState) {
+        runningState = this.runningState;
+      }
+      if (runningState.lastConnectedServer) {
+        let server = locateServer(
+          this.tableData,
+          runningState.lastConnectedServer
+        );
+        server.connected = false;
+        console.log(server);
+      }
+      if (runningState.connectedServer) {
+        let server = locateServer(this.tableData, runningState.connectedServer);
+        server.connected = true;
+        console.log(server);
+      }
+    },
+    locateTabToConnected(whichServer) {
+      if (!whichServer) {
+        whichServer = this.tableData.connectedServer;
+      }
+      if (!whichServer) {
+        return;
+      }
+      let sub = whichServer.sub;
+      if (whichServer._type === "subscription") {
+        this.tab = sub + 2;
+        console.log("locate to", whichServer);
+      } else if (whichServer._type === "server") {
+        this.tab = 0;
+      }
+    },
     handleClickImport() {
       const that = this;
       this.$buefy.dialog.prompt({
@@ -358,8 +374,12 @@ export default {
           data: { ...node, sub: i }
         }).then(res => {
           if (res.data.code === "SUCCESS") {
-            node.connected = true;
-            this.$store.commit("RUNNING", CONST.IS_RUNNING);
+            Object.assign(this.runningState, {
+              running: CONST.IS_RUNNING,
+              connectedServer: res.data.data.connectedServer,
+              lastConnectedServer: res.data.data.lastConnectedServer
+            });
+            this.updateConnectView();
           } else {
             this.$buefy.snackbar.open({
               message: res.data.message,
@@ -375,7 +395,12 @@ export default {
         }).then(res => {
           if (res.data.code === "SUCCESS") {
             node.connected = false;
-            this.$store.commit("RUNNING", CONST.NOT_RUNNING);
+            Object.assign(this.runningState, {
+              running: CONST.NOT_RUNNING,
+              connectedServer: null,
+              lastConnectedServer: res.data.data.lastConnectedServer
+            });
+            this.updateConnectView();
           } else {
             this.$buefy.snackbar.open({
               message: res.data.message,
@@ -405,7 +430,7 @@ export default {
 </style>
 
 <style lang="scss">
-@import "~bulma/sass/utilities/_all";
+@import "../../node_modules/bulma/sass/utilities/all";
 tr.is-connected {
   //$c: #23d160;
   $c: #bbdefb;
