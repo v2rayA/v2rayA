@@ -10,7 +10,7 @@ V2Ray 项目地址：https://github.com/v2ray/v2ray-core
 
 V2RayA是一个V2Ray的Web GUI。
 
-尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个Linux GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目。
+尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目。
 
 虽然V2RayA是一个Web GUI，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。
 
@@ -71,7 +71,7 @@ V2RayA是一个V2Ray的Web GUI。
 
 ## 注意
 
-应用不会将任何用户数据保存在云端，所有用户数据存放在docker容器中，当docker容器被清除时配置也将随之消失。
+应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地的docker容器中，当docker容器被清除时配置也将随之消失。
 
 提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本Github项目自动部署完成的，如果担心安全性可以自行部署。
 
