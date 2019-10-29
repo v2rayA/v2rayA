@@ -44,17 +44,17 @@ V2RayA是一个V2Ray的Web GUI。
 
 有如下使用方法：
 
-1. 在本地用docker-compose部署service，在[GUI](https://v2ray.mzz.pub)使用（或手动部署前端GUI）。
+1. 在本地用docker-compose部署service，在[GUI](https://v2raya.mzz.pub)使用（或手动部署前端GUI）。
    
    ```bash
    docker-compose up -d
    ```
    
-2. 用docker拉取镜像部署service，在[GUI](https://v2ray.mzz.pub)使用（或手动部署前端GUI）。
+2. 用docker拉取镜像部署service，在[GUI](https://v2raya.mzz.pub)使用（或手动部署前端GUI）。
 
    ```bash
-   docker pull mzz2017/V2RayA
-   docker run -d -p 2017:2017 -p 1080-1082:1080-1082 --restart=always mzz2017/V2Ray
+   docker pull mzz2017/v2raya
+   docker run -d -p 2017:2017 -p 1080-1082:1080-1082 --restart=always mzz2017/v2raya
    ```
 
 其中四个端口分别为：
