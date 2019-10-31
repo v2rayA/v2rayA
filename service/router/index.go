@@ -28,6 +28,7 @@ func Run() {
 		g.POST("v2ray", handlers.PostV2ray)
 		g.DELETE("v2ray", handlers.DeleteV2ray)
 		g.GET("pingLatency", handlers.GetPingLatency)
+		g.GET("sharingAddress", handlers.GetSharingAddress)
 	}
 	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
 }
