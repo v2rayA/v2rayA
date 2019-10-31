@@ -120,7 +120,7 @@ export default {
                         <p class="modal-card-title">mzz2017 / V2RayA</p>
                     </header>
                     <section class="modal-card-body lazy">
-                        <p>V2RayA是V2Ray的一个Web GUI，前端使用Vue构建，后端使用Golang构建。</p>
+                        <p>V2RayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
                         <p>整个项目依赖于Docker，如果你想修改socks或http的端口号，请修改docker参数并重新启动容器。</p>
                         <p>应用不会将任何用户数据保存在云端，所有用户数据存放在docker容器中，当docker容器被清除时配置也将随之消失。</p>
                         <p>在使用中如果发现任何问题，欢迎提出issue。</p>
