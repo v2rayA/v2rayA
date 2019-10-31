@@ -112,8 +112,9 @@ export default {
       });
     },
     handleClickAbout() {
-      this.$buefy.modal.open(
-        `
+      this.$buefy.modal.open({
+        width: 500,
+        content: `
 <div class="modal-card" style="max-width: 500px;margin:auto">
                     <header class="modal-card-head">
                         <p class="modal-card-title">mzz2017 / V2RayA</p>
@@ -133,7 +134,7 @@ export default {
                     </footer>
                 </div>
 `
-      );
+      });
     },
     handleClickStatus() {
       if (this.runningState.running === CONST.NOT_RUNNING) {
@@ -148,7 +149,7 @@ export default {
               lastConnectedServer: null
             });
           } else {
-            this.$buefy.snackbar.open({
+            this.$buefy.toast.open({
               message: res.data.message,
               type: "is-warning",
               position: "is-top"
@@ -168,7 +169,7 @@ export default {
             });
             console.log(this.runningState);
           } else {
-            this.$buefy.snackbar.open({
+            this.$buefy.toast.open({
               message: res.data.message,
               type: "is-warning",
               position: "is-top"
@@ -182,7 +183,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "https://at.alicdn.com/t/font_1467288_oepi5rq7dv.css";
+@import "https://at.alicdn.com/t/font_1467288_g4sctinqavb.css";
 #app {
   margin: 0;
 }

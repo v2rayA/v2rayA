@@ -2,10 +2,13 @@ package tools
 
 import (
 	"V2RayA/models"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -154,4 +157,34 @@ func ResolveURL(u string) (n *models.NodeData, err error) {
 		return
 	}
 	return
+}
+
+func GenerateURL(info models.VmessInfo) string {
+	switch info.Protocol {
+	case "", "vmess":
+		//去除info中的protocol，减少URL体积
+		it := reflect.TypeOf(info)
+		iv := reflect.ValueOf(info)
+		m := make(map[string]interface{})
+		for i := 0; i < it.NumField(); i++ {
+			f := it.Field(i)
+			chKey := f.Tag.Get("json")
+			if chKey == "protocol" { //不转换protocol
+				continue
+			}
+			m[chKey] = iv.FieldByName(f.Name).Interface()
+		}
+		b, _ := json.Marshal(m)
+		return "vmess://" + base64.StdEncoding.EncodeToString(b)
+	case "shadowsocks":
+		/* ss://BASE64(method:password)@server:port#name */
+		return fmt.Sprintf(
+			"ss://%v@%v:%v#%v",
+			base64.StdEncoding.EncodeToString([]byte(info.Net+":"+info.ID)),
+			info.Add,
+			info.Port,
+			info.Ps,
+		)
+	}
+	return ""
 }

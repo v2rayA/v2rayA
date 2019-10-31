@@ -17,7 +17,7 @@ function handleResponse(res, that, suc, err) {
     if (err && err instanceof Function) {
       err.apply(that);
     } else {
-      that.$buefy.snackbar.open({
+      that.$buefy.toast.open({
         message: res.data.message,
         type: "is-warning",
         position: "is-top"

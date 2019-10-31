@@ -142,6 +142,7 @@
                       icon-left=" github-circle iconfont icon-share"
                       outlined
                       type="is-success"
+                      @click="handleClickShare(props.row)"
                     >
                       分享
                     </b-button>
@@ -212,6 +213,7 @@
                       icon-left=" github-circle iconfont icon-share"
                       :outlined="!props.row.connected"
                       type="is-success"
+                      @click="handleClickShare(props.row)"
                     >
                       分享
                     </b-button>
@@ -286,6 +288,7 @@
                       icon-left=" github-circle iconfont icon-share"
                       :outlined="!props.row.connected"
                       type="is-success"
+                      @click="handleClickShare(props.row, subi)"
                     >
                       分享
                     </b-button>
@@ -306,6 +309,10 @@
 <script>
 import { locateServer, handleResponse } from "@/assets/js/utils";
 import CONST from "@/assets/js/const";
+import QRCode from "qrcode";
+import ClipboardJS from "clipboard";
+import { Base64 } from "js-base64";
+
 export default {
   name: "Node",
   data() {
@@ -350,7 +357,7 @@ export default {
         this.ready = true;
       })
       .catch(err => {
-        this.$buefy.snackbar.open({
+        this.$buefy.toast.open({
           message: err,
           type: "is-warning",
           position: "is-top"
@@ -359,6 +366,24 @@ export default {
           console.log("todo"); //TODO
         }
       });
+  },
+  mounted() {
+    let clipboard = new ClipboardJS(".sharingAddressTag");
+    clipboard.on("success", e => {
+      this.$buefy.toast.open({
+        message: "复制成功",
+        type: "is-primary",
+        position: "is-top"
+      });
+      e.clearSelection();
+    });
+    clipboard.on("error", e => {
+      this.$buefy.toast.open({
+        message: "复制失败，error:" + e.toLocaleString(),
+        type: "is-warning",
+        position: "is-top"
+      });
+    });
   },
   methods: {
     updateConnectView(runningState) {
@@ -437,7 +462,7 @@ export default {
                   lastConnectedServer: null
                 };
               } else {
-                this.$buefy.snackbar.open({
+                this.$buefy.toast.open({
                   message: res.data.message,
                   type: "is-warning",
                   position: "is-top"
@@ -448,47 +473,56 @@ export default {
       });
     },
     handleClickDelete() {
-      console.log(this.checkedRows);
-      this.$axios({
-        url: apiRoot + "/touch",
-        method: "delete",
-        data: {
-          touches: this.checkedRows.map(x => {
-            return {
-              id: x.id,
-              _type: x._type
-            };
+      this.$buefy.dialog.confirm({
+        title: "删除节点/订阅",
+        message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。",
+        confirmText: "删除",
+        cancelText: "取消",
+        type: "is-danger",
+        hasIcon: true,
+        icon: " iconfont icon-alert",
+        onConfirm: () =>
+          this.$axios({
+            url: apiRoot + "/touch",
+            method: "delete",
+            data: {
+              touches: this.checkedRows.map(x => {
+                return {
+                  id: x.id,
+                  _type: x._type
+                };
+              })
+            }
+          }).then(res => {
+            if (res.data.code === "SUCCESS") {
+              this.tableData = res.data.data.touch;
+              this.checkedRows = [];
+              Object.assign(this.runningState, {
+                running: this.tableData.running
+                  ? CONST.IS_RUNNING
+                  : CONST.NOT_RUNNING,
+                connectedServer: this.tableData.connectedServer,
+                lastConnectedServer: null
+              });
+              this.updateConnectView();
+            } else {
+              this.$buefy.toast.open({
+                message: res.data.message,
+                type: "is-warning",
+                position: "is-top"
+              });
+            }
           })
-        }
-      }).then(res => {
-        if (res.data.code === "SUCCESS") {
-          this.tableData = res.data.data.touch;
-          this.checkedRows = [];
-          Object.assign(this.runningState, {
-            running: this.tableData.running
-              ? CONST.IS_RUNNING
-              : CONST.NOT_RUNNING,
-            connectedServer: this.tableData.connectedServer,
-            lastConnectedServer: null
-          });
-          this.updateConnectView();
-        } else {
-          this.$buefy.snackbar.open({
-            message: res.data.message,
-            type: "is-warning",
-            position: "is-top"
-          });
-        }
       });
     },
-    handleClickAboutConnection(node, sub) {
-      console.log(node);
-      if (!node.connected) {
+    handleClickAboutConnection(row, sub) {
+      console.log(row);
+      if (!row.connected) {
         //该节点并未处于连接状态，因此进行连接
         this.$axios({
           url: apiRoot + "/connection",
           method: "post",
-          data: { ...node, sub: sub }
+          data: { id: row.id, _type: row._type, sub: sub }
         }).then(res => {
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
@@ -498,7 +532,7 @@ export default {
             });
             this.updateConnectView();
           } else {
-            this.$buefy.snackbar.open({
+            this.$buefy.toast.open({
               message: res.data.message,
               type: "is-warning",
               position: "is-top"
@@ -511,7 +545,7 @@ export default {
           method: "delete"
         }).then(res => {
           if (res.data.code === "SUCCESS") {
-            node.connected = false;
+            row.connected = false;
             Object.assign(this.runningState, {
               running: CONST.NOT_RUNNING,
               connectedServer: null,
@@ -519,7 +553,7 @@ export default {
             });
             this.updateConnectView();
           } else {
-            this.$buefy.snackbar.open({
+            this.$buefy.toast.open({
               message: res.data.message,
               type: "is-warning",
               position: "is-top"
@@ -561,7 +595,7 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     handleTabsChange(index) {
-      this.checkedRows = [];
+      // this.checkedRows = [];
     },
     isCheckedRowsDeletable() {
       // CONST.SubscriptionServerType is not deletable
@@ -580,6 +614,98 @@ export default {
             x._type === CONST.SubscriptionServerType
         )
       );
+    },
+    handleClickShare(row, sub) {
+      const TYPE_MAP = {
+        [CONST.SubscriptionServerType]: "SERVER",
+        [CONST.ServerType]: "SERVER",
+        [CONST.SubscriptionType]: "SUBSCRIPTION"
+      };
+      this.$axios({
+        url: apiRoot + "/sharingAddress",
+        method: "get",
+        params: {
+          touch: {
+            id: row.id,
+            _type: row._type,
+            sub
+          }
+        }
+      }).then(res => {
+        handleResponse(res, this, () => {
+          this.$buefy.modal.open({
+            width: 500,
+            content: `
+<div class="modal-card" style="max-width: 500px;margin:auto">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title has-text-centered">${
+                          TYPE_MAP[row._type]
+                        }</p>
+                    </header>
+                    <section class="modal-card-body lazy" style="text-align: center">
+                        <div><canvas id="canvas" class="qrcode"></canvas></div>
+                        <div class="tags has-addons is-centered" style="position: relative">
+                            <span class="tag is-rounded is-dark sharingAddressTag" style="position: relative" data-clipboard-text="${
+                              res.data.data.sharingAddress
+                            }">
+                                <div class="tag-cover tag is-rounded" style="display: none;"></div>
+                                <span>
+                                    ${row.name || row.host}
+                                </span>
+                            </span>
+                            <div id="tag-cover-text">点击复制</div>
+                            <span class="tag is-rounded is-primary sharingAddressTag" style="position: relative" data-clipboard-text="${
+                              res.data.data.sharingAddress
+                            }">
+                                <span class="has-ellipsis" style="max-width:25em">
+                                  ${res.data.data.sharingAddress}
+                                </span>
+                                <div class="tag-cover tag is-rounded" style="display: none;"></div>
+                            </span>
+                        </div>
+                    </section>
+                    <footer class="modal-card-foot" style="justify-content: center">
+                        <a class="is-link" href="https://github.com/mzz2017/V2RayA" target="_blank">
+                          <img class="leave-right" src="https://img.shields.io/github/stars/mzz2017/V2RayA.svg?style=social" alt="stars">
+                          <img class="leave-right" src="https://img.shields.io/github/forks/mzz2017/V2RayA.svg?style=social" alt="forks">
+                          <img class="leave-right" src="https://img.shields.io/github/watchers/mzz2017/V2RayA.svg?style=social" alt="watchers">
+                        </a>
+                    </footer>
+                </div>
+`
+          });
+          console.log(row);
+          this.$nextTick(() => {
+            let add = res.data.data.sharingAddress;
+            if (row._type === CONST.SubscriptionType) {
+              add = "sub://" + Base64.encode(add);
+            }
+            let canvas = document.getElementById("canvas");
+            QRCode.toCanvas(
+              canvas,
+              add,
+              { errorCorrectionLevel: "H" },
+              function(error) {
+                if (error) console.error(error);
+                console.log("QRCode has been generated successfully!");
+              }
+            );
+            let targets = document.querySelectorAll(".sharingAddressTag");
+            let covers = document.querySelectorAll(".tag-cover");
+            let coverText = document.querySelector("#tag-cover-text");
+            let enter = () => {
+              covers.forEach(x => (x.style.display = "unset"));
+              coverText.style.display = "flex";
+            };
+            let leave = () => {
+              covers.forEach(x => (x.style.display = "none"));
+              coverText.style.display = "none";
+            };
+            targets.forEach(x => x.addEventListener("mouseenter", enter));
+            targets.forEach(x => x.addEventListener("mouseleave", leave));
+          });
+        });
+      });
     }
   }
 };
@@ -642,7 +768,43 @@ tr.is-connected {
 .not-display {
   display: none;
 }
-table td, table th{
+table td,
+table th {
   vertical-align: middle !important;
+}
+.dialog .mdi-.iconfont.icon-alert {
+  font-size: 40px;
+}
+.qrcode#canvas {
+  min-height: 300px !important;
+  min-width: 300px !important;
+}
+$coverBackground: rgba(0, 0, 0, 0.6);
+.tag-cover {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: $coverBackground !important;
+  transition: all 0.5s ease;
+  cursor: pointer;
+  text-align: center;
+  line-height: 22px;
+  user-select: none;
+}
+#tag-cover-text {
+  color: findColorInvert($coverBackground);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  font-size: 12px;
+  pointer-events: none;
 }
 </style>

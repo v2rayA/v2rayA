@@ -23,13 +23,13 @@ V2RayA是一个V2Ray的Web GUI。
 - [x] 删除节点/删除订阅
 - [x] 连接节点
 - [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
+- [x] 测试节点Ping时延
+- [x] 二维码、地址分享
 - [ ] 前端可判断后端运行状态并支持修改通信baseURL
 - [ ] 支持PAC模式（GFWList、大陆白名单、自定义规则）
 - [ ] 多路复用
 - [ ] 登陆
 - [ ] 手动添加/修改节点
-- [ ] 二维码、地址分享
-- [ ] 测试节点Ping时延
 - [ ] 测试节点HTTP时延
 
 ## 图片(PWA模式下)
