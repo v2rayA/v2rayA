@@ -2,31 +2,34 @@
 
 V2RayA是V2Ray的一个Web客户端。
 
-尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，因此开此项目。
+尽管v2ray的客户端很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
 
-虽然V2RayA是一个Web客户端，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。
+虽然V2RayA是一个Web客户端，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
 项目地址：https://github.com/mzz2017/V2RayA
 
 ## 功能清单
 
+**目前支持订阅、导入等必要功能，暂不支持手动录入节点，项目正在逐步开发中。**
+
 - [x] 检查/启动/关闭V2Ray服务
-- [x] 导入vmess地址
-- [x] 导入ss地址
-- [x] 导入订阅地址
-- [x] 删除节点/删除订阅
-- [x] 连接节点
+- [x] 导入vmess、ss、订阅地址
+- [x] 连接节点，删除节点，删除订阅
 - [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
-- [ ] 前端可判断后端运行状态并支持修改通信baseURL
+- [ ] 手动、自动更新订阅
 - [ ] 支持PAC模式（GFWList、大陆白名单、自定义规则）
-- [ ] 多路复用
-- [ ] 登陆
+- [ ] 多路复用、TCPFastOpen
+- [ ] 登陆与安全
 - [ ] 手动添加/修改节点
 - [ ] 测试节点HTTP时延
+- [ ] 前端可判断后端运行状态并支持修改通信baseURL
 
-## 图片(PWA模式下)
+## 界面截图
+
+<details>
+    <summary>界面截图(PWA模式下)</summary>
 
 ![](http://mzzeast.shumsg.cn/FtwssiGjyR_IXalEiquQw--5ChYl)
 
@@ -34,13 +37,17 @@ V2RayA是V2Ray的一个Web客户端。
 
 ![](http://mzzeast.shumsg.cn/FnWz1AWvPoTEDFOvax0jihMVTdr2)
 
+</details>
+
 ## 使用(under development)
 
 有如下使用方法：
 
-1. 在本地用docker-compose部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
+1. 拉取源码，在本地用docker-compose部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
    
    ```bash
+   git clone https://github.com/mzz2017/V2RayA.git
+   cd V2RayA
    docker-compose up -d
    ```
    
@@ -79,7 +86,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 [hq450/fancyss](https://github.com/hq450/fancyss)
 
-# Similar projects
+# 相似项目
 
 [v2raywebui/V2RayWebUI](https://github.com/v2raywebui/V2RayWebUI)
 
