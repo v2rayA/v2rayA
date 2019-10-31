@@ -23,7 +23,15 @@ func StopV2rayService() (err error) {
 	return
 }
 
-//TODO: EnableV2rayService
+func EnableV2rayService() (err error) {
+	_, err = exec.Command("update-rc.d", "v2ray", "enable").CombinedOutput()
+	if err != nil{
+		_, err = exec.Command("systemctl", "enable", "v2ray").Output()
+	}
+	return
+}
+
+
 func DisableV2rayService() (err error) {
 	_, err = exec.Command("update-rc.d", "v2ray", "disable").CombinedOutput()
 	if err != nil{

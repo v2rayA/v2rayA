@@ -12,7 +12,7 @@ func PostConnection(ctx *gin.Context) {
 	var data models.WhichTouch
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
 	//定位Server
@@ -41,6 +41,11 @@ func PostConnection(ctx *gin.Context) {
 		return
 	}
 	config.SetTouchRaw(&tr)
+	err = tools.EnableV2rayService()
+	if err != nil {
+		tools.ResponseError(ctx, err)
+		return
+	}
 	tools.ResponseSuccess(ctx, gin.H{"connectedServer": tr.ConnectedServer, "lastConnectedServer": lastConnectedServer})
 }
 

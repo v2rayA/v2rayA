@@ -80,11 +80,11 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 	// 该函数尝试对ss://链接进行解析
 	resolveFormat := func(content string) (subMatch []string, ok bool) {
 		// 尝试按ss://method:password@server:port#name格式进行解析
-		re := regexp.MustCompile(`(.+):(.+)@(\d+\.\d+\.\d+\.\d+):(\d+)(#.+)?`)
+		re := regexp.MustCompile(`(.+):(.+)@(.+?):(\d+)(#.+)?`)
 		subMatch = re.FindStringSubmatch(content)
 		if len(subMatch) == 0 {
 			// 尝试按ss://BASE64(method:password)@server:port#name格式进行解析
-			re = regexp.MustCompile(`(.+)()@(\d+\.\d+\.\d+\.\d+):(\d+)(#.+)?`) //留个空组，确保subMatch长度统一
+			re = regexp.MustCompile(`(.+)()@(.+?):(\d+)(#.+)?`) //留个空组，确保subMatch长度统一
 			subMatch = re.FindStringSubmatch(content)
 			if len(subMatch) > 0 {
 				raw, err := Base64StdDecode(subMatch[1])
@@ -94,6 +94,9 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 				as := strings.Split(raw, ":")
 				subMatch[1], subMatch[2] = as[0], as[1]
 			}
+		}
+		if subMatch == nil {
+			return
 		}
 		if len(subMatch[5]) > 0 {
 			subMatch[5] = subMatch[5][1:]

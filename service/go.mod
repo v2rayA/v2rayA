@@ -14,6 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.10.2 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.2 // indirect
 	mellium.im/sasl v0.2.1 // indirect

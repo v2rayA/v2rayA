@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import CONST from "@/assets/const";
+import CONST from "@/assets/js/const";
 import ModalSetting from "@/components/ModalSetting";
 import node from "@/components/node";
 
@@ -161,11 +161,6 @@ export default {
           method: "delete"
         }).then(res => {
           if (res.data.code === "SUCCESS") {
-            this.$store.commit(
-              "CONNECTED_SERVER",
-              res.data.data.connectedServer
-            );
-
             Object.assign(this.runningState, {
               running: CONST.NOT_RUNNING,
               connectedServer: null,
@@ -187,7 +182,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "https://at.alicdn.com/t/font_1467288_i3pvm4jajs.css";
+@import "https://at.alicdn.com/t/font_1467288_oepi5rq7dv.css";
 #app {
   margin: 0;
 }

@@ -22,6 +22,7 @@ func GetTouchRaw() models.TouchRaw {
 	return *deepcopy.Copy(tr).(*models.TouchRaw)
 }
 
+/*更新config中的tr备份*/
 func SetTouchRaw(newTr *models.TouchRaw) {
 	tr = newTr
 }

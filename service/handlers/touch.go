@@ -4,8 +4,8 @@ import (
 	"V2RayA/config"
 	"V2RayA/models"
 	"V2RayA/tools"
+	"errors"
 	"github.com/gin-gonic/gin"
-	"sort"
 )
 
 func GetTouch(ctx *gin.Context) {
@@ -18,7 +18,7 @@ func GetTouch(ctx *gin.Context) {
 	for i := range t.Subscriptions {
 		t.Subscriptions[i].TYPE = models.SubscriptionType
 		for j := range t.Subscriptions[i].Servers {
-			t.Subscriptions[i].Servers[j].TYPE = models.SubscriptionType
+			t.Subscriptions[i].Servers[j].TYPE = models.SubscriptionServerType
 		}
 	}
 	for i := range t.Servers {
@@ -31,46 +31,46 @@ func GetTouch(ctx *gin.Context) {
 }
 
 func DeleteTouch(ctx *gin.Context) {
-	// TODO: 特判删除connected节点时的情况
 	var data models.WhichTouches
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
 	tr := config.GetTouchRaw()
-	//对要删除的touch去重，并将ID转化为下标，然后检查下标有效性
-	ts := make(map[models.WhichTouch]struct{})
-	for i := range data.Touches {
-		ind := data.Touches[i].ID - 1
-		v := data.Touches[i]
-		switch v.TYPE {
-		case models.SubscriptionType:
-			if ind >= 0 && ind < len(tr.Subscriptions) {
-				ts[v] = struct{}{}
-			}
-		case models.ServerType:
-			if ind >= 0 && ind < len(tr.Servers) {
-				ts[v] = struct{}{}
-			}
-		}
-	}
-	data.Touches = make([]models.WhichTouch, 0)
-	for k := range ts {
-		data.Touches = append(data.Touches, k)
-	}
+	//对要删除的touch去重
+	data.SetTouches(data.GetNonDuplicatedTouches(&tr))
 	//对要删除的touch排序，将大的下标排在前面，从后往前删
-	sort.Sort(data)
+	data.Sort()
 	touches := data.GetTouches()
 	tr.Lock() //写操作需要上锁
 	defer tr.Unlock()
+	disconnect := func() {
+		tr.SetDisConnect()
+		err = tools.StopV2rayService()
+		if err != nil {
+			tools.ResponseError(ctx, err)
+			return
+		}
+		err = tools.DisableV2rayService()
+		if err != nil {
+			tools.ResponseError(ctx, err)
+			return
+		}
+	}
 	for _, v := range touches {
 		ind := v.ID - 1
 		switch v.TYPE {
-		case models.SubscriptionType:
+		case models.SubscriptionType: //这里删的是某个订阅
+			//检查现在连接的结点是否在该订阅中，是的话断开连接
+			if tr.ConnectedServer != nil && tr.ConnectedServer.TYPE == models.SubscriptionServerType && tr.ConnectedServer.Sub == ind {
+				disconnect()
+			}
 			tr.Subscriptions = append(tr.Subscriptions[:ind], tr.Subscriptions[ind+1:]...)
 		case models.ServerType:
 			tr.Servers = append(tr.Servers[:ind], tr.Servers[ind+1:]...)
+		case models.SubscriptionServerType: //订阅的结点的不能删的
+			continue
 		}
 	}
 	err = tr.WriteToFile()
