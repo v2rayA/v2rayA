@@ -19,7 +19,7 @@ func Import(ctx *gin.Context) {
 	)
 	err = ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
 	tr := config.GetTouchRaw()

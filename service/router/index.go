@@ -27,6 +27,7 @@ func Run() {
 		g.DELETE("connection", handlers.DeleteConnection)
 		g.POST("v2ray", handlers.PostV2ray)
 		g.DELETE("v2ray", handlers.DeleteV2ray)
+		g.GET("pingLatency", handlers.GetPingLatency)
 	}
 	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
 }

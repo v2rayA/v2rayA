@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import CONST from "@/assets/const";
+import CONST from "@/assets/js/const";
 
 Vue.use(Vuex);
 

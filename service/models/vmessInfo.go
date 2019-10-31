@@ -12,5 +12,5 @@ type VmessInfo struct {
 	Path     string `json:"path"`
 	TLS      string `json:"tls"`
 	V        string `json:"v"`
-	Protocol string `json:"-"`
+	Protocol string `json:"protocol"`
 }

@@ -10,13 +10,15 @@ $warning: #ff845e;
 $warning-invert: findColorInvert($warning);
 
 $warning: #dc8e47;
-$danger-invert: findColorInvert($warning);
+$warning-invert: findColorInvert($warning);
 $info: #4497a5;
 $info-invert: findColorInvert($info);
 $success: #506da4;
 $success-invert: findColorInvert($success);
-$delete: #dfaab1;
+$delete: #cd8a7a;
 $delete-invert: findColorInvert($delete);
+$danger: rgba(255, 69, 58, 0.73);
+$danger-invert: findColorInvert($danger);
 
 // Setup $colors to use as bulma classes (e.g. 'is-twitter')
 $colors: (

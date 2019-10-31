@@ -6,16 +6,45 @@
         group-multiline
         style="margin-bottom: 1rem;position: relative"
       >
-        <button
-          :class="
-            `button field is-delete ${checkedRows.length ? '' : 'not-show'}`
-          "
-          @click="handleClickDelete"
-        >
-          <i class="iconfont icon-delete"></i>
-          <span>删除</span>
-        </button>
-        <div style="position:absolute;right:0;">
+        <div>
+          <button
+            :class="{
+              button: true,
+              field: true,
+              'is-info': true,
+              'not-display': !isCheckedRowsPingable()
+            }"
+            @click="handleClickPing"
+          >
+            <i class="iconfont icon-wave"></i>
+            <span>Ping</span>
+          </button>
+          <button
+            :class="{
+              button: true,
+              field: true,
+              'is-delete': true,
+              'not-display': !isCheckedRowsDeletable()
+            }"
+            @click="handleClickDelete"
+          >
+            <i class="iconfont icon-delete"></i>
+            <span>删除</span>
+          </button>
+          <button
+            :class="{
+              button: true,
+              field: true,
+              'is-delete': true,
+              'not-show': true
+            }"
+          >
+            <i class="iconfont icon-delete"></i>
+            <span>placeholder</span>
+          </button>
+          <span class="field not-show">placeholder</span>
+        </div>
+        <div style="position:absolute;right:0;top:0">
           <b-button class="field" type="is-primary" @click="checkedRows = []">
             <i class="iconfont icon-chuangjiangongdan1"></i>
             <span>创建</span>
@@ -60,9 +89,14 @@
         </footer>
       </b-collapse>
 
-      <b-tabs v-model="tab" position="is-centered" type="is-toggle-rounded">
+      <b-tabs
+        v-model="tab"
+        position="is-centered"
+        type="is-toggle-rounded"
+        @change="handleTabsChange"
+      >
         <b-tab-item
-          :visible="!!tableData.subscriptions.length"
+          v-if="!!tableData.subscriptions.length"
           label="SUBSCRIPTION"
         >
           <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
@@ -117,7 +151,7 @@
             </b-table>
           </b-field>
         </b-tab-item>
-        <b-tab-item :visible="!!tableData.servers.length" label="SERVER">
+        <b-tab-item v-if="!!tableData.servers.length" label="SERVER">
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
               :data="tableData.servers"
@@ -135,10 +169,14 @@
                 <b-table-column field="address" label="节点地址">
                   {{ props.row.address }}
                 </b-table-column>
-                <b-table-column field="net" label="传输协议/加密方式">
+                <b-table-column field="net" label="协议">
                   {{ props.row.net }}
                 </b-table-column>
-                <b-table-column field="pingLatency" label="Ping时延">
+                <b-table-column
+                  field="pingLatency"
+                  label="Ping时延"
+                  class="ping-latency"
+                >
                   {{ props.row.pingLatency }}
                 </b-table-column>
                 <!--            <b-table-column field="httpLatency" label="HTTP时延" width="100">-->
@@ -191,6 +229,8 @@
           <b-field :label="`${sub.host.toUpperCase()}(${sub.servers.length})`">
             <b-table
               :data="sub.servers"
+              :checked-rows.sync="checkedRows"
+              checkable
               :row-class="(row, index) => row.connected && 'is-connected'"
             >
               <template slot-scope="props">
@@ -203,10 +243,14 @@
                 <b-table-column field="address" label="节点地址">
                   {{ props.row.address }}
                 </b-table-column>
-                <b-table-column field="net" label="传输协议/加密方式">
+                <b-table-column field="net" label="协议">
                   {{ props.row.net }}
                 </b-table-column>
-                <b-table-column field="pingLatency" label="Ping时延">
+                <b-table-column
+                  field="pingLatency"
+                  label="Ping时延"
+                  class="ping-latency"
+                >
                   {{ props.row.pingLatency }}
                 </b-table-column>
                 <!--            <b-table-column field="httpLatency" label="HTTP时延" width="100">-->
@@ -260,8 +304,8 @@
 </template>
 
 <script>
-import { locateServer } from "@/assets/js/utils";
-import CONST from "@/assets/const";
+import { locateServer, handleResponse } from "@/assets/js/utils";
+import CONST from "@/assets/js/const";
 export default {
   name: "Node",
   data() {
@@ -330,6 +374,11 @@ export default {
         console.log(server);
       }
       if (runningState.connectedServer) {
+        console.log(
+          "updateConnectView",
+          this.tableData,
+          runningState.connectedServer
+        );
         let server = locateServer(this.tableData, runningState.connectedServer);
         server.connected = true;
         console.log(server);
@@ -343,11 +392,20 @@ export default {
         return;
       }
       let sub = whichServer.sub;
-      if (whichServer._type === "subscription") {
-        this.tab = sub + 2;
+      let subscriptionServersOffset = 0;
+      let serversOffset = 0;
+      if (this.tableData.subscriptions.length > 0) {
+        subscriptionServersOffset++;
+        serversOffset++;
+      }
+      if (this.tableData.servers.length > 0) {
+        subscriptionServersOffset++;
+      }
+      if (whichServer._type === CONST.SubscriptionServerType) {
+        this.tab = sub + subscriptionServersOffset;
         console.log("locate to", whichServer);
-      } else if (whichServer._type === "server") {
-        this.tab = 1;
+      } else if (whichServer._type === CONST.ServerType) {
+        this.tab = serversOffset;
       }
     },
     handleClickImport() {
@@ -371,6 +429,13 @@ export default {
             .then(res => {
               if (res.data.code === "SUCCESS") {
                 this.tableData = res.data.data.touch;
+                this.runningState = {
+                  running: res.data.data.running
+                    ? CONST.IS_RUNNING
+                    : CONST.NOT_RUNNING,
+                  connectedServer: this.tableData.connectedServer,
+                  lastConnectedServer: null
+                };
               } else {
                 this.$buefy.snackbar.open({
                   message: res.data.message,
@@ -384,7 +449,6 @@ export default {
     },
     handleClickDelete() {
       console.log(this.checkedRows);
-      // this.checkedRows = [];
       this.$axios({
         url: apiRoot + "/touch",
         method: "delete",
@@ -397,18 +461,34 @@ export default {
           })
         }
       }).then(res => {
-        this.tableData = res.data.data.touch;
-        this.checkedRows = [];
+        if (res.data.code === "SUCCESS") {
+          this.tableData = res.data.data.touch;
+          this.checkedRows = [];
+          Object.assign(this.runningState, {
+            running: this.tableData.running
+              ? CONST.IS_RUNNING
+              : CONST.NOT_RUNNING,
+            connectedServer: this.tableData.connectedServer,
+            lastConnectedServer: null
+          });
+          this.updateConnectView();
+        } else {
+          this.$buefy.snackbar.open({
+            message: res.data.message,
+            type: "is-warning",
+            position: "is-top"
+          });
+        }
       });
     },
-    handleClickAboutConnection(node, i) {
+    handleClickAboutConnection(node, sub) {
       console.log(node);
       if (!node.connected) {
         //该节点并未处于连接状态，因此进行连接
         this.$axios({
           url: apiRoot + "/connection",
           method: "post",
-          data: { ...node, sub: i }
+          data: { ...node, sub: sub }
         }).then(res => {
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
@@ -447,6 +527,59 @@ export default {
           }
         });
       }
+    },
+    handleClickPing() {
+      console.log(this.checkedRows);
+      let touches = JSON.stringify(
+        this.checkedRows.map(x => {
+          //穷举sub
+          let sub = this.tableData.subscriptions.findIndex(subscription =>
+            subscription.servers.some(y => x === y)
+          );
+          return {
+            id: x.id,
+            _type: x._type,
+            sub: sub === -1 ? null : sub
+          };
+        })
+      );
+      this.checkedRows = [];
+      this.$axios({
+        url: apiRoot + "/pingLatency",
+        params: {
+          touches
+        }
+      }).then(res => {
+        handleResponse(res, this, () => {
+          res.data.data.touches.forEach(x => {
+            let server = locateServer(this.tableData, x);
+            server.pingLatency = x.pingLatency;
+          });
+          this.updateConnectView();
+        });
+      });
+    },
+    // eslint-disable-next-line no-unused-vars
+    handleTabsChange(index) {
+      this.checkedRows = [];
+    },
+    isCheckedRowsDeletable() {
+      // CONST.SubscriptionServerType is not deletable
+      return (
+        this.checkedRows.length > 0 &&
+        this.checkedRows.every(x => x._type !== CONST.SubscriptionServerType)
+      );
+    },
+    isCheckedRowsPingable() {
+      // CONST.SubscriptionServerType is not deletable
+      return (
+        this.checkedRows.length > 0 &&
+        this.checkedRows.some(
+          x =>
+            x._type === CONST.ServerType ||
+            x._type === CONST.SubscriptionServerType
+        )
+      );
     }
   }
 };
@@ -467,6 +600,9 @@ export default {
 .card {
   max-width: 500px;
   margin: auto;
+}
+.ping-latency {
+  font-size: 0.8em;
 }
 </style>
 
@@ -493,5 +629,20 @@ tr.is-connected {
 }
 .not-show {
   opacity: 0;
+  pointer-events: none;
+  width: 0 !important;
+  display: inline-block !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  border-left: 0 !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  border-right: 0 !important;
+}
+.not-display {
+  display: none;
+}
+table td, table th{
+  vertical-align: middle !important;
 }
 </style>

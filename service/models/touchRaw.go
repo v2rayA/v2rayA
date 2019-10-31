@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -32,11 +33,14 @@ type SubscriptionRaw struct {
 func serverRawsToServers(rss []TouchServerRaw) (ts []TouchServer) {
 	ts = make([]TouchServer, len(rss))
 	for i, v := range rss {
+		if v.VmessInfo.Protocol == "" {
+			v.VmessInfo.Protocol = "vmess"
+		}
 		ts[i] = TouchServer{
 			ID:        i + 1,
 			Name:      v.VmessInfo.Ps,
 			Address:   v.VmessInfo.Add + ":" + v.VmessInfo.Port,
-			Net:       v.VmessInfo.Net,
+			Net:       fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Net),
 			Connected: v.Connected,
 		}
 	}
@@ -98,13 +102,13 @@ func (tr *TouchRaw) LocateServer(wt *WhichTouch) (*TouchServerRaw, error) {
 			return nil, errors.New("ID超出下标范围")
 		}
 		return &tr.Servers[ind], nil
-	case SubscriptionType:
+	case SubscriptionServerType:
 		if wt.Sub < 0 || wt.Sub >= len(tr.Subscriptions) || ind < 0 || ind >= len(tr.Subscriptions[wt.Sub].Servers) {
 			return nil, errors.New("ID或Sub超出下标范围")
 		}
 		return &tr.Subscriptions[wt.Sub].Servers[ind], nil
 	default:
-		return nil, errors.New("无效的TYPE")
+		return nil, errors.New("LocateServer: 无效的TYPE")
 	}
 }
 
