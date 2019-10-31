@@ -1,18 +1,12 @@
-# V2Ray
-
-V2Ray 是 Project V 下的一个工具。Project V 包含一系列工具，帮助你打造专属的定制网络体系。而 V2Ray 属于最核心的一个。 简单地说，V2Ray 是一个与 Shadowsocks 类似的代理软件，但比Shadowsocks更具优势。
-
-V2Ray 用户手册：https://www.v2ray.com
-
-V2Ray 项目地址：https://github.com/v2ray/v2ray-core
-
 # V2RayA
 
-V2RayA是一个V2Ray的Web GUI。
+V2RayA是V2Ray的一个Web客户端。
 
-尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个GUI，但暂时无法满足我对用户体验的较高要求，因此开此项目。
+尽管v2ray的GUI很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，因此开此项目。
 
-虽然V2RayA是一个Web GUI，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。
+虽然V2RayA是一个Web客户端，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。
+
+项目地址：https://github.com/mzz2017/V2RayA
 
 ## 功能清单
 
@@ -44,13 +38,13 @@ V2RayA是一个V2Ray的Web GUI。
 
 有如下使用方法：
 
-1. 在本地用docker-compose部署service，在[GUI](https://v2raya.mzz.pub)使用（或手动部署前端GUI）。
+1. 在本地用docker-compose部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
    
    ```bash
    docker-compose up -d
    ```
    
-2. 用docker拉取镜像部署service，在[GUI](https://v2raya.mzz.pub)使用（或手动部署前端GUI）。
+2. 用docker拉取镜像部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
 
    ```bash
    docker pull mzz2017/v2raya
