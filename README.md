@@ -19,7 +19,7 @@ V2RayA是V2Ray的一个Web客户端。
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
 - [ ] 手动、自动更新订阅
-- [ ] 支持PAC模式（GFWList、大陆白名单、自定义规则）
+- [ ] 自定义PAC模式（GFWList、大陆白名单、自定义规则）
 - [ ] 多路复用、TCPFastOpen
 - [ ] 登陆与安全
 - [ ] 手动添加/修改节点
@@ -41,7 +41,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 ## 使用(under development)
 
-有如下使用方法：
+如下使用方法：
 
 1. 拉取源码，在本地用docker-compose部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
    
@@ -55,18 +55,28 @@ V2RayA是V2Ray的一个Web客户端。
 
    ```bash
    docker pull mzz2017/v2raya
-   docker run -d -p 2017:2017 -p 1080-1082:1080-1082 --restart=always mzz2017/v2raya
+   docker run -d -p 2017:2017 -p 10800-10802:10800-10802 --restart=always mzz2017/v2raya
    ```
 
-其中四个端口分别为：
+3. 【不推荐】不使用docker
+
+   ```bash
+   git clone https://github.com/mzz2017/V2RayA.git
+   cd V2RayA/service
+   sudo go run -mod=vendor main.go
+   ```
+
+   或直接使用[Releases](https://github.com/mzz2017/V2RayA/releases)。注意，请使用sudo运行。
+
+默认使用的四个端口分别为：
 
 2017: V2RayA后端端口
 
-1080: SOCKS协议
+10800: SOCKS协议
 
-1081: HTTP协议
+10801: HTTP协议
 
-1082: 带PAC的HTTP协议
+10802: 带PAC的HTTP协议【正在开发，目前使用大陆白名单模式，大陆已知域名直连，国外域名走代理】
 
 用户可通过docker将上述端口映射到本地的任意端口。
 

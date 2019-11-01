@@ -16,15 +16,12 @@ const templateJson = `{
     },
     "inbounds": [
       {
-        "port": 1080,
+        "port": 10800,
         "listen": "0.0.0.0",
         "protocol": "socks",
         "sniffing": {
           "enabled": true,
-          "destOverride": [
-            "http",
-            "tls"
-          ]
+          "destOverride": ["http", "tls"]
         },
         "settings": {
           "auth": "noauth",
@@ -32,7 +29,28 @@ const templateJson = `{
           "ip": null,
           "clients": null
         },
-        "streamSettings": null
+        "streamSettings": null,
+        "tag": "socks"
+      },
+      {
+        "port": 10801,
+        "listen": "0.0.0.0",
+        "protocol": "http",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": ["http", "tls"]
+        },
+        "tag": "http"
+      },
+      {
+        "port": 10802,
+        "listen": "0.0.0.0",
+        "protocol": "http",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": ["http", "tls"]
+        },
+        "tag": "pac"
       }
     ],
     "outbounds": [
@@ -45,52 +63,66 @@ const templateJson = `{
         },
         "streamSettings": null,
         "mux": null
+      },
+      {
+        "protocol": "freedom",
+        "settings": {},
+        "tag": "direct"
       }
     ],
-    "tcpSettings": {
-      "connectionReuse": true,
-      "header": {
-        "type": "http",
-        "request": {
-          "version": "1.1",
-          "method": "GET",
-          "path": [
-            "/"
+    "routing": {
+      "domainStrategy": "IPOnDemand",
+      "rules": [
+        {
+          "type": "field",
+          "inboundTag": [
+            "pac"
           ],
-          "headers": {
-            "Host": [
-              "host"
-            ],
-            "User-Agent": [
-              "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
-              "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
-            ],
-            "Accept-Encoding": [
-              "gzip, deflate"
-            ],
-            "Connection": [
-              "keep-alive"
-            ],
-            "Pragma": "no-cache"
-          }
+          "outboundTag": "direct",
+          "domain": ["geosite:cn"]
         },
-        "response": {
-          "version": "1.1",
-          "status": "200",
-          "reason": "OK",
-          "headers": {
-            "Content-Type": [
-              "application/octet-stream",
-              "video/mpeg"
-            ],
-            "Transfer-Encoding": [
-              "chunked"
-            ],
-            "Connection": [
-              "keep-alive"
-            ],
-            "Pragma": "no-cache"
-          }
+        {
+          "type": "field",
+          "inboundTag": [
+            "pac"
+          ],
+          "outboundTag": "direct",
+          "ip": [
+            "geoip:cn",
+            "geoip:private"
+          ]
+        }
+      ]
+    }
+  },
+  "tcpSettings": {
+    "connectionReuse": true,
+    "header": {
+      "type": "http",
+      "request": {
+        "version": "1.1",
+        "method": "GET",
+        "path": ["/"],
+        "headers": {
+          "Host": ["host"],
+          "User-Agent": [
+            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
+          ],
+          "Accept-Encoding": ["gzip, deflate"],
+          "Connection": ["keep-alive"],
+          "Pragma": "no-cache"
+        }
+      },
+      "response": {
+        "version": "1.1",
+        "status": "200",
+        "reason": "OK",
+        "headers": {
+          "Content-Type": ["application/octet-stream", "video/mpeg"],
+          "Transfer-Encoding": ["chunked"],
+          "Connection": ["keep-alive"],
+          "Pragma": "no-cache"
         }
       }
     }
@@ -122,9 +154,7 @@ const templateJson = `{
   },
   "httpSettings": {
     "path": "path",
-    "host": [
-      "host"
-    ]
+    "host": ["host"]
   },
   "streamSettings": {
     "network": "ws",
@@ -139,7 +169,9 @@ const templateJson = `{
     "enabled": false,
     "concurrency": 8
   }
-}`
+}
+
+`
 
 /*对应template.json*/
 type TmplJson struct {
@@ -157,6 +189,16 @@ type Template struct {
 	Log       Log        `json:"log"`
 	Inbounds  []Inbound  `json:"inbounds"`
 	Outbounds []Outbound `json:"outbounds"`
+	Routing   struct {
+		DomainStrategy string `json:"domainStrategy"`
+		Rules          []struct {
+			Type        string   `json:"type"`
+			OutboundTag string   `json:"outboundTag"`
+			Domain      []string `json:"domain,omitempty"`
+			InboundTag  []string `json:"inboundTag"`
+			IP          []string `json:"ip,omitempty"`
+		} `json:"rules"`
+	} `json:"routing"`
 }
 type Log struct {
 	Access   string `json:"access"`
@@ -179,6 +221,7 @@ type Inbound struct {
 		Clients interface{} `json:"clients"`
 	} `json:"settings"`
 	StreamSettings interface{} `json:"streamSettings"`
+	Tag            string      `json:"tag,omitempty"`
 }
 type User struct {
 	ID       string `json:"id"`
@@ -296,7 +339,7 @@ func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 	raw := []byte(templateJson)
 	err := json.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return err
+		return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 	}
 	// 其中Template是基础配置，替换掉*t即可
 	*t = tmplJson.Template

@@ -2,6 +2,7 @@ package tools
 
 import (
 	"V2RayA/models"
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -9,15 +10,21 @@ import (
 
 func RestartV2rayService() (err error) {
 	_, err = exec.Command("service", "v2ray", "restart").CombinedOutput()
-	if err != nil{
+	if err != nil {
 		_, err = exec.Command("systemctl", "restart", "v2ray").Output()
+		if err != nil {
+			return
+		}
+	}
+	if !IsV2RayRunning() {
+		return errors.New("v2ray启动失败")
 	}
 	return
 }
 
 func StopV2rayService() (err error) {
 	_, err = exec.Command("service", "v2ray", "stop").CombinedOutput()
-	if err != nil{
+	if err != nil {
 		_, err = exec.Command("systemctl", "stop", "v2ray").Output()
 	}
 	return
@@ -25,16 +32,15 @@ func StopV2rayService() (err error) {
 
 func EnableV2rayService() (err error) {
 	_, err = exec.Command("update-rc.d", "v2ray", "enable").CombinedOutput()
-	if err != nil{
+	if err != nil {
 		_, err = exec.Command("systemctl", "enable", "v2ray").Output()
 	}
 	return
 }
 
-
 func DisableV2rayService() (err error) {
 	_, err = exec.Command("update-rc.d", "v2ray", "disable").CombinedOutput()
-	if err != nil{
+	if err != nil {
 		_, err = exec.Command("systemctl", "disable", "v2ray").Output()
 	}
 	return
