@@ -88,6 +88,20 @@ V2RayA是V2Ray的一个Web客户端。
 
 不要将本项目用于不合法用途，作者仅将该项目用于学习研究和内网穿透的用途。
 
+# Status
+
+## Build Status
+
+| name                     | docker image | travis-ci |
+|---------------------------------|-----|---------------------|
+| V2RayA                |![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya) |[![Build Status](https://travis-ci.org/mzz2017/V2RayA.svg?branch=master)](https://travis-ci.org/mzz2017/V2RayA) |
+
+## Usage Statistics
+
+| name   | docker pulls                                                 | github releases                                              |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| V2RayA | ![Docker Pulls](https://img.shields.io/docker/pulls/mzz2017/v2raya) | ![GitHub All Releases](https://img.shields.io/github/downloads/mzz2017/V2RayA/total) |
+
 # 感谢
 
 [jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
