@@ -146,17 +146,20 @@ export default {
     },
     handleClickAbout() {
       this.$buefy.modal.open({
-        width: 500,
         content: `
-<div class="modal-card" style="max-width: 500px;margin:auto">
+<div class="modal-card" style="margin:auto">
                     <header class="modal-card-head">
                         <p class="modal-card-title">mzz2017 / V2RayA</p>
                     </header>
                     <section class="modal-card-body lazy">
                         <p>V2RayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
-                        <p>整个项目依赖于Docker，如果你想修改socks或http的端口号，请修改docker参数并重新启动容器。</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">2017: V2RayA后端端口</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">10800: SOCKS协议</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">10801: HTTP协议</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">10802: 带PAC的HTTP协议</p>
+                        <p>整个项目依赖于Docker，如果你想修改上述端口号，请修改docker参数并重新启动容器。</p>
                         <p>应用不会将任何用户数据保存在云端，所有用户数据存放在docker容器中，当docker容器被清除时配置也将随之消失。</p>
-                        <p>在使用中如果发现任何问题，欢迎提出issue。</p>
+                        <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>
                     </section>
                     <footer class="modal-card-foot">
                         <a class="is-link" href="https://github.com/mzz2017/V2RayA" target="_blank">
