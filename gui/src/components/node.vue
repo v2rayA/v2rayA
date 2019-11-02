@@ -343,29 +343,49 @@ export default {
   },
   created() {
     this.$axios({
-      url: apiRoot + "/touch"
+      url: apiRoot + "/version"
     })
       .then(res => {
-        this.tableData = res.data.data.touch;
-        // this.$store.commit("CONNECTED_SERVER", this.tableData.connectedServer);
-        this.runningState = {
-          running: res.data.data.running ? CONST.IS_RUNNING : CONST.NOT_RUNNING,
-          connectedServer: this.tableData.connectedServer,
-          lastConnectedServer: null
-        };
-        this.locateTabToConnected();
-        this.ready = true;
+        if (res.data.code === "SUCCESS") {
+          this.$buefy.toast.open({
+            message: `检测到本地V2RayA服务端版本: ${res.data.data}`,
+            type: "is-dark",
+            position: "is-top",
+            duration: 3000
+          });
+        }
       })
       .catch(err => {
-        this.$buefy.toast.open({
-          message: err,
-          type: "is-warning",
-          position: "is-top"
-        });
         if (err.message === "Network Error") {
-          console.log("todo"); //TODO
+          console.log("todo", Object.assign({}, err)); //TODO
+          this.$buefy.snackbar.open({
+            message: "未检测到本地V2RayA服务端",
+            type: "is-warning",
+            position: "is-top",
+            actionText: "查看帮助",
+            duration: 30000,
+            onAction: () => {
+              window.open(
+                "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8under-development",
+                "_blank"
+              );
+            }
+          });
         }
       });
+    this.$axios({
+      url: apiRoot + "/touch"
+    }).then(res => {
+      this.tableData = res.data.data.touch;
+      // this.$store.commit("CONNECTED_SERVER", this.tableData.connectedServer);
+      this.runningState = {
+        running: res.data.data.running ? CONST.IS_RUNNING : CONST.NOT_RUNNING,
+        connectedServer: this.tableData.connectedServer,
+        lastConnectedServer: null
+      };
+      this.locateTabToConnected();
+      this.ready = true;
+    });
   },
   mounted() {
     let clipboard = new ClipboardJS(".sharingAddressTag");

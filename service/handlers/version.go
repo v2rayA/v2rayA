@@ -6,5 +6,5 @@ import (
 )
 
 func Version(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, "1.00")
+	tools.ResponseSuccess(ctx, "v0.2")
 }

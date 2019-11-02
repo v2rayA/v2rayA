@@ -66,7 +66,7 @@ V2RayA是V2Ray的一个Web客户端。
    sudo go run -mod=vendor main.go
    ```
 
-   或直接使用[Releases](https://github.com/mzz2017/V2RayA/releases)。注意，请使用sudo运行。
+   或直接使用[Releases](https://github.com/mzz2017/V2RayA/releases)。注意，该方法不支持windows，其他系统请使用sudo运行。
 
 默认使用的四个端口分别为：
 
@@ -76,7 +76,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 10801: HTTP协议
 
-10802: 带PAC的HTTP协议【正在开发，目前使用大陆白名单模式，大陆已知域名直连，国外域名走代理】
+10802: 带PAC的HTTP协议【正在开发，目前使用大陆白名单模式，大陆已知域名直连，其他域名走代理】
 
 用户可通过docker将上述端口映射到本地的任意端口。
 
