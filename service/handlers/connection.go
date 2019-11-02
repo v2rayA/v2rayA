@@ -1,22 +1,22 @@
 package handlers
 
 import (
-	"V2RayA/config"
-	"V2RayA/models"
+	"V2RayA/global"
+	"V2RayA/models/touch"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
 
 func PostConnection(ctx *gin.Context) {
-	var data models.WhichTouch
+	var data touch.WhichTouch
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
 	//定位Server
-	tr := config.GetTouchRaw()
+	tr := global.GetTouchRaw()
 	lastConnectedServer := tr.ConnectedServer
 	tsr, err := tr.LocateServer(&data)
 	if err != nil {
@@ -40,7 +40,7 @@ func PostConnection(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	config.SetTouchRaw(&tr)
+	global.SetTouchRaw(&tr)
 	err = tools.EnableV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
@@ -50,7 +50,7 @@ func PostConnection(ctx *gin.Context) {
 }
 
 func DeleteConnection(ctx *gin.Context) {
-	tr := config.GetTouchRaw()
+	tr := global.GetTouchRaw()
 	cs := tr.ConnectedServer
 	tr.Lock() //写操作加锁
 	defer tr.Unlock()
@@ -70,6 +70,6 @@ func DeleteConnection(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	config.SetTouchRaw(&tr)
+	global.SetTouchRaw(&tr)
 	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": cs})
 }

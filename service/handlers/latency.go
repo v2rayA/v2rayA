@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"V2RayA/config"
-	"V2RayA/models"
+	"V2RayA/global"
+	"V2RayA/models/touch"
 	"V2RayA/tools"
 	"encoding/json"
 	"errors"
@@ -14,20 +14,20 @@ import (
 )
 
 func GetPingLatency(ctx *gin.Context) {
-	var data models.WhichTouches
+	var data touch.WhichTouches
 	err := json.Unmarshal([]byte(ctx.Query("touches")), &data.Touches)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	tr := config.GetTouchRaw()
+	tr := global.GetTouchRaw()
 	//对要Ping的touch去重
 	data.SetTouches(data.GetNonDuplicatedTouches(&tr))
 	touches := data.GetTouches()
 	//多线程异步ping
 	wg := new(sync.WaitGroup)
 	for i, v := range touches {
-		if v.TYPE == models.SubscriptionType { //subscription不能ping
+		if v.TYPE == touch.SubscriptionType { //subscription不能ping
 			continue
 		}
 		tsr, err := tr.LocateServer(&v)
@@ -55,7 +55,7 @@ func GetPingLatency(ctx *gin.Context) {
 	}
 	wg.Wait()
 	for i := len(data.Touches) - 1; i >= 0; i-- {
-		if data.Touches[i].TYPE == models.SubscriptionType { //不返回subscriptionType
+		if data.Touches[i].TYPE == touch.SubscriptionType { //不返回subscriptionType
 			data.Touches = append(data.Touches[:i], data.Touches[i+1:]...)
 		}
 	}

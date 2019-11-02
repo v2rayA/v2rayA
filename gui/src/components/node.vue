@@ -343,37 +343,6 @@ export default {
   },
   created() {
     this.$axios({
-      url: apiRoot + "/version"
-    })
-      .then(res => {
-        if (res.data.code === "SUCCESS") {
-          this.$buefy.toast.open({
-            message: `检测到本地V2RayA服务端版本: ${res.data.data}`,
-            type: "is-dark",
-            position: "is-top",
-            duration: 3000
-          });
-        }
-      })
-      .catch(err => {
-        if (err.message === "Network Error") {
-          console.log("todo", Object.assign({}, err)); //TODO
-          this.$buefy.snackbar.open({
-            message: "未检测到本地V2RayA服务端",
-            type: "is-warning",
-            position: "is-top",
-            actionText: "查看帮助",
-            duration: 30000,
-            onAction: () => {
-              window.open(
-                "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8under-development",
-                "_blank"
-              );
-            }
-          });
-        }
-      });
-    this.$axios({
       url: apiRoot + "/touch"
     }).then(res => {
       this.tableData = res.data.data.touch;

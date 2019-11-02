@@ -1,7 +1,9 @@
 package tools
 
 import (
-	"V2RayA/models"
+	"V2RayA/models/nodeData"
+	tmpl "V2RayA/models/v2rayTmpl"
+	"V2RayA/models/vmessInfo"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -16,12 +18,12 @@ import (
 /*
 根据传入的 vmess://xxxxx 解析出NodeData
 */
-func ResolveVmessURL(vmess string) (nodeData *models.NodeData, err error) {
+func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 	if len(vmess) < 8 || strings.ToLower(vmess[:8]) != "vmess://" {
 		err = errors.New("this address is not begin with vmess://")
 		return
 	}
-	var info models.VmessInfo
+	var info vmessInfo.VmessInfo
 	// 进行base64解码，并unmarshal到VmessInfo上
 	raw, err := Base64StdDecode(vmess[8:])
 	if err != nil {
@@ -40,7 +42,7 @@ func ResolveVmessURL(vmess string) (nodeData *models.NodeData, err error) {
 			return
 		}
 		q := u.Query()
-		info = models.VmessInfo{
+		info = vmessInfo.VmessInfo{
 			ID:   subMatch[1],
 			Add:  subMatch[2],
 			Port: subMatch[3],
@@ -62,20 +64,19 @@ func ResolveVmessURL(vmess string) (nodeData *models.NodeData, err error) {
 		}
 	}
 	// 填充模板并处理结果
-	tmpl := models.NewTemplate()
-	err = tmpl.FillWithVmessInfo(info)
-
-	nodeData = new(models.NodeData)
-	b := tmpl.ToConfigBytes()
-	nodeData.Config = string(b)
-	nodeData.VmessInfo = info
+	t := tmpl.NewTemplate()
+	err = t.FillWithVmessInfo(info)
+	data = new(nodeData.NodeData)
+	b := t.ToConfigBytes()
+	data.Config = string(b)
+	data.VmessInfo = info
 	return
 }
 
 /*
 根据传入的 ss://xxxxx 解析出NodeData
 */
-func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
+func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 	if len(vmess) < 5 || strings.ToLower(vmess[:5]) != "ss://" {
 		err = errors.New("this address is not begin with ss://")
 		return
@@ -125,7 +126,7 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 		return
 	}
 	log.Println(content, subMatch)
-	info := models.VmessInfo{
+	info := vmessInfo.VmessInfo{
 		Protocol: "shadowsocks",
 		Net:      subMatch[1],
 		ID:       subMatch[2],
@@ -135,16 +136,16 @@ func ResolveSSURL(vmess string) (nodeData *models.NodeData, err error) {
 	}
 	log.Println(info)
 	// 填充模板并处理结果
-	tmpl := models.NewTemplate()
-	err = tmpl.FillWithVmessInfo(info)
+	t := tmpl.NewTemplate()
+	err = t.FillWithVmessInfo(info)
 
-	nodeData = new(models.NodeData)
-	b := tmpl.ToConfigBytes()
-	nodeData.Config = string(b)
-	nodeData.VmessInfo = info
+	data = new(nodeData.NodeData)
+	b := t.ToConfigBytes()
+	data.Config = string(b)
+	data.VmessInfo = info
 	return
 }
-func ResolveURL(u string) (n *models.NodeData, err error) {
+func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	if strings.HasPrefix(u, "vmess://") {
 		n, err = ResolveVmessURL(u)
 	} else if strings.HasPrefix(u, "ss://") {
@@ -159,7 +160,7 @@ func ResolveURL(u string) (n *models.NodeData, err error) {
 	return
 }
 
-func GenerateURL(info models.VmessInfo) string {
+func GenerateURL(info vmessInfo.VmessInfo) string {
 	switch info.Protocol {
 	case "", "vmess":
 		//去除info中的protocol，减少URL体积

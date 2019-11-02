@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"V2RayA/config"
-	"V2RayA/models"
+	"V2RayA/global"
+	"V2RayA/models/nodeData"
+	"V2RayA/models/touch"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,7 @@ func Import(ctx *gin.Context) {
 		data struct {
 			URL string `json:"url"`
 		}
-		n   *models.NodeData
+		n   *nodeData.NodeData
 		err error
 	)
 	err = ctx.ShouldBindJSON(&data)
@@ -22,7 +23,7 @@ func Import(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	tr := config.GetTouchRaw()
+	tr := global.GetTouchRaw()
 	tr.Lock() //写操作需要上锁
 	defer tr.Unlock()
 	if strings.HasPrefix(data.URL, "vmess://") || strings.HasPrefix(data.URL, "ss://") {
@@ -44,13 +45,13 @@ func Import(ctx *gin.Context) {
 			return
 		}
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
-		servers := make([]models.TouchServerRaw, len(infos))
+		servers := make([]touch.TouchServerRaw, len(infos))
 		for i, v := range infos {
 			servers[i] = v.ToTouchServerRaw()
 		}
-		tr.Subscriptions = append(tr.Subscriptions, models.SubscriptionRaw{
+		tr.Subscriptions = append(tr.Subscriptions, touch.SubscriptionRaw{
 			Address: data.URL,
-			Status:  models.NewUpdateStatus(),
+			Status:  touch.NewUpdateStatus(),
 			Servers: servers,
 		})
 	}
@@ -61,6 +62,6 @@ func Import(ctx *gin.Context) {
 		return
 	}
 	//录入成功，直接调用Touch接口返回更新后的数据
-	config.SetTouchRaw(&tr)
+	global.SetTouchRaw(&tr)
 	GetTouch(ctx)
 }

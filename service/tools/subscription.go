@@ -1,16 +1,20 @@
 package tools
 
 import (
-	"V2RayA/models"
+	"V2RayA/models/nodeData"
 	"bytes"
 	"log"
 	"net/http"
 	"strings"
 )
 
-func ResolveSubscription(source string) (infos []*models.NodeData, err error) {
+func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
+	return ResolveSubscriptionWithClient(source, http.DefaultClient)
+}
+
+func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, err error) {
 	// get请求source
-	res, err := http.Get(source)
+	res, err := client.Get(source)
 	if err != nil {
 		return
 	}
@@ -25,9 +29,9 @@ func ResolveSubscription(source string) (infos []*models.NodeData, err error) {
 	// 切分raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析
-	infos = make([]*models.NodeData, 0)
+	infos = make([]*nodeData.NodeData, 0)
 	for _, row := range rows {
-		var data *models.NodeData
+		var data *nodeData.NodeData
 		data, err = ResolveURL(row)
 		if err != nil {
 			log.Println(row, err)

@@ -1,177 +1,14 @@
-package models
+package v2rayTmpl
 
 import (
+	"V2RayA/global"
+	"V2RayA/models/touch"
+	"V2RayA/models/vmessInfo"
 	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
 )
-
-const templateJson = `{
-  "template": {
-    "log": {
-      "access": "/dev/null",
-      "error": "/dev/null",
-      "loglevel": "/dev/null"
-    },
-    "inbounds": [
-      {
-        "port": 10800,
-        "listen": "0.0.0.0",
-        "protocol": "socks",
-        "sniffing": {
-          "enabled": true,
-          "destOverride": ["http", "tls"]
-        },
-        "settings": {
-          "auth": "noauth",
-          "udp": true,
-          "ip": null,
-          "clients": null
-        },
-        "streamSettings": null,
-        "tag": "socks"
-      },
-      {
-        "port": 10801,
-        "listen": "0.0.0.0",
-        "protocol": "http",
-        "sniffing": {
-          "enabled": true,
-          "destOverride": ["http", "tls"]
-        },
-        "tag": "http"
-      },
-      {
-        "port": 10802,
-        "listen": "0.0.0.0",
-        "protocol": "http",
-        "sniffing": {
-          "enabled": true,
-          "destOverride": ["http", "tls"]
-        },
-        "tag": "pac"
-      }
-    ],
-    "outbounds": [
-      {
-        "tag": "proxy",
-        "protocol": "vmess",
-        "settings": {
-          "vnext": null,
-          "servers": null
-        },
-        "streamSettings": null,
-        "mux": null
-      },
-      {
-        "protocol": "freedom",
-        "settings": {},
-        "tag": "direct"
-      }
-    ],
-    "routing": {
-      "domainStrategy": "IPOnDemand",
-      "rules": [
-        {
-          "type": "field",
-          "inboundTag": [
-            "pac"
-          ],
-          "outboundTag": "direct",
-          "domain": ["geosite:cn"]
-        },
-        {
-          "type": "field",
-          "inboundTag": [
-            "pac"
-          ],
-          "outboundTag": "direct",
-          "ip": [
-            "geoip:cn",
-            "geoip:private"
-          ]
-        }
-      ]
-    }
-  },
-  "tcpSettings": {
-    "connectionReuse": true,
-    "header": {
-      "type": "http",
-      "request": {
-        "version": "1.1",
-        "method": "GET",
-        "path": ["/"],
-        "headers": {
-          "Host": ["host"],
-          "User-Agent": [
-            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46"
-          ],
-          "Accept-Encoding": ["gzip, deflate"],
-          "Connection": ["keep-alive"],
-          "Pragma": "no-cache"
-        }
-      },
-      "response": {
-        "version": "1.1",
-        "status": "200",
-        "reason": "OK",
-        "headers": {
-          "Content-Type": ["application/octet-stream", "video/mpeg"],
-          "Transfer-Encoding": ["chunked"],
-          "Connection": ["keep-alive"],
-          "Pragma": "no-cache"
-        }
-      }
-    }
-  },
-  "wsSettings": {
-    "connectionReuse": true,
-    "path": "",
-    "headers": {
-      "Host": "host"
-    }
-  },
-  "tlsSettings": {
-    "allowInsecure": true,
-    "serverName": null
-  },
-  "kcpSettings": {
-    "mtu": 1350,
-    "tti": 50,
-    "uplinkCapacity": 12,
-    "downlinkCapacity": 100,
-    "congestion": false,
-    "readBufferSize": 2,
-    "writeBufferSize": 2,
-    "header": {
-      "type": "none",
-      "request": null,
-      "response": null
-    }
-  },
-  "httpSettings": {
-    "path": "path",
-    "host": ["host"]
-  },
-  "streamSettings": {
-    "network": "ws",
-    "security": "",
-    "tlsSettings": null,
-    "tcpSettings": null,
-    "kcpSettings": null,
-    "wsSettings": null,
-    "httpSettings": null
-  },
-  "mux": {
-    "enabled": false,
-    "concurrency": 8
-  }
-}
-
-`
 
 /*对应template.json*/
 type TmplJson struct {
@@ -182,23 +19,26 @@ type TmplJson struct {
 	KcpSettings    KcpSettings    `json:"kcpSettings"`
 	HttpSettings   HttpSettings   `json:"httpSettings"`
 	StreamSettings StreamSettings `json:"streamSettings"`
+	Whitelist      []RoutingRule  `json:"whitelist"`
+	Gfwlist        []RoutingRule  `json:"gfwlist"`
 	Mux            Mux            `json:"mux"`
 }
-
 type Template struct {
 	Log       Log        `json:"log"`
 	Inbounds  []Inbound  `json:"inbounds"`
 	Outbounds []Outbound `json:"outbounds"`
 	Routing   struct {
-		DomainStrategy string `json:"domainStrategy"`
-		Rules          []struct {
-			Type        string   `json:"type"`
-			OutboundTag string   `json:"outboundTag"`
-			Domain      []string `json:"domain,omitempty"`
-			InboundTag  []string `json:"inboundTag"`
-			IP          []string `json:"ip,omitempty"`
-		} `json:"rules"`
+		DomainStrategy string        `json:"domainStrategy"`
+		Rules          []RoutingRule `json:"rules"`
 	} `json:"routing"`
+}
+type RoutingRule struct {
+	Type        string   `json:"type"`
+	OutboundTag string   `json:"outboundTag"`
+	InboundTag  []string `json:"inboundTag,omitempty"`
+	Domain      []string `json:"domain,omitempty"`
+	IP          []string `json:"ip,omitempty"`
+	Network     string   `json:"network,omitempty"`
 }
 type Log struct {
 	Access   string `json:"access"`
@@ -333,7 +173,7 @@ func NewTemplate() (tmpl *Template) {
 根据传入的 VmessInfo 填充模板
 当协议是shadowsocks时，v.Net对应Method，v.ID对应Password
 */
-func (t *Template) FillWithVmessInfo(v VmessInfo) error {
+func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(templateJson)
@@ -343,10 +183,11 @@ func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 	}
 	// 其中Template是基础配置，替换掉*t即可
 	*t = tmplJson.Template
-	// 进行适配性修改
+	// 默认协议vmess
 	if v.Protocol == "" {
 		v.Protocol = "vmess"
 	}
+	// 根据vmessInfo修改json配置
 	t.Outbounds[0].Protocol = v.Protocol
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
@@ -403,6 +244,41 @@ func (t *Template) FillWithVmessInfo(v VmessInfo) error {
 		}
 	default:
 		return errors.New("不支持的协议: " + v.Protocol)
+	}
+	//根据设置修改路由部分json配置
+	setting := global.GetTouchRaw().Setting
+	switch setting.PacMode {
+	case touch.WhitelistMode:
+		t.Routing.Rules = append(t.Routing.Rules, tmplJson.Whitelist...)
+	case touch.GfwlistMode:
+		t.Routing.Rules = append(t.Routing.Rules, tmplJson.Gfwlist...)
+	case touch.CustomMode:
+		for _, v := range setting.CustomPac.RoutingRules {
+			rule := RoutingRule{
+				Type:        "field",
+				OutboundTag: string(v.RuleType),
+				InboundTag:  []string{"pac"},
+			}
+			for i := range v.Tags {
+				v.Tags[i] = "ext:custom.dat:" + v.Tags[i]
+			}
+			switch v.MatchType {
+			case touch.DomainMatchRule:
+				rule.Domain = v.Tags
+			case touch.IpMatchRule:
+				rule.IP = v.Tags
+			}
+			t.Routing.Rules = append(t.Routing.Rules, rule)
+		}
+		//如果默认直连，规则内的才走代理，则需要加上下述规则
+		if setting.CustomPac.DefaultProxyMode == "direct" {
+			t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+				Network:     "tcp,udp",
+			})
+		}
 	}
 	return nil
 }

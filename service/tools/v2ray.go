@@ -1,7 +1,8 @@
 package tools
 
 import (
-	"V2RayA/models"
+	"V2RayA/models/v2rayTmpl"
+	"V2RayA/models/vmessInfo"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -57,9 +58,9 @@ func IsV2RayRunning() bool {
 	}
 	return err == nil && len(out) > 0
 }
-func UpdateV2RayConfig(vmessInfo *models.VmessInfo) (err error) {
+func UpdateV2RayConfig(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	//读配置，转换为v2ray配置并写入
-	tmpl := models.NewTemplate()
+	tmpl := v2rayTmpl.NewTemplate()
 	err = tmpl.FillWithVmessInfo(*vmessInfo)
 	if err != nil {
 		return
