@@ -2,7 +2,7 @@
 
 V2RayA是V2Ray的一个Web客户端。
 
-尽管v2ray的客户端很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
+尽管V2Ray的客户端很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
 
 虽然V2RayA是一个Web客户端，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
@@ -46,15 +46,20 @@ V2RayA是V2Ray的一个Web客户端。
 
 ## 界面截图
 
-<details>
-    <summary>界面截图(PWA模式下)</summary>
-
 ![](http://mzzeast.shumsg.cn/FtwssiGjyR_IXalEiquQw--5ChYl)
+<p align="center">节点</p>
 
 ![](http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-)
+<p align="center">订阅源</p>
 
-![](http://mzzeast.shumsg.cn/FnWz1AWvPoTEDFOvax0jihMVTdr2)
+<details>
+    <summary>点击展开更多截图</summary>
 
+![](http://mzzeast.shumsg.cn/FgSf755x0pr6TF-Cgy21rF0AiKax)
+<p align="center">设置</p>
+
+![](http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE)
+<p align="center">使用自定义PAC时可以配置路由规则</p>
 </details>
 
 ## 使用
