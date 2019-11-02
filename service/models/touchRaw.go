@@ -67,8 +67,8 @@ func (tr *TouchRaw) ToTouch() (t Touch) {
 	return
 }
 
-func (tr *TouchRaw) ReadFromFile() (err error) {
-	b, err := ioutil.ReadFile(".tr")
+func (tr *TouchRaw) ReadFromFile(path string) (err error) {
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return
 	}

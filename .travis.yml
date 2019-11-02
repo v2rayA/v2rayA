@@ -1,12 +1,15 @@
 language: go
 go: "1.12"
+branches:
+  only: # 指定分支提交时才会运行travis ci
+    - master
 env:
   global:
-  - GO111MODULE=on
+    - GO111MODULE=on
 install:
-- go get github.com/mitchellh/gox
+  - go get github.com/mitchellh/gox
 script:
-- cd service && gox -osarch="linux/amd64 windows/amd64 linux/arm darwin/amd64" -mod=vendor && cp -r V2RayA_* ../
+  - cd service && gox -osarch="linux/amd64 linux/arm darwin/amd64" -mod=vendor && cp -r V2RayA_* ../
 deploy:
   provider: releases
   api_key:
@@ -15,8 +18,7 @@ deploy:
     - "V2RayA_darwin_amd64"
     - "V2RayA_linux_amd64"
     - "V2RayA_linux_arm"
-    - "V2RayA_windows_amd64"
   skip_cleanup: true
-  overwrite: true
+  # overwrite: true
   on:
     tags: true

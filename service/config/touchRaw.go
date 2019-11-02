@@ -11,7 +11,7 @@ var tr *models.TouchRaw
 func GetTouchRaw() models.TouchRaw {
 	if tr == nil {
 		tr = new(models.TouchRaw)
-		_ = tr.ReadFromFile()
+		_ = tr.ReadFromFile(GetServiceConfig().ConfigPath)
 		if tr.Subscriptions == nil {
 			tr.Subscriptions = make([]models.SubscriptionRaw, 0)
 		}
