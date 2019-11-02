@@ -1,4 +1,4 @@
-package models
+package vmessInfo
 
 type VmessInfo struct {
 	Ps       string `json:"ps"`

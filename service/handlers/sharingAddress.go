@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"V2RayA/config"
-	"V2RayA/models"
+	"V2RayA/global"
+	"V2RayA/models/touch"
 	"V2RayA/tools"
 	"encoding/json"
 	"errors"
@@ -10,15 +10,15 @@ import (
 )
 
 func GetSharingAddress(ctx *gin.Context) {
-	var wt models.WhichTouch
+	var wt touch.WhichTouch
 	err := json.Unmarshal([]byte(ctx.Query("touch")), &wt)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	tr := config.GetTouchRaw()
+	tr := global.GetTouchRaw()
 	var add string
-	if wt.TYPE == models.SubscriptionType {
+	if wt.TYPE == touch.SubscriptionType {
 		ind := wt.ID - 1
 		if ind < 0 || ind >= len(tr.Subscriptions) {
 			tools.ResponseError(ctx, errors.New("参数有误"))

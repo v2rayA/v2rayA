@@ -8,9 +8,25 @@ V2RayA是V2Ray的一个Web客户端。
 
 项目地址：https://github.com/mzz2017/V2RayA
 
+## Status
+
+### Build Status
+
+| name   | docker image                                                 | travis-ci                                                    |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| V2RayA | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=TRAVIS-CI%20BUILD&style=for-the-badge)](https://travis-ci.org/mzz2017/V2RayA) |
+
+### Usage Statistics
+
+| name   | docker pulls                                                 | github releases                                              |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| V2RayA | [![Docker Pulls](https://img.shields.io/docker/pulls/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![GitHub All Releases](https://img.shields.io/github/downloads/mzz2017/V2RayA/total?label=releases%20downloads&style=for-the-badge)](https://github.com/mzz2017/V2RayA/releases) |
+
 ## 功能清单
 
 **目前支持订阅、导入等必要功能，暂不支持手动录入节点，项目正在逐步开发中。**
+
+已支持：
 
 - [x] 检查/启动/关闭V2Ray服务
 - [x] 导入vmess、ss、订阅地址
@@ -18,13 +34,15 @@ V2RayA是V2Ray的一个Web客户端。
 - [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
-- [ ] 手动、自动更新订阅
-- [ ] 自定义PAC模式（GFWList、大陆白名单、自定义规则）
-- [ ] 多路复用、TCPFastOpen
-- [ ] 登陆与安全
+- [x] 自定义PAC模式（GFWList、大陆白名单、自定义路由规则）
+
+待开发：
+
+- [ ] 自动更新订阅、PAC文件
 - [ ] 手动添加/修改节点
 - [ ] 测试节点HTTP时延
-- [ ] 前端可判断后端运行状态并支持修改通信baseURL
+- [ ] 登陆与安全
+- [ ] 多路复用、TCPFastOpen
 
 ## 界面截图
 
@@ -39,7 +57,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 </details>
 
-## 使用(under development)
+## 使用
 
 如下使用方法：
 
@@ -88,20 +106,6 @@ V2RayA是V2Ray的一个Web客户端。
 
 不要将本项目用于不合法用途，作者仅将该项目用于学习研究和内网穿透的用途。
 
-# Status
-
-## Build Status
-
-| name                     | docker image | travis-ci |
-|---------------------------------|-----|---------------------|
-| V2RayA                |![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya) |[![Build Status](https://travis-ci.org/mzz2017/V2RayA.svg?branch=master)](https://travis-ci.org/mzz2017/V2RayA) |
-
-## Usage Statistics
-
-| name   | docker pulls                                                 | github releases                                              |
-| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| V2RayA | ![Docker Pulls](https://img.shields.io/docker/pulls/mzz2017/v2raya) | ![GitHub All Releases](https://img.shields.io/github/downloads/mzz2017/V2RayA/total) |
-
 # 感谢
 
 [jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
@@ -110,9 +114,17 @@ V2RayA是V2Ray的一个Web客户端。
 
 [hq450/fancyss](https://github.com/hq450/fancyss)
 
+[xlzd/quickdown](https://github.com/xlzd/quickdown)
+
+[ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
+
 # 相似项目
 
 [v2raywebui/V2RayWebUI](https://github.com/v2raywebui/V2RayWebUI)
+
+[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
+
+[NoOne-hub/v2ray_client](https://github.com/NoOne-hub/v2ray_client)
 
 # 协议
 

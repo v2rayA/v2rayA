@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"V2RayA/models"
+	"V2RayA/models/nodeData"
 	"V2RayA/tools"
 	"encoding/json"
 	"errors"
@@ -20,7 +20,7 @@ RequestData: {
 */
 func Resolving(ctx *gin.Context) {
 	var (
-		n   *models.NodeData
+		n   *nodeData.NodeData
 		err error
 	)
 	u, ok := ctx.GetQuery("url")

@@ -92,6 +92,39 @@ export default {
       }
     };
   },
+  created() {
+    this.$axios({
+      url: apiRoot + "/version"
+    })
+      .then(res => {
+        if (res.data.code === "SUCCESS") {
+          this.$buefy.toast.open({
+            message: `本地V2RayA服务端正在运行，Version: ${res.data.data}`,
+            type: "is-dark",
+            position: "is-top",
+            duration: 3000
+          });
+        }
+      })
+      .catch(err => {
+        if (err.message === "Network Error") {
+          console.log("todo", Object.assign({}, err)); //TODO
+          this.$buefy.snackbar.open({
+            message: "未检测到本地V2RayA服务端，请确认服务端是否监听2017端口",
+            type: "is-warning",
+            position: "is-top",
+            actionText: "查看帮助",
+            duration: 60000,
+            onAction: () => {
+              window.open(
+                "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8under-development",
+                "_blank"
+              );
+            }
+          });
+        }
+      });
+  },
   methods: {
     handleOnStatusMouseEnter() {
       if (this.runningState.running === CONST.IS_RUNNING) {
@@ -182,8 +215,11 @@ export default {
 };
 </script>
 
+<style>
+@import "https://at.alicdn.com/t/font_1467288_0g54ffvhenqu.css";
+</style>
+
 <style lang="scss" scoped>
-@import "https://at.alicdn.com/t/font_1467288_g4sctinqavb.css";
 #app {
   margin: 0;
 }

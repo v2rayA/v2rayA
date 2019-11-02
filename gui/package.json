@@ -12,6 +12,7 @@
     "buefy": "^0.8.5",
     "clipboard": "^2.0.4",
     "core-js": "^3.1.2",
+    "dayjs": "^1.8.16",
     "js-base64": "^2.5.1",
     "normalize.css": "^8.0.1",
     "qrcode": "^1.4.2",

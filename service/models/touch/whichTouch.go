@@ -1,21 +1,9 @@
-package models
+package touch
 
-import "sort"
-
-type TouchType string
-
-const (
-	SubscriptionType       = "subscription"
-	ServerType             = "server"
-	SubscriptionServerType = "subscriptionServer"
+import (
+	"sort"
 )
 
-type WhichTouch struct {
-	TYPE        TouchType `json:"_type"` //Server还是Subscription
-	ID          int       `json:"id"`    //代表某个subscription或某个server的ID是多少, 从1开始. 如果是SubscriptionServer, 代表这个server在该Subscription中的ID
-	Sub         int       `json:"sub"`   //仅当TYPE为SubscriptionServer时有效, 代表Subscription的下标, 从0开始.
-	PingLatency *string   `json:"pingLatency,omitempty"`
-}
 
 /*
 WhichTouches是线性结构的前后端通信形式，其结构设计和前端统一。
@@ -23,6 +11,13 @@ WhichTouches是线性结构的前后端通信形式，其结构设计和前端�
 type WhichTouches struct {
 	Touches        []WhichTouch `json:"touches"`
 	sort.Interface `json:"-"`
+}
+
+type WhichTouch struct {
+	TYPE        TouchType `json:"_type"` //Server还是Subscription
+	ID          int       `json:"id"`    //代表某个subscription或某个server的ID是多少, 从1开始. 如果是SubscriptionServer, 代表这个server在该Subscription中的ID
+	Sub         int       `json:"sub"`   //仅当TYPE为SubscriptionServer时有效, 代表Subscription的下标, 从0开始.
+	PingLatency *string   `json:"pingLatency,omitempty"`
 }
 
 func (t WhichTouches) Len() int {

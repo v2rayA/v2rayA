@@ -1,7 +1,7 @@
 package router
 
 import (
-	"V2RayA/config"
+	"V2RayA/global"
 	"V2RayA/handlers"
 	"fmt"
 	"github.com/gin-contrib/cors"
@@ -10,7 +10,7 @@ import (
 )
 
 func Run() {
-	app := config.GetServiceConfig()
+	app := global.GetServiceConfig()
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
@@ -29,6 +29,10 @@ func Run() {
 		g.DELETE("v2ray", handlers.DeleteV2ray)
 		g.GET("pingLatency", handlers.GetPingLatency)
 		g.GET("sharingAddress", handlers.GetSharingAddress)
+		g.GET("remoteGFWListVersion", handlers.GetRemoteGFWListVersion)
+		g.GET("setting", handlers.GetSetting)
+		g.PUT("setting", handlers.PutSetting)
+		g.PUT("gfwList", handlers.PutGFWList)
 	}
 	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
 }

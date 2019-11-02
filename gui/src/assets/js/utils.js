@@ -20,7 +20,8 @@ function handleResponse(res, that, suc, err) {
       that.$buefy.toast.open({
         message: res.data.message,
         type: "is-warning",
-        position: "is-top"
+        position: "is-top",
+        duration: 5000
       });
     }
   }
