@@ -105,10 +105,7 @@
         >
         </b-clockpicker>
       </b-field>
-      <b-field
-        label="解析订阅链接/更新时优先使用"
-        label-position="on-border"
-      >
+      <b-field label="解析订阅链接/更新时优先使用" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">直连模式</option>
           <option value="pac">PAC模式</option>

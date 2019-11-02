@@ -337,7 +337,6 @@ export default {
       console.log("watch runningState.running:", this.runningState);
       let val = this.runningState;
       this.updateConnectView(val);
-      this.locateTabToConnected(val.connectedServer);
       this.$emit("input", this.runningState);
     }
   },
@@ -487,7 +486,7 @@ export default {
               this.tableData = res.data.data.touch;
               this.checkedRows = [];
               Object.assign(this.runningState, {
-                running: this.tableData.running
+                running: res.data.data.running
                   ? CONST.IS_RUNNING
                   : CONST.NOT_RUNNING,
                 connectedServer: this.tableData.connectedServer,

@@ -28,9 +28,8 @@ V2RayA是V2Ray的一个Web客户端。
 
 已支持：
 
-- [x] 检查/启动/关闭V2Ray服务
+- [x] V2Ray服务控制
 - [x] 导入vmess、ss、订阅地址
-- [x] 连接节点，删除节点，删除订阅
 - [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
@@ -38,28 +37,26 @@ V2RayA是V2Ray的一个Web客户端。
 
 待开发：
 
-- [ ] 自动更新订阅、PAC文件
-- [ ] 手动添加/修改节点
 - [ ] 测试节点HTTP时延
-- [ ] 登陆与安全
+- [ ] 自动更新订阅、PAC文件
 - [ ] 多路复用、TCPFastOpen
+- [ ] 手动添加/修改节点
+- [ ] 登陆与安全
 
 ## 界面截图
 
-![](http://mzzeast.shumsg.cn/FtwssiGjyR_IXalEiquQw--5ChYl)
+<img src="http://mzzeast.shumsg.cn/FtwssiGjyR_IXalEiquQw--5ChYl" />
 <p align="center">节点</p>
-
-![](http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-)
+<img src="http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-" />
 <p align="center">订阅源</p>
-
 <details>
     <summary>点击展开更多截图</summary>
-
-![](http://mzzeast.shumsg.cn/FgSf755x0pr6TF-Cgy21rF0AiKax)
+<img src="http://mzzeast.shumsg.cn/FgSf755x0pr6TF-Cgy21rF0AiKax" />
 <p align="center">设置</p>
-
-![](http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE)
+<img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
 <p align="center">使用自定义PAC时可以配置路由规则</p>
+
+
 </details>
 
 ## 使用
@@ -99,7 +96,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 10801: HTTP协议
 
-10802: 带PAC的HTTP协议【正在开发，目前使用大陆白名单模式，大陆已知域名直连，其他域名走代理】
+10802: 带PAC的HTTP协议
 
 用户可通过docker将上述端口映射到本地的任意端口。
 
