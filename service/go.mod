@@ -16,7 +16,6 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
 	github.com/stevenroose/gonfig v0.1.4
-	github.com/xlzd/quickdown v0.0.0-20180622155613-8070d96ddcc7
 	golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 )
