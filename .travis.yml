@@ -1,8 +1,8 @@
 language: go
 go: "1.12"
-branches:
-  only: # 指定分支提交时才会运行travis ci
-    - master
+
+if: (tag =~ ^v) OR (branch = master)
+
 env:
   global:
     - GO111MODULE=on
