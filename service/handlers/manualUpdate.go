@@ -17,24 +17,28 @@ func PutGFWList(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	//本地版本是否比远端还新
-	t, err := tools.GetFileModTime("/etc/v2ray/h2y.dat")
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
+
+	if _, err := os.Stat("/etc/v2ray/h2y.dat"); err == nil {
+		//本地文件存在，检查本地版本是否比远端还新
+		t, err := tools.GetFileModTime("/etc/v2ray/h2y.dat")
+		if err != nil {
+			tools.ResponseError(ctx, err)
+			return
+		}
+		tRemote, err := tools.GetRemoteGFWListUpdateTime(c)
+		if err != nil {
+			tools.ResponseError(ctx, err)
+			return
+		}
+		if t.After(tRemote) {
+			//那确实新，不更新了
+			tools.ResponseError(ctx, errors.New(
+				"目前最新版本为"+tRemote.Format("2006-01-02")+"，您的本地文件已最新，无需更新",
+			))
+			return
+		}
 	}
-	tRemote, err := tools.GetRemoteGFWListUpdateTime(c)
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
-	}
-	if t.After(tRemote) {
-		//那确实新，不更新了
-		tools.ResponseError(ctx, errors.New(
-			"目前最新版本为"+tRemote.Format("2006-01-02")+"，您的本地文件已最新，无需更新",
-		))
-		return
-	}
+
 	/* 更新/etc/v2ray/h2y.dat */
 	id, _ := gonanoid.Nanoid()
 	quickdown.SetHttpClient(c)
@@ -62,7 +66,7 @@ func PutGFWList(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	t, err = tools.GetFileModTime("/etc/v2ray/h2y.dat")
+	t, err := tools.GetFileModTime("/etc/v2ray/h2y.dat")
 	var localGFWListVersion string
 	if err == nil {
 		localGFWListVersion = t.Format("2006-01-02")

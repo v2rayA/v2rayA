@@ -737,11 +737,6 @@ tr.is-connected {
     transform: rotate(360deg);
   }
 }
-.icon-loading_ico-copy {
-  font-size: 2.5rem;
-  color: rgba(0, 0, 0, 0.45);
-  animation: loading-rotate 2s infinite linear;
-}
 .not-show {
   opacity: 0;
   pointer-events: none;

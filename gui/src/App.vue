@@ -99,7 +99,9 @@ export default {
       .then(res => {
         if (res.data.code === "SUCCESS") {
           this.$buefy.toast.open({
-            message: `本地V2RayA服务端正在运行，Version: ${res.data.data}`,
+            message: `V2RayA服务端正在运行于${
+              res.data.data.isInDocker ? "Docker环境中" : "本地"
+            }，Version: ${res.data.data.version}`,
             type: "is-dark",
             position: "is-top",
             duration: 3000
@@ -117,7 +119,7 @@ export default {
             duration: 60000,
             onAction: () => {
               window.open(
-                "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8under-development",
+                "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
                 "_blank"
               );
             }
@@ -154,9 +156,9 @@ export default {
                     <section class="modal-card-body lazy">
                         <p>V2RayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">2017: V2RayA后端端口</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">10800: SOCKS协议</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">10801: HTTP协议</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">10802: 带PAC的HTTP协议</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20170: SOCKS协议</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20171: HTTP协议</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20172: 带PAC的HTTP协议</p>
                         <p>整个项目依赖于Docker，如果你想修改上述端口号，请修改docker参数并重新启动容器。</p>
                         <p>应用不会将任何用户数据保存在云端，所有用户数据存放在docker容器中，当docker容器被清除时配置也将随之消失。</p>
                         <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>
@@ -293,5 +295,10 @@ a.navbar-item.is-active,
 a {
   $success: #506da4;
   color: $success;
+}
+.icon-loading_ico-copy {
+  font-size: 2.5rem;
+  color: rgba(0, 0, 0, 0.45);
+  animation: loading-rotate 2s infinite linear;
 }
 </style>
