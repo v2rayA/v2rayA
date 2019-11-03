@@ -171,6 +171,10 @@ export default {
         Object.assign(this, res.data.data.setting);
         delete res.data.data["setting"];
         Object.assign(this, res.data.data);
+        this.subscriptionAutoUpdateTime = new Date(
+          this.subscriptionAutoUpdateTime
+        );
+        this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
       });
     });
   },

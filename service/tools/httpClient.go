@@ -24,11 +24,11 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 }
 
 func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
-	return GetHttpClientWithProxy("socks5://localhost:10800")
+	return GetHttpClientWithProxy("socks5://localhost:20170")
 }
 
 func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
-	return GetHttpClientWithProxy("http://localhost:10802")
+	return GetHttpClientWithProxy("http://localhost:20172")
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {

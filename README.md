@@ -51,10 +51,11 @@ V2RayA是V2Ray的一个Web客户端。
 <p align="center">订阅源</p>
 <details>
     <summary>点击展开更多截图</summary>
-<img src="http://mzzeast.shumsg.cn/FgSf755x0pr6TF-Cgy21rF0AiKax" />
+<img src="http://mzzeast.shumsg.cn/Ft6KlgZuuMNsL5oCHxfkBllEFvuf" />
 <p align="center">设置</p>
 <img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
 <p align="center">使用自定义PAC时可以配置路由规则</p>
+
 
 
 </details>
@@ -75,10 +76,10 @@ V2RayA是V2Ray的一个Web客户端。
 
    ```bash
    docker pull mzz2017/v2raya
-   docker run -d -p 2017:2017 -p 10800-10802:10800-10802 --restart=always mzz2017/v2raya
+   docker run -d -p 2017:2017 -p 20170-20172:20170-20172 --restart=always mzz2017/v2raya
    ```
 
-3. 【不推荐】不使用docker
+3. 不使用docker
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -92,13 +93,19 @@ V2RayA是V2Ray的一个Web客户端。
 
 2017: V2RayA后端端口
 
-10800: SOCKS协议
+20170: SOCKS协议
 
-10801: HTTP协议
+20171: HTTP协议
 
-10802: 带PAC的HTTP协议
+20172: 带PAC的HTTP协议
 
 用户可通过docker将上述端口映射到本地的任意端口。
+
+### 在不同运行环境下程序表现将不同
+
+由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种曲折的折中方案。
+
+在宿主环境下以sudo权限运行将不受此限制。
 
 ## 注意
 

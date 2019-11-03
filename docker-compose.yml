@@ -1,8 +1,23 @@
 version: "3"
 services:
   backend:
-    ports:
-      - 2017:2017
-      - 2080-2082:1080-1082
     restart: always
     build: .
+    ports:
+      - 2017:2017
+    volumes:
+      - shared-data:/etc/v2ray
+
+  v2ray:
+    restart: always
+    image: "v2ray/official"
+    pid: service:backend
+    ports:
+      - 20170-20172:20170-20172
+    volumes:
+      - shared-data:/etc/v2ray
+    command: cp -r /usr/bin/v2ray/* /etc/v2ray/
+    entrypoint: v2ray -config=/etc/v2ray/config.json
+
+volumes:
+  shared-data:

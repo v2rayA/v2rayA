@@ -9,7 +9,7 @@ const templateJson = `{
     },
     "inbounds": [
       {
-        "port": 10800,
+        "port": 20170,
         "listen": "0.0.0.0",
         "protocol": "socks",
         "sniffing": {
@@ -26,7 +26,7 @@ const templateJson = `{
         "tag": "socks"
       },
       {
-        "port": 10801,
+        "port": 20171,
         "listen": "0.0.0.0",
         "protocol": "http",
         "sniffing": {
@@ -36,7 +36,7 @@ const templateJson = `{
         "tag": "http"
       },
       {
-        "port": 10802,
+        "port": 20172,
         "listen": "0.0.0.0",
         "protocol": "http",
         "sniffing": {

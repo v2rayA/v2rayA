@@ -246,7 +246,8 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		return errors.New("不支持的协议: " + v.Protocol)
 	}
 	//根据设置修改路由部分json配置
-	setting := global.GetTouchRaw().Setting
+	tr := global.GetTouchRaw()
+	setting := tr.Setting
 	switch setting.PacMode {
 	case touch.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules, tmplJson.Whitelist...)

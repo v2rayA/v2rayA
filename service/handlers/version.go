@@ -1,12 +1,16 @@
 package handlers
 
 import (
+	"V2RayA/global"
 	"V2RayA/tools"
 	"github.com/gin-gonic/gin"
 )
 
 func Version(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, "v0.2")
+	tools.ResponseSuccess(ctx, gin.H{
+		"version":    "v0.2",
+		"isInDocker": global.IsInDocker,
+	})
 }
 
 func GetRemoteGFWListVersion(ctx *gin.Context) {
