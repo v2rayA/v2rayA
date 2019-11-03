@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"V2RayA/global"
+	"V2RayA/models/v2ray"
 	"V2RayA/tools"
 	"github.com/gin-gonic/gin"
 )
@@ -9,7 +10,7 @@ import (
 func Version(ctx *gin.Context) {
 	tools.ResponseSuccess(ctx, gin.H{
 		"version":    "v0.2",
-		"isInDocker": global.IsInDocker,
+		"isInDocker": global.ServiceControlMode == v2ray.Docker,
 	})
 }
 

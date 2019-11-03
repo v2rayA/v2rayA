@@ -12,6 +12,7 @@ func GetTouchRaw() touch.TouchRaw {
 	if tr == nil {
 		tr = new(touch.TouchRaw)
 		tr.Lock()
+		defer tr.Unlock()
 		_ = tr.ReadFromFile(GetServiceConfig().ConfigPath)
 		if tr.Subscriptions == nil {
 			tr.Subscriptions = make([]touch.SubscriptionRaw, 0)
@@ -22,7 +23,6 @@ func GetTouchRaw() touch.TouchRaw {
 		if tr.Setting == nil {
 			tr.Setting = touch.NewSetting()
 		}
-		tr.Unlock()
 	}
 	return *deepcopy.Copy(tr).(*touch.TouchRaw)
 }

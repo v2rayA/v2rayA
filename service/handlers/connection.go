@@ -3,6 +3,7 @@ package handlers
 import (
 	"V2RayA/global"
 	"V2RayA/models/touch"
+	"V2RayA/models/v2ray"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,7 @@ func PostConnection(ctx *gin.Context) {
 		return
 	}
 	//根据找到的Server更新V2Ray服务的配置
-	err = tools.UpdateV2RayConfig(&tsr.VmessInfo)
+	err = tools.UpdateV2RayConfigAndRestart(&tsr.VmessInfo)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
@@ -55,12 +56,7 @@ func DeleteConnection(ctx *gin.Context) {
 	tr.Lock() //写操作加锁
 	defer tr.Unlock()
 	tr.SetDisConnect()
-	err := tr.WriteToFile()
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
-	}
-	err = tools.StopV2rayService()
+	err := tools.StopV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
@@ -70,6 +66,19 @@ func DeleteConnection(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
+	err = tr.WriteToFile()
+	if err != nil {
+		tools.ResponseError(ctx, err)
+		return
+	}
 	global.SetTouchRaw(&tr)
+	//docker模式下清空inbounds来代表断开连接
+	if global.ServiceControlMode == v2ray.Docker {
+		err = tools.PretendToStopV2rayService()
+		if err != nil {
+			tools.ResponseError(ctx, err)
+			return
+		}
+	}
 	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": cs})
 }

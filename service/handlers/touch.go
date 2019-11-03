@@ -3,6 +3,7 @@ package handlers
 import (
 	"V2RayA/global"
 	"V2RayA/models/touch"
+	"V2RayA/models/v2ray"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -45,7 +46,7 @@ func DeleteTouch(ctx *gin.Context) {
 	touches := data.GetTouches()
 	tr.Lock() //写操作需要上锁
 	defer tr.Unlock()
-	disconnect := func() {
+	disconnect := func() (err error) {
 		tr.SetDisConnect()
 		err = tools.StopV2rayService()
 		if err != nil {
@@ -57,6 +58,19 @@ func DeleteTouch(ctx *gin.Context) {
 			tools.ResponseError(ctx, err)
 			return
 		}
+		//docker模式下清空inbounds来代表断开连接
+		if global.ServiceControlMode == v2ray.Docker {
+			err = tools.PretendToStopV2rayService()
+			if err != nil {
+				tools.ResponseError(ctx, err)
+				return
+			}
+			err = tools.RestartV2rayService()
+			if err != nil {
+				return
+			}
+		}
+		return
 	}
 	for _, v := range touches {
 		ind := v.ID - 1
@@ -64,7 +78,10 @@ func DeleteTouch(ctx *gin.Context) {
 		case touch.SubscriptionType: //这里删的是某个订阅
 			//检查现在连接的结点是否在该订阅中，是的话断开连接
 			if tr.ConnectedServer != nil && tr.ConnectedServer.TYPE == touch.SubscriptionServerType && tr.ConnectedServer.Sub == ind {
-				disconnect()
+				err = disconnect()
+				if err != nil {
+					return
+				}
 			}
 			tr.Subscriptions = append(tr.Subscriptions[:ind], tr.Subscriptions[ind+1:]...)
 		case touch.ServerType:

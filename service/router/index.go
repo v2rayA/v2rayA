@@ -16,6 +16,9 @@ func Run() {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
 	engine.Use(cors.New(corsConfig))
+	engine.GET("/", func(ctx *gin.Context) {
+		ctx.String(200, `这里是V2RayA服务端，请配合前端GUI使用，方法：https://github.com/mzz2017/V2RayA/blob/master/README.md`)
+	})
 	g := engine.Group("api")
 	{
 		g.GET("version", handlers.Version)
