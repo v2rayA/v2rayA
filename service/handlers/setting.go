@@ -18,11 +18,11 @@ func GetSetting(ctx *gin.Context) {
 		s = touch.NewSetting()
 	}
 	var localGFWListVersion, customPacFileVersion string
-	t, err := tools.GetFileModTime("/etc/v2ray/h2y.dat")
+	t, err := tools.GetFileModTime(global.V2RAY_LOCATION_ASSET+"/h2y.dat")
 	if err == nil {
 		localGFWListVersion = t.Format("2006-01-02")
 	}
-	t, err = tools.GetFileModTime("/etc/v2ray/custom.dat")
+	t, err = tools.GetFileModTime(global.V2RAY_LOCATION_ASSET+"/custom.dat")
 	if err == nil {
 		customPacFileVersion = t.Format("2006-01-02")
 	}
@@ -50,12 +50,12 @@ func PutSetting(ctx *gin.Context) {
 	//TODO: 检查参数合法性
 	switch data.PacMode {
 	case touch.GfwlistMode:
-		if _, err := os.Stat("/etc/v2ray/h2y.dat"); err != nil {
+		if _, err := os.Stat(global.V2RAY_LOCATION_ASSET+"/h2y.dat"); err != nil {
 			tools.ResponseError(ctx, errors.New("未发现GFWList文件，请更新GFWList后再试"))
 			return
 		}
 	case touch.CustomMode:
-		if _, err := os.Stat("/etc/v2ray/custom.dat"); err != nil {
+		if _, err := os.Stat(global.V2RAY_LOCATION_ASSET+"/custom.dat"); err != nil {
 			tools.ResponseError(ctx, errors.New("未发现custom.dat文件，功能正在开发"))
 			return
 		}

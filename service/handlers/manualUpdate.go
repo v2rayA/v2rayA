@@ -3,6 +3,7 @@ package handlers
 import (
 	"V2RayA/extra/copyfile"
 	"V2RayA/extra/quickdown"
+	"V2RayA/global"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -18,9 +19,9 @@ func PutGFWList(ctx *gin.Context) {
 		return
 	}
 
-	if _, err := os.Stat("/etc/v2ray/h2y.dat"); err == nil {
+	if _, err := os.Stat(global.V2RAY_LOCATION_ASSET+"/h2y.dat"); err == nil {
 		//本地文件存在，检查本地版本是否比远端还新
-		t, err := tools.GetFileModTime("/etc/v2ray/h2y.dat")
+		t, err := tools.GetFileModTime(global.V2RAY_LOCATION_ASSET+"/h2y.dat")
 		if err != nil {
 			tools.ResponseError(ctx, err)
 			return
@@ -39,7 +40,7 @@ func PutGFWList(ctx *gin.Context) {
 		}
 	}
 
-	/* 更新/etc/v2ray/h2y.dat */
+	/* 更新h2y.dat */
 	id, _ := gonanoid.Nanoid()
 	quickdown.SetHttpClient(c)
 	i := 0
@@ -56,17 +57,17 @@ func PutGFWList(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	err = copyfile.CopyFile("/tmp/"+id, "/etc/v2ray/h2y.dat")
+	err = copyfile.CopyFile("/tmp/"+id, global.V2RAY_LOCATION_ASSET+"/h2y.dat")
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	err = os.Chmod("/etc/v2ray/h2y.dat", os.FileMode(0755))
+	err = os.Chmod(global.V2RAY_LOCATION_ASSET+"/h2y.dat", os.FileMode(0755))
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	t, err := tools.GetFileModTime("/etc/v2ray/h2y.dat")
+	t, err := tools.GetFileModTime(global.V2RAY_LOCATION_ASSET+"/h2y.dat")
 	var localGFWListVersion string
 	if err == nil {
 		localGFWListVersion = t.Format("2006-01-02")
