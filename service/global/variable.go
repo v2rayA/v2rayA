@@ -3,6 +3,7 @@ package global
 import (
 	"V2RayA/models/v2ray"
 	"os/exec"
+	"strings"
 )
 
 var ServiceControlMode v2ray.ServiceControlMode
@@ -29,19 +30,36 @@ func getV2rayLocationAsset() (s string) {
 				p = `/lib/systemd/system/v2ray.service`
 			}
 		}
-		sout := string(out)
+		sout := strings.TrimSpace(string(out))
 		p = sout[1 : len(sout)-1]
 		out, err = exec.Command("sh", "-c", "cat "+p+"|grep Environment=V2RAY_LOCATION_ASSET").Output()
 		if err != nil {
 			return
 		}
-		s = string(out)
+		s = strings.TrimSpace(string(out))
 		s = s[len("Environment=V2RAY_LOCATION_ASSET="):]
 	}
+	var err error
 	if s == "" {
+		//默认为v2ray运行目录
+		s, err = getV2rayWorkingDir()
+	}
+	if err != nil {
+		//再不行盲猜一个
 		s = "/etc/v2ray"
 	}
 	return
+}
+
+func getV2rayWorkingDir() (string, error) {
+	out, err := exec.Command("sh", "-c", "type -p v2ray").Output()
+	if err != nil {
+		out, err = exec.Command("sh", "-c", "which v2ray").Output()
+	}
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
 
 func init() {
