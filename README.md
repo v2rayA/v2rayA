@@ -8,19 +8,11 @@ V2RayA是V2Ray的一个Web客户端。
 
 项目地址：https://github.com/mzz2017/V2RayA
 
-## Status
-
-### Build Status
+## Build Status
 
 | name   | docker image                                                 | travis-ci                                                    |
 | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | V2RayA | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=TRAVIS-CI%20BUILD&style=for-the-badge)](https://travis-ci.org/mzz2017/V2RayA) |
-
-### Usage Statistics
-
-| name   | docker pulls                                                 | github releases                                              |
-| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| V2RayA | [![Docker Pulls](https://img.shields.io/docker/pulls/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![GitHub All Releases](https://img.shields.io/github/downloads/mzz2017/V2RayA/total?label=releases%20downloads&style=for-the-badge)](https://github.com/mzz2017/V2RayA/releases) |
 
 ## 功能清单
 
@@ -72,11 +64,14 @@ V2RayA是V2Ray的一个Web客户端。
    docker-compose up -d
    ```
    
-2. 用docker拉取镜像部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
+2. (文档待完善)用docker拉取镜像部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
 
    ```bash
+   # TODO
+   docker pull v2ray/official
+   docker run -d -p 20170-20172:20170-20172 --restart=always v2ray/official
    docker pull mzz2017/v2raya
-   docker run -d -p 2017:2017 -p 20170-20172:20170-20172 --restart=always mzz2017/v2raya
+   docker run -d -p 2017:2017 --restart=always mzz2017/v2raya
    ```
 
 3. 不使用docker

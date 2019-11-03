@@ -47,6 +47,7 @@ func PutSetting(ctx *gin.Context) {
 	}
 
 	//TODO: 检查参数合法性
+	//TODO: 确保SiteDAT文件存在！
 
 	tr := global.GetTouchRaw()
 	tr.Lock()
