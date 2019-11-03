@@ -1,0 +1,7 @@
+FROM golang
+
+RUN go get github.com/codegangsta/gin
+RUN apt-get update
+RUN apt-get install -y psmisc ca-certificates
+WORKDIR /service
+ENTRYPOINT gin -p 2017 -i run

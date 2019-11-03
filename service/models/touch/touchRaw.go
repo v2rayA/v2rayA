@@ -18,7 +18,7 @@ type TouchRaw struct {
 	Subscriptions   []SubscriptionRaw `json:"subscriptions"`
 	mutex           sync.Mutex        `json:"-"`
 	ConnectedServer *WhichTouch       `json:"connectedServer"` //冗余一个信息，方便查找
-	Setting         *Setting           `json:"setting"`
+	Setting         *Setting          `json:"setting"`
 }
 
 type Setting struct {

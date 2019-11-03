@@ -63,18 +63,8 @@ V2RayA是V2Ray的一个Web客户端。
    cd V2RayA
    docker-compose up -d
    ```
-   
-2. (文档待完善)用docker拉取镜像部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
 
-   ```bash
-   # TODO
-   docker pull v2ray/official
-   docker run -d -p 20170-20172:20170-20172 --restart=always v2ray/official
-   docker pull mzz2017/v2raya
-   docker run -d -p 2017:2017 --restart=always mzz2017/v2raya
-   ```
-
-3. 不使用docker
+2. 不使用docker
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -82,7 +72,7 @@ V2RayA是V2Ray的一个Web客户端。
    sudo go run -mod=vendor main.go
    ```
 
-   或直接使用[Releases](https://github.com/mzz2017/V2RayA/releases)。注意，该方法不支持windows，其他系统请使用sudo运行。
+   或直接使用[Releases](https://github.com/mzz2017/V2RayA/releases)。注意，该方法不支持windows。
 
 默认使用的四个端口分别为：
 
@@ -98,7 +88,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 ### 在不同运行环境下程序表现将不同
 
-由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种曲折的折中方案。
+由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种折中方案，不影响正常使用。
 
 在宿主环境下以sudo权限运行将不受此限制。
 
@@ -109,6 +99,16 @@ V2RayA是V2Ray的一个Web客户端。
 提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本Github项目自动部署完成的，如果担心安全性可以自行部署。
 
 不要将本项目用于不合法用途，作者仅将该项目用于学习研究和内网穿透的用途。
+
+# 在docker环境中开发
+
+```bash
+
+docker-compose -f docker-compose.dev.yml up
+
+```
+
+gin会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
 
 # 感谢
 
