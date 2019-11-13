@@ -10,8 +10,8 @@ V2RayA是V2Ray的一个Web客户端。
 
 ## Build Status
 
-| name   | docker image                                                 | travis-ci                                                    |
-| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| name   | docker image                                                                                                                                          | travis-ci                                                                                                                                          |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | V2RayA | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=TRAVIS-CI%20BUILD&style=for-the-badge)](https://travis-ci.org/mzz2017/V2RayA) |
 
 ## 功能清单
@@ -98,9 +98,16 @@ V2RayA是V2Ray的一个Web客户端。
 
 在宿主环境下以sudo权限运行将不受此限制。
 
+### 支持Windows、MacOS吗
+
+目前仅在Linux进行过测试，并计划优先适配Linux。目前尚未验证在Windows及MacOS上存在的问题。
+
+实际上Windows和MacOS上已经存在很多优秀的V2Ray客户端，若无特殊需求，建议选择这些客户端。
+
 ### 已知问题
 
 + 在windows环境下无法监听2017端口。据了解，Caddy的2015端口也是不能监听的，后期将考虑支持自定义端口以解决问题。
+
 
 ## 注意
 

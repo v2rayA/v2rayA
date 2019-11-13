@@ -126,6 +126,7 @@
                       icon-left=" github-circle iconfont icon-sync"
                       outlined
                       type="is-warning"
+                      @click="handleClickUpdateSubscription(props.row)"
                     >
                       更新
                     </b-button>
@@ -694,6 +695,33 @@ export default {
             };
             targets.forEach(x => x.addEventListener("mouseenter", enter));
             targets.forEach(x => x.addEventListener("mouseleave", leave));
+          });
+        });
+      });
+    },
+    handleClickUpdateSubscription(row) {
+      this.$axios({
+        url: apiRoot + "/subscription",
+        method: "put",
+        data: {
+          id: row.id,
+          _type: row._type
+        }
+      }).then(res => {
+        handleResponse(res, this, () => {
+          this.tableData = res.data.data.touch;
+          this.runningState = {
+            running: res.data.data.running
+              ? CONST.IS_RUNNING
+              : CONST.NOT_RUNNING,
+            connectedServer: this.tableData.connectedServer,
+            lastConnectedServer: null
+          };
+          this.$buefy.toast.open({
+            message: "更新完成",
+            type: "is-primary",
+            position: "is-top",
+            duration: 5000
           });
         });
       });

@@ -55,30 +55,36 @@ func DeleteConnection(ctx *gin.Context) {
 	cs := tr.ConnectedServer
 	tr.Lock() //写操作加锁
 	defer tr.Unlock()
-	tr.SetDisConnect()
-	err := tools.StopV2rayService()
+	err := disconnect(&tr)
 	if err != nil {
 		tools.ResponseError(ctx, err)
+		return
+	}
+	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": cs})
+}
+
+/*不会给tr加锁，会写文件和global，请注意加锁问题*/
+func disconnect(tr *touch.TouchRaw) (err error) {
+	tr.SetDisConnect()
+	err = tools.StopV2rayService()
+	if err != nil {
 		return
 	}
 	err = tools.DisableV2rayService()
 	if err != nil {
-		tools.ResponseError(ctx, err)
 		return
 	}
-	err = tr.WriteToFile()
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
-	}
-	global.SetTouchRaw(&tr)
 	//docker模式下清空inbounds来代表断开连接
 	if global.ServiceControlMode == v2ray.Docker {
 		err = tools.PretendToStopV2rayService()
 		if err != nil {
-			tools.ResponseError(ctx, err)
 			return
 		}
 	}
-	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": cs})
+	err = tr.WriteToFile()
+	if err != nil {
+		return
+	}
+	global.SetTouchRaw(tr)
+	return
 }
