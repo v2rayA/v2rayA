@@ -138,5 +138,9 @@ func PretendToStopV2rayService() (err error) {
 	}
 	tmplJson.Inbounds = make([]v2rayTmpl.Inbound, 0)
 	b, _ = json.Marshal(tmplJson)
-	return WriteV2rayConfig(b)
+	err = WriteV2rayConfig(b)
+	if err != nil {
+		return
+	}
+	return RestartV2rayService()
 }
