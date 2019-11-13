@@ -61,10 +61,16 @@ V2RayA是V2Ray的一个Web客户端。
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
    cd V2RayA
-   docker-compose up -d
+   docker-compose up -d --build
    ```
 
-2. 不使用docker
+2. 拉取源码，使用docker命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
+
+   ```bash
+   # TODO
+   ```
+   
+3. 不使用docker
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -107,12 +113,12 @@ V2RayA是V2Ray的一个Web客户端。
 # 在docker环境中开发
 
 ```bash
-
 docker-compose -f docker-compose.dev.yml up
-
 ```
 
 gin会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
+
+如果出现问题，可以尝试添加`--build`参数，或将docker离开swarm模式：`docker swarm leave --force`。
 
 # 感谢
 
