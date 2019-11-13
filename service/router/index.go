@@ -36,6 +36,7 @@ func Run() {
 		g.GET("setting", handlers.GetSetting)
 		g.PUT("setting", handlers.PutSetting)
 		g.PUT("gfwList", handlers.PutGFWList)
+		g.PUT("subscription", handlers.PutSubscription)
 	}
 	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
 }

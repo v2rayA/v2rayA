@@ -39,9 +39,14 @@ func Import(ctx *gin.Context) {
 		if !strings.HasPrefix(data.URL, "http://") && !strings.HasPrefix(data.URL, "https://") {
 			data.URL = "http://" + data.URL
 		}
-		infos, err := tools.ResolveSubscription(data.URL)
+		c, err := tools.GetHttpClientAutomatically()
 		if err != nil {
-			tools.ResponseError(ctx, errors.New("无效的订阅地址"))
+			tools.ResponseError(ctx, errors.New("尝试使用代理失败，建议修改设置为直连模式再试"))
+			return
+		}
+		infos, err := tools.ResolveSubscriptionWithClient(data.URL, c)
+		if err != nil {
+			tools.ResponseError(ctx, errors.New("解析订阅地址失败"))
 			return
 		}
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers

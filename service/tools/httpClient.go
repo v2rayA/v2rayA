@@ -57,7 +57,11 @@ func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {
-	switch global.GetTouchRaw().Setting.ProxyModeWhenSubscribe {
+	tr := global.GetTouchRaw()
+	if tr.ConnectedServer == nil {
+		return http.DefaultClient, nil
+	}
+	switch tr.Setting.ProxyModeWhenSubscribe {
 	case touch.ProxyModePac:
 		c, err = GetHttpClientWithV2RayAPac()
 	case touch.ProxyModeProxy:
