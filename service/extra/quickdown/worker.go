@@ -50,7 +50,10 @@ func (self *worker) run() {
 
 		tmpfile, err = os.OpenFile(self.filename, os.O_APPEND|os.O_WRONLY, 0600)
 	} else {
-		tmpfile, _ = os.Create(self.filename)
+		tmpfile, err = os.Create(self.filename)
+	}
+	if err != nil {
+		panic(err)
 	}
 	defer tmpfile.Close()
 

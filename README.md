@@ -56,7 +56,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 如下使用方法：
 
-1. 拉取源码，在本地用docker-compose部署service，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
+1. 拉取源码，使用docker-compose部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
    
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -64,13 +64,13 @@ V2RayA是V2Ray的一个Web客户端。
    docker-compose up -d --build
    ```
 
-2. 拉取源码，使用docker命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
+2. 使用docker命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
 
-   ```bash
-   # TODO
-   ```
+   我们同步发行[Docker镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用docker-compose，可以参考docker-compose并使用docker命令自行搭建。
    
 3. 不使用docker
+
+   如不使用docker，请确保已正确安装V2Ray及[RedisJSON](https://github.com/RedisLabsModules/redisjson)
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -78,7 +78,9 @@ V2RayA是V2Ray的一个Web客户端。
    sudo go run -mod=vendor main.go
    ```
 
-   或直接使用[Releases](https://github.com/mzz2017/V2RayA/releases)。注意，该方法不支持windows。
+   或不拉取源码，使用[Releases](https://github.com/mzz2017/V2RayA/releases)代替。
+   
+   注意，该方法不支持windows。
 
 默认使用的四个端口分别为：
 
@@ -90,11 +92,10 @@ V2RayA是V2Ray的一个Web客户端。
 
 20172: 带PAC的HTTP协议
 
-用户可通过docker将上述端口映射到本地的任意端口。
 
 ### 在不同运行环境下程序表现将不同
 
-由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种折中方案，但不影响正常使用。
+由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种折中方案，除了在更换配置时略有卡顿外不影响正常使用。
 
 在宿主环境下以sudo权限运行将不受此限制。
 
