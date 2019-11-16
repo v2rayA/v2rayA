@@ -189,6 +189,12 @@ export default {
       }).then(res => {
         handleResponse(res, this, () => {
           this.localGFWListVersion = res.data.data.localGFWListVersion;
+          this.$buefy.toast.open({
+            message: "更新成功",
+            type: "is-warning",
+            position: "is-top",
+            duration: 5000
+          });
         });
       });
     },

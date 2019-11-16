@@ -99,7 +99,7 @@ export default {
         if (res.data.code === "SUCCESS") {
           this.$buefy.toast.open({
             message: `V2RayA服务端正在运行于${
-              res.data.data.isInDocker ? "Docker环境中" : "本地"
+              res.data.data.dockerMode ? "Docker环境中，使用兼容模式" : "本地"
             }，Version: ${res.data.data.version}`,
             type: "is-dark",
             position: "is-top",

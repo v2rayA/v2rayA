@@ -536,9 +536,7 @@ export default {
           if (res.data.code === "SUCCESS") {
             row.connected = false;
             Object.assign(this.runningState, {
-              running: localStorage["docker"]
-                ? CONST.IS_RUNNING
-                : CONST.NOT_RUNNING,
+              running: CONST.NOT_RUNNING,
               connectedServer: null,
               lastConnectedServer: res.data.data.lastConnectedServer
             });

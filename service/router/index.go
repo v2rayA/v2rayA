@@ -2,7 +2,7 @@ package router
 
 import (
 	"V2RayA/global"
-	"V2RayA/handlers"
+	"V2RayA/controller"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -21,22 +21,22 @@ func Run() {
 	})
 	g := engine.Group("api")
 	{
-		g.GET("version", handlers.Version)
-		g.GET("resolving", handlers.Resolving)
-		g.POST("import", handlers.Import)
-		g.GET("touch", handlers.GetTouch)
-		g.DELETE("touch", handlers.DeleteTouch)
-		g.POST("connection", handlers.PostConnection)
-		g.DELETE("connection", handlers.DeleteConnection)
-		g.POST("v2ray", handlers.PostV2ray)
-		g.DELETE("v2ray", handlers.DeleteV2ray)
-		g.GET("pingLatency", handlers.GetPingLatency)
-		g.GET("sharingAddress", handlers.GetSharingAddress)
-		g.GET("remoteGFWListVersion", handlers.GetRemoteGFWListVersion)
-		g.GET("setting", handlers.GetSetting)
-		g.PUT("setting", handlers.PutSetting)
-		g.PUT("gfwList", handlers.PutGFWList)
-		g.PUT("subscription", handlers.PutSubscription)
+		g.GET("version", controller.Version)
+		g.GET("resolving", controller.Resolving)
+		g.POST("import", controller.Import)
+		g.GET("touch", controller.GetTouch)
+		g.DELETE("touch", controller.DeleteTouch)
+		g.POST("connection", controller.PostConnection)
+		g.DELETE("connection", controller.DeleteConnection)
+		g.POST("v2ray", controller.PostV2ray)
+		g.DELETE("v2ray", controller.DeleteV2ray)
+		g.GET("pingLatency", controller.GetPingLatency)
+		g.GET("sharingAddress", controller.GetSharingAddress)
+		g.GET("remoteGFWListVersion", controller.GetRemoteGFWListVersion)
+		g.GET("setting", controller.GetSetting)
+		g.PUT("setting", controller.PutSetting)
+		g.PUT("gfwList", controller.PutGFWList)
+		g.PUT("subscription", controller.PutSubscription)
 	}
 	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
 }

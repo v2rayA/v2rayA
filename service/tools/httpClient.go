@@ -1,10 +1,9 @@
 package tools
 
 import (
+	"V2RayA/extra/proxyWithHttp"
 	"V2RayA/global"
-	"V2RayA/models/touch"
-	"V2RayA/models/v2ray"
-	"V2RayA/proxyWithHttp"
+	"V2RayA/persistence/configure"
 	"net/http"
 	"net/url"
 	"os/exec"
@@ -29,7 +28,7 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
 	host := "localhost"
 	//是否在docker环境
-	if global.ServiceControlMode == v2ray.Docker {
+	if global.ServiceControlMode == global.DockerMode {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
 		out, err := exec.Command("sh", "-c", "ip route|grep default|awk '{print $3}'").Output()
 		if err == nil {
@@ -44,7 +43,7 @@ func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
 func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 	host := "localhost"
 	//是否在docker环境
-	if global.ServiceControlMode == v2ray.Docker {
+	if global.ServiceControlMode == global.DockerMode {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
 		out, err := exec.Command("sh", "-c", "ip route|grep default|awk '{print $3}'").Output()
 		if err == nil {
@@ -57,14 +56,14 @@ func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {
-	tr := global.GetTouchRaw()
-	if tr.ConnectedServer == nil {
+	if configure.GetConnectedServer() == nil {
 		return http.DefaultClient, nil
 	}
-	switch tr.Setting.ProxyModeWhenSubscribe {
-	case touch.ProxyModePac:
+	setting := configure.GetSetting()
+	switch setting.ProxyModeWhenSubscribe {
+	case configure.ProxyModePac:
 		c, err = GetHttpClientWithV2RayAPac()
-	case touch.ProxyModeProxy:
+	case configure.ProxyModeProxy:
 		c, err = GetHttpClientWithV2RayAProxy()
 	default:
 		c = http.DefaultClient
