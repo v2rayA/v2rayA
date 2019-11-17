@@ -66,11 +66,15 @@ V2RayA是V2Ray的一个Web客户端。
 
 2. 使用docker命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
 
-   我们同步发行[Docker镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用docker-compose，可以参考docker-compose并使用docker命令自行搭建。
+   我们同步发行[Docker镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用docker命令自行搭建。
    
 3. 不使用docker
 
    如不使用docker，请确保已正确安装V2Ray及[RedisJSON](https://github.com/RedisLabsModules/redisjson)
+
+   准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)启动V2RayA服务端
+   
+   或拉取源码，通过golang启动
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -78,9 +82,7 @@ V2RayA是V2Ray的一个Web客户端。
    sudo go run -mod=vendor main.go
    ```
 
-   或不拉取源码，使用[Releases](https://github.com/mzz2017/V2RayA/releases)代替。
-   
-   注意，该方法不支持windows。
+   注意，尽管golang具有交叉编译的特性，但由于项目使用了较多linux commands，导致该方法不支持windows。若想在windows体验，可借助Docker或WSL。
 
 默认使用的四个端口分别为：
 
