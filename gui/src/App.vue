@@ -112,7 +112,7 @@ export default {
         if (err.message === "Network Error") {
           console.log("todo", Object.assign({}, err)); //TODO
           this.$buefy.snackbar.open({
-            message: "未检测到本地V2RayA服务端，请确认服务端是否监听2017端口",
+            message: "未检测到本地V2RayA服务端，请确保服务端正确监听2017端口",
             type: "is-warning",
             position: "is-top",
             actionText: "查看帮助",
@@ -161,7 +161,7 @@ export default {
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20170: SOCKS协议</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20171: HTTP协议</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20172: 带PAC的HTTP协议</p>
-                        <p>应用不会将任何用户数据保存在云端，所有用户数据存放在docker容器中，当docker容器被清除时配置也将随之消失。</p>
+                        <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地的redis数据库中，若redis运行于docker，则当docker容器被清除时配置也将随之消失。</p>
                         <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>
                     </section>
                     <footer class="modal-card-foot">

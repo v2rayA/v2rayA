@@ -2,17 +2,15 @@ package configure
 
 import (
 	"V2RayA/model/vmessInfo"
-	"time"
 )
 
 type Setting struct {
 	PacMode                    PacMode                `json:"pacMode"`
 	CustomPac                  CustomPac              `json:"customPac"`
 	ProxyModeWhenSubscribe     ProxyModeWhenSubscribe `json:"proxyModeWhenSubscribe"`
-	PacAutoUpdateMode          AutoUpdateMode         `json:"pacAutoUpdateMode"`
-	PacAutoUpdateTime          int                    `json:"pacAutoUpdateTime"` //时间戳
+	GFWListAutoUpdateMode      AutoUpdateMode         `json:"pacAutoUpdateMode"`
+	CustomAutoUpdateMode       AutoUpdateMode         `json:"pacAutoUpdateMode"`
 	SubscriptionAutoUpdateMode AutoUpdateMode         `json:"subscriptionAutoUpdateMode"`
-	SubscriptionAutoUpdateTime int                    `json:"subscriptionAutoUpdateTime"` //时间戳
 }
 
 func NewSetting() (setting *Setting) {
@@ -24,10 +22,9 @@ func NewSetting() (setting *Setting) {
 			RoutingRules:     []RoutingRule{},
 		},
 		ProxyModeWhenSubscribe:     ProxyModeDirect,
-		PacAutoUpdateMode:          DoNotUpdatePac,
-		PacAutoUpdateTime:          int(21 * time.Hour / time.Millisecond), //凌晨5点
-		SubscriptionAutoUpdateMode: DoNotUpdatePac,
-		SubscriptionAutoUpdateTime: int(21 * time.Hour / time.Millisecond), //凌晨5点
+		GFWListAutoUpdateMode:      NotAutoUpdate,
+		CustomAutoUpdateMode:       NotAutoUpdate,
+		SubscriptionAutoUpdateMode: NotAutoUpdate,
 	}
 
 }
