@@ -61,7 +61,7 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 	return
 }
 
-func UpdateLocalGFWList() (localGFWListVersion string, err error) {
+func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	c, err := tools.GetHttpClientAutomatically()
 	if err != nil {
 		return
@@ -91,7 +91,7 @@ func UpdateLocalGFWList() (localGFWListVersion string, err error) {
 	}
 	t, err := tools.GetFileModTime(global.V2RAY_LOCATION_ASSET + "/h2y.dat")
 	if err == nil {
-		localGFWListVersion = t.Format("2006-01-02")
+		localGFWListVersionAfterUpdate = t.Format("2006-01-02")
 	}
 	return
 }

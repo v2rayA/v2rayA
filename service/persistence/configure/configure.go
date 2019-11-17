@@ -45,7 +45,7 @@ func decode(b []byte) (result []byte) {
 }
 func setSomething(path string, val interface{}) (err error) {
 	b, _ := json.Marshal(val)
-	_, err = persistence.DoAndSave("json.set", "configure", path, b)
+	_, err = persistence.DoAndSave("json.set", "V2RayA.configure", path, b)
 	return
 }
 func SetConfigure(cfg *Configure) error {
@@ -60,7 +60,7 @@ func SetSetting(setting *Setting) (err error) {
 
 func appendSomething(path string, val interface{}) (err error) {
 	b, _ := json.Marshal(val)
-	_, err = persistence.DoAndSave("json.arrappend", "configure", path, b)
+	_, err = persistence.DoAndSave("json.arrappend", "V2RayA.configure", path, b)
 	return
 }
 func AppendServer(server *TouchServerRaw) (err error) {
@@ -71,7 +71,7 @@ func AppendSubscription(subscription *SubscriptionRaw) (err error) {
 }
 
 func getSomething(path string, v interface{}) {
-	re, err := persistence.Do("json.get", "configure", path)
+	re, err := persistence.Do("json.get", "V2RayA.configure", path)
 	if err != nil || re == nil {
 		v = nil
 		return
@@ -110,7 +110,7 @@ func GetConnectedServer() *Which {
 }
 
 func getLenSomething(path string) int {
-	re, err := persistence.Do("json.arrlen", "configure", path)
+	re, err := persistence.Do("json.arrlen", "V2RayA.configure", path)
 	if err != nil {
 		return 0
 	}
@@ -127,7 +127,7 @@ func GetLenServers() int {
 }
 
 func removeSomethingFromArray(path string, index int) error {
-	_, err := persistence.DoAndSave("json.arrpop", "configure", path, index)
+	_, err := persistence.DoAndSave("json.arrpop", "V2RayA.configure", path, index)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
-          <option value="custom">自定义PAC</option>
+          <option value="custom">自定义PAC（待开发）</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
           <b-input
@@ -66,44 +66,28 @@
           <b-button
             v-if="pacMode === 'custom'"
             type="is-primary"
-            style="margin-left:0px;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
+            style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
             outlined
             @click="handleClickConfigurePac"
             >配置</b-button
           >
         </template>
       </b-field>
-      <b-field label="(待开发)每日自动更新PAC文件" label-position="on-border">
+      <b-field
+        v-show="pacMode === 'gfwlist'"
+        label="自动更新GFWList"
+        label-position="on-border"
+      >
         <b-select v-model="pacAutoUpdateMode" expanded>
           <option value="none">关闭自动更新</option>
-          <option value="auto_update">每日自动更新PAC文件</option>
+          <option value="auto_update">服务端启动时更新</option>
         </b-select>
-        <b-clockpicker
-          v-if="pacAutoUpdateMode !== 'none'"
-          v-model="pacAutoUpdateTime"
-          placeholder="选择每日更新时间点"
-          icon=" iconfont icon-clock2"
-          hour-format="24"
-          position="is-bottom-left"
-          class="modal-setting-clockpicker"
-        >
-        </b-clockpicker>
       </b-field>
-      <b-field label="(待开发)每日自动更新订阅" label-position="on-border">
+      <b-field label="自动更新订阅" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
           <option value="none">关闭自动更新</option>
-          <option value="auto_update">每日自动更新订阅</option>
+          <option value="auto_update">服务端启动时更新</option>
         </b-select>
-        <b-clockpicker
-          v-if="subscriptionAutoUpdateMode !== 'none'"
-          v-model="subscriptionAutoUpdateTime"
-          placeholder="选择每日更新时间点"
-          icon=" iconfont icon-clock2"
-          hour-format="24"
-          position="is-bottom-left"
-          class="modal-setting-clockpicker"
-        >
-        </b-clockpicker>
       </b-field>
       <b-field label="解析订阅链接/更新时优先使用" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>

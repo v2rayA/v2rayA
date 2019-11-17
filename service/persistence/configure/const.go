@@ -11,8 +11,8 @@ type (
 )
 
 const (
-	DoNotUpdatePac = AutoUpdateMode("none")
-	UpdatePac      = AutoUpdateMode("auto_update")
+	NotAutoUpdate = AutoUpdateMode("none")
+	AutoUpdate    = AutoUpdateMode("auto_update")
 
 	ProxyModeDirect = ProxyModeWhenSubscribe("direct")
 	ProxyModePac    = ProxyModeWhenSubscribe("pac")

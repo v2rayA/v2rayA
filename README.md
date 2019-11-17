@@ -2,11 +2,13 @@
 
 V2RayA是V2Ray的一个Web客户端。
 
-尽管V2Ray的客户端很多，但在Linux上好用的却寥寥无几。[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
+尽管V2Ray的客户端很多，但在Linux上好用的却寥寥无几。jiangxufeng/v2rayL是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
 
 虽然V2RayA是一个Web客户端，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
 项目地址：https://github.com/mzz2017/V2RayA
+
+前端demo: https://v2raya.mzz.pub
 
 ## Build Status
 
@@ -16,7 +18,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 ## 功能清单
 
-**目前支持订阅、导入等必要功能，暂不支持手动录入节点，项目正在逐步开发中。**
+**目前已完成基本功能，项目正在逐步开发中。**
 
 已支持：
 
@@ -26,13 +28,15 @@ V2RayA是V2Ray的一个Web客户端。
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
 - [x] 自定义PAC模式（GFWList、大陆白名单、自定义路由规则）
+- [x] 服务端启动自动检查PAC、订阅更新
 
 待开发：
 
-- [ ] 测试节点HTTP时延
-- [ ] 自动更新订阅、PAC文件
-- [ ] 多路复用、TCPFastOpen
 - [ ] 手动添加/修改节点
+- [ ] 测试节点HTTP时延
+- [ ] 多路复用、TCPFastOpen支持
+- [ ] VPN模式全局代理支持
+- [ ] QUIC协议支持
 - [ ] 登陆与安全
 
 ## 界面截图
@@ -82,7 +86,7 @@ V2RayA是V2Ray的一个Web客户端。
    sudo go run -mod=vendor main.go
    ```
 
-   注意，尽管golang具有交叉编译的特性，但由于项目使用了较多linux commands，导致该方法不支持windows。若想在windows体验，可借助Docker或WSL。
+   注意，尽管golang具有交叉编译的特性，但由于项目使用了linux commands，导致该方法不支持windows。若想在windows体验，可借助Docker或WSL。
 
 默认使用的四个端口分别为：
 
@@ -114,7 +118,7 @@ V2RayA是V2Ray的一个Web客户端。
 
 ## 注意
 
-应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地的docker容器中，当docker容器被清除时配置也将随之消失。
+应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地的redis数据库中，若redis运行于docker，则当docker容器被清除时配置也将随之消失。
 
 提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本Github项目自动部署完成的，如果担心安全性可以自行部署。
 
