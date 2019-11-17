@@ -8,9 +8,14 @@ type (
 	PacMatchType            string
 	RoutingDefaultProxyMode string
 	TouchType               string
+	DefaultYesNo            string
 )
 
 const (
+	Default = DefaultYesNo("default")
+	Yes = DefaultYesNo("yes")
+	No = DefaultYesNo("no")
+
 	NotAutoUpdate = AutoUpdateMode("none")
 	AutoUpdate    = AutoUpdateMode("auto_update")
 

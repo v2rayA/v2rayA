@@ -51,7 +51,7 @@
         ></b-field
       >
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
-      <b-field label="PAC模式使用" label-position="on-border">
+      <b-field label="PAC模式" label-position="on-border">
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
@@ -79,14 +79,14 @@
         label-position="on-border"
       >
         <b-select v-model="pacAutoUpdateMode" expanded>
-          <option value="none">关闭自动更新</option>
-          <option value="auto_update">服务端启动时更新</option>
+          <option value="none">不自动更新GFWList</option>
+          <option value="auto_update">服务端启动时更新GFWList</option>
         </b-select>
       </b-field>
       <b-field label="自动更新订阅" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
-          <option value="none">关闭自动更新</option>
-          <option value="auto_update">服务端启动时更新</option>
+          <option value="none">不自动更新订阅</option>
+          <option value="auto_update">服务端启动时更新订阅</option>
         </b-select>
       </b-field>
       <b-field label="解析订阅链接/更新时优先使用" label-position="on-border">
@@ -95,6 +95,59 @@
           <option value="pac">PAC模式</option>
           <option value="proxy">代理模式</option>
         </b-select>
+      </b-field>
+      <b-field label-position="on-border">
+        <template slot="label">
+          TCPFastOpen
+          <b-tooltip
+            type="is-dark"
+            label="简化TCP握手流程以加速建立连接，可能会增加封包的特征。"
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            ></b-icon>
+          </b-tooltip>
+        </template>
+        <b-select v-model="tcpFastOpen" expanded>
+          <option value="default">保持系统默认</option>
+          <option value="yes">启用</option>
+          <option value="no">禁用</option>
+        </b-select>
+      </b-field>
+      <b-field label-position="on-border" class="mux">
+        <template slot="label">
+          多路复用
+          <b-tooltip
+            type="is-dark"
+            label="复用TCP连接以减少握手延迟而非提高吞吐量，可能有反效果。"
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            ></b-icon>
+          </b-tooltip>
+        </template>
+        <b-select v-model="muxOn" expanded style="flex: 1">
+          <option value="no">关闭多路复用</option>
+          <option value="yes">启用多路复用</option>
+        </b-select>
+        <cus-b-input
+          v-if="muxOn === 'yes'"
+          ref="muxinput"
+          v-model="mux"
+          placeholder="最大并发连接数"
+          custom-class="no-shadow"
+          type="number"
+          min="1"
+          max="1024"
+          validation-icon=" iconfont icon-alert"
+          style="flex: 1"
+        ></cus-b-input>
       </b-field>
       <!--      <b-field label="SERVER列表" label-position="on-border">-->
       <!--        <b-select v-model="serverListMode" expanded>-->
@@ -118,11 +171,16 @@
 import { handleResponse } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalConfigurePac from "@/components/ModalConfigurePac";
+import CusBInput from "./input/Input.vue";
 
 export default {
   name: "ModalSetting",
+  components: { CusBInput },
   data: () => ({
     proxyModeWhenSubscribe: "direct",
+    tcpFastOpen: "default",
+    muxOn: "no",
+    mux: "8",
     pacAutoUpdateMode: "none",
     pacAutoUpdateTime: null,
     subscriptionAutoUpdateMode: "none",
@@ -183,6 +241,9 @@ export default {
       });
     },
     handleClickSubmit() {
+      if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
+        return;
+      }
       if (this.pacMode === "custom" && this.customPac.url.length <= 0) {
         this.$buefy.toast.open({
           message: "自定义PAC模式下，SiteDAT file URL不能为空",
@@ -217,7 +278,10 @@ export default {
             ? this.subscriptionAutoUpdateTime.getTime()
             : 0,
           customPac: this.customPac,
-          pacMode: this.pacMode
+          pacMode: this.pacMode,
+          tcpFastOpen: this.tcpFastOpen,
+          muxOn: this.muxOn,
+          mux: parseInt(this.mux)
         }
       }).then(res => {
         handleResponse(res, this, () => {
@@ -281,5 +345,15 @@ export default {
 }
 .no-shadow {
   box-shadow: none !important;
+}
+.mux {
+  p.help {
+    position: absolute;
+    bottom: -18px;
+    right: 0;
+  }
+  .icon-alert {
+    font-size: 18px;
+  }
 }
 </style>
