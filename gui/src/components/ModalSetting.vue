@@ -79,8 +79,8 @@
         label-position="on-border"
       >
         <b-select v-model="pacAutoUpdateMode" expanded>
-          <option value="none">不自动更新GFWList</option>
-          <option value="auto_update">服务端启动时更新GFWList</option>
+          <option value="none">不自动更新PAC文件</option>
+          <option value="auto_update">服务端启动时更新PAC文件</option>
         </b-select>
       </b-field>
       <b-field label="自动更新订阅" label-position="on-border">
@@ -102,6 +102,7 @@
           <b-tooltip
             type="is-dark"
             label="简化TCP握手流程以加速建立连接，可能会增加封包的特征。"
+            multilined
             position="is-right"
           >
             <b-icon
@@ -122,7 +123,8 @@
           多路复用
           <b-tooltip
             type="is-dark"
-            label="复用TCP连接以减少握手延迟而非提高吞吐量，可能有反效果。"
+            label="复用TCP连接以减少握手延迟，但会影响吞吐量大的使用场景，如观看视频、下载、测速。"
+            multilined
             position="is-right"
           >
             <b-icon
@@ -133,8 +135,8 @@
           </b-tooltip>
         </template>
         <b-select v-model="muxOn" expanded style="flex: 1">
-          <option value="no">关闭多路复用</option>
-          <option value="yes">启用多路复用</option>
+          <option value="no">关闭</option>
+          <option value="yes">启用</option>
         </b-select>
         <cus-b-input
           v-if="muxOn === 'yes'"
@@ -182,9 +184,7 @@ export default {
     muxOn: "no",
     mux: "8",
     pacAutoUpdateMode: "none",
-    pacAutoUpdateTime: null,
     subscriptionAutoUpdateMode: "none",
-    subscriptionAutoUpdateTime: null,
     customSiteDAT: {},
     pacMode: "whitelist",
     customPac: {

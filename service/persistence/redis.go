@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const saveInterval = 10 * time.Second
+
 var once sync.Once
 var pool *redis.Pool
 var nextSave = time.Now().Add(30 * 24 * time.Hour)
@@ -19,7 +21,7 @@ func saveLater() {
 			c := RedisPool().Get()
 			_, _ = c.Do("BGSAVE")
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(saveInterval / 2)
 	}
 }
 
@@ -55,6 +57,6 @@ func Do(command string, args ...interface{}) (reply interface{}, err error) {
 }
 
 func DoAndSave(command string, args ...interface{}) (reply interface{}, err error) {
-	nextSave = time.Now().Add(5 * time.Second) //延迟5秒save，这样如果连续调用本函数，将会推迟save时间
+	nextSave = time.Now().Add(saveInterval) //延迟一段时间save，这样如果连续调用本函数，将会推迟save时间
 	return Do(command, args...)
 }
