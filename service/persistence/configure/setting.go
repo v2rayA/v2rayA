@@ -8,8 +8,7 @@ type Setting struct {
 	PacMode                    PacMode                `json:"pacMode"`
 	CustomPac                  CustomPac              `json:"customPac"`
 	ProxyModeWhenSubscribe     ProxyModeWhenSubscribe `json:"proxyModeWhenSubscribe"`
-	GFWListAutoUpdateMode      AutoUpdateMode         `json:"pacAutoUpdateMode"`
-	CustomAutoUpdateMode       AutoUpdateMode         `json:"pacAutoUpdateMode"`
+	PacAutoUpdateMode          AutoUpdateMode         `json:"pacAutoUpdateMode"`
 	SubscriptionAutoUpdateMode AutoUpdateMode         `json:"subscriptionAutoUpdateMode"`
 	TcpFastOpen                DefaultYesNo           `json:"tcpFastOpen"`
 	MuxOn                      DefaultYesNo           `json:"muxOn"`
@@ -25,8 +24,7 @@ func NewSetting() (setting *Setting) {
 			RoutingRules:     []RoutingRule{},
 		},
 		ProxyModeWhenSubscribe:     ProxyModeDirect,
-		GFWListAutoUpdateMode:      NotAutoUpdate,
-		CustomAutoUpdateMode:       NotAutoUpdate,
+		PacAutoUpdateMode:          NotAutoUpdate,
 		SubscriptionAutoUpdateMode: NotAutoUpdate,
 		TcpFastOpen:                Default,
 		MuxOn:                      No,

@@ -60,33 +60,36 @@ func hello() {
 }
 func checkUpdate() {
 	setting := service.GetSetting()
-	if setting.GFWListAutoUpdateMode == configure.AutoUpdate {
-		go func() {
-			update, tRemote, err := service.IsUpdate()
-			if err != nil {
-				logs.Print("自动更新GFWList失败" + err.Error())
-				return
-			}
-			if update {
-				logs.Print("自动更新GFWList：目前最新版本为" + tRemote.Format("2006-01-02") + "，您的本地文件已最新，无需更新")
-				return
-			}
-			/* 更新h2y.dat */
-			localGFWListVersion, err := service.UpdateLocalGFWList()
-			if err != nil {
-				logs.Print("自动更新GFWList失败" + err.Error())
-				return
-			}
-			logs.Print("自动更新GFWList完成，本地文件时间：" + localGFWListVersion)
-		}()
-	}
-	if setting.CustomAutoUpdateMode == configure.AutoUpdate {
-		//TODO
+	log.Println("PacAutoUpdateMode", setting.PacAutoUpdateMode)
+	if setting.PacAutoUpdateMode == configure.AutoUpdate {
+		switch setting.PacMode {
+		case configure.GfwlistMode:
+			go func() {
+				update, tRemote, err := service.IsUpdate()
+				if err != nil {
+					logs.Print("自动更新PAC文件失败" + err.Error())
+					return
+				}
+				if update {
+					logs.Print("自动更新PAC文件：目前最新版本为" + tRemote.Format("2006-01-02") + "，您的本地文件已最新，无需更新")
+					return
+				}
+				/* 更新h2y.dat */
+				localGFWListVersion, err := service.UpdateLocalGFWList()
+				if err != nil {
+					logs.Print("自动更新PAC文件失败" + err.Error())
+					return
+				}
+				logs.Print("自动更新PAC文件完成，本地文件时间：" + localGFWListVersion)
+			}()
+		case configure.CustomMode:
+			//TODO
+		}
 	}
 	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
-		subs := configure.GetSubscriptions()
-		lenSubs := len(subs)
 		go func() {
+			subs := configure.GetSubscriptions()
+			lenSubs := len(subs)
 			control := make(chan struct{}, 2) //并发限制同时更新2个订阅
 			wg := new(sync.WaitGroup)
 			for i := 0; i < lenSubs; i++ {
@@ -95,7 +98,7 @@ func checkUpdate() {
 					control <- struct{}{}
 					err := service.UpdateSubscription(i)
 					if err != nil {
-						logs.Print(fmt.Sprintf("自动更新订阅失败，id: %d，地址: %s，err: %v", i, subs[i].Address, err.Error()))
+						logs.Print(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, subs[i].Address, err.Error()))
 					} else {
 						logs.Print(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
 					}
@@ -111,6 +114,7 @@ func checkUpdate() {
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
+	logs.Print("V2RayA已启动")
 	initConfigure()
 	checkConnection()
 	hello()

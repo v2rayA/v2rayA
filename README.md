@@ -27,7 +27,7 @@ V2RayA是V2Ray的一个Web客户端。
 - [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
-- [x] 自定义PAC模式（GFWList、大陆白名单、自定义路由规则）
+- [x] 自定义PAC模式（GFWList、大陆白名单）
 - [x] 服务端启动自动检查PAC、订阅更新
 - [x] 多路复用、TCPFastOpen支持
 
@@ -36,6 +36,7 @@ V2RayA是V2Ray的一个Web客户端。
 - [ ] 手动添加/修改节点
 - [ ] 测试节点HTTP时延
 - [ ] VPN模式全局代理支持
+- [ ] 自定义路由规则
 - [ ] QUIC协议支持
 - [ ] 登陆与安全
 
