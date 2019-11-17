@@ -59,7 +59,7 @@ func hello() {
 	}
 }
 func checkUpdate() {
-	setting := configure.GetSetting()
+	setting := service.GetSetting()
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdate {
 		go func() {
 			update, tRemote, err := service.IsUpdate()

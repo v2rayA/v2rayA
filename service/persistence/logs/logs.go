@@ -2,6 +2,7 @@ package logs
 
 import (
 	"V2RayA/persistence"
+	"log"
 	"time"
 )
 
@@ -11,4 +12,5 @@ func format(s string) string {
 
 func Print(s string) {
 	persistence.DoAndSave("rpush", "V2RayA.log", format(s))
+	log.Println(s)
 }

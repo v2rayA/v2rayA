@@ -103,6 +103,12 @@ type StreamSettings struct {
 	KcpSettings  *KcpSettings  `json:"kcpSettings"`
 	WsSettings   *WsSettings   `json:"wsSettings"`
 	HTTPSettings *HttpSettings `json:"httpSettings"`
+	Sockopt      *Sockopt      `json:"sockopt"`
+}
+type Sockopt struct {
+	Mark        *int    `json:"mark"`
+	TCPFastOpen *bool   `json:"tcpFastOpen"`
+	Tproxy      *string `json:"tproxy"`
 }
 type Mux struct {
 	Enabled     bool `json:"enabled"`
@@ -190,6 +196,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	t.Outbounds[0].Protocol = v.Protocol
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
+	setting := configure.GetSetting()
 	switch strings.ToLower(v.Protocol) {
 	case "vmess":
 		t.Outbounds[0].Settings.Vnext = []Vnext{
@@ -230,7 +237,17 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			t.Outbounds[0].StreamSettings.Security = "tls"
 			t.Outbounds[0].StreamSettings.TLSSettings = &tmplJson.TLSSettings
 		}
-		t.Outbounds[0].Mux = &tmplJson.Mux
+		//是否在设置里开启了TCPFastOpen
+		if setting.TcpFastOpen != configure.Default {
+			t.Outbounds[0].StreamSettings.Sockopt = new(Sockopt)
+			tmp := setting.TcpFastOpen == configure.Yes
+			t.Outbounds[0].StreamSettings.Sockopt.TCPFastOpen = &tmp
+		}
+		//是否在设置了里开启了mux
+		t.Outbounds[0].Mux = &Mux{
+			Enabled:     setting.MuxOn == configure.Yes,
+			Concurrency: setting.Mux,
+		}
 	case "shadowsocks":
 		t.Outbounds[0].Settings.Servers = []Server{
 			{
@@ -245,7 +262,6 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		return errors.New("不支持的协议: " + v.Protocol)
 	}
 	//根据设置修改路由部分json配置
-	setting := configure.GetSetting()
 	switch setting.PacMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules, tmplJson.Whitelist...)
