@@ -37,7 +37,6 @@ func initRedis() *redis.Pool {
 	if err := p.Get().Err(); err != nil {
 		log.Fatal("redis连接失败: ", err)
 	}
-	log.Println("redisServer: ", conf.RedisServer)
 	go saveLater() //启个协程管理save
 	return p
 }

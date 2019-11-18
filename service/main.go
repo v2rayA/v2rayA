@@ -2,6 +2,7 @@ package main
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/transparentProxy"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/persistence/logs"
@@ -12,8 +13,10 @@ import (
 	"github.com/gookit/color"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
 )
 
 func checkEnvironment() {
@@ -29,10 +32,22 @@ func checkEnvironment() {
 }
 
 func initConfigure() {
+	//初始化配置
 	if !configure.IsConfigureExists() {
 		err := configure.SetConfigure(configure.New())
 		if err != nil {
 			log.Fatal(err)
+		}
+	}
+	//配置文件描述符上限
+	if global.ServiceControlMode == global.ServiceMode || global.ServiceControlMode == global.SystemctlMode {
+		_ = v2ray.LiberalizeProcFile()
+	}
+	//配置ip转发
+	setting := configure.GetSetting()
+	if setting.Transparent != configure.TransparentClose {
+		if setting.IpForward != transparentProxy.IsIpForwardOn() {
+			_ = transparentProxy.WriteIpForward(setting.IpForward)
 		}
 	}
 }
@@ -48,34 +63,22 @@ func checkConnection() {
 }
 
 func hello() {
-	color.Red.Println("V2RAY_LOCATION_ASSET is:", global.V2RAY_LOCATION_ASSET)
+	color.Red.Println("V2RayLocationAsset is:", v2ray.GetV2rayLocationAsset())
 	if global.ServiceControlMode != global.DockerMode {
 		wd, _ := os.Getwd()
 		color.Red.Println("Service working directory is:", wd)
-		conf := global.GetServiceConfig()
-		color.Red.Println("Service listen: "+conf.Address+":"+conf.Port+",", "GUI demo: https://v2raya.mzz.pub")
 	} else {
 		fmt.Println("V2RayA is running in Docker. Compatibility mode starts up.")
 	}
 }
 func checkUpdate() {
 	setting := service.GetSetting()
-	log.Println("PacAutoUpdateMode", setting.PacAutoUpdateMode)
 	if setting.PacAutoUpdateMode == configure.AutoUpdate {
 		switch setting.PacMode {
 		case configure.GfwlistMode:
 			go func() {
-				update, tRemote, err := service.IsUpdate()
-				if err != nil {
-					logs.Print("自动更新PAC文件失败" + err.Error())
-					return
-				}
-				if update {
-					logs.Print("自动更新PAC文件：目前最新版本为" + tRemote.Format("2006-01-02") + "，您的本地文件已最新，无需更新")
-					return
-				}
 				/* 更新h2y.dat */
-				localGFWListVersion, err := service.UpdateLocalGFWList()
+				localGFWListVersion, err := service.CheckAndUpdateGFWList()
 				if err != nil {
 					logs.Print("自动更新PAC文件失败" + err.Error())
 					return
@@ -98,7 +101,7 @@ func checkUpdate() {
 					control <- struct{}{}
 					err := service.UpdateSubscription(i)
 					if err != nil {
-						logs.Print(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, subs[i].Address, err.Error()))
+						logs.Print(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, err.Error()))
 					} else {
 						logs.Print(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
 					}
@@ -110,14 +113,32 @@ func checkUpdate() {
 		}()
 	}
 }
+func run() error { //TODO: 开启IP转发，以实现网关透明代理
+	errch := make(chan error)
+	go func() {
+		errch <- router.Run()
+	}()
+	go func() {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGILL)
+		<-sigs
+		errch <- nil
+	}()
+	fmt.Println("Ctrl-C to quit")
+	if err := <-errch; err != nil {
+		return err
+	}
+	fmt.Println("Quitting...")
+	_ = transparentProxy.StopTransparentProxy(global.Iptables)
+	return nil
+}
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
-	logs.Print("V2RayA已启动")
 	initConfigure()
 	checkConnection()
 	hello()
 	checkUpdate()
-	router.Run()
+	log.Fatal(run())
 }

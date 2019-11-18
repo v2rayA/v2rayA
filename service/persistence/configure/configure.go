@@ -1,6 +1,7 @@
 package configure
 
 import (
+	"V2RayA/model/transparentProxy"
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"
@@ -101,6 +102,7 @@ func GetSubscriptions() []SubscriptionRaw {
 func GetSetting() *Setting {
 	r := new(Setting)
 	getSomething("setting", &r)
+	r.IpForward = transparentProxy.IsIpForwardOn() //永远用真实值
 	return r
 }
 func GetConnectedServer() *Which {

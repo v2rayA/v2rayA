@@ -5,14 +5,16 @@ import (
 )
 
 type Setting struct {
-	PacMode                    PacMode                `json:"pacMode"`
-	CustomPac                  CustomPac              `json:"customPac"`
-	ProxyModeWhenSubscribe     ProxyModeWhenSubscribe `json:"proxyModeWhenSubscribe"`
-	PacAutoUpdateMode          AutoUpdateMode         `json:"pacAutoUpdateMode"`
-	SubscriptionAutoUpdateMode AutoUpdateMode         `json:"subscriptionAutoUpdateMode"`
-	TcpFastOpen                DefaultYesNo           `json:"tcpFastOpen"`
-	MuxOn                      DefaultYesNo           `json:"muxOn"`
-	Mux                        int                    `json:"mux"`
+	PacMode                    PacMode         `json:"pacMode"`
+	CustomPac                  CustomPac       `json:"customPac"`
+	ProxyModeWhenSubscribe     ProxyMode       `json:"proxyModeWhenSubscribe"`
+	PacAutoUpdateMode          AutoUpdateMode  `json:"pacAutoUpdateMode"`
+	SubscriptionAutoUpdateMode AutoUpdateMode  `json:"subscriptionAutoUpdateMode"`
+	TcpFastOpen                DefaultYesNo    `json:"tcpFastOpen"`
+	MuxOn                      DefaultYesNo    `json:"muxOn"`
+	Mux                        int             `json:"mux"`
+	Transparent                TransparentMode `json:"transparent"` //当透明代理开启时将覆盖端口单独的配置
+	IpForward                  bool            `json:"ipforward"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -29,6 +31,7 @@ func NewSetting() (setting *Setting) {
 		TcpFastOpen:                Default,
 		MuxOn:                      No,
 		Mux:                        8,
+		Transparent:                TransparentClose,
 	}
 
 }

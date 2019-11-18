@@ -9,20 +9,7 @@ import (
 )
 
 func PutGFWList(ctx *gin.Context) {
-	update, tRemote, err := service.IsUpdate()
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
-	}
-	if update {
-		tools.ResponseError(ctx, errors.New(
-			"目前最新版本为"+tRemote.Format("2006-01-02")+"，您的本地文件已最新，无需更新",
-		))
-		return
-	}
-
-	/* 更新h2y.dat */
-	localGFWListVersion, err := service.UpdateLocalGFWList()
+	localGFWListVersion, err := service.CheckAndUpdateGFWList()
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

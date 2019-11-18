@@ -105,7 +105,7 @@ export default {
             position: "is-top",
             duration: 3000
           });
-          localStorage["docker"] = res.data.data.isInDocker;
+          localStorage["docker"] = res.data.data.dockerMode;
         }
       })
       .catch(err => {

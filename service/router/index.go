@@ -1,15 +1,15 @@
 package router
 
 import (
-	"V2RayA/global"
 	"V2RayA/controller"
+	"V2RayA/global"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/gookit/color"
 )
 
-func Run() {
+func Run() error {
 	app := global.GetServiceConfig()
 	engine := gin.New()
 	engine.Use(gin.Recovery())
@@ -38,5 +38,6 @@ func Run() {
 		g.PUT("gfwList", controller.PutGFWList)
 		g.PUT("subscription", controller.PutSubscription)
 	}
-	log.Fatal(engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port)))
+	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
+	return engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port))
 }

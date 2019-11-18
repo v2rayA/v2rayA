@@ -33,6 +33,12 @@ const TemplateJson = `{
           "enabled": true,
           "destOverride": ["http", "tls"]
         },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "ip": null,
+          "clients": null
+        },
         "tag": "http"
       },
       {
@@ -42,6 +48,12 @@ const TemplateJson = `{
         "sniffing": {
           "enabled": true,
           "destOverride": ["http", "tls"]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "ip": null,
+          "clients": null
         },
         "tag": "pac"
       }
@@ -85,11 +97,13 @@ const TemplateJson = `{
   "gfwlist": [
     {
       "type": "field",
+      "inboundTag": ["pac"],
       "outboundTag": "proxy",
       "domain": ["ext:h2y.dat:gfw"]
     },
     {
       "type": "field",
+      "inboundTag": ["pac"],
       "network": "tcp,udp",
       "outboundTag": "direct"
     }
