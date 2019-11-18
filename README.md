@@ -22,12 +22,13 @@ V2RayA是V2Ray的一个Web客户端。
 
 已支持：
 
+- [x] 全局透明代理（不支持docker模式）
 - [x] V2Ray服务控制
 - [x] 导入vmess、ss、订阅地址
 - [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
 - [x] 测试节点Ping时延
 - [x] 二维码、地址分享
-- [x] 自定义PAC模式（GFWList、大陆白名单）
+- [x] 同时开放socks5、http、带PAC的http三个端口（PAC模式可选GFWList、大陆白名单）
 - [x] 服务端启动自动检查PAC、订阅更新
 - [x] 多路复用、TCPFastOpen支持
 
@@ -35,9 +36,9 @@ V2RayA是V2Ray的一个Web客户端。
 
 - [ ] 手动添加/修改节点
 - [ ] 测试节点HTTP时延
-- [ ] VPN模式全局代理支持
-- [ ] 自定义路由规则
+- [ ] 自定义PAC路由规则
 - [ ] QUIC协议支持
+- [ ] 端口号配置
 - [ ] 登陆与安全
 
 ## 界面截图
@@ -102,7 +103,10 @@ V2RayA是V2Ray的一个Web客户端。
 
 ### 在不同运行环境下程序表现将不同
 
-由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种折中方案，除了在更换配置时略有卡顿外不影响正常使用。
+由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种折中方案，会有如下影响：
+
+1. 在更换配置时略有卡顿
+2. 无法使用全局透明代理
 
 在宿主环境下以sudo权限运行将不受此限制。
 
@@ -137,15 +141,13 @@ gin会监测文件改动并热重载，见[codegangsta/gin](https://github.com/c
 
 # 感谢
 
-[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
-
-[2dust/v2rayN](https://github.com/2dust/v2rayN)
-
 [hq450/fancyss](https://github.com/hq450/fancyss)
 
 [xlzd/quickdown](https://github.com/xlzd/quickdown)
 
 [ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
+
+[txthinking/brook](https://github.com/txthinking/brook)
 
 # 相似项目
 

@@ -9,9 +9,10 @@ services:
       - 2017:2017
     volumes:
       - shared-data:/etc/v2ray
-      - ./service:/service
+      - ./service:/service:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      - /dev/net:/dev/net
     environment:
       - REDIS=redis:6379
     links:

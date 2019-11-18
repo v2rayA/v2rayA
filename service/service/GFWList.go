@@ -3,8 +3,8 @@ package service
 import (
 	"V2RayA/extra/copyfile"
 	"V2RayA/extra/quickdown"
-	"V2RayA/global"
 	"V2RayA/model/v2ray"
+	"V2RayA/persistence/configure"
 	"V2RayA/tools"
 	"github.com/PuerkitoBio/goquery"
 	gonanoid "github.com/matoous/go-nanoid"
@@ -80,17 +80,42 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	err = copyfile.CopyFile("/tmp/"+id, global.V2RAY_LOCATION_ASSET+"/h2y.dat")
+	err = copyfile.CopyFile("/tmp/"+id, v2ray.GetV2rayLocationAsset()+"/h2y.dat")
 	if err != nil {
 		return
 	}
-	err = os.Chmod(global.V2RAY_LOCATION_ASSET+"/h2y.dat", os.FileMode(0755))
+	err = os.Chmod(v2ray.GetV2rayLocationAsset()+"/h2y.dat", os.FileMode(0755))
 	if err != nil {
 		return
 	}
-	t, err := tools.GetFileModTime(global.V2RAY_LOCATION_ASSET + "/h2y.dat")
+	t, err := tools.GetFileModTime(v2ray.GetV2rayLocationAsset() + "/h2y.dat")
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Format("2006-01-02")
+	}
+	return
+}
+
+func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) {
+	update, tRemote, err := IsUpdate()
+	if err != nil {
+		return
+	}
+	if update {
+		return "", errors.New(
+			"目前最新版本为" + tRemote.Format("2006-01-02") + "，您的本地文件已最新，无需更新",
+		)
+	}
+
+	/* 更新h2y.dat */
+	localGFWListVersionAfterUpdate, err = UpdateLocalGFWList()
+	if err != nil {
+		return
+	}
+	setting := configure.GetSetting()
+	if v2ray.IsV2RayRunning() && //正在使用GFWList模式再重启
+		(setting.Transparent == configure.TransparentGfwlist ||
+			setting.Transparent == configure.TransparentClose && setting.PacMode == configure.GfwlistMode) {
+		err = v2ray.RestartV2rayService()
 	}
 	return
 }

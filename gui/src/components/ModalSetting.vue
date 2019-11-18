@@ -51,7 +51,44 @@
         ></b-field
       >
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
-      <b-field label="PAC模式" label-position="on-border">
+      <b-field
+        v-if="!dockerMode"
+        label-position="on-border"
+        class="with-icon-alert"
+      >
+        <template slot="label">
+          透明全局代理
+          <b-tooltip
+            type="is-dark"
+            label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。"
+            multilined
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            ></b-icon>
+          </b-tooltip>
+        </template>
+        <b-select v-model="transparent" expanded>
+          <option value="close">关闭</option>
+          <option value="proxy">代理模式</option>
+          <option value="whitelist">大陆白名单</option>
+          <option value="gfwlist">GFWList</option>
+        </b-select>
+        <b-checkbox-button
+          v-if="transparent !== 'close'"
+          v-model="ipforward"
+          :native-value="true"
+          >开启IP转发</b-checkbox-button
+        >
+      </b-field>
+      <b-field
+        v-show="transparent === 'close'"
+        label="PAC模式"
+        label-position="on-border"
+      >
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
@@ -74,7 +111,10 @@
         </template>
       </b-field>
       <b-field
-        v-show="pacMode === 'gfwlist'"
+        v-show="
+          (transparent === 'close' && pacMode === 'gfwlist') ||
+            transparent === 'gfwlist'
+        "
         label="自动更新GFWList"
         label-position="on-border"
       >
@@ -118,7 +158,7 @@
           <option value="no">禁用</option>
         </b-select>
       </b-field>
-      <b-field label-position="on-border" class="mux">
+      <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
           多路复用
           <b-tooltip
@@ -183,6 +223,8 @@ export default {
     tcpFastOpen: "default",
     muxOn: "no",
     mux: "8",
+    transparent: "close",
+    ipforward: false,
     pacAutoUpdateMode: "none",
     subscriptionAutoUpdateMode: "none",
     customSiteDAT: {},
@@ -198,6 +240,11 @@ export default {
     localGFWListVersion: "checking...",
     customPacFileVersion: "checking..."
   }),
+  computed: {
+    dockerMode() {
+      return window.localStorage["docker"] === "true";
+    }
+  },
   created() {
     this.$axios({
       url: apiRoot + "/remoteGFWListVersion"
@@ -281,7 +328,9 @@ export default {
           pacMode: this.pacMode,
           tcpFastOpen: this.tcpFastOpen,
           muxOn: this.muxOn,
-          mux: parseInt(this.mux)
+          mux: parseInt(this.mux),
+          transparent: this.transparent,
+          ipforward: this.ipforward
         }
       }).then(res => {
         handleResponse(res, this, () => {
@@ -316,6 +365,10 @@ export default {
 </script>
 
 <style lang="scss">
+.rules {
+  height: 390px;
+  overflow-x: hidden;
+}
 .flex-end {
   justify-content: flex-end !important;
 }
@@ -346,7 +399,7 @@ export default {
 .no-shadow {
   box-shadow: none !important;
 }
-.mux {
+.with-icon-alert {
   p.help {
     position: absolute;
     bottom: -18px;
@@ -355,5 +408,8 @@ export default {
   .icon-alert {
     font-size: 18px;
   }
+}
+.control:first-of-type:not(:last-of-type) .select select {
+  border-radius: 4px 0 0 4px !important;
 }
 </style>

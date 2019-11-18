@@ -2,26 +2,32 @@ package configure
 
 type (
 	AutoUpdateMode          string
-	ProxyModeWhenSubscribe  string
+	ProxyMode               string
 	PacMode                 string
 	PacRuleType             string
 	PacMatchType            string
 	RoutingDefaultProxyMode string
 	TouchType               string
 	DefaultYesNo            string
+	TransparentMode         string
 )
 
 const (
+	TransparentClose     = TransparentMode("close")
+	TransparentProxy     = TransparentMode("proxy")
+	TransparentWhitelist = TransparentMode("whitelist")
+	TransparentGfwlist   = TransparentMode("gfwlist")
+
 	Default = DefaultYesNo("default")
-	Yes = DefaultYesNo("yes")
-	No = DefaultYesNo("no")
+	Yes     = DefaultYesNo("yes")
+	No      = DefaultYesNo("no")
 
 	NotAutoUpdate = AutoUpdateMode("none")
 	AutoUpdate    = AutoUpdateMode("auto_update")
 
-	ProxyModeDirect = ProxyModeWhenSubscribe("direct")
-	ProxyModePac    = ProxyModeWhenSubscribe("pac")
-	ProxyModeProxy  = ProxyModeWhenSubscribe("proxy")
+	ProxyModeDirect = ProxyMode("direct")
+	ProxyModePac    = ProxyMode("pac")
+	ProxyModeProxy  = ProxyMode("proxy")
 
 	WhitelistMode = PacMode("whitelist")
 	GfwlistMode   = PacMode("gfwlist")
