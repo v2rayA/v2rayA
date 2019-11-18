@@ -1,14 +1,14 @@
 # V2RayA
 
-V2RayA是V2Ray的一个Web客户端。
+V2RayA 是 V2Ray 的一个 Web 客户端。
 
-尽管V2Ray的客户端很多，但在Linux上好用的却寥寥无几。jiangxufeng/v2rayL是目前Linux上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
+尽管 V2Ray 的客户端很多，但在 Linux 上好用的却寥寥无几。jiangxufeng/v2rayL 是目前 Linux 上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
 
-虽然V2RayA是一个Web客户端，但它支持以PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
+虽然 V2RayA 是一个 Web 客户端，但它支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
 项目地址：https://github.com/mzz2017/V2RayA
 
-前端demo: https://v2raya.mzz.pub
+前端 demo: https://v2raya.mzz.pub
 
 ## Build Status
 
@@ -22,22 +22,22 @@ V2RayA是V2Ray的一个Web客户端。
 
 已支持：
 
-- [x] 全局透明代理（不支持docker模式）
-- [x] V2Ray服务控制
-- [x] 导入vmess、ss、订阅地址
-- [x] websocket、kcp、tcp、http、tls、shadowsocks全支持
-- [x] 测试节点Ping时延
+- [x] 全局透明代理（不支持 docker 模式）
+- [x] V2Ray 服务控制
+- [x] 导入 vmess、ss、订阅地址
+- [x] websocket、kcp、tcp、http、tls、shadowsocks 全支持
+- [x] 测试节点 Ping 时延
 - [x] 二维码、地址分享
-- [x] 同时开放socks5、http、带PAC的http三个端口（PAC模式可选GFWList、大陆白名单）
-- [x] 服务端启动自动检查PAC、订阅更新
-- [x] 多路复用、TCPFastOpen支持
+- [x] 同时开放 socks5、http、带 PAC 的 http 三个端口（PAC 模式可选 GFWList、大陆白名单）
+- [x] 服务端启动自动检查 PAC、订阅更新
+- [x] 多路复用、TCPFastOpen 支持
 
 待开发：
 
 - [ ] 手动添加/修改节点
-- [ ] 测试节点HTTP时延
-- [ ] 自定义PAC路由规则
-- [ ] QUIC协议支持
+- [ ] 测试节点 HTTP 时延
+- [ ] 自定义 PAC 路由规则
+- [ ] QUIC 协议支持
 - [ ] 端口号配置
 - [ ] 登陆与安全
 
@@ -54,33 +54,27 @@ V2RayA是V2Ray的一个Web客户端。
 <img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
 <p align="center">使用自定义PAC时可以配置路由规则</p>
 
-
-
 </details>
 
 ## 使用
 
 如下使用方法：
 
-1. 拉取源码，使用docker-compose部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
-   
+1. 不使用 docker
+
+   如不使用 docker，请确保已正确安装 v2ray-core
+
+   官方提供了 Linux 下的一键安装脚本：
+
+   > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
+
    ```bash
-   git clone https://github.com/mzz2017/V2RayA.git
-   cd V2RayA
-   docker-compose up -d --build
+   bash <(curl -L -s https://install.direct/go.sh)
    ```
 
-2. 使用docker命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署Web-GUI）。
+   准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)启动 V2RayA 服务端
 
-   我们同步发行[Docker镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用docker命令自行搭建。
-   
-3. 不使用docker
-
-   如不使用docker，请确保已正确安装V2Ray及[RedisJSON](https://github.com/RedisLabsModules/redisjson)
-
-   准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)启动V2RayA服务端
-   
-   或拉取源码，通过golang启动
+   或拉取源码，通过 golang 启动
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -88,57 +82,67 @@ V2RayA是V2Ray的一个Web客户端。
    sudo go run -mod=vendor main.go
    ```
 
-   注意，尽管golang具有交叉编译的特性，但由于项目使用了linux commands，导致该方法不支持windows。若想在windows体验，可借助Docker或WSL。
+   注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
+
+2. 拉取源码，使用 docker-compose 部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+
+   ```bash
+   git clone https://github.com/mzz2017/V2RayA.git
+   cd V2RayA
+   docker-compose up -d --build
+   ```
+
+3. 使用 docker 命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+
+   我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
 
 默认使用的四个端口分别为：
 
-2017: V2RayA后端端口
+2017: V2RayA 后端端口
 
-20170: SOCKS协议
+20170: SOCKS 协议
 
-20171: HTTP协议
+20171: HTTP 协议
 
-20172: 带PAC的HTTP协议
-
+20172: 带 PAC 的 HTTP 协议
 
 ### 在不同运行环境下程序表现将不同
 
-由于docker容器对systemd的限制性，在docker中将采用pid共享进程命名空间，volumes共享存储空间，更新配置后通过结束进程触发v2ray容器的重启来更新配置，以无inbounds的配置代替断开连接，这是一种折中方案，会有如下影响：
+由于 docker 容器对 systemd 的限制性，在 docker 中将采用 pid 共享进程命名空间，volumes 共享存储空间，更新配置后通过结束进程触发 v2ray 容器的重启来更新配置，以无 inbounds 的配置代替断开连接，这是一种折中方案，会有如下影响：
 
 1. 在更换配置时略有卡顿
 2. 无法使用全局透明代理
 
-在宿主环境下以sudo权限运行将不受此限制。
+在宿主环境下以 sudo 权限运行将不受此限制。
 
-### 支持Windows、MacOS吗
+### 支持 Windows、MacOS 吗
 
-目前仅在Linux进行过测试，并计划优先适配Linux。目前尚未验证在Windows及MacOS上存在的问题。
+目前仅在 Linux 进行过测试，并计划优先适配 Linux。目前尚未验证在 Windows 及 MacOS 上存在的问题。
 
-实际上Windows和MacOS上已经存在很多优秀的V2Ray客户端，若无特殊需求，建议选择这些客户端。
+实际上 Windows 和 MacOS 上已经存在很多优秀的 V2Ray 客户端，若无特殊需求，建议选择这些客户端。
 
 ### 已知问题
 
-+ 在windows环境下无法监听2017端口。据了解，Caddy的2015端口也是不能监听的，后期将考虑支持自定义端口以解决问题。
-+ 在使用GoLand进行开发时，如果开启了全局透明代理，由于程序捕获不了GoLand的结束signal，在程序退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已中招重启系统即可。
-
+- 在 windows 环境下无法监听 2017 端口。据了解，Caddy 的 2015 端口也是不能监听的，后期将考虑支持自定义端口以解决问题。
+- 在使用 GoLand 进行开发时，如果开启了全局透明代理，由于程序捕获不了 GoLand 的结束 signal，在程序退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已中招重启系统即可。
 
 ## 注意
 
-应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当docker容器被清除时配置也将随之消失，请做好备份。
+应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当 docker 容器被清除时配置也将随之消失，请做好备份。
 
-提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本Github项目自动部署完成的，如果担心安全性可以自行部署。
+提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
 
 不要将本项目用于不合法用途，作者仅将该项目用于学习研究和内网穿透的用途。
 
-# 在docker环境中开发
+# 在 docker 环境中开发
 
 ```bash
 docker-compose -f docker-compose.dev.yml up
 ```
 
-gin会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
+gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
 
-如果出现问题，可以尝试添加`--build`参数，或将docker离开swarm模式：`docker swarm leave --force`。
+如果出现问题，可以尝试添加`--build`参数，或将 docker 离开 swarm 模式：`docker swarm leave --force`。
 
 # 感谢
 
