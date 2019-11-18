@@ -1,16 +1,17 @@
 package configure
 
 import (
+	"V2RayA/global"
 	"V2RayA/model/transparentProxy"
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
+	"os"
 )
 
 type Configure struct {
-	Servers         []TouchServerRaw  `json:"servers"`
+	Servers         []ServerRaw       `json:"servers"`
 	Subscriptions   []SubscriptionRaw `json:"subscriptions"`
 	ConnectedServer *Which            `json:"connectedServer"` //冗余一个信息，方便查找
 	Setting         *Setting          `json:"setting"`
@@ -18,7 +19,7 @@ type Configure struct {
 
 func New() *Configure {
 	return &Configure{
-		Servers:         make([]TouchServerRaw, 0),
+		Servers:         make([]ServerRaw, 0),
 		Subscriptions:   make([]SubscriptionRaw, 0),
 		ConnectedServer: nil,
 		Setting:         NewSetting(),
@@ -44,104 +45,84 @@ func decode(b []byte) (result []byte) {
 	}
 	return
 }
-func setSomething(path string, val interface{}) (err error) {
-	b, _ := json.Marshal(val)
-	_, err = persistence.DoAndSave("json.set", "V2RayA.configure", path, b)
-	return
-}
+
 func SetConfigure(cfg *Configure) error {
-	return setSomething(".", cfg)
+	return persistence.Set(".", cfg)
+}
+func SetSubscriptions(subscriptions []SubscriptionRaw) (err error) {
+	return persistence.Set("subscriptions", subscriptions)
+}
+func SetServers(servers []ServerRaw) (err error) {
+	return persistence.Set("servers", servers)
 }
 func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
-	return setSomething(fmt.Sprintf("subscriptions[%d]", index), subscription)
+	return persistence.Set(fmt.Sprintf("subscriptions.%d", index), subscription)
 }
 func SetSetting(setting *Setting) (err error) {
-	return setSomething("setting", setting)
+	return persistence.Set("setting", setting)
+}
+func SetTransparent(transparent TransparentMode) (err error) {
+	return persistence.Set("setting.transparent", transparent)
 }
 
-func appendSomething(path string, val interface{}) (err error) {
-	b, _ := json.Marshal(val)
-	_, err = persistence.DoAndSave("json.arrappend", "V2RayA.configure", path, b)
-	return
-}
-func AppendServer(server *TouchServerRaw) (err error) {
-	return appendSomething("servers", server)
+func AppendServer(server *ServerRaw) (err error) {
+	return persistence.Append("servers", server)
 }
 func AppendSubscription(subscription *SubscriptionRaw) (err error) {
-	return appendSomething("subscriptions", subscription)
+	return persistence.Append("subscriptions", subscription)
 }
 
-func getSomething(path string, v interface{}) {
-	re, err := persistence.Do("json.get", "V2RayA.configure", path)
-	if err != nil || re == nil {
-		v = nil
-		return
-	}
-	_ = json.Unmarshal(decode(re.([]byte)), v)
-	return
-}
 func IsConfigureExists() bool {
-	var v interface{}
-	getSomething(".", &v)
-	switch v.(type) {
-	case nil:
-		return false
+	f, err := os.OpenFile(global.GetServiceConfig().Config, os.O_RDONLY, os.ModeAppend)
+	if err != nil {
+		return !os.IsNotExist(err)
 	}
-	return true
+	buf := new(bytes.Buffer)
+	n, err := buf.ReadFrom(f)
+	return err == nil && n > 0
 }
-func GetServers() []TouchServerRaw {
-	r := make([]TouchServerRaw, 0)
-	getSomething("servers", &r)
+func GetServers() []ServerRaw {
+	r := make([]ServerRaw, 0)
+	_ = persistence.Get("servers", &r)
 	return r
 }
 func GetSubscriptions() []SubscriptionRaw {
 	r := make([]SubscriptionRaw, 0)
-	getSomething("subscriptions", &r)
+	_ = persistence.Get("subscriptions", &r)
 	return r
 }
 func GetSetting() *Setting {
 	r := new(Setting)
-	getSomething("setting", &r)
+	_ = persistence.Get("setting", &r)
 	r.IpForward = transparentProxy.IsIpForwardOn() //永远用真实值
 	return r
 }
 func GetConnectedServer() *Which {
 	r := new(Which)
-	getSomething("connectedServer", &r)
+	_ = persistence.Get("connectedServer", &r)
 	return r
 }
 
-func getLenSomething(path string) int {
-	re, err := persistence.Do("json.arrlen", "V2RayA.configure", path)
-	if err != nil {
-		return 0
-	}
-	return int(re.(int64))
-}
 func GetLenSubscriptions() int {
-	return getLenSomething("subscriptions")
+	l, err := persistence.GetLen("subscriptions")
+	if err != nil {
+		panic(err)
+	}
+	return l
 }
 func GetLenSubscriptionServers(sub int) int {
-	return getLenSomething(fmt.Sprintf("subscriptions[%d].servers", sub))
+	l, err := persistence.GetLen(fmt.Sprintf("subscriptions.%d.servers", sub))
+	if err != nil {
+		panic(err)
+	}
+	return l
 }
 func GetLenServers() int {
-	return getLenSomething("servers")
-}
-
-func removeSomethingFromArray(path string, index int) error {
-	_, err := persistence.DoAndSave("json.arrpop", "V2RayA.configure", path, index)
+	l, err := persistence.GetLen("servers")
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return nil
-}
-func RemoveSubscription(index int) error {
-	err := removeSomethingFromArray("subscriptions", index)
-	return err
-}
-func RemoveServer(index int) error {
-	err := removeSomethingFromArray("servers", index)
-	return err
+	return l
 }
 
 /*不会停止v2ray.service*/
@@ -151,5 +132,5 @@ func ClearConnected() error {
 
 /*不会启动v2ray.service*/
 func SetConnect(wt *Which) (err error) {
-	return setSomething("connectedServer", wt)
+	return persistence.Set("connectedServer", wt)
 }

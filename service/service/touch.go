@@ -13,6 +13,10 @@ func DeleteWhich(ws []configure.Which) (err error) {
 	data.Sort()
 	touches := data.Get()
 	cs := configure.GetConnectedServer()
+	subscriptions := configure.GetSubscriptions()
+	servers := configure.GetServers()
+	bDeletedSubscription := false
+	bDeletedServer := false
 	for _, v := range touches {
 		ind := v.ID - 1
 		switch v.TYPE {
@@ -24,18 +28,23 @@ func DeleteWhich(ws []configure.Which) (err error) {
 					return
 				}
 			}
-			err = configure.RemoveSubscription(ind)
-			if err != nil {
-				return
-			}
+			subscriptions = append(subscriptions[:ind], subscriptions[ind+1:]...)
+			bDeletedSubscription = true
 		case configure.ServerType:
-			err = configure.RemoveServer(ind)
-			if err != nil {
-				return
-			}
+			servers = append(servers[:ind], servers[ind+1:]...)
+			bDeletedServer = true
 		case configure.SubscriptionServerType: //订阅的结点的不能删的
 			continue
 		}
+	}
+	if bDeletedSubscription {
+		err = configure.SetSubscriptions(subscriptions)
+		if err != nil {
+			return
+		}
+	}
+	if bDeletedServer {
+		err = configure.SetServers(servers)
 	}
 	return
 }

@@ -27,7 +27,7 @@ func PutSubscription(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	err = service.UpdateSubscription(index)
+	err = service.UpdateSubscription(index, false)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

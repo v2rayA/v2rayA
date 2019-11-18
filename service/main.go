@@ -5,7 +5,6 @@ import (
 	"V2RayA/model/transparentProxy"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
-	"V2RayA/persistence/logs"
 	"V2RayA/router"
 	"V2RayA/service"
 	"fmt"
@@ -80,10 +79,10 @@ func checkUpdate() {
 				/* 更新h2y.dat */
 				localGFWListVersion, err := service.CheckAndUpdateGFWList()
 				if err != nil {
-					logs.Print("自动更新PAC文件失败" + err.Error())
+					log.Println("自动更新PAC文件失败" + err.Error())
 					return
 				}
-				logs.Print("自动更新PAC文件完成，本地文件时间：" + localGFWListVersion)
+				log.Println("自动更新PAC文件完成，本地文件时间：" + localGFWListVersion)
 			}()
 		case configure.CustomMode:
 			//TODO
@@ -99,11 +98,11 @@ func checkUpdate() {
 				wg.Add(1)
 				go func(i int) {
 					control <- struct{}{}
-					err := service.UpdateSubscription(i)
+					err := service.UpdateSubscription(i, false)
 					if err != nil {
-						logs.Print(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, err.Error()))
+						log.Println(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, err.Error()))
 					} else {
-						logs.Print(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
+						log.Println(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
 					}
 					wg.Done()
 					<-control
@@ -113,7 +112,16 @@ func checkUpdate() {
 		}()
 	}
 }
-func run() error { //TODO: 开启IP转发，以实现网关透明代理
+func run() error {
+	//docker模式下把transparent纠正一下
+	if global.ServiceControlMode == global.DockerMode {
+		if err := configure.SetTransparent(configure.TransparentClose); err != nil {
+			return err
+		}
+	}
+	if err := v2ray.RewriteV2rayConf(); err != nil {
+		return err
+	}
 	errch := make(chan error)
 	go func() {
 		errch <- router.Run()

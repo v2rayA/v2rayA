@@ -23,13 +23,13 @@ func GetTouch(ctx *gin.Context) {
 }
 
 func DeleteTouch(ctx *gin.Context) {
-	var ws []configure.Which
+	var ws configure.Whiches
 	err := ctx.ShouldBindJSON(&ws)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	err = service.DeleteWhich(ws)
+	err = service.DeleteWhich(ws.Get())
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

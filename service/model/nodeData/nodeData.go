@@ -13,8 +13,8 @@ type NodeData struct {
 	Config    string              `json:"config"`
 }
 
-func (nd *NodeData) ToTouchServerRaw() (tsr *configure.TouchServerRaw) {
-	tsr = new(configure.TouchServerRaw)
+func (nd *NodeData) ToTouchServerRaw() (tsr *configure.ServerRaw) {
+	tsr = new(configure.ServerRaw)
 	tsr.VmessInfo = nd.VmessInfo
 	return
 }

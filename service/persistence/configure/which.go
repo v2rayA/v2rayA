@@ -9,12 +9,12 @@ import (
 )
 
 type Whiches struct {
-	touches        []Which
+	Touches        []Which `json:"touches"`
 	sort.Interface `json:"-"`
 }
 
 func (ws Whiches) Len() int {
-	return len(ws.touches)
+	return len(ws.Touches)
 }
 
 func (ws Whiches) Less(i, j int) bool {
@@ -24,14 +24,14 @@ func (ws Whiches) Less(i, j int) bool {
 		SubscriptionType:       1,
 		SubscriptionServerType: 2,
 	}
-	if ws.touches[i].TYPE == ws.touches[j].TYPE {
-		return ws.touches[i].ID > ws.touches[j].ID
+	if ws.Touches[i].TYPE == ws.Touches[j].TYPE {
+		return ws.Touches[i].ID > ws.Touches[j].ID
 	}
-	return quantifyType[ws.touches[i].TYPE] < quantifyType[ws.touches[j].TYPE]
+	return quantifyType[ws.Touches[i].TYPE] < quantifyType[ws.Touches[j].TYPE]
 }
 
 func (ws Whiches) Swap(i, j int) {
-	ws.touches[i], ws.touches[j] = ws.touches[j], ws.touches[i]
+	ws.Touches[i], ws.Touches[j] = ws.Touches[j], ws.Touches[i]
 }
 
 /*
@@ -48,20 +48,20 @@ func (ws Whiches) Sort() {
 }
 
 func (ws *Whiches) Get() []Which {
-	return ws.touches
+	return ws.Touches
 }
 
 func (ws *Whiches) Set(wt []Which) {
-	ws.touches = wt
+	ws.Touches = wt
 }
 
 /*去重，并做下标范围检测，只保留符合下标范围的项*/
 func (ws *Whiches) GetNonDuplicated() (w []Which) {
 	ts := make(map[Which]struct{})
 	//下标范围检测，并利用map的key值无重复特性去重
-	for i := range ws.touches {
-		ind := ws.touches[i].ID - 1
-		v := ws.touches[i]
+	for i := range ws.Touches {
+		ind := ws.Touches[i].ID - 1
+		v := ws.Touches[i]
 		switch v.TYPE {
 		case SubscriptionType:
 			if ind >= 0 && ind < GetLenSubscriptions() {
@@ -73,8 +73,8 @@ func (ws *Whiches) GetNonDuplicated() (w []Which) {
 			}
 		case SubscriptionServerType:
 			if v.Sub >= 0 && v.Sub < GetLenSubscriptions() && ind >= 0 && ind < GetLenSubscriptionServers(v.Sub) {
-			ts[v] = struct{}{}
-		}
+				ts[v] = struct{}{}
+			}
 		}
 	}
 	//还原回slice
@@ -114,8 +114,7 @@ func (w *Which) Ping(count int, timeout time.Duration) (err error) {
 	return
 }
 
-
-func (wt *Which) LocateServer() (*TouchServerRaw, error) {
+func (wt *Which) LocateServer() (*ServerRaw, error) {
 	ind := wt.ID - 1 //转化为下标
 	switch wt.TYPE {
 	case ServerType:

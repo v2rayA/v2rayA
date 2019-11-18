@@ -12,11 +12,6 @@ services:
       - ./service:/service:ro
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - /dev/net:/dev/net
-    environment:
-      - REDIS=redis:6379
-    links:
-      - redis
 
   v2ray:
     restart: always
@@ -29,10 +24,6 @@ services:
     volumes:
       - shared-data:/etc/v2ray
     entrypoint: sh -c "cp -rfu /usr/bin/v2ray/*.dat /etc/v2ray && v2ray -config=/etc/v2ray/config.json"
-  
-  redis:
-    restart: always
-    image: "redislabs/rejson:latest"
 
 volumes:
   shared-data:

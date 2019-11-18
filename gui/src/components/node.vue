@@ -571,11 +571,11 @@ export default {
       this.$axios({
         url: apiRoot + "/pingLatency",
         params: {
-          touches
+          whiches: touches
         }
       }).then(res => {
         handleResponse(res, this, () => {
-          res.data.data.touches.forEach(x => {
+          res.data.data.whiches.forEach(x => {
             let server = locateServer(this.tableData, x);
             server.pingLatency = x.pingLatency;
           });

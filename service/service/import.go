@@ -32,7 +32,7 @@ func Import(url string) (err error) {
 			return errors.New("解析订阅地址失败" + err.Error())
 		}
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
-		servers := make([]configure.TouchServerRaw, len(infos))
+		servers := make([]configure.ServerRaw, len(infos))
 		for i, v := range infos {
 			servers[i] = *v.ToTouchServerRaw()
 		}

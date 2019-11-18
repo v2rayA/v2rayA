@@ -281,7 +281,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	}
 
 	//根据设置修改透明代理
-	if setting.Transparent != configure.TransparentClose {
+	if global.ServiceControlMode != global.DockerMode && setting.Transparent != configure.TransparentClose {
 		//先修改DNS设置
 		t.DNS = new(DNS)
 		ds := DnsServer{

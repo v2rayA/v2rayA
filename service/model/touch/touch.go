@@ -41,9 +41,9 @@ func NewUpdateFailStatus(reason string) SubscriptionStatus {
 }
 
 /* 将[]TouchServerRaw映射到[]TouchServer */
-func serverRawsToServers(rss []configure.TouchServerRaw) (ts []TouchServer) {
+func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 	w := configure.GetConnectedServer()
-	var tsr *configure.TouchServerRaw
+	var tsr *configure.ServerRaw
 	var err error
 	if w != nil {
 		tsr, err = w.LocateServer()
@@ -67,8 +67,9 @@ func serverRawsToServers(rss []configure.TouchServerRaw) (ts []TouchServer) {
 /* 根据Configure创建一个Touch */
 func GenerateTouch() (t Touch) {
 	t.Servers = serverRawsToServers(configure.GetServers())
-	t.Subscriptions = make([]Subscription, configure.GetLenSubscriptions())
-	for i, v := range configure.GetSubscriptions() {
+	subscriptions := configure.GetSubscriptions()
+	t.Subscriptions = make([]Subscription, len(subscriptions))
+	for i, v := range subscriptions {
 		u, err := url.Parse(v.Address)
 		if err != nil {
 			continue

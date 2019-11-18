@@ -17,7 +17,7 @@ func GetSharingAddress(w *configure.Which) (addr string, err error) {
 		}
 		addr = subscriptions[ind].Address
 	} else {
-		var tsr *configure.TouchServerRaw
+		var tsr *configure.ServerRaw
 		tsr, err = w.LocateServer()
 		if err != nil {
 			return

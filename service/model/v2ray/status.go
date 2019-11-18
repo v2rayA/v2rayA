@@ -4,6 +4,7 @@ import (
 	"V2RayA/global"
 	"V2RayA/model/v2rayTmpl"
 	"V2RayA/model/vmessInfo"
+	"V2RayA/persistence/configure"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -124,6 +125,22 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 		return
 	}
 	return RestartV2rayService()
+}
+func RewriteV2rayConf() (err error) {
+	cs := configure.GetConnectedServer()
+	if cs == nil { //没有连接，把v2ray配置更新一下好了
+		return pretendToStopV2rayService()
+	}
+	sr, err := cs.LocateServer()
+	if err != nil {
+		return
+	}
+	tmpl := v2rayTmpl.NewTemplate()
+	err = tmpl.FillWithVmessInfo(sr.VmessInfo)
+	if err != nil {
+		return
+	}
+	return WriteV2rayConfig(tmpl.ToConfigBytes())
 }
 
 /*清空inbounds规则来假停v2ray*/

@@ -49,12 +49,12 @@ type RoutingRule struct {
 	RuleType  PacRuleType  `json:"ruleType"`  //在名单上的项进行直连、代理还是拦截
 }
 
-type TouchServerRaw struct {
+type ServerRaw struct {
 	VmessInfo vmessInfo.VmessInfo `json:"vmessInfo"`
 }
 
 type SubscriptionRaw struct {
-	Address string           `json:"address"`
-	Status  string           `json:"status"` //update time, error info, etc.
-	Servers []TouchServerRaw `json:"servers"`
+	Address string      `json:"address"`
+	Status  string      `json:"status"` //update time, error info, etc.
+	Servers []ServerRaw `json:"servers"`
 }
