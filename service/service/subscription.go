@@ -47,7 +47,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	return
 }
 
-func UpdateSubscription(index int) (err error) {
+func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
 	c, err := tools.GetHttpClientAutomatically()
@@ -61,15 +61,16 @@ func UpdateSubscription(index int) (err error) {
 		log.Println(infos, err)
 		return errors.New(reason)
 	}
-	tsrs := make([]configure.TouchServerRaw, len(infos))
-	var connectedServer *configure.TouchServerRaw
-	if cs := configure.GetConnectedServer(); cs != nil {
+	tsrs := make([]configure.ServerRaw, len(infos))
+	var connectedServer *configure.ServerRaw
+	cs := configure.GetConnectedServer()
+	if cs != nil {
 		connectedServer, _ = cs.LocateServer()
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
 	finishFindConnected := false
 	for i, info := range infos {
-		tsr := configure.TouchServerRaw{
+		tsr := configure.ServerRaw{
 			VmessInfo: info.VmessInfo,
 		}
 		if !finishFindConnected && connectedServer != nil && connectedServer.VmessInfo == tsr.VmessInfo {
@@ -87,10 +88,20 @@ func UpdateSubscription(index int) (err error) {
 		tsrs[i] = tsr
 	}
 	if !finishFindConnected {
-		err = Disconnect()
-		if err != nil {
-			reason := "现连接的服务器已被更新且不包含在新的订阅中，在试图与其断开的过程中遇到失败"
-			return errors.New(reason)
+		if disconnectIfNecessary {
+			err = Disconnect()
+			if err != nil {
+				reason := "现连接的服务器已被更新且不包含在新的订阅中，在试图与其断开的过程中遇到失败"
+				return errors.New(reason)
+			}
+		} else if cs != nil && connectedServer != nil { //这里这么写是因为不想让goland报警
+			//将之前连接的节点append进去
+			tsrs = append(tsrs, *connectedServer)
+			cs.ID = len(tsrs) - 1
+			err = configure.SetConnect(cs)
+			if err != nil {
+				return
+			}
 		}
 	}
 	subscriptions[index].Servers = tsrs

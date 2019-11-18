@@ -2,6 +2,7 @@ package controller
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/transparentProxy"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
@@ -15,7 +16,11 @@ func PostV2ray(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("不能启动V2Ray, 请选择一个节点连接"))
 		return
 	}
-	err := v2ray.RestartAndEnableV2rayService()
+	err := v2ray.RewriteV2rayConf()
+	if err != nil {
+		return
+	}
+	err = v2ray.RestartV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
@@ -28,7 +33,12 @@ func DeleteV2ray(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("Docker模式下无法关闭V2Ray，但可以断开节点连接"))
 		return
 	}
-	err := v2ray.StopAndDisableV2rayService()
+	err := transparentProxy.StopTransparentProxy(global.Iptables)
+	if err != nil {
+		tools.ResponseError(ctx, err)
+		return
+	}
+	err = v2ray.StopAndDisableV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

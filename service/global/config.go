@@ -6,9 +6,10 @@ import (
 )
 
 type Param struct {
-	Address    string `id:"address" short:"a" default:"0.0.0.0" desc:"监听地址"`
-	Port       string `id:"port" short:"p" default:"2017" desc:"监听端口"`
-	RedisServer string `id:"redis" default:":6379" desc:"redis server socket"`
+	Address string `id:"address" short:"a" default:"0.0.0.0" desc:"监听地址"`
+	Port    string `id:"port" short:"p" default:"2017" desc:"监听端口"`
+	RedisServer string `id:"redis" default:":6379" desc:"DEPRESSED!! redis server socket"`
+	Config  string `id:"config" default:"config.json" desc:"V2RayA配置文件路径"`
 }
 
 var param Param
