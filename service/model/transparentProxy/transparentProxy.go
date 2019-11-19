@@ -13,10 +13,8 @@ func StartTransparentProxy() (t *IpTablesMangle,err error) {
 }
 
 func StopTransparentProxy(t *IpTablesMangle) (err error) {
-	if t != nil { //有备份过iptablets，清理一下
-		if err = t.RestoreRules(); err != nil {
-			return
-		}
+	if err = t.RestoreRules(); err != nil {
+		return
 	}
 	return
 }
