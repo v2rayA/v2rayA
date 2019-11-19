@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"runtime"
 	"sync"
 	"syscall"
@@ -33,6 +34,7 @@ func checkEnvironment() {
 func initConfigure() {
 	//初始化配置
 	if !configure.IsConfigureExists() {
+		_ = os.MkdirAll(path.Dir(global.GetServiceConfig().Config), os.ModeDir|0755)
 		err := configure.SetConfigure(configure.New())
 		if err != nil {
 			log.Fatal(err)
@@ -138,7 +140,7 @@ func run() (err error) {
 		return
 	}
 	fmt.Println("Quitting...")
-	_ = transparentProxy.StopTransparentProxy(global.Iptables)
+	_ = service.CheckAndStopTransparentProxy()
 	return nil
 }
 

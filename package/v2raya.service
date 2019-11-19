@@ -1,0 +1,14 @@
+[Unit]
+Description=V2RayA Service
+Documentation=https://github.com/mzz2017/V2RayA/blob/master/README.md
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+Environment=V2RAYA_CONFIG=/etc/v2ray/v2raya.json
+ExecStart=/usr/bin/v2raya
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
