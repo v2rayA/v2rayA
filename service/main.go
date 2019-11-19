@@ -112,15 +112,16 @@ func checkUpdate() {
 		}()
 	}
 }
-func run() error {
+func run() (err error) {
 	//docker模式下把transparent纠正一下
 	if global.ServiceControlMode == global.DockerMode {
-		if err := configure.SetTransparent(configure.TransparentClose); err != nil {
-			return err
+		if err = configure.SetTransparent(configure.TransparentClose); err != nil {
+			return
 		}
 	}
-	if err := v2ray.RewriteV2rayConf(); err != nil {
-		return err
+	err = service.CheckAndSetupTransparentProxy(true)
+	if err != nil {
+		return
 	}
 	errch := make(chan error)
 	go func() {
@@ -133,8 +134,8 @@ func run() error {
 		errch <- nil
 	}()
 	fmt.Println("Ctrl-C to quit")
-	if err := <-errch; err != nil {
-		return err
+	if err = <-errch; err != nil {
+		return
 	}
 	fmt.Println("Quitting...")
 	_ = transparentProxy.StopTransparentProxy(global.Iptables)

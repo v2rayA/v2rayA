@@ -1,15 +1,13 @@
 package service
 
 import (
-	"V2RayA/global"
-	"V2RayA/model/transparentProxy"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"errors"
 )
 
 func Disconnect() (err error) {
-	err = transparentProxy.StopTransparentProxy(global.Iptables)
+	err = CheckAndStopTransparentProxy()
 	if err != nil {
 		return
 	}

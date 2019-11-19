@@ -126,6 +126,7 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	}
 	return RestartV2rayService()
 }
+
 func RewriteV2rayConf() (err error) {
 	cs := configure.GetConnectedServer()
 	if cs == nil { //没有连接，把v2ray配置更新一下好了

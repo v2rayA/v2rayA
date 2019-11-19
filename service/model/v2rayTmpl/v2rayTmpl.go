@@ -410,7 +410,9 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			return err
 		}
 	} else {
-		_ = transparentProxy.StopTransparentProxy(global.Iptables)
+		if global.Iptables!=nil{
+			_ = transparentProxy.StopTransparentProxy(global.Iptables)
+		}
 		global.Iptables = nil
 		// 不是全局模式，根据设置修改路由部分的PAC规则
 		switch setting.PacMode {
