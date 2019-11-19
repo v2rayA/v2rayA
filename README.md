@@ -34,11 +34,13 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 待开发：
 
+- [ ] 以service方式启动
+- [ ] 检查版本更新
 - [ ] 手动添加/修改节点
 - [ ] 测试节点 HTTP 时延
 - [ ] 自定义 PAC 路由规则
 - [ ] QUIC 协议支持
-- [ ] 端口号配置
+- [ ] 服务端端口号配置、前端可指定服务端地址
 - [ ] 登陆与安全
 
 ## 界面截图
@@ -49,7 +51,6 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 <p align="center">订阅源</p>
 <img src="http://mzzeast.shumsg.cn/FkOIrdEqCXvqQEgMH166RsugmaSs" />
 <p align="center">设置</p>
-
 <details>
     <summary>点击展开更多截图</summary>
 <img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
@@ -143,7 +144,13 @@ docker-compose -f docker-compose.dev.yml up
 
 gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
 
-如果出现问题，可以尝试添加`--build`参数，或将 docker 离开 swarm 模式：`docker swarm leave --force`。
+# 相似项目
+
+[v2raywebui/V2RayWebUI](https://github.com/v2raywebui/V2RayWebUI)
+
+[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
+
+[NoOne-hub/v2ray_client](https://github.com/NoOne-hub/v2ray_client)
 
 # 感谢
 
@@ -153,15 +160,7 @@ gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/
 
 [ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
 
-[txthinking/brook](https://github.com/txthinking/brook)
-
-# 相似项目
-
-[v2raywebui/V2RayWebUI](https://github.com/v2raywebui/V2RayWebUI)
-
 [jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
-
-[NoOne-hub/v2ray_client](https://github.com/NoOne-hub/v2ray_client)
 
 # 协议
 

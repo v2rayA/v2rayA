@@ -110,7 +110,7 @@ func (w *Which) Ping(count int, timeout time.Duration) (err error) {
 	pinger.Run()
 	s := pinger.Statistics()
 	w.PingLatency = new(string)
-	*w.PingLatency = fmt.Sprintf("平均: %dms, 最快: %dms, 最慢: %dms. 丢包: %d/%d(%.1f%%)", int(s.AvgRtt.Seconds()*1000), int(s.MaxRtt.Seconds()*1000), int(s.MinRtt.Seconds()*1000), s.PacketsSent-s.PacketsRecv, s.PacketsSent, s.PacketLoss)
+	*w.PingLatency = fmt.Sprintf("平均: %dms, 最快: %dms, 最慢: %dms. 丢包: %d/%d(%.1f%%)", int(s.AvgRtt.Seconds()*1000), int(s.MinRtt.Seconds()*1000), int(s.MaxRtt.Seconds()*1000), s.PacketsSent-s.PacketsRecv, s.PacketsSent, s.PacketLoss)
 	return
 }
 

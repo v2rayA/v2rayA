@@ -57,7 +57,7 @@
         class="with-icon-alert"
       >
         <template slot="label">
-          透明全局代理
+          全局透明代理
           <b-tooltip
             type="is-dark"
             label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。"
