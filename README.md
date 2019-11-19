@@ -47,10 +47,11 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 <p align="center">节点</p>
 <img src="http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-" />
 <p align="center">订阅源</p>
+<img src="http://mzzeast.shumsg.cn/FkOIrdEqCXvqQEgMH166RsugmaSs" />
+<p align="center">设置</p>
+
 <details>
     <summary>点击展开更多截图</summary>
-<img src="http://mzzeast.shumsg.cn/Ft6KlgZuuMNsL5oCHxfkBllEFvuf" />
-<p align="center">设置</p>
 <img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
 <p align="center">使用自定义PAC时可以配置路由规则</p>
 
