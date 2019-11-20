@@ -1,7 +1,9 @@
 os:
   - linux
   - osx
-language: go
+language:
+  - go
+  - ruby
 go: "1.12"
 
 if: (tag =~ ^v) OR (branch = master)
@@ -10,30 +12,29 @@ env:
   global:
     - GO111MODULE=on
     - NAME=v2raya
+    - VERSION=$(git describe --abbrev=0 --tags)
 addons:
   apt:
     packages:
       - bsdtar
       - rpm
       - lintian
-      - perl
-  homebrew:
-    packages:
-      - perl
+      - reprepro
+      - gnupg
+      - sshpass
+      - expect
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then go get github.com/mitchellh/gox ;fi
   - gem install fpm
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd service && VERSION=$(git describe --abbrev=0 --tags) && gox -osarch="linux/amd64 linux/arm" -mod=vendor -ldflags="-X global.Version=${VERSION:1}" && cp -r V2RayA_* ../ && cp -r V2RayA_linux_amd64 v2raya ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cp -f V2RayA_linux_amd64 v2raya && fpm -s dir -t deb -n $NAME -v ${VERSION:1} --prefix /usr/bin v2raya && fpm -s dir -t rpm -n $NAME -v ${VERSION:1} --prefix /usr/bin v2raya && fpm -s dir -t pacman -n $NAME -v ${VERSION:1} --prefix /usr/bin v2raya && fpm -s dir -t freebsd -n $NAME -v ${VERSION:1} --prefix /usr/bin v2raya ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv *.deb ../v2raya_debian.deb ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv *.txz ../v2raya_freebsd.txz ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv *.rpm ../v2raya_redhat.rpm ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv *.pkg.tar.xz ../v2raya.pkg.tar.xz ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd service && gox -osarch="linux/amd64 linux/arm" -mod=vendor -ldflags="-X V2RayA/global.Version=${VERSION:1}" && cp -r V2RayA_* ../ ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd ../ ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then files="V2RayA_linux_amd64=/usr/bin/v2raya install/v2raya.service=/etc/systemd/system/v2raya.service" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then params="-f -n $NAME -v ${VERSION:1} --after-install install/after_install.sh --before-remove install/before_remove.sh --after-remove install/after_remove.sh --after-upgrade install/after_upgrade.sh $files" ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then fpm -s dir -t deb -p v2raya_debian.deb $params && fpm -s dir -t rpm -p v2raya_redhat.rpm $params && fpm -s dir -t pacman -p v2raya_arch.pkg.tar.xz $params && fpm -s dir -t freebsd -p v2raya_freebsd.txz $params ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd service && CGO_ENABLED=0 go build -mod=vendor -a -ldflags='-extldflags "-static" -X global.Version=${VERSION:1}' -o v2raya && cp v2raya ../V2RayA_darwin_amd64; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo -E fpm -s dir -t osxpkg -n $NAME -v ${VERSION:1} --prefix /usr/bin v2raya ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mv *.pkg ../v2raya_macos.pkg ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo -E fpm -s dir -t osxpkg -p v2raya_osx.pkg $params ; fi
 
 deploy:
   provider: releases
@@ -46,11 +47,16 @@ deploy:
     - "v2raya_debian.deb"
     - "v2raya_freebsd.txz"
     - "v2raya_redhat.rpm"
-    - "v2raya_macos.pkg"
+    - "v2raya_osx.pkg"
     - "v2raya_arch.pkg.tar.xz"
   skip_cleanup: true
-  # overwrite: true
+  overwrite: true
   on:
     tags: true
 
-    
+after_deploy:
+  - mkdir -p apt/incoming && cp -r install/key install/conf apt/
+  - cd apt
+  - ../install/reprepro_expect --ask-passphrase -Vb . export
+  - ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../v2raya_debian.deb
+  - sshpass -p $SF scp -r -o StrictHostKeyChecking=no ./* mzz2017@frs.sourceforge.net:/home/frs/project/v2raya/

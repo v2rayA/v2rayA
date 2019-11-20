@@ -68,8 +68,9 @@ func hello() {
 	if global.ServiceControlMode != global.DockerMode {
 		wd, _ := os.Getwd()
 		color.Red.Println("Service working directory is:", wd)
+		color.Red.Println("Version:", global.Version)
 	} else {
-		fmt.Println("V2RayA is running in Docker. Compatibility mode starts up.")
+		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")
 	}
 }
 func checkUpdate() {
