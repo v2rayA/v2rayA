@@ -1,0 +1,8 @@
+Origin: mzz2017
+Label: v2raya
+Suite: stable
+Codename: v2raya
+Architectures: amd64
+Components: main
+Description: https://github.com/mzz2017/v2raya
+SignWith: yes

@@ -1,5 +1,3 @@
-/web
-
 # IDE
 .idea
 .vscode
@@ -17,4 +15,7 @@ node_modules
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Output
 V2RayA_*
+v2raya_*
