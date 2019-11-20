@@ -4,9 +4,9 @@ set timeout 30
 
 set passphrase "$env(SIGNING_PASSWORD)"
 
-# Call reprepro with variable length arguments, so that this script
+# Call gpg2 with variable length arguments, so that this script
 # takes the same arguments as the original program
-spawn reprepro {*}$argv
+spawn gpg2 {*}$argv
 
 expect {
     timeout                     {send_error "\nFailed to get password prompt\n";
@@ -16,11 +16,11 @@ expect {
                                  exp_continue}
 }
 
-# Get the pid, spawnid, oserr and exitcode from the spawned reprepro command
+# Get the pid, spawnid, oserr and exitcode from the spawned gpg2 command
 set returnvalues [wait]
 
-# Extract the reprepro exit code
+# Extract the gpg2 exit code
 set exitcode [lindex $returnvalues 3]
 
-# Exit with the exitcode from reprepro (0 on success)
+# Exit with the exitcode from gpg2 (0 on success)
 exit $exitcode
