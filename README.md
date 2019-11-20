@@ -62,9 +62,34 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 如下使用方法：
 
-1. 不使用 docker
+1. **使用apt-get安装**
+   
+   请确保已正确安装 v2ray-core
 
-   如不使用 docker，请确保已正确安装 v2ray-core
+   官方提供了 Linux 下的一键安装脚本：
+
+   > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
+
+   ```bash
+   bash <(curl -L -s https://install.direct/go.sh)
+   ```
+   准备完毕后：
+   ```bash
+   # add public key
+   wget -qO - https://raw.githubusercontent.com/mzz2017/V2RayA/apt/key/public-key.asc | sudo apt-key add -
+
+
+   # add V2RayA's repository
+   sudo add-apt-repository 'deb https://raw.githubusercontent.com/mzz2017/V2RayA/apt v2raya main'
+   sudo apt-get update
+
+
+   # install V2RayA
+   sudo apt-get install v2raya
+   ```
+2. **使用Release二进制文件/安装包**（支持常见linux系统）
+
+   请确保已正确安装 v2ray-core
 
    官方提供了 Linux 下的一键安装脚本：
 
@@ -74,9 +99,11 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    bash <(curl -L -s https://install.direct/go.sh)
    ```
 
-   准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)启动 V2RayA 服务端
+   准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
 
-   或拉取源码，通过 golang 启动
+3. 当然，你也可以选择拉取源码，**通过 golang 启动**：
+   
+   该方法同样需要正确安装v2ray-core，详情见上
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -86,7 +113,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
    注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
 
-2. 拉取源码，使用 docker-compose 部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+4. 拉取源码，**使用 docker-compose 部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -94,7 +121,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    docker-compose up -d --build
    ```
 
-3. 使用 docker 命令部署，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+5. **使用 docker 命令部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
 
    我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
 
