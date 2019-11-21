@@ -3,6 +3,7 @@
 pkgname=v2raya
 pkgver={{pkgver}}
 pkgrel=1
+install=.INSTALL
 pkgdesc="V2RayA是一个支持全局透明代理的V2Ray Linux客户端。"
 arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/mzz2017/V2RayA"
@@ -19,7 +20,7 @@ prepare() {
 
 build() {
     cd "V2RayA-$pkgver/service"
-    go build -ldflags='-X V2RayA/global.Version=$pkgver' -o v2raya
+    go build -ldflags="-X V2RayA/global.Version=$pkgver" -o v2raya
 }
 
 package() {
