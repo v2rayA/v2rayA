@@ -19,11 +19,27 @@ prepare() {
 
 build() {
     cd "V2RayA-$pkgver/service"
-    go build -ldflags='-X V2RayA/global.Version=$pkgver' -o v2raya
+    go build -ldflags="-X V2RayA/global.Version=$pkgver" -o v2raya
 }
 
 package() {
     cd "V2RayA-$pkgver"
     install -Dm644 "install/v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
     install -Dm755 "service/v2raya" -t "$pkgdir/usr/bin/"
+}
+
+post_install() {
+    bash install/after_install.sh
+}
+
+post_remove() {
+    bash install/after_remove.sh
+}
+
+post_upgrade() {
+    bash install/after_upgrade.sh
+}
+
+pre_remove() {
+    bash install/before_remove.sh
 }

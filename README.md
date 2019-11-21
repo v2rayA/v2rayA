@@ -75,7 +75,9 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    ```bash
    bash <(curl -L -s https://install.direct/go.sh)
    ```
+   
    准备完毕后：
+
    ```bash
    # add public key
    wget -qO - https://raw.githubusercontent.com/mzz2017/V2RayA/apt/key/public-key.asc | sudo apt-key add -
@@ -88,11 +90,26 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    sudo apt-get install v2raya
    ```
    
+   V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+   
 2. **使用pacman安装**（archlinux、manjaro）
+   
+   由于v2raya发布在AUR中，而pacman不支持AUR，因此建议使用主流的yay或yaourt作为替代方案
+
    ```bash
-   # assume command 'yay' is available. https://github.com/Jguer/yay
-   yay -S v2raya
+   # install yay
+   sudo pacman -Sy yay
    ```
+
+   当yay或yaourt可用时，可通过yay或yaourt安装v2raya
+
+   ```bash
+   # assume command 'yay' is available
+   yay -Sy v2raya
+   ```
+
+   V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+
 3. **使用Release二进制文件/安装包**（支持常见linux系统）
 
    请确保已正确安装 v2ray-core
@@ -106,6 +123,8 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    ```
 
    准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
+   
+   V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
 
 4. 当然，你也可以选择拉取源码，**通过 golang 启动**：
    
@@ -114,13 +133,14 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
    cd V2RayA/service
-   # export GOPROXY=https://goproxy.io
+   # set proxy.io as the proxy of golang
+   export GOPROXY=https://goproxy.io
    sudo go run main.go
    ```
 
    注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
 
-5. 拉取源码，**使用 docker-compose 部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+5. 拉取源码，**使用 docker-compose 部署**。该方法不支持全局透明代理。
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -128,7 +148,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    docker-compose up -d --build
    ```
 
-6. **使用 docker 命令部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+6. **使用 docker 命令部署**。该方法不支持全局透明代理。
 
    我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
 

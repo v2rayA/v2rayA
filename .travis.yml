@@ -33,7 +33,8 @@ script:
   - cd ../
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then files="V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya install/v2raya.service=/etc/systemd/system/v2raya.service" ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then files="V2RayA_darwin_amd64_$VERSION=/usr/bin/v2raya install/v2raya.service=/etc/systemd/system/v2raya.service" ; fi
-  - params="-f -n $NAME -v ${VERSION:1} --after-install install/after_install.sh --before-remove install/before_remove.sh --after-remove install/after_remove.sh --after-upgrade install/after_upgrade.sh $files"
+  - params="--verbose -f -n $NAME -v ${VERSION:1} --after-install=install/after_install.sh --before-remove=install/before_remove.sh --after-remove=install/after_remove.sh --after-upgrade=install/after_upgrade.sh $files"
+  - echo $params
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then fpm -s dir -t deb -p installer_debian_$VERSION.deb $params && fpm -s dir -t rpm -p installer_redhat_$VERSION.rpm $params && fpm -s dir -t pacman -p installer_arch_$VERSION.pkg.tar.xz $params && fpm -s dir -t freebsd -p installer_freebsd_$VERSION.txz $params ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo -E fpm -s dir -t osxpkg -p installer_osx_$VERSION.pkg $params ; fi
 
