@@ -2,7 +2,7 @@ package tools
 
 import (
 	"encoding/base64"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
@@ -71,14 +71,14 @@ func ValidToken(token, secret string) (err error) {
 }
 
 func MakeJWT(payload map[string]string, secret []byte, expDuration *time.Duration) (jwt string, err error) {
-	headerJSON, _ := json.Marshal(map[string]string{
+	headerJSON, _ := jsoniter.Marshal(map[string]string{
 		"alg": "HS256",
 		"typ": "JWT",
 	})
 	if expDuration != nil {
 		payload["exp"] = fmt.Sprint(time.Now().Add(*expDuration).Unix())
 	}
-	payloadJSON, err := json.Marshal(payload)
+	payloadJSON, err := jsoniter.Marshal(payload)
 	if err != nil {
 		return
 	}
@@ -96,6 +96,6 @@ func GetJWTPayload(jwt string) (payload map[string]string, err error) {
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(pl, &payload)
+	err = jsoniter.Unmarshal(pl, &payload)
 	return
 }

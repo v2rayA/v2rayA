@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
+	"github.com/json-iterator/go/extra"
 	"log"
 	"os"
 	"os/signal"
@@ -51,6 +52,7 @@ func initConfigure() {
 			_ = transparentProxy.WriteIpForward(setting.IpForward)
 		}
 	}
+	extra.RegisterFuzzyDecoders()
 }
 
 func checkConnection() {

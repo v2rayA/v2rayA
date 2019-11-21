@@ -5,7 +5,7 @@ import (
 	tmpl "V2RayA/model/v2rayTmpl"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/tools"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"errors"
 	"net/url"
 	"regexp"
@@ -55,7 +55,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 			info.Net = "ws"
 		}
 	} else {
-		err = json.Unmarshal([]byte(raw), &info)
+		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
 			return
 		}

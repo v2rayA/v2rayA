@@ -2,7 +2,7 @@ package vmessInfo
 
 import (
 	"encoding/base64"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"fmt"
 	"reflect"
 )
@@ -37,7 +37,7 @@ func (v *VmessInfo) ExportToURL() string {
 			}
 			m[chKey] = iv.FieldByName(f.Name).Interface()
 		}
-		b, _ := json.Marshal(m)
+		b, _ := jsoniter.Marshal(m)
 		return "vmess://" + base64.StdEncoding.EncodeToString(b)
 	case "shadowsocks":
 		/* ss://BASE64(method:password)@server:port#name */

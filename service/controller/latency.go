@@ -4,7 +4,7 @@ import (
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 func GetPingLatency(ctx *gin.Context) {
 	var wt []configure.Which
-	err := json.Unmarshal([]byte(ctx.Query("whiches")), &wt)
+	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return

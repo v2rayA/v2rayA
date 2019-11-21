@@ -22,15 +22,31 @@ func DeleteWhich(ws []configure.Which) (err error) {
 		switch v.TYPE {
 		case configure.SubscriptionType: //这里删的是某个订阅
 			//检查现在连接的结点是否在该订阅中，是的话断开连接
-			if cs != nil && cs.TYPE == configure.SubscriptionServerType && cs.Sub == ind {
-				err = Disconnect()
-				if err != nil {
-					return
+			if cs != nil && cs.TYPE == configure.SubscriptionServerType {
+				if ind == cs.Sub {
+					err = Disconnect()
+					if err != nil {
+						return
+					}
+				} else if ind < cs.Sub {
+					cs.Sub -= 1
 				}
+
 			}
 			subscriptions = append(subscriptions[:ind], subscriptions[ind+1:]...)
 			bDeletedSubscription = true
 		case configure.ServerType:
+			//检查现在连接的结点是否是该服务器，是的话断开连接
+			if cs != nil && cs.TYPE == configure.ServerType {
+				if v.ID == cs.ID {
+					err = Disconnect()
+					if err != nil {
+						return
+					}
+				} else if v.ID < cs.ID {
+					cs.ID -= 1
+				}
+			}
 			servers = append(servers[:ind], servers[ind+1:]...)
 			bDeletedServer = true
 		case configure.SubscriptionServerType: //订阅的结点的不能删的
@@ -45,6 +61,9 @@ func DeleteWhich(ws []configure.Which) (err error) {
 	}
 	if bDeletedServer {
 		err = configure.SetServers(servers)
+		if err != nil {
+			return
+		}
 	}
-	return
+	return configure.SetConnect(cs) //由于删除了一些servers或subscriptions，当前which可能会有下标上的变化
 }

@@ -3,7 +3,7 @@ package persistence
 import (
 	"V2RayA/global"
 	"bytes"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"errors"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -20,7 +20,7 @@ func Get(path string, val interface{}) (err error) {
 	if !v.Exists() {
 		return errors.New("路径不存在")
 	}
-	return json.Unmarshal([]byte(v.Raw), val)
+	return jsoniter.Unmarshal([]byte(v.Raw), val)
 }
 
 func Exists(path string) bool {
@@ -48,7 +48,7 @@ func GetLen(path string) (length int, err error) {
 
 func Set(path string, val interface{}) (err error) {
 	if path == "" || path == "." { //这种情况sjson不支持，特判用marshal搞定
-		b, _ := json.Marshal(val)
+		b, _ := jsoniter.Marshal(val)
 		return ioutil.WriteFile(global.GetServiceConfig().Config, b, 0644)
 	}
 	f, err := os.OpenFile(global.GetServiceConfig().Config, os.O_RDWR|os.O_CREATE, 0644)
