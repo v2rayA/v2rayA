@@ -20,5 +20,9 @@ node_modules
 V2RayA_*
 v2raya_*
 installer_*
-apt
 V2RayA
+
+#package
+/.SRCINFO
+/apt
+/PKGBUILD
