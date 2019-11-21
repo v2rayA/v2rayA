@@ -154,5 +154,7 @@ func main() {
 	checkConnection()
 	hello()
 	checkUpdate()
-	log.Fatal(run())
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
 }
