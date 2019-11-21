@@ -4,7 +4,7 @@ import (
 	"V2RayA/model/transparentProxy"
 )
 
-var Version = "0.0"
+var Version = "debug"
 
 var ServiceControlMode SystemServiceControlMode = GetServiceControlMode()
 

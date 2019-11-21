@@ -4,7 +4,7 @@ import (
 	"V2RayA/model/nodeData"
 	"V2RayA/service"
 	"V2RayA/tools"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
@@ -35,6 +35,6 @@ func Resolving(ctx *gin.Context) {
 		return
 	}
 	var m map[string]interface{}
-	_ = json.Unmarshal([]byte(n.Config), &m)
+	_ = jsoniter.Unmarshal([]byte(n.Config), &m)
 	tools.ResponseSuccess(ctx, gin.H{"config": m})
 }

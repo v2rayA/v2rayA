@@ -5,7 +5,7 @@ import (
 	"V2RayA/model/v2rayTmpl"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -28,7 +28,7 @@ func IsV2RayRunning() bool {
 		if err != nil {
 			return false
 		}
-		err = json.Unmarshal(b, &tmplJson)
+		err = jsoniter.Unmarshal(b, &tmplJson)
 		if err != nil {
 			return false
 		}
@@ -56,7 +56,7 @@ func RestartV2rayService() (err error) {
 		if err != nil {
 			return
 		}
-		err = json.Unmarshal(b, &tmplJson)
+		err = jsoniter.Unmarshal(b, &tmplJson)
 		if err != nil {
 			return
 		}
@@ -64,12 +64,12 @@ func RestartV2rayService() (err error) {
 			// 读入模板json
 			rawJson := v2rayTmpl.NewTemplate()
 			raw := []byte(v2rayTmpl.TemplateJson)
-			err = json.Unmarshal(raw, &rawJson)
+			err = jsoniter.Unmarshal(raw, &rawJson)
 			if err != nil {
 				return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 			}
 			tmplJson.Inbounds = rawJson.Inbounds
-			b, _ = json.Marshal(tmplJson)
+			b, _ = jsoniter.Marshal(tmplJson)
 			err = WriteV2rayConfig(b)
 			if err != nil {
 				return
@@ -151,12 +151,12 @@ func pretendToStopV2rayService() (err error) {
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(b, &tmplJson)
+	err = jsoniter.Unmarshal(b, &tmplJson)
 	if err != nil {
 		return
 	}
 	tmplJson.Inbounds = make([]v2rayTmpl.Inbound, 0)
-	b, _ = json.Marshal(tmplJson)
+	b, _ = jsoniter.Marshal(tmplJson)
 	err = WriteV2rayConfig(b)
 	if err != nil {
 		return

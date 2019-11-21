@@ -5,7 +5,7 @@ import (
 	"V2RayA/model/transparentProxy"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
-	"encoding/json"
+	"github.com/json-iterator/go"
 	"errors"
 	"net"
 	"strconv"
@@ -200,7 +200,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
-	err := json.Unmarshal(raw, &tmplJson)
+	err := jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
 		return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 	}
@@ -453,6 +453,6 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 }
 
 func (t *Template) ToConfigBytes() []byte {
-	b, _ := json.Marshal(t)
+	b, _ := jsoniter.Marshal(t)
 	return b
 }
