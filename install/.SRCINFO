@@ -1,0 +1,19 @@
+pkgbase = v2raya
+	pkgdesc = V2RayA是一个支持全局透明代理的V2Ray Linux客户端。
+	pkgver = {{pkgver}}
+	pkgrel = 1
+	url = https://github.com/mzz2017/V2RayA
+	arch = i686
+	arch = x86_64
+	arch = armv7h
+	arch = armv6h
+	arch = aarch64
+	license = GPL
+	makedepends = go>=2:1.11.3-1
+	depends = glibc
+	depends = v2ray
+	source = v2raya-{{pkgver}}.tar.gz::https://github.com/mzz2017/V2RayA/archive/v{{pkgver}}.tar.gz
+	sha512sums = SKIP
+
+pkgname = v2raya
+

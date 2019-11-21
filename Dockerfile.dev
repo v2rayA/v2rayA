@@ -11,4 +11,4 @@ RUN apt-get install -y psmisc ca-certificates
 WORKDIR /service
 ENV GOPROXY=https://goproxy.io
 ENV CONFIG=../config.json
-ENTRYPOINT gin -p 2017 -i --buildArgs -mod=vendor --bin ../V2RayA run
+ENTRYPOINT gin -p 2017 -i --buildArgs --bin ../V2RayA run

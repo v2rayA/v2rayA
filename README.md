@@ -6,7 +6,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
-得益于Web客户端的优势，你只需对前端稍作修改，就可以将它部署在软路由或NAS上，并通过http访问。
+得益于Web客户端的优势，你只需对前端稍作修改就可以将它部署在软路由或NAS上，并通过http访问管理你的节点。
 
 项目地址：https://github.com/mzz2017/V2RayA
 
@@ -64,7 +64,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 如下使用方法：
 
-1. **使用apt-get安装**
+1. **使用apt-get安装**（debian、ubuntu）
    
    请确保已正确安装 v2ray-core
 
@@ -80,16 +80,20 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    # add public key
    wget -qO - https://raw.githubusercontent.com/mzz2017/V2RayA/apt/key/public-key.asc | sudo apt-key add -
 
-
    # add V2RayA's repository
    sudo add-apt-repository 'deb https://raw.githubusercontent.com/mzz2017/V2RayA/apt v2raya main'
    sudo apt-get update
 
-
    # install V2RayA
    sudo apt-get install v2raya
    ```
-2. **使用Release二进制文件/安装包**（支持常见linux系统）
+   
+2. **使用pacman安装**（archlinux、manjaro）
+   ```bash
+   # assume command 'yay' is available. https://github.com/Jguer/yay
+   yay -S v2raya
+   ```
+3. **使用Release二进制文件/安装包**（支持常见linux系统）
 
    请确保已正确安装 v2ray-core
 
@@ -103,19 +107,20 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
    准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
 
-3. 当然，你也可以选择拉取源码，**通过 golang 启动**：
+4. 当然，你也可以选择拉取源码，**通过 golang 启动**：
    
    该方法同样需要正确安装v2ray-core，详情见上
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
    cd V2RayA/service
-   sudo go run -mod=vendor main.go
+   # export GOPROXY=https://goproxy.io
+   sudo go run main.go
    ```
 
    注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
 
-4. 拉取源码，**使用 docker-compose 部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+5. 拉取源码，**使用 docker-compose 部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -123,7 +128,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    docker-compose up -d --build
    ```
 
-5. **使用 docker 命令部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
+6. **使用 docker 命令部署**，在[Web-GUI](https://v2raya.mzz.pub)使用（或手动部署 Web-GUI）。该方法不支持全局透明代理。
 
    我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
 
