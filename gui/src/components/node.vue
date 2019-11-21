@@ -450,6 +450,7 @@ export default {
                   connectedServer: this.tableData.connectedServer,
                   lastConnectedServer: null
                 };
+                this.updateConnectView();
               } else {
                 this.$buefy.toast.open({
                   message: res.data.message,

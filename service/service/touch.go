@@ -65,5 +65,8 @@ func DeleteWhich(ws []configure.Which) (err error) {
 			return
 		}
 	}
-	return configure.SetConnect(cs) //由于删除了一些servers或subscriptions，当前which可能会有下标上的变化
+	if configure.GetConnectedServer() != nil { //如果已经disconnect了，就不要再set回去了
+		err = configure.SetConnect(cs) //由于删除了一些servers或subscriptions，当前which可能会有下标上的变化
+	}
+	return
 }
