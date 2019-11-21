@@ -4,7 +4,9 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 尽管 V2Ray 的客户端很多，但在 Linux 上好用的却寥寥无几。jiangxufeng/v2rayL 是目前 Linux 上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
 
-虽然 V2RayA 是一个 Web 客户端，但它支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
+虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
+
+得益于Web客户端的优势，你只需对前端稍作修改，就可以将它部署在软路由或NAS上，并通过http访问。
 
 项目地址：https://github.com/mzz2017/V2RayA
 
@@ -31,10 +33,10 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 - [x] 同时开放 socks5、http、带 PAC 的 http 三个端口（PAC 模式可选 GFWList、大陆白名单）
 - [x] 服务端启动自动检查 PAC、订阅更新
 - [x] 多路复用、TCPFastOpen 支持
+- [x] 以service方式启动
 
 待开发：
 
-- [ ] 以service方式启动
 - [ ] 检查版本更新
 - [ ] 手动添加/修改节点
 - [ ] 测试节点 HTTP 时延
@@ -153,15 +155,15 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 ### 已知问题
 
 - 在 windows 环境下无法监听 2017 端口。据了解，Caddy 的 2015 端口也是不能监听的，后期将考虑支持自定义端口以解决问题。
-- 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于程序捕获不了 GoLand 的结束 signal，在程序退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已中招重启系统即可。不开启全局透明代理可不受影响。
+- 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已中招重启系统即可。不开启全局透明代理可不受影响。
 
 ## 注意
 
-应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当 docker 容器被清除时配置也将随之消失，请做好备份。
+1. 应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当 docker 容器被清除时配置也将随之消失，请做好备份。
 
-提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
+2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
 
-不要将本项目用于不合法用途，作者仅将该项目用于学习研究和内网穿透的用途。
+3. **不要将本项目用于不合法用途。**
 
 # 在 docker 环境中开发
 
