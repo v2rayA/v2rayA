@@ -5,8 +5,8 @@ import (
 	"V2RayA/model/transparentProxy"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
-	"github.com/json-iterator/go"
 	"errors"
+	"github.com/json-iterator/go"
 	"net"
 	"strconv"
 	"strings"
@@ -402,18 +402,13 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 				},
 			)
 		}
-		if global.Iptables != nil {
-			_ = transparentProxy.StopTransparentProxy(global.Iptables)
-		}
-		global.Iptables, err = transparentProxy.StartTransparentProxy()
+		_ = transparentProxy.DeleteRules()
+		err = transparentProxy.WriteRules()
 		if err != nil {
 			return err
 		}
 	} else {
-		if global.Iptables!=nil{
-			_ = transparentProxy.StopTransparentProxy(global.Iptables)
-		}
-		global.Iptables = nil
+		_ = transparentProxy.DeleteRules()
 		// 不是全局模式，根据设置修改路由部分的PAC规则
 		switch setting.PacMode {
 		case configure.WhitelistMode:

@@ -12,18 +12,22 @@ type IpTablesMangle struct {
 	bakMangle *string
 }
 
-func execCommands(commands string) error {
+func execCommands(commands string, stopWhenError bool) error {
 	lines := strings.Split(commands, "\n")
+	var e error
 	for _, line := range lines {
 		if len(line) <= 0 || strings.HasPrefix(line, "#") {
 			continue
 		}
-		_, err := exec.Command("sh", "-c", line).CombinedOutput()
+		out, err := exec.Command("sh", "-c", line).CombinedOutput()
 		if err != nil {
-			return err
+			e = errors.New(err.Error() + string(out))
+			if stopWhenError {
+				return e
+			}
 		}
 	}
-	return nil
+	return e
 }
 
 func backupRules() (string, error) {
@@ -65,7 +69,7 @@ func restoreRules(r string) error {
 ip rule del fwmark 1 table 100 
 ip route del local 0.0.0.0/0 dev lo table 100
 `
-	err = execCommands(commands)
+	err = execCommands(commands, false)
 	return err
 }
 
@@ -76,11 +80,23 @@ func (t *IpTablesMangle) RestoreRules() error {
 	return restoreRules(*t.bakMangle)
 }
 
-func (t *IpTablesMangle) WriteRules() error {
-	bak, err := backupRules()
-	if err != nil {
-		return err
-	}
+func DeleteRules() error {
+	commands := `
+# 删除策略路由
+ip rule del fwmark 1 table 100 
+ip route del local 0.0.0.0/0 dev lo table 100
+# 删除iptables链
+iptables -t mangle -F V2RAY
+iptables -t mangle -D PREROUTING -j V2RAY
+iptables -t mangle -X V2RAY
+iptables -t mangle -F V2RAY_MASK
+iptables -t mangle -D OUTPUT -j V2RAY_MASK
+iptables -t mangle -X V2RAY_MASK
+`
+	return execCommands(commands, false)
+}
+
+func WriteRules() error {
 	commands := `
 # 设置策略路由
 ip rule add fwmark 1 table 100 
@@ -122,8 +138,8 @@ iptables -t mangle -A V2RAY_MASK -p udp -j MARK --set-mark 1   # 给 UDP 打标�
 iptables -t mangle -A V2RAY_MASK -p tcp -j MARK --set-mark 1   # 给 TCP 打标记,重路由
 iptables -t mangle -A OUTPUT -j V2RAY_MASK # 应用规则
 ` // 来自https://guide.v2fly.org/app/tproxy.html
-	if err := execCommands(commands); err != nil {
-		_ = restoreRules(bak)
+	if err := execCommands(commands, true); err != nil {
+		_ = DeleteRules()
 		return err
 	}
 	return nil
