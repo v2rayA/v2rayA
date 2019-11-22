@@ -20,8 +20,6 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 ## 功能清单
 
-**目前已完成基本功能，项目正在逐步开发中。**
-
 已支持：
 
 - [x] 全局透明代理（不支持 docker 模式）
@@ -34,10 +32,10 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 - [x] 服务端启动自动检查 PAC、订阅更新
 - [x] 多路复用、TCPFastOpen 支持
 - [x] 以service方式启动
+- [x] 检查版本更新
 
 待开发：
 
-- [ ] 检查版本更新
 - [ ] 手动添加/修改节点
 - [ ] 测试节点 HTTP 时延
 - [ ] 自定义 PAC 路由规则
@@ -92,7 +90,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
    
-2. **使用pacman安装**（archlinux、manjaro）
+2. **使用yay/yaourt安装**（archlinux、manjaro）
    
    由于v2raya发布在AUR中，而pacman不支持AUR，因此建议使用主流的yay或yaourt作为替代方案
 
@@ -104,13 +102,13 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    当yay或yaourt可用时，可通过yay或yaourt安装v2raya
 
    ```bash
-   # assume command 'yay' is available
+   # assume command yay is available
    yay -S v2raya
    ```
 
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
 
-3. **使用Release二进制文件/安装包**（支持常见linux系统）
+3. **使用二进制文件/安装包**（支持常见linux系统）
 
    请确保已正确安装 v2ray-core
 
@@ -133,7 +131,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
    cd V2RayA/service
-   # set proxy.io as the proxy of golang
+   # set goproxy.io as the proxy of golang
    export GOPROXY=https://goproxy.io
    sudo go run main.go
    ```
@@ -169,18 +167,16 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 1. 在更换配置时略有卡顿
 2. 无法使用全局透明代理
 
-在宿主环境下以 sudo 权限运行将不受此限制。
+### 支持 Windows、MacOSX 吗
 
-### 支持 Windows、MacOS 吗
+目前仅在 Linux 进行过测试，并计划优先适配 Linux。目前尚未验证在 Windows 及 MacOSX 上存在的问题。
 
-目前仅在 Linux 进行过测试，并计划优先适配 Linux。目前尚未验证在 Windows 及 MacOS 上存在的问题。
-
-实际上 Windows 和 MacOS 上已经存在很多优秀的 V2Ray 客户端，若无特殊需求，建议选择这些客户端。
+实际上 Windows 和 MacOSX 上已经存在很多优秀的 V2Ray 客户端，若无特殊需求，建议选择这些客户端。
 
 ### 已知问题
 
 - 在 windows 环境下无法监听 2017 端口。据了解，Caddy 的 2015 端口也是不能监听的，后期将考虑支持自定义端口以解决问题。
-- 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如想恢复网络，一种可行方法是重新启动程序并关闭全局透明代理。不开启全局透明代理时，GoLand调试将不受影响。
+- 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已无法正常上网，恢复网络的一种简单可行方法是重新启动程序并关闭全局透明代理。不开启全局透明代理时，GoLand调试将不受影响。
 
 ## 注意
 

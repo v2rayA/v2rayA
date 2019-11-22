@@ -10,6 +10,9 @@ import (
 )
 
 func Import(url string) (err error) {
+	if strings.HasPrefix(url, "ssr://") {
+		return errors.New("V2RayA不支持SSR")
+	}
 	if strings.HasPrefix(url, "vmess://") || strings.HasPrefix(url, "ss://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)

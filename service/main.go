@@ -7,6 +7,7 @@ import (
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
 	"V2RayA/service"
+	"V2RayA/tools"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -29,6 +30,10 @@ func checkEnvironment() {
 	}
 	if os.Getegid() != 0 {
 		log.Fatal("请以sudo或root权限执行本程序")
+	}
+	port := global.GetServiceConfig().Port
+	if occupied, which := tools.IsPortOccupied(port); occupied {
+		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }
 
@@ -116,6 +121,12 @@ func checkUpdate() {
 			wg.Wait()
 		}()
 	}
+	go func() {
+		if foundNew, remote, err := service.CheckUpdate(); err == nil {
+			global.FoundNew = foundNew
+			global.RemoteVersion = remote
+		}
+	}()
 }
 func run() (err error) {
 	//docker模式下把transparent纠正一下

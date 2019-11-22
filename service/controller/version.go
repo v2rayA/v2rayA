@@ -9,8 +9,10 @@ import (
 
 func Version(ctx *gin.Context) {
 	tools.ResponseSuccess(ctx, gin.H{
-		"version":    global.Version,
-		"dockerMode": global.ServiceControlMode == global.DockerMode,
+		"version":       global.Version,
+		"dockerMode":    global.ServiceControlMode == global.DockerMode,
+		"foundNew":      global.FoundNew,
+		"remoteVersion": global.RemoteVersion,
 	})
 }
 
