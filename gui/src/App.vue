@@ -97,14 +97,28 @@ export default {
     })
       .then(res => {
         if (res.data.code === "SUCCESS") {
-          this.$buefy.toast.open({
+          let toastConf = {
             message: `V2RayA服务端正在运行于${
               res.data.data.dockerMode ? "Docker环境中，使用兼容模式" : "本地"
             }，Version: ${res.data.data.version}`,
             type: "is-dark",
             position: "is-top",
             duration: 3000
-          });
+          };
+          if (res.data.data.foundNew) {
+            toastConf.duration = 5000;
+            toastConf.message += `，检测到新版本: ${res.data.data.remoteVersion}`;
+            toastConf.type = "is-danger";
+            // toastConf.onAction = () => {
+            //   if (res.data.data.foundNew) {
+            //     window.open(
+            //       "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
+            //       "_blank"
+            //     );
+            //   }
+            // };
+          }
+          this.$buefy.toast.open(toastConf);
           localStorage["docker"] = res.data.data.dockerMode;
         }
       })
