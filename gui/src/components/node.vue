@@ -45,7 +45,7 @@
           <span class="field not-show">placeholder</span>
         </div>
         <div style="position:absolute;right:0;top:0">
-          <b-button class="field" type="is-primary" @click="checkedRows = []">
+          <b-button class="field" type="is-primary" @click="handleClickCreate">
             <i class="iconfont icon-chuangjiangongdan1"></i>
             <span>创建</span>
           </b-button>
@@ -206,6 +206,7 @@
                       icon-left=" github-circle iconfont icon-wendangxiugai"
                       :outlined="!props.row.connected"
                       type="is-info"
+                      @click="handleClickModifyServer(props.row)"
                     >
                       修改
                     </b-button>
@@ -281,6 +282,7 @@
                       icon-left=" github-circle iconfont icon-winfo-icon-chakanbaogao"
                       :outlined="!props.row.connected"
                       type="is-info"
+                      @click="handleClickViewServer(props.row)"
                     >
                       查看
                     </b-button>
@@ -304,6 +306,19 @@
     <b-loading v-else :is-full-page="true" :active="true">
       <i class="iconfont icon-loading_ico-copy"></i>
     </b-loading>
+    <b-modal
+      :active.sync="showModalServer"
+      has-modal-card
+      trap-focus
+      aria-role="dialog"
+      aria-modal
+    >
+      <ModalServer
+        :which="which"
+        :readonly="modalServerReadOnly"
+        @submit="handleModalServerSubmit"
+      ></ModalServer>
+    </b-modal>
   </section>
 </template>
 
@@ -313,9 +328,11 @@ import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
+import ModalServer from "@/components/ModalServer";
 
 export default {
   name: "Node",
+  components: { ModalServer },
   data() {
     return {
       tableData: {
@@ -330,7 +347,10 @@ export default {
         running: CONST.INSPECTING_RUNNING,
         connectedServer: null,
         lastConnectedServer: null
-      }
+      },
+      showModalServer: false,
+      which: null,
+      modalServerReadOnly: false
     };
   },
   watch: {
@@ -716,12 +736,57 @@ export default {
             connectedServer: this.tableData.connectedServer,
             lastConnectedServer: null
           };
+          this.updateConnectView();
           this.$buefy.toast.open({
             message: "更新完成",
             type: "is-primary",
             position: "is-top",
             duration: 5000
           });
+        });
+      });
+    },
+    handleClickCreate() {
+      this.modalServerReadOnly = false;
+      this.which = null;
+      this.showModalServer = true;
+    },
+    handleClickModifyServer(row) {
+      this.modalServerReadOnly = false;
+      this.which = row;
+      this.showModalServer = true;
+    },
+    handleClickViewServer(row) {
+      this.modalServerReadOnly = true;
+      this.which = row;
+      this.showModalServer = true;
+    },
+    handleModalServerSubmit(url) {
+      this.$axios({
+        url: apiRoot + "/import",
+        method: "post",
+        data: {
+          url: url,
+          which: this.which
+        }
+      }).then(res => {
+        handleResponse(res, this, () => {
+          this.$buefy.toast.open({
+            message: "操作成功",
+            type: "is-primary",
+            position: "is-top",
+            duration: 3000
+          });
+          this.showModalServer = false;
+          this.tableData = res.data.data.touch;
+          this.runningState = {
+            running: res.data.data.running
+              ? CONST.IS_RUNNING
+              : CONST.NOT_RUNNING,
+            connectedServer: this.tableData.connectedServer,
+            lastConnectedServer: null
+          };
+          this.updateConnectView();
         });
       });
     }

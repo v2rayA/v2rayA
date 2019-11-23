@@ -21,9 +21,9 @@ func Run() error {
 	})
 	g := engine.Group("api")
 	{
-		g.GET("version", controller.Version)
-		g.GET("resolving", controller.Resolving)
-		g.POST("import", controller.Import)
+		g.GET("version", controller.GetVersion)
+		g.GET("resolving", controller.GetResolving)
+		g.POST("import", controller.PostImport)
 		g.GET("touch", controller.GetTouch)
 		g.DELETE("touch", controller.DeleteTouch)
 		g.POST("connection", controller.PostConnection)

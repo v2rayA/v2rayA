@@ -39,7 +39,7 @@ func (v *VmessInfo) ExportToURL() string {
 		}
 		b, _ := jsoniter.Marshal(m)
 		return "vmess://" + base64.StdEncoding.EncodeToString(b)
-	case "shadowsocks":
+	case "ss":
 		/* ss://BASE64(method:password)@server:port#name */
 		return fmt.Sprintf(
 			"ss://%v@%v:%v#%v",

@@ -25,6 +25,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 - [x] 全局透明代理（不支持 docker 模式）
 - [x] V2Ray 服务控制
 - [x] 导入 vmess、ss、订阅地址
+- [x] 手动添加/修改节点
 - [x] websocket、kcp、tcp、http、tls、shadowsocks 全支持
 - [x] 测试节点 Ping 时延
 - [x] 二维码、地址分享
@@ -36,10 +37,9 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 待开发：
 
-- [ ] 手动添加/修改节点
 - [ ] 测试节点 HTTP 时延
 - [ ] 自定义 PAC 路由规则
-- [ ] QUIC 协议支持
+- [ ] QUIC、SSR 协议支持
 - [ ] 服务端端口号配置、前端可指定服务端地址
 - [ ] 登陆与安全
 

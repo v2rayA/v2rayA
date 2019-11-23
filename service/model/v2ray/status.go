@@ -5,8 +5,8 @@ import (
 	"V2RayA/model/v2rayTmpl"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
-	"github.com/json-iterator/go"
 	"errors"
+	"github.com/json-iterator/go"
 	"io/ioutil"
 	"log"
 	"os"
@@ -127,7 +127,7 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	return RestartV2rayService()
 }
 
-func RewriteV2rayConf() (err error) {
+func UpdateV2rayWithConnectedServer() (err error) {
 	cs := configure.GetConnectedServer()
 	if cs == nil { //没有连接，把v2ray配置更新一下好了
 		return pretendToStopV2rayService()
@@ -141,7 +141,14 @@ func RewriteV2rayConf() (err error) {
 	if err != nil {
 		return
 	}
-	return WriteV2rayConfig(tmpl.ToConfigBytes())
+	err = WriteV2rayConfig(tmpl.ToConfigBytes())
+	if err != nil {
+		return
+	}
+	if IsV2RayRunning() {
+		err = RestartV2rayService()
+	}
+	return
 }
 
 /*清空inbounds规则来假停v2ray*/
@@ -161,7 +168,10 @@ func pretendToStopV2rayService() (err error) {
 	if err != nil {
 		return
 	}
-	return RestartV2rayService()
+	if IsV2RayRunning() {
+		err = RestartV2rayService()
+	}
+	return
 }
 
 func StopV2rayService() (err error) {
