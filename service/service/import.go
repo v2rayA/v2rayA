@@ -3,13 +3,15 @@ package service
 import (
 	"V2RayA/model/nodeData"
 	"V2RayA/model/touch"
+	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
 	"errors"
+	"fmt"
 	"strings"
 )
 
-func Import(url string) (err error) {
+func Import(url string, which *configure.Which) (err error) {
 	if strings.HasPrefix(url, "ssr://") {
 		return errors.New("V2RayA不支持SSR")
 	}
@@ -19,8 +21,29 @@ func Import(url string) (err error) {
 		if err != nil {
 			return
 		}
-		//后端NodeData转前端TouchServerRaw压入TouchRaw.Servers
-		err = configure.AppendServer(n.ToTouchServerRaw())
+		fmt.Println(n)
+		if which != nil {
+			//修改
+			ind := which.ID - 1
+			if which.TYPE != configure.ServerType || ind < 0 || ind >= configure.GetLenServers() {
+				return errors.New("节点参数有误")
+			}
+			var sr *configure.ServerRaw
+			sr, err = which.LocateServer()
+			if err != nil {
+				return
+			}
+			sr.VmessInfo = n.VmessInfo
+			err = configure.SetServer(ind, n.ToServerRaw())
+			cs := configure.GetConnectedServer()
+			if which.TYPE == cs.TYPE && which.ID == cs.ID {
+				err = v2ray.UpdateV2rayWithConnectedServer()
+			}
+		} else {
+			//新建
+			//后端NodeData转前端TouchServerRaw压入TouchRaw.Servers
+			err = configure.AppendServer(n.ToServerRaw())
+		}
 	} else {
 		//不是ss://也不是vmess://，有可能是订阅地址
 		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
@@ -37,7 +60,7 @@ func Import(url string) (err error) {
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
 		servers := make([]configure.ServerRaw, len(infos))
 		for i, v := range infos {
-			servers[i] = *v.ToTouchServerRaw()
+			servers[i] = *v.ToServerRaw()
 		}
 		err = configure.AppendSubscription(&configure.SubscriptionRaw{
 			Address: url,

@@ -123,7 +123,7 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 		return
 	}
 	info := vmessInfo.VmessInfo{
-		Protocol: "shadowsocks",
+		Protocol: "ss",
 		Net:      subMatch[1],
 		ID:       subMatch[2],
 		Add:      subMatch[3],

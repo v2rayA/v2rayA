@@ -157,7 +157,7 @@ export default {
         parent: this,
         component: ModalSetting,
         hasModalCard: true,
-        canCancel: false
+        canCancel: true
       });
     },
     handleClickAbout() {

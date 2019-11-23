@@ -19,7 +19,7 @@ RequestData: {
 	"url": "ss://..."
 }
 */
-func Resolving(ctx *gin.Context) {
+func GetResolving(ctx *gin.Context) {
 	var (
 		n   *nodeData.NodeData
 		err error

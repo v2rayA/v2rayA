@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Version(ctx *gin.Context) {
+func GetVersion(ctx *gin.Context) {
 	tools.ResponseSuccess(ctx, gin.H{
 		"version":       global.Version,
 		"dockerMode":    global.ServiceControlMode == global.DockerMode,

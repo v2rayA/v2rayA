@@ -194,7 +194,7 @@ func NewTemplate() (tmpl *Template) {
 
 /*
 根据传入的 VmessInfo 填充模板
-当协议是shadowsocks时，v.Net对应Method，v.ID对应Password
+当协议是ss时，v.Net对应Method，v.ID对应Password
 */
 func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	var tmplJson TmplJson
@@ -266,7 +266,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
 		}
-	case "shadowsocks":
+	case "ss":
 		t.Outbounds[0].Settings.Servers = []Server{
 			{
 				Address:  v.Add,

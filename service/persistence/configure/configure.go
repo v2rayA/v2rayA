@@ -55,6 +55,9 @@ func SetSubscriptions(subscriptions []SubscriptionRaw) (err error) {
 func SetServers(servers []ServerRaw) (err error) {
 	return persistence.Set("servers", servers)
 }
+func SetServer(index int, server *ServerRaw) (err error) {
+	return persistence.Set(fmt.Sprintf("servers.%d", index), server)
+}
 func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 	return persistence.Set(fmt.Sprintf("subscriptions.%d", index), subscription)
 }

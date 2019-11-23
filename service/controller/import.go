@@ -1,22 +1,24 @@
 package controller
 
 import (
+	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
 
-func Import(ctx *gin.Context) {
+func PostImport(ctx *gin.Context) {
 	var data struct {
-		URL string `json:"url"`
+		URL   string `json:"url"`
+		Which *configure.Which
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	err = service.Import(data.URL)
+	err = service.Import(data.URL, data.Which)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
