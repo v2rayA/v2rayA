@@ -5,9 +5,10 @@ chmod 600 ./install/deploy_key
 ssh-keyscan -H aur.archlinux.org >>~/.ssh/known_hosts
 git config user.name "$(git show -s --format='%an')"
 git config user.email "$(git show -s --format='%ae')"
+cp -f install/PKGBUILD install/.SRCINFO install/.INSTALL /tmp/
+cd /tmp/
 git clone ssh://aur@aur.archlinux.org/v2raya.git
-cp -f install/PKGBUILD install/.SRCINFO install/.INSTALL ./v2raya/
-mv v2raya /tmp/v2raya #换个地方，不让git仓库有包含关系
+sudo cp -f /tmp/PKGBUILD /tmp/.SRCINFO /tmp/.INSTALL /tmp/v2raya/
 cd /tmp/v2raya
 sed -i s/{{pkgver}}/${VERSION:1}/g PKGBUILD
 sed -i s/{{pkgver}}/${VERSION:1}/g .SRCINFO
