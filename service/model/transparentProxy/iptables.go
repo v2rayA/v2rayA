@@ -83,16 +83,18 @@ func (t *IpTablesMangle) RestoreRules() error {
 
 func DeleteRules() error {
 	commands := `
-# 删除策略路由
 ip rule del fwmark 1 table 100 
-ip route del local 0.0.0.0/0 dev lo table 100
-# 删除iptables链
-iptables -t mangle -F V2RAY
-iptables -t mangle -D PREROUTING -j V2RAY
-iptables -t mangle -X V2RAY
-iptables -t mangle -F V2RAY_MASK
-iptables -t mangle -D OUTPUT -j V2RAY_MASK
-iptables -t mangle -X V2RAY_MASK
+ip route del local 0/0 dev lo table 100
+
+sudo iptables -t mangle -F SSTP_OUT
+sudo iptables -t mangle -D OUTPUT -j SSTP_OUT
+sudo iptables -t mangle -X SSTP_OUT
+sudo iptables -t mangle -F SSTP_PRE
+sudo iptables -t mangle -D PREROUTING -j SSTP_PRE
+sudo iptables -t mangle -X SSTP_PRE
+sudo iptables -t mangle -F LOG
+sudo iptables -t mangle -F SETMARK
+sudo iptables -t mangle -X SETMARK
 `
 	if global.ServiceControlMode == global.DockerMode {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
@@ -103,43 +105,52 @@ iptables -t mangle -X V2RAY_MASK
 func WriteRules() error {
 	commands := `
 # 设置策略路由
-ip rule add fwmark 1 table 100 
-ip route add local 0.0.0.0/0 dev lo table 100
+ip rule add fwmark 1 table 100
+ip route add local 0/0 dev lo table 100
 
-# 代理局域网设备
-iptables -t mangle -N V2RAY
-iptables -t mangle -A V2RAY -d 0.0.0.0/8 -j RETURN
-iptables -t mangle -A V2RAY -d 10.0.0.0/8 -j RETURN
-iptables -t mangle -A V2RAY -d 127.0.0.0/8 -j RETURN
-iptables -t mangle -A V2RAY -d 169.254.0.0/16 -j RETURN
-iptables -t mangle -A V2RAY -d 172.16.0.0/12 -j RETURN
-iptables -t mangle -A V2RAY -d 192.168.0.0/16 -j RETURN
-iptables -t mangle -A V2RAY -d 224.0.0.0/4 -j RETURN
-iptables -t mangle -A V2RAY -d 240.0.0.0/4 -j RETURN
-iptables -t mangle -A V2RAY -d 255.255.255.255/32 -j RETURN 
-iptables -t mangle -A V2RAY -i docker+ -j RETURN
-iptables -t mangle -A V2RAY -p udp -j TPROXY --on-port 12345 --tproxy-mark 1 # 给 UDP 打标记 1，转发至 12345 端口
-iptables -t mangle -A V2RAY -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1 # 给 TCP 打标记 1，转发至 12345 端口
-iptables -t mangle -A PREROUTING -j V2RAY # 应用规则
+iptables -t mangle -N SSTP_OUT
+iptables -t mangle -N SSTP_PRE
 
-# 代理网关本机
-iptables -t mangle -N V2RAY_MASK
-iptables -t mangle -A V2RAY_MASK -d 0.0.0.0/8 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 10.0.0.0/8 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 127.0.0.0/8 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 169.254.0.0/16 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 172.16.0.0/12 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 192.168.0.0/16 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 224.0.0.0/4 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 240.0.0.0/4 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 224.0.0.0/4 -j RETURN 
-iptables -t mangle -A V2RAY_MASK -d 255.255.255.255/32 -j RETURN 
-iptables -t mangle -A V2RAY_MASK -j RETURN -m mark --mark 0xff    # 直连 SO_MARK 为 0xff 的流量(0xff 是 16 进制数，数值上等同与上面V2Ray 配置的 255)，此规则目的是避免代理本机(网关)流量出现回环问题
-iptables -t mangle -A V2RAY -i docker+ -j RETURN
-iptables -t mangle -A V2RAY_MASK -p udp -j MARK --set-mark 1   # 给 UDP 打标记,重路由
-iptables -t mangle -A V2RAY_MASK -p tcp -j MARK --set-mark 1   # 给 TCP 打标记,重路由
-iptables -t mangle -A OUTPUT -j V2RAY_MASK # 应用规则
-` // 来自https://guide.v2fly.org/app/tproxy.html
+iptables -t mangle -A OUTPUT -j SSTP_OUT
+iptables -t mangle -A PREROUTING -j SSTP_PRE
+# 打上 iptables 标记，mark 了的会走代理
+iptables -t mangle -N SETMARK
+
+iptables -t mangle -A SETMARK -m mark --mark 1 -j RETURN
+iptables -t mangle -A SETMARK -m mark --mark 0xff -j RETURN
+iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+iptables -t mangle -A SETMARK -d 0.0.0.0/32 -j RETURN
+iptables -t mangle -A SETMARK -d 10.0.0.0/8 -j RETURN
+iptables -t mangle -A SETMARK -d 127.0.0.0/8 -j RETURN
+iptables -t mangle -A SETMARK -d 169.254.0.0/16 -j RETURN
+iptables -t mangle -A SETMARK -d 172.16.0.0/12 -j RETURN
+iptables -t mangle -A SETMARK -d 192.168.0.0/16 -j RETURN
+iptables -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
+iptables -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
+iptables -t mangle -A SETMARK -d 255.255.255.255/32 -j RETURN
+
+iptables -t mangle -A SETMARK -s 224.0.0.0/4 -j RETURN
+iptables -t mangle -A SETMARK -s 240.0.0.0/4 -j RETURN
+iptables -t mangle -A SETMARK -s 255.255.255.255/32 -j RETURN
+
+iptables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
+iptables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
+
+# 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
+iptables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
+iptables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
+iptables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
+iptables -t mangle -A SSTP_OUT -p tcp -j RETURN
+iptables -t mangle -A SSTP_OUT -p udp -j RETURN
+
+# 遍历内网地址段，处理内网主机发过来的 TCP 和 UDP
+	# 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
+	iptables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
+	iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
+# 将所有打了标记的 TCP 和 UDP 包透明地转发到代理的监听端口
+iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-ip 127.0.0.1 --on-port 12345 --tproxy-mark 1
+iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-ip 127.0.0.1 --on-port 12345 --tproxy-mark 1
+` //参考http://briteming.hatenablog.com/entry/2019/06/18/175518
 	if global.ServiceControlMode == global.DockerMode {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 	}

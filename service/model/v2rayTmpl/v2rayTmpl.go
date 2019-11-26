@@ -333,9 +333,6 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		t.Outbounds = append(t.Outbounds, Outbound{
 			Tag:      "dns-out",
 			Protocol: "dns",
-			StreamSettings: &StreamSettings{
-				Sockopt: &Sockopt{Mark: &mark},
-			},
 		})
 		for i := range t.Outbounds {
 			if t.Outbounds[i].Protocol == "blackhole" {

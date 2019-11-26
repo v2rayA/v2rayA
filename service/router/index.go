@@ -26,9 +26,6 @@ func Run() error {
 		noAuth.GET("version", controller.GetVersion)
 		noAuth.POST("login", controller.PostLogin)
 		noAuth.POST("account", controller.PostAccount)
-		noAuth.PUT("account", controller.PutAccount)
-		noAuth.GET("ports", controller.GetPorts)
-		noAuth.PUT("ports", controller.PutPorts)
 	}
 	auth := engine.Group("api")
 	auth.Use(func(ctx *gin.Context) {
@@ -57,6 +54,9 @@ func Run() error {
 		auth.PUT("setting", controller.PutSetting)
 		auth.PUT("gfwList", controller.PutGFWList)
 		auth.PUT("subscription", controller.PutSubscription)
+		noAuth.GET("ports", controller.GetPorts)
+		noAuth.PUT("ports", controller.PutPorts)
+		noAuth.PUT("account", controller.PutAccount)
 	}
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
 	return engine.Run(app.Address)

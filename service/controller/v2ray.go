@@ -33,12 +33,8 @@ func DeleteV2ray(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("Docker模式下无法关闭V2Ray，但可以断开节点连接"))
 		return
 	}
-	err := service.CheckAndStopTransparentProxy()
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
-	}
-	err = v2ray.StopAndDisableV2rayService()
+	_ = service.CheckAndStopTransparentProxy()
+	err := v2ray.StopAndDisableV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

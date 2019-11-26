@@ -19,11 +19,11 @@ func GetServiceControlMode() (mode SystemServiceControlMode) {
 		mode = DockerMode
 		return
 	}
-	if out, err := exec.Command("sh", "-c", "type -p systemctl").Output(); strings.Contains(string(out), "systemctl") && err == nil {
+	if out, err := exec.Command("sh", "-c", "which systemctl").Output(); err == nil && strings.Contains(string(out), "systemctl") {
 		mode = SystemctlMode
 		return
 	}
-	if out, err := exec.Command("sh", "-c", "type -p service").Output(); strings.Contains(string(out), "service") && err == nil {
+	if out, err := exec.Command("sh", "-c", "which service").Output(); err == nil && strings.Contains(string(out), "service") {
 		mode = ServiceMode
 		return
 	}

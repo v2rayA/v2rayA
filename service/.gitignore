@@ -1,8 +1,9 @@
-v2raya
-main.test.go
-V2RayA*
-.tr
-tmp
-gin-bin
-config.json
-vendor
+/v2raya
+/main.test.go
+/V2RayA*
+/.tr
+/tmp
+/gin-bin
+/config.json
+/vendor
+/main

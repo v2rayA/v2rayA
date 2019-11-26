@@ -78,7 +78,7 @@ func hello() {
 	color.Red.Println("V2RayLocationAsset is:", v2ray.GetV2rayLocationAsset())
 	if global.ServiceControlMode != global.DockerMode {
 		wd, _ := os.Getwd()
-		color.Red.Println("Service working directory is:", wd)
+		color.Red.Println("V2RayA working directory is:", wd)
 		color.Red.Println("Version:", global.Version)
 	} else {
 		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")

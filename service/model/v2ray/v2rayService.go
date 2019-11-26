@@ -112,7 +112,7 @@ func LiberalizeProcFile() (err error) {
 func IsV2rayServiceValid() bool {
 	switch global.ServiceControlMode {
 	case global.SystemctlMode:
-		out, err := exec.Command("sh", "-c", "systemctl list-unit-files v2ray.service|grep v2ray.service").Output()
+		out, err := exec.Command("sh", "-c", "systemctl list-unit-files|grep v2ray.service").Output()
 		return err == nil && len(bytes.TrimSpace(out)) > 0
 	case global.ServiceMode:
 		out, err := exec.Command("sh", "-c", "service v2ray status|grep not-found").Output()

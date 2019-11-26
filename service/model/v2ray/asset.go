@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 )
@@ -34,7 +35,7 @@ func GetV2rayLocationAsset() (s string) {
 		s, err = getV2rayWorkingDir()
 	}
 	if err != nil {
-		//再不行盲猜一个
+		//再不行只能盲猜一个
 		s = "/etc/v2ray"
 	}
 	v2rayLocationAsset = &s
@@ -42,14 +43,17 @@ func GetV2rayLocationAsset() (s string) {
 }
 
 func getV2rayWorkingDir() (string, error) {
-	out, err := exec.Command("sh", "-c", "type -p v2ray").CombinedOutput()
-	if err != nil {
-		out, err = exec.Command("sh", "-c", "which v2ray").CombinedOutput()
+	out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
+	if err == nil {
+		return strings.TrimSpace(string(out)), nil
 	}
+	p, _ := GetV2rayServiceFilePath()
+	out, err = exec.Command("sh", "-c", "cat "+p+"|grep ExecStart=").CombinedOutput()
 	if err != nil {
 		return "", errors.New(err.Error() + string(out))
 	}
-	return strings.TrimSpace(string(out)), nil
+	arr := strings.Split(strings.TrimSpace(string(out)), " ")
+	return path.Dir(arr[0][len("ExecStart="):]), nil
 }
 
 func IsH2yExists() bool {
