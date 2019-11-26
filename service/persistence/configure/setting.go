@@ -1,9 +1,5 @@
 package configure
 
-import (
-	"V2RayA/model/vmessInfo"
-)
-
 type Setting struct {
 	PacMode                    PacMode         `json:"pacMode"`
 	CustomPac                  CustomPac       `json:"customPac"`
@@ -47,14 +43,4 @@ type RoutingRule struct {
 	Tags      []string     `json:"tags"`      //SiteDAT文件的标签
 	MatchType PacMatchType `json:"matchType"` //是domain匹配还是ip匹配
 	RuleType  PacRuleType  `json:"ruleType"`  //在名单上的项进行直连、代理还是拦截
-}
-
-type ServerRaw struct {
-	VmessInfo vmessInfo.VmessInfo `json:"vmessInfo"`
-}
-
-type SubscriptionRaw struct {
-	Address string      `json:"address"`
-	Status  string      `json:"status"` //update time, error info, etc.
-	Servers []ServerRaw `json:"servers"`
 }

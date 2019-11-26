@@ -195,6 +195,9 @@
       <!--      </b-field>-->
     </section>
     <footer class="modal-card-foot flex-end">
+      <button class="button footer-absolute-left" type="button" @click="$emit('clickPorts')">
+        端口与地址
+      </button>
       <button class="button" type="button" @click="$parent.close()">
         取消
       </button>
@@ -407,5 +410,9 @@ export default {
 }
 .control:first-of-type:not(:last-of-type) .select select {
   border-radius: 4px 0 0 4px !important;
+}
+.footer-absolute-left {
+  position: absolute;
+  left: 20px;
 }
 </style>

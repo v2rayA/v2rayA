@@ -279,6 +279,18 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		return errors.New("不支持的协议: " + v.Protocol)
 	}
 
+	//根据配置修改端口
+	ports := configure.GetPorts()
+	if ports.Socks5 != 0 {
+		t.Inbounds[0].Port = ports.Socks5
+	}
+	if ports.Http != 0 {
+		t.Inbounds[1].Port = ports.Http
+	}
+	if ports.HttpWithPac != 0 {
+		t.Inbounds[2].Port = ports.HttpWithPac
+	}
+
 	//根据设置修改透明代理
 	if setting.Transparent != configure.TransparentClose {
 		//先修改DNS设置

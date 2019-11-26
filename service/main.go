@@ -13,6 +13,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/json-iterator/go/extra"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"path"
@@ -31,7 +32,10 @@ func checkEnvironment() {
 	if os.Getegid() != 0 {
 		log.Fatal("请以sudo或root权限执行本程序")
 	}
-	port := global.GetServiceConfig().Port
+	_, port, err := net.SplitHostPort(global.GetEnvironmentConfig().Address)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if occupied, which := tools.IsPortOccupied(port); occupied {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
@@ -40,7 +44,7 @@ func checkEnvironment() {
 func initConfigure() {
 	//初始化配置
 	if !configure.IsConfigureExists() {
-		_ = os.MkdirAll(path.Dir(global.GetServiceConfig().Config), os.ModeDir|0755)
+		_ = os.MkdirAll(path.Dir(global.GetEnvironmentConfig().Config), os.ModeDir|0755)
 		err := configure.SetConfigure(configure.New())
 		if err != nil {
 			log.Fatal(err)
@@ -79,6 +83,7 @@ func hello() {
 	} else {
 		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")
 	}
+	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 }
 func checkUpdate() {
 	setting := service.GetSetting()
@@ -149,7 +154,6 @@ func run() (err error) {
 		<-sigs
 		errch <- nil
 	}()
-	fmt.Println("Ctrl-C to quit")
 	if err = <-errch; err != nil {
 		return
 	}

@@ -17,6 +17,7 @@ type Configure struct {
 	ConnectedServer *Which            `json:"connectedServer"` //冗余一个信息，方便查找
 	Setting         *Setting          `json:"setting"`
 	Accounts        map[string]string `json:"accounts"`
+	Ports           Ports             `json:"ports"`
 }
 
 func New() *Configure {
@@ -25,6 +26,11 @@ func New() *Configure {
 		Subscriptions:   make([]SubscriptionRaw, 0),
 		ConnectedServer: nil,
 		Setting:         NewSetting(),
+		Ports: Ports{
+			Socks5:      20170,
+			Http:        20171,
+			HttpWithPac: 20172,
+		},
 	}
 }
 func decode(b []byte) (result []byte) {
@@ -69,6 +75,9 @@ func SetSetting(setting *Setting) (err error) {
 func SetTransparent(transparent TransparentMode) (err error) {
 	return persistence.Set("setting.transparent", transparent)
 }
+func SetPorts(ports *Ports) (err error) {
+	return persistence.Set("ports", ports)
+}
 
 func AppendServer(server *ServerRaw) (err error) {
 	return persistence.Append("servers", server)
@@ -78,7 +87,7 @@ func AppendSubscription(subscription *SubscriptionRaw) (err error) {
 }
 
 func IsConfigureExists() bool {
-	f, err := os.OpenFile(global.GetServiceConfig().Config, os.O_RDONLY, os.ModeAppend)
+	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDONLY, os.ModeAppend)
 	if err != nil {
 		return !os.IsNotExist(err)
 	}
@@ -100,6 +109,11 @@ func GetSetting() *Setting {
 	r := new(Setting)
 	_ = persistence.Get("setting", &r)
 	r.IpForward = transparentProxy.IsIpForwardOn() //永远用真实值
+	return r
+}
+func GetPorts() *Ports {
+	r := new(Ports)
+	_ = persistence.Get("ports", &r)
 	return r
 }
 func GetConnectedServer() *Which {

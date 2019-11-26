@@ -12,7 +12,7 @@ import (
 )
 
 func Get(path string, val interface{}) (err error) {
-	b, err := ioutil.ReadFile(global.GetServiceConfig().Config)
+	b, err := ioutil.ReadFile(global.GetEnvironmentConfig().Config)
 	if err != nil {
 		return
 	}
@@ -24,7 +24,7 @@ func Get(path string, val interface{}) (err error) {
 }
 
 func Exists(path string) bool {
-	b, err := ioutil.ReadFile(global.GetServiceConfig().Config)
+	b, err := ioutil.ReadFile(global.GetEnvironmentConfig().Config)
 	if err != nil {
 		return false
 	}
@@ -32,7 +32,7 @@ func Exists(path string) bool {
 	return v.Exists()
 }
 func GetArrayLen(path string) (length int, err error) {
-	b, err := ioutil.ReadFile(global.GetServiceConfig().Config)
+	b, err := ioutil.ReadFile(global.GetEnvironmentConfig().Config)
 	if err != nil {
 		return
 	}
@@ -46,7 +46,7 @@ func GetArrayLen(path string) (length int, err error) {
 	return len(v.Array()), nil
 }
 func GetObjectLen(path string) (length int, err error) {
-	b, err := ioutil.ReadFile(global.GetServiceConfig().Config)
+	b, err := ioutil.ReadFile(global.GetEnvironmentConfig().Config)
 	if err != nil {
 		return
 	}
@@ -63,9 +63,9 @@ func GetObjectLen(path string) (length int, err error) {
 func Set(path string, val interface{}) (err error) {
 	if path == "" || path == "." { //这种情况sjson不支持，特判用marshal搞定
 		b, _ := jsoniter.Marshal(val)
-		return ioutil.WriteFile(global.GetServiceConfig().Config, b, 0644)
+		return ioutil.WriteFile(global.GetEnvironmentConfig().Config, b, 0644)
 	}
-	f, err := os.OpenFile(global.GetServiceConfig().Config, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return
 	}

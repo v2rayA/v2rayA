@@ -67,6 +67,17 @@
       </template>
     </b-navbar>
     <node v-model="runningState" />
+    <b-modal
+      :active.sync="showCustomPorts"
+      has-modal-card
+      trap-focus
+      aria-role="dialog"
+      aria-modal
+      style="z-index: 1000"
+      class="modal-custom-address"
+    >
+      <ModalCustomAddress @close="showCustomPorts = false"></ModalCustomAddress>
+    </b-modal>
     <div id="login"></div>
   </div>
 </template>
@@ -76,9 +87,10 @@ import CONST from "@/assets/js/const";
 import ModalSetting from "@/components/modalSetting";
 import node from "@/components/node";
 import { Base64 } from "js-base64";
+import ModalCustomAddress from "./components/modalCustomPorts";
 
 export default {
-  components: { node },
+  components: { ModalCustomAddress, node },
   data() {
     return {
       statusMap: {
@@ -91,7 +103,8 @@ export default {
         running: CONST.INSPECTING_RUNNING,
         connectedServer: null,
         lastConnectedServer: null
-      }
+      },
+      showCustomPorts: false
     };
   },
   computed: {
@@ -105,6 +118,9 @@ export default {
     }
   },
   created() {
+    if (!localStorage.getItem("backendAddress")) {
+      localStorage.setItem("backendAddress", "http://localhost:2017");
+    }
     this.$axios({
       url: apiRoot + "/version"
     })
@@ -146,11 +162,25 @@ export default {
       .catch(err => {
         if (err.message === "Network Error" || err.response === undefined) {
           this.$buefy.snackbar.open({
-            message: "未检测到本地V2RayA服务端，请确保服务端正确监听2017端口",
-            type: "is-warning",
+            message: "您是否需要调整服务端地址？",
+            type: "is-primary",
+            queue: false,
+            indefinite: true,
             position: "is-top",
+            actionText: "是",
+            onAction: () => {
+              this.showCustomPorts = true;
+            }
+          });
+          this.$buefy.snackbar.open({
+            message: `未在 ${
+              localStorage["backendAddress"]
+            } 检测到V2RayA服务端，请确定V2RayA已正确安装且配置正确`,
+            type: "is-warning",
+            queue: false,
+            position: "is-top",
+            indefinite: true,
             actionText: "查看帮助",
-            duration: 60000,
             onAction: () => {
               window.open(
                 "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
@@ -173,11 +203,17 @@ export default {
       this.coverStatusText = "";
     },
     handleClickSetting() {
+      const that = this;
       this.$buefy.modal.open({
         parent: this,
         component: ModalSetting,
         hasModalCard: true,
-        canCancel: true
+        canCancel: true,
+        events: {
+          clickPorts() {
+            that.showCustomPorts = true;
+          }
+        }
       });
     },
     handleClickAbout() {

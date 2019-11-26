@@ -5,14 +5,13 @@ import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
-	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
 )
 
 func Run() error {
-	app := global.GetServiceConfig()
+	app := global.GetEnvironmentConfig()
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
@@ -28,6 +27,8 @@ func Run() error {
 		noAuth.POST("login", controller.PostLogin)
 		noAuth.POST("account", controller.PostAccount)
 		noAuth.PUT("account", controller.PutAccount)
+		noAuth.GET("ports", controller.GetPorts)
+		noAuth.PUT("ports", controller.PutPorts)
 	}
 	auth := engine.Group("api")
 	auth.Use(func(ctx *gin.Context) {
@@ -58,5 +59,5 @@ func Run() error {
 		auth.PUT("subscription", controller.PutSubscription)
 	}
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
-	return engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port))
+	return engine.Run(app.Address)
 }
