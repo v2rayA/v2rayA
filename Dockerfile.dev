@@ -1,14 +1,16 @@
 FROM golang
-# RUN echo "192.30.253.112 github.com" >>"/etc/hosts"
+# RUN echo "192.30.253.112 github.com" >"/etc/hosts"
 # RUN echo "151.101.185.194 github.global.ssl.fastly.net" >>"/etc/hosts"
-# 用gitee的fork加速
-RUN go get gitee.com/myzfon/gin
-# RUN go get github.com/codegangsta/gin
+RUN go get github.com/codegangsta/gin
 RUN echo "deb http://mirrors.ustc.edu.cn/debian stable main contrib non-free" > /etc/apt/sources.list
 RUN echo "deb http://mirrors.ustc.edu.cn/debian stable-updates main contrib non-free" >> /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get install -y psmisc ca-certificates
+RUN apt-get install -y iptables
 WORKDIR /service
 ENV GOPROXY=https://goproxy.io
 ENV CONFIG=../config.json
-ENTRYPOINT gin -p 2017 -i --buildArgs --bin ../V2RayA run
+ENV GIN_BIN=../V2RayA
+ENV GIN_GUILD_ARGS="-o ${GIN_BIN}"
+EXPOSE 2017
+ENTRYPOINT gin -a 2017 -i run

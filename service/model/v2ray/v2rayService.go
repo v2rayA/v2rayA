@@ -2,7 +2,9 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -10,23 +12,37 @@ import (
 )
 
 func EnableV2rayService() (err error) {
+	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode, global.CommonMode: //docker, common中无需enable service
 	case global.ServiceMode:
-		_, err = exec.Command("sh", "-c", "update-rc.d v2ray enable").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "update-rc.d v2ray enable").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	case global.SystemctlMode:
-		_, err = exec.Command("sh", "-c", "systemctl enable v2ray").Output()
+		out, err = exec.Command("sh", "-c", "systemctl enable v2ray").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	}
 	return
 }
 
 func DisableV2rayService() (err error) {
+	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode, global.CommonMode: //docker, common中无需disable service
 	case global.ServiceMode:
-		_, err = exec.Command("sh", "-c", "update-rc.d v2ray disable").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "update-rc.d v2ray disable").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	case global.SystemctlMode:
-		_, err = exec.Command("sh", "-c", "systemctl disable v2ray").Output()
+		out, err = exec.Command("sh", "-c", "systemctl disable v2ray").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	}
 	return
 }
@@ -91,4 +107,19 @@ func LiberalizeProcFile() (err error) {
 		err = RestartV2rayService()
 	}
 	return
+}
+
+func IsV2rayServiceValid() bool {
+	switch global.ServiceControlMode {
+	case global.SystemctlMode:
+		out, err := exec.Command("sh", "-c", "systemctl list-unit-files v2ray.service|grep v2ray.service").Output()
+		return err == nil && len(bytes.TrimSpace(out)) > 0
+	case global.ServiceMode:
+		out, err := exec.Command("sh", "-c", "service v2ray status|grep not-found").Output()
+		return err == nil && len(bytes.TrimSpace(out)) == 0
+	case global.DockerMode, global.CommonMode:
+		out, err := exec.Command("sh", "-c", fmt.Sprintf("ls %s/geoip.dat", GetV2rayLocationAsset())).Output()
+		return err == nil && len(bytes.TrimSpace(out)) > 0
+	}
+	return false
 }

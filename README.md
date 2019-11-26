@@ -22,7 +22,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 已支持：
 
-- [x] 全局透明代理（不支持 docker 模式）
+- [x] 全局透明代理
 - [x] V2Ray 服务控制
 - [x] 导入 vmess、ss、订阅地址
 - [x] 手动添加/修改节点
@@ -160,12 +160,15 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 20172: 带 PAC 的 HTTP 协议
 
+另外需要开放的端口为：
+
+12345: tproxy （全局透明代理所需）
+
 ### 在不同运行环境下程序表现将不同
 
 由于 docker 容器对 systemd 的限制性，在 docker 中将采用 pid 共享进程命名空间，volumes 共享存储空间，更新配置后通过结束进程触发 v2ray 容器的重启来更新配置，以无 inbounds 的配置代替断开连接，这是一种折中方案，会有如下影响：
 
 1. 在更换配置时略有卡顿
-2. 无法使用全局透明代理
 
 ### 支持 Windows、MacOSX 吗
 
@@ -189,7 +192,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 # 在 docker 环境中开发
 
 ```bash
-docker-compose -f docker-compose.dev.yml up
+docker-compose -f docker-compose.dev.yml up --build
 ```
 
 gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。

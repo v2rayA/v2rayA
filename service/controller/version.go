@@ -2,6 +2,7 @@ package controller
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/v2ray"
 	"V2RayA/service"
 	"V2RayA/tools"
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,7 @@ func GetVersion(ctx *gin.Context) {
 		"dockerMode":    global.ServiceControlMode == global.DockerMode,
 		"foundNew":      global.FoundNew,
 		"remoteVersion": global.RemoteVersion,
+		"serviceValid":  v2ray.IsV2rayServiceValid(),
 	})
 }
 

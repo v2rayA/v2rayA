@@ -8,7 +8,7 @@
       </template>
       <template slot="start">
         <b-navbar-item tag="div">
-          V2Ray状态：
+          v2ray-core状态：
           <b-tag
             id="statusTag"
             :type="statusMap[runningState.running]"
@@ -120,6 +120,14 @@ export default {
           }
           this.$buefy.toast.open(toastConf);
           localStorage["docker"] = res.data.data.dockerMode;
+          if (res.data.data.serviceValid === false) {
+            this.$buefy.toast.open({
+              message: "检测到v2ray-core可能未正确安装，请检查",
+              type: "is-danger",
+              position: "is-top",
+              duration: 5000
+            });
+          }
         }
       })
       .catch(err => {

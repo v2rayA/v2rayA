@@ -1,6 +1,7 @@
 package transparentProxy
 
 import (
+	"V2RayA/global"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -33,7 +34,7 @@ func execCommands(commands string, stopWhenError bool) error {
 func backupRules() (string, error) {
 	out, err := exec.Command("sh", "-c", "iptables-save -t mangle").CombinedOutput()
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error() + string(out))
 	}
 	return strings.TrimSpace(string(out)), nil
 }
@@ -57,9 +58,9 @@ func restoreRules(r string) error {
 		tmpfile.Close()
 		return err
 	}
-	_, err = exec.Command("sh", "-c", "iptables-restore < "+tmpfile.Name()).CombinedOutput()
+	out, err := exec.Command("sh", "-c", "iptables-restore < "+tmpfile.Name()).CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(err.Error() + string(out))
 	}
 	if err = tmpfile.Close(); err != nil {
 		return err
@@ -93,6 +94,9 @@ iptables -t mangle -F V2RAY_MASK
 iptables -t mangle -D OUTPUT -j V2RAY_MASK
 iptables -t mangle -X V2RAY_MASK
 `
+	if global.ServiceControlMode == global.DockerMode {
+		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
+	}
 	return execCommands(commands, false)
 }
 
@@ -138,6 +142,9 @@ iptables -t mangle -A V2RAY_MASK -p udp -j MARK --set-mark 1   # 给 UDP 打标�
 iptables -t mangle -A V2RAY_MASK -p tcp -j MARK --set-mark 1   # 给 TCP 打标记,重路由
 iptables -t mangle -A OUTPUT -j V2RAY_MASK # 应用规则
 ` // 来自https://guide.v2fly.org/app/tproxy.html
+	if global.ServiceControlMode == global.DockerMode {
+		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
+	}
 	if err := execCommands(commands, true); err != nil {
 		_ = DeleteRules()
 		return err

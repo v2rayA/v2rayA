@@ -47,6 +47,7 @@ func IsV2RayRunning() bool {
 	return true
 }
 func RestartV2rayService() (err error) {
+	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode:
 		//看inbounds是不是空的，是的话就补上
@@ -89,12 +90,21 @@ func RestartV2rayService() (err error) {
 			}
 		}
 	case global.ServiceMode:
-		_, err = exec.Command("sh", "-c", "service v2ray restart").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "service v2ray restart").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	case global.SystemctlMode:
-		_, err = exec.Command("sh", "-c", "systemctl restart v2ray").Output()
+		out, err = exec.Command("sh", "-c", "systemctl restart v2ray").Output()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	case global.CommonMode:
 		_, _ = exec.Command("sh", "-c", "killall -9 v2ray").CombinedOutput()
-		_, err = exec.Command("sh", "-c", "v2ray --config=/etc/v2ray/config.json").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "v2ray --config=/etc/v2ray/config.json").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	}
 	if err != nil {
 		if global.ServiceControlMode == global.DockerMode {
@@ -109,7 +119,11 @@ func RestartV2rayService() (err error) {
 }
 
 func WriteV2rayConfig(content []byte) (err error) {
-	return ioutil.WriteFile("/etc/v2ray/config.json", content, os.ModeAppend)
+	err = ioutil.WriteFile("/etc/v2ray/config.json", content, os.ModeAppend)
+	if err != nil {
+		return errors.New("WriteV2rayConfig: " + err.Error())
+	}
+	return
 }
 
 /*更新v2ray配置并重启*/
@@ -175,15 +189,25 @@ func pretendToStopV2rayService() (err error) {
 }
 
 func StopV2rayService() (err error) {
+	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode:
 		return pretendToStopV2rayService()
 	case global.CommonMode:
-		_, err = exec.Command("sh", "-c", "killall -9 v2ray").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "killall -9 v2ray").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	case global.ServiceMode:
-		_, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	case global.SystemctlMode:
-		_, err = exec.Command("sh", "-c", "systemctl stop v2ray").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "systemctl stop v2ray").CombinedOutput()
+		if err != nil {
+			err = errors.New(err.Error() + string(out))
+		}
 	}
 	if IsV2RayRunning() {
 		return errors.New("v2ray停止失败")

@@ -1,11 +1,14 @@
 version: "3"
 services:
   backend:
+    privileged: true
+    network_mode: host # --network host
     build:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - 2017:2017
+      - 2017:3000
+      - 12345:12345
     volumes:
       - shared-data:/etc/v2ray
       - ./service:/service:ro
@@ -13,11 +16,13 @@ services:
       - /etc/timezone:/etc/timezone:ro
 
   v2ray:
+    privileged: true
+    network_mode: host # --network host
     restart: always
     image: "v2ray/official"
     pid: service:backend
     environment:
-     - V2RAY_LOCATION_ASSET=/etc/v2ray
+      - V2RAY_LOCATION_ASSET=/etc/v2ray
     ports:
       - 20170-20172:20170-20172
     volumes:

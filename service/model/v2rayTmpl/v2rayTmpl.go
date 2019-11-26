@@ -1,7 +1,6 @@
 package v2rayTmpl
 
 import (
-	"V2RayA/global"
 	"V2RayA/model/transparentProxy"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
@@ -281,7 +280,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	}
 
 	//根据设置修改透明代理
-	if global.ServiceControlMode != global.DockerMode && setting.Transparent != configure.TransparentClose {
+	if setting.Transparent != configure.TransparentClose {
 		//先修改DNS设置
 		t.DNS = new(DNS)
 		ds := DnsServer{

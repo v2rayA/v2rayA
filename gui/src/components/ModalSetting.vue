@@ -51,11 +51,7 @@
         ></b-field
       >
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
-      <b-field
-        v-if="!dockerMode"
-        label-position="on-border"
-        class="with-icon-alert"
-      >
+      <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
           全局透明代理
           <b-tooltip
