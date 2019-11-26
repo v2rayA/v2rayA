@@ -2,11 +2,13 @@
 
 V2RayA 是 V2Ray 的一个 Web 客户端。
 
-尽管 V2Ray 的客户端很多，但在 Linux 上好用的却寥寥无几。jiangxufeng/v2rayL 是目前 Linux 上较好的一个客户端，但暂时无法满足我对用户体验的较高要求，决定手撸一个。
+V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
-得益于Web客户端的优势，你只需对前端稍作修改就可以将它部署在软路由或NAS上，并通过http访问管理你的节点。
+得益于Web客户端的优势，你可以轻松地将它部署在软路由或NAS上，并通过http访问管理你的节点。
+
+目前V2RayA仅在部分Linux发行版进行过充分测试，在使用过程中如果遇到问题，欢迎提出issue。
 
 项目地址：https://github.com/mzz2017/V2RayA
 
