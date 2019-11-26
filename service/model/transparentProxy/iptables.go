@@ -112,11 +112,12 @@ iptables -t mangle -A V2RAY -d 0.0.0.0/8 -j RETURN
 iptables -t mangle -A V2RAY -d 10.0.0.0/8 -j RETURN
 iptables -t mangle -A V2RAY -d 127.0.0.0/8 -j RETURN
 iptables -t mangle -A V2RAY -d 169.254.0.0/16 -j RETURN
-iptables -t mangle -A V2RAY -d 172.16.0.0/12 ! -o docker+ -j RETURN
+iptables -t mangle -A V2RAY -d 172.16.0.0/12 -j RETURN
 iptables -t mangle -A V2RAY -d 192.168.0.0/16 -j RETURN
 iptables -t mangle -A V2RAY -d 224.0.0.0/4 -j RETURN
 iptables -t mangle -A V2RAY -d 240.0.0.0/4 -j RETURN
 iptables -t mangle -A V2RAY -d 255.255.255.255/32 -j RETURN 
+iptables -t mangle -A V2RAY -i docker+ -j RETURN
 iptables -t mangle -A V2RAY -p udp -j TPROXY --on-port 12345 --tproxy-mark 1 # 给 UDP 打标记 1，转发至 12345 端口
 iptables -t mangle -A V2RAY -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1 # 给 TCP 打标记 1，转发至 12345 端口
 iptables -t mangle -A PREROUTING -j V2RAY # 应用规则
@@ -127,13 +128,14 @@ iptables -t mangle -A V2RAY_MASK -d 0.0.0.0/8 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 10.0.0.0/8 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 127.0.0.0/8 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 169.254.0.0/16 -j RETURN
-iptables -t mangle -A V2RAY_MASK -d 172.16.0.0/12 ! -o docker+ -j RETURN
+iptables -t mangle -A V2RAY_MASK -d 172.16.0.0/12 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 192.168.0.0/16 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 224.0.0.0/4 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 240.0.0.0/4 -j RETURN
 iptables -t mangle -A V2RAY_MASK -d 224.0.0.0/4 -j RETURN 
 iptables -t mangle -A V2RAY_MASK -d 255.255.255.255/32 -j RETURN 
 iptables -t mangle -A V2RAY_MASK -j RETURN -m mark --mark 0xff    # 直连 SO_MARK 为 0xff 的流量(0xff 是 16 进制数，数值上等同与上面V2Ray 配置的 255)，此规则目的是避免代理本机(网关)流量出现回环问题
+iptables -t mangle -A V2RAY -i docker+ -j RETURN
 iptables -t mangle -A V2RAY_MASK -p udp -j MARK --set-mark 1   # 给 UDP 打标记,重路由
 iptables -t mangle -A V2RAY_MASK -p tcp -j MARK --set-mark 1   # 给 TCP 打标记,重路由
 iptables -t mangle -A OUTPUT -j V2RAY_MASK # 应用规则
