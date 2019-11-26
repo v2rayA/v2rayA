@@ -108,16 +108,17 @@ func WriteRules() error {
 ip rule add fwmark 1 table 100
 ip route add local 0/0 dev lo table 100
 
+# 建链
 iptables -t mangle -N SSTP_OUT
 iptables -t mangle -N SSTP_PRE
-
 iptables -t mangle -A OUTPUT -j SSTP_OUT
 iptables -t mangle -A PREROUTING -j SSTP_PRE
+
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
-
 iptables -t mangle -A SETMARK -m mark --mark 1 -j RETURN
 iptables -t mangle -A SETMARK -m mark --mark 0xff -j RETURN
+iptables -t mangle -A SETMARK -i docker+ -j RETURN
 iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -d 0.0.0.0/32 -j RETURN
 iptables -t mangle -A SETMARK -d 10.0.0.0/8 -j RETURN
@@ -128,25 +129,19 @@ iptables -t mangle -A SETMARK -d 192.168.0.0/16 -j RETURN
 iptables -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
 iptables -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
 iptables -t mangle -A SETMARK -d 255.255.255.255/32 -j RETURN
-
 iptables -t mangle -A SETMARK -s 224.0.0.0/4 -j RETURN
 iptables -t mangle -A SETMARK -s 240.0.0.0/4 -j RETURN
 iptables -t mangle -A SETMARK -s 255.255.255.255/32 -j RETURN
-
 iptables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
 
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
-iptables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
 iptables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
-iptables -t mangle -A SSTP_OUT -p tcp -j RETURN
-iptables -t mangle -A SSTP_OUT -p udp -j RETURN
 
-# 遍历内网地址段，处理内网主机发过来的 TCP 和 UDP
-	# 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
-	iptables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
-	iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
+# 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
+iptables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
+iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 # 将所有打了标记的 TCP 和 UDP 包透明地转发到代理的监听端口
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-ip 127.0.0.1 --on-port 12345 --tproxy-mark 1
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-ip 127.0.0.1 --on-port 12345 --tproxy-mark 1
