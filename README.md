@@ -138,7 +138,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
    注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
 
-5. 拉取源码，**使用 docker-compose 部署**。该方法不支持全局透明代理。
+5. 拉取源码，**使用 docker-compose 部署**。
 
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
@@ -146,7 +146,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    docker-compose up -d --build
    ```
 
-6. **使用 docker 命令部署**。该方法不支持全局透明代理。
+6. **使用 docker 命令部署**。注意在启动v2ray及v2raya容器时添加`--privileged --network host`以支持全局透明代理。
 
    我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
 
