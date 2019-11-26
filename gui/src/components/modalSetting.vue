@@ -208,7 +208,7 @@
 <script>
 import { handleResponse } from "@/assets/js/utils";
 import dayjs from "dayjs";
-import ModalConfigurePac from "@/components/ModalConfigurePac";
+import ModalConfigurePac from "@/components/modalConfigurePac";
 import CusBInput from "./input/Input.vue";
 
 export default {

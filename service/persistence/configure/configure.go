@@ -6,6 +6,7 @@ import (
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -15,6 +16,7 @@ type Configure struct {
 	Subscriptions   []SubscriptionRaw `json:"subscriptions"`
 	ConnectedServer *Which            `json:"connectedServer"` //冗余一个信息，方便查找
 	Setting         *Setting          `json:"setting"`
+	Accounts        map[string]string `json:"accounts"`
 }
 
 func New() *Configure {
@@ -107,21 +109,21 @@ func GetConnectedServer() *Which {
 }
 
 func GetLenSubscriptions() int {
-	l, err := persistence.GetLen("subscriptions")
+	l, err := persistence.GetArrayLen("subscriptions")
 	if err != nil {
 		panic(err)
 	}
 	return l
 }
 func GetLenSubscriptionServers(sub int) int {
-	l, err := persistence.GetLen(fmt.Sprintf("subscriptions.%d.servers", sub))
+	l, err := persistence.GetArrayLen(fmt.Sprintf("subscriptions.%d.servers", sub))
 	if err != nil {
 		panic(err)
 	}
 	return l
 }
 func GetLenServers() int {
-	l, err := persistence.GetLen("servers")
+	l, err := persistence.GetArrayLen("servers")
 	if err != nil {
 		panic(err)
 	}
@@ -136,4 +138,26 @@ func ClearConnected() error {
 /*不会启动v2ray.service*/
 func SetConnect(wt *Which) (err error) {
 	return persistence.Set("connectedServer", wt)
+}
+
+func SetAccount(username, password string) (err error) {
+	path := fmt.Sprintf("accounts.%s", username)
+	return persistence.Set(path, password)
+}
+func ExistsAccount(username string) bool {
+	return persistence.Exists(fmt.Sprintf("accounts.%s", username))
+}
+
+func GetPasswordOfAccount(username string) (pwd string, err error) {
+	path := fmt.Sprintf("accounts.%s", username)
+	if !persistence.Exists(path) {
+		return "", errors.New("用户名不存在")
+	}
+	err = persistence.Get(path, &pwd)
+	return
+}
+
+func HasAnyAccounts() bool {
+	l, err := persistence.GetObjectLen("accounts")
+	return err == nil && l > 0
 }

@@ -3,6 +3,8 @@ package router
 import (
 	"V2RayA/controller"
 	"V2RayA/global"
+	"V2RayA/persistence/configure"
+	"V2RayA/tools"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -15,28 +17,45 @@ func Run() error {
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
+	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
 	engine.GET("/", func(ctx *gin.Context) {
 		ctx.String(200, `这里是V2RayA服务端，请配合前端GUI使用，方法：https://github.com/mzz2017/V2RayA/blob/master/README.md`)
 	})
-	g := engine.Group("api")
+	noAuth := engine.Group("api")
 	{
-		g.GET("version", controller.GetVersion)
-		g.GET("resolving", controller.GetResolving)
-		g.POST("import", controller.PostImport)
-		g.GET("touch", controller.GetTouch)
-		g.DELETE("touch", controller.DeleteTouch)
-		g.POST("connection", controller.PostConnection)
-		g.DELETE("connection", controller.DeleteConnection)
-		g.POST("v2ray", controller.PostV2ray)
-		g.DELETE("v2ray", controller.DeleteV2ray)
-		g.GET("pingLatency", controller.GetPingLatency)
-		g.GET("sharingAddress", controller.GetSharingAddress)
-		g.GET("remoteGFWListVersion", controller.GetRemoteGFWListVersion)
-		g.GET("setting", controller.GetSetting)
-		g.PUT("setting", controller.PutSetting)
-		g.PUT("gfwList", controller.PutGFWList)
-		g.PUT("subscription", controller.PutSubscription)
+		noAuth.GET("version", controller.GetVersion)
+		noAuth.POST("login", controller.PostLogin)
+		noAuth.POST("account", controller.PostAccount)
+		noAuth.PUT("account", controller.PutAccount)
+	}
+	auth := engine.Group("api")
+	auth.Use(func(ctx *gin.Context) {
+		if !configure.HasAnyAccounts() {
+			tools.Response(ctx, tools.UNAUTHORIZED, gin.H{
+				"first": true,
+			})
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
+	}, tools.JWTAuth(false))
+	{
+		auth.GET("resolving", controller.GetResolving)
+		auth.POST("import", controller.PostImport)
+		auth.GET("touch", controller.GetTouch)
+		auth.DELETE("touch", controller.DeleteTouch)
+		auth.POST("connection", controller.PostConnection)
+		auth.DELETE("connection", controller.DeleteConnection)
+		auth.POST("v2ray", controller.PostV2ray)
+		auth.DELETE("v2ray", controller.DeleteV2ray)
+		auth.GET("pingLatency", controller.GetPingLatency)
+		auth.GET("sharingAddress", controller.GetSharingAddress)
+		auth.GET("remoteGFWListVersion", controller.GetRemoteGFWListVersion)
+		auth.GET("setting", controller.GetSetting)
+		auth.PUT("setting", controller.PutSetting)
+		auth.PUT("gfwList", controller.PutGFWList)
+		auth.PUT("subscription", controller.PutSubscription)
 	}
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
 	return engine.Run(fmt.Sprintf("%v:%v", app.Address, app.Port))

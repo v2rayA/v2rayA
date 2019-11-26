@@ -21,12 +21,21 @@ func Response(ctx *gin.Context, code Code, data interface{}) {
 		status = http.StatusUnauthorized
 	}
 	if code == FAIL {
-		data = data.(string)
-		ctx.JSON(status, gin.H{
-			"code":    code,
-			"message": data,
-			"data":    nil,
-		})
+		switch data.(type) {
+		case string:
+			data = data.(string)
+			ctx.JSON(status, gin.H{
+				"code":    code,
+				"message": data,
+				"data":    nil,
+			})
+		default:
+			ctx.JSON(status, gin.H{
+				"code":    code,
+				"message": nil,
+				"data":    data,
+			})
+		}
 		return
 	}
 	ctx.JSON(status, gin.H{

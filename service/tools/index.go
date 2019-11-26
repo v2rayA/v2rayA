@@ -1,14 +1,17 @@
 package tools
 
-import "github.com/matoous/go-nanoid"
+import (
+	"github.com/matoous/go-nanoid"
+	"log"
+)
 
 var secret string
 
 func init() {
-	//屡次启动的Secret都不一样
+	//屡次启动的secret都不一样
 	id, err := gonanoid.Nanoid()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	secret = id
 }

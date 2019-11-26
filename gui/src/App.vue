@@ -40,7 +40,7 @@
           class="menudropdown"
         >
           <a slot="trigger" class="navbar-item" role="button">
-            <span class="no-select">mzz2017</span>
+            <span class="no-select">{{ username }}</span>
             <i
               class="iconfont icon-caret-down"
               style="position: relative; top: 1px; left:2px"
@@ -48,13 +48,14 @@
           </a>
 
           <b-dropdown-item custom aria-role="menuitem">
-            Logged as <b>mzz2017</b>
+            Logged as <b>{{ username }}</b>
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item
             value="logout"
             aria-role="menuitem"
             class="no-select"
+            @click="handleClickLogout"
           >
             <i
               class="iconfont icon-logout"
@@ -66,13 +67,15 @@
       </template>
     </b-navbar>
     <node v-model="runningState" />
+    <div id="login"></div>
   </div>
 </template>
 
 <script>
 import CONST from "@/assets/js/const";
-import ModalSetting from "@/components/ModalSetting";
+import ModalSetting from "@/components/modalSetting";
 import node from "@/components/node";
+import { Base64 } from "js-base64";
 
 export default {
   components: { node },
@@ -90,6 +93,16 @@ export default {
         lastConnectedServer: null
       }
     };
+  },
+  computed: {
+    username() {
+      let token = localStorage["token"];
+      if (!token) {
+        return "未登录";
+      }
+      let payload = JSON.parse(Base64.decode(token.split(".")[1]));
+      return payload["uname"];
+    }
   },
   created() {
     this.$axios({
@@ -131,8 +144,7 @@ export default {
         }
       })
       .catch(err => {
-        if (err.message === "Network Error") {
-          console.log("todo", Object.assign({}, err)); //TODO
+        if (err.message === "Network Error" || err.response === undefined) {
           this.$buefy.snackbar.open({
             message: "未检测到本地V2RayA服务端，请确保服务端正确监听2017端口",
             type: "is-warning",
@@ -183,6 +195,8 @@ export default {
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20170: SOCKS协议</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20171: HTTP协议</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20172: 带PAC的HTTP协议</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">其他端口：</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12345: tproxy （全局透明代理所需）</p>
                         <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当docker容器被清除时配置也将随之消失，请做好备份。</p>
                         <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>
                     </section>
@@ -238,6 +252,10 @@ export default {
           }
         });
       }
+    },
+    handleClickLogout() {
+      localStorage.removeItem("token");
+      window.location.reload();
     }
   }
 };

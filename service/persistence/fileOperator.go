@@ -31,7 +31,7 @@ func Exists(path string) bool {
 	v := gjson.GetBytes(b, path)
 	return v.Exists()
 }
-func GetLen(path string) (length int, err error) {
+func GetArrayLen(path string) (length int, err error) {
 	b, err := ioutil.ReadFile(global.GetServiceConfig().Config)
 	if err != nil {
 		return
@@ -44,6 +44,20 @@ func GetLen(path string) (length int, err error) {
 		return -1, errors.New("不是数组")
 	}
 	return len(v.Array()), nil
+}
+func GetObjectLen(path string) (length int, err error) {
+	b, err := ioutil.ReadFile(global.GetServiceConfig().Config)
+	if err != nil {
+		return
+	}
+	v := gjson.GetBytes(b, path)
+	if !v.Exists() {
+		return -1, errors.New("路径不存在")
+	}
+	if !v.IsObject() {
+		return -1, errors.New("不是对象")
+	}
+	return len(v.Map()), nil
 }
 
 func Set(path string, val interface{}) (err error) {

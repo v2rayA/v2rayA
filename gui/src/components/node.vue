@@ -328,7 +328,7 @@ import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
-import ModalServer from "@/components/ModalServer";
+import ModalServer from "@/components/modalServer";
 
 export default {
   name: "Node",

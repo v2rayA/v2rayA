@@ -2,11 +2,11 @@ package tools
 
 import (
 	"encoding/base64"
-	"github.com/json-iterator/go"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gin-gonic/gin"
+	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
@@ -22,11 +22,6 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 			})
 		if err != nil {
 			Response(ctx, UNAUTHORIZED, err.Error())
-			ctx.Abort()
-			return
-		}
-		if !token.Valid {
-			Response(ctx, UNAUTHORIZED, "Token is invalid!")
 			ctx.Abort()
 			return
 		}
@@ -70,7 +65,7 @@ func ValidToken(token, secret string) (err error) {
 	return nil
 }
 
-func MakeJWT(payload map[string]string, secret []byte, expDuration *time.Duration) (jwt string, err error) {
+func MakeJWT(payload map[string]string, expDuration *time.Duration) (jwt string, err error) {
 	headerJSON, _ := jsoniter.Marshal(map[string]string{
 		"alg": "HS256",
 		"typ": "JWT",
@@ -85,7 +80,7 @@ func MakeJWT(payload map[string]string, secret []byte, expDuration *time.Duratio
 	bh := base64.RawURLEncoding.EncodeToString(headerJSON)
 	bp := base64.RawURLEncoding.EncodeToString(payloadJSON)
 	signBefore := bh + "." + bp
-	signature := HMACSHA256(signBefore, secret)
+	signature := HMACSHA256(signBefore, []byte(secret))
 	bs := base64.RawURLEncoding.EncodeToString(signature)
 	return signBefore + "." + bs, nil
 }

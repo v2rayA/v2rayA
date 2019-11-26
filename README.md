@@ -34,6 +34,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 - [x] 多路复用、TCPFastOpen 支持
 - [x] 以service方式启动
 - [x] 检查版本更新
+- [x] 登陆与安全
 
 待开发：
 
@@ -41,7 +42,6 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 - [ ] 自定义 PAC 路由规则
 - [ ] QUIC、SSR 协议支持
 - [ ] 服务端端口号配置、前端可指定服务端地址
-- [ ] 登陆与安全
 
 ## 界面截图
 
@@ -131,8 +131,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
    ```bash
    git clone https://github.com/mzz2017/V2RayA.git
    cd V2RayA/service
-   # set goproxy.io as the proxy of golang
-   export GOPROXY=https://goproxy.io
+   export GOPROXY=https://goproxy.io # set goproxy.io as the proxy of go modules
    sudo go run main.go
    ```
 
@@ -160,7 +159,7 @@ V2RayA 是 V2Ray 的一个 Web 客户端。
 
 20172: 带 PAC 的 HTTP 协议
 
-另外需要开放的端口为：
+其他端口：
 
 12345: tproxy （全局透明代理所需）
 
