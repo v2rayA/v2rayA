@@ -16,7 +16,7 @@
           ></b-input
         >
       </b-field>
-      <template v-show="backendReady && dockerMode === false">
+      <template v-if="backendReady && dockerMode === false">
         <b-field label="socks5端口" label-position="on-border">
           <b-input
             v-model="table.socks5"
@@ -99,6 +99,7 @@ export default {
       url: apiRoot + "/ports"
     }).then(res => {
       handleResponse(res, this, () => {
+        console.log("!")
         this.backendReady = true;
         Object.assign(this.table, res.data.data);
       });
