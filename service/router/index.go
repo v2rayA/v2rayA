@@ -11,9 +11,7 @@ import (
 )
 
 func Run() error {
-	app := global.GetEnvironmentConfig()
-	engine := gin.New()
-	engine.Use(gin.Recovery())
+	engine := gin.Default()
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
 	corsConfig.AddAllowHeaders("Authorization")
@@ -59,5 +57,6 @@ func Run() error {
 		noAuth.PUT("account", controller.PutAccount)
 	}
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
+	app := global.GetEnvironmentConfig()
 	return engine.Run(app.Address)
 }
