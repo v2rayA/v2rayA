@@ -16,9 +16,9 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 ## Build Status
 
-| name   | docker image                                                                                                                                          | travis-ci                                                                                                                                          |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| V2RayA | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=TRAVIS-CI%20BUILD&style=for-the-badge)](https://travis-ci.org/mzz2017/V2RayA) |
+| name   | docker image                                                 | travis-ci                                                    | netlify                                                      |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| V2RayA | [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya?style=for-the-badge)](https://hub.docker.com/r/mzz2017/v2raya) | [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=TRAVIS-CI%20BUILD&style=for-the-badge)](https://travis-ci.org/mzz2017/V2RayA) | [![Netlify](https://img.shields.io/netlify/f93dbfa7-d14b-4968-a7a4-5e503d8bf5e5?label=netlify%20build&style=for-the-badge)](https://app.netlify.com/sites/xenodochial-jepsen-122e9b/deploys) |
 
 ## 功能清单
 
@@ -73,17 +73,17 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
 
    ```bash
-   bash <(curl -L -s https://install.direct/go.sh)
+   curl -L -s https://install.direct/go.sh | sudo -E bash -
    ```
    
    准备完毕后：
 
    ```bash
    # add public key
-   wget -qO - https://raw.githubusercontent.com/mzz2017/V2RayA/apt/key/public-key.asc | sudo apt-key add -
+   wget -qO - https://apt.v2raya.mzz.pub/key/public-key.asc | sudo apt-key add -
 
    # add V2RayA's repository
-   sudo add-apt-repository 'deb https://raw.githubusercontent.com/mzz2017/V2RayA/apt v2raya main'
+   sudo add-apt-repository 'deb https://apt.v2raya.mzz.pub v2raya main'
    sudo apt-get update
 
    # install V2RayA
@@ -119,7 +119,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
 
    ```bash
-   bash <(curl -L -s https://install.direct/go.sh)
+   curl -L -s https://install.direct/go.sh | sudo -E bash -
    ```
 
    准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
@@ -186,7 +186,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 1. 应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当 docker 容器被清除时配置也将随之消失，请做好备份。
 
-2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Render](https://render.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
+2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Netlify](https://app.netlify.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
 
 3. **不要将本项目用于不合法用途。**
 
