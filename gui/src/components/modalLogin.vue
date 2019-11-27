@@ -41,6 +41,7 @@ export default {
   }),
   methods: {
     handleClickSubmit() {
+      const that = this;
       if (this.first) {
         //register
         this.$axios({
@@ -66,13 +67,50 @@ export default {
             username: this.username,
             password: this.password
           }
-        }).then(res => {
-          handleResponse(res, this, () => {
-            localStorage["token"] = res.data.data.token;
-            this.$emit("close");
-            window.location.reload();
+        })
+          .then(res => {
+            handleResponse(res, this, () => {
+              localStorage["token"] = res.data.data.token;
+              this.$emit("close");
+              window.location.reload();
+            });
+          })
+          .catch(err => {
+            if (err.message.indexOf("Network Error") >= 0) {
+              //尝试后端是否能够接的上
+              that
+                .$axios({
+                  url: apiRoot + "/version"
+                })
+                .then(() => {
+                  this.$buefy.snackbar.open({
+                    message:
+                      "可能是因为Firefox等浏览器不支持在https站点访问http资源，请尝试换用Chrome，或访问备用站点",
+                    type: "is-warning",
+                    position: "is-top",
+                    duration: 5000,
+                    actionText: "访问备用站点",
+                    onAction: () => {
+                      this.$buefy.toast.open({
+                        message:
+                          "暂无备用站点，如果您有意提供自动部署的非ssl站点，可以邮件至m@mzz.pub或直接发起pull request",
+                        type: "is-warning",
+                        position: "is-top",
+                        queue: false,
+                        duration: 8000
+                      });
+                    }
+                  });
+                })
+                .catch(err => {
+                  this.$buefy.toast.open({
+                    message: err.message,
+                    type: "is-warning",
+                    position: "is-top"
+                  });
+                });
+            }
           });
-        });
       }
     }
   }
