@@ -26,11 +26,11 @@
         <!--          节点-->
         <!--        </b-navbar-item>-->
         <b-navbar-item tag="a" @click.native="handleClickSetting">
-          <i class="iconfont icon-setting" style="font-size: 1.25em"></i>
+          <i class="iconfont icon-setting" style="font-size: 1.25em" />
           设置
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickAbout">
-          <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
+          <i class="iconfont icon-heart" style="font-size: 1.25em" />
           关于
         </b-navbar-item>
         <b-dropdown
@@ -44,7 +44,7 @@
             <i
               class="iconfont icon-caret-down"
               style="position: relative; top: 1px; left:2px"
-            ></i>
+            />
           </a>
 
           <b-dropdown-item custom aria-role="menuitem">
@@ -60,7 +60,7 @@
             <i
               class="iconfont icon-logout"
               style="position: relative;top:1px;"
-            ></i>
+            />
             Logout
           </b-dropdown-item>
         </b-dropdown>
@@ -73,10 +73,9 @@
       trap-focus
       aria-role="dialog"
       aria-modal
-      style="z-index: 1000"
-      class="modal-custom-address"
+      class="modal-custom-ports"
     >
-      <ModalCustomAddress @close="showCustomPorts = false"></ModalCustomAddress>
+      <ModalCustomAddress @close="showCustomPorts = false" />
     </b-modal>
     <div id="login"></div>
   </div>
@@ -123,73 +122,41 @@ export default {
     }
     this.$axios({
       url: apiRoot + "/version"
-    })
-      .then(res => {
-        if (res.data.code === "SUCCESS") {
-          let toastConf = {
-            message: `V2RayA服务端正在运行于${
-              res.data.data.dockerMode ? "Docker环境中，使用兼容模式" : "本地"
-            }，Version: ${res.data.data.version}`,
-            type: "is-dark",
-            position: "is-top",
-            duration: 3000
-          };
-          if (res.data.data.foundNew) {
-            toastConf.duration = 5000;
-            toastConf.message += `，检测到新版本: ${res.data.data.remoteVersion}`;
-            toastConf.type = "is-danger";
-            // toastConf.onAction = () => {
-            //   if (res.data.data.foundNew) {
-            //     window.open(
-            //       "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
-            //       "_blank"
-            //     );
-            //   }
-            // };
-          }
-          this.$buefy.toast.open(toastConf);
-          localStorage["docker"] = res.data.data.dockerMode;
-          if (res.data.data.serviceValid === false) {
-            this.$buefy.toast.open({
-              message: "检测到v2ray-core可能未正确安装，请检查",
-              type: "is-danger",
-              position: "is-top",
-              duration: 5000
-            });
-          }
+    }).then(res => {
+      if (res.data.code === "SUCCESS") {
+        let toastConf = {
+          message: `V2RayA服务端正在运行于${
+            res.data.data.dockerMode ? "Docker环境中，使用兼容模式" : "本地"
+          }，Version: ${res.data.data.version}`,
+          type: "is-dark",
+          position: "is-top",
+          duration: 3000
+        };
+        if (res.data.data.foundNew) {
+          toastConf.duration = 5000;
+          toastConf.message += `，检测到新版本: ${res.data.data.remoteVersion}`;
+          toastConf.type = "is-danger";
+          // toastConf.onAction = () => {
+          //   if (res.data.data.foundNew) {
+          //     window.open(
+          //       "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
+          //       "_blank"
+          //     );
+          //   }
+          // };
         }
-      })
-      .catch(err => {
-        if (err.message === "Network Error" || err.response === undefined) {
-          this.$buefy.snackbar.open({
-            message: "您是否需要调整服务端地址？",
-            type: "is-primary",
-            queue: false,
-            indefinite: true,
+        this.$buefy.toast.open(toastConf);
+        localStorage["docker"] = res.data.data.dockerMode;
+        if (res.data.data.serviceValid === false) {
+          this.$buefy.toast.open({
+            message: "检测到v2ray-core可能未正确安装，请检查",
+            type: "is-danger",
             position: "is-top",
-            actionText: "是",
-            onAction: () => {
-              this.showCustomPorts = true;
-            }
-          });
-          this.$buefy.snackbar.open({
-            message: `未在 ${
-              localStorage["backendAddress"]
-            } 检测到V2RayA服务端，请确定V2RayA已正确安装且配置正确`,
-            type: "is-warning",
-            queue: false,
-            position: "is-top",
-            indefinite: true,
-            actionText: "查看帮助",
-            onAction: () => {
-              window.open(
-                "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
-                "_blank"
-              );
-            }
+            duration: 5000
           });
         }
-      });
+      }
+    });
   },
   methods: {
     handleOnStatusMouseEnter() {
@@ -390,5 +357,8 @@ a {
   font-size: 2.5rem;
   color: rgba(0, 0, 0, 0.45);
   animation: loading-rotate 2s infinite linear;
+}
+.modal-custom-ports {
+  z-index: 999;
 }
 </style>
