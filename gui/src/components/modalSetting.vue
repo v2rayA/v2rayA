@@ -213,7 +213,7 @@
 </template>
 
 <script>
-import { handleResponse } from "@/assets/js/utils";
+import { handleResponse, isIntranet } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalConfigurePac from "@/components/modalConfigurePac";
 import CusBInput from "./input/Input.vue";
@@ -290,30 +290,7 @@ export default {
         });
       });
     },
-    handleClickSubmit() {
-      if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
-        return;
-      }
-      if (this.pacMode === "custom" && this.customPac.url.length <= 0) {
-        this.$buefy.toast.open({
-          message: "自定义PAC模式下，SiteDAT file URL不能为空",
-          type: "is-warning",
-          position: "is-top",
-          duration: 3000
-        });
-        return;
-      } else if (
-        this.pacMode === "custom" &&
-        this.customPac.routingRules.length <= 0
-      ) {
-        this.$buefy.toast.open({
-          message: "您还没有配置PAC路由呢",
-          type: "is-warning",
-          position: "is-top",
-          duration: 3000
-        });
-        return;
-      }
+    requestUpdateSetting() {
       this.$axios({
         url: apiRoot + "/setting",
         method: "put",
@@ -345,6 +322,43 @@ export default {
           this.$parent.close();
         });
       });
+    },
+    handleClickSubmit() {
+      if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
+        return;
+      }
+      if (this.pacMode === "custom" && this.customPac.url.length <= 0) {
+        this.$buefy.toast.open({
+          message: "自定义PAC模式下，SiteDAT file URL不能为空",
+          type: "is-warning",
+          position: "is-top",
+          duration: 3000
+        });
+        return;
+      } else if (
+        this.pacMode === "custom" &&
+        this.customPac.routingRules.length <= 0
+      ) {
+        this.$buefy.toast.open({
+          message: "您还没有配置PAC路由呢",
+          type: "is-warning",
+          position: "is-top",
+          duration: 3000
+        });
+        return;
+      }
+      if (!isIntranet(apiRoot)) {
+        this.$buefy.dialog.confirm({
+          title: "警告",
+          message: `看起来您正在尝试对不同子网下的机器设置透明代理，这可能会导致该机器入方向的流量受到影响，甚至ssh无法连接，您确定要继续吗？`,
+          cancelText: "放弃",
+          confirmText: "请继续，我已悉知风险",
+          type: "is-danger",
+          onConfirm: () => this.requestUpdateSetting()
+        });
+      } else {
+        this.requestUpdateSetting();
+      }
     },
     handleClickConfigurePac() {
       const that = this;

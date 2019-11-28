@@ -355,7 +355,6 @@ export default {
   },
   watch: {
     "runningState.running"() {
-      console.log("watch runningState.running:", this.runningState);
       let val = this.runningState;
       this.updateConnectView(val);
       this.$emit("input", this.runningState);
@@ -405,17 +404,10 @@ export default {
           runningState.lastConnectedServer
         );
         server.connected = false;
-        console.log(server);
       }
       if (runningState.connectedServer) {
-        console.log(
-          "updateConnectView",
-          this.tableData,
-          runningState.connectedServer
-        );
         let server = locateServer(this.tableData, runningState.connectedServer);
         server.connected = true;
-        console.log(server);
       }
     },
     locateTabToConnected(whichServer) {
@@ -437,7 +429,6 @@ export default {
       }
       if (whichServer._type === CONST.SubscriptionServerType) {
         this.tab = sub + subscriptionServersOffset;
-        console.log("locate to", whichServer);
       } else if (whichServer._type === CONST.ServerType) {
         this.tab = serversOffset;
       }
@@ -526,7 +517,6 @@ export default {
       });
     },
     handleClickAboutConnection(row, sub) {
-      console.log(row);
       if (!row.connected) {
         //该节点并未处于连接状态，因此进行连接
         this.$axios({
@@ -573,7 +563,6 @@ export default {
       }
     },
     handleClickPing() {
-      console.log(this.checkedRows);
       let touches = JSON.stringify(
         this.checkedRows.map(x => {
           //穷举sub
@@ -685,7 +674,6 @@ export default {
                 </div>
 `
           });
-          console.log(row);
           this.$nextTick(() => {
             let add = res.data.data.sharingAddress;
             if (row._type === CONST.SubscriptionType) {

@@ -348,7 +348,6 @@ export default {
         coded = this.generateURL(this.ss);
       }
       this.$emit("submit", coded);
-      console.log(coded);
     }
   }
 };

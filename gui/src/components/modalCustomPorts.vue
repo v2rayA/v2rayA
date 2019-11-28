@@ -24,7 +24,7 @@
             type="number"
             min="1"
             required
-          ></b-input>
+          />
         </b-field>
         <b-field label="http端口" label-position="on-border">
           <b-input
@@ -33,7 +33,7 @@
             type="number"
             min="1"
             required
-          ></b-input>
+          />
         </b-field>
         <b-field label="http端口(with PAC)" label-position="on-border">
           <b-input
@@ -42,7 +42,7 @@
             type="number"
             min="1"
             required
-          ></b-input>
+          />
         </b-field>
         <b-message
           v-show="dockerMode"
@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import { handleResponse } from "../assets/js/utils";
+import { handleResponse, parseURL } from "../assets/js/utils";
 
 export default {
   name: "ModalCustomPorts",
@@ -99,7 +99,7 @@ export default {
       url: apiRoot + "/ports"
     }).then(res => {
       handleResponse(res, this, () => {
-        console.log("!")
+        console.log("!");
         this.backendReady = true;
         Object.assign(this.table, res.data.data);
       });
@@ -107,28 +107,35 @@ export default {
   },
   methods: {
     handleClickSubmit() {
-      localStorage["backendAddress"] = this.table.backendAddress;
+      //去除末位'/'
+      let backendAddress = this.table.backendAddress;
+      if (backendAddress.endsWith("/")) {
+        backendAddress = backendAddress.substr(0, backendAddress.length - 1);
+      }
+      //当前服务端是否正常工作
       if (this.backendReady) {
         this.$axios({
-          url: apiRoot + "/ports",
+          url: backendAddress + "/api/ports",
           method: "put",
           data: {
             socks5: parseInt(this.table.socks5),
             http: parseInt(this.table.http),
             httpWithPac: parseInt(this.table.httpWithPac)
           }
-        })
-          .then(res => {
-            handleResponse(res, this, () => {
-              this.$emit("close");
-            });
-          })
-          .catch(() => {
-            //ERROR
+        }).then(res => {
+          handleResponse(res, this, () => {
+            localStorage["backendAddress"] = backendAddress;
+            this.$emit("close");
           });
+        });
       } else {
-        this.$emit("close");
-        window.location.reload();
+        this.$axios({
+          url: backendAddress + "/api/version"
+        }).then(() => {
+          localStorage["backendAddress"] = backendAddress;
+          this.$emit("close");
+          window.location.reload();
+        });
       }
     }
   }
