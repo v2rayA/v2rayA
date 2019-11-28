@@ -1,6 +1,6 @@
 # V2RayA
 
-V2RayA 是 V2Ray 的一个 Web 客户端。
+V2RayA 是一个支持全局透明代理的 V2Ray Linux 客户端。
 
 V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
@@ -91,7 +91,6 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    ```
    
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
-   
 2. **使用yay/yaourt安装**（archlinux、manjaro）
    
    由于v2raya发布在AUR中，而pacman不支持AUR，因此建议使用主流的yay或yaourt作为替代方案
@@ -105,12 +104,11 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
    ```bash
    # assume command yay is available
-   yay -S v2raya
+   yay v2raya
    ```
 
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
-
-3. **使用二进制文件/安装包**（支持常见linux系统）
+3. **使用二进制文件 / 安装包**（支持常见linux系统）
 
    请确保已正确安装 v2ray-core
 
@@ -125,8 +123,17 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
    
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+4. 拉取源码，**使用 docker-compose 部署**。
 
-4. 当然，你也可以选择拉取源码，**通过 golang 启动**：
+   ```bash
+   git clone https://github.com/mzz2017/V2RayA.git
+   cd V2RayA
+   docker-compose up -d --build
+   ```
+5. **使用 docker 命令部署**。注意在启动v2ray及v2raya容器时添加`--privileged --network host`以支持全局透明代理。
+
+   我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
+6. 当然，你也可以选择拉取源码，**通过 golang 启动**：
    
    该方法同样需要正确安装v2ray-core，详情见上
 
@@ -139,17 +146,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
    注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
 
-5. 拉取源码，**使用 docker-compose 部署**。
-
-   ```bash
-   git clone https://github.com/mzz2017/V2RayA.git
-   cd V2RayA
-   docker-compose up -d --build
-   ```
-
-6. **使用 docker 命令部署**。注意在启动v2ray及v2raya容器时添加`--privileged --network host`以支持全局透明代理。
-
-   我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
+   
 
 默认使用的四个端口分别为：
 
@@ -163,7 +160,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 其他端口：
 
-12345: tproxy （全局透明代理所需）
+12345: tproxy（全局透明代理所需）
 
 ### 在不同运行环境下程序表现将不同
 
@@ -179,7 +176,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 ### 已知问题
 
-- 在 Firefox 使用将出现跨域问题[Bug 1488740](https://bugzilla.mozilla.org/show_bug.cgi?id=1488740)，但为了更好的安全性，demo站将保持SSL，建议使用Chrome访问。如果您有意提供自动部署的非ssl站点，可以邮件至m@mzz.pub或直接发起pull request，谢谢。
+- 在 Firefox 使用将出现跨域问题[Bug 1488740](https://bugzilla.mozilla.org/show_bug.cgi?id=1488740)，但为了更好的安全性，demo站将保持HTTPS，建议使用Chrome访问。如果您有意提供自动部署的HTTP站点，可以邮件至m@mzz.pub或直接发起pull request，谢谢。
 - 在 windows 环境下无法监听 2017 端口。据了解，Caddy 的 2015 端口也是不能监听的，后期将考虑支持自定义端口以解决问题。
 - 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已无法正常上网，恢复网络的一种简单可行方法是重新启动程序并关闭全局透明代理。不开启全局透明代理时，GoLand调试将不受影响。
 

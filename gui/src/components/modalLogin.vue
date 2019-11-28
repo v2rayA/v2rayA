@@ -11,16 +11,24 @@
         <img src="../assets/logo2.png" alt="V2RayA" />
       </p>
       <b-field label="Username" type="is-success">
-        <b-input v-model="username"></b-input>
+        <b-input v-model="username" @keyup.enter.native="handleEnter" />
       </b-field>
       <b-field label="Password" type="is-success">
-        <b-input v-model="password" type="password" maxlength="32"></b-input>
+        <b-input
+          v-model="password"
+          type="password"
+          maxlength="32"
+          @keyup.enter.native="handleEnter"
+        />
       </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
-      <button class="button is-primary" @click="handleClickSubmit">
+      <b-button
+        :class="{ 'is-primary': !first, 'is-twitter': first }"
+        @click="handleClickSubmit"
+      >
         {{ first ? "注册" : "登陆" }}
-      </button>
+      </b-button>
     </footer>
   </div>
 </template>
@@ -94,7 +102,7 @@ export default {
                     onAction: () => {
                       this.$buefy.toast.open({
                         message:
-                          "暂无备用站点，如果您有意提供自动部署的非ssl站点，可以邮件至m@mzz.pub或直接发起pull request",
+                          "暂无备用站点，如果您有意提供自动部署的HTTP站点，可以邮件至m@mzz.pub或直接发起pull request",
                         type: "is-warning",
                         position: "is-top",
                         queue: false,
@@ -113,6 +121,9 @@ export default {
             }
           });
       }
+    },
+    handleEnter() {
+      this.handleClickSubmit();
     }
   }
 };

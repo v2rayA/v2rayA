@@ -23,6 +23,7 @@ services:
      - V2RAY_LOCATION_ASSET=/etc/v2ray
     ports:
       - 20170-20172:20170-20172
+      - 12345:12345
     volumes:
       - shared-data:/etc/v2ray
     entrypoint: sh -c "cp -rfu /usr/bin/v2ray/*.dat /etc/v2ray && v2ray -config=/etc/v2ray/config.json"

@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-func CheckUpdate() (foundNew bool, remoteVerison string, err error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/mzz2017/V2RayA/apt/dists/v2raya/main/binary-amd64/Packages")
+func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
+	resp, err := http.Get("https://apt.v2raya.mzz.pub/dists/v2raya/main/binary-amd64/Packages")
 	if err != nil {
 		return
 	}

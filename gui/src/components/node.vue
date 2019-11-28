@@ -84,7 +84,7 @@
           </div>
         </div>
         <footer class="card-footer">
-          <a class="card-footer-item">创建</a>
+          <a class="card-footer-item" @click="handleClickCreate">创建</a>
           <a class="card-footer-item" @click="handleClickImport">导入</a>
         </footer>
       </b-collapse>

@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "clipboard": "^2.0.4",
-    "qrcode": "^1.4.2"
-  }
-}

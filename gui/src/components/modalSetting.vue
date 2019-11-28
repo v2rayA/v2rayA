@@ -64,7 +64,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            ></b-icon>
+            />
           </b-tooltip>
         </template>
         <b-select v-model="transparent" expanded>
@@ -95,7 +95,7 @@
             v-model="customPac.url"
             placeholder="SiteDAT file URL"
             custom-class="no-shadow"
-          ></b-input>
+          />
           <b-button
             v-if="pacMode === 'custom'"
             type="is-primary"
@@ -145,7 +145,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            ></b-icon>
+            />
           </b-tooltip>
         </template>
         <b-select v-model="tcpFastOpen" expanded>
@@ -167,7 +167,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            ></b-icon>
+            />
           </b-tooltip>
         </template>
         <b-select v-model="muxOn" expanded style="flex: 1">
@@ -185,7 +185,7 @@
           max="1024"
           validation-icon=" iconfont icon-alert"
           style="flex: 1"
-        ></cus-b-input>
+        />
       </b-field>
       <!--      <b-field label="SERVER列表" label-position="on-border">-->
       <!--        <b-select v-model="serverListMode" expanded>-->
@@ -195,8 +195,12 @@
       <!--      </b-field>-->
     </section>
     <footer class="modal-card-foot flex-end">
-      <button class="button footer-absolute-left" type="button" @click="$emit('clickPorts')">
-        端口与地址
+      <button
+        class="button footer-absolute-left"
+        type="button"
+        @click="$emit('clickPorts')"
+      >
+        地址与端口
       </button>
       <button class="button" type="button" @click="$parent.close()">
         取消

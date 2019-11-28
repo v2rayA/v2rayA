@@ -1,6 +1,6 @@
 **/V2RayA_*
 **/.git
 **/.idea
+**/.vscode
 **/*.test.go
 **/.tr
-

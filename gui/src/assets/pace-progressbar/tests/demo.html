@@ -1,0 +1,44 @@
+<head>
+  <link rel="stylesheet" href="../themes/blue/pace-theme-center-simple.css" />
+
+  <script>
+    paceOptions = {
+      elements: true
+    };
+  </script>
+  <script src="../pace.js"></script>
+  <script>
+    function load(time){
+      var x = new XMLHttpRequest()
+      x.open('GET', "http://localhost:5646/walter/" + time, true);
+      x.send();
+    };
+
+    load(20);
+    load(100);
+    load(500);
+    load(2000);
+    load(3000);
+
+    setTimeout(function(){
+      Pace.ignore(function(){
+        load(3100);
+      });
+    }, 4000);
+
+    Pace.on('hide', function(){
+      console.log('done');
+    });
+  </script>
+
+<body>
+  <input id="range" type="range" min="0" max="100">
+  <script>
+    range.addEventListener('input', function(){
+      document.querySelector('.pace').classList.remove('pace-inactive');
+      document.querySelector('.pace').classList.add('pace-active');
+
+      document.querySelector('.pace-progress').setAttribute('data-progress-text', range.value + '%');
+      document.querySelector('.pace-progress').setAttribute('style', '-webkit-transform: translate3d(' + range.value + '%, 0px, 0px)');
+    });
+  </script>
