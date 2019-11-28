@@ -144,15 +144,15 @@ axios.interceptors.response.use(
         duration: 10000,
         actionText: "切换为备用站点",
         onAction: () => {
-          // window.open("http://v.mzz.pub", "_self");
-          ToastProgrammatic.open({
-            message:
-              "暂无备用站点，如果您有意提供自动部署的HTTP站点，可以邮件至m@mzz.pub或直接发起pull request",
-            type: "is-warning",
-            position: "is-top",
-            queue: false,
-            duration: 10000
-          });
+          window.open("http://v.mzz.pub", "_self");
+          // ToastProgrammatic.open({
+          //   message:
+          //     "暂无备用站点，如果您有意提供自动部署的HTTP站点，可以邮件至m@mzz.pub或直接发起pull request",
+          //   type: "is-warning",
+          //   position: "is-top",
+          //   queue: false,
+          //   duration: 10000
+          // });
         }
       });
     } else {
