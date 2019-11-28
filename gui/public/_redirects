@@ -1,5 +1,0 @@
-# Redirect for single-page application
-/*    /index.html   200
-
-# Redirect default Netlify subdomain to primary domain
-https://xenodochial-jepsen-122e9b.netlify.com/* https://v2ray.mzz.pub/:splat 301!
