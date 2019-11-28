@@ -73,17 +73,17 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
 
    ```bash
-   curl -L -s https://install.direct/go.sh | sudo -E bash -
+   curl -L -s https://install.direct/go.sh | bash -s - --source jsdelivr
    ```
    
    准备完毕后：
 
    ```bash
    # add public key
-   wget -qO - https://apt.v2raya.mzz.pub/key/public-key.asc | sudo apt-key add -
+   wget -qO - https://cdn.jsdelivr.net/gh/mzz2017/V2RayA@apt/key/public-key.asc | sudo apt-key add -
 
    # add V2RayA's repository
-   sudo add-apt-repository 'deb https://apt.v2raya.mzz.pub v2raya main'
+   sudo add-apt-repository 'deb https://cdn.jsdelivr.net/gh/mzz2017/V2RayA@apt/ v2raya main'
    sudo apt-get update
 
    # install V2RayA
@@ -117,7 +117,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
 
    ```bash
-   curl -L -s https://install.direct/go.sh | sudo -E bash -
+   curl -L -s https://install.direct/go.sh | bash -s - --source jsdelivr
    ```
 
    准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
