@@ -1,4 +1,3 @@
-<!--TODO: 0则关闭端口-->
 <template>
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
@@ -23,7 +22,7 @@
             v-model="table.socks5"
             placeholder="20170"
             type="number"
-            min="1"
+            min="0"
             required
           ></b-input>
         </b-field>
@@ -32,7 +31,7 @@
             v-model="table.http"
             placeholder="20171"
             type="number"
-            min="1"
+            min="0"
             required
           ></b-input>
         </b-field>
@@ -41,7 +40,7 @@
             v-model="table.httpWithPac"
             placeholder="20172"
             type="number"
-            min="1"
+            min="0"
             required
           ></b-input>
         </b-field>
@@ -61,6 +60,13 @@
           <p v-show="dockerMode">
             docker模式下不能正确判断端口占用，请确保输入的端口未被其他程序占用。
           </p>
+        </b-message>
+        <b-message
+          type="is-info"
+          style="font-size:13px"
+          class="after-line-dot5"
+        >
+          如将端口设为0则表示关闭该端口
         </b-message>
       </template>
     </section>

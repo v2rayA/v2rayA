@@ -56,10 +56,10 @@ func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {
-	if configure.GetConnectedServer() == nil {
+	if configure.GetConnectedServerNotNil() == nil {
 		return http.DefaultClient, nil
 	}
-	setting := configure.GetSetting()
+	setting := configure.GetSettingNotNil()
 	switch setting.ProxyModeWhenSubscribe {
 	case configure.ProxyModePac:
 		c, err = GetHttpClientWithV2RayAPac()

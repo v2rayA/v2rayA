@@ -11,7 +11,7 @@ import (
 )
 
 func PostV2ray(ctx *gin.Context) {
-	cs := configure.GetConnectedServer()
+	cs := configure.GetConnectedServerNotNil()
 	if cs == nil {
 		tools.ResponseError(ctx, errors.New("不能启动V2Ray, 请选择一个节点连接"))
 		return
@@ -39,5 +39,5 @@ func DeleteV2ray(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": configure.GetConnectedServer()})
+	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": configure.GetConnectedServerNotNil()})
 }

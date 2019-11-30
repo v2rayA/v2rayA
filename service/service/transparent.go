@@ -7,7 +7,7 @@ import (
 )
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
-	setting := configure.GetSetting()
+	setting := configure.GetSettingNotNil()
 	if (!checkRunning || v2ray.IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
 		_ = iptables.DeleteRules()
 		err = iptables.WriteRules()

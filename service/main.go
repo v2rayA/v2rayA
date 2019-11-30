@@ -55,7 +55,7 @@ func initConfigure() {
 		_ = v2ray.LiberalizeProcFile()
 	}
 	//配置ip转发
-	setting := configure.GetSetting()
+	setting := configure.GetSettingNotNil()
 	if setting.Transparent != configure.TransparentClose {
 		if setting.IpForward != ipforward.IsIpForwardOn() {
 			_ = ipforward.WriteIpForward(setting.IpForward)
@@ -66,7 +66,7 @@ func initConfigure() {
 
 func checkConnection() {
 	//如果V2Ray正在运行，而配置文件中没有记录当前连接的节点是谁，就关掉V2Ray
-	if v2ray.IsV2RayRunning() && configure.GetConnectedServer() == nil {
+	if v2ray.IsV2RayRunning() && configure.GetConnectedServerNotNil() == nil {
 		err := v2ray.StopAndDisableV2rayService()
 		if err != nil {
 			log.Fatal(err)

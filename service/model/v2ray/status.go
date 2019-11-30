@@ -142,7 +142,7 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 }
 
 func UpdateV2rayWithConnectedServer() (err error) {
-	cs := configure.GetConnectedServer()
+	cs := configure.GetConnectedServerNotNil()
 	if cs == nil { //没有连接，把v2ray配置更新一下好了
 		return pretendToStopV2rayService()
 	}

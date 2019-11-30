@@ -111,7 +111,7 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 	if err != nil {
 		return
 	}
-	setting := configure.GetSetting()
+	setting := configure.GetSettingNotNil()
 	if v2ray.IsV2RayRunning() && //正在使用GFWList模式再重启
 		(setting.Transparent == configure.TransparentGfwlist ||
 			setting.Transparent == configure.TransparentClose && setting.PacMode == configure.GfwlistMode) {

@@ -8,7 +8,7 @@ import (
 )
 
 func GetSetting() *configure.Setting {
-	s := configure.GetSetting()
+	s := configure.GetSettingNotNil()
 	if s == nil {
 		s = configure.NewSetting()
 		_ = configure.SetSetting(s)
@@ -43,7 +43,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		return
 	}
 	//如果v2ray正在运行且有连接，则重写配置并重启连接，使得对PAC模式、TCPFastOpen等配置的修改立即生效
-	cs := configure.GetConnectedServer()
+	cs := configure.GetConnectedServerNotNil()
 	if cs != nil && v2ray.IsV2RayRunning() {
 		tsr, _ := cs.LocateServer()
 		err = v2ray.UpdateV2RayConfigAndRestart(&tsr.VmessInfo)

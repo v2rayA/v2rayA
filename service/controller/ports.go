@@ -24,5 +24,5 @@ func PutPorts(ctx *gin.Context) {
 }
 
 func GetPorts(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, service.GetPorts())
+	tools.ResponseSuccess(ctx, service.GetPortsDefault())
 }

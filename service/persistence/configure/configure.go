@@ -109,7 +109,7 @@ func GetSubscriptions() []SubscriptionRaw {
 	_ = persistence.Get("subscriptions", &r)
 	return r
 }
-func GetSetting() *Setting {
+func GetSettingNotNil() *Setting {
 	r := new(Setting)
 	_ = persistence.Get("setting", &r)
 	r.IpForward = ipforward.IsIpForwardOn() //永远用真实值
@@ -117,15 +117,18 @@ func GetSetting() *Setting {
 }
 func GetPorts() *Ports {
 	r := new(Ports)
-	_ = persistence.Get("ports", &r)
+	err := persistence.Get("ports", &r)
+	if err != nil {
+		return nil
+	}
 	return r
 }
-func GetPortWhiteList() *PortWhiteList {
+func GetPortWhiteListNotNil() *PortWhiteList {
 	r := new(PortWhiteList)
 	_ = persistence.Get("portWhiteList", &r)
 	return r
 }
-func GetConnectedServer() *Which {
+func GetConnectedServerNotNil() *Which {
 	r := new(Which)
 	_ = persistence.Get("connectedServer", &r)
 	return r

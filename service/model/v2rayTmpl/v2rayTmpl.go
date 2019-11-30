@@ -213,7 +213,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	t.Outbounds[0].Protocol = v.Protocol
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
-	setting := configure.GetSetting()
+	setting := configure.GetSettingNotNil()
 	switch strings.ToLower(v.Protocol) {
 	case "vmess":
 		t.Outbounds[0].Settings.Vnext = []Vnext{
@@ -281,16 +281,17 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 
 	//根据配置修改端口
 	ports := configure.GetPorts()
-	if ports.Socks5 != 0 {
-		t.Inbounds[0].Port = ports.Socks5
-	}
-	if ports.Http != 0 {
-		t.Inbounds[1].Port = ports.Http
-	}
-	if ports.HttpWithPac != 0 {
+	if ports != nil {
 		t.Inbounds[2].Port = ports.HttpWithPac
+		t.Inbounds[1].Port = ports.Http
+		t.Inbounds[0].Port = ports.Socks5
+		//端口为0则删除
+		for i := 2; i >= 0; i-- {
+			if t.Inbounds[i].Port == 0 {
+				t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
+			}
+		}
 	}
-
 	//根据设置修改透明代理
 	if setting.Transparent != configure.TransparentClose {
 		//先修改DNS设置

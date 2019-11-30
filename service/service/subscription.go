@@ -63,7 +63,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	}
 	tsrs := make([]configure.ServerRaw, len(infos))
 	var connectedServer *configure.ServerRaw
-	cs := configure.GetConnectedServer()
+	cs := configure.GetConnectedServerNotNil()
 	if cs != nil {
 		connectedServer, _ = cs.LocateServer()
 	}

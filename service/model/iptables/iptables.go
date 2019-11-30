@@ -154,7 +154,7 @@ iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-ip 127.0.0
 	//先看要不要把自己的端口加进去
 	selfPort := strings.Split(global.GetEnvironmentConfig().Address, ":")[1]
 	iSelfPort, _ := strconv.Atoi(selfPort)
-	wl := configure.GetPortWhiteList()
+	wl := configure.GetPortWhiteListNotNil()
 	has := false
 	for _, t := range wl.TCP {
 		if t == selfPort {

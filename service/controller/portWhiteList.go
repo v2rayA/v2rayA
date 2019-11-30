@@ -3,6 +3,7 @@ package controller
 import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
+	"V2RayA/service"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -11,7 +12,7 @@ import (
 )
 
 func GetPortWhiteList(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, configure.GetPortWhiteList())
+	tools.ResponseSuccess(ctx, configure.GetPortWhiteListNotNil())
 }
 
 func PutPortWhiteList(ctx *gin.Context) {
@@ -42,7 +43,7 @@ func PostPortWhiteList(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	p := configure.GetPorts()
+	p := service.GetPortsDefault()
 	listenPort := strings.Split(global.GetEnvironmentConfig().Address, ":")[1]
 	wpl := configure.PortWhiteList{
 		TCP: []string{"1:1023", data.RequestPort, listenPort, strconv.Itoa(p.Http), strconv.Itoa(p.HttpWithPac), strconv.Itoa(p.Socks5)},
