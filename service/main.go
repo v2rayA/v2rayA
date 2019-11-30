@@ -2,7 +2,7 @@ package main
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/transparentProxy"
+	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
@@ -57,8 +57,8 @@ func initConfigure() {
 	//配置ip转发
 	setting := configure.GetSetting()
 	if setting.Transparent != configure.TransparentClose {
-		if setting.IpForward != transparentProxy.IsIpForwardOn() {
-			_ = transparentProxy.WriteIpForward(setting.IpForward)
+		if setting.IpForward != ipforward.IsIpForwardOn() {
+			_ = ipforward.WriteIpForward(setting.IpForward)
 		}
 	}
 	extra.RegisterFuzzyDecoders()

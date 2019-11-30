@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 func GetPorts() *configure.Ports {
@@ -31,19 +32,28 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if ports.Socks5 != 0 && ports.Socks5 != p.Socks5 {
 		p.Socks5 = ports.Socks5
 		if o, w := tools.IsPortOccupied(strconv.Itoa(p.Socks5)); o {
-			return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Socks5, w))
+			arr := strings.Split(w, "/")
+			if arr[1] != "v2ray" {
+				return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Socks5, w))
+			}
 		}
 	}
 	if ports.Http != 0 && ports.Http != p.Http {
 		p.Http = ports.Http
 		if o, w := tools.IsPortOccupied(strconv.Itoa(p.Http)); o {
-			return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Http, w))
+			arr := strings.Split(w, "/")
+			if arr[1] != "v2ray" {
+				return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Http, w))
+			}
 		}
 	}
 	if ports.HttpWithPac != 0 && ports.HttpWithPac != p.HttpWithPac {
 		p.HttpWithPac = ports.HttpWithPac
 		if o, w := tools.IsPortOccupied(strconv.Itoa(p.HttpWithPac)); o {
-			return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.HttpWithPac, w))
+			arr := strings.Split(w, "/")
+			if arr[1] != "v2ray" {
+				return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.HttpWithPac, w))
+			}
 		}
 	}
 	err = configure.SetPorts(p)

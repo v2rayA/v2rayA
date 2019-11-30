@@ -2,7 +2,7 @@ package configure
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/transparentProxy"
+	"V2RayA/model/ipforward"
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"
@@ -17,7 +17,8 @@ type Configure struct {
 	ConnectedServer *Which            `json:"connectedServer"` //冗余一个信息，方便查找
 	Setting         *Setting          `json:"setting"`
 	Accounts        map[string]string `json:"accounts"`
-	Ports           Ports             `json:"ports"`
+	CustomPorts     Ports             `json:"ports"`
+	PortWhiteList   PortWhiteList     `json:"portWhiteList"`
 }
 
 func New() *Configure {
@@ -26,7 +27,7 @@ func New() *Configure {
 		Subscriptions:   make([]SubscriptionRaw, 0),
 		ConnectedServer: nil,
 		Setting:         NewSetting(),
-		Ports: Ports{
+		CustomPorts: Ports{
 			Socks5:      20170,
 			Http:        20171,
 			HttpWithPac: 20172,
@@ -78,6 +79,9 @@ func SetTransparent(transparent TransparentMode) (err error) {
 func SetPorts(ports *Ports) (err error) {
 	return persistence.Set("ports", ports)
 }
+func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
+	return persistence.Set("portWhiteList", portWhiteList.Compressed())
+}
 
 func AppendServer(server *ServerRaw) (err error) {
 	return persistence.Append("servers", server)
@@ -108,12 +112,17 @@ func GetSubscriptions() []SubscriptionRaw {
 func GetSetting() *Setting {
 	r := new(Setting)
 	_ = persistence.Get("setting", &r)
-	r.IpForward = transparentProxy.IsIpForwardOn() //永远用真实值
+	r.IpForward = ipforward.IsIpForwardOn() //永远用真实值
 	return r
 }
 func GetPorts() *Ports {
 	r := new(Ports)
 	_ = persistence.Get("ports", &r)
+	return r
+}
+func GetPortWhiteList() *PortWhiteList {
+	r := new(PortWhiteList)
+	_ = persistence.Get("portWhiteList", &r)
 	return r
 }
 func GetConnectedServer() *Which {

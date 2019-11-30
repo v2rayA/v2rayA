@@ -125,8 +125,8 @@ export default {
     }).then(res => {
       if (res.data.code === "SUCCESS") {
         let toastConf = {
-          message: `V2RayA服务端正在运行于${
-            res.data.data.dockerMode ? "Docker环境中，使用兼容模式" : "本地"
+          message: `V2RayA服务端正在运行${
+            res.data.data.dockerMode ? "于Docker环境中" : ""
           }，Version: ${res.data.data.version}`,
           type: "is-dark",
           position: "is-top",
@@ -360,5 +360,11 @@ a {
 }
 .modal-custom-ports {
   z-index: 999;
+}
+
+.after-line-dot5 {
+  p {
+    margin-bottom: 0.5em;
+  }
 }
 </style>

@@ -1,3 +1,4 @@
+<!--TODO: 0则关闭端口-->
 <template>
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
@@ -13,10 +14,10 @@
           required
           pattern="https?://.+(:\d+)?"
         >
-          ></b-input
-        >
+          >
+        </b-input>
       </b-field>
-      <template v-if="backendReady && dockerMode === false">
+      <template v-if="backendReady && dockerMode === false && !addressChanged">
         <b-field label="socks5端口" label-position="on-border">
           <b-input
             v-model="table.socks5"
@@ -24,7 +25,7 @@
             type="number"
             min="1"
             required
-          />
+          ></b-input>
         </b-field>
         <b-field label="http端口" label-position="on-border">
           <b-input
@@ -33,7 +34,7 @@
             type="number"
             min="1"
             required
-          />
+          ></b-input>
         </b-field>
         <b-field label="http端口(with PAC)" label-position="on-border">
           <b-input
@@ -42,7 +43,7 @@
             type="number"
             min="1"
             required
-          />
+          ></b-input>
         </b-field>
         <b-message
           v-show="dockerMode"
@@ -75,7 +76,7 @@
 </template>
 
 <script>
-import { handleResponse, parseURL } from "../assets/js/utils";
+import { handleResponse } from "../assets/js/utils";
 
 export default {
   name: "ModalCustomPorts",
@@ -91,6 +92,13 @@ export default {
   computed: {
     dockerMode() {
       return window.localStorage["docker"] === "true";
+    },
+    addressChanged() {
+      let backendAddress = this.table.backendAddress;
+      if (backendAddress.endsWith("/")) {
+        backendAddress = backendAddress.substr(0, backendAddress.length - 1);
+      }
+      return backendAddress + "/api" !== apiRoot;
     }
   },
   created() {
@@ -113,7 +121,7 @@ export default {
         backendAddress = backendAddress.substr(0, backendAddress.length - 1);
       }
       //当前服务端是否正常工作
-      if (this.backendReady) {
+      if (this.backendReady && !this.addressChanged) {
         this.$axios({
           url: backendAddress + "/api/ports",
           method: "put",
@@ -145,10 +153,5 @@ export default {
 <style lang="scss">
 .modal-custom-ports .modal-background {
   background-color: rgba(0, 0, 0, 0.6);
-}
-.after-line-dot5 {
-  p {
-    margin-bottom: 0.5em;
-  }
 }
 </style>

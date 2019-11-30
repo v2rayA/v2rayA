@@ -1,4 +1,4 @@
-package transparentProxy
+package ipforward
 
 import (
 	"errors"

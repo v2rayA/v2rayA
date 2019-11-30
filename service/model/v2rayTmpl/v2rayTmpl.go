@@ -1,7 +1,7 @@
 package v2rayTmpl
 
 import (
-	"V2RayA/model/transparentProxy"
+	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"errors"
@@ -410,13 +410,13 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 				},
 			)
 		}
-		_ = transparentProxy.DeleteRules()
-		err = transparentProxy.WriteRules()
+		_ = iptables.DeleteRules()
+		err = iptables.WriteRules()
 		if err != nil {
 			return err
 		}
 	} else {
-		_ = transparentProxy.DeleteRules()
+		_ = iptables.DeleteRules()
 		// 不是全局模式，根据设置修改路由部分的PAC规则
 		switch setting.PacMode {
 		case configure.WhitelistMode:

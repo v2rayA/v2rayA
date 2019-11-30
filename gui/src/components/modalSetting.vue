@@ -25,38 +25,39 @@
           multilined
           animated
         >
-          {{ localGFWListVersion ? localGFWListVersion : "无" }} </b-tooltip
-        ><span v-else>{{
+          {{ localGFWListVersion ? localGFWListVersion : "无" }}
+        </b-tooltip>
+        <span v-else>{{
           localGFWListVersion ? localGFWListVersion : "无"
-        }}</span
-        ><b-button
+        }}</span>
+        <b-button
           size="is-small"
           type="is-text"
           style="position: relative;top:-2px;text-decoration:none"
           @click="handleClickUpdateGFWList"
-          >更新</b-button
-        ></b-field
-      >
+          >更新
+        </b-button>
+      </b-field>
       <b-field
         v-if="customPacFileVersion"
         label="自定义规则"
         horizontal
         custom-class="modal-setting-label"
-        >最后更新时间： <span>{{ customPacFileVersion }}</span
-        ><b-button
+        >最后更新时间： <span>{{ customPacFileVersion }}</span>
+        <b-button
           size="is-small"
           type="is-text"
           style="position: relative;top:-2px;text-decoration:none"
-          >更新</b-button
-        ></b-field
-      >
+          >更新
+        </b-button>
+      </b-field>
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
       <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
           全局透明代理
           <b-tooltip
             type="is-dark"
-            label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。【该选项会影响流量流入，请勿在不同子网下的VPS使用，但路由器使用不受此影响】"
+            label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。"
             multilined
             position="is-right"
           >
@@ -64,7 +65,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            />
+            ></b-icon>
           </b-tooltip>
         </template>
         <b-select v-model="transparent" expanded>
@@ -73,12 +74,20 @@
           <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
         </b-select>
-        <b-checkbox-button
-          v-if="transparent !== 'close'"
-          v-model="ipforward"
-          :native-value="true"
-          >开启IP转发</b-checkbox-button
-        >
+        <template v-if="transparent !== 'close'">
+          <b-button
+            style="border-radius: 0;z-index: 2;"
+            @click="handleClickPortWhiteList"
+          >
+            端口白名单
+          </b-button>
+          <b-checkbox-button
+            v-model="ipforward"
+            :native-value="true"
+            style="position:relative;left:-1px;"
+            >开启IP转发
+          </b-checkbox-button>
+        </template>
       </b-field>
       <b-field
         v-show="transparent === 'close'"
@@ -95,15 +104,15 @@
             v-model="customPac.url"
             placeholder="SiteDAT file URL"
             custom-class="no-shadow"
-          />
+          ></b-input>
           <b-button
             v-if="pacMode === 'custom'"
             type="is-primary"
             style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
             outlined
             @click="handleClickConfigurePac"
-            >配置</b-button
-          >
+            >配置
+          </b-button>
         </template>
       </b-field>
       <b-field
@@ -145,7 +154,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            />
+            ></b-icon>
           </b-tooltip>
         </template>
         <b-select v-model="tcpFastOpen" expanded>
@@ -167,7 +176,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            />
+            ></b-icon>
           </b-tooltip>
         </template>
         <b-select v-model="muxOn" expanded style="flex: 1">
@@ -217,10 +226,15 @@ import { handleResponse, isIntranet } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalConfigurePac from "@/components/modalConfigurePac";
 import CusBInput from "./input/Input.vue";
+import { parseURL } from "../assets/js/utils";
+import BButton from "buefy/src/components/button/Button";
+import BSelect from "buefy/src/components/select/Select";
+import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
+import modalPortWhiteList from "@/components/modalPortWhiteList";
 
 export default {
   name: "ModalSetting",
-  components: { CusBInput },
+  components: { BCheckboxButton, BSelect, BButton, CusBInput },
   data: () => ({
     proxyModeWhenSubscribe: "direct",
     tcpFastOpen: "default",
@@ -246,6 +260,15 @@ export default {
   computed: {
     dockerMode() {
       return window.localStorage["docker"] === "true";
+    },
+    v2rayaPort() {
+      let U = parseURL(apiRoot);
+      let port = U.port;
+      if (!port) {
+        port =
+          U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+      }
+      return port;
     }
   },
   created() {
@@ -267,6 +290,22 @@ export default {
           this.subscriptionAutoUpdateTime
         );
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+      });
+    });
+    //白名单有没有项，没有就post一下
+    this.$axios({
+      url: apiRoot + "/portWhiteList"
+    }).then(res => {
+      handleResponse(res, this, () => {
+        if (res.data.data.tcp === null && res.data.data.udp === null) {
+          this.$axios({
+            url: apiRoot + "/portWhiteList",
+            method: "post",
+            data: {
+              requestPort: this.v2rayaPort
+            }
+          });
+        }
       });
     });
   },
@@ -347,15 +386,35 @@ export default {
         });
         return;
       }
-      if (!isIntranet(apiRoot)) {
-        this.$buefy.dialog.confirm({
-          title: "警告",
-          message: `看起来您正在尝试对不同子网下的机器设置透明代理，这可能会导致该机器入方向的流量受到影响，甚至ssh无法连接，您确定要继续吗？`,
-          cancelText: "放弃",
-          confirmText: "请继续，我已悉知风险",
-          type: "is-danger",
-          onConfirm: () => this.requestUpdateSetting()
-        });
+      if (this.transparent !== "close" && !isIntranet(apiRoot)) {
+        let U = parseURL(apiRoot);
+        let port = U.port;
+        if (!port) {
+          port =
+            U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+        }
+        this.$axios({
+          url: apiRoot + "/portWhiteList"
+        })
+          .then(res => {
+            handleResponse(res, this, () => {
+              this.$buefy.dialog.confirm({
+                title: "提示",
+                message: `<div class=""><p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
+              <p>当前设置的端口白名单为：</p>
+              <p>TCP: ${res.data.data.tcp.join(", ")}</p>
+              <p>UDP: ${res.data.data.udp.join(", ")}</p>`,
+                cancelText: "取消",
+                confirmText: "确认无误",
+                type: "is-danger",
+                onConfirm: () => this.requestUpdateSetting()
+              });
+            });
+          })
+          .catch(() => {
+            //可能是服务端是老旧版本，没这个接口
+            this.requestUpdateSetting();
+          });
       } else {
         this.requestUpdateSetting();
       }
@@ -376,6 +435,14 @@ export default {
           }
         }
       });
+    },
+    handleClickPortWhiteList() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalPortWhiteList,
+        hasModalCard: true,
+        canCancel: true
+      });
     }
   }
 };
@@ -386,19 +453,23 @@ export default {
   height: 390px;
   overflow-x: hidden;
 }
+
 .flex-end {
   justify-content: flex-end !important;
 }
+
 .modal-setting-label {
   width: 7em;
   padding: 0 !important;
   text-align: left !important;
 }
+
 .modal-setting-clockpicker {
   .background {
     display: unset;
     background-color: rgba(10, 10, 10, 0.6) !important;
   }
+
   .dropdown-menu {
     position: fixed;
     top: 50% !important;
@@ -413,22 +484,27 @@ export default {
 .rules .field.is-horizontal .field-body .field:last-child {
   text-align: right;
 }
+
 .no-shadow {
   box-shadow: none !important;
 }
+
 .with-icon-alert {
   p.help {
     position: absolute;
     bottom: -18px;
     right: 0;
   }
+
   .icon-alert {
     font-size: 18px;
   }
 }
+
 .control:first-of-type:not(:last-of-type) .select select {
   border-radius: 4px 0 0 4px !important;
 }
+
 .footer-absolute-left {
   position: absolute;
   left: 20px;

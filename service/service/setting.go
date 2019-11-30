@@ -1,7 +1,7 @@
 package service
 
 import (
-	"V2RayA/model/transparentProxy"
+	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"errors"
@@ -31,8 +31,8 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		return errors.New("未发现GFWList文件，请更新GFWList后再试")
 	}
 	if setting.Transparent != configure.TransparentClose {
-		if setting.IpForward != transparentProxy.IsIpForwardOn() {
-			err = transparentProxy.WriteIpForward(setting.IpForward)
+		if setting.IpForward != ipforward.IsIpForwardOn() {
+			err = ipforward.WriteIpForward(setting.IpForward)
 			if err != nil {
 				return
 			}
