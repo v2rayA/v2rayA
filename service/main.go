@@ -1,6 +1,7 @@
 package main
 
 import (
+	"V2RayA/extra/quickdown"
 	"V2RayA/global"
 	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
@@ -11,7 +12,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
-	"github.com/json-iterator/go/extra"
+	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"log"
 	"net"
 	"os"
@@ -43,6 +44,7 @@ func checkEnvironment() {
 
 func initConfigure() {
 	//初始化配置
+	jsonIteratorExtra.RegisterFuzzyDecoders()
 	if !configure.IsConfigureExists() {
 		_ = os.MkdirAll(path.Dir(global.GetEnvironmentConfig().Config), os.ModeDir|0755)
 		err := configure.SetConfigure(configure.New())
@@ -61,7 +63,25 @@ func initConfigure() {
 			_ = ipforward.WriteIpForward(setting.IpForward)
 		}
 	}
-	extra.RegisterFuzzyDecoders()
+	//检查geoip、geosite是否存在
+	if !v2ray.IsGeoipExists() {
+		wg := new(sync.WaitGroup)
+		wg.Add(2)
+		dld := func(filename string) {
+			color.Red.Println("正在安装" + filename)
+			defer wg.Done()
+			u := "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/" + filename
+			p := v2ray.GetV2rayLocationAsset() + "/" + filename
+			err := quickdown.DownloadWithWorkersTo(u, 5, p)
+			if err != nil {
+				return
+			}
+			err = os.Chmod(p, os.FileMode(0755))
+		}
+		go dld("geoip.dat")
+		go dld("geosite.dat")
+		wg.Wait()
+	}
 }
 
 func checkConnection() {
@@ -75,10 +95,12 @@ func checkConnection() {
 }
 
 func hello() {
-	color.Red.Println("V2RayLocationAsset is:", v2ray.GetV2rayLocationAsset())
+	color.Red.Println("V2RayLocationAsset is", v2ray.GetV2rayLocationAsset())
+	wd, _ := v2ray.GetV2rayWorkingDir()
+	color.Red.Println("V2Ray binary is", wd+"/v2ray")
 	if global.ServiceControlMode != global.DockerMode {
-		wd, _ := os.Getwd()
-		color.Red.Println("V2RayA working directory is:", wd)
+		wd, _ = os.Getwd()
+		color.Red.Println("V2RayA working directory is", wd)
 		color.Red.Println("Version:", global.Version)
 	} else {
 		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")
@@ -87,6 +109,8 @@ func hello() {
 }
 func checkUpdate() {
 	setting := service.GetSetting()
+
+	//检查PAC文件更新
 	if setting.PacAutoUpdateMode == configure.AutoUpdate {
 		switch setting.PacMode {
 		case configure.GfwlistMode:
@@ -103,6 +127,8 @@ func checkUpdate() {
 			//TODO
 		}
 	}
+
+	//检查订阅更新
 	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
 		go func() {
 			subs := configure.GetSubscriptions()
@@ -126,6 +152,7 @@ func checkUpdate() {
 			wg.Wait()
 		}()
 	}
+	// 检查服务端更新
 	go func() {
 		if foundNew, remote, err := service.CheckUpdate(); err == nil {
 			global.FoundNew = foundNew

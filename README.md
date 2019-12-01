@@ -168,7 +168,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 1. 在更换配置时略有卡顿
 
-### 支持 Windows、MacOSX 吗
+### 服务端支持 Windows、MacOSX 吗
 
 目前仅在 Linux 进行过测试，并计划优先适配 Linux。目前尚未验证在 Windows 及 MacOSX 上存在的问题。
 

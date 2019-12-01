@@ -11,7 +11,8 @@ import (
 )
 
 func Run() error {
-	engine := gin.Default()
+	engine := gin.New()
+	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
 	corsConfig.AddAllowHeaders("Authorization")

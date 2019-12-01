@@ -2,7 +2,7 @@
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
-        {{ first ? "初来乍到，请先注册账号" : "登陆 - V2rayA" }}
+        {{ first ? "初来乍到，注册一个管理员账号" : "登陆 - V2rayA" }}
       </p>
     </header>
     <section class="modal-card-body">
@@ -10,7 +10,7 @@
         <img src="../assets/logo2.png" alt="V2RayA" />
       </p>
       <b-field label="Username" type="is-success">
-        <b-input v-model="username" @keyup.enter.native="handleEnter" />
+        <b-input v-model="username" @keyup.enter.native="handleEnter"></b-input>
       </b-field>
       <b-field label="Password" type="is-success">
         <b-input
@@ -18,8 +18,13 @@
           type="password"
           maxlength="32"
           @keyup.enter.native="handleEnter"
-        />
+        ></b-input>
       </b-field>
+      <b-message v-if="first" type="is-info" class="after-line-dot5">
+        <p>请记住您注册的管理员账号，用于登录该管理页面。</p>
+        <p>账号信息位于本地，我们不会上传任何信息到服务器。</p>
+        <p>如不慎忘记密码，可通过清除配置文件重置。</p>
+      </b-message>
     </section>
     <footer class="modal-card-foot flex-end">
       <b-button
@@ -94,5 +99,13 @@ export default {
 <style lang="scss">
 .modal-login .modal-background {
   background-color: rgba(10, 10, 10, 0.7) !important;
+}
+</style>
+<style lang="scss" scoped>
+.after-line-dot5 {
+  font-size: 14px;
+  p {
+    font-size: 14px;
+  }
 }
 </style>

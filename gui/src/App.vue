@@ -3,7 +3,7 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="./assets/logo.png" alt="V2RayA" class="logo no-select" />
+          <img src="./assets/logo2.png" alt="V2RayA" class="logo no-select" />
         </b-navbar-item>
       </template>
       <template slot="start">
@@ -26,11 +26,11 @@
         <!--          节点-->
         <!--        </b-navbar-item>-->
         <b-navbar-item tag="a" @click.native="handleClickSetting">
-          <i class="iconfont icon-setting" style="font-size: 1.25em" />
+          <i class="iconfont icon-setting" style="font-size: 1.25em"></i>
           设置
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickAbout">
-          <i class="iconfont icon-heart" style="font-size: 1.25em" />
+          <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
           关于
         </b-navbar-item>
         <b-dropdown
@@ -44,7 +44,7 @@
             <i
               class="iconfont icon-caret-down"
               style="position: relative; top: 1px; left:2px"
-            />
+            ></i>
           </a>
 
           <b-dropdown-item custom aria-role="menuitem">
@@ -60,7 +60,7 @@
             <i
               class="iconfont icon-logout"
               style="position: relative;top:1px;"
-            />
+            ></i>
             Logout
           </b-dropdown-item>
         </b-dropdown>
@@ -279,6 +279,8 @@ export default {
 
 .logo {
   min-height: 2.5rem;
+  margin-left: 1em;
+  margin-right: 1em;
 }
 
 .navbar-item .iconfont {

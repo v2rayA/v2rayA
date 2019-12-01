@@ -4,7 +4,6 @@ import (
 	"V2RayA/global"
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -117,8 +116,13 @@ func IsV2rayServiceValid() bool {
 	case global.ServiceMode:
 		out, err := exec.Command("sh", "-c", "service v2ray status|grep not-found").Output()
 		return err == nil && len(bytes.TrimSpace(out)) == 0
-	case global.DockerMode, global.CommonMode:
-		out, err := exec.Command("sh", "-c", fmt.Sprintf("ls %s/geoip.dat", GetV2rayLocationAsset())).Output()
+	case global.DockerMode:
+		return IsGeoipExists() && IsGeositeExists()
+	case global.CommonMode:
+		if !IsGeoipExists() || !IsGeositeExists() {
+			return false
+		}
+		out, err := exec.Command("sh", "-c", "which v2ray").Output()
 		return err == nil && len(bytes.TrimSpace(out)) > 0
 	}
 	return false

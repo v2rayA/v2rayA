@@ -32,7 +32,7 @@ func GetV2rayLocationAsset() (s string) {
 	var err error
 	if s == "" {
 		//默认为v2ray运行目录
-		s, err = getV2rayWorkingDir()
+		s, err = GetV2rayWorkingDir()
 	}
 	if err != nil {
 		//再不行只能盲猜一个
@@ -42,22 +42,43 @@ func GetV2rayLocationAsset() (s string) {
 	return
 }
 
-func getV2rayWorkingDir() (string, error) {
-	out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
-	if err == nil {
-		return strings.TrimSpace(string(out)), nil
+func GetV2rayWorkingDir() (string, error) {
+	switch global.ServiceControlMode {
+	case global.SystemctlMode, global.ServiceMode:
+		//从systemd的启动参数里找
+		p, _ := GetV2rayServiceFilePath()
+		out, err := exec.Command("sh", "-c", "cat "+p+"|grep ExecStart=").CombinedOutput()
+		if err != nil {
+			return "", errors.New(err.Error() + string(out))
+		}
+		arr := strings.Split(strings.TrimSpace(string(out)), " ")
+		return path.Dir(arr[0][len("ExecStart="):]), nil
+	case global.DockerMode, global.CommonMode:
+		//从环境变量里找
+		out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
+		if err == nil {
+			return path.Dir(strings.TrimSpace(string(out))), nil
+		}
 	}
-	p, _ := GetV2rayServiceFilePath()
-	out, err = exec.Command("sh", "-c", "cat "+p+"|grep ExecStart=").CombinedOutput()
-	if err != nil {
-		return "", errors.New(err.Error() + string(out))
-	}
-	arr := strings.Split(strings.TrimSpace(string(out)), " ")
-	return path.Dir(arr[0][len("ExecStart="):]), nil
+	return "", errors.New("not found")
 }
 
 func IsH2yExists() bool {
 	_, err := os.Stat(GetV2rayLocationAsset() + "/h2y.dat")
+	if err != nil {
+		return false
+	}
+	return true
+}
+func IsGeoipExists() bool {
+	_, err := os.Stat(GetV2rayLocationAsset() + "/geoip.dat")
+	if err != nil {
+		return false
+	}
+	return true
+}
+func IsGeositeExists() bool {
+	_, err := os.Stat(GetV2rayLocationAsset() + "/geosite.dat")
 	if err != nil {
 		return false
 	}

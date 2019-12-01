@@ -13,7 +13,6 @@ require (
 	github.com/matoous/go-nanoid v1.1.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.5 // indirect
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/pkg/errors v0.8.1
 	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
 	github.com/stevenroose/gonfig v0.1.4
