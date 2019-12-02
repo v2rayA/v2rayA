@@ -4,6 +4,7 @@ import (
 	"V2RayA/global"
 	"V2RayA/tools"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -71,6 +72,7 @@ func IsH2yExists() bool {
 	return true
 }
 func IsGeoipExists() bool {
+	fmt.Println(GetV2rayLocationAsset())
 	_, err := os.Stat(GetV2rayLocationAsset() + "/geoip.dat")
 	if err != nil {
 		return false

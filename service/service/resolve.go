@@ -2,11 +2,11 @@ package service
 
 import (
 	"V2RayA/model/nodeData"
-	tmpl "V2RayA/model/v2rayTmpl"
+	"V2RayA/model/v2ray"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/tools"
-	"github.com/json-iterator/go"
 	"errors"
+	"github.com/json-iterator/go"
 	"net/url"
 	"regexp"
 	"strings"
@@ -61,7 +61,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 	}
 	// 填充模板并处理结果
-	t := tmpl.NewTemplate()
+	t := v2ray.NewTemplate()
 	err = t.FillWithVmessInfo(info)
 	data = new(nodeData.NodeData)
 	b := t.ToConfigBytes()
@@ -131,7 +131,7 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 		Ps:       subMatch[5],
 	}
 	// 填充模板并处理结果
-	t := tmpl.NewTemplate()
+	t := v2ray.NewTemplate()
 	err = t.FillWithVmessInfo(info)
 
 	data = new(nodeData.NodeData)

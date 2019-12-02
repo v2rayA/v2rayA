@@ -9,7 +9,7 @@ arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/mzz2017/V2RayA"
 license=('GPL')
 depends=('glibc' 'v2ray')
-makedepends=('go>=2:1.11.3-1')
+makedepends=('go>=2:1.12.3-1')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/mzz2017/V2RayA/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 

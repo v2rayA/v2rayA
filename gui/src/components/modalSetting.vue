@@ -52,7 +52,11 @@
         </b-button>
       </b-field>
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
-      <b-field label-position="on-border" class="with-icon-alert">
+      <b-field
+        v-show="transparentValid"
+        label-position="on-border"
+        class="with-icon-alert"
+      >
         <template slot="label">
           全局透明代理
           <b-tooltip
@@ -71,7 +75,7 @@
         <b-select v-model="transparent" expanded>
           <option value="close">关闭</option>
           <option value="proxy">代理模式</option>
-          <option value="whitelist">大陆白名单</option>
+          <option value="whitelist">大陆白名单(Recommend)</option>
           <option value="gfwlist">GFWList</option>
         </b-select>
         <template v-if="transparent !== 'close'">
@@ -95,7 +99,7 @@
         label-position="on-border"
       >
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
-          <option value="whitelist">大陆白名单</option>
+          <option value="whitelist">大陆白名单(Recommend)</option>
           <option value="gfwlist">GFWList</option>
           <option value="custom">自定义PAC（待开发）</option>
         </b-select>
@@ -269,6 +273,9 @@ export default {
           U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return port;
+    },
+    transparentValid() {
+      return localStorage["transparentValid"] !== "false";
     }
   },
   created() {

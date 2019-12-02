@@ -2,8 +2,10 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"V2RayA/tools"
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -126,4 +128,22 @@ func IsV2rayServiceValid() bool {
 		return err == nil && len(bytes.TrimSpace(out)) > 0
 	}
 	return false
+}
+
+func GetV2rayServiceVersion() (ver string, err error) {
+	dir, err := GetV2rayWorkingDir()
+	if err != nil || len(dir) <= 0 {
+		return "", errors.New("无法找到v2ray可执行文件")
+	}
+	out, err := exec.Command("sh", "-c", fmt.Sprintf("%v/v2ray -version|awk '{print $2}'|awk 'NR==1'", dir)).Output()
+	return strings.TrimSpace(string(out)), err
+}
+
+func IsTransparentSupported() (transparentValid bool) {
+	if ver, err := GetV2rayServiceVersion(); err == nil {
+		if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err == nil && greaterEqual {
+			return true
+		}
+	}
+	return
 }

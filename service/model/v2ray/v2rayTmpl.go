@@ -1,4 +1,4 @@
-package v2rayTmpl
+package v2ray
 
 import (
 	"V2RayA/model/iptables"
@@ -293,7 +293,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		}
 	}
 	//根据设置修改透明代理
-	if setting.Transparent != configure.TransparentClose {
+	if setting.Transparent != configure.TransparentClose && IsTransparentSupported() {
 		//先修改DNS设置
 		t.DNS = new(DNS)
 		ds := DnsServer{
@@ -382,6 +382,10 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 				Protocol:    []string{"bittorrent"},
 			},
 		)
+		if net.ParseIP(v.Add) == nil {
+			//如果不是IP，而是域名，也加入白名单
+			ds.Domains = append(ds.Domains, v.Add)
+		}
 		switch setting.Transparent {
 		case configure.TransparentProxy:
 		case configure.TransparentWhitelist:

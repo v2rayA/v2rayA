@@ -37,6 +37,9 @@ func NewDownlosadTaskWithWorkers(url string, workerCount int) *DownloadTask {
 }
 
 func NewDownloadTask(url, filename string, workerCount int) *DownloadTask {
+	if client == nil {
+		client = http.DefaultClient
+	}
 	if workerCount < 1 {
 		panic(errors.New("[DownloadTask] worker count must greater than 0."))
 	}

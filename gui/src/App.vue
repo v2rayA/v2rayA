@@ -136,14 +136,6 @@ export default {
           toastConf.duration = 5000;
           toastConf.message += `，检测到新版本: ${res.data.data.remoteVersion}`;
           toastConf.type = "is-danger";
-          // toastConf.onAction = () => {
-          //   if (res.data.data.foundNew) {
-          //     window.open(
-          //       "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
-          //       "_blank"
-          //     );
-          //   }
-          // };
         }
         this.$buefy.toast.open(toastConf);
         localStorage["docker"] = res.data.data.dockerMode;
@@ -154,6 +146,16 @@ export default {
             position: "is-top",
             duration: 5000
           });
+        } else {
+          localStorage["transparentValid"] = res.data.data.transparentValid;
+          if (res.data.data.transparentValid === false) {
+            this.$buefy.toast.open({
+              message: "检测到v2ray-core版本低于4.19.1，不支持全局透明代理",
+              type: "is-warning",
+              position: "is-top",
+              duration: 3000
+            });
+          }
         }
       }
     });

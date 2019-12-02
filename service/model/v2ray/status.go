@@ -2,11 +2,11 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/v2rayTmpl"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"errors"
 	"github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,16 +23,11 @@ func IsV2RayProcessExists() bool {
 func IsV2RayRunning() bool {
 	switch global.ServiceControlMode {
 	case global.DockerMode:
-		tmplJson := v2rayTmpl.NewTemplate()
 		b, err := ioutil.ReadFile("/etc/v2ray/config.json")
 		if err != nil {
 			return false
 		}
-		err = jsoniter.Unmarshal(b, &tmplJson)
-		if err != nil {
-			return false
-		}
-		return len(tmplJson.Inbounds) > 0
+		return len(gjson.GetBytes(b, "inbounds").Array()) > 0
 	case global.CommonMode:
 		return IsV2RayProcessExists()
 	case global.ServiceMode:
@@ -51,7 +46,7 @@ func RestartV2rayService() (err error) {
 	switch global.ServiceControlMode {
 	case global.DockerMode:
 		//看inbounds是不是空的，是的话就补上
-		tmplJson := v2rayTmpl.NewTemplate()
+		tmplJson := NewTemplate()
 		var b []byte
 		b, err = ioutil.ReadFile("/etc/v2ray/config.json")
 		if err != nil {
@@ -63,8 +58,8 @@ func RestartV2rayService() (err error) {
 		}
 		if len(tmplJson.Inbounds) <= 0 {
 			// 读入模板json
-			rawJson := v2rayTmpl.NewTemplate()
-			raw := []byte(v2rayTmpl.TemplateJson)
+			rawJson := NewTemplate()
+			raw := []byte(TemplateJson)
 			err = jsoniter.Unmarshal(raw, &rawJson)
 			if err != nil {
 				return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
@@ -84,7 +79,7 @@ func RestartV2rayService() (err error) {
 			if time.Now().Sub(startTime) > 8*time.Second {
 				return errors.New("请勿在Docker模式下频繁更换配置，请等待一段时间后再试")
 			}
-			<-time.After(50 * time.Millisecond)
+			<-time.After(100 * time.Millisecond)
 			if IsV2RayProcessExists() {
 				return nil
 			}
@@ -112,6 +107,7 @@ func RestartV2rayService() (err error) {
 		}
 		return
 	}
+	<-time.After(100 * time.Millisecond)
 	if !IsV2RayRunning() {
 		return errors.New("v2ray启动失败")
 	}
@@ -129,7 +125,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	//读配置，转换为v2ray配置并写入
-	tmpl := v2rayTmpl.NewTemplate()
+	tmpl := NewTemplate()
 	err = tmpl.FillWithVmessInfo(*vmessInfo)
 	if err != nil {
 		return
@@ -150,7 +146,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	if err != nil {
 		return
 	}
-	tmpl := v2rayTmpl.NewTemplate()
+	tmpl := NewTemplate()
 	err = tmpl.FillWithVmessInfo(sr.VmessInfo)
 	if err != nil {
 		return
@@ -167,7 +163,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 
 /*清空inbounds规则来假停v2ray*/
 func pretendToStopV2rayService() (err error) {
-	tmplJson := v2rayTmpl.NewTemplate()
+	tmplJson := NewTemplate()
 	b, err := ioutil.ReadFile("/etc/v2ray/config.json")
 	if err != nil {
 		return
@@ -176,7 +172,7 @@ func pretendToStopV2rayService() (err error) {
 	if err != nil {
 		return
 	}
-	tmplJson.Inbounds = make([]v2rayTmpl.Inbound, 0)
+	tmplJson.Inbounds = make([]Inbound, 0)
 	b, _ = jsoniter.Marshal(tmplJson)
 	err = WriteV2rayConfig(b)
 	if err != nil {

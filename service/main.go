@@ -9,6 +9,7 @@ import (
 	"V2RayA/router"
 	"V2RayA/service"
 	"V2RayA/tools"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -42,6 +43,7 @@ func checkEnvironment() {
 	}
 }
 
+//TODO: is netstat available?
 func initConfigure() {
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
@@ -67,20 +69,31 @@ func initConfigure() {
 	if !v2ray.IsGeoipExists() {
 		wg := new(sync.WaitGroup)
 		wg.Add(2)
+		errch := make(chan error, 2)
 		dld := func(filename string) {
 			color.Red.Println("正在安装" + filename)
 			defer wg.Done()
+			//jsdelivr经常版本落后，但这俩文件版本落后一点也没关系
 			u := "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/" + filename
 			p := v2ray.GetV2rayLocationAsset() + "/" + filename
 			err := quickdown.DownloadWithWorkersTo(u, 5, p)
 			if err != nil {
+				errch <- errors.New("download(" + u + ")(" + p + "): " + err.Error())
 				return
 			}
 			err = os.Chmod(p, os.FileMode(0755))
+			if err != nil {
+				errch <- errors.New("chmod: " + err.Error())
+			}
 		}
 		go dld("geoip.dat")
 		go dld("geosite.dat")
 		wg.Wait()
+		select {
+		case err := <-errch:
+			log.Println(err)
+		default:
+		}
 	}
 }
 
@@ -167,6 +180,7 @@ func run() (err error) {
 			return
 		}
 	}
+	_ = service.CheckAndStopTransparentProxy()
 	err = service.CheckAndSetupTransparentProxy(true)
 	if err != nil {
 		return

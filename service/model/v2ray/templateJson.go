@@ -1,11 +1,11 @@
-package v2rayTmpl
+package v2ray
 
 const TemplateJson = `{
   "template": {
     "log": {
       "access": "/dev/null",
       "error": "/dev/null",
-      "loglevel": "/dev/null"
+      "loglevel": "none"
     },
     "inbounds": [
       {
