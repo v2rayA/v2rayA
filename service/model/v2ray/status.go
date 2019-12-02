@@ -4,11 +4,11 @@ import (
 	"V2RayA/global"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
+	"V2RayA/tools"
 	"errors"
 	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -72,7 +72,7 @@ func RestartV2rayService() (err error) {
 			}
 		}
 
-		_, err = exec.Command("sh", "-c", "killall -9 v2ray").CombinedOutput()
+		_ = tools.KillAll("v2ray", true)
 		//8秒等待v2ray启动
 		startTime := time.Now()
 		for {
@@ -95,16 +95,13 @@ func RestartV2rayService() (err error) {
 			err = errors.New(err.Error() + string(out))
 		}
 	case global.CommonMode:
-		_, _ = exec.Command("sh", "-c", "killall -9 v2ray").CombinedOutput()
+		_ = tools.KillAll("v2ray", true)
 		out, err = exec.Command("sh", "-c", "v2ray --config=/etc/v2ray/config.json").CombinedOutput()
 		if err != nil {
 			err = errors.New(err.Error() + string(out))
 		}
 	}
 	if err != nil {
-		if global.ServiceControlMode == global.DockerMode {
-			log.Println("建议检查killall命令是否可用")
-		}
 		return
 	}
 	<-time.After(100 * time.Millisecond)
@@ -190,10 +187,7 @@ func StopV2rayService() (err error) {
 	case global.DockerMode:
 		return pretendToStopV2rayService()
 	case global.CommonMode:
-		out, err = exec.Command("sh", "-c", "killall -9 v2ray").CombinedOutput()
-		if err != nil {
-			err = errors.New(err.Error() + string(out))
-		}
+		err = tools.KillAll("v2ray", true)
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
 		if err != nil {

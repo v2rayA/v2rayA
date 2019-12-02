@@ -3,8 +3,8 @@ package v2ray
 const TemplateJson = `{
   "template": {
     "log": {
-      "access": "/dev/null",
-      "error": "/dev/null",
+      "access": "/var/log/v2ray.log",
+      "error": "/var/log/v2ray.err.log",
       "loglevel": "none"
     },
     "inbounds": [

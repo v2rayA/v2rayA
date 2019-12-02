@@ -53,12 +53,20 @@ func GetV2rayWorkingDir() (string, error) {
 		}
 		arr := strings.Split(strings.TrimSpace(string(out)), " ")
 		return path.Dir(arr[0][len("ExecStart="):]), nil
-	case global.DockerMode, global.CommonMode:
+	case global.CommonMode:
 		//从环境变量里找
 		out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
 		if err == nil {
 			return path.Dir(strings.TrimSpace(string(out))), nil
 		}
+	case global.DockerMode:
+		//只能指望在asset里有没有了
+		asset := GetV2rayLocationAsset()
+		_, err := os.Stat(asset + "/v2ray")
+		if err != nil {
+			return "", err
+		}
+		return asset, nil
 	}
 	return "", errors.New("not found")
 }

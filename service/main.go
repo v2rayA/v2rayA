@@ -38,7 +38,7 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, which := tools.IsPortOccupied(port, "tcp"); occupied {
+	if occupied, which := tools.IsPortOccupied(port, "tcp"); occupied && len(which)>0 {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }
@@ -173,12 +173,6 @@ func checkUpdate() {
 	}()
 }
 func run() (err error) {
-	//docker模式下把transparent纠正一下
-	if global.ServiceControlMode == global.DockerMode {
-		if err = configure.SetTransparent(configure.TransparentClose); err != nil {
-			return
-		}
-	}
 	_ = service.CheckAndStopTransparentProxy()
 	err = service.CheckAndSetupTransparentProxy(true)
 	if err != nil {

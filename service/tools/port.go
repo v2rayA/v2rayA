@@ -34,7 +34,9 @@ func IsPortOccupied(port string, protocol string) (occupied bool, which string) 
 		tabs = append(tabs, tmp...)
 	}
 	if err == nil && len(tabs) > 0 {
-		which = tabs[0].Process.String()
+		if tabs[0].Process != nil {
+			which = tabs[0].Process.String()
+		}
 		occupied = true
 	}
 	return

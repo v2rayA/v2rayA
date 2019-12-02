@@ -86,7 +86,7 @@ func (t *IpTablesMangle) RestoreRules() error {
 func DeleteRules() error {
 	commands := `
 ip rule del fwmark 1 table 100 
-ip route del local 0/0 dev lo table 100
+ip route del local 0.0.0.0/0 dev lo table 100
 
 iptables -t mangle -F SSTP_OUT
 iptables -t mangle -D OUTPUT -j SSTP_OUT
@@ -108,7 +108,7 @@ func WriteRules() error {
 	commands := `
 # 设置策略路由
 ip rule add fwmark 1 table 100
-ip route add local 0/0 dev lo table 100
+ip route add local 0.0.0.0/0 dev lo table 100
 
 # 建链
 iptables -t mangle -N SSTP_OUT
