@@ -38,12 +38,11 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, which := tools.IsPortOccupied(port); occupied {
+	if occupied, which := tools.IsPortOccupied(port, "tcp"); occupied {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }
 
-//TODO: is netstat available?
 func initConfigure() {
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
