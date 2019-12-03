@@ -6,7 +6,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
-得益于Web客户端的优势，你可以轻松地将它部署在软路由或NAS上，并通过http访问管理你的节点。
+得益于Web客户端的优势，你可以轻松地将它部署在路由器或NAS上，并通过http访问管理你的节点。
 
 目前V2RayA仅在部分Linux发行版进行过充分测试，在使用过程中如果遇到问题，欢迎提出issue。
 
@@ -56,11 +56,14 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 <details>
     <summary>点击展开更多截图</summary>
 <img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
-<p align="center">使用自定义PAC时可以配置路由规则</p>
+<p align="center">使用自定义PAC时可以配置路由规则（待实现）</p>
+
 
 </details>
 
 ## 使用
+
+### 从软件源安装
 
 如下使用方法：
 
@@ -91,6 +94,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    ```
    
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+   
 2. **使用yay/yaourt安装**（archlinux、manjaro）
    
    由于v2raya发布在AUR中，而pacman不支持AUR，因此建议使用主流的yay或yaourt作为替代方案
@@ -108,45 +112,84 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    ```
 
    V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
-3. **使用二进制文件 / 安装包**（支持常见linux系统）
 
-   请确保已正确安装 v2ray-core
+### Docker方式
 
-   我们提供了 Linux 下的一键安装脚本（在官方脚本基础上增加了ustc镜像源）：
-
-   > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
+1. 拉取源码，**使用 docker-compose 部署**。
 
    ```bash
-   curl -L -s https://github.com/mzz2017/V2RayA/raw/master/install/go.sh | sudo -E bash -s - --source ustc
-   ```
-
-   准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
-   
-   V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
-4. 拉取源码，**使用 docker-compose 部署**。
-
-   ```bash
-   git clone https://github.com/mzz2017/V2RayA.git
+   git clone --depth=1 https://github.com/mzz2017/V2RayA.git
    cd V2RayA
    docker-compose up -d --build
    ```
-5. **使用 docker 命令部署**。注意在启动v2ray及v2raya容器时添加`--privileged --network host`以支持全局透明代理。
 
-   我们同步发行[Docker 镜像](https://hub.docker.com/r/mzz2017/v2raya)，如果无法使用 docker-compose，可以参考[docker-compose.yml](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。
-6. 当然，你也可以选择拉取源码，**通过 golang 启动**：
-   
-   该方法同样需要正确安装v2ray-core，详情见上
+2. **使用 docker 命令部署**。注意在启动v2ray及v2raya容器时添加`--privileged --network host`以支持全局透明代理。
 
-   ```bash
-   git clone https://github.com/mzz2017/V2RayA.git
-   cd V2RayA/service
-   export GOPROXY=https://goproxy.io # set goproxy.io as the proxy of go modules
-   sudo go run main.go
-   ```
+   我们同步发行Docker镜像，如果无法使用 docker-compose，可以参考[**docker-compose.yml**](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。[镜像地址](https://hub.docker.com/r/mzz2017/v2raya)
 
-   注意，尽管 golang 具有交叉编译的特性，但由于项目使用了 linux commands，导致该方法不支持 windows。若想在 windows 体验，可借助 Docker 或 WSL。
+### 二进制文件、安装包
 
-   
+请确保已正确安装 v2ray-core
+
+我们提供了 Linux 下的一键安装脚本（在官方脚本基础上增加了ustc镜像源）：
+
+> 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
+
+```bash
+curl -L -s https://github.com/mzz2017/V2RayA/raw/master/install/go.sh | sudo -E bash -s - --source ustc
+```
+
+准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
+
+V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+
+### 自行编译运行
+
+当然，你也可以选择拉取源码，**通过 golang 启动**：
+
+该方法同样需要正确安装v2ray-core，详情见上
+
+```bash
+git clone https://github.com/mzz2017/V2RayA.git
+cd V2RayA/service
+export GOPROXY=https://goproxy.io # set goproxy.io as the proxy of go modules
+sudo go run main.go
+```
+
+注意，尽管 golang 具有交叉编译的特性，但由于项目使用了大量 linux commands，导致该方法仍然不支持 windows。若想在 windows 体验，可尝试借助 Docker 或 WSL。
+
+### 在路由器使用
+
+分为以下几种情况：
+
+#### v2ray能够以daemon存在
+
+能够以daemon存在即在正确安装v2ray后，使用下述命令之一能够得到正确的反馈：
+
+```bash
+# if systemctl is available
+systemctl status v2ray
+# else if service is available
+systemctl v2ray status
+```
+
+那么可从软件源安装，或下载[releases](https://github.com/mzz2017/V2RayA/releases)中的对应安装包进行安装。
+
+#### v2ray能够运行于docker
+
+可参照Docker方式使用
+
+#### 通用方法
+
+1. 请自行安装v2ray，并确保v2ray、v2ctl均被包含在PATH中，否则请将上述文件放于`echo $PATH`中的任一目录下。
+
+2. 下载[releases](https://github.com/mzz2017/V2RayA/releases)中最新版本的对应CPU架构的二进制文件，或自行使用golang交叉编译。
+
+3. 使用参数`--config=V2RAYA_CONFIG_PATH --mode=common`启动V2RayA服务端，参数含义可执行`--help`查看。
+
+   请将上述V2RAYA_CONFIG_PATH替换为一个可读写的，并且你喜欢的路径。
+
+## 开放端口
 
 默认使用的四个端口分别为：
 
@@ -162,31 +205,15 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 12345: tproxy（全局透明代理所需）
 
-### 在不同运行环境下程序表现将不同
+## 在不同运行环境下程序表现将不同
 
 由于 docker 容器对 systemd 的限制性，在 docker 中将采用 pid 共享进程命名空间，volumes 共享存储空间，更新配置后通过结束进程触发 v2ray 容器的重启来更新配置，以无 inbounds 的配置代替断开连接，这是一种折中方案，会有如下影响：
 
 1. 在更换配置时略有卡顿
 
-### 服务端支持 Windows、MacOSX 吗
+## 开发相关
 
-目前仅在 Linux 进行过测试，并计划优先适配 Linux。目前尚未验证在 Windows 及 MacOSX 上存在的问题。
-
-实际上 Windows 和 MacOSX 上已经存在很多优秀的 V2Ray 客户端，若无特殊需求，建议选择这些客户端。
-
-### 已知问题
-
-- 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已无法正常上网，恢复网络的一种简单可行方法是重新启动程序并关闭全局透明代理。不开启全局透明代理时，GoLand调试将不受影响。
-
-## 注意
-
-1. 应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当 docker 容器被清除时配置也将随之消失，请做好备份。
-
-2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Netlify](https://app.netlify.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
-
-3. **不要将本项目用于不合法用途。**
-
-# 在 docker 环境中开发
+### 在 docker 环境中开发
 
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
@@ -194,13 +221,21 @@ docker-compose -f docker-compose.dev.yml up --build
 
 gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
 
-# 相似项目
+### 已知问题
 
-[v2raywebui/V2RayWebUI](https://github.com/v2raywebui/V2RayWebUI)
+在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`killall ___go_build_V2R`来结束进程。如已无法正常上网，恢复网络的一种简单可行方法是重新启动程序并关闭全局透明代理。不开启全局透明代理时，GoLand调试将不受影响。
 
-[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
 
-[NoOne-hub/v2ray_client](https://github.com/NoOne-hub/v2ray_client)
+
+# 注意
+
+1. 程序不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当 docker 容器被清除时配置也将随之消失，请做好备份。
+
+2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Netlify](https://app.netlify.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
+
+3. **不要将本项目用于不合法用途。**
+
+
 
 # 感谢
 
@@ -211,6 +246,8 @@ gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/
 [ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
 
 [jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
+
+
 
 # 协议
 

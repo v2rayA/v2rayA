@@ -9,14 +9,20 @@ import (
 )
 
 func GetVersion(ctx *gin.Context) {
-
+	err := v2ray.CheckTransparentSupported()
+	var transparentProxyValid string
+	if err == nil {
+		transparentProxyValid = "yes"
+	} else {
+		transparentProxyValid = err.Error()
+	}
 	tools.ResponseSuccess(ctx, gin.H{
 		"version":          global.Version,
 		"dockerMode":       global.ServiceControlMode == global.DockerMode,
 		"foundNew":         global.FoundNew,
 		"remoteVersion":    global.RemoteVersion,
 		"serviceValid":     v2ray.IsV2rayServiceValid(),
-		"transparentValid": v2ray.IsTransparentSupported(),
+		"transparentValid": transparentProxyValid,
 	})
 }
 

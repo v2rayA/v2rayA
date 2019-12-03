@@ -26,7 +26,7 @@ services:
       - 12345:12345
     volumes:
       - shared-data:/etc/v2ray
-    entrypoint: sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray && v2ray -config=/etc/v2ray/config.json"
+    entrypoint: sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
 
 volumes:
   shared-data:

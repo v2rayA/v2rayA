@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var xtTproxyEnable bool
+
 func EnableV2rayService() (err error) {
 	var out []byte
 	switch global.ServiceControlMode {
@@ -139,11 +141,20 @@ func GetV2rayServiceVersion() (ver string, err error) {
 	return strings.TrimSpace(string(out)), err
 }
 
-func IsTransparentSupported() (transparentValid bool) {
-	if ver, err := GetV2rayServiceVersion(); err == nil {
-		if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err == nil && greaterEqual {
-			return true
+func CheckTransparentSupported() (err error) {
+	ver, err := GetV2rayServiceVersion()
+	if err != nil {
+		return errors.New("获取v2ray-core版本失败")
+	}
+	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
+		return errors.New("v2ray-core版本低于4.19.1")
+	}
+	if !xtTproxyEnable && global.ServiceControlMode != global.DockerMode { //docker下无法判断
+		_, err = exec.Command("sh", "-c", "modprobe -v xt_TPROXY").CombinedOutput()
+		if err != nil {
+			return errors.New("内核未编译xt_TPROXY")
 		}
+		xtTproxyEnable = true
 	}
 	return
 }

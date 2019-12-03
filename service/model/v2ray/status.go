@@ -2,10 +2,12 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
 	"errors"
+	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
@@ -16,14 +18,17 @@ import (
 )
 
 func IsV2RayProcessExists() bool {
-	out, err := exec.Command("sh", "-c", "ps -ef|grep v2ray").CombinedOutput()
-	return err == nil && strings.Contains(string(out), "v2ray -config=")
+	out, err := exec.Command("sh", "-c", "ps -ef|awk '{print $9,$8}'|grep v2ray$").CombinedOutput()
+	if err != nil || (strings.Contains(string(out), "invalid option") && strings.Contains(strings.ToLower(string(out)), "busybox")) {
+		out, err = exec.Command("sh", "-c", "ps|awk '{print $4,$5}'|grep v2ray$").CombinedOutput()
+	}
+	return err == nil && len(strings.TrimSpace(string(out))) > 0 && !strings.Contains(string(out), "-version")
 }
 
 func IsV2RayRunning() bool {
 	switch global.ServiceControlMode {
 	case global.DockerMode:
-		b, err := ioutil.ReadFile("/etc/v2ray/config.json")
+		b, err := ioutil.ReadFile(GetConfigPath())
 		if err != nil {
 			return false
 		}
@@ -48,7 +53,7 @@ func RestartV2rayService() (err error) {
 		//看inbounds是不是空的，是的话就补上
 		tmplJson := NewTemplate()
 		var b []byte
-		b, err = ioutil.ReadFile("/etc/v2ray/config.json")
+		b, err = ioutil.ReadFile(GetConfigPath())
 		if err != nil {
 			return
 		}
@@ -96,7 +101,12 @@ func RestartV2rayService() (err error) {
 		}
 	case global.CommonMode:
 		_ = tools.KillAll("v2ray", true)
-		out, err = exec.Command("sh", "-c", "v2ray --config=/etc/v2ray/config.json").CombinedOutput()
+		v2wd, _ := GetV2rayWorkingDir()
+		v2ctlDir, _ := GetV2ctlDir()
+		//cd到v2ctl的目录，防止找不到v2ctl
+		wd, _ := os.Getwd()
+		cmd := fmt.Sprintf("cd %v && nohup %v/v2ray --config=%v > %v/v2ray.log 2>&1 &", v2ctlDir, v2wd, GetConfigPath(), wd)
+		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
 		if err != nil {
 			err = errors.New(err.Error() + string(out))
 		}
@@ -112,7 +122,7 @@ func RestartV2rayService() (err error) {
 }
 
 func WriteV2rayConfig(content []byte) (err error) {
-	err = ioutil.WriteFile("/etc/v2ray/config.json", content, os.ModeAppend)
+	err = ioutil.WriteFile(GetConfigPath(), content, os.ModeAppend)
 	if err != nil {
 		return errors.New("WriteV2rayConfig: " + err.Error())
 	}
@@ -131,7 +141,16 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
-	return RestartV2rayService()
+	err = RestartV2rayService()
+	if err != nil {
+		return
+	}
+	time.Sleep(100 * time.Millisecond)
+	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTransparentSupported() == nil {
+		_ = iptables.DeleteRules()
+		err = iptables.WriteRules()
+	}
+	return
 }
 
 func UpdateV2rayWithConnectedServer() (err error) {
@@ -154,6 +173,11 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	}
 	if IsV2RayRunning() {
 		err = RestartV2rayService()
+		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTransparentSupported() == nil {
+			time.Sleep(100 * time.Millisecond)
+			_ = iptables.DeleteRules()
+			err = iptables.WriteRules()
+		}
 	}
 	return
 }
@@ -161,7 +185,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 /*清空inbounds规则来假停v2ray*/
 func pretendToStopV2rayService() (err error) {
 	tmplJson := NewTemplate()
-	b, err := ioutil.ReadFile("/etc/v2ray/config.json")
+	b, err := ioutil.ReadFile(GetConfigPath())
 	if err != nil {
 		return
 	}

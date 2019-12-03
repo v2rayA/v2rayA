@@ -34,18 +34,18 @@ axios.interceptors.request.use(
   }
 );
 
-let informed = false;
+let informed = "";
 
-function informNotRunning() {
-  if (informed) {
+function informNotRunning(url=localStorage["backendAddress"]) {
+  if (informed===url) {
     return;
   }
-  informed = true;
+  informed = url
   SnackbarProgrammatic.open({
     message: "您是否需要调整服务端地址？",
     type: "is-primary",
     queue: false,
-    indefinite: true,
+    duration: 10000,
     position: "is-top",
     actionText: "是",
     onAction: () => {
@@ -60,12 +60,12 @@ function informNotRunning() {
   });
   SnackbarProgrammatic.open({
     message: `未在 ${
-      localStorage["backendAddress"]
+      url
     } 检测到V2RayA服务端，请确定V2RayA已正确安装且配置正确`,
     type: "is-warning",
     queue: false,
     position: "is-top",
-    indefinite: true,
+    duration: 10000,
     actionText: "查看帮助",
     onAction: () => {
       window.open(
@@ -83,6 +83,8 @@ axios.interceptors.response.use(
   function(err) {
     console.log("!!", err.name, err.message);
     console.log(Object.assign({}, err));
+    let u=parseURL(err.config.url)
+    let host = u.host;
     if (err.response && err.response.status === 401) {
       //401未授权
       new Vue({
@@ -119,15 +121,14 @@ axios.interceptors.response.use(
       }).$mount("#login");
     } else if (
       location.protocol.substr(0, 5) === "https" &&
-      parseURL(err.config.url).protocol === "http"
+      u.protocol === "http"
     ) {
       //https前端通信http后端
       let msg = `无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。`;
-      let host = parseURL(err.config.url).host;
       if (host === "localhost" || host === "local" || host === "127.0.0.1") {
         if (browser.versions.webKit) {
           //Chrome等webkit内核浏览器允许访问http://localhost，只有可能是服务端未启动
-          informNotRunning();
+          informNotRunning(u.source.replace(u.relative,""));
           return;
         }
         if (browser.versions.gecko) {
@@ -156,7 +157,7 @@ axios.interceptors.response.use(
         }
       });
     } else if (err.message === "Network Error") {
-      informNotRunning();
+      informNotRunning(u.source.replace(u.relative,""));
     } else {
       //其他错误
       if (err.message.indexOf("404") >= 0) {

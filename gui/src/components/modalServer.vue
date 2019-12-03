@@ -229,7 +229,7 @@ export default {
       protocol: "vmess"
     },
     ss: {
-      method: "",
+      method: "aes-256-cfb",
       password: "",
       server: "",
       port: "",

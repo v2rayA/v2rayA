@@ -38,7 +38,7 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, which := tools.IsPortOccupied(port, "tcp"); occupied && len(which)>0 {
+	if occupied, which := tools.IsPortOccupied(port, "tcp"); occupied && len(which) > 0 {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }
@@ -65,33 +65,29 @@ func initConfigure() {
 		}
 	}
 	//检查geoip、geosite是否存在
-	if !v2ray.IsGeoipExists() {
-		wg := new(sync.WaitGroup)
-		wg.Add(2)
-		errch := make(chan error, 2)
-		dld := func(filename string) {
+	if !v2ray.IsGeoipExists() || !v2ray.IsGeositeExists() {
+		dld := func(filename string) (err error) {
 			color.Red.Println("正在安装" + filename)
-			defer wg.Done()
 			//jsdelivr经常版本落后，但这俩文件版本落后一点也没关系
 			u := "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/" + filename
 			p := v2ray.GetV2rayLocationAsset() + "/" + filename
-			err := quickdown.DownloadWithWorkersTo(u, 5, p)
+			err = quickdown.DownloadWithWorkersTo(u, 5, p)
 			if err != nil {
-				errch <- errors.New("download(" + u + ")(" + p + "): " + err.Error())
-				return
+				return errors.New("download(" + u + ")(" + p + "): " + err.Error())
 			}
 			err = os.Chmod(p, os.FileMode(0755))
 			if err != nil {
-				errch <- errors.New("chmod: " + err.Error())
+				return errors.New("chmod: " + err.Error())
 			}
+			return
 		}
-		go dld("geoip.dat")
-		go dld("geosite.dat")
-		wg.Wait()
-		select {
-		case err := <-errch:
+		err := dld("geoip.dat")
+		if err != nil {
 			log.Println(err)
-		default:
+		}
+		err = dld("geosite.dat")
+		if err != nil {
+			log.Println(err)
 		}
 	}
 }

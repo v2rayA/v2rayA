@@ -41,7 +41,7 @@ type RoutingRule struct {
 	Domain      []string `json:"domain,omitempty"`
 	IP          []string `json:"ip,omitempty"`
 	Network     string   `json:"network,omitempty"`
-	Port        int      `json:"port,omitempty"`
+	Port        string   `json:"port,omitempty"`
 	Protocol    []string `json:"protocol,omitempty"`
 }
 type Log struct {
@@ -293,7 +293,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		}
 	}
 	//根据设置修改透明代理
-	if setting.Transparent != configure.TransparentClose && IsTransparentSupported() {
+	if setting.Transparent != configure.TransparentClose && CheckTransparentSupported() == nil {
 		//先修改DNS设置
 		t.DNS = new(DNS)
 		ds := DnsServer{
@@ -355,7 +355,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			RoutingRule{ // 劫持 53 端口 UDP 流量，使用 V2Ray 的 DNS
 				Type:        "field",
 				InboundTag:  []string{"transparent"},
-				Port:        53,
+				Port:        "53",
 				OutboundTag: "dns-out",
 				Network:     "udp",
 			},
@@ -364,7 +364,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 				OutboundTag: "direct",
 				InboundTag:  []string{"transparent"},
 				Network:     "udp",
-				Port:        123,
+				Port:        "123",
 			},
 			RoutingRule{ // 设置 DNS 配置中的国内 DNS 服务器地址直连，以达到 DNS 分流目的
 				Type:        "field",
@@ -414,11 +414,6 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 					Network:     "tcp,udp",
 				},
 			)
-		}
-		_ = iptables.DeleteRules()
-		err = iptables.WriteRules()
-		if err != nil {
-			return err
 		}
 	} else {
 		_ = iptables.DeleteRules()

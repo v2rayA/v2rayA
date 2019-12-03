@@ -71,6 +71,23 @@ func GetV2rayWorkingDir() (string, error) {
 	return "", errors.New("not found")
 }
 
+func GetV2ctlDir() (string, error) {
+	d, err := GetV2rayWorkingDir()
+	if err == nil {
+		_, err := os.Stat(d + "/v2ctl")
+		if err != nil {
+			return "", err
+		}
+		return d, nil
+	}
+	out, err := exec.Command("sh", "-c", "which v2ctl").Output()
+	if err != nil {
+		err = errors.New(err.Error() + string(out))
+		return "", err
+	}
+	return path.Dir(strings.TrimSpace(string(out))), nil
+}
+
 func IsH2yExists() bool {
 	_, err := os.Stat(GetV2rayLocationAsset() + "/h2y.dat")
 	if err != nil {
@@ -104,4 +121,14 @@ func IsCustomExists() bool {
 }
 func GetCustomModTime() (time.Time, error) {
 	return tools.GetFileModTime(GetV2rayLocationAsset() + "/custom.dat")
+}
+
+func GetConfigPath() (path string) {
+	switch global.ServiceControlMode {
+	case global.CommonMode:
+		path = GetV2rayLocationAsset() + "/config.json"
+	default:
+		path = "/etc/v2ray/config.json"
+	}
+	return
 }

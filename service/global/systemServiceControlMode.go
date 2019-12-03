@@ -15,18 +15,31 @@ const (
 )
 
 func GetServiceControlMode() (mode SystemServiceControlMode) {
-	if _, err := exec.Command("ls", "/.dockerenv").Output(); err == nil {
-		mode = DockerMode
-		return
-	}
-	if out, err := exec.Command("sh", "-c", "which systemctl").Output(); err == nil && strings.Contains(string(out), "systemctl") {
+	m := GetEnvironmentConfig().Mode
+	switch m {
+	case "systemctl":
 		mode = SystemctlMode
-		return
-	}
-	if out, err := exec.Command("sh", "-c", "which service").Output(); err == nil && strings.Contains(string(out), "service") {
+	case "service":
 		mode = ServiceMode
-		return
+	case "docker":
+		mode = DockerMode
+	case "common":
+		mode = CommonMode
+	default:
+		//自动检测
+		if _, err := exec.Command("ls", "/.dockerenv").Output(); err == nil {
+			mode = DockerMode
+			return
+		}
+		if out, err := exec.Command("sh", "-c", "which systemctl").Output(); err == nil && strings.Contains(string(out), "systemctl") {
+			mode = SystemctlMode
+			return
+		}
+		if out, err := exec.Command("sh", "-c", "which service").Output(); err == nil && strings.Contains(string(out), "service") {
+			mode = ServiceMode
+			return
+		}
+		mode = CommonMode
 	}
-	mode = CommonMode
 	return
 }

@@ -61,7 +61,7 @@
           全局透明代理
           <b-tooltip
             type="is-dark"
-            label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：docker不会走代理。"
+            label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker不会走代理。"
             multilined
             position="is-right"
           >
@@ -275,7 +275,12 @@ export default {
       return port;
     },
     transparentValid() {
-      return localStorage["transparentValid"] !== "false";
+      let val = localStorage["transparentValid"];
+      return (
+        val === "undefined" || //最早版本, 无法判断是否valid, 就默认valid了
+        val === "true" || //boolean版本
+        val === "yes" //最新string版本
+      );
     }
   },
   created() {

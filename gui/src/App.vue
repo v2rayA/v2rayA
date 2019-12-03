@@ -87,6 +87,7 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/components/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
+import { parseURL } from "./assets/js/utils";
 
 export default {
   components: { ModalCustomAddress, node },
@@ -117,9 +118,13 @@ export default {
     }
   },
   created() {
-    if (!localStorage.getItem("backendAddress")) {
-      localStorage.setItem("backendAddress", "http://localhost:2017");
+    let ba = localStorage.getItem("backendAddress");
+    if (!ba) {
+      ba = "http://localhost:2017";
+      localStorage.setItem("backendAddress", ba);
     }
+    let u = parseURL(ba);
+    document.title = `V2RayA - ${u.host}:${u.port}`;
     this.$axios({
       url: apiRoot + "/version"
     }).then(res => {
@@ -148,9 +153,23 @@ export default {
           });
         } else {
           localStorage["transparentValid"] = res.data.data.transparentValid;
-          if (res.data.data.transparentValid === false) {
+          if (
+            typeof res.data.data.transparentValid == "boolean" && //兼容旧版本
+            res.data.data.transparentValid === false
+          ) {
             this.$buefy.toast.open({
               message: "检测到v2ray-core版本低于4.19.1，不支持全局透明代理",
+              type: "is-warning",
+              position: "is-top",
+              duration: 3000
+            });
+          }
+          if (
+            typeof res.data.data.transparentValid === "string" && //新版本
+            res.data.data.transparentValid !== "yes"
+          ) {
+            this.$buefy.toast.open({
+              message: "不支持全局透明代理: " + res.data.data.transparentValid,
               type: "is-warning",
               position: "is-top",
               duration: 3000

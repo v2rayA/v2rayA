@@ -24,7 +24,7 @@ func execCommands(commands string, stopWhenError bool) error {
 		}
 		out, err := exec.Command("sh", "-c", line).CombinedOutput()
 		if err != nil {
-			e = errors.New(err.Error() + string(out))
+			e = errors.New(line + " " + err.Error() + " " + string(out))
 			if stopWhenError {
 				return e
 			}
@@ -193,6 +193,9 @@ iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-ip 127.0.0
 	}
 	if err := execCommands(commands, true); err != nil {
 		_ = DeleteRules()
+		if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
+			err = errors.New("内核未编译xt_TPROXY")
+		}
 		return err
 	}
 	return nil
