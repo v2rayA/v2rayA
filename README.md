@@ -162,7 +162,7 @@ sudo go run main.go
 
 分为以下几种情况：
 
-#### v2ray能够以daemon存在
+#### 若v2ray能够以daemon存在
 
 能够以daemon存在即在正确安装v2ray后，使用下述命令之一能够得到正确的反馈：
 
@@ -170,12 +170,12 @@ sudo go run main.go
 # if systemctl is available
 systemctl status v2ray
 # else if service is available
-systemctl v2ray status
+service v2ray status
 ```
 
 那么可从软件源安装，或下载[releases](https://github.com/mzz2017/V2RayA/releases)中的对应安装包进行安装。
 
-#### v2ray能够运行于docker
+#### 若v2ray能够运行于docker
 
 可参照Docker方式使用
 
