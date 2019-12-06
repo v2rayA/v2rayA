@@ -128,9 +128,12 @@ func GetPortWhiteListNotNil() *PortWhiteList {
 	_ = persistence.Get("portWhiteList", &r)
 	return r
 }
-func GetConnectedServerNotNil() *Which {
+func GetConnectedServer() *Which {
 	r := new(Which)
-	_ = persistence.Get("connectedServer", &r)
+	err := persistence.Get("connectedServer", &r)
+	if err != nil {
+		return nil
+	}
 	return r
 }
 

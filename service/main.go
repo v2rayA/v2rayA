@@ -94,7 +94,7 @@ func initConfigure() {
 
 func checkConnection() {
 	//如果V2Ray正在运行，而配置文件中没有记录当前连接的节点是谁，就关掉V2Ray
-	if v2ray.IsV2RayRunning() && configure.GetConnectedServerNotNil() == nil {
+	if v2ray.IsV2RayRunning() && configure.GetConnectedServer() == nil {
 		err := v2ray.StopAndDisableV2rayService()
 		if err != nil {
 			log.Fatal(err)
@@ -169,15 +169,22 @@ func checkUpdate() {
 	}()
 }
 func run() (err error) {
+	//判别是否common模式，需要启动v2ray吗
+	if global.ServiceControlMode == global.CommonMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayProcessExists() {
+		_ = v2ray.RestartV2rayService()
+	}
+	//开启透明代理
 	_ = service.CheckAndStopTransparentProxy()
 	err = service.CheckAndSetupTransparentProxy(true)
 	if err != nil {
 		return
 	}
 	errch := make(chan error)
+	//启动服务端
 	go func() {
 		errch <- router.Run()
 	}()
+	//监听信号，处理透明代理的关闭
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGILL)

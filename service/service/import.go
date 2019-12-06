@@ -35,7 +35,7 @@ func Import(url string, which *configure.Which) (err error) {
 			}
 			sr.VmessInfo = n.VmessInfo
 			err = configure.SetServer(ind, n.ToServerRaw())
-			cs := configure.GetConnectedServerNotNil()
+			cs := configure.GetConnectedServer()
 			if which.TYPE == cs.TYPE && which.ID == cs.ID {
 				err = v2ray.UpdateV2rayWithConnectedServer()
 			}

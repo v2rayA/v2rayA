@@ -15,17 +15,17 @@ func PostConnection(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	lastConnectedServer := configure.GetConnectedServerNotNil()
+	lastConnectedServer := configure.GetConnectedServer()
 	err = service.Connect(&which)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("连接失败："+err.Error()))
 		return
 	}
-	tools.ResponseSuccess(ctx, gin.H{"connectedServer": configure.GetConnectedServerNotNil(), "lastConnectedServer": lastConnectedServer})
+	tools.ResponseSuccess(ctx, gin.H{"connectedServer": configure.GetConnectedServer(), "lastConnectedServer": lastConnectedServer})
 }
 
 func DeleteConnection(ctx *gin.Context) {
-	cs := configure.GetConnectedServerNotNil()
+	cs := configure.GetConnectedServer()
 	err := service.Disconnect()
 	if err != nil {
 		tools.ResponseError(ctx, err)

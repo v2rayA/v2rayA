@@ -42,7 +42,7 @@ func NewUpdateFailStatus(reason string) SubscriptionStatus {
 
 /* 将[]TouchServerRaw映射到[]TouchServer */
 func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
-	w := configure.GetConnectedServerNotNil()
+	w := configure.GetConnectedServer()
 	var tsr *configure.ServerRaw
 	var err error
 	if w != nil {
@@ -81,7 +81,7 @@ func GenerateTouch() (t Touch) {
 			Servers: serverRawsToServers(v.Servers),
 		}
 	}
-	t.ConnectedServer = configure.GetConnectedServerNotNil()
+	t.ConnectedServer = configure.GetConnectedServer()
 	//补充TYPE
 	for i := range t.Subscriptions {
 		t.Subscriptions[i].TYPE = configure.SubscriptionType

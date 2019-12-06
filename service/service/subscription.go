@@ -48,6 +48,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
+	//TODO: 正确做法应该为 不是所有的subscription在更新时都需要检查append
 	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
 	c, err := tools.GetHttpClientAutomatically()
@@ -63,7 +64,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	}
 	tsrs := make([]configure.ServerRaw, len(infos))
 	var connectedServer *configure.ServerRaw
-	cs := configure.GetConnectedServerNotNil()
+	cs := configure.GetConnectedServer()
 	if cs != nil {
 		connectedServer, _ = cs.LocateServer()
 	}

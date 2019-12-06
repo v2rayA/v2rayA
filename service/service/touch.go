@@ -12,7 +12,7 @@ func DeleteWhich(ws []configure.Which) (err error) {
 	//对要删除的touch排序，将大的下标排在前面，从后往前删
 	data.Sort()
 	touches := data.Get()
-	cs := configure.GetConnectedServerNotNil()
+	cs := configure.GetConnectedServer()
 	subscriptions := configure.GetSubscriptions()
 	servers := configure.GetServers()
 	bDeletedSubscription := false
@@ -65,7 +65,7 @@ func DeleteWhich(ws []configure.Which) (err error) {
 			return
 		}
 	}
-	if configure.GetConnectedServerNotNil() != nil { //如果已经disconnect了，就不要再set回去了
+	if configure.GetConnectedServer() != nil { //如果已经disconnect了，就不要再set回去了
 		err = configure.SetConnect(cs) //由于删除了一些servers或subscriptions，当前which可能会有下标上的变化
 	}
 	return

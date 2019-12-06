@@ -150,9 +150,9 @@ func CheckTransparentSupported() (err error) {
 		return errors.New("v2ray-core版本低于4.19.1")
 	}
 	if !xtTproxyEnable && global.ServiceControlMode != global.DockerMode { //docker下无法判断
-		_, err = exec.Command("sh", "-c", "modprobe -v xt_TPROXY").CombinedOutput()
+		_, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
-			return errors.New("内核未编译xt_TPROXY")
+			return errors.New("内核未编译xt_TPROXY") //TODO: 不支持tproxy，使用重定向方案
 		}
 		xtTproxyEnable = true
 	}
