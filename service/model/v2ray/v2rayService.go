@@ -12,8 +12,6 @@ import (
 	"strings"
 )
 
-var xtTproxyEnable bool
-
 func EnableV2rayService() (err error) {
 	var out []byte
 	switch global.ServiceControlMode {
@@ -141,6 +139,11 @@ func GetV2rayServiceVersion() (ver string, err error) {
 	return strings.TrimSpace(string(out)), err
 }
 
+func IfTProxyModLoaded() bool {
+	out, err := exec.Command("sh", "-c", "lsmod|awk '{print $1}'|grep ^xt_TPROXY$").Output()
+	return err == nil && len(bytes.TrimSpace(out)) > 0
+}
+
 func CheckTransparentSupported() (err error) {
 	ver, err := GetV2rayServiceVersion()
 	if err != nil {
@@ -149,12 +152,17 @@ func CheckTransparentSupported() (err error) {
 	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
 		return errors.New("v2ray-core版本低于4.19.1")
 	}
-	if !xtTproxyEnable && global.ServiceControlMode != global.DockerMode { //docker下无法判断
-		_, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
+	if !IfTProxyModLoaded() && global.ServiceControlMode != global.DockerMode { //docker下无法判断
+		var out []byte
+		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
-			return errors.New("内核未编译xt_TPROXY") //TODO: 不支持tproxy，使用重定向方案
+			if !strings.Contains(string(out), "not found") {
+				err = errors.New("启动xt_TPROXY失败: " + string(out))
+				return
+			}
+			//TODO: 不支持xt_TPROXY，使用重定向方案
+
 		}
-		xtTproxyEnable = true
 	}
 	return
 }
