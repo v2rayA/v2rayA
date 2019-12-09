@@ -2,6 +2,7 @@ package service
 
 import (
 	"V2RayA/persistence/configure"
+	"log"
 	"sync"
 	"time"
 )
@@ -23,6 +24,7 @@ func Ping(which []configure.Which, count int, timeout time.Duration) ([]configur
 			e := which[i].Ping(count, timeout)
 			if e != nil {
 				err = e
+				log.Println(err)
 				//不在乎并发会导致的问题，无需加锁
 			}
 			wg.Done()

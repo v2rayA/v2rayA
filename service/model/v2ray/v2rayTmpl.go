@@ -306,12 +306,14 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			},
 		}
 		if net.ParseIP(v.Add) == nil {
-			//如果不是IP，而是域名，也加入白名单
-			ds.Domains = append(ds.Domains, v.Add)
+			//如果不是IP，而是域名，将其二级域名加入白名单
+			group := strings.Split(v.Add, ".")
+			domain := strings.Join(group[len(group)-2:], ".")
+			ds.Domains = append(ds.Domains, domain)
 		}
 		t.DNS.Servers = []interface{}{
-			"8.8.8.8",         // 非中中国大陆域名使用 Google 的 DNS
-			"1.1.1.1",         // 非中中国大陆域名使用 Cloudflare 的 DNS(备用)
+			"8.8.8.8", // 非中中国大陆域名使用 Google 的 DNS
+			//"1.1.1.1",         // 非中中国大陆域名使用 Cloudflare 的 DNS(备用)
 			"114.114.114.114", // 114 的 DNS (备用)
 			ds,
 		}
@@ -383,8 +385,15 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			},
 		)
 		if net.ParseIP(v.Add) == nil {
-			//如果不是IP，而是域名，也加入白名单
-			ds.Domains = append(ds.Domains, v.Add)
+			//如果不是IP，而是域名，将其二级域名加入白名单
+			group := strings.Split(v.Add, ".")
+			domain := strings.Join(group[len(group)-2:], ".")
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: "direct",
+					Domain:      []string{"domain:" + domain},
+				})
 		}
 		switch setting.Transparent {
 		case configure.TransparentProxy:

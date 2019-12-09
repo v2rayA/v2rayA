@@ -3,6 +3,7 @@ package configure
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"sort"
 	"strings"
@@ -105,19 +106,25 @@ func (w *Which) Ping(count int, timeout time.Duration) (err error) {
 	host := tsr.VmessInfo.Add
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		hosts, err = net.LookupAddr(host)
+		hosts, err = net.LookupHost(host)
 		if err != nil || len(hosts) <= 0 {
 			return
 		}
 		host = hosts[0]
 	}
 	t := time.Now()
-	_, e := net.DialTimeout("tcp", host+":"+tsr.VmessInfo.Port, timeout)
+	log.Println(time.Now().String(), tsr.VmessInfo.Add, host+":"+tsr.VmessInfo.Port)
+	conn, e := net.DialTimeout("tcp", host+":"+tsr.VmessInfo.Port, timeout)
 	w.PingLatency = new(string)
-	if e != nil && strings.Contains(e.Error(), "refuse") {
+	if e == nil || (strings.Contains(e.Error(), "refuse")) {
+		log.Println(time.Now().String(),e, tsr.VmessInfo.Add, host+":"+tsr.VmessInfo.Port)
 		*w.PingLatency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 	} else {
+		log.Println(e)
 		*w.PingLatency = "timeout"
+	}
+	if e == nil {
+		_ = conn.Close()
 	}
 	return
 }

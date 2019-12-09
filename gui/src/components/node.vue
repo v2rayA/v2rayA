@@ -282,7 +282,7 @@
                       icon-left=" github-circle iconfont icon-winfo-icon-chakanbaogao"
                       :outlined="!props.row.connected"
                       type="is-info"
-                      @click="handleClickViewServer(props.row)"
+                      @click="handleClickViewServer(props.row, subi)"
                     >
                       查看
                     </b-button>
@@ -744,9 +744,9 @@ export default {
       this.which = row;
       this.showModalServer = true;
     },
-    handleClickViewServer(row) {
+    handleClickViewServer(row, sub) {
       this.modalServerReadOnly = true;
-      this.which = row;
+      this.which = { ...row, sub };
       this.showModalServer = true;
     },
     handleModalServerSubmit(url) {
