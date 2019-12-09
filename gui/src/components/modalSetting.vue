@@ -69,7 +69,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            ></b-icon>
+            />
           </b-tooltip>
         </template>
         <b-select v-model="transparent" expanded>
@@ -108,7 +108,7 @@
             v-model="customPac.url"
             placeholder="SiteDAT file URL"
             custom-class="no-shadow"
-          ></b-input>
+          />
           <b-button
             v-if="pacMode === 'custom'"
             type="is-primary"
@@ -138,7 +138,11 @@
           <option value="auto_update">服务端启动时更新订阅</option>
         </b-select>
       </b-field>
-      <b-field label="解析订阅链接/更新时优先使用" label-position="on-border">
+      <b-field
+        v-if="transparent === 'close'"
+        label="解析订阅链接/更新时优先使用"
+        label-position="on-border"
+      >
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">直连模式</option>
           <option value="pac">PAC模式</option>
@@ -158,7 +162,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            ></b-icon>
+            />
           </b-tooltip>
         </template>
         <b-select v-model="tcpFastOpen" expanded>
@@ -180,7 +184,7 @@
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
               style="position:relative;top:2px;right:3px;font-weight:normal"
-            ></b-icon>
+            />
           </b-tooltip>
         </template>
         <b-select v-model="muxOn" expanded style="flex: 1">
