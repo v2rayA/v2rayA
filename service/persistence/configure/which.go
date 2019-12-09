@@ -3,8 +3,9 @@ package configure
 import (
 	"errors"
 	"fmt"
-	"github.com/sparrc/go-ping"
+	"net"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -100,17 +101,24 @@ func (w *Which) Ping(count int, timeout time.Duration) (err error) {
 	if err != nil {
 		return
 	}
-	pinger, err := ping.NewPinger(tsr.VmessInfo.Add)
-	if err != nil {
-		return
+	//BEGIN
+	host := tsr.VmessInfo.Add
+	if net.ParseIP(host) == nil {
+		var hosts []string
+		hosts, err = net.LookupAddr(host)
+		if err != nil || len(hosts) <= 0 {
+			return
+		}
+		host = hosts[0]
 	}
-	pinger.Count = count
-	pinger.Timeout = timeout
-	pinger.SetPrivileged(true)
-	pinger.Run()
-	s := pinger.Statistics()
+	t := time.Now()
+	_, e := net.DialTimeout("tcp", host+":"+tsr.VmessInfo.Port, timeout)
 	w.PingLatency = new(string)
-	*w.PingLatency = fmt.Sprintf("平均: %dms, 最快: %dms, 最慢: %dms. 丢包: %d/%d(%.1f%%)", int(s.AvgRtt.Seconds()*1000), int(s.MinRtt.Seconds()*1000), int(s.MaxRtt.Seconds()*1000), s.PacketsSent-s.PacketsRecv, s.PacketsSent, s.PacketLoss)
+	if e != nil && strings.Contains(e.Error(), "refuse") {
+		*w.PingLatency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
+	} else {
+		*w.PingLatency = "timeout"
+	}
 	return
 }
 

@@ -577,7 +577,7 @@ export default {
         })
       );
       this.checkedRows.forEach(x => x.pingLatency && (x.pingLatency = "")); //refresh
-      this.checkedRows = [];
+      // this.checkedRows = [];
       this.$axios({
         url: apiRoot + "/pingLatency",
         params: {
