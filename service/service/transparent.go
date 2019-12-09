@@ -9,7 +9,7 @@ import (
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	setting := configure.GetSettingNotNil()
-	if e := v2ray.CheckTransparentSupported(); e != nil {
+	if e := v2ray.CheckTProxySupported(); e != nil {
 		log.Println("不支持透明代理，设置透明代理失败" + e.Error())
 		return //TODO: 当前版本v2ray不支持透明代理，需要返回error吗？
 	}
@@ -21,7 +21,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 }
 
 func CheckAndStopTransparentProxy() (err error) {
-	if v2ray.CheckTransparentSupported() != nil {
+	if v2ray.CheckTProxySupported() != nil {
 		return //TODO: 当前版本v2ray不支持透明代理，需要返回error吗？
 	}
 	return iptables.DeleteRules()

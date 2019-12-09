@@ -9,7 +9,7 @@ import (
 )
 
 func GetVersion(ctx *gin.Context) {
-	err := v2ray.CheckTransparentSupported()
+	err := v2ray.CheckTProxySupported()
 	var transparentProxyValid string
 	if err == nil {
 		transparentProxyValid = "yes"

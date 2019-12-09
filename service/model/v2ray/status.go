@@ -146,7 +146,7 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 		return
 	}
 	time.Sleep(100 * time.Millisecond)
-	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTransparentSupported() == nil {
+	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		_ = iptables.DeleteRules()
 		err = iptables.WriteRules()
 	}
@@ -173,7 +173,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	}
 	if IsV2RayRunning() {
 		err = RestartV2rayService()
-		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTransparentSupported() == nil {
+		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 			time.Sleep(100 * time.Millisecond)
 			_ = iptables.DeleteRules()
 			err = iptables.WriteRules()

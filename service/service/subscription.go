@@ -48,7 +48,6 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
-	//TODO: 正确做法应该为 不是所有的subscription在更新时都需要检查append
 	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
 	c, err := tools.GetHttpClientAutomatically()
@@ -69,12 +68,12 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		connectedServer, _ = cs.LocateServer()
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
-	finishFindConnected := false
+	foundConnectedServerInNewList := false
 	for i, info := range infos {
 		tsr := configure.ServerRaw{
 			VmessInfo: info.VmessInfo,
 		}
-		if !finishFindConnected && connectedServer != nil && connectedServer.VmessInfo == tsr.VmessInfo {
+		if !foundConnectedServerInNewList && connectedServer != nil && connectedServer.VmessInfo == tsr.VmessInfo {
 			err = configure.SetConnect(&configure.Which{
 				TYPE:        configure.SubscriptionServerType,
 				ID:          i + 1,
@@ -84,18 +83,18 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			if err != nil {
 				return
 			}
-			finishFindConnected = true
+			foundConnectedServerInNewList = true
 		}
 		tsrs[i] = tsr
 	}
-	if !finishFindConnected {
+	if cs != nil && cs.Sub == index && !foundConnectedServerInNewList {
 		if disconnectIfNecessary {
 			err = Disconnect()
 			if err != nil {
 				reason := "现连接的服务器已被更新且不包含在新的订阅中，在试图与其断开的过程中遇到失败"
 				return errors.New(reason)
 			}
-		} else if cs != nil && connectedServer != nil { //这里这么写是因为不想让goland报警
+		} else if connectedServer != nil {
 			//将之前连接的节点append进去
 			tsrs = append(tsrs, *connectedServer)
 			cs.ID = len(tsrs) - 1

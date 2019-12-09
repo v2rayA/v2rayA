@@ -144,7 +144,7 @@ func IfTProxyModLoaded() bool {
 	return err == nil && len(bytes.TrimSpace(out)) > 0
 }
 
-func CheckTransparentSupported() (err error) {
+func CheckTProxySupported() (err error) {
 	ver, err := GetV2rayServiceVersion()
 	if err != nil {
 		return errors.New("获取v2ray-core版本失败")
@@ -157,11 +157,10 @@ func CheckTransparentSupported() (err error) {
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
 			if !strings.Contains(string(out), "not found") {
-				err = errors.New("启动xt_TPROXY失败: " + string(out))
-				return
+				return errors.New("启动xt_TPROXY失败: " + string(out))
 			}
-			//TODO: 不支持xt_TPROXY，使用重定向方案
-
+			// modprobe失败，不支持xt_TPROXY方案
+			return errors.New("不支持xt_TPROXY" + string(out))
 		}
 	}
 	return

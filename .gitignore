@@ -26,3 +26,5 @@ V2RayA
 /.SRCINFO
 /apt
 /PKGBUILD
+/go.mod
+/go.sum
