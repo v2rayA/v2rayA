@@ -595,7 +595,7 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     handleTabsChange(index) {
-      // this.checkedRows = [];
+      this.checkedRows = [];
     },
     isCheckedRowsDeletable() {
       // CONST.SubscriptionServerType is not deletable

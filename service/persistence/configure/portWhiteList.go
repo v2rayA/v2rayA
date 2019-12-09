@@ -75,3 +75,35 @@ func (pwl *PortWhiteList) Compressed() (wl *PortWhiteList) {
 	}
 	return
 }
+
+func (pwl *PortWhiteList) Has(port string, protocol string) (has bool) {
+	iPort, err := strconv.Atoi(port)
+	if err != nil {
+		return false
+	}
+	has = false
+	var list []string
+	switch strings.ToLower(protocol) {
+	case "tcp":
+		list = pwl.TCP
+	case "udp":
+		list = pwl.UDP
+	default:
+		return false
+	}
+	for _, t := range list {
+		if t == port {
+			has = true
+			break
+		} else if strings.Contains(t, ":") {
+			arr := strings.Split(t, ":")
+			l, _ := strconv.Atoi(arr[0])
+			r, _ := strconv.Atoi(arr[1])
+			if iPort >= l && iPort <= r {
+				has = true
+				break
+			}
+		}
+	}
+	return has
+}

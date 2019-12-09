@@ -12,6 +12,9 @@ func Ping(which []configure.Which, count int, timeout time.Duration) ([]configur
 	whiches.Set(which)
 	//对要Ping的which去重
 	which = whiches.GetNonDuplicated()
+	//暂时关闭透明代理
+	_ = CheckAndStopTransparentProxy()
+	defer CheckAndSetupTransparentProxy(true)
 	//多线程异步ping
 	wg := new(sync.WaitGroup)
 	var err error

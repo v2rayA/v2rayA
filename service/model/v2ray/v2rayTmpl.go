@@ -88,8 +88,8 @@ type Server struct {
 	Port     int    `json:"port"`
 }
 type Settings struct {
-	Vnext          interface{} `json:"vnext"`
-	Servers        interface{} `json:"servers"`
+	Vnext          interface{} `json:"vnext,omitempty"`
+	Servers        interface{} `json:"servers,omitempty"`
 	DomainStrategy string      `json:"domainStrategy,omitempty"`
 }
 type TLSSettings struct {
@@ -129,6 +129,7 @@ type Outbound struct {
 	Settings       Settings        `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
+	Network        string          `json:"network,omitempty"`
 }
 type TCPSettings struct {
 	ConnectionReuse bool `json:"connectionReuse"`
@@ -178,7 +179,8 @@ type HttpSettings struct {
 	Host []string `json:"host"`
 }
 type DNS struct {
-	Servers []interface{} `json:"servers"`
+	Hosts   map[string]string `json:"hosts"`
+	Servers []interface{}     `json:"servers"`
 }
 type DnsServer struct {
 	Address string   `json:"address"`
@@ -312,10 +314,10 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			ds.Domains = append(ds.Domains, domain)
 		}
 		t.DNS.Servers = []interface{}{
-			"8.8.8.8", // 非中中国大陆域名使用 Google 的 DNS
-			//"1.1.1.1",         // 非中中国大陆域名使用 Cloudflare 的 DNS(备用)
-			"114.114.114.114", // 114 的 DNS (备用)
 			ds,
+			"8.8.8.8", // 非中中国大陆域名使用 Google 的 DNS
+			"1.1.1.1",
+			"localhost",
 		}
 		//再修改inbounds
 		tproxy := "tproxy"
@@ -327,7 +329,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 				Enabled:      true,
 				DestOverride: []string{"http", "tls"},
 			},
-			Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
+			Settings:       &InboundSettings{FollowRedirect: true},
 			StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
 			Tag:            "transparent",
 		})
@@ -336,6 +338,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		t.Outbounds = append(t.Outbounds, Outbound{
 			Tag:      "dns-out",
 			Protocol: "dns",
+			Network:  "tcp",
 		})
 		for i := range t.Outbounds {
 			if t.Outbounds[i].Protocol == "blackhole" {

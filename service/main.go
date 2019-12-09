@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
+	"time"
 )
 
 func checkEnvironment() {
@@ -123,6 +124,7 @@ func checkUpdate() {
 		switch setting.PacMode {
 		case configure.GfwlistMode:
 			go func() {
+				time.Sleep(2 * time.Second)
 				/* 更新h2y.dat */
 				localGFWListVersion, err := service.CheckAndUpdateGFWList()
 				if err != nil {
@@ -139,6 +141,7 @@ func checkUpdate() {
 	//检查订阅更新
 	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
 		go func() {
+			time.Sleep(2 * time.Second)
 			subs := configure.GetSubscriptions()
 			lenSubs := len(subs)
 			control := make(chan struct{}, 2) //并发限制同时更新2个订阅
@@ -162,6 +165,7 @@ func checkUpdate() {
 	}
 	// 检查服务端更新
 	go func() {
+		time.Sleep(1 * time.Second)
 		if foundNew, remote, err := service.CheckUpdate(); err == nil {
 			global.FoundNew = foundNew
 			global.RemoteVersion = remote

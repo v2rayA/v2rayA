@@ -113,18 +113,16 @@ func (w *Which) Ping(count int, timeout time.Duration) (err error) {
 		host = hosts[0]
 	}
 	t := time.Now()
-	log.Println(time.Now().String(), tsr.VmessInfo.Add, host+":"+tsr.VmessInfo.Port)
 	conn, e := net.DialTimeout("tcp", host+":"+tsr.VmessInfo.Port, timeout)
 	w.PingLatency = new(string)
 	if e == nil || (strings.Contains(e.Error(), "refuse")) {
-		log.Println(time.Now().String(),e, tsr.VmessInfo.Add, host+":"+tsr.VmessInfo.Port)
+		if e == nil {
+			_ = conn.Close()
+		}
 		*w.PingLatency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 	} else {
 		log.Println(e)
 		*w.PingLatency = "timeout"
-	}
-	if e == nil {
-		_ = conn.Close()
 	}
 	return
 }
