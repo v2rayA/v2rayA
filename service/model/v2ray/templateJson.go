@@ -5,7 +5,7 @@ const TemplateJson = `{
     "log": {
       "access": "/var/log/v2ray.log",
       "error": "/var/log/v2ray.err.log",
-      "loglevel": "debug"
+      "loglevel": "none"
     },
     "inbounds": [
       {

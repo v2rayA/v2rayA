@@ -129,6 +129,8 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    ```bash
    # pull latest or stable version of v2raya
    docker pull mzz2017/v2raya:latest
+   # pull latest version of v2ray
+   docker pull v2ray/official
    
    # create volume to share data
    docker volume create v2raya_shared-data

@@ -182,7 +182,7 @@ ip6tables -t mangle -A PREROUTING -j SSTP_PRE
 # 打上 iptables 标记，mark 了的会走代理
 ip6tables -t mangle -N SETMARK
 ip6tables -t mangle -A SETMARK -i docker+ -j RETURN
-ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
 ip6tables -t mangle -A SETMARK -d ::/128 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::1/128 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN
