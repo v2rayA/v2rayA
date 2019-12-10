@@ -124,9 +124,39 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    docker-compose up -d --build
    ```
 
-2. **使用 docker 命令部署**。注意在启动v2ray及v2raya容器时添加`--privileged --network host`以支持全局透明代理。
+2. **使用 docker 命令部署**。
 
-   我们同步发行Docker镜像，如果无法使用 docker-compose，可以参考[**docker-compose.yml**](https://github.com/mzz2017/V2RayA/blob/master/docker-compose.yml)并使用 docker 命令自行搭建。[镜像地址](https://hub.docker.com/r/mzz2017/v2raya)
+   ```bash
+   # pull latest or stable version of v2raya
+   docker pull mzz2017/v2raya:latest
+   
+   # create volume to share data
+   docker volume create v2raya_shared-data
+   
+   # run v2raya
+   docker run -d \
+   	--restart=always \
+   	--privileged \
+   	--network=host \
+   	-v v2raya_shared-data:/etc/v2ray \
+   	-v /etc/localtime:/etc/localtime:ro \
+   	-v /etc/timezone:/etc/timezone:ro \
+   	--name v2raya_backend \
+   	mzz2017/v2raya:latest
+   
+   # run v2ray
+   docker run -d \
+   	--restart=always \
+   	--privileged \
+   	--network=host \
+   	--pid=container:v2raya_backend \
+   	-v v2raya_shared-data:/etc/v2ray \
+   	--env V2RAY_LOCATION_ASSET=/etc/v2ray \
+   	--name v2raya_v2ray \
+   	v2ray/official \
+   	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
+   ```
+   
 
 ### 二进制文件、安装包
 
