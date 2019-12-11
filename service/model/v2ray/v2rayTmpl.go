@@ -208,8 +208,11 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 	// 其中Template是基础配置，替换掉*t即可
 	*t = tmplJson.Template
 	// 默认协议vmess
-	if v.Protocol == "" {
+	switch v.Protocol {
+	case "":
 		v.Protocol = "vmess"
+	case "ss":
+		v.Protocol = "shadowsocks"
 	}
 	// 根据vmessInfo修改json配置
 	t.Outbounds[0].Protocol = v.Protocol
@@ -267,7 +270,7 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
 		}
-	case "ss":
+	case "shadowsocks":
 		t.Outbounds[0].Settings.Servers = []Server{
 			{
 				Address:  v.Add,

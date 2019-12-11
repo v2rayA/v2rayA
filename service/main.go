@@ -170,6 +170,7 @@ func checkUpdate() {
 	// 检查服务端更新
 	go func() {
 		time.Sleep(1 * time.Second)
+		//TODO: 访问页面时检查更新，每次启动只会检查一次
 		if foundNew, remote, err := service.CheckUpdate(); err == nil {
 			global.FoundNew = foundNew
 			global.RemoteVersion = remote
