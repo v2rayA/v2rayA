@@ -6,7 +6,7 @@
         group-multiline
         style="margin-bottom: 1rem;position: relative"
       >
-        <div>
+        <div style="max-width: 50%">
           <button
             :class="{
               button: true,
@@ -14,10 +14,22 @@
               'is-info': true,
               'not-display': !isCheckedRowsPingable()
             }"
-            @click="handleClickPing"
+            @click="handleClickLatency(true)"
           >
             <i class="iconfont icon-wave"></i>
-            <span>Ping</span>
+            <span>PING</span>
+          </button>
+          <button
+            :class="{
+              button: true,
+              field: true,
+              'is-info': true,
+              'not-display': !isCheckedRowsPingable()
+            }"
+            @click="handleClickLatency(false)"
+          >
+            <i class="iconfont icon-wave"></i>
+            <span>HTTP</span>
           </button>
           <button
             :class="{
@@ -44,7 +56,7 @@
           </button>
           <span class="field not-show">placeholder</span>
         </div>
-        <div style="position:absolute;right:0;top:0">
+        <div style="position:absolute;right:0;top:0;max-width: 50%">
           <b-button class="field" type="is-primary" @click="handleClickCreate">
             <i class="iconfont icon-chuangjiangongdan1"></i>
             <span>创建</span>
@@ -130,14 +142,14 @@
                     >
                       更新
                     </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-wendangxiugai"
-                      :outlined="!props.row.connected"
-                      type="is-info"
-                    >
-                      修改
-                    </b-button>
+                    <!--                    <b-button-->
+                    <!--                      size="is-small"-->
+                    <!--                      icon-left=" github-circle iconfont icon-wendangxiugai"-->
+                    <!--                      :outlined="!props.row.connected"-->
+                    <!--                      type="is-info"-->
+                    <!--                    >-->
+                    <!--                      修改-->
+                    <!--                    </b-button>-->
                     <b-button
                       size="is-small"
                       icon-left=" github-circle iconfont icon-share"
@@ -176,7 +188,7 @@
                 </b-table-column>
                 <b-table-column
                   field="pingLatency"
-                  label="Ping时延"
+                  label="时延"
                   class="ping-latency"
                 >
                   {{ props.row.pingLatency }}
@@ -252,7 +264,7 @@
                 </b-table-column>
                 <b-table-column
                   field="pingLatency"
-                  label="Ping时延"
+                  label="时延"
                   class="ping-latency"
                 >
                   {{ props.row.pingLatency }}
@@ -462,6 +474,11 @@ export default {
                   lastConnectedServer: null
                 };
                 this.updateConnectView();
+                this.$buefy.toast.open({
+                  message: "导入成功",
+                  type: "is-primary",
+                  position: "is-top"
+                });
               } else {
                 this.$buefy.toast.open({
                   message: res.data.message,
@@ -562,7 +579,7 @@ export default {
         });
       }
     },
-    handleClickPing() {
+    handleClickLatency(ping) {
       let touches = JSON.stringify(
         this.checkedRows.map(x => {
           //穷举sub
@@ -576,10 +593,10 @@ export default {
           };
         })
       );
-      this.checkedRows.forEach(x => x.pingLatency && (x.pingLatency = "")); //refresh
+      this.checkedRows.forEach(x => (x.pingLatency = "testing...")); //refresh
       // this.checkedRows = [];
       this.$axios({
-        url: apiRoot + "/pingLatency",
+        url: apiRoot + (ping ? "/pingLatency" : "/httpLatency"),
         params: {
           whiches: touches
         }

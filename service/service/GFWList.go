@@ -17,7 +17,7 @@ import (
 )
 
 func GetRemoteGFWListUpdateTime(c *http.Client) (t time.Time, err error) {
-	resp, err := tools.HttpGetUsingCertainClient(c, "https://github.com/ToutyRater/V2Ray-SiteDAT/contributors/master/geofiles/h2y.dat")
+	resp, err := tools.HttpGetUsingSpecificClient(c, "https://github.com/ToutyRater/V2Ray-SiteDAT/contributors/master/geofiles/h2y.dat")
 	if err != nil {
 		return
 	}

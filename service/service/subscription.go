@@ -75,10 +75,10 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		}
 		if !foundConnectedServerInNewList && connectedServer != nil && connectedServer.VmessInfo == tsr.VmessInfo {
 			err = configure.SetConnect(&configure.Which{
-				TYPE:        configure.SubscriptionServerType,
-				ID:          i + 1,
-				Sub:         index,
-				PingLatency: nil,
+				TYPE:    configure.SubscriptionServerType,
+				ID:      i + 1,
+				Sub:     index,
+				Latency: "",
 			})
 			if err != nil {
 				return

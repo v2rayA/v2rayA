@@ -30,6 +30,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 - [x] 手动添加/修改节点
 - [x] websocket、kcp、tcp、http、tls、shadowsocks 全支持
 - [x] 测试节点 Ping 时延
+- [x] 测试节点 HTTP 时延
 - [x] 二维码、地址分享
 - [x] 同时开放 socks5、http、带 PAC 的 http 三个端口（PAC 模式可选 GFWList、大陆白名单）
 - [x] 服务端启动自动检查 PAC、订阅更新
@@ -41,7 +42,6 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 待开发：
 
-- [ ] 测试节点 HTTP 时延
 - [ ] 自定义 PAC 路由规则
 - [ ] QUIC、SSR 协议支持
 - [ ] 透明代理重定向备选方案
@@ -128,7 +128,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
    ```bash
    # pull latest or stable version of v2raya
-   docker pull mzz2017/v2raya:latest
+   docker pull mzz2017/v2raya:stable
    # pull latest version of v2ray
    docker pull v2ray/official
    
@@ -144,7 +144,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    	-v /etc/localtime:/etc/localtime:ro \
    	-v /etc/timezone:/etc/timezone:ro \
    	--name v2raya_backend \
-   	mzz2017/v2raya:latest
+   	mzz2017/v2raya:stable
    
    # run v2ray
    docker run -d \

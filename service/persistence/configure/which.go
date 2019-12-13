@@ -88,13 +88,13 @@ func (ws *Whiches) GetNonDuplicated() (w []Which) {
 }
 
 type Which struct {
-	TYPE        TouchType `json:"_type"` //Server还是Subscription
-	ID          int       `json:"id"`    //代表某个subscription或某个server的ID是多少, 从1开始. 如果是SubscriptionServer, 代表这个server在该Subscription中的ID
-	Sub         int       `json:"sub"`   //仅当TYPE为SubscriptionServer时有效, 代表Subscription的下标, 从0开始.
-	PingLatency *string   `json:"pingLatency,omitempty"`
+	TYPE    TouchType `json:"_type"`                 //Server还是Subscription
+	ID      int       `json:"id"`                    //代表某个subscription或某个server的ID是多少, 从1开始. 如果是SubscriptionServer, 代表这个server在该Subscription中的ID
+	Sub     int       `json:"sub"`                   //仅当TYPE为SubscriptionServer时有效, 代表Subscription的下标, 从0开始.
+	Latency string    `json:"pingLatency,omitempty"` //历史遗留问题，前后端通信还是使用pingLatency这个名字
 }
 
-func (w *Which) Ping(count int, timeout time.Duration) (err error) {
+func (w *Which) Ping(timeout time.Duration) (err error) {
 	if w.TYPE == SubscriptionType {
 		return errors.New("subscription不能ping")
 	}
@@ -108,28 +108,32 @@ func (w *Which) Ping(count int, timeout time.Duration) (err error) {
 		var hosts []string
 		hosts, err = net.LookupHost(host)
 		if err != nil || len(hosts) <= 0 {
+			if err != nil {
+				w.Latency = err.Error()
+			} else {
+				w.Latency = "dns解析失败: " + host
+			}
 			return
 		}
 		host = hosts[0]
 	}
 	t := time.Now()
 	conn, e := net.DialTimeout("tcp", host+":"+tsr.VmessInfo.Port, timeout)
-	w.PingLatency = new(string)
 	if e == nil || (strings.Contains(e.Error(), "refuse")) {
 		if e == nil {
 			_ = conn.Close()
 		}
-		*w.PingLatency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
+		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 	} else {
 		log.Println(e)
-		*w.PingLatency = "timeout"
+		w.Latency = "timeout"
 	}
 	return
 }
 
-func (wt *Which) LocateServer() (*ServerRaw, error) {
-	ind := wt.ID - 1 //转化为下标
-	switch wt.TYPE {
+func (w *Which) LocateServer() (*ServerRaw, error) {
+	ind := w.ID - 1 //转化为下标
+	switch w.TYPE {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
@@ -138,10 +142,10 @@ func (wt *Which) LocateServer() (*ServerRaw, error) {
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
-		if wt.Sub < 0 || wt.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[wt.Sub].Servers) {
+		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
 			return nil, errors.New("ID或Sub超出下标范围")
 		}
-		return &subscriptions[wt.Sub].Servers[ind], nil
+		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
 		return nil, errors.New("LocateServer: 无效的TYPE")
 	}

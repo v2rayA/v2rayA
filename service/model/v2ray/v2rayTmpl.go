@@ -197,16 +197,17 @@ func NewTemplate() (tmpl *Template) {
 根据传入的 VmessInfo 填充模板
 当协议是ss时，v.Net对应Method，v.ID对应Password
 */
-func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
+
+func ResolveOutbound(v vmessInfo.VmessInfo, tag string) (o Outbound, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
-	err := jsoniter.Unmarshal(raw, &tmplJson)
+	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+		return o, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 	}
 	// 其中Template是基础配置，替换掉*t即可
-	*t = tmplJson.Template
+	o = tmplJson.Template.Outbounds[0]
 	// 默认协议vmess
 	switch v.Protocol {
 	case "":
@@ -215,13 +216,12 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 		v.Protocol = "shadowsocks"
 	}
 	// 根据vmessInfo修改json配置
-	t.Outbounds[0].Protocol = v.Protocol
+	o.Protocol = v.Protocol
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
-	setting := configure.GetSettingNotNil()
 	switch strings.ToLower(v.Protocol) {
 	case "vmess":
-		t.Outbounds[0].Settings.Vnext = []Vnext{
+		o.Settings.Vnext = []Vnext{
 			{
 				Address: v.Add,
 				Port:    port,
@@ -234,31 +234,65 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 				},
 			},
 		}
-		t.Outbounds[0].StreamSettings = &tmplJson.StreamSettings
-		t.Outbounds[0].StreamSettings.Network = v.Net
+		o.StreamSettings = &tmplJson.StreamSettings
+		o.StreamSettings.Network = v.Net
 		// 根据传输协议(network)修改streamSettings
 		switch strings.ToLower(v.Net) {
 		case "ws":
 			tmplJson.WsSettings.Headers.Host = v.Host
 			tmplJson.WsSettings.Path = v.Path
-			t.Outbounds[0].StreamSettings.WsSettings = &tmplJson.WsSettings
+			o.StreamSettings.WsSettings = &tmplJson.WsSettings
 		case "mkcp", "kcp":
 			tmplJson.KcpSettings.Header.Type = v.Type
-			t.Outbounds[0].StreamSettings.KcpSettings = &tmplJson.KcpSettings
+			o.StreamSettings.KcpSettings = &tmplJson.KcpSettings
 		case "tcp":
 			if strings.ToLower(v.Type) != "none" { //那就是http无疑了
 				tmplJson.TCPSettings.Header.Request.Headers.Host = strings.Split(v.Host, ",")
-				t.Outbounds[0].StreamSettings.TCPSettings = &tmplJson.TCPSettings
+				o.StreamSettings.TCPSettings = &tmplJson.TCPSettings
 			}
 		case "h2", "http":
 			tmplJson.HttpSettings.Host = strings.Split(v.Host, ",")
 			tmplJson.HttpSettings.Path = v.Path
-			t.Outbounds[0].StreamSettings.HTTPSettings = &tmplJson.HttpSettings
+			o.StreamSettings.HTTPSettings = &tmplJson.HttpSettings
 		}
 		if strings.ToLower(v.TLS) == "tls" {
-			t.Outbounds[0].StreamSettings.Security = "tls"
-			t.Outbounds[0].StreamSettings.TLSSettings = &tmplJson.TLSSettings
+			o.StreamSettings.Security = "tls"
+			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
 		}
+	case "shadowsocks":
+		o.Settings.Servers = []Server{
+			{
+				Address:  v.Add,
+				Port:     port,
+				Method:   v.Net,
+				Password: v.ID,
+				Ota:      false, //避免chacha20无法工作
+			},
+		}
+	default:
+		return o, errors.New("不支持的协议: " + v.Protocol)
+	}
+	o.Tag = tag
+	return
+}
+
+func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) (err error) {
+	var tmplJson TmplJson
+	// 读入模板json
+	raw := []byte(TemplateJson)
+	err = jsoniter.Unmarshal(raw, &tmplJson)
+	if err != nil {
+		return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+	}
+	// 其中Template是基础配置，替换掉*t即可
+	*t = tmplJson.Template
+	o, err := ResolveOutbound(v, "proxy")
+	if err != nil {
+		return err
+	}
+	t.Outbounds[0] = o
+	setting := configure.GetSettingNotNil()
+	if o.Protocol == "vmess" {
 		//是否在设置里开启了TCPFastOpen
 		if setting.TcpFastOpen != configure.Default {
 			t.Outbounds[0].StreamSettings.Sockopt = new(Sockopt)
@@ -270,18 +304,6 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
 		}
-	case "shadowsocks":
-		t.Outbounds[0].Settings.Servers = []Server{
-			{
-				Address:  v.Add,
-				Port:     port,
-				Method:   v.Net,
-				Password: v.ID,
-				Ota:      false, //避免chacha20无法工作
-			},
-		}
-	default:
-		return errors.New("不支持的协议: " + v.Protocol)
 	}
 
 	//根据配置修改端口
@@ -473,4 +495,39 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) error {
 func (t *Template) ToConfigBytes() []byte {
 	b, _ := jsoniter.Marshal(t)
 	return b
+}
+func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string) (err error) {
+	o, err := ResolveOutbound(v, "outbound"+inboundPort)
+	if err != nil {
+		return
+	}
+	t.Outbounds = append(t.Outbounds, o)
+	iPort, err := strconv.Atoi(inboundPort)
+	if err != nil || iPort <= 0 {
+		return errors.New("inboundPort必须为string类型的正数")
+	}
+	t.Inbounds = append(t.Inbounds, Inbound{
+		Port:     iPort,
+		Protocol: "socks",
+		Listen:   "0.0.0.0",
+		Sniffing: Sniffing{
+			Enabled:      true,
+			DestOverride: []string{"http", "tls"},
+		},
+		Settings: &InboundSettings{
+			Auth: "noauth",
+			UDP:  true,
+		},
+		StreamSettings: nil,
+		Tag:            "inbound" + inboundPort,
+	})
+	if t.Routing.DomainStrategy == "" {
+		t.Routing.DomainStrategy = "IPOnDemand"
+	}
+	t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+		Type:        "field",
+		OutboundTag: "outbound" + inboundPort,
+		InboundTag:  []string{"inbound" + inboundPort},
+	})
+	return
 }
