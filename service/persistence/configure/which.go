@@ -111,7 +111,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 			if err != nil {
 				w.Latency = err.Error()
 			} else {
-				w.Latency = "dns解析失败: " + host
+				w.Latency = "DNS解析失败: " + host
 			}
 			return
 		}
@@ -126,7 +126,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 	} else {
 		log.Println(e)
-		w.Latency = "timeout"
+		w.Latency = "TIMEOUT"
 	}
 	return
 }

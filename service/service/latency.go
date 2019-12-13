@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -52,10 +54,8 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	}
 	//对要Ping的which去重
 	which = whiches.GetNonDuplicated()
-	//暂时关闭透明代理
-	_ = CheckAndStopTransparentProxy()
-	defer CheckAndSetupTransparentProxy(true)
 	//全部解析成ip
+	v2rayRunning := v2ray.IsV2RayRunning()
 	wg := new(sync.WaitGroup)
 	vms := make([]vmessInfo.VmessInfo, len(which))
 	for i := range which {
@@ -81,7 +81,19 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}
 	}
 	//写v2ray配置
-	tmpl := v2ray.NewTemplate()
+	var tmpl v2ray.Template
+	if v2rayRunning {
+		var err error
+		tmpl, err = v2ray.NewTemplateFromConfig()
+		if err != nil {
+			return nil, err
+		}
+		//暂时关闭透明代理
+		//_ = CheckAndStopTransparentProxy()
+		//defer CheckAndSetupTransparentProxy(true)
+	} else {
+		tmpl = v2ray.NewTemplate()
+	}
 	for i, v := range vms {
 		if which[i].Latency != "" {
 			continue
@@ -101,6 +113,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		return nil, err
 	}
 	//线程并发限制
+	time.Sleep(200 * time.Millisecond)
 	wg = new(sync.WaitGroup)
 	cc := make(chan struct{}, maxParallel)
 	for i := range which {
@@ -115,11 +128,13 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}(i)
 	}
 	wg.Wait()
-	if configure.GetConnectedServer() != nil {
+	if v2rayRunning && configure.GetConnectedServer() != nil {
 		err = v2ray.UpdateV2rayWithConnectedServer()
 		if err != nil {
 			return which, errors.New("V2Ray重启失败，请手动连接一个节点")
 		}
+	} else {
+		_ = v2ray.StopV2rayService() //没关掉那就不好意思了
 	}
 	return which, nil
 }
@@ -131,9 +146,20 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	}
 	c.Timeout = timeout
 	t := time.Now()
-	resp, err := tools.HttpGetUsingSpecificClient(c, "https://google.com")
+	req, _ := http.NewRequest("HEAD", "https://google.com", nil)
+	resp, err := c.Do(req)
 	if err != nil {
-		which.Latency = err.Error()
+		es := strings.ToLower(err.Error())
+		switch {
+		case strings.Contains(es, "eof"):
+			which.Latency = "NOT STABLE"
+		case strings.Contains(es, "does not look like a tls handshake"):
+			which.Latency = "INVALID"
+		case strings.Contains(es, "timeout"):
+			which.Latency = "TIMEOUT"
+		default:
+			which.Latency = err.Error()
+		}
 		return
 	}
 	_ = resp.Body.Close()

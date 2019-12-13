@@ -114,17 +114,9 @@ func RestartV2rayService() (err error) {
 	if err != nil {
 		return
 	}
-	<-time.After(100 * time.Millisecond)
+	<-time.After(300 * time.Millisecond)
 	if !IsV2RayRunning() {
 		return errors.New("v2ray启动失败")
-	}
-	return
-}
-
-func WriteV2rayConfig(content []byte) (err error) {
-	err = ioutil.WriteFile(GetConfigPath(), content, os.ModeAppend)
-	if err != nil {
-		return errors.New("WriteV2rayConfig: " + err.Error())
 	}
 	return
 }
@@ -132,8 +124,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	//读配置，转换为v2ray配置并写入
-	tmpl := NewTemplate()
-	err = tmpl.FillWithVmessInfo(*vmessInfo)
+	tmpl, err := NewTemplateFromVmessInfo(*vmessInfo)
 	if err != nil {
 		return
 	}
@@ -145,7 +136,7 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		_ = iptables.DeleteRules()
 		err = iptables.WriteRules()
@@ -162,8 +153,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	if err != nil {
 		return
 	}
-	tmpl := NewTemplate()
-	err = tmpl.FillWithVmessInfo(sr.VmessInfo)
+	tmpl, err := NewTemplateFromVmessInfo(sr.VmessInfo)
 	if err != nil {
 		return
 	}
@@ -174,7 +164,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	if IsV2RayRunning() {
 		err = RestartV2rayService()
 		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			_ = iptables.DeleteRules()
 			err = iptables.WriteRules()
 		}

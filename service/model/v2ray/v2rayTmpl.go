@@ -6,7 +6,9 @@ import (
 	"V2RayA/persistence/configure"
 	"errors"
 	"github.com/json-iterator/go"
+	"io/ioutil"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -188,8 +190,7 @@ type DnsServer struct {
 	Domains []string `json:"domains"`
 }
 
-func NewTemplate() (tmpl *Template) {
-	tmpl = new(Template)
+func NewTemplate() (tmpl Template) {
 	return
 }
 
@@ -276,19 +277,19 @@ func ResolveOutbound(v vmessInfo.VmessInfo, tag string) (o Outbound, err error) 
 	return
 }
 
-func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) (err error) {
+func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+		return t, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 	}
 	// 其中Template是基础配置，替换掉*t即可
-	*t = tmplJson.Template
+	t = tmplJson.Template
 	o, err := ResolveOutbound(v, "proxy")
 	if err != nil {
-		return err
+		return t, err
 	}
 	t.Outbounds[0] = o
 	setting := configure.GetSettingNotNil()
@@ -489,18 +490,43 @@ func (t *Template) FillWithVmessInfo(v vmessInfo.VmessInfo) (err error) {
 			}
 		}
 	}
-	return nil
+	return t, nil
 }
 
 func (t *Template) ToConfigBytes() []byte {
 	b, _ := jsoniter.Marshal(t)
 	return b
 }
+
+func WriteV2rayConfig(content []byte) (err error) {
+	err = ioutil.WriteFile(GetConfigPath(), content, os.ModeAppend)
+	if err != nil {
+		return errors.New("WriteV2rayConfig: " + err.Error())
+	}
+	return
+}
+
+func NewTemplateFromConfig() (t Template, err error) {
+	b, err := ioutil.ReadFile(GetConfigPath())
+	if err != nil {
+		return
+	}
+	err = jsoniter.Unmarshal(b, &t)
+	return
+}
 func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string) (err error) {
 	o, err := ResolveOutbound(v, "outbound"+inboundPort)
 	if err != nil {
 		return
 	}
+	var mark = 0xff
+	if o.StreamSettings == nil {
+		o.StreamSettings = new(StreamSettings)
+	}
+	if o.StreamSettings.Sockopt == nil {
+		o.StreamSettings.Sockopt = new(Sockopt)
+	}
+	o.StreamSettings.Sockopt.Mark = &mark
 	t.Outbounds = append(t.Outbounds, o)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
@@ -518,16 +544,17 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string)
 			Auth: "noauth",
 			UDP:  true,
 		},
-		StreamSettings: nil,
-		Tag:            "inbound" + inboundPort,
+		Tag: "inbound" + inboundPort,
 	})
 	if t.Routing.DomainStrategy == "" {
 		t.Routing.DomainStrategy = "IPOnDemand"
 	}
-	t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+	//将routingRule插入最前
+	t.Routing.Rules = append(make([]RoutingRule, 1), t.Routing.Rules...)
+	t.Routing.Rules[0] = RoutingRule{
 		Type:        "field",
 		OutboundTag: "outbound" + inboundPort,
 		InboundTag:  []string{"inbound" + inboundPort},
-	})
+	}
 	return
 }

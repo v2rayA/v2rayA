@@ -34,7 +34,7 @@ func GetHttpLatency(ctx *gin.Context) {
 		tools.ResponseError(ctx, errors.New("参数有误"))
 		return
 	}
-	wt, err = service.TestHttpLatency(wt, 5*time.Second, 4)
+	wt, err = service.TestHttpLatency(wt, 10*time.Second, 4)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
