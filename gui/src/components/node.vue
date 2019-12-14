@@ -16,7 +16,7 @@
             }"
             @click="handleClickLatency(true)"
           >
-            <i class="iconfont icon-wave"></i>
+            <i class="iconfont icon-wave" />
             <span>PING</span>
           </button>
           <button
@@ -28,7 +28,7 @@
             }"
             @click="handleClickLatency(false)"
           >
-            <i class="iconfont icon-wave"></i>
+            <i class="iconfont icon-wave" />
             <span>HTTP</span>
           </button>
           <button
@@ -40,7 +40,7 @@
             }"
             @click="handleClickDelete"
           >
-            <i class="iconfont icon-delete"></i>
+            <i class="iconfont icon-delete" />
             <span>删除</span>
           </button>
           <button
@@ -51,18 +51,18 @@
               'not-show': true
             }"
           >
-            <i class="iconfont icon-delete"></i>
+            <i class="iconfont icon-delete" />
             <span>placeholder</span>
           </button>
           <span class="field not-show">placeholder</span>
         </div>
         <div style="position:absolute;right:0;top:0;max-width: 50%">
           <b-button class="field" type="is-primary" @click="handleClickCreate">
-            <i class="iconfont icon-chuangjiangongdan1"></i>
+            <i class="iconfont icon-chuangjiangongdan1" />
             <span>创建</span>
           </b-button>
           <b-button class="field" type="is-primary" @click="handleClickImport">
-            <i class="iconfont icon-daoruzupu-xianxing"></i>
+            <i class="iconfont icon-daoruzupu-xianxing" />
             <span>导入</span>
           </b-button>
         </div>
@@ -125,6 +125,9 @@
                 <b-table-column field="host" label="域名">
                   {{ props.row.host }}
                 </b-table-column>
+                <b-table-column field="remarks" label="别名">
+                  {{ props.row.remarks }}
+                </b-table-column>
                 <b-table-column field="status" label="更新状态">
                   {{ props.row.status }}
                 </b-table-column>
@@ -142,14 +145,15 @@
                     >
                       更新
                     </b-button>
-                    <!--                    <b-button-->
-                    <!--                      size="is-small"-->
-                    <!--                      icon-left=" github-circle iconfont icon-wendangxiugai"-->
-                    <!--                      :outlined="!props.row.connected"-->
-                    <!--                      type="is-info"-->
-                    <!--                    >-->
-                    <!--                      修改-->
-                    <!--                    </b-button>-->
+                    <b-button
+                      size="is-small"
+                      icon-left=" github-circle iconfont icon-wendangxiugai"
+                      outlined
+                      type="is-info"
+                      @click="handleClickModifySubscription(props.row)"
+                    >
+                      修改
+                    </b-button>
                     <b-button
                       size="is-small"
                       icon-left=" github-circle iconfont icon-share"
@@ -240,7 +244,9 @@
         <b-tab-item
           v-for="(sub, subi) of tableData.subscriptions"
           :key="sub.id"
-          :label="sub.host.toUpperCase()"
+          :label="
+            (sub.remarks && sub.remarks.toUpperCase()) || sub.host.toUpperCase()
+          "
         >
           <b-field :label="`${sub.host.toUpperCase()}(${sub.servers.length})`">
             <b-table
@@ -269,9 +275,6 @@
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
-                <!--            <b-table-column field="httpLatency" label="HTTP时延" width="100">-->
-                <!--              {{ props.row.httpLatency }}-->
-                <!--            </b-table-column>-->
                 <b-table-column label="操作">
                   <div class="operate-box">
                     <b-button
@@ -316,7 +319,7 @@
       </b-tabs>
     </div>
     <b-loading v-else :is-full-page="true" :active="true">
-      <i class="iconfont icon-loading_ico-copy"></i>
+      <i class="iconfont icon-loading_ico-copy" />
     </b-loading>
     <b-modal
       :active.sync="showModalServer"
@@ -329,7 +332,19 @@
         :which="which"
         :readonly="modalServerReadOnly"
         @submit="handleModalServerSubmit"
-      ></ModalServer>
+      />
+    </b-modal>
+    <b-modal
+      :active.sync="showModalSubscription"
+      has-modal-card
+      trap-focus
+      aria-role="dialog"
+      aria-modal
+    >
+      <ModalSubscription
+        :which="which"
+        @submit="handleModalSubscriptionSubmit"
+      />
     </b-modal>
   </section>
 </template>
@@ -341,10 +356,11 @@ import QRCode from "qrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";
+import ModalSubscription from "./modalSuscription";
 
 export default {
   name: "Node",
-  components: { ModalServer },
+  components: { ModalSubscription, ModalServer },
   data() {
     return {
       tableData: {
@@ -362,7 +378,8 @@ export default {
       },
       showModalServer: false,
       which: null,
-      modalServerReadOnly: false
+      modalServerReadOnly: false,
+      showModalSubscription: false
     };
   },
   watch: {
@@ -758,7 +775,8 @@ export default {
     },
     handleClickModifyServer(row) {
       this.modalServerReadOnly = false;
-      this.which = row;
+      this.which = Object.assign({}, row);
+      this.which.servers = [];
       this.showModalServer = true;
     },
     handleClickViewServer(row, sub) {
@@ -783,6 +801,39 @@ export default {
             duration: 3000
           });
           this.showModalServer = false;
+          this.tableData = res.data.data.touch;
+          this.runningState = {
+            running: res.data.data.running
+              ? CONST.IS_RUNNING
+              : CONST.NOT_RUNNING,
+            connectedServer: this.tableData.connectedServer,
+            lastConnectedServer: null
+          };
+          this.updateConnectView();
+        });
+      });
+    },
+    handleClickModifySubscription(row) {
+      this.which = Object.assign({}, row);
+      this.which.servers = [];
+      this.showModalSubscription = true;
+    },
+    handleModalSubscriptionSubmit(subscription) {
+      this.$axios({
+        url: apiRoot + "/subscription",
+        method: "patch",
+        data: {
+          subscription
+        }
+      }).then(res => {
+        handleResponse(res, this, () => {
+          this.$buefy.toast.open({
+            message: "操作成功",
+            type: "is-primary",
+            position: "is-top",
+            duration: 3000
+          });
+          this.showModalSubscription = false;
           this.tableData = res.data.data.touch;
           this.runningState = {
             running: res.data.data.running

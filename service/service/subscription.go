@@ -18,7 +18,7 @@ func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) 
 
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, err error) {
 	// get请求source
-	res, err := client.Get(source)
+	res, err := tools.HttpGetUsingSpecificClient(client, source)
 	if err != nil {
 		return
 	}
@@ -107,4 +107,13 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions[index].Servers = tsrs
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
 	return configure.SetSubscription(index, &subscriptions[index])
+}
+
+func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
+	raw := configure.GetSubscription(subscription.ID - 1)
+	if raw == nil {
+		return errors.New("无法找到对应的subscription")
+	}
+	raw.Remarks = subscription.Remarks
+	return configure.SetSubscription(subscription.ID-1, raw)
 }

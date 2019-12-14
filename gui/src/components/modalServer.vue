@@ -200,7 +200,7 @@ import { handleResponse } from "@/assets/js/utils";
 import { Base64 } from "js-base64";
 
 export default {
-  name: "ModalSetting",
+  name: "ModalServer",
   props: {
     which: {
       type: Object,

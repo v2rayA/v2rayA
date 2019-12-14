@@ -26,6 +26,7 @@ type TouchServer struct {
 	PingLatency string              `json:"pingLatency"`
 }
 type Subscription struct {
+	Remarks string              `json:"remarks,omitempty"`
 	ID      int                 `json:"id"`
 	TYPE    configure.TouchType `json:"_type"`
 	Host    string              `json:"host"`
@@ -75,6 +76,7 @@ func GenerateTouch() (t Touch) {
 			continue
 		}
 		t.Subscriptions[i] = Subscription{
+			Remarks: v.Remarks,
 			ID:      i + 1,
 			Host:    u.Host,
 			Status:  SubscriptionStatus(v.Status),

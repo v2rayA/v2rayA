@@ -124,4 +124,31 @@ function isIntranet(url) {
     return is;
   });
 }
-export { locateServer, handleResponse, parseURL, isIntranet };
+
+function isVersionGreaterEqual(va, vb) {
+  if (va.toLowerCase() === "debug") {
+    return true;
+  }
+  va = va.trim();
+  vb = vb.trim();
+  let a = va.split(".");
+  let b = vb.split(".");
+  let minlen = Math.min(a.length, b.length);
+  for (let i = 0; i < minlen; i++) {
+    if (parseInt(a[i]) < parseInt(b[i])) {
+      return false;
+    }
+    if (parseInt(a[i]) > parseInt(b[i])) {
+      return true;
+    }
+  }
+  return a.length >= b.length;
+}
+
+export {
+  locateServer,
+  handleResponse,
+  parseURL,
+  isIntranet,
+  isVersionGreaterEqual
+};

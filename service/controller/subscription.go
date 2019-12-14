@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"V2RayA/model/touch"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"
@@ -8,17 +9,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func PutGFWList(ctx *gin.Context) {
-	localGFWListVersion, err := service.CheckAndUpdateGFWList()
+/*修改Remarks*/
+func PatchSubscription(ctx *gin.Context) {
+	var data struct {
+		Subscription touch.Subscription `json:"subscription"`
+	}
+	err := ctx.ShouldBindJSON(&data)
+	s := data.Subscription
+	index := s.ID - 1
+	if err != nil || s.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
+		tools.ResponseError(ctx, errors.New("参数有误"))
+		return
+	}
+	err = service.ModifySubscriptionRemark(s)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, gin.H{
-		"localGFWListVersion": localGFWListVersion,
-	})
+	GetTouch(ctx)
 }
 
+/*更新订阅*/
 func PutSubscription(ctx *gin.Context) {
 	var data configure.Which
 	err := ctx.ShouldBindJSON(&data)

@@ -15,6 +15,9 @@ func Run() error {
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowMethods = []string{
+		"GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD",
+	}
 	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
 	engine.GET("/", func(ctx *gin.Context) {
@@ -54,6 +57,7 @@ func Run() error {
 		auth.PUT("setting", controller.PutSetting)
 		auth.PUT("gfwList", controller.PutGFWList)
 		auth.PUT("subscription", controller.PutSubscription)
+		auth.PATCH("subscription", controller.PatchSubscription)
 		auth.GET("ports", controller.GetPorts)
 		auth.PUT("ports", controller.PutPorts)
 		auth.PUT("account", controller.PutAccount)

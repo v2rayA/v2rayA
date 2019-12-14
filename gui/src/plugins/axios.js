@@ -36,11 +36,11 @@ axios.interceptors.request.use(
 
 let informed = "";
 
-function informNotRunning(url=localStorage["backendAddress"]) {
-  if (informed===url) {
+function informNotRunning(url = localStorage["backendAddress"]) {
+  if (informed === url) {
     return;
   }
-  informed = url
+  informed = url;
   SnackbarProgrammatic.open({
     message: "您是否需要调整服务端地址？",
     type: "is-primary",
@@ -59,9 +59,7 @@ function informNotRunning(url=localStorage["backendAddress"]) {
     }
   });
   SnackbarProgrammatic.open({
-    message: `未在 ${
-      url
-    } 检测到V2RayA服务端，请确定V2RayA已正确安装且配置正确`,
+    message: `未在 ${url} 检测到V2RayA服务端，请确定V2RayA已正确安装且配置正确`,
     type: "is-warning",
     queue: false,
     position: "is-top",
@@ -83,7 +81,7 @@ axios.interceptors.response.use(
   function(err) {
     console.log("!!", err.name, err.message);
     console.log(Object.assign({}, err));
-    let u=parseURL(err.config.url)
+    let u = parseURL(err.config.url);
     let host = u.host;
     if (err.response && err.response.status === 401) {
       //401未授权
@@ -128,7 +126,7 @@ axios.interceptors.response.use(
       if (host === "localhost" || host === "local" || host === "127.0.0.1") {
         if (browser.versions.webKit) {
           //Chrome等webkit内核浏览器允许访问http://localhost，只有可能是服务端未启动
-          informNotRunning(u.source.replace(u.relative,""));
+          informNotRunning(u.source.replace(u.relative, ""));
           return;
         }
         if (browser.versions.gecko) {
@@ -157,7 +155,7 @@ axios.interceptors.response.use(
         }
       });
     } else if (err.message === "Network Error") {
-      informNotRunning(u.source.replace(u.relative,""));
+      informNotRunning(u.source.replace(u.relative, ""));
     } else {
       //其他错误
       if (err.message.indexOf("404") >= 0) {

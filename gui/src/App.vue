@@ -144,6 +144,7 @@ export default {
         }
         this.$buefy.toast.open(toastConf);
         localStorage["docker"] = res.data.data.dockerMode;
+        localStorage["version"] = res.data.data.version;
         if (res.data.data.serviceValid === false) {
           this.$buefy.toast.open({
             message: "检测到v2ray-core可能未正确安装，请检查",

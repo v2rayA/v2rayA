@@ -109,6 +109,14 @@ func GetSubscriptions() []SubscriptionRaw {
 	_ = persistence.Get("subscriptions", &r)
 	return r
 }
+func GetSubscription(id int) *SubscriptionRaw {
+	s := new(SubscriptionRaw)
+	err := persistence.Get(fmt.Sprintf("subscriptions.%d", id), &s)
+	if err != nil {
+		return nil
+	}
+	return s
+}
 func GetSettingNotNil() *Setting {
 	r := new(Setting)
 	_ = persistence.Get("setting", &r)
