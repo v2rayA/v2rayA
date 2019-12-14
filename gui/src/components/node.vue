@@ -350,7 +350,11 @@
 </template>
 
 <script>
-import { locateServer, handleResponse } from "@/assets/js/utils";
+import {
+  locateServer,
+  handleResponse,
+  isVersionGreaterEqual
+} from "@/assets/js/utils";
 import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
 import ClipboardJS from "clipboard";
@@ -814,6 +818,23 @@ export default {
       });
     },
     handleClickModifySubscription(row) {
+      if (!isVersionGreaterEqual(localStorage["version"], "0.5.0")) {
+        this.$buefy.snackbar.open({
+          message: "修改订阅别名需要V2RayA版本高于0.5.0",
+          type: "is-warning",
+          queue: false,
+          position: "is-top",
+          duration: 3000,
+          actionText: "查看帮助",
+          onAction: () => {
+            window.open(
+              "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
+              "_blank"
+            );
+          }
+        });
+        return;
+      }
       this.which = Object.assign({}, row);
       this.which.servers = [];
       this.showModalSubscription = true;

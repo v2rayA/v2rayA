@@ -158,7 +158,10 @@ axios.interceptors.response.use(
       informNotRunning(u.source.replace(u.relative, ""));
     } else {
       //其他错误
-      if (err.message.indexOf("404") >= 0) {
+      if (
+        err.message.indexOf("404") >= 0 ||
+        (err.response && err.response.status === 404)
+      ) {
         //接口不存在，可能服务端是老旧版本，不管
         return Promise.reject(err);
       }

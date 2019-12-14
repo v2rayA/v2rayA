@@ -20,9 +20,6 @@
 </template>
 
 <script>
-import { isVersionGreaterEqual } from "@/assets/js/utils";
-import { SnackbarProgrammatic } from "../plugins/buefy";
-
 export default {
   name: "ModalSubscription",
   props: {
@@ -31,24 +28,6 @@ export default {
       default() {
         return null;
       }
-    }
-  },
-  mounted() {
-    if (!isVersionGreaterEqual(localStorage["version"], "0.5.0")) {
-      this.$buefy.snackbar.open({
-        message: "修改订阅别名需要V2RayA版本高于0.5.0",
-        type: "is-warning",
-        queue: false,
-        position: "is-top",
-        duration: 3000,
-        actionText: "查看帮助",
-        onAction: () => {
-          window.open(
-            "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
-            "_blank"
-          );
-        }
-      });
     }
   },
   methods: {
