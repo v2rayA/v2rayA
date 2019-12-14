@@ -128,13 +128,13 @@
                 <b-table-column field="remarks" label="别名">
                   {{ props.row.remarks }}
                 </b-table-column>
-                <b-table-column field="status" label="更新状态">
+                <b-table-column field="status" label="更新状态" width="260">
                   {{ props.row.status }}
                 </b-table-column>
-                <b-table-column label="节点数">
+                <b-table-column label="节点数" centered>
                   {{ props.row.servers.length }}
                 </b-table-column>
-                <b-table-column label="操作">
+                <b-table-column label="操作" width="250">
                   <div class="operate-box">
                     <b-button
                       size="is-small"
@@ -200,7 +200,7 @@
                 <!--            <b-table-column field="httpLatency" label="HTTP时延" width="100">-->
                 <!--              {{ props.row.httpLatency }}-->
                 <!--            </b-table-column>-->
-                <b-table-column label="操作">
+                <b-table-column label="操作" width="250">
                   <div class="operate-box">
                     <b-button
                       size="is-small"
@@ -275,7 +275,7 @@
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
-                <b-table-column label="操作">
+                <b-table-column label="操作" width="250">
                   <div class="operate-box">
                     <b-button
                       size="is-small"
