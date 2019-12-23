@@ -514,7 +514,7 @@ func NewTemplateFromConfig() (t Template, err error) {
 	err = jsoniter.Unmarshal(b, &t)
 	return
 }
-func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string) (err error) {
+func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool) (err error) {
 	o, err := ResolveOutbound(v, "outbound"+inboundPort)
 	if err != nil {
 		return
@@ -542,7 +542,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string)
 		},
 		Settings: &InboundSettings{
 			Auth: "noauth",
-			UDP:  true,
+			UDP:  udpSupport,
 		},
 		Tag: "inbound" + inboundPort,
 	})

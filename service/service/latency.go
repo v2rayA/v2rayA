@@ -54,7 +54,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	}
 	//对要Ping的which去重
 	which = whiches.GetNonDuplicated()
-	//全部解析成ip
+	//将要测试的节点全部解析成ip
 	v2rayRunning := v2ray.IsV2RayRunning()
 	wg := new(sync.WaitGroup)
 	vms := make([]vmessInfo.VmessInfo, len(which))
@@ -94,11 +94,28 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	} else {
 		tmpl = v2ray.NewTemplate()
 	}
+	portMap := make(map[int]string)
+	port := 0
 	for i, v := range vms {
 		if which[i].Latency != "" {
 			continue
 		}
-		err := tmpl.AddMappingOutbound(v, strconv.Itoa(54322+i))
+		//找到一个未被占用的高端口
+		if port == 0 {
+			port = 14321 //起始端口
+		} else {
+			port = port + 1
+		}
+		for {
+			if occupied, which := tools.IsPortOccupied(strconv.Itoa(port), "tcp"); occupied && !strings.Contains(which, "v2ray") {
+				port++
+			} else {
+				break
+			}
+		}
+		sPort := strconv.Itoa(port)
+		portMap[i] = sPort
+		err := tmpl.AddMappingOutbound(v, sPort, false)
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue
@@ -113,7 +130,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		return nil, err
 	}
 	//线程并发限制
-	time.Sleep(200 * time.Millisecond)
+	//time.Sleep(200 * time.Millisecond)
 	wg = new(sync.WaitGroup)
 	cc := make(chan struct{}, maxParallel)
 	for i := range which {
@@ -124,7 +141,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		go func(i int) {
 			cc <- struct{}{}
 			defer func() { <-cc; wg.Done() }()
-			httpLatency(&which[i], strconv.Itoa(54322+i), timeout)
+			httpLatency(&which[i], portMap[i], timeout)
 		}(i)
 	}
 	wg.Wait()
@@ -146,7 +163,7 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	}
 	c.Timeout = timeout
 	t := time.Now()
-	req, _ := http.NewRequest("HEAD", "https://google.com", nil)
+	req, _ := http.NewRequest("HEAD", "https://www.google.com", nil)
 	resp, err := c.Do(req)
 	if err != nil {
 		es := strings.ToLower(err.Error())

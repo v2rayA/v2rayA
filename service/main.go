@@ -106,17 +106,18 @@ func checkConnection() {
 func hello() {
 	color.Red.Println("V2RayLocationAsset is", v2ray.GetV2rayLocationAsset())
 	wd, _ := v2ray.GetV2rayWorkingDir()
-	color.Red.Println("V2Ray binary is", wd+"/v2ray")
+	color.Red.Println("V2Ray binary is at", wd+"/v2ray")
 	if global.ServiceControlMode != global.DockerMode {
 		wd, _ = os.Getwd()
 		color.Red.Println("V2RayA working directory is", wd)
 		color.Red.Println("Version:", global.Version)
 	} else {
 		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")
-		fmt.Printf("%v\n","Waiting for official/v2ray's running. Refer: https://github.com/mzz2017/V2RayA#docker%E6%96%B9%E5%BC%8F")
+		fmt.Printf("%v\n", "Waiting for official/v2ray's running. Refer: https://github.com/mzz2017/V2RayA#docker%E6%96%B9%E5%BC%8F")
 		for !v2ray.IsV2RayProcessExists() {
-			time.Sleep(1*time.Second)
+			time.Sleep(1 * time.Second)
 		}
+		fmt.Println("Container official/v2ray is ready.")
 	}
 	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 }

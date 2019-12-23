@@ -7,7 +7,7 @@ import (
 )
 
 /*
-protocol: tcp tcp6 udp udp6
+protocol: tcp udp
 */
 func IsPortOccupied(port string, protocol string) (occupied bool, which string) {
 	pint, _ := strconv.Atoi(port)

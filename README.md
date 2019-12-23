@@ -116,6 +116,8 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 ### Docker方式
 
+注意，如果你使用MacOS，docker命令会略有不同，参见[#10](<https://github.com/mzz2017/V2RayA/issues/10>)
+
 1. 拉取源码，**使用 docker-compose 部署**。
 
    ```bash
@@ -159,6 +161,8 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
    ```
    
+
+
 
 ### 二进制文件、安装包
 

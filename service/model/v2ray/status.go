@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -86,7 +87,7 @@ func RestartV2rayService() (err error) {
 			}
 			<-time.After(100 * time.Millisecond)
 			if IsV2RayProcessExists() {
-				return nil
+				break
 			}
 		}
 	case global.ServiceMode:
@@ -114,9 +115,42 @@ func RestartV2rayService() (err error) {
 	if err != nil {
 		return
 	}
-	<-time.After(300 * time.Millisecond)
-	if !IsV2RayRunning() {
-		return errors.New("v2ray启动失败")
+	//如果inbounds中开放端口，检测端口是否已就绪
+	tmplJson := NewTemplate()
+	var b []byte
+	b, err = ioutil.ReadFile(GetConfigPath())
+	if err != nil {
+		return
+	}
+	err = jsoniter.Unmarshal(b, &tmplJson)
+	if err != nil {
+		return
+	}
+	bPortOpen := false
+	var sPortOpen string
+	for _, v := range tmplJson.Inbounds {
+		if v.Port != 0 {
+			bPortOpen = true
+			sPortOpen = strconv.Itoa(v.Port)
+			break
+		}
+	}
+	startTime := time.Now()
+	for {
+		if bPortOpen {
+			if p, which := tools.IsPortOccupied(sPortOpen, "tcp"); p && strings.Contains(which, "v2ray") {
+				break
+			}
+		} else {
+			if IsV2RayRunning() {
+				time.Sleep(300 * time.Millisecond)
+				break
+			}
+		}
+		if time.Since(startTime) > 8*time.Second {
+			return errors.New("v2ray-core无法正常启动，可能是配置文件出现问题或所需端口被占用")
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 	return
 }
@@ -136,7 +170,7 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
-	time.Sleep(200 * time.Millisecond)
+	//time.Sleep(200 * time.Millisecond)
 	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		_ = iptables.DeleteRules()
 		err = iptables.WriteRules()
@@ -164,7 +198,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	if IsV2RayRunning() {
 		err = RestartV2rayService()
 		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-			time.Sleep(200 * time.Millisecond)
+			//time.Sleep(200 * time.Millisecond)
 			_ = iptables.DeleteRules()
 			err = iptables.WriteRules()
 		}
