@@ -1,19 +1,27 @@
 <template>
-  <section class="node-section container hero">
+  <section id="node-section" class="node-section container hero">
     <div v-if="ready" class="hero-body">
       <b-field
+        id="toolbar"
         grouped
         group-multiline
-        style="margin-bottom: 1rem;position: relative"
+        :style="{
+          background: overHeight
+            ? isCheckedRowsPingable() || isCheckedRowsDeletable()
+              ? 'rgba(0, 0, 0, 0.1)'
+              : 'rgba(0, 0, 0, 0.05)'
+            : '#fff'
+        }"
       >
         <div style="max-width: 50%">
           <button
             :class="{
               button: true,
               field: true,
-              'is-info': true,
-              'not-display': !isCheckedRowsPingable()
+              'is-info': true
+              // 'not-display': !isCheckedRowsPingable()
             }"
+            :disabled="!isCheckedRowsPingable()"
             @click="handleClickLatency(true)"
           >
             <i class="iconfont icon-wave" />
@@ -23,9 +31,10 @@
             :class="{
               button: true,
               field: true,
-              'is-info': true,
-              'not-display': !isCheckedRowsPingable()
+              'is-info': true
+              // 'not-display': !isCheckedRowsPingable()
             }"
+            :disabled="!isCheckedRowsPingable()"
             @click="handleClickLatency(false)"
           >
             <i class="iconfont icon-wave" />
@@ -35,9 +44,10 @@
             :class="{
               button: true,
               field: true,
-              'is-delete': true,
-              'not-display': !isCheckedRowsDeletable()
+              'is-delete': true
+              // 'not-display': !isCheckedRowsDeletable()
             }"
+            :disabled="!isCheckedRowsDeletable()"
             @click="handleClickDelete"
           >
             <i class="iconfont icon-delete" />
@@ -56,7 +66,7 @@
           </button>
           <span class="field not-show">placeholder</span>
         </div>
-        <div style="position:absolute;right:0;top:0;max-width: 50%">
+        <div class="right">
           <b-button class="field" type="is-primary" @click="handleClickCreate">
             <i class="iconfont icon-chuangjiangongdan1" />
             <span>创建</span>
@@ -402,7 +412,8 @@ export default {
         _type: "",
         id: 0,
         sub: 0
-      }
+      },
+      overHeight: false
     };
   },
   watch: {
@@ -443,6 +454,15 @@ export default {
         type: "is-warning",
         position: "is-top"
       });
+    });
+    const that = this;
+    let scrollTimer = null;
+    window.addEventListener("scroll", e => {
+      clearTimeout(scrollTimer);
+      setTimeout(() => {
+        scrollTimer = null;
+        that.overHeight = e.target.scrollingElement.scrollTop > 65;
+      }, 100);
     });
   },
   methods: {
@@ -524,7 +544,8 @@ export default {
                 this.$buefy.toast.open({
                   message: "导入成功",
                   type: "is-primary",
-                  position: "is-top"
+                  position: "is-top",
+                  queue: false
                 });
               } else {
                 this.$buefy.toast.open({
@@ -642,20 +663,32 @@ export default {
       );
       this.checkedRows.forEach(x => (x.pingLatency = "testing...")); //refresh
       // this.checkedRows = [];
+      let timerTip = setTimeout(() => {
+        this.$buefy.toast.open({
+          message: "时延测试往往需要花费较长时间，请耐心等待",
+          type: "is-primary",
+          position: "is-top",
+          duration: 5000
+        });
+      }, 10 * 1200);
       this.$axios({
         url: apiRoot + (ping ? "/pingLatency" : "/httpLatency"),
         params: {
           whiches: touches
         }
-      }).then(res => {
-        handleResponse(res, this, () => {
-          res.data.data.whiches.forEach(x => {
-            let server = locateServer(this.tableData, x);
-            server.pingLatency = x.pingLatency;
+      })
+        .then(res => {
+          handleResponse(res, this, () => {
+            res.data.data.whiches.forEach(x => {
+              let server = locateServer(this.tableData, x);
+              server.pingLatency = x.pingLatency;
+            });
+            this.updateConnectView();
           });
-          this.updateConnectView();
+        })
+        .finally(() => {
+          clearTimeout(timerTip);
         });
-      });
     },
     // eslint-disable-next-line no-unused-vars
     handleTabsChange(index) {
@@ -920,6 +953,26 @@ export default {
 
 <style lang="scss">
 @import "../../node_modules/bulma/sass/utilities/all";
+#toolbar {
+  padding: 0.75em 0.75em 0;
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 65px;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.05);
+  width: 100%;
+  border-radius: 3px;
+  .right {
+    position: absolute;
+    right: 0.75rem;
+    top: 0.75em;
+    max-width: 50%;
+  }
+  &,
+  button {
+    transition: all 50ms ease-in-out;
+  }
+}
 .tabs {
   .icon + span {
     color: #ff6719; //方案1

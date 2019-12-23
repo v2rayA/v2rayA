@@ -323,7 +323,7 @@ html {
 
   #app {
     height: calc(100vh - 3.25rem);
-    overflow-y: auto;
+    /*overflow-y: auto;*/
     overflow-scrolling: touch;
     -webkit-overflow-scrolling: touch;
   }
