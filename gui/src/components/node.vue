@@ -18,8 +18,8 @@
             :class="{
               button: true,
               field: true,
-              'is-info': true
-              // 'not-display': !isCheckedRowsPingable()
+              'is-info': true,
+              'not-display': !overHeight && !isCheckedRowsPingable()
             }"
             :disabled="!isCheckedRowsPingable()"
             @click="handleClickLatency(true)"
@@ -31,8 +31,8 @@
             :class="{
               button: true,
               field: true,
-              'is-info': true
-              // 'not-display': !isCheckedRowsPingable()
+              'is-info': true,
+              'not-display': !overHeight && !isCheckedRowsPingable()
             }"
             :disabled="!isCheckedRowsPingable()"
             @click="handleClickLatency(false)"
@@ -44,8 +44,8 @@
             :class="{
               button: true,
               field: true,
-              'is-delete': true
-              // 'not-display': !isCheckedRowsDeletable()
+              'is-delete': true,
+              'not-display': !overHeight && !isCheckedRowsDeletable()
             }"
             :disabled="!isCheckedRowsDeletable()"
             @click="handleClickDelete"
@@ -968,9 +968,9 @@ export default {
     top: 0.75em;
     max-width: 50%;
   }
-  &,
+  transition: all 200ms linear;
   button {
-    transition: all 50ms ease-in-out;
+    transition: all 100ms ease-in-out;
   }
 }
 .tabs {

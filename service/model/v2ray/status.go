@@ -148,6 +148,9 @@ func RestartV2rayService() (err error) {
 			}
 		}
 		if time.Since(startTime) > 8*time.Second {
+			if global.ServiceControlMode == global.DockerMode {
+				return errors.New("v2ray-core无法正常启动，请确保已正确按照文档配置docker参数，如仍无法正常工作，请提出issue")
+			}
 			return errors.New("v2ray-core无法正常启动，可能是配置文件出现问题或所需端口被占用")
 		}
 		time.Sleep(100 * time.Millisecond)
