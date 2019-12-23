@@ -102,7 +102,7 @@
       </b-collapse>
 
       <b-tabs
-        v-model="tab"
+        :value="tab"
         position="is-centered"
         type="is-toggle-rounded"
         @change="handleTabsChange"
@@ -169,7 +169,13 @@
             </b-table>
           </b-field>
         </b-tab-item>
-        <b-tab-item v-if="!!tableData.servers.length" label="SERVER">
+        <b-tab-item
+          v-if="!!tableData.servers.length"
+          label="SERVER"
+          :icon="
+            `${connectedServer._type === 'server' ? ' iconfont icon-dian' : ''}`
+          "
+        >
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
               :data="tableData.servers"
@@ -246,6 +252,14 @@
           :key="sub.id"
           :label="
             (sub.remarks && sub.remarks.toUpperCase()) || sub.host.toUpperCase()
+          "
+          :icon="
+            `${
+              connectedServer._type === 'subscriptionServer' &&
+              connectedServer.sub === subi
+                ? ' iconfont icon-dian'
+                : ''
+            }`
           "
         >
           <b-field :label="`${sub.host.toUpperCase()}(${sub.servers.length})`">
@@ -383,7 +397,12 @@ export default {
       showModalServer: false,
       which: null,
       modalServerReadOnly: false,
-      showModalSubscription: false
+      showModalSubscription: false,
+      connectedServer: {
+        _type: "",
+        id: 0,
+        sub: 0
+      }
     };
   },
   watch: {
@@ -442,6 +461,10 @@ export default {
         let server = locateServer(this.tableData, runningState.connectedServer);
         server.connected = true;
       }
+      this.connectedServer = Object.assign(
+        this.connectedServer,
+        runningState.connectedServer
+      );
     },
     locateTabToConnected(whichServer) {
       if (!whichServer) {
@@ -894,6 +917,23 @@ export default {
 
 <style lang="scss">
 @import "../../node_modules/bulma/sass/utilities/all";
+.tabs {
+  .icon + span {
+    color: #ff6719; //方案1
+  }
+  .is-active .icon + span {
+    color: #ff465a;
+  }
+  .icon {
+    display: none; //方案1
+    margin: 0 0 0 -0.5em !important;
+
+    .iconfont {
+      font-size: 32px;
+      color: coral;
+    }
+  }
+}
 tr.is-connected {
   //$c: #23d160;
   $c: #bbdefb;

@@ -287,7 +287,7 @@ export default {
 </script>
 
 <style>
-@import "https://at.alicdn.com/t/font_1467288_gx22ipe6nuo.css";
+@import "https://at.alicdn.com/t/font_1467288_0848esqlmdcn.css";
 </style>
 
 <style lang="scss" scoped>
