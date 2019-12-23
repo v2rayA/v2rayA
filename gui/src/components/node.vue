@@ -465,6 +465,9 @@ export default {
         this.connectedServer,
         runningState.connectedServer
       );
+      if (!runningState.connectedServer) {
+        this.connectedServer._type = "";
+      }
     },
     locateTabToConnected(whichServer) {
       if (!whichServer) {
