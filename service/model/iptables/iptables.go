@@ -3,7 +3,6 @@ package iptables
 import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -98,19 +97,19 @@ iptables -t mangle -F LOG
 iptables -t mangle -F SETMARK
 iptables -t mangle -X SETMARK
 `
-	if tools.IsCommandValid("ip6tables") {
-		commands += `
-ip6tables -t mangle -F SSTP_OUT
-ip6tables -t mangle -D OUTPUT -j SSTP_OUT
-ip6tables -t mangle -X SSTP_OUT
-ip6tables -t mangle -F SSTP_PRE
-ip6tables -t mangle -D PREROUTING -j SSTP_PRE
-ip6tables -t mangle -X SSTP_PRE
-ip6tables -t mangle -F LOG
-ip6tables -t mangle -F SETMARK
-ip6tables -t mangle -X SETMARK
-`
-	}
+//	if tools.IsCommandValid("ip6tables") {
+//		commands += `
+//ip6tables -t mangle -F SSTP_OUT
+//ip6tables -t mangle -D OUTPUT -j SSTP_OUT
+//ip6tables -t mangle -X SSTP_OUT
+//ip6tables -t mangle -F SSTP_PRE
+//ip6tables -t mangle -D PREROUTING -j SSTP_PRE
+//ip6tables -t mangle -X SSTP_PRE
+//ip6tables -t mangle -F LOG
+//ip6tables -t mangle -F SETMARK
+//ip6tables -t mangle -X SETMARK
+//`
+//	}
 	if global.ServiceControlMode == global.DockerMode {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
@@ -171,52 +170,52 @@ iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345 --tproxy-mark 1
 `
-	if tools.IsCommandValid("ip6tables") {
-		commands += `
-# 建链
-ip6tables -t mangle -N SSTP_OUT
-ip6tables -t mangle -N SSTP_PRE
-ip6tables -t mangle -A OUTPUT -j SSTP_OUT
-ip6tables -t mangle -A PREROUTING -j SSTP_PRE
-
-# 打上 iptables 标记，mark 了的会走代理
-ip6tables -t mangle -N SETMARK
-ip6tables -t mangle -A SETMARK -i docker+ -j RETURN
-#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -d ::/128 -j RETURN
-ip6tables -t mangle -A SETMARK -d ::1/128 -j RETURN
-ip6tables -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN
-ip6tables -t mangle -A SETMARK -d ::ffff:0:0:0/96 -j RETURN
-ip6tables -t mangle -A SETMARK -d 64:ff9b::/96 -j RETURN
-ip6tables -t mangle -A SETMARK -d 100::/64 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2001::/32 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2001:20::/28 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2001:db8::/32 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2002::/16 -j RETURN
-ip6tables -t mangle -A SETMARK -d fc00::/7 -j RETURN
-ip6tables -t mangle -A SETMARK -d fe80::/10 -j RETURN
-ip6tables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
-
-# 走过TPROXY的通行
-ip6tables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
-# 本机出方向规则，白名单端口
-ip6tables -t mangle -A SSTP_OUT -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
-ip6tables -t mangle -A SSTP_OUT -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
-# 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
-ip6tables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
-ip6tables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
-
-# 走过TPROXY的通行
-ip6tables -t mangle -A SSTP_PRE -m mark --mark 0xff -j RETURN
-# 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
-ip6tables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
-ip6tables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
-# 将所有打了标记的 TCP 和 UDP 包透明地转发到代理的监听端口
-ip6tables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1
-ip6tables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345 --tproxy-mark 1
-`
-	}
+//	if tools.IsCommandValid("ip6tables") {
+//		commands += `
+//# 建链
+//ip6tables -t mangle -N SSTP_OUT
+//ip6tables -t mangle -N SSTP_PRE
+//ip6tables -t mangle -A OUTPUT -j SSTP_OUT
+//ip6tables -t mangle -A PREROUTING -j SSTP_PRE
+//
+//# 打上 iptables 标记，mark 了的会走代理
+//ip6tables -t mangle -N SETMARK
+//ip6tables -t mangle -A SETMARK -i docker+ -j RETURN
+//#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+//ip6tables -t mangle -A SETMARK -d ::/128 -j RETURN
+//ip6tables -t mangle -A SETMARK -d ::1/128 -j RETURN
+//ip6tables -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN
+//ip6tables -t mangle -A SETMARK -d ::ffff:0:0:0/96 -j RETURN
+//ip6tables -t mangle -A SETMARK -d 64:ff9b::/96 -j RETURN
+//ip6tables -t mangle -A SETMARK -d 100::/64 -j RETURN
+//ip6tables -t mangle -A SETMARK -d 2001::/32 -j RETURN
+//ip6tables -t mangle -A SETMARK -d 2001:20::/28 -j RETURN
+//ip6tables -t mangle -A SETMARK -d 2001:db8::/32 -j RETURN
+//ip6tables -t mangle -A SETMARK -d 2002::/16 -j RETURN
+//ip6tables -t mangle -A SETMARK -d fc00::/7 -j RETURN
+//ip6tables -t mangle -A SETMARK -d fe80::/10 -j RETURN
+//ip6tables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
+//ip6tables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
+//
+//# 走过TPROXY的通行
+//ip6tables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
+//# 本机出方向规则，白名单端口
+//ip6tables -t mangle -A SSTP_OUT -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
+//ip6tables -t mangle -A SSTP_OUT -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
+//# 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
+//ip6tables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
+//ip6tables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
+//
+//# 走过TPROXY的通行
+//ip6tables -t mangle -A SSTP_PRE -m mark --mark 0xff -j RETURN
+//# 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
+//ip6tables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
+//ip6tables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
+//# 将所有打了标记的 TCP 和 UDP 包透明地转发到代理的监听端口
+//ip6tables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1
+//ip6tables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345 --tproxy-mark 1
+//`
+//	}
 	//参考http://briteming.hatenablog.com/entry/2019/06/18/175518
 	//先看要不要把自己的端口加进去
 	selfPort := strings.Split(global.GetEnvironmentConfig().Address, ":")[1]
