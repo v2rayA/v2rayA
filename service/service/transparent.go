@@ -9,6 +9,7 @@ import (
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	setting := configure.GetSettingNotNil()
+	//TODO: backup /etc/resolv.conf and reset to router: ip route|grep default|awk '{print $3}'
 	if e := v2ray.CheckTProxySupported(); e != nil {
 		log.Println("不支持透明代理，设置透明代理失败" + e.Error())
 		return //TODO: 当前版本v2ray不支持透明代理，需要返回error吗？

@@ -16,6 +16,7 @@ import (
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -170,8 +171,17 @@ func checkUpdate() {
 	}
 	// 检查服务端更新
 	go func() {
-		time.Sleep(1 * time.Second)
-		//TODO: 访问页面时检查更新，每次启动只会检查一次
+		//等待网络连通
+		for {
+			c := http.DefaultClient
+			c.Timeout = 5 * time.Second
+			resp, err := http.Get("http://detectportal.firefox.com/success.txt")
+			if err == nil {
+				_ = resp.Body.Close()
+				break
+			}
+			time.Sleep(10 * time.Second)
+		}
 		if foundNew, remote, err := service.CheckUpdate(); err == nil {
 			global.FoundNew = foundNew
 			global.RemoteVersion = remote
