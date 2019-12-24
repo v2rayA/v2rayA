@@ -1,0 +1,54 @@
+@font-face {
+    font-family: {{ fontName }};
+    {% if formats.indexOf('eot')>-1 -%}
+        src: url("{{ cssFontPath }}{{ fontName }}.eot");
+    {%- endif -%}
+    {%- set eotIndex = formats.indexOf('eot') -%}
+    {%- set woff2Index = formats.indexOf('woff2') -%}
+    {%- set woffIndex = formats.indexOf('woff') -%}
+    {%- set ttfIndex = formats.indexOf('ttf') -%}
+    {%- set svgIndex = formats.indexOf('svg') -%}
+
+    src: {% if eotIndex != -1 -%}
+            url("{{ cssFontPath }}{{ fontName }}.eot?{{ fileMark }}#iefix") format("embedded-opentype")
+            {%- set nothing = formats.splice(eotIndex, 1) -%}
+            {%- if formats.length != 0 -%},
+             {% else -%}; {% endif -%}
+        {%- endif -%}
+        {%- if woff2Index != -1 -%}
+            url("{{ cssFontPath }}{{ fontName }}.woff2?{{ fileMark }}") format("woff2")
+            {%- set nothing = formats.splice(woff2Index, 1) -%}
+            {%- if formats.length != 0 -%},
+             {% else -%}; {% endif -%}
+        {%- endif -%}
+        {%- if woffIndex != -1 -%}
+            url("{{ cssFontPath }}{{ fontName }}.woff?{{ fileMark }}") format("woff")
+            {%- set nothing = formats.splice(woffIndex, 1) -%}
+            {%- if formats.length != 0 -%},
+             {% else -%}; {% endif -%}
+        {%- endif -%}
+        {%- if ttfIndex != -1 -%}
+            url("{{ cssFontPath }}{{ fontName }}.ttf?{{ fileMark }}") format("truetype")
+            {%- set nothing = formats.splice(ttfIndex, 1) -%}
+            {%- if formats.length != 0 -%},
+             {% else -%}; {% endif -%}
+        {%- endif -%}
+        {%- if svgIndex != -1 -%}
+            url("{{ cssFontPath }}{{ fontName }}.svg?{{ fileMark }}#{{ fontName }}") format("svg");
+        {%- endif %}
+    font-weight: normal;
+    font-style: normal;
+}
+
+[class^="{{ cssPrefix }}"], [class*=" {{ cssPrefix }}"] {
+    font-family: '{{ fontName }}';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-style: normal;
+}
+
+{% for glyph in glyphs %}
+.{{ cssPrefix }}-{{ glyph.name }}::before {
+    content: "\{{ glyph.unicode[0].charCodeAt(0).toString(16) }}";
+}
+{% endfor %}

@@ -286,8 +286,10 @@ export default {
 };
 </script>
 
-<style>
-@import "https://at.alicdn.com/t/font_1467288_0848esqlmdcn.css";
+<style lang="scss">
+//TODO: 缓冲css到本地
+@import "assets/iconfont/fonts/font.css";
+@import "assets/scss/reset.scss";
 </style>
 
 <style lang="scss" scoped>

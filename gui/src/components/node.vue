@@ -10,7 +10,7 @@
             ? isCheckedRowsPingable() || isCheckedRowsDeletable()
               ? 'rgba(0, 0, 0, 0.1)'
               : 'rgba(0, 0, 0, 0.05)'
-            : '#fff'
+            : 'transparent'
         }"
       >
         <div style="max-width: 50%">
@@ -461,7 +461,7 @@ export default {
       clearTimeout(scrollTimer);
       setTimeout(() => {
         scrollTimer = null;
-        that.overHeight = e.target.scrollingElement.scrollTop > 65;
+        that.overHeight = e.target.scrollingElement.scrollTop > 50;
       }, 100);
     });
   },

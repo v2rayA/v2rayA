@@ -1,4 +1,7 @@
 var webpack = require("webpack");
+var path = require("path");
+var WebpackIconfontPluginNodejs = require("webpack-iconfont-plugin-nodejs");
+var dir = "src/assets/iconfont";
 
 module.exports = {
   configureWebpack: config => {
@@ -7,6 +10,16 @@ module.exports = {
       plugins: [
         new webpack.DefinePlugin({
           apiRoot: '`${localStorage["backendAddress"]}/api`'
+        }),
+        new WebpackIconfontPluginNodejs({
+          cssPrefix: "icon",
+          svgs: path.join(dir, "svgs/*.svg"),
+          template: path.join(dir, "css-template.njk"),
+          fontsOutput: path.join(dir, "fonts/"),
+          cssOutput: path.join(dir, "fonts/font.css"),
+          // htmlOutput: path.join(dir, "fonts/_font-preview.html"),
+          jsOutput: path.join(dir, "fonts/fonts.js")
+          // formats: ['ttf', 'woff', 'svg'],
         })
       ]
     };
