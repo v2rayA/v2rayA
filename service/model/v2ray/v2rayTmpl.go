@@ -128,7 +128,7 @@ type Mux struct {
 type Outbound struct {
 	Tag            string          `json:"tag"`
 	Protocol       string          `json:"protocol"`
-	Settings       *Settings        `json:"settings,omitempty"`
+	Settings       *Settings       `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
 	Network        string          `json:"network,omitempty"`
@@ -336,8 +336,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		if net.ParseIP(v.Add) == nil {
 			//如果不是IP，而是域名，将其二级域名加入白名单
 			group := strings.Split(v.Add, ".")
-			domain := strings.Join(group[len(group)-2:], ".")
-			ds.Domains = append(ds.Domains, domain)
+			if len(group) >= 2 {
+				domain := strings.Join(group[len(group)-2:], ".")
+				ds.Domains = append(ds.Domains, domain)
+			}
 		}
 		t.DNS.Servers = []interface{}{
 			ds,
@@ -415,13 +417,16 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		if net.ParseIP(v.Add) == nil {
 			//如果不是IP，而是域名，将其二级域名加入白名单
 			group := strings.Split(v.Add, ".")
-			domain := strings.Join(group[len(group)-2:], ".")
-			t.Routing.Rules = append(t.Routing.Rules,
-				RoutingRule{
-					Type:        "field",
-					OutboundTag: "direct",
-					Domain:      []string{"domain:" + domain},
-				})
+			if len(group) >= 2 {
+				domain := strings.Join(group[len(group)-2:], ".")
+				t.Routing.Rules = append(t.Routing.Rules,
+					RoutingRule{
+						Type:        "field",
+						OutboundTag: "direct",
+						Domain:      []string{"domain:" + domain},
+					})
+			}
+
 		}
 		switch setting.Transparent {
 		case configure.TransparentProxy:

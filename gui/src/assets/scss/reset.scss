@@ -1,3 +1,16 @@
 body.has-navbar-fixed-top, html.has-navbar-fixed-top{
   padding-top:2.25rem;
 }
+
+body::-webkit-scrollbar {
+  width: 1em;
+}
+ 
+body::-webkit-scrollbar-track {
+  background-color: #F5F5F5
+}
+ 
+body::-webkit-scrollbar-thumb {
+  background-color: darkgrey;
+  outline: 1px solid slategrey;
+}

@@ -318,16 +318,16 @@ export default {
 
 <style lang="scss">
 html {
-  &::-webkit-scrollbar {
-    // 去掉讨厌的滚动条
-    display: none;
-  }
+//  &::-webkit-scrollbar {
+//    // 去掉讨厌的滚动条
+//    display: none;
+//  }
 
   #app {
     height: calc(100vh - 3.25rem);
     /*overflow-y: auto;*/
-    overflow-scrolling: touch;
-    -webkit-overflow-scrolling: touch;
+    //overflow-scrolling: touch;
+    //-webkit-overflow-scrolling: touch;
   }
 }
 
