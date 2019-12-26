@@ -10,7 +10,7 @@ import (
 */
 type NodeData struct {
 	VmessInfo vmessInfo.VmessInfo `json:"vmessInfo"`
-	Config    string              `json:"config"`
+	//Config    string              `json:"config"`
 }
 
 func (nd *NodeData) ToServerRaw() (tsr *configure.ServerRaw) {

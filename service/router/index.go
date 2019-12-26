@@ -41,7 +41,7 @@ func Run() error {
 		ctx.Next()
 	}, tools.JWTAuth(false))
 	{
-		auth.GET("resolving", controller.GetResolving)
+		//auth.GET("resolving", controller.GetResolving)
 		auth.POST("import", controller.PostImport)
 		auth.GET("touch", controller.GetTouch)
 		auth.DELETE("touch", controller.DeleteTouch)

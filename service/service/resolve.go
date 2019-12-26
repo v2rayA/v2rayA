@@ -2,7 +2,6 @@ package service
 
 import (
 	"V2RayA/model/nodeData"
-	"V2RayA/model/v2ray"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/tools"
 	"errors"
@@ -61,13 +60,13 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 	}
 	// 填充模板并处理结果
-	t, err := v2ray.NewTemplateFromVmessInfo(info)
-	if err != nil {
-		return
-	}
+	//t, err := v2ray.NewTemplateFromVmessInfo(info)
+	//if err != nil {
+	//	return
+	//}
 	data = new(nodeData.NodeData)
-	b := t.ToConfigBytes()
-	data.Config = string(b)
+	//b := t.ToConfigBytes()
+	//data.Config = string(b)
 	data.VmessInfo = info
 	return
 }
@@ -133,13 +132,12 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 		Ps:       subMatch[5],
 	}
 	// 填充模板并处理结果
-	t, err := v2ray.NewTemplateFromVmessInfo(info)
-	if err != nil {
-		return
-	}
 	data = new(nodeData.NodeData)
-	b := t.ToConfigBytes()
-	data.Config = string(b)
+	//t, err := v2ray.NewTemplateFromVmessInfo(info)
+	//if err == nil {
+	//	b := t.ToConfigBytes()
+	//	data.Config = string(b)
+	//}
 	data.VmessInfo = info
 	return
 }

@@ -261,6 +261,12 @@ func ResolveOutbound(v vmessInfo.VmessInfo, tag string) (o Outbound, err error) 
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
 		}
 	case "shadowsocks":
+		v.Net = strings.ToLower(v.Net)
+		switch v.Net {
+		case "aes-256-cfb", "aes-128-cfb", "chacha20", "chacha20-ietf", "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305":
+		default:
+			return o, errors.New("不支持的shadowsocks加密方式: " + v.Net)
+		}
 		o.Settings.Servers = []Server{
 			{
 				Address:  v.Add,
