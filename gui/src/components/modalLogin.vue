@@ -2,7 +2,7 @@
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
-        {{ first ? "初来乍到，注册一个管理员账号" : "登陆 - V2rayA" }}
+        {{ first ? "初来乍到，创建一个管理员账号" : "登陆 - V2rayA" }}
       </p>
     </header>
     <section class="modal-card-body">
@@ -21,7 +21,7 @@
         ></b-input>
       </b-field>
       <b-message v-if="first" type="is-info" class="after-line-dot5">
-        <p>请记住您注册的管理员账号，用于登录该管理页面。</p>
+        <p>请记住您创建的管理员账号，用于登录该管理页面。</p>
         <p>账号信息位于本地，我们不会上传任何信息到服务器。</p>
         <p>如不慎忘记密码，可通过清除配置文件重置。</p>
       </b-message>
@@ -31,7 +31,7 @@
         :class="{ 'is-primary': !first, 'is-twitter': first }"
         @click="handleClickSubmit"
       >
-        {{ first ? "注册" : "登陆" }}
+        {{ first ? "创建" : "登陆" }}
       </b-button>
     </footer>
   </div>

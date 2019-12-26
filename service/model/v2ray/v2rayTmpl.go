@@ -128,7 +128,7 @@ type Mux struct {
 type Outbound struct {
 	Tag            string          `json:"tag"`
 	Protocol       string          `json:"protocol"`
-	Settings       Settings        `json:"settings,omitempty"`
+	Settings       *Settings        `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
 	Network        string          `json:"network,omitempty"`
@@ -364,7 +364,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.Outbounds = append(t.Outbounds, Outbound{
 			Tag:      "dns-out",
 			Protocol: "dns",
-			Network:  "tcp",
 		})
 		for i := range t.Outbounds {
 			if t.Outbounds[i].Protocol == "blackhole" {
