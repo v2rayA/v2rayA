@@ -193,9 +193,11 @@ func run() (err error) {
 	if global.ServiceControlMode == global.CommonMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayProcessExists() {
 		_ = v2ray.RestartV2rayService()
 	}
+	//刷新配置以刷新透明代理、ssr server
+	err = v2ray.UpdateV2rayWithConnectedServer()
 	//开启透明代理
-	_ = service.CheckAndStopTransparentProxy()
-	err = service.CheckAndSetupTransparentProxy(true)
+	//_ = service.CheckAndStopTransparentProxy()
+	//err = service.CheckAndSetupTransparentProxy(true)
 	if err != nil {
 		return
 	}

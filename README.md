@@ -282,9 +282,7 @@ gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/
 
 [ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
 
-[jiangxufeng/v2rayL](https://github.com/jiangxufeng/v2rayL)
-
-
+[nadoo/glider](https://github.com/nadoo/glider)
 
 # 协议
 

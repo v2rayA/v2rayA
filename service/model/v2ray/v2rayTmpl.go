@@ -1,7 +1,9 @@
 package v2ray
 
 import (
+	"V2RayA/global"
 	"V2RayA/model/iptables"
+	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"errors"
@@ -84,9 +86,9 @@ type Vnext struct {
 }
 type Server struct {
 	Address  string `json:"address"`
-	Method   string `json:"method"`
-	Ota      bool   `json:"ota"`
-	Password string `json:"password"`
+	Method   string `json:"method,omitempty"`
+	Ota      bool   `json:"ota,omitempty"`
+	Password string `json:"password,omitempty"`
 	Port     int    `json:"port"`
 }
 type Settings struct {
@@ -197,9 +199,10 @@ func NewTemplate() (tmpl Template) {
 /*
 根据传入的 VmessInfo 填充模板
 当协议是ss时，v.Net对应Method，v.ID对应Password
+函数会规格化传入的v
 */
 
-func ResolveOutbound(v vmessInfo.VmessInfo, tag string) (o Outbound, err error) {
+func ResolveOutbound(v *vmessInfo.VmessInfo, tag string) (o Outbound, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
@@ -215,6 +218,8 @@ func ResolveOutbound(v vmessInfo.VmessInfo, tag string) (o Outbound, err error) 
 		v.Protocol = "vmess"
 	case "ss":
 		v.Protocol = "shadowsocks"
+	case "ssr":
+		v.Protocol = "shadowsocksr"
 	}
 	// 根据vmessInfo修改json配置
 	o.Protocol = v.Protocol
@@ -260,20 +265,34 @@ func ResolveOutbound(v vmessInfo.VmessInfo, tag string) (o Outbound, err error) 
 			o.StreamSettings.Security = "tls"
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
 		}
-	case "shadowsocks":
+	case "shadowsocks", "shadowsocksr":
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
-		case "aes-256-cfb", "aes-128-cfb", "chacha20", "chacha20-ietf", "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305":
+		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
 		default:
-			return o, errors.New("不支持的shadowsocks加密方式: " + v.Net)
+			return o, errors.New("不支持的shadowsocks加密方法: " + v.Net)
 		}
+		if len(strings.TrimSpace(v.Type)) <= 0 {
+			v.Type = "origin"
+		}
+		switch v.Type {
+		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1":
+		default:
+			return o, errors.New("不支持的shadowsocksr协议: " + v.Net)
+		}
+		if len(strings.TrimSpace(v.TLS)) <= 0 {
+			v.TLS = "plain"
+		}
+		switch v.TLS {
+		case "plain", "http_simple", "http_post", "random_head", "tls1.2_ticket_auth":
+		default:
+			return o, errors.New("不支持的shadowsocksr混淆方法: " + v.Net)
+		}
+		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
 			{
-				Address:  v.Add,
-				Port:     port,
-				Method:   v.Net,
-				Password: v.ID,
-				Ota:      false, //避免chacha20无法工作
+				Address: "127.0.0.1",
+				Port:    global.GetEnvironmentConfig().SSRListenPort,
 			},
 		}
 	default:
@@ -293,13 +312,14 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	}
 	// 其中Template是基础配置，替换掉*t即可
 	t = tmplJson.Template
-	o, err := ResolveOutbound(v, "proxy")
+	o, err := ResolveOutbound(&v, "proxy")
 	if err != nil {
 		return t, err
 	}
 	t.Outbounds[0] = o
 	setting := configure.GetSettingNotNil()
-	if o.Protocol == "vmess" {
+	switch o.Protocol {
+	case "vmess":
 		//是否在设置里开启了TCPFastOpen
 		if setting.TcpFastOpen != configure.Default {
 			t.Outbounds[0].StreamSettings.Sockopt = new(Sockopt)
@@ -310,6 +330,19 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.Outbounds[0].Mux = &Mux{
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
+		}
+	case "socks":
+		//说明是ss或ssr，启动ssr server
+		if shadowsocksr.IsRunning() {
+			err = shadowsocksr.Close()
+			if err != nil {
+				err = errors.New("无法关闭上一个ssr server")
+				return
+			}
+		}
+		err = shadowsocksr.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
+		if err != nil {
+			return
 		}
 	}
 
@@ -351,7 +384,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			ds,
 			"8.8.8.8", // 非中中国大陆域名使用 Google 的 DNS
 			"1.1.1.1",
-			"localhost",
+			"127.0.0.1",
 		}
 		//再修改inbounds
 		tproxy := "tproxy"
@@ -525,7 +558,7 @@ func NewTemplateFromConfig() (t Template, err error) {
 	return
 }
 func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool) (err error) {
-	o, err := ResolveOutbound(v, "outbound"+inboundPort)
+	o, err := ResolveOutbound(&v, "outbound"+inboundPort)
 	if err != nil {
 		return
 	}

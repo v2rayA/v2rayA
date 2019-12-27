@@ -156,7 +156,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	return which, nil
 }
 func httpLatency(which *configure.Which, port string, timeout time.Duration) {
-	c, err := tools.GetHttpClientWithProxy("socks5://localhost:" + port)
+	c, err := tools.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
 	if err != nil {
 		which.Latency = err.Error()
 		return

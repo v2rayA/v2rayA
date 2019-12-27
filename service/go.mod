@@ -14,12 +14,12 @@ require (
 	github.com/matoous/go-nanoid v1.1.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.5 // indirect
+	github.com/mzz2017/shadowsocksR v0.0.0-20191219051354-c22d8508a9ff
+	github.com/nadoo/glider v0.9.2
 	github.com/pkg/errors v0.8.1
-	github.com/sparrc/go-ping v0.0.0-20190613174326-4e5b6552494c
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.5
 	github.com/tidwall/sjson v1.0.4
-	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
-	golang.org/x/sys v0.0.0-20190924154521-2837fb4f24fe // indirect
+	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 )

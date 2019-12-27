@@ -26,7 +26,7 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 }
 
 func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
-	host := "localhost"
+	host := "127.0.0.1"
 	//是否在docker环境
 	if global.ServiceControlMode == global.DockerMode {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
@@ -41,7 +41,7 @@ func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
 }
 
 func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
-	host := "localhost"
+	host := "127.0.0.1"
 	//是否在docker环境
 	if global.ServiceControlMode == global.DockerMode {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的

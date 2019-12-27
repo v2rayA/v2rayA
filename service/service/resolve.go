@@ -141,13 +141,82 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 	data.VmessInfo = info
 	return
 }
+
+/*
+根据传入的 ss://xxxxx 解析出NodeData
+*/
+func ResolveSSRURL(vmess string) (data *nodeData.NodeData, err error) {
+	if len(vmess) < 6 || strings.ToLower(vmess[:6]) != "ssr://" {
+		err = errors.New("this address is not begin with ssr://")
+		return
+	}
+	// 该函数尝试对ss://链接进行解析
+	resolveFormat := func(content string) (v vmessInfo.VmessInfo, ok bool) {
+		arr := strings.Split(content, "/?")
+		if len(arr) != 2 {
+			return v, false
+		}
+		pre := strings.Split(arr[0], ":")
+		q, err := url.ParseQuery(arr[1])
+		if err != nil {
+			return v, false
+		}
+		pswd, _ := tools.Base64URLDecode(pre[5])
+		add, _ := tools.Base64URLDecode(pre[0])
+		remarks, _ := tools.Base64URLDecode(q.Get("remarks"))
+		protoparam, _ := tools.Base64URLDecode(q.Get("protoparam"))
+		obfsparam, _ := tools.Base64URLDecode(q.Get("obfsparam"))
+		v = vmessInfo.VmessInfo{
+			Ps:       remarks,
+			Add:      add,
+			Port:     pre[1],
+			ID:       pswd,
+			Net:      pre[3],
+			Type:     pre[2],
+			Host:     protoparam,
+			Path:     obfsparam,
+			TLS:      pre[4],
+			Protocol: "ssr",
+		}
+		return v, true
+	}
+	content := vmess[6:]
+	var (
+		info vmessInfo.VmessInfo
+		ok   bool
+	)
+	// 尝试解析ssr://链接，失败则先base64解码
+	if info, ok = resolveFormat(content); !ok {
+		// 进行base64解码，并unmarshal到VmessInfo上
+		content, err = tools.Base64StdDecode(content)
+		if err != nil {
+			return
+		}
+		info, ok = resolveFormat(content)
+	}
+	if !ok {
+		err = errors.New("不是合法的ssr URL")
+		return
+	}
+	// 填充模板并处理结果
+	data = new(nodeData.NodeData)
+	//t, err := v2ray.NewTemplateFromVmessInfo(info)
+	//if err == nil {
+	//	b := t.ToConfigBytes()
+	//	data.Config = string(b)
+	//}
+	data.VmessInfo = info
+	return
+}
 func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	if strings.HasPrefix(u, "vmess://") {
 		n, err = ResolveVmessURL(u)
 	} else if strings.HasPrefix(u, "ss://") {
 		n, err = ResolveSSURL(u)
+	} else if strings.HasPrefix(u, "ssr://") {
+		n, err = ResolveSSRURL(u)
 	} else {
-		err = errors.New("不支持该协议，目前只支持ss和vmess协议")
+		err = errors.New("不支持该协议，目前只支持ss、ssr和vmess协议")
 		return
 	}
 	if err != nil {
