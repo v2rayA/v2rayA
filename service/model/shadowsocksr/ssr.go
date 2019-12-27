@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SSR struct {
@@ -58,6 +59,8 @@ func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsP
 			_ = local.(*socks5.Socks5).TcpListener.Close()
 		}
 	}()
+	//等待100ms的error
+	time.Sleep(100 * time.Millisecond)
 	return err
 }
 

@@ -1,8 +1,10 @@
 # V2RayA
 
-V2RayA 是一个支持全局透明代理的 V2Ray Linux 客户端，且兼容SS、SSR协议。
+V2RayA 是一个支持全局透明代理的 V2Ray Linux 客户端，同时兼容SS、SSR协议。
 
 V2RayA 致力于提供最简单的操作，满足绝大部分需求。
+
+同时兼容V2Ray、SS、SSR意味着用户不再需要在不同工具之间切换，你甚至可以使用一个混合协议的订阅。
 
 虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
@@ -29,22 +31,19 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 - [x] 导入 vmess、ss、ssr、订阅地址
 - [x] 手动添加/修改节点
 - [x] websocket、kcp、tcp、http、tls、shadowsocks、shadowsocksR 全支持 [[SS/SSR支持清单]](https://github.com/mzz2017/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
-- [x] 测试节点 Ping 时延
-- [x] 测试节点 HTTP 时延
+- [x] 测试节点 Ping、HTTP 时延
 - [x] 二维码、地址分享
-- [x] 同时开放 socks5、http、带 PAC 的 http 三个端口（PAC 模式可选 GFWList、大陆白名单）
+- [x] 支持PAC
 - [x] 服务端启动自动检查 PAC、订阅更新
 - [x] 多路复用、TCPFastOpen 支持
-- [x] 以service方式启动
-- [x] 检查版本更新
-- [x] 登陆与安全
-- [x] 服务端端口号配置、前端可指定服务端地址
+- [x] 自动检查版本更新
+- [x] 自定义端口
 
 待开发：
 
 - [ ] 手动修改SSR配置
 - [ ] 自定义 PAC 路由规则
-- [ ] QUIC协议支持
+- [ ] QUIC、auth_chain\*支持
 - [ ] 透明代理重定向备选方案
 
 ## 界面截图
