@@ -1,12 +1,12 @@
 # V2RayA
 
-V2RayA 是一个支持全局透明代理的 V2Ray Linux 客户端。
+V2RayA 是一个支持全局透明代理的 V2Ray Linux 客户端，且兼容SS、SSR协议。
 
 V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
-得益于Web客户端的优势，你可以轻松地将它部署在路由器或NAS上，并通过http访问管理你的节点。
+得益于Web客户端的优势，你不仅可以将其用于本地计算机，还可以轻松地将它部署在路由器或NAS上。
 
 目前V2RayA仅在部分Linux发行版进行过充分测试，在使用过程中如果遇到问题，欢迎提出issue。
 
@@ -26,9 +26,9 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 - [x] 全局透明代理
 - [x] V2Ray 服务控制
-- [x] 导入 vmess、ss、订阅地址
+- [x] 导入 vmess、ss、ssr、订阅地址
 - [x] 手动添加/修改节点
-- [x] websocket、kcp、tcp、http、tls、shadowsocks 全支持
+- [x] websocket、kcp、tcp、http、tls、shadowsocks、shadowsocksR 全支持 [[SS/SSR支持清单]](https://github.com/mzz2017/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 - [x] 测试节点 Ping 时延
 - [x] 测试节点 HTTP 时延
 - [x] 二维码、地址分享
@@ -42,8 +42,9 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 待开发：
 
+- [ ] 手动修改SSR配置
 - [ ] 自定义 PAC 路由规则
-- [ ] QUIC、SSR 协议支持
+- [ ] QUIC协议支持
 - [ ] 透明代理重定向备选方案
 
 ## 界面截图
@@ -241,6 +242,8 @@ service v2ray status
 其他端口：
 
 12345: tproxy（全局透明代理所需）
+
+12346: ssr server（SS、SSR所需）
 
 ## 在不同运行环境下程序表现将不同
 

@@ -9,10 +9,12 @@ import (
 	"strconv"
 )
 
-var c chan struct{}
+type SSR struct {
+	c chan struct{}
+}
 
-func Serve(localPort int, cipher, passwd, address, port, obfs, obfsParam, protocol, protocolParam string) (err error) {
-	c = make(chan struct{}, 0)
+func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsParam, protocol, protocolParam string) (err error) {
+	self.c = make(chan struct{}, 0)
 	u, _ := url.Parse(fmt.Sprintf("ssr://%v:%v@%v:%v", cipher, passwd, address, port))
 	q := u.Query()
 	q.Set("obfs", obfs)
@@ -27,30 +29,24 @@ func Serve(localPort int, cipher, passwd, address, port, obfs, obfsParam, protoc
 	}
 	go func() {
 		go local.ListenAndServe()
-		for {
-			select {
-			case <-c:
-				_ = local.(*socks5.Socks5).TcpListener.Close()
-				return
-			default:
-			}
-		}
+		<-self.c
+		_ = local.(*socks5.Socks5).TcpListener.Close()
 	}()
 	return nil
 }
 
-func Close() error {
-	if c == nil {
+func (self *SSR) Close() error {
+	if self.c == nil {
 		return errors.New("close fail: shadowsocksr not running")
 	}
-	if len(c) > 0 {
+	if len(self.c) > 0 {
 		return errors.New("close fail: duplicate close")
 	}
-	c <- struct{}{}
-	c = nil
+	self.c <- struct{}{}
+	self.c = nil
 	return nil
 }
 
-func IsRunning() bool {
-	return c != nil
+func (self *SSR) IsRunning() bool {
+	return self.c != nil
 }

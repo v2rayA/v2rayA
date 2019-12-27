@@ -3,6 +3,7 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/model/iptables"
+	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
@@ -159,9 +160,9 @@ func RestartV2rayService() (err error) {
 }
 
 /*更新v2ray配置并重启*/
-func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
+func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 	//读配置，转换为v2ray配置并写入
-	tmpl, err := NewTemplateFromVmessInfo(*vmessInfo)
+	tmpl, err := NewTemplateFromVmessInfo(*v)
 	if err != nil {
 		return
 	}
@@ -173,7 +174,16 @@ func UpdateV2RayConfigAndRestart(vmessInfo *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
-	//time.Sleep(200 * time.Millisecond)
+	global.SSRs.ClearAll()
+	if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
+		//说明是ss或ssr，启动ssr server
+		ss := new(shadowsocksr.SSR)
+		err = ss.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
+		if err != nil {
+			return
+		}
+		global.SSRs.Append(*ss)
+	}
 	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		_ = iptables.DeleteRules()
 		err = iptables.WriteRules()
@@ -198,10 +208,21 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	if err != nil {
 		return
 	}
-	if IsV2RayRunning() {
+
+	if IsV2RayRunning() { //没有运行就不需要启动了
 		err = RestartV2rayService()
+		global.SSRs.ClearAll()
+		if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
+			//说明是ss或ssr，启动ssr server
+			v := sr.VmessInfo
+			ss := new(shadowsocksr.SSR)
+			err = ss.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
+			if err != nil {
+				return
+			}
+			global.SSRs.Append(*ss)
+		}
 		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-			//time.Sleep(200 * time.Millisecond)
 			_ = iptables.DeleteRules()
 			err = iptables.WriteRules()
 		}

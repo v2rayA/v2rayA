@@ -3,7 +3,6 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/model/iptables"
-	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"errors"
@@ -202,7 +201,7 @@ func NewTemplate() (tmpl Template) {
 函数会规格化传入的v
 */
 
-func ResolveOutbound(v *vmessInfo.VmessInfo, tag string) (o Outbound, err error) {
+func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int) (o Outbound, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
@@ -278,7 +277,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string) (o Outbound, err error)
 		switch v.Type {
 		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1":
 		default:
-			return o, errors.New("不支持的shadowsocksr协议: " + v.Net)
+			return o, errors.New("不支持的shadowsocksr协议: " + v.Type)
 		}
 		if len(strings.TrimSpace(v.TLS)) <= 0 {
 			v.TLS = "plain"
@@ -286,13 +285,13 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string) (o Outbound, err error)
 		switch v.TLS {
 		case "plain", "http_simple", "http_post", "random_head", "tls1.2_ticket_auth":
 		default:
-			return o, errors.New("不支持的shadowsocksr混淆方法: " + v.Net)
+			return o, errors.New("不支持的shadowsocksr混淆方法: " + v.TLS)
 		}
 		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
 			{
 				Address: "127.0.0.1",
-				Port:    global.GetEnvironmentConfig().SSRListenPort,
+				Port:    ssrLocalPortIfNeed,
 			},
 		}
 	default:
@@ -312,7 +311,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	}
 	// 其中Template是基础配置，替换掉*t即可
 	t = tmplJson.Template
-	o, err := ResolveOutbound(&v, "proxy")
+	o, err := ResolveOutbound(&v, "proxy", global.GetEnvironmentConfig().SSRListenPort)
 	if err != nil {
 		return t, err
 	}
@@ -330,19 +329,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.Outbounds[0].Mux = &Mux{
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
-		}
-	case "socks":
-		//说明是ss或ssr，启动ssr server
-		if shadowsocksr.IsRunning() {
-			err = shadowsocksr.Close()
-			if err != nil {
-				err = errors.New("无法关闭上一个ssr server")
-				return
-			}
-		}
-		err = shadowsocksr.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
-		if err != nil {
-			return
 		}
 	}
 
@@ -557,8 +543,8 @@ func NewTemplateFromConfig() (t Template, err error) {
 	err = jsoniter.Unmarshal(b, &t)
 	return
 }
-func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool) (err error) {
-	o, err := ResolveOutbound(&v, "outbound"+inboundPort)
+func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, ssrLocalPortIfNeed int) (err error) {
+	o, err := ResolveOutbound(&v, "outbound"+inboundPort, ssrLocalPortIfNeed)
 	if err != nil {
 		return
 	}

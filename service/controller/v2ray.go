@@ -20,7 +20,11 @@ func PostV2ray(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = v2ray.RestartV2rayService()
+	csr, err := cs.LocateServer()
+	if err != nil {
+		return
+	}
+	err = v2ray.UpdateV2RayConfigAndRestart(&csr.VmessInfo)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
@@ -39,5 +43,6 @@ func DeleteV2ray(ctx *gin.Context) {
 		tools.ResponseError(ctx, err)
 		return
 	}
+	global.SSRs.ClearAll()
 	tools.ResponseSuccess(ctx, gin.H{"lastConnectedServer": configure.GetConnectedServer()})
 }

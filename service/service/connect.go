@@ -1,7 +1,7 @@
 package service
 
 import (
-	"V2RayA/model/shadowsocksr"
+	"V2RayA/global"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 func Disconnect() (err error) {
 	_ = CheckAndStopTransparentProxy()
-	_ = shadowsocksr.Close()
+	global.SSRs.ClearAll()
 	err = v2ray.StopV2rayService()
 	if err != nil {
 		return

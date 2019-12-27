@@ -1,6 +1,8 @@
 package service
 
 import (
+	"V2RayA/global"
+	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/v2ray"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
@@ -95,6 +97,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		tmpl = v2ray.NewTemplate()
 	}
 	portMap := make(map[int]string)
+	ssrPortMap := make(map[int]int)
 	port := 0
 	for i, v := range vms {
 		if which[i].Latency != "" {
@@ -113,12 +116,41 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 				break
 			}
 		}
-		sPort := strconv.Itoa(port)
-		portMap[i] = sPort
-		err := tmpl.AddMappingOutbound(v, sPort, false)
+		v2rayInboundPort := strconv.Itoa(port)
+		ssrLocalPortIfNeed := 0
+		switch strings.ToLower(v.Protocol) {
+		case "shadowsocksr", "shadowsocks", "ss", "ssr":
+			//再找一个空端口
+			port++
+			for {
+				if occupied, which := tools.IsPortOccupied(strconv.Itoa(port), "tcp"); occupied && !strings.Contains(which, "v2ray") {
+					port++
+				} else {
+					break
+				}
+			}
+			ssrLocalPortIfNeed = port
+		default:
+		}
+		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, ssrLocalPortIfNeed)
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue
+		}
+		portMap[i] = v2rayInboundPort
+		ssrPortMap[i] = ssrLocalPortIfNeed
+	}
+	//启ssr
+	//不清SSRs，防止断开当前连接
+	if len(ssrPortMap) > 0 {
+		for i, localPort := range ssrPortMap {
+			v := vms[i]
+			ssr := new(shadowsocksr.SSR)
+			err := ssr.Serve(localPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
+			if err != nil {
+				return nil, err
+			}
+			global.SSRs.Append(*ssr)
 		}
 	}
 	err := v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())

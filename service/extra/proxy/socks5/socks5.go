@@ -73,7 +73,7 @@ func NewSocks5Server(s string, p proxy.Proxy) (proxy.Server, error) {
 
 // ListenAndServe serves socks5 requests.
 func (s *Socks5) ListenAndServe() {
-	go s.ListenAndServeUDP()
+	//go s.ListenAndServeUDP()
 	s.ListenAndServeTCP()
 }
 
