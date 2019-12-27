@@ -72,17 +72,17 @@ func NewSocks5Server(s string, p proxy.Proxy) (proxy.Server, error) {
 }
 
 // ListenAndServe serves socks5 requests.
-func (s *Socks5) ListenAndServe() {
+func (s *Socks5) ListenAndServe() error {
 	//go s.ListenAndServeUDP()
-	s.ListenAndServeTCP()
+	return s.ListenAndServeTCP()
 }
 
 // ListenAndServeTCP listen and serve on tcp port.
-func (s *Socks5) ListenAndServeTCP() {
+func (s *Socks5) ListenAndServeTCP() error {
 	l, err := net.Listen("tcp", s.addr)
 	if err != nil {
 		log.Printf("[socks5] failed to listen on %s: %v\n", s.addr, err)
-		return
+		return err
 	}
 	s.TcpListener = l
 
@@ -92,7 +92,7 @@ func (s *Socks5) ListenAndServeTCP() {
 		c, err := l.Accept()
 		if err != nil {
 			if strings.Contains(err.Error(), "use of closed network connection") {
-				return
+				return nil
 			}
 			log.Printf("[socks5] failed to accept: %v\n", err)
 			continue

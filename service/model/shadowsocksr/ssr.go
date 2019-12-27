@@ -5,8 +5,10 @@ import (
 	"V2RayA/extra/proxy/ssr"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type SSR struct {
@@ -15,8 +17,25 @@ type SSR struct {
 
 func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsParam, protocol, protocolParam string) (err error) {
 	self.c = make(chan struct{}, 0)
-	u, _ := url.Parse(fmt.Sprintf("ssr://%v:%v@%v:%v", cipher, passwd, address, port))
+
+	u, err := url.Parse(fmt.Sprintf(
+		"ssr://%v:%v@%v:%v",
+		url.PathEscape(cipher),
+		url.PathEscape(passwd),
+		url.PathEscape(address),
+		url.PathEscape(port),
+	))
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	q := u.Query()
+	if len(strings.TrimSpace(obfs)) <= 0 {
+		obfs = "plain"
+	}
+	if len(strings.TrimSpace(protocol)) <= 0 {
+		protocol = "origin"
+	}
 	q.Set("obfs", obfs)
 	q.Set("obfs_param", obfsParam)
 	q.Set("protocol", protocol)
@@ -28,11 +47,16 @@ func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsP
 		return
 	}
 	go func() {
-		go local.ListenAndServe()
+		go func() {
+			e := local.ListenAndServe()
+			if e != nil {
+				err = e
+			}
+		}()
 		<-self.c
 		_ = local.(*socks5.Socks5).TcpListener.Close()
 	}()
-	return nil
+	return err
 }
 
 func (self *SSR) Close() error {

@@ -130,6 +130,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 				}
 			}
 			ssrLocalPortIfNeed = port
+			ssrPortMap[i] = port
 		default:
 		}
 		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, ssrLocalPortIfNeed)
@@ -138,7 +139,6 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			continue
 		}
 		portMap[i] = v2rayInboundPort
-		ssrPortMap[i] = ssrLocalPortIfNeed
 	}
 	//启ssr
 	//不清SSRs，防止断开当前连接

@@ -14,7 +14,7 @@ require (
 	github.com/matoous/go-nanoid v1.1.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.5 // indirect
-	github.com/mzz2017/shadowsocksR v0.0.0-20191219051354-c22d8508a9ff
+	github.com/mzz2017/shadowsocksR v0.0.0-20191227180500-1ac9689bb34d
 	github.com/nadoo/glider v0.9.2
 	github.com/pkg/errors v0.8.1
 	github.com/stevenroose/gonfig v0.1.4

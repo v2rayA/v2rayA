@@ -12,7 +12,7 @@ import (
 // Server interface
 type Server interface {
 	// ListenAndServe sets up a listener and serve on it
-	ListenAndServe()
+	ListenAndServe() error
 
 	// Serve serves a connection
 	Serve(c net.Conn)
