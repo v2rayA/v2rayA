@@ -62,10 +62,22 @@ func Import(url string, which *configure.Which) (err error) {
 		for i, v := range infos {
 			servers[i] = *v.ToServerRaw()
 		}
+		//去重
+		unique := make(map[configure.ServerRaw]struct{})
+		for _, s := range servers {
+			unique[s] = struct{}{}
+		}
+		uniqueServers := make([]configure.ServerRaw, 0)
+		for _, s := range servers {
+			if _, ok := unique[s]; ok {
+				uniqueServers = append(uniqueServers, s)
+				delete(unique, s)
+			}
+		}
 		err = configure.AppendSubscription(&configure.SubscriptionRaw{
 			Address: url,
 			Status:  string(touch.NewUpdateStatus()),
-			Servers: servers,
+			Servers: uniqueServers,
 		})
 	}
 	return

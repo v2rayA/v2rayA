@@ -9,6 +9,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
+	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/gookit/color v1.2.0
 	github.com/json-iterator/go v1.1.6
 	github.com/matoous/go-nanoid v1.1.0
