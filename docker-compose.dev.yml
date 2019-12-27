@@ -6,9 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    ports:
-      - 2017:3000
-      - 12345:12345
     volumes:
       - shared-data:/etc/v2ray
       - ./service:/service:ro
@@ -23,9 +20,6 @@ services:
     pid: service:backend
     environment:
       - V2RAY_LOCATION_ASSET=/etc/v2ray
-    ports:
-      - 20170-20172:20170-20172
-      - 12345:12345
     volumes:
       - shared-data:/etc/v2ray
     entrypoint: sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
