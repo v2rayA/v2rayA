@@ -54,7 +54,9 @@ func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsP
 			}
 		}()
 		<-self.c
-		_ = local.(*socks5.Socks5).TcpListener.Close()
+		if local.(*socks5.Socks5).TcpListener != nil {
+			_ = local.(*socks5.Socks5).TcpListener.Close()
+		}
 	}()
 	return err
 }

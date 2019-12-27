@@ -154,7 +154,7 @@
           TCPFastOpen
           <b-tooltip
             type="is-dark"
-            label="简化TCP握手流程以加速建立连接，可能会增加封包的特征。"
+            label="简化TCP握手流程以加速建立连接，可能会增加封包的特征。当前仅支持vmess节点。"
             multilined
             position="is-right"
           >
@@ -176,7 +176,7 @@
           多路复用
           <b-tooltip
             type="is-dark"
-            label="复用TCP连接以减少握手延迟，但会影响吞吐量大的使用场景，如观看视频、下载、测速。"
+            label="复用TCP连接以减少握手延迟，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。"
             multilined
             position="is-right"
           >
