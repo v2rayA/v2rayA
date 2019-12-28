@@ -150,13 +150,18 @@ func ResolveSSRURL(vmess string) (data *nodeData.NodeData, err error) {
 		err = errors.New("this address is not begin with ssr://")
 		return
 	}
-	// 该函数尝试对ss://链接进行解析
+	// 该函数尝试对ssr://链接进行解析
 	resolveFormat := func(content string) (v vmessInfo.VmessInfo, ok bool) {
 		arr := strings.Split(content, "/?")
 		if len(arr) != 2 {
 			return v, false
 		}
 		pre := strings.Split(arr[0], ":")
+		if len(pre) > 6 {
+			//如果长度多于6，说明host中包含字符:，重新合并前几个分组到host去
+			pre[len(pre)-6] = strings.Join(pre[:len(pre)-5], ":")
+			pre = pre[len(pre)-6:]
+		}
 		q, err := url.ParseQuery(arr[1])
 		if err != nil {
 			return v, false

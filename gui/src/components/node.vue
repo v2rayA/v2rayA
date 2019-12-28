@@ -746,11 +746,11 @@ export default {
                               res.data.data.sharingAddress
                             }">
                                 <div class="tag-cover tag is-rounded" style="display: none;"></div>
-                                <span>
-                                    ${row.name || row.host}
+                                <span class="has-ellipsis" style="max-width:10em">
+                                    ${row.name || row.host || row.address}
                                 </span>
                             </span>
-                            <div id="tag-cover-text">点击复制</div>
+                            <div id="tag-cover-text">复制链接</div>
                             <span class="tag is-rounded is-primary sharingAddressTag" style="position: relative" data-clipboard-text="${
                               res.data.data.sharingAddress
                             }">

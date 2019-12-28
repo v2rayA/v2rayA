@@ -12,10 +12,7 @@ import (
 )
 
 func Import(url string, which *configure.Which) (err error) {
-	if strings.HasPrefix(url, "ssr://") {
-		return errors.New("V2RayA不支持SSR")
-	}
-	if strings.HasPrefix(url, "vmess://") || strings.HasPrefix(url, "ss://") {
+	if strings.HasPrefix(url, "vmess://") || strings.HasPrefix(url, "ss://") || strings.HasPrefix(url, "ssr://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)
 		if err != nil {
@@ -36,7 +33,7 @@ func Import(url string, which *configure.Which) (err error) {
 			sr.VmessInfo = n.VmessInfo
 			err = configure.SetServer(ind, n.ToServerRaw())
 			cs := configure.GetConnectedServer()
-			if which.TYPE == cs.TYPE && which.ID == cs.ID {
+			if cs != nil && which.TYPE == cs.TYPE && which.ID == cs.ID {
 				err = v2ray.UpdateV2rayWithConnectedServer()
 			}
 		} else {

@@ -13,10 +13,11 @@
         <b-tab-item label="VMESS">
           <b-field label="Name" label-position="on-border">
             <b-input
+              ref="vmess_name"
               v-model="vmess.ps"
               placeholder="节点名称"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="Address" label-position="on-border">
             <b-input
@@ -25,7 +26,7 @@
               required
               placeholder="IP / HOST"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="Port" label-position="on-border">
             <b-input
@@ -35,7 +36,7 @@
               placeholder="端口号"
               type="number"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="ID" label-position="on-border">
             <b-input
@@ -44,7 +45,7 @@
               required
               placeholder="UserID"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="AID" label-position="on-border">
             <b-input
@@ -55,7 +56,7 @@
               min="0"
               max="65535"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field
             v-show="vmess.type !== 'dtls'"
@@ -114,27 +115,24 @@
               v-model="vmess.host"
               placeholder="伪装域名(host)"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field
             v-show="vmess.net === 'ws' || vmess.net === 'h2'"
             label="Path"
             label-position="on-border"
           >
-            <b-input
-              v-model="vmess.path"
-              placeholder="路径(path)"
-              expanded
-            ></b-input>
+            <b-input v-model="vmess.path" placeholder="路径(path)" expanded />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
           <b-field label="Name" label-position="on-border">
             <b-input
+              ref="ss_name"
               v-model="ss.name"
               placeholder="节点名称"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="Address" label-position="on-border">
             <b-input
@@ -143,7 +141,7 @@
               required
               placeholder="IP / HOST"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="Port" label-position="on-border">
             <b-input
@@ -153,7 +151,7 @@
               placeholder="端口号"
               type="number"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="Password" label-position="on-border">
             <b-input
@@ -162,24 +160,139 @@
               required
               placeholder="密码"
               expanded
-            ></b-input>
+            />
           </b-field>
           <b-field label="Method" label-position="on-border">
-            <b-select
-              ref="ss_net"
-              v-model="ss.method"
-              expanded
-              required
-              @input="handleNetworkChange"
-            >
-              <option value="aes-256-cfb">aes-256-cfb</option>
+            <b-select ref="ss_method" v-model="ss.method" expanded required>
               <option value="aes-128-cfb">aes-128-cfb</option>
+              <option value="aes-192-cfb">aes-192-cfb</option>
+              <option value="aes-256-cfb">aes-256-cfb</option>
+              <option value="aes-128-ctr">aes-128-ctr</option>
+              <option value="aes-192-ctr">aes-192-ctr</option>
+              <option value="aes-256-ctr">aes-256-ctr</option>
+              <option value="aes-128-ofb">aes-128-ofb</option>
+              <option value="aes-192-ofb">aes-192-ofb</option>
+              <option value="aes-256-ofb">aes-256-ofb</option>
+              <option value="des-cfb">des-cfb</option>
+              <option value="bf-cfb">bf-cfb</option>
+              <option value="cast5-cfb">cast5-cfb</option>
+              <option value="rc4-md5">rc4-md5</option>
               <option value="chacha20">chacha20</option>
               <option value="chacha20-ietf">chacha20-ietf</option>
-              <option value="chacha20-poly1305">chacha20-poly1305</option>
-              <option value="aes-256-gcm">aes-256-gcm</option>
-              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="salsa20">salsa20</option>
+              <option value="camellia-128-cfb">camellia-128-cfb</option>
+              <option value="camellia-192-cfb">camellia-192-cfb</option>
+              <option value="camellia-256-cfb">camellia-256-cfb</option>
+              <option value="idea-cfb">idea-cfb</option>
+              <option value="rc2-cfb">rc2-cfb</option>
+              <option value="seed-cfb">seed-cfb</option>
             </b-select>
+          </b-field>
+        </b-tab-item>
+        <b-tab-item label="SSR">
+          <b-field label="Name" label-position="on-border">
+            <b-input
+              ref="ssr_name"
+              v-model="ssr.name"
+              placeholder="节点名称"
+              expanded
+            />
+          </b-field>
+          <b-field label="Address" label-position="on-border">
+            <b-input
+              ref="ssr_server"
+              v-model="ssr.server"
+              required
+              placeholder="IP / HOST"
+              expanded
+            />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input
+              ref="ssr_port"
+              v-model="ssr.port"
+              required
+              placeholder="端口号"
+              type="number"
+              expanded
+            />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input
+              ref="ssr_password"
+              v-model="ssr.password"
+              required
+              placeholder="密码"
+              expanded
+            />
+          </b-field>
+          <b-field label="Method" label-position="on-border">
+            <b-select ref="ssr_method" v-model="ssr.method" expanded required>
+              <option value="aes-128-cfb">aes-128-cfb</option>
+              <option value="aes-192-cfb">aes-192-cfb</option>
+              <option value="aes-256-cfb">aes-256-cfb</option>
+              <option value="aes-128-ctr">aes-128-ctr</option>
+              <option value="aes-192-ctr">aes-192-ctr</option>
+              <option value="aes-256-ctr">aes-256-ctr</option>
+              <option value="aes-128-ofb">aes-128-ofb</option>
+              <option value="aes-192-ofb">aes-192-ofb</option>
+              <option value="aes-256-ofb">aes-256-ofb</option>
+              <option value="des-cfb">des-cfb</option>
+              <option value="bf-cfb">bf-cfb</option>
+              <option value="cast5-cfb">cast5-cfb</option>
+              <option value="rc4-md5">rc4-md5</option>
+              <option value="chacha20">chacha20</option>
+              <option value="chacha20-ietf">chacha20-ietf</option>
+              <option value="salsa20">salsa20</option>
+              <option value="camellia-128-cfb">camellia-128-cfb</option>
+              <option value="camellia-192-cfb">camellia-192-cfb</option>
+              <option value="camellia-256-cfb">camellia-256-cfb</option>
+              <option value="idea-cfb">idea-cfb</option>
+              <option value="rc2-cfb">rc2-cfb</option>
+              <option value="seed-cfb">seed-cfb</option>
+            </b-select>
+          </b-field>
+          <b-field label="Protocol" label-position="on-border">
+            <b-select ref="ssr_proto" v-model="ssr.proto" expanded required>
+              <option value="origin">origin</option>
+              <option value="verify_sha1">verify_sha1</option>
+              <option value="auth_sha1_v4">auth_sha1_v4</option>
+              <option value="auth_aes128_md5">auth_aes128_md5</option>
+              <option value="auth_aes128_sha1">auth_aes128_sha1</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-if="ssr.proto !== 'origin'"
+            label="Protocol Param"
+            label-position="on-border"
+          >
+            <b-input
+              ref="ssr_protoParam"
+              v-model="ssr.protoParam"
+              placeholder="(optional)"
+              expanded
+            />
+          </b-field>
+          <b-field label="Obfs" label-position="on-border">
+            <b-select ref="ssr_obfs" v-model="ssr.obfs" expanded required>
+              <option value="plain">plain</option>
+              <option value="http_simple">http_simple</option>
+              <option value="http_post">http_post</option>
+              <option value="random_head">random_head</option>
+              <option value="tls1.2_ticket_auth">tls1.2_ticket_auth</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-if="ssr.obfs !== 'plain'"
+            label="Obfs Param"
+            label-position="on-border"
+          >
+            <b-input
+              ref="ssr_obfsParam"
+              v-model="ssr.obfsParam"
+              placeholder="(optional)"
+              expanded
+            />
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -229,12 +342,24 @@ export default {
       protocol: "vmess"
     },
     ss: {
-      method: "aes-256-cfb",
+      method: "aes-128-cfb",
       password: "",
       server: "",
       port: "",
       name: "",
       protocol: "ss"
+    },
+    ssr: {
+      method: "aes-128-cfb",
+      password: "",
+      server: "",
+      port: "",
+      name: "",
+      proto: "origin",
+      protoParam: "",
+      obfs: "plain",
+      obfsParam: "",
+      protocol: "ssr"
     },
     tabChoice: 0
   }),
@@ -258,6 +383,11 @@ export default {
           ) {
             this.ss = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 1;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("ssr://")
+          ) {
+            this.ssr = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 2;
           }
         });
       });
@@ -287,6 +417,35 @@ export default {
           name: arr[4],
           protocol: "ss"
         };
+      } else if (url.toLowerCase().indexOf("ssr://") >= 0) {
+        url = Base64.decode(url.substr(6));
+        let arr = url.split("/?");
+        let params = arr[1].split("&");
+        let m = {};
+        for (let param of params) {
+          let [key, val] = param.split("=", 2);
+          val = Base64.decode(val);
+          m[key] = val;
+        }
+        let pre = arr[0].split(":");
+        if (pre.length > 6) {
+          //如果长度多于6，说明host中包含字符:，重新合并前几个分组到host去
+          pre[pre.length - 6] = pre.slice(0, pre.length - 5).join(":");
+          pre = pre.slice(pre.length - 6);
+        }
+        pre[5] = Base64.decode(pre[5]);
+        return {
+          method: pre[3],
+          password: pre[5],
+          server: pre[0],
+          port: pre[1],
+          name: m["remarks"],
+          proto: pre[2],
+          protoParam: m["protoparam"],
+          obfs: pre[4],
+          obfsParam: m["obfsparam"],
+          protocol: "ssr"
+        };
       }
       return null;
     },
@@ -311,6 +470,17 @@ export default {
           return `ss://${Base64.encode(
             `${srcObj.method}:${srcObj.password}`
           )}@${srcObj.server}:${srcObj.port}#${srcObj.name}`;
+        case "ssr":
+          /* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
+          return `ssr://${Base64.encode(
+            `${srcObj.server}:${srcObj.port}:${srcObj.proto}:${srcObj.method}:${
+              srcObj.obfs
+            }:${Base64.encodeURI(srcObj.password)}/?remarks=${Base64.encodeURI(
+              srcObj.name
+            )}&protoparam=${Base64.encodeURI(
+              srcObj.protoParam
+            )}&obfsparam=${Base64.encodeURI(srcObj.obfsParam)}`
+          )}`;
       }
       return null;
     },
@@ -323,10 +493,13 @@ export default {
         if (!this.$refs.hasOwnProperty(k)) {
           continue;
         }
-        if (this.tabChoice === 0 && !k.startsWith("vmess")) {
+        if (this.tabChoice === 0 && !k.startsWith("vmess_")) {
           continue;
         }
-        if (this.tabChoice === 1 && !k.startsWith("ss")) {
+        if (this.tabChoice === 1 && !k.startsWith("ss_")) {
+          continue;
+        }
+        if (this.tabChoice === 2 && !k.startsWith("ssr_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -346,6 +519,8 @@ export default {
         coded = this.generateURL(this.vmess);
       } else if (this.tabChoice === 1) {
         coded = this.generateURL(this.ss);
+      } else if (this.tabChoice === 2) {
+        coded = this.generateURL(this.ssr);
       }
       this.$emit("submit", coded);
     }

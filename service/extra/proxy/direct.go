@@ -80,7 +80,7 @@ func dial(network, addr string, localIP net.IP) (net.Conn, error) {
 		LocalAddr: la,
 		Control: func(network, address string, c syscall.RawConn) error {
 			return c.Control(func(fd uintptr) {
-				//TODO: force set 0xff. any chance to custom the value?
+				//TODO: force to set 0xff. any chances to customize this value?
 				err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
 				if err != nil {
 					log.Printf("control: %s", err)

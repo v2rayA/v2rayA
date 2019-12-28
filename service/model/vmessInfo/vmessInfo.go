@@ -2,8 +2,8 @@ package vmessInfo
 
 import (
 	"encoding/base64"
-	"github.com/json-iterator/go"
 	"fmt"
+	"github.com/json-iterator/go"
 	"reflect"
 )
 
@@ -48,6 +48,22 @@ func (v *VmessInfo) ExportToURL() string {
 			v.Port,
 			v.Ps,
 		)
+	case "ssr":
+		/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
+		return fmt.Sprintf("ssr://%v", base64.StdEncoding.EncodeToString([]byte(
+			fmt.Sprintf(
+				"%v:%v:%v:%v:%v:%v/?remarks=%v&protoparam=%v&obfsparam=%v",
+				v.Add,
+				v.Port,
+				v.Type,
+				v.Net,
+				v.TLS,
+				base64.URLEncoding.EncodeToString([]byte(v.ID)),
+				base64.URLEncoding.EncodeToString([]byte(v.Ps)),
+				base64.URLEncoding.EncodeToString([]byte(v.Host)),
+				base64.URLEncoding.EncodeToString([]byte(v.Path)),
+			),
+		)))
 	}
 	return ""
 }
