@@ -115,7 +115,10 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 		// 进行base64解码，并unmarshal到VmessInfo上
 		content, err = tools.Base64StdDecode(content)
 		if err != nil {
-			return
+			content, err = tools.Base64URLDecode(content)
+			if err != nil {
+				return
+			}
 		}
 		subMatch, ok = resolveFormat(content)
 	}
@@ -195,7 +198,10 @@ func ResolveSSRURL(vmess string) (data *nodeData.NodeData, err error) {
 		// 进行base64解码，并unmarshal到VmessInfo上
 		content, err = tools.Base64StdDecode(content)
 		if err != nil {
-			return
+			content, err = tools.Base64URLDecode(content)
+			if err != nil {
+				return
+			}
 		}
 		info, ok = resolveFormat(content)
 	}
@@ -214,6 +220,11 @@ func ResolveSSRURL(vmess string) (data *nodeData.NodeData, err error) {
 	return
 }
 func ResolveURL(u string) (n *nodeData.NodeData, err error) {
+	u = strings.TrimSpace(u)
+	if len(u) <= 0 {
+		err = errors.New("ResolveURL error: 空地址")
+		return
+	}
 	if strings.HasPrefix(u, "vmess://") {
 		n, err = ResolveVmessURL(u)
 	} else if strings.HasPrefix(u, "ss://") {
@@ -221,7 +232,7 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	} else if strings.HasPrefix(u, "ssr://") {
 		n, err = ResolveSSRURL(u)
 	} else {
-		err = errors.New("不支持该协议，目前只支持ss、ssr和vmess协议")
+		err = errors.New("不支持该协议，目前只支持ss、ssr和vmess协议: " + u)
 		return
 	}
 	if err != nil {

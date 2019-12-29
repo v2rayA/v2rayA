@@ -47,6 +47,7 @@ func Ping(which []configure.Which, timeout time.Duration) ([]configure.Which, er
 }
 
 func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel int) ([]configure.Which, error) {
+	//TODO: 未连接时测速需要添加一个direct outbound
 	var whiches configure.Whiches
 	whiches.Set(which)
 	for i := len(which) - 1; i >= 0; i-- {
