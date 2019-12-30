@@ -123,6 +123,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 		if e == nil {
 			_ = conn.Close()
 		}
+		//log.Println(host+":"+tsr.VmessInfo.Port, e)
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 	} else {
 		log.Println(e)

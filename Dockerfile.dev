@@ -1,13 +1,8 @@
-FROM golang:buster
-# RUN echo "192.30.253.112 github.com" >"/etc/hosts"
-# RUN echo "151.101.185.194 github.global.ssl.fastly.net" >>"/etc/hosts"
+FROM golang:alpine
+RUN apk --no-cache add iptables git
+ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn
 RUN go get github.com/codegangsta/gin
-RUN echo "deb http://mirrors.ustc.edu.cn/debian buster main contrib non-free" > /etc/apt/sources.list
-RUN echo "deb http://mirrors.ustc.edu.cn/debian buster-updates main contrib non-free" >> /etc/apt/sources.list
-RUN apt-get update
-RUN apt-get install -y psmisc ca-certificates
-RUN apt-get install -y iptables
 WORKDIR /service
 ENV CONFIG=../config.json
 ENV GIN_BIN=../V2RayA

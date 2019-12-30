@@ -7,7 +7,7 @@ import (
 )
 
 func KillAll(process string, immediately bool) (e error) {
-	out, err := exec.Command("sh", "-c", "ps -e|awk '{print $1,$4}'|grep "+process+"$|awk '{print $1}'").CombinedOutput()
+	out, err := exec.Command("sh", "-c", "ps -e -o pid -o comm|grep "+process+"$|awk '{print $1}'").CombinedOutput()
 	if err != nil || strings.Contains(string(out), "invalid option") {
 		if strings.Contains(strings.ToLower(string(out)), "busybox") {
 			out, e = exec.Command("sh", "-c", "ps|awk '{print $1,$5}'|grep "+process+"$|awk '{print $1}'").Output()

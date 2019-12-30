@@ -3,6 +3,8 @@ services:
   backend:
     privileged: true
     network_mode: host # --network host
+    ports:
+      - 2017:2017
     restart: always
     build: .
     volumes:
@@ -13,9 +15,9 @@ services:
   v2ray:
     privileged: true
     network_mode: host # --network host
+    pid: service:backend
     restart: always
     image: "v2ray/official"
-    pid: service:backend
     environment:
      - V2RAY_LOCATION_ASSET=/etc/v2ray
     volumes:

@@ -678,13 +678,27 @@ export default {
         }
       })
         .then(res => {
-          handleResponse(res, this, () => {
-            res.data.data.whiches.forEach(x => {
-              let server = locateServer(this.tableData, x);
-              server.pingLatency = x.pingLatency;
-            });
-            this.updateConnectView();
-          });
+          handleResponse(
+            res,
+            this,
+            () => {
+              res.data.data.whiches.forEach(x => {
+                let server = locateServer(this.tableData, x);
+                server.pingLatency = x.pingLatency;
+              });
+              this.updateConnectView();
+            },
+            () => {
+              this.$buefy.toast.open({
+                message: res.data.message,
+                type: "is-warning",
+                position: "is-top",
+                queue: false,
+                duration: 5000
+              });
+              this.checkedRows.forEach(x => (x.pingLatency = ""));
+            }
+          );
         })
         .finally(() => {
           clearTimeout(timerTip);
@@ -962,6 +976,10 @@ export default {
   background: rgba(0, 0, 0, 0.05);
   width: 100%;
   border-radius: 3px;
+  pointer-events: none;
+  * {
+    pointer-events: auto;
+  }
   .right {
     position: absolute;
     right: 0.75rem;
@@ -1006,7 +1024,8 @@ tr.is-connected {
 }
 .not-show {
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none !important;
+  overflow: hidden;
   width: 0 !important;
   display: inline-block !important;
   padding-left: 0 !important;

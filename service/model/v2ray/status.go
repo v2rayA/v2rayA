@@ -20,7 +20,7 @@ import (
 )
 
 func IsV2RayProcessExists() bool {
-	out, err := exec.Command("sh", "-c", "ps -ef|awk '{print $9,$8}'|grep v2ray$").CombinedOutput()
+	out, err := exec.Command("sh", "-c", "ps -e -o comm|grep ^v2ray$").CombinedOutput()
 	if err != nil || (strings.Contains(string(out), "invalid option") && strings.Contains(strings.ToLower(string(out)), "busybox")) {
 		out, err = exec.Command("sh", "-c", "ps|awk '{print $4,$5}'|grep v2ray$").CombinedOutput()
 	}
