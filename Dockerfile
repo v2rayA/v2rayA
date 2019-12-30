@@ -1,6 +1,7 @@
 FROM golang:alpine AS builder
 ADD ./service /service
 WORKDIR /service
+ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.io
 RUN go build -o V2RayA .
 
