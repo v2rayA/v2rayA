@@ -209,9 +209,9 @@ func UpdateV2rayWithConnectedServer() (err error) {
 		return
 	}
 
+	global.SSRs.ClearAll()
 	if IsV2RayRunning() { //没有运行就不需要启动了
 		err = RestartV2rayService()
-		global.SSRs.ClearAll()
 		if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
 			//说明是ss或ssr，启动ssr server
 			v := sr.VmessInfo

@@ -196,7 +196,7 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	}
 	c.Timeout = timeout
 	t := time.Now()
-	req, _ := http.NewRequest("HEAD", "https://www.google.com", nil)
+	req, _ := http.NewRequest("HEAD", "https://www.youtube.com", nil)
 	resp, err := c.Do(req)
 	if err != nil {
 		es := strings.ToLower(err.Error())
