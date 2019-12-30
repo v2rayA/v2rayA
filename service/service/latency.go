@@ -177,6 +177,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}(i)
 	}
 	wg.Wait()
+	global.SSRs.ClearAll()
 	if v2rayRunning && configure.GetConnectedServer() != nil {
 		err = v2ray.UpdateV2rayWithConnectedServer()
 		if err != nil {

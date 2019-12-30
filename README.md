@@ -44,6 +44,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 - [ ] 自定义 PAC 路由规则
 - [ ] QUIC、auth_chain\*支持
 - [ ] 透明代理重定向备选方案
+- [ ] 日志
 
 ## 界面截图
 
@@ -127,7 +128,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 2. **使用 docker 命令部署**。
 
    ```bash
-   # pull latest or stable version of v2raya
+   # pull stable version of v2raya
    docker pull mzz2017/v2raya:stable
    # pull latest version of v2ray
    docker pull v2ray/official
@@ -135,31 +136,31 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    # create volume to share data
    docker volume create v2raya_shared-data
    
-   # run v2raya
-   docker run -d \
-   	--restart=always \
-   	--privileged \
-   	--network=host \
-   	-v v2raya_shared-data:/etc/v2ray \
-   	-v /etc/localtime:/etc/localtime:ro \
-   	-v /etc/timezone:/etc/timezone:ro \
-   	--name v2raya_backend \
-   	mzz2017/v2raya:stable
-   
    # run v2ray
    docker run -d \
    	--restart=always \
    	--privileged \
    	--network=host \
-   	--pid=container:v2raya_backend \
    	-v v2raya_shared-data:/etc/v2ray \
    	--env V2RAY_LOCATION_ASSET=/etc/v2ray \
    	--name v2raya_v2ray \
    	v2ray/official \
    	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
+
+   # run v2raya
+   docker run -d \
+   	--restart=always \
+   	--privileged \
+   	--network=host \
+   	--pid=container:v2raya_v2ray \
+   	-v v2raya_shared-data:/etc/v2ray \
+   	-v /etc/localtime:/etc/localtime:ro \
+   	-v /etc/timezone:/etc/timezone:ro \
+   	--name v2raya_backend \
+   	mzz2017/v2raya:stable
    ```
    
-   如果你使用MacOS，docker命令会略有不同，参见[#10](<https://github.com/mzz2017/V2RayA/issues/10>)
+   如果你使用MacOS，docker命令会略有不同，参见[#10](<https://github.com/mzz2017/V2RayA/issues/10#issuecomment-568296453>)
 
 ### 二进制文件、安装包
 
