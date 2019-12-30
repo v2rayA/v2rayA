@@ -3,6 +3,7 @@ services:
   backend:
     privileged: true
     network_mode: host # --network host
+    pid: service:v2ray
     ports:
       - 2017:2017
     restart: always
@@ -15,7 +16,6 @@ services:
   v2ray:
     privileged: true
     network_mode: host # --network host
-    pid: service:backend
     restart: always
     image: "v2ray/official"
     environment:

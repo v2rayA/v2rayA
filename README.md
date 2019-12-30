@@ -44,7 +44,6 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 - [ ] 自定义 PAC 路由规则
 - [ ] QUIC、auth_chain\*支持
 - [ ] 透明代理重定向备选方案
-- [ ] docker一键部署GUI
 
 ## 界面截图
 
@@ -94,7 +93,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    sudo apt-get install v2raya
    ```
    
-   V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+   V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
    
 2. **使用yay/yaourt安装**（archlinux、manjaro）
    
@@ -112,7 +111,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    yay v2raya
    ```
 
-   V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+   V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
 
 ### Docker方式
 
@@ -123,6 +122,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    cd V2RayA
    docker-compose up -d --build
    ```
+   如果出现`ERROR: ...Connot start service...container...is not running`，尝试添加参数`-V`
 
 2. **使用 docker 命令部署**。
 
@@ -175,7 +175,7 @@ curl -L -s https://github.com/mzz2017/V2RayA/raw/master/install/go.sh | sudo -E 
 
 准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
 
-V2RayA服务端正常运行后，就可在[Web-GUI](https://v2raya.mzz.pub)使用了（或手动部署 Web-GUI）。
+V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
 
 ### 自行编译运行
 
@@ -247,6 +247,22 @@ service v2ray status
 
 1. 在更换配置时略有卡顿
 
+## 如何部署GUI
+
+一般情况下可使用[demo](https://v2raya.mzz.pub)即可满足需求，如有部署GUI的必要，可参考下述文档：
+
+**使用docker一键部署**
+
+```bash
+docker pull v2raya-gui
+docker run --name v2raya-gui -d -p <port>:80 v2raya-gui
+```
+将上述`<port>`替换为任一本地端口即可。
+
+**手动部署**
+
+见 [README](https://github.com/mzz2017/V2RayA/tree/master/gui#v2raya-gui)
+
 ## 开发相关
 
 ### 在 docker 环境中开发
@@ -256,6 +272,8 @@ docker-compose -f docker-compose.dev.yml up --build
 ```
 
 gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
+
+如果出现`ERROR: ...Connot start service...container...is not running`，尝试添加参数`-V`
 
 ### 已知问题
 

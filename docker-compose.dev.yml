@@ -3,6 +3,7 @@ services:
   backend:
     privileged: true
     network_mode: host # --network host
+    pid: service:v2ray
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -17,7 +18,6 @@ services:
     network_mode: host # --network host
     restart: always
     image: "v2ray/official"
-    pid: service:backend
     environment:
       - V2RAY_LOCATION_ASSET=/etc/v2ray
     volumes:
