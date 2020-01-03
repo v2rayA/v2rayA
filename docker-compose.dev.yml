@@ -3,7 +3,6 @@ services:
   backend:
     privileged: true
     network_mode: host # --network host
-    pid: service:v2ray
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -16,6 +15,7 @@ services:
   v2ray:
     privileged: true
     network_mode: host # --network host
+    pid: service:backend
     restart: always
     image: "v2ray/official"
     environment:

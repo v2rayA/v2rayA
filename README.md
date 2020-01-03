@@ -136,31 +136,66 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    # create volume to share data
    docker volume create v2raya_shared-data
    
-   # run v2ray
-   docker run -d \
-   	--restart=always \
-   	--privileged \
-   	--network=host \
-   	-v v2raya_shared-data:/etc/v2ray \
-   	--env V2RAY_LOCATION_ASSET=/etc/v2ray \
-   	--name v2raya_v2ray \
-   	v2ray/official \
-   	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
-
    # run v2raya
    docker run -d \
    	--restart=always \
    	--privileged \
    	--network=host \
-   	--pid=container:v2raya_v2ray \
    	-v v2raya_shared-data:/etc/v2ray \
    	-v /etc/localtime:/etc/localtime:ro \
    	-v /etc/timezone:/etc/timezone:ro \
    	--name v2raya_backend \
    	mzz2017/v2raya:stable
+
+   # run v2ray
+   docker run -d \
+   	--restart=always \
+   	--privileged \
+   	--network=host \
+   	--pid=container:v2raya_backend \
+   	-v v2raya_shared-data:/etc/v2ray \
+   	--env V2RAY_LOCATION_ASSET=/etc/v2ray \
+   	--name v2raya_v2ray \
+   	v2ray/official \
+   	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
    ```
    
-   如果你使用MacOS，docker命令会略有不同，参见[#10](<https://github.com/mzz2017/V2RayA/issues/10#issuecomment-568296453>)
+   如果你使用MacOSX或其他不支持host模式的环境，在该情况下无法使用全局透明代理，docker命令会略有不同：
+   
+   ```bash
+   # pull stable version of v2raya
+   docker pull mzz2017/v2raya:stable
+   # pull latest version of v2ray
+   docker pull v2ray/official
+   
+   # create volume to share data
+   docker volume create v2raya_shared-data
+   
+   # run v2raya
+   docker run -d \
+       -p 2017:2017 \
+       -p 20170-20172:20170-20172 \
+       -p 12345:12345 \
+       --restart=always \
+       --privileged \
+       -v v2raya_shared-data:/etc/v2ray \
+       --name v2raya_backend \
+       mzz2017/v2raya:stable
+       
+   # run v2ray
+   docker run -d \
+       --restart=always \
+       --privileged \
+       --pid=container:v2raya_backend \
+       --network=container:v2raya_backend \
+       -v v2raya_shared-data:/etc/v2ray \
+       --env V2RAY_LOCATION_ASSET=/etc/v2ray \
+       --name v2raya_v2ray \
+       v2ray/official \
+       /bin/sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
+   ```
+   
+   
 
 ### 二进制文件、安装包
 
@@ -255,8 +290,8 @@ service v2ray status
 **使用docker一键部署**
 
 ```bash
-docker pull v2raya-gui
-docker run --name v2raya-gui -d -p <port>:80 v2raya-gui
+docker pull mzz2017/v2raya-gui
+docker run --name v2raya-gui -d -p <port>:80 mzz2017/v2raya-gui
 ```
 将上述`<port>`替换为任一本地端口即可。
 
