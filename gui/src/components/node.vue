@@ -995,9 +995,6 @@ export default {
   .icon + span {
     color: #ff6719; //方案1
   }
-  .is-active .icon + span {
-    color: #ff465a;
-  }
   .icon {
     display: none; //方案1
     margin: 0 0 0 -0.5em !important;
