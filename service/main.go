@@ -1,7 +1,7 @@
 package main
 
 import (
-	"V2RayA/extra/quickdown"
+	"V2RayA/extra/download"
 	"V2RayA/global"
 	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
@@ -76,7 +76,7 @@ func initConfigure() {
 			//jsdelivr经常版本落后，但这俩文件版本落后一点也没关系
 			u := "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/" + filename
 			p := v2ray.GetV2rayLocationAsset() + "/" + filename
-			err = quickdown.DownloadWithWorkersTo(u, 5, p)
+			err = download.Pget(u, p)
 			if err != nil {
 				return errors.New("download(" + u + ")(" + p + "): " + err.Error())
 			}

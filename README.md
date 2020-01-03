@@ -331,8 +331,6 @@ gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/
 
 [hq450/fancyss](https://github.com/hq450/fancyss)
 
-[xlzd/quickdown](https://github.com/xlzd/quickdown)
-
 [ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
 
 [nadoo/glider](https://github.com/nadoo/glider)

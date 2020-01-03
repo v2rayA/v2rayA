@@ -2,7 +2,7 @@ package service
 
 import (
 	"V2RayA/extra/copyfile"
-	"V2RayA/extra/quickdown"
+	"V2RayA/extra/download"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -61,17 +60,12 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 }
 
 func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
-	c, err := tools.GetHttpClientAutomatically()
-	if err != nil {
-		return
-	}
-	quickdown.SetHttpClient(c)
 	id, _ := gonanoid.Nanoid()
 	i := 0
 	for {
-		err = quickdown.DownloadWithWorkersTo("https://github.com/ToutyRater/V2Ray-SiteDAT/raw/master/geofiles/h2y.dat", 10, "/tmp/"+id)
-		if err != nil && i < 3 && strings.Contains(err.Error(), "head fail") {
-			//建立连接问题，最多重试3次
+		err = download.Pget("https://github.com/ToutyRater/V2Ray-SiteDAT/raw/master/geofiles/h2y.dat", "/tmp/h2y.dat."+id)
+		if err != nil && i < 2 {
+			//最多重试2次
 			i++
 			continue
 		}
@@ -80,7 +74,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	err = copyfile.CopyFile("/tmp/"+id, v2ray.GetV2rayLocationAsset()+"/h2y.dat")
+	err = copyfile.CopyFile("/tmp/h2y.dat."+id, v2ray.GetV2rayLocationAsset()+"/h2y.dat")
 	if err != nil {
 		return
 	}
