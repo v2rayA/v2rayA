@@ -9,6 +9,7 @@ import (
 )
 
 func Pget(u string, p string) (err error) {
+	//TODO: support proxy
 	pg := pget.New()
 	pg.URLs = []string{u}
 	pg.TargetDir = filepath.Dir(p)

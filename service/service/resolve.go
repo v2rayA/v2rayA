@@ -6,6 +6,7 @@ import (
 	"V2RayA/tools"
 	"errors"
 	"github.com/json-iterator/go"
+	"log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -74,8 +75,8 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 /*
 根据传入的 ss://xxxxx 解析出NodeData
 */
-func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
-	if len(vmess) < 5 || strings.ToLower(vmess[:5]) != "ss://" {
+func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
+	if len(u) < 5 || strings.ToLower(u[:5]) != "ss://" {
 		err = errors.New("this address is not begin with ss://")
 		return
 	}
@@ -105,7 +106,16 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 		return subMatch, len(subMatch) > 0
 	}
-	content := vmess[5:]
+	content := u[5:]
+	//看是不是有#，有的话说明name没有被base64
+	sp := strings.Split(content, "#")
+	var name string
+	if len(sp) == 2 {
+		log.Println(content)
+		content = sp[0]
+		name, _ = tools.Base64URLDecode(sp[1])
+
+	}
 	var (
 		subMatch []string
 		ok       bool
@@ -134,6 +144,9 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 		Port:     subMatch[4],
 		Ps:       subMatch[5],
 	}
+	if len(name) > 0 {
+		info.Ps = name
+	}
 	// 填充模板并处理结果
 	data = new(nodeData.NodeData)
 	//t, err := v2ray.NewTemplateFromVmessInfo(info)
@@ -148,8 +161,8 @@ func ResolveSSURL(vmess string) (data *nodeData.NodeData, err error) {
 /*
 根据传入的 ss://xxxxx 解析出NodeData
 */
-func ResolveSSRURL(vmess string) (data *nodeData.NodeData, err error) {
-	if len(vmess) < 6 || strings.ToLower(vmess[:6]) != "ssr://" {
+func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
+	if len(u) < 6 || strings.ToLower(u[:6]) != "ssr://" {
 		err = errors.New("this address is not begin with ssr://")
 		return
 	}
@@ -188,7 +201,7 @@ func ResolveSSRURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 		return v, true
 	}
-	content := vmess[6:]
+	content := u[6:]
 	var (
 		info vmessInfo.VmessInfo
 		ok   bool

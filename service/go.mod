@@ -44,3 +44,11 @@ require (
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
 )
+
+// Replace dependency modules with local developing copy
+// use `go list -m all` to confirm the final module used
+// replace (
+//	github.com/nadoo/conflag => ../conflag
+//	github.com/nadoo/go-shadowsocks2 => ../go-shadowsocks2
+// )
+replace github.com/mzz2017/shadowsocksR => ../../shadowsocksR
