@@ -536,7 +536,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 }
 
 func NewTemplateFromConfig() (t Template, err error) {
-	b, err := ioutil.ReadFile(GetConfigPath())
+	b, err := GetConfigBytes()
 	if err != nil {
 		return
 	}

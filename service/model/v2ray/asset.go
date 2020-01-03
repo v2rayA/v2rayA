@@ -4,9 +4,12 @@ import (
 	"V2RayA/global"
 	"V2RayA/tools"
 	"errors"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -123,12 +126,45 @@ func GetCustomModTime() (time.Time, error) {
 	return tools.GetFileModTime(GetV2rayLocationAsset() + "/custom.dat")
 }
 
-func GetConfigPath() (path string) {
+func GetConfigBytes() (b []byte, err error) {
+	b, err = ioutil.ReadFile(GetConfigPath())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	reg1 := regexp.MustCompile(`/\*[\s\S]*?\*/`)
+	reg2 := regexp.MustCompile(`//.*`)
+	b = reg1.ReplaceAll(b, nil)
+	b = reg2.ReplaceAll(b, nil)
+	return
+}
+
+func GetConfigPath() (p string) {
+	p = "/etc/v2ray/config.json"
 	switch global.ServiceControlMode {
-	case global.CommonMode:
-		path = GetV2rayLocationAsset() + "/config.json"
+	case global.SystemctlMode, global.ServiceMode:
+		//从systemd的启动参数里找
+		pa, _ := GetV2rayServiceFilePath()
+		out, e := exec.Command("sh", "-c", "cat "+pa+"|grep ExecStart=").CombinedOutput()
+		if e != nil {
+			return
+		}
+		pa = strings.TrimSpace(string(out))[len("ExecStart="):]
+		indexConfigBegin := strings.Index(pa, "-config")
+		if indexConfigBegin == -1 {
+			return
+		}
+		indexConfigBegin += len("-config") + 1
+		indexConfigEnd := strings.Index(pa[indexConfigBegin:], " ")
+		if indexConfigEnd == -1 {
+			indexConfigEnd = len(pa)
+		} else {
+			indexConfigEnd += indexConfigBegin
+		}
+		p = pa[indexConfigBegin:indexConfigEnd]
+	case global.CommonMode, global.DockerMode:
+		p = GetV2rayLocationAsset() + "/config.json"
 	default:
-		path = "/etc/v2ray/config.json"
 	}
 	return
 }

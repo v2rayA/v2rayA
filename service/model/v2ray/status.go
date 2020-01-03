@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -30,7 +29,7 @@ func IsV2RayProcessExists() bool {
 func IsV2RayRunning() bool {
 	switch global.ServiceControlMode {
 	case global.DockerMode:
-		b, err := ioutil.ReadFile(GetConfigPath())
+		b, err := GetConfigBytes()
 		if err != nil {
 			return false
 		}
@@ -55,7 +54,7 @@ func RestartV2rayService() (err error) {
 		//看inbounds是不是空的，是的话就补上
 		tmplJson := NewTemplate()
 		var b []byte
-		b, err = ioutil.ReadFile(GetConfigPath())
+		b, err = GetConfigBytes()
 		if err != nil {
 			return
 		}
@@ -119,7 +118,7 @@ func RestartV2rayService() (err error) {
 	//如果inbounds中开放端口，检测端口是否已就绪
 	tmplJson := NewTemplate()
 	var b []byte
-	b, err = ioutil.ReadFile(GetConfigPath())
+	b, err = GetConfigBytes()
 	if err != nil {
 		return
 	}
@@ -233,7 +232,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 /*清空inbounds规则来假停v2ray*/
 func pretendToStopV2rayService() (err error) {
 	tmplJson := NewTemplate()
-	b, err := ioutil.ReadFile(GetConfigPath())
+	b, err := GetConfigBytes()
 	if err != nil {
 		return
 	}

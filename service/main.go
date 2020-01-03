@@ -48,6 +48,9 @@ func checkEnvironment() {
 func initConfigure() {
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
+	// Enable line numbers in logging
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	if !configure.IsConfigureExists() {
 		_ = os.MkdirAll(path.Dir(global.GetEnvironmentConfig().Config), os.ModeDir|0755)
 		err := configure.SetConfigure(configure.New())
