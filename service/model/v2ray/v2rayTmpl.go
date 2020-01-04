@@ -84,16 +84,20 @@ type Vnext struct {
 	Users   []User `json:"users"`
 }
 type Server struct {
-	Address  string `json:"address"`
+	Network  string `json:"network,omitempty"`
+	Address  string `json:"address,omitempty"`
 	Method   string `json:"method,omitempty"`
 	Ota      bool   `json:"ota,omitempty"`
 	Password string `json:"password,omitempty"`
-	Port     int    `json:"port"`
+	Port     int    `json:"port,omitempty"`
 }
 type Settings struct {
 	Vnext          interface{} `json:"vnext,omitempty"`
 	Servers        interface{} `json:"servers,omitempty"`
 	DomainStrategy string      `json:"domainStrategy,omitempty"`
+	Port           int         `json:"port,omitempty"`
+	Address        string      `json:"address,omitempty"`
+	Network        string      `json:"network,omitempty"`
 }
 type TLSSettings struct {
 	AllowInsecure bool        `json:"allowInsecure"`
@@ -132,7 +136,6 @@ type Outbound struct {
 	Settings       *Settings       `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
-	Network        string          `json:"network,omitempty"`
 }
 type TCPSettings struct {
 	ConnectionReuse bool `json:"connectionReuse"`
@@ -265,6 +268,13 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
 		}
 	case "shadowsocks", "shadowsocksr":
+		//// 尝试将address解析成ip
+		//if net.ParseIP(v.Add) == nil {
+		//	addrs, e := net.LookupHost(v.Add)
+		//	if e == nil && len(addrs) > 0 {
+		//		v.Add = addrs[0]
+		//	}
+		//}
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
 		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
@@ -309,8 +319,12 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	if err != nil {
 		return t, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 	}
-	// 其中Template是基础配置，替换掉*t即可
+	// 其中Template是基础配置，替换掉t即可
 	t = tmplJson.Template
+	// 调试模式
+	if global.Version == "debug" {
+		t.Log.Loglevel = "debug"
+	}
 	o, err := ResolveOutbound(&v, "proxy", global.GetEnvironmentConfig().SSRListenPort)
 	if err != nil {
 		return t, err
@@ -367,10 +381,17 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			}
 		}
 		t.DNS.Servers = []interface{}{
+			"localhost", //如将iptables中的53端口RETURN改为mark，将本行localhost去除
+			DnsServer{
+				Address: "208.67.222.222",
+				Port:    5353,
+			},
+			DnsServer{
+				Address: "8.8.8.8",
+				Port:    5353,
+			},
+			"114.114.114.114",
 			ds,
-			"8.8.8.8", // 非中中国大陆域名使用 Google 的 DNS
-			"1.1.1.1",
-			"127.0.0.1",
 		}
 		//再修改inbounds
 		tproxy := "tproxy"
@@ -382,7 +403,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Enabled:      true,
 				DestOverride: []string{"http", "tls"},
 			},
-			Settings:       &InboundSettings{FollowRedirect: true},
+			Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
 			StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
 			Tag:            "transparent",
 		})
@@ -391,6 +412,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.Outbounds = append(t.Outbounds, Outbound{
 			Tag:      "dns-out",
 			Protocol: "dns",
+			Settings: &Settings{Network: "tcp"},
 		})
 		for i := range t.Outbounds {
 			if t.Outbounds[i].Protocol == "blackhole" {
@@ -409,12 +431,11 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 		//最后是routing
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 劫持 53 端口 UDP 流量，使用 V2Ray 的 DNS
+			RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
 				Type:        "field",
 				InboundTag:  []string{"transparent"},
 				Port:        "53",
 				OutboundTag: "dns-out",
-				Network:     "udp",
 			},
 			RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
 				Type:        "field",
@@ -431,7 +452,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			RoutingRule{ // 设置 DNS 配置中的国外 DNS 服务器地址走代理，以达到 DNS 分流目的
 				Type:        "field",
 				OutboundTag: "proxy",
-				IP:          []string{"8.8.8.8", "1.1.1.1"},
+				IP:          []string{"8.8.8.8", "1.1.1.1", "208.67.222.222"},
 			},
 			RoutingRule{ // BT 流量直连
 				Type:        "field",
