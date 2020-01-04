@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
+	"log"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -60,6 +62,7 @@ func RestartV2rayService() (err error) {
 		}
 		err = jsoniter.Unmarshal(b, &tmplJson)
 		if err != nil {
+			log.Println(err)
 			return
 		}
 		if len(tmplJson.Inbounds) <= 0 {
@@ -176,6 +179,13 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 	global.SSRs.ClearAll()
 	if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
 		//说明是ss或ssr，启动ssr server
+		// 尝试将address解析成ip
+		if net.ParseIP(v.Add) == nil {
+			addrs, e := net.LookupHost(v.Add)
+			if e == nil && len(addrs) > 0 {
+				v.Add = addrs[0]
+			}
+		}
 		ss := new(shadowsocksr.SSR)
 		err = ss.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
 		if err != nil {
@@ -214,6 +224,13 @@ func UpdateV2rayWithConnectedServer() (err error) {
 		if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
 			//说明是ss或ssr，启动ssr server
 			v := sr.VmessInfo
+			// 尝试将address解析成ip
+			if net.ParseIP(v.Add) == nil {
+				addrs, e := net.LookupHost(v.Add)
+				if e == nil && len(addrs) > 0 {
+					v.Add = addrs[0]
+				}
+			}
 			ss := new(shadowsocksr.SSR)
 			err = ss.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
 			if err != nil {
@@ -236,8 +253,10 @@ func pretendToStopV2rayService() (err error) {
 	if err != nil {
 		return
 	}
+
 	err = jsoniter.Unmarshal(b, &tmplJson)
 	if err != nil {
+		log.Println(string(b), err)
 		return
 	}
 	tmplJson.Inbounds = make([]Inbound, 0)

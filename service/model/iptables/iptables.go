@@ -133,10 +133,10 @@ iptables -t mangle -A PREROUTING -j SSTP_PRE
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
 iptables -t mangle -A SETMARK -i docker+ -j RETURN
-#iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-iptables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
-#iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
-iptables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
+iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+#iptables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
+iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
+#iptables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
 iptables -t mangle -A SETMARK -d 0.0.0.0/32 -j RETURN
 iptables -t mangle -A SETMARK -d 10.0.0.0/8 -j RETURN
 iptables -t mangle -A SETMARK -d 100.64.0.0/10 -j RETURN
@@ -185,10 +185,10 @@ ip6tables -t mangle -A PREROUTING -j SSTP_PRE
 # 打上 iptables 标记，mark 了的会走代理
 ip6tables -t mangle -N SETMARK
 ip6tables -t mangle -A SETMARK -i docker+ -j RETURN
-#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
-#ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
+ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
+ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
+#ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::/128 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::1/128 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN

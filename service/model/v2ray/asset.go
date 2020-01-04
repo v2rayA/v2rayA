@@ -4,12 +4,12 @@ import (
 	"V2RayA/global"
 	"V2RayA/tools"
 	"errors"
+	"github.com/muhammadmuzzammil1998/jsonc"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -132,10 +132,7 @@ func GetConfigBytes() (b []byte, err error) {
 		log.Println(err)
 		return
 	}
-	reg1 := regexp.MustCompile(`/\*[\s\S]*?\*/`)
-	reg2 := regexp.MustCompile(`//.*`)
-	b = reg1.ReplaceAll(b, nil)
-	b = reg2.ReplaceAll(b, nil)
+	b = jsonc.ToJSON(b)
 	return
 }
 

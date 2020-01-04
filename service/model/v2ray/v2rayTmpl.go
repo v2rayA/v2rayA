@@ -5,8 +5,9 @@ import (
 	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
+	"V2RayA/tools"
 	"errors"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"net"
 	"os"
@@ -191,7 +192,7 @@ type DNS struct {
 type DnsServer struct {
 	Address string   `json:"address"`
 	Port    int      `json:"port"`
-	Domains []string `json:"domains"`
+	Domains []string `json:"domains,omitempty"`
 }
 
 func NewTemplate() (tmpl Template) {
@@ -268,13 +269,6 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
 		}
 	case "shadowsocks", "shadowsocksr":
-		//// 尝试将address解析成ip
-		//if net.ParseIP(v.Add) == nil {
-		//	addrs, e := net.LookupHost(v.Add)
-		//	if e == nil && len(addrs) > 0 {
-		//		v.Add = addrs[0]
-		//	}
-		//}
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
 		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
@@ -344,6 +338,24 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
 		}
+	case "socks":
+		t.DNS = new(DNS)
+		//ss, ssr不支持udp
+		//为了安全，先优先请求DOH
+		ver, err := GetV2rayServiceVersion()
+		if err == nil {
+			if ok, _ := tools.VersionGreaterEqual(ver, "4.22.0"); ok {
+				t.DNS.Servers = []interface{}{"https://1.1.1.1/dns-query"}
+			}
+		}
+		if len(t.DNS.Servers) <= 0 {
+			t.DNS.Servers = []interface{}{
+				DnsServer{
+					Address: "208.67.220.220",
+					Port:    5353,
+				},
+			} //openDNS 非标准端口
+		}
 	}
 
 	//根据配置修改端口
@@ -362,14 +374,19 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	//根据设置修改透明代理
 	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		//先修改DNS设置
-		t.DNS = new(DNS)
+		if t.DNS == nil {
+			t.DNS = new(DNS)
+		}
 		ds := DnsServer{
 			Address: "119.29.29.29",
 			Port:    53,
 			Domains: []string{
-				"geosite:cn",     // 国内白名单走DNSPod
-				"ntp.org",        // NTP 服务器
-				"v2raya.mzz.pub", // V2RayA demo
+				"geosite:cn",          // 国内白名单走DNSPod
+				"domain:ntp.org",      // NTP 服务器
+				"domain:dogedoge.com", // mzz2017爱用的多吉
+				"domain:233py.com",    // DOH服务器
+				"dns.google",          // DOH服务器
+				"v2raya.mzz.pub",      // V2RayA demo
 			},
 		}
 		if net.ParseIP(v.Add) == nil {
@@ -377,22 +394,21 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			group := strings.Split(v.Add, ".")
 			if len(group) >= 2 {
 				domain := strings.Join(group[len(group)-2:], ".")
-				ds.Domains = append(ds.Domains, domain)
+				ds.Domains = append(ds.Domains, "domain:"+domain)
 			}
 		}
-		t.DNS.Servers = []interface{}{
-			"localhost", //如将iptables中的53端口RETURN改为mark，将本行localhost去除
+		t.DNS.Servers = append(t.DNS.Servers, []interface{}{
 			DnsServer{
-				Address: "208.67.222.222",
-				Port:    5353,
+				Address: "1.1.1.1",
+				Port:    53,
 			},
 			DnsServer{
 				Address: "8.8.8.8",
-				Port:    5353,
+				Port:    53,
 			},
 			"114.114.114.114",
 			ds,
-		}
+		}...)
 		//再修改inbounds
 		tproxy := "tproxy"
 		t.Inbounds = append(t.Inbounds, Inbound{
@@ -412,7 +428,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.Outbounds = append(t.Outbounds, Outbound{
 			Tag:      "dns-out",
 			Protocol: "dns",
-			Settings: &Settings{Network: "tcp"},
+			//Settings: &Settings{Network: "tcp"},
 		})
 		for i := range t.Outbounds {
 			if t.Outbounds[i].Protocol == "blackhole" {
@@ -444,17 +460,36 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Network:     "udp",
 				Port:        "123",
 			},
-			RoutingRule{ // 设置 DNS 配置中的国内 DNS 服务器地址直连，以达到 DNS 分流目的
+			RoutingRule{ // 国内DNS服务器直连，以分流
 				Type:        "field",
 				OutboundTag: "direct",
 				IP:          []string{"119.29.29.29", "114.114.114.114", "223.5.5.5"},
+				Port:        "53",
 			},
-			RoutingRule{ // 设置 DNS 配置中的国外 DNS 服务器地址走代理，以达到 DNS 分流目的
+			RoutingRule{ // 国外DNS服务器地址走代理，以防污染和流量监控
 				Type:        "field",
 				OutboundTag: "proxy",
-				IP:          []string{"8.8.8.8", "1.1.1.1", "208.67.222.222"},
+				IP:          []string{"8.8.8.8", "1.1.1.1", "208.67.222.222", "208.67.220.220"},
+				Port:        "53",
 			},
-			RoutingRule{ // BT 流量直连
+			RoutingRule{ // 非标准端口暂时安全，直连
+				Type:        "field",
+				OutboundTag: "direct",
+				IP:          []string{"208.67.222.222", "208.67.220.220"},
+				Port:        "5353",
+			},
+			RoutingRule{ // DOH直连
+				Type:        "field",
+				OutboundTag: "direct",
+				Domain:      []string{"full:dns.google", "domain:233py.com"},
+			},
+			RoutingRule{ // DOH直连
+				Type:        "field",
+				OutboundTag: "direct",
+				IP:          []string{"1.1.1.1"},
+				Port:        "443",
+			},
+			RoutingRule{ // BT流量直连
 				Type:        "field",
 				OutboundTag: "direct",
 				Protocol:    []string{"bittorrent"},
@@ -465,12 +500,12 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			group := strings.Split(v.Add, ".")
 			if len(group) >= 2 {
 				domain := strings.Join(group[len(group)-2:], ".")
-				t.Routing.Rules = append(t.Routing.Rules,
-					RoutingRule{
-						Type:        "field",
-						OutboundTag: "direct",
-						Domain:      []string{"domain:" + domain},
-					})
+				t.Routing.Rules = append([]RoutingRule{RoutingRule{
+					Type:        "field",
+					OutboundTag: "direct",
+					Domain:      []string{"domain:" + domain},
+				}}, t.Routing.Rules...
+				)
 			}
 
 		}

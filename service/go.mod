@@ -18,12 +18,13 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.2.0
 	github.com/jessevdk/go-flags v1.4.0 // indirect
-	github.com/json-iterator/go v1.1.6
+	github.com/json-iterator/go v1.1.9
 	github.com/matoous/go-nanoid v1.1.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.5 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
+	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/shadowsocksR v0.0.0-20191227180500-1ac9689bb34d
 	github.com/nadoo/glider v0.9.2
 	github.com/nwaples/rardecode v1.0.0 // indirect
