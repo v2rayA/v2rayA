@@ -136,7 +136,11 @@ type Outbound struct {
 	Protocol       string          `json:"protocol"`
 	Settings       *Settings       `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
+	ProxySettings  *ProxySettings  `json:"proxySettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
+}
+type ProxySettings struct {
+	Tag string `json:"tag,omitempty"`
 }
 type TCPSettings struct {
 	ConnectionReuse bool `json:"connectionReuse"`
@@ -345,7 +349,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		ver, err := GetV2rayServiceVersion()
 		if err == nil {
 			if ok, _ := tools.VersionGreaterEqual(ver, "4.22.0"); ok {
-				t.DNS.Servers = []interface{}{"https://1.1.1.1/dns-query"}
+				t.DNS.Servers = []interface{}{"https://1.0.0.1/dns-query"}
 			}
 		}
 		if len(t.DNS.Servers) <= 0 {
@@ -361,6 +365,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		TODO:
 			FAST mode: dns请求直接发送，嗅探域名
 	*/
+	t.DNS = new(DNS)
 	t.DNS.Servers = []interface{}{"119.29.29.29"}
 	//根据配置修改端口
 	ports := configure.GetPorts()
@@ -433,6 +438,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			Tag:      "dns-out",
 			Protocol: "dns",
 			//Settings: &Settings{Network: "tcp"},
+			//ProxySettings: &ProxySettings{Tag: "direct"},
 		})
 		for i := range t.Outbounds {
 			if t.Outbounds[i].Protocol == "blackhole" {
@@ -490,7 +496,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			RoutingRule{ // DOH直连
 				Type:        "field",
 				OutboundTag: "direct",
-				IP:          []string{"1.1.1.1"},
+				IP:          []string{"1.1.1.1", "1.0.0.1"},
 				Port:        "443",
 			},
 			RoutingRule{ // BT流量直连

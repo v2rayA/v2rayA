@@ -56,7 +56,7 @@ func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {
-	if configure.GetConnectedServer() == nil {
+	if s := configure.GetSettingNotNil(); configure.GetConnectedServer() == nil || s.Transparent != configure.TransparentClose {
 		return http.DefaultClient, nil
 	}
 	setting := configure.GetSettingNotNil()
