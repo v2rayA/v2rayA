@@ -7,10 +7,25 @@ body::-webkit-scrollbar {
 }
  
 body::-webkit-scrollbar-track {
-  background-color: #F5F5F5
+  background-color: #f9f9f9;
 }
  
 body::-webkit-scrollbar-thumb {
-  background-color: darkgrey;
+  background-color: #d0d0d0;
   outline: 1px solid slategrey;
+}
+
+nav::-webkit-scrollbar {
+  height: 0.75em;
+}
+
+nav::-webkit-scrollbar-track {
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+nav::-webkit-scrollbar-thumb {
+  background-color: #d0d0d0;
+  outline: 1px solid slategrey;
+  border-radius: 5px;
 }
