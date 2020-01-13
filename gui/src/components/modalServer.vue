@@ -179,7 +179,9 @@
               <option value="rc4-md5">rc4-md5</option>
               <option value="chacha20">chacha20</option>
               <option value="chacha20-ietf">chacha20-ietf</option>
-              <option value="xchacha20-ietf-poly1305">xchacha20-ietf-poly1305</option>
+              <option value="xchacha20-ietf-poly1305"
+                >xchacha20-ietf-poly1305</option
+              >
               <option value="salsa20">salsa20</option>
               <option value="camellia-128-cfb">camellia-128-cfb</option>
               <option value="camellia-192-cfb">camellia-192-cfb</option>
@@ -504,6 +506,9 @@ export default {
           continue;
         }
         let x = this.$refs[k];
+        if (!x) {
+          continue;
+        }
         if (
           x.hasOwnProperty("checkHtml5Validity") &&
           typeof x.checkHtml5Validity === "function" &&
