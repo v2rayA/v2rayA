@@ -365,8 +365,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		TODO:
 			FAST mode: dns请求直接发送，嗅探域名
 	*/
-	t.DNS = new(DNS)
-	t.DNS.Servers = []interface{}{"119.29.29.29"}
 	//根据配置修改端口
 	ports := configure.GetPorts()
 	if ports != nil {
@@ -418,6 +416,9 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			"114.114.114.114",
 			ds,
 		}...)
+		//FIXME: 目前得出不使用内置dns是最快的，且不丢包
+		t.DNS = new(DNS)
+		t.DNS.Servers = []interface{}{"localhost"}
 		//再修改inbounds
 		tproxy := "tproxy"
 		t.Inbounds = append(t.Inbounds, Inbound{
@@ -461,7 +462,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Type:        "field",
 				InboundTag:  []string{"transparent"},
 				Port:        "53",
-				OutboundTag: "dns-out",
+				OutboundTag: "direct", //FIXME
 			},
 			RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
 				Type:        "field",

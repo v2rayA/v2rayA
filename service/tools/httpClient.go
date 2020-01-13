@@ -3,6 +3,7 @@ package tools
 import (
 	"V2RayA/extra/proxyWithHttp"
 	"V2RayA/global"
+	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"net/http"
 	"net/url"
@@ -56,7 +57,7 @@ func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {
-	if s := configure.GetSettingNotNil(); configure.GetConnectedServer() == nil || s.Transparent != configure.TransparentClose {
+	if s := configure.GetSettingNotNil(); !v2ray.IsV2RayRunning() || configure.GetConnectedServer() == nil || s.Transparent != configure.TransparentClose {
 		return http.DefaultClient, nil
 	}
 	setting := configure.GetSettingNotNil()

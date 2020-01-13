@@ -133,10 +133,10 @@ iptables -t mangle -A PREROUTING -j SSTP_PRE
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
 iptables -t mangle -A SETMARK -i docker+ -j RETURN
-iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-#iptables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
-iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
-#iptables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
+#iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+iptables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
+#iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
+iptables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
 iptables -t mangle -A SETMARK -d 0.0.0.0/32 -j RETURN
 iptables -t mangle -A SETMARK -d 10.0.0.0/8 -j RETURN
 iptables -t mangle -A SETMARK -d 100.64.0.0/10 -j RETURN
@@ -162,7 +162,7 @@ iptables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
 iptables -t mangle -A SSTP_OUT -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
 iptables -t mangle -A SSTP_OUT -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 # 本机出方向白名单
-
+iptables -t mangle -A SSTP_OUT -d 1.0.0.1/32 -j RETURN
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 iptables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
@@ -187,10 +187,10 @@ ip6tables -t mangle -A PREROUTING -j SSTP_PRE
 # 打上 iptables 标记，mark 了的会走代理
 ip6tables -t mangle -N SETMARK
 ip6tables -t mangle -A SETMARK -i docker+ -j RETURN
-ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
-ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
-#ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
+#ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
+ip6tables -t mangle -A SETMARK -p udp --dport 53 -j RETURN
+#ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
+ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::/128 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::1/128 -j RETURN
 ip6tables -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN
