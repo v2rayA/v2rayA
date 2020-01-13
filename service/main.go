@@ -8,7 +8,7 @@ import (
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
 	"V2RayA/service"
-	"V2RayA/tools"
+	"V2RayA/tools/ports"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -40,7 +40,7 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, which := tools.IsPortOccupied(port, "tcp"); occupied && len(which) > 0 {
+	if occupied, which := ports.IsPortOccupied(port, "tcp"); occupied && len(which) > 0 {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }

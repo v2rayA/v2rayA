@@ -2,7 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/tools"
+	"V2RayA/tools/files"
 	"errors"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"io/ioutil"
@@ -113,7 +113,7 @@ func IsGeositeExists() bool {
 	return true
 }
 func GetH2yModTime() (time.Time, error) {
-	return tools.GetFileModTime(GetV2rayLocationAsset() + "/h2y.dat")
+	return files.GetFileModTime(GetV2rayLocationAsset() + "/h2y.dat")
 }
 func IsCustomExists() bool {
 	_, err := os.Stat(GetV2rayLocationAsset() + "/custom.dat")
@@ -123,7 +123,7 @@ func IsCustomExists() bool {
 	return true
 }
 func GetCustomModTime() (time.Time, error) {
-	return tools.GetFileModTime(GetV2rayLocationAsset() + "/custom.dat")
+	return files.GetFileModTime(GetV2rayLocationAsset() + "/custom.dat")
 }
 
 func GetConfigBytes() (b []byte, err error) {

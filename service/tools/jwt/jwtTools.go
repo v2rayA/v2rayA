@@ -1,6 +1,7 @@
-package tools
+package jwt
 
 import (
+	"V2RayA/tools"
 	"encoding/base64"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -21,14 +22,14 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 				return []byte(secret), nil
 			})
 		if err != nil {
-			Response(ctx, UNAUTHORIZED, err.Error())
+			tools.Response(ctx, tools.UNAUTHORIZED, err.Error())
 			ctx.Abort()
 			return
 		}
 		//如果需要Admin权限
 		mapClaims := token.Claims.(jwt.MapClaims)
 		if Admin && mapClaims["admin"] == false {
-			ResponseError(ctx, errors.New("admin required"))
+			tools.ResponseError(ctx, errors.New("admin required"))
 			ctx.Abort()
 			return
 		}

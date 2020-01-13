@@ -6,7 +6,8 @@ import (
 	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
+	"V2RayA/tools/ports"
+	"V2RayA/tools/process"
 	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
@@ -81,7 +82,7 @@ func RestartV2rayService() (err error) {
 			}
 		}
 
-		_ = tools.KillAll("v2ray", true)
+		_ = process.KillAll("v2ray", true)
 		//8秒等待v2ray启动
 		startTime := time.Now()
 		for {
@@ -104,7 +105,7 @@ func RestartV2rayService() (err error) {
 			err = errors.New(err.Error() + string(out))
 		}
 	case global.CommonMode:
-		_ = tools.KillAll("v2ray", true)
+		_ = process.KillAll("v2ray", true)
 		v2wd, _ := GetV2rayWorkingDir()
 		v2ctlDir, _ := GetV2ctlDir()
 		//cd到v2ctl的目录，防止找不到v2ctl
@@ -141,7 +142,7 @@ func RestartV2rayService() (err error) {
 	startTime := time.Now()
 	for {
 		if bPortOpen {
-			if p, which := tools.IsPortOccupied(sPortOpen, "tcp"); p && strings.Contains(which, "v2ray") {
+			if p, which := ports.IsPortOccupied(sPortOpen, "tcp"); p && strings.Contains(which, "v2ray") {
 				break
 			}
 		} else {
@@ -277,7 +278,7 @@ func StopV2rayService() (err error) {
 	case global.DockerMode:
 		return pretendToStopV2rayService()
 	case global.CommonMode:
-		err = tools.KillAll("v2ray", true)
+		err = process.KillAll("v2ray", true)
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
 		if err != nil {

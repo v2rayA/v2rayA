@@ -5,7 +5,7 @@ import (
 	"V2RayA/extra/download"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
+	"V2RayA/tools/files"
 	"V2RayA/tools/httpClient"
 	"github.com/PuerkitoBio/goquery"
 	gonanoid "github.com/matoous/go-nanoid"
@@ -83,7 +83,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	t, err := tools.GetFileModTime(v2ray.GetV2rayLocationAsset() + "/h2y.dat")
+	t, err := files.GetFileModTime(v2ray.GetV2rayLocationAsset() + "/h2y.dat")
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Format("2006-01-02")
 	}

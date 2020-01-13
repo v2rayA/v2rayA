@@ -3,7 +3,7 @@ package iptables
 import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
+	"V2RayA/tools/cmds"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -98,7 +98,7 @@ iptables -t mangle -F LOG
 iptables -t mangle -F SETMARK
 iptables -t mangle -X SETMARK
 `
-	if tools.IsCommandValid("ip6tables") {
+	if cmds.IsCommandValid("ip6tables") {
 		commands += `
 ip6tables -t mangle -F SSTP_OUT
 ip6tables -t mangle -D OUTPUT -j SSTP_OUT
@@ -176,7 +176,7 @@ iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345 --tproxy-mark 1
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345 --tproxy-mark 1
 `
-	if tools.IsCommandValid("ip6tables") {
+	if cmds.IsCommandValid("ip6tables") {
 		commands += `
 # 建链
 ip6tables -t mangle -N SSTP_OUT

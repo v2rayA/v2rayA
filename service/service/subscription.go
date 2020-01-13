@@ -4,8 +4,8 @@ import (
 	"V2RayA/model/nodeData"
 	"V2RayA/model/touch"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
 	"V2RayA/tools/httpClient"
+	"V2RayA/tools/jwt"
 	"bytes"
 	"errors"
 	"log"
@@ -27,7 +27,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
 	// base64解码, raw是多行vmess
-	raw, err := tools.Base64StdDecode(buf.String())
+	raw, err := jwt.Base64StdDecode(buf.String())
 	if err != nil {
 		return
 	}
@@ -39,7 +39,9 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		var data *nodeData.NodeData
 		data, err = ResolveURL(row)
 		if err != nil {
-			log.Println(row, err)
+			if !strings.Contains(err.Error(), "空地址") {
+				log.Println(row, err)
+			}
 			err = nil
 			continue
 		}

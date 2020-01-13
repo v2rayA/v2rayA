@@ -5,6 +5,20 @@ import (
 	"strings"
 )
 
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func Min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
+
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 	a1 := strings.Split(v1, ".")

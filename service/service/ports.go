@@ -3,7 +3,7 @@ package service
 import (
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
+	ports2 "V2RayA/tools/ports"
 	"errors"
 	"fmt"
 	"strconv"
@@ -43,12 +43,12 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if ports.Socks5 != p.Socks5 {
 		p.Socks5 = ports.Socks5
 		if ports.Socks5 != 0 {
-			if o, w := tools.IsPortOccupied(strconv.Itoa(p.Socks5), "tcp"); o {
+			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Socks5), "tcp"); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
 					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Socks5, w))
 				}
-			} else if o, w := tools.IsPortOccupied(strconv.Itoa(p.Socks5), "udp"); o {
+			} else if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Socks5), "udp"); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
 					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Socks5, w))
@@ -59,7 +59,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if ports.Http != p.Http {
 		p.Http = ports.Http
 		if ports.Http != 0 {
-			if o, w := tools.IsPortOccupied(strconv.Itoa(p.Http), "tcp"); o {
+			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Http), "tcp"); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
 					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Http, w))
@@ -70,7 +70,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if ports.HttpWithPac != p.HttpWithPac {
 		p.HttpWithPac = ports.HttpWithPac
 		if ports.HttpWithPac != 0 {
-			if o, w := tools.IsPortOccupied(strconv.Itoa(p.HttpWithPac), "tcp"); o {
+			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.HttpWithPac), "tcp"); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
 					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.HttpWithPac, w))

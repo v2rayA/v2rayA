@@ -5,6 +5,7 @@ import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
+	"V2RayA/tools/jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -39,7 +40,7 @@ func Run() error {
 			return
 		}
 		ctx.Next()
-	}, tools.JWTAuth(false))
+	}, jwt.JWTAuth(false))
 	{
 		//auth.GET("resolving", controller.GetResolving)
 		auth.POST("import", controller.PostImport)

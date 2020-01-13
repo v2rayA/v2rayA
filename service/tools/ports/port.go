@@ -1,4 +1,4 @@
-package tools
+package ports
 
 import (
 	"github.com/cakturk/go-netstat/netstat"
