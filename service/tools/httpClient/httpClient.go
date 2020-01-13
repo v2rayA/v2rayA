@@ -1,4 +1,4 @@
-package tools
+package httpClient
 
 import (
 	"V2RayA/extra/proxyWithHttp"

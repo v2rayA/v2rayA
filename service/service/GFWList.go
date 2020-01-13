@@ -6,6 +6,7 @@ import (
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
+	"V2RayA/tools/httpClient"
 	"github.com/PuerkitoBio/goquery"
 	gonanoid "github.com/matoous/go-nanoid"
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ import (
 )
 
 func GetRemoteGFWListUpdateTime(c *http.Client) (t time.Time, err error) {
-	resp, err := tools.HttpGetUsingSpecificClient(c, "https://github.com/ToutyRater/V2Ray-SiteDAT/contributors/master/geofiles/h2y.dat")
+	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://github.com/ToutyRater/V2Ray-SiteDAT/contributors/master/geofiles/h2y.dat")
 	if err != nil {
 		return
 	}
@@ -33,7 +34,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (t time.Time, err error) {
 	return time.Parse(time.RFC3339, timeRaw)
 }
 func IsUpdate() (update bool, remoteTime time.Time, err error) {
-	c, err := tools.GetHttpClientAutomatically()
+	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
 		return
 	}

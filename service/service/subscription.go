@@ -5,6 +5,7 @@ import (
 	"V2RayA/model/touch"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
+	"V2RayA/tools/httpClient"
 	"bytes"
 	"errors"
 	"log"
@@ -18,7 +19,7 @@ func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) 
 
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, err error) {
 	// get请求source
-	res, err := tools.HttpGetUsingSpecificClient(client, source)
+	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
 	if err != nil {
 		return
 	}
@@ -50,7 +51,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
-	c, err := tools.GetHttpClientAutomatically()
+	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
 		reason := "尝试使用代理失败，建议修改设置为直连模式再试"
 		return errors.New(reason)

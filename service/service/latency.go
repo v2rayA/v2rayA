@@ -7,6 +7,7 @@ import (
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
+	"V2RayA/tools/httpClient"
 	"errors"
 	"fmt"
 	"net"
@@ -189,7 +190,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	return which, nil
 }
 func httpLatency(which *configure.Which, port string, timeout time.Duration) {
-	c, err := tools.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
+	c, err := httpClient.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
 	if err != nil {
 		which.Latency = err.Error()
 		return
