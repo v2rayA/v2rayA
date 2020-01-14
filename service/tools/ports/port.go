@@ -2,7 +2,6 @@ package ports
 
 import (
 	"github.com/cakturk/go-netstat/netstat"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -24,7 +23,7 @@ func IsPortOccupied(port string, protocol string) (occupied bool, which string) 
 		case netstat.Close, netstat.Closing, netstat.FinWait1, netstat.FinWait2, netstat.TimeWait, netstat.Established:
 			return false
 		}
-		log.Println("occupied", s.State)
+		//log.Println("occupied", s.State)
 		return true
 	}
 	switch strings.ToLower(protocol) {

@@ -51,7 +51,7 @@ func initConfigure() {
 	// Enable line numbers in logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	if !configure.IsConfigureExists() {
+	if configure.IsConfigureNotExists() {
 		_ = os.MkdirAll(path.Dir(global.GetEnvironmentConfig().Config), os.ModeDir|0755)
 		err := configure.SetConfigure(configure.New())
 		if err != nil {

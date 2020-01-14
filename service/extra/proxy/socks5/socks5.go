@@ -12,7 +12,7 @@ package socks5
 import (
 	"V2RayA/extra/proxy"
 	"errors"
-	"github.com/nadoo/glider/common/conn"
+	"github.com/mzz2017/shadowsocksR/tools/leakybuf"
 	"github.com/nadoo/glider/common/socks"
 	"io"
 	"log"
@@ -20,7 +20,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -102,79 +101,14 @@ func (s *Socks5) ListenAndServeTCP() error {
 	}
 }
 
-// ListenAndServeUDP serves udp requests.
-func (s *Socks5) ListenAndServeUDP() {
-	lc, err := net.ListenPacket("udp", s.addr)
-	if err != nil {
-		log.Printf("[socks5-udp] failed to listen on %s: %v\n", s.addr, err)
-		return
-	}
-	defer lc.Close()
-
-	log.Printf("[socks5-udp] listening UDP on %s\n", s.addr)
-
-	var nm sync.Map
-	buf := make([]byte, conn.UDPBufSize)
-
-	for {
-		c := NewPktConn(lc, nil, nil, true, nil)
-
-		n, raddr, err := c.ReadFrom(buf)
-		if err != nil {
-			log.Printf("[socks5-udp] remote read error: %v\n", err)
-			continue
-		}
-
-		var pc *PktConn
-		v, ok := nm.Load(raddr.String())
-		if !ok && v == nil {
-			if c.tgtAddr == nil {
-				log.Println("[socks5-udp] can not get target address, not a valid request")
-				continue
-			}
-
-			lpc, nextHop, err := s.proxy.DialUDP("udp", c.tgtAddr.String())
-			if err != nil {
-				log.Printf("[socks5-udp] remote dial error: %v\n", err)
-				continue
-			}
-
-			pc = NewPktConn(lpc, nextHop, nil, false, nil)
-			nm.Store(raddr.String(), pc)
-
-			go func() {
-				conn.RelayUDP(c, raddr, pc, 2*time.Minute)
-				pc.Close()
-				nm.Delete(raddr.String())
-			}()
-
-			log.Printf("[socks5-udp] %s <-> %s\n", raddr, c.tgtAddr)
-
-		} else {
-			pc = v.(*PktConn)
-		}
-
-		_, err = pc.WriteTo(buf[:n], pc.writeAddr)
-		if err != nil {
-			log.Printf("[socks5-udp] remote write error: %v\n", err)
-			continue
-		}
-
-		// log.F("[socks5-udp] %s <-> %s", raddr, c.tgtAddr)
-	}
-
-}
-
 // Serve serves a connection.
 func (s *Socks5) Serve(cc net.Conn) {
 	defer cc.Close()
 
-	var c *conn.Conn
+	var c net.Conn
 	switch ccc := cc.(type) {
 	case *net.TCPConn:
 		ccc.SetKeepAlive(true)
-		c = conn.NewConn(ccc)
-	case *conn.Conn:
 		c = ccc
 	}
 
@@ -206,14 +140,59 @@ func (s *Socks5) Serve(cc net.Conn) {
 	defer rc.Close()
 
 	log.Printf("[socks5] %s <-> %s via %s\n", c.RemoteAddr(), tgt, p)
-
-	_, _, err = conn.Relay(c, rc)
+	err = Relay(c, rc)
+	//log.Printf("[socks5] %s <-> %s via %s, [over]", c.RemoteAddr(), tgt, p)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			return // ignore i/o timeout
 		}
 		log.Printf("[socks5] relay error: %v\n", err)
 	}
+}
+func Relay(src, dst net.Conn) error {
+	errc := make(chan error, 2)
+	done := make(chan struct{})
+	go func() {
+		err := Pipe(src, dst)
+		if err != nil {
+			errc <- err
+		}
+		done <- struct{}{}
+	}()
+	err := Pipe(dst, src)
+	if err != nil {
+		errc <- err
+	}
+	<-done
+	if len(errc) == 0 {
+		errc <- nil
+	}
+	return <-errc
+}
+
+// PipeThenClose copies data from src to dst, closes dst when done.
+func Pipe(src, dst net.Conn) error {
+	buf := leakybuf.GlobalLeakyBuf.Get()
+	for {
+		src.SetReadDeadline(time.Now().Add(4 * time.Second))
+		n, err := src.Read(buf)
+		// read may return EOF with n > 0
+		// should always process n > 0 bytes before handling error
+		if n > 0 {
+			// Note: avoid overwrite err returned by Read.
+			if _, err := dst.Write(buf[0:n]); err != nil {
+				break
+			}
+		}
+		if err != nil {
+			// Always "use of closed network connection", but no easy way to
+			// identify this specific error. So just leave the error along for now.
+			// More info here: https://code.google.com/p/go/issues/detail?id=4373
+			break
+		}
+	}
+	leakybuf.GlobalLeakyBuf.Put(buf)
+	return nil
 }
 
 // Addr returns forwarder's address.

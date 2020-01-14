@@ -90,14 +90,14 @@ func AppendSubscription(subscription *SubscriptionRaw) (err error) {
 	return persistence.Append("subscriptions", subscription)
 }
 
-func IsConfigureExists() bool {
+func IsConfigureNotExists() bool {
 	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDONLY, os.ModeAppend)
 	if err != nil {
-		return !os.IsNotExist(err)
+		return os.IsNotExist(err)
 	}
 	buf := new(bytes.Buffer)
 	n, err := buf.ReadFrom(f)
-	return err == nil && n > 0
+	return !(err == nil && n > 0)
 }
 func GetServers() []ServerRaw {
 	r := make([]ServerRaw, 0)
