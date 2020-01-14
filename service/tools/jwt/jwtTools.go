@@ -45,7 +45,7 @@ func ValidToken(token, secret string) (err error) {
 	if len(arr) != 3 {
 		return errors.New("token核对失败, token格式有误")
 	}
-	sign := base64.RawURLEncoding.EncodeToString(HMACSHA256(arr[0]+"."+arr[1], []byte(secret)))
+	sign := base64.RawURLEncoding.EncodeToString(tools.HMACSHA256(arr[0]+"."+arr[1], []byte(secret)))
 	if sign != arr[2] { //签名核对失败
 		return errors.New("token核对失败, 无效签名")
 	}
@@ -81,7 +81,7 @@ func MakeJWT(payload map[string]string, expDuration *time.Duration) (jwt string,
 	bh := base64.RawURLEncoding.EncodeToString(headerJSON)
 	bp := base64.RawURLEncoding.EncodeToString(payloadJSON)
 	signBefore := bh + "." + bp
-	signature := HMACSHA256(signBefore, []byte(secret))
+	signature := tools.HMACSHA256(signBefore, []byte(secret))
 	bs := base64.RawURLEncoding.EncodeToString(signature)
 	return signBefore + "." + bs, nil
 }

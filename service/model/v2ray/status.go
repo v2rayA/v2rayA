@@ -208,6 +208,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 	}
 	sr, err := cs.LocateServer()
 	if err != nil {
+		log.Println(err)
 		return
 	}
 	tmpl, err := NewTemplateFromVmessInfo(sr.VmessInfo)

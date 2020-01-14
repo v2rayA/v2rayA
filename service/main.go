@@ -202,7 +202,9 @@ func run() (err error) {
 	//_ = service.CheckAndStopTransparentProxy()
 	//err = service.CheckAndSetupTransparentProxy(true)
 	if err != nil {
-		return
+		w := configure.GetConnectedServer()
+		log.Println("which:", w)
+		_ = configure.ClearConnected()
 	}
 	errch := make(chan error)
 	//启动服务端

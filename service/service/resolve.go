@@ -3,10 +3,9 @@ package service
 import (
 	"V2RayA/model/nodeData"
 	"V2RayA/model/vmessInfo"
-	"V2RayA/tools/jwt"
+	"V2RayA/tools"
 	"errors"
 	"github.com/json-iterator/go"
-	"log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -22,7 +21,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 	}
 	var info vmessInfo.VmessInfo
 	// 进行base64解码，并unmarshal到VmessInfo上
-	raw, err := jwt.Base64StdDecode(vmess[8:])
+	raw, err := tools.Base64StdDecode(vmess[8:])
 	if err != nil {
 		// 不是json格式，尝试以vmess://BASE64(Security:ID@Add:Port)?remarks=Ps&obfsParam=Host&Path=Path&obfs=Net&tls=TLS解析
 		var u *url.URL
@@ -32,7 +31,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 		re := regexp.MustCompile(`.+:(.+)@(.+):(\d+)`)
 		s := strings.Split(vmess[8:], "?")[0]
-		s, err = jwt.Base64StdDecode(s)
+		s, err = tools.Base64StdDecode(s)
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
 			err = errors.New("无法识别的vmess链接")
@@ -90,7 +89,7 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 			re = regexp.MustCompile(`(.+)()@(.+?):(\d+)(#.+)?`) //留个空组，确保subMatch长度统一
 			subMatch = re.FindStringSubmatch(content)
 			if len(subMatch) > 0 {
-				raw, err := jwt.Base64StdDecode(subMatch[1])
+				raw, err := tools.Base64StdDecode(subMatch[1])
 				if err != nil {
 					return
 				}
@@ -111,9 +110,8 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 	sp := strings.Split(content, "#")
 	var name string
 	if len(sp) == 2 {
-		log.Println(content)
 		content = sp[0]
-		name, _ = jwt.Base64URLDecode(sp[1])
+		name, _ = tools.Base64URLDecode(sp[1])
 
 	}
 	var (
@@ -123,9 +121,9 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 	// 尝试解析ss://链接，失败则先base64解码
 	if subMatch, ok = resolveFormat(content); !ok {
 		// 进行base64解码，并unmarshal到VmessInfo上
-		content, err = jwt.Base64StdDecode(content)
+		content, err = tools.Base64StdDecode(content)
 		if err != nil {
-			content, err = jwt.Base64URLDecode(content)
+			content, err = tools.Base64URLDecode(content)
 			if err != nil {
 				return
 			}
@@ -169,7 +167,10 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 	// 该函数尝试对ssr://链接进行解析
 	resolveFormat := func(content string) (v vmessInfo.VmessInfo, ok bool) {
 		arr := strings.Split(content, "/?")
-		if len(arr) != 2 {
+		if strings.Contains(content, ":") && len(arr) < 2 {
+			content += "/?remarks=&protoparam=&obfsparam="
+			arr = strings.Split(content, "/?")
+		} else if len(arr) != 2 {
 			return v, false
 		}
 		pre := strings.Split(arr[0], ":")
@@ -182,11 +183,11 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 		if err != nil {
 			return v, false
 		}
-		pswd, _ := jwt.Base64URLDecode(pre[5])
-		add, _ := jwt.Base64URLDecode(pre[0])
-		remarks, _ := jwt.Base64URLDecode(q.Get("remarks"))
-		protoparam, _ := jwt.Base64URLDecode(q.Get("protoparam"))
-		obfsparam, _ := jwt.Base64URLDecode(q.Get("obfsparam"))
+		pswd, _ := tools.Base64URLDecode(pre[5])
+		add, _ := tools.Base64URLDecode(pre[0])
+		remarks, _ := tools.Base64URLDecode(q.Get("remarks"))
+		protoparam, _ := tools.Base64URLDecode(q.Get("protoparam"))
+		obfsparam, _ := tools.Base64URLDecode(q.Get("obfsparam"))
 		v = vmessInfo.VmessInfo{
 			Ps:       remarks,
 			Add:      add,
@@ -209,9 +210,9 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 	// 尝试解析ssr://链接，失败则先base64解码
 	if info, ok = resolveFormat(content); !ok {
 		// 进行base64解码，并unmarshal到VmessInfo上
-		content, err = jwt.Base64StdDecode(content)
+		content, err = tools.Base64StdDecode(content)
 		if err != nil {
-			content, err = jwt.Base64URLDecode(content)
+			content, err = tools.Base64URLDecode(content)
 			if err != nil {
 				return
 			}

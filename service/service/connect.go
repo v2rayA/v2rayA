@@ -5,6 +5,7 @@ import (
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
 	"errors"
+	"log"
 )
 
 func Disconnect() (err error) {
@@ -32,6 +33,7 @@ func Connect(which *configure.Which) (err error) {
 	//定位Server
 	tsr, err := which.LocateServer()
 	if err != nil {
+		log.Println(err)
 		return
 	}
 	//根据找到的Server更新V2Ray的配置

@@ -59,7 +59,7 @@ func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 			Name:      v.VmessInfo.Ps,
 			Address:   v.VmessInfo.Add + ":" + v.VmessInfo.Port,
 			Net:       fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Net),
-			Connected: w != nil && err == nil && *tsr == v,
+			Connected: w != nil && err == nil && &tsr.VmessInfo == &v.VmessInfo,
 		}
 	}
 	return

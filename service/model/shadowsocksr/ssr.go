@@ -3,6 +3,7 @@ package shadowsocksr
 import (
 	"V2RayA/extra/proxy/socks5"
 	"V2RayA/extra/proxy/ssr"
+	"V2RayA/tools/ports"
 	"errors"
 	"fmt"
 	"log"
@@ -13,7 +14,8 @@ import (
 )
 
 type SSR struct {
-	c chan struct{}
+	c    chan struct{}
+	port int
 }
 
 func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsParam, protocol, protocolParam string) (err error) {
@@ -47,6 +49,7 @@ func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsP
 	if err != nil {
 		return
 	}
+	self.port = localPort
 	go func() {
 		go func() {
 			e := local.ListenAndServe()
@@ -73,6 +76,21 @@ func (self *SSR) Close() error {
 	}
 	self.c <- struct{}{}
 	self.c = nil
+	time.Sleep(100 * time.Millisecond)
+	start := time.Now()
+	port := strconv.Itoa(self.port)
+	for {
+		o, who := ports.IsPortOccupied(port, "tcp")
+		if !o {
+			break
+		}
+		log.Println("test")
+		if time.Since(start) > 3*time.Second {
+			log.Println("SSR.Close: 关闭SSR超时", port+"/"+who)
+			return errors.New("SSR.Close: 关闭SSR超时")
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 	return nil
 }
 

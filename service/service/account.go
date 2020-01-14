@@ -2,6 +2,7 @@ package service
 
 import (
 	"V2RayA/persistence/configure"
+	"V2RayA/tools"
 	"V2RayA/tools/jwt"
 	"errors"
 	"time"
@@ -22,14 +23,14 @@ func IsValidAccount(username, password string) bool {
 	if err != nil {
 		return false
 	}
-	return pwd == jwt.CryptoPwd(password)
+	return pwd == tools.CryptoPwd(password)
 }
 
 func Register(username, password string) (token string, err error) {
 	if configure.ExistsAccount(username) {
 		return "", errors.New("用户名已存在")
 	}
-	err = configure.SetAccount(username, jwt.CryptoPwd(password))
+	err = configure.SetAccount(username, tools.CryptoPwd(password))
 	if err != nil {
 		return
 	}

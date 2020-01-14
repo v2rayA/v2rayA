@@ -132,19 +132,19 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 	return
 }
 
-func (w *Which) LocateServer() (*ServerRaw, error) {
+func (w *Which) LocateServer() (sr *ServerRaw, err error) {
 	ind := w.ID - 1 //转化为下标
 	switch w.TYPE {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
-			return nil, errors.New("ID超出下标范围")
+			return nil, errors.New("LocateServer: ID超出下标范围")
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-			return nil, errors.New("ID或Sub超出下标范围")
+			return nil, errors.New("LocateServer: ID或Sub超出下标范围")
 		}
 		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
