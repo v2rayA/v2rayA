@@ -111,8 +111,12 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 	var name string
 	if len(sp) == 2 {
 		content = sp[0]
-		name, _ = tools.Base64URLDecode(sp[1])
-
+		var e error
+		name, e = tools.Base64URLDecode(sp[1])
+		if e != nil {
+			name, _ = tools.Base64StdDecode(sp[1])
+		}
+		name, _ = url.QueryUnescape(name)
 	}
 	var (
 		subMatch []string
