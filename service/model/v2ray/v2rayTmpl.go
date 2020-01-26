@@ -406,19 +406,20 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 		t.DNS.Servers = append(t.DNS.Servers, []interface{}{
 			DnsServer{
-				Address: "1.1.1.1",
+				Address: "8.8.8.8",
 				Port:    53,
 			},
 			DnsServer{
-				Address: "8.8.8.8",
+				Address: "1.1.1.1",
 				Port:    53,
 			},
 			"114.114.114.114",
 			ds,
 		}...)
-		//FIXME: 目前得出不使用内置dns是最快的，且不丢包
-		t.DNS = new(DNS)
-		t.DNS.Servers = []interface{}{"localhost"}
+		if setting.DnsForward == configure.No {
+			t.DNS = new(DNS)
+			t.DNS.Servers = []interface{}{"localhost"}
+		}
 		//再修改inbounds
 		tproxy := "tproxy"
 		t.Inbounds = append(t.Inbounds, Inbound{
@@ -457,13 +458,17 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
 		}
 		//最后是routing
+		df := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+			Type:        "field",
+			InboundTag:  []string{"transparent"},
+			Port:        "53",
+			OutboundTag: "direct",
+		}
+		if setting.DnsForward == configure.Yes {
+			df.OutboundTag = "dns-out"
+		}
+		t.Routing.Rules = append(t.Routing.Rules, df)
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
-				Type:        "field",
-				InboundTag:  []string{"transparent"},
-				Port:        "53",
-				OutboundTag: "direct", //FIXME
-			},
 			RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
 				Type:        "field",
 				OutboundTag: "direct",

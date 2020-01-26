@@ -11,6 +11,7 @@ type Setting struct {
 	Mux                        int             `json:"mux"`
 	Transparent                TransparentMode `json:"transparent"` //当透明代理开启时将覆盖端口单独的配置
 	IpForward                  bool            `json:"ipforward"`
+	DnsForward                 DefaultYesNo    `json:"dnsforward"`
 }
 
 func NewSetting() (setting *Setting) {

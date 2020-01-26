@@ -149,6 +149,31 @@
           <option value="proxy">代理模式</option>
         </b-select>
       </b-field>
+      <b-field
+        v-show="showDnsForward"
+        label="转发DNS查询"
+        label-position="on-border"
+      >
+        <template slot="label">
+          转发DNS查询
+          <b-tooltip
+            type="is-dark"
+            label="转发DNS查询可以有效规避DNS污染，但有可能会降低网页打开速度，请视情况开启。"
+            multilined
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            />
+          </b-tooltip>
+        </template>
+        <b-select v-model="dnsforward" expanded>
+          <option value="no">关闭</option>
+          <option value="yes">启用</option>
+        </b-select>
+      </b-field>
       <b-field label-position="on-border">
         <template slot="label">
           TCPFastOpen
@@ -234,7 +259,7 @@ import { handleResponse, isIntranet } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalConfigurePac from "@/components/modalConfigurePac";
 import CusBInput from "./input/Input.vue";
-import { parseURL } from "../assets/js/utils";
+import { isVersionGreaterEqual, parseURL } from "../assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
@@ -250,6 +275,7 @@ export default {
     mux: "8",
     transparent: "close",
     ipforward: false,
+    dnsforward: "no",
     pacAutoUpdateMode: "none",
     subscriptionAutoUpdateMode: "none",
     customSiteDAT: {},
@@ -263,7 +289,8 @@ export default {
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
-    customPacFileVersion: "checking..."
+    customPacFileVersion: "checking...",
+    showDnsForward: false
   }),
   computed: {
     dockerMode() {
@@ -306,6 +333,10 @@ export default {
           this.subscriptionAutoUpdateTime
         );
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+        this.showDnsForward = isVersionGreaterEqual(
+          localStorage["version"],
+          "0.6.1"
+        );
       });
     });
     //白名单有没有项，没有就post一下
@@ -365,7 +396,8 @@ export default {
           muxOn: this.muxOn,
           mux: parseInt(this.mux),
           transparent: this.transparent,
-          ipforward: this.ipforward
+          ipforward: this.ipforward,
+          dnsforward: this.dnsforward
         }
       }).then(res => {
         handleResponse(res, this, () => {

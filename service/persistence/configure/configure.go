@@ -121,6 +121,9 @@ func GetSettingNotNil() *Setting {
 	r := new(Setting)
 	_ = persistence.Get("setting", &r)
 	r.IpForward = ipforward.IsIpForwardOn() //永远用真实值
+	if r.DnsForward == "" {
+		r.DnsForward = No
+	}
 	return r
 }
 func GetPorts() *Ports {
