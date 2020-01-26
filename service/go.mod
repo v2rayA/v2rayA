@@ -25,7 +25,7 @@ require (
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
-	github.com/mzz2017/shadowsocksR v0.0.0-20191227180500-1ac9689bb34d
+	github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a
 	github.com/nadoo/glider v0.9.2
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.4.0+incompatible // indirect
@@ -42,4 +42,4 @@ require (
 
 // Replace dependency modules with local developing copy
 // use `go list -m all` to confirm the final module used
-// replace github.com/mzz2017/shadowsocksR => ../../shadowsocksR
+//replace github.com/mzz2017/shadowsocksR => ../../shadowsocksR

@@ -361,10 +361,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			} //openDNS 非标准端口
 		}
 	}
-	/*
-		TODO:
-			FAST mode: dns请求直接发送，嗅探域名
-	*/
 	//根据配置修改端口
 	ports := configure.GetPorts()
 	if ports != nil {

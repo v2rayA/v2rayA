@@ -91,6 +91,8 @@ func NewSSR(s string, d proxy.Dialer) (*SSR, error) {
 	p.Obfs = query.Get("obfs")
 	p.ObfsParam = query.Get("obfs_param")
 
+	p.ProtocolData = new(protocol.AuthData)
+
 	return p, nil
 }
 
