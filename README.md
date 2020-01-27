@@ -194,6 +194,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
        v2ray/official \
        /bin/sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
    ```
+部署完毕后，在[GUI demo](https://v2raya.mzz.pub)使用（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
    
    
 
