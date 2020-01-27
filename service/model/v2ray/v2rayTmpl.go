@@ -345,20 +345,26 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	case "socks":
 		t.DNS = new(DNS)
 		//ss, ssr不支持udp
-		//为了安全，先优先请求DOH
-		ver, err := GetV2rayServiceVersion()
-		if err == nil {
-			if ok, _ := tools.VersionGreaterEqual(ver, "4.22.0"); ok {
-				t.DNS.Servers = []interface{}{"https://1.0.0.1/dns-query"}
+		//先优先请求DOH
+		if setting.DnsForward == configure.Yes {
+			ver, err := GetV2rayServiceVersion()
+			if err == nil { //v2ray版本高于4.22.0则使用DOH
+				if ok, _ := tools.VersionGreaterEqual(ver, "4.22.0"); ok {
+					t.DNS.Servers = []interface{}{
+						"https://dns.google/dns-query",
+						"https://1.0.0.1/dns-query",
+					}
+				}
 			}
-		}
-		if len(t.DNS.Servers) <= 0 {
-			t.DNS.Servers = []interface{}{
-				DnsServer{
-					Address: "208.67.220.220",
-					Port:    5353,
-				},
-			} //openDNS 非标准端口
+			//否则使用openDNS非标准端口
+			if len(t.DNS.Servers) <= 0 {
+				t.DNS.Servers = []interface{}{
+					DnsServer{
+						Address: "208.67.220.220",
+						Port:    5353,
+					},
+				}
+			}
 		}
 	}
 	//根据配置修改端口
@@ -374,33 +380,12 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			}
 		}
 	}
-	//根据设置修改透明代理
-	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-		//先修改DNS设置
-		if t.DNS == nil {
-			t.DNS = new(DNS)
-		}
-		ds := DnsServer{
-			Address: "119.29.29.29",
-			Port:    53,
-			Domains: []string{
-				"geosite:cn",          // 国内白名单走DNSPod
-				"domain:ntp.org",      // NTP 服务器
-				"domain:dogedoge.com", // mzz2017爱用的多吉
-				"domain:233py.com",    // DOH服务器
-				"dns.google",          // DOH服务器
-				"v2raya.mzz.pub",      // V2RayA demo
-			},
-		}
-		if net.ParseIP(v.Add) == nil {
-			//如果不是IP，而是域名，将其二级域名加入白名单
-			group := strings.Split(v.Add, ".")
-			if len(group) >= 2 {
-				domain := strings.Join(group[len(group)-2:], ".")
-				ds.Domains = append(ds.Domains, "domain:"+domain)
-			}
-		}
-		t.DNS.Servers = append(t.DNS.Servers, []interface{}{
+	//先修改DNS设置
+	if t.DNS == nil {
+		t.DNS = new(DNS)
+	}
+	if len(t.DNS.Servers) <= 0 {
+		t.DNS.Servers = []interface{}{
 			DnsServer{
 				Address: "8.8.8.8",
 				Port:    53,
@@ -409,69 +394,97 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Address: "1.1.1.1",
 				Port:    53,
 			},
-			"114.114.114.114",
-			ds,
-		}...)
-		if setting.DnsForward == configure.No {
-			t.DNS = new(DNS)
-			t.DNS.Servers = []interface{}{"localhost"}
 		}
-		//再修改inbounds
-		tproxy := "tproxy"
-		t.Inbounds = append(t.Inbounds, Inbound{
-			Listen:   "0.0.0.0",
-			Port:     12345,
-			Protocol: "dokodemo-door",
-			Sniffing: Sniffing{
-				Enabled:      true,
-				DestOverride: []string{"http", "tls"},
-			},
-			Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
-			StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
-			Tag:            "transparent",
-		})
-		//再修改outbounds
-		mark := 0xff
-		t.Outbounds = append(t.Outbounds, Outbound{
-			Tag:      "dns-out",
-			Protocol: "dns",
-			//Settings: &Settings{Network: "tcp"},
-			//ProxySettings: &ProxySettings{Tag: "direct"},
-		})
-		for i := range t.Outbounds {
-			if t.Outbounds[i].Protocol == "blackhole" {
-				continue
-			}
-			if t.Outbounds[i].StreamSettings == nil {
-				t.Outbounds[i].StreamSettings = new(StreamSettings)
-			}
-			if t.Outbounds[i].StreamSettings.Sockopt == nil {
-				t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
-			}
-			if t.Outbounds[i].Protocol == "freedom" {
-				t.Outbounds[i].Settings.DomainStrategy = "UseIP"
-			}
-			t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
+	}
+	ds := DnsServer{
+		Address: "119.29.29.29",
+		Port:    53,
+		Domains: []string{
+			"geosite:cn",          // 国内白名单走DNSPod
+			"domain:ntp.org",      // NTP 服务器
+			"domain:dogedoge.com", // mzz2017爱用的多吉
+			"domain:233py.com",    // DOH服务器
+			"dns.google",          // DOH服务器
+			"v2raya.mzz.pub",      // V2RayA demo
+		},
+	}
+	if net.ParseIP(v.Add) == nil {
+		//如果不是IP，而是域名，将其二级域名加入白名单
+		group := strings.Split(v.Add, ".")
+		if len(group) >= 2 {
+			domain := strings.Join(group[len(group)-2:], ".")
+			ds.Domains = append(ds.Domains, "domain:"+domain)
 		}
-		//最后是routing
-		df := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+	}
+	t.DNS.Servers = append(t.DNS.Servers,
+		"114.114.114.114",
+		ds,
+	)
+	if setting.DnsForward == configure.No {
+		t.DNS = new(DNS)
+		t.DNS.Servers = []interface{}{"localhost"}
+	}
+	//再修改inbounds
+	tproxy := "tproxy"
+	t.Inbounds = append(t.Inbounds, Inbound{
+		Listen:   "0.0.0.0",
+		Port:     12345,
+		Protocol: "dokodemo-door",
+		Sniffing: Sniffing{
+			Enabled:      true,
+			DestOverride: []string{"http", "tls"},
+		},
+		Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
+		StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
+		Tag:            "transparent",
+	})
+	//再修改outbounds
+	mark := 0xff
+	t.Outbounds = append(t.Outbounds, Outbound{
+		Tag:      "dns-out",
+		Protocol: "dns",
+		//Settings: &Settings{Network: "tcp"},
+		//ProxySettings: &ProxySettings{Tag: "direct"},
+	})
+	for i := range t.Outbounds {
+		if t.Outbounds[i].Protocol == "blackhole" {
+			continue
+		}
+		if t.Outbounds[i].StreamSettings == nil {
+			t.Outbounds[i].StreamSettings = new(StreamSettings)
+		}
+		if t.Outbounds[i].StreamSettings.Sockopt == nil {
+			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
+		}
+		if t.Outbounds[i].Protocol == "freedom" {
+			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
+		}
+		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
+	}
+	//最后是routing
+	df := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+		Type:        "field",
+		InboundTag:  []string{"transparent", "socks", "http", "pac"},
+		Port:        "53",
+		OutboundTag: "direct",
+	}
+	dohs := []RoutingRule{
+		RoutingRule{ // DOH直连
 			Type:        "field",
-			InboundTag:  []string{"transparent"},
-			Port:        "53",
 			OutboundTag: "direct",
-		}
-		if setting.DnsForward == configure.Yes {
-			df.OutboundTag = "dns-out"
-		}
+			Domain:      []string{"full:dns.google", "domain:233py.com"},
+		},
+		RoutingRule{ // DOH直连
+			Type:        "field",
+			OutboundTag: "direct",
+			IP:          []string{"1.1.1.1", "1.0.0.1"},
+			Port:        "443",
+		},
+	}
+	if setting.DnsForward == configure.Yes {
+		df.OutboundTag = "dns-out"
 		t.Routing.Rules = append(t.Routing.Rules, df)
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"transparent"},
-				Network:     "udp",
-				Port:        "123",
-			},
 			RoutingRule{ // 国内DNS服务器直连，以分流
 				Type:        "field",
 				OutboundTag: "direct",
@@ -489,38 +502,43 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				OutboundTag: "direct",
 				IP:          []string{"208.67.222.222", "208.67.220.220"},
 				Port:        "5353",
-			},
-			RoutingRule{ // DOH直连
-				Type:        "field",
-				OutboundTag: "direct",
-				Domain:      []string{"full:dns.google", "domain:233py.com"},
-			},
-			RoutingRule{ // DOH直连
-				Type:        "field",
-				OutboundTag: "direct",
-				IP:          []string{"1.1.1.1", "1.0.0.1"},
-				Port:        "443",
-			},
-			RoutingRule{ // BT流量直连
-				Type:        "field",
-				OutboundTag: "direct",
-				Protocol:    []string{"bittorrent"},
-			},
-		)
-		if net.ParseIP(v.Add) == nil {
-			//如果不是IP，而是域名，将其二级域名加入白名单
-			group := strings.Split(v.Add, ".")
-			if len(group) >= 2 {
-				domain := strings.Join(group[len(group)-2:], ".")
-				t.Routing.Rules = append([]RoutingRule{RoutingRule{
-					Type:        "field",
-					OutboundTag: "direct",
-					Domain:      []string{"domain:" + domain},
-				}}, t.Routing.Rules...
-				)
-			}
-
+			})
+		for i := range dohs {
+			dohs[i].OutboundTag = "proxy"
 		}
+	} else {
+		t.Routing.Rules = append(t.Routing.Rules, df)
+	}
+	t.Routing.Rules = append(t.Routing.Rules, dohs...)
+	t.Routing.Rules = append(t.Routing.Rules,
+		RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
+			Type:        "field",
+			OutboundTag: "direct",
+			InboundTag:  []string{"transparent"},
+			Network:     "udp",
+			Port:        "123",
+		},
+		RoutingRule{ // BT流量直连
+			Type:        "field",
+			OutboundTag: "direct",
+			Protocol:    []string{"bittorrent"},
+		},
+	)
+	if net.ParseIP(v.Add) == nil {
+		//如果不是IP，而是域名，将其二级域名加入白名单
+		group := strings.Split(v.Add, ".")
+		if len(group) >= 2 {
+			domain := strings.Join(group[len(group)-2:], ".")
+			t.Routing.Rules = append([]RoutingRule{RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				Domain:      []string{"domain:" + domain},
+			}}, t.Routing.Rules...
+			)
+		}
+	}
+	//根据设置修改路由
+	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		switch setting.Transparent {
 		case configure.TransparentProxy:
 		case configure.TransparentWhitelist:

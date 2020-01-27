@@ -84,7 +84,6 @@ func (self *SSR) Close() error {
 		if !o {
 			break
 		}
-		log.Println("test")
 		if time.Since(start) > 3*time.Second {
 			log.Println("SSR.Close: 关闭SSR超时", port+"/"+who)
 			return errors.New("SSR.Close: 关闭SSR超时")
