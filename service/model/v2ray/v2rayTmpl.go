@@ -403,7 +403,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			"geosite:cn",          // 国内白名单走DNSPod
 			"domain:ntp.org",      // NTP 服务器
 			"domain:dogedoge.com", // mzz2017爱用的多吉
-			"domain:233py.com",    // DOH服务器
 			"dns.google",          // DOH服务器
 			"v2raya.mzz.pub",      // V2RayA demo
 		},
@@ -537,7 +536,75 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			)
 		}
 	}
-	//根据设置修改路由
+
+	//端口入口有自己的规则
+	t.Routing.Rules = append(t.Routing.Rules,
+		RoutingRule{ // socks和http无论在全局还是非全局模式下都走代理
+			Type:        "field",
+			OutboundTag: "proxy",
+			InboundTag:  []string{"socks", "http"},
+		},
+	)
+	//PAC端口规则
+	switch setting.PacMode {
+	case configure.WhitelistMode:
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+				IP:          []string{"geoip:private", "geoip:cn"},
+			},
+			RoutingRule{ // 直连中国大陆主流网站域名
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+				Domain:      []string{"geosite:cn"},
+			},
+		)
+	case configure.GfwlistMode:
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "proxy",
+				InboundTag:  []string{"pac"},
+				Domain:      []string{"ext:h2y.dat:gfw"},
+			},
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+			},
+		)
+	case configure.CustomMode:
+		for _, v := range setting.CustomPac.RoutingRules {
+			rule := RoutingRule{
+				Type:        "field",
+				OutboundTag: string(v.RuleType),
+				InboundTag:  []string{"pac"},
+			}
+			for i := range v.Tags {
+				v.Tags[i] = "ext:custom.dat:" + v.Tags[i]
+			}
+			switch v.MatchType {
+			case configure.DomainMatchRule:
+				rule.Domain = v.Tags
+			case configure.IpMatchRule:
+				rule.IP = v.Tags
+			}
+			t.Routing.Rules = append(t.Routing.Rules, rule)
+		}
+		//如果默认直连，规则内的才走代理，则需要加上下述规则
+		if setting.CustomPac.DefaultProxyMode == "direct" {
+			t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+			})
+		}
+	}
+
+	//根据是否使用全局代理修改路由
 	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
 		switch setting.Transparent {
 		case configure.TransparentProxy:
@@ -546,11 +613,19 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
 					Type:        "field",
 					OutboundTag: "direct",
+					InboundTag:  []string{"transparent"},
+					IP:          []string{"geoip:private", "geoip:cn"},
+				},
+				RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
+					Type:        "field",
+					OutboundTag: "direct",
+					InboundTag:  []string{"transparent"},
 					IP:          []string{"geoip:private", "geoip:cn"},
 				},
 				RoutingRule{ // 直连中国大陆主流网站域名
 					Type:        "field",
 					OutboundTag: "direct",
+					InboundTag:  []string{"transparent"},
 					Domain:      []string{"geosite:cn"},
 				},
 			)
@@ -559,52 +634,20 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				RoutingRule{
 					Type:        "field",
 					OutboundTag: "proxy",
+					InboundTag:  []string{"transparent"},
 					Domain:      []string{"ext:h2y.dat:gfw"},
 				},
 				RoutingRule{
 					Type:        "field",
 					OutboundTag: "direct",
-					Network:     "tcp,udp",
+					InboundTag:  []string{"transparent"},
 				},
 			)
 		}
 	} else {
 		_ = iptables.DeleteRules()
-		// 不是全局模式，根据设置修改路由部分的PAC规则
-		switch setting.PacMode {
-		case configure.WhitelistMode:
-			t.Routing.Rules = append(t.Routing.Rules, tmplJson.Whitelist...)
-		case configure.GfwlistMode:
-			t.Routing.Rules = append(t.Routing.Rules, tmplJson.Gfwlist...)
-		case configure.CustomMode:
-			for _, v := range setting.CustomPac.RoutingRules {
-				rule := RoutingRule{
-					Type:        "field",
-					OutboundTag: string(v.RuleType),
-					InboundTag:  []string{"pac"},
-				}
-				for i := range v.Tags {
-					v.Tags[i] = "ext:custom.dat:" + v.Tags[i]
-				}
-				switch v.MatchType {
-				case configure.DomainMatchRule:
-					rule.Domain = v.Tags
-				case configure.IpMatchRule:
-					rule.IP = v.Tags
-				}
-				t.Routing.Rules = append(t.Routing.Rules, rule)
-			}
-			//如果默认直连，规则内的才走代理，则需要加上下述规则
-			if setting.CustomPac.DefaultProxyMode == "direct" {
-				t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
-					Type:        "field",
-					OutboundTag: "direct",
-					InboundTag:  []string{"pac"},
-					Network:     "tcp,udp",
-				})
-			}
-		}
 	}
+
 	return t, nil
 }
 

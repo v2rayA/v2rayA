@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/Code-Hex/pget v0.0.0-20170428105109-9294f7465fa7
 	github.com/Code-Hex/updater v0.0.0-20160712085121-c3f278672520 // indirect
+	github.com/DNSCrypt/dnscrypt-proxy v0.0.0-20200125144523-349320f29126 // indirect
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/antonholmquist/jason v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
@@ -35,7 +36,7 @@ require (
 	github.com/tidwall/gjson v1.3.5
 	github.com/tidwall/sjson v1.0.4
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582
+	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 )

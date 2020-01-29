@@ -80,34 +80,6 @@ const TemplateJson = `{
       "rules": []
     }
   },
-  "whitelist": [
-    {
-      "type": "field",
-      "inboundTag": ["pac"],
-      "outboundTag": "direct",
-      "domain": ["geosite:cn"]
-    },
-    {
-      "type": "field",
-      "inboundTag": ["pac"],
-      "outboundTag": "direct",
-      "ip": ["geoip:cn", "geoip:private"]
-    }
-  ],
-  "gfwlist": [
-    {
-      "type": "field",
-      "inboundTag": ["pac"],
-      "outboundTag": "proxy",
-      "domain": ["ext:h2y.dat:gfw"]
-    },
-    {
-      "type": "field",
-      "inboundTag": ["pac"],
-      "network": "tcp,udp",
-      "outboundTag": "direct"
-    }
-  ],
   "tcpSettings": {
     "connectionReuse": true,
     "header": {

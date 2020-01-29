@@ -93,11 +93,7 @@
           </b-checkbox-button>
         </template>
       </b-field>
-      <b-field
-        v-show="transparent === 'close'"
-        label="PAC模式"
-        label-position="on-border"
-      >
+      <b-field label="PAC模式" label-position="on-border">
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单(Recommend)</option>
           <option value="gfwlist">GFWList</option>
