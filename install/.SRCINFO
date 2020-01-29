@@ -1,5 +1,5 @@
 pkgbase = v2raya
-	pkgdesc = 一个支持全局透明代理且兼容 SS、SSR 的 V2Ray Linux GUI 客户端
+	pkgdesc = 一个支持全局透明代理且兼容 SS、SSR 的 V2Ray Linux GUI Client
 	pkgver = {{pkgver}}
 	pkgrel = 1
 	url = https://github.com/mzz2017/V2RayA
