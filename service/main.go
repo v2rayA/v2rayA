@@ -177,7 +177,7 @@ func checkUpdate() {
 		//等待网络连通
 		for {
 			c := http.DefaultClient
-			c.Timeout = 5 * time.Second
+			c.Timeout = 10 * time.Second
 			resp, err := http.Get("http://detectportal.firefox.com/success.txt")
 			if err == nil {
 				_ = resp.Body.Close()

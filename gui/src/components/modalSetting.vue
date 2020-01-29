@@ -131,7 +131,7 @@
             />
           </b-tooltip>
         </template>
-        <b-select v-model="antipollution" expanded>
+        <b-select v-model="antipollution" expanded class="left-border">
           <option value="none">关闭</option>
           <option value="dnsforward">转发DNS查询</option>
           <option v-show="showDoh" value="doh">DoH(DNS-over-HTTPS)</option>
@@ -572,5 +572,8 @@ export default {
 .footer-absolute-left {
   position: absolute;
   left: 20px;
+}
+.left-border select {
+  border-radius: 4px 0 0 4px !important;
 }
 </style>
