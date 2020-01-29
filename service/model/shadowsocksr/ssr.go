@@ -80,7 +80,7 @@ func (self *SSR) Close() error {
 	start := time.Now()
 	port := strconv.Itoa(self.port)
 	for {
-		o, who := ports.IsPortOccupied(port, "tcp")
+		o, who := ports.IsPortOccupied(port, "tcp", true)
 		if !o {
 			break
 		}

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Configure struct {
@@ -19,6 +20,7 @@ type Configure struct {
 	Accounts        map[string]string `json:"accounts"`
 	CustomPorts     Ports             `json:"ports"`
 	PortWhiteList   PortWhiteList     `json:"portWhiteList"`
+	DohList         string            `json:"dohlist"`
 }
 
 func New() *Configure {
@@ -82,6 +84,9 @@ func SetPorts(ports *Ports) (err error) {
 func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
 	return persistence.Set("portWhiteList", portWhiteList.Compressed())
 }
+func SetDohList(dohList *string) (err error) {
+	return persistence.Set("dohList", strings.TrimSpace(*dohList))
+}
 
 func AppendServer(server *ServerRaw) (err error) {
 	return persistence.Append("servers", server)
@@ -121,8 +126,8 @@ func GetSettingNotNil() *Setting {
 	r := new(Setting)
 	_ = persistence.Get("setting", &r)
 	r.IpForward = ipforward.IsIpForwardOn() //永远用真实值
-	if r.DnsForward == "" {
-		r.DnsForward = No
+	if r.AntiPollution == "" {
+		r.AntiPollution = AntipollutionNone
 	}
 	return r
 }
@@ -137,6 +142,16 @@ func GetPorts() *Ports {
 func GetPortWhiteListNotNil() *PortWhiteList {
 	r := new(PortWhiteList)
 	_ = persistence.Get("portWhiteList", &r)
+	return r
+}
+func GetDohListNotNil() *string {
+	r := new(string)
+	_ = persistence.Get("dohList", &r)
+	if len(strings.TrimSpace(*r)) == 0 {
+		*r = `https://i.233py.com/dns-query
+https://dns.rubyfish.cn/dns-query
+https://1.0.0.1/dns-query`
+	}
 	return r
 }
 func GetConnectedServer() *Which {

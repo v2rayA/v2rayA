@@ -165,3 +165,14 @@ func CheckTProxySupported() (err error) {
 	}
 	return
 }
+
+func CheckDohSupported() (err error) {
+	ver, err := GetV2rayServiceVersion()
+	if err != nil {
+		return errors.New("获取v2ray-core版本失败")
+	}
+	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
+		return errors.New("v2ray-core版本低于4.22.0")
+	}
+	return
+}

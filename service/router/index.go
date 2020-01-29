@@ -65,6 +65,8 @@ func Run() error {
 		auth.GET("portWhiteList", controller.GetPortWhiteList)
 		auth.PUT("portWhiteList", controller.PutPortWhiteList)
 		auth.POST("portWhiteList", controller.PostPortWhiteList)
+		auth.GET("dohList", controller.GetDohList)
+		auth.PUT("dohList", controller.PutDohList)
 	}
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
 	app := global.GetEnvironmentConfig()

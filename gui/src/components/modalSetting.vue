@@ -115,46 +115,12 @@
           </b-button>
         </template>
       </b-field>
-      <b-field
-        v-show="
-          (transparent === 'close' && pacMode === 'gfwlist') ||
-            transparent === 'gfwlist'
-        "
-        label="自动更新GFWList"
-        label-position="on-border"
-      >
-        <b-select v-model="pacAutoUpdateMode" expanded>
-          <option value="none">不自动更新PAC文件</option>
-          <option value="auto_update">服务端启动时更新PAC文件</option>
-        </b-select>
-      </b-field>
-      <b-field label="自动更新订阅" label-position="on-border">
-        <b-select v-model="subscriptionAutoUpdateMode" expanded>
-          <option value="none">不自动更新订阅</option>
-          <option value="auto_update">服务端启动时更新订阅</option>
-        </b-select>
-      </b-field>
-      <b-field
-        v-if="transparent === 'close'"
-        label="解析订阅链接/更新时优先使用"
-        label-position="on-border"
-      >
-        <b-select v-model="proxyModeWhenSubscribe" expanded>
-          <option value="direct">直连模式</option>
-          <option value="pac">PAC模式</option>
-          <option value="proxy">代理模式</option>
-        </b-select>
-      </b-field>
-      <b-field
-        v-show="showDnsForward"
-        label="转发DNS查询"
-        label-position="on-border"
-      >
+      <b-field v-show="showAntipollution" label-position="on-border">
         <template slot="label">
-          转发DNS查询
+          防止DNS污染
           <b-tooltip
             type="is-dark"
-            label="转发DNS查询可以有效规避DNS污染，但有可能会降低网页打开速度，请视情况开启。"
+            label="可以有效规避DNS污染，但会降低网页打开速度，请视情况开启。转发DNS查询: 万金油，通过代理服务器转发DNS请求，但对网速影响稍大。DoH(v2ray-core: 4.22.0+): 对网速影响较小，需选择较快的DoH服务提供商。"
             multilined
             position="is-right"
           >
@@ -165,10 +131,19 @@
             />
           </b-tooltip>
         </template>
-        <b-select v-model="dnsforward" expanded>
-          <option value="no">关闭</option>
-          <option value="yes">启用</option>
+        <b-select v-model="antipollution" expanded>
+          <option value="none">关闭</option>
+          <option value="dnsforward">转发DNS查询</option>
+          <option v-show="showDoh" value="doh">DoH(DNS-over-HTTPS)</option>
         </b-select>
+        <template v-if="antipollution === 'doh'">
+          <b-button
+            style="border-radius: 0 4px 4px 0"
+            @click="handleClickDohSetting"
+          >
+            DoH设置
+          </b-button>
+        </template>
       </b-field>
       <b-field label-position="on-border">
         <template slot="label">
@@ -225,6 +200,36 @@
           style="flex: 1"
         />
       </b-field>
+      <b-field
+        v-show="
+          (transparent === 'close' && pacMode === 'gfwlist') ||
+            transparent === 'gfwlist'
+        "
+        label="自动更新GFWList"
+        label-position="on-border"
+      >
+        <b-select v-model="pacAutoUpdateMode" expanded>
+          <option value="none">不自动更新PAC文件</option>
+          <option value="auto_update">服务端启动时更新PAC文件</option>
+        </b-select>
+      </b-field>
+      <b-field label="自动更新订阅" label-position="on-border">
+        <b-select v-model="subscriptionAutoUpdateMode" expanded>
+          <option value="none">不自动更新订阅</option>
+          <option value="auto_update">服务端启动时更新订阅</option>
+        </b-select>
+      </b-field>
+      <b-field
+        v-if="transparent === 'close'"
+        label="解析订阅链接/更新时优先使用"
+        label-position="on-border"
+      >
+        <b-select v-model="proxyModeWhenSubscribe" expanded>
+          <option value="direct">直连模式</option>
+          <option value="pac">PAC模式</option>
+          <option value="proxy">代理模式</option>
+        </b-select>
+      </b-field>
       <!--      <b-field label="SERVER列表" label-position="on-border">-->
       <!--        <b-select v-model="serverListMode" expanded>-->
       <!--          <option value="noSubscription">仅显示非订阅节点</option>-->
@@ -244,7 +249,7 @@
         取消
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
-        保存设置
+        保存并应用
       </button>
     </footer>
   </div>
@@ -260,6 +265,7 @@ import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalPortWhiteList from "@/components/modalPortWhiteList";
+import modalDohSetting from "./modalDohSetting";
 
 export default {
   name: "ModalSetting",
@@ -272,6 +278,7 @@ export default {
     transparent: "close",
     ipforward: false,
     dnsforward: "no",
+    antipollution: "none",
     pacAutoUpdateMode: "none",
     subscriptionAutoUpdateMode: "none",
     customSiteDAT: {},
@@ -286,7 +293,8 @@ export default {
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
     customPacFileVersion: "checking...",
-    showDnsForward: false
+    showAntipollution: false,
+    showDoh: false
   }),
   computed: {
     dockerMode() {
@@ -329,10 +337,13 @@ export default {
           this.subscriptionAutoUpdateTime
         );
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
-        this.showDnsForward = isVersionGreaterEqual(
+        this.showAntipollution = isVersionGreaterEqual(
           localStorage["version"],
           "0.6.1"
         );
+        this.showDoh =
+          isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
+          localStorage["dohValid"] === "yes";
       });
     });
     //白名单有没有项，没有就post一下
@@ -393,7 +404,8 @@ export default {
           mux: parseInt(this.mux),
           transparent: this.transparent,
           ipforward: this.ipforward,
-          dnsforward: this.dnsforward
+          dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
+          antipollution: this.antipollution
         }
       }).then(res => {
         handleResponse(res, this, () => {
@@ -484,6 +496,14 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: modalPortWhiteList,
+        hasModalCard: true,
+        canCancel: true
+      });
+    },
+    handleClickDohSetting() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalDohSetting,
         hasModalCard: true,
         canCancel: true
       });

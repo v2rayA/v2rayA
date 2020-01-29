@@ -40,7 +40,7 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, which := ports.IsPortOccupied(port, "tcp"); occupied && len(which) > 0 {
+	if occupied, which := ports.IsPortOccupied(port, "tcp", true); occupied && len(which) > 0 {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }
