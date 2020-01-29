@@ -6,7 +6,7 @@ import store from "./store";
 import "normalize.css";
 import "@/registerServiceWorker";
 import "@/assets/pace-progressbar";
-import "@/assets/pace-progressbar/themes/blue/pace-theme-minimal.css";
+import "@/assets/pace-progressbar/themes/blue/pace-theme-corner-indicator.css";
 
 Vue.config.productionTip = false;
 

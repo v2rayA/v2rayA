@@ -5,8 +5,8 @@ import (
 	"V2RayA/model/v2ray"
 	"V2RayA/service"
 	"V2RayA/tools"
-	"V2RayA/tools/httpClient"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 func GetVersion(ctx *gin.Context) {
@@ -36,12 +36,12 @@ func GetVersion(ctx *gin.Context) {
 }
 
 func GetRemoteGFWListVersion(ctx *gin.Context) {
-	c, err := httpClient.GetHttpClientAutomatically()
-	if err != nil {
-		tools.ResponseError(ctx, err)
-		return
-	}
-	t, err := service.GetRemoteGFWListUpdateTime(c)
+	//c, err := httpClient.GetHttpClientAutomatically()
+	//if err != nil {
+	//	tools.ResponseError(ctx, err)
+	//	return
+	//}
+	t, err := service.GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

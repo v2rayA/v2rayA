@@ -13,13 +13,22 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 )
 
+var gfwlistupdatetime *time.Time
+var mutex sync.Mutex
+
 func GetRemoteGFWListUpdateTime(c *http.Client) (t time.Time, err error) {
-	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://github.com/ToutyRater/V2Ray-SiteDAT/contributors/master/geofiles/h2y.dat")
+	mutex.Lock()
+	defer mutex.Unlock()
+	if gfwlistupdatetime != nil {
+		return *gfwlistupdatetime, nil
+	}
+	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://mirrors.0diis.com/github/ToutyRater/V2Ray-SiteDAT/contributors/master/geofiles/h2y.dat")
 	if err != nil {
-		return
+		return time.Time{}, errors.New("获取GFWList最新版本时间失败")
 	}
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
@@ -31,14 +40,16 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (t time.Time, err error) {
 		log.Println(doc.Html())
 		return time.Time{}, errors.New("获取最新GFWList版本失败")
 	}
-	return time.Parse(time.RFC3339, timeRaw)
+	t, err = time.Parse(time.RFC3339, timeRaw)
+	gfwlistupdatetime = &t
+	return t, err
 }
 func IsUpdate() (update bool, remoteTime time.Time, err error) {
-	c, err := httpClient.GetHttpClientAutomatically()
-	if err != nil {
-		return
-	}
-	remoteTime, err = GetRemoteGFWListUpdateTime(c)
+	//c, err := httpClient.GetHttpClientAutomatically()
+	//if err != nil {
+	//	return
+	//}
+	remoteTime, err = GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		return
 	}
