@@ -82,14 +82,14 @@
 </template>
 
 <script>
-import CONST from "@/assets/js/const";
-import ModalSetting from "@/components/modalSetting";
-import node from "@/components/node";
-import { Base64 } from "js-base64";
-import ModalCustomAddress from "./components/modalCustomPorts";
-import { parseURL } from "./assets/js/utils";
+  import CONST from "@/assets/js/const";
+  import ModalSetting from "@/components/modalSetting";
+  import node from "@/components/node";
+  import {Base64} from "js-base64";
+  import ModalCustomAddress from "./components/modalCustomPorts";
+  import {parseURL} from "./assets/js/utils";
 
-export default {
+  export default {
   components: { ModalCustomAddress, node },
   data() {
     return {
@@ -154,6 +154,7 @@ export default {
           });
         } else {
           localStorage["transparentValid"] = res.data.data.transparentValid;
+          localStorage["dohValid"] = res.data.data.dohValid;
           if (
             typeof res.data.data.transparentValid == "boolean" && //兼容旧版本
             res.data.data.transparentValid === false

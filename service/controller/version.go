@@ -17,6 +17,13 @@ func GetVersion(ctx *gin.Context) {
 	} else {
 		transparentProxyValid = err.Error()
 	}
+	err = v2ray.CheckDohSupported()
+	var dohValid string
+	if err == nil {
+		dohValid = "yes"
+	} else {
+		dohValid = err.Error()
+	}
 	tools.ResponseSuccess(ctx, gin.H{
 		"version":          global.Version,
 		"dockerMode":       global.ServiceControlMode == global.DockerMode,
@@ -24,6 +31,7 @@ func GetVersion(ctx *gin.Context) {
 		"remoteVersion":    global.RemoteVersion,
 		"serviceValid":     v2ray.IsV2rayServiceValid(),
 		"transparentValid": transparentProxyValid,
+		"dohValid":         dohValid,
 	})
 }
 

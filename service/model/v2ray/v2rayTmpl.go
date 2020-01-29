@@ -5,11 +5,11 @@ import (
 	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
 	"errors"
 	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -190,7 +190,7 @@ type HttpSettings struct {
 	Host []string `json:"host"`
 }
 type DNS struct {
-	Hosts   map[string]string `json:"hosts"`
+	Hosts   map[string]string `json:"hosts,omitempty"`
 	Servers []interface{}     `json:"servers"`
 }
 type DnsServer struct {
@@ -344,19 +344,16 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	case "socks":
 		t.DNS = new(DNS)
-		//ss, ssr不支持udp
-		//先优先请求DOH
-		if setting.DnsForward == configure.Yes {
-			ver, err := GetV2rayServiceVersion()
-			if err == nil { //v2ray版本高于4.22.0则使用DOH
-				if ok, _ := tools.VersionGreaterEqual(ver, "4.22.0"); ok {
-					t.DNS.Servers = []interface{}{
-						"https://dns.google/dns-query",
-						"https://1.0.0.1/dns-query",
-					}
+		if setting.AntiPollution == configure.DnsForward {
+			//由于ss, ssr不支持udp
+			//先优先请求DoH（tcp）
+			if err := CheckDohSupported(); err == nil {
+				t.DNS.Servers = []interface{}{
+					"https://dns.google/dns-query",
+					"https://1.0.0.1/dns-query",
 				}
 			}
-			//否则使用openDNS非标准端口
+			//否则使用openDNS非标准端口直连5353
 			if len(t.DNS.Servers) <= 0 {
 				t.DNS.Servers = []interface{}{
 					DnsServer{
@@ -384,6 +381,40 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	if t.DNS == nil {
 		t.DNS = new(DNS)
 	}
+	//添加DoH服务器
+	if setting.AntiPollution == configure.DoH {
+		s := *configure.GetDohListNotNil()
+		dohs := strings.Split(strings.TrimSpace(s), "\n")
+		for _, doh := range dohs {
+			t.DNS.Servers = append(t.DNS.Servers, doh)
+		}
+	}
+	//统计DoH服务器信息
+	dohIPs := make([]string, 0)
+	dohHosts := make([]string, 0)
+	for _, u := range t.DNS.Servers {
+		switch u := u.(type) {
+		case string:
+			if !strings.HasPrefix(strings.ToLower(u), "https://") {
+				break
+			}
+			uu, e := url.Parse(u)
+			if e != nil {
+				continue
+			}
+			//如果是非IP
+			if net.ParseIP(uu.Hostname()) == nil {
+				dohHosts = append(dohHosts, uu.Hostname())
+				addrs, e := net.LookupHost(uu.Hostname())
+				if e != nil {
+					continue
+				}
+				dohIPs = append(dohIPs, addrs...)
+			} else {
+				dohIPs = append(dohIPs, uu.Hostname())
+			}
+		}
+	}
 	if len(t.DNS.Servers) <= 0 {
 		t.DNS.Servers = []interface{}{
 			DnsServer{
@@ -403,9 +434,12 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			"geosite:cn",          // 国内白名单走DNSPod
 			"domain:ntp.org",      // NTP 服务器
 			"domain:dogedoge.com", // mzz2017爱用的多吉
-			"dns.google",          // DOH服务器
 			"v2raya.mzz.pub",      // V2RayA demo
+			"v.mzz.pub",           // V2RayA demo
 		},
+	}
+	if setting.AntiPollution == configure.DoH {
+		ds.Domains = append(ds.Domains, dohHosts...)
 	}
 	if net.ParseIP(v.Add) == nil {
 		//如果不是IP，而是域名，将其二级域名加入白名单
@@ -419,7 +453,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		"114.114.114.114",
 		ds,
 	)
-	if setting.DnsForward == configure.No {
+	if setting.AntiPollution == configure.AntipollutionNone {
 		t.DNS = new(DNS)
 		t.DNS.Servers = []interface{}{"localhost"}
 	}
@@ -467,20 +501,17 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		Port:        "53",
 		OutboundTag: "direct",
 	}
-	dohs := []RoutingRule{
-		RoutingRule{ // DOH直连
+
+	dohRouting := make([]RoutingRule, 0)
+	if len(dohIPs) > 0 {
+		dohRouting = append(dohRouting, RoutingRule{
 			Type:        "field",
-			OutboundTag: "direct",
-			Domain:      []string{"full:dns.google", "domain:233py.com"},
-		},
-		RoutingRule{ // DOH直连
-			Type:        "field",
-			OutboundTag: "direct",
-			IP:          []string{"1.1.1.1", "1.0.0.1"},
+			OutboundTag: "direct", //如果配置了dns转发，此处将被改成proxy
+			IP:          dohIPs,
 			Port:        "443",
-		},
+		})
 	}
-	if setting.DnsForward == configure.Yes {
+	if setting.AntiPollution != configure.AntipollutionNone {
 		df.OutboundTag = "dns-out"
 		t.Routing.Rules = append(t.Routing.Rules, df)
 		t.Routing.Rules = append(t.Routing.Rules,
@@ -502,13 +533,15 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				IP:          []string{"208.67.222.222", "208.67.220.220"},
 				Port:        "5353",
 			})
-		for i := range dohs {
-			dohs[i].OutboundTag = "proxy"
+		if setting.AntiPollution == configure.DnsForward {
+			for i := range dohRouting {
+				dohRouting[i].OutboundTag = "proxy"
+			}
 		}
 	} else {
 		t.Routing.Rules = append(t.Routing.Rules, df)
 	}
-	t.Routing.Rules = append(t.Routing.Rules, dohs...)
+	t.Routing.Rules = append(t.Routing.Rules, dohRouting...)
 	t.Routing.Rules = append(t.Routing.Rules,
 		RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
 			Type:        "field",

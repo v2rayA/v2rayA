@@ -8,8 +8,9 @@ import (
 
 /*
 protocol: tcp udp
+loose: 宽松模式
 */
-func IsPortOccupied(port string, protocol string) (occupied bool, which string) {
+func IsPortOccupied(port string, protocol string, loose bool) (occupied bool, which string) {
 	pint, _ := strconv.Atoi(port)
 	p := uint16(pint)
 	var tabs []netstat.SockTabEntry
@@ -19,11 +20,20 @@ func IsPortOccupied(port string, protocol string) (occupied bool, which string) 
 		if s.LocalAddr.Port != p {
 			return false
 		}
-		switch s.State {
-		case netstat.Close, netstat.Closing, netstat.FinWait1, netstat.FinWait2, netstat.TimeWait, netstat.Established:
-			return false
+		if loose {
+			switch s.State {
+			case netstat.FinWait1, netstat.FinWait2, netstat.Close, netstat.CloseWait, netstat.Closing, netstat.TimeWait, netstat.LastAck:
+				return false
+			}
+			return true
+		} else {
+			switch s.State {
+			case netstat.FinWait1, netstat.FinWait2, netstat.Close, netstat.CloseWait, netstat.Closing, netstat.TimeWait, netstat.LastAck, netstat.Established:
+				return false
+			}
+			return true
 		}
-		return true
+
 	}
 	switch strings.ToLower(protocol) {
 	case "tcp":

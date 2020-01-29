@@ -10,6 +10,7 @@ type (
 	TouchType               string
 	DefaultYesNo            string
 	TransparentMode         string
+	Antipollution           string
 )
 
 const (
@@ -46,4 +47,8 @@ const (
 	SubscriptionType       = TouchType("subscription")
 	ServerType             = TouchType("server")
 	SubscriptionServerType = TouchType("subscriptionServer")
+
+	DnsForward        = Antipollution("dnsforward")
+	DoH               = Antipollution("doh")
+	AntipollutionNone = Antipollution("none")
 )

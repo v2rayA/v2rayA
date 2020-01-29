@@ -111,7 +111,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			port = port + 1
 		}
 		for {
-			if occupied, which := ports.IsPortOccupied(strconv.Itoa(port), "tcp"); occupied && !strings.Contains(which, "v2ray") {
+			if occupied, which := ports.IsPortOccupied(strconv.Itoa(port), "tcp", false); occupied && !strings.Contains(which, "v2ray") {
 				port++
 			} else {
 				break
@@ -124,7 +124,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			//再找一个空端口
 			port++
 			for {
-				if occupied, which := ports.IsPortOccupied(strconv.Itoa(port), "tcp"); occupied && !strings.Contains(which, "v2ray") {
+				if occupied, which := ports.IsPortOccupied(strconv.Itoa(port), "tcp", false); occupied && !strings.Contains(which, "v2ray") {
 					port++
 				} else {
 					break
