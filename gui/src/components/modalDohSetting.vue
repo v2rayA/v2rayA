@@ -23,7 +23,8 @@
         </p>
         <p>
           另外，您可以在未受到DNS污染的国内服务器上自架DoH服务，以纵享丝滑。<a
-            href="https://dnscrypt.info/implementations" target="_blank"
+            href="https://dnscrypt.info/implementations"
+            target="_blank"
             >Server Implementations</a
           >
         </p>
