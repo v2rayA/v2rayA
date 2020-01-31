@@ -178,7 +178,7 @@ func checkUpdate() {
 		for {
 			c := http.DefaultClient
 			c.Timeout = 10 * time.Second
-			resp, err := http.Get("http://detectportal.firefox.com/success.txt")
+			resp, err := http.Get("http://www.gstatic.com/generate_204")
 			if err == nil {
 				_ = resp.Body.Close()
 				break

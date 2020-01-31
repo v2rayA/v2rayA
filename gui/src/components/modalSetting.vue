@@ -120,7 +120,9 @@
           防止DNS污染
           <b-tooltip
             type="is-dark"
-            label="可以有效规避DNS污染，但会降低网页打开速度，请视情况开启。转发DNS查询: 万金油，通过代理服务器转发DNS请求，但对网速影响稍大。DoH(v2ray-core: 4.22.0+): 对网速影响较小，需选择较快的DoH服务提供商。"
+            label="可以有效规避DNS污染，但会降低网页打开速度，请视情况开启。
+            ★转发DNS查询: 万金油，通过代理服务器转发DNS请求，可在代理服务器速度较快时使用。
+            ★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，需选择较快且稳定的DoH服务提供商。"
             multilined
             position="is-right"
           >
