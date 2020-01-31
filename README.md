@@ -41,7 +41,8 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 待开发：
 
-- [ ] 自定义 PAC 路由规则
+- [ ] 回国模式
+- [ ] 自定义路由规则
 - [ ] QUIC、auth_chain\*支持
 - [ ] 透明代理重定向备选方案
 - [ ] 日志
@@ -69,7 +70,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 如下使用方法：
 
 1. **使用apt-get安装**（debian、ubuntu）
-   
+  
    请确保已正确安装 v2ray-core
 
    我们提供了 Linux 下的一键安装脚本（在官方脚本基础上增加了ustc镜像源）：
@@ -97,7 +98,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
    
 2. **使用yay/yaourt安装**（archlinux、manjaro）
-   
+  
    由于v2raya发布在AUR中，而pacman不支持AUR，因此建议使用主流的yay或yaourt作为替代方案
 
    ```bash
@@ -216,15 +217,19 @@ V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使�
 
 ### 自行编译运行
 
-当然，你也可以选择拉取源码，**通过 golang 启动**：
+当然，你也可以选择拉取源码，**编译为二进制文件运行**：
 
 该方法同样需要正确安装v2ray-core，详情见上
 
 ```bash
 git clone https://github.com/mzz2017/V2RayA.git
 cd V2RayA/service
-export GOPROXY=https://goproxy.io # set goproxy.io as the proxy of go modules
-sudo go run main.go
+# set goproxy.io as the proxy of go modules
+export GOPROXY=https://goproxy.io
+# compile
+go build -o v2raya
+# run
+sudo ./v2raya
 ```
 
 注意，尽管 golang 具有交叉编译的特性，但由于项目使用了大量 linux commands，导致该方法仍然不支持 windows。若想在 windows 体验，可尝试借助 Docker 或 WSL。
