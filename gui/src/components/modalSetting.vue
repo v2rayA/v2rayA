@@ -61,7 +61,7 @@
           全局透明代理
           <b-tooltip
             type="is-dark"
-            label="全局代理开启后，任何TCP、UDP流量均会经过V2Ray，此时PAC端口的配置将被覆盖。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker不会走代理。"
+            label="全局代理开启后，无需经过额外设置，任何TCP、UDP流量均会经过V2Ray。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker容器不会走代理。"
             multilined
             position="is-right"
           >
@@ -93,7 +93,22 @@
           </b-checkbox-button>
         </template>
       </b-field>
-      <b-field label="PAC模式" label-position="on-border">
+      <b-field label-position="on-border">
+        <template slot="label">
+          PAC模式
+          <b-tooltip
+            type="is-dark"
+            label="PAC端口使用的路由模式。默认情况下PAC端口为20172，HTTP协议。"
+            multilined
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            />
+          </b-tooltip>
+        </template>
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单(Recommend)</option>
           <option value="gfwlist">GFWList</option>
@@ -120,9 +135,9 @@
           防止DNS污染
           <b-tooltip
             type="is-dark"
-            label="可以有效规避DNS污染，但会降低网页打开速度，请视情况开启。
-            ★转发DNS查询: 万金油，通过代理服务器转发DNS请求，可在代理服务器速度较快时使用。
-            ★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，需选择较快且稳定的DoH服务提供商。"
+            label="可以有效规避DNS污染，但会降低网页打开速度，请视网络环境开启。
+            ★转发DNS查询: 通过代理服务器转发DNS请求，可在代理服务器速度较快时使用。
+            ★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，需选择较快且稳定的DoH服务提供商，开启DoH会显著影响v2ray-core配置加载速度，请耐心等待。"
             multilined
             position="is-right"
           >
@@ -174,7 +189,7 @@
           多路复用
           <b-tooltip
             type="is-dark"
-            label="复用TCP连接以减少握手延迟，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。"
+            label="复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。"
             multilined
             position="is-right"
           >
