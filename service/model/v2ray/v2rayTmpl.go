@@ -504,12 +504,26 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
+		hosts := make([]string, len(dohHosts))
+		for i := range dohHosts {
+			hosts[i] = "full:" + dohHosts[i]
+		}
 		dohRouting = append(dohRouting, RoutingRule{
 			Type:        "field",
 			OutboundTag: "direct", //如果配置了dns转发，此处将被改成proxy
 			IP:          dohIPs,
 			Port:        "443",
+		}, RoutingRule{
+			Type:        "field",
+			OutboundTag: "direct", //如果配置了dns转发，此处将被改成proxy
+			Domain:      hosts,
+			Port:        "443",
 		})
+	}
+	if setting.AntiPollution == configure.DnsForward {
+		for i := range dohRouting {
+			dohRouting[i].OutboundTag = "proxy"
+		}
 	}
 	if setting.AntiPollution != configure.AntipollutionNone {
 		df.OutboundTag = "dns-out"
@@ -533,11 +547,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				IP:          []string{"208.67.222.222", "208.67.220.220"},
 				Port:        "5353",
 			})
-		if setting.AntiPollution == configure.DnsForward {
-			for i := range dohRouting {
-				dohRouting[i].OutboundTag = "proxy"
-			}
-		}
 	} else {
 		t.Routing.Rules = append(t.Routing.Rules, df)
 	}
