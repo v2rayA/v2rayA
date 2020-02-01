@@ -455,7 +455,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	)
 	if setting.AntiPollution == configure.AntipollutionNone {
 		t.DNS = new(DNS)
-		t.DNS.Servers = []interface{}{"localhost"}
+		t.DNS.Servers = []interface{}{"119.29.29.29", "localhost"} //防止DNS劫持，使用DNSPod作为主DNS
 	}
 	//再修改inbounds
 	tproxy := "tproxy"
@@ -499,7 +499,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		Type:        "field",
 		InboundTag:  []string{"transparent", "socks", "http", "pac"},
 		Port:        "53",
-		OutboundTag: "direct",
+		OutboundTag: "dns-out",
 	}
 
 	dohRouting := make([]RoutingRule, 0)
@@ -526,7 +526,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	}
 	if setting.AntiPollution != configure.AntipollutionNone {
-		df.OutboundTag = "dns-out"
+		//df.OutboundTag = "dns-out"
 		t.Routing.Rules = append(t.Routing.Rules, df)
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{ // 国内DNS服务器直连，以分流
