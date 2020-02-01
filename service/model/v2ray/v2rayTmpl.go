@@ -232,6 +232,13 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 	o.Protocol = v.Protocol
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
+	// 将地址转换为IP，加快连接速度
+	if ip := net.ParseIP(v.Add); ip == nil {
+		ips, _ := net.LookupHost(v.Add)
+		if len(ips) > 0 {
+			v.Add = ips[0]
+		}
+	}
 	switch strings.ToLower(v.Protocol) {
 	case "vmess":
 		o.Settings.Vnext = []Vnext{
@@ -497,7 +504,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	//最后是routing
 	df := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
 		Type:        "field",
-		InboundTag:  []string{"transparent", "socks", "http", "pac"},
 		Port:        "53",
 		OutboundTag: "dns-out",
 	}
@@ -652,12 +658,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		case configure.TransparentProxy:
 		case configure.TransparentWhitelist:
 			t.Routing.Rules = append(t.Routing.Rules,
-				RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
-					Type:        "field",
-					OutboundTag: "direct",
-					InboundTag:  []string{"transparent"},
-					IP:          []string{"geoip:private", "geoip:cn"},
-				},
 				RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
 					Type:        "field",
 					OutboundTag: "direct",

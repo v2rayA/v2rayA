@@ -134,8 +134,9 @@ iptables -t mangle -A PREROUTING -j SSTP_PRE
 iptables -t mangle -N SETMARK
 iptables -t mangle -A SETMARK -i docker+ -j RETURN
 `
-	s := configure.GetSettingNotNil()
-	if s.AntiPollution != configure.AntipollutionNone {
+	//s := configure.GetSettingNotNil()
+	//if s.AntiPollution != configure.AntipollutionNone {
+	if true {
 		commands += `
 iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
