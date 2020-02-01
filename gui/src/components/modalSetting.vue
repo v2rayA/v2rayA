@@ -135,7 +135,7 @@
           防止DNS污染
           <b-tooltip
             type="is-dark"
-            label="可以有效规避DNS污染，但会降低网页打开速度，请视网络环境开启。
+            label="关闭时默认使用DNSPod防止DNS劫持(v0.6.3+)，开启后可以有效规避DNS污染，但会降低网页打开速度，请视网络环境开启。
             ★转发DNS查询: 通过代理服务器转发DNS请求，可在代理服务器速度较快时使用。
             ★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，需选择较快且稳定的DoH服务提供商，开启DoH会显著影响v2ray-core配置加载速度，请耐心等待。"
             multilined
