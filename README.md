@@ -50,15 +50,19 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 ## 界面截图
 
 <img src="http://mzzeast.shumsg.cn/FtwssiGjyR_IXalEiquQw--5ChYl" />
+
 <p align="center">节点</p>
 <img src="http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-" />
+
 <p align="center">订阅源</p>
-<img src="http://mzzeast.shumsg.cn/FkOIrdEqCXvqQEgMH166RsugmaSs" />
+<img src="http://mzzeast.shumsg.cn/Fk2iK2bhjA7a1PyyycMZYy0GadsY" />
+
 <p align="center">设置</p>
 <details>
     <summary>点击展开更多截图</summary>
-<img src="http://mzzeast.shumsg.cn/FiVwkK1H5PqTevGcVAp34GCOuERE" />
-<p align="center">使用自定义PAC时可以配置路由规则（待实现）</p>
+<img src="http://mzzeast.shumsg.cn/FplKWoEoiKWRu4B8qA_p-cX1P8L6" />
+<p align="center">自定义路由规则</p>
+
 
 
 </details>
