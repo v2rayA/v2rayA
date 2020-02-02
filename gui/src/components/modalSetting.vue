@@ -75,8 +75,11 @@
         <b-select v-model="transparent" expanded>
           <option value="close">关闭</option>
           <option value="proxy">代理模式</option>
-          <option value="whitelist">大陆白名单(Recommend)</option>
+          <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
+          <option v-show="showTransparentModePac" value="pac"
+            >与PAC模式一致</option
+          >
         </b-select>
         <template v-if="transparent !== 'close'">
           <b-button
@@ -112,14 +115,9 @@
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单(Recommend)</option>
           <option value="gfwlist">GFWList</option>
-          <option value="custom">自定义PAC（待开发）</option>
+          <option value="custom">自定义路由规则</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
-          <b-input
-            v-model="customPac.url"
-            placeholder="SiteDAT file URL"
-            custom-class="no-shadow"
-          />
           <b-button
             v-if="pacMode === 'custom'"
             type="is-primary"
@@ -149,7 +147,7 @@
           </b-tooltip>
         </template>
         <b-select v-model="antipollution" expanded class="left-border">
-          <option value="none">仅防止NDS劫持(v0.6.3+)</option>
+          <option value="none">仅防止DNS劫持(v0.6.3+)</option>
           <option value="dnsforward">防止DNS污染：转发DNS查询</option>
           <option v-show="showDoh" value="doh"
             >防止DNS污染：DoH(DNS-over-HTTPS)</option
@@ -302,18 +300,14 @@ export default {
     subscriptionAutoUpdateMode: "none",
     customSiteDAT: {},
     pacMode: "whitelist",
-    customPac: {
-      url: "",
-      defaultProxyMode: "direct",
-      routingRules: []
-    },
     showClockPicker: true,
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
     customPacFileVersion: "checking...",
     showAntipollution: false,
-    showDoh: false
+    showDoh: false,
+    showTransparentModePac: false
   }),
   computed: {
     dockerMode() {
@@ -364,6 +358,10 @@ export default {
           isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
           localStorage["dohValid"] === "yes";
       });
+      this.showTransparentModePac = isVersionGreaterEqual(
+        localStorage["version"],
+        "0.6.4"
+      );
     });
     //白名单有没有项，没有就post一下
     this.$axios({
@@ -416,7 +414,6 @@ export default {
           subscriptionAutoUpdateTime: this.subscriptionAutoUpdateTime
             ? this.subscriptionAutoUpdateTime.getTime()
             : 0,
-          customPac: this.customPac,
           pacMode: this.pacMode,
           tcpFastOpen: this.tcpFastOpen,
           muxOn: this.muxOn,
@@ -439,26 +436,6 @@ export default {
     },
     handleClickSubmit() {
       if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
-        return;
-      }
-      if (this.pacMode === "custom" && this.customPac.url.length <= 0) {
-        this.$buefy.toast.open({
-          message: "自定义PAC模式下，SiteDAT file URL不能为空",
-          type: "is-warning",
-          position: "is-top",
-          duration: 3000
-        });
-        return;
-      } else if (
-        this.pacMode === "custom" &&
-        this.customPac.routingRules.length <= 0
-      ) {
-        this.$buefy.toast.open({
-          message: "您还没有配置PAC路由呢",
-          type: "is-warning",
-          position: "is-top",
-          duration: 3000
-        });
         return;
       }
       if (this.transparent !== "close" && !isIntranet(apiRoot)) {
@@ -500,15 +477,7 @@ export default {
         parent: this,
         component: ModalConfigurePac,
         hasModalCard: true,
-        canCancel: false,
-        props: {
-          customPac: this.customPac
-        },
-        events: {
-          submit(val) {
-            that.customPac = val;
-          }
-        }
+        canCancel: false
       });
     },
     handleClickPortWhiteList() {

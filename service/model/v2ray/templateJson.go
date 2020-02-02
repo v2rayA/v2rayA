@@ -73,6 +73,11 @@ const TemplateJson = `{
         "protocol": "freedom",
         "settings": {},
         "tag": "direct"
+      },
+      {
+        "protocol": "blackhole",
+        "settings": {},
+        "tag": "block"
       }
     ],
     "routing": {
