@@ -710,6 +710,19 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				},
 			)
 		case configure.TransparentPac:
+			//transparent模式跟随pac
+			for i := range t.Routing.Rules {
+				bIncludePac := false
+				for _, in := range t.Routing.Rules[i].InboundTag {
+					if in == "pac" {
+						bIncludePac = true
+						break
+					}
+				}
+				if bIncludePac {
+					t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "transparent")
+				}
+			}
 		}
 	} else {
 		_ = iptables.DeleteRules()
