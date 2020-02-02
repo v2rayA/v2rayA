@@ -1,9 +1,11 @@
 FROM golang:alpine AS builder
-ADD ./service /service
 WORKDIR /service
+ADD ./service /service
+ADD .git /service
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.io
-RUN go build -o V2RayA .
+RUN apk --no-cache add git
+RUN VERSION=$(git describe --abbrev=0 --tags) && go build -ldflags="-X V2RayA/global.Version=${VERSION:1}" -o V2RayA .
 
 
 FROM alpine:latest
