@@ -122,9 +122,6 @@ func IsCustomExists() bool {
 	}
 	return true
 }
-func GetCustomModTime() (time.Time, error) {
-	return files.GetFileModTime(GetV2rayLocationAsset() + "/custom.dat")
-}
 
 func GetConfigBytes() (b []byte, err error) {
 	b, err = ioutil.ReadFile(GetConfigPath())

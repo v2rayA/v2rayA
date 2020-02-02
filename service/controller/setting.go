@@ -11,19 +11,14 @@ import (
 
 func GetSetting(ctx *gin.Context) {
 	s := service.GetSetting()
-	var localGFWListVersion, customPacFileVersion string
+	var localGFWListVersion string
 	t, err := v2ray.GetH2yModTime()
 	if err == nil {
 		localGFWListVersion = t.Format("2006-01-02")
 	}
-	t, err = v2ray.GetCustomModTime()
-	if err == nil {
-		customPacFileVersion = t.Format("2006-01-02")
-	}
 	tools.ResponseSuccess(ctx, gin.H{
 		"setting":              s,
 		"localGFWListVersion":  localGFWListVersion,
-		"customPacFileVersion": customPacFileVersion,
 	})
 }
 
