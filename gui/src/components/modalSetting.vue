@@ -38,19 +38,6 @@
           >更新
         </b-button>
       </b-field>
-      <b-field
-        v-if="customPacFileVersion"
-        label="自定义规则"
-        horizontal
-        custom-class="modal-setting-label"
-        >最后更新时间： <span>{{ customPacFileVersion }}</span>
-        <b-button
-          size="is-small"
-          type="is-text"
-          style="position: relative;top:-2px;text-decoration:none"
-          >更新
-        </b-button>
-      </b-field>
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
       <b-field
         v-show="transparentValid"
@@ -304,7 +291,6 @@ export default {
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
-    customPacFileVersion: "checking...",
     showAntipollution: false,
     showDoh: false,
     showTransparentModePac: false
