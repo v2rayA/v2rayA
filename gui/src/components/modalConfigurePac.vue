@@ -4,9 +4,23 @@
     style="max-width: 400px;margin:auto"
   >
     <header class="modal-card-head">
-      <p class="modal-card-title">自定义PAC路由规则</p>
+      <p class="modal-card-title">自定义路由规则</p>
     </header>
     <section class="modal-card-body rules">
+      <b-message type="is-info" class="after-line-dot5">
+        <p>
+          将SiteDat文件放于
+          <b>{{ V2RayLocationAsset }}</b> 目录下，V2rayA将自动进行识别
+        </p>
+        <p>
+          制作SiteDat文件：<a href="https://github.com/ToutyRater/V2Ray-SiteDAT"
+            >ToutyRater/V2Ray-SiteDAT</a
+          >
+        </p>
+      </b-message>
+      <b-message type="is-success" class="after-line-dot5">
+        <p>在选择Tags时，可按Ctrl等多选键进行多选。</p>
+      </b-message>
       <b-collapse class="card">
         <div
           slot="trigger"
@@ -26,6 +40,7 @@
             <b-select v-model="customPac.defaultProxyMode" expanded>
               <option value="direct">直连</option>
               <option value="proxy">代理</option>
+              <option value="block">拦截</option>
             </b-select>
           </b-field>
         </div>
@@ -47,7 +62,7 @@
               type="is-text"
               size="is-small"
               style="position: absolute;right:0"
-              @click="handleClickRule(...arguments, index)"
+              @click="handleClickDeleteRule(...arguments, index)"
               >删除</b-button
             >
           </p>
@@ -63,21 +78,39 @@
           </a>
         </div>
         <div class="card-content">
-          <b-field label="Tags" label-position="on-border">
-            <b-taginput
-              v-model="rule.tags"
-              ellipsis
-              icon=" iconfont icon-label"
-              placeholder="Add a tag"
-            >
-            </b-taginput>
-          </b-field>
-          <b-field label="匹配类型" label-position="on-border">
-            <b-select v-model="rule.matchType" expanded>
-              <option value="domain">上述标签属于域名匹配</option>
-              <option value="ip">上述标签属于IP匹配</option>
+          <b-field label="域名文件" label-position="on-border">
+            <b-select v-model="rule.filename" expanded>
+              <option
+                v-for="file of siteDatFiles"
+                :key="file.filename"
+                :value="file.filename"
+                >{{ file.filename }}</option
+              >
             </b-select>
           </b-field>
+          <b-field label="Tags" label-position="on-border">
+            <b-select
+              v-model="rule.tags"
+              multiple
+              :native-size="
+                siteDatFiles[rule.filename].tags.length > 8
+                  ? 8
+                  : siteDatFiles[rule.filename].tags.length
+              "
+              size="is-small"
+              expanded
+            >
+              <option
+                v-for="tag of siteDatFiles[rule.filename].tags"
+                :key="tag"
+                :value="tag"
+                >{{ tag }}</option
+              >
+            </b-select>
+          </b-field>
+          <p class="content" style="font-size:0.8em;margin-left:0.5em">
+            tags: {{ rule.tags }}
+          </p>
           <b-field label="规则类型" label-position="on-border">
             <b-select v-model="rule.ruleType" expanded>
               <option value="direct"
@@ -125,26 +158,69 @@
 </template>
 
 <script>
+import { handleResponse } from "@/assets/js/utils";
 export default {
   name: "ModalConfigurePac",
-  props: {
-    customPac: {
-      type: Object,
-      default() {
-        return {
-          url: "",
-          defaultProxyMode: "direct",
-          routingRules: []
-        };
-      }
-    }
-  },
   data: () => ({
-    isOpen: 0
+    customPac: {
+      defaultProxyMode: "",
+      routingRules: []
+    },
+    siteDatFiles: [],
+    firstSiteDatFilename: "",
+    V2RayLocationAsset: ""
   }),
+  created() {
+    (async () => {
+      let closing = false;
+      let promiseSiteDatFiles = this.$axios({
+        url: apiRoot + "/siteDatFiles"
+      }).then(res => {
+        handleResponse(res, this, () => {
+          if (
+            res.data.data.siteDatFiles &&
+            res.data.data.siteDatFiles.length > 0
+          ) {
+            //将数组转换为map
+            this.siteDatFiles = {};
+            res.data.data.siteDatFiles.forEach(x => {
+              this.siteDatFiles[x.filename] = x;
+              x.tags.sort(); //对tags进行排序，方便查找
+            });
+            this.firstSiteDatFilename = res.data.data.siteDatFiles[0].filename;
+          } else {
+            this.$buefy.toast.open({
+              message: "未在V2RayLocationAsset中发现siteDat文件",
+              type: "is-warning",
+              position: "is-top",
+              queue: false,
+              duration: 5000
+            });
+            closing = true;
+          }
+        });
+      });
+      let customPac;
+      let promiseConfigurePac = this.$axios({
+        url: apiRoot + "/customPac"
+      }).then(res => {
+        handleResponse(res, this, () => {
+          customPac = res.data.data.customPac;
+          this.V2RayLocationAsset = res.data.data.V2RayLocationAsset;
+        });
+      });
+      await Promise.all([promiseConfigurePac, promiseSiteDatFiles]).then(() => {
+        this.customPac = customPac;
+        if (closing) {
+          this.$parent.close();
+        }
+      });
+    })();
+  },
   methods: {
     handleNew() {
       this.customPac.routingRules.push({
+        filename: this.firstSiteDatFilename,
         tags: [],
         matchType: "domain",
         ruleType:
@@ -155,7 +231,7 @@ export default {
         target.scrollTop = target.scrollHeight - target.clientHeight;
       });
     },
-    handleClickRule(event, index) {
+    handleClickDeleteRule(event, index) {
       event.stopImmediatePropagation();
       delete this.customPac.routingRules.splice(index, 1);
     },
@@ -169,8 +245,17 @@ export default {
         });
         return;
       }
-      this.$emit("submit", this.customPac);
-      this.$parent.close();
+      this.$axios({
+        url: apiRoot + "/customPac",
+        method: "put",
+        data: {
+          customPac: this.customPac
+        }
+      }).then(res => {
+        handleResponse(res, this, () => {
+          this.$parent.close();
+        });
+      });
     }
   }
 };
@@ -186,5 +271,11 @@ export default {
 <style lang="scss">
 .icon-label {
   font-size: 24px !important;
+}
+.after-line-dot5 {
+  font-size: 14px;
+  p {
+    font-size: 14px;
+  }
 }
 </style>

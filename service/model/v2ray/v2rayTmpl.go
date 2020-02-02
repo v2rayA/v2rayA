@@ -6,6 +6,7 @@ import (
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"errors"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"net"
@@ -561,7 +562,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
 			Type:        "field",
 			OutboundTag: "direct",
-			InboundTag:  []string{"transparent"},
 			Network:     "udp",
 			Port:        "123",
 		},
@@ -585,14 +585,14 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	}
 
-	//端口入口有自己的规则
-	t.Routing.Rules = append(t.Routing.Rules,
-		RoutingRule{ // socks和http无论在全局还是非全局模式下都走代理
-			Type:        "field",
-			OutboundTag: "proxy",
-			InboundTag:  []string{"socks", "http"},
-		},
-	)
+	////端口入口有自己的规则
+	//t.Routing.Rules = append(t.Routing.Rules,
+	//	RoutingRule{ // socks和http无论在全局还是非全局模式下都走代理
+	//		Type:        "field",
+	//		OutboundTag: "proxy",
+	//		InboundTag:  []string{"socks", "http"},
+	//	},
+	//)
 	//PAC端口规则
 	switch setting.PacMode {
 	case configure.WhitelistMode:
@@ -625,28 +625,52 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			},
 		)
 	case configure.CustomMode:
-		for _, v := range setting.CustomPac.RoutingRules {
-			rule := RoutingRule{
-				Type:        "field",
-				OutboundTag: string(v.RuleType),
-				InboundTag:  []string{"pac"},
+		customPac := configure.GetCustomPacNotNil()
+		var lastOutboundTag string
+		var lastMatchType configure.PacMatchType
+		for _, v := range customPac.RoutingRules {
+			reuse := false
+			var rule *RoutingRule
+			//如果相邻规则的outbound类型以及matchType相同，则合并
+			if string(v.RuleType) == lastOutboundTag && v.MatchType == lastMatchType {
+				rule = &t.Routing.Rules[len(t.Routing.Rules)-1]
+				reuse = true
+			} else {
+				rule = &RoutingRule{
+					Type:        "field",
+					OutboundTag: string(v.RuleType),
+					InboundTag:  []string{"pac"},
+				}
 			}
 			for i := range v.Tags {
-				v.Tags[i] = "ext:custom.dat:" + v.Tags[i]
+				r := fmt.Sprintf("ext:%v:%v", v.Filename, v.Tags[i])
+				switch v.MatchType {
+				case configure.DomainMatchRule:
+					rule.Domain = append(rule.Domain, r)
+				case configure.IpMatchRule:
+					rule.IP = append(rule.IP, r)
+				}
 			}
-			switch v.MatchType {
-			case configure.DomainMatchRule:
-				rule.Domain = v.Tags
-			case configure.IpMatchRule:
-				rule.IP = v.Tags
+			if !reuse {
+				t.Routing.Rules = append(t.Routing.Rules, *rule)
 			}
-			t.Routing.Rules = append(t.Routing.Rules, rule)
+			lastOutboundTag = string(v.RuleType)
+			lastMatchType = v.MatchType
 		}
-		//如果默认直连，规则内的才走代理，则需要加上下述规则
-		if setting.CustomPac.DefaultProxyMode == "direct" {
+		switch customPac.DefaultProxyMode {
+		case configure.DefaultProxyMode:
+		case configure.DefaultDirectMode:
+			//如果默认直连，则需要加上下述规则
 			t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+			})
+		case configure.DefaultBlockMode:
+			//如果默认拦截，则需要加上下述规则
+			t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+				Type:        "field",
+				OutboundTag: "block",
 				InboundTag:  []string{"pac"},
 			})
 		}
@@ -685,6 +709,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 					InboundTag:  []string{"transparent"},
 				},
 			)
+		case configure.TransparentPac:
 		}
 	} else {
 		_ = iptables.DeleteRules()

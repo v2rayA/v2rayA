@@ -21,6 +21,7 @@ type Configure struct {
 	CustomPorts     Ports             `json:"ports"`
 	PortWhiteList   PortWhiteList     `json:"portWhiteList"`
 	DohList         string            `json:"dohlist"`
+	CustomPac       CustomPac         `json:"customPac"`
 }
 
 func New() *Configure {
@@ -87,6 +88,9 @@ func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
 func SetDohList(dohList *string) (err error) {
 	return persistence.Set("dohList", strings.TrimSpace(*dohList))
 }
+func SetCustomPac(customPac *CustomPac) (err error) {
+	return persistence.Set("customPac", customPac)
+}
 
 func AppendServer(server *ServerRaw) (err error) {
 	return persistence.Append("servers", server)
@@ -152,6 +156,14 @@ func GetDohListNotNil() *string {
 https://i.233py.com/dns-query
 https://1.0.0.1/dns-query`
 	}
+	return r
+}
+func GetCustomPacNotNil() *CustomPac {
+	r := &CustomPac{
+		DefaultProxyMode: DefaultDirectMode,
+		RoutingRules:     []RoutingRule{},
+	}
+	_ = persistence.Get("customPac", &r)
 	return r
 }
 func GetConnectedServer() *Which {

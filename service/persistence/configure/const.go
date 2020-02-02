@@ -18,6 +18,7 @@ const (
 	TransparentProxy     = TransparentMode("proxy")
 	TransparentWhitelist = TransparentMode("whitelist")
 	TransparentGfwlist   = TransparentMode("gfwlist")
+	TransparentPac       = TransparentMode("pac")
 
 	Default = DefaultYesNo("default")
 	Yes     = DefaultYesNo("yes")
@@ -43,6 +44,7 @@ const (
 
 	DefaultDirectMode = RoutingDefaultProxyMode("direct")
 	DefaultProxyMode  = RoutingDefaultProxyMode("proxy")
+	DefaultBlockMode  = RoutingDefaultProxyMode("block")
 
 	SubscriptionType       = TouchType("subscription")
 	ServerType             = TouchType("server")

@@ -81,8 +81,11 @@ axios.interceptors.response.use(
   function(err) {
     console.log("!!", err.name, err.message);
     console.log(Object.assign({}, err));
-    let u = parseURL(err.config.url);
-    let host = u.host;
+    let u, host;
+    if (err.config) {
+      u = parseURL(err.config.url);
+      host = u.host;
+    }
     if (err.response && err.response.status === 401) {
       //401未授权
       new Vue({
