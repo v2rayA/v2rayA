@@ -100,7 +100,7 @@
           </b-tooltip>
         </template>
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
-          <option value="whitelist">大陆白名单(Recommend)</option>
+          <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
           <option v-show="showTransparentModeRoutingPac" value="custom"
             >自定义路由规则</option
