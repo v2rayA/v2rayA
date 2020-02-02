@@ -64,7 +64,7 @@
           <option value="proxy">代理模式</option>
           <option value="whitelist">大陆白名单</option>
           <option value="gfwlist">GFWList</option>
-          <option v-show="showTransparentModePac" value="pac"
+          <option v-show="showTransparentModeRoutingPac" value="pac"
             >与PAC模式一致</option
           >
         </b-select>
@@ -102,7 +102,9 @@
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
           <option value="whitelist">大陆白名单(Recommend)</option>
           <option value="gfwlist">GFWList</option>
-          <option value="custom">自定义路由规则</option>
+          <option v-show="showTransparentModeRoutingPac" value="custom"
+            >自定义路由规则</option
+          >
         </b-select>
         <template v-if="pacMode === 'custom'">
           <b-button
@@ -293,7 +295,7 @@ export default {
     localGFWListVersion: "checking...",
     showAntipollution: false,
     showDoh: false,
-    showTransparentModePac: false
+    showTransparentModeRoutingPac: false
   }),
   computed: {
     dockerMode() {
@@ -344,7 +346,7 @@ export default {
           isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
           localStorage["dohValid"] === "yes";
       });
-      this.showTransparentModePac = isVersionGreaterEqual(
+      this.showTransparentModeRoutingPac = isVersionGreaterEqual(
         localStorage["version"],
         "0.6.4"
       );

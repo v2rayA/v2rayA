@@ -11,6 +11,12 @@ function locateServer(touch, whichServer) {
 }
 
 function handleResponse(res, that, suc, err) {
+  if (!res.data) {
+    if (err && err instanceof Function) {
+      err.apply(that);
+    }
+    return;
+  }
   if (res.data.code === "SUCCESS") {
     suc.apply(that);
   } else {
