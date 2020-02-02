@@ -477,7 +477,7 @@ export default {
         parent: this,
         component: ModalConfigurePac,
         hasModalCard: true,
-        canCancel: false
+        canCancel: true
       });
     },
     handleClickPortWhiteList() {

@@ -22,6 +22,10 @@ func GetSiteDatFiles() (siteDats []siteDat.SiteDat) {
 			continue
 		}
 		if path.Ext(strings.ToLower(f.Name())) == ".dat" {
+			if f.Name() == "geoip.dat" {
+				//暂不支持IPDat
+				continue
+			}
 			var sd siteDat.SiteDat
 			sd.Filename = f.Name()
 			b, err := ioutil.ReadFile(path.Join(dir, f.Name()))
