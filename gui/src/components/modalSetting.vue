@@ -225,15 +225,13 @@
           <option value="auto_update">服务端启动时更新订阅</option>
         </b-select>
       </b-field>
-      <b-field
-        v-if="transparent === 'close'"
-        label="解析订阅链接/更新时优先使用"
-        label-position="on-border"
-      >
+      <b-field label="解析订阅链接/更新时优先使用" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
-          <option value="direct">直连模式</option>
-          <option value="pac">PAC模式</option>
+          <option value="direct">{{
+            transparent === "close" ? "直连模式" : "跟随全局透明代理"
+          }}</option>
           <option value="proxy">代理模式</option>
+          <option value="pac">PAC模式</option>
         </b-select>
       </b-field>
       <!--      <b-field label="SERVER列表" label-position="on-border">-->
