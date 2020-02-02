@@ -95,6 +95,12 @@ func initConfigure() {
 			log.Println(err)
 		}
 	}
+	//检查config.json是否存在
+	if _, err := os.Stat(v2ray.GetConfigPath()); err != nil {
+		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
+		t := v2ray.NewTemplate()
+		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
+	}
 }
 
 func checkConnection() {
