@@ -9,7 +9,6 @@ import (
 )
 
 func Disconnect() (err error) {
-	_ = CheckAndStopTransparentProxy()
 	global.SSRs.ClearAll()
 	err = v2ray.StopV2rayService()
 	if err != nil {

@@ -203,7 +203,7 @@ func run() (err error) {
 		_ = v2ray.RestartV2rayService()
 	}
 	//刷新配置以刷新透明代理、ssr server
-	_ = service.CheckAndStopTransparentProxy()
+	_ = v2ray.CheckAndStopTransparentProxy()
 	err = v2ray.UpdateV2rayWithConnectedServer()
 	if err != nil {
 		w := configure.GetConnectedServer()
@@ -226,7 +226,7 @@ func run() (err error) {
 		return
 	}
 	fmt.Println("Quitting...")
-	_ = service.CheckAndStopTransparentProxy()
+	_ = v2ray.CheckAndStopTransparentProxy()
 	return nil
 }
 

@@ -468,7 +468,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	//再修改inbounds
 	tproxy := "tproxy"
 	t.Inbounds = append(t.Inbounds, Inbound{
-		Listen:   "0.0.0.0",
+		Listen:   "::",
 		Port:     12345,
 		Protocol: "dokodemo-door",
 		Sniffing: Sniffing{

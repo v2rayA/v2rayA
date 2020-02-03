@@ -24,8 +24,8 @@ func Ping(which []configure.Which, timeout time.Duration) ([]configure.Which, er
 	//对要Ping的which去重
 	which = whiches.GetNonDuplicated()
 	//暂时关闭透明代理
-	_ = CheckAndStopTransparentProxy()
-	defer CheckAndSetupTransparentProxy(true)
+	_ = v2ray.CheckAndStopTransparentProxy()
+	defer v2ray.CheckAndSetupTransparentProxy(true)
 	//多线程异步ping
 	wg := new(sync.WaitGroup)
 	for i, v := range which {
