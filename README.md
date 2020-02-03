@@ -6,7 +6,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 同时兼容V2Ray、SS、SSR意味着用户不再需要在不同工具之间切换，你甚至可以使用一个混合协议的订阅。
 
-虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App)的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
+虽然 V2RayA 是一个 Web 客户端，它也支持以 PWA(Progressive Web App) 的方式享受桌面端应用的体验。[食用方法](https://www.ithome.com/0/414/429.htm)
 
 得益于Web客户端的优势，你不仅可以将其用于本地计算机，还可以轻松地将它部署在路由器或NAS上。
 
@@ -49,18 +49,23 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 ## 界面截图
 
-<img src="http://mzzeast.shumsg.cn/FtwssiGjyR_IXalEiquQw--5ChYl" />
+<img src="https://s2.ax1x.com/2020/02/03/1wfTbt.png" alt="1wfTbt.png" border="0">
 
 <p align="center">节点</p>
-<img src="http://mzzeast.shumsg.cn/FlF9m8Ze5D24FlS0DfYykKCG0G3-" />
-
-<p align="center">订阅源</p>
-<img src="http://mzzeast.shumsg.cn/Fk2iK2bhjA7a1PyyycMZYy0GadsY" />
-
-<p align="center">设置</p>
 <details>
     <summary>点击展开更多截图</summary>
-<img src="http://mzzeast.shumsg.cn/FplKWoEoiKWRu4B8qA_p-cX1P8L6" />
+
+
+<img src="https://s2.ax1x.com/2020/02/03/1wf4vd.png" alt="1wf4vd.png" border="0">
+
+<p align="center">订阅源</p>
+
+<img src="https://s2.ax1x.com/2020/02/03/1wfoDI.png" alt="1wfoDI.png" border="0">
+
+<p align="center">设置</p>
+
+<img src="https://s2.ax1x.com/2020/02/03/1wfIKA.png" alt="1wfIKA.png" border="0">
+
 <p align="center">自定义路由规则</p>
 
 
