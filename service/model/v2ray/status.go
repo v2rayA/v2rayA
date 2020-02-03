@@ -51,6 +51,8 @@ func IsV2RayRunning() bool {
 	return true
 }
 func RestartV2rayService() (err error) {
+	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
+	_ = CheckAndStopTransparentProxy()
 	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode:
@@ -158,6 +160,11 @@ func RestartV2rayService() (err error) {
 			return errors.New("v2ray-core无法正常启动，可能是配置文件出现问题或所需端口被占用")
 		}
 		time.Sleep(500 * time.Millisecond)
+	}
+	//最后再启动transparentProxy，防止v2ray在启动DOH时需要解析域名
+	err = CheckAndSetupTransparentProxy(false)
+	if err != nil {
+		return
 	}
 	return
 }
@@ -274,6 +281,7 @@ func pretendToStopV2rayService() (err error) {
 }
 
 func StopV2rayService() (err error) {
+	defer CheckAndStopTransparentProxy()
 	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode:
