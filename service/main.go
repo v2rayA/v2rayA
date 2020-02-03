@@ -40,7 +40,7 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, which := ports.IsPortOccupied(port, "tcp", true); occupied && len(which) > 0 {
+	if occupied, which := ports.IsPortOccupied(port, "tcp", true); occupied {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
 }
@@ -123,11 +123,11 @@ func hello() {
 		color.Red.Println("Version:", global.Version)
 	} else {
 		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")
-		fmt.Printf("%v\n", "Waiting for official/v2ray's running. Refer: https://github.com/mzz2017/V2RayA#docker%E6%96%B9%E5%BC%8F")
+		fmt.Printf("%v\n", "Waiting for container v2raya_v2ray's running. Refer: https://github.com/mzz2017/V2RayA#docker%E6%96%B9%E5%BC%8F")
 		for !v2ray.IsV2RayProcessExists() {
 			time.Sleep(1 * time.Second)
 		}
-		fmt.Println("Container official/v2ray is ready.")
+		fmt.Println("Container v2raya_v2ray is ready.")
 	}
 	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 }
