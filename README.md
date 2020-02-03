@@ -136,7 +136,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    # pull stable version of v2raya
    docker pull mzz2017/v2raya:stable
    # pull latest version of v2ray
-   docker pull v2ray/official
+   docker pull v2fly/v2fly-core
    
    # create volume to share data
    docker volume create v2raya_shared-data
@@ -161,7 +161,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    	-v v2raya_shared-data:/etc/v2ray \
    	--env V2RAY_LOCATION_ASSET=/etc/v2ray \
    	--name v2raya_v2ray \
-   	v2ray/official \
+   	v2fly/v2fly-core \
    	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
    ```
    
@@ -171,7 +171,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    # pull stable version of v2raya
    docker pull mzz2017/v2raya:stable
    # pull latest version of v2ray
-   docker pull v2ray/official
+   docker pull v2fly/v2fly-core
    
    # create volume to share data
    docker volume create v2raya_shared-data
@@ -196,7 +196,7 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
        -v v2raya_shared-data:/etc/v2ray \
        --env V2RAY_LOCATION_ASSET=/etc/v2ray \
        --name v2raya_v2ray \
-       v2ray/official \
+       v2fly/v2fly-core \
        /bin/sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
    ```
 部署完毕后，在[GUI demo](https://v2raya.mzz.pub)使用（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。

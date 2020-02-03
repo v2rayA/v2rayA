@@ -21,6 +21,12 @@ func Min(a, b int) int {
 
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
+	if v1 == "debug" {
+		return true, nil
+	}
+	if v2 == "debug" {
+		return false, nil
+	}
 	a1 := strings.Split(v1, ".")
 	a2 := strings.Split(v2, ".")
 	l := Min(len(a1), len(a2))

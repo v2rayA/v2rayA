@@ -2,10 +2,10 @@ package service
 
 import (
 	"V2RayA/global"
+	"V2RayA/tools"
 	"bytes"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -38,29 +38,6 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	}
 	s = s[:r]
 	// 远端版本获取完毕
-	if strings.ToLower(global.Version) == "debug" {
-		return false, s, nil //debug模式无需检查更新
-	}
-	local := strings.Split(global.Version, ".")
-	remote := strings.Split(s, ".")
-	mlen := len(local)
-	if len(remote) < mlen {
-		mlen = len(remote)
-	}
-	for i := 0; i < mlen; i++ {
-		lc, err := strconv.Atoi(local[i])
-		if err != nil {
-			return false, "", err
-		}
-		rm, err := strconv.Atoi(remote[i])
-		if err != nil {
-			return false, "", err
-		}
-		if lc < rm { //按节比较，某一节如果本地小于远端，则需要更新
-			return true, s, nil
-		} else if lc > rm { //奇怪的事情，本地版本高于远端
-			return false, "", errors.New("奇怪的事情发生了，本地版本高于远端")
-		}
-	}
-	return len(remote) > len(local), s, nil //如果前面都一样，远端版本号长度更长则需要更新
+	ge, err := tools.VersionGreaterEqual(global.Version, s)
+	return !ge, s, err
 }

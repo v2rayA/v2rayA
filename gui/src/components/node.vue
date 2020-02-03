@@ -515,7 +515,7 @@ export default {
     handleClickImport() {
       const that = this;
       this.$buefy.dialog.prompt({
-        message: `填入ss/vmess/订阅地址`,
+        message: `填入ss/ssr/vmess/订阅地址`,
         inputAttrs: {
           type: "text",
           value: ""
