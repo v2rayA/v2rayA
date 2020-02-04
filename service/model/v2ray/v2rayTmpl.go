@@ -125,6 +125,7 @@ type StreamSettings struct {
 }
 type Sockopt struct {
 	Mark        *int    `json:"mark,omitempty"`
+	Tos         *int    `json:"tos,omitempty"`
 	TCPFastOpen *bool   `json:"tcpFastOpen,omitempty"`
 	Tproxy      *string `json:"tproxy,omitempty"`
 }
@@ -405,7 +406,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	for _, u := range t.DNS.Servers {
 		switch u := u.(type) {
 		case string:
-			if !strings.HasPrefix(strings.ToLower(u), "https://") {
+			if !strings.HasPrefix(strings.ToLower(u), "https://") &&
+				!strings.HasPrefix(strings.ToLower(u), "https+local://") {
 				break
 			}
 			uu, e := url.Parse(u)
@@ -435,6 +437,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Address: "1.1.1.1",
 				Port:    53,
 			},
+			DnsServer{
+				Address: "114.114.114.114",
+				Port:    53,
+			},
 		}
 	}
 	ds := DnsServer{
@@ -460,7 +466,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	}
 	t.DNS.Servers = append(t.DNS.Servers,
-		"114.114.114.114",
+		//"114.114.114.114",
 		ds,
 	)
 	if setting.AntiPollution == configure.AntipollutionNone {
@@ -483,6 +489,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	})
 	//再修改outbounds
 	mark := 0xff
+	tos := 184
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "dns-out",
 		Protocol: "dns",
@@ -503,6 +510,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
 		}
 		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
+		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}
 	//最后是routing
 	df := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
@@ -760,6 +768,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 		return
 	}
 	var mark = 0xff
+	var tos = 184
 	if o.StreamSettings == nil {
 		o.StreamSettings = new(StreamSettings)
 	}
@@ -767,6 +776,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 		o.StreamSettings.Sockopt = new(Sockopt)
 	}
 	o.StreamSettings.Sockopt.Mark = &mark
+	o.StreamSettings.Sockopt.Tos = &tos
 	t.Outbounds = append(t.Outbounds, o)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
