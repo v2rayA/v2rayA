@@ -200,6 +200,23 @@ type DnsServer struct {
 	Port    int      `json:"port"`
 	Domains []string `json:"domains,omitempty"`
 }
+type Policy struct {
+	Levels struct {
+		Num0 struct {
+			Handshake         int  `json:"handshake,omitempty"`
+			ConnIdle          int  `json:"connIdle,omitempty"`
+			UplinkOnly        int  `json:"uplinkOnly,omitempty"`
+			DownlinkOnly      int  `json:"downlinkOnly,omitempty"`
+			StatsUserUplink   bool `json:"statsUserUplink,omitempty"`
+			StatsUserDownlink bool `json:"statsUserDownlink,omitempty"`
+			BufferSize        int  `json:"bufferSize,omitempty"`
+		} `json:"0"`
+	} `json:"levels"`
+	System struct {
+		StatsInboundUplink   bool `json:"statsInboundUplink,omitempty"`
+		StatsInboundDownlink bool `json:"statsInboundDownlink,omitempty"`
+	} `json:"system"`
+}
 
 func NewTemplate() (tmpl Template) {
 	return
@@ -506,9 +523,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		if t.Outbounds[i].StreamSettings.Sockopt == nil {
 			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
 		}
-		if t.Outbounds[i].Protocol == "freedom" {
-			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
-		}
+		// DNS请求被路由强行分发到dns-out，无需在此设置DomainStrategy
+		//if t.Outbounds[i].Protocol == "freedom" {
+		//	t.Outbounds[i].Settings.DomainStrategy = "UseIP"
+		//}
 		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
 		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}

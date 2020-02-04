@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -168,6 +169,7 @@ func CheckTProxySupported() (err error) {
 
 func CheckDohSupported() (err error) {
 	ver, err := GetV2rayServiceVersion()
+	log.Println(ver)
 	if err != nil {
 		return errors.New("获取v2ray-core版本失败")
 	}

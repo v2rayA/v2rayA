@@ -137,6 +137,14 @@ function isVersionGreaterEqual(va, vb) {
   }
   va = va.trim();
   vb = vb.trim();
+  if (va.length > 0 && va[0] === "v") {
+    va = va.substr(1);
+  }
+  if (vb.length > 0 && vb[0] === "v") {
+    vb = vb.substr(1);
+  }
+  va.replace("-", ".");
+  vb.replace("-", ".");
   let a = va.split(".");
   let b = vb.split(".");
   let minlen = Math.min(a.length, b.length);

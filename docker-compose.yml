@@ -19,7 +19,7 @@ services:
     restart: always
     image: "v2fly/v2fly-core"
     environment:
-     - V2RAY_LOCATION_ASSET=/etc/v2ray
+      - V2RAY_LOCATION_ASSET=/etc/v2ray
     volumes:
       - shared-data:/etc/v2ray
     entrypoint: sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
