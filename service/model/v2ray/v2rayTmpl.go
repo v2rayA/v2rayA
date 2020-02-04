@@ -394,6 +394,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		s := *configure.GetDohListNotNil()
 		dohs := strings.Split(strings.TrimSpace(s), "\n")
 		for _, doh := range dohs {
+			//使用DOHL模式，默认绕过routing和outbound以加快DOH速度
+			doh = strings.Replace(doh, "https://", "https+local://", 1)
 			t.DNS.Servers = append(t.DNS.Servers, doh)
 		}
 	}
