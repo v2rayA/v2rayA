@@ -251,13 +251,6 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 	o.Protocol = v.Protocol
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
-	// 将地址转换为IP，加快连接速度
-	if ip := net.ParseIP(v.Add); ip == nil {
-		ips, _ := net.LookupHost(v.Add)
-		if len(ips) > 0 {
-			v.Add = ips[0]
-		}
-	}
 	switch strings.ToLower(v.Protocol) {
 	case "vmess":
 		o.Settings.Vnext = []Vnext{
