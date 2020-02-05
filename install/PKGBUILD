@@ -22,6 +22,12 @@ build() {
 
 package() {
     cd "V2RayA-$pkgver"
+    
     install -Dm644 "install/v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
     install -Dm755 "service/v2raya" -t "$pkgdir/usr/bin/"
+    
+    ICON_SOURCE=gui/public/img/icons
+    ICON_TARGET=/usr/share/icons
+    sudo install -Dm644 "$ICON_SOURCE/android-chrome-512x512.png" "$ICON_TARGET/v2raya.png"
+    sudo install -Dm755 "install/v2raya.desktop" -t "$pkgdir/usr/share/applications/"
 }

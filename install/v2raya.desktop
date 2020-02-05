@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Terminal=false
+Type=Application
+Name=V2RayA
+Keywords=Internet;VPN;Proxy;v2ray;v2raya
+Exec=python -m webbrowser "https://v2raya.mzz.pub"
+Icon=/usr/share/icons/v2raya.png
