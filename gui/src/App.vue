@@ -222,9 +222,9 @@
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20171: HTTP协议</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20172: 带PAC的HTTP协议</p>
                         <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">其他端口：</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12345: tproxy （全局透明代理所需）</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12346: ssr server （SS、SSR所需）</p>
-                        <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当docker容器被清除时配置也将随之消失，请做好备份。</p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12345: tproxy </p>
+                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12346: ssr relay</p>
+                        <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
                         <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>
                     </section>
                     <footer class="modal-card-foot">
