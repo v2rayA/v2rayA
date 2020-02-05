@@ -52,21 +52,40 @@ func GetV2rayServiceFilePath() (path string, err error) {
 	var out []byte
 
 	if global.ServiceControlMode == global.SystemctlMode {
-		out, err = exec.Command("sh", "-c", "systemctl status v2ray|grep Loaded|awk '{print $3}'").Output()
+		out, err = exec.Command("sh", "-c", "systemctl status v2ray|grep /v2ray.service").CombinedOutput()
 		if err != nil {
-			path = `/usr/lib/systemd/system/v2ray.service`
+			err = errors.New(strings.TrimSpace(string(out)))
+			if !strings.Contains(string(out), "not be found") {
+				path = `/usr/lib/systemd/system/v2ray.service`
+				return
+			}
 		}
 	} else if global.ServiceControlMode == global.ServiceMode {
-		out, err = exec.Command("sh", "-c", "service v2ray status|grep Loaded|awk '{print $3}'").Output()
+		out, err = exec.Command("sh", "-c", "service v2ray status|grep /v2ray.service").CombinedOutput()
 		if err != nil || strings.TrimSpace(string(out)) == "(Reason:" {
-			path = `/lib/systemd/system/v2ray.service`
+			if !strings.Contains(string(out), "not be found") {
+				path = `/lib/systemd/system/v2ray.service`
+				return
+			}
+			if err != nil {
+				err = errors.New(strings.TrimSpace(string(out)))
+			}
 		}
 	} else {
 		err = errors.New("当前环境无法使用systemctl和service命令")
 		return
 	}
-	sout := strings.TrimSpace(string(out))
-	path = sout[1 : len(sout)-1]
+	if err != nil {
+		return
+	}
+	sout := string(out)
+	l := strings.Index(sout, "/")
+	r := strings.Index(sout, "/v2ray.service")
+	if l < 0 || r < 0 {
+		err = errors.New("getV2rayServiceFilePath失败")
+		return
+	}
+	path = sout[l : r+len("/v2ray.service")]
 	return
 }
 
@@ -147,7 +166,7 @@ func IfTProxyModLoaded() bool {
 func CheckTProxySupported() (err error) {
 	ver, err := GetV2rayServiceVersion()
 	if err != nil {
-		return errors.New("获取v2ray-core版本失败")
+		return errors.New("获取v2ray-core版本失败: " + err.Error())
 	}
 	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
 		return errors.New("v2ray-core版本低于4.19.1")
