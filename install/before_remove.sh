@@ -1,5 +1,4 @@
 #!/bin/sh
 
-systemctl disable v2raya
-systemctl stop v2raya
-systemctl stop v2ray
+systemctl disable v2raya || true
+systemctl stop v2raya || true
