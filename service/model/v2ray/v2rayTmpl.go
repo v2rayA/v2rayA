@@ -486,7 +486,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	//再修改inbounds
 	tproxy := "tproxy"
 	t.Inbounds = append(t.Inbounds, Inbound{
-		Listen:   "::",
+		Listen:   "0.0.0.0",
 		Port:     12345,
 		Protocol: "dokodemo-door",
 		Sniffing: Sniffing{
@@ -597,7 +597,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		group := strings.Split(v.Add, ".")
 		if len(group) >= 2 {
 			domain := strings.Join(group[len(group)-2:], ".")
-			t.Routing.Rules = append([]RoutingRule{RoutingRule{
+			t.Routing.Rules = append([]RoutingRule{{
 				Type:        "field",
 				OutboundTag: "direct",
 				Domain:      []string{"domain:" + domain},
@@ -647,13 +647,13 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		)
 	case configure.CustomMode:
 		customPac := configure.GetCustomPacNotNil()
-		var lastOutboundTag string
+		var lastOutboundTag configure.PacRuleType
 		var lastMatchType configure.PacMatchType
 		for _, v := range customPac.RoutingRules {
 			reuse := false
 			var rule *RoutingRule
 			//如果相邻规则的outbound类型以及matchType相同，则合并
-			if string(v.RuleType) == lastOutboundTag && v.MatchType == lastMatchType {
+			if v.RuleType == lastOutboundTag && v.MatchType == lastMatchType {
 				rule = &t.Routing.Rules[len(t.Routing.Rules)-1]
 				reuse = true
 			} else {
@@ -675,7 +675,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			if !reuse {
 				t.Routing.Rules = append(t.Routing.Rules, *rule)
 			}
-			lastOutboundTag = string(v.RuleType)
+			lastOutboundTag = v.RuleType
 			lastMatchType = v.MatchType
 		}
 		switch customPac.DefaultProxyMode {
