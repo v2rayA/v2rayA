@@ -34,7 +34,7 @@
       /></b-field>
       <b-message type="is-danger" class="after-line-dot5">
         <p>
-          建议上述列表2-3行即可，留空保存可恢复默认
+          建议上述列表1-2行即可，留空保存可恢复默认
         </p>
       </b-message>
     </section>

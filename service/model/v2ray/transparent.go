@@ -15,6 +15,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	if (!checkRunning || IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
 		_ = iptables.DeleteRules()
 		err = iptables.WriteRules()
+		log.Println("CheckAndSetupTransparentProxy: set iptables rules")
 	}
 	return
 }
