@@ -444,10 +444,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Port:    53,
 			},
 			DnsServer{
-				Address: "1.1.1.1",
-				Port:    53,
-			},
-			DnsServer{
 				Address: "114.114.114.114",
 				Port:    53,
 			},

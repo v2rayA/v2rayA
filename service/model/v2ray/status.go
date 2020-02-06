@@ -51,6 +51,8 @@ func IsV2RayRunning() bool {
 	return true
 }
 func RestartV2rayService() (err error) {
+	log.Println("RestartV2rayService: begin")
+	defer log.Println("RestartV2rayService: done")
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
 	_ = CheckAndStopTransparentProxy()
 	var out []byte
@@ -171,6 +173,9 @@ func RestartV2rayService() (err error) {
 
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
+	log.Println("UpdateV2RayConfigAndRestart: begin")
+	defer log.Println("UpdateV2RayConfigAndRestart: done")
+	_ = CheckAndStopTransparentProxy()
 	//读配置，转换为v2ray配置并写入
 	tmpl, err := NewTemplateFromVmessInfo(*v)
 	if err != nil {
