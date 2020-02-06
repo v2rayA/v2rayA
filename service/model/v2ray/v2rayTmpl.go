@@ -5,6 +5,7 @@ import (
 	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
+	"bytes"
 	"errors"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -12,6 +13,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -191,9 +193,11 @@ type HttpSettings struct {
 	Path string   `json:"path"`
 	Host []string `json:"host"`
 }
+type Hosts map[string]string
+
 type DNS struct {
-	Hosts   map[string]string `json:"hosts,omitempty"`
-	Servers []interface{}     `json:"servers"`
+	Hosts   Hosts         `json:"hosts,omitempty"`
+	Servers []interface{} `json:"servers"`
 }
 type DnsServer struct {
 	Address string   `json:"address"`
@@ -400,6 +404,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	if t.DNS == nil {
 		t.DNS = new(DNS)
 	}
+	//修改hosts
+	t.DNS.Hosts = getHosts()
 	//添加DoH服务器
 	if setting.AntiPollution == configure.DoH {
 		s := *configure.GetDohListNotNil()
@@ -456,8 +462,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			"geosite:cn",          // 国内白名单走DNSPod
 			"domain:ntp.org",      // NTP 服务器
 			"domain:dogedoge.com", // mzz2017爱用的多吉
-			"v2raya.mzz.pub",      // V2RayA demo
-			"v.mzz.pub",           // V2RayA demo
+			"full:v2raya.mzz.pub", // V2RayA demo
+			"full:v.mzz.pub",      // V2RayA demo
 		},
 	}
 	if setting.AntiPollution == configure.DoH {
@@ -812,6 +818,31 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 		Type:        "field",
 		OutboundTag: "outbound" + inboundPort,
 		InboundTag:  []string{"inbound" + inboundPort},
+	}
+	return
+}
+
+func getHosts() (h Hosts) {
+	h = make(Hosts)
+	b, err := ioutil.ReadFile("/etc/hosts")
+	if err != nil {
+		return
+	}
+	regex := regexp.MustCompile(`\s+`)
+	lines := bytes.Split(b, []byte("\n"))
+	for _, line := range lines {
+		line = bytes.TrimSpace(line)
+		if bytes.HasPrefix(line, []byte("#")) {
+			continue
+		}
+		s := string(regex.ReplaceAll(line, []byte(" ")))
+		arr := strings.Split(s, " ")
+		lenArr := len(arr)
+		if lenArr > 1 {
+			for i := 1; i < lenArr; i++ {
+				h[arr[i]] = arr[0]
+			}
+		}
 	}
 	return
 }
