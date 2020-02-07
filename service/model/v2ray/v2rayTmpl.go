@@ -404,8 +404,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	if t.DNS == nil {
 		t.DNS = new(DNS)
 	}
-	//修改hosts
-	t.DNS.Hosts = getHosts()
 	//添加DoH服务器
 	if setting.AntiPollution == configure.DoH {
 		s := *configure.GetDohListNotNil()
@@ -484,6 +482,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	if setting.AntiPollution == configure.AntipollutionNone {
 		t.DNS = new(DNS)
 		t.DNS.Servers = []interface{}{"119.29.29.29", "localhost"} //防止DNS劫持，使用DNSPod作为主DNS
+	}
+	if t.DNS != nil {
+		//修改hosts
+		t.DNS.Hosts = getHosts()
 	}
 	//再修改inbounds
 	tproxy := "tproxy"
