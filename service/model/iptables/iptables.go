@@ -136,6 +136,7 @@ iptables -t mangle -A PREROUTING -j SSTP_PRE
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
 iptables -t mangle -A SETMARK -i docker+ -j RETURN
+iptables -t mangle -A SETMARK -i br-+ -j RETURN
 `
 	//s := configure.GetSettingNotNil()
 	//if s.AntiPollution != configure.AntipollutionNone {
