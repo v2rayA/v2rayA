@@ -9,8 +9,6 @@ services:
     volumes:
       - shared-data:/etc/v2ray
       - ./service:/service:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
 
   v2ray:
     privileged: true
