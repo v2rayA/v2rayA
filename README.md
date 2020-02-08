@@ -152,8 +152,6 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
    	--privileged \
    	--network=host \
    	-v v2raya_shared-data:/etc/v2ray \
-   	-v /etc/localtime:/etc/localtime:ro \
-   	-v /etc/timezone:/etc/timezone:ro \
    	--name v2raya_backend \
    	mzz2017/v2raya:stable
 
