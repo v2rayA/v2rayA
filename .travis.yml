@@ -32,7 +32,7 @@ install:
 script:
   - cd service && gox -osarch="linux/amd64 linux/arm" -ldflags="-X V2RayA/global.Version=${VERSION:1}" -output="../{{.Dir}}_{{.OS}}_{{.Arch}}_$VERSION"
   - cd ../
-  - files="V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya install/v2raya.service=/etc/systemd/system/v2raya.service"
+  - files="V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya install/v2raya.service=/etc/systemd/system/v2raya.service gui/public/img/icons/android-chrome-512x512.png=/usr/share/icons/v2raya.png install/v2raya.desktop=/usr/share/applications/v2raya.desktop"
   - params="--verbose -f -n $NAME -v ${VERSION:1} --after-install=install/after_install.sh --before-remove=install/before_remove.sh --after-remove=install/after_remove.sh --after-upgrade=install/after_upgrade.sh $files"
   - echo $params
   - fpm -s dir -t deb -p installer_debian_$VERSION.deb $params && fpm -s dir -t rpm -p installer_redhat_$VERSION.rpm $params && fpm -s dir -t pacman -p installer_arch_$VERSION.pkg.tar.xz $params && fpm -s dir -t freebsd -p installer_freebsd_$VERSION.txz $params
