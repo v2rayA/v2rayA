@@ -4,13 +4,6 @@ systemctl daemon-reload
 systemctl enable v2raya
 systemctl start v2raya
 
-ICON_SOURCE=gui/public/img/icons
-ICON_TARGET=/usr/share/icons
-mkdir -p $ICON_TARGET || true
-cp $ICON_SOURCE/android-chrome-512x512.png $ICON_TARGET/v2raya.png || true
-
-cp install/v2raya.desktop /usr/share/applications/v2raya.desktop || true
-
 ECHOLEN=$(echo -e|awk '{print length($0)}')
 if [ ${ECHOLEN} = '0' ]
 then
