@@ -195,21 +195,30 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 		which.Latency = err.Error()
 		return
 	}
+	defer c.CloseIdleConnections()
 	c.Timeout = timeout
 	t := time.Now()
-	req, _ := http.NewRequest("HEAD", "http://www.gstatic.com/generate_204", nil)
+	req, _ := http.NewRequest("GET", "https://www.youtube.com", nil)
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
+	req.Header.Set("Connection", "close")
 	resp, err := c.Do(req)
-	if err != nil {
-		es := strings.ToLower(err.Error())
-		switch {
-		case strings.Contains(es, "eof"):
-			which.Latency = "NOT STABLE"
-		case strings.Contains(es, "does not look like a tls handshake"):
-			which.Latency = "INVALID"
-		case strings.Contains(es, "timeout"):
-			which.Latency = "TIMEOUT"
-		default:
-			which.Latency = err.Error()
+	if err != nil || resp.StatusCode != 200 {
+		if err != nil {
+			es := strings.ToLower(err.Error())
+			switch {
+			case strings.Contains(es, "eof"):
+				which.Latency = "NOT STABLE"
+			case strings.Contains(es, "does not look like a tls handshake"):
+				which.Latency = "INVALID"
+			case strings.Contains(es, "timeout"):
+				which.Latency = "TIMEOUT"
+			default:
+				which.Latency = err.Error()
+			}
+		} else {
+			which.Latency = "BAD RESPONSE"
 		}
 		return
 	}
