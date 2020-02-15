@@ -1,0 +1,136 @@
+name: Go
+on: 
+  push:
+    tags:
+      - v*
+env:
+  NAME: v2raya
+  DESC: "A V2Ray linux GUI client, which support transparent proxy .\nhttps://github.com/mzz2017/v2raya"
+  SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Get the version
+        id: tag
+        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: Setup Ruby for use with actions
+        uses: actions/setup-ruby@v1.0.0
+
+      - name: Setup Node.js for use with actions
+        uses: actions/setup-node@v1.1.0
+
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bsdtar rpm reprepro gnupg2 expect
+#          go get github.com/mitchellh/gox
+#          gem install fpm
+#          npm i -g yarn
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Before Deploy
+        run: |
+          if [[ $(pwd) =~ /apt$ ]]; then
+              echo 'Now in subdir "apt"'
+                  cp -rf ../install/key ../install/conf ./;
+          else
+              mkdir -p apt/incoming && cp -r install/key install/conf apt/ && cd apt;
+          fi
+          gpg2 --version
+          gpg2 --import key/public-key.asc
+          cat ~/.gnupg/gpg.conf
+          ../install/gpg2_expect --allow-secret-key-import --import ../install/private-key.asc
+          ../install/reprepro_expect --ask-passphrase -Vb . export
+          ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_i386_$VERSION.deb
+          ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_amd64_$VERSION.deb
+          ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm_$VERSION.deb
+          ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm64_$VERSION.deb
+          cd ../
+          export bp=$(pwd)
+      - name: Build
+        run: |
+          export VERSION=${{ steps.tag.outputs.VERSION }}
+          export PATH=$PATH:$HOME/go/bin
+          cd service && gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X V2RayA/global.Version=${VERSION:1}" -output="../{{.Dir}}_{{.OS}}_{{.Arch}}_$VERSION"
+          cd ../
+          files="install/v2raya.service=/etc/systemd/system/v2raya.service gui/public/img/icons/android-chrome-512x512.png=/usr/share/icons/v2raya.png install/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+          params="--verbose -f -n $NAME -v ${VERSION:1} --url https://github.com/mzz2017/v2raya --maintainer mzz2017 --after-install install/after_install.sh --after-upgrade install/after_upgrade.sh --before-remove install/before_remove.sh --after-remove install/after_remove.sh"
+          fpm -s dir -t deb -p installer_debian_i386_$VERSION.deb --description "$DESC" $params --architecture i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t deb -p installer_debian_arm_$VERSION.deb --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" $params --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t rpm -p installer_redhat_i386_$VERSION.rpm --description "$DESC" $params --architecture=i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t rpm -p installer_redhat_amd64_$VERSION.rpm --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t rpm -p installer_redhat_arm_$VERSION.rpm --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t rpm -p installer_redhat_arm64_$VERSION.rpm --description "$DESC" $params --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t pacman -p installer_archlinux_i386_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t pacman -p installer_archlinux_amd64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t pacman -p installer_archlinux_arm_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t pacman -p installer_archlinux_arm64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $params --description "$DESC" --architecture=i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $params --description "$DESC" --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t freebsd -p installer_freebsd_arm_$VERSION.txz $params --description "$DESC" --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+          fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $params --description "$DESC" --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+          cd gui && yarn && yarn build && cd ../
+
+
+
+      - name: Deploy APT
+        uses: ad-m/github-push-action@v0.5.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: apt
+          force: true
+          directory: apt
+
+      - name: Deploy v.mzz.pub
+        uses: ad-m/github-push-action@v0.5.0
+        with:
+          github_token: ${{ secrets.ACROSS_TOKEN }}
+          repository: mzz2017/v2raya-web
+          branch: master
+          force: true
+          directory: web
+
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.5
+        with:
+          files: |
+            V2RayA_linux_386_${{ steps.tag.outputs.VERSION }}
+            V2RayA_linux_amd64_${{ steps.tag.outputs.VERSION }}
+            V2RayA_linux_arm_${{ steps.tag.outputs.VERSION }}
+            V2RayA_linux_arm64_${{ steps.tag.outputs.VERSION }}
+            installer_debian_i386_${{ steps.tag.outputs.VERSION }}.deb
+            installer_debian_amd64_${{ steps.tag.outputs.VERSION }}.deb
+            installer_debian_arm_${{ steps.tag.outputs.VERSION }}.deb
+            installer_debian_arm64_${{ steps.tag.outputs.VERSION }}.deb
+            installer_freebsd_i386_${{ steps.tag.outputs.VERSION }}.txz
+            installer_freebsd_amd64_${{ steps.tag.outputs.VERSION }}.txz
+            installer_freebsd_arm_${{ steps.tag.outputs.VERSION }}.txz
+            installer_freebsd_arm64_${{ steps.tag.outputs.VERSION }}.txz
+            installer_redhat_i386_${{ steps.tag.outputs.VERSION }}.rpm
+            installer_redhat_amd64_${{ steps.tag.outputs.VERSION }}.rpm
+            installer_redhat_arm_${{ steps.tag.outputs.VERSION }}.rpm
+            installer_redhat_arm64_${{ steps.tag.outputs.VERSION }}.rpm
+            installer_archlinux_i386_${{ steps.tag.outputs.VERSION }}.pkg.tar.xz
+            installer_archlinux_amd64_${{ steps.tag.outputs.VERSION }}.pkg.tar.xz
+            installer_archlinux_arm_${{ steps.tag.outputs.VERSION }}.pkg.tar.xz
+            installer_archlinux_arm64_${{ steps.tag.outputs.VERSION }}.pkg.tar.xz
+
+      - name: Deploy AUR
+        run: bash install/aur.sh
+
+
+
