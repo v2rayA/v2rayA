@@ -15,6 +15,7 @@ env:
     - NAME=v2raya
     - VERSION=$(git describe --abbrev=0 --tags)
     - GOPROXY=https://goproxy.io
+    - DESC="A V2Ray linux GUI client, which support transparent proxy .\nhttps://github.com/mzz2017/v2raya"
 addons:
   apt:
     packages:
@@ -30,12 +31,26 @@ install:
   - go get github.com/mitchellh/gox
   - gem install fpm
 script:
-  - cd service && gox -osarch="linux/amd64 linux/arm" -ldflags="-X V2RayA/global.Version=${VERSION:1}" -output="../{{.Dir}}_{{.OS}}_{{.Arch}}_$VERSION"
+  - cd service && gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X V2RayA/global.Version=${VERSION:1}" -output="../{{.Dir}}_{{.OS}}_{{.Arch}}_$VERSION"
   - cd ../
-  - files="V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya install/v2raya.service=/etc/systemd/system/v2raya.service gui/public/img/icons/android-chrome-512x512.png=/usr/share/icons/v2raya.png install/v2raya.desktop=/usr/share/applications/v2raya.desktop"
-  - params="--verbose -f -n $NAME -v ${VERSION:1} --after-install=install/after_install.sh --before-remove=install/before_remove.sh --after-remove=install/after_remove.sh --after-upgrade=install/after_upgrade.sh $files"
-  - echo $params
-  - fpm -s dir -t deb -p installer_debian_$VERSION.deb $params && fpm -s dir -t rpm -p installer_redhat_$VERSION.rpm $params && fpm -s dir -t pacman -p installer_arch_$VERSION.pkg.tar.xz $params && fpm -s dir -t freebsd -p installer_freebsd_$VERSION.txz $params
+  - files="install/v2raya.service=/etc/systemd/system/v2raya.service gui/public/img/icons/android-chrome-512x512.png=/usr/share/icons/v2raya.png install/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+  - params="--verbose -f -n $NAME -v ${VERSION:1} --url https://github.com/mzz2017/v2raya --maintainer mzz2017 --after-install install/after_install.sh --after-upgrade install/after_upgrade.sh --before-remove install/before_remove.sh --after-remove install/after_remove.sh"
+  - fpm -s dir -t deb -p installer_debian_i386_$VERSION.deb --description "$DESC" $params --architecture i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t deb -p installer_debian_arm_$VERSION.deb --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" $params --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t rpm -p installer_redhat_i386_$VERSION.rpm --description "$DESC" $params --architecture=i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t rpm -p installer_redhat_amd64_$VERSION.rpm --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t rpm -p installer_redhat_arm_$VERSION.rpm --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t rpm -p installer_redhat_arm64_$VERSION.rpm --description "$DESC" $params --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t pacman -p installer_archlinux_i386_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t pacman -p installer_archlinux_amd64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t pacman -p installer_archlinux_arm_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t pacman -p installer_archlinux_arm64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $params --description "$DESC" --architecture=i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $params --description "$DESC" --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t freebsd -p installer_freebsd_arm_$VERSION.txz $params --description "$DESC" --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $params --description "$DESC" --architecture=arm64 V2RayA_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - cd gui && yarn && yarn build && cd ../
 
 before_deploy:
@@ -48,7 +63,10 @@ before_deploy:
       gpg2 --import key/public-key.asc &&
       ../install/gpg2_expect --allow-secret-key-import --import ../install/private-key.asc &&
       ../install/reprepro_expect --ask-passphrase -Vb . export &&
-      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_$VERSION.deb &&
+      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_i386_$VERSION.deb &&
+      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_amd64_$VERSION.deb &&
+      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm_$VERSION.deb &&
+      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm64_$VERSION.deb &&
       cd ../ && 
       export bp=$(pwd)
 
@@ -74,12 +92,26 @@ deploy:
     api_key:
       secure: dI7F0zR8lks/+Nk1RZ41V8jidKSXJRDkUFhjRkQFLO3NE2wCwlftSCEMhRa0ULqyskCmboKmVAAbCZupttFynWaj9ttpa2UWng+EfNtwEOvB0wp8b2CCV13Y/ncvaofIULWGJsjNbPAILkMp4YTfs92GslxGcLAJqAL3/P7O3Tx8AO7l7WzkVOC31sO5ZApb4kzb58T5IWY7mDZ9gSvjC4iyBGMwFG8YZXmknxTHVsDNWXvZwmScDB3VTu+X6U3aEVvdOYlmcqxDOzc8ZFGSpw6R4Dy2/KUH99UtofrF/buQauPmUq8Znu8u0LePtNI9ePxACqokPo8e+4MyE1ipVgoirgZmS2ICLnXTsSrwmNQ8S3+alOZW/+Kfo1v9Besfia9DoWUxOinRlGLVmnWFbMasRxKsqLfR2q3rSpWU4cKbH5WpxHewBnYqa86Xwp9G2O4MLpe6Ct7MLOiLonBXnUb2hXZGri8y87lTAUugxj/wSqXucw5SSDbRJT9v6Zwk5Eaj7Fc8QNTt7eqhVvmE8UucQPy1TL3gkTYFtUDkngWV0d0Y4JOHQW4ZUd28WLWIEyFoLZ8ZUT/kx87E69BhsqTq5S6tFRmWUXNLUpSrxJq29UdFy6zgNJhxgxxXXVpUH6wYHqV7nDCsZygJ5Z+iTTbkt+e1bIkhXbf/fM4+Yws=
     file:
+      - "V2RayA_linux_386_$VERSION"
       - "V2RayA_linux_amd64_$VERSION"
       - "V2RayA_linux_arm_$VERSION"
-      - "installer_debian_$VERSION.deb"
-      - "installer_freebsd_$VERSION.txz"
-      - "installer_redhat_$VERSION.rpm"
-      - "installer_arch_$VERSION.pkg.tar.xz"
+      - "V2RayA_linux_arm64_$VERSION"
+      - "installer_debian_386_$VERSION.deb"
+      - "installer_debian_amd64_$VERSION.deb"
+      - "installer_debian_arm_$VERSION.deb"
+      - "installer_debian_arm64_$VERSION.deb"
+      - "installer_freebsd_386_$VERSION.txz"
+      - "installer_freebsd_amd64_$VERSION.txz"
+      - "installer_freebsd_arm_$VERSION.txz"
+      - "installer_freebsd_arm64_$VERSION.txz"
+      - "installer_redhat_386_$VERSION.rpm"
+      - "installer_redhat_amd64_$VERSION.rpm"
+      - "installer_redhat_arm_$VERSION.rpm"
+      - "installer_redhat_arm64_$VERSION.rpm"
+      - "installer_archlinux_386_$VERSION.pkg.tar.xz"
+      - "installer_archlinux_amd64_$VERSION.pkg.tar.xz"
+      - "installer_archlinux_arm_$VERSION.pkg.tar.xz"
+      - "installer_archlinux_arm64_$VERSION.pkg.tar.xz"
     skip_cleanup: true
     overwrite: true
     on:
