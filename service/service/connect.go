@@ -26,6 +26,8 @@ func Disconnect() (err error) {
 }
 
 func Connect(which *configure.Which) (err error) {
+	log.Println("Connect: begin")
+	defer log.Println("Connect: done")
 	if which == nil {
 		return errors.New("which不能为nil")
 	}

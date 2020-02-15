@@ -173,8 +173,6 @@ func RestartV2rayService() (err error) {
 
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
-	log.Println("UpdateV2RayConfigAndRestart: begin")
-	defer log.Println("UpdateV2RayConfigAndRestart: done")
 	_ = CheckAndStopTransparentProxy()
 	//读配置，转换为v2ray配置并写入
 	tmpl, err := NewTemplateFromVmessInfo(*v)

@@ -447,10 +447,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Address: "8.8.8.8",
 				Port:    53,
 			},
-			DnsServer{
-				Address: "114.114.114.114",
-				Port:    53,
-			},
 		}
 	}
 	ds := DnsServer{
@@ -476,12 +472,11 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	}
 	t.DNS.Servers = append(t.DNS.Servers,
-		//"114.114.114.114",
 		ds,
 	)
 	if setting.AntiPollution == configure.AntipollutionNone {
 		t.DNS = new(DNS)
-		t.DNS.Servers = []interface{}{"119.29.29.29", "localhost"} //防止DNS劫持，使用DNSPod作为主DNS
+		t.DNS.Servers = []interface{}{"119.29.29.29", "114.114.114.114"} //防止DNS劫持，使用DNSPod作为主DNS
 	}
 	if t.DNS != nil {
 		//修改hosts
@@ -507,8 +502,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "dns-out",
 		Protocol: "dns",
-		//Settings: &Settings{Network: "tcp"},
-		//ProxySettings: &ProxySettings{Tag: "direct"},
 	})
 	for i := range t.Outbounds {
 		if t.Outbounds[i].Protocol == "blackhole" {
@@ -528,11 +521,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}
 	//最后是routing
-	df := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
-		Type:        "field",
-		Port:        "53",
-		OutboundTag: "dns-out",
-	}
 
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
@@ -558,20 +546,23 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	}
 	if setting.AntiPollution != configure.AntipollutionNone {
-		//df.OutboundTag = "dns-out"
-		t.Routing.Rules = append(t.Routing.Rules, df)
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{ // 国内DNS服务器直连，以分流
 				Type:        "field",
 				OutboundTag: "direct",
-				IP:          []string{"119.29.29.29", "114.114.114.114", "223.5.5.5"},
+				IP:          []string{"119.29.29.29", "114.114.114.114"},
 				Port:        "53",
 			},
-			RoutingRule{ // 国外DNS服务器地址走代理，以防污染和流量监控
+			RoutingRule{ // 国外DNS服务器地址走代理，以防污染
 				Type:        "field",
 				OutboundTag: "proxy",
-				IP:          []string{"8.8.8.8", "1.1.1.1", "208.67.222.222", "208.67.220.220"},
+				IP:          []string{"8.8.8.8", "1.1.1.1"},
 				Port:        "53",
+			},
+			RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+				Type:        "field",
+				Port:        "53",
+				OutboundTag: "dns-out",
 			},
 			RoutingRule{ // 非标准端口暂时安全，直连
 				Type:        "field",
@@ -580,7 +571,16 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 				Port:        "5353",
 			})
 	} else {
-		t.Routing.Rules = append(t.Routing.Rules, df)
+		t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+			Type:        "field",
+			OutboundTag: "direct",
+			IP:          []string{"119.29.29.29", "114.114.114.114"},
+			Port:        "53",
+		}, RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+			Type:        "field",
+			Port:        "53",
+			OutboundTag: "dns-out",
+		})
 	}
 	t.Routing.Rules = append(t.Routing.Rules, dohRouting...)
 	t.Routing.Rules = append(t.Routing.Rules,
@@ -596,7 +596,13 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			Protocol:    []string{"bittorrent"},
 		},
 	)
+	serverIPs := []string{v.Add}
 	if net.ParseIP(v.Add) == nil {
+		//解析IP
+		ips, _ := net.LookupHost(v.Add)
+		if len(ips) > 0 {
+			serverIPs = ips
+		}
 		//如果不是IP，而是域名，将其二级域名加入白名单
 		group := strings.Split(v.Add, ".")
 		if len(group) >= 2 {
@@ -609,7 +615,15 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			)
 		}
 	}
-
+	//将节点IP加入白名单
+	if len(serverIPs) > 0 {
+		t.Routing.Rules = append([]RoutingRule{{
+			Type:        "field",
+			OutboundTag: "direct",
+			IP:          serverIPs,
+		}}, t.Routing.Rules...
+		)
+	}
 	////端口入口有自己的规则
 	//t.Routing.Rules = append(t.Routing.Rules,
 	//	RoutingRule{ // socks和http无论在全局还是非全局模式下都走代理
