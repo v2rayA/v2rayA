@@ -4,7 +4,7 @@ language:
   - go
   - ruby
   - node_js
-go: "1.12"
+go: "1.13"
 node_js: "node"
 
 if: (tag =~ ^v) OR (tag =~ ^test) OR (branch = master) OR (branch == test)
