@@ -333,7 +333,6 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 }
 
 func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHosts []string) {
-	notSupportUDP := supportUDP
 	setting := configure.GetSettingNotNil()
 	//先修改DNS设置
 	t.DNS = new(DNS)
@@ -348,7 +347,14 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHo
 			t.DNS.Servers = append(t.DNS.Servers, doh)
 		}
 	case configure.DnsForward:
-		if notSupportUDP {
+		if supportUDP {
+			t.DNS.Servers = []interface{}{
+				DnsServer{
+					Address: "8.8.8.8",
+					Port:    53,
+				},
+			}
+		} else {
 			//由于ss, ssr不支持udp
 			//先优先请求DoH（tcp）
 			if err := CheckDohSupported(); err == nil {
@@ -365,13 +371,6 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHo
 						Port:    5353,
 					},
 				}
-			}
-		} else {
-			t.DNS.Servers = []interface{}{
-				DnsServer{
-					Address: "8.8.8.8",
-					Port:    53,
-				},
 			}
 		}
 	case configure.AntipollutionNone:
