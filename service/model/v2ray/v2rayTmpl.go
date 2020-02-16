@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"bytes"
@@ -332,42 +331,23 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 	return
 }
 
-func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
-	var tmplJson TmplJson
-	// 读入模板json
-	raw := []byte(TemplateJson)
-	err = jsoniter.Unmarshal(raw, &tmplJson)
-	if err != nil {
-		return t, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
-	}
-	// 其中Template是基础配置，替换掉t即可
-	t = tmplJson.Template
-	// 调试模式
-	if global.Version == "debug" {
-		t.Log.Loglevel = "debug"
-	}
-	o, err := ResolveOutbound(&v, "proxy", global.GetEnvironmentConfig().SSRListenPort)
-	if err != nil {
-		return t, err
-	}
-	t.Outbounds[0] = o
+func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHosts []string) {
+	notSupportUDP := supportUDP
 	setting := configure.GetSettingNotNil()
-	switch o.Protocol {
-	case "vmess":
-		//是否在设置里开启了TCPFastOpen
-		if setting.TcpFastOpen != configure.Default {
-			t.Outbounds[0].StreamSettings.Sockopt = new(Sockopt)
-			tmp := setting.TcpFastOpen == configure.Yes
-			t.Outbounds[0].StreamSettings.Sockopt.TCPFastOpen = &tmp
+	//先修改DNS设置
+	t.DNS = new(DNS)
+	switch setting.AntiPollution {
+	case configure.DoH:
+		//添加DoH服务器
+		s := *configure.GetDohListNotNil()
+		dohs := strings.Split(strings.TrimSpace(s), "\n")
+		for _, doh := range dohs {
+			//使用DOHL模式，默认绕过routing和outbound以加快DOH速度
+			doh = strings.Replace(doh, "https://", "https+local://", 1)
+			t.DNS.Servers = append(t.DNS.Servers, doh)
 		}
-		//是否在设置了里开启了mux
-		t.Outbounds[0].Mux = &Mux{
-			Enabled:     setting.MuxOn == configure.Yes,
-			Concurrency: setting.Mux,
-		}
-	case "socks":
-		t.DNS = new(DNS)
-		if setting.AntiPollution == configure.DnsForward {
+	case configure.DnsForward:
+		if notSupportUDP {
 			//由于ss, ssr不支持udp
 			//先优先请求DoH（tcp）
 			if err := CheckDohSupported(); err == nil {
@@ -376,8 +356,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 					"https://1.0.0.1/dns-query",
 				}
 			}
-			//否则使用openDNS非标准端口直连5353
 			if len(t.DNS.Servers) <= 0 {
+				//否则使用openDNS非标准端口直连5353
 				t.DNS.Servers = []interface{}{
 					DnsServer{
 						Address: "208.67.220.220",
@@ -385,143 +365,81 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 					},
 				}
 			}
-		}
-	}
-	//根据配置修改端口
-	ports := configure.GetPorts()
-	if ports != nil {
-		t.Inbounds[2].Port = ports.HttpWithPac
-		t.Inbounds[1].Port = ports.Http
-		t.Inbounds[0].Port = ports.Socks5
-		//端口为0则删除
-		for i := 2; i >= 0; i-- {
-			if t.Inbounds[i].Port == 0 {
-				t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
+		} else {
+			t.DNS.Servers = []interface{}{
+				DnsServer{
+					Address: "8.8.8.8",
+					Port:    53,
+				},
 			}
 		}
+	case configure.AntipollutionNone:
+		t.DNS.Servers = []interface{}{"119.29.29.29", "114.114.114.114"} //防止DNS劫持，使用DNSPod作为主DNS
 	}
-	//先修改DNS设置
-	if t.DNS == nil {
-		t.DNS = new(DNS)
-	}
-	//添加DoH服务器
-	if setting.AntiPollution == configure.DoH {
-		s := *configure.GetDohListNotNil()
-		dohs := strings.Split(strings.TrimSpace(s), "\n")
-		for _, doh := range dohs {
-			//使用DOHL模式，默认绕过routing和outbound以加快DOH速度
-			doh = strings.Replace(doh, "https://", "https+local://", 1)
-			t.DNS.Servers = append(t.DNS.Servers, doh)
-		}
-	}
-	//统计DoH服务器信息
-	dohIPs := make([]string, 0)
-	dohHosts := make([]string, 0)
-	for _, u := range t.DNS.Servers {
-		switch u := u.(type) {
-		case string:
-			if !strings.HasPrefix(strings.ToLower(u), "https://") &&
-				!strings.HasPrefix(strings.ToLower(u), "https+local://") {
-				break
-			}
-			uu, e := url.Parse(u)
-			if e != nil {
-				continue
-			}
-			//如果是非IP
-			if net.ParseIP(uu.Hostname()) == nil {
-				dohHosts = append(dohHosts, uu.Hostname())
-				addrs, e := net.LookupHost(uu.Hostname())
+	if setting.AntiPollution != configure.AntipollutionNone {
+		//统计DoH服务器信息
+		dohIPs = make([]string, 0)
+		dohHosts = make([]string, 0)
+		for _, u := range t.DNS.Servers {
+			switch u := u.(type) {
+			case string:
+				if !strings.HasPrefix(strings.ToLower(u), "https://") &&
+					!strings.HasPrefix(strings.ToLower(u), "https+local://") {
+					break
+				}
+				uu, e := url.Parse(u)
 				if e != nil {
 					continue
 				}
-				dohIPs = append(dohIPs, addrs...)
-			} else {
-				dohIPs = append(dohIPs, uu.Hostname())
+				//如果是非IP则解析为IP
+				if net.ParseIP(uu.Hostname()) == nil {
+					dohHosts = append(dohHosts, uu.Hostname())
+					addrs, e := net.LookupHost(uu.Hostname())
+					if e != nil {
+						continue
+					}
+					dohIPs = append(dohIPs, addrs...)
+				} else {
+					dohIPs = append(dohIPs, uu.Hostname())
+				}
 			}
 		}
-	}
-	if len(t.DNS.Servers) <= 0 {
-		t.DNS.Servers = []interface{}{
-			DnsServer{
-				Address: "8.8.8.8",
-				Port:    53,
+
+		ds := DnsServer{
+			Address: "119.29.29.29",
+			Port:    53,
+			Domains: []string{
+				"geosite:cn",          // 国内白名单走DNSPod
+				"domain:ntp.org",      // NTP 服务器
+				"domain:dogedoge.com", // mzz2017爱用的多吉
+				"full:v2raya.mzz.pub", // V2RayA demo
+				"full:v.mzz.pub",      // V2RayA demo
 			},
 		}
-	}
-	ds := DnsServer{
-		Address: "119.29.29.29",
-		Port:    53,
-		Domains: []string{
-			"geosite:cn",          // 国内白名单走DNSPod
-			"domain:ntp.org",      // NTP 服务器
-			"domain:dogedoge.com", // mzz2017爱用的多吉
-			"full:v2raya.mzz.pub", // V2RayA demo
-			"full:v.mzz.pub",      // V2RayA demo
-		},
-	}
-	if setting.AntiPollution == configure.DoH {
-		ds.Domains = append(ds.Domains, dohHosts...)
-	}
-	if net.ParseIP(v.Add) == nil {
-		//如果不是IP，而是域名，将其二级域名加入白名单
-		group := strings.Split(v.Add, ".")
-		if len(group) >= 2 {
-			domain := strings.Join(group[len(group)-2:], ".")
-			ds.Domains = append(ds.Domains, "domain:"+domain)
+		if len(dohHosts) > 0 {
+			ds.Domains = append(ds.Domains, dohHosts...)
 		}
-	}
-	t.DNS.Servers = append(t.DNS.Servers,
-		ds,
-	)
-	if setting.AntiPollution == configure.AntipollutionNone {
-		t.DNS = new(DNS)
-		t.DNS.Servers = []interface{}{"119.29.29.29", "114.114.114.114"} //防止DNS劫持，使用DNSPod作为主DNS
+		if net.ParseIP(v.Add) == nil {
+			//如果节点地址不是IP而是域名，将其二级域名加入白名单
+			group := strings.Split(v.Add, ".")
+			if len(group) >= 2 {
+				domain := strings.Join(group[len(group)-2:], ".")
+				ds.Domains = append(ds.Domains, "domain:"+domain)
+			}
+		}
+		t.DNS.Servers = append(t.DNS.Servers,
+			ds,
+		)
 	}
 	if t.DNS != nil {
 		//修改hosts
 		t.DNS.Hosts = getHosts()
 	}
-	//再修改inbounds
-	tproxy := "tproxy"
-	t.Inbounds = append(t.Inbounds, Inbound{
-		Listen:   "0.0.0.0",
-		Port:     12345,
-		Protocol: "dokodemo-door",
-		Sniffing: Sniffing{
-			Enabled:      true,
-			DestOverride: []string{"http", "tls"},
-		},
-		Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
-		StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
-		Tag:            "transparent",
-	})
-	//再修改outbounds
-	mark := 0xff
-	tos := 184
-	t.Outbounds = append(t.Outbounds, Outbound{
-		Tag:      "dns-out",
-		Protocol: "dns",
-	})
-	for i := range t.Outbounds {
-		if t.Outbounds[i].Protocol == "blackhole" {
-			continue
-		}
-		if t.Outbounds[i].StreamSettings == nil {
-			t.Outbounds[i].StreamSettings = new(StreamSettings)
-		}
-		if t.Outbounds[i].StreamSettings.Sockopt == nil {
-			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
-		}
-		// DNS请求被路由强行分发到dns-out，无需在此设置DomainStrategy
-		//if t.Outbounds[i].Protocol == "freedom" {
-		//	t.Outbounds[i].Settings.DomainStrategy = "UseIP"
-		//}
-		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
-		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
-	}
-	//最后是routing
+	return
+}
 
+func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string) {
+	setting := configure.GetSettingNotNil()
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
 		hosts := make([]string, len(dohHosts))
@@ -624,15 +542,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}}, t.Routing.Rules...
 		)
 	}
-	////端口入口有自己的规则
-	//t.Routing.Rules = append(t.Routing.Rules,
-	//	RoutingRule{ // socks和http无论在全局还是非全局模式下都走代理
-	//		Type:        "field",
-	//		OutboundTag: "proxy",
-	//		InboundTag:  []string{"socks", "http"},
-	//	},
-	//)
-	//PAC端口规则
+}
+
+func (t *Template) SetPacRouting() {
+	setting := configure.GetSettingNotNil()
 	switch setting.PacMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules,
@@ -714,57 +627,172 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 			})
 		}
 	}
-
-	//根据是否使用全局代理修改路由
-	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-		switch setting.Transparent {
-		case configure.TransparentProxy:
-		case configure.TransparentWhitelist:
-			t.Routing.Rules = append(t.Routing.Rules,
-				RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
-					Type:        "field",
-					OutboundTag: "direct",
-					InboundTag:  []string{"transparent"},
-					IP:          []string{"geoip:private", "geoip:cn"},
-				},
-				RoutingRule{ // 直连中国大陆主流网站域名
-					Type:        "field",
-					OutboundTag: "direct",
-					InboundTag:  []string{"transparent"},
-					Domain:      []string{"geosite:cn"},
-				},
-			)
-		case configure.TransparentGfwlist:
-			t.Routing.Rules = append(t.Routing.Rules,
-				RoutingRule{
-					Type:        "field",
-					OutboundTag: "proxy",
-					InboundTag:  []string{"transparent"},
-					Domain:      []string{"ext:h2y.dat:gfw"},
-				},
-				RoutingRule{
-					Type:        "field",
-					OutboundTag: "direct",
-					InboundTag:  []string{"transparent"},
-				},
-			)
-		case configure.TransparentPac:
-			//transparent模式跟随pac
-			for i := range t.Routing.Rules {
-				bIncludePac := false
-				for _, in := range t.Routing.Rules[i].InboundTag {
-					if in == "pac" {
-						bIncludePac = true
-						break
-					}
-				}
-				if bIncludePac {
-					t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "transparent")
+}
+func (t *Template) SetTransparentRouting() {
+	setting := configure.GetSettingNotNil()
+	switch setting.Transparent {
+	case configure.TransparentProxy:
+	case configure.TransparentWhitelist:
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"transparent"},
+				IP:          []string{"geoip:private", "geoip:cn"},
+			},
+			RoutingRule{ // 直连中国大陆主流网站域名
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"transparent"},
+				Domain:      []string{"geosite:cn"},
+			},
+		)
+	case configure.TransparentGfwlist:
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "proxy",
+				InboundTag:  []string{"transparent"},
+				Domain:      []string{"ext:h2y.dat:gfw"},
+			},
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"transparent"},
+			},
+		)
+	case configure.TransparentPac:
+		//transparent模式跟随pac
+		for i := range t.Routing.Rules {
+			bIncludePac := false
+			for _, in := range t.Routing.Rules[i].InboundTag {
+				if in == "pac" {
+					bIncludePac = true
+					break
 				}
 			}
+			if bIncludePac {
+				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "transparent")
+			}
 		}
-	} else {
-		_ = iptables.DeleteRules()
+	}
+}
+func (t *Template) AppendDokodemo(port int) {
+	tproxy := "tproxy"
+	t.Inbounds = append(t.Inbounds, Inbound{
+		Listen:   "0.0.0.0",
+		Port:     port,
+		Protocol: "dokodemo-door",
+		Sniffing: Sniffing{
+			Enabled:      true,
+			DestOverride: []string{"http", "tls"},
+		},
+		Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
+		StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
+		Tag:            "transparent",
+	})
+}
+
+func (t *Template) SetOutboundSockopt() {
+	mark := 0xff
+	tos := 184
+	for i := range t.Outbounds {
+		if t.Outbounds[i].Protocol == "blackhole" {
+			continue
+		}
+		if t.Outbounds[i].StreamSettings == nil {
+			t.Outbounds[i].StreamSettings = new(StreamSettings)
+		}
+		if t.Outbounds[i].StreamSettings.Sockopt == nil {
+			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
+		}
+		// DNS请求被路由强行分发到dns-out，无需在此设置DomainStrategy
+		//if t.Outbounds[i].Protocol == "freedom" {
+		//	t.Outbounds[i].Settings.DomainStrategy = "UseIP"
+		//}
+		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
+		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
+	}
+}
+
+func (t *Template) AppendDNSOut() {
+	t.Outbounds = append(t.Outbounds, Outbound{
+		Tag:      "dns-out",
+		Protocol: "dns",
+	})
+}
+
+func (t *Template) SetInboundPort() {
+	ports := configure.GetPorts()
+	if ports != nil {
+		t.Inbounds[2].Port = ports.HttpWithPac
+		t.Inbounds[1].Port = ports.Http
+		t.Inbounds[0].Port = ports.Socks5
+		//端口为0则删除
+		for i := 2; i >= 0; i-- {
+			if t.Inbounds[i].Port == 0 {
+				t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
+			}
+		}
+	}
+}
+
+func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
+	var tmplJson TmplJson
+	// 读入模板json
+	raw := []byte(TemplateJson)
+	err = jsoniter.Unmarshal(raw, &tmplJson)
+	if err != nil {
+		return t, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+	}
+	// 其中Template是基础配置，替换掉t即可
+	t = tmplJson.Template
+	// 调试模式
+	if global.Version == "debug" {
+		t.Log.Loglevel = "debug"
+	}
+	// 解析Outbound
+	o, err := ResolveOutbound(&v, "proxy", global.GetEnvironmentConfig().SSRListenPort)
+	if err != nil {
+		return t, err
+	}
+	t.Outbounds[0] = o
+	setting := configure.GetSettingNotNil()
+	var supportUDP = true
+	switch o.Protocol {
+	case "vmess":
+		//是否在设置里开启了TCPFastOpen
+		if setting.TcpFastOpen != configure.Default {
+			t.Outbounds[0].StreamSettings.Sockopt = new(Sockopt)
+			tmp := setting.TcpFastOpen == configure.Yes
+			t.Outbounds[0].StreamSettings.Sockopt.TCPFastOpen = &tmp
+		}
+		//是否在设置了里开启了mux
+		t.Outbounds[0].Mux = &Mux{
+			Enabled:     setting.MuxOn == configure.Yes,
+			Concurrency: setting.Mux,
+		}
+	case "socks":
+		supportUDP = false
+	}
+	//根据配置修改端口
+	t.SetInboundPort()
+	//设置DNS
+	dohIPs, dohHosts := t.SetDNS(v, supportUDP)
+	//再修改inbounds
+	if setting.Transparent != configure.TransparentClose {
+		t.AppendDokodemo(12345)
+	}
+	//再修改outbounds
+	t.AppendDNSOut()
+	t.SetOutboundSockopt()
+	//最后是routing
+	t.SetDNSRouting(v, dohIPs, dohHosts)
+	//PAC端口规则
+	t.SetPacRouting()
+	//根据是否使用全局代理修改路由
+	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
+		t.SetTransparentRouting()
 	}
 
 	return t, nil
