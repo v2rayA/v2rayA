@@ -54,11 +54,17 @@ func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 		if v.VmessInfo.Protocol == "" {
 			v.VmessInfo.Protocol = "vmess"
 		}
+		var protoToShow string
+		if v.VmessInfo.Protocol == "vmess" || v.VmessInfo.Type == "" {
+			protoToShow = fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Net)
+		} else {
+			protoToShow = fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Type)
+		}
 		ts[i] = TouchServer{
 			ID:        i + 1,
 			Name:      v.VmessInfo.Ps,
 			Address:   v.VmessInfo.Add + ":" + v.VmessInfo.Port,
-			Net:       fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Net),
+			Net:       protoToShow,
 			Connected: w != nil && err == nil && &tsr.VmessInfo == &v.VmessInfo,
 		}
 	}
