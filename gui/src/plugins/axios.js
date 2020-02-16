@@ -61,7 +61,7 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     }
   });
   SnackbarProgrammatic.open({
-    message: `未在 ${url} 检测到V2RayA服务端，请确定V2RayA已正确安装且配置正确`,
+    message: `未在 ${url} 检测到V2RayA服务端，请确定v2ray-core及V2RayA已正确安装且配置正确`,
     type: "is-warning",
     queue: false,
     position: "is-top",
@@ -69,7 +69,7 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     actionText: "查看帮助",
     onAction: () => {
       window.open(
-        "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
+        "https://github.com/mzz2017/V2RayA/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98",
         "_blank"
       );
     }
