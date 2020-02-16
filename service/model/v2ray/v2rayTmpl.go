@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/iptables"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"bytes"
@@ -678,7 +679,12 @@ func (t *Template) SetTransparentRouting() {
 	}
 }
 func (t *Template) AppendDokodemo(port int) {
-	tproxy := "tproxy"
+	var tproxy string
+	if iptables.UseTproxy == true {
+		tproxy = "tproxy"
+	} else {
+		tproxy = "redirect"
+	}
 	t.Inbounds = append(t.Inbounds, Inbound{
 		Listen:   "0.0.0.0",
 		Port:     port,
