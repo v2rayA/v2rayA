@@ -39,11 +39,7 @@
         </b-button>
       </b-field>
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
-      <b-field
-        v-show="transparentValid"
-        label-position="on-border"
-        class="with-icon-alert"
-      >
+      <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
           全局透明代理
           <b-tooltip
@@ -308,13 +304,8 @@ export default {
       }
       return port;
     },
-    transparentValid() {
-      let val = localStorage["transparentValid"];
-      return (
-        val === "undefined" || //最早版本, 无法判断是否valid, 就默认valid了
-        val === "true" || //boolean版本
-        val === "yes" //最新string版本
-      );
+    iptablesMode() {
+      return localStorage["iptablesMode"] || "tproxy";
     }
   },
   created() {

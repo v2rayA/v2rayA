@@ -153,30 +153,8 @@
             duration: 5000
           });
         } else {
-          localStorage["transparentValid"] = res.data.data.transparentValid;
+          localStorage["iptablesMode"] = res.data.data.iptablesMode;
           localStorage["dohValid"] = res.data.data.dohValid;
-          if (
-            typeof res.data.data.transparentValid == "boolean" && //兼容旧版本
-            res.data.data.transparentValid === false
-          ) {
-            this.$buefy.toast.open({
-              message: "检测到v2ray-core版本低于4.19.1，不支持全局透明代理",
-              type: "is-warning",
-              position: "is-top",
-              duration: 3000
-            });
-          }
-          if (
-            typeof res.data.data.transparentValid === "string" && //新版本
-            res.data.data.transparentValid !== "yes"
-          ) {
-            this.$buefy.toast.open({
-              message: "不支持全局透明代理: " + res.data.data.transparentValid,
-              type: "is-warning",
-              position: "is-top",
-              duration: 3000
-            });
-          }
         }
       }
     });
