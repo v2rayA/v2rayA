@@ -385,6 +385,7 @@ import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";
 import ModalSubscription from "./modalSuscription";
+import axios from "../plugins/axios";
 
 export default {
   name: "Node",
@@ -608,22 +609,41 @@ export default {
           url: apiRoot + "/connection",
           method: "post",
           data: { id: row.id, _type: row._type, sub: sub }
-        }).then(res => {
-          if (res.data.code === "SUCCESS") {
-            Object.assign(this.runningState, {
-              running: CONST.IS_RUNNING,
-              connectedServer: res.data.data.connectedServer,
-              lastConnectedServer: res.data.data.lastConnectedServer
-            });
-            this.updateConnectView();
-          } else {
-            this.$buefy.toast.open({
-              message: res.data.message,
-              type: "is-warning",
-              position: "is-top"
-            });
-          }
-        });
+        })
+          .then(res => {
+            if (res.data.code === "SUCCESS") {
+              Object.assign(this.runningState, {
+                running: CONST.IS_RUNNING,
+                connectedServer: res.data.data.connectedServer,
+                lastConnectedServer: res.data.data.lastConnectedServer
+              });
+              this.updateConnectView();
+            } else {
+              this.$buefy.toast.open({
+                message: res.data.message,
+                type: "is-warning",
+                position: "is-top"
+              });
+            }
+          })
+          .catch(err => {
+            if (err.code === "ECONNABORTED" && err.isAxiosError) {
+              //更换配置过程中可能会因为网络原因中断connection，timeout之后检查是否已连接，是则刷新页面
+              axios({
+                url: apiRoot + "/touch",
+                timeout: 0
+              }).then(res => {
+                handleResponse(res, this, () => {
+                  if (
+                    res.data.data.running &&
+                    res.data.data.touch.connectedServer
+                  ) {
+                    window.location.reload();
+                  }
+                });
+              });
+            }
+          });
       } else {
         this.$axios({
           url: apiRoot + "/connection",

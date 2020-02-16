@@ -15,6 +15,8 @@ import modalCustomPorts from "../components/modalCustomPorts";
 
 Vue.prototype.$axios = axios;
 
+axios.defaults.timeout = 20 * 1000; // timeout: 20秒
+
 axios.interceptors.request.use(
   config => {
     if (localStorage.hasOwnProperty("token")) {
@@ -180,3 +182,5 @@ axios.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+export default axios;

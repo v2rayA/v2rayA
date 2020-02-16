@@ -266,6 +266,7 @@ import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalPortWhiteList from "@/components/modalPortWhiteList";
 import modalDohSetting from "./modalDohSetting";
+import axios from "../plugins/axios";
 
 export default {
   name: "ModalSetting",
@@ -400,16 +401,35 @@ export default {
           dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
           antipollution: this.antipollution
         }
-      }).then(res => {
-        handleResponse(res, this, () => {
-          this.$buefy.toast.open({
-            message: res.data.code,
-            type: "is-primary",
-            position: "is-top"
+      })
+        .then(res => {
+          handleResponse(res, this, () => {
+            this.$buefy.toast.open({
+              message: res.data.code,
+              type: "is-primary",
+              position: "is-top"
+            });
+            this.$parent.close();
           });
-          this.$parent.close();
+        })
+        .catch(err => {
+          if (err.code === "ECONNABORTED" && err.isAxiosError) {
+            //更换配置过程中可能会因为网络原因中断connection，timeout之后检查是否已连接，是则刷新页面
+            axios({
+              url: apiRoot + "/touch",
+              timeout: 0
+            }).then(res => {
+              handleResponse(res, this, () => {
+                if (
+                  res.data.data.running &&
+                  res.data.data.touch.connectedServer
+                ) {
+                  window.location.reload();
+                }
+              });
+            });
+          }
         });
-      });
     },
     handleClickSubmit() {
       if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
