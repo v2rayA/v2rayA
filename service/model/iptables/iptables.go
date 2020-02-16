@@ -10,7 +10,7 @@ import (
 
 // http://briteming.hatenablog.com/entry/2019/06/18/175518
 
-var UseTproxy = false
+var UseTproxy = true
 
 type SetupCommands string
 type CleanCommands string
