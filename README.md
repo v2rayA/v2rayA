@@ -42,10 +42,11 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 
 待开发：
 
+- [ ] RoutingA
 - [ ] 回国模式（当前版本可通过自定义路由规则实现）
 - [ ] QUIC、auth_chain\*支持
-- [ ] 透明代理重定向备选方案
 - [ ] 日志
+- [ ] 多语言
 
 ## 界面截图
 
@@ -59,276 +60,25 @@ V2RayA 致力于提供最简单的操作，满足绝大部分需求。
 <img src="https://s2.ax1x.com/2020/02/03/1wf4vd.png" alt="1wf4vd.png" border="0">
 
 <p align="center">订阅源</p>
-
 <img src="https://s2.ax1x.com/2020/02/03/1wfoDI.png" alt="1wfoDI.png" border="0">
 
 <p align="center">设置</p>
-
 <img src="https://s2.ax1x.com/2020/02/03/1wfIKA.png" alt="1wfIKA.png" border="0">
 
 <p align="center">自定义路由规则</p>
 
 
-
 </details>
 
-## 使用
+# 使用方法
 
-### 从软件源安装
+V2RayA主要提供了下述使用方法：
 
-如下使用方法：
+1. 软件源安装
+2. docker
+3. 二进制文件、安装包
 
-1. **使用apt-get安装**（debian、ubuntu）
-  
-   请确保已正确安装 v2ray-core
-
-   我们提供了 Linux 下的一键安装脚本（在官方脚本基础上增加了ustc镜像源）：
-
-   > 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
-
-   ```bash
-   curl -L -s https://github.com/mzz2017/V2RayA/raw/master/install/go.sh | sudo -E bash -s - --source ustc
-   ```
-   
-   准备完毕后：
-
-   ```bash
-   # add public key
-   wget -qO - https://apt.v2raya.mzz.pub/key/public-key.asc | sudo apt-key add -
-
-   # add V2RayA's repository
-   sudo add-apt-repository 'deb https://apt.v2raya.mzz.pub/ v2raya main'
-   sudo apt-get update
-
-   # install V2RayA
-   sudo apt-get install v2raya
-   ```
-   
-   V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
-   
-2. **使用yay/yaourt安装**（archlinux、manjaro）
-  
-   由于v2raya发布在AUR中，而pacman不支持AUR，因此建议使用主流的yay或yaourt作为替代方案
-
-   ```bash
-   # install yay
-   sudo pacman -Sy yay
-   ```
-
-   当yay或yaourt可用时，可通过yay或yaourt安装v2raya
-
-   ```bash
-   # assume command yay is available
-   yay v2raya
-   ```
-
-   V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
-
-### Docker方式
-
-1. 拉取源码，**使用 docker-compose 部署**。
-
-   ```bash
-   git clone --depth=1 https://github.com/mzz2017/V2RayA.git
-   cd V2RayA
-   docker-compose up -d --build
-   ```
-   如果出现`ERROR: ...Connot start service...container...is not running`，尝试添加参数`-V`
-
-2. **使用 docker 命令部署**。
-
-   ```bash
-   # pull stable version of v2raya
-   docker pull mzz2017/v2raya:stable
-   # pull latest version of v2ray
-   docker pull v2fly/v2fly-core
-   
-   # create volume to share data
-   docker volume create v2raya_shared-data
-   
-   # run v2raya
-   docker run -d \
-   	--restart=always \
-   	--privileged \
-   	--network=host \
-   	-v v2raya_shared-data:/etc/v2ray \
-   	--name v2raya_backend \
-   	mzz2017/v2raya:stable
-
-   # run v2ray
-   docker run -d \
-   	--restart=always \
-   	--privileged \
-   	--network=host \
-   	--pid=container:v2raya_backend \
-   	-v v2raya_shared-data:/etc/v2ray \
-   	--env V2RAY_LOCATION_ASSET=/etc/v2ray \
-   	--name v2raya_v2ray \
-   	v2fly/v2fly-core \
-   	sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
-   ```
-   
-   如果你使用MacOSX或其他不支持host模式的环境，在该情况下无法使用全局透明代理，docker命令会略有不同：
-   
-   ```bash
-   # pull stable version of v2raya
-   docker pull mzz2017/v2raya:stable
-   # pull latest version of v2ray
-   docker pull v2fly/v2fly-core
-   
-   # create volume to share data
-   docker volume create v2raya_shared-data
-   
-   # run v2raya
-   docker run -d \
-       -p 2017:2017 \
-       -p 20170-20172:20170-20172 \
-       -p 12345:12345 \
-       --restart=always \
-       --privileged \
-       -v v2raya_shared-data:/etc/v2ray \
-       --name v2raya_backend \
-       mzz2017/v2raya:stable
-       
-   # run v2ray
-   docker run -d \
-       --restart=always \
-       --privileged \
-       --pid=container:v2raya_backend \
-       --network=container:v2raya_backend \
-       -v v2raya_shared-data:/etc/v2ray \
-       --env V2RAY_LOCATION_ASSET=/etc/v2ray \
-       --name v2raya_v2ray \
-       v2fly/v2fly-core \
-       /bin/sh -c "cp -rfu /usr/bin/v2ray/* /etc/v2ray/ && v2ray -config=/etc/v2ray/config.json"
-   ```
-部署完毕后，在[GUI demo](https://v2raya.mzz.pub)使用（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
-   
-   
-
-### 二进制文件、安装包
-
-请确保已正确安装 v2ray-core
-
-我们提供了 Linux 下的一键安装脚本（在官方脚本基础上增加了ustc镜像源）：
-
-> 运行下面的指令下载并安装 V2Ray。当 yum 或 apt-get 可用的情况下，此脚本会自动安装 unzip 和 daemon。这两个组件是安装 V2Ray 的必要组件。如果你使用的系统不支持 yum 或 apt-get，请自行安装 unzip 和 daemon
-
-```bash
-curl -L -s https://github.com/mzz2017/V2RayA/raw/master/install/go.sh | sudo -E bash -s - --source ustc
-```
-
-准备完毕后，可下载[Releases](https://github.com/mzz2017/V2RayA/releases)中的二进制文件启动V2RayA服务端，或下载安装包进行安装。
-
-V2RayA服务端正常运行后，就可在[GUI demo](https://v2raya.mzz.pub)使用了（或[部署GUI](https://github.com/mzz2017/V2RayA#%E5%A6%82%E4%BD%95%E9%83%A8%E7%BD%B2GUI)）。
-
-### 自行编译运行
-
-当然，你也可以选择拉取源码，**编译为二进制文件运行**：
-
-该方法同样需要正确安装v2ray-core，详情见上
-
-```bash
-git clone https://github.com/mzz2017/V2RayA.git
-cd V2RayA/service
-# set goproxy.io as the proxy of go modules
-export GOPROXY=https://goproxy.io
-# compile
-go build -o v2raya
-# run
-sudo ./v2raya
-```
-
-注意，尽管 golang 具有交叉编译的特性，但由于项目使用了大量 linux commands，导致该方法仍然不支持 windows。若想在 windows 体验，可尝试借助 Docker 或 WSL。
-
-### 在路由器使用
-
-分为以下几种情况：
-
-#### 若v2ray能够以daemon存在
-
-能够以daemon存在即在正确安装v2ray后，使用下述命令之一能够得到正确的反馈：
-
-```bash
-# if systemctl is available
-systemctl status v2ray
-# else if service is available
-service v2ray status
-```
-
-那么可从软件源安装，或下载[releases](https://github.com/mzz2017/V2RayA/releases)中的对应安装包进行安装。
-
-#### 若v2ray能够运行于docker
-
-可参照Docker方式使用
-
-#### 通用方法
-
-1. 请自行安装v2ray，并确保v2ray、v2ctl均被包含在PATH中，否则请将上述文件放于`echo $PATH`中的任一目录下。
-
-2. 下载[releases](https://github.com/mzz2017/V2RayA/releases)中最新版本的对应CPU架构的二进制文件，或自行使用golang交叉编译。
-
-3. 使用参数`--config=V2RAYA_CONFIG_PATH --mode=common`启动V2RayA服务端，参数含义可执行`--help`查看。
-
-   请将上述V2RAYA_CONFIG_PATH替换为一个可读写的，并且你喜欢的路径。
-
-## 开放端口
-
-默认使用的四个端口分别为：
-
-2017: V2RayA 后端端口
-
-20170: SOCKS 协议
-
-20171: HTTP 协议
-
-20172: 带 PAC 的 HTTP 协议
-
-所需占用的其他端口：
-
-12345: tproxy
-
-12346: ssr relay
-
-## 在不同运行环境下程序表现将不同
-
-由于 docker 容器对 systemd 的限制性，在 docker 中将采用 pid 共享进程命名空间，volumes 共享存储空间，更新配置后通过结束进程触发 v2ray 容器的重启来更新配置，以无 inbounds 的配置代替断开连接，这是一种折中方案，会有如下影响：
-
-1. 在更换配置时略有卡顿
-
-## 如何部署GUI
-
-一般情况下可使用[demo](https://v2raya.mzz.pub)即可满足需求，如有部署GUI的必要，可参考下述文档：
-
-**使用docker一键部署**
-
-```bash
-docker pull mzz2017/v2raya-gui
-docker run --name v2raya-gui -d -p <port>:80 mzz2017/v2raya-gui
-```
-将上述`<port>`替换为任一本地端口即可。
-
-**手动部署**
-
-见 [README](https://github.com/mzz2017/V2RayA/tree/master/gui#v2raya-gui)
-
-## 开发相关
-
-### 在 docker 环境中开发
-
-```bash
-docker-compose -f docker-compose.dev.yml up --build
-```
-
-gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/codegangsta/gin)。
-
-如果出现`ERROR: ...Connot start service...container...is not running`，尝试添加参数`-V`
-
-## 已知问题
-
-1. 在使用 GoLand 进行开发调试时，**如果开启了全局透明代理**，由于进程捕获不了 GoLand 的结束 signal，在进程退出后将无法恢复正常网络，因此建议使用`kill`来结束进程。如已无法正常上网，恢复网络的一种简单可行方法是重新启动程序并关闭全局透明代理。不开启全局透明代理时，GoLand调试将不受影响。
-
-2. v2ray-core(4.22.0 - 4.22.1)在DoH模式下的DNS查询速度较慢，详见[#26](https://github.com/mzz2017/V2RayA/issues/26)
+详见 [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/使用方法)
 
 
 # 注意
@@ -338,8 +88,6 @@ gin 会监测文件改动并热重载，见[codegangsta/gin](https://github.com/
 2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Netlify](https://app.netlify.com/)在本 Github 项目自动部署完成的，如果担心安全性可以自行部署。
 
 3. **不要将本项目用于不合法用途。**
-
-
 
 # 感谢
 
