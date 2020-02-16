@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/iptables"
 	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
@@ -54,7 +53,7 @@ func RestartV2rayService() (err error) {
 	log.Println("RestartV2rayService: begin")
 	defer log.Println("RestartV2rayService: done")
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
-	_ = CheckAndStopTransparentProxy()
+	CheckAndStopTransparentProxy()
 	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode:
@@ -173,7 +172,7 @@ func RestartV2rayService() (err error) {
 
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
-	_ = CheckAndStopTransparentProxy()
+	CheckAndStopTransparentProxy()
 	//读配置，转换为v2ray配置并写入
 	tmpl, err := NewTemplateFromVmessInfo(*v)
 	if err != nil {
@@ -205,8 +204,8 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 		global.SSRs.Append(*ss)
 	}
 	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-		_ = iptables.DeleteRules()
-		err = iptables.WriteRules()
+		CheckAndStopTransparentProxy()
+		err = CheckAndSetupTransparentProxy(false)
 	}
 	return
 }
@@ -251,8 +250,8 @@ func UpdateV2rayWithConnectedServer() (err error) {
 			global.SSRs.Append(*ss)
 		}
 		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
-			_ = iptables.DeleteRules()
-			err = iptables.WriteRules()
+			CheckAndStopTransparentProxy()
+			err = CheckAndSetupTransparentProxy(false)
 		}
 	}
 	return
