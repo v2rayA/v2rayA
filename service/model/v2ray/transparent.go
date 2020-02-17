@@ -3,7 +3,6 @@ package v2ray
 import (
 	"V2RayA/model/iptables"
 	"V2RayA/persistence/configure"
-	"log"
 )
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
@@ -11,7 +10,6 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	if (!checkRunning || IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
 		iptables.DeleteRules()
 		err = iptables.WriteRules()
-		log.Println("CheckAndSetupTransparentProxy: set iptables rules")
 	}
 	return
 }

@@ -21,7 +21,6 @@ import (
 	"os/signal"
 	"path"
 	"runtime"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -66,8 +65,8 @@ func initConfigure() {
 	//配置文件描述符上限
 	if global.ServiceControlMode == global.ServiceMode || global.ServiceControlMode == global.SystemctlMode {
 		err := v2ray.LiberalizeProcFile()
-		if err != nil && strings.Contains(err.Error(), "not be found") {
-			//log.Fatal(err.Error() + " 您可能未正确安装v2ray-core. 参考：https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8")
+		if err != nil {
+			log.Println(err)
 		}
 	}
 	//配置ip转发
