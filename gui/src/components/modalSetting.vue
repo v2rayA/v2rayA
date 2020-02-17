@@ -427,6 +427,11 @@ export default {
                   window.location.reload();
                 }
               });
+              this.$buefy.toast.open({
+                message: "与V2RayA的连接因网络变化而超时，请手动刷新页面",
+                type: "is-primary",
+                position: "is-top"
+              });
             });
           }
         });

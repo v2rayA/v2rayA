@@ -61,7 +61,7 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     }
   });
   SnackbarProgrammatic.open({
-    message: `未在 ${url} 检测到V2RayA服务端，请确定v2ray-core及V2RayA已正确安装且配置正确`,
+    message: `未在 ${url} 检测到V2RayA服务端，请确定v2ray-core已正确安装，且V2RayA正常运行`,
     type: "is-warning",
     queue: false,
     position: "is-top",
@@ -83,6 +83,9 @@ axios.interceptors.response.use(
   function(err) {
     console.log("!!", err.name, err.message);
     console.log(Object.assign({}, err));
+    if (err.code === "ECONNABORTED" && err.isAxiosError) {
+      return Promise.reject(err);
+    }
     let u, host;
     if (err.config) {
       u = parseURL(err.config.url);

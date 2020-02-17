@@ -15,7 +15,7 @@ assignees: ''
 > V2RayA运行日志（Optional）：
 >
 > ```bash
-> # daemon mond
+> # daemon mode
 > journalctl -u v2raya | tail -n 50
 > 
 > # docker mode
