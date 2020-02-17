@@ -2,11 +2,25 @@ var webpack = require("webpack");
 var path = require("path");
 var WebpackIconfontPluginNodejs = require("webpack-iconfont-plugin-nodejs");
 var dir = "src/assets/iconfont";
+var UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
   configureWebpack: config => {
     config.resolve.alias["vue$"] = "vue/dist/vue.esm.js";
     return {
+      optimization: {
+        minimizer: [
+          new UglifyJsPlugin({
+            uglifyOptions: {
+              mangle: true,
+              output: {
+                beautify: true
+              }
+              // compress: true
+            }
+          })
+        ]
+      },
       plugins: [
         new webpack.DefinePlugin({
           apiRoot: '`${localStorage["backendAddress"]}/api`'
@@ -47,5 +61,7 @@ module.exports = {
     }
   },
 
-  lintOnSave: false
+  lintOnSave: false,
+
+  transpileDependencies: ["buefy"]
 };
