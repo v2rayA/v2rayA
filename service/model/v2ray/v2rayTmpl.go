@@ -796,7 +796,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	//PAC端口规则
 	t.SetPacRouting()
 	//根据是否使用全局代理修改路由
-	if setting.Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
+	if setting.Transparent != configure.TransparentClose {
 		t.SetTransparentRouting()
 	}
 

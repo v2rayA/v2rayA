@@ -106,6 +106,10 @@ func initConfigure() {
 		t := v2ray.NewTemplate()
 		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
 	}
+	//检查tproxy是否可以启用
+	if err := v2ray.CheckAndProbeTProxy(); err != nil {
+		log.Println("无法启用TPROXY模块:", err)
+	}
 }
 
 func checkConnection() {

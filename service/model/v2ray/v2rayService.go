@@ -163,7 +163,7 @@ func IfTProxyModLoaded() bool {
 	return err == nil && len(bytes.TrimSpace(out)) > 0
 }
 
-func CheckTProxySupported() (err error) {
+func CheckAndProbeTProxy() (err error) {
 	ver, err := GetV2rayServiceVersion()
 	if err != nil {
 		return errors.New("获取v2ray-core版本失败: " + err.Error())
