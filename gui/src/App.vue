@@ -82,14 +82,14 @@
 </template>
 
 <script>
-  import CONST from "@/assets/js/const";
-  import ModalSetting from "@/components/modalSetting";
-  import node from "@/components/node";
-  import {Base64} from "js-base64";
-  import ModalCustomAddress from "./components/modalCustomPorts";
-  import {parseURL} from "./assets/js/utils";
+import CONST from "@/assets/js/const";
+import ModalSetting from "@/components/modalSetting";
+import node from "@/components/node";
+import { Base64 } from "js-base64";
+import ModalCustomAddress from "./components/modalCustomPorts";
+import { parseURL } from "./assets/js/utils";
 
-  export default {
+export default {
   components: { ModalCustomAddress, node },
   data() {
     return {
@@ -140,7 +140,7 @@
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
           toastConf.message += `，检测到新版本: ${res.data.data.remoteVersion}`;
-          toastConf.type = "is-danger";
+          toastConf.type = "is-success";
         }
         this.$buefy.toast.open(toastConf);
         localStorage["docker"] = res.data.data.dockerMode;
@@ -150,7 +150,8 @@
             message: "检测到v2ray-core可能未正确安装，请检查",
             type: "is-danger",
             position: "is-top",
-            duration: 5000
+            queue: false,
+            duration: 10000
           });
         } else {
           localStorage["iptablesMode"] = res.data.data.iptablesMode;
@@ -298,10 +299,10 @@
 
 <style lang="scss">
 html {
-//  &::-webkit-scrollbar {
-//    // 去掉讨厌的滚动条
-//    display: none;
-//  }
+  //  &::-webkit-scrollbar {
+  //    // 去掉讨厌的滚动条
+  //    display: none;
+  //  }
 
   #app {
     height: calc(100vh - 3.25rem);
