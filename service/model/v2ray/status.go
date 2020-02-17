@@ -50,8 +50,6 @@ func IsV2RayRunning() bool {
 	return true
 }
 func RestartV2rayService() (err error) {
-	log.Println("RestartV2rayService: begin")
-	defer log.Println("RestartV2rayService: done")
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
 	CheckAndStopTransparentProxy()
 	var out []byte
