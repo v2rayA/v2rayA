@@ -22,7 +22,8 @@ func Run() error {
 	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
 	engine.GET("/", func(ctx *gin.Context) {
-		ctx.String(200, `这里是V2RayA服务端，请配合前端GUI使用，方法：https://github.com/mzz2017/V2RayA/blob/master/README.md`)
+		ctx.Header("Content-Type","text/html; charset=utf-8")
+		ctx.String(418, `<body>Here is V2RayA backend. Reference: <a href="https://github.com/mzz2017/V2RayA">https://github.com/mzz2017/V2RayA</a></body>`)
 	})
 	noAuth := engine.Group("api")
 	{

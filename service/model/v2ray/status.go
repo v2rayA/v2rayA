@@ -201,7 +201,7 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 		}
 		global.SSRs.Append(*ss)
 	}
-	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
+	if configure.GetSettingNotNil().Transparent != configure.TransparentClose {
 		CheckAndStopTransparentProxy()
 		err = CheckAndSetupTransparentProxy(false)
 	}
@@ -247,7 +247,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 			}
 			global.SSRs.Append(*ss)
 		}
-		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && CheckTProxySupported() == nil {
+		if configure.GetSettingNotNil().Transparent != configure.TransparentClose{
 			CheckAndStopTransparentProxy()
 			err = CheckAndSetupTransparentProxy(false)
 		}
