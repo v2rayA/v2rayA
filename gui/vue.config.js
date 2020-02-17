@@ -12,11 +12,14 @@ module.exports = {
         minimizer: [
           new UglifyJsPlugin({
             uglifyOptions: {
-              mangle: true,
               output: {
-                beautify: true
-              }
-              // compress: true
+                beautify: false
+              },
+              compress: {
+                warnings: false,
+                drop_console: true
+              },
+              sourceMap: false
             }
           })
         ]
