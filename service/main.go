@@ -76,14 +76,17 @@ func initConfigure() {
 	}
 	//检查geoip、geosite是否存在
 	if !v2ray.IsGeoipExists() || !v2ray.IsGeositeExists() {
-		dld := func(filename string) (err error) {
+		dld := func(downloadURL, alternativeDownloadURL, filename string) (err error) {
 			color.Red.Println("正在安装" + filename)
-			//jsdelivr经常版本落后，但这俩文件版本落后一点也没关系
-			u := "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/" + filename
 			p := v2ray.GetV2rayLocationAsset() + "/" + filename
+			u := downloadURL
 			err = download.Pget(u, p)
 			if err != nil {
-				return errors.New("download(" + u + ")(" + p + "): " + err.Error())
+				u := alternativeDownloadURL
+				err = download.Pget(u, p)
+				if err != nil {
+					return errors.New("download<" + p + ">: " + err.Error())
+				}
 			}
 			err = os.Chmod(p, os.FileMode(0755))
 			if err != nil {
@@ -91,11 +94,11 @@ func initConfigure() {
 			}
 			return
 		}
-		err := dld("geoip.dat")
+		err := dld("https://github.com/v2ray/geoip/releases/latest/download/geoip.dat", "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geoip.dat", "geoip.dat")
 		if err != nil {
 			log.Println(err)
 		}
-		err = dld("geosite.dat")
+		err = dld("https://github.com/v2ray/domain-list-community/releases/latest/download/dlc.dat","https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geosite.dat","geosite.dat")
 		if err != nil {
 			log.Println(err)
 		}
@@ -140,6 +143,7 @@ func hello() {
 	}
 	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 }
+
 func checkUpdate() {
 	setting := service.GetSetting()
 
@@ -206,6 +210,7 @@ func checkUpdate() {
 		}
 	}()
 }
+
 func run() (err error) {
 	//判别是否common模式，需要启动v2ray吗
 	if global.ServiceControlMode == global.CommonMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayProcessExists() {
