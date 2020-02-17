@@ -1,7 +1,7 @@
 ---
 name: Need help
 about: Something wrong but I can not confirm it is because of V2Ray's bug.
-title: "[help] "
+title: "[help] title"
 labels: help wanted
 assignees: ''
 ---
