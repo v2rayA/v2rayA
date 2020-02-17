@@ -34,10 +34,8 @@ func checkEnvironment() {
 		os.Exit(1)
 	}
 	if !global.GetEnvironmentConfig().PassCheckRoot {
-		if os.Getegid() == -1 {
-			log.Println("[warning] 无法判断当前是否sudo或拥有root权限，请确保V2RayA以sudo或root权限运行")
-		} else if os.Getegid() != 0 {
-			log.Fatal("请以sudo或root权限执行本程序. 或使用--passcheckroot参数跳过检查")
+		if os.Getegid() != 0 {
+			log.Fatal("请以sudo或root权限执行本程序. 如您确信已sudo或已拥有root权限, 可使用--passcheckroot参数跳过检查")
 		}
 	}
 	_, port, err := net.SplitHostPort(global.GetEnvironmentConfig().Address)
