@@ -518,9 +518,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 	if net.ParseIP(v.Add) == nil {
 		//解析IP
 		ips, _ := net.LookupHost(v.Add)
-		if len(ips) > 0 {
-			serverIPs = ips
-		}
+		serverIPs = ips
 		//如果不是IP，而是域名，将其二级域名加入白名单
 		group := strings.Split(v.Add, ".")
 		if len(group) >= 2 {
@@ -677,14 +675,8 @@ func (t *Template) SetTransparentRouting() {
 		}
 	}
 }
-func (t *Template) AppendDokodemo(port int) {
-	var tproxy string
-	if iptables.UseTproxy == true {
-		tproxy = "tproxy"
-	} else {
-		tproxy = "redirect"
-	}
-	t.Inbounds = append(t.Inbounds, Inbound{
+func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
+	dokodemo := Inbound{
 		Listen:   "0.0.0.0",
 		Port:     port,
 		Protocol: "dokodemo-door",
@@ -692,13 +684,18 @@ func (t *Template) AppendDokodemo(port int) {
 			Enabled:      true,
 			DestOverride: []string{"http", "tls"},
 		},
-		Settings:       &InboundSettings{Network: "tcp,udp", FollowRedirect: true},
-		StreamSettings: StreamSettings{Sockopt: &Sockopt{Tproxy: &tproxy}},
-		Tag:            "transparent",
-	})
+		Settings: &InboundSettings{Network: "tcp,udp"},
+		Tag:      tag,
+	}
+	if tproxy != nil {
+		dokodemo.StreamSettings = StreamSettings{Sockopt: &Sockopt{Tproxy: tproxy}}
+		dokodemo.Settings.FollowRedirect = true
+
+	}
+	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
-func (t *Template) SetOutboundSockopt() {
+func (t *Template) SetOutboundSockopt(supportUDP bool) {
 	mark := 0xff
 	tos := 184
 	for i := range t.Outbounds {
@@ -711,19 +708,19 @@ func (t *Template) SetOutboundSockopt() {
 		if t.Outbounds[i].StreamSettings.Sockopt == nil {
 			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
 		}
-		// DNS请求被路由强行分发到dns-out，无需在此设置DomainStrategy
-		//if t.Outbounds[i].Protocol == "freedom" {
-		//	t.Outbounds[i].Settings.DomainStrategy = "UseIP"
-		//}
+		if t.Outbounds[i].Protocol == "freedom" {
+			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
+		}
 		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
 		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}
 }
 
-func (t *Template) AppendDNSOut() {
+func (t *Template) AppendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "dns-out",
 		Protocol: "dns",
+		Settings: &Settings{Address: "119.29.29.29"},
 	})
 }
 
@@ -786,11 +783,17 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	dohIPs, dohHosts := t.SetDNS(v, supportUDP)
 	//再修改inbounds
 	if setting.Transparent != configure.TransparentClose {
-		t.AppendDokodemo(12345)
+		var tproxy string
+		if iptables.UseTproxy == true {
+			tproxy = "tproxy"
+		} else {
+			tproxy = "redirect"
+		}
+		t.AppendDokodemo(&tproxy, 12345, "transparent")
 	}
 	//再修改outbounds
-	t.AppendDNSOut()
-	t.SetOutboundSockopt()
+	t.AppendDNSOutbound()
+	t.SetOutboundSockopt(supportUDP)
 	//最后是routing
 	t.SetDNSRouting(v, dohIPs, dohHosts)
 	//PAC端口规则

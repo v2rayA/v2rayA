@@ -5,12 +5,13 @@ import (
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/cmds"
 	"errors"
+	"log"
 	"strings"
 )
 
 // http://briteming.hatenablog.com/entry/2019/06/18/175518
 
-var UseTproxy = true
+var UseTproxy = false
 
 type SetupCommands string
 type CleanCommands string
@@ -78,6 +79,7 @@ func WriteRules() error {
 	}
 	if !UseTproxy {
 		if err := Redirect.GetSetupCommands().Setup(); err != nil {
+			log.Println(err)
 			return errors.New("机器不支持透明代理: " + err.Error())
 		}
 	}

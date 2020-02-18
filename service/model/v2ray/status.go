@@ -202,7 +202,6 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 		global.SSRs.Append(*ss)
 	}
 	if configure.GetSettingNotNil().Transparent != configure.TransparentClose {
-		CheckAndStopTransparentProxy()
 		err = CheckAndSetupTransparentProxy(false)
 	}
 	return

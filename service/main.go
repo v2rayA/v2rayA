@@ -3,6 +3,7 @@ package main
 import (
 	"V2RayA/extra/download"
 	"V2RayA/global"
+	"V2RayA/model/dnsDelayer"
 	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
 	"V2RayA/persistence/configure"
@@ -98,7 +99,7 @@ func initConfigure() {
 		if err != nil {
 			log.Println(err)
 		}
-		err = dld("https://github.com/v2ray/domain-list-community/releases/latest/download/dlc.dat","https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geosite.dat","geosite.dat")
+		err = dld("https://github.com/v2ray/domain-list-community/releases/latest/download/dlc.dat", "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geosite.dat", "geosite.dat")
 		if err != nil {
 			log.Println(err)
 		}
@@ -141,7 +142,6 @@ func hello() {
 		}
 		fmt.Println("Container v2raya_v2ray is ready.")
 	}
-	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 }
 
 func checkUpdate() {
@@ -251,6 +251,18 @@ func main() {
 	checkConnection()
 	hello()
 	checkUpdate()
+	go func() {
+		d := dnsDelayer.New()
+		ifname := "wlp5s0"
+		err := d.Prepare(ifname)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = d.Run(ifname)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}

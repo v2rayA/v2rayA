@@ -17,6 +17,7 @@ require (
 	github.com/gin-gonic/gin v1.4.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/gopacket v1.1.17
 	github.com/gookit/color v1.2.0
 	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.9
@@ -25,6 +26,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.5 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
+	github.com/miekg/dns v1.1.4
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a
 	github.com/nadoo/glider v0.9.2
@@ -39,7 +41,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200115085410-6d4e4cb37c7d // indirect
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1 // indirect
+	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 	v2ray.com/core v4.19.1+incompatible
