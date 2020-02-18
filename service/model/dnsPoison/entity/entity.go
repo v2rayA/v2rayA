@@ -72,7 +72,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 						_ = poison.DeleteHandles(h)
 					}
 				}
-				if !needToAdd {
+				if !needToAdd || (len(ifnames) == 1 && ifnames[0] == "") {
 					return
 				}
 				//准备白名单
