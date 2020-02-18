@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"V2RayA/model/dnsPoison/entity"
 	"V2RayA/model/iptables"
 	"V2RayA/persistence/configure"
 )
@@ -16,4 +17,5 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 
 func CheckAndStopTransparentProxy() {
 	iptables.DeleteRules()
+	entity.StopDNSPoison()
 }

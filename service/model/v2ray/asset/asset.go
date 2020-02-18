@@ -14,7 +14,6 @@ import (
 	"path"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
@@ -169,82 +168,65 @@ func GetConfigPath() (p string) {
 	return
 }
 
-var (
-	cacheWlIps     *v2router.GeoIPMatcher
-	cacheWlDomains *strmatcher.MatcherGroup
-	cacheWlMutex   sync.Mutex
-)
-
-func GetWhitelistCn() (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
-	init := func() (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
-		dir := GetV2rayLocationAsset()
-		b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
-		if err != nil {
-			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
-		}
-		var siteList v2router.GeoSiteList
-		err = proto.Unmarshal(b, &siteList)
-		if err != nil {
-			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
-		}
-		wlDomains = new(strmatcher.MatcherGroup)
-		domainMatcher := new(dnsPoison.DomainMatcherGroup)
-		fullMatcher := new(dnsPoison.FullMatcherGroup)
-		for _, e := range siteList.Entry {
-			if e.CountryCode == "CN" {
-				dms := e.Domain
-				for _, dm := range dms {
-					switch dm.Type {
-					case v2router.Domain_Domain:
-						domainMatcher.Add(dm.Value)
-					case v2router.Domain_Full:
-						fullMatcher.Add(dm.Value)
-					case v2router.Domain_Plain:
-						wlDomains.Add(dnsPoison.SubstrMatcher(dm.Value))
-					case v2router.Domain_Regex:
-						r, err := regexp.Compile(dm.Value)
-						if err != nil {
-							break
-						}
-						wlDomains.Add(&dnsPoison.RegexMatcher{Pattern: r})
+func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain) (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
+	dir := GetV2rayLocationAsset()
+	b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
+	if err != nil {
+		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+	}
+	var siteList v2router.GeoSiteList
+	err = proto.Unmarshal(b, &siteList)
+	if err != nil {
+		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+	}
+	wlDomains = new(strmatcher.MatcherGroup)
+	domainMatcher := new(dnsPoison.DomainMatcherGroup)
+	fullMatcher := new(dnsPoison.FullMatcherGroup)
+	for _, e := range siteList.Entry {
+		if e.CountryCode == "CN" {
+			dms := e.Domain
+			dms = append(dms, externDomains...)
+			for _, dm := range dms {
+				switch dm.Type {
+				case v2router.Domain_Domain:
+					domainMatcher.Add(dm.Value)
+				case v2router.Domain_Full:
+					fullMatcher.Add(dm.Value)
+				case v2router.Domain_Plain:
+					wlDomains.Add(dnsPoison.SubstrMatcher(dm.Value))
+				case v2router.Domain_Regex:
+					r, err := regexp.Compile(dm.Value)
+					if err != nil {
+						break
 					}
+					wlDomains.Add(&dnsPoison.RegexMatcher{Pattern: r})
 				}
-				break
 			}
+			break
 		}
-		domainMatcher.Add("mzz.pub")
-		wlDomains.Add(domainMatcher)
-		wlDomains.Add(fullMatcher)
+	}
+	wlDomains.Add(domainMatcher)
+	wlDomains.Add(fullMatcher)
 
-		b, err = ioutil.ReadFile(path.Join(dir, "geoip.dat"))
-		if err != nil {
-			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
-		}
-		var ipList v2router.GeoIPList
-		err = proto.Unmarshal(b, &ipList)
-		if err != nil {
-			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
-		}
-		wlIps = new(v2router.GeoIPMatcher)
-		for _, e := range ipList.Entry {
-			if e.CountryCode == "CN" {
-				ips := e.Cidr
-				ips = append(ips, &v2router.CIDR{
-					Ip:     []byte{119, 29, 29, 29},
-					Prefix: 32,
-				})
-				_ = wlIps.Init(ips)
-				break
-			}
-		}
-		return
+	b, err = ioutil.ReadFile(path.Join(dir, "geoip.dat"))
+	if err != nil {
+		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
 	}
-	cacheWlMutex.Lock()
-	defer cacheWlMutex.Unlock()
-	if cacheWlDomains == nil && cacheWlIps == nil {
-		cacheWlIps, cacheWlDomains, err = init()
+	var ipList v2router.GeoIPList
+	err = proto.Unmarshal(b, &ipList)
+	if err != nil {
+		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
 	}
-	return cacheWlIps, cacheWlDomains, err
+	wlIps = new(v2router.GeoIPMatcher)
+	for _, e := range ipList.Entry {
+		if e.CountryCode == "CN" {
+			ips := e.Cidr
+			ips = append(ips, externIps...)
+			_ = wlIps.Init(ips)
+			break
+		}
+	}
+	return
 }
 func GetV2rayServiceFilePath() (path string, err error) {
 	var out []byte

@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/iptables"
 	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
@@ -171,9 +172,8 @@ func RestartV2rayService() (err error) {
 
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
-	CheckAndStopTransparentProxy()
 	//读配置，转换为v2ray配置并写入
-	tmpl, err := NewTemplateFromVmessInfo(*v)
+	tmpl, extraInfo, err := NewTemplateFromVmessInfo(*v)
 	if err != nil {
 		return
 	}
@@ -202,8 +202,9 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 		}
 		global.SSRs.Append(*ss)
 	}
-	if configure.GetSettingNotNil().Transparent != configure.TransparentClose {
-		err = CheckAndSetupTransparentProxy(false)
+	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !iptables.UseTproxy {
+		//redirect+poison增强方案
+		tmpl.SetupDNSPoison(extraInfo)
 	}
 	return
 }
@@ -218,7 +219,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 		log.Println(err)
 		return
 	}
-	tmpl, err := NewTemplateFromVmessInfo(sr.VmessInfo)
+	tmpl, extraInfo, err := NewTemplateFromVmessInfo(sr.VmessInfo)
 	if err != nil {
 		return
 	}
@@ -247,9 +248,9 @@ func UpdateV2rayWithConnectedServer() (err error) {
 			}
 			global.SSRs.Append(*ss)
 		}
-		if configure.GetSettingNotNil().Transparent != configure.TransparentClose{
-			CheckAndStopTransparentProxy()
-			err = CheckAndSetupTransparentProxy(false)
+		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !iptables.UseTproxy {
+			//redirect+poison增强方案
+			tmpl.SetupDNSPoison(extraInfo)
 		}
 	}
 	return
