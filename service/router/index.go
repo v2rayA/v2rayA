@@ -72,6 +72,7 @@ func Run() error {
 		auth.GET("customPac", controller.GetCustomPac)
 		auth.PUT("customPac", controller.PutCustomPac)
 	}
+	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
 	app := global.GetEnvironmentConfig()
 	return engine.Run(app.Address)

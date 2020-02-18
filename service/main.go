@@ -98,7 +98,7 @@ func initConfigure() {
 		if err != nil {
 			log.Println(err)
 		}
-		err = dld("https://github.com/v2ray/domain-list-community/releases/latest/download/dlc.dat","https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geosite.dat","geosite.dat")
+		err = dld("https://github.com/v2ray/domain-list-community/releases/latest/download/dlc.dat", "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geosite.dat", "geosite.dat")
 		if err != nil {
 			log.Println(err)
 		}
@@ -141,7 +141,6 @@ func hello() {
 		}
 		fmt.Println("Container v2raya_v2ray is ready.")
 	}
-	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 }
 
 func checkUpdate() {
