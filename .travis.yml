@@ -113,6 +113,7 @@ deploy:
       - "installer_archlinux_arm_$VERSION.pkg.tar.xz"
       - "installer_archlinux_arm64_$VERSION.pkg.tar.xz"
     skip_cleanup: true
+    draft: true
     overwrite: true
     on:
       tags: true
