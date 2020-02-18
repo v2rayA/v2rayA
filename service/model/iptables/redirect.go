@@ -38,6 +38,7 @@ ip6tables -t nat -N V2RAY
 #禁用ipv6
 ip6tables -t nat -A V2RAY -p tcp -j REDIRECT --to-port 0
 ip6tables -t nat -A V2RAY -p udp -j REDIRECT --to-port 0
+<<<<<<< HEAD
 
 ip6tables -t nat -A V2RAY -m mark --mark 0xff -j RETURN
 ip6tables -t nat -A V2RAY -d ::/128 -j RETURN
@@ -54,6 +55,8 @@ ip6tables -t nat -A V2RAY -d fc00::/7 -j RETURN
 ip6tables -t nat -A V2RAY -d fe80::/10 -j RETURN
 ip6tables -t nat -A V2RAY -d ff00::/8 -j RETURN
 ip6tables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 12345
+=======
+>>>>>>> fix: ban ipv6 and problem that can't start v2ray if no internet access
 ip6tables -t nat -A PREROUTING -p tcp -j V2RAY
 ip6tables -t nat -A PREROUTING -p udp -j V2RAY
 ip6tables -t nat -A OUTPUT -p tcp -j V2RAY
