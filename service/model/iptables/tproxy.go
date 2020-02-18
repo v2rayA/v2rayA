@@ -62,61 +62,9 @@ iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345
 `
 	if cmds.IsCommandValid("ip6tables") {
 		commands += `
-# 开启ipv6 forward
-sysctl -w net.ipv6.conf.all.forwarding=1
-
-# 设置策略路由
-ip -6 rule add fwmark 1 table 100
-ip -6 route add local ::/0 dev lo table 100
-
-# 建链
-ip6tables -t mangle -N SSTP_OUT
-ip6tables -t mangle -N SSTP_PRE
-ip6tables -t mangle -A OUTPUT -j SSTP_OUT
-ip6tables -t mangle -A PREROUTING -j SSTP_PRE
-
-# 打上 iptables 标记，mark 了的会走代理
-ip6tables -t mangle -N SETMARK
 #禁用ipv6
-ip6tables -t mangle -A SETMARK -p tcp -j DROP
-ip6tables -t mangle -A SETMARK -p udp -j DROP
-
-ip6tables -t mangle -A SETMARK -i docker+ -j RETURN
-ip6tables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -d ::/128 -j RETURN
-ip6tables -t mangle -A SETMARK -d ::1/128 -j RETURN
-ip6tables -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN
-ip6tables -t mangle -A SETMARK -d ::ffff:0:0:0/96 -j RETURN
-ip6tables -t mangle -A SETMARK -d 64:ff9b::/96 -j RETURN
-ip6tables -t mangle -A SETMARK -d 100::/64 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2001::/32 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2001:20::/28 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2001:db8::/32 -j RETURN
-ip6tables -t mangle -A SETMARK -d 2002::/16 -j RETURN
-ip6tables -t mangle -A SETMARK -d fc00::/7 -j RETURN
-ip6tables -t mangle -A SETMARK -d fe80::/10 -j RETURN
-ip6tables -t mangle -A SETMARK -d ff00::/8 -j RETURN
-ip6tables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
-ip6tables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
-
-# 走过TPROXY的通行
-ip6tables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
-# 本机出方向规则，白名单端口
-ip6tables -t mangle -A SSTP_OUT -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
-ip6tables -t mangle -A SSTP_OUT -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
-# 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
-ip6tables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
-ip6tables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
-
-# 走过TPROXY的通行
-ip6tables -t mangle -A SSTP_PRE -m mark --mark 0xff -j RETURN
-# 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
-ip6tables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
-ip6tables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
-# 将所有打了标记的 TCP 和 UDP 包透明地转发到代理的监听端口
-ip6tables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345
-ip6tables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
 	`
 	}
 	return SetupCommands(commands)
@@ -138,18 +86,8 @@ iptables -t mangle -X SETMARK
 `
 	if cmds.IsCommandValid("ip6tables") {
 		commands += `
-ip -6 rule del fwmark 1 table 100
-ip -6 route del local ::/0 dev lo table 100
-
-ip6tables -t mangle -F SSTP_OUT
-ip6tables -t mangle -D OUTPUT -j SSTP_OUT
-ip6tables -t mangle -X SSTP_OUT
-ip6tables -t mangle -F SSTP_PRE
-ip6tables -t mangle -D PREROUTING -j SSTP_PRE
-ip6tables -t mangle -X SSTP_PRE
-ip6tables -t mangle -F LOG
-ip6tables -t mangle -F SETMARK
-ip6tables -t mangle -X SETMARK
+sysctl -w net.ipv6.conf.all.disable_ipv6=0
+sysctl -w net.ipv6.conf.default.disable_ipv6=0
 `
 	}
 	return CleanCommands(commands)

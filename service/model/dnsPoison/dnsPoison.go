@@ -150,10 +150,14 @@ out:
 		default:
 		}
 		trans := packet.TransportLayer()
-		if trans == nil || trans.TransportFlow().Dst().String() != "53" {
+		if trans == nil {
 			continue
 		}
-		sPort, dPort := trans.TransportFlow().Endpoints()
+		transflow := trans.TransportFlow()
+		sPort, dPort := transflow.Endpoints()
+		if dPort.String() != "53" {
+			continue
+		}
 		sAddr, dAddr := packet.NetworkLayer().NetworkFlow().Endpoints()
 		// TODO: 暂不支持IPv6
 		dIp := net.ParseIP(dAddr.String()).To4()

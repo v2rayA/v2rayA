@@ -122,7 +122,7 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 	if v2ray.IsV2RayRunning() && //正在使用GFWList模式再重启
 		(setting.Transparent == configure.TransparentGfwlist ||
 			setting.Transparent == configure.TransparentClose && setting.PacMode == configure.GfwlistMode) {
-		err = v2ray.RestartV2rayService()
+		err = v2ray.UpdateV2rayWithConnectedServer()
 	}
 	return
 }

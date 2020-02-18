@@ -53,7 +53,6 @@ func IsV2RayRunning() bool {
 }
 func RestartV2rayService() (err error) {
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
-	CheckAndStopTransparentProxy()
 	var out []byte
 	switch global.ServiceControlMode {
 	case global.DockerMode:
@@ -162,16 +161,13 @@ func RestartV2rayService() (err error) {
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
-	//最后再启动transparentProxy，防止v2ray在启动DOH时需要解析域名
-	err = CheckAndSetupTransparentProxy(false)
-	if err != nil {
-		return
-	}
 	return
 }
 
 /*更新v2ray配置并重启*/
 func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
+	CheckAndStopTransparentProxy()
+	defer CheckAndSetupTransparentProxy(true)
 	//读配置，转换为v2ray配置并写入
 	tmpl, extraInfo, err := NewTemplateFromVmessInfo(*v)
 	if err != nil {
@@ -210,6 +206,8 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 }
 
 func UpdateV2rayWithConnectedServer() (err error) {
+	CheckAndStopTransparentProxy()
+	defer CheckAndSetupTransparentProxy(true)
 	cs := configure.GetConnectedServer()
 	if cs == nil { //没有连接，把v2ray配置更新一下好了
 		return pretendToStopV2rayService()
@@ -304,14 +302,6 @@ func StopV2rayService() (err error) {
 		return errors.New("v2ray停止失败")
 	}
 	return
-}
-
-func RestartAndEnableV2rayService() (err error) {
-	err = RestartV2rayService()
-	if err != nil {
-		return
-	}
-	return EnableV2rayService()
 }
 
 func StopAndDisableV2rayService() (err error) {
