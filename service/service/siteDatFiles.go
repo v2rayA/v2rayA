@@ -2,7 +2,7 @@ package service
 
 import (
 	"V2RayA/model/siteDat"
-	"V2RayA/model/v2ray"
+	"V2RayA/model/v2ray/asset"
 	"github.com/gogo/protobuf/proto"
 	"io/ioutil"
 	"log"
@@ -12,7 +12,7 @@ import (
 )
 
 func GetSiteDatFiles() (siteDats []siteDat.SiteDat) {
-	dir := v2ray.GetV2rayLocationAsset()
+	dir := asset.GetV2rayLocationAsset()
 	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return

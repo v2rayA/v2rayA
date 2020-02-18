@@ -11,7 +11,6 @@ var Redirect redirect
 func (r *redirect) GetSetupCommands() SetupCommands {
 	commands := `
 iptables -t nat -N V2RAY
-iptables -t nat -A V2RAY -m mark --mark 0xff -j RETURN
 iptables -t nat -A V2RAY -d 10.0.0.0/8 -j RETURN
 iptables -t nat -A V2RAY -d 100.64.0.0/10 -j RETURN
 iptables -t nat -A V2RAY -d 127.0.0.0/8 -j RETURN
@@ -27,13 +26,11 @@ iptables -t nat -A V2RAY -d 203.0.113.0/24 -j RETURN
 iptables -t nat -A V2RAY -d 224.0.0.0/4 -j RETURN
 iptables -t nat -A V2RAY -d 240.0.0.0/4 -j RETURN
 iptables -t nat -A V2RAY -d 255.255.255.255/32 -j RETURN
+iptables -t nat -A V2RAY -m mark --mark 0xff -j RETURN
 iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 12345
 
 iptables -t nat -A PREROUTING -p tcp -j V2RAY
 iptables -t nat -A OUTPUT -p tcp -j V2RAY
-iptables -A INPUT -p udp -s 172.20.10.1 --sport 53 -j ACCEPT
-iptables -A INPUT -p udp -s 119.29.29.29 --sport 53 -j ACCEPT
-iptables -A INPUT -p udp -m mark ! --mark 0xff --sport 53 -j DROP
 `
 	if cmds.IsCommandValid("ip6tables") {
 		commands += `
@@ -74,9 +71,6 @@ iptables -t nat -D PREROUTING -p udp -j V2RAY
 iptables -t nat -D OUTPUT -p tcp -j V2RAY
 iptables -t nat -D OUTPUT -p udp -j V2RAY
 iptables -t nat -X V2RAY
-iptables -D INPUT -p udp -s 172.20.10.1 --sport 53 -j ACCEPT
-iptables -D INPUT -p udp -s 119.29.29.29 --sport 53 -j ACCEPT
-iptables -D INPUT -p udp -m mark ! --mark 0xff --sport 53 -j DROP
 `
 	if cmds.IsCommandValid("ip6tables") {
 		commands += `

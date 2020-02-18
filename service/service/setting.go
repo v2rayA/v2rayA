@@ -3,6 +3,7 @@ package service
 import (
 	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"errors"
 )
@@ -19,15 +20,15 @@ func GetSetting() *configure.Setting {
 func UpdateSetting(setting *configure.Setting) (err error) {
 	switch setting.PacMode {
 	case configure.GfwlistMode:
-		if !v2ray.IsH2yExists() {
+		if !asset.IsH2yExists() {
 			return errors.New("未发现GFWList文件，请更新GFWList后再试")
 		}
 	case configure.CustomMode:
-		if !v2ray.IsCustomExists() {
+		if !asset.IsCustomExists() {
 			return errors.New("未发现custom.dat文件，功能正在开发")
 		}
 	}
-	if setting.Transparent == configure.TransparentGfwlist && !v2ray.IsH2yExists() {
+	if setting.Transparent == configure.TransparentGfwlist && !asset.IsH2yExists() {
 		return errors.New("未发现GFWList文件，请更新GFWList后再试")
 	}
 	if setting.Transparent != configure.TransparentClose {

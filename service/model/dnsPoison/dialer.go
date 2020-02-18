@@ -1,4 +1,4 @@
-package dnsDelayer
+package dnsPoison
 
 import (
 	"log"
@@ -12,11 +12,11 @@ func newDialer(laddr string, lport uint32, timeout time.Duration) (dialer *net.D
 		Timeout: timeout,
 		Control: func(network, address string, c syscall.RawConn) error {
 			return c.Control(func(fd uintptr) {
-				//err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
-				//if err != nil {
-				//	log.Printf("control: %s", err)
-				//	return
-				//}
+				err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
+				if err != nil {
+					log.Printf("control: %s", err)
+					return
+				}
 				if err := syscall.SetsockoptInt(int(fd), syscall.SOL_IP, syscall.IP_TRANSPARENT, 1); err != nil {
 					log.Println("control: failed to set IP_TRANSPARENT")
 					return

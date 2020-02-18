@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/tools"
 	"bytes"
 	"errors"
@@ -48,52 +49,11 @@ func DisableV2rayService() (err error) {
 	return
 }
 
-func GetV2rayServiceFilePath() (path string, err error) {
-	var out []byte
-
-	if global.ServiceControlMode == global.SystemctlMode {
-		out, err = exec.Command("sh", "-c", "systemctl status v2ray|grep /v2ray.service").CombinedOutput()
-		if err != nil {
-			err = errors.New(strings.TrimSpace(string(out)))
-			if !strings.Contains(string(out), "not be found") {
-				path = `/usr/lib/systemd/system/v2ray.service`
-				return
-			}
-		}
-	} else if global.ServiceControlMode == global.ServiceMode {
-		out, err = exec.Command("sh", "-c", "service v2ray status|grep /v2ray.service").CombinedOutput()
-		if err != nil || strings.TrimSpace(string(out)) == "(Reason:" {
-			if !strings.Contains(string(out), "not be found") {
-				path = `/lib/systemd/system/v2ray.service`
-				return
-			}
-			if err != nil {
-				err = errors.New(strings.TrimSpace(string(out)))
-			}
-		}
-	} else {
-		err = errors.New("当前环境无法使用systemctl和service命令")
-		return
-	}
-	if err != nil {
-		return
-	}
-	sout := string(out)
-	l := strings.Index(sout, "/")
-	r := strings.Index(sout, "/v2ray.service")
-	if l < 0 || r < 0 {
-		err = errors.New("getV2rayServiceFilePath失败")
-		return
-	}
-	path = sout[l : r+len("/v2ray.service")]
-	return
-}
-
 func LiberalizeProcFile() (err error) {
 	if global.ServiceControlMode != global.SystemctlMode && global.ServiceControlMode != global.ServiceMode {
 		return
 	}
-	p, err := GetV2rayServiceFilePath()
+	p, err := asset.GetV2rayServiceFilePath()
 	if err != nil {
 		return
 	}
@@ -138,9 +98,9 @@ func IsV2rayServiceValid() bool {
 		out, err := exec.Command("sh", "-c", "service v2ray status|grep not-found").Output()
 		return err == nil && len(bytes.TrimSpace(out)) == 0
 	case global.DockerMode:
-		return IsGeoipExists() && IsGeositeExists()
+		return asset.IsGeoipExists() && asset.IsGeositeExists()
 	case global.CommonMode:
-		if !IsGeoipExists() || !IsGeositeExists() {
+		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 			return false
 		}
 		out, err := exec.Command("sh", "-c", "which v2ray").Output()
@@ -150,7 +110,7 @@ func IsV2rayServiceValid() bool {
 }
 
 func GetV2rayServiceVersion() (ver string, err error) {
-	dir, err := GetV2rayWorkingDir()
+	dir, err := asset.GetV2rayWorkingDir()
 	if err != nil || len(dir) <= 0 {
 		return "", errors.New("无法找到v2ray可执行文件")
 	}

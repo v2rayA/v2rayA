@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"V2RayA/model/v2ray"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"
@@ -12,7 +12,7 @@ import (
 func GetSetting(ctx *gin.Context) {
 	s := service.GetSetting()
 	var localGFWListVersion string
-	t, err := v2ray.GetH2yModTime()
+	t, err := asset.GetH2yModTime()
 	if err == nil {
 		localGFWListVersion = t.Format("2006-01-02")
 	}

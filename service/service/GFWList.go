@@ -4,6 +4,7 @@ import (
 	"V2RayA/extra/copyfile"
 	"V2RayA/extra/download"
 	"V2RayA/model/v2ray"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/files"
 	"V2RayA/tools/httpClient"
@@ -18,11 +19,11 @@ import (
 )
 
 var gfwlistupdatetime *time.Time
-var mutex sync.Mutex
+var gfwListMutex sync.Mutex
 
 func GetRemoteGFWListUpdateTime(c *http.Client) (t time.Time, err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	gfwListMutex.Lock()
+	defer gfwListMutex.Unlock()
 	if gfwlistupdatetime != nil {
 		return *gfwlistupdatetime, nil
 	}
@@ -54,12 +55,12 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 		return
 	}
 
-	if !v2ray.IsH2yExists() {
+	if !asset.IsH2yExists() {
 		//本地文件不存在，那远端必定比本地新
 		return false, remoteTime, nil
 	}
 	//本地文件存在，检查本地版本是否比远端还新
-	t, err := v2ray.GetH2yModTime()
+	t, err := asset.GetH2yModTime()
 	if err != nil {
 		return
 	}
@@ -86,15 +87,15 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	err = copyfile.CopyFile("/tmp/h2y.dat."+id, v2ray.GetV2rayLocationAsset()+"/h2y.dat")
+	err = copyfile.CopyFile("/tmp/h2y.dat."+id, asset.GetV2rayLocationAsset()+"/h2y.dat")
 	if err != nil {
 		return
 	}
-	err = os.Chmod(v2ray.GetV2rayLocationAsset()+"/h2y.dat", os.FileMode(0755))
+	err = os.Chmod(asset.GetV2rayLocationAsset()+"/h2y.dat", os.FileMode(0755))
 	if err != nil {
 		return
 	}
-	t, err := files.GetFileModTime(v2ray.GetV2rayLocationAsset() + "/h2y.dat")
+	t, err := files.GetFileModTime(asset.GetV2rayLocationAsset() + "/h2y.dat")
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Format("2006-01-02")
 	}

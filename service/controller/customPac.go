@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"V2RayA/model/v2ray"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"
@@ -15,7 +15,7 @@ func GetSiteDatFiles(ctx *gin.Context) {
 func GetCustomPac(ctx *gin.Context) {
 	tools.ResponseSuccess(ctx, gin.H{
 		"customPac":          configure.GetCustomPacNotNil(),
-		"V2RayLocationAsset": v2ray.GetV2rayLocationAsset(),
+		"V2RayLocationAsset": asset.GetV2rayLocationAsset(),
 	})
 }
 func PutCustomPac(ctx *gin.Context) {
