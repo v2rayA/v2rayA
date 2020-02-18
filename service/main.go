@@ -3,9 +3,9 @@ package main
 import (
 	"V2RayA/extra/download"
 	"V2RayA/global"
-	"V2RayA/model/dnsDelayer"
 	"V2RayA/model/ipforward"
 	"V2RayA/model/v2ray"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
 	"V2RayA/service"
@@ -76,10 +76,10 @@ func initConfigure() {
 		}
 	}
 	//检查geoip、geosite是否存在
-	if !v2ray.IsGeoipExists() || !v2ray.IsGeositeExists() {
+	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 		dld := func(downloadURL, alternativeDownloadURL, filename string) (err error) {
 			color.Red.Println("正在安装" + filename)
-			p := v2ray.GetV2rayLocationAsset() + "/" + filename
+			p := asset.GetV2rayLocationAsset() + "/" + filename
 			u := downloadURL
 			err = download.Pget(u, p)
 			if err != nil {
@@ -105,7 +105,7 @@ func initConfigure() {
 		}
 	}
 	//检查config.json是否存在
-	if _, err := os.Stat(v2ray.GetConfigPath()); err != nil {
+	if _, err := os.Stat(asset.GetConfigPath()); err != nil {
 		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
 		t := v2ray.NewTemplate()
 		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
@@ -127,8 +127,8 @@ func checkConnection() {
 }
 
 func hello() {
-	color.Red.Println("V2RayLocationAsset is", v2ray.GetV2rayLocationAsset())
-	wd, _ := v2ray.GetV2rayWorkingDir()
+	color.Red.Println("V2RayLocationAsset is", asset.GetV2rayLocationAsset())
+	wd, _ := asset.GetV2rayWorkingDir()
 	color.Red.Println("V2Ray binary is at", wd+"/v2ray")
 	if global.ServiceControlMode != global.DockerMode {
 		wd, _ = os.Getwd()
@@ -251,18 +251,6 @@ func main() {
 	checkConnection()
 	hello()
 	checkUpdate()
-	go func() {
-		d := dnsDelayer.New()
-		ifname := "wlp5s0"
-		err := d.Prepare(ifname)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = d.Run(ifname)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}

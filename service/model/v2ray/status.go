@@ -3,6 +3,7 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/model/shadowsocksr"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/ports"
@@ -31,7 +32,7 @@ func IsV2RayProcessExists() bool {
 func IsV2RayRunning() bool {
 	switch global.ServiceControlMode {
 	case global.DockerMode:
-		b, err := GetConfigBytes()
+		b, err := asset.GetConfigBytes()
 		if err != nil {
 			return false
 		}
@@ -58,7 +59,7 @@ func RestartV2rayService() (err error) {
 		//看inbounds是不是空的，是的话就补上
 		tmplJson := NewTemplate()
 		var b []byte
-		b, err = GetConfigBytes()
+		b, err = asset.GetConfigBytes()
 		if err != nil {
 			return
 		}
@@ -107,11 +108,11 @@ func RestartV2rayService() (err error) {
 		}
 	case global.CommonMode:
 		_ = process.KillAll("v2ray", true)
-		v2wd, _ := GetV2rayWorkingDir()
-		v2ctlDir, _ := GetV2ctlDir()
+		v2wd, _ := asset.GetV2rayWorkingDir()
+		v2ctlDir, _ := asset.GetV2ctlDir()
 		//cd到v2ctl的目录，防止找不到v2ctl
 		wd, _ := os.Getwd()
-		cmd := fmt.Sprintf("cd %v && nohup %v/v2ray --config=%v > %v/v2ray.log 2>&1 &", v2ctlDir, v2wd, GetConfigPath(), wd)
+		cmd := fmt.Sprintf("cd %v && nohup %v/v2ray --config=%v > %v/v2ray.log 2>&1 &", v2ctlDir, v2wd, asset.GetConfigPath(), wd)
 		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
 		if err != nil {
 			err = errors.New(err.Error() + string(out))
@@ -123,7 +124,7 @@ func RestartV2rayService() (err error) {
 	//如果inbounds中开放端口，检测端口是否已就绪
 	tmplJson := NewTemplate()
 	var b []byte
-	b, err = GetConfigBytes()
+	b, err = asset.GetConfigBytes()
 	if err != nil {
 		return
 	}
@@ -257,7 +258,7 @@ func UpdateV2rayWithConnectedServer() (err error) {
 /*清空inbounds规则来假停v2ray*/
 func pretendToStopV2rayService() (err error) {
 	tmplJson := NewTemplate()
-	b, err := GetConfigBytes()
+	b, err := asset.GetConfigBytes()
 	if err != nil {
 		return
 	}

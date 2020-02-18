@@ -1,17 +1,23 @@
-package v2ray
+package asset
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/dnsPoison"
 	"V2RayA/tools/files"
 	"errors"
+	"github.com/gogo/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
+	v2router "v2ray.com/core/app/router"
+	"v2ray.com/core/common/strmatcher"
 )
 
 var v2rayLocationAsset *string
@@ -160,5 +166,123 @@ func GetConfigPath() (p string) {
 		p = GetV2rayLocationAsset() + "/config.json"
 	default:
 	}
+	return
+}
+
+var (
+	cacheWlIps     *v2router.GeoIPMatcher
+	cacheWlDomains *strmatcher.MatcherGroup
+	cacheWlMutex   sync.Mutex
+)
+
+func GetWhitelistCn() (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
+	init := func() (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
+		dir := GetV2rayLocationAsset()
+		b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
+		if err != nil {
+			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+		}
+		var siteList v2router.GeoSiteList
+		err = proto.Unmarshal(b, &siteList)
+		if err != nil {
+			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+		}
+		wlDomains = new(strmatcher.MatcherGroup)
+		domainMatcher := new(dnsPoison.DomainMatcherGroup)
+		fullMatcher := new(dnsPoison.FullMatcherGroup)
+		for _, e := range siteList.Entry {
+			if e.CountryCode == "CN" {
+				dms := e.Domain
+				for _, dm := range dms {
+					switch dm.Type {
+					case v2router.Domain_Domain:
+						domainMatcher.Add(dm.Value)
+					case v2router.Domain_Full:
+						fullMatcher.Add(dm.Value)
+					case v2router.Domain_Plain:
+						wlDomains.Add(dnsPoison.SubstrMatcher(dm.Value))
+					case v2router.Domain_Regex:
+						r, err := regexp.Compile(dm.Value)
+						if err != nil {
+							break
+						}
+						wlDomains.Add(&dnsPoison.RegexMatcher{Pattern: r})
+					}
+				}
+				break
+			}
+		}
+		domainMatcher.Add("mzz.pub")
+		wlDomains.Add(domainMatcher)
+		wlDomains.Add(fullMatcher)
+
+		b, err = ioutil.ReadFile(path.Join(dir, "geoip.dat"))
+		if err != nil {
+			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+		}
+		var ipList v2router.GeoIPList
+		err = proto.Unmarshal(b, &ipList)
+		if err != nil {
+			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+		}
+		wlIps = new(v2router.GeoIPMatcher)
+		for _, e := range ipList.Entry {
+			if e.CountryCode == "CN" {
+				ips := e.Cidr
+				ips = append(ips, &v2router.CIDR{
+					Ip:     []byte{119, 29, 29, 29},
+					Prefix: 32,
+				})
+				_ = wlIps.Init(ips)
+				break
+			}
+		}
+		return
+	}
+	cacheWlMutex.Lock()
+	defer cacheWlMutex.Unlock()
+	if cacheWlDomains == nil && cacheWlIps == nil {
+		cacheWlIps, cacheWlDomains, err = init()
+	}
+	return cacheWlIps, cacheWlDomains, err
+}
+func GetV2rayServiceFilePath() (path string, err error) {
+	var out []byte
+
+	if global.ServiceControlMode == global.SystemctlMode {
+		out, err = exec.Command("sh", "-c", "systemctl status v2ray|grep /v2ray.service").CombinedOutput()
+		if err != nil {
+			err = errors.New(strings.TrimSpace(string(out)))
+			if !strings.Contains(string(out), "not be found") {
+				path = `/usr/lib/systemd/system/v2ray.service`
+				return
+			}
+		}
+	} else if global.ServiceControlMode == global.ServiceMode {
+		out, err = exec.Command("sh", "-c", "service v2ray status|grep /v2ray.service").CombinedOutput()
+		if err != nil || strings.TrimSpace(string(out)) == "(Reason:" {
+			if !strings.Contains(string(out), "not be found") {
+				path = `/lib/systemd/system/v2ray.service`
+				return
+			}
+			if err != nil {
+				err = errors.New(strings.TrimSpace(string(out)))
+			}
+		}
+	} else {
+		err = errors.New("当前环境无法使用systemctl和service命令")
+		return
+	}
+	if err != nil {
+		return
+	}
+	sout := string(out)
+	l := strings.Index(sout, "/")
+	r := strings.Index(sout, "/v2ray.service")
+	if l < 0 || r < 0 {
+		err = errors.New("getV2rayServiceFilePath失败")
+		return
+	}
+	path = sout[l : r+len("/v2ray.service")]
 	return
 }

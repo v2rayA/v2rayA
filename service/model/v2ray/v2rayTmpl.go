@@ -3,6 +3,7 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/model/iptables"
+	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"bytes"
@@ -812,7 +813,7 @@ func (t *Template) ToConfigBytes() []byte {
 }
 
 func WriteV2rayConfig(content []byte) (err error) {
-	err = ioutil.WriteFile(GetConfigPath(), content, os.ModeAppend)
+	err = ioutil.WriteFile(asset.GetConfigPath(), content, os.ModeAppend)
 	if err != nil {
 		return errors.New("WriteV2rayConfig: " + err.Error())
 	}
@@ -820,7 +821,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 }
 
 func NewTemplateFromConfig() (t Template, err error) {
-	b, err := GetConfigBytes()
+	b, err := asset.GetConfigBytes()
 	if err != nil {
 		return
 	}
