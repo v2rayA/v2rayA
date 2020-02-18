@@ -69,11 +69,11 @@ func (d *DnsPoison) Prepare(ifname string) (err error) {
 	return
 }
 
-func (d *DnsPoison) ListHandles() (handles []string) {
+func (d *DnsPoison) ListHandles() (ifnames []string) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	for ifname := range d.handles {
-		handles = append(handles, ifname)
+		ifnames = append(ifnames, ifname)
 	}
 	return
 }
@@ -125,7 +125,7 @@ func Fqdn(domain string) string {
 	return domain + "."
 }
 
-func (d *DnsPoison) Run(ifname string, whitelistDstIps *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
+func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
@@ -158,11 +158,10 @@ out:
 		// TODO: 暂不支持IPv6
 		dIp := net.ParseIP(dAddr.String()).To4()
 		if len(dIp) != net.IPv4len {
-			log.Println(dAddr)
 			continue
 		}
 		// whitelistIps
-		if ok := whitelistDstIps.Match(dIp); ok {
+		if ok := whitelistDnsServers.Match(dIp); ok {
 			continue
 		}
 		var m dnsmessage.Message
@@ -181,11 +180,10 @@ out:
 		if len(dm) == 0 {
 			continue
 		} else if index := whitelistDomains.Match(dm[:len(dm)-1]); index > 0 {
-			log.Println("skip", dm)
 			continue
 		}
 
-		log.Println("dnsPoison投毒:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions)
+		log.Println("dnsPoison投毒["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions)
 		go func(m *dnsmessage.Message, sAddr, sPort, dAddr, dPort *gopacket.Endpoint) {
 			switch q.Type {
 			case dnsmessage.TypeAAAA:

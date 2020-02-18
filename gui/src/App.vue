@@ -233,6 +233,7 @@ export default {
             this.$buefy.toast.open({
               message: res.data.message,
               type: "is-warning",
+              duration: 5000,
               position: "is-top"
             });
           }
@@ -253,6 +254,7 @@ export default {
             this.$buefy.toast.open({
               message: res.data.message,
               type: "is-warning",
+              duration: 5000,
               position: "is-top"
             });
           }

@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-func GetDefaultInterface() (string, error) {
+func GetDefaultInterface() ([]string, error) {
 	b, err := exec.Command("sh", "-c", "awk '$2 == 00000000 { print $1 }' /proc/net/route").Output()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return strings.TrimSpace(string(b)), nil
+	return strings.Split(strings.TrimSpace(string(b)), "\n"), nil
 }

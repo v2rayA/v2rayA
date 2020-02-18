@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/dnsPoison/entity"
 	"V2RayA/model/iptables"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
@@ -17,6 +18,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"v2ray.com/core/app/router"
 )
 
 /*对应template.json*/
@@ -221,6 +223,37 @@ type Policy struct {
 		StatsInboundUplink   bool `json:"statsInboundUplink,omitempty"`
 		StatsInboundDownlink bool `json:"statsInboundDownlink,omitempty"`
 	} `json:"system"`
+}
+
+type ExtraInfo struct {
+	DohIps                  []string
+	DohDomains              []string
+	ServerIps               []string
+	serverSecondLevelDomain string
+}
+
+func (t *Template) SetupDNSPoison(info *ExtraInfo) {
+	whitedms := make([]*router.Domain, 0, len(info.DohDomains))
+	for _, h := range info.DohDomains {
+		whitedms = append(whitedms, &router.Domain{
+			Type:  router.Domain_Full,
+			Value: h,
+		})
+	}
+	if len(info.serverSecondLevelDomain) > 0 {
+		whitedms = append(whitedms, &router.Domain{
+			Type:  router.Domain_Domain,
+			Value: info.serverSecondLevelDomain,
+		})
+	}
+	whitedms = append(whitedms, &router.Domain{
+		Type:  router.Domain_Domain,
+		Value: "v2raya.mzz.pub",
+	})
+	_ = entity.StartDNSPoison([]*router.CIDR{{
+		Ip:     []byte{119, 29, 29, 29},
+		Prefix: 32,
+	}}, whitedms)
 }
 
 func NewTemplate() (tmpl Template) {
@@ -439,7 +472,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHo
 	return
 }
 
-func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string) {
+func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string) (serverIPs []string, serverDomain string) {
 	setting := configure.GetSettingNotNil()
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
@@ -515,7 +548,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 			Protocol:    []string{"bittorrent"},
 		},
 	)
-	serverIPs := []string{v.Add}
+	serverIPs = []string{v.Add}
 	if net.ParseIP(v.Add) == nil {
 		//解析IP
 		ips, _ := net.LookupHost(v.Add)
@@ -530,6 +563,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 				Domain:      []string{"domain:" + domain},
 			}}, t.Routing.Rules...
 			)
+			serverDomain = domain
 		}
 	}
 	//将节点IP加入白名单
@@ -541,6 +575,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 		}}, t.Routing.Rules...
 		)
 	}
+	return
 }
 
 func (t *Template) SetPacRouting() {
@@ -709,9 +744,9 @@ func (t *Template) SetOutboundSockopt(supportUDP bool) {
 		if t.Outbounds[i].StreamSettings.Sockopt == nil {
 			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
 		}
-		if t.Outbounds[i].Protocol == "freedom" {
-			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
-		}
+		//if t.Outbounds[i].Protocol == "freedom" {
+		//	t.Outbounds[i].Settings.DomainStrategy = "UseIP"
+		//}
 		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
 		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}
@@ -740,13 +775,13 @@ func (t *Template) SetInboundPort() {
 	}
 }
 
-func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
+func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *ExtraInfo, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return t, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+		return t, nil, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
 	}
 	// 其中Template是基础配置，替换掉t即可
 	t = tmplJson.Template
@@ -757,7 +792,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	// 解析Outbound
 	o, err := ResolveOutbound(&v, "proxy", global.GetEnvironmentConfig().SSRListenPort)
 	if err != nil {
-		return t, err
+		return t, nil, err
 	}
 	t.Outbounds[0] = o
 	setting := configure.GetSettingNotNil()
@@ -796,7 +831,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	t.AppendDNSOutbound()
 	t.SetOutboundSockopt(supportUDP)
 	//最后是routing
-	t.SetDNSRouting(v, dohIPs, dohHosts)
+	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts)
 	//PAC端口规则
 	t.SetPacRouting()
 	//根据是否使用全局代理修改路由
@@ -804,7 +839,12 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.SetTransparentRouting()
 	}
 
-	return t, nil
+	return t, &ExtraInfo{
+		DohIps:                  dohIPs,
+		DohDomains:              dohHosts,
+		ServerIps:               serverIPs,
+		serverSecondLevelDomain: serverDomain,
+	}, nil
 }
 
 func (t *Template) ToConfigBytes() []byte {
