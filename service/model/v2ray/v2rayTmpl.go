@@ -518,9 +518,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 	if net.ParseIP(v.Add) == nil {
 		//解析IP
 		ips, _ := net.LookupHost(v.Add)
-		if len(ips) > 0 {
-			serverIPs = ips
-		}
+		serverIPs = ips
 		//如果不是IP，而是域名，将其二级域名加入白名单
 		group := strings.Split(v.Add, ".")
 		if len(group) >= 2 {
