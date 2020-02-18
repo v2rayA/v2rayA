@@ -226,10 +226,10 @@ type Policy struct {
 }
 
 type ExtraInfo struct {
-	DohIps                  []string
-	DohDomains              []string
-	ServerIps               []string
-	serverSecondLevelDomain string
+	DohIps       []string
+	DohDomains   []string
+	ServerIps    []string
+	serverDomain string
 }
 
 func (t *Template) SetupDNSPoison(info *ExtraInfo) {
@@ -240,20 +240,21 @@ func (t *Template) SetupDNSPoison(info *ExtraInfo) {
 			Value: h,
 		})
 	}
-	if len(info.serverSecondLevelDomain) > 0 {
+	if len(info.serverDomain) > 0 {
 		whitedms = append(whitedms, &router.Domain{
-			Type:  router.Domain_Domain,
-			Value: info.serverSecondLevelDomain,
+			Type:  router.Domain_Full,
+			Value: info.serverDomain,
 		})
 	}
 	whitedms = append(whitedms, &router.Domain{
 		Type:  router.Domain_Domain,
 		Value: "v2raya.mzz.pub",
 	})
-	_ = entity.StartDNSPoison([]*router.CIDR{{
-		Ip:     []byte{119, 29, 29, 29},
-		Prefix: 32,
-	}}, whitedms)
+	_ = entity.StartDNSPoison([]*router.CIDR{
+		{Ip: []byte{119, 29, 29, 29}, Prefix: 32},
+		{Ip: []byte{114, 114, 114, 114}, Prefix: 32},
+	},
+		whitedms)
 }
 
 func NewTemplate() (tmpl Template) {
@@ -366,7 +367,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 	return
 }
 
-func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHosts []string) {
+func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohDomains []string) {
 	setting := configure.GetSettingNotNil()
 	//先修改DNS设置
 	t.DNS = new(DNS)
@@ -413,7 +414,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHo
 	if setting.AntiPollution != configure.AntipollutionNone {
 		//统计DoH服务器信息
 		dohIPs = make([]string, 0)
-		dohHosts = make([]string, 0)
+		dohDomains = make([]string, 0)
 		for _, u := range t.DNS.Servers {
 			switch u := u.(type) {
 			case string:
@@ -427,7 +428,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHo
 				}
 				//如果是非IP则解析为IP
 				if net.ParseIP(uu.Hostname()) == nil {
-					dohHosts = append(dohHosts, uu.Hostname())
+					dohDomains = append(dohDomains, uu.Hostname())
 					addrs, e := net.LookupHost(uu.Hostname())
 					if e != nil {
 						continue
@@ -450,8 +451,8 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohHo
 				"full:v.mzz.pub",      // V2RayA demo
 			},
 		}
-		if len(dohHosts) > 0 {
-			ds.Domains = append(ds.Domains, dohHosts...)
+		if len(dohDomains) > 0 {
+			ds.Domains = append(ds.Domains, dohDomains...)
 		}
 		if net.ParseIP(v.Add) == nil {
 			//如果节点地址不是IP而是域名，将其二级域名加入白名单
@@ -550,21 +551,17 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 	)
 	serverIPs = []string{v.Add}
 	if net.ParseIP(v.Add) == nil {
+		//如果不是IP，而是域名，将其加入白名单
+		t.Routing.Rules = append([]RoutingRule{{
+			Type:        "field",
+			OutboundTag: "direct",
+			Domain:      []string{"full:" + v.Add},
+		}}, t.Routing.Rules...
+		)
+		serverDomain = v.Add
 		//解析IP
 		ips, _ := net.LookupHost(v.Add)
 		serverIPs = ips
-		//如果不是IP，而是域名，将其二级域名加入白名单
-		group := strings.Split(v.Add, ".")
-		if len(group) >= 2 {
-			domain := strings.Join(group[len(group)-2:], ".")
-			t.Routing.Rules = append([]RoutingRule{{
-				Type:        "field",
-				OutboundTag: "direct",
-				Domain:      []string{"domain:" + domain},
-			}}, t.Routing.Rules...
-			)
-			serverDomain = domain
-		}
 	}
 	//将节点IP加入白名单
 	if len(serverIPs) > 0 {
@@ -756,7 +753,6 @@ func (t *Template) AppendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "dns-out",
 		Protocol: "dns",
-		Settings: &Settings{Address: "119.29.29.29"},
 	})
 }
 
@@ -832,6 +828,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *ExtraInf
 	t.SetOutboundSockopt(supportUDP)
 	//最后是routing
 	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts)
+	//添加hosts
+	if len(serverDomain) > 0 && len(serverIPs) > 0 {
+		t.DNS.Hosts[serverDomain] = serverIPs[0]
+	}
 	//PAC端口规则
 	t.SetPacRouting()
 	//根据是否使用全局代理修改路由
@@ -840,10 +840,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *ExtraInf
 	}
 
 	return t, &ExtraInfo{
-		DohIps:                  dohIPs,
-		DohDomains:              dohHosts,
-		ServerIps:               serverIPs,
-		serverSecondLevelDomain: serverDomain,
+		DohIps:       dohIPs,
+		DohDomains:   dohHosts,
+		ServerIps:    serverIPs,
+		serverDomain: serverDomain,
 	}, nil
 }
 

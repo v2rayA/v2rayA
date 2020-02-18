@@ -91,9 +91,6 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		if err != nil {
 			return nil, err
 		}
-		//暂时关闭透明代理
-		//_ = CheckAndStopTransparentProxy()
-		//defer CheckAndSetupTransparentProxy(true)
 	} else {
 		tmpl = v2ray.NewTemplate()
 	}
