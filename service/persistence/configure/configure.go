@@ -158,11 +158,14 @@ https://i.233py.com/dns-query`
 	return r
 }
 func GetCustomPacNotNil() *CustomPac {
-	r := &CustomPac{
-		DefaultProxyMode: DefaultDirectMode,
-		RoutingRules:     []RoutingRule{},
-	}
+	r := new(CustomPac)
 	_ = persistence.Get("customPac", &r)
+	if r.DefaultProxyMode == "" {
+		r = &CustomPac{
+			DefaultProxyMode: DefaultDirectMode,
+			RoutingRules:     []RoutingRule{},
+		}
+	}
 	return r
 }
 func GetConnectedServer() *Which {
