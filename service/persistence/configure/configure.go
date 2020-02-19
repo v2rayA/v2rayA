@@ -162,7 +162,7 @@ func GetCustomPacNotNil() *CustomPac {
 	_ = persistence.Get("customPac", &r)
 	if r.DefaultProxyMode == "" {
 		r = &CustomPac{
-			DefaultProxyMode: DefaultDirectMode,
+			DefaultProxyMode: DefaultProxyMode,
 			RoutingRules:     []RoutingRule{},
 		}
 	}

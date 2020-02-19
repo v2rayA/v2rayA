@@ -24,9 +24,6 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 			return errors.New("未发现GFWList文件，请更新GFWList后再试")
 		}
 	case configure.CustomMode:
-		if !asset.IsCustomExists() {
-			return errors.New("未发现custom.dat文件，功能正在开发")
-		}
 	}
 	if setting.Transparent == configure.TransparentGfwlist && !asset.IsH2yExists() {
 		return errors.New("未发现GFWList文件，请更新GFWList后再试")
