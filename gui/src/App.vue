@@ -8,7 +8,7 @@
       </template>
       <template slot="start">
         <b-navbar-item tag="div">
-          v2ray-core状态：
+          {{ $t("common.v2rayCoreStatus") }}：
           <b-tag
             id="statusTag"
             :type="statusMap[runningState.running]"
@@ -27,11 +27,11 @@
         <!--        </b-navbar-item>-->
         <b-navbar-item tag="a" @click.native="handleClickSetting">
           <i class="iconfont icon-setting" style="font-size: 1.25em"></i>
-          设置
+          {{ $t("common.setting") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickAbout">
           <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
-          关于
+          {{ $t("common.about") }}
         </b-navbar-item>
         <b-dropdown
           position="is-bottom-left"
@@ -47,8 +47,11 @@
             ></i>
           </a>
 
-          <b-dropdown-item custom aria-role="menuitem">
-            Logged as <b>{{ username }}</b>
+          <b-dropdown-item
+            custom
+            aria-role="menuitem"
+            v-html="$t('common.loggedAs', { username })"
+          >
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item
@@ -61,7 +64,7 @@
               class="iconfont icon-logout"
               style="position: relative;top:1px;"
             ></i>
-            Logout
+            {{ $t("operations.logout") }}
           </b-dropdown-item>
         </b-dropdown>
       </template>
@@ -87,20 +90,22 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/components/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
-import { parseURL } from "./assets/js/utils";
+import { parseURL, handleResponse } from "./assets/js/utils";
+import { waitingConnected } from "./assets/js/networkInspect";
+import axios from "./plugins/axios";
 
 export default {
   components: { ModalCustomAddress, node },
   data() {
     return {
       statusMap: {
-        [CONST.INSPECTING_RUNNING]: "is-light",
-        [CONST.NOT_RUNNING]: "is-danger",
-        [CONST.IS_RUNNING]: "is-success"
+        [this.$t("common.checkRunning")]: "is-light",
+        [this.$t("common.notRunning")]: "is-danger",
+        [this.$t("common.isRunning")]: "is-success"
       },
       coverStatusText: "",
       runningState: {
-        running: CONST.INSPECTING_RUNNING,
+        running: this.$t("common.checkRunning"),
         connectedServer: null,
         lastConnectedServer: null
       },
@@ -111,13 +116,14 @@ export default {
     username() {
       let token = localStorage["token"];
       if (!token) {
-        return "未登录";
+        return this.$t("common.notLogin");
       }
       let payload = JSON.parse(Base64.decode(token.split(".")[1]));
       return payload["uname"];
     }
   },
   created() {
+    console.log("app created");
     let ba = localStorage.getItem("backendAddress");
     if (!ba) {
       ba = "http://localhost:2017";
@@ -130,16 +136,21 @@ export default {
     }).then(res => {
       if (res.data.code === "SUCCESS") {
         let toastConf = {
-          message: `V2RayA服务端正在运行${
-            res.data.data.dockerMode ? "于Docker环境中" : ""
-          }，Version: ${res.data.data.version}`,
+          message: this.$t(
+            res.data.data.dockerMode ? "welcome.docker" : "welcome.default",
+            { version: res.data.data.version }
+          ),
           type: "is-dark",
           position: "is-top",
           duration: 3000
         };
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
-          toastConf.message += `，检测到新版本: ${res.data.data.remoteVersion}`;
+          toastConf.message +=
+            ", " +
+            this.$t("welcome.newVersion", {
+              version: res.data.data.remoteVersion
+            });
           toastConf.type = "is-success";
         }
         this.$buefy.toast.open(toastConf);
@@ -162,10 +173,10 @@ export default {
   },
   methods: {
     handleOnStatusMouseEnter() {
-      if (this.runningState.running === CONST.IS_RUNNING) {
-        this.coverStatusText = "　关闭　";
-      } else if (this.runningState.running === CONST.NOT_RUNNING) {
-        this.coverStatusText = "　启动　";
+      if (this.runningState.running === this.$t("common.isRunning")) {
+        this.coverStatusText = "　" + this.$t("v2ray.stop") + "　";
+      } else if (this.runningState.running === this.$t("common.notRunning")) {
+        this.coverStatusText = "　" + this.$t("v2ray.start") + "　";
       }
     },
     handleOnStatusMouseLeave() {
@@ -218,34 +229,42 @@ export default {
       });
     },
     handleClickStatus() {
-      if (this.runningState.running === CONST.NOT_RUNNING) {
-        this.$axios({
-          url: apiRoot + "/v2ray",
-          method: "post"
-        }).then(res => {
-          if (res.data.code === "SUCCESS") {
-            Object.assign(this.runningState, {
-              running: CONST.IS_RUNNING,
-              connectedServer: res.data.data.connectedServer,
-              lastConnectedServer: null
-            });
-          } else {
-            this.$buefy.toast.open({
-              message: res.data.message,
-              type: "is-warning",
-              duration: 5000,
-              position: "is-top"
-            });
-          }
-        });
-      } else if (this.runningState.running === CONST.IS_RUNNING) {
+      if (this.runningState.running === this.$t("common.notRunning")) {
+        let cancel;
+        waitingConnected(
+          this.$axios({
+            url: apiRoot + "/v2ray",
+            method: "post",
+            cancelToken: new axios.CancelToken(function executor(c) {
+              cancel = c;
+            })
+          }).then(res => {
+            if (res.data.code === "SUCCESS") {
+              Object.assign(this.runningState, {
+                running: this.$t("common.isRunning"),
+                connectedServer: res.data.data.connectedServer,
+                lastConnectedServer: null
+              });
+            } else {
+              this.$buefy.toast.open({
+                message: res.data.message,
+                type: "is-warning",
+                duration: 5000,
+                position: "is-top"
+              });
+            }
+          }),
+          5 * 1000,
+          cancel
+        );
+      } else if (this.runningState.running === this.$t("common.isRunning")) {
         this.$axios({
           url: apiRoot + "/v2ray",
           method: "delete"
         }).then(res => {
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
-              running: CONST.NOT_RUNNING,
+              running: this.$t("common.notRunning"),
               connectedServer: null,
               lastConnectedServer: res.data.data.lastConnectedServer
             });
@@ -263,7 +282,7 @@ export default {
     },
     handleClickLogout() {
       localStorage.removeItem("token");
-      window.location.reload();
+      this.$remount();
     }
   }
 };

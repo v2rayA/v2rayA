@@ -1,19 +1,22 @@
 <template>
   <div class="modal-card" style="max-width: 400px;margin:auto">
     <header class="modal-card-head">
-      <p class="modal-card-title">修改订阅</p>
+      <p class="modal-card-title">{{ $t("configureSubscription.title") }}</p>
     </header>
     <section class="modal-card-body">
       <b-field label="REMARKS">
-        <b-input v-model="which.remarks" placeholder="别名" />
+        <b-input
+          v-model="which.remarks"
+          :placeholder="$t('subscription.remarks')"
+        />
       </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
       <button class="button" type="button" @click="$parent.close()">
-        取消
+        {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
-        保存
+        {{ $t("operations.saveApply") }}
       </button>
     </footer>
   </div>

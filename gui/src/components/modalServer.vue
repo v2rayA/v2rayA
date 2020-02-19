@@ -1,7 +1,9 @@
 <template>
   <div class="modal-card" style="max-width: 520px;margin:auto">
     <header class="modal-card-head">
-      <p class="modal-card-title">节点配置</p>
+      <p class="modal-card-title">
+        {{ $tc("configureServer.title", readonly ? 2 : 1) }}
+      </p>
     </header>
     <section :class="{ 'modal-card-body': true, readonly: readonly }">
       <b-tabs
@@ -15,7 +17,7 @@
             <b-input
               ref="vmess_name"
               v-model="vmess.ps"
-              placeholder="节点名称"
+              :placeholder="$t('configureServer.servername')"
               expanded
             />
           </b-field>
@@ -33,7 +35,7 @@
               ref="vmess_port"
               v-model="vmess.port"
               required
-              placeholder="端口号"
+              :placeholder="$t('configureServer.port')"
               type="number"
               expanded
             />
@@ -64,8 +66,8 @@
             label-position="on-border"
           >
             <b-select v-model="vmess.tls" expanded @input="handleNetworkChange">
-              <option value="none">关闭</option>
-              <option value="tls">开启</option>
+              <option value="none">{{ $t("setting.options.off") }}</option>
+              <option value="tls">{{ $t("setting.options.on") }}</option>
             </b-select>
           </b-field>
           <b-field label="Network" label-position="on-border">
@@ -88,8 +90,12 @@
             label-position="on-border"
           >
             <b-select v-model="vmess.type" expanded>
-              <option value="none">不伪装</option>
-              <option value="http">伪装http</option>
+              <option value="none">{{
+                $t("configureServer.noObfuscation")
+              }}</option>
+              <option value="http">{{
+                $t("configureServer.httpObfuscation")
+              }}</option>
             </b-select>
           </b-field>
           <b-field
@@ -98,12 +104,26 @@
             label-position="on-border"
           >
             <b-select v-model="vmess.type" expanded>
-              <option value="none">不伪装</option>
-              <option value="srtp">伪装视频通话(srtp)</option>
-              <option value="utp">伪装BT下载(uTP)</option>
-              <option value="wechat-video">伪装微信视频通话</option>
-              <option value="dtls">伪装DTLS1.2数据包(将强制开启TLS)</option>
-              <option value="wireguard">伪装WireGuard数据包</option>
+              <option value="none">{{
+                $t("configureServer.noObfuscation")
+              }}</option>
+              <option value="srtp">{{
+                $t("configureServer.srtpObfuscation")
+              }}</option>
+              <option value="utp">{{
+                $t("configureServer.utpObfuscation")
+              }}</option>
+              <option value="wechat-video">{{
+                $t("configureServer.wechatVideoObfuscation")
+              }}</option>
+              <option value="dtls">{{
+                `${$t("configureServer.dtlsObfuscation")}(${$t(
+                  "configureServer.forceTLS"
+                )})`
+              }}</option>
+              <option value="wireguard">{{
+                $t("configureServer.wireguardObfuscation")
+              }}</option>
             </b-select>
           </b-field>
           <b-field
@@ -113,7 +133,7 @@
           >
             <b-input
               v-model="vmess.host"
-              placeholder="伪装域名(host)"
+              :placeholder="$t('configureServer.hostObfuscation')"
               expanded
             />
           </b-field>
@@ -122,7 +142,11 @@
             label="Path"
             label-position="on-border"
           >
-            <b-input v-model="vmess.path" placeholder="路径(path)" expanded />
+            <b-input
+              v-model="vmess.path"
+              :placeholder="$t('configureServer.pathObfuscation')"
+              expanded
+            />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
@@ -130,7 +154,7 @@
             <b-input
               ref="ss_name"
               v-model="ss.name"
-              placeholder="节点名称"
+              :placeholder="$t('configureServer.servername')"
               expanded
             />
           </b-field>
@@ -148,7 +172,7 @@
               ref="ss_port"
               v-model="ss.port"
               required
-              placeholder="端口号"
+              :placeholder="$t('configureServer.port')"
               type="number"
               expanded
             />
@@ -158,7 +182,7 @@
               ref="ss_password"
               v-model="ss.password"
               required
-              placeholder="密码"
+              :placeholder="$t('configureServer.password')"
               expanded
             />
           </b-field>
@@ -197,7 +221,7 @@
             <b-input
               ref="ssr_name"
               v-model="ssr.name"
-              placeholder="节点名称"
+              :placeholder="$t('configureServer.servername')"
               expanded
             />
           </b-field>
@@ -215,7 +239,7 @@
               ref="ssr_port"
               v-model="ssr.port"
               required
-              placeholder="端口号"
+              :placeholder="$t('configureServer.port')"
               type="number"
               expanded
             />
@@ -225,7 +249,7 @@
               ref="ssr_password"
               v-model="ssr.password"
               required
-              placeholder="密码"
+              :placeholder="$t('configureServer.password')"
               expanded
             />
           </b-field>
@@ -302,10 +326,10 @@
     </section>
     <footer v-if="!readonly" class="modal-card-foot flex-end">
       <button class="button" type="button" @click="$parent.close()">
-        取消
+        {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
-        保存
+        {{ $t("operations.saveApply") }}
       </button>
     </footer>
   </div>

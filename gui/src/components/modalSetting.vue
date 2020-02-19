@@ -1,7 +1,7 @@
 <template>
-  <div class="modal-card" style="max-width: 520px;margin:auto">
+  <div class="modal-card" style="max-width: 600px;margin:auto">
     <header class="modal-card-head">
-      <p class="modal-card-title">设置</p>
+      <p class="modal-card-title">{{ $t("common.setting") }}</p>
     </header>
     <section class="modal-card-body rules">
       <b-field
@@ -9,13 +9,13 @@
         horizontal
         custom-class="modal-setting-label"
         style="position: relative"
-        >最新：
+        ><span>{{ $t("common.latest") }}:</span>
         <a
           href="https://github.com/ToutyRater/V2Ray-SiteDAT/blob/master/geofiles/h2y.dat"
           target="_blank"
           class="is-link"
           >{{ remoteGFWListVersion }}</a
-        >本地：
+        ><span>{{ $t("common.local") }}:</span>
         <b-tooltip
           v-if="dayjs(localGFWListVersion).isAfter(dayjs(remoteGFWListVersion))"
           label="该时间是指本地文件最后修改时间，因此可能会领先最新版本"
@@ -33,15 +33,15 @@
         <b-button
           size="is-small"
           type="is-text"
-          style="position: relative;top:-2px;text-decoration:none"
+          style="position: relative;top:-2px;text-decoration:none;font-weight: bold"
           @click="handleClickUpdateGFWList"
-          >更新
+          >{{ $t("operations.update") }}
         </b-button>
       </b-field>
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
       <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
-          全局透明代理
+          {{ $t("setting.transparentProxy") }}
           <b-tooltip
             type="is-dark"
             label="全局代理开启后，无需经过额外设置，任何TCP、UDP流量均会经过V2Ray。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker容器不会走代理。"
@@ -56,32 +56,34 @@
           </b-tooltip>
         </template>
         <b-select v-model="transparent" expanded>
-          <option value="close">关闭</option>
-          <option value="proxy">代理模式</option>
-          <option value="whitelist">大陆白名单</option>
-          <option value="gfwlist">GFWList</option>
-          <option v-show="showTransparentModeRoutingPac" value="pac"
-            >与PAC模式一致</option
-          >
+          <option value="close">{{ $t("setting.options.off") }}</option>
+          <option value="proxy">{{ $t("setting.options.global") }}</option>
+          <option value="whitelist">{{
+            $t("setting.options.whitelistCn")
+          }}</option>
+          <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
+          <option v-show="showTransparentModeRoutingPac" value="pac">{{
+            $t("setting.options.sameAsPacMode")
+          }}</option>
         </b-select>
         <template v-if="transparent !== 'close'">
           <b-button
             style="border-radius: 0;z-index: 2;"
             @click="handleClickPortWhiteList"
           >
-            端口白名单
+            {{ $t("egressPortWhitelist.title") }}
           </b-button>
           <b-checkbox-button
             v-model="ipforward"
             :native-value="true"
             style="position:relative;left:-1px;"
-            >开启IP转发
+            >{{ $t("setting.ipForwardOn") }}
           </b-checkbox-button>
         </template>
       </b-field>
       <b-field label-position="on-border">
         <template slot="label">
-          PAC模式
+          {{ $t("setting.pacMode") }}
           <b-tooltip
             type="is-dark"
             label="PAC端口使用的路由模式。默认情况下PAC端口为20172，HTTP协议。"
@@ -96,11 +98,13 @@
           </b-tooltip>
         </template>
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
-          <option value="whitelist">大陆白名单</option>
-          <option value="gfwlist">GFWList</option>
-          <option v-show="showTransparentModeRoutingPac" value="custom"
-            >自定义路由规则</option
-          >
+          <option value="whitelist">{{
+            $t("setting.options.whitelistCn")
+          }}</option>
+          <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
+          <option v-show="showTransparentModeRoutingPac" value="custom">{{
+            $t("setting.options.customRouting")
+          }}</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
           <b-button
@@ -109,13 +113,13 @@
             style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
             outlined
             @click="handleClickConfigurePac"
-            >配置
+            >{{ $t("operations.configure") }}
           </b-button>
         </template>
       </b-field>
       <b-field v-show="showAntipollution" label-position="on-border">
         <template slot="label">
-          防止DNS污染
+          {{ $t("setting.preventDnsSpoofing") }}
           <b-tooltip
             type="is-dark"
             label="默认使用DNSPod防止DNS劫持(v0.6.3+)。防止DNS污染开启后可以有效规避DNS污染，但会降低网页打开速度，请视网络环境开启。
@@ -132,18 +136,22 @@
           </b-tooltip>
         </template>
         <b-select v-model="antipollution" expanded class="left-border">
-          <option value="none">仅防止DNS劫持(v0.6.3+)</option>
-          <option value="dnsforward">防止DNS污染：转发DNS查询</option>
-          <option v-show="showDoh" value="doh"
-            >防止DNS污染：DoH(DNS-over-HTTPS)</option
-          >
+          <option value="none">{{
+            $t("setting.options.antiDnsHijack")
+          }}</option>
+          <option value="dnsforward">{{
+            $t("setting.options.forwardDnsRequest")
+          }}</option>
+          <option v-show="showDoh" value="doh">{{
+            $t("setting.options.doh")
+          }}</option>
         </b-select>
         <template v-if="antipollution === 'doh'">
           <b-button
             style="border-radius: 0 4px 4px 0"
             @click="handleClickDohSetting"
           >
-            DoH设置
+            {{ $t("operations.configure") }}
           </b-button>
         </template>
       </b-field>
@@ -164,14 +172,14 @@
           </b-tooltip>
         </template>
         <b-select v-model="tcpFastOpen" expanded>
-          <option value="default">保持系统默认</option>
-          <option value="yes">启用</option>
-          <option value="no">禁用</option>
+          <option value="default">{{ $t("setting.options.default") }}</option>
+          <option value="yes">{{ $t("setting.options.on") }}</option>
+          <option value="no">{{ $t("setting.options.off") }}</option>
         </b-select>
       </b-field>
       <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
-          多路复用
+          {{ $t("setting.mux") }}
           <b-tooltip
             type="is-dark"
             label="复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。"
@@ -186,14 +194,14 @@
           </b-tooltip>
         </template>
         <b-select v-model="muxOn" expanded style="flex: 1">
-          <option value="no">关闭</option>
-          <option value="yes">启用</option>
+          <option value="no">{{ $t("setting.options.off") }}</option>
+          <option value="yes">{{ $t("setting.options.on") }}</option>
         </b-select>
         <cus-b-input
           v-if="muxOn === 'yes'"
           ref="muxinput"
           v-model="mux"
-          placeholder="最大并发连接数"
+          :placeholder="$t('setting.concurrency')"
           custom-class="no-shadow"
           type="number"
           min="1"
@@ -203,39 +211,39 @@
         />
       </b-field>
       <b-field
-        v-show="
-          (transparent === 'close' && pacMode === 'gfwlist') ||
-            transparent === 'gfwlist'
-        "
-        label="自动更新GFWList"
+        v-show="pacMode === 'gfwlist' || transparent === 'gfwlist'"
+        :label="$t('setting.autoUpdateGfwlist')"
         label-position="on-border"
       >
         <b-select v-model="pacAutoUpdateMode" expanded>
-          <option value="none">不自动更新PAC文件</option>
-          <option value="auto_update">服务端启动时更新PAC文件</option>
+          <option value="none">{{ $t("setting.options.off") }}</option>
+          <option value="auto_update">{{
+            $t("setting.options.updateGfwlistWhenStart")
+          }}</option>
         </b-select>
       </b-field>
-      <b-field label="自动更新订阅" label-position="on-border">
+      <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
-          <option value="none">不自动更新订阅</option>
-          <option value="auto_update">服务端启动时更新订阅</option>
+          <option value="none">{{ $t("setting.options.off") }}</option>
+          <option value="auto_update">{{
+            $t("setting.options.updateSubWhenStart")
+          }}</option>
         </b-select>
       </b-field>
-      <b-field label="解析订阅链接/更新时优先使用" label-position="on-border">
+      <b-field
+        :label="$t('setting.preferModeWhenUpdate')"
+        label-position="on-border"
+      >
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">{{
-            transparent === "close" ? "直连模式" : "跟随全局透明代理"
+            transparent === "close"
+              ? $t("setting.options.direct")
+              : $t("setting.options.dependTransparentMode")
           }}</option>
-          <option value="proxy">代理模式</option>
-          <option value="pac">PAC模式</option>
+          <option value="proxy">{{ $t("setting.options.global") }}</option>
+          <option value="pac">{{ $t("setting.options.pac") }}</option>
         </b-select>
       </b-field>
-      <!--      <b-field label="SERVER列表" label-position="on-border">-->
-      <!--        <b-select v-model="serverListMode" expanded>-->
-      <!--          <option value="noSubscription">仅显示非订阅节点</option>-->
-      <!--          <option value="all">显示全部节点</option>-->
-      <!--        </b-select>-->
-      <!--      </b-field>-->
     </section>
     <footer class="modal-card-foot flex-end">
       <button
@@ -243,13 +251,13 @@
         type="button"
         @click="$emit('clickPorts')"
       >
-        地址与端口
+        {{ $t("customAddressPort.title") }}
       </button>
       <button class="button" type="button" @click="$parent.close()">
-        取消
+        {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
-        保存并应用
+        {{ $t("operations.saveApply") }}
       </button>
     </footer>
   </div>
@@ -267,6 +275,7 @@ import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalPortWhiteList from "@/components/modalPortWhiteList";
 import modalDohSetting from "./modalDohSetting";
 import axios from "../plugins/axios";
+import { waitingConnected } from "../assets/js/networkInspect";
 
 export default {
   name: "ModalSetting",
@@ -379,30 +388,34 @@ export default {
       });
     },
     requestUpdateSetting() {
-      this.$axios({
-        url: apiRoot + "/setting",
-        method: "put",
-        data: {
-          proxyModeWhenSubscribe: this.proxyModeWhenSubscribe,
-          pacAutoUpdateMode: this.pacAutoUpdateMode,
-          pacAutoUpdateTime: this.pacAutoUpdateTime
-            ? this.pacAutoUpdateTime.getTime()
-            : 0,
-          subscriptionAutoUpdateMode: this.subscriptionAutoUpdateMode,
-          subscriptionAutoUpdateTime: this.subscriptionAutoUpdateTime
-            ? this.subscriptionAutoUpdateTime.getTime()
-            : 0,
-          pacMode: this.pacMode,
-          tcpFastOpen: this.tcpFastOpen,
-          muxOn: this.muxOn,
-          mux: parseInt(this.mux),
-          transparent: this.transparent,
-          ipforward: this.ipforward,
-          dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
-          antipollution: this.antipollution
-        }
-      })
-        .then(res => {
+      let cancel;
+      waitingConnected(
+        this.$axios({
+          url: apiRoot + "/setting",
+          method: "put",
+          data: {
+            proxyModeWhenSubscribe: this.proxyModeWhenSubscribe,
+            pacAutoUpdateMode: this.pacAutoUpdateMode,
+            pacAutoUpdateTime: this.pacAutoUpdateTime
+              ? this.pacAutoUpdateTime.getTime()
+              : 0,
+            subscriptionAutoUpdateMode: this.subscriptionAutoUpdateMode,
+            subscriptionAutoUpdateTime: this.subscriptionAutoUpdateTime
+              ? this.subscriptionAutoUpdateTime.getTime()
+              : 0,
+            pacMode: this.pacMode,
+            tcpFastOpen: this.tcpFastOpen,
+            muxOn: this.muxOn,
+            mux: parseInt(this.mux),
+            transparent: this.transparent,
+            ipforward: this.ipforward,
+            dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
+            antipollution: this.antipollution
+          },
+          cancelToken: new axios.CancelToken(function executor(c) {
+            cancel = c;
+          })
+        }).then(res => {
           handleResponse(res, this, () => {
             this.$buefy.toast.open({
               message: res.data.code,
@@ -411,30 +424,10 @@ export default {
             });
             this.$parent.close();
           });
-        })
-        .catch(err => {
-          if (err.code === "ECONNABORTED" && err.isAxiosError) {
-            //更换配置过程中可能会因为网络原因中断connection，timeout之后检查是否已连接，是则刷新页面
-            axios({
-              url: apiRoot + "/touch",
-              timeout: 0
-            }).then(res => {
-              handleResponse(res, this, () => {
-                if (
-                  res.data.data.running &&
-                  res.data.data.touch.connectedServer
-                ) {
-                  window.location.reload();
-                }
-              });
-              this.$buefy.toast.open({
-                message: "与V2RayA的连接因网络变化而超时，请手动刷新页面",
-                type: "is-primary",
-                position: "is-top"
-              });
-            });
-          }
-        });
+        }),
+        5 * 1000,
+        cancel
+      );
     },
     handleClickSubmit() {
       if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {

@@ -1,13 +1,12 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import CONST from "@/assets/js/const";
+import i18n from "../plugins/i18n";
 
 Vue.use(Vuex);
-
 export default new Vuex.Store({
   state: {
     nav: "",
-    running: CONST.INSPECTING_RUNNING,
+    running: i18n.messages[i18n.locale]["checkRunning"],
     connectedServer: {}
   },
   mutations: {

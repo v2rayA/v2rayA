@@ -1,4 +1,8 @@
 import CONST from "./const.js";
+import axios from "../../plugins/axios";
+import Vue from "vue";
+import store from "../../store";
+import App from "../../App";
 function locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
   let sub = whichServer.sub;
