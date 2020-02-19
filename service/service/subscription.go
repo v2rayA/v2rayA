@@ -67,16 +67,21 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	tsrs := make([]configure.ServerRaw, len(infos))
 	var connectedServer *configure.ServerRaw
 	cs := configure.GetConnectedServer()
+	toFindConnectedServer := false
+	var found bool
 	if cs != nil {
 		connectedServer, _ = cs.LocateServer()
+		if connectedServer != nil && cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
+			toFindConnectedServer = true
+			found = false
+		}
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
-	foundConnectedServerInNewList := false
 	for i, info := range infos {
 		tsr := configure.ServerRaw{
 			VmessInfo: info.VmessInfo,
 		}
-		if !foundConnectedServerInNewList && connectedServer != nil && connectedServer.VmessInfo == tsr.VmessInfo {
+		if toFindConnectedServer && connectedServer.VmessInfo == tsr.VmessInfo {
 			err = configure.SetConnect(&configure.Which{
 				TYPE:    configure.SubscriptionServerType,
 				ID:      i + 1,
@@ -86,11 +91,12 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			if err != nil {
 				return
 			}
-			foundConnectedServerInNewList = true
+			toFindConnectedServer = false
+			found = true
 		}
 		tsrs[i] = tsr
 	}
-	if cs != nil && cs.Sub == index && !foundConnectedServerInNewList {
+	if toFindConnectedServer && !found {
 		if disconnectIfNecessary {
 			err = Disconnect()
 			if err != nil {
