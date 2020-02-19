@@ -167,15 +167,16 @@ axios.interceptors.response.use(
     } else {
       //其他错误
       if (
-        err.message.indexOf("404") >= 0 ||
+        !err.message ||
+        (err.message && err.message.indexOf("404") >= 0) ||
         (err.response && err.response.status === 404)
       ) {
-        //接口不存在，可能服务端是老旧版本，不管
+        //接口不存在，或是正常错误（如取消），可能服务端是老旧版本，不管
         return Promise.reject(err);
       }
       console.log("!other");
       ToastProgrammatic.open({
-        message: err.message,
+        message: err,
         type: "is-warning",
         position: "is-top",
         queue: false,

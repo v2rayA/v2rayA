@@ -2,14 +2,14 @@
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
-        {{ first ? "初来乍到，创建一个管理员账号" : "登陆 - V2rayA" }}
+        {{ first ? $t("register.title") : `${$t("login.title")} - V2rayA` }}
       </p>
     </header>
     <section class="modal-card-body">
       <p style="text-align: center">
         <img src="../assets/logo2.png" alt="V2RayA" />
       </p>
-      <b-field label="Username" type="is-success">
+      <b-field :label="$t('login.username')" type="is-success">
         <b-input v-model="username" @keyup.enter.native="handleEnter"></b-input>
       </b-field>
       <b-field label="Password" type="is-success">
@@ -31,7 +31,7 @@
         :class="{ 'is-primary': !first, 'is-twitter': first }"
         @click="handleClickSubmit"
       >
-        {{ first ? "创建" : "登陆" }}
+        {{ first ? $t("operations.create") : $t("operations.login") }}
       </b-button>
     </footer>
   </div>
@@ -39,8 +39,10 @@
 
 <script>
 import { handleResponse } from "../assets/js/utils";
+import i18n from "@/plugins/i18n";
 
 export default {
+  i18n,
   name: "ModalLogin",
   props: {
     first: {
@@ -68,7 +70,7 @@ export default {
           handleResponse(res, this, () => {
             localStorage["token"] = res.data.data.token;
             this.$emit("close");
-            window.location.reload();
+            this.$remount();
           });
         });
       } else {
@@ -84,7 +86,7 @@ export default {
           handleResponse(res, this, () => {
             localStorage["token"] = res.data.data.token;
             this.$emit("close");
-            window.location.reload();
+            this.$remount();
           });
         });
       }

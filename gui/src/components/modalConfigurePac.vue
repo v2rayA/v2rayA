@@ -1,25 +1,30 @@
 <template>
   <div
     class="modal-card modal-configure-pac"
-    style="max-width: 400px;margin:auto"
+    style="max-width: 550px;height:700px;margin:auto"
   >
     <header class="modal-card-head">
-      <p class="modal-card-title">自定义路由规则</p>
+      <p class="modal-card-title">{{ $t("customRouting.title") }}</p>
     </header>
     <section class="modal-card-body rules">
       <b-message type="is-info" class="after-line-dot5">
-        <p>
-          将SiteDat文件放于
-          <b>{{ V2RayLocationAsset }}</b> 目录下，V2rayA将自动进行识别
-        </p>
-        <p>
-          制作SiteDat文件：<a href="https://github.com/ToutyRater/V2Ray-SiteDAT"
-            >ToutyRater/V2Ray-SiteDAT</a
-          >
-        </p>
+        <p
+          v-html="
+            $t('customRouting.messages.0', {
+              V2RayLocationAsset
+            })
+          "
+        />
+        <p
+          v-html="
+            $t('customRouting.messages.1', {
+              V2RayLocationAsset
+            })
+          "
+        ></p>
       </b-message>
       <b-message type="is-success" class="after-line-dot5">
-        <p>在选择Tags时，可按Ctrl等多选键进行多选。</p>
+        <p>{{ $t("customRouting.messages.2") }}</p>
       </b-message>
       <b-collapse class="card">
         <div
@@ -29,18 +34,21 @@
           role="button"
         >
           <p class="card-header-title">
-            默认路由规则
+            {{ $t("customRouting.defaultRoutingRule") }}
           </p>
           <a class="card-header-icon">
             <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"> </b-icon>
           </a>
         </div>
         <div class="card-content">
-          <b-field label="默认路由规则" label-position="on-border">
+          <b-field
+            :label="$t('customRouting.defaultRoutingRule')"
+            label-position="on-border"
+          >
             <b-select v-model="customPac.defaultProxyMode" expanded>
-              <option value="direct">直连</option>
-              <option value="proxy">代理</option>
-              <option value="block">拦截</option>
+              <option value="direct">{{ $t("customRouting.direct") }}</option>
+              <option value="proxy">{{ $t("customRouting.proxy") }}</option>
+              <option value="block">{{ $t("customRouting.block") }}</option>
             </b-select>
           </b-field>
         </div>
@@ -57,13 +65,13 @@
           role="button"
         >
           <p class="card-header-title" style="position: relative;">
-            <span>{{ `规则${index + 1}` }}</span>
+            <span>{{ `${$t("customRouting.rule")}${index + 1}` }}</span>
             <b-button
               type="is-text"
               size="is-small"
               style="position: absolute;right:0"
               @click="handleClickDeleteRule(...arguments, index)"
-              >删除</b-button
+              >{{ $t("operations.delete") }}</b-button
             >
           </p>
           <a class="card-header-icon">
@@ -78,7 +86,10 @@
           </a>
         </div>
         <div class="card-content">
-          <b-field label="域名文件" label-position="on-border">
+          <b-field
+            :label="$t('customRouting.domainFile')"
+            label-position="on-border"
+          >
             <b-select v-model="rule.filename" expanded>
               <option
                 v-for="file of siteDatFiles"
@@ -111,29 +122,29 @@
           <p class="content" style="font-size:0.8em;margin-left:0.5em">
             tags: {{ rule.tags }}
           </p>
-          <b-field label="规则类型" label-position="on-border">
+          <b-field
+            :label="$t('customRouting.typeRule')"
+            label-position="on-border"
+          >
             <b-select v-model="rule.ruleType" expanded>
-              <option value="direct"
-                >直连{{
-                  customPac.defaultProxyMode === "direct"
-                    ? "(与默认规则相同)"
-                    : ""
-                }}</option
-              >
-              <option value="proxy"
-                >代理{{
-                  customPac.defaultProxyMode === "proxy"
-                    ? "(与默认规则相同)"
-                    : ""
-                }}</option
-              >
-              <option value="block"
-                >拦截{{
-                  customPac.defaultProxyMode === "block"
-                    ? "(与默认规则相同)"
-                    : ""
-                }}</option
-              >
+              <option value="direct">{{
+                $t("customRouting.direct") +
+                  (customPac.defaultProxyMode === "direct"
+                    ? `(${$t("customRouting.sameAsDefaultRule")})`
+                    : "")
+              }}</option>
+              <option value="proxy">{{
+                $t("customRouting.proxy") +
+                  (customPac.defaultProxyMode === "proxy"
+                    ? `(${$t("customRouting.sameAsDefaultRule")})`
+                    : "")
+              }}</option>
+              <option value="block">{{
+                $t("customRouting.block") +
+                  (customPac.defaultProxyMode === "block"
+                    ? `(${$t("customRouting.sameAsDefaultRule")})`
+                    : "")
+              }}</option>
             </b-select>
           </b-field>
         </div>
@@ -144,13 +155,13 @@
         style="position:relative;display:flex;justify-content:flex-end;width:100%"
       >
         <button class="button btn-new" type="button" @click="handleNew">
-          新建规则
+          {{ $t("customRouting.appendRule") }}
         </button>
         <button class="button" type="button" @click="$parent.close()">
-          取消
+          {{ $t("operations.cancel") }}
         </button>
         <button class="button is-primary" @click="handleClickSubmit">
-          保存
+          {{ $t("operations.save") }}
         </button>
       </div>
     </footer>

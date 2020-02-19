@@ -51,7 +51,7 @@
             @click="handleClickDelete"
           >
             <i class="iconfont icon-delete" />
-            <span>删除</span>
+            <span>{{ $t("operations.delete") }}</span>
           </button>
           <button
             :class="{
@@ -69,11 +69,11 @@
         <div class="right">
           <b-button class="field" type="is-primary" @click="handleClickCreate">
             <i class="iconfont icon-chuangjiangongdan1" />
-            <span>创建</span>
+            <span>{{ $t("operations.create") }}</span>
           </b-button>
           <b-button class="field" type="is-primary" @click="handleClickImport">
             <i class="iconfont icon-daoruzupu-xianxing" />
-            <span>导入</span>
+            <span>{{ $t("operations.import") }}</span>
           </b-button>
         </div>
       </b-field>
@@ -132,19 +132,29 @@
                 <b-table-column field="id" label="ID" numeric>
                   {{ props.row.id }}
                 </b-table-column>
-                <b-table-column field="host" label="域名">
+                <b-table-column field="host" :label="$t('subscription.host')">
                   {{ props.row.host }}
                 </b-table-column>
-                <b-table-column field="remarks" label="别名">
+                <b-table-column
+                  field="remarks"
+                  :label="$t('subscription.remarks')"
+                >
                   {{ props.row.remarks }}
                 </b-table-column>
-                <b-table-column field="status" label="更新状态" width="260">
+                <b-table-column
+                  field="status"
+                  :label="$t('subscription.timeLastUpdate')"
+                  width="260"
+                >
                   {{ props.row.status }}
                 </b-table-column>
-                <b-table-column label="节点数" centered>
+                <b-table-column
+                  :label="$t('subscription.numberServers')"
+                  centered
+                >
                   {{ props.row.servers.length }}
                 </b-table-column>
-                <b-table-column label="操作" width="250">
+                <b-table-column :label="$t('operations.name')" width="300">
                   <div class="operate-box">
                     <b-button
                       size="is-small"
@@ -153,7 +163,7 @@
                       type="is-warning"
                       @click="handleClickUpdateSubscription(props.row)"
                     >
-                      更新
+                      {{ $t("operations.update") }}
                     </b-button>
                     <b-button
                       size="is-small"
@@ -162,7 +172,7 @@
                       type="is-info"
                       @click="handleClickModifySubscription(props.row)"
                     >
-                      修改
+                      {{ $t("operations.modify") }}
                     </b-button>
                     <b-button
                       size="is-small"
@@ -171,7 +181,7 @@
                       type="is-success"
                       @click="handleClickShare(props.row)"
                     >
-                      分享
+                      {{ $t("operations.share") }}
                     </b-button>
                   </div>
                 </b-table-column>
@@ -197,18 +207,18 @@
                 <b-table-column field="id" label="ID" numeric>
                   {{ props.row.id }}
                 </b-table-column>
-                <b-table-column field="name" label="节点名">
+                <b-table-column field="name" :label="$t('server.name')">
                   {{ props.row.name }}
                 </b-table-column>
-                <b-table-column field="address" label="节点地址">
+                <b-table-column field="address" :label="$t('server.address')">
                   {{ props.row.address }}
                 </b-table-column>
-                <b-table-column field="net" label="协议">
+                <b-table-column field="net" :label="$t('server.protocol')">
                   {{ props.row.net }}
                 </b-table-column>
                 <b-table-column
                   field="pingLatency"
-                  label="时延"
+                  :label="$t('server.latency')"
                   class="ping-latency"
                 >
                   {{ props.row.pingLatency }}
@@ -216,7 +226,7 @@
                 <!--            <b-table-column field="httpLatency" label="HTTP时延" width="100">-->
                 <!--              {{ props.row.httpLatency }}-->
                 <!--            </b-table-column>-->
-                <b-table-column label="操作" width="250">
+                <b-table-column :label="$t('operations.name')" width="300">
                   <div class="operate-box">
                     <b-button
                       size="is-small"
@@ -231,7 +241,11 @@
                       :type="props.row.connected ? 'is-warning' : 'is-warning'"
                       @click="handleClickAboutConnection(props.row)"
                     >
-                      {{ props.row.connected ? "断开" : "连接" }}
+                      {{
+                        props.row.connected
+                          ? $t("operations.disconnect")
+                          : $t("operations.connect")
+                      }}
                     </b-button>
                     <b-button
                       size="is-small"
@@ -240,7 +254,7 @@
                       type="is-info"
                       @click="handleClickModifyServer(props.row)"
                     >
-                      修改
+                      {{ $t("operations.modify") }}
                     </b-button>
                     <b-button
                       size="is-small"
@@ -249,7 +263,7 @@
                       type="is-success"
                       @click="handleClickShare(props.row)"
                     >
-                      分享
+                      {{ $t("operations.share") }}
                     </b-button>
                   </div>
                 </b-table-column>
@@ -283,23 +297,23 @@
                 <b-table-column field="id" label="ID" numeric>
                   {{ props.row.id }}
                 </b-table-column>
-                <b-table-column field="name" label="节点名">
+                <b-table-column field="name" :label="$t('server.name')">
                   {{ props.row.name }}
                 </b-table-column>
-                <b-table-column field="address" label="节点地址">
+                <b-table-column field="address" :label="$t('server.address')">
                   {{ props.row.address }}
                 </b-table-column>
-                <b-table-column field="net" label="协议">
+                <b-table-column field="net" :label="$t('server.protocol')">
                   {{ props.row.net }}
                 </b-table-column>
                 <b-table-column
                   field="pingLatency"
-                  label="时延"
+                  :label="$t('server.latency')"
                   class="ping-latency"
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
-                <b-table-column label="操作" width="250">
+                <b-table-column :label="$t('operations.name')" width="300">
                   <div class="operate-box">
                     <b-button
                       size="is-small"
@@ -314,7 +328,11 @@
                       :type="props.row.connected ? 'is-warning' : 'is-warning'"
                       @click="handleClickAboutConnection(props.row, subi)"
                     >
-                      {{ props.row.connected ? "断开" : "连接" }}
+                      {{
+                        props.row.connected
+                          ? $t("operations.disconnect")
+                          : $t("operations.connect")
+                      }}
                     </b-button>
                     <b-button
                       size="is-small"
@@ -323,7 +341,7 @@
                       type="is-info"
                       @click="handleClickViewServer(props.row, subi)"
                     >
-                      查看
+                      {{ $t("operations.view") }}
                     </b-button>
                     <b-button
                       size="is-small"
@@ -332,7 +350,7 @@
                       type="is-success"
                       @click="handleClickShare(props.row, subi)"
                     >
-                      分享
+                      {{ $t("operations.share") }}
                     </b-button>
                   </div>
                 </b-table-column>
@@ -385,8 +403,8 @@ import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";
 import ModalSubscription from "./modalSuscription";
+import { waitingConnected } from "../assets/js/networkInspect";
 import axios from "../plugins/axios";
-
 export default {
   name: "Node",
   components: { ModalSubscription, ModalServer },
@@ -401,7 +419,7 @@ export default {
       ready: false,
       tab: 0,
       runningState: {
-        running: CONST.INSPECTING_RUNNING,
+        running: this.$t("common.checkRunning"),
         connectedServer: null,
         lastConnectedServer: null
       },
@@ -431,7 +449,9 @@ export default {
       this.tableData = res.data.data.touch;
       // this.$store.commit("CONNECTED_SERVER", this.tableData.connectedServer);
       this.runningState = {
-        running: res.data.data.running ? CONST.IS_RUNNING : CONST.NOT_RUNNING,
+        running: res.data.data.running
+          ? this.$t("common.isRunning")
+          : this.$t("common.notRunning"),
         connectedServer: this.tableData.connectedServer,
         lastConnectedServer: null
       };
@@ -536,8 +556,8 @@ export default {
                 this.tableData = res.data.data.touch;
                 this.runningState = {
                   running: res.data.data.running
-                    ? CONST.IS_RUNNING
-                    : CONST.NOT_RUNNING,
+                    ? this.$t("common.isRunning")
+                    : this.$t("common.notRunning"),
                   connectedServer: this.tableData.connectedServer,
                   lastConnectedServer: null
                 };
@@ -586,8 +606,8 @@ export default {
               this.checkedRows = [];
               Object.assign(this.runningState, {
                 running: res.data.data.running
-                  ? CONST.IS_RUNNING
-                  : CONST.NOT_RUNNING,
+                  ? this.$t("common.isRunning")
+                  : this.$t("common.notRunning"),
                 connectedServer: this.tableData.connectedServer,
                 lastConnectedServer: null
               });
@@ -604,17 +624,22 @@ export default {
       });
     },
     handleClickAboutConnection(row, sub) {
+      const that = this;
+      let cancel;
       if (!row.connected) {
         //该节点并未处于连接状态，因此进行连接
-        this.$axios({
-          url: apiRoot + "/connection",
-          method: "post",
-          data: { id: row.id, _type: row._type, sub: sub }
-        })
-          .then(res => {
+        waitingConnected(
+          this.$axios({
+            url: apiRoot + "/connection",
+            method: "post",
+            data: { id: row.id, _type: row._type, sub: sub },
+            cancelToken: new axios.CancelToken(function executor(c) {
+              cancel = c;
+            })
+          }).then(res => {
             if (res.data.code === "SUCCESS") {
               Object.assign(this.runningState, {
-                running: CONST.IS_RUNNING,
+                running: this.$t("common.isRunning"),
                 connectedServer: res.data.data.connectedServer,
                 lastConnectedServer: res.data.data.lastConnectedServer
               });
@@ -627,30 +652,10 @@ export default {
                 duration: 5000
               });
             }
-          })
-          .catch(err => {
-            if (err.code === "ECONNABORTED" && err.isAxiosError) {
-              //更换配置过程中可能会因为网络原因中断connection，timeout之后检查是否已连接，是则刷新页面
-              axios({
-                url: apiRoot + "/touch",
-                timeout: 0
-              }).then(res => {
-                handleResponse(res, this, () => {
-                  if (
-                    res.data.data.running &&
-                    res.data.data.touch.connectedServer
-                  ) {
-                    window.location.reload();
-                  }
-                });
-                this.$buefy.toast.open({
-                  message: "与V2RayA的连接因网络变化而超时，请手动刷新页面",
-                  type: "is-primary",
-                  position: "is-top"
-                });
-              });
-            }
-          });
+          }),
+          5 * 1000,
+          cancel
+        );
       } else {
         this.$axios({
           url: apiRoot + "/connection",
@@ -659,7 +664,7 @@ export default {
           if (res.data.code === "SUCCESS") {
             row.connected = false;
             Object.assign(this.runningState, {
-              running: CONST.NOT_RUNNING,
+              running: that.$t("common.notRunning"),
               connectedServer: null,
               lastConnectedServer: res.data.data.lastConnectedServer
             });
@@ -792,7 +797,9 @@ export default {
                                     ${row.name || row.host || row.address}
                                 </span>
                             </span>
-                            <div id="tag-cover-text">复制链接</div>
+                            <div id="tag-cover-text">${this.$t(
+                              "operations.copyLink"
+                            )}</div>
                             <span class="tag is-rounded is-primary sharingAddressTag" style="position: relative" data-clipboard-text="${
                               res.data.data.sharingAddress
                             }">
@@ -858,8 +865,8 @@ export default {
           this.tableData = res.data.data.touch;
           this.runningState = {
             running: res.data.data.running
-              ? CONST.IS_RUNNING
-              : CONST.NOT_RUNNING,
+              ? this.$t("common.isRunning")
+              : this.$t("common.notRunning"),
             connectedServer: this.tableData.connectedServer,
             lastConnectedServer: null
           };
@@ -909,8 +916,8 @@ export default {
           this.tableData = res.data.data.touch;
           this.runningState = {
             running: res.data.data.running
-              ? CONST.IS_RUNNING
-              : CONST.NOT_RUNNING,
+              ? this.$t("common.isRunning")
+              : this.$t("common.notRunning"),
             connectedServer: this.tableData.connectedServer,
             lastConnectedServer: null
           };
@@ -959,8 +966,8 @@ export default {
           this.tableData = res.data.data.touch;
           this.runningState = {
             running: res.data.data.running
-              ? CONST.IS_RUNNING
-              : CONST.NOT_RUNNING,
+              ? this.$t("common.isRunning")
+              : this.$t("common.notRunning"),
             connectedServer: this.tableData.connectedServer,
             lastConnectedServer: null
           };
