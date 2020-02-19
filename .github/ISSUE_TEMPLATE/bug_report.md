@@ -22,6 +22,18 @@ assignees: ''
 <!-- 在下方描述如何复现问题 -->
 
 
+### V2RayA运行日志：
+
+ ```bash
+ # daemon mode
+ journalctl -u v2raya | tail -n 50
+ 
+ # docker mode
+ docker logs v2raya_backend
+ ```
+<!-- 在下方贴入运行日志 -->
+
+
 ### 截图
 <!-- 如果条件允许请附图 -->
 

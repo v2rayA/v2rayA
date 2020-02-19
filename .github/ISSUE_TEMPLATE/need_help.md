@@ -4,7 +4,15 @@ about: Something wrong but I can not confirm it is because of V2Ray's bug.
 title: "[help] title"
 labels: help wanted
 assignees: ''
+
 ---
+
+### 版本与安装方式
+
+1. 你在使用什么版本的V2RayA
+
+2. 你通过什么方式安装V2RayA
+
 
 ### 描述问题：
 
