@@ -145,65 +145,63 @@ func hello() {
 }
 
 func checkUpdate() {
-	setting := service.GetSetting()
-
-	//检查PAC文件更新
-	if setting.PacAutoUpdateMode == configure.AutoUpdate {
-		switch setting.PacMode {
-		case configure.GfwlistMode:
-			go func() {
-				time.Sleep(2 * time.Second)
-				/* 更新h2y.dat */
-				localGFWListVersion, err := service.CheckAndUpdateGFWList()
-				if err != nil {
-					log.Println("自动更新PAC文件失败" + err.Error())
-					return
-				}
-				log.Println("自动更新PAC文件完成，本地文件时间：" + localGFWListVersion)
-			}()
-		case configure.CustomMode:
-			//TODO
-		}
-	}
-
-	//检查订阅更新
-	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
-		go func() {
-			time.Sleep(2 * time.Second)
-			subs := configure.GetSubscriptions()
-			lenSubs := len(subs)
-			control := make(chan struct{}, 2) //并发限制同时更新2个订阅
-			wg := new(sync.WaitGroup)
-			for i := 0; i < lenSubs; i++ {
-				wg.Add(1)
-				go func(i int) {
-					control <- struct{}{}
-					err := service.UpdateSubscription(i, false)
-					if err != nil {
-						log.Println(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, err.Error()))
-					} else {
-						log.Println(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
-					}
-					wg.Done()
-					<-control
-				}(i)
-			}
-			wg.Wait()
-		}()
-	}
-	// 检查服务端更新
 	go func() {
 		//等待网络连通
 		for {
 			c := http.DefaultClient
-			c.Timeout = 10 * time.Second
+			c.Timeout = 5 * time.Second
 			resp, err := http.Get("http://www.gstatic.com/generate_204")
 			if err == nil {
 				_ = resp.Body.Close()
 				break
 			}
-			time.Sleep(10 * time.Second)
+			time.Sleep(c.Timeout)
 		}
+
+		setting := service.GetSetting()
+		//检查PAC文件更新
+		if setting.PacAutoUpdateMode == configure.AutoUpdate || setting.Transparent == configure.TransparentGfwlist {
+			switch setting.PacMode {
+			case configure.GfwlistMode:
+				go func() {
+					/* 更新h2y.dat */
+					localGFWListVersion, err := service.CheckAndUpdateGFWList()
+					if err != nil {
+						log.Println("自动更新PAC文件失败" + err.Error())
+						return
+					}
+					log.Println("自动更新PAC文件完成，本地文件时间：" + localGFWListVersion)
+				}()
+			case configure.CustomMode:
+				//TODO
+			}
+		}
+
+		//检查订阅更新
+		if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
+			go func() {
+				subs := configure.GetSubscriptions()
+				lenSubs := len(subs)
+				control := make(chan struct{}, 2) //并发限制同时更新2个订阅
+				wg := new(sync.WaitGroup)
+				for i := 0; i < lenSubs; i++ {
+					wg.Add(1)
+					go func(i int) {
+						control <- struct{}{}
+						err := service.UpdateSubscription(i, false)
+						if err != nil {
+							log.Println(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, err.Error()))
+						} else {
+							log.Println(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
+						}
+						wg.Done()
+						<-control
+					}(i)
+				}
+				wg.Wait()
+			}()
+		}
+		// 检查服务端更新
 		if foundNew, remote, err := service.CheckUpdate(); err == nil {
 			global.FoundNew = foundNew
 			global.RemoteVersion = remote
