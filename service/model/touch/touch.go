@@ -35,7 +35,7 @@ type Subscription struct {
 }
 
 func NewUpdateStatus() SubscriptionStatus {
-	return SubscriptionStatus("上次更新：" + time.Now().Local().Format("2006-1-2 15:04:05"))
+	return SubscriptionStatus(time.Now().Local().Format("2006-1-2 15:04:05"))
 }
 func NewUpdateFailStatus(reason string) SubscriptionStatus {
 	return SubscriptionStatus(time.Now().Local().Format("2006-1-2 15:04:05") + "尝试更新失败：" + reason)

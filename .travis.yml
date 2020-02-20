@@ -33,8 +33,8 @@ install:
 script:
   - cd service && gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X V2RayA/global.Version=${VERSION:1}" -output="../{{.Dir}}_{{.OS}}_{{.Arch}}_$VERSION"
   - cd ../
-  - files="install/v2raya.service=/etc/systemd/system/v2raya.service gui/public/img/icons/android-chrome-512x512.png=/usr/share/icons/v2raya.png install/v2raya.desktop=/usr/share/applications/v2raya.desktop"
-  - params="--verbose -f -n $NAME -v ${VERSION:1} --url https://github.com/mzz2017/v2raya --maintainer mzz2017 --after-install install/after_install.sh --after-upgrade install/after_upgrade.sh --before-remove install/before_remove.sh --after-remove install/after_remove.sh"
+  - files="install/universal/v2raya.service=/etc/systemd/system/v2raya.service gui/public/img/icons/android-chrome-512x512.png=/usr/share/icons/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+  - params="--verbose -f -n $NAME -v ${VERSION:1} --url https://github.com/mzz2017/v2raya --maintainer mzz2017 --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --before-remove install/universal/before_remove.sh --after-remove install/universal/after_remove.sh"
   - fpm -s dir -t deb -p installer_debian_i386_$VERSION.deb --description "$DESC" $params --architecture i386 V2RayA_linux_386_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" $params --architecture=amd64 V2RayA_linux_amd64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_arm_$VERSION.deb --description "$DESC" $params --architecture=arm V2RayA_linux_arm_$VERSION=/usr/bin/v2raya $files
@@ -56,17 +56,17 @@ script:
 before_deploy:
   if [[ $(pwd) =~ /apt$ ]]; then
       echo 'Now in subdir "apt"' &&
-          cp -rf ../install/key ../install/conf ./;
+          cp -rf ../install/debian/key ../install/debian/conf ./;
   else
-      mkdir -p apt/incoming && cp -r install/key install/conf apt/ && cd apt;
+      mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/ && cd apt;
   fi &&
       gpg2 --import key/public-key.asc &&
-      ../install/gpg2_expect --allow-secret-key-import --import ../install/private-key.asc &&
-      ../install/reprepro_expect --ask-passphrase -Vb . export &&
-      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_i386_$VERSION.deb &&
-      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_amd64_$VERSION.deb &&
-      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm_$VERSION.deb &&
-      ../install/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm64_$VERSION.deb &&
+      ../install/tool/gpg2_expect --allow-secret-key-import --import ../install/debian/private-key.asc &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . export &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_i386_$VERSION.deb &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_amd64_$VERSION.deb &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm_$VERSION.deb &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm64_$VERSION.deb &&
       cd ../ && 
       export bp=$(pwd)
 
@@ -118,6 +118,6 @@ deploy:
     on:
       tags: true
   - provider: script
-    script: bash install/aur.sh
+    script: bash install/aur/deploy.sh
     on:
       tags: true
