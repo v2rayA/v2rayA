@@ -12,7 +12,7 @@
       <b-field :label="$t('login.username')" type="is-success">
         <b-input v-model="username" @keyup.enter.native="handleEnter"></b-input>
       </b-field>
-      <b-field label="Password" type="is-success">
+      <b-field :label="$t('login.password')" type="is-success">
         <b-input
           v-model="password"
           type="password"

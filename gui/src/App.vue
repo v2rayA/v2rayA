@@ -85,7 +85,6 @@
 </template>
 
 <script>
-import CONST from "@/assets/js/const";
 import ModalSetting from "@/components/modalSetting";
 import node from "@/components/node";
 import { Base64 } from "js-base64";

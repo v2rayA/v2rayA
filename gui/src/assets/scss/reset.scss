@@ -33,3 +33,15 @@ nav::-webkit-scrollbar-thumb {
 code {
   color: #0087e1 !important;
 }
+
+html{
+  @media screen and (max-width: 1024px) {
+      font-size:0.9em;
+    @media screen and (max-width: 767px) {
+      font-size:0.8em;
+      @media screen and (max-width: 350px) {
+        font-size:0.7em;
+      }
+    }
+  }
+}
