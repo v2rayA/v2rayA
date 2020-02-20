@@ -9,9 +9,7 @@ Vue.use(VueI18n);
 // Create VueI18n instance with options
 let locale = "zh";
 for (let l of window.navigator.languages) {
-  if (l.toLowerCase() === "zh-cn") {
-    l = "zh";
-  }
+  l = l.split("-")[0];
   if (l in messages) {
     locale = l;
   }
