@@ -2,7 +2,6 @@ package entity
 
 import (
 	"V2RayA/model/dnsPoison"
-	"V2RayA/model/v2ray/asset"
 	"V2RayA/tools/netTools"
 	"errors"
 	"log"
@@ -75,14 +74,14 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 				if !needToAdd || (len(ifnames) == 1 && ifnames[0] == "") {
 					return
 				}
-				//准备白名单
-				_, wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
-				if err != nil {
-					log.Println("StartDNSPoisonConroutine:", err)
-					return
-				}
-				ipMatcher := new(router.GeoIPMatcher)
-				_ = ipMatcher.Init(whiteDnsServerIps)
+				////准备白名单
+				//_, wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
+				//if err != nil {
+				//	log.Println("StartDNSPoisonConroutine:", err)
+				//	return
+				//}
+				//ipMatcher := new(router.GeoIPMatcher)
+				//_ = ipMatcher.Init(whiteDnsServerIps)
 				for _, ifname := range ifnames {
 					if _, ok := mHandles[ifname]; !ok {
 						err = poison.Prepare(ifname)
@@ -91,7 +90,8 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 							return
 						}
 						go func(ifname string) {
-							err = poison.Run(ifname, ipMatcher, wlDms)
+							//err = poison.RunWithWhitelist(ifname, ipMatcher, wlDms)
+							err = poison.RunWithDetection(ifname)
 							if err != nil {
 								log.Println("StartDNSPoisonConroutine["+ifname+"]:", err)
 							}

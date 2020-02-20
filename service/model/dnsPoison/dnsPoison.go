@@ -1,6 +1,7 @@
 package dnsPoison
 
 import (
+	"bytes"
 	"errors"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -21,12 +22,15 @@ type handle struct {
 	done    chan interface{}
 	running bool
 	*pcapgo.EthernetHandle
+	detectedDomains map[string]interface{}
+	domainMutex     sync.RWMutex
 }
 
 func newHandle(ethernetHandle *pcapgo.EthernetHandle) handle {
 	return handle{
-		done:           make(chan interface{}),
-		EthernetHandle: ethernetHandle,
+		done:            make(chan interface{}),
+		EthernetHandle:  ethernetHandle,
+		detectedDomains: make(map[string]interface{}),
 	}
 }
 
@@ -125,7 +129,7 @@ func Fqdn(domain string) string {
 	return domain + "."
 }
 
-func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
+func (d *DnsPoison) RunWithWhitelist(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
@@ -136,8 +140,9 @@ func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatche
 	}
 	handle.running = true
 	d.inner.Unlock()
-	log.Println("DnsPoison:", ifname, "running")
+	log.Println("DnsPoison[" + ifname + "]: running")
 	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
+	pkgsrc.NoCopy = true
 out:
 	for packet := range pkgsrc.Packets() {
 		select {
@@ -188,46 +193,126 @@ out:
 		}
 
 		log.Println("dnsPoison投毒["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions)
-		go func(m *dnsmessage.Message, sAddr, sPort, dAddr, dPort *gopacket.Endpoint) {
-			switch q.Type {
-			case dnsmessage.TypeAAAA:
-				//TODO: 对AAAA查询直接返回[::1]以屏蔽
-				var lo [16]byte
-				lo[15] = 1
-				m.Answers = []dnsmessage.Resource{{
-					Header: dnsmessage.ResourceHeader{
-						Name:  q.Name,
-						Type:  q.Type,
-						Class: q.Class,
-						TTL:   0,
-					},
-					Body: &dnsmessage.AAAAResource{AAAA: lo},
-				}}
-			case dnsmessage.TypeA:
-				//对A查询返回一个公网地址以使得后续tcp连接经过网关嗅探，以dns污染解决dns污染
-				m.Answers = []dnsmessage.Resource{{
-					Header: dnsmessage.ResourceHeader{
-						Name:  q.Name,
-						Type:  q.Type,
-						Class: q.Class,
-						TTL:   0,
-					},
-					Body: &dnsmessage.AResource{A: [4]byte{1, 2, 3, 4}},
-				}}
-			}
-			m.Response = true
-			m.RecursionAvailable = true
-			packed, _ := m.Pack()
-			// write back
-			dport, _ := strconv.Atoi(dPort.String())
-			sConn, err := newDialer(dAddr.String(), uint32(dport), 30*time.Second).Dial("udp", sAddr.String()+":"+sPort.String())
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			defer sConn.Close()
-			_, _ = sConn.Write(packed)
-		}(&m, &sAddr, &sPort, &dAddr, &dPort)
+		go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
 	}
 	return
+}
+
+func (d *DnsPoison) RunWithDetection(ifname string) (err error) {
+	d.inner.Lock()
+	handle, ok := d.handles[ifname]
+	if !ok {
+		return errors.New(ifname + " not exsits")
+	}
+	if handle.running {
+		return errors.New(ifname + " is running")
+	}
+	handle.running = true
+	d.inner.Unlock()
+	log.Println("DnsPoison[" + ifname + "]: running")
+	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
+	pkgsrc.NoCopy = true
+out:
+	for packet := range pkgsrc.Packets() {
+		select {
+		case <-handle.done:
+			d.inner.Lock()
+			delete(d.handles, ifname)
+			d.inner.Unlock()
+			log.Println("DnsPoison:", ifname, "closed")
+			break out
+		default:
+		}
+		trans := packet.TransportLayer()
+		if trans == nil {
+			continue
+		}
+		transflow := trans.TransportFlow()
+		sPort, dPort := transflow.Endpoints()
+		if dPort.String() != "53" && sPort.String() != "53" {
+			continue
+		}
+		sAddr, dAddr := packet.NetworkLayer().NetworkFlow().Endpoints()
+		// TODO: 暂不支持IPv6
+		dIp := net.ParseIP(dAddr.String()).To4()
+		if len(dIp) != net.IPv4len {
+			continue
+		}
+
+		var m dnsmessage.Message
+		err := m.Unpack(trans.LayerPayload())
+		if err != nil {
+			continue
+		}
+		// dns请求一般只有一个question
+		q := m.Questions[0]
+		if (q.Type != dnsmessage.TypeA && q.Type != dnsmessage.TypeAAAA) ||
+			q.Class != dnsmessage.ClassINET {
+			continue
+		}
+		if !m.Response {
+			//不在列表中的放行
+			handle.domainMutex.RLock()
+			if _, ok := handle.detectedDomains[q.Name.String()]; !ok {
+				handle.domainMutex.RUnlock()
+				continue
+			}
+			handle.domainMutex.RUnlock()
+		} else {
+			//探测是否被污染为本地回环
+			if len(m.Answers) > 0 {
+				switch a := m.Answers[0].Body.(type) {
+				case *dnsmessage.AResource:
+					if bytes.Equal(a.A[:], []byte{127, 0, 0, 1}) {
+						handle.domainMutex.RLock()
+						name := q.Name.String()
+						if _, ok := handle.detectedDomains[name]; !ok {
+							handle.domainMutex.RUnlock()
+							handle.domainMutex.Lock()
+							handle.detectedDomains[name] = nil
+							handle.domainMutex.Unlock()
+							log.Println("dnsPoison投毒["+ifname+"]: 探测到", name)
+						} else {
+							handle.domainMutex.RUnlock()
+						}
+					}
+				}
+			}
+			continue
+		}
+		log.Println("dnsPoison投毒["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions)
+		go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
+	}
+	return
+}
+
+func poison(m *dnsmessage.Message, lAddr, lPort, rAddr, rPort *gopacket.Endpoint) {
+	q := m.Questions[0]
+	m.RCode = dnsmessage.RCodeSuccess
+	switch q.Type {
+	case dnsmessage.TypeAAAA:
+		//返回空回答
+	case dnsmessage.TypeA:
+		//对A查询返回一个公网地址以使得后续tcp连接经过网关嗅探，以dns污染解决dns污染
+		m.Answers = []dnsmessage.Resource{{
+			Header: dnsmessage.ResourceHeader{
+				Name:  q.Name,
+				Type:  q.Type,
+				Class: q.Class,
+				TTL:   0,
+			},
+			Body: &dnsmessage.AResource{A: [4]byte{1, 2, 3, 4}},
+		}}
+	}
+	m.Response = true
+	m.RecursionAvailable = true
+	packed, _ := m.Pack()
+	// write back
+	lport, _ := strconv.Atoi(lPort.String())
+	conn, err := newDialer(lAddr.String(), uint32(lport), 30*time.Second).Dial("udp", rAddr.String()+":"+rPort.String())
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+	_, _ = conn.Write(packed)
 }
