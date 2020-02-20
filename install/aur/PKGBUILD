@@ -23,9 +23,9 @@ build() {
 package() {
     cd "V2RayA-$pkgver"
     
-    install -Dm644 "install/v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
+    install -Dm644 "install/universal/v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
     install -Dm755 "service/v2raya" -t "$pkgdir/usr/bin/"
 
     install -Dm644 "gui/public/img/icons/android-chrome-512x512.png" "$pkgdir/usr/share/icons/v2raya.png"
-    install -Dm755 "install/v2raya.desktop" -t "$pkgdir/usr/share/applications/"
+    install -Dm755 "install/universal/v2raya.desktop" -t "$pkgdir/usr/share/applications/"
 }
