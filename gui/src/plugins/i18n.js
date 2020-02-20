@@ -7,7 +7,7 @@ Vue.use(VueI18n);
 // Ready translated locale messages
 
 // Create VueI18n instance with options
-let locale = "zh";
+let locale = "en";
 for (let l of window.navigator.languages) {
   l = l.split("-")[0];
   if (l in messages) {
