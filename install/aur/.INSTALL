@@ -1,7 +1,6 @@
-post_install() {
-    :
-    #!/bin/sh
+#!/bin/sh
 
+post_install() {
     systemctl daemon-reload
     systemctl enable v2raya
     systemctl start v2raya
@@ -18,12 +17,9 @@ post_install() {
     $ECHO "\033[36m* HTTPS demo: https://v2raya.mzz.pub *\033[0m"
     $ECHO "\033[36m* HTTP  demo: http://v.mzz.pub       *\033[0m"
     $ECHO "\033[36m**************************************\033[0m"
-
 }
-post_upgrade() {
-    :
-    #!/bin/sh
 
+post_upgrade() {
     systemctl daemon-reload
     systemctl restart v2raya
     
@@ -39,22 +35,14 @@ post_upgrade() {
     $ECHO "\033[36m* HTTPS demo: https://v2raya.mzz.pub *\033[0m"
     $ECHO "\033[36m* HTTP  demo: http://v.mzz.pub       *\033[0m"
     $ECHO "\033[36m**************************************\033[0m"
-
 }
 
 pre_remove() {
-    :
-    #!/bin/sh
-
     systemctl disable v2raya
     systemctl stop v2raya
     systemctl stop v2ray
-
 }
+
 post_remove() {
-    :
-    #!/bin/sh
-
     systemctl daemon-reload
-
 }
