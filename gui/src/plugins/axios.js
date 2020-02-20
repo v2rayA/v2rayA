@@ -53,7 +53,6 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     onAction: () => {
       // this.showCustomPorts = true;
       ModalProgrammatic.open({
-        parent: this,
         component: modalCustomPorts,
         hasModalCard: true,
         customClass: "modal-custom-ports"

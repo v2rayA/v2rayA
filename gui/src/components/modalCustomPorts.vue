@@ -90,9 +90,11 @@
 
 <script>
 import { handleResponse } from "../assets/js/utils";
+import i18n from "@/plugins/i18n";
 
 export default {
   name: "ModalCustomPorts",
+  i18n,
   data: () => ({
     table: {
       backendAddress: "http://localhost:2017",
