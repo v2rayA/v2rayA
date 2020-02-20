@@ -12,6 +12,7 @@ for (let l of window.navigator.languages) {
   l = l.split("-")[0];
   if (l in messages) {
     locale = l;
+    break;
   }
 }
 const i18n = new VueI18n({
