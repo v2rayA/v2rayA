@@ -10,5 +10,9 @@ func GetDefaultInterface() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(strings.TrimSpace(string(b)), "\n"), nil
+	ifnames := strings.Split(strings.TrimSpace(string(b)), "\n")
+	if len(ifnames) == 1 && ifnames[0] == "" {
+		ifnames = nil
+	}
+	return ifnames, nil
 }

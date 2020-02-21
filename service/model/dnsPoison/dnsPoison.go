@@ -22,15 +22,15 @@ type handle struct {
 	done    chan interface{}
 	running bool
 	*pcapgo.EthernetHandle
-	detectedDomains map[string]interface{}
-	domainMutex     sync.RWMutex
+	inspectedWhiteDomains map[string]interface{}
+	domainMutex           sync.RWMutex
 }
 
 func newHandle(ethernetHandle *pcapgo.EthernetHandle) handle {
 	return handle{
-		done:            make(chan interface{}),
-		EthernetHandle:  ethernetHandle,
-		detectedDomains: make(map[string]interface{}),
+		done:                  make(chan interface{}),
+		EthernetHandle:        ethernetHandle,
+		inspectedWhiteDomains: make(map[string]interface{}),
 	}
 }
 
@@ -130,73 +130,7 @@ func Fqdn(domain string) string {
 	return domain + "."
 }
 
-func (d *DnsPoison) RunWithWhitelist(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
-	d.inner.Lock()
-	handle, ok := d.handles[ifname]
-	if !ok {
-		return errors.New(ifname + " not exsits")
-	}
-	if handle.running {
-		return errors.New(ifname + " is running")
-	}
-	handle.running = true
-	d.inner.Unlock()
-	log.Println("DnsPoison[" + ifname + "]: running")
-	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
-	pkgsrc.NoCopy = true
-out:
-	for packet := range pkgsrc.Packets() {
-		select {
-		case <-handle.done:
-			log.Println("DnsPoison:", ifname, "closed")
-			break out
-		default:
-		}
-		trans := packet.TransportLayer()
-		if trans == nil {
-			continue
-		}
-		transflow := trans.TransportFlow()
-		sPort, dPort := transflow.Endpoints()
-		if dPort.String() != "53" {
-			continue
-		}
-		sAddr, dAddr := packet.NetworkLayer().NetworkFlow().Endpoints()
-		// TODO: 暂不支持IPv6
-		dIp := net.ParseIP(dAddr.String()).To4()
-		if len(dIp) != net.IPv4len {
-			continue
-		}
-		// whitelistIps
-		if ok := whitelistDnsServers.Match(dIp); ok {
-			continue
-		}
-		var m dnsmessage.Message
-		err := m.Unpack(trans.LayerPayload())
-		if err != nil {
-			continue
-		}
-		// dns请求一般只有一个question
-		q := m.Questions[0]
-		if (q.Type != dnsmessage.TypeA && q.Type != dnsmessage.TypeAAAA) ||
-			q.Class != dnsmessage.ClassINET {
-			continue
-		}
-		// whitelistDomains
-		dm := q.Name.String()
-		if len(dm) == 0 {
-			continue
-		} else if index := whitelistDomains.Match(dm[:len(dm)-1]); index > 0 {
-			continue
-		}
-
-		log.Println("dnsPoison投毒["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions)
-		go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
-	}
-	return
-}
-
-func (d *DnsPoison) RunWithDetection(ifname string) (err error) {
+func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
@@ -229,11 +163,22 @@ out:
 		}
 		sAddr, dAddr := packet.NetworkLayer().NetworkFlow().Endpoints()
 		// TODO: 暂不支持IPv6
+		sIp := net.ParseIP(sAddr.String()).To4()
+		if len(sIp) != net.IPv4len {
+			continue
+		}
+		// whitelistIps
+		if ok := whitelistDnsServers.Match(sIp); ok {
+			continue
+		}
 		dIp := net.ParseIP(dAddr.String()).To4()
 		if len(dIp) != net.IPv4len {
 			continue
 		}
-
+		// whitelistIps
+		if ok := whitelistDnsServers.Match(dIp); ok {
+			continue
+		}
 		var m dnsmessage.Message
 		err := m.Unpack(trans.LayerPayload())
 		if err != nil {
@@ -245,38 +190,58 @@ out:
 			q.Class != dnsmessage.ClassINET {
 			continue
 		}
+		// whitelistDomains
+		dm := q.Name.String()
+		if len(dm) == 0 {
+			continue
+		} else if index := whitelistDomains.Match(dm[:len(dm)-1]); index > 0 {
+			continue
+		}
 		if !m.Response {
-			//不在列表中的放行
+			//在已探测白名单中的放行
 			handle.domainMutex.RLock()
-			if _, ok := handle.detectedDomains[q.Name.String()]; !ok {
+			if _, ok := handle.inspectedWhiteDomains[q.Name.String()]; ok {
 				handle.domainMutex.RUnlock()
 				continue
 			}
 			handle.domainMutex.RUnlock()
+			log.Println("dnsPoison["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions, "已投毒")
+			go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
 		} else {
-			//探测是否被污染为本地回环
+			//探测该域名是否被污染为本地回环
 			if len(m.Answers) > 0 {
 				switch a := m.Answers[0].Body.(type) {
 				case *dnsmessage.AResource:
+					log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), m.Questions, a.A)
 					if bytes.Equal(a.A[:], []byte{127, 0, 0, 1}) {
 						handle.domainMutex.RLock()
 						name := q.Name.String()
-						if _, ok := handle.detectedDomains[name]; !ok {
+						if _, ok := handle.inspectedWhiteDomains[name]; ok {
 							handle.domainMutex.RUnlock()
 							handle.domainMutex.Lock()
-							handle.detectedDomains[name] = nil
+							delete(handle.inspectedWhiteDomains, name)
 							handle.domainMutex.Unlock()
-							log.Println("dnsPoison投毒["+ifname+"]: 探测到", name)
+							log.Println("dnsPoison["+ifname+"]: 探测到", name, "从白名单移除", m.Questions)
+						} else {
+							handle.domainMutex.RUnlock()
+						}
+					} else {
+						//返回的是非本地回环IP
+						handle.domainMutex.RLock()
+						name := q.Name.String()
+						if _, ok := handle.inspectedWhiteDomains[name]; !ok {
+							handle.domainMutex.RUnlock()
+							handle.domainMutex.Lock()
+							handle.inspectedWhiteDomains[name] = nil
+							handle.domainMutex.Unlock()
+							log.Println("dnsPoison["+ifname+"]: 探测到", name, "加入白名单", a.A)
 						} else {
 							handle.domainMutex.RUnlock()
 						}
 					}
 				}
 			}
-			continue
 		}
-		log.Println("dnsPoison投毒["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions)
-		go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
 	}
 	return
 }
