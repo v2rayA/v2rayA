@@ -3,6 +3,7 @@ package dnsPoison
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
@@ -10,6 +11,7 @@ import (
 	"golang.org/x/sys/unix"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -198,47 +200,62 @@ out:
 			continue
 		}
 		if !m.Response {
-			//在已探测白名单中的放行
-			handle.domainMutex.RLock()
-			if _, ok := handle.inspectedWhiteDomains[q.Name.String()]; ok {
+			if q.Type == dnsmessage.TypeA {
+				//在已探测白名单中的放行
+				handle.domainMutex.RLock()
+				if _, ok := handle.inspectedWhiteDomains[q.Name.String()]; ok {
+					handle.domainMutex.RUnlock()
+					continue
+				}
 				handle.domainMutex.RUnlock()
-				continue
+				log.Println("dnsPoison["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), dm, "已投毒")
 			}
-			handle.domainMutex.RUnlock()
-			log.Println("dnsPoison["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), m.Questions, "已投毒")
+			//TODO: 不支持IPv6，AAAA投毒返回空，加速解析
 			go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
 		} else {
 			//探测该域名是否被污染为本地回环
-			if len(m.Answers) > 0 {
-				switch a := m.Answers[0].Body.(type) {
+			spooffed := false
+			var msgs []string
+			for _, a := range m.Answers {
+				switch a := a.Body.(type) {
+				case *dnsmessage.CNAMEResource:
+					msgs = append(msgs, "CNAME:"+strings.TrimSuffix(a.CNAME.String(), "."))
 				case *dnsmessage.AResource:
-					log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), m.Questions, a.A)
+					msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
 					if bytes.Equal(a.A[:], []byte{127, 0, 0, 1}) {
-						handle.domainMutex.RLock()
-						name := q.Name.String()
-						if _, ok := handle.inspectedWhiteDomains[name]; ok {
-							handle.domainMutex.RUnlock()
-							handle.domainMutex.Lock()
-							delete(handle.inspectedWhiteDomains, name)
-							handle.domainMutex.Unlock()
-							log.Println("dnsPoison["+ifname+"]: 探测到", name, "从白名单移除", m.Questions)
-						} else {
-							handle.domainMutex.RUnlock()
-						}
-					} else {
-						//返回的是非本地回环IP
-						handle.domainMutex.RLock()
-						name := q.Name.String()
-						if _, ok := handle.inspectedWhiteDomains[name]; !ok {
-							handle.domainMutex.RUnlock()
-							handle.domainMutex.Lock()
-							handle.inspectedWhiteDomains[name] = nil
-							handle.domainMutex.Unlock()
-							log.Println("dnsPoison["+ifname+"]: 探测到", name, "加入白名单", a.A)
-						} else {
-							handle.domainMutex.RUnlock()
-						}
+						spooffed = true
 					}
+				}
+			}
+			msg := strings.Join(msgs, ", ")
+			if msg == "" {
+				msg = "(empty)"
+			} else {
+				msg = "[" + msg + "]"
+			}
+			log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), dm, "=>", msg)
+			if spooffed {
+				handle.domainMutex.RLock()
+				if _, ok := handle.inspectedWhiteDomains[dm]; ok {
+					handle.domainMutex.RUnlock()
+					handle.domainMutex.Lock()
+					delete(handle.inspectedWhiteDomains, dm)
+					handle.domainMutex.Unlock()
+					log.Println("dnsPoison["+ifname+"]: 探测到", dm, "从白名单移除", msg)
+				} else {
+					handle.domainMutex.RUnlock()
+				}
+			} else {
+				//返回的是非本地回环IP
+				handle.domainMutex.RLock()
+				if _, ok := handle.inspectedWhiteDomains[dm]; !ok {
+					handle.domainMutex.RUnlock()
+					handle.domainMutex.Lock()
+					handle.inspectedWhiteDomains[dm] = nil
+					handle.domainMutex.Unlock()
+					log.Println("dnsPoison["+ifname+"]: 探测到", dm, "加入白名单", msg)
+				} else {
+					handle.domainMutex.RUnlock()
 				}
 			}
 		}
