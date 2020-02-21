@@ -89,6 +89,7 @@ func (d *DnsPoison) DeleteHandles(ifname string) (err error) {
 		return errors.New("handle not exists")
 	}
 	close(d.handles[ifname].done)
+	delete(d.handles, ifname)
 	return
 }
 
@@ -147,9 +148,6 @@ out:
 	for packet := range pkgsrc.Packets() {
 		select {
 		case <-handle.done:
-			d.inner.Lock()
-			delete(d.handles, ifname)
-			d.inner.Unlock()
 			log.Println("DnsPoison:", ifname, "closed")
 			break out
 		default:
@@ -216,9 +214,6 @@ out:
 	for packet := range pkgsrc.Packets() {
 		select {
 		case <-handle.done:
-			d.inner.Lock()
-			delete(d.handles, ifname)
-			d.inner.Unlock()
 			log.Println("DnsPoison:", ifname, "closed")
 			break out
 		default:
