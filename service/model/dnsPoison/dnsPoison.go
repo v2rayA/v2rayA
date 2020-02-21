@@ -28,8 +28,8 @@ type handle struct {
 	domainMutex           sync.RWMutex
 }
 
-func newHandle(ethernetHandle *pcapgo.EthernetHandle) handle {
-	return handle{
+func newHandle(ethernetHandle *pcapgo.EthernetHandle) *handle {
+	return &handle{
 		done:                  make(chan interface{}),
 		EthernetHandle:        ethernetHandle,
 		inspectedWhiteDomains: make(map[string]interface{}),
@@ -37,14 +37,14 @@ func newHandle(ethernetHandle *pcapgo.EthernetHandle) handle {
 }
 
 type DnsPoison struct {
-	handles map[string]handle
+	handles map[string]*handle
 	reqID   uint32
 	inner   sync.Mutex
 }
 
 func New() *DnsPoison {
 	return &DnsPoison{
-		handles: make(map[string]handle),
+		handles: make(map[string]*handle),
 	}
 }
 
@@ -92,6 +92,7 @@ func (d *DnsPoison) DeleteHandles(ifname string) (err error) {
 	}
 	close(d.handles[ifname].done)
 	delete(d.handles, ifname)
+	log.Println("DnsPoison:", ifname, "closed")
 	return
 }
 
@@ -133,6 +134,9 @@ func Fqdn(domain string) string {
 }
 
 func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
+	defer func() {
+		recover()
+	}()
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
@@ -142,15 +146,27 @@ func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatche
 		return errors.New(ifname + " is running")
 	}
 	handle.running = true
-	d.inner.Unlock()
 	log.Println("DnsPoison[" + ifname + "]: running")
 	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
 	pkgsrc.NoCopy = true
+	d.inner.Unlock()
+	packets := pkgsrc.Packets()
+	go func() {
+		for {
+			//心跳包，防止内存泄漏
+			packets <- gopacket.NewPacket(nil, layers.LinkTypeEthernet, gopacket.DecodeOptions{})
+			select {
+			case <-handle.done:
+				return
+			default:
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
 out:
-	for packet := range pkgsrc.Packets() {
+	for packet := range packets {
 		select {
 		case <-handle.done:
-			log.Println("DnsPoison:", ifname, "closed")
 			break out
 		default:
 		}
@@ -214,7 +230,8 @@ out:
 			go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
 		} else {
 			//探测该域名是否被污染为本地回环
-			spooffed := false
+			spoofed := false
+			emptyRecord := true
 			var msgs []string
 			for _, a := range m.Answers {
 				switch a := a.Body.(type) {
@@ -223,24 +240,25 @@ out:
 				case *dnsmessage.AResource:
 					msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
 					if bytes.Equal(a.A[:], []byte{127, 0, 0, 1}) {
-						spooffed = true
+						spoofed = true
+					} else {
+						emptyRecord = false
 					}
 				}
 			}
-			msg := strings.Join(msgs, ", ")
-			if msg == "" {
-				msg = "(empty)"
-			} else {
-				msg = "[" + msg + "]"
+			msg := "[" + strings.Join(msgs, ", ") + "]"
+			if emptyRecord {
+				//空记录不能影响白名单探测
+				continue
 			}
-			log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), dm, "=>", msg)
-			if spooffed {
+			if spoofed {
 				handle.domainMutex.RLock()
 				if _, ok := handle.inspectedWhiteDomains[dm]; ok {
 					handle.domainMutex.RUnlock()
 					handle.domainMutex.Lock()
 					delete(handle.inspectedWhiteDomains, dm)
 					handle.domainMutex.Unlock()
+					log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), dm, "=>", msg)
 					log.Println("dnsPoison["+ifname+"]: 探测到", dm, "从白名单移除", msg)
 				} else {
 					handle.domainMutex.RUnlock()
@@ -253,6 +271,7 @@ out:
 					handle.domainMutex.Lock()
 					handle.inspectedWhiteDomains[dm] = nil
 					handle.domainMutex.Unlock()
+					log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), dm, "=>", msg)
 					log.Println("dnsPoison["+ifname+"]: 探测到", dm, "加入白名单", msg)
 				} else {
 					handle.domainMutex.RUnlock()
