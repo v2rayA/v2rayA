@@ -119,7 +119,7 @@ func GetV2rayServiceVersion() (ver string, err error) {
 }
 
 func IfTProxyModLoaded() bool {
-	out, err := exec.Command("sh", "-c", "lsmod|awk '{print $1}'|grep ^xt_TPROXY$").Output()
+	out, err := exec.Command("sh", "-c", "lsmod|grep xt_TPROXY").Output()
 	return err == nil && len(bytes.TrimSpace(out)) > 0
 }
 
