@@ -21,9 +21,9 @@
         ></b-input>
       </b-field>
       <b-message v-if="first" type="is-info" class="after-line-dot5">
-        <p>请记住您创建的管理员账号，用于登录该管理页面。</p>
-        <p>账号信息位于本地，我们不会上传任何信息到服务器。</p>
-        <p>如不慎忘记密码，可通过清除配置文件重置。</p>
+        <p>{{ $t("register.messages.0") }}</p>
+        <p>{{ $t("register.messages.1") }}</p>
+        <p>{{ $t("register.messages.2") }}</p>
       </b-message>
     </section>
     <footer class="modal-card-foot flex-end">

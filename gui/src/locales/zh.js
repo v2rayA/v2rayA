@@ -9,12 +9,21 @@ export default {
     notRunning: "尚未运行",
     notLogin: "未登录",
     latest: "最新",
-    local: "本地"
+    local: "本地",
+    success: "成功",
+    fail: "失败",
+    message: "提示",
+    none: "无"
   },
   welcome: {
+    title: "初来乍到，请多关照",
     docker: "V2RayA服务端正在运行于Docker环境中，Version: {version}",
     default: "V2RayA服务端正在运行，Version: {version}",
-    newVersion: "检测到新版本: {version}"
+    newVersion: "检测到新版本: {version}",
+    messages: [
+      "我们发现你还没有创建或导入任何节点、订阅。",
+      "我们支持以vmess、ss、ssr地址，或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！"
+    ]
   },
   v2ray: {
     start: "启动",
@@ -48,12 +57,19 @@ export default {
     configure: "配置",
     cancel: "取消",
     confirm: "确定",
+    confirm2: "确认无误",
     saveApply: "保存并应用",
     save: "保存",
-    copyLink: "复制链接"
+    copyLink: "复制链接",
+    helpManual: "查看帮助"
   },
   register: {
-    title: "初来乍到，创建一个管理员账号"
+    title: "初来乍到，创建一个管理员账号",
+    messages: [
+      "请记住您创建的管理员账号，用于登录该管理页面。",
+      "账号信息位于本地，我们不会上传任何信息到服务器。",
+      "如不慎忘记密码，可通过清除配置文件重置。"
+    ]
   },
   login: {
     title: "登录",
@@ -87,6 +103,25 @@ export default {
       updateSubWhenStart: "服务端启动时更新订阅",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
       dependTransparentMode: "跟随全局透明代理"
+    },
+    messages: {
+      gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
+      transparentProxy:
+        "全局代理开启后，无需经过额外设置，任何TCP、UDP流量均会经过V2Ray。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker容器不会走代理。",
+      pacMode:
+        "该选项设置PAC端口所使用的路由模式。默认情况下PAC端口为20172，HTTP协议。",
+      preventDnsSpoofing:
+        "默认使用DNSPod防止DNS劫持(v0.6.3+)。" +
+        "★转发DNS查询: 通过代理服务器转发DNS请求。" +
+        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，建议选择较快且稳定的DoH服务提供商。",
+      tcpFastOpen:
+        "简化TCP握手流程以加速建立连接，可能会增加封包的特征。当前仅支持vmess节点。",
+      mux:
+        "复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。",
+      confirmEgressPorts: `<p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
+                          <p>当前设置的端口白名单为：</p>
+                          <p>TCP: {tcpPorts}</p>
+                          <p>UDP: {udpPorts}</p>`
     }
   },
   customAddressPort: {
@@ -113,11 +148,13 @@ export default {
     rule: "规则",
     domainFile: "域名文件",
     typeRule: "规则类型",
-    messages: [
-      "将SiteDat文件放于 <b>{V2RayLocationAsset}</b> 目录下，V2rayA将自动进行识别",
-      '制作SiteDat文件：<a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
-      "在选择Tags时，可按Ctrl等多选键进行多选。"
-    ]
+    messages: {
+      0: "将SiteDat文件放于 <b>{V2RayLocationAsset}</b> 目录下，V2rayA将自动进行识别",
+      1: '制作SiteDat文件：<a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
+      2: "在选择Tags时，可按Ctrl等多选键进行多选。",
+      noSiteDatFileFound: "未在{V2RayLocationAsset}中发现siteDat文件",
+      emptyRuleNotPermitted: "不能存在tags为空的规则，请检查"
+    }
   },
   doh: {
     title: "配置DoH服务器",
@@ -159,5 +196,30 @@ export default {
     hostObfuscation: "域名(host)",
     pathObfuscation: "路径(path)",
     password: "密码"
-  }
+  },
+  import: {
+    message: "填入订阅地址："
+  },
+  delete: {
+    title: "确认删除",
+    message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。"
+  },
+  latency: {
+    message: "时延测试往往需要花费较长时间，请耐心等待"
+  },
+  version: {
+    higherVersionNeeded: "该操作需要V2RayA的版本高于{version}",
+    v2rayInvalid: "检测到v2ray-core可能未正确安装，请检查"
+  },
+  about: `<p>V2RayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
+          <p class="about-small">默认端口：</p>
+          <p class="about-small">2017: V2RayA后端端口</p>
+          <p class="about-small">20170: SOCKS协议</p>
+          <p class="about-small">20171: HTTP协议</p>
+          <p class="about-small">20172: 带PAC的HTTP协议</p>
+          <p class="about-small">其他端口：</p>
+          <p class="about-small">12345: tproxy </p>
+          <p class="about-small">12346: ssr relay</p>
+          <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
+          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>`
 };

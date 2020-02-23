@@ -68,7 +68,7 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     actionText: "查看帮助",
     onAction: () => {
       window.open(
-        "https://github.com/mzz2017/V2RayA/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98",
+        "https://github.com/mzz2017/V2RayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95",
         "_blank"
       );
     }
