@@ -60,7 +60,7 @@ iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345
 iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if cmds.IsCommandValid("sysctl") {
 		commands += `
 #禁用ipv6
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
@@ -84,7 +84,7 @@ iptables -t mangle -X SSTP_PRE
 iptables -t mangle -F SETMARK
 iptables -t mangle -X SETMARK
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if cmds.IsCommandValid("sysctl") {
 		commands += `
 sysctl -w net.ipv6.conf.all.disable_ipv6=0
 sysctl -w net.ipv6.conf.default.disable_ipv6=0

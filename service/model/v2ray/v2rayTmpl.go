@@ -741,9 +741,9 @@ func (t *Template) SetOutboundSockopt(supportUDP bool) {
 		if t.Outbounds[i].StreamSettings.Sockopt == nil {
 			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
 		}
-		//if t.Outbounds[i].Protocol == "freedom" {
-		//	t.Outbounds[i].Settings.DomainStrategy = "UseIP"
-		//}
+		if t.Outbounds[i].Protocol == "freedom" {
+			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
+		}
 		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
 		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}
