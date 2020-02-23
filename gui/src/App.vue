@@ -89,7 +89,7 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/components/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
-import { parseURL, handleResponse } from "./assets/js/utils";
+import { parseURL } from "./assets/js/utils";
 import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
 
@@ -157,7 +157,7 @@ export default {
         localStorage["version"] = res.data.data.version;
         if (res.data.data.serviceValid === false) {
           this.$buefy.toast.open({
-            message: "检测到v2ray-core可能未正确安装，请检查",
+            message: this.$t("version.v2rayInvalid"),
             type: "is-danger",
             position: "is-top",
             queue: false,
@@ -204,17 +204,7 @@ export default {
                         <p class="modal-card-title">mzz2017 / V2RayA</p>
                     </header>
                     <section class="modal-card-body lazy">
-                        <p>V2RayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">默认端口：</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">2017: V2RayA后端端口</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20170: SOCKS协议</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20171: HTTP协议</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">20172: 带PAC的HTTP协议</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">其他端口：</p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12345: tproxy </p>
-                        <p style="font-size:0.85em;text-indent:1em;color:rgba(0,0,0,0.6)">12346: ssr relay</p>
-                        <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
-                        <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>
+                        ${this.$t(`about`)}
                     </section>
                     <footer class="modal-card-foot">
                         <a class="is-link" href="https://github.com/mzz2017/V2RayA" target="_blank">
@@ -393,5 +383,10 @@ a {
   p {
     margin-bottom: 0.5em;
   }
+}
+.about-small {
+  font-size: 0.85em;
+  text-indent: 1em;
+  color: rgba(0, 0, 0, 0.6);
 }
 </style>

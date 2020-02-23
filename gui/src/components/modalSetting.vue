@@ -18,17 +18,17 @@
         ><span>{{ $t("common.local") }}:</span>
         <b-tooltip
           v-if="dayjs(localGFWListVersion).isAfter(dayjs(remoteGFWListVersion))"
-          label="该时间是指本地文件最后修改时间，因此可能会领先最新版本"
+          :label="$t('setting.messages.gfwlist')"
           position="is-bottom"
           type="is-danger"
           dashed
           multilined
           animated
         >
-          {{ localGFWListVersion ? localGFWListVersion : "无" }}
+          {{ localGFWListVersion ? localGFWListVersion : $t("none") }}
         </b-tooltip>
         <span v-else>{{
-          localGFWListVersion ? localGFWListVersion : "无"
+          localGFWListVersion ? localGFWListVersion : $t("none")
         }}</span>
         <b-button
           size="is-small"
@@ -44,7 +44,7 @@
           {{ $t("setting.transparentProxy") }}
           <b-tooltip
             type="is-dark"
-            label="全局代理开启后，无需经过额外设置，任何TCP、UDP流量均会经过V2Ray。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker容器不会走代理。"
+            :label="$t('setting.messages.transparentProxy')"
             multilined
             position="is-right"
           >
@@ -86,7 +86,7 @@
           {{ $t("setting.pacMode") }}
           <b-tooltip
             type="is-dark"
-            label="PAC端口使用的路由模式。默认情况下PAC端口为20172，HTTP协议。"
+            :label="$t('setting.messages.pacMode')"
             multilined
             position="is-right"
           >
@@ -122,9 +122,7 @@
           {{ $t("setting.preventDnsSpoofing") }}
           <b-tooltip
             type="is-dark"
-            label="默认使用DNSPod防止DNS劫持(v0.6.3+)。防止DNS污染开启后可以有效规避DNS污染，但会降低网页打开速度，请视网络环境开启。
-            ★转发DNS查询: 通过代理服务器转发DNS请求，可在代理服务器速度较快时使用。
-            ★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，需选择较快且稳定的DoH服务提供商，开启DoH会显著影响v2ray-core配置加载速度，请耐心等待。"
+            :label="$t('setting.messages.preventDnsSpoofing')"
             multilined
             position="is-right"
           >
@@ -160,7 +158,7 @@
           TCPFastOpen
           <b-tooltip
             type="is-dark"
-            label="简化TCP握手流程以加速建立连接，可能会增加封包的特征。当前仅支持vmess节点。"
+            :label="$t('setting.messages.tcpFastOpen')"
             multilined
             position="is-right"
           >
@@ -182,7 +180,7 @@
           {{ $t("setting.mux") }}
           <b-tooltip
             type="is-dark"
-            label="复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。"
+            :label="$t('setting.messages.mux')"
             multilined
             position="is-right"
           >
@@ -266,7 +264,7 @@
 <script>
 import { handleResponse, isIntranet } from "@/assets/js/utils";
 import dayjs from "dayjs";
-import ModalConfigurePac from "@/components/modalConfigurePac";
+import ModalCustomRouting from "@/components/modalCustomRouting";
 import CusBInput from "./input/Input.vue";
 import { isVersionGreaterEqual, parseURL } from "../assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -379,7 +377,7 @@ export default {
         handleResponse(res, this, () => {
           this.localGFWListVersion = res.data.data.localGFWListVersion;
           this.$buefy.toast.open({
-            message: "更新成功",
+            message: this.$t("common.success"),
             type: "is-warning",
             position: "is-top",
             duration: 5000
@@ -446,13 +444,13 @@ export default {
           .then(res => {
             handleResponse(res, this, () => {
               this.$buefy.dialog.confirm({
-                title: "提示",
-                message: `<div class=""><p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
-              <p>当前设置的端口白名单为：</p>
-              <p>TCP: ${res.data.data.tcp.join(", ")}</p>
-              <p>UDP: ${res.data.data.udp.join(", ")}</p>`,
-                cancelText: "取消",
-                confirmText: "确认无误",
+                title: this.$t("common.message"),
+                message: this.$t("setting.messages.confirmEgressPorts", {
+                  tcpPorts: res.data.data.tcp.join(", "),
+                  udpPorts: res.data.data.udp.join(", ")
+                }),
+                cancelText: this.$t("operations.cancel"),
+                confirmText: this.$t("operations.confirm2"),
                 type: "is-danger",
                 onConfirm: () => this.requestUpdateSetting()
               });
@@ -470,7 +468,7 @@ export default {
       const that = this;
       this.$buefy.modal.open({
         parent: this,
-        component: ModalConfigurePac,
+        component: ModalCustomRouting,
         hasModalCard: true,
         canCancel: true
       });

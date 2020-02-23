@@ -9,12 +9,21 @@ export default {
     notRunning: "Stopped",
     notLogin: "Login please",
     latest: "Latest",
-    local: "Local"
+    local: "Local",
+    success: "SUCCESS",
+    fail: "FAIL",
+    message: "Message",
+    none: "none"
   },
   welcome: {
+    title: "Welcome",
     docker: "V2RayA service is running in Docker，Version: {version}",
     default: "V2RayA service is running，Version: {version}",
-    newVersion: "Detected new version: {version}"
+    newVersion: "Detected new version: {version}",
+    messages: [
+      "There is no servers now.",
+      "You can create a server or import a subscription now. Vmess, SS and SSR are supported."
+    ]
   },
   v2ray: {
     start: "Start",
@@ -49,11 +58,18 @@ export default {
     cancel: "Cancel",
     saveApply: "Save and Apply",
     confirm: "Confirm",
+    confirm2: "Carefully confirmed",
     save: "Save",
-    copyLink: "COPY LINK"
+    copyLink: "COPY LINK",
+    helpManual: "Help & Manual"
   },
   register: {
-    title: "Nice to meet you! Create an admin account now"
+    title: "Nice to meet you! Create an admin account now",
+    messages: [
+      "Remember your admin account which is importantly used to login.",
+      "Account information is stored in local. We never send information to any server.",
+      "Once password is forgot, you can delete the config file and restart V2RayA service to reset."
+    ]
   },
   login: {
     title: "Login",
@@ -68,7 +84,7 @@ export default {
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Upadate Subscriptions and GFWList",
-    ipForwardOn: "Setup IP Forward",
+    ipForwardOn: "IP Forward",
     concurrency: "Concurrency",
     options: {
       global: "Proxy All Traffic",
@@ -87,6 +103,27 @@ export default {
       updateSubWhenStart: "Update Subscriptions When Service Starts",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
       dependTransparentMode: "Depend on Transparent Mode"
+    },
+    messages: {
+      gfwlist:
+        "Based on modified time of file which sometimes is after latest version online.",
+      transparentProxy:
+        "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy to other computers through the gateway installed V2RayA should make 'IP forward' on.",
+      pacMode:
+        "Here you can set what proxy mode PAC mode is. By default PAC port is 20172 and HTTP protocol.",
+      preventDnsSpoofing:
+        "By default use DNSPod to prevent DNS hijack(v0.6.3+)." +
+        "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
+        "★DoH(dns-over-https, v2ray-core: 4.22.0+): Stable and fast DoH services are suggested.",
+      tcpFastOpen:
+        "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. Support vmess only now.",
+      mux:
+        "Multiplexing TCP connections to reduce the number of handshake, but it will affect the use cases with high throughput, such as watching videos, downloading, and test speed. " +
+        "Risk of emphasizing characteristics of packets exists. Support vmess only now.",
+      confirmEgressPorts: `<p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
+                          <p>当前设置的端口白名单为：</p>
+                          <p>TCP: {tcpPorts}</p>
+                          <p>UDP: {udpPorts}</p>`
     }
   },
   customAddressPort: {
@@ -113,11 +150,13 @@ export default {
     rule: "Rule",
     domainFile: "Domain File",
     typeRule: "Type of Rule",
-    messages: [
-      "V2RayA will recognize all SiteDat file in <b>{V2RayLocationAsset}</b>",
-      'To make a SiteDat file by yourself: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
-      "Multi-select is supported."
-    ]
+    messages: {
+      0: "V2RayA will recognize all SiteDat file in <b>{V2RayLocationAsset}</b>",
+      1: 'To make a SiteDat file by yourself: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
+      2: "Multi-select is supported.",
+      noSiteDatFileFound: "No siteDat file found in {V2RayLocationAsset}",
+      emptyRuleNotPermitted: "Empty rule is not permitted"
+    }
   },
   doh: {
     title: "Configure DoH Server",
@@ -162,5 +201,33 @@ export default {
   },
   configureSubscription: {
     title: "Configure Subscription"
-  }
+  },
+  import: {
+    message: "Input a subscription address:"
+  },
+  delete: {
+    title: "Confirm to DELETE",
+    message:
+      "Be sure to <b>DELETE</b> those servers/subscriptions? It is not reversible."
+  },
+  latency: {
+    message:
+      "Latency test used to cost one or several minutes. Wait patiently please."
+  },
+  version: {
+    higherVersionNeeded:
+      "This operation need higher version of V2RayA than {version}",
+    v2rayInvalid: "v2ray-core may not be installed correctly"
+  },
+  about: `<p>V2RayA is a web GUI client of V2Ray. Frontend is built with Vue.js and backend is built with golang.</p>
+          <p class="about-small">Default ports:</p>
+          <p class="about-small">2017: V2RayA service port</p>
+          <p class="about-small">20170: SOCKS protocol</p>
+          <p class="about-small">20171: HTTP protocol</p>
+          <p class="about-small">20172: HTTP protocol with PAC</p>
+          <p class="about-small">Other ports：</p>
+          <p class="about-small">12345: tproxy </p>
+          <p class="about-small">12346: ssr relay</p>
+          <p>All data is stored in local. If service is running in docker, configure will disappear with related docker volume's removing. Backup data if necessary.
+          <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/V2RayA/issues">issues</a>.</p>`
 };

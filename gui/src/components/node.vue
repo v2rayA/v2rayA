@@ -91,7 +91,7 @@
           aria-controls="contentIdForA11y3"
         >
           <p class="card-header-title">
-            初来乍到，请多关照
+            {{ $t("welcome.title") }}
           </p>
           <a class="card-header-icon">
             <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"> </b-icon>
@@ -99,15 +99,17 @@
         </div>
         <div class="card-content">
           <div class="content">
-            <p>我们发现你还没有创建或导入任何节点、订阅。</p>
-            <p>
-              我们支持以vmess、ss、ssr地址，或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！
-            </p>
+            <p>{{ $t("welcome.messages.0") }}</p>
+            <p>{{ $t("welcome.messages.1") }}</p>
           </div>
         </div>
         <footer class="card-footer">
-          <a class="card-footer-item" @click="handleClickCreate">创建</a>
-          <a class="card-footer-item" @click="handleClickImport">导入</a>
+          <a class="card-footer-item" @click="handleClickCreate">{{
+            $t("operations.create")
+          }}</a>
+          <a class="card-footer-item" @click="handleClickImport">{{
+            $t("operations.import")
+          }}</a>
         </footer>
       </b-collapse>
 
@@ -223,9 +225,6 @@
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
-                <!--            <b-table-column field="httpLatency" label="HTTP时延" width="100">-->
-                <!--              {{ props.row.httpLatency }}-->
-                <!--            </b-table-column>-->
                 <b-table-column :label="$t('operations.name')" width="300">
                   <div class="operate-box">
                     <b-button
@@ -463,7 +462,7 @@ export default {
     let clipboard = new ClipboardJS(".sharingAddressTag");
     clipboard.on("success", e => {
       this.$buefy.toast.open({
-        message: "复制成功",
+        message: this.$t("common.success"),
         type: "is-primary",
         position: "is-top"
       });
@@ -471,7 +470,7 @@ export default {
     });
     clipboard.on("error", e => {
       this.$buefy.toast.open({
-        message: "复制失败，error:" + e.toLocaleString(),
+        message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
         type: "is-warning",
         position: "is-top"
       });
@@ -536,7 +535,7 @@ export default {
     handleClickImport() {
       const that = this;
       this.$buefy.dialog.prompt({
-        message: `填入ss/ssr/vmess/订阅地址`,
+        message: this.$t("import.message"),
         inputAttrs: {
           type: "text",
           value: ""
@@ -563,7 +562,7 @@ export default {
                 };
                 this.updateConnectView();
                 this.$buefy.toast.open({
-                  message: "导入成功",
+                  message: this.$t("common.success"),
                   type: "is-primary",
                   position: "is-top",
                   queue: false
@@ -581,10 +580,10 @@ export default {
     },
     handleClickDelete() {
       this.$buefy.dialog.confirm({
-        title: "删除节点/订阅",
-        message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。",
-        confirmText: "删除",
-        cancelText: "取消",
+        title: this.$t("delete.title"),
+        message: this.$t("delete.message"),
+        confirmText: this.$t("operations.delete"),
+        cancelText: this.$t("operations.cancel"),
         type: "is-danger",
         hasIcon: true,
         icon: " iconfont icon-alert",
@@ -698,7 +697,7 @@ export default {
       // this.checkedRows = [];
       let timerTip = setTimeout(() => {
         this.$buefy.toast.open({
-          message: "时延测试往往需要花费较长时间，请耐心等待",
+          message: this.$t("latency.message"),
           type: "is-primary",
           position: "is-top",
           duration: 5000
@@ -872,7 +871,7 @@ export default {
           };
           this.updateConnectView();
           this.$buefy.toast.open({
-            message: "更新完成",
+            message: this.$t("common.success"),
             type: "is-primary",
             position: "is-top",
             duration: 5000
@@ -907,7 +906,7 @@ export default {
       }).then(res => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({
-            message: "操作成功",
+            message: this.$t("common.success"),
             type: "is-primary",
             position: "is-top",
             duration: 3000
@@ -928,12 +927,12 @@ export default {
     handleClickModifySubscription(row) {
       if (!isVersionGreaterEqual(localStorage["version"], "0.5.0")) {
         this.$buefy.snackbar.open({
-          message: "修改订阅别名需要V2RayA版本高于0.5.0",
+          message: this.$t("version.higherVersionNeeded"),
           type: "is-warning",
           queue: false,
           position: "is-top",
           duration: 3000,
-          actionText: "查看帮助",
+          actionText: this.$t("operations.helpManual"),
           onAction: () => {
             window.open(
               "https://github.com/mzz2017/V2RayA#%E4%BD%BF%E7%94%A8",
@@ -957,7 +956,7 @@ export default {
       }).then(res => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({
-            message: "操作成功",
+            message: this.$t("common.success"),
             type: "is-primary",
             position: "is-top",
             duration: 3000

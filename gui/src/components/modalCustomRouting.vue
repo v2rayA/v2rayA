@@ -171,7 +171,7 @@
 <script>
 import { handleResponse } from "@/assets/js/utils";
 export default {
-  name: "ModalConfigurePac",
+  name: "ModalCustomRouting",
   data: () => ({
     customPac: {
       defaultProxyMode: "",
@@ -181,10 +181,19 @@ export default {
     firstSiteDatFilename: "",
     V2RayLocationAsset: ""
   }),
-  created() {
+  mounted() {
     (async () => {
+      let customPac = this.customPac;
+      await this.$axios({
+        url: apiRoot + "/customPac"
+      }).then(res => {
+        handleResponse(res, this, () => {
+          customPac = res.data.data.customPac;
+          this.V2RayLocationAsset = res.data.data.V2RayLocationAsset;
+        });
+      });
       let closing = false;
-      let promiseSiteDatFiles = this.$axios({
+      await this.$axios({
         url: apiRoot + "/siteDatFiles"
       }).then(res => {
         handleResponse(res, this, () => {
@@ -201,7 +210,9 @@ export default {
             this.firstSiteDatFilename = res.data.data.siteDatFiles[0].filename;
           } else {
             this.$buefy.toast.open({
-              message: "未在V2RayLocationAsset中发现siteDat文件",
+              message: this.$t("customRouting.messages.noSiteDatFileFound", {
+                V2RayLocationAsset: this.V2RayLocationAsset
+              }),
               type: "is-warning",
               position: "is-top",
               queue: false,
@@ -211,21 +222,10 @@ export default {
           }
         });
       });
-      let customPac;
-      let promiseConfigurePac = this.$axios({
-        url: apiRoot + "/customPac"
-      }).then(res => {
-        handleResponse(res, this, () => {
-          customPac = res.data.data.customPac;
-          this.V2RayLocationAsset = res.data.data.V2RayLocationAsset;
-        });
-      });
-      await Promise.all([promiseConfigurePac, promiseSiteDatFiles]).then(() => {
-        this.customPac = customPac;
-        if (closing) {
-          this.$parent.close();
-        }
-      });
+      this.customPac = customPac;
+      if (closing) {
+        this.$parent.close();
+      }
     })();
   },
   methods: {
@@ -249,9 +249,10 @@ export default {
     handleClickSubmit() {
       if (this.customPac.routingRules.some(x => x.tags.length <= 0)) {
         this.$buefy.toast.open({
-          message: "不能存在tags为空的规则，请检查",
+          message: this.$t("customRouting.messages.emptyRuleNotPermitted"),
           type: "is-warning",
           position: "is-top",
+          queue: false,
           duration: 3000
         });
         return;
