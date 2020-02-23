@@ -108,7 +108,7 @@ export default {
       gfwlist:
         "Based on modified time of file which sometimes is after latest version online.",
       transparentProxy:
-        "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy to other computers through the gateway installed V2RayA should make 'IP forward' on.",
+        "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy service to other computers as the gateway should make option 'IP forward' on.",
       pacMode:
         "Here you can set what proxy mode PAC mode is. By default PAC port is 20172 and HTTP protocol.",
       preventDnsSpoofing:
