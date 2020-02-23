@@ -33,7 +33,7 @@ iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 12345
 iptables -t nat -A PREROUTING -p tcp -j V2RAY
 iptables -t nat -A OUTPUT -p tcp -j V2RAY
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if cmds.IsCommandValid("sysctl") {
 		commands += `
 #禁用ipv6
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
@@ -52,7 +52,7 @@ iptables -t nat -D OUTPUT -p tcp -j V2RAY
 iptables -t nat -D OUTPUT -p udp -j V2RAY
 iptables -t nat -X V2RAY
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if cmds.IsCommandValid("sysctl") {
 		commands += `
 sysctl -w net.ipv6.conf.all.disable_ipv6=0
 sysctl -w net.ipv6.conf.default.disable_ipv6=0
