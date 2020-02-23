@@ -120,8 +120,8 @@ export default {
       mux:
         "Multiplexing TCP connections to reduce the number of handshake, but it will affect the use cases with high throughput, such as watching videos, downloading, and test speed. " +
         "Risk of emphasizing characteristics of packets exists. Support vmess only now.",
-      confirmEgressPorts: `<p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
-                          <p>当前设置的端口白名单为：</p>
+      confirmEgressPorts: `<p>You are setting up transparent proxy across LANs, confirm egress port whitelist.</p>
+                          <p>Whitelist:</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`
     }
