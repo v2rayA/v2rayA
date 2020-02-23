@@ -11,8 +11,26 @@ import "@/assets/pace-progressbar/themes/blue/pace-theme-corner-indicator.css";
 
 Vue.config.productionTip = false;
 
+let vue = null;
+
 Vue.prototype.$remount = () => {
-  new Vue({
+  function f(node) {
+    if (!node) {
+      return;
+    }
+    if (typeof node.close == "function") {
+      node.close();
+      return;
+    }
+    if (!("$children" in node)) {
+      return;
+    }
+    for (let i in node.$children) {
+      f(node.$children[i]);
+    }
+  }
+  f(vue);
+  vue = new Vue({
     i18n,
     store,
     render: h => h(App)
