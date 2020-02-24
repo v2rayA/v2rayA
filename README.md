@@ -6,7 +6,7 @@
 
 V2RayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS and SSR protocols. [[SS/SSR protocol list]](https://github.com/mzz2017/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
-We are committed to providing the simplest operation and meet most needs.
+directlyWe are committed to providing the simplest operation and meet most needs.
 
 Thanks to the advantages of the web, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
 
@@ -19,11 +19,11 @@ Frontend demo: https://v2raya.mzz.pub
 
 V2RayA mainly provides the following methods of installation:
 
-1. Install from apt-source / aur.
+1. Install from apt-source or AUR
 2. Docker
 3. Binary file and installation package
 
-See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/使用方法)
+See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/Usage)
 
 
 ## Screenshot
@@ -50,7 +50,7 @@ See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/使用方法)
 ## Attention
 
 1. The program does not save any user data in the cloud, all user data is stored in local. If the v2raya service is running in docker, the configuration will disappear when the related docker volume is removed. Please make a backup if necessary.
-2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Netlify](https://app.netlify.com/). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/V2RayA/wiki/%E9%83%A8%E7%BD%B2GUI).
+2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Netlify](https://app.netlify.com/). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/V2RayA/wiki/Deploy-GUI).
 3. **Do not use this project for illegal purposes.**
 
 ## Acknowledgement
