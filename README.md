@@ -28,24 +28,7 @@ See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/Usage)
 
 ## Screenshot
 
-<img src="https://s2.ax1x.com/2020/02/03/1wfTbt.png" alt="1wfTbt.png" border="0">
-
-<p align="center">Servers</p>
-<details>
-    <summary>Load more</summary>
-
-
-<img src="https://s2.ax1x.com/2020/02/03/1wf4vd.png" alt="1wf4vd.png" border="0">
-
-<p align="center">Subscriptions</p>
-<img src="https://s2.ax1x.com/2020/02/03/1wfoDI.png" alt="1wfoDI.png" border="0">
-
-<p align="center">Setting</p>
-<img src="https://s2.ax1x.com/2020/02/03/1wfIKA.png" alt="1wfIKA.png" border="0">
-
-<p align="center">Customize routing rules</p>
-</details>
-
+<img src="https://s2.ax1x.com/2020/02/24/3GOhkQ.png" alt="3GOhkQ.png" border="0">
 
 ## Attention
 

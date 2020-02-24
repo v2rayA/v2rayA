@@ -28,22 +28,6 @@ V2RayA主要提供了下述使用方法：
 
 <img src="https://s2.ax1x.com/2020/02/03/1wfTbt.png" alt="1wfTbt.png" border="0">
 
-<p align="center">节点</p>
-<details>
-    <summary>点击展开更多截图</summary>
-
-
-<img src="https://s2.ax1x.com/2020/02/03/1wf4vd.png" alt="1wf4vd.png" border="0">
-
-<p align="center">订阅源</p>
-<img src="https://s2.ax1x.com/2020/02/03/1wfoDI.png" alt="1wfoDI.png" border="0">
-
-<p align="center">设置</p>
-<img src="https://s2.ax1x.com/2020/02/03/1wfIKA.png" alt="1wfIKA.png" border="0">
-
-<p align="center">自定义路由规则</p>
-</details>
-
 
 ## 注意
 
