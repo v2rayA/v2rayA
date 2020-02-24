@@ -1,8 +1,10 @@
 package global
 
 import (
+	"fmt"
 	"github.com/stevenroose/gonfig"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -12,6 +14,7 @@ type Params struct {
 	Mode          string `id:"mode" short:"m" desc:"可选systemctl, service, docker, common. 不设置则自动检测"`
 	SSRListenPort int    `short:"s" default:"12346" desc:"使用ss或ssr时的ssr server监听端口，默认12346"`
 	PassCheckRoot bool   `desc:"可跳过启动时的权限检查"`
+	ShowVersion   bool   `id:"version"`
 }
 
 var params Params
@@ -26,6 +29,10 @@ func initFunc() {
 		if err.Error() != "unexpected word while parsing flags: '-test.v'" {
 			log.Fatal(err)
 		}
+	}
+	if params.ShowVersion {
+		fmt.Println(Version)
+		os.Exit(0)
 	}
 }
 
