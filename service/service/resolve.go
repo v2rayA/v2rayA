@@ -59,6 +59,11 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 			return
 		}
 	}
+	if strings.HasPrefix(info.Host, "/") && info.Path == "" {
+		// 对错误vmess进行力所能及的修正
+		info.Path = info.Host
+		info.Host = ""
+	}
 	// 填充模板并处理结果
 	//t, err := v2ray.NewTemplateFromVmessInfo(info)
 	//if err != nil {
