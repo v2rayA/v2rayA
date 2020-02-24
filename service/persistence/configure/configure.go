@@ -213,6 +213,9 @@ func SetAccount(username, password string) (err error) {
 	path := fmt.Sprintf("accounts.%s", username)
 	return persistence.Set(path, password)
 }
+func ResetAccounts() (err error) {
+	return persistence.Set("accounts", nil)
+}
 func ExistsAccount(username string) bool {
 	return persistence.Exists(fmt.Sprintf("accounts.%s", username))
 }
