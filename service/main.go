@@ -34,12 +34,21 @@ func checkEnvironment() {
 		_, _ = fmt.Scanf("\n")
 		os.Exit(1)
 	}
-	if !global.GetEnvironmentConfig().PassCheckRoot {
+	conf := global.GetEnvironmentConfig()
+	if !conf.PassCheckRoot || conf.ResetPassword {
 		if os.Getegid() != 0 {
 			log.Fatal("请以sudo或root权限执行本程序. 如您确信已sudo或已拥有root权限, 可使用--passcheckroot参数跳过检查")
 		}
 	}
-	_, port, err := net.SplitHostPort(global.GetEnvironmentConfig().Address)
+	if conf.ResetPassword {
+		err := configure.ResetAccounts()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("ok")
+		os.Exit(0)
+	}
+	_, port, err := net.SplitHostPort(conf.Address)
 	if err != nil {
 		log.Fatal(err)
 	}

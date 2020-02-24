@@ -21,8 +21,8 @@ export default {
     default: "V2RayA service is running，Version: {version}",
     newVersion: "Detected new version: {version}",
     messages: [
-      "There is no servers now.",
-      "You can create a server or import a subscription now. Vmess, SS and SSR are supported."
+      "There is no server.",
+      "You can create a server or import a subscription. Vmess, SS and SSR are supported."
     ]
   },
   v2ray: {
@@ -64,11 +64,11 @@ export default {
     helpManual: "Help & Manual"
   },
   register: {
-    title: "Nice to meet you! Create an admin account now",
+    title: "Create an admin account first",
     messages: [
       "Remember your admin account which is importantly used to login.",
       "Account information is stored in local. We never send information to any server.",
-      "Once password is forgot, you can delete the config file and restart V2RayA service to reset."
+      "Once password was forgot, you could delete the config file and restart V2RayA service to reset."
     ]
   },
   login: {
