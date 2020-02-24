@@ -8,7 +8,7 @@ V2RayA is a V2Ray Linux client supporting global transparent proxy, compatible w
 
 directlyWe are committed to providing the simplest operation and meet most needs.
 
-Thanks to the advantages of the web, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
+Thanks to the advantages of Web GUI, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
 
 Project：https://github.com/mzz2017/V2RayA
 
