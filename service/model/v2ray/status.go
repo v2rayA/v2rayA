@@ -164,7 +164,11 @@ func RestartV2rayService() (err error) {
 	return
 }
 
-/*更新v2ray配置并重启*/
+/*
+传入nil，以当前连接节点更新v2ray配置，视情况重启
+
+传入非nil，以传入VmessInfo更新v2ray配置并重启
+*/
 func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	CheckAndStopTransparentProxy()
 	defer CheckAndSetupTransparentProxy(true)
@@ -201,7 +205,7 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	global.SSRs.ClearAll()
 	entity.StopDNSPoison()
 
-	if !IsV2RayRunning() {
+	if v == nil && !IsV2RayRunning() {
 		//没有运行就不需要重新启动了
 		return
 	}
