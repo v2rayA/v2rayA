@@ -7,7 +7,6 @@ import (
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/httpClient"
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -18,7 +17,6 @@ func Import(url string, which *configure.Which) (err error) {
 		if err != nil {
 			return
 		}
-		fmt.Println(n)
 		if which != nil {
 			//修改
 			ind := which.ID - 1
