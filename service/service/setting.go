@@ -44,7 +44,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	cs := configure.GetConnectedServer()
 	if cs != nil && v2ray.IsV2RayRunning() {
 		tsr, _ := cs.LocateServer()
-		err = v2ray.UpdateV2RayConfigAndRestart(&tsr.VmessInfo)
+		err = v2ray.UpdateV2RayConfig(&tsr.VmessInfo)
 		if err != nil {
 			return
 		}

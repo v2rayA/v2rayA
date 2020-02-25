@@ -2,7 +2,6 @@ package controller
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/iptables"
 	"V2RayA/model/v2ray"
 	"V2RayA/service"
 	"V2RayA/tools"
@@ -19,7 +18,7 @@ func GetVersion(ctx *gin.Context) {
 	} else {
 		dohValid = err.Error()
 	}
-	if iptables.UseTproxy {
+	if global.SupportTproxy {
 		iptablesMode = "tproxy"
 	} else {
 		iptablesMode = "redirect"

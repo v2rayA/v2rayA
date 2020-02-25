@@ -4,6 +4,7 @@ import (
 	"V2RayA/extra/download"
 	"V2RayA/global"
 	"V2RayA/model/ipforward"
+	"V2RayA/model/iptables"
 	"V2RayA/model/v2ray"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
@@ -21,12 +22,33 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"regexp"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 )
 
+func testTproxy() {
+	preprocess := func(c *iptables.SetupCommands) {
+		commands := string(*c)
+		lines := strings.Split(commands, "\n")
+		for i, line := range lines {
+			reg := regexp.MustCompile(`{{.+}}`)
+			if len(reg.FindString(line)) > 0 {
+				lines = append(lines[:i], lines[i+1:]...)
+			}
+		}
+		commands = strings.Join(lines, "\n")
+		*c = iptables.SetupCommands(commands)
+	}
+	err := iptables.Tproxy.GetSetupCommands().Setup(&preprocess)
+	if err != nil {
+		global.SupportTproxy = false
+	}
+	iptables.Tproxy.GetCleanCommands().Clean()
+}
 func checkEnvironment() {
 	if runtime.GOOS == "windows" {
 		fmt.Println("windows不支持直接运行，请配合docker使用。见https://github.com/mzz2017/V2RayA")
@@ -55,6 +77,7 @@ func checkEnvironment() {
 	if occupied, which := ports.IsPortOccupied(port, "tcp", true); occupied {
 		log.Fatalf("V2RayA启动失败，%v端口已被%v占用", port, which)
 	}
+	testTproxy()
 }
 
 func initConfigure() {
@@ -224,7 +247,7 @@ func run() (err error) {
 		_ = v2ray.RestartV2rayService()
 	}
 	//刷新配置以刷新透明代理、ssr server
-	err = v2ray.UpdateV2rayWithConnectedServer()
+	err = v2ray.UpdateV2RayConfig(nil)
 	if err != nil {
 		w := configure.GetConnectedServer()
 		log.Println("which:", w)

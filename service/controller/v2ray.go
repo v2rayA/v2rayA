@@ -19,7 +19,7 @@ func PostV2ray(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = v2ray.UpdateV2RayConfigAndRestart(&csr.VmessInfo)
+	err = v2ray.UpdateV2RayConfig(&csr.VmessInfo)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return

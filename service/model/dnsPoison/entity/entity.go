@@ -20,6 +20,38 @@ var (
 	whiteDomains      []*router.Domain
 )
 
+type ExtraInfo struct {
+	DohIps       []string
+	DohDomains   []string
+	ServerIps    []string
+	ServerDomain string
+}
+
+func SetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
+	whitedms := make([]*router.Domain, 0, len(info.DohDomains))
+	for _, h := range info.DohDomains {
+		whitedms = append(whitedms, &router.Domain{
+			Type:  router.Domain_Full,
+			Value: h,
+		})
+	}
+	if len(info.ServerDomain) > 0 {
+		whitedms = append(whitedms, &router.Domain{
+			Type:  router.Domain_Full,
+			Value: info.ServerDomain,
+		})
+	}
+	whitedms = append(whitedms, &router.Domain{
+		Type:  router.Domain_Domain,
+		Value: "v2raya.mzz.pub",
+	})
+	_ = StartDNSPoison([]*router.CIDR{
+		{Ip: []byte{119, 29, 29, 29}, Prefix: 32},
+		{Ip: []byte{114, 114, 114, 114}, Prefix: 32},
+	},
+		whitedms)
+}
+
 func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*router.Domain) (err error) {
 	defer func() {
 		if err != nil {

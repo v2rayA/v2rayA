@@ -32,7 +32,7 @@ func Import(url string, which *configure.Which) (err error) {
 			err = configure.SetServer(ind, n.ToServerRaw())
 			cs := configure.GetConnectedServer()
 			if cs != nil && which.TYPE == cs.TYPE && which.ID == cs.ID {
-				err = v2ray.UpdateV2rayWithConnectedServer()
+				err = v2ray.UpdateV2RayConfig(nil)
 			}
 		} else {
 			//新建

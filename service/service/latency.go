@@ -177,7 +177,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	wg.Wait()
 	global.SSRs.ClearAll()
 	if v2rayRunning && configure.GetConnectedServer() != nil {
-		err = v2ray.UpdateV2rayWithConnectedServer()
+		err = v2ray.UpdateV2RayConfig(nil)
 		if err != nil {
 			return which, errors.New("V2Ray重启失败，请手动连接一个节点")
 		}

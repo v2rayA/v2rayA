@@ -3,7 +3,6 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/model/dnsPoison/entity"
-	"V2RayA/model/iptables"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
@@ -18,7 +17,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"v2ray.com/core/app/router"
 )
 
 /*对应template.json*/
@@ -223,38 +221,6 @@ type Policy struct {
 		StatsInboundUplink   bool `json:"statsInboundUplink,omitempty"`
 		StatsInboundDownlink bool `json:"statsInboundDownlink,omitempty"`
 	} `json:"system"`
-}
-
-type ExtraInfo struct {
-	DohIps       []string
-	DohDomains   []string
-	ServerIps    []string
-	serverDomain string
-}
-
-func (t *Template) SetupDNSPoison(info *ExtraInfo) {
-	whitedms := make([]*router.Domain, 0, len(info.DohDomains))
-	for _, h := range info.DohDomains {
-		whitedms = append(whitedms, &router.Domain{
-			Type:  router.Domain_Full,
-			Value: h,
-		})
-	}
-	if len(info.serverDomain) > 0 {
-		whitedms = append(whitedms, &router.Domain{
-			Type:  router.Domain_Full,
-			Value: info.serverDomain,
-		})
-	}
-	whitedms = append(whitedms, &router.Domain{
-		Type:  router.Domain_Domain,
-		Value: "v2raya.mzz.pub",
-	})
-	_ = entity.StartDNSPoison([]*router.CIDR{
-		{Ip: []byte{119, 29, 29, 29}, Prefix: 32},
-		{Ip: []byte{114, 114, 114, 114}, Prefix: 32},
-	},
-		whitedms)
 }
 
 func NewTemplate() (tmpl Template) {
@@ -771,7 +737,7 @@ func (t *Template) SetInboundPort() {
 	}
 }
 
-func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *ExtraInfo, err error) {
+func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.ExtraInfo, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
@@ -816,7 +782,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *ExtraInf
 	//再修改inbounds
 	if setting.Transparent != configure.TransparentClose {
 		var tproxy string
-		if iptables.UseTproxy == true {
+		if global.SupportTproxy == true {
 			tproxy = "tproxy"
 		} else {
 			tproxy = "redirect"
@@ -839,11 +805,11 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *ExtraInf
 		t.SetTransparentRouting()
 	}
 
-	return t, &ExtraInfo{
+	return t, &entity.ExtraInfo{
 		DohIps:       dohIPs,
 		DohDomains:   dohHosts,
 		ServerIps:    serverIPs,
-		serverDomain: serverDomain,
+		ServerDomain: serverDomain,
 	}, nil
 }
 
