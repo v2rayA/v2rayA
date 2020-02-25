@@ -19,6 +19,7 @@ func ExecCommands(commands string, stopWhenError bool) error {
 	lines := strings.Split(commands, "\n")
 	var e error
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		if len(line) <= 0 || strings.HasPrefix(line, "#") {
 			continue
 		}
