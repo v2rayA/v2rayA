@@ -12,7 +12,7 @@ import (
 func GetSetting(ctx *gin.Context) {
 	s := service.GetSetting()
 	var localGFWListVersion string
-	t, err := asset.GetH2yModTime()
+	t, err := asset.GetGFWListModTime()
 	if err == nil {
 		localGFWListVersion = t.Format("2006-01-02")
 	}

@@ -707,7 +707,8 @@ export default {
         url: apiRoot + (ping ? "/pingLatency" : "/httpLatency"),
         params: {
           whiches: touches
-        }
+        },
+        timeout: 0
       })
         .then(res => {
           handleResponse(

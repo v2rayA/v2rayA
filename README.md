@@ -44,6 +44,8 @@ See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/Usage)
 
 [nadoo/glider](https://github.com/nadoo/glider)
 
+[Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
+
 ## License
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)

@@ -2,8 +2,8 @@ package controller
 
 import (
 	"V2RayA/global"
+	"V2RayA/model/gfwlist"
 	"V2RayA/model/v2ray"
-	"V2RayA/service"
 	"V2RayA/tools"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -40,10 +40,10 @@ func GetRemoteGFWListVersion(ctx *gin.Context) {
 	//	tools.ResponseError(ctx, err)
 	//	return
 	//}
-	t, err := service.GetRemoteGFWListUpdateTime(http.DefaultClient)
+	g, err := gfwlist.GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		tools.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, gin.H{"remoteGFWListVersion": t.Format("2006-01-02")})
+	tools.ResponseSuccess(ctx, gin.H{"remoteGFWListVersion": g.UpdateTime.Format("2006-01-02")})
 }
