@@ -38,7 +38,7 @@ func Connect(which *configure.Which) (err error) {
 		return
 	}
 	//根据找到的Server更新V2Ray的配置
-	err = v2ray.UpdateV2RayConfigAndRestart(&tsr.VmessInfo)
+	err = v2ray.UpdateV2RayConfig(&tsr.VmessInfo)
 	if err != nil {
 		return
 	}

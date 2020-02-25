@@ -82,5 +82,5 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if err != nil {
 		return
 	}
-	return v2ray.UpdateV2rayWithConnectedServer()
+	return v2ray.UpdateV2RayConfig(nil)
 }

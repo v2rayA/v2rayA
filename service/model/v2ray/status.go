@@ -2,7 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/iptables"
+	"V2RayA/model/dnsPoison/entity"
 	"V2RayA/model/shadowsocksr"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
@@ -165,11 +165,31 @@ func RestartV2rayService() (err error) {
 }
 
 /*更新v2ray配置并重启*/
-func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
+func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	CheckAndStopTransparentProxy()
 	defer CheckAndSetupTransparentProxy(true)
+	//iptables.SpoofingFilter.GetCleanCommands().Clean()
+	//defer iptables.SpoofingFilter.GetSetupCommands().Setup(nil)
 	//读配置，转换为v2ray配置并写入
-	tmpl, extraInfo, err := NewTemplateFromVmessInfo(*v)
+	var (
+		tmpl      Template
+		sr        *configure.ServerRaw
+		extraInfo *entity.ExtraInfo
+	)
+	if v == nil {
+		cs := configure.GetConnectedServer()
+		if cs == nil { //没有连接，把v2ray配置更新一下好了
+			return pretendToStopV2rayService()
+		}
+		sr, err = cs.LocateServer()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		tmpl, extraInfo, err = NewTemplateFromVmessInfo(sr.VmessInfo)
+	} else {
+		tmpl, extraInfo, err = NewTemplateFromVmessInfo(*v)
+	}
 	if err != nil {
 		return
 	}
@@ -177,14 +197,24 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
+
+	global.SSRs.ClearAll()
+	entity.StopDNSPoison()
+
+	if !IsV2RayRunning() {
+		//没有运行就不需要重新启动了
+		return
+	}
 	err = RestartV2rayService()
 	if err != nil {
 		return
 	}
-	global.SSRs.ClearAll()
 	if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
 		//说明是ss或ssr，启动ssr server
 		// 尝试将address解析成ip
+		if v == nil {
+			v = &sr.VmessInfo
+		}
 		if net.ParseIP(v.Add) == nil {
 			addrs, e := net.LookupHost(v.Add)
 			if e == nil && len(addrs) > 0 {
@@ -198,58 +228,9 @@ func UpdateV2RayConfigAndRestart(v *vmessInfo.VmessInfo) (err error) {
 		}
 		global.SSRs.Append(*ss)
 	}
-	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !iptables.UseTproxy {
+	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !global.SupportTproxy {
 		//redirect+poison增强方案
-		tmpl.SetupDNSPoison(extraInfo)
-	}
-	return
-}
-
-func UpdateV2rayWithConnectedServer() (err error) {
-	CheckAndStopTransparentProxy()
-	defer CheckAndSetupTransparentProxy(true)
-	cs := configure.GetConnectedServer()
-	if cs == nil { //没有连接，把v2ray配置更新一下好了
-		return pretendToStopV2rayService()
-	}
-	sr, err := cs.LocateServer()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	tmpl, extraInfo, err := NewTemplateFromVmessInfo(sr.VmessInfo)
-	if err != nil {
-		return
-	}
-	err = WriteV2rayConfig(tmpl.ToConfigBytes())
-	if err != nil {
-		return
-	}
-
-	global.SSRs.ClearAll()
-	if IsV2RayRunning() { //没有运行就不需要启动了
-		err = RestartV2rayService()
-		if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
-			//说明是ss或ssr，启动ssr server
-			v := sr.VmessInfo
-			// 尝试将address解析成ip
-			if net.ParseIP(v.Add) == nil {
-				addrs, e := net.LookupHost(v.Add)
-				if e == nil && len(addrs) > 0 {
-					v.Add = addrs[0]
-				}
-			}
-			ss := new(shadowsocksr.SSR)
-			err = ss.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
-			if err != nil {
-				return
-			}
-			global.SSRs.Append(*ss)
-		}
-		if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !iptables.UseTproxy {
-			//redirect+poison增强方案
-			tmpl.SetupDNSPoison(extraInfo)
-		}
+		entity.SetupDnsPoisonWithExtraInfo(extraInfo)
 	}
 	return
 }
