@@ -546,17 +546,17 @@ func (t *Template) SetPacRouting() {
 	switch setting.PacMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"pac"},
-				IP:          []string{"geoip:private", "geoip:cn"},
-			},
 			RoutingRule{ // 直连中国大陆主流网站域名
 				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  []string{"pac"},
 				Domain:      []string{"geosite:cn"},
+			},
+			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"pac"},
+				IP:          []string{"geoip:private", "geoip:cn"},
 			},
 		)
 	case configure.GfwlistMode:
@@ -566,6 +566,12 @@ func (t *Template) SetPacRouting() {
 				OutboundTag: "proxy",
 				InboundTag:  []string{"pac"},
 				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
+			},
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "proxy",
+				InboundTag:  []string{"pac"},
+				IP:      []string{"ext:LoyalsoldierIP.dat:geolocation-!cn"},
 			},
 			RoutingRule{
 				Type:        "field",
@@ -631,17 +637,17 @@ func (t *Template) SetTransparentRouting() {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"transparent"},
-				IP:          []string{"geoip:private", "geoip:cn"},
-			},
 			RoutingRule{ // 直连中国大陆主流网站域名
 				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  []string{"transparent"},
 				Domain:      []string{"geosite:cn"},
+			},
+			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
+				Type:        "field",
+				OutboundTag: "direct",
+				InboundTag:  []string{"transparent"},
+				IP:          []string{"geoip:private", "geoip:cn"},
 			},
 		)
 	case configure.TransparentGfwlist:
@@ -651,6 +657,12 @@ func (t *Template) SetTransparentRouting() {
 				OutboundTag: "proxy",
 				InboundTag:  []string{"transparent"},
 				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
+			},
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "proxy",
+				InboundTag:  []string{"transparent"},
+				IP:          []string{"ext:LoyalsoldierIP.dat:geolocation-!cn"},
 			},
 			RoutingRule{
 				Type:        "field",
