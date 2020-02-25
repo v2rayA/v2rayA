@@ -1,9 +1,7 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: "[BUG] title"
-labels: bug
-assignees: ''
+name: 需要帮助
+about: "有些问题出现了，但我不能确定它是不是 V2RayA 的程序问题"
+labels: help wanted
 
 ---
 
@@ -16,15 +14,13 @@ assignees: ''
 3. 你所使用的操作系统、CPU架构
 
 
-### 描述问题
-<!-- 在下方简要描述问题 -->
+### 描述问题：
+
+<!-- 在下方描述问题 -->
 
 
-### 复现问题的步骤
-<!-- 在下方描述如何复现问题 -->
 
-
-### V2RayA运行日志：
+### V2RayA运行日志（Optional）：
 
  ```bash
  # daemon mode
@@ -34,8 +30,4 @@ assignees: ''
  docker logs v2raya_backend
  ```
 <!-- 在下方贴入运行日志 -->
-
-
-### 截图
-<!-- 如果条件允许请附图 -->
 
