@@ -21,6 +21,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 				err = errors.New("内核未编译xt_TPROXY")
 			}
 			DeleteTransparentProxyRules()
+			log.Println(err)
 			global.SupportTproxy = false
 		}
 	}
@@ -50,8 +51,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 			lines := strings.Split(commands, "\n")
 			for i, line := range lines {
 				if strings.Contains(line, "{{UDP_PORTS}}") {
-					lines = append(lines[:i], lines[i+1:]...)
-					break
+					lines[i] = ""
 				}
 			}
 			commands = strings.Join(lines, "\n")

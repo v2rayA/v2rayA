@@ -34,10 +34,10 @@ func testTproxy() {
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
 		lines := strings.Split(commands, "\n")
+		reg := regexp.MustCompile(`{{.+}}`)
 		for i, line := range lines {
-			reg := regexp.MustCompile(`{{.+}}`)
 			if len(reg.FindString(line)) > 0 {
-				lines = append(lines[:i], lines[i+1:]...)
+				lines[i] = ""
 			}
 		}
 		commands = strings.Join(lines, "\n")
@@ -45,6 +45,7 @@ func testTproxy() {
 	}
 	err := iptables.Tproxy.GetSetupCommands().Setup(&preprocess)
 	if err != nil {
+		log.Println(err)
 		global.SupportTproxy = false
 	}
 	iptables.Tproxy.GetCleanCommands().Clean()
