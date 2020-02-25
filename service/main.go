@@ -117,7 +117,7 @@ func initConfigure() {
 		dld := func(repo, filename, localname string) (err error) {
 			color.Red.Println("正在安装" + filename)
 			p := asset.GetV2rayLocationAsset() + "/" + filename
-			resp, err := http.Get("https://api.github.com/repos/" + repo + "/releases/latest")
+			resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 			if err != nil {
 				return
 			}
@@ -126,7 +126,7 @@ func initConfigure() {
 			if err != nil {
 				return
 			}
-			tag := gjson.GetBytes(b, "tag_name").String()
+			tag := gjson.GetBytes(b, "0.name").String()
 			u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
 			err = download.Pget(u, p)
 			if err != nil {
