@@ -2,7 +2,7 @@
 
 # V2RayA
 
-[**English**](https://github.com/mzz2017/V2RayA/blob/master/README.md)   [**简体中文**](https://github.com/mzz2017/V2RayA/blob/master/README_zh.md)
+<font size=4>[**English**](https://github.com/mzz2017/V2RayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/mzz2017/V2RayA/blob/master/README_zh.md)</font>
 
 V2RayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS and SSR protocols. [[SS/SSR protocol list]](https://github.com/mzz2017/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
@@ -30,13 +30,13 @@ See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/Usage)
 
 <img src="https://s2.ax1x.com/2020/02/24/3GOhkQ.png" alt="3GOhkQ.png" border="0">
 
-## Attention
+## Statement
 
 1. The program does not save any user data in the cloud, all user data is stored in local. If the v2raya service is running in docker, the configuration will disappear when the related docker volume is removed. Please make a backup if necessary.
 2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Netlify](https://app.netlify.com/). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/V2RayA/wiki/Deploy-GUI).
 3. **Do not use this project for illegal purposes.**
 
-## Acknowledgement
+## Credits
 
 [hq450/fancyss](https://github.com/hq450/fancyss)
 

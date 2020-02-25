@@ -29,5 +29,9 @@ labels: help wanted
  # docker mode
  docker logs v2raya_backend
  ```
-<!-- 在下方贴入运行日志 -->
+```shell
+# 此处贴入运行日志
 
+
+
+```
