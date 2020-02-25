@@ -203,7 +203,7 @@ export default {
     title: "Configure Subscription"
   },
   import: {
-    message: "Input a subscription address:"
+    message: "Input a vmess/ss/ssr/subscription address:"
   },
   delete: {
     title: "Confirm to DELETE",

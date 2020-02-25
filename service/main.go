@@ -219,8 +219,8 @@ func checkUpdate() {
 }
 
 func run() (err error) {
-	//判别是否common模式，需要启动v2ray吗
-	if global.ServiceControlMode == global.CommonMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayProcessExists() {
+	//判别是否universal模式，需要启动v2ray吗
+	if global.ServiceControlMode == global.UniversalMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayProcessExists() {
 		_ = v2ray.RestartV2rayService()
 	}
 	//刷新配置以刷新透明代理、ssr server

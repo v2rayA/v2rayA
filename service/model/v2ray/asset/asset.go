@@ -61,7 +61,7 @@ func GetV2rayWorkingDir() (string, error) {
 		}
 		arr := strings.Split(strings.TrimSpace(string(out)), " ")
 		return path.Dir(arr[0][len("ExecStart="):]), nil
-	case global.CommonMode:
+	case global.UniversalMode:
 		//从环境变量里找
 		out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
 		if err == nil {
@@ -161,7 +161,7 @@ func GetConfigPath() (p string) {
 			indexConfigEnd += indexConfigBegin
 		}
 		p = pa[indexConfigBegin:indexConfigEnd]
-	case global.CommonMode, global.DockerMode:
+	case global.UniversalMode, global.DockerMode:
 		p = GetV2rayLocationAsset() + "/config.json"
 	default:
 	}

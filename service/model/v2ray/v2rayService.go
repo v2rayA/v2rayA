@@ -16,7 +16,7 @@ import (
 func EnableV2rayService() (err error) {
 	var out []byte
 	switch global.ServiceControlMode {
-	case global.DockerMode, global.CommonMode: //docker, common中无需enable service
+	case global.DockerMode, global.UniversalMode: //docker, universal中无需enable service
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "update-rc.d v2ray enable").CombinedOutput()
 		if err != nil {
@@ -34,7 +34,7 @@ func EnableV2rayService() (err error) {
 func DisableV2rayService() (err error) {
 	var out []byte
 	switch global.ServiceControlMode {
-	case global.DockerMode, global.CommonMode: //docker, common中无需disable service
+	case global.DockerMode, global.UniversalMode: //docker, universal中无需disable service
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "update-rc.d v2ray disable").CombinedOutput()
 		if err != nil {
@@ -99,7 +99,7 @@ func IsV2rayServiceValid() bool {
 		return err == nil && len(bytes.TrimSpace(out)) == 0
 	case global.DockerMode:
 		return asset.IsGeoipExists() && asset.IsGeositeExists()
-	case global.CommonMode:
+	case global.UniversalMode:
 		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 			return false
 		}
