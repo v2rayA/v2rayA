@@ -10,7 +10,7 @@ type SystemServiceControlMode int
 const (
 	SystemctlMode = SystemServiceControlMode(iota)
 	ServiceMode
-	CommonMode
+	UniversalMode
 	DockerMode
 )
 
@@ -23,8 +23,8 @@ func GetServiceControlMode() (mode SystemServiceControlMode) {
 		mode = ServiceMode
 	case "docker":
 		mode = DockerMode
-	case "common":
-		mode = CommonMode
+	case "universal", "common":
+		mode = UniversalMode
 	default:
 		//自动检测
 		if _, err := exec.Command("ls", "/.dockerenv").Output(); err == nil {
@@ -39,7 +39,7 @@ func GetServiceControlMode() (mode SystemServiceControlMode) {
 			mode = ServiceMode
 			return
 		}
-		mode = CommonMode
+		mode = UniversalMode
 	}
 	return
 }

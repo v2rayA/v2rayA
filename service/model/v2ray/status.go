@@ -38,7 +38,7 @@ func IsV2RayRunning() bool {
 			return false
 		}
 		return len(gjson.GetBytes(b, "inbounds").Array()) > 0
-	case global.CommonMode:
+	case global.UniversalMode:
 		return IsV2RayProcessExists()
 	case global.ServiceMode:
 		out, err := exec.Command("sh", "-c", "service v2ray status|head -n 5|grep running").CombinedOutput()
@@ -106,7 +106,7 @@ func RestartV2rayService() (err error) {
 		if err != nil {
 			err = errors.New(err.Error() + string(out))
 		}
-	case global.CommonMode:
+	case global.UniversalMode:
 		_ = process.KillAll("v2ray", true)
 		v2wd, _ := asset.GetV2rayWorkingDir()
 		v2ctlDir, _ := asset.GetV2ctlDir()
@@ -285,7 +285,7 @@ func StopV2rayService() (err error) {
 	switch global.ServiceControlMode {
 	case global.DockerMode:
 		return pretendToStopV2rayService()
-	case global.CommonMode:
+	case global.UniversalMode:
 		err = process.KillAll("v2ray", true)
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
