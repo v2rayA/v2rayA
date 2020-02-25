@@ -96,8 +96,8 @@ func GetV2ctlDir() (string, error) {
 	return path.Dir(strings.TrimSpace(string(out))), nil
 }
 
-func IsH2yExists() bool {
-	_, err := os.Stat(GetV2rayLocationAsset() + "/h2y.dat")
+func IsGFWListExists() bool {
+	_, err := os.Stat(GetV2rayLocationAsset() + "/LoyalsoldierSite.dat")
 	if err != nil {
 		return false
 	}
@@ -117,8 +117,8 @@ func IsGeositeExists() bool {
 	}
 	return true
 }
-func GetH2yModTime() (time.Time, error) {
-	return files.GetFileModTime(GetV2rayLocationAsset() + "/h2y.dat")
+func GetGFWListModTime() (time.Time, error) {
+	return files.GetFileModTime(GetV2rayLocationAsset() + "/LoyalsoldierSite.dat")
 }
 func IsCustomExists() bool {
 	_, err := os.Stat(GetV2rayLocationAsset() + "/custom.dat")

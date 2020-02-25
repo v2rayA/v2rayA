@@ -20,12 +20,12 @@ func GetSetting() *configure.Setting {
 func UpdateSetting(setting *configure.Setting) (err error) {
 	switch setting.PacMode {
 	case configure.GfwlistMode:
-		if !asset.IsH2yExists() {
+		if !asset.IsGFWListExists() {
 			return errors.New("未发现GFWList文件，请更新GFWList后再试")
 		}
 	case configure.CustomMode:
 	}
-	if setting.Transparent == configure.TransparentGfwlist && !asset.IsH2yExists() {
+	if setting.Transparent == configure.TransparentGfwlist && !asset.IsGFWListExists() {
 		return errors.New("未发现GFWList文件，请更新GFWList后再试")
 	}
 	if setting.Transparent != configure.TransparentClose {

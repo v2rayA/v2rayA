@@ -565,7 +565,7 @@ func (t *Template) SetPacRouting() {
 				Type:        "field",
 				OutboundTag: "proxy",
 				InboundTag:  []string{"pac"},
-				Domain:      []string{"ext:h2y.dat:gfw"},
+				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
 			},
 			RoutingRule{
 				Type:        "field",
@@ -650,7 +650,7 @@ func (t *Template) SetTransparentRouting() {
 				Type:        "field",
 				OutboundTag: "proxy",
 				InboundTag:  []string{"transparent"},
-				Domain:      []string{"ext:h2y.dat:gfw"},
+				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
 			},
 			RoutingRule{
 				Type:        "field",

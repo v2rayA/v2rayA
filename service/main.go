@@ -3,6 +3,7 @@ package main
 import (
 	"V2RayA/extra/download"
 	"V2RayA/global"
+	"V2RayA/model/gfwlist"
 	"V2RayA/model/ipforward"
 	"V2RayA/model/iptables"
 	"V2RayA/model/v2ray"
@@ -16,6 +17,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
+	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -31,6 +34,7 @@ import (
 )
 
 func testTproxy() {
+	v2ray.CheckAndStopTransparentProxy()
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
 		lines := strings.Split(commands, "\n")
@@ -110,17 +114,23 @@ func initConfigure() {
 	}
 	//检查geoip、geosite是否存在
 	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
-		dld := func(downloadURL, alternativeDownloadURL, filename string) (err error) {
+		dld := func(repo, filename, localname string) (err error) {
 			color.Red.Println("正在安装" + filename)
 			p := asset.GetV2rayLocationAsset() + "/" + filename
-			u := downloadURL
+			resp, err := http.Get("https://api.github.com/repos/" + repo + "/releases/latest")
+			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return
+			}
+			tag := gjson.GetBytes(b, "tag_name").String()
+			u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
 			err = download.Pget(u, p)
 			if err != nil {
-				u := alternativeDownloadURL
-				err = download.Pget(u, p)
-				if err != nil {
-					return errors.New("download<" + p + ">: " + err.Error())
-				}
+				return errors.New("download<" + p + ">: " + err.Error())
 			}
 			err = os.Chmod(p, os.FileMode(0755))
 			if err != nil {
@@ -128,11 +138,11 @@ func initConfigure() {
 			}
 			return
 		}
-		err := dld("https://github.com/v2ray/geoip/releases/latest/download/geoip.dat", "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geoip.dat", "geoip.dat")
+		err := dld("mzz2017/dist-geoip", "geoip.dat", "geoip.dat")
 		if err != nil {
 			log.Println(err)
 		}
-		err = dld("https://github.com/v2ray/domain-list-community/releases/latest/download/dlc.dat", "https://cdn.jsdelivr.net/gh/v2ray/v2ray-core@master/release/config/geosite.dat", "geosite.dat")
+		err = dld("mzz2017/dist-domain-list-community", "dlc.dat", "geosite.dat")
 		if err != nil {
 			log.Println(err)
 		}
@@ -197,8 +207,8 @@ func checkUpdate() {
 			switch setting.PacMode {
 			case configure.GfwlistMode:
 				go func() {
-					/* 更新h2y.dat */
-					localGFWListVersion, err := service.CheckAndUpdateGFWList()
+					/* 更新LoyalsoldierSite.dat */
+					localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
 					if err != nil {
 						log.Println("自动更新PAC文件失败" + err.Error())
 						return

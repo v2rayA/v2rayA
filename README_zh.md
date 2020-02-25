@@ -47,6 +47,8 @@ V2RayA主要提供了下述使用方法：
 
 [nadoo/glider](https://github.com/nadoo/glider)
 
+[Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
+
 ## 协议
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)

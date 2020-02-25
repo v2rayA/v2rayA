@@ -11,7 +11,7 @@
         style="position: relative"
         ><span>{{ $t("common.latest") }}:</span>
         <a
-          href="https://github.com/ToutyRater/V2Ray-SiteDAT/blob/master/geofiles/h2y.dat"
+          href="https://github.com/Loyalsoldier/v2ray-rules-dat/releases"
           target="_blank"
           class="is-link"
           >{{ remoteGFWListVersion }}</a
@@ -372,7 +372,8 @@ export default {
     handleClickUpdateGFWList() {
       this.$axios({
         url: apiRoot + "/gfwList",
-        method: "put"
+        method: "put",
+        timeout: 0
       }).then(res => {
         handleResponse(res, this, () => {
           this.localGFWListVersion = res.data.data.localGFWListVersion;
