@@ -569,12 +569,6 @@ func (t *Template) SetPacRouting() {
 			},
 			RoutingRule{
 				Type:        "field",
-				OutboundTag: "proxy",
-				InboundTag:  []string{"pac"},
-				IP:      []string{"ext:LoyalsoldierIP.dat:geolocation-!cn"},
-			},
-			RoutingRule{
-				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  []string{"pac"},
 			},
@@ -657,12 +651,6 @@ func (t *Template) SetTransparentRouting() {
 				OutboundTag: "proxy",
 				InboundTag:  []string{"transparent"},
 				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
-			},
-			RoutingRule{
-				Type:        "field",
-				OutboundTag: "proxy",
-				InboundTag:  []string{"transparent"},
-				IP:          []string{"ext:LoyalsoldierIP.dat:geolocation-!cn"},
 			},
 			RoutingRule{
 				Type:        "field",
