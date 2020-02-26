@@ -1,6 +1,4 @@
-[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/V2RayA) [![Netlify](https://img.shields.io/netlify/f93dbfa7-d14b-4968-a7a4-5e503d8bf5e5?label=netlify%20build)](https://app.netlify.com/sites/xenodochial-jepsen-122e9b/deploys)
-
-# V2RayA
+# V2RayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/V2RayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/V2RayA) [![Netlify](https://img.shields.io/netlify/f93dbfa7-d14b-4968-a7a4-5e503d8bf5e5?label=netlify%20build)](https://app.netlify.com/sites/xenodochial-jepsen-122e9b/deploys)
 
 [**English**](https://github.com/mzz2017/V2RayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/mzz2017/V2RayA/blob/master/README_zh.md)
 

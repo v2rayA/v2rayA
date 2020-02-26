@@ -190,6 +190,8 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 			//如果长度多于6，说明host中包含字符:，重新合并前几个分组到host去
 			pre[len(pre)-6] = strings.Join(pre[:len(pre)-5], ":")
 			pre = pre[len(pre)-6:]
+		} else if len(pre) < 6 {
+			return v, false
 		}
 		q, err := url.ParseQuery(arr[1])
 		if err != nil {

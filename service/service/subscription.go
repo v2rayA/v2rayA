@@ -27,10 +27,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
 	// base64解码, raw是多行vmess
-	raw, err := tools.Base64StdDecode(buf.String())
-	if err != nil {
-		return
-	}
+	raw, _ := tools.Base64StdDecode(buf.String())
 	// 切分raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析
