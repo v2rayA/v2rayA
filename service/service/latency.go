@@ -10,7 +10,7 @@ import (
 	"V2RayA/tools/ports"
 	"errors"
 	"fmt"
-	"net"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,10 +57,10 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	}
 	//对要Ping的which去重
 	which = whiches.GetNonDuplicated()
-	//将要测试的节点全部解析成ip
 	v2rayRunning := v2ray.IsV2RayRunning()
 	wg := new(sync.WaitGroup)
 	vms := make([]vmessInfo.VmessInfo, len(which))
+	//init vmessInfos
 	for i := range which {
 		which[i].Latency = ""
 		sr, err := which[i].LocateServer()
@@ -69,19 +69,6 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			continue
 		}
 		vms[i] = sr.VmessInfo
-		if net.ParseIP(vms[i].Add) == nil {
-			var hosts []string
-			hosts, err = net.LookupHost(vms[i].Add)
-			if err != nil || len(hosts) <= 0 {
-				if err != nil {
-					which[i].Latency = err.Error()
-				} else {
-					which[i].Latency = "dns解析失败: " + vms[i].Add
-				}
-				continue
-			}
-			vms[i].Add = hosts[0]
-		}
 	}
 	//写v2ray配置
 	var tmpl v2ray.Template
@@ -131,7 +118,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			ssrPortMap[i] = port
 		default:
 		}
-		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, ssrLocalPortIfNeed)
+		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, ssrLocalPortIfNeed, "")
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue
@@ -204,6 +191,8 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	if err != nil || resp.StatusCode != 200 {
 		if err != nil {
 			es := strings.ToLower(err.Error())
+			s, _ := which.LocateServer()
+			log.Println(err, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 			switch {
 			case strings.Contains(es, "eof"):
 				which.Latency = "NOT STABLE"

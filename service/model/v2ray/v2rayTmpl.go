@@ -834,7 +834,7 @@ func NewTemplateFromConfig() (t Template, err error) {
 	err = jsoniter.Unmarshal(b, &t)
 	return
 }
-func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, ssrLocalPortIfNeed int) (err error) {
+func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, ssrLocalPortIfNeed int, protocol string) (err error) {
 	o, err := ResolveOutbound(&v, "outbound"+inboundPort, ssrLocalPortIfNeed)
 	if err != nil {
 		return
@@ -854,9 +854,12 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 	if err != nil || iPort <= 0 {
 		return errors.New("inboundPort必须为string类型的正数")
 	}
+	if protocol == "" {
+		protocol = "socks"
+	}
 	t.Inbounds = append(t.Inbounds, Inbound{
 		Port:     iPort,
-		Protocol: "socks",
+		Protocol: protocol,
 		Listen:   "0.0.0.0",
 		Sniffing: Sniffing{
 			Enabled:      true,
@@ -871,13 +874,14 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 	if t.Routing.DomainStrategy == "" {
 		t.Routing.DomainStrategy = "IPOnDemand"
 	}
-	//将routingRule插入最前
-	t.Routing.Rules = append(make([]RoutingRule, 1), t.Routing.Rules...)
-	t.Routing.Rules[0] = RoutingRule{
+	//插入最前
+	tmp := make([]RoutingRule, 1, len(t.Routing.Rules)+1)
+	tmp[0] = RoutingRule{
 		Type:        "field",
 		OutboundTag: "outbound" + inboundPort,
 		InboundTag:  []string{"inbound" + inboundPort},
 	}
+	t.Routing.Rules = append(tmp, t.Routing.Rules...)
 	return
 }
 

@@ -31,7 +31,7 @@ func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
 	//是否在docker环境
 	if global.ServiceControlMode == global.DockerMode {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
-		out, err := exec.Command("sh", "-c", "ip route|grep default|awk '{print $3}'").Output()
+		out, err := exec.Command("sh", "-c", "ip route list default|head -n 1|awk '{print $3}'").Output()
 		if err == nil {
 			host = strings.TrimSpace(string(out))
 		} else {
