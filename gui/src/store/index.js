@@ -6,7 +6,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     nav: "",
-    running: i18n.messages[i18n.locale]["checkRunning"],
+    running: i18n.t("common.checkRunning"),
     connectedServer: {}
   },
   mutations: {

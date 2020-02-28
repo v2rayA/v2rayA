@@ -61,7 +61,10 @@ export default {
     confirm2: "Carefully confirmed",
     save: "Save",
     copyLink: "COPY LINK",
-    helpManual: "Help & Manual"
+    helpManual: "Help & Manual",
+    yes: "Yes",
+    no: "No",
+    switchSite: "Switch to alternate site"
   },
   register: {
     title: "Create an admin account first",
@@ -229,5 +232,16 @@ export default {
           <p class="about-small">12345: tproxy </p>
           <p class="about-small">12346: ssr relay</p>
           <p>All data is stored in local. If service is running in docker, configure will disappear with related docker volume's removing. Backup data if necessary.
-          <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/V2RayA/issues">issues</a>.</p>`
+          <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/V2RayA/issues">issues</a>.</p>`,
+  axios: {
+    messages: {
+      optimizeBackend: "Adjust V2RayA service address？",
+      noBackendFound:
+        "Cannot find V2RayA at {url}. Make sure V2RayA is running at this address.",
+      cannotCommunicate: [
+        "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
+        "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http site."
+      ]
+    }
+  }
 };
