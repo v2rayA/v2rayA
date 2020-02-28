@@ -61,7 +61,10 @@ export default {
     saveApply: "保存并应用",
     save: "保存",
     copyLink: "复制链接",
-    helpManual: "查看帮助"
+    helpManual: "查看帮助",
+    yes: "是",
+    no: "否",
+    switchSite: "切换至备用站点"
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -221,5 +224,15 @@ export default {
           <p class="about-small">12345: tproxy </p>
           <p class="about-small">12346: ssr relay</p>
           <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
-          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>`
+          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>`,
+  axios: {
+    messages: {
+      optimizeBackend: "您是否需要调整服务端地址？",
+      noBackendFound: "未在 {url} 检测到V2RayA服务端，请确定V2RayA正常运行",
+      cannotCommunicate: [
+        "无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。",
+        "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。"
+      ]
+    }
+  }
 };
