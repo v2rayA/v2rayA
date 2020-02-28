@@ -166,7 +166,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	if v2rayRunning && configure.GetConnectedServer() != nil {
 		err = v2ray.UpdateV2RayConfig(nil)
 		if err != nil {
-			return which, errors.New("V2Ray重启失败，请手动连接一个节点")
+			return which, errors.New("fail in restart v2ray-core, please connect a server")
 		}
 	} else {
 		_ = v2ray.StopV2rayService() //没关掉那就不好意思了

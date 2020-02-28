@@ -12,7 +12,7 @@ func PutPorts(ctx *gin.Context) {
 	var data configure.Ports
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.SetPorts(&data)

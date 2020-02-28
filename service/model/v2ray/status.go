@@ -52,6 +52,10 @@ func IsV2RayRunning() bool {
 	return true
 }
 func RestartV2rayService() (err error) {
+	setting := configure.GetSettingNotNil()
+	if (setting.Transparent == configure.TransparentGfwlist || setting.PacMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
+		return errors.New("cannot find GFWList files. update GFWList and try again")
+	}
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
 	var out []byte
 	switch global.ServiceControlMode {
@@ -74,7 +78,7 @@ func RestartV2rayService() (err error) {
 			raw := []byte(TemplateJson)
 			err = jsoniter.Unmarshal(raw, &rawJson)
 			if err != nil {
-				return errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+				return errors.New("error occurs while reading template json, please check if templateJson variable is correct json format")
 			}
 			tmplJson.Inbounds = rawJson.Inbounds
 			b, _ = jsoniter.Marshal(tmplJson)
@@ -89,7 +93,7 @@ func RestartV2rayService() (err error) {
 		startTime := time.Now()
 		for {
 			if time.Now().Sub(startTime) > 8*time.Second {
-				return errors.New("请勿在Docker模式下频繁更换配置，请等待一段时间后再试")
+				return errors.New("do not change configuration frequently in Docker mode, please wait for a while and try again")
 			}
 			<-time.After(100 * time.Millisecond)
 			if IsV2RayProcessExists() {
@@ -155,9 +159,9 @@ func RestartV2rayService() (err error) {
 		}
 		if time.Since(startTime) > 15*time.Second {
 			if global.ServiceControlMode == global.DockerMode {
-				return errors.New("v2ray-core无法正常启动，请确保已正确按照文档配置docker参数，如仍无法正常工作，请提出issue")
+				return errors.New("v2ray-core does not start normally, please make sure that the docker parameters have been correctly configured according to the documentation. If it still does not work, please raise an issue")
 			}
-			return errors.New("v2ray-core无法正常启动，可能是配置文件出现问题或所需端口被占用")
+			return errors.New("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -284,7 +288,7 @@ func StopV2rayService() (err error) {
 		}
 	}
 	if IsV2RayRunning() {
-		return errors.New("v2ray停止失败")
+		return errors.New("fail in stopping v2ray")
 	}
 	return
 }

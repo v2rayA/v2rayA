@@ -43,24 +43,24 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 func ValidToken(token, secret string) (err error) {
 	arr := strings.Split(token, ".")
 	if len(arr) != 3 {
-		return errors.New("token核对失败, token格式有误")
+		return errors.New("bad token: 1")
 	}
 	sign := base64.RawURLEncoding.EncodeToString(tools.HMACSHA256(arr[0]+"."+arr[1], []byte(secret)))
 	if sign != arr[2] { //签名核对失败
-		return errors.New("token核对失败, 无效签名")
+		return errors.New("bad token: 2")
 	}
 	pl, err := GetJWTPayload(token)
 	if err != nil { //decode发生意外
-		return errors.New("token核对失败, 解析失败")
+		return errors.New("bad token: 3")
 	}
 	strExp, ok := pl["exp"]
 	if ok {
 		iExp, err := strconv.Atoi(strExp)
 		if err != nil { //str转int失败
-			return errors.New("token核对失败")
+			return errors.New("bad token: 4")
 		}
 		if time.Now().After(time.Unix(int64(iExp), 0)) { //token过期
-			return errors.New("token核对失败, token过期")
+			return errors.New("expired token")
 		}
 	}
 	return nil

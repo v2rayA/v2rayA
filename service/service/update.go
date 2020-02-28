@@ -23,13 +23,13 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	s := buf.String()
 	l := strings.Index(s, "Package: v2raya")
 	if l < 0 {
-		return false, "", errors.New("检查更新失败，没有从Packages文件中找到Package: v2raya")
+		return false, "", errors.New("fail in getting latest version from Package file: 1")
 	}
 	s = s[l:]
 	prefix := "Version: "
 	l = strings.Index(s, prefix)
 	if l < 0 {
-		return false, "", errors.New("检查更新失败，没有从Packages文件中找到Version: ")
+		return false, "", errors.New("fail in getting latest version from Package file: 2")
 	}
 	s = s[l+len(prefix):]
 	r := strings.Index(s, "\n")

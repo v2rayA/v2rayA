@@ -29,7 +29,7 @@ func Connect(which *configure.Which) (err error) {
 	log.Println("Connect: begin")
 	defer log.Println("Connect: done")
 	if which == nil {
-		return errors.New("which不能为nil")
+		return errors.New("which can not be nil")
 	}
 	//定位Server
 	tsr, err := which.LocateServer()

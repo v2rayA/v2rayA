@@ -14,7 +14,7 @@ func GetPingLatency(ctx *gin.Context) {
 	var wt []configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	wt, err = service.Ping(wt, 5*time.Second)
@@ -31,7 +31,7 @@ func GetHttpLatency(ctx *gin.Context) {
 	var wt []configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	wt, err = service.TestHttpLatency(wt, 10*time.Second, 4)

@@ -65,7 +65,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 			//done has closed
 		default:
 			mutex.Unlock()
-			return errors.New("DNSPoison正在运行")
+			return errors.New("DNSPoison is running")
 		}
 	}
 	done = make(chan interface{})

@@ -18,7 +18,7 @@ func Get(path string, val interface{}) (err error) {
 	}
 	v := gjson.GetBytes(b, path)
 	if !v.Exists() {
-		return errors.New("路径不存在")
+		return errors.New("bad path")
 	}
 	return jsoniter.Unmarshal([]byte(v.Raw), val)
 }
@@ -38,10 +38,10 @@ func GetArrayLen(path string) (length int, err error) {
 	}
 	v := gjson.GetBytes(b, path)
 	if !v.Exists() {
-		return -1, errors.New("路径不存在")
+		return -1, errors.New("bad path")
 	}
 	if !v.IsArray() {
-		return -1, errors.New("不是数组")
+		return -1, errors.New("not an array")
 	}
 	return len(v.Array()), nil
 }
@@ -52,10 +52,10 @@ func GetObjectLen(path string) (length int, err error) {
 	}
 	v := gjson.GetBytes(b, path)
 	if !v.Exists() {
-		return -1, errors.New("路径不存在")
+		return -1, errors.New("bad path")
 	}
 	if !v.IsObject() {
-		return -1, errors.New("不是对象")
+		return -1, errors.New("not an object")
 	}
 	return len(v.Map()), nil
 }
@@ -90,7 +90,7 @@ func Set(path string, val interface{}) (err error) {
 
 func Append(path string, val interface{}) (err error) {
 	if path == "" || path == "." {
-		return errors.New("不能在根处append元素")
+		return errors.New("cannot append an element at root")
 	}
 	return Set(path+".-1", val)
 }

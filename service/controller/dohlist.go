@@ -52,11 +52,11 @@ func PutDohList(ctx *gin.Context) {
 	var data dohputdata
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	if !data.Valid() {
-		tools.ResponseError(ctx, errors.New("包含无效的DoH服务器格式"))
+		tools.ResponseError(ctx, errors.New("bad format of DoH server"))
 		return
 	}
 	data.DeDuplicate()

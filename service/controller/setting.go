@@ -26,11 +26,11 @@ func PutSetting(ctx *gin.Context) {
 	var data configure.Setting
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"+err.Error()))
+		tools.ResponseError(ctx, errors.New("bad request"+err.Error()))
 		return
 	}
 	if data.MuxOn == configure.Yes && (data.Mux < 1 || data.Mux > 1024) {
-		tools.ResponseError(ctx, errors.New("多路复用最大并发连接数必须介于1到1024之间"))
+		tools.ResponseError(ctx, errors.New("mux should be between 1 and 1024"))
 		return
 	}
 	err = service.UpdateSetting(&data)

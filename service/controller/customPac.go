@@ -24,7 +24,7 @@ func PutCustomPac(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"+err.Error()))
+		tools.ResponseError(ctx, errors.New("bad request"+err.Error()))
 		return
 	}
 	err = configure.SetCustomPac(&data.CustomPac)

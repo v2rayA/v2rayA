@@ -52,12 +52,12 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	addr := subscriptions[index].Address
 	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
-		reason := "尝试使用代理失败，建议修改设置为直连模式再试"
+		reason := "fail in get proxy"
 		return errors.New(reason)
 	}
 	infos, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
-		reason := "解析订阅地址失败: " + err.Error()
+		reason := "fail in resolving subscription address: " + err.Error()
 		log.Println(infos, err)
 		return errors.New(reason)
 	}
@@ -97,7 +97,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		if disconnectIfNecessary {
 			err = Disconnect()
 			if err != nil {
-				reason := "现连接的服务器已被更新且不包含在新的订阅中，在试图与其断开的过程中遇到失败"
+				reason := "fail in disconnecting previous server"
 				return errors.New(reason)
 			}
 		} else if connectedServer != nil {
@@ -118,7 +118,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return errors.New("无法找到对应的subscription")
+		return errors.New("fail in finding the corresponding subscription")
 	}
 	raw.Remarks = subscription.Remarks
 	return configure.SetSubscription(subscription.ID-1, raw)

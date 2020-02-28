@@ -18,7 +18,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 	if global.SupportTproxy {
 		if err := iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
-				err = errors.New("内核未编译xt_TPROXY")
+				err = errors.New("not compile xt_TPROXY in kernel")
 			}
 			DeleteTransparentProxyRules()
 			log.Println(err)
@@ -29,7 +29,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
 			log.Println(err)
 			DeleteTransparentProxyRules()
-			return errors.New("机器不支持透明代理: " + err.Error())
+			return errors.New("not support transparent proxy: " + err.Error())
 		}
 	}
 	return nil

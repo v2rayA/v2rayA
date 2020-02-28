@@ -18,7 +18,7 @@ func PatchSubscription(ctx *gin.Context) {
 	s := data.Subscription
 	index := s.ID - 1
 	if err != nil || s.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.ModifySubscriptionRemark(s)
@@ -35,7 +35,7 @@ func PutSubscription(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&data)
 	index := data.ID - 1
 	if err != nil || data.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.UpdateSubscription(index, false)

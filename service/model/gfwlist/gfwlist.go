@@ -1,7 +1,7 @@
 package gfwlist
 
 import (
-	"V2RayA/extra/download"
+	"V2RayA/extra/gopeed"
 	"V2RayA/model/v2ray"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
@@ -33,7 +33,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	}
 	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/mzz2017/dist-v2ray-rules-dat/tags")
 	if err != nil {
-		err = errors.New("获取GFWList最新版本时间失败: " + err.Error())
+		err = errors.New("fail in get latest version of GFWList: " + err.Error())
 		return
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
@@ -41,12 +41,12 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	tag := gjson.GetBytes(b, "0.name").Str
 	u := gjson.GetBytes(b, "0.commit.url").Str
 	if tag == "" || u == "" {
-		err = errors.New("获取GFWList最新版本时间失败: fail in getting latest tag")
+		err = errors.New("fail in get latest version of GFWList: fail in getting latest tag")
 		return
 	}
 	resp, err = httpClient.HttpGetUsingSpecificClient(c, u)
 	if err != nil {
-		err = errors.New("获取GFWList最新版本时间失败: " + err.Error())
+		err = errors.New("fail in get latest version of GFWList: " + err.Error())
 		return
 	}
 	b, _ = ioutil.ReadAll(resp.Body)
@@ -54,7 +54,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	g.Tag = tag
 	g.UpdateTime = &t
 	if t.IsZero() {
-		err = errors.New("获取GFWList最新版本时间失败: fail in getting commit date of latest tag")
+		err = errors.New("fail in get latest version of GFWList: fail in getting commit date of latest tag")
 		return
 	}
 	return g, nil
@@ -88,14 +88,20 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geoip.dat`, gfwlist.Tag)
-	err = download.Pget(u, asset.GetV2rayLocationAsset()+"/LoyalsoldierIP.dat")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	u = fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
-	err = download.Pget(u, asset.GetV2rayLocationAsset()+"/LoyalsoldierSite.dat")
+	//u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geoip.dat`, gfwlist.Tag)
+	//err = gopeed.Down(&gopeed.Request{
+	//	Method: "GET",
+	//	URL:    u,
+	//}, asset.GetV2rayLocationAsset()+"/LoyalsoldierIP.dat")
+	//if err != nil {
+	//	log.Println(err)
+	//	return
+	//}
+	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
+	err = gopeed.Down(&gopeed.Request{
+		Method: "GET",
+		URL:    u,
+	}, asset.GetV2rayLocationAsset()+"/LoyalsoldierSite.dat")
 	if err != nil {
 		log.Println(err)
 		return
@@ -115,7 +121,7 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 	}
 	if update {
 		return "", errors.New(
-			"目前最新版本为" + tRemote.Format("2006-01-02") + "，您的本地文件已最新，无需更新",
+			"latest version is" + tRemote.Format("2006-01-02") + ". your GFWList is up to date",
 		)
 	}
 

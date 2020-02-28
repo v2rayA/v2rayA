@@ -15,7 +15,7 @@ func PostLogin(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	jwt, err := service.Login(data.Username, data.Password)
@@ -36,16 +36,16 @@ func PutAccount(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	if !service.ValidPasswordLength(data.Password) {
-		tools.ResponseError(ctx, errors.New("密码长度最短5位，且最长32位"))
+		tools.ResponseError(ctx, errors.New("length of password should be between 5 and 32"))
 		return
 	}
 	username := ctx.GetString("Name")
 	if !service.IsValidAccount(username, data.Password) {
-		tools.ResponseError(ctx, errors.New("密码错误"))
+		tools.ResponseError(ctx, errors.New("invalid username or password"))
 		return
 	}
 	tools.ResponseSuccess(ctx, nil)
@@ -59,12 +59,12 @@ func PostAccount(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	if !service.ValidPasswordLength(data.Password) {
 		log.Println(data)
-		tools.ResponseError(ctx, errors.New("密码长度最短5位，且最长32位"))
+		tools.ResponseError(ctx, errors.New("length of password should be between 5 and 32"))
 		return
 	}
 	token, err := service.Register(data.Username, data.Password)

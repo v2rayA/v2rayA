@@ -252,7 +252,7 @@ func GetV2rayServiceFilePath() (path string, err error) {
 			}
 		}
 	} else {
-		err = errors.New("当前环境无法使用systemctl和service命令")
+		err = errors.New("commands systemctl and service not found")
 		return
 	}
 	if err != nil {
@@ -262,7 +262,7 @@ func GetV2rayServiceFilePath() (path string, err error) {
 	l := strings.Index(sout, "/")
 	r := strings.Index(sout, "/v2ray.service")
 	if l < 0 || r < 0 {
-		err = errors.New("getV2rayServiceFilePath失败")
+		err = errors.New("fail: getV2rayServiceFilePath")
 		return
 	}
 	path = sout[l : r+len("/v2ray.service")]

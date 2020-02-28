@@ -239,7 +239,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return o, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+		return o, errors.New("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
 	// 其中Template是基础配置，替换掉*t即可
 	o = tmplJson.Template.Outbounds[0]
@@ -301,7 +301,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 		switch v.Net {
 		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
 		default:
-			return o, errors.New("不支持的shadowsocks加密方法: " + v.Net)
+			return o, errors.New("unsupported shadowsocks encryption method: " + v.Net)
 		}
 		if len(strings.TrimSpace(v.Type)) <= 0 {
 			v.Type = "origin"
@@ -309,7 +309,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 		switch v.Type {
 		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1":
 		default:
-			return o, errors.New("不支持的shadowsocksr协议: " + v.Type)
+			return o, errors.New("unsupported shadowsocksR protocol: " + v.Type)
 		}
 		if len(strings.TrimSpace(v.TLS)) <= 0 {
 			v.TLS = "plain"
@@ -317,7 +317,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 		switch v.TLS {
 		case "plain", "http_simple", "http_post", "random_head", "tls1.2_ticket_auth":
 		default:
-			return o, errors.New("不支持的shadowsocksr混淆方法: " + v.TLS)
+			return o, errors.New("unsupported shadowsocksr obfuscation method: " + v.TLS)
 		}
 		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
@@ -327,7 +327,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 			},
 		}
 	default:
-		return o, errors.New("不支持的协议: " + v.Protocol)
+		return o, errors.New("unsupported protocol: " + v.Protocol)
 	}
 	o.Tag = tag
 	return
@@ -743,7 +743,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return t, nil, errors.New("读入模板json出错，请检查templateJson变量是否是正确的json格式")
+		return t, nil, errors.New("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
 	// 其中Template是基础配置，替换掉t即可
 	t = tmplJson.Template
@@ -852,7 +852,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 	t.Outbounds = append(t.Outbounds, o)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
-		return errors.New("inboundPort必须为string类型的正数")
+		return errors.New("port of inbound must be a positive number with string type")
 	}
 	if protocol == "" {
 		protocol = "socks"

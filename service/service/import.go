@@ -21,7 +21,7 @@ func Import(url string, which *configure.Which) (err error) {
 			//修改
 			ind := which.ID - 1
 			if which.TYPE != configure.ServerType || ind < 0 || ind >= configure.GetLenServers() {
-				return errors.New("节点参数有误")
+				return errors.New("bad request")
 			}
 			var sr *configure.ServerRaw
 			sr, err = which.LocateServer()
@@ -46,11 +46,11 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 		c, err := httpClient.GetHttpClientAutomatically()
 		if err != nil {
-			return errors.New("尝试使用代理失败，建议修改设置为直连模式再试" + err.Error())
+			return errors.New(err.Error())
 		}
 		infos, err := ResolveSubscriptionWithClient(url, c)
 		if err != nil {
-			return errors.New("解析订阅地址失败" + err.Error())
+			return errors.New("fail in resolving subscription address" + err.Error())
 		}
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
 		servers := make([]configure.ServerRaw, len(infos))
