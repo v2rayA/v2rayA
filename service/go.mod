@@ -21,7 +21,7 @@ require (
 	github.com/gookit/color v1.2.0
 	github.com/jessevdk/go-flags v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.9
-	github.com/matoous/go-nanoid v1.1.0
+	github.com/matoous/go-nanoid v0.0.0-20200226125206-b0a1054fe39d
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.5 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
