@@ -10,7 +10,7 @@ import (
 
 func Login(username, password string) (token string, err error) {
 	if !IsValidAccount(username, password) {
-		return "", errors.New("用户名或密码错误")
+		return "", errors.New("invalid username or password")
 	}
 	dur := 3 * time.Hour
 	return jwt.MakeJWT(map[string]string{
@@ -28,7 +28,7 @@ func IsValidAccount(username, password string) bool {
 
 func Register(username, password string) (token string, err error) {
 	if configure.ExistsAccount(username) {
-		return "", errors.New("用户名已存在")
+		return "", errors.New("username exists")
 	}
 	err = configure.SetAccount(username, tools.CryptoPwd(password))
 	if err != nil {

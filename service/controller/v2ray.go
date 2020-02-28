@@ -12,7 +12,7 @@ import (
 func PostV2ray(ctx *gin.Context) {
 	cs := configure.GetConnectedServer()
 	if cs == nil {
-		tools.ResponseError(ctx, errors.New("不能启动V2Ray, 请选择一个节点连接"))
+		tools.ResponseError(ctx, errors.New("cannot start V2Ray without server connected"))
 		return
 	}
 	csr, err := cs.LocateServer()
@@ -29,7 +29,7 @@ func PostV2ray(ctx *gin.Context) {
 
 func DeleteV2ray(ctx *gin.Context) {
 	if global.ServiceControlMode == global.DockerMode {
-		tools.ResponseError(ctx, errors.New("Docker模式下无法关闭V2Ray，但可以断开节点连接"))
+		tools.ResponseError(ctx, errors.New("cannot stop v2ray in docker mode. try disconnecting your server"))
 		return
 	}
 	err := v2ray.StopAndDisableV2rayService()

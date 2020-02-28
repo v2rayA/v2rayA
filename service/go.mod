@@ -5,7 +5,6 @@ go 1.12
 require (
 	github.com/Code-Hex/pget v0.0.0-20170428105109-9294f7465fa7
 	github.com/Code-Hex/updater v0.0.0-20160712085121-c3f278672520 // indirect
-	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/antonholmquist/jason v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/cakturk/go-netstat v0.0.0-20190620190123-a633b9c55b1a
@@ -16,7 +15,6 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/gopacket v1.1.17
 	github.com/gookit/color v1.2.0
 	github.com/jessevdk/go-flags v1.4.0 // indirect
@@ -26,6 +24,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.5 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
+	github.com/monkeyWie/gopeed v0.0.0-20200228110501-b0bd2a776a55
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a
 	github.com/nadoo/glider v0.9.2

@@ -13,7 +13,7 @@ func GetSharingAddress(ctx *gin.Context) {
 	var w configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("touch")), &w)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	addr, err := service.GetSharingAddress(&w)

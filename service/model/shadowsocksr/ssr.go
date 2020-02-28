@@ -86,7 +86,7 @@ func (self *SSR) Close() error {
 		}
 		if time.Since(start) > 3*time.Second {
 			log.Println("SSR.Close: 关闭SSR超时", port+"/"+who)
-			return errors.New("SSR.Close: 关闭SSR超时")
+			return errors.New("SSR.Close: timeout of closing SSR")
 		}
 		time.Sleep(200 * time.Millisecond)
 	}

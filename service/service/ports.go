@@ -38,7 +38,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 		cnt++
 	}
 	if cnt > len(set) {
-		return errors.New("端口之间不能重复，请检查")
+		return errors.New("ports duplicate. check it")
 	}
 	if ports.Socks5 != p.Socks5 {
 		p.Socks5 = ports.Socks5
@@ -46,12 +46,12 @@ func SetPorts(ports *configure.Ports) (err error) {
 			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Socks5), "tcp", true); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Socks5, w))
+					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.Socks5, w))
 				}
 			} else if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Socks5), "udp", true); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Socks5, w))
+					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.Socks5, w))
 				}
 			}
 		}
@@ -62,7 +62,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Http), "tcp", true); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.Http, w))
+					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.Http, w))
 				}
 			}
 		}
@@ -73,7 +73,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.HttpWithPac), "tcp", true); o {
 				arr := strings.Split(w, "/")
 				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("%v端口已被%v占用，请检查", p.HttpWithPac, w))
+					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.HttpWithPac, w))
 				}
 			}
 		}

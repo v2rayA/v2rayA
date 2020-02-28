@@ -1,7 +1,7 @@
 package main
 
 import (
-	"V2RayA/extra/download"
+	"V2RayA/extra/gopeed"
 	"V2RayA/global"
 	"V2RayA/model/gfwlist"
 	"V2RayA/model/ipforward"
@@ -128,7 +128,10 @@ func initConfigure() {
 			}
 			tag := gjson.GetBytes(b, "0.name").String()
 			u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
-			err = download.Pget(u, p)
+			err = gopeed.Down(&gopeed.Request{
+				Method: "GET",
+				URL:    u,
+			}, p)
 			if err != nil {
 				return errors.New("download<" + p + ">: " + err.Error())
 			}

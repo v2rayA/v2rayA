@@ -18,15 +18,8 @@ func GetSetting() *configure.Setting {
 }
 
 func UpdateSetting(setting *configure.Setting) (err error) {
-	switch setting.PacMode {
-	case configure.GfwlistMode:
-		if !asset.IsGFWListExists() {
-			return errors.New("未发现GFWList文件，请更新GFWList后再试")
-		}
-	case configure.CustomMode:
-	}
-	if setting.Transparent == configure.TransparentGfwlist && !asset.IsGFWListExists() {
-		return errors.New("未发现GFWList文件，请更新GFWList后再试")
+	if (setting.Transparent == configure.TransparentGfwlist || setting.PacMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
+		return errors.New("cannot find GFWList files. update GFWList and try again")
 	}
 	if setting.Transparent != configure.TransparentClose {
 		if setting.IpForward != ipforward.IsIpForwardOn() {

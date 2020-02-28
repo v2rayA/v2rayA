@@ -19,11 +19,11 @@ func PutPortWhiteList(ctx *gin.Context) {
 	var data configure.PortWhiteList
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	if !data.Valid() {
-		tools.ResponseError(ctx, errors.New("包含无效的端口格式"))
+		tools.ResponseError(ctx, errors.New("invalid format of port"))
 		return
 	}
 	err = configure.SetPortWhiteList(&data)
@@ -40,7 +40,7 @@ func PostPortWhiteList(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	p := service.GetPortsDefault()

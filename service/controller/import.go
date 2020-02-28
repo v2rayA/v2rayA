@@ -15,7 +15,7 @@ func PostImport(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("参数有误"))
+		tools.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.Import(data.URL, data.Which)
