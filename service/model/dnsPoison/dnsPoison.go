@@ -1,7 +1,7 @@
 package dnsPoison
 
 import (
-	"bytes"
+	"V2RayA/tools/netTools"
 	"errors"
 	"fmt"
 	"github.com/google/gopacket"
@@ -239,7 +239,7 @@ out:
 					msgs = append(msgs, "CNAME:"+strings.TrimSuffix(a.CNAME.String(), "."))
 				case *dnsmessage.AResource:
 					msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
-					if bytes.Equal(a.A[:], []byte{127, 0, 0, 1}) {
+					if netTools.IsIntranet4(a.A) {
 						spoofed = true
 					} else {
 						emptyRecord = false
