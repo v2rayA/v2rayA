@@ -242,6 +242,9 @@ export default {
         "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
         "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http site."
       ]
+    },
+    urls: {
+      usage: "https://github.com/mzz2017/V2RayA/wiki/Usage"
     }
   }
 };
