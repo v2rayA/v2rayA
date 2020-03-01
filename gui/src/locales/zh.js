@@ -233,6 +233,10 @@ export default {
         "无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。",
         "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。"
       ]
+    },
+    urls: {
+      usage:
+        "https://github.com/mzz2017/V2RayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
     }
   }
 };

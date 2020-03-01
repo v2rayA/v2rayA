@@ -68,10 +68,7 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     duration: 10000,
     actionText: i18n.t("operations.helpManual"),
     onAction: () => {
-      window.open(
-        "https://github.com/mzz2017/V2RayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95",
-        "_blank"
-      );
+      window.open(i18n.t("axios.urls.usage"), "_blank");
     }
   });
 }
