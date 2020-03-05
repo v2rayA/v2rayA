@@ -14,7 +14,9 @@ require (
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
+	github.com/gocarina/gocsv v0.0.0-20200302151839-87c60d755c58
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/gopacket v1.1.17
 	github.com/gookit/color v1.2.0
 	github.com/jessevdk/go-flags v1.4.0 // indirect
@@ -24,7 +26,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.5 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
-	github.com/monkeyWie/gopeed v0.0.0-20200228110501-b0bd2a776a55
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a
 	github.com/nadoo/glider v0.9.2
