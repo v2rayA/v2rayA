@@ -100,10 +100,11 @@ func AppendSubscription(subscription *SubscriptionRaw) (err error) {
 }
 
 func IsConfigureNotExists() bool {
-	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDONLY, os.ModeAppend)
+	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDONLY, os.FileMode(0600))
 	if err != nil {
 		return os.IsNotExist(err)
 	}
+	defer f.Close()
 	buf := new(bytes.Buffer)
 	n, err := buf.ReadFrom(f)
 	return !(err == nil && n > 0)

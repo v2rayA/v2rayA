@@ -3,8 +3,8 @@ package persistence
 import (
 	"V2RayA/global"
 	"bytes"
-	"github.com/json-iterator/go"
 	"errors"
+	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"io/ioutil"
@@ -63,9 +63,9 @@ func GetObjectLen(path string) (length int, err error) {
 func Set(path string, val interface{}) (err error) {
 	if path == "" || path == "." { //这种情况sjson不支持，特判用marshal搞定
 		b, _ := jsoniter.Marshal(val)
-		return ioutil.WriteFile(global.GetEnvironmentConfig().Config, b, 0644)
+		return ioutil.WriteFile(global.GetEnvironmentConfig().Config, b, os.FileMode(0600))
 	}
-	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(global.GetEnvironmentConfig().Config, os.O_RDWR|os.O_CREATE, os.FileMode(0600))
 	if err != nil {
 		return
 	}
