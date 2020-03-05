@@ -104,8 +104,8 @@
               v-model="rule.tags"
               multiple
               :native-size="
-                siteDatFiles[rule.filename].tags.length > 8
-                  ? 8
+                siteDatFiles[rule.filename].tags.length > 16
+                  ? 16
                   : siteDatFiles[rule.filename].tags.length
               "
               size="is-small"
