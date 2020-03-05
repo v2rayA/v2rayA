@@ -13,12 +13,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
 
 type GFWList struct {
-	UpdateTime *time.Time
+	UpdateTime time.Time
 	Tag        string
 	sync.Mutex
 }
@@ -28,7 +29,7 @@ var g GFWList
 func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	g.Lock()
 	defer g.Unlock()
-	if g.UpdateTime != nil {
+	if !g.UpdateTime.IsZero() {
 		return g, nil
 	}
 	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/mzz2017/dist-v2ray-rules-dat/tags")
@@ -51,12 +52,12 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	}
 	b, _ = ioutil.ReadAll(resp.Body)
 	t := gjson.GetBytes(b, "commit.committer.date").Time()
-	g.Tag = tag
-	g.UpdateTime = &t
 	if t.IsZero() {
 		err = errors.New("fail in get latest version of GFWList: fail in getting commit date of latest tag")
 		return
 	}
+	g.Tag = tag
+	g.UpdateTime = t
 	return g, nil
 }
 func IsUpdate() (update bool, remoteTime time.Time, err error) {
@@ -64,7 +65,7 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 	if err != nil {
 		return
 	}
-	remoteTime = *gfwlist.UpdateTime
+	remoteTime = gfwlist.UpdateTime
 	if !asset.IsGFWListExists() {
 		//本地文件不存在，那远端必定比本地新
 		return false, remoteTime, nil
@@ -74,7 +75,7 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 	if err != nil {
 		return
 	}
-	if t.After(remoteTime) {
+	if !t.Before(remoteTime) {
 		//那确实新
 		update = true
 		return
@@ -106,9 +107,10 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		log.Println(err)
 		return
 	}
+	_ = os.Chtimes(asset.GetV2rayLocationAsset()+"/LoyalsoldierSite.dat", gfwlist.UpdateTime, gfwlist.UpdateTime)
 	t, err := files.GetFileModTime(asset.GetV2rayLocationAsset() + "/LoyalsoldierSite.dat")
 	if err == nil {
-		localGFWListVersionAfterUpdate = t.Format("2006-01-02")
+		localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
 	}
 	log.Printf("download[%v]: %v -> SUCCESS\n", i+1, u)
 	return
@@ -121,7 +123,7 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 	}
 	if update {
 		return "", errors.New(
-			"latest version is " + tRemote.Format("2006-01-02") + ". current GFWList is up to date",
+			"latest version is " + tRemote.Local().Format("2006-01-02") + ". GFWList is up to date",
 		)
 	}
 
