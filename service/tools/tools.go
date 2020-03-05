@@ -19,6 +19,13 @@ func Min(a, b int) int {
 	return a
 }
 
+func BoolToInt(a bool) int {
+	if a {
+		return 1
+	}
+	return 0
+}
+
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 	if v1 == "debug" {
