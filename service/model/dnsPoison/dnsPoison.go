@@ -1,6 +1,7 @@
 package dnsPoison
 
 import (
+	"V2RayA/tools"
 	"V2RayA/tools/netTools"
 	"errors"
 	"fmt"
@@ -208,11 +209,11 @@ out:
 			q.Class != dnsmessage.ClassINET {
 			continue
 		}
-		// whitelistDomains
 		dm := q.Name.String()
-		if len(dm) == 0 {
+		if dm == "" {
 			continue
 		} else if index := whitelistDomains.Match(dm[:len(dm)-1]); index > 0 {
+			// whitelistDomains
 			continue
 		}
 		if !m.Response {
@@ -233,17 +234,19 @@ out:
 			spoofed := false
 			emptyRecord := true
 			var msgs []string
+			dms := []string{dm}
 			for _, a := range m.Answers {
 				switch a := a.Body.(type) {
 				case *dnsmessage.CNAMEResource:
-					msgs = append(msgs, "CNAME:"+strings.TrimSuffix(a.CNAME.String(), "."))
+					cname := a.CNAME.String()
+					msgs = append(msgs, "CNAME:"+strings.TrimSuffix(cname, "."))
+					dms = append(dms, cname)
 				case *dnsmessage.AResource:
 					msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
 					if netTools.IsIntranet4(a.A) {
 						spoofed = true
-					} else {
-						emptyRecord = false
 					}
+					emptyRecord = false
 				}
 			}
 			msg := "[" + strings.Join(msgs, ", ") + "]"
@@ -251,31 +254,31 @@ out:
 				//空记录不能影响白名单探测
 				continue
 			}
-			if spoofed {
-				handle.domainMutex.RLock()
-				if _, ok := handle.inspectedWhiteDomains[dm]; ok {
-					handle.domainMutex.RUnlock()
-					handle.domainMutex.Lock()
-					delete(handle.inspectedWhiteDomains, dm)
-					handle.domainMutex.Unlock()
-					log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), dm, "=>", msg)
-					log.Println("dnsPoison["+ifname+"]: 探测到", dm, "从白名单移除", msg)
-				} else {
-					handle.domainMutex.RUnlock()
+			todolist := make([]string, 0, len(dms))
+			//读写分离，减少锁竞争
+			handle.domainMutex.RLock()
+			iSpoofed := tools.BoolToInt(spoofed)
+			for _, d := range dms {
+				if _, ok := handle.inspectedWhiteDomains[d]; tools.BoolToInt(ok)^iSpoofed == 0 {
+					todolist = append(todolist, d)
 				}
-			} else {
-				//返回的是非本地回环IP
-				handle.domainMutex.RLock()
-				if _, ok := handle.inspectedWhiteDomains[dm]; !ok {
-					handle.domainMutex.RUnlock()
-					handle.domainMutex.Lock()
-					handle.inspectedWhiteDomains[dm] = nil
-					handle.domainMutex.Unlock()
-					log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), dm, "=>", msg)
-					log.Println("dnsPoison["+ifname+"]: 探测到", dm, "加入白名单", msg)
-				} else {
-					handle.domainMutex.RUnlock()
+			}
+			handle.domainMutex.RUnlock()
+			if len(todolist) > 0 {
+				log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), "("+dm, "=>", msg+")")
+				handle.domainMutex.Lock()
+				for _, d := range todolist {
+					if _, ok := handle.inspectedWhiteDomains[d]; tools.BoolToInt(ok)^iSpoofed == 0 {
+						if ok {
+							delete(handle.inspectedWhiteDomains, d)
+							log.Println("dnsPoison["+ifname+"]: 探测到", d, "从白名单移除", dm+msg)
+						} else {
+							handle.inspectedWhiteDomains[d] = nil
+							log.Println("dnsPoison["+ifname+"]: 探测到", d, "加入白名单", dm+msg)
+						}
+					}
 				}
+				handle.domainMutex.Unlock()
 			}
 		}
 	}
