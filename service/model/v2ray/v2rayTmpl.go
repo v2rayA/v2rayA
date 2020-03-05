@@ -819,7 +819,7 @@ func (t *Template) ToConfigBytes() []byte {
 }
 
 func WriteV2rayConfig(content []byte) (err error) {
-	err = ioutil.WriteFile(asset.GetConfigPath(), content, os.ModeAppend)
+	err = ioutil.WriteFile(asset.GetConfigPath(), content, os.FileMode(0600))
 	if err != nil {
 		return errors.New("WriteV2rayConfig: " + err.Error())
 	}

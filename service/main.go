@@ -34,6 +34,10 @@ import (
 )
 
 func testTproxy() {
+	//检查tproxy是否可以启用
+	if err := v2ray.CheckAndProbeTProxy(); err != nil {
+		log.Println("无法启用TPROXY模块:", err)
+	}
 	v2ray.CheckAndStopTransparentProxy()
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
@@ -155,10 +159,6 @@ func initConfigure() {
 		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
 		t := v2ray.NewTemplate()
 		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
-	}
-	//检查tproxy是否可以启用
-	if err := v2ray.CheckAndProbeTProxy(); err != nil {
-		log.Println("无法启用TPROXY模块:", err)
 	}
 }
 
