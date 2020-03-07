@@ -52,7 +52,10 @@ ip(1.1.1.1) && protocol(http) -> direct
 `,
 	}
 	for _, test := range tests {
-		S := generateSyntaxTree(test)
+		S, err := generateSyntaxTree(test)
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Log(string(S.sym), "=>", S.val)
 	}
 	t.Log("all tests passed")
