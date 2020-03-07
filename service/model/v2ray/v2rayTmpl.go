@@ -3,6 +3,7 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/model/dnsPoison/entity"
+	"V2RayA/model/routingA"
 	"V2RayA/model/v2ray/asset"
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
@@ -11,6 +12,7 @@ import (
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -51,6 +53,8 @@ type RoutingRule struct {
 	Network     string   `json:"network,omitempty"`
 	Port        string   `json:"port,omitempty"`
 	Protocol    []string `json:"protocol,omitempty"`
+	Source      []string `json:"source,omitempty"`
+	User        []string `json:"user,omitempty"`
 }
 type Log struct {
 	Access   string `json:"access"`
@@ -89,12 +93,13 @@ type Vnext struct {
 	Users   []User `json:"users"`
 }
 type Server struct {
-	Network  string `json:"network,omitempty"`
-	Address  string `json:"address,omitempty"`
-	Method   string `json:"method,omitempty"`
-	Ota      bool   `json:"ota,omitempty"`
-	Password string `json:"password,omitempty"`
-	Port     int    `json:"port,omitempty"`
+	Network  string         `json:"network,omitempty"`
+	Address  string         `json:"address,omitempty"`
+	Method   string         `json:"method,omitempty"`
+	Ota      bool           `json:"ota,omitempty"`
+	Password string         `json:"password,omitempty"`
+	Port     int            `json:"port,omitempty"`
+	Users    []OutboundUser `json:"users,omitempty"`
 }
 type Settings struct {
 	Vnext          interface{} `json:"vnext,omitempty"`
@@ -103,6 +108,8 @@ type Settings struct {
 	Port           int         `json:"port,omitempty"`
 	Address        string      `json:"address,omitempty"`
 	Network        string      `json:"network,omitempty"`
+	Redirect       string      `json:"redirect,omitempty"`
+	UserLevel      int         `json:"userLevel,omitempty"`
 }
 type TLSSettings struct {
 	AllowInsecure bool        `json:"allowInsecure"`
@@ -143,6 +150,11 @@ type Outbound struct {
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	ProxySettings  *ProxySettings  `json:"proxySettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
+}
+type OutboundUser struct {
+	User  string `json:"user"`
+	Pass  string `json:"pass"`
+	Level int    `json:"level,omitempty"`
 }
 type ProxySettings struct {
 	Tag string `json:"tag,omitempty"`
@@ -623,7 +635,136 @@ func (t *Template) SetPacRouting() {
 				InboundTag:  []string{"pac"},
 			})
 		}
+	case configure.RoutingAMode:
+		parseRoutingA(t, []string{"pac"})
 	}
+}
+func parseRoutingA(t *Template, inboundTags []string) {
+	ra := configure.GetRoutingA()
+	rules, err := routingA.Parse(ra)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defaultOutbound := "proxy"
+	for _, rule := range rules {
+		switch rule := rule.(type) {
+		case routingA.Define:
+			switch rule.Name {
+			case "default":
+				switch v := rule.Value.(type) {
+				case string:
+					defaultOutbound = v
+				}
+			case "outbound":
+				switch o := rule.Value.(type) {
+				case routingA.Outbound:
+					proto := o.Value
+					switch proto.Name {
+					case "http", "socks":
+						if len(proto.NamedParams["address"]) < 1 ||
+							len(proto.NamedParams["port"]) < 1 {
+							continue
+						}
+						port, err := strconv.Atoi(proto.NamedParams["port"][0])
+						if err != nil {
+							continue
+						}
+						server := Server{
+							Port:    port,
+							Address: proto.NamedParams["address"][0],
+						}
+						if unames := proto.NamedParams["user"]; len(unames) > 0 {
+							passwords := proto.NamedParams["pass"]
+							levels := proto.NamedParams["level"]
+							for i, uname := range unames {
+								u := OutboundUser{
+									User: uname,
+								}
+								if i < len(passwords) {
+									u.Pass = passwords[i]
+								}
+								if i < len(levels) {
+									u.Level, _ = strconv.Atoi(levels[i])
+								}
+								server.Users = append(server.Users, u)
+							}
+						}
+						t.Outbounds = append(t.Outbounds, Outbound{
+							Tag:      o.Name,
+							Protocol: o.Value.Name,
+							Settings: &Settings{
+								Servers: []Server{
+									server,
+								},
+							},
+						})
+					case "freedom":
+						settings := new(Settings)
+						if len(proto.NamedParams["domainStrategy"]) > 0 {
+							settings.DomainStrategy = proto.NamedParams["domainStrategy"][0]
+						}
+						if len(proto.NamedParams["redirect"]) > 0 {
+							settings.Redirect = proto.NamedParams["redirect"][0]
+						}
+						if len(proto.NamedParams["userLevel"]) > 0 {
+							settings.UserLevel, _ = strconv.Atoi(proto.NamedParams["userLevel"][0])
+						}
+						t.Outbounds = append(t.Outbounds, Outbound{
+							Tag:      o.Name,
+							Protocol: o.Value.Name,
+							Settings: settings,
+						})
+					}
+				}
+			}
+		case routingA.Routing:
+			rr := RoutingRule{
+				Type:        "field",
+				OutboundTag: rule.Out,
+				InboundTag:  inboundTags,
+			}
+			for _, f := range rule.And {
+				switch f.Name {
+				case "domain":
+					for k, vv := range f.NamedParams {
+						for _, v := range vv {
+							if k == "contains" {
+								rr.Domain = append(rr.Domain, v)
+								continue
+							}
+							rr.Domain = append(rr.Domain, fmt.Sprintf("%v:%v", k, v))
+						}
+					}
+					//this is not recommended
+					//rr.Domain = append(rr.Domain, f.Params...)
+				case "ip":
+					for k, vv := range f.NamedParams {
+						for _, v := range vv {
+							rr.IP = append(rr.IP, fmt.Sprintf("%v:%v", k, v))
+						}
+					}
+					rr.IP = append(rr.IP, f.Params...)
+				case "network":
+					rr.Network = strings.Join(f.Params, ",")
+				case "port":
+					rr.Port = strings.Join(f.Params, ",")
+				case "protocol":
+					rr.Protocol = f.Params
+				case "source":
+					rr.Source = f.Params
+				case "user":
+					rr.User = f.Params
+				}
+			}
+			t.Routing.Rules = append(t.Routing.Rules, rr)
+		}
+	}
+	t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+		Type:        "field",
+		OutboundTag: defaultOutbound,
+		InboundTag:  []string{"pac"},
+	})
 }
 func (t *Template) SetTransparentRouting() {
 	setting := configure.GetSettingNotNil()

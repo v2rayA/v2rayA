@@ -2,9 +2,9 @@ package routingA
 
 import "strings"
 
-func mergeMap(m1 *map[string]string, m2 map[string]string) {
+func mergeMap(m1 *map[string][]string, m2 map[string][]string) {
 	for k, v := range m2 {
-		(*m1)[k] = v
+		(*m1)[k] = append((*m1)[k], v...)
 	}
 }
 
@@ -20,11 +20,11 @@ func symMatch(a []symbol, b []rune) bool {
 	return true
 }
 
-func parseN(s symbol) (m map[string]string) {
+func parseN(s symbol) (m map[string][]string) {
 	if s.sym != 'N' {
 		return nil
 	}
-	m = make(map[string]string)
+	m = make(map[string][]string)
 	if !symMatch(s.children, []rune(",H:HN")) {
 		return
 	}
@@ -32,12 +32,12 @@ func parseN(s symbol) (m map[string]string) {
 }
 
 //H:HN
-func parseHHN(s symbol) (m map[string]string) {
+func parseHHN(s symbol) (m map[string][]string) {
 	if !symMatch(s.children, []rune("H:HN")) {
 		return
 	}
-	m = make(map[string]string)
-	m[s.children[0].val] = parseH(s.children[2])
+	m = make(map[string][]string)
+	m[s.children[0].val] = append(m[s.children[0].val], parseH(s.children[2]))
 	N := s.children[3]
 	if len(N.children) > 0 {
 		mm := parseN(N)
@@ -71,12 +71,12 @@ func parseM(s symbol) (params []string) {
 	return
 }
 
-func parseG(s symbol) (params []string, namedParams map[string]string) {
+func parseG(s symbol) (params []string, namedParams map[string][]string) {
 	if s.sym != 'G' {
 		return
 	}
 	params = make([]string, 0)
-	namedParams = make(map[string]string)
+	namedParams = make(map[string][]string)
 	switch {
 	case symMatch(s.children, []rune("HMN")):
 		params = append(params, parseH(s.children[0]))
