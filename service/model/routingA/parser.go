@@ -1,7 +1,7 @@
 package routingA
 
 func Parse(program string) (rules []interface{}) {
-	S := generateSyntaxTree(program)
+	S, _ := generateSyntaxTree(program)
 	As := parseS(S)
 	for _, A := range As {
 		switch {

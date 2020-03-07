@@ -12,7 +12,7 @@ func TestNewFunction(t *testing.T) {
 		`outbound:test3=socks()`,
 	}
 	for _, test := range tests {
-		S := generateSyntaxTree(test)
+		S, _ := generateSyntaxTree(test)
 		f := newFunction(S.children[0].children[0].children[2].children[2])
 		t.Log(f.Name, f.Params, f.NamedParams)
 	}
@@ -25,7 +25,7 @@ func TestNewOutbound(t *testing.T) {
 		`outbound:   test2=   socks ( test,   port: 10800, user: "my-username",pass:"my-password" )`,
 	}
 	for _, test := range tests {
-		S := generateSyntaxTree(test)
+		S, _ := generateSyntaxTree(test)
 		o := newOutbound(S.children[0].children[0].children[2])
 		t.Log(o.Name, o.Value)
 	}
@@ -37,7 +37,7 @@ func TestNewDefine(t *testing.T) {
 		`default  : httpout`,
 	}
 	for _, test := range tests {
-		S := generateSyntaxTree(test)
+		S, _ := generateSyntaxTree(test)
 		o := newDefine(S.children[0].children[0])
 		t.Log(o.Name, o.Value)
 	}
@@ -56,7 +56,7 @@ func TestNewRouting(t *testing.T) {
 		`ip(1.1.1.1, 1.2.3.4, 9.9.9.9) && protocol(http) -> direct`,
 	}
 	for _, test := range tests {
-		S := generateSyntaxTree(test)
+		S, _ := generateSyntaxTree(test)
 		r := newRouting(S.children[0].children[0])
 		t.Log(r.And, r.Out)
 	}

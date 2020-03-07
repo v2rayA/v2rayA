@@ -1,8 +1,10 @@
 package routingA
 
 import (
+	"V2RayA/global"
+	"V2RayA/tools"
+	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"unicode"
@@ -130,8 +132,13 @@ func postHandleMsg(msg string, str []rune, i int) string {
 }
 
 //LR(1)文法
-func generateSyntaxTree(program string) (S symbol) {
+func generateSyntaxTree(program string) (S symbol, err error) {
 	logs := ""
+	defer func() {
+		if err != nil && global.Version != "debug" {
+			err = errors.New(logs + err.Error())
+		}
+	}()
 	var stackR, stackS = make(symbols, 1), make([]int, 1)
 	stackR[0] = symbol{sym: 0}
 	stackS[0] = 0
@@ -165,9 +172,11 @@ out:
 			logs += fmt.Sprintln("[info]", string(production.left), "<-", production.right)
 			stackS = stackS[:len(stackS)-len(production.right)]
 			gt := table[stackS[len(stackS)-1]][string(production.left)]
-			newState, err := strconv.Atoi(gt)
+			var newState int
+			newState, err = strconv.Atoi(gt)
 			if err != nil {
-				log.Fatal(logs + "[error] " + fmt.Sprintf("table[%v][%v]", stackS[len(stackS)-1], string(production.left)) + " <" + err.Error() + ">")
+				err = errors.New("[error] " + fmt.Sprintf("table[%v][%v]", stackS[len(stackS)-1], string(production.left)) + " <" + err.Error() + ">")
+				return
 			}
 			stackS = append(stackS, newState)
 			if !matchRegex(stackR.Runes(), production.right) {
@@ -187,9 +196,15 @@ out:
 			S = stackR[len(stackR)-1]
 			break out
 		case msg == "":
-			log.Fatal(logs + fmt.Sprintf("[error] position: %v unexpected character %c <...%v>", i, str[i], string(str[i:len(str)-1])))
+			end := strings.Index(string(str[i:]), "\n")
+			if end == -1 {
+				end = 0x3f3f3f3f
+			}
+			err = errors.New(fmt.Sprintf("[error] position: %v unexpected character %c <...%v>", i, str[i], string(str[i:tools.Min(len(str)-1, i+end)])))
+			return
 		default:
-			log.Fatal(logs + "[error] " + msg)
+			err = errors.New("[error] " + msg)
+			return
 		}
 	}
 	return

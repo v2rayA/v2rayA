@@ -6,8 +6,8 @@ import (
 
 func TestParse(t *testing.T) {
 	program := `# 自定义outbound
-outbound: httpout = http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
-outbound: socksout = socks(address: 127.0.0.1, port: 10800, user: "my-username", pass: "my-password")
+outbound: httpout = http(address: 127.0.0.1, port: 8080, user: 'my-use"rn"ame', pass: 'my-password')
+outbound: socksout = socks(address: 127.0.0.1, port: 10800, user: "my-u''sername", pass: "my-password")
 outbound:   test=   socks ( 127.0.0.1,   port: 10800, user: "my-username",pass:"my-password" )
 outbound:   test2=   socks ( test,   port: 10800, user: "my-username",pass:"my-password" )
 
