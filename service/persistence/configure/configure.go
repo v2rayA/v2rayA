@@ -22,6 +22,7 @@ type Configure struct {
 	PortWhiteList   PortWhiteList     `json:"portWhiteList"`
 	DohList         string            `json:"dohlist"`
 	CustomPac       CustomPac         `json:"customPac"`
+	RoutingA        string            `json:"routingA"`
 }
 
 func New() *Configure {
@@ -90,6 +91,9 @@ func SetDohList(dohList *string) (err error) {
 }
 func SetCustomPac(customPac *CustomPac) (err error) {
 	return persistence.Set("customPac", customPac)
+}
+func SetRoutingA(routingA string) (err error) {
+	return persistence.Set("routingA", routingA)
 }
 
 func AppendServer(server *ServerRaw) (err error) {
@@ -168,6 +172,10 @@ func GetCustomPacNotNil() *CustomPac {
 		}
 	}
 	return r
+}
+func GetRoutingA() (r string) {
+	_ = persistence.Get("routingA", &r)
+	return
 }
 func GetConnectedServer() *Which {
 	r := new(Which)

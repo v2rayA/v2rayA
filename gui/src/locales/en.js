@@ -246,5 +246,8 @@ export default {
     urls: {
       usage: "https://github.com/mzz2017/V2RayA/wiki/Usage"
     }
+  },
+  routingA: {
+    messages: ["click the button 'Help&Manual' for help"]
   }
 };

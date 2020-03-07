@@ -22,7 +22,7 @@ func Run() error {
 	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
 	engine.GET("/", func(ctx *gin.Context) {
-		ctx.Header("Content-Type","text/html; charset=utf-8")
+		ctx.Header("Content-Type", "text/html; charset=utf-8")
 		ctx.String(418, `<body>Here is V2RayA backend. Reference: <a href="https://github.com/mzz2017/V2RayA">https://github.com/mzz2017/V2RayA</a></body>`)
 	})
 	noAuth := engine.Group("api")
@@ -71,6 +71,8 @@ func Run() error {
 		auth.GET("siteDatFiles", controller.GetSiteDatFiles)
 		auth.GET("customPac", controller.GetCustomPac)
 		auth.PUT("customPac", controller.PutCustomPac)
+		auth.GET("routingA", controller.GetRoutingA)
+		auth.PUT("routingA", controller.PutRoutingA)
 	}
 	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")

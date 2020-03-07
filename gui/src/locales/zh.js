@@ -238,5 +238,8 @@ export default {
       usage:
         "https://github.com/mzz2017/V2RayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
     }
+  },
+  routingA: {
+    messages: ["点击“查看帮助”按钮以获取帮助"]
   }
 };

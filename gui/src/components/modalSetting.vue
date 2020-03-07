@@ -105,14 +105,23 @@
           <option v-show="showTransparentModeRoutingPac" value="custom">{{
             $t("setting.options.customRouting")
           }}</option>
+          <option v-show="showRoutingA" value="routingA">RoutingA</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
           <b-button
-            v-if="pacMode === 'custom'"
             type="is-primary"
             style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
             outlined
             @click="handleClickConfigurePac"
+            >{{ $t("operations.configure") }}
+          </b-button>
+        </template>
+        <template v-if="pacMode === 'routingA'">
+          <b-button
+            type="is-primary"
+            style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
+            outlined
+            @click="handleClickConfigureRoutingA"
             >{{ $t("operations.configure") }}
           </b-button>
         </template>
@@ -265,6 +274,7 @@
 import { handleResponse, isIntranet } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
+import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
 import CusBInput from "./input/Input.vue";
 import { isVersionGreaterEqual, parseURL } from "../assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -297,7 +307,8 @@ export default {
     localGFWListVersion: "checking...",
     showAntipollution: false,
     showDoh: false,
-    showTransparentModeRoutingPac: false
+    showTransparentModeRoutingPac: false,
+    showRoutingA: false
   }),
   computed: {
     dockerMode() {
@@ -346,6 +357,10 @@ export default {
       this.showTransparentModeRoutingPac = isVersionGreaterEqual(
         localStorage["version"],
         "0.6.4"
+      );
+      this.showRoutingA = isVersionGreaterEqual(
+        localStorage["version"],
+        "0.6.8"
       );
     });
     //白名单有没有项，没有就post一下
@@ -466,10 +481,17 @@ export default {
       }
     },
     handleClickConfigurePac() {
-      const that = this;
       this.$buefy.modal.open({
         parent: this,
         component: ModalCustomRouting,
+        hasModalCard: true,
+        canCancel: true
+      });
+    },
+    handleClickConfigureRoutingA() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: ModalCustomRoutingA,
         hasModalCard: true,
         canCancel: true
       });

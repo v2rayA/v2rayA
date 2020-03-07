@@ -1,5 +1,9 @@
 package routingA
 
+/*
+outbound: httpout = http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
+default: proxy
+*/
 type Define struct {
 	Name  string
 	Value interface{}
@@ -14,7 +18,7 @@ func newDefine(s symbol) (d *Define) {
 	d.Name = s.children[0].val
 	switch {
 	case symMatch(E.children, []rune("D=F")):
-		d.Value = *newFunction(E.children[2])
+		d.Value = *newOutbound(E)
 	case symMatch(E.children, []rune("D")):
 		d.Value = E.children[0].val
 	default:
@@ -23,13 +27,16 @@ func newDefine(s symbol) (d *Define) {
 	return
 }
 
+/*
+httpout = http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
+*/
 type Outbound struct {
 	Name  string
 	Value Function
 }
 
 func newOutbound(s symbol) (o *Outbound) {
-	if s.sym != 'E' {
+	if s.sym != 'E' || !symMatch(s.children, []rune("D=F")) {
 		return nil
 	}
 	o = new(Outbound)
@@ -38,10 +45,13 @@ func newOutbound(s symbol) (o *Outbound) {
 	return
 }
 
+/*
+http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
+*/
 type Function struct {
 	Name        string
 	Params      []string
-	NamedParams map[string]string
+	NamedParams map[string][]string
 }
 
 func newFunction(s symbol) (f *Function) {
@@ -55,6 +65,9 @@ func newFunction(s symbol) (f *Function) {
 	return
 }
 
+/*
+domain(domain: v2raya.mzz.pub) -> socksout
+*/
 type Routing struct {
 	And []Function
 	Out string

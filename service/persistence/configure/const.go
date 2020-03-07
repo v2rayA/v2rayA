@@ -34,6 +34,7 @@ const (
 	WhitelistMode = PacMode("whitelist")
 	GfwlistMode   = PacMode("gfwlist")
 	CustomMode    = PacMode("custom")
+	RoutingAMode  = PacMode("routingA")
 
 	DirectRule = PacRuleType("direct")
 	ProxyRule  = PacRuleType("proxy")
