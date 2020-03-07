@@ -35,7 +35,6 @@ func toHeader(r rune) string {
 		} else if _, ok := reserve[r]; ok {
 			return string(r)
 		} else {
-			//n是不包含:及界符集合o的所有标点符号
 			return "n"
 		}
 	case unicode.IsDigit(r):

@@ -164,11 +164,11 @@ export default {
     dohPriorityList: "DoH服务优先级列表",
     messages: [
       "DoH即DNS over HTTPS，能够有效避免DNS污染，但一些DoH提供商的DoH服务可能被墙，请自行选择非代理条件下直连速度最快的DoH提供商",
-      "大陆较好的DoH服务有geekdns: 233py.com、红鱼: rubyfish.cn等",
+      "大陆较好的DoH服务有阿里dns, geekdns, rubyfish等",
       "台湾有quad101: dns.twnic.tw等",
       "美国有cloudflare: 1.0.0.1等",
       '清单：<a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>',
-      '另外，您可以在未受到DNS污染的国内服务器上自架DoH服务，以纵享丝滑。<a href="https://dnscrypt.info/implementations" target="_blank">Server Implementations</a>',
+      '另外，您可以在未受到DNS污染的国内服务器上自架DoH服务，以纵享丝滑。<a href="https://hub.docker.com/r/flexo3001/rust-doh" target="_blank">rust-doh</a>',
       "建议上述列表1-2行即可，留空保存可恢复默认"
     ]
   },
