@@ -109,7 +109,7 @@ type Settings struct {
 	Address        string      `json:"address,omitempty"`
 	Network        string      `json:"network,omitempty"`
 	Redirect       string      `json:"redirect,omitempty"`
-	UserLevel      int         `json:"userLevel,omitempty"`
+	UserLevel      *int        `json:"userLevel,omitempty"`
 }
 type TLSSettings struct {
 	AllowInsecure bool        `json:"allowInsecure"`
@@ -708,7 +708,10 @@ func parseRoutingA(t *Template, inboundTags []string) {
 							settings.Redirect = proto.NamedParams["redirect"][0]
 						}
 						if len(proto.NamedParams["userLevel"]) > 0 {
-							settings.UserLevel, _ = strconv.Atoi(proto.NamedParams["userLevel"][0])
+							level, err := strconv.Atoi(proto.NamedParams["userLevel"][0])
+							if err == nil {
+								settings.UserLevel = &level
+							}
 						}
 						t.Outbounds = append(t.Outbounds, Outbound{
 							Tag:      o.Name,
@@ -837,7 +840,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 
 func (t *Template) SetOutboundSockopt(supportUDP bool) {
 	mark := 0xff
-	tos := 184
+	//tos := 184
 	for i := range t.Outbounds {
 		if t.Outbounds[i].Protocol == "blackhole" {
 			continue
@@ -848,11 +851,16 @@ func (t *Template) SetOutboundSockopt(supportUDP bool) {
 		if t.Outbounds[i].StreamSettings.Sockopt == nil {
 			t.Outbounds[i].StreamSettings.Sockopt = new(Sockopt)
 		}
-		if t.Outbounds[i].Protocol == "freedom" {
+		if t.Outbounds[i].Protocol == "freedom" && t.Outbounds[i].Tag == "direct" {
 			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
 		}
+		setting := configure.GetSettingNotNil()
+		if setting.TcpFastOpen != configure.Default {
+			tmp := setting.TcpFastOpen == configure.Yes
+			t.Outbounds[i].StreamSettings.Sockopt.TCPFastOpen = &tmp
+		}
 		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
-		t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
+		//t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
 	}
 }
 
@@ -902,12 +910,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	var supportUDP = true
 	switch o.Protocol {
 	case "vmess":
-		//是否在设置里开启了TCPFastOpen
-		if setting.TcpFastOpen != configure.Default {
-			t.Outbounds[0].StreamSettings.Sockopt = new(Sockopt)
-			tmp := setting.TcpFastOpen == configure.Yes
-			t.Outbounds[0].StreamSettings.Sockopt.TCPFastOpen = &tmp
-		}
 		//是否在设置了里开启了mux
 		t.Outbounds[0].Mux = &Mux{
 			Enabled:     setting.MuxOn == configure.Yes,
@@ -932,7 +934,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	}
 	//再修改outbounds
 	t.AppendDNSOutbound()
-	t.SetOutboundSockopt(supportUDP)
 	//最后是routing
 	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts)
 	//添加hosts
@@ -945,6 +946,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	if setting.Transparent != configure.TransparentClose {
 		t.SetTransparentRouting()
 	}
+	//置outboundSockopt
+	t.SetOutboundSockopt(supportUDP)
 
 	return t, &entity.ExtraInfo{
 		DohIps:       dohIPs,
@@ -981,7 +984,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 		return
 	}
 	var mark = 0xff
-	var tos = 184
+	//var tos = 184
 	if o.StreamSettings == nil {
 		o.StreamSettings = new(StreamSettings)
 	}
@@ -989,7 +992,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 		o.StreamSettings.Sockopt = new(Sockopt)
 	}
 	o.StreamSettings.Sockopt.Mark = &mark
-	o.StreamSettings.Sockopt.Tos = &tos
+	//o.StreamSettings.Sockopt.Tos = &tos
 	t.Outbounds = append(t.Outbounds, o)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
