@@ -146,7 +146,7 @@ export default {
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
           toastConf.message +=
-            ", " +
+            ". " +
             this.$t("welcome.newVersion", {
               version: res.data.data.remoteVersion
             });

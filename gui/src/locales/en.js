@@ -17,8 +17,8 @@ export default {
   },
   welcome: {
     title: "Welcome",
-    docker: "V2RayA service is running in Docker，Version: {version}",
-    default: "V2RayA service is running，Version: {version}",
+    docker: "V2RayA service is running in Docker. Version: {version}",
+    default: "V2RayA service is running. Version: {version}",
     newVersion: "Detected new version: {version}",
     messages: [
       "There is no server.",
