@@ -11,6 +11,7 @@
         label-position="on-border"
       >
         <b-input
+          ref="backendAddress"
           v-model="table.backendAddress"
           placeholder="http://localhost:2017"
           required
@@ -129,6 +130,9 @@ export default {
   },
   methods: {
     handleClickSubmit() {
+      if (!this.$refs.backendAddress.checkHtml5Validity()) {
+        return;
+      }
       //去除末位'/'
       let backendAddress = this.table.backendAddress;
       if (backendAddress.endsWith("/")) {

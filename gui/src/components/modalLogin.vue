@@ -2,7 +2,7 @@
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
-        {{ first ? $t("register.title") : `${$t("login.title")} - V2rayA` }}
+        {{ first ? $t("register.title") : `${$t("login.title")} - V2RayA` }}
       </p>
     </header>
     <section class="modal-card-body">
