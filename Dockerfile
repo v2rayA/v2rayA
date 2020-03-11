@@ -12,11 +12,14 @@ ENV GOPROXY=https://goproxy.io
 COPY --from=version /build/version ./
 RUN export VERSION=$(cat ./version) && go build -ldflags="-X V2RayA/global.Version=${VERSION:1}" -o V2RayA .
 
+FROM v2fly/v2fly-core AS v2ray
 
 FROM alpine:latest
 RUN apk --no-cache add iptables
 WORKDIR /v2raya
 COPY --from=builder /build/service/V2RayA .
+COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
+ENV PATH=$PATH:/etc/v2ray
 ENV GIN_MODE=release
 EXPOSE 2017
-ENTRYPOINT "./V2RayA"
+ENTRYPOINT ["./V2RayA","--mode=universal"]

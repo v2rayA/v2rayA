@@ -11,7 +11,6 @@ const (
 	SystemctlMode = SystemServiceControlMode(iota)
 	ServiceMode
 	UniversalMode
-	DockerMode
 )
 
 func GetServiceControlMode() (mode SystemServiceControlMode) {

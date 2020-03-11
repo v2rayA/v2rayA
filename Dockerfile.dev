@@ -1,11 +1,16 @@
+FROM v2fly/v2fly-core AS v2ray
+
 FROM golang:alpine
 RUN apk --no-cache add iptables git
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn
 RUN go get github.com/codegangsta/gin
 WORKDIR /service
+COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
+ENV PATH=$PATH:/etc/v2ray
 ENV CONFIG=../config.json
 ENV GIN_BIN=../V2RayA
 ENV GIN_GUILD_ARGS="-o ${GIN_BIN}"
+ENV V2RAYA_MODE=universal
 EXPOSE 2017
 ENTRYPOINT gin -a 2017 -i run

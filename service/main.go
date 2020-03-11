@@ -275,6 +275,7 @@ func run() (err error) {
 	}
 	fmt.Println("Quitting...")
 	v2ray.CheckAndStopTransparentProxy()
+	_ = v2ray.StopV2rayService()
 	return nil
 }
 
