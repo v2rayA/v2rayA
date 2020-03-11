@@ -1,17 +1,25 @@
+FROM mzz2017/git:alpine AS version
+WORKDIR /build
+ADD .git ./.git
+RUN git describe --abbrev=0 --tags > ./version
+
+
 FROM golang:alpine AS builder
-WORKDIR /service
-ADD ./service /service
-ADD .git /service
+ADD service /build/service
+WORKDIR /build/service
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.io
-RUN apk --no-cache add git
-RUN VERSION=$(git describe --abbrev=0 --tags) && go build -ldflags="-X V2RayA/global.Version=${VERSION:1}" -o V2RayA .
+COPY --from=version /build/version ./
+RUN export VERSION=$(cat ./version) && go build -ldflags="-X V2RayA/global.Version=${VERSION:1}" -o V2RayA .
 
+FROM v2fly/v2fly-core AS v2ray
 
 FROM alpine:latest
 RUN apk --no-cache add iptables
-WORKDIR /service
-COPY --from=builder /service/V2RayA .
+WORKDIR /v2raya
+COPY --from=builder /build/service/V2RayA .
+COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
+ENV PATH=$PATH:/etc/v2ray
 ENV GIN_MODE=release
 EXPOSE 2017
-ENTRYPOINT "./V2RayA"
+ENTRYPOINT ["./V2RayA","--mode=common"]
