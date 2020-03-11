@@ -1,7 +1,7 @@
 package iptables
 
 import (
-	"V2RayA/global"
+	"V2RayA/tools"
 	"V2RayA/tools/cmds"
 	"strings"
 )
@@ -21,7 +21,7 @@ func (c SetupCommands) Setup(preprocess *func(c *SetupCommands)) (err error) {
 		(*preprocess)(&c)
 	}
 	commands := string(c)
-	if global.ServiceControlMode == global.DockerMode {
+	if tools.IsInDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
 	}
@@ -30,7 +30,7 @@ func (c SetupCommands) Setup(preprocess *func(c *SetupCommands)) (err error) {
 
 func (c CleanCommands) Clean() {
 	commands := string(c)
-	if global.ServiceControlMode == global.DockerMode {
+	if tools.IsInDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
 	}

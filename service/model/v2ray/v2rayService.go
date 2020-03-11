@@ -16,7 +16,7 @@ import (
 func EnableV2rayService() (err error) {
 	var out []byte
 	switch global.ServiceControlMode {
-	case global.DockerMode, global.UniversalMode: //docker, universal中无需enable service
+	case global.UniversalMode: //docker, universal中无需enable service
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "update-rc.d v2ray enable").CombinedOutput()
 		if err != nil {
@@ -34,7 +34,7 @@ func EnableV2rayService() (err error) {
 func DisableV2rayService() (err error) {
 	var out []byte
 	switch global.ServiceControlMode {
-	case global.DockerMode, global.UniversalMode: //docker, universal中无需disable service
+	case global.UniversalMode: //docker, universal中无需disable service
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "update-rc.d v2ray disable").CombinedOutput()
 		if err != nil {
@@ -97,8 +97,6 @@ func IsV2rayServiceValid() bool {
 	case global.ServiceMode:
 		out, err := exec.Command("sh", "-c", "service v2ray status|grep not-found").Output()
 		return err == nil && len(bytes.TrimSpace(out)) == 0
-	case global.DockerMode:
-		return asset.IsGeoipExists() && asset.IsGeositeExists()
 	case global.UniversalMode:
 		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 			return false
@@ -131,7 +129,7 @@ func CheckAndProbeTProxy() (err error) {
 	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
 		return errors.New("the version of v2ray-core is lower than 4.19.1")
 	}
-	if !IfTProxyModLoaded() && global.ServiceControlMode != global.DockerMode { //docker下无法判断
+	if !IfTProxyModLoaded() && !tools.IsInDocker() { //docker下无法判断
 		var out []byte
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {

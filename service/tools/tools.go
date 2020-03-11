@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"os"
 	"strconv"
 	"strings"
 )
@@ -58,4 +59,9 @@ func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 		}
 	}
 	return len(a1) >= len(a2), nil
+}
+
+func IsInDocker() bool {
+	_, err := os.Stat("/.dockerenv")
+	return !os.IsNotExist(err)
 }
