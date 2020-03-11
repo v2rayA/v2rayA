@@ -25,7 +25,6 @@ func GetVersion(ctx *gin.Context) {
 	}
 	tools.ResponseSuccess(ctx, gin.H{
 		"version":       global.Version,
-		"dockerMode":    global.ServiceControlMode == global.DockerMode,
 		"foundNew":      global.FoundNew,
 		"remoteVersion": global.RemoteVersion,
 		"serviceValid":  v2ray.IsV2rayServiceValid(),

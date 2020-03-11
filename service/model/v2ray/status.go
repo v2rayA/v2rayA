@@ -8,36 +8,39 @@ import (
 	"V2RayA/model/vmessInfo"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/ports"
-	"V2RayA/tools/process"
+	"bytes"
 	"errors"
-	"fmt"
 	"github.com/json-iterator/go"
-	"github.com/tidwall/gjson"
 	"log"
 	"net"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 func IsV2RayProcessExists() bool {
-	out, err := exec.Command("sh", "-c", "ps -e -o comm|grep ^v2ray$").CombinedOutput()
+	out, err := exec.Command("sh", "-c", "ps -e -o args").CombinedOutput()
 	if err != nil || (strings.Contains(string(out), "invalid option") && strings.Contains(strings.ToLower(string(out)), "busybox")) {
-		out, err = exec.Command("sh", "-c", "ps|awk '{print $4,$5}'|grep v2ray$").CombinedOutput()
+		out, err = exec.Command("sh", "-c", "ps|awk '{print $4,$5}'").CombinedOutput()
 	}
-	return err == nil && len(strings.TrimSpace(string(out))) > 0 && !strings.Contains(string(out), "-version")
+	if err == nil {
+		//模拟grep -E
+		regex := regexp.MustCompile(`\bv2ray\b`)
+		lines := bytes.Split(out, []byte{'\n'})
+		for _, line := range lines {
+			if regex.Match(line) && !bytes.Contains(line, []byte("-version")) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func IsV2RayRunning() bool {
 	switch global.ServiceControlMode {
-	case global.DockerMode:
-		b, err := asset.GetConfigBytes()
-		if err != nil {
-			return false
-		}
-		return len(gjson.GetBytes(b, "inbounds").Array()) > 0
 	case global.UniversalMode:
 		return IsV2RayProcessExists()
 	case global.ServiceMode:
@@ -59,47 +62,6 @@ func RestartV2rayService() (err error) {
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
 	var out []byte
 	switch global.ServiceControlMode {
-	case global.DockerMode:
-		//看inbounds是不是空的，是的话就补上
-		tmplJson := NewTemplate()
-		var b []byte
-		b, err = asset.GetConfigBytes()
-		if err != nil {
-			return
-		}
-		err = jsoniter.Unmarshal(b, &tmplJson)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		if len(tmplJson.Inbounds) <= 0 {
-			// 读入模板json
-			rawJson := NewTemplate()
-			raw := []byte(TemplateJson)
-			err = jsoniter.Unmarshal(raw, &rawJson)
-			if err != nil {
-				return errors.New("error occurs while reading template json, please check if templateJson variable is correct json format")
-			}
-			tmplJson.Inbounds = rawJson.Inbounds
-			b, _ = jsoniter.Marshal(tmplJson)
-			err = WriteV2rayConfig(b)
-			if err != nil {
-				return
-			}
-		}
-
-		_ = process.KillAll("v2ray", true)
-		//30秒等待v2ray启动
-		startTime := time.Now()
-		for {
-			if time.Now().Sub(startTime) > 8*time.Second {
-				return errors.New("do not change configuration frequently in Docker mode, please wait for a while and try again")
-			}
-			<-time.After(100 * time.Millisecond)
-			if IsV2RayProcessExists() {
-				break
-			}
-		}
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray restart").CombinedOutput()
 		if err != nil {
@@ -111,13 +73,18 @@ func RestartV2rayService() (err error) {
 			err = errors.New(err.Error() + string(out))
 		}
 	case global.UniversalMode:
-		_ = process.KillAll("v2ray", true)
+		_ = killV2ray()
 		v2wd, _ := asset.GetV2rayWorkingDir()
 		v2ctlDir, _ := asset.GetV2ctlDir()
-		//cd到v2ctl的目录，防止找不到v2ctl
-		wd, _ := os.Getwd()
-		cmd := fmt.Sprintf("cd %v && nohup %v/v2ray --config=%v > %v/v2ray.log 2>&1 &", v2ctlDir, v2wd, asset.GetConfigPath(), wd)
-		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
+		global.V2RayPID, err = os.StartProcess(v2wd+"/v2ray", []string{"--config=" + asset.GetConfigPath()}, &os.ProcAttr{
+			Dir: v2ctlDir, //防止找不到v2ctl
+			Env: os.Environ(),
+			Files: []*os.File{
+				os.Stdin,
+				os.Stdout,
+				os.Stderr,
+			},
+		})
 		if err != nil {
 			err = errors.New(err.Error() + string(out))
 		}
@@ -158,9 +125,6 @@ func RestartV2rayService() (err error) {
 			}
 		}
 		if time.Since(startTime) > 15*time.Second {
-			if global.ServiceControlMode == global.DockerMode {
-				return errors.New("v2ray-core does not start normally, please make sure that the docker parameters have been correctly configured according to the documentation. If it still does not work, please raise an issue")
-			}
 			return errors.New("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -268,14 +232,36 @@ func pretendToStopV2rayService() (err error) {
 	return
 }
 
+func killV2ray() (err error) {
+	if global.V2RayPID != nil {
+		err = global.V2RayPID.Kill()
+		if err != nil {
+			return
+		}
+		_, err = global.V2RayPID.Wait()
+		if err != nil {
+			return
+		}
+		global.V2RayPID = nil
+	}
+	return
+}
+
 func StopV2rayService() (err error) {
 	defer CheckAndStopTransparentProxy()
+	defer func() {
+		if IsV2RayRunning() {
+			msg := "fail in stopping v2ray"
+			if err != nil && len(strings.TrimSpace(err.Error())) > 0 {
+				msg += ": " + err.Error()
+			}
+			err = errors.New(msg)
+		}
+	}()
 	var out []byte
 	switch global.ServiceControlMode {
-	case global.DockerMode:
-		return pretendToStopV2rayService()
 	case global.UniversalMode:
-		err = process.KillAll("v2ray", true)
+		return killV2ray()
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
 		if err != nil {
@@ -286,9 +272,6 @@ func StopV2rayService() (err error) {
 		if err != nil {
 			err = errors.New(err.Error() + string(out))
 		}
-	}
-	if IsV2RayRunning() {
-		return errors.New("fail in stopping v2ray")
 	}
 	return
 }

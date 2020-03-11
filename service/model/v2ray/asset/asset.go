@@ -26,8 +26,6 @@ func GetV2rayLocationAsset() (s string) {
 		return *v2rayLocationAsset
 	}
 	switch global.ServiceControlMode {
-	case global.DockerMode:
-		return "/etc/v2ray"
 	case global.SystemctlMode, global.ServiceMode:
 		p, _ := GetV2rayServiceFilePath()
 		out, err := exec.Command("sh", "-c", "cat "+p+"|grep Environment=V2RAY_LOCATION_ASSET").CombinedOutput()
@@ -67,14 +65,6 @@ func GetV2rayWorkingDir() (string, error) {
 		if err == nil {
 			return path.Dir(strings.TrimSpace(string(out))), nil
 		}
-	case global.DockerMode:
-		//只能指望在asset里有没有了
-		asset := GetV2rayLocationAsset()
-		_, err := os.Stat(asset + "/v2ray")
-		if err != nil {
-			return "", err
-		}
-		return asset, nil
 	}
 	return "", errors.New("not found")
 }
@@ -161,7 +151,7 @@ func GetConfigPath() (p string) {
 			indexConfigEnd += indexConfigBegin
 		}
 		p = pa[indexConfigBegin:indexConfigEnd]
-	case global.UniversalMode, global.DockerMode:
+	case global.UniversalMode:
 		p = GetV2rayLocationAsset() + "/config.json"
 	default:
 	}

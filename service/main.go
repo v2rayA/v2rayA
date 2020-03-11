@@ -176,18 +176,9 @@ func hello() {
 	color.Red.Println("V2RayLocationAsset is", asset.GetV2rayLocationAsset())
 	wd, _ := asset.GetV2rayWorkingDir()
 	color.Red.Println("V2Ray binary is at", wd+"/v2ray")
-	if global.ServiceControlMode != global.DockerMode {
-		wd, _ = os.Getwd()
-		color.Red.Println("V2RayA working directory is", wd)
-		color.Red.Println("Version:", global.Version)
-	} else {
-		fmt.Println("V2RayA is running in Docker. Compatible mode starts up.")
-		fmt.Printf("%v\n", "Waiting for container v2raya_v2ray's running. Refer: https://github.com/mzz2017/V2RayA#docker%E6%96%B9%E5%BC%8F")
-		for !v2ray.IsV2RayProcessExists() {
-			time.Sleep(1 * time.Second)
-		}
-		fmt.Println("Container v2raya_v2ray is ready.")
-	}
+	wd, _ = os.Getwd()
+	color.Red.Println("V2RayA working directory is", wd)
+	color.Red.Println("Version:", global.Version)
 }
 
 func checkUpdate() {
@@ -257,7 +248,7 @@ func checkUpdate() {
 
 func run() (err error) {
 	//判别是否universal模式，需要启动v2ray吗
-	if global.ServiceControlMode == global.UniversalMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayProcessExists() {
+	if global.ServiceControlMode == global.UniversalMode && configure.GetConnectedServer() != nil && !v2ray.IsV2RayRunning() {
 		_ = v2ray.RestartV2rayService()
 	}
 	//刷新配置以刷新透明代理、ssr server

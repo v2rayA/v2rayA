@@ -28,10 +28,6 @@ func PostV2ray(ctx *gin.Context) {
 }
 
 func DeleteV2ray(ctx *gin.Context) {
-	if global.ServiceControlMode == global.DockerMode {
-		tools.ResponseError(ctx, errors.New("cannot stop v2ray in docker mode. try disconnecting your server"))
-		return
-	}
 	err := v2ray.StopAndDisableV2rayService()
 	if err != nil {
 		tools.ResponseError(ctx, err)
