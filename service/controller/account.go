@@ -1,18 +1,28 @@
 package controller
 
 import (
+	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"log"
+	"sync"
+	"time"
 )
+
+var loginSessions = make(chan interface{}, 1)
 
 func PostLogin(ctx *gin.Context) {
 	var data struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+	loginSessions <- nil
+	defer func() {
+		time.Sleep(500 * time.Millisecond)
+		<-loginSessions
+	}()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("bad request"))
@@ -52,11 +62,15 @@ func PutAccount(ctx *gin.Context) {
 }
 
 /*注册*/
+var muReg sync.Mutex
+
 func PostAccount(ctx *gin.Context) {
 	var data struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+	muReg.Lock()
+	defer muReg.Unlock()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		tools.ResponseError(ctx, errors.New("bad request"))
@@ -65,6 +79,10 @@ func PostAccount(ctx *gin.Context) {
 	if !service.ValidPasswordLength(data.Password) {
 		log.Println(data)
 		tools.ResponseError(ctx, errors.New("length of password should be between 5 and 32"))
+		return
+	}
+	if configure.HasAnyAccounts() {
+		tools.ResponseError(ctx, errors.New("register closed"))
 		return
 	}
 	token, err := service.Register(data.Username, data.Password)
