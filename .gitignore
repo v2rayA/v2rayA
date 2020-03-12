@@ -17,12 +17,12 @@ node_modules
 *.out
 
 # Output
-V2RayA_*
-v2raya_*
-installer_*
-V2RayA
-v2raya
-web
+/V2RayA_*
+/v2raya_*
+/installer_*
+/V2RayA
+/v2raya
+/web
 
 #package
 /.SRCINFO

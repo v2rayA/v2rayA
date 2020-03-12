@@ -4,7 +4,7 @@ pkgname=v2raya
 pkgver={{pkgver}}
 pkgrel=1
 install=.INSTALL
-pkgdesc="V2Ray Linux client with web GUI, compatible with SS and SSR, supporting transparent proxy"
+pkgdesc="A V2Ray Linux client with web GUI, compatible with SS and SSR and supporting transparent proxy"
 arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/mzz2017/V2RayA"
 license=('GPL')
@@ -21,7 +21,7 @@ build() {
 }
 
 package() {
-    cd "V2RayA-$pkgver"
+    cd "$srcdir/V2RayA-$pkgver"
     
     install -Dm644 "install/universal/v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
     install -Dm755 "service/v2raya" -t "$pkgdir/usr/bin/"
