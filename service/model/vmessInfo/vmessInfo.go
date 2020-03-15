@@ -38,19 +38,19 @@ func (v *VmessInfo) ExportToURL() string {
 			m[chKey] = iv.FieldByName(f.Name).Interface()
 		}
 		b, _ := jsoniter.Marshal(m)
-		return "vmess://" + base64.StdEncoding.EncodeToString(b)
+		return "vmess://" + base64.URLEncoding.EncodeToString(b)
 	case "ss":
 		/* ss://BASE64(method:password)@server:port#name */
 		return fmt.Sprintf(
 			"ss://%v@%v:%v#%v",
-			base64.StdEncoding.EncodeToString([]byte(v.Net+":"+v.ID)),
+			base64.URLEncoding.EncodeToString([]byte(v.Net+":"+v.ID)),
 			v.Add,
 			v.Port,
 			v.Ps,
 		)
 	case "ssr":
 		/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
-		return fmt.Sprintf("ssr://%v", base64.StdEncoding.EncodeToString([]byte(
+		return fmt.Sprintf("ssr://%v", base64.URLEncoding.EncodeToString([]byte(
 			fmt.Sprintf(
 				"%v:%v:%v:%v:%v:%v/?remarks=%v&protoparam=%v&obfsparam=%v",
 				v.Add,
