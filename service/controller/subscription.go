@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"V2RayA/model/touch"
+	"V2RayA/core/touch"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
 	"V2RayA/tools"

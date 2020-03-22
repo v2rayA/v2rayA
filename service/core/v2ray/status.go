@@ -2,10 +2,10 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/dnsPoison/entity"
-	"V2RayA/model/shadowsocksr"
-	"V2RayA/model/v2ray/asset"
-	"V2RayA/model/vmessInfo"
+	"V2RayA/core/dnsPoison/entity"
+	"V2RayA/core/shadowsocksr"
+	"V2RayA/core/v2ray/asset"
+	"V2RayA/core/vmessInfo"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/ports"
 	"bytes"

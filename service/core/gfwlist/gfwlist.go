@@ -2,8 +2,8 @@ package gfwlist
 
 import (
 	"V2RayA/extra/gopeed"
-	"V2RayA/model/v2ray"
-	"V2RayA/model/v2ray/asset"
+	"V2RayA/core/v2ray"
+	"V2RayA/core/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/files"
 	"V2RayA/tools/httpClient"

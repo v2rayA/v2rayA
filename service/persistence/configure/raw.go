@@ -1,6 +1,6 @@
 package configure
 
-import "V2RayA/model/vmessInfo"
+import "V2RayA/core/vmessInfo"
 
 type ServerRaw struct {
 	VmessInfo vmessInfo.VmessInfo `json:"vmessInfo"`

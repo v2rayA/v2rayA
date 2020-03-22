@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"V2RayA/model/gfwlist"
+	"V2RayA/core/gfwlist"
 	"V2RayA/tools"
 	"github.com/gin-gonic/gin"
 )

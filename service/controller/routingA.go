@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"V2RayA/model/routingA"
+	"V2RayA/core/routingA"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools"
 	"errors"

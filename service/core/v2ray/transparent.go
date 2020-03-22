@@ -2,7 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/iptables"
+	"V2RayA/core/iptables"
 	"V2RayA/persistence/configure"
 	"errors"
 	"log"

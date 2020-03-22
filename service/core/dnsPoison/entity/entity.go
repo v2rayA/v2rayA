@@ -1,8 +1,8 @@
 package entity
 
 import (
-	"V2RayA/model/dnsPoison"
-	"V2RayA/model/v2ray/asset"
+	"V2RayA/core/dnsPoison"
+	"V2RayA/core/v2ray/asset"
 	"V2RayA/tools/netTools"
 	"errors"
 	"log"
