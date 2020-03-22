@@ -1,9 +1,9 @@
 package shadowsocksr
 
 import (
+	"V2RayA/common/ports"
 	"V2RayA/extra/proxy/socks5"
 	"V2RayA/extra/proxy/ssr"
-	"V2RayA/tools/ports"
 	"errors"
 	"fmt"
 	"log"
@@ -78,14 +78,13 @@ func (self *SSR) Close() error {
 	self.c = nil
 	time.Sleep(100 * time.Millisecond)
 	start := time.Now()
-	port := strconv.Itoa(self.port)
 	for {
-		o, who := ports.IsPortOccupied(port, "tcp", true)
+		o, _ := ports.IsPortOccupied([]string{strconv.Itoa(self.port) + ":tcp"})
 		if !o {
 			break
 		}
 		if time.Since(start) > 3*time.Second {
-			log.Println("SSR.Close: 关闭SSR超时", port+"/"+who)
+			log.Println("SSR.Close: 关闭SSR超时", self.port)
 			return errors.New("SSR.Close: timeout of closing SSR")
 		}
 		time.Sleep(200 * time.Millisecond)

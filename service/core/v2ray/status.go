@@ -1,13 +1,13 @@
 package v2ray
 
 import (
-	"V2RayA/global"
+	"V2RayA/common/process/netstat"
 	"V2RayA/core/dnsPoison/entity"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray/asset"
 	"V2RayA/core/vmessInfo"
+	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools/ports"
 	"bytes"
 	"errors"
 	"github.com/json-iterator/go"
@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -104,18 +103,18 @@ func RestartV2rayService() (err error) {
 		return
 	}
 	bPortOpen := false
-	var sPortOpen string
+	var port int
 	for _, v := range tmplJson.Inbounds {
 		if v.Port != 0 {
 			bPortOpen = true
-			sPortOpen = strconv.Itoa(v.Port)
+			port = v.Port
 			break
 		}
 	}
 	startTime := time.Now()
 	for {
 		if bPortOpen {
-			if p, which := ports.IsPortOccupied(sPortOpen, "tcp", true); p && strings.Contains(which, "v2ray") {
+			if netstat.IsProcessPort("v2ray", port, []string{"tcp", "tcp6"}) {
 				break
 			}
 		} else {
@@ -127,7 +126,7 @@ func RestartV2rayService() (err error) {
 		if time.Since(startTime) > 15*time.Second {
 			return errors.New("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 	}
 	return
 }

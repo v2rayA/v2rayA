@@ -4,7 +4,7 @@ import (
 	"V2RayA/extra/proxyWithHttp"
 	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"net/http"
 	"net/url"
 	"os/exec"
@@ -29,7 +29,7 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
 	host := "127.0.0.1"
 	//是否在docker环境
-	if tools.IsInDocker() {
+	if common.IsInDocker() {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
 		out, err := exec.Command("sh", "-c", "ip route list default|head -n 1|awk '{print $3}'").Output()
 		if err == nil {
@@ -44,7 +44,7 @@ func GetHttpClientWithV2RayAProxy() (client *http.Client, err error) {
 func GetHttpClientWithV2RayAPac() (client *http.Client, err error) {
 	host := "127.0.0.1"
 	//是否在docker环境
-	if tools.IsInDocker() {
+	if common.IsInDocker() {
 		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
 		out, err := exec.Command("sh", "-c", "ip route|grep default|awk '{print $3}'").Output()
 		if err == nil {

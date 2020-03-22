@@ -4,8 +4,8 @@ import (
 	"V2RayA/controller"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
-	"V2RayA/tools/jwt"
+	"V2RayA/common"
+	"V2RayA/common/jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -34,7 +34,7 @@ func Run() error {
 	auth := engine.Group("api")
 	auth.Use(func(ctx *gin.Context) {
 		if !configure.HasAnyAccounts() {
-			tools.Response(ctx, tools.UNAUTHORIZED, gin.H{
+			common.Response(ctx, common.UNAUTHORIZED, gin.H{
 				"first": true,
 			})
 			ctx.Abort()

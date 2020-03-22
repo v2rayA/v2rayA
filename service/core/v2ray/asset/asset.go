@@ -1,9 +1,9 @@
 package asset
 
 import (
-	"V2RayA/global"
+	"V2RayA/common/files"
 	"V2RayA/core/dnsPoison"
-	"V2RayA/tools/files"
+	"V2RayA/global"
 	"errors"
 	"github.com/gogo/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
@@ -14,6 +14,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
@@ -158,21 +159,32 @@ func GetConfigPath() (p string) {
 	return
 }
 
+var whitelistCn struct {
+	siteList *v2router.GeoSiteList
+	ipList   *v2router.GeoIPList
+	sync.Mutex
+}
+
 func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain) (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
+	whitelistCn.Lock()
+	defer whitelistCn.Unlock()
 	dir := GetV2rayLocationAsset()
 	b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
 	if err != nil {
 		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
 	}
-	var siteList v2router.GeoSiteList
-	err = proto.Unmarshal(b, &siteList)
-	if err != nil {
-		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+	if whitelistCn.siteList == nil {
+		var siteList v2router.GeoSiteList
+		err = proto.Unmarshal(b, &siteList)
+		if err != nil {
+			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+		}
+		whitelistCn.siteList = &siteList
 	}
 	wlDomains = new(strmatcher.MatcherGroup)
 	domainMatcher := new(dnsPoison.DomainMatcherGroup)
 	fullMatcher := new(dnsPoison.FullMatcherGroup)
-	for _, e := range siteList.Entry {
+	for _, e := range whitelistCn.siteList.Entry {
 		if e.CountryCode == "CN" {
 			dms := e.Domain
 			dms = append(dms, externDomains...)
@@ -195,6 +207,7 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 			break
 		}
 	}
+	domainMatcher.Add("lan")
 	wlDomains.Add(domainMatcher)
 	wlDomains.Add(fullMatcher)
 
@@ -202,13 +215,16 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	if err != nil {
 		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
 	}
-	var ipList v2router.GeoIPList
-	err = proto.Unmarshal(b, &ipList)
-	if err != nil {
-		return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+	if whitelistCn.ipList == nil {
+		var ipList v2router.GeoIPList
+		err = proto.Unmarshal(b, &ipList)
+		if err != nil {
+			return nil, nil, errors.New("GetWhitelistCn: " + err.Error())
+		}
+		whitelistCn.ipList = &ipList
 	}
 	wlIps = new(v2router.GeoIPMatcher)
-	for _, e := range ipList.Entry {
+	for _, e := range whitelistCn.ipList.Entry {
 		if e.CountryCode == "CN" {
 			ips := e.Cidr
 			ips = append(ips, externIps...)

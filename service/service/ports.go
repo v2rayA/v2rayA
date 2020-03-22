@@ -1,13 +1,12 @@
 package service
 
 import (
+	ports2 "V2RayA/common/ports"
 	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
-	ports2 "V2RayA/tools/ports"
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 func GetPortsDefault() configure.Ports {
@@ -40,42 +39,29 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if cnt > len(set) {
 		return errors.New("ports duplicate. check it")
 	}
+	detectSyntax := make([]string, 0, 3)
 	if ports.Socks5 != p.Socks5 {
 		p.Socks5 = ports.Socks5
-		if ports.Socks5 != 0 {
-			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Socks5), "tcp", true); o {
-				arr := strings.Split(w, "/")
-				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.Socks5, w))
-				}
-			} else if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Socks5), "udp", true); o {
-				arr := strings.Split(w, "/")
-				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.Socks5, w))
-				}
-			}
+		if p.Socks5 != 0 {
+			detectSyntax = append(detectSyntax, strconv.Itoa(p.Socks5)+":tcp,udp")
 		}
 	}
 	if ports.Http != p.Http {
 		p.Http = ports.Http
-		if ports.Http != 0 {
-			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.Http), "tcp", true); o {
-				arr := strings.Split(w, "/")
-				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.Http, w))
-				}
-			}
+		if p.Http != 0 {
+			detectSyntax = append(detectSyntax, strconv.Itoa(p.Http)+":tcp")
 		}
 	}
 	if ports.HttpWithPac != p.HttpWithPac {
 		p.HttpWithPac = ports.HttpWithPac
-		if ports.HttpWithPac != 0 {
-			if o, w := ports2.IsPortOccupied(strconv.Itoa(p.HttpWithPac), "tcp", true); o {
-				arr := strings.Split(w, "/")
-				if arr[1] != "v2ray" {
-					return errors.New(fmt.Sprintf("port %v is occupied by %v", p.HttpWithPac, w))
-				}
-			}
+		if p.HttpWithPac != 0 {
+			detectSyntax = append(detectSyntax, strconv.Itoa(p.HttpWithPac)+":tcp")
+		}
+	}
+	if o, v := ports2.IsPortOccupied(detectSyntax); o {
+		process := v.Process()
+		if process.Name != "v2ray" {
+			return errors.New(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))
 		}
 	}
 	err = configure.SetPorts(&p)

@@ -3,7 +3,7 @@ package controller
 import (
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
@@ -12,17 +12,17 @@ func PutPorts(ctx *gin.Context) {
 	var data configure.Ports
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.SetPorts(&data)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, nil)
+	common.ResponseSuccess(ctx, nil)
 }
 
 func GetPorts(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, service.GetPortsDefault())
+	common.ResponseSuccess(ctx, service.GetPortsDefault())
 }

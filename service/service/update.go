@@ -2,7 +2,7 @@ package service
 
 import (
 	"V2RayA/global"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"bytes"
 	"errors"
 	"net/http"
@@ -38,6 +38,6 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	}
 	s = s[:r]
 	// 远端版本获取完毕
-	ge, err := tools.VersionGreaterEqual(global.Version, s)
+	ge, err := common.VersionGreaterEqual(global.Version, s)
 	return !ge, s, err
 }

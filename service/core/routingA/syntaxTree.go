@@ -2,12 +2,13 @@ package routingA
 
 import (
 	"V2RayA/global"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
+	"v2ray.com/core/common/buf"
 )
 
 func toSym(r rune) rune {
@@ -133,10 +134,10 @@ func postHandleMsg(msg string, str []rune, i int) string {
 
 //LR(1)文法
 func generateSyntaxTree(program string) (S symbol, err error) {
-	logs := ""
+	logsBuf := buf.New()
 	defer func() {
 		if err != nil && global.Version != "debug" {
-			err = errors.New(logs + err.Error())
+			err = errors.New(logsBuf.String() + err.Error())
 		}
 	}()
 	var stackR, stackS = make(symbols, 1), make([]int, 1)
@@ -158,18 +159,18 @@ out:
 		msg := table[sTop][string(sym)]
 		//特殊处理
 		msg = postHandleMsg(msg, str, i)
-		logs += fmt.Sprintln("[status]", "StackRune:", stackR.String(), "StackState:", stackS, "Str[i]:", val, "Sym:", string(sym), "Msg:", msg)
+		logsBuf.WriteString(fmt.Sprintln("[status]", "StackRune:", stackR.String(), "StackState:", stackS, "Str[i]:", val, "Sym:", string(sym), "Msg:", msg))
 		switch {
 		case strings.HasPrefix(msg, "s"):
 			state, _ := strconv.Atoi(msg[1:])
 			stackS = append(stackS, state)
 			stackR = append(stackR, symbol{sym: sym, val: val})
-			logs += fmt.Sprintln("[info]", "Shift:", val, "Push state:", state)
+			logsBuf.WriteString(fmt.Sprintln("[info]", "Shift:", val, "Push state:", state))
 			i++
 		case strings.HasPrefix(msg, "r"):
 			state, _ := strconv.Atoi(msg[1:])
 			production := productions[state]
-			logs += fmt.Sprintln("[info]", string(production.left), "<-", production.right)
+			logsBuf.WriteString(fmt.Sprintln("[info]", string(production.left), "<-", production.right))
 			stackS = stackS[:len(stackS)-len(production.right)]
 			gt := table[stackS[len(stackS)-1]][string(production.left)]
 			var newState int
@@ -180,7 +181,7 @@ out:
 			}
 			stackS = append(stackS, newState)
 			if !matchRegex(stackR.Runes(), production.right) {
-				logs += fmt.Sprintln("[warning]", "TrimSuffix:", stackR.String(), "not match regex:", production.right)
+				logsBuf.WriteString(fmt.Sprintln("[warning]", "TrimSuffix:", stackR.String(), "not match regex:", production.right))
 			}
 			//形成语法树
 			reducedSyms := stackR[len(stackR)-len(production.right):]
@@ -200,7 +201,7 @@ out:
 			if end == -1 {
 				end = 0x3f3f3f3f
 			}
-			err = errors.New(fmt.Sprintf("[error] position: %v unexpected character %c <...%v>", i, str[i], string(str[i:tools.Min(len(str)-1, i+end)])))
+			err = errors.New(fmt.Sprintf("[error] position: %v unexpected character %c <...%v>", i, str[i], string(str[i:common.Min(len(str)-1, i+end)])))
 			return
 		default:
 			err = errors.New("[error] " + msg)

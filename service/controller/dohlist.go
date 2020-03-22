@@ -2,14 +2,14 @@ package controller
 
 import (
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
 
 func GetDohList(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, gin.H{"dohlist": configure.GetDohListNotNil()})
+	common.ResponseSuccess(ctx, gin.H{"dohlist": configure.GetDohListNotNil()})
 }
 
 type dohputdata struct {
@@ -52,18 +52,18 @@ func PutDohList(ctx *gin.Context) {
 	var data dohputdata
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	if !data.Valid() {
-		tools.ResponseError(ctx, errors.New("bad format of DoH server"))
+		common.ResponseError(ctx, errors.New("bad format of DoH server"))
 		return
 	}
 	data.DeDuplicate()
 	err = configure.SetDohList(&data.DohList)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, nil)
+	common.ResponseSuccess(ctx, nil)
 }

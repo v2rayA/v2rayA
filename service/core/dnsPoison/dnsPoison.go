@@ -1,8 +1,8 @@
 package dnsPoison
 
 import (
-	"V2RayA/tools"
-	"V2RayA/tools/netTools"
+	"V2RayA/common"
+	"V2RayA/common/netTools"
 	"errors"
 	"fmt"
 	"github.com/google/gopacket"
@@ -210,10 +210,14 @@ out:
 			continue
 		}
 		dm := q.Name.String()
+		dmNoTQDN := strings.TrimSuffix(dm, ".")
 		if dm == "" {
 			continue
-		} else if index := whitelistDomains.Match(dm[:len(dm)-1]); index > 0 {
+		} else if index := whitelistDomains.Match(dmNoTQDN); index > 0 {
 			// whitelistDomains
+			continue
+		} else if index := strings.Index(dmNoTQDN, "."); index <= 0 {
+			// 跳过随机的顶级域名
 			continue
 		}
 		if !m.Response {
@@ -257,9 +261,9 @@ out:
 			todolist := make([]string, 0, len(dms))
 			//读写分离，减少锁竞争
 			handle.domainMutex.RLock()
-			iSpoofed := tools.BoolToInt(spoofed)
+			iSpoofed := common.BoolToInt(spoofed)
 			for _, d := range dms {
-				if _, ok := handle.inspectedWhiteDomains[d]; tools.BoolToInt(ok)^iSpoofed == 0 {
+				if _, ok := handle.inspectedWhiteDomains[d]; common.BoolToInt(ok)^iSpoofed == 0 {
 					todolist = append(todolist, d)
 				}
 			}
@@ -268,7 +272,7 @@ out:
 				log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), "("+dm, "=>", msg+")")
 				handle.domainMutex.Lock()
 				for _, d := range todolist {
-					if _, ok := handle.inspectedWhiteDomains[d]; tools.BoolToInt(ok)^iSpoofed == 0 {
+					if _, ok := handle.inspectedWhiteDomains[d]; common.BoolToInt(ok)^iSpoofed == 0 {
 						if ok {
 							delete(handle.inspectedWhiteDomains, d)
 							log.Println("dnsPoison["+ifname+"]: 探测到", d, "从白名单移除", dm+msg)
