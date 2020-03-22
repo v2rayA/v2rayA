@@ -2,7 +2,7 @@ package asset
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/dnsPoison"
+	"V2RayA/core/dnsPoison"
 	"V2RayA/tools/files"
 	"errors"
 	"github.com/gogo/protobuf/proto"

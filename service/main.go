@@ -1,13 +1,13 @@
 package main
 
 import (
+	"V2RayA/core/gfwlist"
+	"V2RayA/core/ipforward"
+	"V2RayA/core/iptables"
+	"V2RayA/core/v2ray"
+	"V2RayA/core/v2ray/asset"
 	"V2RayA/extra/gopeed"
 	"V2RayA/global"
-	"V2RayA/model/gfwlist"
-	"V2RayA/model/ipforward"
-	"V2RayA/model/iptables"
-	"V2RayA/model/v2ray"
-	"V2RayA/model/v2ray/asset"
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
 	"V2RayA/service"
@@ -247,8 +247,8 @@ func checkUpdate() {
 }
 
 func run() (err error) {
-	//判别是否universal模式，需要启动v2ray吗
-	if global.ServiceControlMode == global.UniversalMode && configure.GetConnectedServer() != nil {
+	//判别需要启动v2ray吗
+	if configure.GetConnectedServer() != nil {
 		_ = v2ray.RestartV2rayService()
 	}
 	//刷新配置以刷新透明代理、ssr server

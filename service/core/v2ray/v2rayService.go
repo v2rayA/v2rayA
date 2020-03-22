@@ -2,7 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/v2ray/asset"
+	"V2RayA/core/v2ray/asset"
 	"V2RayA/tools"
 	"bytes"
 	"errors"

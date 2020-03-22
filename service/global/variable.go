@@ -1,14 +1,14 @@
 package global
 
 import (
-	"V2RayA/model/shadowsocksr"
+	"V2RayA/core/shadowsocksr"
 	"os"
 )
 
 var Version = "debug"
 var FoundNew = false
 var RemoteVersion = ""
-var SupportTproxy = true
+var SupportTproxy = false
 
 var ServiceControlMode SystemServiceControlMode = GetServiceControlMode()
 

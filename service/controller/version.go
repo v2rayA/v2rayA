@@ -2,8 +2,8 @@ package controller
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/gfwlist"
-	"V2RayA/model/v2ray"
+	"V2RayA/core/gfwlist"
+	"V2RayA/core/v2ray"
 	"V2RayA/tools"
 	"github.com/gin-gonic/gin"
 	"net/http"

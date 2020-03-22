@@ -1,9 +1,9 @@
 package service
 
 import (
-	"V2RayA/model/nodeData"
-	"V2RayA/model/touch"
-	"V2RayA/model/v2ray"
+	"V2RayA/core/nodeData"
+	"V2RayA/core/touch"
+	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/tools/httpClient"
 	"errors"

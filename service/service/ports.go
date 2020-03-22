@@ -1,7 +1,7 @@
 package service
 
 import (
-	"V2RayA/model/v2ray"
+	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
 	ports2 "V2RayA/tools/ports"
 	"errors"

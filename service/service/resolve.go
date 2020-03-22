@@ -1,8 +1,8 @@
 package service
 
 import (
-	"V2RayA/model/nodeData"
-	"V2RayA/model/vmessInfo"
+	"V2RayA/core/nodeData"
+	"V2RayA/core/vmessInfo"
 	"V2RayA/tools"
 	"errors"
 	"github.com/json-iterator/go"

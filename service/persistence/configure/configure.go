@@ -2,7 +2,7 @@ package configure
 
 import (
 	"V2RayA/global"
-	"V2RayA/model/ipforward"
+	"V2RayA/core/ipforward"
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"V2RayA/model/siteDat"
-	"V2RayA/model/v2ray/asset"
+	"V2RayA/core/siteDat"
+	"V2RayA/core/v2ray/asset"
 	"github.com/gogo/protobuf/proto"
 	"io/ioutil"
 	"log"
