@@ -1,6 +1,6 @@
 package iptables
 
-import "V2RayA/tools/cmds"
+import "V2RayA/common/cmds"
 
 type tproxy struct{ iptablesSetter }
 

@@ -8,7 +8,7 @@ import (
 var Version = "debug"
 var FoundNew = false
 var RemoteVersion = ""
-var SupportTproxy = false
+var SupportTproxy = true
 
 var ServiceControlMode SystemServiceControlMode = GetServiceControlMode()
 

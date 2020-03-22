@@ -4,7 +4,7 @@ import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -12,26 +12,26 @@ import (
 )
 
 func GetPortWhiteList(ctx *gin.Context) {
-	tools.ResponseSuccess(ctx, configure.GetPortWhiteListNotNil())
+	common.ResponseSuccess(ctx, configure.GetPortWhiteListNotNil())
 }
 
 func PutPortWhiteList(ctx *gin.Context) {
 	var data configure.PortWhiteList
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	if !data.Valid() {
-		tools.ResponseError(ctx, errors.New("invalid format of port"))
+		common.ResponseError(ctx, errors.New("invalid format of port"))
 		return
 	}
 	err = configure.SetPortWhiteList(&data)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, nil)
+	common.ResponseSuccess(ctx, nil)
 }
 
 func PostPortWhiteList(ctx *gin.Context) {
@@ -40,7 +40,7 @@ func PostPortWhiteList(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	p := service.GetPortsDefault()
@@ -51,8 +51,8 @@ func PostPortWhiteList(ctx *gin.Context) {
 	}
 	err = configure.SetPortWhiteList(&wpl)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, nil)
+	common.ResponseSuccess(ctx, nil)
 }

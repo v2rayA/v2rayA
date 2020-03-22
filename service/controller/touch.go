@@ -5,7 +5,7 @@ import (
 	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ func GetTouch(ctx *gin.Context) {
 	if !running { //如果没有运行，把connectedServer删掉，防止前端错误渲染
 		t.ConnectedServer = nil
 	}
-	tools.ResponseSuccess(ctx, gin.H{
+	common.ResponseSuccess(ctx, gin.H{
 		"running": running,
 		"touch":   t,
 	})
@@ -26,12 +26,12 @@ func DeleteTouch(ctx *gin.Context) {
 	var ws configure.Whiches
 	err := ctx.ShouldBindJSON(&ws)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.DeleteWhich(ws.Get())
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
 	GetTouch(ctx)

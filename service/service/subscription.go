@@ -4,8 +4,8 @@ import (
 	"V2RayA/core/nodeData"
 	"V2RayA/core/touch"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools"
-	"V2RayA/tools/httpClient"
+	"V2RayA/common"
+	"V2RayA/common/httpClient"
 	"bytes"
 	"errors"
 	"log"
@@ -27,7 +27,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
 	// base64解码, raw是多行vmess
-	raw, _ := tools.Base64StdDecode(buf.String())
+	raw, _ := common.Base64StdDecode(buf.String())
 	// 切分raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析

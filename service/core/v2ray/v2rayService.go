@@ -3,7 +3,7 @@ package v2ray
 import (
 	"V2RayA/global"
 	"V2RayA/core/v2ray/asset"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"bytes"
 	"errors"
 	"fmt"
@@ -126,10 +126,10 @@ func CheckAndProbeTProxy() (err error) {
 	if err != nil {
 		return errors.New("fail in getting the version of v2ray-core: " + err.Error())
 	}
-	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
+	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
 		return errors.New("the version of v2ray-core is lower than 4.19.1")
 	}
-	if !IfTProxyModLoaded() && !tools.IsInDocker() { //docker下无法判断
+	if !IfTProxyModLoaded() && !common.IsInDocker() { //docker下无法判断
 		var out []byte
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
@@ -148,7 +148,7 @@ func CheckDohSupported() (err error) {
 	if err != nil {
 		return errors.New("fail in getting the version of v2ray-core")
 	}
-	if greaterEqual, err := tools.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
+	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
 		return errors.New("the version of v2ray-core is lower than 4.22.0")
 	}
 	return

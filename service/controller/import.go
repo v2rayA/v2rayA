@@ -3,7 +3,7 @@ package controller
 import (
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"errors"
 	"github.com/gin-gonic/gin"
 )
@@ -15,12 +15,12 @@ func PostImport(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		tools.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
 	err = service.Import(data.URL, data.Which)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
 	GetTouch(ctx)

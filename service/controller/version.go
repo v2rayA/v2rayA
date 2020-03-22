@@ -4,7 +4,7 @@ import (
 	"V2RayA/global"
 	"V2RayA/core/gfwlist"
 	"V2RayA/core/v2ray"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -23,7 +23,7 @@ func GetVersion(ctx *gin.Context) {
 	} else {
 		iptablesMode = "redirect"
 	}
-	tools.ResponseSuccess(ctx, gin.H{
+	common.ResponseSuccess(ctx, gin.H{
 		"version":       global.Version,
 		"foundNew":      global.FoundNew,
 		"remoteVersion": global.RemoteVersion,
@@ -41,8 +41,8 @@ func GetRemoteGFWListVersion(ctx *gin.Context) {
 	//}
 	g, err := gfwlist.GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
-		tools.ResponseError(ctx, err)
+		common.ResponseError(ctx, err)
 		return
 	}
-	tools.ResponseSuccess(ctx, gin.H{"remoteGFWListVersion": g.UpdateTime.Local().Format("2006-01-02")})
+	common.ResponseSuccess(ctx, gin.H{"remoteGFWListVersion": g.UpdateTime.Local().Format("2006-01-02")})
 }

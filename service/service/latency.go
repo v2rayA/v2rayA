@@ -1,13 +1,13 @@
 package service
 
 import (
-	"V2RayA/global"
+	"V2RayA/common/httpClient"
+	"V2RayA/common/process/netstat"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray"
 	"V2RayA/core/vmessInfo"
+	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"V2RayA/tools/httpClient"
-	"V2RayA/tools/ports"
 	"errors"
 	"fmt"
 	"log"
@@ -84,6 +84,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	portMap := make(map[int]string)
 	ssrPortMap := make(map[int]int)
 	port := 0
+	nsmap := netstat.ToPortMap([]string{"tcp", "tcp6"})
 	for i, v := range vms {
 		if which[i].Latency != "" {
 			continue
@@ -95,7 +96,9 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			port = port + 1
 		}
 		for {
-			if occupied, which := ports.IsPortOccupied(strconv.Itoa(port), "tcp", false); occupied && !strings.Contains(which, "v2ray") {
+			v, ok := nsmap["tcp"][port]
+			v6, ok6 := nsmap["tcp6"][port]
+			if (ok && v.State != netstat.Close) || (ok6 && v6.State != netstat.Close) {
 				port++
 			} else {
 				break
@@ -108,7 +111,9 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			//再找一个空端口
 			port++
 			for {
-				if occupied, which := ports.IsPortOccupied(strconv.Itoa(port), "tcp", false); occupied && !strings.Contains(which, "v2ray") {
+				v, ok := nsmap["tcp"][port]
+				v6, ok6 := nsmap["tcp6"][port]
+				if (ok && v.State != netstat.Close) || (ok6 && v6.State != netstat.Close) {
 					port++
 				} else {
 					break

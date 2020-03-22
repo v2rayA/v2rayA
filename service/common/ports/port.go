@@ -1,0 +1,61 @@
+package ports
+
+import (
+	"V2RayA/common/process/netstat"
+	"strconv"
+	"strings"
+)
+
+/*
+example:
+
+IsPortOccupied([]string{"80:tcp"})
+
+IsPortOccupied([]string{"53:tcp,udp"})
+
+IsPortOccupied([]string{"53:tcp,udp", "80:tcp"})
+*/
+func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket) {
+	rp := make([]string, 0, 4)
+	udp := false
+	tcp := false
+	req := make(map[int][]string)
+	for _, s := range syntax {
+		a1 := strings.SplitN(s, ":", 2)
+		p, err := strconv.Atoi(a1[0])
+		if err != nil {
+			continue
+		}
+		req[p] = make([]string, 0, 2)
+		a2 := strings.Split(a1[1], ",")
+		for _, proto := range a2 {
+			switch strings.ToLower(proto) {
+			case "tcp":
+				req[p] = append(req[p], "tcp", "tcp6")
+				if !tcp {
+					tcp = true
+				}
+			case "udp":
+				req[p] = append(req[p], "udp", "udp6")
+				if !udp {
+					udp = true
+				}
+			}
+		}
+	}
+	if tcp {
+		rp = append(rp, "tcp", "tcp6")
+	}
+	if udp {
+		rp = append(rp, "udp", "udp6")
+	}
+	m := netstat.ToPortMap(rp)
+	for p, protos := range req {
+		for _, proto := range protos {
+			if v, ok := m[proto][p]; ok && v.State != netstat.Close {
+				return true, &v
+			}
+		}
+	}
+	return false, nil
+}

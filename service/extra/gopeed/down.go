@@ -2,7 +2,7 @@ package gopeed
 
 import (
 	"V2RayA/extra/copyfile"
-	"V2RayA/tools"
+	"V2RayA/common"
 	"fmt"
 	gonanoid "github.com/matoous/go-nanoid"
 	"io"
@@ -107,7 +107,7 @@ func Down(request *Request, to string) error {
 	}
 	// support range
 	if response.Range {
-		cons := tools.Max(4, runtime.NumCPU())
+		cons := common.Max(4, runtime.NumCPU())
 		chunkSize := response.Size / int64(cons)
 		waitGroup := &sync.WaitGroup{}
 		waitGroup.Add(cons)

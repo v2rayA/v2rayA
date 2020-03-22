@@ -13,6 +13,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/gin-contrib/cors v1.3.0
+	github.com/gin-contrib/pprof v1.2.1
 	github.com/gin-gonic/gin v1.4.0
 	github.com/gocarina/gocsv v0.0.0-20200302151839-87c60d755c58
 	github.com/gogo/protobuf v1.3.1

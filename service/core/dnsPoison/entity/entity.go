@@ -3,7 +3,7 @@ package entity
 import (
 	"V2RayA/core/dnsPoison"
 	"V2RayA/core/v2ray/asset"
-	"V2RayA/tools/netTools"
+	"V2RayA/common/netTools"
 	"errors"
 	"log"
 	"sync"

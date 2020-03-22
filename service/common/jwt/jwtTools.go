@@ -1,7 +1,7 @@
 package jwt
 
 import (
-	"V2RayA/tools"
+	"V2RayA/common"
 	"encoding/base64"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -22,14 +22,14 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 				return []byte(secret), nil
 			})
 		if err != nil {
-			tools.Response(ctx, tools.UNAUTHORIZED, err.Error())
+			common.Response(ctx, common.UNAUTHORIZED, err.Error())
 			ctx.Abort()
 			return
 		}
 		//如果需要Admin权限
 		mapClaims := token.Claims.(jwt.MapClaims)
 		if Admin && mapClaims["admin"] == false {
-			tools.ResponseError(ctx, errors.New("admin required"))
+			common.ResponseError(ctx, errors.New("admin required"))
 			ctx.Abort()
 			return
 		}
@@ -45,7 +45,7 @@ func ValidToken(token, secret string) (err error) {
 	if len(arr) != 3 {
 		return errors.New("bad token: 1")
 	}
-	sign := base64.RawURLEncoding.EncodeToString(tools.HMACSHA256(arr[0]+"."+arr[1], []byte(secret)))
+	sign := base64.RawURLEncoding.EncodeToString(common.HMACSHA256(arr[0]+"."+arr[1], []byte(secret)))
 	if sign != arr[2] { //签名核对失败
 		return errors.New("bad token: 2")
 	}
@@ -81,7 +81,7 @@ func MakeJWT(payload map[string]string, expDuration *time.Duration) (jwt string,
 	bh := base64.RawURLEncoding.EncodeToString(headerJSON)
 	bp := base64.RawURLEncoding.EncodeToString(payloadJSON)
 	signBefore := bh + "." + bp
-	signature := tools.HMACSHA256(signBefore, []byte(secret))
+	signature := common.HMACSHA256(signBefore, []byte(secret))
 	bs := base64.RawURLEncoding.EncodeToString(signature)
 	return signBefore + "." + bs, nil
 }
