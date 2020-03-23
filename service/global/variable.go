@@ -10,7 +10,7 @@ var FoundNew = false
 var RemoteVersion = ""
 var SupportTproxy = true
 
-var ServiceControlMode SystemServiceControlMode = GetServiceControlMode()
+var ServiceControlMode = GetServiceControlMode()
 
 var SSRs shadowsocksr.SSRs
 

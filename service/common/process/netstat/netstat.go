@@ -131,23 +131,31 @@ type Process struct {
 	Name string
 }
 
+const (
+	SocketFreed = "process not found, correspond socket was freed"
+)
+
+func IsSocketFreed(err error) bool {
+	return err != nil && errors.Is(err, errors.New(SocketFreed))
+}
+
 /*
 较为消耗资源
 */
-func (s *Socket) Process() *Process {
+func (s *Socket) Process() (*Process, error) {
 	s.processMutex.Lock()
 	s.processMutex.Unlock()
 	if s.process != nil {
-		return s.process
+		return s.process, nil
 	}
 	f, err := os.Open(pathProc)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	names, err := f.Readdirnames(-1)
 	f.Close()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 loop1:
 	for _, fn := range names {
@@ -166,10 +174,10 @@ loop1:
 				PID:  fn,
 				Name: getProcessName(fn),
 			}
-			return s.process
+			return s.process, nil
 		}
 	}
-	return nil
+	return nil, errors.New(SocketFreed)
 }
 
 /*
