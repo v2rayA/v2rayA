@@ -59,8 +59,8 @@ func SetPorts(ports *configure.Ports) (err error) {
 		}
 	}
 	if o, v := ports2.IsPortOccupied(detectSyntax); o {
-		process := v.Process()
-		if process.Name != "v2ray" {
+		process, err := v.Process()
+		if err == nil && process.Name != "v2ray" {
 			return errors.New(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))
 		}
 	}

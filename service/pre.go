@@ -83,7 +83,10 @@ func checkEnvironment() {
 		log.Fatal(err)
 	}
 	if occupied, socket := ports.IsPortOccupied([]string{port + ":tcp"}); occupied {
-		log.Fatalf("V2RayA启动失败，%v端口已被%v/%v占用", port, socket.Process().Name, socket.Process().PID)
+		process, err := socket.Process()
+		if err == nil {
+			log.Fatalf("V2RayA启动失败，%v端口已被%v/%v占用", port, process.Name, process.PID)
+		}
 	}
 	testTproxy()
 }
