@@ -37,6 +37,8 @@ func Connect(which *configure.Which) (err error) {
 		log.Println(err)
 		return
 	}
+	//unset connectedServer to avoid refresh in advance
+	_ = configure.ClearConnected()
 	//根据找到的Server更新V2Ray的配置
 	err = v2ray.UpdateV2RayConfig(&tsr.VmessInfo)
 	if err != nil {
