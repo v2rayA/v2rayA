@@ -58,8 +58,8 @@ func GetV2rayWorkingDir() (string, error) {
 		if err != nil {
 			return "", errors.New(err.Error() + string(out))
 		}
-		arr := strings.Split(strings.TrimSpace(string(out)), " ")
-		return path.Dir(arr[0][len("ExecStart="):]), nil
+		arr := strings.SplitN(strings.TrimSpace(string(out)), " ", 2)
+		return path.Dir(strings.TrimPrefix(arr[0], "ExecStart=")), nil
 	case global.UniversalMode:
 		//从环境变量里找
 		out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
