@@ -302,7 +302,11 @@
                 <b-table-column field="address" :label="$t('server.address')">
                   {{ props.row.address }}
                 </b-table-column>
-                <b-table-column field="net" :label="$t('server.protocol')">
+                <b-table-column
+                  field="net"
+                  :label="$t('server.protocol')"
+                  style="font-size:0.9em"
+                >
                   {{ props.row.net }}
                 </b-table-column>
                 <b-table-column
@@ -980,6 +984,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+td {
+  font-size: 0.9em;
+}
 .node-section {
   margin-top: 1rem;
   .iconfont {
