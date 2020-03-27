@@ -1,9 +1,9 @@
 package v2ray
 
 import (
-	"V2RayA/global"
-	"V2RayA/core/v2ray/asset"
 	"V2RayA/common"
+	"V2RayA/core/v2ray/asset"
+	"V2RayA/global"
 	"bytes"
 	"errors"
 	"fmt"
@@ -49,7 +49,7 @@ func DisableV2rayService() (err error) {
 	return
 }
 
-func LiberalizeProcFile() (err error) {
+func OptimizeServiceFile() (err error) {
 	if global.ServiceControlMode != global.SystemctlMode && global.ServiceControlMode != global.ServiceMode {
 		return
 	}
@@ -62,19 +62,26 @@ func LiberalizeProcFile() (err error) {
 		return
 	}
 	s := string(b)
-	if strings.Contains(s, "LimitNPROC=500") && strings.Contains(s, "LimitNOFILE=1000000") {
+	if strings.Contains(s, "LimitNPROC=500") &&
+		strings.Contains(s, "LimitNOFILE=1000000") &&
+		strings.Contains(s, "CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN") {
 		return
 	}
 	lines := strings.Split(s, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
-		if strings.HasPrefix(lines[i], "LimitNPROC=") || strings.HasPrefix(lines[i], "LimitNOFILE=") {
+		if strings.HasPrefix(lines[i], "LimitNPROC=") ||
+			strings.HasPrefix(lines[i], "LimitNOFILE=") ||
+			strings.HasPrefix(lines[i], "CapabilityBoundingSet=") {
 			lines = append(lines[:i], lines[i+1:]...)
 		}
 	}
 	for i, line := range lines {
 		if strings.ToLower(line) == "[service]" {
 			s = strings.Join(lines[:i+1], "\n")
-			s += "\nLimitNPROC=500\nLimitNOFILE=1000000\n"
+			s += "\n"
+			s += "LimitNPROC=500\n"
+			s += "LimitNOFILE=1000000\n"
+			s += "CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN\n"
 			s += strings.Join(lines[i+1:], "\n")
 			break
 		}
@@ -82,6 +89,9 @@ func LiberalizeProcFile() (err error) {
 	err = ioutil.WriteFile(p, []byte(s), os.ModeAppend)
 	if err != nil {
 		return
+	}
+	if global.ServiceControlMode == global.SystemctlMode {
+		_, _ = exec.Command("sh", "-c", "systemctl daemon-reload").Output()
 	}
 	if IsV2RayRunning() {
 		err = RestartV2rayService()
@@ -127,7 +137,7 @@ func CheckAndProbeTProxy() (err error) {
 		return errors.New("fail in getting the version of v2ray-core: " + err.Error())
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
-		return errors.New("the version of v2ray-core is lower than 4.19.1")
+		return errors.New("the version of v2ray-core (" + ver + ") is lower than 4.19.1")
 	}
 	if !IfTProxyModLoaded() && !common.IsInDocker() { //docker下无法判断
 		var out []byte

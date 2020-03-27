@@ -6,6 +6,7 @@ Wants=network.target
 
 [Service]
 Type=simple
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
 Environment=V2RAYA_CONFIG=/etc/v2ray/v2raya.json
 ExecStart=/usr/bin/v2raya
 Restart=on-failure

@@ -106,7 +106,7 @@ func initConfigure() {
 	}
 	//配置文件描述符上限
 	if global.ServiceControlMode == global.ServiceMode || global.ServiceControlMode == global.SystemctlMode {
-		err := v2ray.LiberalizeProcFile()
+		err := v2ray.OptimizeServiceFile()
 		if err != nil {
 			log.Println(err)
 		}
