@@ -1,7 +1,7 @@
 FROM v2fly/v2fly-core AS v2ray
 
 FROM golang:alpine
-RUN apk --no-cache add git
+RUN apk --no-cache add iptables git
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn
 RUN go get github.com/codegangsta/gin
