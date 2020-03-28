@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"V2RayA/common/process/netstat"
+	"V2RayA/common/netTools/netstat"
 	"strconv"
 	"strings"
 )
@@ -15,7 +15,7 @@ IsPortOccupied([]string{"53:tcp,udp"})
 
 IsPortOccupied([]string{"53:tcp,udp", "80:tcp"})
 */
-func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket) {
+func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err error) {
 	rp := make([]string, 0, 4)
 	udp := false
 	tcp := false
@@ -49,13 +49,16 @@ func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket) {
 	if udp {
 		rp = append(rp, "udp", "udp6")
 	}
-	m := netstat.ToPortMap(rp)
+	m, err := netstat.ToPortMap(rp)
+	if err != nil {
+		return
+	}
 	for p, protos := range req {
 		for _, proto := range protos {
 			if v, ok := m[proto][p]; ok && v.State != netstat.Close {
-				return true, &v
+				return true, &v, nil
 			}
 		}
 	}
-	return false, nil
+	return false, nil, nil
 }
