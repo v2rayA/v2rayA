@@ -24,19 +24,19 @@ source=(
 )
 
 source_i686=(
-    "v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_386_v${pkgver}"
+    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_386_v${pkgver}"
 )
 source_x86_64=(
-    "v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_amd64_v${pkgver}"
+    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_amd64_v${pkgver}"
 )
 source_aarch64=(
-    "v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm64_v${pkgver}"
+    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm64_v${pkgver}"
 )
 source_armv6h=(
-    "v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_v${pkgver}"
+    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_v${pkgver}"
 )
 source_armv7h=(
-    "v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_v${pkgver}"
+    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_v${pkgver}"
 )
 
 sha1sums=(
@@ -65,7 +65,7 @@ package() {
     cd "$srcdir"
     
     install -Dm644 "v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
-    install -Dm755 "v2raya" -t "$pkgdir/usr/bin/"
+    install -Dm755 "v2raya_v${pkgver}" "$pkgdir/usr/bin/v2raya"
 
     install -Dm644 "v2raya.png" "$pkgdir/usr/share/icons/v2raya.png"
     install -Dm755 "v2raya.desktop" -t "$pkgdir/usr/share/applications/"
