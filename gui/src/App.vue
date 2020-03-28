@@ -46,12 +46,24 @@
               style="position: relative; top: 1px; left:2px"
             ></i>
           </a>
-
           <b-dropdown-item
             custom
             aria-role="menuitem"
             v-html="$t('common.loggedAs', { username })"
           >
+          </b-dropdown-item>
+          <b-dropdown-item
+            custom
+            aria-role="menuitem"
+            class="is-flex"
+            style="box-sizing: content-box;height: 16px;width: 60px;justify-content: space-between;"
+          >
+            <img
+              v-for="lang of langs"
+              :src="`/img/flags/flag_${lang}.svg`"
+              style="height:100%;flex-shrink: 0;cursor: pointer"
+              @click="handleClickLang(lang)"
+            />
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item
@@ -108,7 +120,8 @@ export default {
         connectedServer: null,
         lastConnectedServer: null
       },
-      showCustomPorts: false
+      showCustomPorts: false,
+      langs: ["zh", "en"]
     };
   },
   computed: {
@@ -171,6 +184,10 @@ export default {
     });
   },
   methods: {
+    handleClickLang(lang) {
+      localStorage["_lang"] = lang;
+      location.reload();
+    },
     handleOnStatusMouseEnter() {
       if (this.runningState.running === this.$t("common.isRunning")) {
         this.coverStatusText = "　" + this.$t("v2ray.stop") + "　";
