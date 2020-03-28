@@ -1,7 +1,8 @@
 package service
 
 import (
-	ports2 "V2RayA/common/ports"
+	"V2RayA/common/netTools/netstat"
+	ports2 "V2RayA/common/netTools/ports"
 	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
 	"errors"
@@ -58,7 +59,14 @@ func SetPorts(ports *configure.Ports) (err error) {
 			detectSyntax = append(detectSyntax, strconv.Itoa(p.HttpWithPac)+":tcp")
 		}
 	}
-	if o, v := ports2.IsPortOccupied(detectSyntax); o {
+	var (
+		o bool
+		v *netstat.Socket
+	)
+	if o, v, err = ports2.IsPortOccupied(detectSyntax); o {
+		if err != nil {
+			return
+		}
 		process, err := v.Process()
 		if err == nil && process.Name != "v2ray" {
 			return errors.New(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))

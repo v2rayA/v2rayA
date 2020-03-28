@@ -1,7 +1,7 @@
 package main
 
 import (
-	"V2RayA/common/ports"
+	"V2RayA/common/netTools/ports"
 	"V2RayA/core/gfwlist"
 	"V2RayA/core/ipforward"
 	"V2RayA/core/iptables"
@@ -82,7 +82,10 @@ func checkEnvironment() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, socket := ports.IsPortOccupied([]string{port + ":tcp"}); occupied {
+	if occupied, socket, err := ports.IsPortOccupied([]string{port + ":tcp"}); occupied {
+		if err != nil {
+			log.Fatal("netstat:", err)
+		}
 		process, err := socket.Process()
 		if err == nil {
 			log.Fatalf("V2RayA启动失败，%v端口已被%v/%v占用", port, process.Name, process.PID)

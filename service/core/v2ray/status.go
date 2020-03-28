@@ -1,7 +1,7 @@
 package v2ray
 
 import (
-	"V2RayA/common/process/netstat"
+	"V2RayA/common/netTools/netstat"
 	"V2RayA/core/dnsPoison/entity"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray/asset"
@@ -114,7 +114,12 @@ func RestartV2rayService() (err error) {
 	startTime := time.Now()
 	for {
 		if bPortOpen {
-			if netstat.IsProcessPort("v2ray", port, []string{"tcp", "tcp6"}) {
+			var is bool
+			is, err = netstat.IsProcessPort("v2ray", port, []string{"tcp", "tcp6"})
+			if err != nil {
+				return
+			}
+			if is {
 				break
 			}
 		} else {

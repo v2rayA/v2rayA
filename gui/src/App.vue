@@ -60,9 +60,11 @@
           >
             <img
               v-for="lang of langs"
-              :src="`/img/flags/flag_${lang}.svg`"
+              :key="lang.flag"
+              :src="`/img/flags/flag_${lang.flag}.svg`"
+              :alt="lang.alt"
               style="height:100%;flex-shrink: 0;cursor: pointer"
-              @click="handleClickLang(lang)"
+              @click="handleClickLang(lang.flag)"
             />
           </b-dropdown-item>
           <hr class="dropdown-divider" />
@@ -121,7 +123,10 @@ export default {
         lastConnectedServer: null
       },
       showCustomPorts: false,
-      langs: ["zh", "en"]
+      langs: [
+        { flag: "zh", alt: "简体中文" },
+        { flag: "en", alt: "English" }
+      ]
     };
   },
   computed: {

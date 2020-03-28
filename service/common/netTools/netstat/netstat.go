@@ -283,7 +283,7 @@ func parseSocktab(r io.Reader) (map[int]Socket, error) {
 	}
 	return tab, br.Err()
 }
-func ToPortMap(protocols []string) map[string]map[int]Socket {
+func ToPortMap(protocols []string) (map[string]map[int]Socket, error) {
 	m := make(map[string]map[int]Socket)
 	for _, proto := range protocols {
 		switch proto {
@@ -292,27 +292,30 @@ func ToPortMap(protocols []string) map[string]map[int]Socket {
 			if err != nil {
 				continue
 			}
-			m[proto], _ = parseSocktab(b)
+			m[proto], err = parseSocktab(b)
 		default:
 		}
 	}
-	return m
+	return m, nil
 }
 
-func IsProcessPort(pname string, port int, protocols []string) (is bool) {
+func IsProcessPort(pname string, port int, protocols []string) (is bool, err error) {
 	pid, err := findProcessID(pname)
 	if err != nil {
 		return
 	}
-	m := ToPortMap(protocols)
+	m, err := ToPortMap(protocols)
+	if err != nil {
+		return
+	}
 	for _, proto := range protocols {
 		switch proto {
 		case "tcp", "tcp6", "udp", "udp6":
 			if v, ok := m[proto][port]; ok && isProcessSocket(pid, v.inode) {
-				return true
+				return true, nil
 			}
 		default:
 		}
 	}
-	return false
+	return false, nil
 }

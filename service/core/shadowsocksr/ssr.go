@@ -1,7 +1,7 @@
 package shadowsocksr
 
 import (
-	"V2RayA/common/ports"
+	"V2RayA/common/netTools/ports"
 	"V2RayA/extra/proxy/socks5"
 	"V2RayA/extra/proxy/ssr"
 	"errors"
@@ -79,7 +79,11 @@ func (self *SSR) Close() error {
 	time.Sleep(100 * time.Millisecond)
 	start := time.Now()
 	for {
-		o, _ := ports.IsPortOccupied([]string{strconv.Itoa(self.port) + ":tcp"})
+		var o bool
+		o, _, err := ports.IsPortOccupied([]string{strconv.Itoa(self.port) + ":tcp"})
+		if err != nil {
+			return err
+		}
 		if !o {
 			break
 		}

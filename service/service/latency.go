@@ -2,7 +2,7 @@ package service
 
 import (
 	"V2RayA/common/httpClient"
-	"V2RayA/common/process/netstat"
+	"V2RayA/common/netTools/netstat"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray"
 	"V2RayA/core/vmessInfo"
@@ -84,7 +84,10 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	portMap := make(map[int]string)
 	ssrPortMap := make(map[int]int)
 	port := 0
-	nsmap := netstat.ToPortMap([]string{"tcp", "tcp6"})
+	nsmap, err := netstat.ToPortMap([]string{"tcp", "tcp6"})
+	if err != nil {
+		return nil, err
+	}
 	for i, v := range vms {
 		if which[i].Latency != "" {
 			continue
@@ -143,7 +146,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			global.SSRs.Append(*ssr)
 		}
 	}
-	err := v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
+	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
 	}
