@@ -15,6 +15,7 @@ RUN export VERSION=$(cat ./version) && go build -ldflags="-X V2RayA/global.Versi
 FROM v2fly/v2fly-core AS v2ray
 
 FROM alpine:latest
+RUN apk --no-cache add iptables
 WORKDIR /v2raya
 COPY --from=builder /build/service/V2RayA .
 COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
