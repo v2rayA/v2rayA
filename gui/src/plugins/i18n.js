@@ -8,13 +8,19 @@ Vue.use(VueI18n);
 
 // Create VueI18n instance with options
 let locale = "en";
-for (let l of window.navigator.languages) {
-  l = l.split("-")[0];
-  if (l in messages) {
-    locale = l;
-    break;
+let _lang = localStorage["_lang"];
+if (_lang) {
+  locale = _lang;
+} else {
+  for (let l of window.navigator.languages) {
+    l = l.split("-")[0];
+    if (l in messages) {
+      locale = l;
+      break;
+    }
   }
 }
+
 const i18n = new VueI18n({
   locale,
   messages,
