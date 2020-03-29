@@ -1,8 +1,8 @@
 package configure
 
 import (
-	"V2RayA/global"
 	"V2RayA/core/ipforward"
+	"V2RayA/global"
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"
@@ -36,6 +36,7 @@ func New() *Configure {
 			Http:        20171,
 			HttpWithPac: 20172,
 		},
+		Accounts: map[string]string{},
 	}
 }
 func decode(b []byte) (result []byte) {
@@ -223,7 +224,7 @@ func SetAccount(username, password string) (err error) {
 	return persistence.Set(path, password)
 }
 func ResetAccounts() (err error) {
-	return persistence.Set("accounts", nil)
+	return persistence.Set("accounts", map[string]string{})
 }
 func ExistsAccount(username string) bool {
 	return persistence.Exists(fmt.Sprintf("accounts.%s", username))
