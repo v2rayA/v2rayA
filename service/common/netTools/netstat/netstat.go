@@ -270,9 +270,9 @@ func getProcessSocketSet(pid string) (set []string) {
 	return
 }
 
-func parseSocktab(r io.Reader) (map[int]*Socket, error) {
+func parseSocktab(r io.Reader) (map[int][]*Socket, error) {
 	br := bufio.NewScanner(r)
-	tab := make(map[int]*Socket)
+	tab := make(map[int][]*Socket)
 
 	// Discard title
 	br.Scan()
@@ -305,12 +305,12 @@ func parseSocktab(r io.Reader) (map[int]*Socket, error) {
 		s.State = SkState(u)
 		s.UID = fields[7]
 		s.inode = fields[9]
-		tab[s.LocalAddress.Port] = &s
+		tab[s.LocalAddress.Port] = append(tab[s.LocalAddress.Port], &s)
 	}
 	return tab, br.Err()
 }
-func ToPortMap(protocols []string) (map[string]map[int]*Socket, error) {
-	m := make(map[string]map[int]*Socket)
+func ToPortMap(protocols []string) (map[string]map[int][]*Socket, error) {
+	m := make(map[string]map[int][]*Socket)
 	for _, proto := range protocols {
 		switch proto {
 		case "tcp", "tcp6", "udp", "udp6":
@@ -333,8 +333,10 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	}
 	iNodes := make([]string, 2)
 	for _, proto := range protocols {
-		if v, ok := m[proto][port]; ok && (v.State == Listen || v.State == Established) {
-			iNodes = append(iNodes, v.inode)
+		for _, v := range m[proto][port] {
+			if v.State == Listen || v.State == Established {
+				iNodes = append(iNodes, v.inode)
+			}
 		}
 	}
 	if len(iNodes) == 0 {
@@ -401,29 +403,31 @@ func Print(protocols []string) string {
 	var sockets []*Socket
 	for _, proto := range protos {
 		for _, v := range m[proto] {
-			sockets = append(sockets, v)
+			sockets = append(sockets, v...)
 		}
 	}
 	FillAllProcess(sockets)
 	for _, proto := range protos {
-		for _, v := range m[proto] {
-			process, err := v.Process()
-			var pstr string
-			if err != nil {
-				pstr = ""
-			} else {
-				pstr = process.PID + "/" + process.Name
+		for _, sockets := range m[proto] {
+			for _, v := range sockets {
+				process, err := v.Process()
+				var pstr string
+				if err != nil {
+					pstr = ""
+				} else {
+					pstr = process.PID + "/" + process.Name
+				}
+				buffer.WriteString(fmt.Sprintf(
+					"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
+					proto,
+					v.LocalAddress.IP.String()+"/"+strconv.Itoa(v.LocalAddress.Port),
+					v.RemoteAddress.IP.String()+"/"+strconv.Itoa(v.RemoteAddress.Port),
+					v.State.String(),
+					v.UID,
+					v.inode,
+					pstr,
+				))
 			}
-			buffer.WriteString(fmt.Sprintf(
-				"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
-				proto,
-				v.LocalAddress.IP.String()+"/"+strconv.Itoa(v.LocalAddress.Port),
-				v.RemoteAddress.IP.String()+"/"+strconv.Itoa(v.RemoteAddress.Port),
-				v.State.String(),
-				v.UID,
-				v.inode,
-				pstr,
-			))
 		}
 	}
 	return buffer.String()
