@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/common/netTools/netstat"
+	"V2RayA/common/netTools/ports"
 	"V2RayA/core/dnsPoison/entity"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray/asset"
@@ -10,12 +11,14 @@ import (
 	"V2RayA/persistence/configure"
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/json-iterator/go"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -114,13 +117,24 @@ func RestartV2rayService() (err error) {
 	startTime := time.Now()
 	for {
 		if bPortOpen {
-			var is bool
-			is, err = netstat.IsProcessPort("v2ray", port, []string{"tcp", "tcp6"})
+			var (
+				o bool
+				s *netstat.Socket
+			)
+			o, s, err = ports.IsPortOccupied([]string{strconv.Itoa(port) + ":tcp,tcp6"})
 			if err != nil {
 				return
 			}
-			if is {
-				break
+			if o {
+				p, err := s.Process()
+				if err != nil {
+					continue
+				}
+				if p.Name == "v2ray" {
+					break
+				} else {
+					return errors.New(fmt.Sprintf("port %d is occupied by %s", port, p.Name))
+				}
 			}
 		} else {
 			if IsV2RayRunning() {
