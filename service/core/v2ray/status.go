@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"V2RayA/common/netTools/netstat"
-	"V2RayA/common/netTools/ports"
 	"V2RayA/core/dnsPoison/entity"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray/asset"
@@ -12,6 +11,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	netstat2 "github.com/cakturk/go-netstat/netstat"
 	"github.com/json-iterator/go"
 	"log"
 	"net"
@@ -55,6 +55,50 @@ func IsV2RayRunning() bool {
 		return err == nil && len(out) > 0
 	}
 	return true
+}
+
+func testprint() string {
+	var buffer strings.Builder
+	e, _ := netstat2.TCPSocks(func(entry *netstat2.SockTabEntry) bool {
+		return true
+	})
+	e2, _ := netstat2.TCP6Socks(func(entry *netstat2.SockTabEntry) bool {
+		return true
+	})
+	buffer.WriteString(fmt.Sprintf("%-6v%-25v%-25v%-15v%-6v%-9v%v\n", "Proto", "Local Address", "Foreign Address", "State", "User", "Inode", "PID/Program name"))
+	for _, v := range e {
+		var pstr string
+		if v.Process != nil {
+			pstr = v.Process.String()
+		}
+		buffer.WriteString(fmt.Sprintf(
+			"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
+			"tcp",
+			v.LocalAddr.IP.String()+"/"+strconv.Itoa(int(v.LocalAddr.Port)),
+			v.RemoteAddr.IP.String()+"/"+strconv.Itoa(int(v.RemoteAddr.Port)),
+			v.State.String(),
+			v.UID,
+			"",
+			pstr,
+		))
+	}
+	for _, v := range e2 {
+		var pstr string
+		if v.Process != nil {
+			pstr = v.Process.String()
+		}
+		buffer.WriteString(fmt.Sprintf(
+			"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
+			"tcp6",
+			v.LocalAddr.IP.String()+"/"+strconv.Itoa(int(v.LocalAddr.Port)),
+			v.RemoteAddr.IP.String()+"/"+strconv.Itoa(int(v.RemoteAddr.Port)),
+			v.State.String(),
+			v.UID,
+			"",
+			pstr,
+		))
+	}
+	return buffer.String()
 }
 func RestartV2rayService() (err error) {
 	setting := configure.GetSettingNotNil()
@@ -109,32 +153,29 @@ func RestartV2rayService() (err error) {
 	var port int
 	for _, v := range tmplJson.Inbounds {
 		if v.Port != 0 {
+			if v.Settings != nil && v.Settings.Network != "" && !strings.Contains(v.Settings.Network, "tcp") {
+				continue
+			}
 			bPortOpen = true
 			port = v.Port
 			break
 		}
 	}
+	defer func() {
+		log.Println(port)
+		log.Println("\n" + netstat.Print([]string{"tcp", "tcp6"}))
+		log.Println("\n" + testprint())
+	}()
 	startTime := time.Now()
 	for {
 		if bPortOpen {
-			var (
-				o bool
-				s *netstat.Socket
-			)
-			o, s, err = ports.IsPortOccupied([]string{strconv.Itoa(port) + ":tcp,tcp6"})
+			var is bool
+			is, err = netstat.IsProcessListenPort("v2ray", port)
 			if err != nil {
 				return
 			}
-			if o {
-				p, err := s.Process()
-				if err != nil {
-					continue
-				}
-				if p.Name == "v2ray" {
-					break
-				} else {
-					return errors.New(fmt.Sprintf("port %d is occupied by %s", port, p.Name))
-				}
+			if is {
+				break
 			}
 		} else {
 			if IsV2RayRunning() {
@@ -142,6 +183,7 @@ func RestartV2rayService() (err error) {
 				break
 			}
 		}
+
 		if time.Since(startTime) > 15*time.Second {
 			return errors.New("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
 		}
