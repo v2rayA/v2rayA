@@ -2,6 +2,7 @@ package netstat
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -148,20 +149,14 @@ func (s *Socket) Process() (*Process, error) {
 	if s.process != nil {
 		return s.process, nil
 	}
-	f, err := os.Open(pathProc)
+	f, err := ioutil.ReadDir(pathProc)
 	if err != nil {
 		return nil, nil
 	}
-	names, err := f.Readdirnames(-1)
-	f.Close()
-	if err != nil {
-		return nil, err
-	}
 loop1:
-	for _, fn := range names {
-		p := filepath.Join(pathProc, fn)
-		fi, err := os.Stat(p)
-		if err != nil || !fi.IsDir() {
+	for _, fi := range f {
+		fn := fi.Name()
+		if !fi.IsDir() {
 			continue
 		}
 		for _, t := range fn {
@@ -169,7 +164,7 @@ loop1:
 				continue loop1
 			}
 		}
-		if isProcessSocket(fn, s.inode) {
+		if isProcessSocket(fn, []string{s.inode}) {
 			s.process = &Process{
 				PID:  fn,
 				Name: getProcessName(fn),
@@ -184,22 +179,16 @@ loop1:
 没有做缓存，每次调用都会扫描，消耗资源
 */
 func findProcessID(pname string) (pid string, err error) {
-	f, err := os.Open(pathProc)
-	if err != nil {
-		return
-	}
-	names, err := f.Readdirnames(-1)
-	f.Close()
+	f, err := ioutil.ReadDir(pathProc)
 	if err != nil {
 		return
 	}
 loop1:
-	for _, fn := range names {
-		p := filepath.Join(pathProc, fn)
-		fi, err := os.Stat(p)
-		if err != nil || !fi.IsDir() {
+	for _, fi := range f {
+		if !fi.IsDir() {
 			continue
 		}
+		fn := fi.Name()
 		for _, t := range fn {
 			if t > '9' || t < '0' {
 				continue loop1
@@ -212,20 +201,32 @@ loop1:
 	return "", errors.New("not found")
 }
 
+func getProcName(s string) string {
+	i := strings.Index(s, "(")
+	if i < 0 {
+		return ""
+	}
+	s = s[i+1:]
+	j := strings.LastIndex(s, ")")
+	if i < 0 {
+		return ""
+	}
+	return s[:j]
+}
+
 func getProcessName(pid string) (pn string) {
 	p := filepath.Join(pathProc, pid, "stat")
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		return
 	}
-	sp := strings.SplitN(string(b), " ", 3)
-	pn = sp[1]
-	return pn[1 : len(pn)-1]
+	sp := bytes.SplitN(b, []byte(" "), 3)
+	pn = string(sp[1])
+	return getProcName(pn)
 }
 
-func isProcessSocket(pid string, socketInode string) bool {
+func isProcessSocket(pid string, socketInode []string) bool {
 	// link name is of the form socket:[5860846]
-	target := "socket:[" + socketInode + "]"
 	p := filepath.Join(pathProc, pid, "fd")
 	f, err := os.Open(p)
 	fns, err := f.Readdirnames(-1)
@@ -238,15 +239,40 @@ func isProcessSocket(pid string, socketInode string) bool {
 		if err != nil {
 			continue
 		}
-		if lk == target {
-			return true
+		for _, s := range socketInode {
+			target := "socket:[" + s + "]"
+			if lk == target {
+				return true
+			}
 		}
 	}
 	return false
 }
-func parseSocktab(r io.Reader) (map[int]Socket, error) {
+
+func getProcessSocketSet(pid string) (set []string) {
+	// link name is of the form socket:[5860846]
+	p := filepath.Join(pathProc, pid, "fd")
+	f, err := os.Open(p)
+	fns, err := f.Readdirnames(-1)
+	f.Close()
+	if err != nil {
+		return
+	}
+	for _, fn := range fns {
+		lk, err := os.Readlink(filepath.Join(p, fn))
+		if err != nil {
+			continue
+		}
+		if strings.HasPrefix(lk, "socket:[") {
+			set = append(set, lk[8:len(lk)-1])
+		}
+	}
+	return
+}
+
+func parseSocktab(r io.Reader) (map[int]*Socket, error) {
 	br := bufio.NewScanner(r)
-	tab := make(map[int]Socket)
+	tab := make(map[int]*Socket)
 
 	// Discard title
 	br.Scan()
@@ -279,12 +305,12 @@ func parseSocktab(r io.Reader) (map[int]Socket, error) {
 		s.State = SkState(u)
 		s.UID = fields[7]
 		s.inode = fields[9]
-		tab[s.LocalAddress.Port] = s
+		tab[s.LocalAddress.Port] = &s
 	}
 	return tab, br.Err()
 }
-func ToPortMap(protocols []string) (map[string]map[int]Socket, error) {
-	m := make(map[string]map[int]Socket)
+func ToPortMap(protocols []string) (map[string]map[int]*Socket, error) {
+	m := make(map[string]map[int]*Socket)
 	for _, proto := range protocols {
 		switch proto {
 		case "tcp", "tcp6", "udp", "udp6":
@@ -299,23 +325,106 @@ func ToPortMap(protocols []string) (map[string]map[int]Socket, error) {
 	return m, nil
 }
 
-func IsProcessPort(pname string, port int, protocols []string) (is bool, err error) {
-	pid, err := findProcessID(pname)
-	if err != nil {
-		return
-	}
+func IsProcessListenPort(pname string, port int) (is bool, err error) {
+	protocols := []string{"tcp", "tcp6"}
 	m, err := ToPortMap(protocols)
 	if err != nil {
 		return
 	}
+	iNodes := make([]string, 2)
+	for _, proto := range protocols {
+		if v, ok := m[proto][port]; ok && (v.State == Listen || v.State == Established) {
+			iNodes = append(iNodes, v.inode)
+		}
+	}
+	if len(iNodes) == 0 {
+		return false, nil
+	}
+	pid, err := findProcessID(pname)
+	if err != nil {
+		return
+	}
+	return isProcessSocket(pid, iNodes), nil
+}
+
+func FillAllProcess(sockets []*Socket) {
+	mInodeSocket := make(map[string]*Socket)
+	for _, v := range sockets {
+		if v.process == nil {
+			mInodeSocket[v.inode] = v
+			v.processMutex.Lock()
+			defer v.processMutex.Unlock()
+		}
+	}
+	f, err := ioutil.ReadDir(pathProc)
+	if err != nil {
+		return
+	}
+loop1:
+	for _, fi := range f {
+		if !fi.IsDir() {
+			continue
+		}
+		fn := fi.Name()
+		for _, t := range fn {
+			if t > '9' || t < '0' {
+				continue loop1
+			}
+		}
+		socketSet := getProcessSocketSet(fn)
+		for _, s := range socketSet {
+			if socket, ok := mInodeSocket[s]; ok {
+				socket.process = &Process{
+					PID:  fn,
+					Name: getProcessName(fn),
+				}
+			}
+			delete(mInodeSocket, s)
+		}
+	}
+}
+
+func Print(protocols []string) string {
+	var buffer strings.Builder
+	protos := make([]string, 0, 4)
 	for _, proto := range protocols {
 		switch proto {
 		case "tcp", "tcp6", "udp", "udp6":
-			if v, ok := m[proto][port]; ok && isProcessSocket(pid, v.inode) {
-				return true, nil
-			}
-		default:
+			protos = append(protos, proto)
 		}
 	}
-	return false, nil
+	m, err := ToPortMap(protos)
+	if err != nil {
+		return ""
+	}
+	buffer.WriteString(fmt.Sprintf("%-6v%-25v%-25v%-15v%-6v%-9v%v\n", "Proto", "Local Address", "Foreign Address", "State", "User", "Inode", "PID/Program name"))
+	var sockets []*Socket
+	for _, proto := range protos {
+		for _, v := range m[proto] {
+			sockets = append(sockets, v)
+		}
+	}
+	FillAllProcess(sockets)
+	for _, proto := range protos {
+		for _, v := range m[proto] {
+			process, err := v.Process()
+			var pstr string
+			if err != nil {
+				pstr = ""
+			} else {
+				pstr = process.PID + "/" + process.Name
+			}
+			buffer.WriteString(fmt.Sprintf(
+				"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
+				proto,
+				v.LocalAddress.IP.String()+"/"+strconv.Itoa(v.LocalAddress.Port),
+				v.RemoteAddress.IP.String()+"/"+strconv.Itoa(v.RemoteAddress.Port),
+				v.State.String(),
+				v.UID,
+				v.inode,
+				pstr,
+			))
+		}
+	}
+	return buffer.String()
 }
