@@ -47,6 +47,18 @@ func Ping(which []configure.Which, timeout time.Duration) ([]configure.Which, er
 	return which, nil
 }
 
+func isOccupiedTCPPort(nsmap map[string]map[int][]*netstat.Socket, port int) bool {
+	v := nsmap["tcp"][port]
+	v6 := nsmap["tcp6"][port]
+	v = append(v, v6...)
+	for _, v := range v {
+		if v.State != netstat.Close {
+			return true
+		}
+	}
+	return false
+}
+
 func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel int) ([]configure.Which, error) {
 	var whiches configure.Whiches
 	whiches.Set(which)
@@ -99,13 +111,10 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			port = port + 1
 		}
 		for {
-			v, ok := nsmap["tcp"][port]
-			v6, ok6 := nsmap["tcp6"][port]
-			if (ok && v.State != netstat.Close) || (ok6 && v6.State != netstat.Close) {
-				port++
-			} else {
+			if !isOccupiedTCPPort(nsmap, port) {
 				break
 			}
+			port++
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		ssrLocalPortIfNeed := 0
@@ -114,13 +123,10 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			//再找一个空端口
 			port++
 			for {
-				v, ok := nsmap["tcp"][port]
-				v6, ok6 := nsmap["tcp6"][port]
-				if (ok && v.State != netstat.Close) || (ok6 && v6.State != netstat.Close) {
-					port++
-				} else {
+				if !isOccupiedTCPPort(nsmap, port) {
 					break
 				}
+				port++
 			}
 			ssrLocalPortIfNeed = port
 			ssrPortMap[i] = port
