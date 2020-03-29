@@ -499,7 +499,21 @@ export default {
           this.tableData,
           runningState.lastConnectedServer
         );
-        server.connected = false;
+        if (server.connected) {
+          server.connected = false;
+        } else {
+          //否则广播
+          this.tableData.servers.some(v => {
+            v.connected && (v = false);
+            return v.connected;
+          }) ||
+            this.tableData.subscriptions.some(s => {
+              return s.servers.some(v => {
+                v.connected && (v = false);
+                return v.connected;
+              });
+            });
+        }
       }
       if (runningState.connectedServer) {
         let server = locateServer(this.tableData, runningState.connectedServer);
