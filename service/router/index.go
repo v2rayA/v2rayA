@@ -62,7 +62,7 @@ func Run() error {
 		auth.PATCH("subscription", controller.PatchSubscription)
 		auth.GET("ports", controller.GetPorts)
 		auth.PUT("ports", controller.PutPorts)
-		auth.PUT("account", controller.PutAccount)
+		//auth.PUT("account", controller.PutAccount)
 		auth.GET("portWhiteList", controller.GetPortWhiteList)
 		auth.PUT("portWhiteList", controller.PutPortWhiteList)
 		auth.POST("portWhiteList", controller.PostPortWhiteList)

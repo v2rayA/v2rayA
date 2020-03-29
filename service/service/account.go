@@ -1,9 +1,9 @@
 package service
 
 import (
-	"V2RayA/persistence/configure"
 	"V2RayA/common"
 	"V2RayA/common/jwt"
+	"V2RayA/persistence/configure"
 	"errors"
 	"time"
 )
@@ -34,9 +34,13 @@ func Register(username, password string) (token string, err error) {
 	if err != nil {
 		return
 	}
-	return Login(username,password)
+	return Login(username, password)
 }
 
-func ValidPasswordLength(password string) bool {
-	return len(password) >= 5 && len(password) <= 32
+func ValidPasswordLength(password string) (bool, error) {
+	if len(password) >= 6 && len(password) <= 32 {
+		return true, nil
+	} else {
+		return false, errors.New("length of password should be between 6 and 32")
+	}
 }
