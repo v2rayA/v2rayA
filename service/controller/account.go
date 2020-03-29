@@ -1,12 +1,11 @@
 package controller
 
 import (
+	"V2RayA/common"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"V2RayA/common"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"log"
 	"sync"
 	"time"
 )
@@ -49,8 +48,8 @@ func PutAccount(ctx *gin.Context) {
 		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
-	if !service.ValidPasswordLength(data.Password) {
-		common.ResponseError(ctx, errors.New("length of password should be between 5 and 32"))
+	if ok, err := service.ValidPasswordLength(data.Password); !ok {
+		common.ResponseError(ctx, err)
 		return
 	}
 	username := ctx.GetString("Name")
@@ -58,6 +57,7 @@ func PutAccount(ctx *gin.Context) {
 		common.ResponseError(ctx, errors.New("invalid username or password"))
 		return
 	}
+	//TODO: modify password
 	common.ResponseSuccess(ctx, nil)
 }
 
@@ -76,9 +76,8 @@ func PostAccount(ctx *gin.Context) {
 		common.ResponseError(ctx, errors.New("bad request"))
 		return
 	}
-	if !service.ValidPasswordLength(data.Password) {
-		log.Println(data)
-		common.ResponseError(ctx, errors.New("length of password should be between 5 and 32"))
+	if ok, err := service.ValidPasswordLength(data.Password); !ok {
+		common.ResponseError(ctx, err)
 		return
 	}
 	if configure.HasAnyAccounts() {
