@@ -16,7 +16,7 @@
         <b-input
           v-model="password"
           type="password"
-          maxlength="32"
+          :maxlength="first ? '32' : ''"
           @keyup.enter.native="handleEnter"
         ></b-input>
       </b-field>
