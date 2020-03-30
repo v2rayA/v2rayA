@@ -307,8 +307,8 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 		if strings.ToLower(v.TLS) == "tls" {
 			o.StreamSettings.Security = "tls"
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
-			// set SNI
-			if v.Host != "" {
+			// if v.Host is not empty and v.Add's host is not the same as v.Host, set SNI
+			if u, _ := url.Parse(v.Add); v.Host != "" && v.Host != u.Host {
 				o.StreamSettings.TLSSettings.ServerName = v.Host
 			}
 		}
