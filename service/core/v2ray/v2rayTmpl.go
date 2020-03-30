@@ -1,11 +1,11 @@
 package v2ray
 
 import (
-	"V2RayA/global"
 	"V2RayA/core/dnsPoison/entity"
 	"V2RayA/core/routingA"
 	"V2RayA/core/v2ray/asset"
 	"V2RayA/core/vmessInfo"
+	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"bytes"
 	"errors"
@@ -307,8 +307,8 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 		if strings.ToLower(v.TLS) == "tls" {
 			o.StreamSettings.Security = "tls"
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
-			// if v.add is ip address and host is not empty, set SNI
-			if v.Host != "" && net.ParseIP(v.Add) != nil {
+			// set SNI
+			if v.Host != "" {
 				o.StreamSettings.TLSSettings.ServerName = v.Host
 			}
 		}
