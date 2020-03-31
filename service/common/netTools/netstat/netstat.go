@@ -203,7 +203,7 @@ func getProcName(s string) string {
 	}
 	s = s[i+1:]
 	j := strings.LastIndex(s, ")")
-	if i < 0 {
+	if j < 0 {
 		return ""
 	}
 	return s[:j]
