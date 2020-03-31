@@ -24,7 +24,7 @@ labels: help wanted
 
  ```bash
  # daemon mode
- journalctl -u v2raya | tail -n 50
+ journalctl -u v2raya | tail -n 100
  
  # docker mode
  docker logs v2raya_backend
