@@ -193,7 +193,7 @@ loop1:
 			return fn, nil
 		}
 	}
-	return "", newError("not found")
+	return "", newError("process not found")
 }
 
 func getProcName(s string) string {
