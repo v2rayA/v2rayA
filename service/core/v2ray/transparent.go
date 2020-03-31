@@ -1,6 +1,8 @@
 package v2ray
 
 import (
+	"V2RayA/common/netTools/netstat"
+	"V2RayA/common/netTools/ports"
 	"V2RayA/core/iptables"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
@@ -59,6 +61,21 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	}
 	setting := configure.GetSettingNotNil()
 	if (!checkRunning || IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
+		var (
+			o bool
+			s *netstat.Socket
+		)
+		o, s, err = ports.IsPortOccupied([]string{"12345:tcp,udp"})
+		if err != nil {
+			return
+		}
+		if o {
+			p, e := s.Process()
+			if e == nil && p.Name != "v2ray" {
+				err = newError("transparent proxy cannot be set up, port 12345 is occupied by ", p.Name)
+				return
+			}
+		}
 		DeleteTransparentProxyRules()
 		err = WriteTransparentProxyRules(&preprocess)
 	}
