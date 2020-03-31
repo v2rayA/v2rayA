@@ -164,7 +164,10 @@ func RestartV2rayService() (err error) {
 	for {
 		if bPortOpen {
 			var is bool
-			is, _ = netstat.IsProcessListenPort("v2ray", port)
+			is, err = netstat.IsProcessListenPort("v2ray", port)
+			if err != nil {
+				return
+			}
 			if is {
 				break
 			}

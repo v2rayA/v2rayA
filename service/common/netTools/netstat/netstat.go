@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+	"v2ray.com/core/common/errors"
 )
 
 // Socket states
@@ -173,6 +175,9 @@ loop1:
 /*
 没有做缓存，每次调用都会扫描，消耗资源
 */
+
+var NotFoundError = newError("process not found")
+
 func findProcessID(pname string) (pid string, err error) {
 	f, err := ioutil.ReadDir(pathProc)
 	if err != nil {
@@ -193,7 +198,7 @@ loop1:
 			return fn, nil
 		}
 	}
-	return "", newError("process not found")
+	return "", NotFoundError
 }
 
 func getProcName(s string) string {
@@ -339,6 +344,12 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	}
 	pid, err := findProcessID(pname)
 	if err != nil {
+		if errors.Cause(err) == NotFoundError {
+			return false, nil
+		} else {
+			log.Println(errors.Cause(err))
+			log.Println(NotFoundError)
+		}
 		return
 	}
 	return isProcessSocket(pid, iNodes), nil
