@@ -20,6 +20,13 @@ func Min(a, b int) int {
 	return a
 }
 
+func Abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
 func BoolToInt(a bool) int {
 	if a {
 		return 1

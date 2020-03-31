@@ -56,7 +56,7 @@ func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err
 	for p, protos := range req {
 		for _, proto := range protos {
 			for _, v := range m[proto][p] {
-				if v.State != netstat.Close {
+				if proto == "udp" || v.State != netstat.Close {
 					return true, v, nil
 				}
 			}

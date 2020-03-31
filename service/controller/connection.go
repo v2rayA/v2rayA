@@ -17,7 +17,7 @@ func PostConnection(ctx *gin.Context) {
 	lastConnectedServer := configure.GetConnectedServer()
 	err = service.Connect(&which)
 	if err != nil {
-		common.ResponseError(ctx, logError(err, "Fail in connecting"))
+		common.ResponseError(ctx, logError(err, "fail in connecting"))
 		return
 	}
 	common.ResponseSuccess(ctx, gin.H{"connectedServer": configure.GetConnectedServer(), "lastConnectedServer": lastConnectedServer})

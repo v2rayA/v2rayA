@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"V2RayA/common/netTools/netstat"
+	"V2RayA/common/ntp"
 	"V2RayA/core/dnsPoison/entity"
 	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray/asset"
@@ -99,7 +100,11 @@ func testprint() string {
 	}
 	return buffer.String()
 }
+
 func RestartV2rayService() (err error) {
+	if ok, err := ntp.IsDatetimeSynced(); err == nil && !ok {
+		return newError("please sync datetime first")
+	}
 	setting := configure.GetSettingNotNil()
 	if (setting.Transparent == configure.TransparentGfwlist || setting.PacMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
 		return newError("cannot find GFWList files. update GFWList and try again")
@@ -179,7 +184,7 @@ func RestartV2rayService() (err error) {
 		}
 
 		if time.Since(startTime) > 15*time.Second {
-			return newError("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
+			return newError("v2ray-core does not start normally, there may be a problem of the configuration file or the required port is occupied")
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
