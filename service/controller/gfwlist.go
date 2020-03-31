@@ -9,7 +9,7 @@ import (
 func PutGFWList(ctx *gin.Context) {
 	localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, gin.H{

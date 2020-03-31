@@ -4,7 +4,6 @@ import (
 	"V2RayA/common"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"sync"
 	"time"
@@ -24,12 +23,12 @@ func PostLogin(ctx *gin.Context) {
 	}()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
 	jwt, err := service.Login(data.Username, data.Password)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, gin.H{
@@ -45,16 +44,16 @@ func PutAccount(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
 	if ok, err := service.ValidPasswordLength(data.Password); !ok {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	username := ctx.GetString("Name")
 	if !service.IsValidAccount(username, data.Password) {
-		common.ResponseError(ctx, errors.New("invalid username or password"))
+		common.ResponseError(ctx, logError(nil, "invalid username or password"))
 		return
 	}
 	//TODO: modify password
@@ -73,20 +72,20 @@ func PostAccount(ctx *gin.Context) {
 	defer muReg.Unlock()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
 	if ok, err := service.ValidPasswordLength(data.Password); !ok {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	if configure.HasAnyAccounts() {
-		common.ResponseError(ctx, errors.New("register closed"))
+		common.ResponseError(ctx, logError(nil, "register closed"))
 		return
 	}
 	token, err := service.Register(data.Username, data.Password)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, gin.H{

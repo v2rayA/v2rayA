@@ -1,10 +1,9 @@
 package service
 
 import (
+	"V2RayA/common"
 	"V2RayA/core/nodeData"
 	"V2RayA/core/vmessInfo"
-	"V2RayA/common"
-	"errors"
 	"github.com/json-iterator/go"
 	"net/url"
 	"regexp"
@@ -16,7 +15,7 @@ import (
 */
 func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 	if len(vmess) < 8 || strings.ToLower(vmess[:8]) != "vmess://" {
-		err = errors.New("this address is not begin with vmess://")
+		err = newError("this address is not begin with vmess://")
 		return
 	}
 	var info vmessInfo.VmessInfo
@@ -34,7 +33,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		s, err = common.Base64StdDecode(s)
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
-			err = errors.New("unrecognized vmess address")
+			err = newError("unrecognized vmess address")
 			return
 		}
 		q := u.Query()
@@ -84,7 +83,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 */
 func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 	if len(u) < 5 || strings.ToLower(u[:5]) != "ss://" {
-		err = errors.New("this address is not begin with ss://")
+		err = newError("this address is not begin with ss://")
 		return
 	}
 	// 该函数尝试对ss://链接进行解析
@@ -143,7 +142,7 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 		subMatch, ok = resolveFormat(content)
 	}
 	if !ok {
-		err = errors.New("unrecognized ss address")
+		err = newError("unrecognized ss address")
 		return
 	}
 	info := vmessInfo.VmessInfo{
@@ -173,7 +172,7 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 */
 func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 	if len(u) < 6 || strings.ToLower(u[:6]) != "ssr://" {
-		err = errors.New("this address is not begin with ssr://")
+		err = newError("this address is not begin with ssr://")
 		return
 	}
 	// 该函数尝试对ssr://链接进行解析
@@ -234,7 +233,7 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 		info, ok = resolveFormat(content)
 	}
 	if !ok {
-		err = errors.New("unrecognized ssr address")
+		err = newError("unrecognized ssr address")
 		return
 	}
 	// 填充模板并处理结果
@@ -250,7 +249,7 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	u = strings.TrimSpace(u)
 	if len(u) <= 0 {
-		err = errors.New("ResolveURL error: empty address")
+		err = newError("ResolveURL error: empty address")
 		return
 	}
 	if strings.HasPrefix(u, "vmess://") {
@@ -260,7 +259,7 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	} else if strings.HasPrefix(u, "ssr://") {
 		n, err = ResolveSSRURL(u)
 	} else {
-		err = errors.New("not supported protocol. we only support ss, ssr and vmess now: " + u)
+		err = newError("not supported protocol. we only support ss, ssr and vmess now: " + u)
 		return
 	}
 	if err != nil {

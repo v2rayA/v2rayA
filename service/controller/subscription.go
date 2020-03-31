@@ -1,11 +1,10 @@
 package controller
 
 import (
+	"V2RayA/common"
 	"V2RayA/core/touch"
 	"V2RayA/persistence/configure"
 	"V2RayA/service"
-	"V2RayA/common"
-	"errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,12 +17,12 @@ func PatchSubscription(ctx *gin.Context) {
 	s := data.Subscription
 	index := s.ID - 1
 	if err != nil || s.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
-		common.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
 	err = service.ModifySubscriptionRemark(s)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	GetTouch(ctx)
@@ -35,12 +34,12 @@ func PutSubscription(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&data)
 	index := data.ID - 1
 	if err != nil || data.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
-		common.ResponseError(ctx, errors.New("bad request"))
+		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
 	err = service.UpdateSubscription(index, false)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	GetTouch(ctx)

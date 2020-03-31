@@ -3,7 +3,6 @@ package dnsPoison
 import (
 	"V2RayA/common"
 	"V2RayA/common/netTools"
-	"errors"
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -66,7 +65,7 @@ func (d *DnsPoison) Prepare(ifname string) (err error) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	if d.Exists(ifname) {
-		return errors.New(ifname + " exists")
+		return newError(ifname + " exists")
 	}
 	h, err := pcapgo.NewEthernetHandle(ifname)
 	if err != nil {
@@ -89,7 +88,7 @@ func (d *DnsPoison) DeleteHandles(ifname string) (err error) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	if !d.Exists(ifname) {
-		return errors.New("handle not exists")
+		return newError("handle not exists")
 	}
 	close(d.handles[ifname].done)
 	delete(d.handles, ifname)
@@ -99,11 +98,11 @@ func (d *DnsPoison) DeleteHandles(ifname string) (err error) {
 
 func bindAddr(fd uintptr, ip []byte, port uint32) error {
 	if err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1); err != nil {
-		return errors.New("failed to set resuse_addr")
+		return newError("failed to set resuse_addr")
 	}
 
 	if err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, unix.SO_REUSEPORT, 1); err != nil {
-		return errors.New("failed to set resuse_port")
+		return newError("failed to set resuse_port")
 	}
 
 	var sockaddr syscall.Sockaddr
@@ -122,7 +121,7 @@ func bindAddr(fd uintptr, ip []byte, port uint32) error {
 		copy(a6.Addr[:], ip)
 		sockaddr = a6
 	default:
-		return errors.New("unexpected length of ip")
+		return newError("unexpected length of ip")
 	}
 
 	return syscall.Bind(int(fd), sockaddr)
@@ -141,10 +140,10 @@ func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatche
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
-		return errors.New(ifname + " not exsits")
+		return newError(ifname + " not exsits")
 	}
 	if handle.running {
-		return errors.New(ifname + " is running")
+		return newError(ifname + " is running")
 	}
 	handle.running = true
 	log.Println("DnsPoison[" + ifname + "]: running")

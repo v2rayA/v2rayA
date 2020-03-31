@@ -5,7 +5,6 @@ import (
 	"V2RayA/core/v2ray/asset"
 	"V2RayA/global"
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -20,12 +19,12 @@ func EnableV2rayService() (err error) {
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "update-rc.d v2ray enable").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	case global.SystemctlMode:
 		out, err = exec.Command("sh", "-c", "systemctl enable v2ray").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	}
 	return
@@ -38,12 +37,12 @@ func DisableV2rayService() (err error) {
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "update-rc.d v2ray disable").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	case global.SystemctlMode:
 		out, err = exec.Command("sh", "-c", "systemctl disable v2ray").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	}
 	return
@@ -120,7 +119,7 @@ func IsV2rayServiceValid() bool {
 func GetV2rayServiceVersion() (ver string, err error) {
 	dir, err := asset.GetV2rayWorkingDir()
 	if err != nil || len(dir) <= 0 {
-		return "", errors.New("cannot find v2ray executable binary")
+		return "", newError("cannot find v2ray executable binary")
 	}
 	out, err := exec.Command("sh", "-c", fmt.Sprintf("%v/v2ray -version|awk '{print $2}'|awk 'NR==1'", dir)).Output()
 	return strings.TrimSpace(string(out)), err
@@ -134,20 +133,20 @@ func IfTProxyModLoaded() bool {
 func CheckAndProbeTProxy() (err error) {
 	ver, err := GetV2rayServiceVersion()
 	if err != nil {
-		return errors.New("fail in getting the version of v2ray-core: " + err.Error())
+		return newError("fail in getting the version of v2ray-core").Base(err)
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.19.1"); err != nil || !greaterEqual {
-		return errors.New("the version of v2ray-core (" + ver + ") is lower than 4.19.1")
+		return newError("the version of v2ray-core (" + ver + ") is lower than 4.19.1")
 	}
 	if !IfTProxyModLoaded() && !common.IsInDocker() { //docker下无法判断
 		var out []byte
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
 			if !strings.Contains(string(out), "not found") {
-				return errors.New("fail in modprobing xt_TPROXY: " + string(out))
+				return newError("fail in modprobing xt_TPROXY: " + string(out))
 			}
 			// modprobe失败，不支持xt_TPROXY方案
-			return errors.New("not support xt_TPROXY: " + string(out))
+			return newError("not support xt_TPROXY: " + string(out))
 		}
 	}
 	return
@@ -156,10 +155,10 @@ func CheckAndProbeTProxy() (err error) {
 func CheckDohSupported() (err error) {
 	ver, err := GetV2rayServiceVersion()
 	if err != nil {
-		return errors.New("fail in getting the version of v2ray-core")
+		return newError("fail in getting the version of v2ray-core")
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
-		return errors.New("the version of v2ray-core is lower than 4.22.0")
+		return newError("the version of v2ray-core is lower than 4.22.0")
 	}
 	return
 }

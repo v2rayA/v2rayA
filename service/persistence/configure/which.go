@@ -1,7 +1,6 @@
 package configure
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -96,7 +95,7 @@ type Which struct {
 
 func (w *Which) Ping(timeout time.Duration) (err error) {
 	if w.TYPE == SubscriptionType {
-		return errors.New("you cannot ping a subscription")
+		return newError("you cannot ping a subscription")
 	}
 	tsr, err := w.LocateServer()
 	if err != nil {
@@ -138,16 +137,16 @@ func (w *Which) LocateServer() (sr *ServerRaw, err error) {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
-			return nil, errors.New("LocateServer: ID exceed range")
+			return nil, newError("LocateServer: ID exceed range")
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-			return nil, errors.New("LocateServer: ID or Sub exceed range")
+			return nil, newError("LocateServer: ID or Sub exceed range")
 		}
 		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
-		return nil, errors.New("LocateServer: invalid TYPE")
+		return nil, newError("LocateServer: invalid TYPE")
 	}
 }

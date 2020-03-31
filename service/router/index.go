@@ -1,11 +1,11 @@
 package router
 
 import (
+	"V2RayA/common"
+	"V2RayA/common/jwt"
 	"V2RayA/controller"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"V2RayA/common"
-	"V2RayA/common/jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"

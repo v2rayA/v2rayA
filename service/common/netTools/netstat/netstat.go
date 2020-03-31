@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -105,7 +104,7 @@ func parseAddr(s string) (*Address, error) {
 	case ipv6StrLen:
 		ip, err = parseIPv6(fields[0])
 	default:
-		return nil, errors.New("Bad formatted string")
+		return nil, newError("Bad formatted string")
 	}
 	if err != nil {
 		return nil, err
@@ -135,10 +134,6 @@ type Process struct {
 const (
 	SocketFreed = "process not found, correspond socket was freed"
 )
-
-func IsSocketFreed(err error) bool {
-	return err != nil && errors.Is(err, errors.New(SocketFreed))
-}
 
 /*
 较为消耗资源
@@ -172,7 +167,7 @@ loop1:
 			return s.process, nil
 		}
 	}
-	return nil, errors.New(SocketFreed)
+	return nil, newError(SocketFreed)
 }
 
 /*
@@ -198,7 +193,7 @@ loop1:
 			return fn, nil
 		}
 	}
-	return "", errors.New("not found")
+	return "", newError("not found")
 }
 
 func getProcName(s string) string {

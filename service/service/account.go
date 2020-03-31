@@ -4,13 +4,12 @@ import (
 	"V2RayA/common"
 	"V2RayA/common/jwt"
 	"V2RayA/persistence/configure"
-	"errors"
 	"time"
 )
 
 func Login(username, password string) (token string, err error) {
 	if !IsValidAccount(username, password) {
-		return "", errors.New("invalid username or password")
+		return "", newError("invalid username or password")
 	}
 	dur := 3 * time.Hour
 	return jwt.MakeJWT(map[string]string{
@@ -28,7 +27,7 @@ func IsValidAccount(username, password string) bool {
 
 func Register(username, password string) (token string, err error) {
 	if configure.ExistsAccount(username) {
-		return "", errors.New("username exists")
+		return "", newError("username exists")
 	}
 	err = configure.SetAccount(username, common.CryptoPwd(password))
 	if err != nil {
@@ -41,6 +40,6 @@ func ValidPasswordLength(password string) (bool, error) {
 	if len(password) >= 6 && len(password) <= 32 {
 		return true, nil
 	} else {
-		return false, errors.New("length of password should be between 6 and 32")
+		return false, newError("length of password should be between 6 and 32")
 	}
 }

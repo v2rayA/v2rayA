@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"errors"
 	"log"
 	"net"
 	"syscall"
@@ -29,7 +28,7 @@ func NewDirect(intface string) (*Direct, error) {
 
 	iface, err := net.InterfaceByName(intface)
 	if err != nil {
-		return nil, errors.New(err.Error() + ": " + intface)
+		return nil, newError(intface).Base(err)
 	}
 
 	return &Direct{iface: iface}, nil
@@ -57,7 +56,7 @@ func (d *Direct) Dial(network, addr string) (c net.Conn, err error) {
 
 	// no ip available (so no dials made), maybe the interface link is down
 	if c == nil && err == nil {
-		err = errors.New("dial failed, maybe the interface link is down, please check it")
+		err = newError("dial failed, maybe the interface link is down, please check it")
 	}
 
 	return c, err

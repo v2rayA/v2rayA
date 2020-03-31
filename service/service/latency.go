@@ -8,7 +8,6 @@ import (
 	"V2RayA/core/vmessInfo"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -180,7 +179,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	if v2rayRunning && configure.GetConnectedServer() != nil {
 		err = v2ray.UpdateV2RayConfig(nil)
 		if err != nil {
-			return which, errors.New("fail in restart v2ray-core, please connect a server")
+			return which, newError("fail in restart v2ray-core, please connect a server")
 		}
 	} else {
 		_ = v2ray.StopV2rayService() //没关掉那就不好意思了

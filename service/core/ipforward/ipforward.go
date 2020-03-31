@@ -1,7 +1,6 @@
 package ipforward
 
 import (
-	"errors"
 	"os/exec"
 	"strings"
 )
@@ -19,7 +18,7 @@ func WriteIpForward(on bool) (err error) {
 	}
 	out, err := exec.Command("sh", "-c", "echo "+val+" > /proc/sys/net/ipv4/ip_forward").CombinedOutput()
 	if err != nil {
-		err = errors.New(err.Error() + string(out))
+		err = newError(string(out)).Base(err)
 	}
 	return
 }

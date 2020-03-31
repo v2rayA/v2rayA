@@ -3,7 +3,6 @@ package persistence
 import (
 	"V2RayA/global"
 	"bytes"
-	"errors"
 	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -18,7 +17,7 @@ func Get(path string, val interface{}) (err error) {
 	}
 	v := gjson.GetBytes(b, path)
 	if !v.Exists() {
-		return errors.New("bad path")
+		return newError("bad path")
 	}
 	return jsoniter.Unmarshal([]byte(v.Raw), val)
 }
@@ -38,10 +37,10 @@ func GetArrayLen(path string) (length int, err error) {
 	}
 	v := gjson.GetBytes(b, path)
 	if !v.Exists() {
-		return -1, errors.New("bad path")
+		return -1, newError("bad path")
 	}
 	if !v.IsArray() {
-		return -1, errors.New("not an array")
+		return -1, newError("not an array")
 	}
 	return len(v.Array()), nil
 }
@@ -52,10 +51,10 @@ func GetObjectLen(path string) (length int, err error) {
 	}
 	v := gjson.GetBytes(b, path)
 	if !v.Exists() {
-		return -1, errors.New("bad path")
+		return -1, newError("bad path")
 	}
 	if !v.IsObject() {
-		return -1, errors.New("not an object")
+		return -1, newError("not an object")
 	}
 	return len(v.Map()), nil
 }
@@ -90,7 +89,7 @@ func Set(path string, val interface{}) (err error) {
 
 func Append(path string, val interface{}) (err error) {
 	if path == "" || path == "." {
-		return errors.New("cannot append an element at root")
+		return newError("cannot append an element at root")
 	}
 	return Set(path+".-1", val)
 }
