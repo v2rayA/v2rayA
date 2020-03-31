@@ -6,7 +6,6 @@ import (
 	"V2RayA/persistence"
 	"bytes"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -233,7 +232,7 @@ func ExistsAccount(username string) bool {
 func GetPasswordOfAccount(username string) (pwd string, err error) {
 	path := fmt.Sprintf("accounts.%s", username)
 	if !persistence.Exists(path) {
-		return "", errors.New("username not exists")
+		return "", newError("username not exists")
 	}
 	err = persistence.Get(path, &pwd)
 	return

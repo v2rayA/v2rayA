@@ -5,7 +5,6 @@ import (
 	ports2 "V2RayA/common/netTools/ports"
 	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
-	"errors"
 	"fmt"
 	"strconv"
 )
@@ -38,7 +37,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 		cnt++
 	}
 	if cnt > len(set) {
-		return errors.New("ports duplicate. check it")
+		return newError("ports duplicate. check it")
 	}
 	detectSyntax := make([]string, 0, 3)
 	if ports.Socks5 != p.Socks5 {
@@ -69,7 +68,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 		}
 		process, err := v.Process()
 		if err == nil && process.Name != "v2ray" {
-			return errors.New(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))
+			return newError(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))
 		}
 	}
 	err = configure.SetPorts(&p)

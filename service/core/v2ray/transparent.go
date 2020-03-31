@@ -1,10 +1,9 @@
 package v2ray
 
 import (
-	"V2RayA/global"
 	"V2RayA/core/iptables"
+	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"errors"
 	"log"
 	"strings"
 )
@@ -18,7 +17,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 	if global.SupportTproxy {
 		if err := iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
-				err = errors.New("not compile xt_TPROXY in kernel")
+				err = newError("not compile xt_TPROXY in kernel")
 			}
 			DeleteTransparentProxyRules()
 			log.Println(err)
@@ -29,7 +28,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
 			log.Println(err)
 			DeleteTransparentProxyRules()
-			return errors.New("not support transparent proxy: " + err.Error())
+			return newError("not support transparent proxy: ").Base(err)
 		}
 	}
 	return nil

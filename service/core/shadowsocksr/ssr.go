@@ -4,7 +4,6 @@ import (
 	"V2RayA/common/netTools/ports"
 	"V2RayA/extra/proxy/socks5"
 	"V2RayA/extra/proxy/ssr"
-	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -69,10 +68,10 @@ func (self *SSR) Serve(localPort int, cipher, passwd, address, port, obfs, obfsP
 
 func (self *SSR) Close() error {
 	if self.c == nil {
-		return errors.New("close fail: shadowsocksr not running")
+		return newError("close fail: shadowsocksr not running")
 	}
 	if len(self.c) > 0 {
-		return errors.New("close fail: duplicate close")
+		return newError("close fail: duplicate close")
 	}
 	self.c <- struct{}{}
 	self.c = nil
@@ -89,7 +88,7 @@ func (self *SSR) Close() error {
 		}
 		if time.Since(start) > 3*time.Second {
 			log.Println("SSR.Close: 关闭SSR超时", self.port)
-			return errors.New("SSR.Close: timeout of closing SSR")
+			return newError("SSR.Close: timeout of closing SSR")
 		}
 		time.Sleep(200 * time.Millisecond)
 	}

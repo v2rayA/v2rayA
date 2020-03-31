@@ -4,7 +4,6 @@ import (
 	"V2RayA/core/v2ray"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
-	"errors"
 	"log"
 )
 
@@ -29,7 +28,7 @@ func Connect(which *configure.Which) (err error) {
 	log.Println("Connect: begin")
 	defer log.Println("Connect: done")
 	if which == nil {
-		return errors.New("which can not be nil")
+		return newError("which can not be nil")
 	}
 	//定位Server
 	tsr, err := which.LocateServer()

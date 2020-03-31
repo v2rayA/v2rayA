@@ -1,7 +1,6 @@
 package process
 
 import (
-	"errors"
 	"os/exec"
 	"strings"
 )
@@ -27,7 +26,7 @@ func KillAll(process string, immediately bool) (e error) {
 		cmd += pid
 		out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 		if err != nil {
-			e = errors.New(err.Error() + string(out))
+			e = newError(string(out)).Base(err)
 		}
 	}
 	return

@@ -12,7 +12,7 @@ import (
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
 	"V2RayA/service"
-	"errors"
+	"v2ray.com/core/common/errors"
 	"fmt"
 	"github.com/gookit/color"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"

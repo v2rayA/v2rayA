@@ -41,7 +41,7 @@ func GetRemoteGFWListVersion(ctx *gin.Context) {
 	//}
 	g, err := gfwlist.GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, gin.H{"remoteGFWListVersion": g.UpdateTime.Local().Format("2006-01-02")})

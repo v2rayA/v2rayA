@@ -9,7 +9,6 @@ import (
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"bytes"
-	"errors"
 	"fmt"
 	netstat2 "github.com/cakturk/go-netstat/netstat"
 	"github.com/json-iterator/go"
@@ -103,7 +102,7 @@ func testprint() string {
 func RestartV2rayService() (err error) {
 	setting := configure.GetSettingNotNil()
 	if (setting.Transparent == configure.TransparentGfwlist || setting.PacMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
-		return errors.New("cannot find GFWList files. update GFWList and try again")
+		return newError("cannot find GFWList files. update GFWList and try again")
 	}
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
 	var out []byte
@@ -111,12 +110,12 @@ func RestartV2rayService() (err error) {
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray restart").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	case global.SystemctlMode:
 		out, err = exec.Command("sh", "-c", "systemctl restart v2ray").Output()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	case global.UniversalMode:
 		_ = killV2ray()
@@ -132,7 +131,7 @@ func RestartV2rayService() (err error) {
 			},
 		})
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	}
 	if err != nil {
@@ -180,7 +179,7 @@ func RestartV2rayService() (err error) {
 		}
 
 		if time.Since(startTime) > 15*time.Second {
-			return errors.New("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
+			return newError("v2ray-core does not start normally, there may be a problem with the configuration file or the required port is occupied")
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
@@ -310,7 +309,7 @@ func StopV2rayService() (err error) {
 			if err != nil && len(strings.TrimSpace(err.Error())) > 0 {
 				msg += ": " + err.Error()
 			}
-			err = errors.New(msg)
+			err = newError(msg)
 		}
 	}()
 	var out []byte
@@ -320,12 +319,12 @@ func StopV2rayService() (err error) {
 	case global.ServiceMode:
 		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	case global.SystemctlMode:
 		out, err = exec.Command("sh", "-c", "systemctl stop v2ray").CombinedOutput()
 		if err != nil {
-			err = errors.New(err.Error() + string(out))
+			err = newError(string(out)).Base(err)
 		}
 	}
 	return

@@ -2,7 +2,6 @@ package cmds
 
 import (
 	"bytes"
-	"errors"
 	"os/exec"
 	"strings"
 )
@@ -25,7 +24,7 @@ func ExecCommands(commands string, stopWhenError bool) error {
 		}
 		out, err := exec.Command("sh", "-c", line).CombinedOutput()
 		if err != nil {
-			e = errors.New(line + " " + err.Error() + " " + string(out))
+			e = newError(line, " ", string(out)).Base(err)
 			if stopWhenError {
 				return e
 			}

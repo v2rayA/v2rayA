@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"errors"
 	"net"
 	"net/url"
 	"strings"
@@ -34,7 +33,7 @@ func RegisterServer(name string, c ServerCreator) {
 // dialer is the default upstream dialer so cannot be nil, we can use Default when calling this function
 func ServerFromURL(s string, p Proxy) (Server, error) {
 	if p == nil {
-		return nil, errors.New("ServerFromURL: dialer cannot be nil")
+		return nil, newError("ServerFromURL: dialer cannot be nil")
 	}
 
 	if !strings.Contains(s, "://") {
@@ -52,5 +51,5 @@ func ServerFromURL(s string, p Proxy) (Server, error) {
 		return c(s, p)
 	}
 
-	return nil, errors.New("unknown scheme '" + u.Scheme + "'")
+	return nil, newError("unknown scheme '" + u.Scheme + "'")
 }

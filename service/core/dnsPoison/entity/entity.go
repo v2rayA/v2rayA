@@ -1,10 +1,9 @@
 package entity
 
 import (
+	"V2RayA/common/netTools"
 	"V2RayA/core/dnsPoison"
 	"V2RayA/core/v2ray/asset"
-	"V2RayA/common/netTools"
-	"errors"
 	"log"
 	"sync"
 	"time"
@@ -55,7 +54,7 @@ func SetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
 func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*router.Domain) (err error) {
 	defer func() {
 		if err != nil {
-			err = errors.New("StartDNSPoison: " + err.Error())
+			err = newError("StartDNSPoison").Base(err)
 		}
 	}()
 	mutex.Lock()
@@ -65,7 +64,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 			//done has closed
 		default:
 			mutex.Unlock()
-			return errors.New("DNSPoison is running")
+			return newError("DNSPoison is running")
 		}
 	}
 	done = make(chan interface{})

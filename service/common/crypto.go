@@ -1,16 +1,13 @@
 package common
 
 import (
-	"bytes"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
-	"os/exec"
 	"strings"
 )
 
@@ -54,26 +51,4 @@ func Base64URLDecode(s string) (string, error) {
 		return saver, err
 	}
 	return string(raw), err
-}
-
-// 封装一个外部调用进行base64解码
-func ExecBase64Decode(s string) (string, error) {
-	if len(s)%4 > 0 {
-		s += strings.Repeat("=", 4-len(s)%4)
-	}
-	rbuf := new(bytes.Buffer)
-	ebuf := new(bytes.Buffer)
-	c1 := exec.Command("echo", s)
-	c2 := exec.Command("base64", "-d")
-	c2.Stdin, _ = c1.StdoutPipe()
-	c2.Stdout = rbuf
-	c2.Stderr = ebuf
-	c2.Start()
-	c1.Run()
-	c2.Wait()
-	var err error
-	if ebuf.Len() > 0 {
-		err = errors.New(ebuf.String())
-	}
-	return rbuf.String(), err
 }

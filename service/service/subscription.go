@@ -1,13 +1,12 @@
 package service
 
 import (
+	"V2RayA/common"
+	"V2RayA/common/httpClient"
 	"V2RayA/core/nodeData"
 	"V2RayA/core/touch"
 	"V2RayA/persistence/configure"
-	"V2RayA/common"
-	"V2RayA/common/httpClient"
 	"bytes"
-	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -53,13 +52,13 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
 		reason := "fail in get proxy"
-		return errors.New(reason)
+		return newError(reason)
 	}
 	infos, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		reason := "fail in resolving subscription address: " + err.Error()
 		log.Println(infos, err)
-		return errors.New(reason)
+		return newError(reason)
 	}
 	tsrs := make([]configure.ServerRaw, len(infos))
 	var connectedServer *configure.ServerRaw
@@ -98,7 +97,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			err = Disconnect()
 			if err != nil {
 				reason := "fail in disconnecting previous server"
-				return errors.New(reason)
+				return newError(reason)
 			}
 		} else if connectedServer != nil {
 			//将之前连接的节点append进去
@@ -118,7 +117,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return errors.New("fail in finding the corresponding subscription")
+		return newError("fail in finding the corresponding subscription")
 	}
 	raw.Remarks = subscription.Remarks
 	return configure.SetSubscription(subscription.ID-1, raw)

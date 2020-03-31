@@ -1,10 +1,9 @@
 package controller
 
 import (
+	"V2RayA/common"
 	"V2RayA/core/routingA"
 	"V2RayA/persistence/configure"
-	"V2RayA/common"
-	"errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,17 +18,17 @@ func PutRoutingA(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, errors.New("bad request"+err.Error()))
+		common.ResponseError(ctx, logError(err, "bad request"))
 		return
 	}
 	_, err = routingA.Parse(data.RoutingA)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	err = configure.SetRoutingA(data.RoutingA)
 	if err != nil {
-		common.ResponseError(ctx, err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, nil)
