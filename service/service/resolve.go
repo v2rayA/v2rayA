@@ -246,10 +246,13 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 	data.VmessInfo = info
 	return
 }
+
+var ErrorEmptyAddress = newError("ResolveURL error: empty address")
+
 func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	u = strings.TrimSpace(u)
 	if len(u) <= 0 {
-		err = newError("ResolveURL error: empty address")
+		err = ErrorEmptyAddress
 		return
 	}
 	if strings.HasPrefix(u, "vmess://") {
