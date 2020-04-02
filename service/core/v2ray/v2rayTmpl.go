@@ -349,8 +349,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 	return
 }
 
-func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohDomains []string) {
-	setting := configure.GetSettingNotNil()
+func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *configure.Setting) (dohIPs, dohDomains []string) {
 	//先修改DNS设置
 	t.DNS = new(DNS)
 	switch setting.AntiPollution {
@@ -455,8 +454,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool) (dohIPs, dohDo
 	return
 }
 
-func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string) (serverIPs []string, serverDomain string) {
-	setting := configure.GetSettingNotNil()
+func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string, setting *configure.Setting) (serverIPs []string, serverDomain string) {
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
 		hosts := make([]string, len(dohHosts))
@@ -557,8 +555,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 	return
 }
 
-func (t *Template) SetPacRouting() {
-	setting := configure.GetSettingNotNil()
+func (t *Template) SetPacRouting(setting *configure.Setting) {
 	switch setting.PacMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules,
@@ -773,8 +770,7 @@ func parseRoutingA(t *Template, inboundTags []string) {
 		InboundTag:  []string{"pac"},
 	})
 }
-func (t *Template) SetTransparentRouting() {
-	setting := configure.GetSettingNotNil()
+func (t *Template) SetTransparentRouting(setting *configure.Setting) {
 	switch setting.Transparent {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
@@ -842,7 +838,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
-func (t *Template) SetOutboundSockopt(supportUDP bool) {
+func (t *Template) SetOutboundSockopt(supportUDP bool, setting *configure.Setting) {
 	mark := 0xff
 	//tos := 184
 	for i := range t.Outbounds {
@@ -858,7 +854,6 @@ func (t *Template) SetOutboundSockopt(supportUDP bool) {
 		if t.Outbounds[i].Protocol == "freedom" && t.Outbounds[i].Tag == "direct" {
 			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
 		}
-		setting := configure.GetSettingNotNil()
 		if setting.TcpFastOpen != configure.Default {
 			tmp := setting.TcpFastOpen == configure.Yes
 			t.Outbounds[i].StreamSettings.Sockopt.TCPFastOpen = &tmp
@@ -875,7 +870,7 @@ func (t *Template) AppendDNSOutbound() {
 	})
 }
 
-func (t *Template) SetInboundPort() {
+func (t *Template) SetInbound(setting *configure.Setting) {
 	ports := configure.GetPorts()
 	if ports != nil {
 		t.Inbounds[2].Port = ports.HttpWithPac
@@ -888,11 +883,19 @@ func (t *Template) SetInboundPort() {
 			}
 		}
 	}
+	if setting.Transparent != configure.TransparentClose {
+		var tproxy string
+		if global.SupportTproxy == true {
+			tproxy = "tproxy"
+		} else {
+			tproxy = "redirect"
+		}
+		t.AppendDokodemo(&tproxy, 12345, "transparent")
+	}
 }
 
-func checkGFWListFileExists() error {
+func checkGFWListFileExists(setting *configure.Setting) error {
 	//FIXME: non-fully check
-	setting := configure.GetSettingNotNil()
 	if setting.PacMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
 		if !gfwlist.LoyalsoldierSiteDatExists() {
 			return newError("GFWList file not exists. Try updating GFWList please")
@@ -902,7 +905,8 @@ func checkGFWListFileExists() error {
 }
 
 func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.ExtraInfo, err error) {
-	if err = checkGFWListFileExists(); err != nil {
+	setting := configure.GetSettingNotNil()
+	if err = checkGFWListFileExists(setting); err != nil {
 		return
 	}
 	var tmplJson TmplJson
@@ -924,7 +928,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 		return t, nil, err
 	}
 	t.Outbounds[0] = o
-	setting := configure.GetSettingNotNil()
 	var supportUDP = true
 	switch o.Protocol {
 	case "vmess":
@@ -937,35 +940,25 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 		supportUDP = false
 	}
 	//根据配置修改端口
-	t.SetInboundPort()
+	t.SetInbound(setting)
 	//设置DNS
-	dohIPs, dohHosts := t.SetDNS(v, supportUDP)
-	//再修改inbounds
-	if setting.Transparent != configure.TransparentClose {
-		var tproxy string
-		if global.SupportTproxy == true {
-			tproxy = "tproxy"
-		} else {
-			tproxy = "redirect"
-		}
-		t.AppendDokodemo(&tproxy, 12345, "transparent")
-	}
+	dohIPs, dohHosts := t.SetDNS(v, supportUDP, setting)
 	//再修改outbounds
 	t.AppendDNSOutbound()
 	//最后是routing
-	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts)
+	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts, setting)
 	//添加hosts
 	if len(serverDomain) > 0 && len(serverIPs) > 0 {
 		t.DNS.Hosts[serverDomain] = serverIPs[0]
 	}
 	//PAC端口规则
-	t.SetPacRouting()
+	t.SetPacRouting(setting)
 	//根据是否使用全局代理修改路由
 	if setting.Transparent != configure.TransparentClose {
-		t.SetTransparentRouting()
+		t.SetTransparentRouting(setting)
 	}
 	//置outboundSockopt
-	t.SetOutboundSockopt(supportUDP)
+	t.SetOutboundSockopt(supportUDP, setting)
 
 	return t, &entity.ExtraInfo{
 		DohIps:       dohIPs,
