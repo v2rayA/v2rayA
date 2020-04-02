@@ -82,6 +82,13 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 	return
 }
 
+func LoyalsoldierSiteDatExists() bool {
+	if info, err := os.Stat(asset.GetV2rayLocationAsset() + "/LoyalsoldierSite.dat"); err == nil && !info.IsDir() {
+		return true
+	}
+	return false
+}
+
 func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	i := 0
 	gfwlist, err := GetRemoteGFWListUpdateTime(http.DefaultClient)

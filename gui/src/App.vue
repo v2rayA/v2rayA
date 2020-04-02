@@ -265,7 +265,7 @@ export default {
               });
             }
           }),
-          5 * 1000,
+          3 * 1000,
           cancel
         );
       } else if (this.runningState.running === this.$t("common.isRunning")) {

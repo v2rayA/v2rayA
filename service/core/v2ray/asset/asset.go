@@ -37,14 +37,16 @@ func GetV2rayLocationAsset() (s string) {
 	}
 	var err error
 	if s == "" {
-		//默认为v2ray运行目录
+		//by default, v2ray working directory
 		s, err = GetV2rayWorkingDir()
 	}
 	if err != nil {
-		//再不行只能盲猜一个
+		//fine, guess one
 		s = "/etc/v2ray"
+	} else {
+		//save the result if not by guess
+		v2rayLocationAsset = &s
 	}
-	v2rayLocationAsset = &s
 	return
 }
 

@@ -175,7 +175,7 @@ loop1:
 没有做缓存，每次调用都会扫描，消耗资源
 */
 
-var NotFoundError = newError("process not found")
+var ErrorNotFound = newError("process not found")
 
 func findProcessID(pname string) (pid string, err error) {
 	f, err := ioutil.ReadDir(pathProc)
@@ -198,7 +198,7 @@ loop1:
 			return fn, nil
 		}
 	}
-	return "", NotFoundError
+	return "", ErrorNotFound
 }
 
 func getProcName(s string) string {
@@ -354,7 +354,7 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	}
 	pid, err := findProcessID(pname)
 	if err != nil {
-		if errors.Cause(err) == NotFoundError {
+		if errors.Cause(err) == ErrorNotFound {
 			return false, nil
 		}
 		return

@@ -165,6 +165,11 @@ func RestartV2rayService() (err error) {
 			break
 		}
 	}
+	defer func() {
+		log.Println(port)
+		log.Println("\n" + netstat.Print([]string{"tcp", "tcp6"}))
+		log.Println("\n" + testprint())
+	}()
 	startTime := time.Now()
 	for {
 		if bPortOpen {

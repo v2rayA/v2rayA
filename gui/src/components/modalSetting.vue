@@ -439,7 +439,7 @@ export default {
             this.$parent.close();
           });
         }),
-        5 * 1000,
+        3 * 1000,
         cancel
       );
     },

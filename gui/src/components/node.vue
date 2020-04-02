@@ -670,7 +670,7 @@ export default {
               });
             }
           }),
-          5 * 1000,
+          3 * 1000,
           cancel
         );
       } else {
