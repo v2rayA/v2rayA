@@ -7,6 +7,7 @@ import (
 	"V2RayA/core/touch"
 	"V2RayA/persistence/configure"
 	"bytes"
+	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"strings"
@@ -35,7 +36,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		var data *nodeData.NodeData
 		data, err = ResolveURL(row)
 		if err != nil {
-			if !strings.Contains(err.Error(), "空地址") {
+			if errors.Cause(err) != ErrorEmptyAddress {
 				log.Println(row, err)
 			}
 			err = nil
