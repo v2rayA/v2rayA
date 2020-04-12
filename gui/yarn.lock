@@ -9019,7 +9019,7 @@ webpack-dev-server@^3.10.3:
     ws "^6.2.1"
     yargs "12.0.5"
 
-webpack-iconfont-plugin-nodejs@^1.0.17:
+webpack-iconfont-plugin-nodejs@^1.0.16:
   version "1.0.16"
   resolved "https://registry.npm.taobao.org/webpack-iconfont-plugin-nodejs/download/webpack-iconfont-plugin-nodejs-1.0.16.tgz#e10ad444e505a7c2fa54bbc047b27614834825c1"
   integrity sha1-4QrUROUFp8L6VLvAR7J2FINIJcE=
