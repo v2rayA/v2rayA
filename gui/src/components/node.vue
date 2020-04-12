@@ -921,7 +921,8 @@ export default {
         data: {
           url: url,
           which: this.which
-        }
+        },
+        timeout: 0
       }).then(res => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({

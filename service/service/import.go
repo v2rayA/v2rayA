@@ -7,9 +7,11 @@ import (
 	"V2RayA/core/v2ray"
 	"V2RayA/persistence/configure"
 	"strings"
+	"time"
 )
 
 func Import(url string, which *configure.Which) (err error) {
+	url = strings.TrimSpace(url)
 	if strings.HasPrefix(url, "vmess://") || strings.HasPrefix(url, "ss://") || strings.HasPrefix(url, "ssr://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)
@@ -47,6 +49,7 @@ func Import(url string, which *configure.Which) (err error) {
 		if err != nil {
 			return err
 		}
+		c.Timeout = 90 * time.Second
 		infos, err := ResolveSubscriptionWithClient(url, c)
 		if err != nil {
 			return newError("fail in resolving subscription address").Base(err)
