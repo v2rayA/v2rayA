@@ -4,3 +4,4 @@
 **/*.test.go
 **/.tr
 **/node_modules/**
+yarn.lock
