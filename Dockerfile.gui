@@ -1,7 +1,7 @@
 FROM node:lts-alpine AS builder
 ADD gui /gui
 WORKDIR /gui
-RUN npm
+RUN npm install
 RUN npm run build
 
 FROM nginx:stable-alpine
