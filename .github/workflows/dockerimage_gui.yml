@@ -16,5 +16,6 @@ jobs:
       run: |
         docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
         docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-        docker buildx create --use --name mybuilder
+        docker buildx create --name crossbuilder
+        docker buildx use crossbuilder
         docker buildx build -t mzz2017/v2raya-gui --platform=linux/arm,linux/arm64,linux/amd64,linux/386,linux/ppc64le,linux/s390x . --push
