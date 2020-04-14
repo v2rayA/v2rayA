@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"V2RayA/core/dnsPoison/entity"
-	"V2RayA/core/gfwlist"
 	"V2RayA/core/routingA"
 	"V2RayA/core/v2ray/asset"
 	"V2RayA/core/vmessInfo"
@@ -894,21 +893,8 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 	}
 }
 
-func checkGFWListFileExists(setting *configure.Setting) error {
-	//FIXME: non-fully check
-	if setting.PacMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
-		if !gfwlist.LoyalsoldierSiteDatExists() {
-			return newError("GFWList file not exists. Try updating GFWList please")
-		}
-	}
-	return nil
-}
-
 func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.ExtraInfo, err error) {
 	setting := configure.GetSettingNotNil()
-	if err = checkGFWListFileExists(setting); err != nil {
-		return
-	}
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)

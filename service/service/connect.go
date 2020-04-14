@@ -2,6 +2,7 @@ package service
 
 import (
 	"V2RayA/core/v2ray"
+	"V2RayA/core/v2ray/asset/gfwlist"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"log"
@@ -24,9 +25,23 @@ func Disconnect() (err error) {
 	return
 }
 
+func checkAssetsExist(setting *configure.Setting) error {
+	//FIXME: non-fully check
+	if setting.PacMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
+		if !gfwlist.LoyalsoldierSiteDatExists() {
+			return newError("GFWList file not exists. Try updating GFWList please")
+		}
+	}
+	return nil
+}
+
 func Connect(which *configure.Which) (err error) {
 	log.Println("Connect: begin")
 	defer log.Println("Connect: done")
+	setting := GetSetting()
+	if err = checkAssetsExist(setting); err != nil {
+		return
+	}
 	if which == nil {
 		return newError("which can not be nil")
 	}

@@ -2,17 +2,16 @@ package main
 
 import (
 	"V2RayA/common/netTools/ports"
-	"V2RayA/core/gfwlist"
 	"V2RayA/core/ipforward"
 	"V2RayA/core/iptables"
 	"V2RayA/core/v2ray"
 	"V2RayA/core/v2ray/asset"
+	"V2RayA/core/v2ray/asset/gfwlist"
 	"V2RayA/extra/gopeed"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
 	"V2RayA/router"
 	"V2RayA/service"
-	"v2ray.com/core/common/errors"
 	"fmt"
 	"github.com/gookit/color"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
@@ -30,6 +29,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"v2ray.com/core/common/errors"
 )
 
 func testTproxy() {
