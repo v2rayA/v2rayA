@@ -1,8 +1,4 @@
 import CONST from "./const.js";
-import axios from "../../plugins/axios";
-import Vue from "vue";
-import store from "../../store";
-import App from "../../App";
 function locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
   let sub = whichServer.sub;
@@ -78,10 +74,10 @@ function parseURL(url) {
       }
       return ret;
     })(),
-    file: (a.pathname.match(/\/([^\/?#]+)$/i) || [, ""])[1],
+    file: (a.pathname.match(/\/([^/?#]+)$/i) || [null, ""])[1],
     hash: a.hash.replace("#", ""),
-    path: a.pathname.replace(/^([^\/])/, "/$1"),
-    relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [, ""])[1],
+    path: a.pathname.replace(/^([^/])/, "/$1"),
+    relative: (a.href.match(/tps?:\/\/[^/]+(.+)/) || [null, ""])[1],
     segments: a.pathname.replace(/^\//, "").split("/")
   };
 }

@@ -405,9 +405,9 @@ import QRCode from "qrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";
-import ModalSubscription from "./modalSuscription";
-import { waitingConnected } from "../assets/js/networkInspect";
-import axios from "../plugins/axios";
+import ModalSubscription from "@/components/modalSuscription";
+import { waitingConnected } from "@/assets/js/networkInspect";
+import axios from "@/plugins/axios";
 export default {
   name: "Node",
   components: { ModalSubscription, ModalServer },
@@ -1023,7 +1023,7 @@ td {
 </style>
 
 <style lang="scss">
-@import "../../node_modules/bulma/sass/utilities/all";
+@import "~bulma/sass/utilities/all";
 #toolbar {
   padding: 0.75em 0.75em 0;
   margin-bottom: 1rem;

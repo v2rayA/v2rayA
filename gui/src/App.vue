@@ -100,7 +100,7 @@
 
 <script>
 import ModalSetting from "@/components/modalSetting";
-import node from "@/components/node";
+import node from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
 import { parseURL } from "./assets/js/utils";
@@ -142,10 +142,6 @@ export default {
   created() {
     console.log("app created");
     let ba = localStorage.getItem("backendAddress");
-    if (!ba) {
-      ba = "http://localhost:2017";
-      localStorage.setItem("backendAddress", ba);
-    }
     let u = parseURL(ba);
     document.title = `V2RayA - ${u.host}:${u.port}`;
     this.$axios({
