@@ -296,7 +296,6 @@ export default {
 </script>
 
 <style lang="scss">
-//TODO: 缓冲css到本地
 @import "assets/iconfont/fonts/font.css";
 @import "assets/scss/reset.scss";
 </style>
