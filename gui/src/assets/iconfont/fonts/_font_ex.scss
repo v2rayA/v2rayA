@@ -1,0 +1,16 @@
+@import "/font.css";
+
+[class^="mdi"], [class*=" mdi"] {
+  font-family: 'iconfont';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-style: normal;
+}
+
+.mdi-chevron-left::before {
+  content: "\ea06";
+}
+
+.mdi-chevron-right::before {
+  content: "\ea07";
+}

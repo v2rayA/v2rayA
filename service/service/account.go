@@ -9,7 +9,7 @@ import (
 
 func Login(username, password string) (token string, err error) {
 	if !IsValidAccount(username, password) {
-		return "", newError("invalid username or password")
+		return "", newError("wrong username or password")
 	}
 	dur := 3 * time.Hour
 	return jwt.MakeJWT(map[string]string{

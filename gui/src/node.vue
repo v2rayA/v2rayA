@@ -125,6 +125,9 @@
         >
           <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
             <b-table
+              :paginated="tableData.subscriptions.length > 30"
+              :current-page.sync="currentPage.subscriptions"
+              per-page="15"
               :data="tableData.subscriptions"
               :checked-rows.sync="checkedRows"
               :row-class="(row, index) => row.connected && 'is-connected'"
@@ -200,6 +203,9 @@
         >
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
+              :paginated="tableData.servers.length > 30"
+              per-page="15"
+              :current-page.sync="currentPage.servers"
               :data="tableData.servers"
               :checked-rows.sync="checkedRows"
               checkable
@@ -287,6 +293,9 @@
         >
           <b-field :label="`${sub.host.toUpperCase()}(${sub.servers.length})`">
             <b-table
+              :paginated="sub.servers.length > 30"
+              :current-page.sync="currentPage[sub.id]"
+              per-page="15"
               :data="sub.servers"
               :checked-rows.sync="checkedRows"
               checkable
@@ -413,6 +422,7 @@ export default {
   components: { ModalSubscription, ModalServer },
   data() {
     return {
+      currentPage: { servers: 0, subscriptions: 0 },
       tableData: {
         servers: [],
         subscriptions: [],

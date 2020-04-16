@@ -53,7 +53,7 @@ func PutAccount(ctx *gin.Context) {
 	}
 	username := ctx.GetString("Name")
 	if !service.IsValidAccount(username, data.Password) {
-		common.ResponseError(ctx, logError(nil, "invalid username or password"))
+		common.ResponseError(ctx, logError(nil, "wrong username or password"))
 		return
 	}
 	//TODO: modify password

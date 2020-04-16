@@ -60,9 +60,9 @@ func Import(url string, which *configure.Which) (err error) {
 			servers[i] = *v.ToServerRaw()
 		}
 		//去重
-		unique := make(map[configure.ServerRaw]struct{})
+		unique := make(map[configure.ServerRaw]interface{})
 		for _, s := range servers {
-			unique[s] = struct{}{}
+			unique[s] = nil
 		}
 		uniqueServers := make([]configure.ServerRaw, 0)
 		for _, s := range servers {
