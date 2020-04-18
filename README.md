@@ -26,7 +26,7 @@ See [**V2RayA - Wiki**](https://github.com/mzz2017/V2RayA/wiki/Usage)
 
 ## Screenshot
 
-<img src="https://s2.ax1x.com/2020/02/24/3GOhkQ.png" alt="3GOhkQ.png" border="0">
+<img src="https://sm.ms/image/PrJZVzcBuR735yT" border="0">
 
 ## Statement
 
