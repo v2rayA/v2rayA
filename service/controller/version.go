@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"V2RayA/common"
-	"V2RayA/core/v2ray"
-	"V2RayA/core/v2ray/asset/gfwlist"
-	"V2RayA/global"
+	"v2rayA/common"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/v2ray/asset/gfwlist"
+	"v2rayA/global"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

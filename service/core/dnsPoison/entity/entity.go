@@ -1,9 +1,9 @@
 package entity
 
 import (
-	"V2RayA/common/netTools"
-	"V2RayA/core/dnsPoison"
-	"V2RayA/core/v2ray/asset"
+	"v2rayA/common/netTools"
+	"v2rayA/core/dnsPoison"
+	"v2rayA/core/v2ray/asset"
 	"log"
 	"sync"
 	"time"

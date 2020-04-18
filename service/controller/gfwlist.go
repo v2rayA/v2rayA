@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"V2RayA/common"
-	"V2RayA/core/v2ray/asset/gfwlist"
+	"v2rayA/common"
+	"v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/gin-gonic/gin"
 )
 

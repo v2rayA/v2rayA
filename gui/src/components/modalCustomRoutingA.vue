@@ -63,7 +63,7 @@ export default {
   },
   methods: {
     handleClickManual() {
-      window.open("https://github.com/mzz2017/V2RayA/wiki/RoutingA", "_blank");
+      window.open("https://github.com/mzz2017/v2rayA/wiki/RoutingA", "_blank");
     },
     handleClickSubmit() {
       this.$axios({

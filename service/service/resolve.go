@@ -1,9 +1,9 @@
 package service
 
 import (
-	"V2RayA/common"
-	"V2RayA/core/nodeData"
-	"V2RayA/core/vmessInfo"
+	"v2rayA/common"
+	"v2rayA/core/nodeData"
+	"v2rayA/core/vmessInfo"
 	"github.com/json-iterator/go"
 	"log"
 	"net/url"

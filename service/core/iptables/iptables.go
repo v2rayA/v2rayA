@@ -1,8 +1,8 @@
 package iptables
 
 import (
-	"V2RayA/common"
-	"V2RayA/common/cmds"
+	"v2rayA/common"
+	"v2rayA/common/cmds"
 	"strings"
 )
 

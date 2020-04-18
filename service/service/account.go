@@ -1,9 +1,9 @@
 package service
 
 import (
-	"V2RayA/common"
-	"V2RayA/common/jwt"
-	"V2RayA/persistence/configure"
+	"v2rayA/common"
+	"v2rayA/common/jwt"
+	"v2rayA/persistence/configure"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"V2RayA/persistence/configure"
+	"v2rayA/persistence/configure"
 	"testing"
 )
 

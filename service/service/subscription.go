@@ -1,11 +1,11 @@
 package service
 
 import (
-	"V2RayA/common"
-	"V2RayA/common/httpClient"
-	"V2RayA/core/nodeData"
-	"V2RayA/core/touch"
-	"V2RayA/persistence/configure"
+	"v2rayA/common"
+	"v2rayA/common/httpClient"
+	"v2rayA/core/nodeData"
+	"v2rayA/core/touch"
+	"v2rayA/persistence/configure"
 	"bytes"
 	"log"
 	"net/http"

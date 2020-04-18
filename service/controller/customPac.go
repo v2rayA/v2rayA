@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"V2RayA/common"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/persistence/configure"
-	"V2RayA/service"
+	"v2rayA/common"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/persistence/configure"
+	"v2rayA/service"
 	"github.com/gin-gonic/gin"
 )
 

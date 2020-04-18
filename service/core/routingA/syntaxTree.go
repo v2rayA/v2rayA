@@ -1,8 +1,8 @@
 package routingA
 
 import (
-	"V2RayA/common"
-	"V2RayA/global"
+	"v2rayA/common"
+	"v2rayA/global"
 	"v2ray.com/core/common/errors"
 	"fmt"
 	"strconv"

@@ -2,12 +2,12 @@
   <div class="modal-card" style="max-width: 450px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
-        {{ first ? $t("register.title") : `${$t("login.title")} - V2RayA` }}
+        {{ first ? $t("register.title") : `${$t("login.title")} - v2rayA` }}
       </p>
     </header>
     <section class="modal-card-body">
       <p style="text-align: center">
-        <img src="../assets/logo2.png" alt="V2RayA" />
+        <img src="../assets/logo2.png" alt="v2rayA" />
       </p>
       <b-field :label="$t('login.username')" type="is-success">
         <b-input v-model="username" @keyup.enter.native="handleEnter"></b-input>

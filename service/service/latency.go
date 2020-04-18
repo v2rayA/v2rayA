@@ -1,13 +1,13 @@
 package service
 
 import (
-	"V2RayA/common/httpClient"
-	"V2RayA/common/netTools/netstat"
-	"V2RayA/core/v2ray"
-	"V2RayA/core/vmessInfo"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
-	"V2RayA/plugins"
+	"v2rayA/common/httpClient"
+	"v2rayA/common/netTools/netstat"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/plugins"
 	"fmt"
 	"log"
 	"net/http"

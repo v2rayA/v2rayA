@@ -17,8 +17,8 @@ export default {
   },
   welcome: {
     title: "初来乍到，请多关照",
-    docker: "V2RayA服务端正在运行于Docker环境中，Version: {version}",
-    default: "V2RayA服务端正在运行，Version: {version}",
+    docker: "v2rayA服务端正在运行于Docker环境中，Version: {version}",
+    default: "v2rayA服务端正在运行，Version: {version}",
     newVersion: "检测到新版本: {version}",
     messages: [
       "我们发现你还没有创建或导入任何节点、订阅。",
@@ -177,7 +177,7 @@ export default {
     tcpPortWhitelist: "TCP端口白名单",
     udpPortWhitelist: "UDP端口白名单",
     messages: [
-      "如果你将V2RayA架设在对外提供服务的服务器上，那么你需要注意：",
+      "如果你将v2rayA架设在对外提供服务的服务器上，那么你需要注意：",
       "全局透明代理会使得所有TCP、UDP流量走代理，通过走代理的流量其源IP地址会被替换为代理服务器的IP地址，那么如果客户请求你的服务器IP地址，他却将得到从你代理服务器IP发出的回答，该回答在客户看来无疑是不合法的，从而导致服务被拒绝。",
       "因此，需要将服务器提供的对外服务端口包含在白名单中，使其不走代理。如ssh(22)、v2raya({v2rayaPort})。",
       "如不对外提供服务或仅对局域网内主机提供服务，则可不设置白名单。",
@@ -211,12 +211,12 @@ export default {
     message: "时延测试往往需要花费较长时间，请耐心等待"
   },
   version: {
-    higherVersionNeeded: "该操作需要V2RayA的版本高于{version}",
+    higherVersionNeeded: "该操作需要v2rayA的版本高于{version}",
     v2rayInvalid: "检测到v2ray-core可能未正确安装，请检查"
   },
-  about: `<p>V2RayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
+  about: `<p>v2rayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
           <p class="about-small">默认端口：</p>
-          <p class="about-small">2017: V2RayA后端端口</p>
+          <p class="about-small">2017: v2rayA后端端口</p>
           <p class="about-small">20170: SOCKS协议</p>
           <p class="about-small">20171: HTTP协议</p>
           <p class="about-small">20172: 带PAC的HTTP协议</p>
@@ -224,11 +224,11 @@ export default {
           <p class="about-small">12345: tproxy，透明代理所需 </p>
           <p class="about-small">12346: 插件协议端口，如trojan、ssr和pingtunnel</p>
           <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
-          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/V2RayA/issues">提出issue</a>。</p>`,
+          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/v2rayA/issues">提出issue</a>。</p>`,
   axios: {
     messages: {
       optimizeBackend: "您是否需要调整服务端地址？",
-      noBackendFound: "未在 {url} 检测到V2RayA服务端，请确定V2RayA正常运行",
+      noBackendFound: "未在 {url} 检测到v2rayA服务端，请确定v2rayA正常运行",
       cannotCommunicate: [
         "无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。",
         "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。"
@@ -236,7 +236,7 @@ export default {
     },
     urls: {
       usage:
-        "https://github.com/mzz2017/V2RayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
+        "https://github.com/mzz2017/v2rayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
     }
   },
   routingA: {

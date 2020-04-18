@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"V2RayA/common"
-	"V2RayA/core/routingA"
-	"V2RayA/persistence/configure"
+	"v2rayA/common"
+	"v2rayA/core/routingA"
+	"v2rayA/persistence/configure"
 	"github.com/gin-gonic/gin"
 )
 

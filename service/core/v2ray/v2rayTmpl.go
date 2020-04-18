@@ -1,12 +1,12 @@
 package v2ray
 
 import (
-	"V2RayA/core/dnsPoison/entity"
-	"V2RayA/core/routingA"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/core/vmessInfo"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
+	"v2rayA/core/dnsPoison/entity"
+	"v2rayA/core/routingA"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
 	"bytes"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -430,8 +430,8 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 				"geosite:cn",          // 国内白名单走DNSPod
 				"domain:ntp.org",      // NTP 服务器
 				"domain:dogedoge.com", // mzz2017爱用的多吉
-				"full:v2raya.mzz.pub", // V2RayA demo
-				"full:v.mzz.pub",      // V2RayA demo
+				"full:v2raya.mzz.pub", // v2rayA demo
+				"full:v.mzz.pub",      // v2rayA demo
 			},
 		}
 		if len(dohDomains) > 0 {

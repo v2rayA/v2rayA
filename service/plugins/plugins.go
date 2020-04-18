@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"V2RayA/core/vmessInfo"
+	"v2rayA/core/vmessInfo"
 	"strings"
 	"sync"
 )

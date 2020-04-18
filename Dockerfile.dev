@@ -9,7 +9,7 @@ WORKDIR /service
 COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
 ENV PATH=$PATH:/etc/v2ray
 ENV CONFIG=../config.json
-ENV GIN_BIN=../V2RayA
+ENV GIN_BIN=../v2rayA
 ENV GIN_GUILD_ARGS="-o ${GIN_BIN}"
 ENV V2RAYA_MODE=universal
 EXPOSE 2017

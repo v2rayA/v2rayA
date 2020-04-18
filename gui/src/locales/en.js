@@ -17,8 +17,8 @@ export default {
   },
   welcome: {
     title: "Welcome",
-    docker: "V2RayA service is running in Docker. Version: {version}",
-    default: "V2RayA service is running. Version: {version}",
+    docker: "v2rayA service is running in Docker. Version: {version}",
+    default: "v2rayA service is running. Version: {version}",
     newVersion: "Detected new version: {version}",
     messages: [
       "There is no server.",
@@ -71,7 +71,7 @@ export default {
     messages: [
       "Remember your admin account which is importantly used to login.",
       "Account information is stored in local. We never send information to any server.",
-      "Once password was forgot, you could delete the config file and restart V2RayA service to reset."
+      "Once password was forgot, you could delete the config file and restart v2rayA service to reset."
     ]
   },
   login: {
@@ -154,7 +154,7 @@ export default {
     domainFile: "Domain File",
     typeRule: "Type of Rule",
     messages: {
-      0: "V2RayA will recognize all SiteDat file in <b>{V2RayLocationAsset}</b>",
+      0: "v2rayA will recognize all SiteDat file in <b>{V2RayLocationAsset}</b>",
       1: 'To make a SiteDat file by yourself: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
       2: "Multi-select is supported.",
       noSiteDatFileFound: "No siteDat file found in {V2RayLocationAsset}",
@@ -179,7 +179,7 @@ export default {
     tcpPortWhitelist: "TCP Port Whitelist",
     udpPortWhitelist: "UDP Port Whitelist",
     messages: [
-      "If V2RayA is setup on a server providing service to clients, pay attention:",
+      "If v2rayA is setup on a server providing service to clients, pay attention:",
       "Transparent proxy will force all TCP and UDP traffic to pass through proxy server, where source IP address will be replaced with proxy's. Moreover, if some clients send requests to the IP address of your server that provides service, they will received responses from your proxy's IP address weirdly, which is illegal.",
       "To resolve it, we need to add those service ports to whitelist so that not pass through proxy.For examples, ssh(22)、v2raya({v2rayaPort}).",
       "Obviously, if the server does not provide any service, you can skip configuring.",
@@ -219,12 +219,12 @@ export default {
   },
   version: {
     higherVersionNeeded:
-      "This operation need higher version of V2RayA than {version}",
+      "This operation need higher version of v2rayA than {version}",
     v2rayInvalid: "v2ray-core may not be installed correctly"
   },
-  about: `<p>V2RayA is a web GUI client of V2Ray. Frontend is built with Vue.js and backend is built with golang.</p>
+  about: `<p>v2rayA is a web GUI client of V2Ray. Frontend is built with Vue.js and backend is built with golang.</p>
           <p class="about-small">Default ports:</p>
-          <p class="about-small">2017: V2RayA service port</p>
+          <p class="about-small">2017: v2rayA service port</p>
           <p class="about-small">20170: SOCKS protocol</p>
           <p class="about-small">20171: HTTP protocol</p>
           <p class="about-small">20172: HTTP protocol with PAC</p>
@@ -232,19 +232,19 @@ export default {
           <p class="about-small">12345: tproxy, needed by transparent proxy </p>
           <p class="about-small">12346: port of plugins such as trojan, ssr and pingtunnel</p>
           <p>All data is stored in local. If service is running in docker, configure will disappear with related docker volume's removing. Backup data if necessary.
-          <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/V2RayA/issues">issues</a>.</p>`,
+          <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/v2rayA/issues">issues</a>.</p>`,
   axios: {
     messages: {
-      optimizeBackend: "Adjust V2RayA service address？",
+      optimizeBackend: "Adjust v2rayA service address？",
       noBackendFound:
-        "Cannot find V2RayA at {url}. Make sure V2RayA is running at this address.",
+        "Cannot find v2rayA at {url}. Make sure v2rayA is running at this address.",
       cannotCommunicate: [
         "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
         "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http site."
       ]
     },
     urls: {
-      usage: "https://github.com/mzz2017/V2RayA/wiki/Usage"
+      usage: "https://github.com/mzz2017/v2rayA/wiki/Usage"
     }
   },
   routingA: {

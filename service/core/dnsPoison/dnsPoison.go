@@ -1,8 +1,8 @@
 package dnsPoison
 
 import (
-	"V2RayA/common"
-	"V2RayA/common/netTools"
+	"v2rayA/common"
+	"v2rayA/common/netTools"
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"

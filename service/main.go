@@ -1,9 +1,9 @@
 package main
 
 import (
-	_ "V2RayA/plugins/pingtunnel"
-	_ "V2RayA/plugins/shadowsocksr"
-	_ "V2RayA/plugins/trojan"
+	_ "v2rayA/plugins/pingtunnel"
+	_ "v2rayA/plugins/shadowsocksr"
+	_ "v2rayA/plugins/trojan"
 	"github.com/gin-gonic/gin"
 	"log"
 )

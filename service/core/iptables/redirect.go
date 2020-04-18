@@ -1,7 +1,7 @@
 package iptables
 
 import (
-	"V2RayA/common/cmds"
+	"v2rayA/common/cmds"
 )
 
 type redirect struct{ iptablesSetter }

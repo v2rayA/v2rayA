@@ -10,7 +10,7 @@ import (
 
 type Params struct {
 	Address          string `id:"address" short:"a" default:"0.0.0.0:2017" desc:"Listening address"`
-	Config           string `id:"config" short:"c" default:"/etc/v2ray/v2raya.json" desc:"V2RayA configure path"`
+	Config           string `id:"config" short:"c" default:"/etc/v2ray/v2raya.json" desc:"v2rayA configure path"`
 	Mode             string `id:"mode" short:"m" desc:"Options: systemctl, service, universal. Auto-detect if not set"`
 	PluginListenPort int    `short:"s" default:"12346" desc:"Plugin outbound port"`
 	PassCheckRoot    bool   `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`

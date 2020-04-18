@@ -10,7 +10,7 @@
 package socks5
 
 import (
-	"V2RayA/extra/proxy"
+	"v2rayA/extra/proxy"
 	"github.com/mzz2017/shadowsocksR/tools/leakybuf"
 	"github.com/nadoo/glider/common/socks"
 	"io"

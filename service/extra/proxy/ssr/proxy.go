@@ -1,7 +1,7 @@
 package ssr
 
 import (
-	"V2RayA/extra/proxy"
+	"v2rayA/extra/proxy"
 	"net"
 )
 

@@ -1,7 +1,7 @@
 package global
 
 import (
-	"V2RayA/plugins"
+	"v2rayA/plugins"
 	"os"
 )
 

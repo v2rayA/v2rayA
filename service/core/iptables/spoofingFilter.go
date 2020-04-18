@@ -1,6 +1,6 @@
 package iptables
 
-import "V2RayA/common/cmds"
+import "v2rayA/common/cmds"
 
 type spoofingFilter struct{ iptablesSetter }
 
