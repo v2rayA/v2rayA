@@ -1,9 +1,9 @@
 package v2ray
 
 import (
-	"V2RayA/common"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/global"
+	"v2rayA/common"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/global"
 	"bytes"
 	"fmt"
 	"io/ioutil"

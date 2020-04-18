@@ -1,9 +1,9 @@
 package asset
 
 import (
-	"V2RayA/common/files"
-	"V2RayA/core/dnsPoison"
-	"V2RayA/global"
+	"v2rayA/common/files"
+	"v2rayA/core/dnsPoison"
+	"v2rayA/global"
 	"github.com/gogo/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"io/ioutil"

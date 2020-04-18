@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"V2RayA/common/netTools/netstat"
+	"v2rayA/common/netTools/netstat"
 	"strconv"
 	"strings"
 )

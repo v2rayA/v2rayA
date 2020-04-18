@@ -17,9 +17,11 @@ node_modules
 *.out
 
 # Output
+/v2rayA_*
 /V2RayA_*
 /v2raya_*
 /installer_*
+/v2rayA
 /V2RayA
 /v2raya
 /web

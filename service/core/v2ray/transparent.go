@@ -1,11 +1,11 @@
 package v2ray
 
 import (
-	"V2RayA/common/netTools/netstat"
-	"V2RayA/common/netTools/ports"
-	"V2RayA/core/iptables"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
+	"v2rayA/common/netTools/netstat"
+	"v2rayA/common/netTools/ports"
+	"v2rayA/core/iptables"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
 	"log"
 	"strings"
 )

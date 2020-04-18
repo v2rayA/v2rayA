@@ -11,7 +11,7 @@ import (
 	"github.com/mzz2017/shadowsocksR/protocol"
 	"github.com/mzz2017/shadowsocksR/ssr"
 
-	"V2RayA/extra/proxy"
+	"v2rayA/extra/proxy"
 	"github.com/nadoo/glider/common/socks"
 	"log"
 )

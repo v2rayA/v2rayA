@@ -1,7 +1,7 @@
 package vmessInfo
 
 import (
-	"V2RayA/common"
+	"v2rayA/common"
 	"encoding/base64"
 	"fmt"
 	"github.com/json-iterator/go"

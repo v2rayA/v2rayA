@@ -1,7 +1,7 @@
 package service
 
 import (
-	"V2RayA/persistence/configure"
+	"v2rayA/persistence/configure"
 )
 
 func DeleteWhich(ws []configure.Which) (err error) {

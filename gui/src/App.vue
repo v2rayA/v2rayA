@@ -3,7 +3,7 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="./assets/logo2.png" alt="V2RayA" class="logo no-select" />
+          <img src="./assets/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
       </template>
       <template slot="start">
@@ -143,7 +143,7 @@ export default {
     console.log("app created");
     let ba = localStorage.getItem("backendAddress");
     let u = parseURL(ba);
-    document.title = `V2RayA - ${u.host}:${u.port}`;
+    document.title = `v2rayA - ${u.host}:${u.port}`;
     this.$axios({
       url: apiRoot + "/version"
     }).then(res => {
@@ -219,16 +219,16 @@ export default {
         content: `
 <div class="modal-card" style="margin:auto">
                     <header class="modal-card-head">
-                        <p class="modal-card-title">mzz2017 / V2RayA</p>
+                        <p class="modal-card-title">mzz2017 / v2rayA</p>
                     </header>
                     <section class="modal-card-body lazy">
                         ${this.$t(`about`)}
                     </section>
                     <footer class="modal-card-foot">
-                        <a class="is-link" href="https://github.com/mzz2017/V2RayA" target="_blank">
-                          <img class="leave-right" src="https://img.shields.io/github/stars/mzz2017/V2RayA.svg?style=social" alt="stars">
-                          <img class="leave-right" src="https://img.shields.io/github/forks/mzz2017/V2RayA.svg?style=social" alt="forks">
-                          <img class="leave-right" src="https://img.shields.io/github/watchers/mzz2017/V2RayA.svg?style=social" alt="watchers">
+                        <a class="is-link" href="https://github.com/mzz2017/v2rayA" target="_blank">
+                          <img class="leave-right" src="https://img.shields.io/github/stars/mzz2017/v2rayA.svg?style=social" alt="stars">
+                          <img class="leave-right" src="https://img.shields.io/github/forks/mzz2017/v2rayA.svg?style=social" alt="forks">
+                          <img class="leave-right" src="https://img.shields.io/github/watchers/mzz2017/v2rayA.svg?style=social" alt="watchers">
                         </a>
                     </footer>
                 </div>

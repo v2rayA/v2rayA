@@ -1,7 +1,7 @@
 package persistence
 
 import (
-	"V2RayA/global"
+	"v2rayA/global"
 	"bytes"
 	"github.com/json-iterator/go"
 	"github.com/tidwall/gjson"

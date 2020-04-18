@@ -1,10 +1,10 @@
 package service
 
 import (
-	"V2RayA/core/v2ray"
-	"V2RayA/core/v2ray/asset/gfwlist"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/v2ray/asset/gfwlist"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
 	"log"
 )
 

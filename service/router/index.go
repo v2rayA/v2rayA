@@ -1,11 +1,11 @@
 package router
 
 import (
-	"V2RayA/common"
-	"V2RayA/common/jwt"
-	"V2RayA/controller"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
+	"v2rayA/common"
+	"v2rayA/common/jwt"
+	"v2rayA/controller"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -23,7 +23,7 @@ func Run() error {
 	engine.Use(cors.New(corsConfig))
 	engine.GET("/", func(ctx *gin.Context) {
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		ctx.String(418, `<body>Here is V2RayA backend. Reference: <a href="https://github.com/mzz2017/V2RayA">https://github.com/mzz2017/V2RayA</a></body>`)
+		ctx.String(418, `<body>Here is v2rayA backend. Reference: <a href="https://github.com/mzz2017/v2rayA">https://github.com/mzz2017/v2rayA</a></body>`)
 	})
 	noAuth := engine.Group("api")
 	{
@@ -74,7 +74,7 @@ func Run() error {
 		auth.GET("routingA", controller.GetRoutingA)
 		auth.PUT("routingA", controller.PutRoutingA)
 	}
-	color.Red.Println("V2RayA is running at", global.GetEnvironmentConfig().Address)
+	color.Red.Println("v2rayA is running at", global.GetEnvironmentConfig().Address)
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
 	app := global.GetEnvironmentConfig()
 	return engine.Run(app.Address)

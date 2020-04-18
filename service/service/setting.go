@@ -1,10 +1,10 @@
 package service
 
 import (
-	"V2RayA/core/ipforward"
-	"V2RayA/core/v2ray"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/persistence/configure"
+	"v2rayA/core/ipforward"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/persistence/configure"
 )
 
 func GetSetting() *configure.Setting {

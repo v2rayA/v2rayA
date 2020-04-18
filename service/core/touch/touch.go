@@ -1,7 +1,7 @@
 package touch
 
 import (
-	"V2RayA/persistence/configure"
+	"v2rayA/persistence/configure"
 	"fmt"
 	"net/url"
 	"time"

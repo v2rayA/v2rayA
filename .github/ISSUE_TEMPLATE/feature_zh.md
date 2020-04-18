@@ -1,6 +1,6 @@
 ---
 name: 提议一个新功能
-about: "为 V2RayA 提议一个新的功能特性"
+about: "为 v2rayA 提议一个新的功能特性"
 labels: enhancement
 
 ---

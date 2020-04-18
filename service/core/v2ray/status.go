@@ -1,14 +1,14 @@
 package v2ray
 
 import (
-	"V2RayA/common/netTools/netstat"
-	"V2RayA/common/ntp"
-	"V2RayA/core/dnsPoison/entity"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/core/vmessInfo"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
-	"V2RayA/plugins"
+	"v2rayA/common/netTools/netstat"
+	"v2rayA/common/ntp"
+	"v2rayA/core/dnsPoison/entity"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/plugins"
 	"bytes"
 	"fmt"
 	netstat2 "github.com/cakturk/go-netstat/netstat"

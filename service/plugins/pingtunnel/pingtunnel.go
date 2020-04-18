@@ -4,10 +4,10 @@
 package pingtunnel
 
 import (
-	"V2RayA/common/netTools/ports"
-	"V2RayA/core/vmessInfo"
-	"V2RayA/global"
-	"V2RayA/plugins"
+	"v2rayA/common/netTools/ports"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/plugins"
 	"github.com/mzz2017/go-engine/src/loggo"
 	"github.com/mzz2017/go-engine/src/pingtunnel"
 	"log"

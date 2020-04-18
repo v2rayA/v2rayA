@@ -4,12 +4,12 @@
 package trojan
 
 import (
-	"V2RayA/common"
-	"V2RayA/common/netTools/ports"
-	"V2RayA/core/vmessInfo"
-	"V2RayA/extra/proxy/socks5"
-	"V2RayA/extra/proxy/trojan"
-	"V2RayA/plugins"
+	"v2rayA/common"
+	"v2rayA/common/netTools/ports"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/extra/proxy/socks5"
+	"v2rayA/extra/proxy/trojan"
+	"v2rayA/plugins"
 	"fmt"
 	"log"
 	"net/url"

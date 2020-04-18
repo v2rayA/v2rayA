@@ -1,7 +1,7 @@
 package netTools
 
 import (
-	Trie "V2RayA/dataStructure/trie"
+	Trie "v2rayA/dataStructure/trie"
 	"strconv"
 	"strings"
 )

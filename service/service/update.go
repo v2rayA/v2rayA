@@ -1,8 +1,8 @@
 package service
 
 import (
-	"V2RayA/common"
-	"V2RayA/global"
+	"v2rayA/common"
+	"v2rayA/global"
 	"bytes"
 	"net/http"
 	"strings"

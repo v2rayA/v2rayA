@@ -1,9 +1,9 @@
 package configure
 
 import (
-	"V2RayA/core/ipforward"
-	"V2RayA/global"
-	"V2RayA/persistence"
+	"v2rayA/core/ipforward"
+	"v2rayA/global"
+	"v2rayA/persistence"
 	"bytes"
 	"encoding/hex"
 	"fmt"

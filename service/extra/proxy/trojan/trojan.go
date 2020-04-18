@@ -6,7 +6,7 @@
 package trojan
 
 import (
-	"V2RayA/extra/proxy"
+	"v2rayA/extra/proxy"
 	"bytes"
 	"crypto/sha256"
 	"crypto/tls"

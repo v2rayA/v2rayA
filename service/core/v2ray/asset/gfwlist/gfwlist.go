@@ -1,12 +1,12 @@
 package gfwlist
 
 import (
-	"V2RayA/common/files"
-	"V2RayA/common/httpClient"
-	"V2RayA/core/v2ray"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/extra/gopeed"
-	"V2RayA/persistence/configure"
+	"v2rayA/common/files"
+	"v2rayA/common/httpClient"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/extra/gopeed"
+	"v2rayA/persistence/configure"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"io/ioutil"

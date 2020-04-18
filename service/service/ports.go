@@ -1,10 +1,10 @@
 package service
 
 import (
-	"V2RayA/common/netTools/netstat"
-	ports2 "V2RayA/common/netTools/ports"
-	"V2RayA/core/v2ray"
-	"V2RayA/persistence/configure"
+	"v2rayA/common/netTools/netstat"
+	ports2 "v2rayA/common/netTools/ports"
+	"v2rayA/core/v2ray"
+	"v2rayA/persistence/configure"
 	"fmt"
 	"strconv"
 )

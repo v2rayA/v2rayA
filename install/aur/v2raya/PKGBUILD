@@ -6,22 +6,22 @@ pkgrel=1
 install=.INSTALL
 pkgdesc="A web GUI client of Project V which supports V2Ray, SS, SSR, Trojan and PingTunnel protocols"
 arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
-url="https://github.com/mzz2017/V2RayA"
+url="https://github.com/mzz2017/v2rayA"
 license=('GPL')
 depends=('glibc' 'v2ray')
 makedepends=('go>=2:1.12.3-1')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/mzz2017/V2RayA/archive/v$pkgver.tar.gz")
+source=("$pkgname-$pkgver.tar.gz::https://github.com/mzz2017/v2rayA/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 
 build() {
-    cd "V2RayA-$pkgver/service"
+    cd "v2rayA-$pkgver/service"
     export GO111MODULE=on
     export GOPROXY=https://goproxy.io
-    go build -ldflags="-X V2RayA/global.Version=$pkgver" -o v2raya
+    go build -ldflags="-X v2rayA/global.Version=$pkgver" -o v2raya
 }
 
 package() {
-    cd "$srcdir/V2RayA-$pkgver"
+    cd "$srcdir/v2rayA-$pkgver"
     
     install -Dm644 "install/universal/v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
     install -Dm755 "service/v2raya" -t "$pkgdir/usr/bin/"

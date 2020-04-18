@@ -1,17 +1,17 @@
 package main
 
 import (
-	"V2RayA/common/netTools/ports"
-	"V2RayA/core/ipforward"
-	"V2RayA/core/iptables"
-	"V2RayA/core/v2ray"
-	"V2RayA/core/v2ray/asset"
-	"V2RayA/core/v2ray/asset/gfwlist"
-	"V2RayA/extra/gopeed"
-	"V2RayA/global"
-	"V2RayA/persistence/configure"
-	"V2RayA/router"
-	"V2RayA/service"
+	"v2rayA/common/netTools/ports"
+	"v2rayA/core/ipforward"
+	"v2rayA/core/iptables"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/core/v2ray/asset/gfwlist"
+	"v2rayA/extra/gopeed"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/router"
+	"v2rayA/service"
 	"fmt"
 	"github.com/gookit/color"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
@@ -59,7 +59,7 @@ func testTproxy() {
 }
 func checkEnvironment() {
 	if runtime.GOOS == "windows" {
-		fmt.Println("windows不支持直接运行，请配合docker使用。见https://github.com/mzz2017/V2RayA")
+		fmt.Println("windows不支持直接运行，请配合docker使用。见https://github.com/mzz2017/v2rayA")
 		fmt.Println("请按任意键继续...")
 		_, _ = fmt.Scanf("\n")
 		os.Exit(1)
@@ -88,7 +88,7 @@ func checkEnvironment() {
 		}
 		process, err := socket.Process()
 		if err == nil {
-			log.Fatalf("V2RayA启动失败，%v端口已被%v/%v占用", port, process.Name, process.PID)
+			log.Fatalf("v2rayA启动失败，%v端口已被%v/%v占用", port, process.Name, process.PID)
 		}
 	}
 	testTproxy()
@@ -182,7 +182,7 @@ func hello() {
 	wd, _ := asset.GetV2rayWorkingDir()
 	color.Red.Println("V2Ray binary is at", wd+"/v2ray")
 	wd, _ = os.Getwd()
-	color.Red.Println("V2RayA working directory is", wd)
+	color.Red.Println("v2rayA working directory is", wd)
 	color.Red.Println("Version:", global.Version)
 }
 
