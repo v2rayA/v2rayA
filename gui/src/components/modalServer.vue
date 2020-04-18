@@ -350,6 +350,44 @@
             />
           </b-field>
         </b-tab-item>
+        <b-tab-item label="Trojan">
+          <b-field label="Name" label-position="on-border">
+            <b-input
+              ref="trojan_name"
+              v-model="trojan.name"
+              :placeholder="$t('configureServer.servername')"
+              expanded
+            />
+          </b-field>
+          <b-field label="Address" label-position="on-border">
+            <b-input
+              ref="trojan_server"
+              v-model="trojan.server"
+              required
+              placeholder="IP / HOST"
+              expanded
+            />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input
+              ref="trojan_port"
+              v-model="trojan.port"
+              required
+              :placeholder="$t('configureServer.port')"
+              type="number"
+              expanded
+            />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input
+              ref="trojan_password"
+              v-model="trojan.password"
+              required
+              :placeholder="$t('configureServer.password')"
+              expanded
+            />
+          </b-field>
+        </b-tab-item>
       </b-tabs>
     </section>
     <footer v-if="!readonly" class="modal-card-foot flex-end">
@@ -421,6 +459,13 @@ export default {
       server: "",
       password: "",
       protocol: "pingtunnel"
+    },
+    trojan: {
+      name: "",
+      server: "",
+      port: "",
+      password: "",
+      protocol: "trojan"
     },
     tabChoice: 0
   }),
@@ -549,7 +594,8 @@ export default {
           return (
             `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
               srcObj.server
-            }:${srcObj.port}` + (srcObj.name.length ? `#${srcObj.name}` : "")
+            }:${srcObj.port}` +
+            (srcObj.name.length ? `#${Base64.encodeURI(srcObj.name)}` : "")
           );
         case "ssr":
           /* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */

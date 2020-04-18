@@ -83,11 +83,12 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 	// 该函数尝试对ss://链接进行解析
 	resolveFormat := func(content string) (subMatch []string, ok bool) {
 		// 尝试按ss://method:password@server:port#name格式进行解析
-		re := regexp.MustCompile(`(.+):(.+)@(.+?):(\d+)(#.*)?`)
+		content = strings.TrimSuffix(content, "#")
+		re := regexp.MustCompile(`(.+):(.+)@(.+?):(\d+)(#.+)?`)
 		subMatch = re.FindStringSubmatch(content)
 		if len(subMatch) == 0 {
 			// 尝试按ss://BASE64(method:password)@server:port#name格式进行解析
-			re = regexp.MustCompile(`(.+)()@(.+?):(\d+)(#.*)?`) //留个空组，确保subMatch长度统一
+			re = regexp.MustCompile(`(.+)()@(.+?):(\d+)(#.+)?`) //留个空组，确保subMatch长度统一
 			subMatch = re.FindStringSubmatch(content)
 			if len(subMatch) > 0 {
 				raw, err := common.Base64StdDecode(subMatch[1])
@@ -115,9 +116,12 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 		var e error
 		name, e = common.Base64URLDecode(sp[1])
 		if e != nil {
-			name, _ = common.Base64StdDecode(sp[1])
+			name, e = common.Base64StdDecode(sp[1])
 		}
-		name, _ = url.QueryUnescape(name)
+		_name, e := url.QueryUnescape(name)
+		if e == nil {
+			name = _name
+		}
 	}
 	var (
 		subMatch []string
@@ -248,16 +252,18 @@ func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
 		err = newError(err)
 		return
 	}
-	re := regexp.MustCompile(`(.+):(.+)(#.*)?`)
+	arr := strings.Split(u, "#")
+	var ps string
+	if len(arr) == 2 {
+		ps, _ = common.Base64URLDecode(arr[1])
+	}
+	u = arr[0]
+	re := regexp.MustCompile(`(.+):(.+)`)
 	subMatch := re.FindStringSubmatch(u)
-	if subMatch == nil {
+	if len(subMatch) < 3 {
 		return nil, newError("wrong format of pingtunnel")
 	}
 	data = new(nodeData.NodeData)
-	var ps string
-	if len(subMatch) == 4 {
-		ps, _ = common.Base64URLDecode(subMatch[3])
-	}
 	passwd, err := common.Base64URLDecode(subMatch[2])
 	if err != nil {
 		log.Println(subMatch[2])
