@@ -244,7 +244,7 @@ func NewTemplate() (tmpl Template) {
 函数会规格化传入的v
 */
 
-func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int) (o Outbound, err error) {
+func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Outbound, err error) {
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
@@ -334,15 +334,18 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, ssrLocalPortIfNeed int)
 		default:
 			return o, newError("unsupported shadowsocksr obfuscation method: " + v.TLS)
 		}
+	case "pingtunnel":
+	default:
+		return o, newError("unsupported protocol: " + v.Protocol)
+	}
+	if pluginPort != nil {
 		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
 			{
 				Address: "127.0.0.1",
-				Port:    ssrLocalPortIfNeed,
+				Port:    *pluginPort,
 			},
 		}
-	default:
-		return o, newError("unsupported protocol: " + v.Protocol)
 	}
 	o.Tag = tag
 	return
@@ -370,11 +373,11 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 				},
 			}
 		} else {
-			//由于ss, ssr不支持udp
+			//由于plugin不支持udp
 			//先优先请求DoH（tcp）
 			if err := CheckDohSupported(); err == nil {
 				t.DNS.Servers = []interface{}{
-					"https://dns.google/dns-query",
+					"https://dns.alidns.com/dns-query",
 					"https://1.0.0.1/dns-query",
 				}
 			}
@@ -909,7 +912,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 		t.Log.Loglevel = "debug"
 	}
 	// 解析Outbound
-	o, err := ResolveOutbound(&v, "proxy", global.GetEnvironmentConfig().SSRListenPort)
+	o, err := ResolveOutbound(&v, "proxy", &global.GetEnvironmentConfig().PluginListenPort)
 	if err != nil {
 		return t, nil, err
 	}
@@ -922,7 +925,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 			Enabled:     setting.MuxOn == configure.Yes,
 			Concurrency: setting.Mux,
 		}
-	case "socks":
+	default:
 		supportUDP = false
 	}
 	//根据配置修改端口
@@ -975,8 +978,8 @@ func NewTemplateFromConfig() (t Template, err error) {
 	err = jsoniter.Unmarshal(b, &t)
 	return
 }
-func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, ssrLocalPortIfNeed int, protocol string) (err error) {
-	o, err := ResolveOutbound(&v, "outbound"+inboundPort, ssrLocalPortIfNeed)
+func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
+	o, err := ResolveOutbound(&v, "outbound"+inboundPort, &pluginPort)
 	if err != nil {
 		return
 	}

@@ -12,7 +12,10 @@ import (
 
 func Import(url string, which *configure.Which) (err error) {
 	url = strings.TrimSpace(url)
-	if strings.HasPrefix(url, "vmess://") || strings.HasPrefix(url, "ss://") || strings.HasPrefix(url, "ssr://") {
+	if strings.HasPrefix(url, "vmess://") ||
+		strings.HasPrefix(url, "ss://") ||
+		strings.HasPrefix(url, "ssr://") ||
+		strings.HasPrefix(url, "pingtunnel://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)
 		if err != nil {

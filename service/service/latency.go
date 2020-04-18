@@ -3,11 +3,11 @@ package service
 import (
 	"V2RayA/common/httpClient"
 	"V2RayA/common/netTools/netstat"
-	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray"
 	"V2RayA/core/vmessInfo"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
+	"V2RayA/plugins"
 	"fmt"
 	"log"
 	"net/http"
@@ -93,7 +93,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		tmpl = v2ray.NewTemplate()
 	}
 	portMap := make(map[int]string)
-	ssrPortMap := make(map[int]int)
+	pluginPortMap := make(map[int]int)
 	port := 0
 	nsmap, err := netstat.ToPortMap([]string{"tcp", "tcp6"})
 	if err != nil {
@@ -118,7 +118,12 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		v2rayInboundPort := strconv.Itoa(port)
 		ssrLocalPortIfNeed := 0
 		switch strings.ToLower(v.Protocol) {
-		case "shadowsocksr", "shadowsocks", "ss", "ssr":
+		case "vmess", "":
+			//pass
+		default:
+			if !plugins.IsProtocolValid(v) {
+				continue
+			}
 			//再找一个空端口
 			port++
 			for {
@@ -128,8 +133,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 				port++
 			}
 			ssrLocalPortIfNeed = port
-			ssrPortMap[i] = port
-		default:
+			pluginPortMap[i] = port
 		}
 		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, ssrLocalPortIfNeed, "")
 		if err != nil {
@@ -138,17 +142,17 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}
 		portMap[i] = v2rayInboundPort
 	}
-	//启ssr
-	//不清SSRs，防止断开当前连接
-	if len(ssrPortMap) > 0 {
-		for i, localPort := range ssrPortMap {
+	//启plugin
+	//不清plugins，防止断开当前连接
+	if len(pluginPortMap) > 0 {
+		for i, localPort := range pluginPortMap {
 			v := vms[i]
-			ssr := new(shadowsocksr.SSR)
-			err := ssr.Serve(localPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
+			var plugin plugins.Plugin
+			plugin, err = plugins.NewPlugin(localPort, v)
 			if err != nil {
 				return nil, err
 			}
-			global.SSRs.Append(*ssr)
+			global.Plugins.Append(plugin)
 		}
 	}
 	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
@@ -175,7 +179,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}(i)
 	}
 	wg.Wait()
-	global.SSRs.ClearAll()
+	global.Plugins.CloseAll()
 	if v2rayRunning && configure.GetConnectedServer() != nil {
 		err = v2ray.UpdateV2RayConfig(nil)
 		if err != nil {

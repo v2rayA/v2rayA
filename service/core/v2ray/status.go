@@ -4,11 +4,11 @@ import (
 	"V2RayA/common/netTools/netstat"
 	"V2RayA/common/ntp"
 	"V2RayA/core/dnsPoison/entity"
-	"V2RayA/core/shadowsocksr"
 	"V2RayA/core/v2ray/asset"
 	"V2RayA/core/vmessInfo"
 	"V2RayA/global"
 	"V2RayA/persistence/configure"
+	"V2RayA/plugins"
 	"bytes"
 	"fmt"
 	netstat2 "github.com/cakturk/go-netstat/netstat"
@@ -234,35 +234,35 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		return
 	}
 
-	global.SSRs.ClearAll()
+	global.Plugins.CloseAll()
 	entity.StopDNSPoison()
 
 	if v == nil && !IsV2RayRunning() {
 		//没有运行就不需要重新启动了
 		return
 	}
+	if v == nil {
+		v = &sr.VmessInfo
+	}
 	err = RestartV2rayService()
 	if err != nil {
 		return
 	}
-	if len(tmpl.Outbounds) > 0 && tmpl.Outbounds[0].Protocol == "socks" {
-		//说明是ss或ssr，启动ssr server
+	if v.Protocol != "" && v.Protocol != "vmess" {
+		// 说明是plugin，启动plugin client
 		// 尝试将address解析成ip
-		if v == nil {
-			v = &sr.VmessInfo
-		}
 		if net.ParseIP(v.Add) == nil {
 			addrs, e := net.LookupHost(v.Add)
 			if e == nil && len(addrs) > 0 {
 				v.Add = addrs[0]
 			}
 		}
-		ss := new(shadowsocksr.SSR)
-		err = ss.Serve(global.GetEnvironmentConfig().SSRListenPort, v.Net, v.ID, v.Add, v.Port, v.TLS, v.Path, v.Type, v.Host)
+		var plugin plugins.Plugin
+		plugin, err = plugins.NewPlugin(global.GetEnvironmentConfig().PluginListenPort, *v)
 		if err != nil {
 			return
 		}
-		global.SSRs.Append(*ss)
+		global.Plugins.Append(plugin)
 	}
 	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !global.SupportTproxy {
 		//redirect+poison增强方案

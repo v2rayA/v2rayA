@@ -322,6 +322,34 @@
             />
           </b-field>
         </b-tab-item>
+        <b-tab-item label="PingTunnel">
+          <b-field label="Name" label-position="on-border">
+            <b-input
+              ref="pingtunnel_name"
+              v-model="pingtunnel.name"
+              :placeholder="$t('configureServer.servername')"
+              expanded
+            />
+          </b-field>
+          <b-field label="Address" label-position="on-border">
+            <b-input
+              ref="pingtunnel_server"
+              v-model="pingtunnel.server"
+              required
+              placeholder="IP / HOST"
+              expanded
+            />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input
+              ref="pingtunnel_password"
+              v-model="pingtunnel.password"
+              required
+              :placeholder="$t('configureServer.password')"
+              expanded
+            />
+          </b-field>
+        </b-tab-item>
       </b-tabs>
     </section>
     <footer v-if="!readonly" class="modal-card-foot flex-end">
@@ -388,6 +416,12 @@ export default {
       obfsParam: "",
       protocol: "ssr"
     },
+    pingtunnel: {
+      name: "",
+      server: "",
+      password: "",
+      protocol: "pingtunnel"
+    },
     tabChoice: 0
   }),
   mounted() {
@@ -415,6 +449,13 @@ export default {
           ) {
             this.ssr = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 2;
+          } else if (
+            res.data.data.sharingAddress
+              .toLowerCase()
+              .startsWith("pingtunnel://")
+          ) {
+            this.pingtunnel = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 3;
           }
         });
       });
@@ -473,6 +514,15 @@ export default {
           obfsParam: m["obfsparam"],
           protocol: "ssr"
         };
+      } else if (url.toLowerCase().indexOf("pingtunnel://") >= 0) {
+        const regexp = /pingtunnel:\/\/(.+):(.+)#(.*)/;
+        let arr = regexp.exec(url);
+        return {
+          server: arr[1],
+          password: Base64.decode(arr[2]),
+          name: Base64.decode(arr[3]),
+          protocol: "pingtunnel"
+        };
       }
       return null;
     },
@@ -494,9 +544,11 @@ export default {
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":
           /* ss://BASE64(method:password)@server:port#name */
-          return `ss://${Base64.encode(
-            `${srcObj.method}:${srcObj.password}`
-          )}@${srcObj.server}:${srcObj.port}#${srcObj.name}`;
+          return (
+            `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
+              srcObj.server
+            }:${srcObj.port}` + (srcObj.name.length ? `#${srcObj.name}` : "")
+          );
         case "ssr":
           /* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
           return `ssr://${Base64.encode(
@@ -507,6 +559,11 @@ export default {
             )}&protoparam=${Base64.encodeURI(
               srcObj.protoParam
             )}&obfsparam=${Base64.encodeURI(srcObj.obfsParam)}`
+          )}`;
+        case "pingtunnel":
+          return `pingtunnel://${Base64.encode(
+            `${srcObj.server}:${Base64.encodeURI(srcObj.password)}` +
+              (srcObj.name.length ? `#${Base64.encodeURI(srcObj.name)}` : "")
           )}`;
       }
       return null;
@@ -527,6 +584,9 @@ export default {
           continue;
         }
         if (this.tabChoice === 2 && !k.startsWith("ssr_")) {
+          continue;
+        }
+        if (this.tabChoice === 3 && !k.startsWith("pingtunnel_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -551,6 +611,8 @@ export default {
         coded = this.generateURL(this.ss);
       } else if (this.tabChoice === 2) {
         coded = this.generateURL(this.ssr);
+      } else if (this.tabChoice === 3) {
+        coded = this.generateURL(this.pingtunnel);
       }
       this.$emit("submit", coded);
     }
@@ -566,6 +628,7 @@ export default {
   pointer-events: none;
 }
 .same-width-5 li {
-  width: 5em;
+  min-width: 5em;
+  width: unset !important;
 }
 </style>

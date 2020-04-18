@@ -9,7 +9,7 @@ import (
 )
 
 func Disconnect() (err error) {
-	global.SSRs.ClearAll()
+	global.Plugins.CloseAll()
 	err = v2ray.StopV2rayService()
 	if err != nil {
 		return

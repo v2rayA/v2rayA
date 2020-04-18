@@ -5,6 +5,7 @@ import (
 	"V2RayA/core/nodeData"
 	"V2RayA/core/vmessInfo"
 	"github.com/json-iterator/go"
+	"log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -66,14 +67,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 	if info.Aid == "" {
 		info.Aid = "6"
 	}
-	// 填充模板并处理结果
-	//t, err := v2ray.NewTemplateFromVmessInfo(info)
-	//if err != nil {
-	//	return
-	//}
 	data = new(nodeData.NodeData)
-	//b := t.ToConfigBytes()
-	//data.Config = string(b)
 	data.VmessInfo = info
 	return
 }
@@ -89,11 +83,11 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 	// 该函数尝试对ss://链接进行解析
 	resolveFormat := func(content string) (subMatch []string, ok bool) {
 		// 尝试按ss://method:password@server:port#name格式进行解析
-		re := regexp.MustCompile(`(.+):(.+)@(.+?):(\d+)(#.+)?`)
+		re := regexp.MustCompile(`(.+):(.+)@(.+?):(\d+)(#.*)?`)
 		subMatch = re.FindStringSubmatch(content)
 		if len(subMatch) == 0 {
 			// 尝试按ss://BASE64(method:password)@server:port#name格式进行解析
-			re = regexp.MustCompile(`(.+)()@(.+?):(\d+)(#.+)?`) //留个空组，确保subMatch长度统一
+			re = regexp.MustCompile(`(.+)()@(.+?):(\d+)(#.*)?`) //留个空组，确保subMatch长度统一
 			subMatch = re.FindStringSubmatch(content)
 			if len(subMatch) > 0 {
 				raw, err := common.Base64StdDecode(subMatch[1])
@@ -238,12 +232,44 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 	}
 	// 填充模板并处理结果
 	data = new(nodeData.NodeData)
-	//t, err := v2ray.NewTemplateFromVmessInfo(info)
-	//if err == nil {
-	//	b := t.ToConfigBytes()
-	//	data.Config = string(b)
-	//}
 	data.VmessInfo = info
+	return
+}
+
+func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
+	if len(u) < 13 || strings.ToLower(u[:13]) != "pingtunnel://" {
+		err = newError("this address is not begin with pingtunnel://")
+		return
+	}
+	u = u[13:]
+	u, err = common.Base64StdDecode(u)
+	if err != nil {
+		log.Println(u)
+		err = newError(err)
+		return
+	}
+	re := regexp.MustCompile(`(.+):(.+)(#.*)?`)
+	subMatch := re.FindStringSubmatch(u)
+	if subMatch == nil {
+		return nil, newError("wrong format of pingtunnel")
+	}
+	data = new(nodeData.NodeData)
+	var ps string
+	if len(subMatch) == 4 {
+		ps, _ = common.Base64URLDecode(subMatch[3])
+	}
+	passwd, err := common.Base64URLDecode(subMatch[2])
+	if err != nil {
+		log.Println(subMatch[2])
+		err = newError(err)
+		return
+	}
+	data.VmessInfo = vmessInfo.VmessInfo{
+		Ps:       ps,
+		Add:      subMatch[1],
+		ID:       passwd,
+		Protocol: "pingtunnel",
+	}
 	return
 }
 
@@ -261,6 +287,8 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 		n, err = ResolveSSURL(u)
 	} else if strings.HasPrefix(u, "ssr://") {
 		n, err = ResolveSSRURL(u)
+	} else if strings.HasPrefix(u, "pingtunnel://") {
+		n, err = ResolvePingTunnelURL(u)
 	} else {
 		err = newError("not supported protocol. we only support ss, ssr and vmess now: " + u)
 		return

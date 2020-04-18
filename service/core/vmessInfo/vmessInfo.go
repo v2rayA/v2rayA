@@ -64,6 +64,12 @@ func (v *VmessInfo) ExportToURL() string {
 				base64.URLEncoding.EncodeToString([]byte(v.Path)),
 			),
 		)))
+	case "pingtunnel":
+		return fmt.Sprintf("pingtunnel://%v:%v#%v",
+			v.Add,
+			base64.URLEncoding.EncodeToString([]byte(v.ID)),
+			base64.URLEncoding.EncodeToString([]byte(v.Ps)),
+		)
 	}
 	return ""
 }

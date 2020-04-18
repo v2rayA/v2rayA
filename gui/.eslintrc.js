@@ -17,5 +17,9 @@ module.exports = {
     'extends': [
         'plugin:vue/recommended',
         '@vue/prettier'
-    ]
+    ],
+
+    globals:{
+        apiRoot:true
+    }
 };
