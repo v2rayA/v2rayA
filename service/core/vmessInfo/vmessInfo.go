@@ -1,6 +1,7 @@
 package vmessInfo
 
 import (
+	"V2RayA/common"
 	"encoding/base64"
 	"fmt"
 	"github.com/json-iterator/go"
@@ -41,12 +42,16 @@ func (v *VmessInfo) ExportToURL() string {
 		return "vmess://" + base64.StdEncoding.EncodeToString(b)
 	case "ss":
 		/* ss://BASE64(method:password)@server:port#name */
+		nameField := ""
+		if v.Ps != "" {
+			nameField = "#" + v.Ps
+		}
 		return fmt.Sprintf(
-			"ss://%v@%v:%v#%v",
+			"ss://%v@%v:%v%v",
 			base64.URLEncoding.EncodeToString([]byte(v.Net+":"+v.ID)),
 			v.Add,
 			v.Port,
-			v.Ps,
+			nameField,
 		)
 	case "ssr":
 		/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
@@ -65,6 +70,7 @@ func (v *VmessInfo) ExportToURL() string {
 			),
 		)))
 	case "pingtunnel":
+		// pingtunnel://server:URLBASE64(passwd)#URLBASE64(remarks)
 		return fmt.Sprintf("pingtunnel://%v", base64.URLEncoding.EncodeToString([]byte(
 			fmt.Sprintf("%v:%v#%v",
 				v.Add,
@@ -72,6 +78,19 @@ func (v *VmessInfo) ExportToURL() string {
 				base64.URLEncoding.EncodeToString([]byte(v.Ps)),
 			),
 		)))
+	case "trojan":
+		// trojan://passwd@server:port#URLESCAPE(remarks)
+		nameField := ""
+		if v.Ps != "" {
+			nameField = "#" + common.UrlEncoded(v.Ps)
+		}
+		return fmt.Sprintf(
+			"trojan://%v@%v:%v%v",
+			v.ID,
+			v.Add,
+			v.Port,
+			nameField,
+		)
 	}
 	return ""
 }

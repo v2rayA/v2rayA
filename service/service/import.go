@@ -15,7 +15,8 @@ func Import(url string, which *configure.Which) (err error) {
 	if strings.HasPrefix(url, "vmess://") ||
 		strings.HasPrefix(url, "ss://") ||
 		strings.HasPrefix(url, "ssr://") ||
-		strings.HasPrefix(url, "pingtunnel://") {
+		strings.HasPrefix(url, "pingtunnel://") ||
+		strings.HasPrefix(url, "trojan://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)
 		if err != nil {

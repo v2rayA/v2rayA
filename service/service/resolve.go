@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -240,6 +241,52 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 	return
 }
 
+func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
+	//	trojan://password@server:port#escape(remarks)
+	if !strings.HasPrefix(u, "trojan://") {
+		err = newError("this address is not begin with trojan://")
+		return
+	}
+	u = u[9:]
+	arr := strings.Split(u, "#")
+	var name string
+	if len(arr) == 2 {
+		var e error
+		name, e = url.QueryUnescape(arr[1])
+		if e != nil {
+			name = arr[1]
+		}
+		log.Println(name)
+	}
+	u = arr[0]
+	fields := strings.FieldsFunc(u, func(r rune) bool {
+		switch r {
+		case '@', ':':
+			return true
+		}
+		return false
+	})
+	if len(fields) != 3 {
+		return nil, newError("invalid trojan format")
+	}
+	passwd := fields[0]
+	address := fields[1]
+	port := fields[2]
+	_, err = strconv.Atoi(fields[2])
+	if err != nil {
+		return
+	}
+	data = new(nodeData.NodeData)
+	data.VmessInfo = vmessInfo.VmessInfo{
+		Ps:       name,
+		Add:      address,
+		Port:     port,
+		ID:       passwd,
+		Protocol: "trojan",
+	}
+	log.Println(data.VmessInfo)
+	return
+}
 func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
 	if len(u) < 13 || strings.ToLower(u[:13]) != "pingtunnel://" {
 		err = newError("this address is not begin with pingtunnel://")
@@ -295,6 +342,8 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 		n, err = ResolveSSRURL(u)
 	} else if strings.HasPrefix(u, "pingtunnel://") {
 		n, err = ResolvePingTunnelURL(u)
+	} else if strings.HasPrefix(u, "trojan://") {
+		n, err = ResolveTrojanURL(u)
 	} else {
 		err = newError("not supported protocol. we only support ss, ssr and vmess now: " + u)
 		return

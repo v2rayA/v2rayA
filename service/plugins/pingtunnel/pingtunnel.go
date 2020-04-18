@@ -19,16 +19,12 @@ type PingTunnel struct {
 	client    *pingtunnel.Client
 	localPort int
 }
-type Params struct {
-	Address string
-	Passwd  int
-}
 
 func init() {
-	plugins.RegisterPlugin("pingtunnel", newPingTunnelPlugin)
+	plugins.RegisterPlugin("pingtunnel", NewPingTunnelPlugin)
 }
 
-func newPingTunnelPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
+func NewPingTunnelPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
 	plugin = new(PingTunnel)
 	err = plugin.Serve(localPort, v)
 	return
@@ -76,7 +72,7 @@ func (tunnel *PingTunnel) Close() (err error) {
 	start := time.Now()
 	for {
 		var o bool
-		o, _, err := ports.IsPortOccupied([]string{strconv.Itoa(tunnel.localPort) + ":tcp,udp"})
+		o, _, err := ports.IsPortOccupied([]string{strconv.Itoa(tunnel.localPort) + ":tcp"})
 		if err != nil {
 			return err
 		}
