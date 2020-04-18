@@ -229,8 +229,8 @@ export default {
           <p class="about-small">20171: HTTP protocol</p>
           <p class="about-small">20172: HTTP protocol with PAC</p>
           <p class="about-small">Other ports：</p>
-          <p class="about-small">12345: tproxy </p>
-          <p class="about-small">12346: ssr relay</p>
+          <p class="about-small">12345: tproxy, needed by transparent proxy </p>
+          <p class="about-small">12346: port of plugins such as trojan, ssr and pingtunnel</p>
           <p>All data is stored in local. If service is running in docker, configure will disappear with related docker volume's removing. Backup data if necessary.
           <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/V2RayA/issues">issues</a>.</p>`,
   axios: {
