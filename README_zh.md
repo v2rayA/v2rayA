@@ -26,7 +26,7 @@ V2RayA主要提供了下述使用方法：
 
 ## 界面截图
 
-<img src="https://sm.ms/image/IkA7reuE16RfFmB" border="0">
+<img src="https://i.loli.net/2020/04/19/IkA7reuE16RfFmB.png" border="0">
 
 
 ## 注意
