@@ -10,13 +10,13 @@ require (
 	github.com/gin-gonic/gin v1.4.0
 	github.com/gocarina/gocsv v0.0.0-20200302151839-87c60d755c58
 	github.com/gogo/protobuf v1.3.1
-	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/gopacket v1.1.17
 	github.com/gookit/color v1.2.0
 	github.com/json-iterator/go v1.1.9
 	github.com/matoous/go-nanoid v0.0.0-20200226125206-b0a1054fe39d
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
+	github.com/mzz2017/go-engine v0.0.0-20200418065341-cc926badcbf0
 	github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a
 	github.com/nadoo/glider v0.9.2
 	github.com/pkg/errors v0.8.1
@@ -24,9 +24,9 @@ require (
 	github.com/tidwall/gjson v1.3.5
 	github.com/tidwall/sjson v1.0.4
 	golang.org/x/crypto v0.0.0-20200115085410-6d4e4cb37c7d // indirect
-	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20200113162924-86b910548bc1
+	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 	v2ray.com/core v4.19.1+incompatible
 )

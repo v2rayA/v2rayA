@@ -32,6 +32,6 @@ func DeleteV2ray(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	global.SSRs.ClearAll()
+	global.Plugins.CloseAll()
 	common.ResponseSuccess(ctx, gin.H{"lastConnectedServer": configure.GetConnectedServer()})
 }

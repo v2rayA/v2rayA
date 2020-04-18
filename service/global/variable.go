@@ -1,7 +1,7 @@
 package global
 
 import (
-	"V2RayA/core/shadowsocksr"
+	"V2RayA/plugins"
 	"os"
 )
 
@@ -12,6 +12,6 @@ var SupportTproxy = true
 
 var ServiceControlMode = GetServiceControlMode()
 
-var SSRs shadowsocksr.SSRs
+var Plugins plugins.Plugins
 
 var V2RayPID *os.Process
