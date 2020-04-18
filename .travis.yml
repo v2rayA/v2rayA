@@ -15,7 +15,7 @@ env:
     - NAME=v2raya
     - VERSION=$(git describe --abbrev=0 --tags)
     - GOPROXY=https://goproxy.io
-    - DESC="A V2Ray linux GUI client, which support transparent proxy .\nhttps://github.com/mzz2017/v2raya"
+    - DESC="A web GUI client of Project V which supports V2Ray, SS, SSR, Trojan and PingTunnel protocols."
 addons:
   apt:
     packages:
