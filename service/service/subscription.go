@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
@@ -19,7 +20,9 @@ func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) 
 
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, err error) {
 	// get请求source
-	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
+	c := *client
+	c.Timeout = 30 * time.Second
+	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
 	if err != nil {
 		return
 	}
