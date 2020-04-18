@@ -6,6 +6,7 @@ package pingtunnel
 import (
 	"V2RayA/common/netTools/ports"
 	"V2RayA/core/vmessInfo"
+	"V2RayA/global"
 	"V2RayA/plugins"
 	"github.com/mzz2017/go-engine/src/loggo"
 	"github.com/mzz2017/go-engine/src/pingtunnel"
@@ -52,10 +53,11 @@ func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error
 	open_sock5 := 1
 	maxconn := 0
 	loggo.Ini(loggo.Config{
-		Level:     loggo.NameToLevel("WARN"),
+		Level:     loggo.NameToLevel("ERROR"),
 		Prefix:    "pingtunnel",
 		MaxDay:    3,
 		NoLogFile: true,
+		NoPrint:   global.Version != "debug",
 	})
 	c, err := pingtunnel.NewClient(listen, server, target, timeout, key,
 		tcpmode, tcpmode_buffersize, tcpmode_maxwin, tcpmode_resend_timems, tcpmode_compress,
