@@ -515,8 +515,10 @@ export default {
           protocol: "ssr"
         };
       } else if (url.toLowerCase().indexOf("pingtunnel://") >= 0) {
-        const regexp = /pingtunnel:\/\/(.+):(.+)#(.*)/;
-        let arr = regexp.exec(url);
+        let u = url.substr(13);
+        u = Base64.decode(u);
+        const regexp = /(.+):(.+)#(.*)/;
+        let arr = regexp.exec(u);
         return {
           server: arr[1],
           password: Base64.decode(arr[2]),
