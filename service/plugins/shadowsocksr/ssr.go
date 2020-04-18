@@ -23,13 +23,13 @@ type Params struct {
 }
 
 func init() {
-	plugins.RegisterPlugin("ss", newSSRPlugin)
-	plugins.RegisterPlugin("ssr", newSSRPlugin)
-	plugins.RegisterPlugin("shadowsocks", newSSRPlugin)
-	plugins.RegisterPlugin("shadowsocksr", newSSRPlugin)
+	plugins.RegisterPlugin("ss", NewSSRPlugin)
+	plugins.RegisterPlugin("ssr", NewSSRPlugin)
+	plugins.RegisterPlugin("shadowsocks", NewSSRPlugin)
+	plugins.RegisterPlugin("shadowsocksr", NewSSRPlugin)
 }
 
-func newSSRPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
+func NewSSRPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
 	plugin = new(SSR)
 	err = plugin.Serve(localPort, v)
 	return

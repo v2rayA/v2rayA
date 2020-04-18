@@ -334,11 +334,11 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		default:
 			return o, newError("unsupported shadowsocksr obfuscation method: " + v.TLS)
 		}
-	case "pingtunnel":
+	case "pingtunnel", "trojan":
 	default:
 		return o, newError("unsupported protocol: " + v.Protocol)
 	}
-	if v.Protocol!="vmess" && pluginPort != nil {
+	if v.Protocol != "vmess" && pluginPort != nil {
 		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
 			{

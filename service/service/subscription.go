@@ -7,11 +7,11 @@ import (
 	"V2RayA/core/touch"
 	"V2RayA/persistence/configure"
 	"bytes"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+	"v2ray.com/core/common/errors"
 )
 
 func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {

@@ -14,7 +14,6 @@ import (
 	netstat2 "github.com/cakturk/go-netstat/netstat"
 	"github.com/json-iterator/go"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 	"regexp"
@@ -250,13 +249,6 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	}
 	if v.Protocol != "" && v.Protocol != "vmess" {
 		// 说明是plugin，启动plugin client
-		// 尝试将address解析成ip
-		if net.ParseIP(v.Add) == nil {
-			addrs, e := net.LookupHost(v.Add)
-			if e == nil && len(addrs) > 0 {
-				v.Add = addrs[0]
-			}
-		}
 		var plugin plugins.Plugin
 		plugin, err = plugins.NewPlugin(global.GetEnvironmentConfig().PluginListenPort, *v)
 		if err != nil {
