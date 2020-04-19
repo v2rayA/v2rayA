@@ -4,7 +4,7 @@ import (
 	"v2rayA/common/files"
 	"v2rayA/core/dnsPoison"
 	"v2rayA/global"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"io/ioutil"
 	"log"
@@ -176,6 +176,7 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	}
 	if whitelistCn.siteList == nil {
 		var siteList v2router.GeoSiteList
+		log.Println(len(b))
 		err = proto.Unmarshal(b, &siteList)
 		if err != nil {
 			return nil, nil, newError("GetWhitelistCn").Base(err)
