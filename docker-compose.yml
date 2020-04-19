@@ -3,7 +3,5 @@ services:
   backend:
     privileged: true
     network_mode: host # --network host
-    ports:
-      - 2017:2017
     restart: always
     build: .

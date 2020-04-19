@@ -3,7 +3,7 @@ package service
 import (
 	"v2rayA/core/siteDat"
 	"v2rayA/core/v2ray/asset"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"log"
 	"path"
