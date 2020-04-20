@@ -75,7 +75,7 @@ func (v *VmessInfo) ExportToURL() string {
 			fmt.Sprintf("%v:%v#%v",
 				v.Add,
 				base64.URLEncoding.EncodeToString([]byte(v.ID)),
-				base64.URLEncoding.EncodeToString([]byte(v.Ps)),
+				common.UrlEncoded(v.Ps),
 			),
 		)))
 	case "trojan":

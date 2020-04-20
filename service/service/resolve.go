@@ -302,7 +302,7 @@ func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
 	arr := strings.Split(u, "#")
 	var ps string
 	if len(arr) == 2 {
-		ps, _ = common.Base64URLDecode(arr[1])
+		ps, _ = url.QueryUnescape(arr[1])
 	}
 	u = arr[0]
 	re := regexp.MustCompile(`(.+):(.+)`)
