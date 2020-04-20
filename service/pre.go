@@ -35,7 +35,7 @@ import (
 func testTproxy() {
 	//检查tproxy是否可以启用
 	if err := v2ray.CheckAndProbeTProxy(); err != nil {
-		log.Println("无法启用TPROXY模块:", err)
+		log.Println("cannot load TPROXY module:", err)
 	}
 	v2ray.CheckAndStopTransparentProxy()
 	preprocess := func(c *iptables.SetupCommands) {
@@ -59,15 +59,15 @@ func testTproxy() {
 }
 func checkEnvironment() {
 	if runtime.GOOS == "windows" {
-		fmt.Println("windows不支持直接运行，请配合docker使用。见https://github.com/mzz2017/v2rayA")
-		fmt.Println("请按任意键继续...")
+		fmt.Println("v2rayA cannot run on windows")
+		fmt.Println("Press any key to continue...")
 		_, _ = fmt.Scanf("\n")
 		os.Exit(1)
 	}
 	conf := global.GetEnvironmentConfig()
 	if !conf.PassCheckRoot || conf.ResetPassword {
 		if os.Getegid() != 0 {
-			log.Fatal("请以sudo或root权限执行本程序. 如您确信已sudo或已拥有root权限, 可使用--passcheckroot参数跳过检查")
+			log.Fatal("Please execute this program with sudo or as root users. If you are sure that you have root privileges, you can use the --passcheckroot parameter to skip the check")
 		}
 	}
 	if conf.ResetPassword {
@@ -88,7 +88,7 @@ func checkEnvironment() {
 		}
 		process, err := socket.Process()
 		if err == nil {
-			log.Fatalf("v2rayA启动失败，%v端口已被%v/%v占用", port, process.Name, process.PID)
+			log.Fatalf("Port %v is occupied by %v/%v", port, process.Name, process.PID)
 		}
 	}
 	testTproxy()
@@ -124,7 +124,7 @@ func initConfigure() {
 	//检查geoip、geosite是否存在
 	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 		dld := func(repo, filename, localname string) (err error) {
-			color.Red.Println("正在安装" + filename)
+			color.Red.Println("installing" + filename)
 			p := asset.GetV2rayLocationAsset() + "/" + filename
 			resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 			if err != nil {
@@ -209,10 +209,10 @@ func checkUpdate() {
 					/* 更新LoyalsoldierSite.dat */
 					localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
 					if err != nil {
-						log.Println("自动更新PAC文件失败" + err.Error())
+						log.Println("Fail in updating PAC file: " + err.Error())
 						return
 					}
-					log.Println("自动更新PAC文件完成，本地文件时间：" + localGFWListVersion)
+					log.Println("Complete updating PAC file. Localtime: " + localGFWListVersion)
 				}()
 			case configure.CustomMode:
 				//TODO
@@ -232,9 +232,9 @@ func checkUpdate() {
 						control <- struct{}{}
 						err := service.UpdateSubscription(i, false)
 						if err != nil {
-							log.Println(fmt.Sprintf("自动更新订阅失败，id: %d，err: %v", i, err.Error()))
+							log.Println(fmt.Sprintf("Fail in updating subscription -- ID: %d，err: %v", i, err.Error()))
 						} else {
-							log.Println(fmt.Sprintf("自动更新订阅成功，id: %d，地址: %s", i, subs[i].Address))
+							log.Println(fmt.Sprintf("Complete updating subscription -- ID: %d，地址: %s", i, subs[i].Address))
 						}
 						wg.Done()
 						<-control
