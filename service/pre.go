@@ -1,17 +1,6 @@
 package main
 
 import (
-	"v2rayA/common/netTools/ports"
-	"v2rayA/core/ipforward"
-	"v2rayA/core/iptables"
-	"v2rayA/core/v2ray"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/core/v2ray/asset/gfwlist"
-	"v2rayA/extra/gopeed"
-	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	"v2rayA/router"
-	"v2rayA/service"
 	"fmt"
 	"github.com/gookit/color"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
@@ -30,33 +19,19 @@ import (
 	"syscall"
 	"time"
 	"v2ray.com/core/common/errors"
+	"v2rayA/common/netTools/ports"
+	"v2rayA/core/ipforward"
+	"v2rayA/core/iptables"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/core/v2ray/asset/gfwlist"
+	"v2rayA/extra/gopeed"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/router"
+	"v2rayA/service"
 )
 
-func testTproxy() {
-	//检查tproxy是否可以启用
-	if err := v2ray.CheckAndProbeTProxy(); err != nil {
-		log.Println("cannot load TPROXY module:", err)
-	}
-	v2ray.CheckAndStopTransparentProxy()
-	preprocess := func(c *iptables.SetupCommands) {
-		commands := string(*c)
-		lines := strings.Split(commands, "\n")
-		reg := regexp.MustCompile(`{{.+}}`)
-		for i, line := range lines {
-			if len(reg.FindString(line)) > 0 {
-				lines[i] = ""
-			}
-		}
-		commands = strings.Join(lines, "\n")
-		*c = iptables.SetupCommands(commands)
-	}
-	err := iptables.Tproxy.GetSetupCommands().Setup(&preprocess)
-	if err != nil {
-		log.Println(err)
-		global.SupportTproxy = false
-	}
-	iptables.Tproxy.GetCleanCommands().Clean()
-}
 func checkEnvironment() {
 	if runtime.GOOS == "windows" {
 		fmt.Println("v2rayA cannot run on windows")
@@ -91,7 +66,32 @@ func checkEnvironment() {
 			log.Fatalf("Port %v is occupied by %v/%v", port, process.Name, process.PID)
 		}
 	}
-	testTproxy()
+}
+
+func checkTProxySupportability() {
+	//检查tproxy是否可以启用
+	if err := v2ray.CheckAndProbeTProxy(); err != nil {
+		log.Println("[INFO] Cannot load TPROXY module:", err, ". Switch to DNSPoison module")
+	}
+	v2ray.CheckAndStopTransparentProxy()
+	preprocess := func(c *iptables.SetupCommands) {
+		commands := string(*c)
+		lines := strings.Split(commands, "\n")
+		reg := regexp.MustCompile(`{{.+}}`)
+		for i, line := range lines {
+			if len(reg.FindString(line)) > 0 {
+				lines[i] = ""
+			}
+		}
+		commands = strings.Join(lines, "\n")
+		*c = iptables.SetupCommands(commands)
+	}
+	err := iptables.Tproxy.GetSetupCommands().Setup(&preprocess)
+	if err != nil {
+		log.Println(err)
+		global.SupportTproxy = false
+	}
+	iptables.Tproxy.GetCleanCommands().Clean()
 }
 
 func initConfigure() {
@@ -187,68 +187,66 @@ func hello() {
 }
 
 func checkUpdate() {
-	go func() {
-		//等待网络连通
-		for {
-			c := http.DefaultClient
-			c.Timeout = 5 * time.Second
-			resp, err := http.Get("http://www.gstatic.com/generate_204")
-			if err == nil {
-				_ = resp.Body.Close()
-				break
-			}
-			time.Sleep(c.Timeout)
+	//等待网络连通
+	for {
+		c := http.DefaultClient
+		c.Timeout = 5 * time.Second
+		resp, err := http.Get("http://www.gstatic.com/generate_204")
+		if err == nil {
+			_ = resp.Body.Close()
+			break
 		}
+		time.Sleep(c.Timeout)
+	}
 
-		setting := service.GetSetting()
-		//检查PAC文件更新
-		if setting.PacAutoUpdateMode == configure.AutoUpdate || setting.Transparent == configure.TransparentGfwlist {
-			switch setting.PacMode {
-			case configure.GfwlistMode:
-				go func() {
-					/* 更新LoyalsoldierSite.dat */
-					localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
-					if err != nil {
-						log.Println("Fail in updating PAC file: " + err.Error())
-						return
-					}
-					log.Println("Complete updating PAC file. Localtime: " + localGFWListVersion)
-				}()
-			case configure.CustomMode:
-				//TODO
-			}
-		}
-
-		//检查订阅更新
-		if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
+	setting := service.GetSetting()
+	//检查PAC文件更新
+	if setting.PacAutoUpdateMode == configure.AutoUpdate || setting.Transparent == configure.TransparentGfwlist {
+		switch setting.PacMode {
+		case configure.GfwlistMode:
 			go func() {
-				subs := configure.GetSubscriptions()
-				lenSubs := len(subs)
-				control := make(chan struct{}, 2) //并发限制同时更新2个订阅
-				wg := new(sync.WaitGroup)
-				for i := 0; i < lenSubs; i++ {
-					wg.Add(1)
-					go func(i int) {
-						control <- struct{}{}
-						err := service.UpdateSubscription(i, false)
-						if err != nil {
-							log.Println(fmt.Sprintf("Fail in updating subscription -- ID: %d，err: %v", i, err.Error()))
-						} else {
-							log.Println(fmt.Sprintf("Complete updating subscription -- ID: %d，地址: %s", i, subs[i].Address))
-						}
-						wg.Done()
-						<-control
-					}(i)
+				/* 更新LoyalsoldierSite.dat */
+				localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
+				if err != nil {
+					log.Println("Fail in updating PAC file: " + err.Error())
+					return
 				}
-				wg.Wait()
+				log.Println("Complete updating PAC file. Localtime: " + localGFWListVersion)
 			}()
+		case configure.CustomMode:
+			//TODO
 		}
-		// 检查服务端更新
-		if foundNew, remote, err := service.CheckUpdate(); err == nil {
-			global.FoundNew = foundNew
-			global.RemoteVersion = remote
-		}
-	}()
+	}
+
+	//检查订阅更新
+	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate {
+		go func() {
+			subs := configure.GetSubscriptions()
+			lenSubs := len(subs)
+			control := make(chan struct{}, 2) //并发限制同时更新2个订阅
+			wg := new(sync.WaitGroup)
+			for i := 0; i < lenSubs; i++ {
+				wg.Add(1)
+				go func(i int) {
+					control <- struct{}{}
+					err := service.UpdateSubscription(i, false)
+					if err != nil {
+						log.Println(fmt.Sprintf("Fail in updating subscription -- ID: %d，err: %v", i, err.Error()))
+					} else {
+						log.Println(fmt.Sprintf("Complete updating subscription -- ID: %d，地址: %s", i, subs[i].Address))
+					}
+					wg.Done()
+					<-control
+				}(i)
+			}
+			wg.Wait()
+		}()
+	}
+	// 检查服务端更新
+	if foundNew, remote, err := service.CheckUpdate(); err == nil {
+		global.FoundNew = foundNew
+		global.RemoteVersion = remote
+	}
 }
 
 func run() (err error) {

@@ -11,10 +11,11 @@ import (
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
+	checkTProxySupportability()
 	initConfigure()
 	checkConnection()
+	go checkUpdate()
 	hello()
-	checkUpdate()
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
