@@ -1,6 +1,6 @@
 [Unit]
 Description=v2rayA Service
-Documentation=https://github.com/mzz2017/v2rayA/blob/master/README.md
+Documentation=https://github.com/mzz2017/v2rayA/wiki
 After=network.target
 Wants=network.target
 
