@@ -575,7 +575,7 @@ export default {
         return {
           server: arr[1],
           password: Base64.decode(arr[2]),
-          name: Base64.decode(arr[3]),
+          name: decodeURIComponent(arr[3]),
           protocol: "pingtunnel"
         };
       } else if (url.toLowerCase().indexOf("trojan://") >= 0) {
@@ -636,7 +636,7 @@ export default {
         case "pingtunnel":
           return `pingtunnel://${Base64.encode(
             `${srcObj.server}:${Base64.encodeURI(srcObj.password)}` +
-              (srcObj.name.length ? `#${Base64.encodeURI(srcObj.name)}` : "")
+              (srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "")
           )}`;
         case "trojan":
           /* trojan://BASE64(password)@server:port#ESCAPE(name) */
