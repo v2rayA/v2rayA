@@ -243,10 +243,19 @@ func checkUpdate() {
 		}()
 	}
 	// 检查服务端更新
-	if foundNew, remote, err := service.CheckUpdate(); err == nil {
-		global.FoundNew = foundNew
-		global.RemoteVersion = remote
-	}
+	go func() {
+		f := func() {
+			if foundNew, remote, err := service.CheckUpdate(); err == nil {
+				global.FoundNew = foundNew
+				global.RemoteVersion = remote
+			}
+		}
+		f()
+		c := time.Tick(7 * 24 * time.Hour)
+		for range c {
+			f()
+		}
+	}()
 }
 
 func run() (err error) {
