@@ -16,7 +16,7 @@ import i18n from "../plugins/i18n";
 
 Vue.prototype.$axios = axios;
 
-axios.defaults.timeout = 20 * 1000; // timeout: 20秒
+axios.defaults.timeout = 60 * 1000; // timeout: 60秒
 
 axios.interceptors.request.use(
   config => {
