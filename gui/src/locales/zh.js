@@ -81,7 +81,7 @@ export default {
   },
   setting: {
     transparentProxy: "全局透明代理",
-    pacMode: "规则模式",
+    pacMode: "规则端口的分流模式",
     preventDnsSpoofing: "防止DNS污染",
     mux: "多路复用",
     autoUpdateSub: "自动更新订阅",
@@ -92,10 +92,10 @@ export default {
     options: {
       global: "代理所有流量",
       direct: "直连模式",
-      pac: "规则模式",
+      pac: "跟随规则端口",
       whitelistCn: "大陆白名单",
       gfwlist: "GFWList",
-      sameAsPacMode: "与规则模式一致",
+      sameAsPacMode: "与规则端口所选模式一致",
       customRouting: "自定义路由规则",
       antiDnsHijack: "仅防止DNS劫持",
       forwardDnsRequest: "防止DNS污染：转发DNS请求",
@@ -132,7 +132,7 @@ export default {
     serviceAddress: "服务端地址",
     portSocks5: "socks5端口",
     portHttp: "http端口",
-    portHttpWithPac: "http端口(规则模式)",
+    portHttpWithPac: "http端口(带分流规则)",
     messages: [
       "如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
       "docker模式下如果未使用<code>--privileged --network host</code>参数启动容器，可通过修改端口映射修改socks5、http端口。",
