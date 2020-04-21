@@ -81,7 +81,7 @@ export default {
   },
   setting: {
     transparentProxy: "Transparent Proxy",
-    pacMode: "Rule Mode",
+    pacMode: "Traffic Splitting Mode of Rule Port",
     preventDnsSpoofing: "Prevent DNS Spoofing",
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
@@ -92,10 +92,10 @@ export default {
     options: {
       global: "Proxy All Traffic",
       direct: "Direct",
-      pac: "Rule Mode",
+      pac: "Depend on Rule Port",
       whitelistCn: "Proxy except CN Sites",
       gfwlist: "Proxy Only GFWList",
-      sameAsPacMode: "The Same as Rule Mode",
+      sameAsPacMode: "The Same as the Rule Port",
       customRouting: "Customized Routing",
       antiDnsHijack: "Prevent DNS Hijack Only",
       forwardDnsRequest: "Prevent DNS Spoofing: Forward DNS Request",
@@ -105,14 +105,14 @@ export default {
       off: "Off",
       updateSubWhenStart: "Update Subscriptions When Service Starts",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
-      dependTransparentMode: "Depend on Transparent Mode"
+      dependTransparentMode: "Depend on Transparent Proxy"
     },
     messages: {
       gfwlist:
         "Based on modified time of file which sometimes is after latest version online.",
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy service to other computers as the gateway should make option 'IP forward' on.",
-      pacMode: `Here you can set the rule. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
+      pacMode: `Here you can set the splitting traffic rule of rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing:
         "By default use DNSPod to prevent DNS hijack(v0.6.3+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
