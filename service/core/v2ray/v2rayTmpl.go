@@ -1,12 +1,6 @@
 package v2ray
 
 import (
-	"v2rayA/core/dnsPoison/entity"
-	"v2rayA/core/routingA"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
-	"v2rayA/persistence/configure"
 	"bytes"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -18,6 +12,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"v2rayA/core/dnsPoison/entity"
+	"v2rayA/core/routingA"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
 )
 
 /*对应template.json*/
@@ -456,7 +456,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 	return
 }
 
-func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string, setting *configure.Setting) (serverIPs []string, serverDomain string) {
+func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string, setting *configure.Setting, supportUDP bool) (serverIPs []string, serverDomain string) {
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
 		hosts := make([]string, len(dohHosts))
@@ -516,6 +516,15 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 			Port:        "53",
 			OutboundTag: "dns-out",
 		})
+	}
+	if !supportUDP {
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				Network:     "udp",
+			},
+		)
 	}
 	t.Routing.Rules = append(t.Routing.Rules, dohRouting...)
 	t.Routing.Rules = append(t.Routing.Rules,
@@ -935,7 +944,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	//再修改outbounds
 	t.AppendDNSOutbound()
 	//最后是routing
-	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts, setting)
+	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts, setting, supportUDP)
 	//添加hosts
 	if len(serverDomain) > 0 && len(serverIPs) > 0 {
 		t.DNS.Hosts[serverDomain] = serverIPs[0]
