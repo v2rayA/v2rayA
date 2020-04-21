@@ -81,7 +81,7 @@ export default {
   },
   setting: {
     transparentProxy: "全局透明代理",
-    pacMode: "PAC模式",
+    pacMode: "规则模式",
     preventDnsSpoofing: "防止DNS污染",
     mux: "多路复用",
     autoUpdateSub: "自动更新订阅",
@@ -92,10 +92,10 @@ export default {
     options: {
       global: "代理所有流量",
       direct: "直连模式",
-      pac: "PAC模式",
+      pac: "规则模式",
       whitelistCn: "大陆白名单",
       gfwlist: "GFWList",
-      sameAsPacMode: "与PAC模式一致",
+      sameAsPacMode: "与规则模式一致",
       customRouting: "自定义路由规则",
       antiDnsHijack: "仅防止DNS劫持",
       forwardDnsRequest: "防止DNS污染：转发DNS请求",
@@ -112,7 +112,7 @@ export default {
       transparentProxy:
         "全局代理开启后，无需经过额外设置，任何TCP、UDP流量均会经过V2Ray。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：本机docker容器不会走代理。",
       pacMode:
-        "该选项设置PAC端口所使用的路由模式。默认情况下PAC端口为20172，HTTP协议。",
+        "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       preventDnsSpoofing:
         "默认使用DNSPod防止DNS劫持(v0.6.3+)。" +
         "★转发DNS查询: 通过代理服务器转发DNS请求。" +
@@ -132,7 +132,7 @@ export default {
     serviceAddress: "服务端地址",
     portSocks5: "socks5端口",
     portHttp: "http端口",
-    portHttpWithPac: "http端口(PAC模式)",
+    portHttpWithPac: "http端口(规则模式)",
     messages: [
       "如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
       "docker模式下如果未使用<code>--privileged --network host</code>参数启动容器，可通过修改端口映射修改socks5、http端口。",
@@ -219,7 +219,7 @@ export default {
           <p class="about-small">2017: v2rayA后端端口</p>
           <p class="about-small">20170: SOCKS协议</p>
           <p class="about-small">20171: HTTP协议</p>
-          <p class="about-small">20172: 带PAC的HTTP协议</p>
+          <p class="about-small">20172: 带分流规则的HTTP协议</p>
           <p class="about-small">其他端口：</p>
           <p class="about-small">12345: tproxy，透明代理所需 </p>
           <p class="about-small">12346: 插件协议端口，如trojan、ssr和pingtunnel</p>

@@ -81,7 +81,7 @@ export default {
   },
   setting: {
     transparentProxy: "Transparent Proxy",
-    pacMode: "PAC Mode",
+    pacMode: "Rule Mode",
     preventDnsSpoofing: "Prevent DNS Spoofing",
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
@@ -92,10 +92,10 @@ export default {
     options: {
       global: "Proxy All Traffic",
       direct: "Direct",
-      pac: "PAC Mode",
+      pac: "Rule Mode",
       whitelistCn: "Proxy except CN Sites",
       gfwlist: "Proxy Only GFWList",
-      sameAsPacMode: "The Same as PAC Mode",
+      sameAsPacMode: "The Same as Rule Mode",
       customRouting: "Customized Routing",
       antiDnsHijack: "Prevent DNS Hijack Only",
       forwardDnsRequest: "Prevent DNS Spoofing: Forward DNS Request",
@@ -112,8 +112,7 @@ export default {
         "Based on modified time of file which sometimes is after latest version online.",
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy service to other computers as the gateway should make option 'IP forward' on.",
-      pacMode:
-        "Here you can set what proxy mode PAC mode is. By default PAC port is 20172 and HTTP protocol.",
+      pacMode: `Here you can set the rule. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing:
         "By default use DNSPod to prevent DNS hijack(v0.6.3+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
@@ -134,7 +133,7 @@ export default {
     serviceAddress: "Address of Service",
     portSocks5: "Port of SOCKS5",
     portHttp: "Port of HTTP",
-    portHttpWithPac: "Port of HTTP(with PAC)",
+    portHttpWithPac: "Port of HTTP(with Rule)",
     messages: [
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
@@ -227,7 +226,7 @@ export default {
           <p class="about-small">2017: v2rayA service port</p>
           <p class="about-small">20170: SOCKS protocol</p>
           <p class="about-small">20171: HTTP protocol</p>
-          <p class="about-small">20172: HTTP protocol with PAC</p>
+          <p class="about-small">20172: HTTP protocol with "Rule of Splitting Traffic"</p>
           <p class="about-small">Other ports：</p>
           <p class="about-small">12345: tproxy, needed by transparent proxy </p>
           <p class="about-small">12346: port of plugins such as trojan, ssr and pingtunnel</p>
