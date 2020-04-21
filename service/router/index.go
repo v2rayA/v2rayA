@@ -1,18 +1,20 @@
 package router
 
 import (
+	//"github.com/DeanThompson/ginpprof"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/gookit/color"
 	"v2rayA/common"
 	"v2rayA/common/jwt"
 	"v2rayA/controller"
 	"v2rayA/global"
 	"v2rayA/persistence/configure"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/gookit/color"
 )
 
 func Run() error {
 	engine := gin.New()
+	//ginpprof.Wrap(engine)
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
