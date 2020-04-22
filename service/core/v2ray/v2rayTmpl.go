@@ -480,41 +480,35 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 			dohRouting[i].OutboundTag = "proxy"
 		}
 	}
-	if setting.AntiPollution != configure.AntipollutionNone {
+	if supportUDP {
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 国内DNS服务器直连，以分流
-				Type:        "field",
-				OutboundTag: "direct",
-				IP:          []string{"119.29.29.29", "114.114.114.114"},
-				Port:        "53",
-			},
 			RoutingRule{ // 国外DNS服务器地址走代理，以防污染
 				Type:        "field",
 				OutboundTag: "proxy",
 				IP:          []string{"8.8.8.8", "1.1.1.1"},
 				Port:        "53",
 			},
-			RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
-				Type:        "field",
-				Port:        "53",
-				OutboundTag: "dns-out",
-			},
-			RoutingRule{ // 非标准端口暂时安全，直连
-				Type:        "field",
-				OutboundTag: "direct",
-				IP:          []string{"208.67.222.222", "208.67.220.220"},
-				Port:        "5353",
-			})
-	} else {
-		t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+		)
+	}
+	t.Routing.Rules = append(t.Routing.Rules,
+		RoutingRule{ // 国内DNS服务器直连，以分流
 			Type:        "field",
 			OutboundTag: "direct",
 			IP:          []string{"119.29.29.29", "114.114.114.114"},
 			Port:        "53",
-		}, RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+		},
+		RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
 			Type:        "field",
 			Port:        "53",
 			OutboundTag: "dns-out",
+		},
+	)
+	if setting.AntiPollution != configure.AntipollutionNone {
+		t.Routing.Rules = append(t.Routing.Rules, RoutingRule{ // 非标准端口暂时安全，直连
+			Type:        "field",
+			OutboundTag: "direct",
+			IP:          []string{"208.67.222.222", "208.67.220.220"},
+			Port:        "5353",
 		})
 	}
 	if !supportUDP {
