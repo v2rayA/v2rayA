@@ -13,6 +13,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
     - uses: actions/checkout@v2
     - name: Build Docker Buildx
       run: |
@@ -25,3 +28,7 @@ jobs:
         docker buildx create --use --name crossbuilder
         
         docker buildx build -t mzz2017/v2raya -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
+        
+        v=$(echo ${{ steps.get_version.outputs.VERSION }} | cut -c2-)
+        docker tag mzz2017/v2raya:latest mzz2017/v2raya:$v
+        docker push mzz2017/v2raya:$v
