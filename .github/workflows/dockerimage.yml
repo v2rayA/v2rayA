@@ -27,8 +27,6 @@ jobs:
         docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
         docker buildx create --use --name crossbuilder
         
-        docker buildx build -t mzz2017/v2raya -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
-        
         v=$(echo ${{ steps.get_version.outputs.VERSION }} | cut -c2-)
-        docker tag mzz2017/v2raya:latest mzz2017/v2raya:$v
-        docker push mzz2017/v2raya:$v
+        docker buildx build -t mzz2017/v2raya:latest -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
+        docker buildx build -t mzz2017/v2raya:$v -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
