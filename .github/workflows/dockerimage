@@ -1,0 +1,27 @@
+name: Docker Image CI
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  DOCKER_CLI_EXPERIMENTAL: enabled
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Docker Buildx
+      run: |
+        docker build --platform=local -o . git://github.com/docker/buildx
+        mkdir -p ~/.docker/cli-plugins && mv buildx ~/.docker/cli-plugins/docker-buildx
+    - name: Build the Docker image
+      run: |
+        docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+        docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+        docker buildx create --use --name crossbuilder
+        
+        docker buildx build -t mzz2017/v2raya -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
