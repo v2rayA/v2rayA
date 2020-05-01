@@ -1,17 +1,17 @@
 package service
 
 import (
-	"v2rayA/common"
-	"v2rayA/common/httpClient"
-	"v2rayA/core/nodeData"
-	"v2rayA/core/touch"
-	"v2rayA/persistence/configure"
 	"bytes"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 	"v2ray.com/core/common/errors"
+	"v2rayA/common"
+	"v2rayA/common/httpClient"
+	"v2rayA/core/nodeData"
+	"v2rayA/core/touch"
+	"v2rayA/persistence/configure"
 )
 
 func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
@@ -29,8 +29,11 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	buf := new(bytes.Buffer)
 	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
-	// base64解码, raw是多行vmess
-	raw, _ := common.Base64StdDecode(buf.String())
+	// base64解码, raw是多行vmess/ss/ssr/trojan
+	raw, err := common.Base64StdDecode(buf.String())
+	if err != nil {
+		raw, _ = common.Base64URLDecode(buf.String())
+	}
 	// 切分raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析
