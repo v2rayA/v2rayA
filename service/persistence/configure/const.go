@@ -51,7 +51,8 @@ const (
 	ServerType             = TouchType("server")
 	SubscriptionServerType = TouchType("subscriptionServer")
 
-	DnsForward        = Antipollution("dnsforward")
-	DoH               = Antipollution("doh")
-	AntipollutionNone = Antipollution("none")
+	DnsForward          = Antipollution("dnsforward")
+	DoH                 = Antipollution("doh")
+	AntipollutionNone   = Antipollution("none") //历史原因，none代表“仅防止dns劫持”，不代表关闭
+	AntipollutionClosed = Antipollution("closed") //直接iptables略过udp
 )

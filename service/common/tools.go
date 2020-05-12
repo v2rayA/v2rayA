@@ -89,3 +89,14 @@ func UrlEncoded(str string) string {
 	}
 	return u.String()
 }
+
+func TrimLineContains(parent, sub string) string {
+	lines := strings.Split(parent, "\n")
+	result := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !strings.Contains(line, sub) {
+			result = append(result, line)
+		}
+	}
+	return strings.Join(result, "\n")
+}

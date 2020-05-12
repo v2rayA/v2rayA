@@ -466,6 +466,8 @@ export default {
     trojan: {
       name: "",
       server: "",
+      peer: "",
+      allowInsecure: false,
       port: "",
       password: "",
       protocol: "trojan"
@@ -639,7 +641,7 @@ export default {
               (srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "")
           )}`;
         case "trojan":
-          /* trojan://BASE64(password)@server:port#ESCAPE(name) */
+          /* trojan://password@server:port?allowInsecure=1&peer=peer#URIESCAPE(name) */
           return (
             `trojan://${srcObj.password}@${srcObj.server}:${srcObj.port}` +
             (srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "")

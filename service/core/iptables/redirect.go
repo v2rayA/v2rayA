@@ -28,7 +28,7 @@ iptables -t nat -A V2RAY -d 224.0.0.0/4 -j RETURN
 iptables -t nat -A V2RAY -d 240.0.0.0/4 -j RETURN
 iptables -t nat -A V2RAY -d 255.255.255.255/32 -j RETURN
 iptables -t nat -A V2RAY -m mark --mark 0xff -j RETURN
-iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 12345
+iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 32345
 
 iptables -t nat -A PREROUTING -p tcp -j V2RAY
 iptables -t nat -A OUTPUT -p tcp -j V2RAY
@@ -47,9 +47,7 @@ func (r *redirect) GetCleanCommands() CleanCommands {
 	commands := `
 iptables -t nat -F V2RAY
 iptables -t nat -D PREROUTING -p tcp -j V2RAY
-iptables -t nat -D PREROUTING -p udp -j V2RAY
 iptables -t nat -D OUTPUT -p tcp -j V2RAY
-iptables -t nat -D OUTPUT -p udp -j V2RAY
 iptables -t nat -X V2RAY
 `
 	if cmds.IsCommandValid("sysctl") {

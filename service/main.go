@@ -9,6 +9,13 @@ import (
 )
 
 func main() {
+	//u, _ := url.Parse("trojan://CLT5Ge@45.93.216.206:8443?allowInsecure=1&peer=jpo206.ovod.me#%E5%85%8D%E8%B4%B9%C2%B7T%C2%B7%E6%97%A5%E6%9C%ACO%C2%B7206")
+	//log.Println(u.Scheme)
+	//log.Println(u.Hostname())
+	//log.Println(u.Port())
+	//log.Println(u.User)
+	//log.Println(u.Query())
+	//return
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
 	checkTProxySupportability()

@@ -88,6 +88,7 @@ export default {
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Upadate Subscriptions and GFWList",
     ipForwardOn: "IP Forward",
+    enhancedModeOn: "Enhanced Mode",
     concurrency: "Concurrency",
     options: {
       global: "Proxy All Traffic",
@@ -105,7 +106,8 @@ export default {
       off: "Off",
       updateSubWhenStart: "Update Subscriptions When Service Starts",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
-      dependTransparentMode: "Depend on Transparent Proxy"
+      dependTransparentMode: "Depend on Transparent Proxy",
+      closed: "Off"
     },
     messages: {
       gfwlist:
@@ -114,9 +116,10 @@ export default {
         "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy service to other computers as the gateway should make option 'IP forward' on.",
       pacMode: `Here you can set the splitting traffic rule of rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing:
-        "By default use DNSPod to prevent DNS hijack(v0.6.3+)." +
+        "If there is a problem with transparent proxy, try setting it 'Off' or 'Enhanced Mode'(v0.7.0.2+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): Stable and fast DoH services are suggested.",
+        "★DoH(dns-over-https, v2ray-core: 4.22.0+): Stable and fast DoH services are suggested." +
+        "★Enhanced Mode(v0.7.0.2+) will replace the method of forwarding dns-query using iptables with DnsPoison method",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. Support vmess only now.",
       mux:
@@ -138,7 +141,7 @@ export default {
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
       "We can not judge port occupations in docker mode. Confirm ports are free.",
-      "Put zero means to close this port."
+      "Zero means to close this port."
     ]
   },
   customRouting: {
@@ -228,8 +231,8 @@ export default {
           <p class="about-small">20171: HTTP protocol</p>
           <p class="about-small">20172: HTTP protocol with "Rule of Splitting Traffic"</p>
           <p class="about-small">Other ports：</p>
-          <p class="about-small">12345: tproxy, needed by transparent proxy </p>
-          <p class="about-small">12346: port of plugins such as trojan, ssr and pingtunnel</p>
+          <p class="about-small">32345: tproxy, needed by transparent proxy </p>
+          <p class="about-small">32346: port of plugins such as trojan, ssr and pingtunnel</p>
           <p>All data is stored in local. If service is running in docker, configure will disappear with related docker volume's removing. Backup data if necessary.
           <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/v2rayA/issues">issues</a>.</p>`,
   axios: {

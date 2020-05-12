@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"v2rayA/common"
-	"v2rayA/persistence/configure"
-	"v2rayA/service"
 	"github.com/gin-gonic/gin"
 	"github.com/json-iterator/go"
 	"time"
+	"v2rayA/common"
+	"v2rayA/persistence/configure"
+	"v2rayA/service"
 )
 
 func GetPingLatency(ctx *gin.Context) {
@@ -16,7 +16,7 @@ func GetPingLatency(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	wt, err = service.Ping(wt, 5*time.Second)
+	wt, err = service.Ping(wt, 1*time.Second)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
@@ -33,7 +33,7 @@ func GetHttpLatency(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	wt, err = service.TestHttpLatency(wt, 10*time.Second, 4)
+	wt, err = service.TestHttpLatency(wt, 8*time.Second, 4)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

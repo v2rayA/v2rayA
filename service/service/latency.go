@@ -1,13 +1,6 @@
 package service
 
 import (
-	"v2rayA/common/httpClient"
-	"v2rayA/common/netTools/netstat"
-	"v2rayA/core/v2ray"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	"v2rayA/plugins"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,16 +8,25 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"v2rayA/common/httpClient"
+	"v2rayA/common/netTools/netstat"
+	"v2rayA/core/v2ray"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/plugins"
 )
 
-func Ping(which []configure.Which, timeout time.Duration) ([]configure.Which, error) {
+func Ping(which []configure.Which, timeout time.Duration) (_ []configure.Which, err error) {
 	var whiches configure.Whiches
 	whiches.Set(which)
 	//对要Ping的which去重
 	which = whiches.GetNonDuplicated()
 	//暂时关闭透明代理
 	v2ray.CheckAndStopTransparentProxy()
-	defer v2ray.CheckAndSetupTransparentProxy(true)
+	defer func() {
+		err = v2ray.CheckAndSetupTransparentProxy(true)
+	}()
 	//多线程异步ping
 	wg := new(sync.WaitGroup)
 	for i, v := range which {
@@ -199,17 +201,20 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	defer c.CloseIdleConnections()
 	c.Timeout = timeout
 	t := time.Now()
-	req, _ := http.NewRequest("GET", "https://www.youtube.com", nil)
+	// NOT follow redirects
+	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	req, _ := http.NewRequest("HEAD", "http://www.alibaba.com", nil)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
 	req.Header.Set("Connection", "close")
 	resp, err := c.Do(req)
-	if err != nil || resp.StatusCode != 200 {
+	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 400 {
+		s, _ := which.LocateServer()
 		if err != nil {
 			es := strings.ToLower(err.Error())
-			s, _ := which.LocateServer()
-			log.Println(err, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 			switch {
 			case strings.Contains(es, "eof"):
 				which.Latency = "NOT STABLE"
@@ -220,8 +225,10 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 			default:
 				which.Latency = err.Error()
 			}
+			log.Println(err, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 		} else {
 			which.Latency = "BAD RESPONSE"
+			log.Println(resp.Status, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 		}
 		return
 	}

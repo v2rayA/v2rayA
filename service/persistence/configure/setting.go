@@ -1,5 +1,7 @@
 package configure
 
+import "v2rayA/core/ipforward"
+
 type Setting struct {
 	PacMode                    PacMode         `json:"pacMode"`
 	ProxyModeWhenSubscribe     ProxyMode       `json:"proxyModeWhenSubscribe"`
@@ -10,6 +12,7 @@ type Setting struct {
 	Mux                        int             `json:"mux"`
 	Transparent                TransparentMode `json:"transparent"` //当透明代理开启时将覆盖端口单独的配置
 	IpForward                  bool            `json:"ipforward"`
+	EnhancedMode               bool            `json:"enhancedMode"`
 	AntiPollution              Antipollution   `json:"antipollution"`
 }
 
@@ -23,6 +26,9 @@ func NewSetting() (setting *Setting) {
 		MuxOn:                      No,
 		Mux:                        8,
 		Transparent:                TransparentClose,
+		IpForward:                  ipforward.IsIpForwardOn(),
+		EnhancedMode:               false,
+		AntiPollution:              AntipollutionClosed,
 	}
 
 }

@@ -4,15 +4,15 @@
 package pingtunnel
 
 import (
-	"v2rayA/common/netTools/ports"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
-	"v2rayA/plugins"
 	"github.com/mzz2017/go-engine/src/loggo"
 	"github.com/mzz2017/go-engine/src/pingtunnel"
 	"log"
 	"strconv"
 	"time"
+	"v2rayA/common/netTools/ports"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/plugins"
 )
 
 type PingTunnel struct {
@@ -41,7 +41,7 @@ func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error
 		return newError("password must be a string of numbers")
 	}
 	tcpmode := 1
-	tcpmode_buffersize := 1 * 1024 * 1024
+	tcpmode_buffersize := 1 * 1024 * 1024 //1MB
 	tcpmode_maxwin := 10000
 	tcpmode_resend_timems := 400
 	tcpmode_compress := 0

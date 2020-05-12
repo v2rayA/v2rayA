@@ -59,8 +59,8 @@ iptables -t mangle -A SSTP_PRE -m mark --mark 0xff -j RETURN
 iptables -t mangle -A SSTP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 # 将所有打了标记的 TCP 和 UDP 包透明地转发到代理的监听端口
-iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 12345
-iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 12345
+iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 32345
+iptables -t mangle -A SSTP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345
 
 # 略过已建立且被tproxy标记的的socket
 iptables -t mangle -A SSTP_ONCE -j MARK --set-mark 1

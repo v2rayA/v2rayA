@@ -376,9 +376,10 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 			//由于plugin不支持udp
 			//先优先请求DoH（tcp）
 			if err := CheckDohSupported(); err == nil {
+				//DNS转发，所以使用全球友好的DNS服务器
 				t.DNS.Servers = []interface{}{
-					"https://dns.alidns.com/dns-query",
 					"https://1.0.0.1/dns-query",
+					"https://dns.google/dns-query",
 				}
 			}
 			if len(t.DNS.Servers) <= 0 {
@@ -895,7 +896,7 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 		} else {
 			tproxy = "redirect"
 		}
-		t.AppendDokodemo(&tproxy, 12345, "transparent")
+		t.AppendDokodemo(&tproxy, 32345, "transparent")
 	}
 }
 
