@@ -898,7 +898,7 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 	}
 	if setting.Transparent != configure.TransparentClose {
 		var tproxy string
-		if global.SupportTproxy == true {
+		if global.SupportTproxy && !setting.EnhancedMode {
 			tproxy = "tproxy"
 		} else {
 			tproxy = "redirect"

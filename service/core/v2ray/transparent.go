@@ -18,7 +18,8 @@ func DeleteTransparentProxyRules() {
 }
 
 func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) error {
-	if global.SupportTproxy {
+	setting := configure.GetSettingNotNil()
+	if !(!global.SupportTproxy || setting.EnhancedMode) {
 		if err := iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
 				err = newError("not compile xt_TPROXY in kernel")
@@ -28,7 +29,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 			global.SupportTproxy = false
 		}
 	}
-	if !global.SupportTproxy {
+	if !global.SupportTproxy || setting.EnhancedMode {
 		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
 			log.Println(err)
 			DeleteTransparentProxyRules()
