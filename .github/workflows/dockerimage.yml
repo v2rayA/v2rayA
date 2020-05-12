@@ -28,7 +28,5 @@ jobs:
           docker buildx create --use --name crossbuilder
 
           v=$(echo ${{ steps.get_version.outputs.VERSION }} | cut -c2-)
-          docker buildx build -t mzz2017/v2raya:$v -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
-          docker pull mzz2017/v2raya:$v
-          docker tag mzz2017/v2raya:$v mzz2017/v2raya:latest
-          docker push mzz2017/v2raya:latest
+          docker buildx build --no-cache -t mzz2017/v2raya:$v -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
+          docker buildx build --no-cache -t mzz2017/v2raya:latest -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
