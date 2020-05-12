@@ -1,18 +1,20 @@
 package v2ray
 
 import (
+	"log"
+	"strings"
+	"time"
 	"v2rayA/common/netTools/netstat"
 	"v2rayA/common/netTools/ports"
 	"v2rayA/core/iptables"
 	"v2rayA/global"
 	"v2rayA/persistence/configure"
-	"log"
-	"strings"
 )
 
 func DeleteTransparentProxyRules() {
 	iptables.Tproxy.GetCleanCommands().Clean()
 	iptables.Redirect.GetCleanCommands().Clean()
+	time.Sleep(100 * time.Millisecond)
 }
 
 func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) error {

@@ -418,6 +418,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 					dohDomains = append(dohDomains, uu.Hostname())
 					addrs, e := net.LookupHost(uu.Hostname())
 					if e != nil {
+						log.Println("net.LookupHost:", e)
 						continue
 					}
 					dohIPs = append(dohIPs, addrs...)
@@ -549,7 +550,10 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 		)
 		serverDomain = v.Add
 		//解析IP
-		ips, _ := net.LookupHost(v.Add)
+		ips, e := net.LookupHost(v.Add)
+		if e != nil {
+			log.Println("net.LookupHost:", e)
+		}
 		serverIPs = ips
 	}
 	//将节点IP加入白名单

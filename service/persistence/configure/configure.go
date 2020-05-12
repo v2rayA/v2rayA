@@ -157,8 +157,8 @@ func GetDohListNotNil() *string {
 	r := new(string)
 	_ = persistence.Get("dohList", &r)
 	if len(strings.TrimSpace(*r)) == 0 {
-		*r = `https://dns.alidns.com/dns-query
-https://dns.rubyfish.cn/dns-query`
+		*r = `https://dns.rubyfish.cn/dns-query
+https://i.233py.com/dns-query`
 	}
 	return r
 }
