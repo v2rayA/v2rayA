@@ -6,7 +6,6 @@
 package trojan
 
 import (
-	"v2rayA/extra/proxy"
 	"bytes"
 	"crypto/sha256"
 	"crypto/tls"
@@ -16,6 +15,7 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"v2rayA/extra/proxy"
 )
 
 // Trojan is a base trojan struct
@@ -47,15 +47,18 @@ func NewTrojan(s string, d proxy.Dialer, p proxy.Proxy) (*Trojan, error) {
 	hash.Write([]byte(u.User.Username()))
 	hex.Encode(t.pass[:], hash.Sum(nil))
 
-	// serverName
-	colonPos := strings.LastIndex(t.addr, ":")
-	if colonPos == -1 {
-		colonPos = len(t.addr)
+	query := u.Query()
+	t.serverName = query.Get("peer")
+	if t.serverName == "" {
+		colonPos := strings.LastIndex(t.addr, ":")
+		if colonPos == -1 {
+			colonPos = len(t.addr)
+		}
+		t.serverName = t.addr[:colonPos]
 	}
-	t.serverName = t.addr[:colonPos]
 
 	// skipVerify
-	if u.Query().Get("skipVerify") == "true" {
+	if query.Get("skipVerify") == "true" {
 		t.skipVerify = true
 	}
 

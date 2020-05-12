@@ -35,7 +35,9 @@ function handleResponse(res, that, suc, err) {
 }
 
 /*
-var myURL = parseURL('http://abc.com:8080/dir/index.html?id=255&m=hello#top');
+var myURL = parseURL('http://user:pass@abc.com:8080/dir/index.html?id=255&m=hello#top');
+myURL.username;     // = 'user'
+myURL.password;     // = 'pass'
 myURL.file;     // = 'index.html'
 myURL.hash;     // = 'top'
 myURL.host;     // = 'abc.com'
@@ -45,19 +47,36 @@ myURL.path;     // = '/dir/index.html'
 myURL.segments; // = Array = ['dir', 'index.html']
 myURL.port;     // = '8080'
 myURL.protocol; // = 'http'
-myURL.source;   // = 'http://abc.com:8080/dir/index.html?id=255&m=hello#top'
+myURL.source;   // = 'http://user:pass@abc.com:8080/dir/index.html?id=255&m=hello#top'
 */
-function parseURL(url) {
+function parseURL(u) {
+  let url = u;
+  let protocol = "";
+  let fakeProto = false;
   if (url.indexOf("://") === -1) {
     url = "http://" + url;
+  } else {
+    protocol = url.substr(0, url.indexOf("://"));
+    switch (protocol) {
+      case "http":
+      case "https":
+      case "ws":
+      case "wss":
+        break;
+      default:
+        url = "http" + url.substr(url.indexOf("://"));
+        fakeProto = true;
+    }
   }
-  var a = document.createElement("a");
+  const a = document.createElement("a");
   a.href = url;
-  return {
-    source: url,
-    protocol: a.protocol.replace(":", ""),
+  const r = {
+    source: u,
+    username: a.username,
+    password: a.password,
+    protocol: fakeProto ? protocol : a.protocol.replace(":", ""),
     host: a.hostname,
-    port: a.port,
+    port: a.port ? parseInt(a.port) : 80,
     query: a.search,
     params: (function() {
       var ret = {},
@@ -80,6 +99,66 @@ function parseURL(url) {
     relative: (a.href.match(/tps?:\/\/[^/]+(.+)/) || [null, ""])[1],
     segments: a.pathname.replace(/^\//, "").split("/")
   };
+  a.remove();
+  return r;
+}
+
+function generateURL({
+  username,
+  password,
+  protocol,
+  host,
+  port,
+  params,
+  hash,
+  path
+}) {
+  const a = document.createElement("a");
+  if (protocol) {
+    if (protocol.indexOf("://") === -1) {
+      protocol = protocol + "://";
+    }
+  } else {
+    protocol = "http://";
+  }
+  let user = "";
+  if (username || password) {
+    if (username && password) {
+      user = `${username}:${password}@`;
+    } else {
+      user = `${username || password}@`;
+    }
+  }
+  let query = "";
+  if (params) {
+    let first = true;
+    for (const k in params) {
+      if (!params.hasOwnProperty(k)) {
+        continue;
+      }
+      if (!first) {
+        query += "&";
+      } else {
+        first = false;
+      }
+      query += `${k}=${encodeURIComponent(params[k])}`;
+    }
+  }
+  path = path || "";
+  if (path && path.length > 0 && path[0] !== "/") {
+    path = "/" + path;
+  }
+  a.href = `${protocol ? protocol : "http://"}${user}${host}${
+    port ? `:${port}` : ""
+  }${path ? path : ""}`;
+  a.username = username;
+  a.password = password;
+  a.search = query;
+  a.hash = hash;
+  console.log(a, a.username, a.password);
+  const r = a.href;
+  a.remove();
+  return r;
 }
 
 /*判断一个IPv4的地址是否是内网地址*/
@@ -163,6 +242,7 @@ export {
   locateServer,
   handleResponse,
   parseURL,
+  generateURL,
   isIntranet,
   isVersionGreaterEqual
 };

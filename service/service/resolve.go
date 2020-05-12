@@ -1,15 +1,14 @@
 package service
 
 import (
-	"v2rayA/common"
-	"v2rayA/core/nodeData"
-	"v2rayA/core/vmessInfo"
 	"github.com/json-iterator/go"
 	"log"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
+	"v2rayA/common"
+	"v2rayA/core/nodeData"
+	"v2rayA/core/vmessInfo"
 )
 
 /*
@@ -40,16 +39,17 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 		q := u.Query()
 		info = vmessInfo.VmessInfo{
-			ID:   subMatch[1],
-			Add:  subMatch[2],
-			Port: subMatch[3],
-			Ps:   q.Get("remarks"),
-			Host: q.Get("obfsParam"),
-			Path: q.Get("path"),
-			Net:  q.Get("obfs"),
-			Aid:  q.Get("aid"),
-			TLS:  map[string]string{"1": "tls"}[q.Get("tls")],
-			V:    "2",
+			ID:            subMatch[1],
+			Add:           subMatch[2],
+			Port:          subMatch[3],
+			Ps:            q.Get("remarks"),
+			Host:          q.Get("obfsParam"),
+			Path:          q.Get("path"),
+			Net:           q.Get("obfs"),
+			Aid:           q.Get("aid"),
+			TLS:           map[string]string{"1": "tls"}[q.Get("tls")],
+			V:             "2",
+			AllowInsecure: false,
 		}
 		if info.Net == "websocket" {
 			info.Net = "ws"
@@ -247,42 +247,21 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 		err = newError("this address is not begin with trojan://")
 		return
 	}
-	u = u[9:]
-	arr := strings.Split(u, "#")
-	var name string
-	if len(arr) == 2 {
-		var e error
-		name, e = url.QueryUnescape(arr[1])
-		if e != nil {
-			name = arr[1]
-		}
-		log.Println(name)
-	}
-	u = arr[0]
-	fields := strings.FieldsFunc(u, func(r rune) bool {
-		switch r {
-		case '@', ':':
-			return true
-		}
-		return false
-	})
-	if len(fields) != 3 {
-		return nil, newError("invalid trojan format")
-	}
-	passwd := fields[0]
-	address := fields[1]
-	port := fields[2]
-	_, err = strconv.Atoi(fields[2])
+	t, err := url.Parse(u)
 	if err != nil {
+		err = newError("invalid trojan format")
 		return
 	}
+	allowInsecure := t.Query().Get("allowInsecure")
 	data = new(nodeData.NodeData)
 	data.VmessInfo = vmessInfo.VmessInfo{
-		Ps:       name,
-		Add:      address,
-		Port:     port,
-		ID:       passwd,
-		Protocol: "trojan",
+		Ps:            t.Fragment,
+		Add:           t.Hostname(),
+		Port:          t.Port(),
+		ID:            t.User.String(),
+		Host:          t.Query().Get("peer"),
+		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
+		Protocol:      "trojan",
 	}
 	log.Println(data.VmessInfo)
 	return

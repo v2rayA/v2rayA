@@ -13,7 +13,8 @@ export default {
     success: "SUCCESS",
     fail: "FAIL",
     message: "Message",
-    none: "none"
+    none: "none",
+    optional: "optional"
   },
   welcome: {
     title: "Welcome",
