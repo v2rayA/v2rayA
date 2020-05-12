@@ -1,12 +1,12 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
+	"net/http"
 	"v2rayA/common"
 	"v2rayA/core/v2ray"
 	"v2rayA/core/v2ray/asset/gfwlist"
 	"v2rayA/global"
-	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func GetVersion(ctx *gin.Context) {
@@ -29,7 +29,7 @@ func GetVersion(ctx *gin.Context) {
 		"remoteVersion": global.RemoteVersion,
 		"serviceValid":  v2ray.IsV2rayServiceValid(),
 		"dohValid":      dohValid,
-		"iptablesMode":  iptablesMode,
+		"iptablesMode":  iptablesMode, //仅代表是否支持tproxy，真实iptables所使用的表还要看是否是增强模式
 	})
 }
 

@@ -42,7 +42,7 @@ func checkEnvironment() {
 	conf := global.GetEnvironmentConfig()
 	if !conf.PassCheckRoot || conf.ResetPassword {
 		if os.Getegid() != 0 {
-			log.Fatal("Please execute this program with sudo or as root users. If you are sure that you have root privileges, you can use the --passcheckroot parameter to skip the check")
+			log.Fatal("Please execute this program with sudo or as a root user. If you are sure that you have root privileges, you can use the --passcheckroot parameter to skip the check")
 		}
 	}
 	if conf.ResetPassword {
