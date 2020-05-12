@@ -117,7 +117,7 @@ export default {
         "If transparent proxy on, no extra configure needed and all TCP and UDP traffic except from docker will pass through the proxy. Providing proxy service to other computers as the gateway should make option 'IP forward' on.",
       pacMode: `Here you can set the splitting traffic rule of rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing:
-        "If there is a problem with transparent proxy, try setting it 'Off' or 'Enhanced Mode'(v0.7.0.2+)." +
+        "If there is a problem with transparent proxy, try setting 'Prevent DNS Spoofing' as 'Off' or turn on 'Enhanced Mode' (v0.7.0.2+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
         "★DoH(dns-over-https, v2ray-core: 4.22.0+): Stable and fast DoH services are suggested." +
         "★Enhanced Mode(v0.7.0.2+) will replace the method of forwarding dns-query using iptables with DnsPoison method",
