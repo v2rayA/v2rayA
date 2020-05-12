@@ -65,14 +65,14 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 			o bool
 			s *netstat.Socket
 		)
-		o, s, err = ports.IsPortOccupied([]string{"12345:tcp,udp"})
+		o, s, err = ports.IsPortOccupied([]string{"32345:tcp,udp"})
 		if err != nil {
 			return
 		}
 		if o {
 			p, e := s.Process()
 			if e == nil && p.Name != "v2ray" {
-				err = newError("transparent proxy cannot be set up, port 12345 is occupied by ", p.Name)
+				err = newError("transparent proxy cannot be set up, port 32345 is occupied by ", p.Name)
 				return
 			}
 		}

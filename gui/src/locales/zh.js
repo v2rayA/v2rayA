@@ -88,6 +88,7 @@ export default {
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     ipForwardOn: "开启IP转发",
+    enhancedModeOn: "开启增强模式",
     concurrency: "最大并发数",
     options: {
       global: "代理所有流量",
@@ -105,7 +106,8 @@ export default {
       off: "关闭",
       updateSubWhenStart: "服务端启动时更新订阅",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
-      dependTransparentMode: "跟随全局透明代理"
+      dependTransparentMode: "跟随全局透明代理",
+      closed: "关闭"
     },
     messages: {
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
@@ -114,9 +116,10 @@ export default {
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       preventDnsSpoofing:
-        "默认使用DNSPod防止DNS劫持(v0.6.3+)。" +
+        "如果透明代理出现问题，可尝试选择关闭，或打开增强模式(v0.7.0.2+)。" +
         "★转发DNS查询: 通过代理服务器转发DNS请求。" +
-        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，建议选择较快且稳定的DoH服务提供商。",
+        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，建议选择较快且稳定的DoH服务提供商。" +
+        "★增强模式(v0.7.0.2+)会取代通过iptables转发dns请求的方式，转而使用DnsPoison方式",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。当前仅支持vmess节点。",
       mux:
@@ -221,8 +224,8 @@ export default {
           <p class="about-small">20171: HTTP协议</p>
           <p class="about-small">20172: 带分流规则的HTTP协议</p>
           <p class="about-small">其他端口：</p>
-          <p class="about-small">12345: tproxy，透明代理所需 </p>
-          <p class="about-small">12346: 插件协议端口，如trojan、ssr和pingtunnel</p>
+          <p class="about-small">32345: tproxy，透明代理所需 </p>
+          <p class="about-small">32346: 插件协议端口，如trojan、ssr和pingtunnel</p>
           <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
           <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/v2rayA/issues">提出issue</a>。</p>`,
   axios: {

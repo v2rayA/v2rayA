@@ -113,11 +113,11 @@ func (self *SSR) Close() error {
 		if !o {
 			break
 		}
-		if time.Since(start) > 5*time.Second {
+		if time.Since(start) > 3*time.Second {
 			log.Println("SSR.Close: timeout", self.localPort)
 			return newError("SSR.Close: timeout")
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 	}
 	return nil
 }

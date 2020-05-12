@@ -1,14 +1,6 @@
 package v2ray
 
 import (
-	"v2rayA/common/netTools/netstat"
-	"v2rayA/common/ntp"
-	"v2rayA/core/dnsPoison/entity"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	"v2rayA/plugins"
 	"bytes"
 	"fmt"
 	netstat2 "github.com/cakturk/go-netstat/netstat"
@@ -20,6 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"v2rayA/common/netTools/netstat"
+	"v2rayA/common/ntp"
+	"v2rayA/core/dnsPoison/entity"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/core/vmessInfo"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/plugins"
 )
 
 func IsV2RayProcessExists() bool {
@@ -202,7 +202,9 @@ func RestartV2rayService() (err error) {
 */
 func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	CheckAndStopTransparentProxy()
-	defer CheckAndSetupTransparentProxy(true)
+	defer func() {
+		err = CheckAndSetupTransparentProxy(true)
+	}()
 	//iptables.SpoofingFilter.GetCleanCommands().Clean()
 	//defer iptables.SpoofingFilter.GetSetupCommands().Setup(nil)
 	//读配置，转换为v2ray配置并写入
@@ -256,7 +258,10 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		}
 		global.Plugins.Append(plugin)
 	}
-	if configure.GetSettingNotNil().Transparent != configure.TransparentClose && !global.SupportTproxy {
+	if setting := configure.GetSettingNotNil();
+		setting.Transparent != configure.TransparentClose &&
+			setting.AntiPollution != configure.AntipollutionClosed &&
+			(!global.SupportTproxy || setting.EnhancedMode) {
 		//redirect+poison增强方案
 		entity.SetupDnsPoisonWithExtraInfo(extraInfo)
 	}

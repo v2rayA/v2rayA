@@ -1,14 +1,14 @@
 package httpClient
 
 import (
-	"v2rayA/common"
-	"v2rayA/core/v2ray"
-	"v2rayA/extra/proxyWithHttp"
-	"v2rayA/persistence/configure"
 	"net/http"
 	"net/url"
 	"os/exec"
 	"strings"
+	"v2rayA/common"
+	"v2rayA/core/v2ray"
+	"v2rayA/extra/proxyWithHttp"
+	"v2rayA/persistence/configure"
 )
 
 func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
@@ -20,8 +20,9 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 	if err != nil {
 		return
 	}
-	httpTransport := &http.Transport{}
-	httpTransport.Dial = dialer.Dial
+	httpTransport := &http.Transport{
+		Dial: dialer.Dial,
+	}
 	client = &http.Client{Transport: httpTransport}
 	return
 }

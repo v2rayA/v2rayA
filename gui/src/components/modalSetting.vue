@@ -143,6 +143,9 @@
           </b-tooltip>
         </template>
         <b-select v-model="antipollution" expanded class="left-border">
+          <option v-if="showAntipollutionClosed" value="closed">{{
+            $t("setting.options.closed")
+          }}</option>
           <option value="none">{{
             $t("setting.options.antiDnsHijack")
           }}</option>
@@ -155,11 +158,24 @@
         </b-select>
         <template v-if="antipollution === 'doh'">
           <b-button
-            style="border-radius: 0 4px 4px 0"
+            :class="{
+              'right-extra-button': antipollution === 'closed',
+              'no-border-radius': antipollution !== 'closed'
+            }"
             @click="handleClickDohSetting"
           >
             {{ $t("operations.configure") }}
           </b-button>
+        </template>
+        <template
+          v-if="antipollution !== 'closed' && iptablesMode === 'tproxy'"
+        >
+          <b-checkbox-button
+            v-model="enhancedMode"
+            :native-value="true"
+            style="position:relative;left:-1px;"
+            >{{ $t("setting.enhancedModeOn") }}
+          </b-checkbox-button>
         </template>
       </b-field>
       <b-field label-position="on-border">
@@ -295,6 +311,7 @@ export default {
     mux: "8",
     transparent: "close",
     ipforward: false,
+    enhancedMode: false,
     dnsforward: "no",
     antipollution: "none",
     pacAutoUpdateMode: "none",
@@ -308,7 +325,8 @@ export default {
     showAntipollution: false,
     showDoh: false,
     showTransparentModeRoutingPac: false,
-    showRoutingA: false
+    showRoutingA: false,
+    showAntipollutionClosed: false
   }),
   computed: {
     dockerMode() {
@@ -357,6 +375,10 @@ export default {
       this.showTransparentModeRoutingPac = isVersionGreaterEqual(
         localStorage["version"],
         "0.6.4"
+      );
+      this.showAntipollutionClosed = isVersionGreaterEqual(
+        localStorage["version"],
+        "0.7.0.2"
       );
       this.showRoutingA = isVersionGreaterEqual(
         localStorage["version"],
@@ -423,6 +445,7 @@ export default {
             mux: parseInt(this.mux),
             transparent: this.transparent,
             ipforward: this.ipforward,
+            enhancedMode: this.enhancedMode,
             dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
             antipollution: this.antipollution
           },
@@ -579,5 +602,11 @@ export default {
 }
 .left-border select {
   border-radius: 4px 0 0 4px !important;
+}
+.right-extra-button {
+  border-radius: 0 4px 4px 0;
+}
+.no-border-radius {
+  border-radius: 0;
 }
 </style>
