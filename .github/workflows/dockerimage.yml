@@ -17,16 +17,15 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
       - uses: actions/checkout@v2
-      - name: Build Docker Buildx
-        run: |
-          docker build --platform=local -o . git://github.com/docker/buildx
-          mkdir -p ~/.docker/cli-plugins && mv buildx ~/.docker/cli-plugins/docker-buildx
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          buildx-version: latest
+          qemu-version: latest
       - name: Build the Docker image
         run: |
           docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-          docker buildx create --use --name crossbuilder
-
           v=$(echo ${{ steps.get_version.outputs.VERSION }} | cut -c2-)
-          docker buildx build --no-cache -t mzz2017/v2raya:$v -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
-          docker buildx build --no-cache -t mzz2017/v2raya:latest -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
+          docker buildx build -t mzz2017/v2raya:$v -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
+          docker buildx build -t mzz2017/v2raya:latest -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
