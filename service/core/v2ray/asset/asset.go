@@ -1,9 +1,6 @@
 package asset
 
 import (
-	"v2rayA/common/files"
-	"v2rayA/core/dnsPoison"
-	"v2rayA/global"
 	"github.com/golang/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"io/ioutil"
@@ -17,6 +14,9 @@ import (
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
+	"v2rayA/common/files"
+	"v2rayA/core/dnsPoison"
+	"v2rayA/global"
 )
 
 var v2rayLocationAsset *string
@@ -170,13 +170,12 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	whitelistCn.Lock()
 	defer whitelistCn.Unlock()
 	dir := GetV2rayLocationAsset()
-	b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
-	if err != nil {
-		return nil, nil, newError("GetWhitelistCn").Base(err)
-	}
 	if whitelistCn.siteList == nil {
 		var siteList v2router.GeoSiteList
-		log.Println(len(b))
+		b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
+		if err != nil {
+			return nil, nil, newError("GetWhitelistCn").Base(err)
+		}
 		err = proto.Unmarshal(b, &siteList)
 		if err != nil {
 			return nil, nil, newError("GetWhitelistCn").Base(err)
@@ -213,12 +212,12 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	wlDomains.Add(domainMatcher)
 	wlDomains.Add(fullMatcher)
 
-	b, err = ioutil.ReadFile(path.Join(dir, "geoip.dat"))
-	if err != nil {
-		return nil, nil, newError("GetWhitelistCn").Base(err)
-	}
 	if whitelistCn.ipList == nil {
 		var ipList v2router.GeoIPList
+		b, err := ioutil.ReadFile(path.Join(dir, "geoip.dat"))
+		if err != nil {
+			return nil, nil, newError("GetWhitelistCn").Base(err)
+		}
 		err = proto.Unmarshal(b, &ipList)
 		if err != nil {
 			return nil, nil, newError("GetWhitelistCn").Base(err)

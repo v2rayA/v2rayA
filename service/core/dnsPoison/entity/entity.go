@@ -107,6 +107,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 					return
 				}
 				//准备白名单
+				log.Println("DnsPoison: preparing whitelist")
 				_, wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
 				if err != nil {
 					log.Println("StartDNSPoisonConroutine:", err)
@@ -136,7 +137,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 				poison.Clear()
 				break out
 			default:
-				time.Sleep(5 * time.Second)
+				time.Sleep(2 * time.Second)
 			}
 		}
 	}(poison)
@@ -149,7 +150,7 @@ func StopDNSPoison() {
 	if done != nil {
 		select {
 		case <-done:
-			//done has closed
+			// channel 'done' has been closed
 		default:
 			close(done)
 		}
