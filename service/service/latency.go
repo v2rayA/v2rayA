@@ -25,7 +25,9 @@ func Ping(which []configure.Which, timeout time.Duration) (_ []configure.Which, 
 	//暂时关闭透明代理
 	v2ray.CheckAndStopTransparentProxy()
 	defer func() {
-		err = v2ray.CheckAndSetupTransparentProxy(true)
+		if e := v2ray.CheckAndSetupTransparentProxy(true); err == nil && e != nil {
+			err = e
+		}
 	}()
 	//多线程异步ping
 	wg := new(sync.WaitGroup)
