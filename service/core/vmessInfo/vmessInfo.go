@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/json-iterator/go"
+	"net/url"
 	"reflect"
 	"v2rayA/common"
 )
@@ -20,7 +21,7 @@ type VmessInfo struct {
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
 	V             string `json:"v"`
-	AllowInsecure string `json:"allowInsecure,omitempty"`
+	AllowInsecure bool   `json:"allowInsecure"`
 	Protocol      string `json:"protocol"`
 }
 
@@ -81,17 +82,22 @@ func (v *VmessInfo) ExportToURL() string {
 		)))
 	case "trojan":
 		// trojan://passwd@server:port#URLESCAPE(remarks)
-		nameField := ""
-		if v.Ps != "" {
-			nameField = "#" + common.UrlEncoded(v.Ps)
-		}
-		return fmt.Sprintf(
-			"trojan://%v@%v:%v%v",
+		u, _ := url.Parse(fmt.Sprintf(
+			"trojan://%v@%v:%v",
 			v.ID,
 			v.Add,
 			v.Port,
-			nameField,
-		)
+		))
+		u.Fragment = v.Ps
+		q := u.Query()
+		if v.Host != "" {
+			q.Set("peer", v.Host)
+		}
+		if v.AllowInsecure {
+			q.Set("allowInsecure", "1")
+		}
+		u.RawQuery = q.Encode()
+		return u.String()
 	}
 	return ""
 }

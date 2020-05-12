@@ -150,6 +150,17 @@
               expanded
             />
           </b-field>
+          <b-field label="AllowInsecure" label-position="on-border">
+            <b-select
+              ref="vmess_allow_insecure"
+              v-model="vmess.allowInsecure"
+              expanded
+              required
+            >
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">{{ $t("operations.yes") }}</option>
+            </b-select>
+          </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
           <b-field label="Name" label-position="on-border">
@@ -390,6 +401,24 @@
               expanded
             />
           </b-field>
+          <b-field label="Peer" label-position="on-border">
+            <b-input
+              v-model="trojan.peer"
+              :placeholder="`Peer(${$t('common.optional')})`"
+              expanded
+            />
+          </b-field>
+          <b-field label="AllowInsecure" label-position="on-border">
+            <b-select
+              ref="trojan_allow_insecure"
+              v-model="trojan.allowInsecure"
+              expanded
+              required
+            >
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">{{ $t("operations.yes") }}</option>
+            </b-select>
+          </b-field>
         </b-tab-item>
       </b-tabs>
     </section>
@@ -407,6 +436,7 @@
 <script>
 import { handleResponse } from "@/assets/js/utils";
 import { Base64 } from "js-base64";
+import { parseURL, generateURL } from "../assets/js/utils";
 
 export default {
   name: "ModalServer",
@@ -435,6 +465,7 @@ export default {
       path: "",
       tls: "none",
       v: "",
+      allowInsecure: false,
       protocol: "vmess"
     },
     ss: {
@@ -522,6 +553,7 @@ export default {
         let obj = JSON.parse(
           Base64.decode(url.substring(url.indexOf("://") + 3))
         );
+        console.log(obj);
         obj.ps = decodeURIComponent(obj.ps);
         obj.tls = obj.tls || "none";
         obj.type = obj.type || "none";
@@ -581,20 +613,15 @@ export default {
           protocol: "pingtunnel"
         };
       } else if (url.toLowerCase().indexOf("trojan://") >= 0) {
-        let u = url.substr(9);
-        let arr = u.split("#");
-        let name = "";
-        if (arr.length === 2) {
-          name = decodeURIComponent(arr[1]);
-        }
-        u = arr[0];
-        const regexp = /(.+)@(.+):(.+)/;
-        arr = regexp.exec(u);
+        let u = parseURL(url);
         return {
-          password: arr[1],
-          server: arr[2],
-          port: arr[3],
-          name,
+          password: u.username,
+          server: u.host,
+          port: u.port,
+          name: u.hash,
+          peer: u.params.peer || "",
+          allowInsecure:
+            u.params.allowInsecure === true || u.params.allowInsecure === "1",
           protocol: "trojan"
         };
       }
@@ -602,6 +629,7 @@ export default {
     },
     generateURL(srcObj) {
       let obj = {};
+      let params = {};
       switch (srcObj.protocol) {
         case "vmess":
           //尽量减少生成的链接长度
@@ -642,10 +670,18 @@ export default {
           )}`;
         case "trojan":
           /* trojan://password@server:port?allowInsecure=1&peer=peer#URIESCAPE(name) */
-          return (
-            `trojan://${srcObj.password}@${srcObj.server}:${srcObj.port}` +
-            (srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "")
-          );
+          params = { allowInsecure: srcObj.allowInsecure };
+          if (srcObj.peer !== "") {
+            params.peer = srcObj.peer;
+          }
+          return generateURL({
+            protocol: "trojan",
+            username: srcObj.password,
+            host: srcObj.server,
+            port: srcObj.port,
+            hash: srcObj.name,
+            params
+          });
       }
       return null;
     },

@@ -13,7 +13,8 @@ export default {
     success: "成功",
     fail: "失败",
     message: "提示",
-    none: "无"
+    none: "无",
+    optional: "可选"
   },
   welcome: {
     title: "初来乍到，请多关照",

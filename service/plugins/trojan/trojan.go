@@ -4,17 +4,17 @@
 package trojan
 
 import (
+	"fmt"
+	"log"
+	"net/url"
+	"strconv"
+	"time"
 	"v2rayA/common"
 	"v2rayA/common/netTools/ports"
 	"v2rayA/core/vmessInfo"
 	"v2rayA/extra/proxy/socks5"
 	"v2rayA/extra/proxy/trojan"
 	"v2rayA/plugins"
-	"fmt"
-	"log"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 type Trojan struct {
@@ -26,6 +26,7 @@ type Params struct {
 	Port       string
 	Passwd     string
 	SkipVerify bool
+	Peer       string
 }
 
 func init() {
@@ -45,7 +46,8 @@ func (tro *Trojan) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 		Passwd:     v.ID,
 		Address:    v.Add,
 		Port:       v.Port,
-		SkipVerify: true,
+		SkipVerify: v.AllowInsecure,
+		Peer:       v.Host,
 	}
 	u, err := url.Parse(fmt.Sprintf(
 		"trojan://%v@%v:%v",
@@ -59,6 +61,7 @@ func (tro *Trojan) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 	}
 	q := u.Query()
 	q.Set("skipVerify", common.BoolToString(params.SkipVerify))
+	q.Set("peer", params.Peer)
 	u.RawQuery = q.Encode()
 	p, _ := trojan.NewProxy(u.String())
 	local, err := socks5.NewSocks5Server("socks5://127.0.0.1:"+strconv.Itoa(localPort), p)

@@ -306,6 +306,9 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		if strings.ToLower(v.TLS) == "tls" {
 			o.StreamSettings.Security = "tls"
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
+			if v.AllowInsecure {
+				o.StreamSettings.TLSSettings.AllowInsecure = true
+			}
 			// always set SNI
 			if v.Host != "" {
 				o.StreamSettings.TLSSettings.ServerName = v.Host

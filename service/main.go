@@ -13,8 +13,10 @@ func main() {
 	//log.Println(u.Scheme)
 	//log.Println(u.Hostname())
 	//log.Println(u.Port())
-	//log.Println(u.User)
+	//log.Println(u.User.String())
 	//log.Println(u.Query())
+	//log.Println(u.Fragment)
+	//log.Println(u.Opaque)
 	//return
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
