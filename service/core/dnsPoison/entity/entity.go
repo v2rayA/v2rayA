@@ -1,13 +1,13 @@
 package entity
 
 import (
-	"v2rayA/common/netTools"
-	"v2rayA/core/dnsPoison"
-	"v2rayA/core/v2ray/asset"
 	"log"
 	"sync"
 	"time"
 	"v2ray.com/core/app/router"
+	"v2rayA/common/netTools"
+	"v2rayA/core/dnsPoison"
+	"v2rayA/core/v2ray/asset"
 )
 
 var (
@@ -17,6 +17,7 @@ var (
 	limit             = make(chan interface{}, 1)
 	whiteDnsServerIps []*router.CIDR
 	whiteDomains      []*router.Domain
+	wg                sync.WaitGroup
 )
 
 type ExtraInfo struct {
@@ -44,10 +45,7 @@ func SetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
 		Type:  router.Domain_Domain,
 		Value: "v2raya.mzz.pub",
 	})
-	_ = StartDNSPoison([]*router.CIDR{
-		{Ip: []byte{119, 29, 29, 29}, Prefix: 32},
-		{Ip: []byte{114, 114, 114, 114}, Prefix: 32},
-	},
+	_ = StartDNSPoison(nil,
 		whitedms)
 }
 
@@ -123,6 +121,8 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 							return
 						}
 						go func(ifname string) {
+							wg.Add(1)
+							defer wg.Done()
 							err = poison.Run(ifname, ipMatcher, wlDms)
 							if err != nil {
 								log.Println("StartDNSPoisonConroutine["+ifname+"]:", err)
@@ -155,4 +155,5 @@ func StopDNSPoison() {
 			close(done)
 		}
 	}
+	wg.Wait()
 }

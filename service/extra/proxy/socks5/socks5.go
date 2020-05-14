@@ -11,7 +11,6 @@ package socks5
 
 import (
 	"github.com/mzz2017/shadowsocksR/tools/leakybuf"
-	"github.com/nadoo/glider/common/conn"
 	"github.com/nadoo/glider/common/socks"
 	"io"
 	"log"
@@ -19,6 +18,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 	"v2rayA/extra/proxy"
 )
 
@@ -138,13 +138,39 @@ func (s *Socks5) Serve(c net.Conn) {
 
 	log.Printf("[socks5] %s <-> %s via %s", c.RemoteAddr(), tgt, dialer)
 
-	_, _, err = conn.Relay(c, rc)
+	_, _, err = Relay(c, rc)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			return // ignore i/o timeout
 		}
 		log.Printf("[socks5] relay error: %v", err)
 	}
+}
+
+// Relay relays between left and right.
+func Relay(left, right net.Conn) (int64, int64, error) {
+	type res struct {
+		N   int64
+		Err error
+	}
+	ch := make(chan res)
+
+	go func() {
+		n, err := io.Copy(right, left)
+		right.SetDeadline(time.Now()) // wake up the other goroutine blocking on right
+		left.SetDeadline(time.Now())  // wake up the other goroutine blocking on left
+		ch <- res{n, err}
+	}()
+
+	n, err := io.Copy(left, right)
+	right.SetDeadline(time.Now()) // wake up the other goroutine blocking on right
+	left.SetDeadline(time.Now())  // wake up the other goroutine blocking on left
+	rs := <-ch
+
+	if err == nil {
+		err = rs.Err
+	}
+	return n, rs.N, err
 }
 
 // Addr returns forwarder's address.

@@ -54,11 +54,11 @@ func (d *DnsPoison) Exists(ifname string) bool {
 }
 
 func (d *DnsPoison) Clear() {
-	log.Println("DnsPoison: Clear")
 	handles := d.ListHandles()
 	for _, h := range handles {
 		_ = d.DeleteHandles(h)
 	}
+	log.Println("DnsPoison: Clear")
 }
 
 func (d *DnsPoison) Prepare(ifname string) (err error) {
@@ -185,7 +185,7 @@ out:
 		if len(sIp) != net.IPv4len {
 			continue
 		}
-		// whitelistIps
+		// Domain-Name-Server whitelistIps
 		if ok := whitelistDnsServers.Match(sIp); ok {
 			continue
 		}
@@ -193,7 +193,7 @@ out:
 		if len(dIp) != net.IPv4len {
 			continue
 		}
-		// whitelistIps
+		// Domain-Name-Server whitelistIps
 		if ok := whitelistDnsServers.Match(dIp); ok {
 			continue
 		}
