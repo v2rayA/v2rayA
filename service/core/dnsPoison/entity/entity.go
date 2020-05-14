@@ -8,6 +8,8 @@ import (
 	"v2rayA/common/netTools"
 	"v2rayA/core/dnsPoison"
 	"v2rayA/core/v2ray/asset"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
 )
 
 var (
@@ -27,7 +29,14 @@ type ExtraInfo struct {
 	ServerDomain string
 }
 
-func SetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
+func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
+	if setting := configure.GetSettingNotNil();
+		!(setting.Transparent != configure.TransparentClose &&
+			setting.AntiPollution != configure.AntipollutionClosed &&
+			(!global.SupportTproxy || setting.EnhancedMode)) {
+		//redirect+poison增强方案
+		return
+	}
 	whitedms := make([]*router.Domain, 0, len(info.DohDomains))
 	for _, h := range info.DohDomains {
 		whitedms = append(whitedms, &router.Domain{

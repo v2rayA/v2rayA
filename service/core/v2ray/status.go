@@ -259,13 +259,8 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		}
 		global.Plugins.Append(plugin)
 	}
-	if setting := configure.GetSettingNotNil();
-		setting.Transparent != configure.TransparentClose &&
-			setting.AntiPollution != configure.AntipollutionClosed &&
-			(!global.SupportTproxy || setting.EnhancedMode) {
-		//redirect+poison增强方案
-		entity.SetupDnsPoisonWithExtraInfo(extraInfo)
-	}
+
+	entity.CheckAndSetupDnsPoisonWithExtraInfo(extraInfo)
 	return
 }
 

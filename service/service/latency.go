@@ -10,6 +10,7 @@ import (
 	"time"
 	"v2rayA/common/httpClient"
 	"v2rayA/common/netTools/netstat"
+	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/v2ray"
 	"v2rayA/core/vmessInfo"
 	"v2rayA/global"
@@ -63,6 +64,7 @@ func isOccupiedTCPPort(nsmap map[string]map[int][]*netstat.Socket, port int) boo
 }
 
 func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel int) ([]configure.Which, error) {
+	entity.StopDNSPoison()
 	var whiches configure.Whiches
 	whiches.Set(which)
 	for i := len(which) - 1; i >= 0; i-- {
@@ -183,7 +185,6 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}(i)
 	}
 	wg.Wait()
-	global.Plugins.CloseAll()
 	if v2rayRunning && configure.GetConnectedServer() != nil {
 		err = v2ray.UpdateV2RayConfig(nil)
 		if err != nil {
