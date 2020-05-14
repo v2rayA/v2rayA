@@ -49,7 +49,7 @@
               expanded
             />
           </b-field>
-          <b-field label="AID" label-position="on-border">
+          <b-field label="AlterID" label-position="on-border">
             <b-input
               ref="vmess_aid"
               v-model="vmess.aid"
@@ -57,6 +57,7 @@
               type="number"
               min="0"
               max="65535"
+              required
               expanded
             />
           </b-field>
@@ -68,6 +69,21 @@
             <b-select v-model="vmess.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">{{ $t("setting.options.on") }}</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-show="vmess.tls === 'tls'"
+            label="AllowInsecure"
+            label-position="on-border"
+          >
+            <b-select
+              ref="vmess_allow_insecure"
+              v-model="vmess.allowInsecure"
+              expanded
+              required
+            >
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">{{ $t("operations.yes") }}</option>
             </b-select>
           </b-field>
           <b-field label="Network" label-position="on-border">
@@ -149,17 +165,6 @@
               :placeholder="$t('configureServer.pathObfuscation')"
               expanded
             />
-          </b-field>
-          <b-field label="AllowInsecure" label-position="on-border">
-            <b-select
-              ref="vmess_allow_insecure"
-              v-model="vmess.allowInsecure"
-              expanded
-              required
-            >
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
-            </b-select>
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
@@ -458,7 +463,7 @@ export default {
       add: "",
       port: "",
       id: "",
-      aid: "0",
+      aid: "",
       net: "tcp",
       type: "none",
       host: "",

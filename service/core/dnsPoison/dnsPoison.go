@@ -1,8 +1,6 @@
 package dnsPoison
 
 import (
-	"v2rayA/common"
-	"v2rayA/common/netTools"
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -18,6 +16,8 @@ import (
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/net"
 	"v2ray.com/core/common/strmatcher"
+	"v2rayA/common"
+	"v2rayA/common/netTools"
 )
 
 type handle struct {
@@ -133,6 +133,154 @@ func Fqdn(domain string) string {
 	return domain + "."
 }
 
+type handleResult int
+
+const (
+	Pass handleResult = iota
+	Spoofing
+	AddWhitelist
+	RemoveWhitelist
+)
+
+type domainHandleResult struct {
+	domain string
+	result handleResult
+}
+
+func handleSendMessage(interfaceHandle *handle, m *dnsmessage.Message, sAddr, sPort, dAddr, dPort *gopacket.Endpoint, whitelistDomains *strmatcher.MatcherGroup) (result handleResult) {
+	result = Pass
+	// dns请求一般只有一个question
+	q := m.Questions[0]
+	if (q.Type != dnsmessage.TypeA && q.Type != dnsmessage.TypeAAAA) ||
+		q.Class != dnsmessage.ClassINET {
+		return
+	}
+	dm := q.Name.String()
+	dmNoTQDN := strings.TrimSuffix(dm, ".")
+	if dm == "" {
+		return
+	} else if index := whitelistDomains.Match(dmNoTQDN); index > 0 {
+		// whitelistDomains
+		return
+	} else if index := strings.Index(dmNoTQDN, "."); index <= 0 {
+		// 跳过随机的顶级域名
+		return
+	}
+	if q.Type == dnsmessage.TypeA {
+		//在已探测白名单中的放行
+		interfaceHandle.domainMutex.RLock()
+		if _, ok := interfaceHandle.inspectedWhiteDomains[q.Name.String()]; ok {
+			interfaceHandle.domainMutex.RUnlock()
+			return
+		}
+		interfaceHandle.domainMutex.RUnlock()
+	}
+	//TODO: 不支持IPv6，AAAA投毒返回空，加速解析
+	go poison(m, dAddr, dPort, sAddr, sPort)
+	return Spoofing
+}
+
+func handleReceiveMessage(interfaceHandle *handle, m *dnsmessage.Message) (results []*domainHandleResult, msg string) {
+	//探测该域名是否被污染为本地回环
+	spoofed := false
+	emptyRecord := true
+	var msgs []string
+	q := m.Questions[0]
+	dm := q.Name.String()
+	dms := []string{dm}
+	//CNAME has multiple answers including an AResource
+	for _, a := range m.Answers {
+		switch a := a.Body.(type) {
+		case *dnsmessage.CNAMEResource:
+			cname := a.CNAME.String()
+			msgs = append(msgs, "CNAME:"+strings.TrimSuffix(cname, "."))
+			dms = append(dms, cname)
+		case *dnsmessage.AResource:
+			msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
+			if netTools.IsIntranet4(a.A) {
+				spoofed = true
+			}
+			emptyRecord = false
+		}
+	}
+	if emptyRecord {
+		//空记录不能影响白名单探测
+		return nil, msg
+	}
+	defer func() {
+		if results != nil {
+			msg = "[" + strings.Join(msgs, ", ") + "]"
+		}
+	}()
+	todolist := make([]string, 0, len(dms))
+	//读写分离，减少锁竞争
+	interfaceHandle.domainMutex.RLock()
+	iSpoofed := common.BoolToInt(spoofed)
+	for _, d := range dms {
+		if _, ok := interfaceHandle.inspectedWhiteDomains[d]; common.BoolToInt(ok)^iSpoofed == 0 {
+			todolist = append(todolist, d)
+		}
+	}
+	interfaceHandle.domainMutex.RUnlock()
+	if len(todolist) > 0 {
+		interfaceHandle.domainMutex.Lock()
+		for _, d := range todolist {
+			if _, ok := interfaceHandle.inspectedWhiteDomains[d]; common.BoolToInt(ok)^iSpoofed == 0 {
+				if ok {
+					delete(interfaceHandle.inspectedWhiteDomains, d)
+					results = append(results, &domainHandleResult{domain: d, result: RemoveWhitelist})
+				} else {
+					interfaceHandle.inspectedWhiteDomains[d] = nil
+					results = append(results, &domainHandleResult{domain: d, result: AddWhitelist})
+				}
+			}
+		}
+		interfaceHandle.domainMutex.Unlock()
+		return results, msg
+	}
+	return nil, msg
+}
+
+func packetFilter(pPacket *gopacket.Packet, whitelistDnsServers *v2router.GeoIPMatcher) (m *dnsmessage.Message, pSAddr, pSPort, pDAddr, pDPort *gopacket.Endpoint) {
+	packet := *pPacket
+	trans := packet.TransportLayer()
+	//跳过非传输层的包
+	if trans == nil {
+		return
+	}
+	transflow := trans.TransportFlow()
+	sPort, dPort := transflow.Endpoints()
+	//跳过非常规DNS端口53端口的包
+	if dPort.String() != "53" && sPort.String() != "53" {
+		return
+	}
+	sAddr, dAddr := packet.NetworkLayer().NetworkFlow().Endpoints()
+	// TODO: 暂不支持IPv6
+	sIp := net.ParseIP(sAddr.String()).To4()
+	if len(sIp) != net.IPv4len {
+		return
+	}
+	// Domain-Name-Server whitelistIps
+	if ok := whitelistDnsServers.Match(sIp); ok {
+		return
+	}
+	dIp := net.ParseIP(dAddr.String()).To4()
+	if len(dIp) != net.IPv4len {
+		return
+	}
+	// Domain-Name-Server whitelistIps
+	if ok := whitelistDnsServers.Match(dIp); ok {
+		return
+	}
+	//尝试解析为dnsmessage格式
+	var dmessage dnsmessage.Message
+	err := dmessage.Unpack(trans.LayerPayload())
+	if err != nil {
+		return
+	}
+	return &dmessage, &sAddr, &sPort, &dAddr, &dPort
+}
+
 func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
 	defer func() {
 		recover()
@@ -170,118 +318,30 @@ out:
 			break out
 		default:
 		}
-		trans := packet.TransportLayer()
-		if trans == nil {
-			continue
-		}
-		transflow := trans.TransportFlow()
-		sPort, dPort := transflow.Endpoints()
-		if dPort.String() != "53" && sPort.String() != "53" {
-			continue
-		}
-		sAddr, dAddr := packet.NetworkLayer().NetworkFlow().Endpoints()
-		// TODO: 暂不支持IPv6
-		sIp := net.ParseIP(sAddr.String()).To4()
-		if len(sIp) != net.IPv4len {
-			continue
-		}
-		// Domain-Name-Server whitelistIps
-		if ok := whitelistDnsServers.Match(sIp); ok {
-			continue
-		}
-		dIp := net.ParseIP(dAddr.String()).To4()
-		if len(dIp) != net.IPv4len {
-			continue
-		}
-		// Domain-Name-Server whitelistIps
-		if ok := whitelistDnsServers.Match(dIp); ok {
-			continue
-		}
-		var m dnsmessage.Message
-		err := m.Unpack(trans.LayerPayload())
-		if err != nil {
+		m, sAddr, sPort, dAddr, dPort := packetFilter(&packet, whitelistDnsServers)
+		if m == nil {
 			continue
 		}
 		// dns请求一般只有一个question
-		q := m.Questions[0]
-		if (q.Type != dnsmessage.TypeA && q.Type != dnsmessage.TypeAAAA) ||
-			q.Class != dnsmessage.ClassINET {
-			continue
-		}
-		dm := q.Name.String()
-		dmNoTQDN := strings.TrimSuffix(dm, ".")
-		if dm == "" {
-			continue
-		} else if index := whitelistDomains.Match(dmNoTQDN); index > 0 {
-			// whitelistDomains
-			continue
-		} else if index := strings.Index(dmNoTQDN, "."); index <= 0 {
-			// 跳过随机的顶级域名
-			continue
-		}
+		dm := m.Questions[0].Name.String()
 		if !m.Response {
-			if q.Type == dnsmessage.TypeA {
-				//在已探测白名单中的放行
-				handle.domainMutex.RLock()
-				if _, ok := handle.inspectedWhiteDomains[q.Name.String()]; ok {
-					handle.domainMutex.RUnlock()
-					continue
-				}
-				handle.domainMutex.RUnlock()
+			result := handleSendMessage(handle, m, sAddr, sPort, dAddr, dPort, whitelistDomains)
+			// TODO: 不显示AAAA的投毒，因为暂时不支持IPv6
+			if result == Spoofing && m.Questions[0].Type == dnsmessage.TypeA {
 				log.Println("dnsPoison["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), dm, "已投毒")
 			}
-			//TODO: 不支持IPv6，AAAA投毒返回空，加速解析
-			go poison(&m, &dAddr, &dPort, &sAddr, &sPort)
 		} else {
-			//探测该域名是否被污染为本地回环
-			spoofed := false
-			emptyRecord := true
-			var msgs []string
-			dms := []string{dm}
-			for _, a := range m.Answers {
-				switch a := a.Body.(type) {
-				case *dnsmessage.CNAMEResource:
-					cname := a.CNAME.String()
-					msgs = append(msgs, "CNAME:"+strings.TrimSuffix(cname, "."))
-					dms = append(dms, cname)
-				case *dnsmessage.AResource:
-					msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
-					if netTools.IsIntranet4(a.A) {
-						spoofed = true
-					}
-					emptyRecord = false
-				}
-			}
-			msg := "[" + strings.Join(msgs, ", ") + "]"
-			if emptyRecord {
-				//空记录不能影响白名单探测
-				continue
-			}
-			todolist := make([]string, 0, len(dms))
-			//读写分离，减少锁竞争
-			handle.domainMutex.RLock()
-			iSpoofed := common.BoolToInt(spoofed)
-			for _, d := range dms {
-				if _, ok := handle.inspectedWhiteDomains[d]; common.BoolToInt(ok)^iSpoofed == 0 {
-					todolist = append(todolist, d)
-				}
-			}
-			handle.domainMutex.RUnlock()
-			if len(todolist) > 0 {
+			results, msg := handleReceiveMessage(handle, m)
+			if results != nil {
 				log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), "("+dm, "=>", msg+")")
-				handle.domainMutex.Lock()
-				for _, d := range todolist {
-					if _, ok := handle.inspectedWhiteDomains[d]; common.BoolToInt(ok)^iSpoofed == 0 {
-						if ok {
-							delete(handle.inspectedWhiteDomains, d)
-							log.Println("dnsPoison["+ifname+"]: 探测到", d, "从白名单移除", dm+msg)
-						} else {
-							handle.inspectedWhiteDomains[d] = nil
-							log.Println("dnsPoison["+ifname+"]: 探测到", d, "加入白名单", dm+msg)
-						}
+				for _, r := range results {
+					switch r.result {
+					case AddWhitelist:
+						log.Println("dnsPoison["+ifname+"]: 探测到", r.domain, "加入白名单", dm+msg)
+					case RemoveWhitelist:
+						log.Println("dnsPoison["+ifname+"]: 探测到", r.domain, "从白名单移除", dm+msg)
 					}
 				}
-				handle.domainMutex.Unlock()
 			}
 		}
 	}
