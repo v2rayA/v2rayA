@@ -292,9 +292,9 @@
             :label="`${sub.host.toUpperCase()}(${sub.servers.length})`"
           >
             <b-table
-              :paginated="sub.servers.length >= 75"
+              :paginated="sub.servers.length >= 150"
               :current-page.sync="currentPage[sub.id]"
-              per-page="50"
+              per-page="100"
               :data="sub.servers"
               :checked-rows.sync="checkedRows"
               checkable
