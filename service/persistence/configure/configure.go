@@ -159,7 +159,7 @@ func GetDohListNotNil() *string {
 	if len(strings.TrimSpace(*r)) == 0 {
 		*r = `https://dns.alidns.com/dns-query
 https://dns.rubyfish.cn/dns-query
-https://doh.360.cn/dns-query`
+https://i.233py.com/dns-query`
 	}
 	return r
 }

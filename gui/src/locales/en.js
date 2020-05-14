@@ -182,8 +182,8 @@ export default {
     tcpPortWhitelist: "TCP Port Whitelist",
     udpPortWhitelist: "UDP Port Whitelist",
     messages: [
-      "If v2rayA is setup on a server providing service to clients, pay attention:",
-      "Transparent proxy will force all TCP and UDP traffic to pass through proxy server, where source IP address will be replaced with proxy's. Moreover, if some clients send requests to the IP address of your server that provides service, they will received responses from your proxy's IP address weirdly, which is illegal.",
+      "If v2rayA is setup on a server A which connected with a proxy server B, pay attention:",
+      "Transparent proxy will force all TCP and UDP traffic to pass through proxy server B, where source IP address will be replaced with proxy B's. Moreover, if some clients send requests to server A that provides service, they will received responses from your proxy B's IP address weirdly, which is illegal.",
       "To resolve it, we need to add those service ports to whitelist so that not pass through proxy.For examples, ssh(22)、v2raya({v2rayaPort}).",
       "Obviously, if the server does not provide any service, you can skip configuring.",
       "Formatting：22 means port 22，20170:20172 means three ports 20170 to 20172."

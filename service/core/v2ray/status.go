@@ -209,6 +209,8 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	}()
 	//iptables.SpoofingFilter.GetCleanCommands().Clean()
 	//defer iptables.SpoofingFilter.GetSetupCommands().Setup(nil)
+	global.Plugins.CloseAll()
+	entity.StopDNSPoison()
 	//读配置，转换为v2ray配置并写入
 	var (
 		tmpl      Template
@@ -236,9 +238,6 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
-
-	global.Plugins.CloseAll()
-	entity.StopDNSPoison()
 
 	if v == nil && !IsV2RayRunning() {
 		//没有运行就不需要重新启动了
