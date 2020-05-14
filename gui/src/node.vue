@@ -114,15 +114,12 @@
       </b-collapse>
 
       <b-tabs
-        :value="tab"
+        v-model="tab"
         position="is-centered"
         type="is-toggle-rounded"
         @change="handleTabsChange"
       >
-        <b-tab-item
-          v-if="!!tableData.subscriptions.length"
-          label="SUBSCRIPTION"
-        >
+        <b-tab-item label="SUBSCRIPTION">
           <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
             <b-table
               :paginated="tableData.subscriptions.length > 30"
@@ -192,10 +189,9 @@
                 </b-table-column>
               </template>
             </b-table>
-          </b-field>
-        </b-tab-item>
+          </b-field></b-tab-item
+        >
         <b-tab-item
-          v-if="!!tableData.servers.length"
           label="SERVER"
           :icon="
             `${connectedServer._type === 'server' ? ' iconfont icon-dian' : ''}`
@@ -291,11 +287,14 @@
             }`
           "
         >
-          <b-field :label="`${sub.host.toUpperCase()}(${sub.servers.length})`">
+          <b-field
+            v-if="tab === subi + 2"
+            :label="`${sub.host.toUpperCase()}(${sub.servers.length})`"
+          >
             <b-table
-              :paginated="sub.servers.length >= 150"
+              :paginated="sub.servers.length >= 75"
               :current-page.sync="currentPage[sub.id]"
-              per-page="100"
+              per-page="50"
               :data="sub.servers"
               :checked-rows.sync="checkedRows"
               checkable
@@ -547,13 +546,13 @@ export default {
       let sub = whichServer.sub;
       let subscriptionServersOffset = 0;
       let serversOffset = 0;
-      if (this.tableData.subscriptions.length > 0) {
-        subscriptionServersOffset++;
-        serversOffset++;
-      }
-      if (this.tableData.servers.length > 0) {
-        subscriptionServersOffset++;
-      }
+      // if (this.tableData.subscriptions.length > 0) {
+      //   subscriptionServersOffset++;
+      //   serversOffset++;
+      // }
+      // if (this.tableData.servers.length > 0) {
+      //   subscriptionServersOffset++;
+      // }
       if (whichServer._type === CONST.SubscriptionServerType) {
         this.tab = sub + subscriptionServersOffset;
       } else if (whichServer._type === CONST.ServerType) {
