@@ -544,8 +544,8 @@ export default {
         return;
       }
       let sub = whichServer.sub;
-      let subscriptionServersOffset = 0;
-      let serversOffset = 0;
+      let subscriptionServersOffset = 2;
+      let serversOffset = 1;
       // if (this.tableData.subscriptions.length > 0) {
       //   subscriptionServersOffset++;
       //   serversOffset++;

@@ -11,9 +11,9 @@ import (
 	"github.com/mzz2017/shadowsocksR/protocol"
 	"github.com/mzz2017/shadowsocksR/ssr"
 
-	"v2rayA/extra/proxy"
 	"github.com/nadoo/glider/common/socks"
 	"log"
+	"v2rayA/extra/proxy"
 )
 
 // SSR struct.
