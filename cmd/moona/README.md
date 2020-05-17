@@ -1,6 +1,6 @@
 # moona
 
-A Fast and Convenient Cross-Protocols latency tester built with love in Go.
+A Fast and Convenient Cross-Protocols Latency Tester built with love in Go.
 
 ## Usage
 
@@ -15,15 +15,15 @@ Usage of moona:
   -h, --help           print this help menu
 ```
 
-### single test
+### Single test
 ```bash
 $ docker run --rm mzz2017/moona --link ss://***@***:***
 Importing ss://***@***:***
 Test done[1]248ms: ss://***@***:***
 ```
 
-### batch test
-**from subscription link**
+### Batch test
+**From subscription link**
 ```bash
 $ docker run --rm mzz2017/moona --link https://**********
 Importing https://**********
@@ -32,7 +32,7 @@ Test done[3]896ms: vmess://**********
 Test done[2]1115ms: vmess://**********
 ```
 
-**from file**
+**From file**
 ```bash
 $ cat f.txt
 vmess://**********
@@ -41,7 +41,6 @@ ss://***@***:***
 trojan://***@***:***?allowInsecure=false
 
 $ docker run --rm -v $(pwd)/f.txt:/f.txt mzz2017/moona --file /f.txt
-Importing https://**********
 Test done[1]338ms: vmess://**********
 Test done[4]288ms: trojan://***@***:***?allowInsecure=false
 Test done[3]266ms: ss://***@***:***
