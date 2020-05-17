@@ -1,0 +1,30 @@
+name: Docker Image CI - v2raya
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  DOCKER_CLI_EXPERIMENTAL: enabled
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+      - uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          buildx-version: latest
+          qemu-version: latest
+      - name: Build the Docker image
+        run: |
+          docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+          v=$(echo ${{ steps.get_version.outputs.VERSION }} | cut -c2-)
+          docker buildx build -t mzz2017/moona:latest -f Dockerfile.moona --platform=linux/arm,linux/arm64,linux/amd64 . --push

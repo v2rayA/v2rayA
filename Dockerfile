@@ -15,7 +15,6 @@ RUN export VERSION=$(cat ./version) && go build -ldflags="-X v2rayA/global.Versi
 FROM v2fly/v2fly-core AS v2ray
 
 FROM bgiddings/iptables:latest
-WORKDIR /v2raya
 COPY --from=builder /build/service/v2raya /usr/bin/
 COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
 ENV PATH=$PATH:/etc/v2ray

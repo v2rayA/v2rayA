@@ -4,7 +4,7 @@ import (
 	"v2rayA/persistence/configure"
 )
 
-func DeleteWhich(ws []configure.Which) (err error) {
+func DeleteWhich(ws []*configure.Which) (err error) {
 	var data configure.Whiches
 	//对要删除的touch去重
 	data.Set(ws)

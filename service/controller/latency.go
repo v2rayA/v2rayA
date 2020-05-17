@@ -10,7 +10,7 @@ import (
 )
 
 func GetPingLatency(ctx *gin.Context) {
-	var wt []configure.Which
+	var wt []*configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
 		common.ResponseError(ctx, logError(nil, "bad request"))
@@ -27,13 +27,13 @@ func GetPingLatency(ctx *gin.Context) {
 }
 
 func GetHttpLatency(ctx *gin.Context) {
-	var wt []configure.Which
+	var wt []*configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	wt, err = service.TestHttpLatency(wt, 8*time.Second, 4)
+	wt, err = service.TestHttpLatency(wt, 8*time.Second, 4, false)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

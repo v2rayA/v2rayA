@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"syscall"
+	"v2rayA/global"
 )
 
 // Direct proxy
@@ -82,7 +83,9 @@ func dial(network, addr string, localIP net.IP) (net.Conn, error) {
 				//TODO: force to set 0xff. any chances to customize this value?
 				err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
 				if err != nil {
-					log.Printf("control: %s", err)
+					if global.IsDebug() {
+						log.Printf("control: %s", err)
+					}
 					return
 				}
 			})

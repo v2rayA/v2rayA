@@ -263,7 +263,6 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
-	log.Println(data.VmessInfo)
 	return
 }
 func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
