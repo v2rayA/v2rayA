@@ -20,7 +20,13 @@ type Params struct {
 
 var params Params
 
+var dontLoadConfig bool
+
 func initFunc() {
+	defer SetServiceControlMode(params.Mode)
+	if dontLoadConfig {
+		return
+	}
 	err := gonfig.Load(&params, gonfig.Conf{
 		FileDisable:       true,
 		FlagIgnoreUnknown: false,
@@ -42,4 +48,12 @@ var once sync.Once
 func GetEnvironmentConfig() *Params {
 	once.Do(initFunc)
 	return &params
+}
+
+func SetConfig(config Params) {
+	params = config
+}
+
+func DontLoadConfig() {
+	dontLoadConfig = true
 }

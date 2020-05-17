@@ -135,7 +135,7 @@ func postHandleMsg(msg string, str []rune, i int) string {
 func generateSyntaxTree(program string) (S symbol, err error) {
 	var logsBuf strings.Builder
 	defer func() {
-		if err != nil && global.Version == "debug" {
+		if err != nil && global.IsDebug() {
 			err = errors.New(logsBuf.String() + err.Error())
 		}
 	}()

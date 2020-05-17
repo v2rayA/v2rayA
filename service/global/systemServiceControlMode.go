@@ -13,9 +13,8 @@ const (
 	UniversalMode
 )
 
-func GetServiceControlMode() (mode SystemServiceControlMode) {
-	m := GetEnvironmentConfig().Mode
-	switch m {
+func SetServiceControlMode(modeString string) (mode SystemServiceControlMode) {
+	switch modeString {
 	case "systemctl":
 		mode = SystemctlMode
 	case "service":
@@ -34,5 +33,6 @@ func GetServiceControlMode() (mode SystemServiceControlMode) {
 		}
 		mode = UniversalMode
 	}
+	ServiceControlMode = mode
 	return
 }

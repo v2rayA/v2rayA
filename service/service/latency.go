@@ -19,7 +19,7 @@ import (
 	"v2rayA/plugins"
 )
 
-func Ping(which []configure.Which, timeout time.Duration) (_ []configure.Which, err error) {
+func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
 	var whiches configure.Whiches
 	whiches.Set(which)
 	//对要Ping的which去重
@@ -64,7 +64,7 @@ func isOccupiedTCPPort(nsmap map[string]map[int][]*netstat.Socket, port int) boo
 	return false
 }
 
-func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel int) ([]configure.Which, error) {
+func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool) ([]*configure.Which, error) {
 	entity.StopDNSPoison()
 	var whiches configure.Whiches
 	whiches.Set(which)
@@ -73,8 +73,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			which = append(which[:i], which[i+1:]...)
 		}
 	}
-	//对要Ping的which去重
-	which = whiches.GetNonDuplicated()
+	which = whiches.Get()
 	v2rayRunning := v2ray.IsV2RayRunning()
 	wg := new(sync.WaitGroup)
 	vms := make([]vmessInfo.VmessInfo, len(which))
@@ -113,7 +112,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	} else {
 		tmpl = v2ray.NewTemplate()
 	}
-	portMap := make(map[int]string)
+	portMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
 	port := 0
 	nsmap, err := netstat.ToPortMap([]string{"tcp", "tcp6"})
@@ -143,6 +142,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 			//pass
 		default:
 			if !plugins.IsProtocolValid(v) {
+				which[i].Latency = "UNSUPPORTED PROTOCOL"
 				continue
 			}
 			//再找一个空端口
@@ -158,8 +158,11 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 		}
 		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, ssrLocalPortIfNeed, "")
 		if err != nil {
-			which[i].Latency = err.Error()
-			continue
+			if strings.Contains(err.Error(), "unsupported") {
+				which[i].Latency = "UNSUPPORTED PROTOCOL"
+				continue
+			}
+			return nil, err
 		}
 		portMap[i] = v2rayInboundPort
 	}
@@ -190,13 +193,19 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 	cc := make(chan interface{}, maxParallel)
 	for i := range which {
 		if which[i].Latency != "" {
+			if showLog {
+				fmt.Printf("Error[%v]%v: %v\n", i+1, which[i].Latency, which[i].Link)
+			}
 			continue
 		}
 		wg.Add(1)
 		go func(i int) {
 			cc <- nil
 			defer func() { <-cc; wg.Done() }()
-			httpLatency(&which[i], portMap[i], timeout)
+			httpLatency(which[i], portMap[i], timeout)
+			if showLog {
+				fmt.Printf("Test done[%v]%v: %v\n", i+1, which[i].Latency, which[i].Link)
+			}
 		}(i)
 	}
 	wg.Wait()
@@ -213,7 +222,7 @@ func TestHttpLatency(which []configure.Which, timeout time.Duration, maxParallel
 func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	c, err := httpClient.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
 	if err != nil {
-		which.Latency = err.Error()
+		which.Latency = "SYSTEM ERROR"
 		return
 	}
 	defer c.CloseIdleConnections()

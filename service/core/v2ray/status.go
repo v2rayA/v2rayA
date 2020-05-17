@@ -128,11 +128,11 @@ func RestartV2rayService() (err error) {
 		global.V2RayPID, err = os.StartProcess(v2wd+"/v2ray", []string{"--config=" + asset.GetConfigPath()}, &os.ProcAttr{
 			Dir: v2ctlDir, //防止找不到v2ctl
 			Env: os.Environ(),
-			Files: []*os.File{
-				os.Stdin,
-				os.Stdout,
-				os.Stderr,
-			},
+			//Files: []*os.File{
+			//	os.Stdin,
+			//	os.Stdout,
+			//	os.Stderr,
+			//},
 		})
 		if err != nil {
 			err = newError(string(out)).Base(err)

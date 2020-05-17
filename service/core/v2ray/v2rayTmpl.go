@@ -919,7 +919,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	// 其中Template是基础配置，替换掉t即可
 	t = tmplJson.Template
 	// 调试模式
-	if global.Version == "debug" {
+	if global.IsDebug() {
 		t.Log.Loglevel = "debug"
 	}
 	// 解析Outbound
