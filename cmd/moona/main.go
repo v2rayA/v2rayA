@@ -19,22 +19,7 @@ import (
 
 const configFilePath = "/tmp/testLatency.json"
 
-func main() {
-	if !common.IsInDocker() {
-		fmt.Printf("moona must run with docker")
-		os.Exit(1)
-	}
-	global.Version = "moona"
-	c := config.GetConfig()
-	global.DontLoadConfig()
-	global.SetConfig(global.Params{
-		Address:          "127.0.0.1:20177",
-		Config:           configFilePath,
-		Mode:             "universal",
-		PluginListenPort: 30177,
-		PassCheckRoot:    true,
-	})
-	_ = os.Remove(configFilePath)
+func ImportServers(c *config.Params) {
 	if c.Link == "" && c.File == "" {
 		fmt.Printf("Run '%v --help' for usage.\n", os.Args[0])
 		os.Exit(0)
@@ -66,6 +51,22 @@ func main() {
 			}
 		}
 	}
+}
+
+func ConfigureV2rayA() {
+	global.Version = "moona"
+	global.DontLoadConfig()
+	global.SetConfig(global.Params{
+		Address:          "127.0.0.1:20177",
+		Config:           configFilePath,
+		Mode:             "universal",
+		PluginListenPort: 30177,
+		PassCheckRoot:    true,
+	})
+	_ = os.Remove(configFilePath)
+}
+
+func GenerateTestList() configure.Whiches {
 	t := touch.GenerateTouch()
 	var whiches configure.Whiches
 	for _, s := range t.Servers {
@@ -90,7 +91,19 @@ func main() {
 		fmt.Printf("Fail in generating links: %v\n", err)
 		os.Exit(1)
 	}
-	_, err = service.TestHttpLatency(whiches.Get(), time.Duration(c.Timeout)*time.Millisecond, c.Parallel, true)
+	return whiches
+}
+
+func main() {
+	if !common.IsInDocker() {
+		fmt.Printf("moona must run with docker")
+		os.Exit(1)
+	}
+	c := config.GetConfig()
+	ConfigureV2rayA()
+	ImportServers(c)
+	testList := GenerateTestList()
+	_, err := service.TestHttpLatency(testList.Get(), time.Duration(c.Timeout)*time.Millisecond, c.Parallel, true)
 	if err != nil {
 		fmt.Printf("Fail in testing latencies: %v\n", err)
 		os.Exit(1)
