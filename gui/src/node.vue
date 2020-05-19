@@ -122,9 +122,6 @@
         <b-tab-item label="SUBSCRIPTION">
           <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
             <b-table
-              :paginated="tableData.subscriptions.length > 30"
-              :current-page.sync="currentPage.subscriptions"
-              per-page="15"
               :data="tableData.subscriptions"
               :checked-rows.sync="checkedRows"
               :row-class="(row, index) => row.connected && 'is-connected'"
