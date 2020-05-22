@@ -2,11 +2,14 @@ package iptables
 
 import (
 	"strings"
+	"sync"
 	"v2rayA/common"
 	"v2rayA/common/cmds"
 )
 
 // http://briteming.hatenablog.com/entry/2019/06/18/175518
+
+var mutex sync.Mutex
 
 type SetupCommands string
 type CleanCommands string
@@ -17,6 +20,8 @@ type iptablesSetter interface {
 }
 
 func (c SetupCommands) Setup(preprocess *func(c *SetupCommands)) (err error) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	if preprocess != nil {
 		(*preprocess)(&c)
 	}
@@ -29,6 +34,8 @@ func (c SetupCommands) Setup(preprocess *func(c *SetupCommands)) (err error) {
 }
 
 func (c CleanCommands) Clean() {
+	mutex.Lock()
+	defer mutex.Unlock()
 	commands := string(c)
 	if common.IsInDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
