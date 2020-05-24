@@ -196,8 +196,8 @@
         >
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
-              :paginated="tableData.servers.length > 30"
-              per-page="15"
+              :paginated="tableData.servers.length > 150"
+              per-page="100"
               :current-page.sync="currentPage.servers"
               :data="tableData.servers"
               :checked-rows.sync="checkedRows"
@@ -418,7 +418,7 @@ export default {
   components: { ModalSubscription, ModalServer },
   data() {
     return {
-      currentPage: { servers: 0, subscriptions: 0 },
+      currentPage: { servers: 1, subscriptions: 1 },
       tableData: {
         servers: [],
         subscriptions: [],
