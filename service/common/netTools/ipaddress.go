@@ -1,9 +1,9 @@
 package netTools
 
 import (
-	Trie "v2rayA/dataStructure/trie"
 	"strconv"
 	"strings"
+	Trie "v2rayA/dataStructure/trie"
 )
 
 var intranet4 = []string{
@@ -26,16 +26,17 @@ func init() {
 		grp := strings.SplitN(intra, "/", 2)
 		l, _ := strconv.Atoi(grp[1])
 		arr := strings.Split(grp[0], ".")
-		buf := ""
+		var builder strings.Builder
 		for _, sec := range arr {
 			itg, _ := strconv.Atoi(sec)
 			tmp := strconv.FormatInt(int64(itg), 2)
-			buf += strings.Repeat("0", 8-len(tmp)) + tmp
-			if len(buf) >= l {
+			builder.WriteString(strings.Repeat("0", 8-len(tmp)))
+			builder.WriteString(tmp)
+			if builder.Len() >= l {
 				break
 			}
 		}
-		dict = append(dict, buf[:l])
+		dict = append(dict, builder.String()[:l])
 	}
 	trie = Trie.New(dict)
 }
