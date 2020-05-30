@@ -238,11 +238,23 @@ function isVersionGreaterEqual(va, vb) {
   return a.length >= b.length;
 }
 
+function toInt(s) {
+  if (typeof s === "string") {
+    return parseInt(s);
+  } else if (typeof s === "number") {
+    return parseInt(s);
+  } else if (typeof s === "boolean") {
+    return s ? 1 : 0;
+  }
+  return s;
+}
+
 export {
   locateServer,
   handleResponse,
   parseURL,
   generateURL,
   isIntranet,
-  isVersionGreaterEqual
+  isVersionGreaterEqual,
+  toInt
 };

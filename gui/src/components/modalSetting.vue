@@ -292,7 +292,7 @@ import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
 import CusBInput from "./input/Input.vue";
-import { isVersionGreaterEqual, parseURL } from "../assets/js/utils";
+import { isVersionGreaterEqual, parseURL, toInt } from "../assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
@@ -339,7 +339,7 @@ export default {
         port =
           U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
-      return port;
+      return toInt(port);
     },
     iptablesMode() {
       return localStorage["iptablesMode"] || "tproxy";
@@ -395,7 +395,7 @@ export default {
             url: apiRoot + "/portWhiteList",
             method: "post",
             data: {
-              requestPort: this.v2rayaPort
+              requestPort: this.v2rayaPort.toString()
             }
           });
         }
