@@ -85,7 +85,8 @@ func (ws *Whiches) GetNonDuplicated() (w []*Which) {
 	//还原回slice
 	w = make([]*Which, 0)
 	for k := range ts {
-		w = append(w, &k)
+		t := k
+		w = append(w, &t)
 	}
 	return
 }
@@ -115,7 +116,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 			if err != nil {
 				w.Latency = err.Error()
 			} else {
-				w.Latency = "DNS解析失败: " + host
+				w.Latency = "querying dns failed: " + host
 			}
 			return
 		}
