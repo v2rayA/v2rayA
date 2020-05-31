@@ -23,6 +23,9 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 	// 进行base64解码，并unmarshal到VmessInfo上
 	raw, err := common.Base64StdDecode(vmess[8:])
 	if err != nil {
+		raw, err = common.Base64URLDecode(vmess[8:])
+	}
+	if err != nil {
 		// 不是json格式，尝试以vmess://BASE64(Security:ID@Add:Port)?remarks=Ps&obfsParam=Host&Path=Path&obfs=Net&tls=TLS解析
 		var u *url.URL
 		u, err = url.Parse(vmess)
@@ -32,6 +35,9 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		re := regexp.MustCompile(`.*:(.+)@(.+):(\d+)`)
 		s := strings.Split(vmess[8:], "?")[0]
 		s, err = common.Base64StdDecode(s)
+		if err != nil {
+			s, err = common.Base64URLDecode(s)
+		}
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
 			err = newError("unrecognized vmess address")

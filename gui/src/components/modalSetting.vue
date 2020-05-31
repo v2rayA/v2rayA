@@ -418,7 +418,8 @@ export default {
             message: this.$t("common.success"),
             type: "is-warning",
             position: "is-top",
-            duration: 5000
+            duration: 5000,
+            queue: false
           });
         });
       });
@@ -457,7 +458,8 @@ export default {
             this.$buefy.toast.open({
               message: res.data.code,
               type: "is-primary",
-              position: "is-top"
+              position: "is-top",
+              queue: false
             });
             this.$parent.close();
           });
