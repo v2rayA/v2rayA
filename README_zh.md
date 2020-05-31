@@ -1,4 +1,4 @@
-# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/v2rayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/v2rayA) [![Netlify](https://img.shields.io/netlify/f93dbfa7-d14b-4968-a7a4-5e503d8bf5e5?label=netlify%20build)](https://app.netlify.com/sites/xenodochial-jepsen-122e9b/deploys)
+# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/v2rayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/v2rayA)
 
 [**English**](https://github.com/mzz2017/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/mzz2017/v2rayA/blob/master/README_zh.md)
 
@@ -33,7 +33,7 @@ v2rayA主要提供了下述使用方法：
 
 1. 程序不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
 
-2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Netlify](https://app.netlify.com/)在本 Github 项目自动部署完成的，如果担心安全性可以[自行部署](https://github.com/mzz2017/v2rayA/wiki/%E9%83%A8%E7%BD%B2GUI)。
+2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Fast.io](https://fast.io)在本 Github 项目自动部署完成的，如果担心安全性可以[自行部署](https://github.com/mzz2017/v2rayA/wiki/%E9%83%A8%E7%BD%B2GUI)。
 
 3. **不要将本项目用于不合法用途。**
 

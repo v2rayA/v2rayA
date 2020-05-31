@@ -4,5 +4,5 @@ Terminal=false
 Type=Application
 Name=v2rayA
 Keywords=Internet;VPN;Proxy;v2ray;v2raya
-Exec=python -m webbrowser "https://v2raya.mzz.pub"
+Exec=xdg-open "https://v2raya.mzz.pub"
 Icon=/usr/share/icons/v2raya.png
