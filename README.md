@@ -1,4 +1,4 @@
-# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/v2rayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/v2rayA) [![Netlify](https://img.shields.io/netlify/f93dbfa7-d14b-4968-a7a4-5e503d8bf5e5?label=netlify%20build)](https://app.netlify.com/sites/xenodochial-jepsen-122e9b/deploys)
+# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/v2rayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/v2rayA)
 
 [**English**](https://github.com/mzz2017/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/mzz2017/v2rayA/blob/master/README_zh.md)
 
@@ -31,7 +31,7 @@ See [**v2rayA - Wiki**](https://github.com/mzz2017/v2rayA/wiki/Usage)
 ## Statement
 
 1. The program does not save any user data in the cloud, all user data is stored in local. If the v2raya service is running in docker, the configuration will disappear when the related docker volume is removed. Please make a backup if necessary.
-2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Netlify](https://app.netlify.com/). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/v2rayA/wiki/Deploy-GUI).
+2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Fast.io](https://fast.io). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/v2rayA/wiki/Deploy-GUI).
 3. **Do not use this project for illegal purposes.**
 
 ## Credits

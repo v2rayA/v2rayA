@@ -77,6 +77,7 @@ func Run() error {
 	}
 	color.Red.Println("v2rayA is running at", global.GetEnvironmentConfig().Address)
 	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
+	color.Red.Println("GUI demo: http://v.mzz.pub")
 	app := global.GetEnvironmentConfig()
 	return engine.Run(app.Address)
 }
