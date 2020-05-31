@@ -474,7 +474,8 @@ export default {
       this.$buefy.toast.open({
         message: this.$t("common.success"),
         type: "is-primary",
-        position: "is-top"
+        position: "is-top",
+        queue: false
       });
       e.clearSelection();
     });
@@ -482,7 +483,8 @@ export default {
       this.$buefy.toast.open({
         message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
         type: "is-warning",
-        position: "is-top"
+        position: "is-top",
+        queue: false
       });
     });
     const that = this;
@@ -595,7 +597,8 @@ export default {
                 this.$buefy.toast.open({
                   message: res.data.message,
                   type: "is-warning",
-                  position: "is-top"
+                  position: "is-top",
+                  queue: false
                 });
               }
             });
@@ -640,7 +643,8 @@ export default {
                 message: res.data.message,
                 type: "is-warning",
                 position: "is-top",
-                duration: 5000
+                duration: 5000,
+                queue: false
               });
             }
           })
@@ -672,7 +676,8 @@ export default {
                 message: res.data.message,
                 type: "is-warning",
                 position: "is-top",
-                duration: 5000
+                duration: 5000,
+                queue: false
               });
             }
           }),
@@ -697,7 +702,8 @@ export default {
               message: res.data.message,
               type: "is-warning",
               position: "is-top",
-              duration: 5000
+              duration: 5000,
+              queue: false
             });
           }
         });
@@ -724,7 +730,8 @@ export default {
           message: this.$t("latency.message"),
           type: "is-primary",
           position: "is-top",
-          duration: 5000
+          duration: 5000,
+          queue: false
         });
       }, 10 * 1200);
       this.$axios({
@@ -899,7 +906,8 @@ export default {
             message: this.$t("common.success"),
             type: "is-primary",
             position: "is-top",
-            duration: 5000
+            duration: 5000,
+            queue: false
           });
         });
       });
@@ -935,7 +943,8 @@ export default {
             message: this.$t("common.success"),
             type: "is-primary",
             position: "is-top",
-            duration: 3000
+            duration: 3000,
+            queue: false
           });
           this.showModalServer = false;
           this.tableData = res.data.data.touch;
@@ -985,7 +994,8 @@ export default {
             message: this.$t("common.success"),
             type: "is-primary",
             position: "is-top",
-            duration: 3000
+            duration: 3000,
+            queue: false
           });
           this.showModalSubscription = false;
           this.tableData = res.data.data.touch;

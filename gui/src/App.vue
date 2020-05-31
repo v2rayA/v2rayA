@@ -155,7 +155,8 @@ export default {
           ),
           type: "is-dark",
           position: "is-top",
-          duration: 3000
+          duration: 3000,
+          queue: false
         };
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
@@ -257,7 +258,8 @@ export default {
                 message: res.data.message,
                 type: "is-warning",
                 duration: 5000,
-                position: "is-top"
+                position: "is-top",
+                queue: false
               });
             }
           }),
@@ -281,7 +283,8 @@ export default {
               message: res.data.message,
               type: "is-warning",
               duration: 5000,
-              position: "is-top"
+              position: "is-top",
+              queue: false
             });
           }
         });
