@@ -53,6 +53,15 @@ func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
 	whitedms = append(whitedms, &router.Domain{
 		Type:  router.Domain_Domain,
 		Value: "v2raya.mzz.pub",
+	}, &router.Domain{
+		Type:  router.Domain_Domain,
+		Value: "v.mzz.pub",
+	}, &router.Domain{
+		Type:  router.Domain_Domain,
+		Value: "github.com",
+	}, &router.Domain{
+		Type:  router.Domain_Domain,
+		Value: "1password.com",
 	})
 	_ = StartDNSPoison(nil,
 		whitedms)
