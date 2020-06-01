@@ -178,6 +178,10 @@ func StopDNSPoison() {
 		}
 	}
 	wg.Wait()
+	clearDNSCache()
+}
+
+func clearDNSCache() {
 	switch global.ServiceControlMode {
 	case global.ServiceMode:
 		_, _ = exec.Command("sh -c", "service nscd restart").Output()

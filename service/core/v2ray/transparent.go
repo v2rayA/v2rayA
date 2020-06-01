@@ -39,6 +39,26 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 	return nil
 }
 
+func nextPortsGroup(ports []string, groupSize int) (group []string, remain []string) {
+	var cnt int
+	for i := range ports {
+		if strings.ContainsRune(ports[i], ':') {
+			cnt += 2
+		} else {
+			cnt++
+		}
+		if cnt == groupSize {
+			return ports[:i+1], ports[i+1:]
+		} else if cnt > groupSize {
+			return ports[:i], ports[i:]
+		}
+	}
+	if len(ports) > 0 {
+		return ports, nil
+	}
+	return nil, nil
+}
+
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
@@ -48,18 +68,35 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		if !wl.Has(selfPort, "tcp") {
 			wl.TCP = append(wl.TCP, selfPort)
 		}
-		commands = strings.ReplaceAll(commands, "{{TCP_PORTS}}", strings.Join(wl.TCP, ","))
-		if len(wl.UDP) > 0 {
-			commands = strings.ReplaceAll(commands, "{{UDP_PORTS}}", strings.Join(wl.UDP, ","))
-		} else { //没有UDP端口就把这行删了
-			lines := strings.Split(commands, "\n")
-			for i, line := range lines {
-				if strings.Contains(line, "{{UDP_PORTS}}") {
-					lines[i] = ""
+		lines := strings.Split(commands, "\n")
+		for i, line := range lines {
+			if strings.Contains(line, "{{TCP_PORTS}}") {
+				raw := line
+				lines[i] = ""
+				var grp []string
+				r := wl.TCP
+				for r != nil {
+					grp, r = nextPortsGroup(r, 15)
+					if grp != nil {
+						lines[i] += strings.Replace(raw, "{{TCP_PORTS}}", strings.Join(grp, ","), 1) + "\n"
+					}
 				}
+				lines[i] = strings.TrimSuffix(lines[i], "\n")
+			} else if strings.Contains(line, "{{UDP_PORTS}}") {
+				raw := line
+				lines[i] = ""
+				var grp []string
+				r := wl.UDP
+				for r != nil {
+					grp, r = nextPortsGroup(r, 15)
+					if grp != nil {
+						lines[i] += strings.Replace(raw, "{{UDP_PORTS}}", strings.Join(grp, ","), 1) + "\n"
+					}
+				}
+				lines[i] = strings.TrimSuffix(lines[i], "\n")
 			}
-			commands = strings.Join(lines, "\n")
 		}
+		commands = strings.Join(lines, "\n")
 		*c = iptables.SetupCommands(commands)
 	}
 	setting := configure.GetSettingNotNil()
