@@ -14,25 +14,24 @@ const (
 )
 
 func SetServiceControlMode(modeString string) (mode SystemServiceControlMode) {
+	defer func() {
+		ServiceControlMode = mode
+	}()
 	switch modeString {
 	case "systemctl":
-		mode = SystemctlMode
+		return SystemctlMode
 	case "service":
-		mode = ServiceMode
+		return ServiceMode
 	case "universal", "common":
-		mode = UniversalMode
+		return UniversalMode
 	default:
 		//自动检测
 		if out, err := exec.Command("sh", "-c", "which systemctl").Output(); err == nil && strings.Contains(string(out), "systemctl") {
-			mode = SystemctlMode
-			return
+			return SystemctlMode
 		}
 		if out, err := exec.Command("sh", "-c", "which service").Output(); err == nil && strings.Contains(string(out), "service") {
-			mode = ServiceMode
-			return
+			return ServiceMode
 		}
-		mode = UniversalMode
+		return UniversalMode
 	}
-	ServiceControlMode = mode
-	return
 }

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"log"
+	"os/exec"
 	"sync"
 	"time"
 	"v2ray.com/core/app/router"
@@ -61,7 +62,10 @@ func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
 		Value: "github.com",
 	}, &router.Domain{
 		Type:  router.Domain_Domain,
-		Value: "1password.com",
+		Value: `1password.com`,
+	}, &router.Domain{
+		Type:  router.Domain_Regex,
+		Value: `^cdn\..+$`,
 	})
 	_ = StartDNSPoison(nil,
 		whitedms)
@@ -174,4 +178,10 @@ func StopDNSPoison() {
 		}
 	}
 	wg.Wait()
+	switch global.ServiceControlMode {
+	case global.ServiceMode:
+		_, _ = exec.Command("sh -c", "service nscd restart").Output()
+	case global.SystemctlMode:
+		_, _ = exec.Command("sh -c", "systemctl restart nscd").Output()
+	}
 }
