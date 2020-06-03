@@ -31,7 +31,7 @@ v2rayA主要提供了下述使用方法：
 
 ## 注意
 
-1. 程序不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于 docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
+1. 程序不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。
 
 2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Fast.io](https://fast.io)在本 Github 项目自动部署完成的，如果担心安全性可以[自行部署](https://github.com/mzz2017/v2rayA/wiki/%E9%83%A8%E7%BD%B2GUI)。
 
