@@ -227,7 +227,6 @@ export default {
           <p class="about-small">其他端口：</p>
           <p class="about-small">32345: tproxy，透明代理所需 </p>
           <p class="about-small">32346: 插件协议端口，如trojan、ssr和pingtunnel</p>
-          <p>应用不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。若服务端运行于docker，则当相应 docker volume 被清除时配置也将随之消失，请做好备份。
           <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/v2rayA/issues">提出issue</a>。</p>`,
   axios: {
     messages: {

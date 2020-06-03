@@ -30,7 +30,7 @@ See [**v2rayA - Wiki**](https://github.com/mzz2017/v2rayA/wiki/Usage)
 
 ## Statement
 
-1. The program does not save any user data in the cloud, all user data is stored in local. If the v2raya service is running in docker, the configuration will disappear when the related docker volume is removed. Please make a backup if necessary.
+1. The program does not store any user data in the cloud, and all user data is stored in local.
 2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Fast.io](https://fast.io). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/v2rayA/wiki/Deploy-GUI).
 3. **Do not use this project for illegal purposes.**
 
