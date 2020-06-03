@@ -1,15 +1,15 @@
 package v2ray
 
 import (
-	"v2rayA/common"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/global"
 	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+	"v2rayA/common"
+	"v2rayA/core/v2ray/asset"
+	"v2rayA/global"
 )
 
 func EnableV2rayService() (err error) {
@@ -116,6 +116,7 @@ func IsV2rayServiceValid() bool {
 	return false
 }
 
+/* get the version of v2ray-core without 'v' like 4.23.1 */
 func GetV2rayServiceVersion() (ver string, err error) {
 	dir, err := asset.GetV2rayWorkingDir()
 	if err != nil || len(dir) <= 0 {

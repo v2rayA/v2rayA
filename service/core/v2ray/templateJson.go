@@ -126,7 +126,7 @@ const TemplateJson = `{
   },
   "tlsSettings": {
     "allowInsecure": false,
-    "allowInsecureCiphers": true,
+    "allowInsecureCiphers": false,
     "serverName": null
   },
   "kcpSettings": {

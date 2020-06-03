@@ -223,6 +223,7 @@ func handleReceiveMessage(interfaceHandle *handle, m *dnsmessage.Message) (resul
 			if !exists {
 				results = append(results, &domainHandleResult{domain: d, result: ProposeWhitelist})
 			}
+			//TODO: if the ip is in China, add it directly
 			if interfaceHandle.inspectedWhiteDomains.Propose(d) {
 				results = append(results, &domainHandleResult{domain: d, result: AddWhitelist})
 			}

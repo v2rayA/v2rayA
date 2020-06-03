@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"v2rayA/common"
 	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/routingA"
 	"v2rayA/core/v2ray/asset"
@@ -111,8 +112,9 @@ type Settings struct {
 	UserLevel      *int        `json:"userLevel,omitempty"`
 }
 type TLSSettings struct {
-	AllowInsecure bool        `json:"allowInsecure"`
-	ServerName    interface{} `json:"serverName"`
+	AllowInsecure        bool        `json:"allowInsecure"`
+	ServerName           interface{} `json:"serverName"`
+	AllowInsecureCiphers bool        `json:"allowInsecureCiphers"`
 }
 type Headers struct {
 	Host string `json:"Host"`
@@ -308,6 +310,12 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
 			if v.AllowInsecure {
 				o.StreamSettings.TLSSettings.AllowInsecure = true
+			}
+			ver, e := GetV2rayServiceVersion()
+			if e != nil {
+				log.Println(newError("cannot get the version of v2ray-core").Base(e))
+			} else if !common.VersionMustGreaterEqual(ver, "4.23.2") {
+				o.StreamSettings.TLSSettings.AllowInsecureCiphers = true
 			}
 			// always set SNI
 			if v.Host != "" {
@@ -506,6 +514,11 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 			Type:        "field",
 			Port:        "53",
 			OutboundTag: "dns-out",
+		},
+		RoutingRule{ // DNSPoison
+			Type:        "field",
+			IP:          []string{"1.2.3.4"},
+			OutboundTag: "proxy",
 		},
 	)
 	if setting.AntiPollution != configure.AntipollutionNone {
