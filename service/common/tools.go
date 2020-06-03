@@ -42,6 +42,11 @@ func BoolToString(a bool) string {
 	return "false"
 }
 
+func VersionMustGreaterEqual(v1, v2 string) (is bool) {
+	is, _ = VersionGreaterEqual(v1, v2)
+	return
+}
+
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 	if v1 == "debug" {

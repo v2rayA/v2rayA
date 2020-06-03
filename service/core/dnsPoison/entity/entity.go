@@ -62,10 +62,10 @@ func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
 		Value: "github.com",
 	}, &router.Domain{
 		Type:  router.Domain_Domain,
-		Value: `1password.com`,
+		Value: "1password.com",
 	}, &router.Domain{
-		Type:  router.Domain_Regex,
-		Value: `^cdn\..+$`,
+		Type:  router.Domain_Plain,
+		Value: "cdn",
 	})
 	_ = StartDNSPoison(nil,
 		whitedms)
