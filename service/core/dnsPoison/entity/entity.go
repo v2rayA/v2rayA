@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 	"v2ray.com/core/app/router"
+	"v2ray.com/core/common/strmatcher"
 	"v2rayA/common/netTools"
 	"v2rayA/core/dnsPoison"
-	"v2rayA/core/v2ray/asset"
 	"v2rayA/global"
 	"v2rayA/persistence/configure"
 )
@@ -30,12 +30,19 @@ type ExtraInfo struct {
 	ServerDomain string
 }
 
-func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
+func ShouldDnsPoisonOpen() bool {
 	if setting := configure.GetSettingNotNil();
 		!(setting.Transparent != configure.TransparentClose &&
 			setting.AntiPollution != configure.AntipollutionClosed &&
 			(!global.SupportTproxy || setting.EnhancedMode)) {
 		//redirect+poison增强方案
+		return false
+	}
+	return true
+}
+
+func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
+	if !ShouldDnsPoisonOpen() {
 		return
 	}
 	whitedms := make([]*router.Domain, 0, len(info.DohDomains))
@@ -64,8 +71,11 @@ func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
 		Type:  router.Domain_Domain,
 		Value: "1password.com",
 	}, &router.Domain{
-		Type:  router.Domain_Plain,
-		Value: "cdn",
+		Type:  router.Domain_Regex,
+		Value: `^dns\.`,
+	}, &router.Domain{
+		Type:  router.Domain_Regex,
+		Value: `^doh\.`,
 	})
 	_ = StartDNSPoison(nil,
 		whitedms)
@@ -128,11 +138,12 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 				}
 				//准备白名单
 				log.Println("DnsPoison: preparing whitelist")
-				_, wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
-				if err != nil {
-					log.Println("StartDNSPoisonConroutine:", err)
-					return
-				}
+				//_, wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
+				var wlDms = new(strmatcher.MatcherGroup)
+				//if err != nil {
+				//	log.Println("StartDNSPoisonConroutine:", err)
+				//	return
+				//}
 				ipMatcher := new(router.GeoIPMatcher)
 				_ = ipMatcher.Init(whiteDnsServerIps)
 				for _, ifname := range ifnames {

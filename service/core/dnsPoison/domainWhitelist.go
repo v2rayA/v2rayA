@@ -8,7 +8,7 @@ import (
 // but any against will remove it from the whitelist or stop the progress.
 type domainWhitelist struct {
 	whitelist      map[string]interface{}
-	progress       map[string]uint8
+	progress       map[string]int8
 	progressMutex  sync.Mutex
 	whitelistMutex sync.RWMutex
 }
@@ -16,7 +16,7 @@ type domainWhitelist struct {
 func newDomainWhitelist() *domainWhitelist {
 	return &domainWhitelist{
 		whitelist:      make(map[string]interface{}),
-		progress:       make(map[string]uint8),
+		progress:       make(map[string]int8),
 		progressMutex:  sync.Mutex{},
 		whitelistMutex: sync.RWMutex{},
 	}
@@ -34,7 +34,7 @@ func (w *domainWhitelist) Propose(domain string) bool {
 	w.progressMutex.Lock()
 	defer w.progressMutex.Unlock()
 	w.progress[domain]++
-	if w.progress[domain] >= 3 {
+	if w.progress[domain] >= 1 {
 		w.progress[domain] = 0
 		w.whitelistMutex.Lock()
 		w.whitelist[domain] = nil
@@ -54,7 +54,8 @@ func (w *domainWhitelist) Against(domain string) (suc bool) {
 	w.whitelistMutex.Unlock()
 
 	w.progressMutex.Lock()
-	w.progress[domain] = 0
+	// NOTE: in this version we ban this domain
+	w.progress[domain] = -128
 	w.progressMutex.Unlock()
 	return
 }
