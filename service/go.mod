@@ -3,7 +3,6 @@ module v2rayA
 go 1.13
 
 require (
-	github.com/DeanThompson/ginpprof v0.0.0-20190408063150-3be636683586
 	github.com/beevik/ntp v0.3.0
 	github.com/cakturk/go-netstat v0.0.0-20190620190123-a633b9c55b1a
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

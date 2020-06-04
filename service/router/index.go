@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/DeanThompson/ginpprof"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -14,7 +13,7 @@ import (
 
 func Run() error {
 	engine := gin.New()
-	ginpprof.Wrap(engine)
+	//ginpprof.Wrap(engine)
 	engine.Use(gin.Recovery())
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
