@@ -517,7 +517,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 		},
 		RoutingRule{ // DNSPoison
 			Type:        "field",
-			IP:          []string{"1.2.3.4"},
+			IP:          []string{"240.0.0.0/4"},
 			OutboundTag: "proxy",
 		},
 	)

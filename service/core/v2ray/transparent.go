@@ -7,6 +7,7 @@ import (
 	"v2rayA/common"
 	"v2rayA/common/netTools/netstat"
 	"v2rayA/common/netTools/ports"
+	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/iptables"
 	"v2rayA/global"
 	"v2rayA/persistence/configure"
@@ -101,6 +102,9 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		commands = strings.Join(lines, "\n")
 		if setting.AntiPollution == configure.AntipollutionClosed {
 			commands = common.TrimLineContains(commands, "udp")
+		}
+		if entity.ShouldDnsPoisonOpen() {
+			commands = common.TrimLineContains(commands, "240.0.0.0/4")
 		}
 		*c = iptables.SetupCommands(commands)
 	}

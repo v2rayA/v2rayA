@@ -94,9 +94,6 @@ github.com/modern-go/reflect2 v1.0.1 h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6 h1:EajWCEv0scxMWyMHWxJbFK70brsPIl4TLQJ0zaOeOiI=
 github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6/go.mod h1:saF2fIVw4banK0H4+/EuqfFLpRnoy5S+ECwTOCcRcSU=
-github.com/mzz2017/go-engine v0.0.0-20200421205935-de5323d9e1c6 h1:YpLEsrKfHBOFUQijxbwTfROnamR/HnrqG8r0LpNwId8=
-github.com/mzz2017/go-engine v0.0.0-20200421205935-de5323d9e1c6/go.mod h1:dtxaUwnEzmoctRuP9u8gRR/tjbfD7SxOBBDz1R8xDeU=
-github.com/mzz2017/go-engine v0.0.0-20200421213142-1c62621dedfd/go.mod h1:dtxaUwnEzmoctRuP9u8gRR/tjbfD7SxOBBDz1R8xDeU=
 github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229 h1:fRkNTjA1D7vIgranMvHQrQ5Oyb4IvF/zHwPeYz+EQbk=
 github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229/go.mod h1:dtxaUwnEzmoctRuP9u8gRR/tjbfD7SxOBBDz1R8xDeU=
 github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a h1:lM2cQgk1E5mNMUBw5cdE5922waAyan6jlMpbjRxfEas=
