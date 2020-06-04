@@ -162,25 +162,24 @@ func GetConfigPath() (p string) {
 
 var whitelistCn struct {
 	domainMatcher *strmatcher.MatcherGroup
-	ipMatcher     *v2router.GeoIPMatcher
 	sync.Mutex
 }
 
-func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain) (wlIps *v2router.GeoIPMatcher, wlDomains *strmatcher.MatcherGroup, err error) {
+func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain) (wlDomains *strmatcher.MatcherGroup, err error) {
 	whitelistCn.Lock()
 	defer whitelistCn.Unlock()
-	if whitelistCn.domainMatcher != nil && whitelistCn.ipMatcher != nil {
-		return whitelistCn.ipMatcher, whitelistCn.domainMatcher, nil
+	if whitelistCn.domainMatcher != nil {
+		return whitelistCn.domainMatcher, nil
 	}
 	dir := GetV2rayLocationAsset()
 	var siteList v2router.GeoSiteList
 	b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
 	if err != nil {
-		return nil, nil, newError("GetWhitelistCn").Base(err)
+		return  nil, newError("GetWhitelistCn").Base(err)
 	}
 	err = proto.Unmarshal(b, &siteList)
 	if err != nil {
-		return nil, nil, newError("GetWhitelistCn").Base(err)
+		return nil, newError("GetWhitelistCn").Base(err)
 	}
 	wlDomains = new(strmatcher.MatcherGroup)
 	domainMatcher := new(dnsPoison.DomainMatcherGroup)
@@ -211,28 +210,7 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	domainMatcher.Add("lan")
 	wlDomains.Add(domainMatcher)
 	wlDomains.Add(fullMatcher)
-
-	var ipList v2router.GeoIPList
-	b, err = ioutil.ReadFile(path.Join(dir, "geoip.dat"))
-	if err != nil {
-		return nil, nil, newError("GetWhitelistCn").Base(err)
-	}
-	err = proto.Unmarshal(b, &ipList)
-	if err != nil {
-		return nil, nil, newError("GetWhitelistCn").Base(err)
-	}
-
-	wlIps = new(v2router.GeoIPMatcher)
-	for _, e := range ipList.Entry {
-		if e.CountryCode == "CN" {
-			ips := e.Cidr
-			ips = append(ips, externIps...)
-			_ = wlIps.Init(ips)
-			break
-		}
-	}
 	whitelistCn.domainMatcher = wlDomains
-	whitelistCn.ipMatcher = wlIps
 	return
 }
 func GetV2rayServiceFilePath() (path string, err error) {

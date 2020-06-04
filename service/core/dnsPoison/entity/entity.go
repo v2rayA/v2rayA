@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 	"v2ray.com/core/app/router"
-	"v2ray.com/core/common/strmatcher"
 	"v2rayA/common/netTools"
 	"v2rayA/core/dnsPoison"
+	"v2rayA/core/v2ray/asset"
 	"v2rayA/global"
 	"v2rayA/persistence/configure"
 )
@@ -138,12 +138,12 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 				}
 				//准备白名单
 				log.Println("DnsPoison: preparing whitelist")
-				//_, wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
-				var wlDms = new(strmatcher.MatcherGroup)
-				//if err != nil {
-				//	log.Println("StartDNSPoisonConroutine:", err)
-				//	return
-				//}
+				wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
+				//var wlDms = new(strmatcher.MatcherGroup)
+				if err != nil {
+					log.Println("StartDNSPoisonConroutine:", err)
+					return
+				}
 				ipMatcher := new(router.GeoIPMatcher)
 				_ = ipMatcher.Init(whiteDnsServerIps)
 				for _, ifname := range ifnames {
