@@ -203,8 +203,8 @@ func RestartV2rayService() (err error) {
 func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	CheckAndStopTransparentProxy()
 	defer func() {
-		if e := CheckAndSetupTransparentProxy(true); err == nil && e != nil {
-			err = e
+		if e := CheckAndSetupTransparentProxy(true); e != nil {
+			err = newError(e).Base(err)
 		}
 	}()
 	//iptables.SpoofingFilter.GetCleanCommands().Clean()
