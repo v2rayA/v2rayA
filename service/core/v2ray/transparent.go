@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 	"time"
+	"v2rayA/common"
 	"v2rayA/common/netTools/netstat"
 	"v2rayA/common/netTools/ports"
 	"v2rayA/core/iptables"
@@ -60,6 +61,7 @@ func nextPortsGroup(ports []string, groupSize int) (group []string, remain []str
 }
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
+	setting := configure.GetSettingNotNil()
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
 		//先看要不要把自己的端口加进去
@@ -97,9 +99,11 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 			}
 		}
 		commands = strings.Join(lines, "\n")
+		if setting.AntiPollution == configure.AntipollutionClosed {
+			commands = common.TrimLineContains(commands, "udp")
+		}
 		*c = iptables.SetupCommands(commands)
 	}
-	setting := configure.GetSettingNotNil()
 	if (!checkRunning || IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
 		var (
 			o bool
