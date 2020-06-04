@@ -114,6 +114,7 @@
       </b-collapse>
 
       <b-tabs
+        v-if="tableData.subscriptions.length || tableData.servers.length"
         v-model="tab"
         position="is-centered"
         type="is-toggle-rounded"
