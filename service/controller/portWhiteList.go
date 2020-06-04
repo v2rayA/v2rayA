@@ -1,13 +1,14 @@
 package controller
 
 import (
-	"v2rayA/common"
-	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	"v2rayA/service"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
+	"v2rayA/common"
+	"v2rayA/core/v2ray"
+	"v2rayA/global"
+	"v2rayA/persistence/configure"
+	"v2rayA/service"
 )
 
 func GetPortWhiteList(ctx *gin.Context) {
@@ -53,5 +54,7 @@ func PostPortWhiteList(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
+	v2ray.CheckAndStopTransparentProxy()
+	v2ray.CheckAndSetupTransparentProxy(true)
 	common.ResponseSuccess(ctx, nil)
 }
