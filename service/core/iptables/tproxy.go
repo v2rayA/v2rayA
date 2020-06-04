@@ -22,7 +22,11 @@ iptables -t mangle -A PREROUTING -j SSTP_PRE
 
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
+# 出方向白名单端口
+iptables -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
+iptables -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 iptables -t mangle -A SETMARK -i docker+ -j RETURN
+iptables -t mangle -A SETMARK -i veth+ -j RETURN
 iptables -t mangle -A SETMARK -i br-+ -j RETURN
 iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
@@ -46,9 +50,6 @@ iptables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
 # 走过TPROXY的通行
 iptables -t mangle -A SSTP_OUT -m mark --mark 0xff -j RETURN
-# 本机出方向规则，白名单端口
-iptables -t mangle -A SSTP_OUT -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
-iptables -t mangle -A SSTP_OUT -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 iptables -t mangle -A SSTP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -t mangle -A SSTP_OUT -p udp -m mark ! --mark 1 -j SETMARK
