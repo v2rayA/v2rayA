@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gookit/color"
+	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
@@ -25,9 +26,10 @@ import (
 	"v2rayA/core/v2ray"
 	"v2rayA/core/v2ray/asset"
 	"v2rayA/core/v2ray/asset/gfwlist"
+	"v2rayA/db"
+	"v2rayA/db/configure"
 	"v2rayA/extra/gopeed"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
 	"v2rayA/router"
 	"v2rayA/service"
 )
@@ -94,19 +96,62 @@ func checkTProxySupportability() {
 	iptables.Tproxy.GetCleanCommands().Clean()
 }
 
+func migrate(jsonConfPath string) (err error) {
+	log.Println("[info] Migrating json to nutsdb...")
+	defer func() {
+		if err != nil {
+			log.Println("[info] Migrating failed: ", err.Error())
+		} else {
+			log.Println("[info] Migrating complete")
+		}
+	}()
+	b, err := ioutil.ReadFile(jsonConfPath)
+	if err != nil {
+		return
+	}
+	var cfg configure.Configure
+	if err = jsoniter.Unmarshal(b, &cfg); err != nil {
+		return
+	}
+	if err = configure.SetConfigure(&cfg); err != nil {
+		return
+	}
+	return nil
+}
+
+func initDBValue() {
+	err := configure.SetConfigure(configure.New())
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func initConfigure() {
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 	// Enable line numbers in logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	//db
+	confPath := global.GetEnvironmentConfig().Config
+	if _, err := os.Stat(confPath); os.IsNotExist(err) {
+		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0600)
+	}
 	if configure.IsConfigureNotExists() {
-		_ = os.MkdirAll(path.Dir(global.GetEnvironmentConfig().Config), os.ModeDir|0755)
-		err := configure.SetConfigure(configure.New())
-		if err != nil {
-			log.Fatal(err)
+		// need to migrate?
+		jsonConfPath := "/etc/v2ray/v2raya.json"
+		if _, err := os.Stat(jsonConfPath); err == nil {
+			migrate(jsonConfPath)
+		} else if os.IsNotExist(err) {
+			jsonConfPath = "/etc/v2raya/v2raya.json"
+			if _, err := os.Stat(jsonConfPath); err == nil {
+				migrate(jsonConfPath)
+			} else {
+				initDBValue()
+			}
 		}
 	}
+
 	//配置文件描述符上限
 	if global.ServiceControlMode == global.ServiceMode || global.ServiceControlMode == global.SystemctlMode {
 		err := v2ray.OptimizeServiceFile()
@@ -267,7 +312,7 @@ func run() (err error) {
 	err = v2ray.UpdateV2RayConfig(nil)
 	if err != nil {
 		w := configure.GetConnectedServer()
-		log.Println("which:", w)
+		log.Println(err, ", which:", w)
 		_ = configure.ClearConnected()
 	}
 	errch := make(chan error)
@@ -283,10 +328,11 @@ func run() (err error) {
 		errch <- nil
 	}()
 	if err = <-errch; err != nil {
-		return
+		log.Fatal(err)
 	}
 	fmt.Println("Quitting...")
 	v2ray.CheckAndStopTransparentProxy()
 	_ = v2ray.StopV2rayService()
+	_ = db.DB().Close()
 	return nil
 }

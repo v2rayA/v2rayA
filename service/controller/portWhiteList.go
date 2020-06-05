@@ -7,7 +7,7 @@ import (
 	"v2rayA/common"
 	"v2rayA/core/v2ray"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"v2rayA/service"
 )
 

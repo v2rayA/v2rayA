@@ -5,12 +5,14 @@ import (
 	"github.com/stevenroose/gonfig"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 )
 
 type Params struct {
 	Address          string `id:"address" short:"a" default:"0.0.0.0:2017" desc:"Listening address"`
-	Config           string `id:"config" short:"c" default:"/etc/v2ray/v2raya.json" desc:"v2rayA configure path"`
+	Config           string `id:"config" short:"c" default:"/etc/v2raya" desc:"v2rayA configure directory"`
 	Mode             string `id:"mode" short:"m" desc:"Options: systemctl, service, universal. Auto-detect if not set"`
 	PluginListenPort int    `short:"s" default:"32346" desc:"Plugin outbound port"`
 	PassCheckRoot    bool   `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
@@ -37,6 +39,11 @@ func initFunc() {
 			log.Fatal(err)
 		}
 	}
+	// replace all dots of the filename with underlines
+	params.Config = filepath.Join(
+		filepath.Dir(params.Config),
+		strings.ReplaceAll(filepath.Base(params.Config), ".", "_"),
+	)
 	if params.ShowVersion {
 		fmt.Println(Version)
 		os.Exit(0)

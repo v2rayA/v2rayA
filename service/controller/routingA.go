@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"v2rayA/common"
 	"v2rayA/core/routingA"
-	"v2rayA/persistence/configure"
-	"github.com/gin-gonic/gin"
+	"v2rayA/db/configure"
 )
 
 func GetRoutingA(ctx *gin.Context) {
@@ -26,7 +26,7 @@ func PutRoutingA(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	err = configure.SetRoutingA(data.RoutingA)
+	err = configure.SetRoutingA(&data.RoutingA)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

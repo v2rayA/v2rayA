@@ -2,7 +2,7 @@ package nodeData
 
 import (
 	"v2rayA/core/vmessInfo"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 /*

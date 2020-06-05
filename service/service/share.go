@@ -1,7 +1,7 @@
 package service
 
 import (
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func GetSharingAddress(w *configure.Which) (addr string, err error) {

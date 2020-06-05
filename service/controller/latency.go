@@ -5,7 +5,7 @@ import (
 	"github.com/json-iterator/go"
 	"time"
 	"v2rayA/common"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"v2rayA/service"
 )
 

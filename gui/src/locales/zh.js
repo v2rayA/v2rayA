@@ -120,7 +120,7 @@ export default {
         "如果透明代理出现问题，可尝试将'防止DNS污染'选为'关闭'，或打开增强模式(v0.7.0.2+)。" +
         "★转发DNS查询: 通过代理服务器转发DNS请求。" +
         "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，建议选择较快且稳定的DoH服务提供商。" +
-        "★增强模式(v0.7.0.2+)会取代通过iptables转发dns请求的方式，转而使用DnsPoison方式",
+        "★增强模式(v0.7.0.2+)会取代通过iptables转发dns请求的方式，转而使用DnsPoison方式应对被污染的域名。",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。当前仅支持vmess节点。",
       mux:

@@ -15,8 +15,8 @@ import (
 	"v2rayA/core/v2ray"
 	"v2rayA/core/vmessInfo"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	"v2rayA/plugins"
+	"v2rayA/db/configure"
+	"v2rayA/plugin"
 )
 
 func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
@@ -141,7 +141,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		case "vmess", "":
 			//pass
 		default:
-			if !plugins.IsProtocolValid(v) {
+			if !plugin.IsProtocolValid(v) {
 				which[i].Latency = "UNSUPPORTED PROTOCOL"
 				continue
 			}
@@ -171,12 +171,12 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	if len(pluginPortMap) > 0 {
 		for i, localPort := range pluginPortMap {
 			v := vms[i]
-			var plugin plugins.Plugin
-			plugin, err = plugins.NewPlugin(localPort, v)
+			var plu plugin.Plugin
+			plu, err = plugin.NewPlugin(localPort, v)
 			if err != nil {
 				return nil, err
 			}
-			global.Plugins.Append(plugin)
+			global.Plugins.Append(plu)
 		}
 	}
 	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())

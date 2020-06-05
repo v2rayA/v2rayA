@@ -442,7 +442,8 @@ export default {
         id: 0,
         sub: 0
       },
-      overHeight: false
+      overHeight: false,
+      clipboard: null
     };
   },
   watch: {
@@ -469,9 +470,12 @@ export default {
       this.ready = true;
     });
   },
+  beforeDestroy() {
+    this.clipboard.destroy();
+  },
   mounted() {
-    let clipboard = new ClipboardJS(".sharingAddressTag");
-    clipboard.on("success", e => {
+    this.clipboard = new ClipboardJS(".sharingAddressTag");
+    this.clipboard.on("success", e => {
       this.$buefy.toast.open({
         message: this.$t("common.success"),
         type: "is-primary",
@@ -480,7 +484,7 @@ export default {
       });
       e.clearSelection();
     });
-    clipboard.on("error", e => {
+    this.clipboard.on("error", e => {
       this.$buefy.toast.open({
         message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
         type: "is-warning",

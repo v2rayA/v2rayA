@@ -68,7 +68,7 @@ type Address struct {
 func parseIPv4(s string) (net.IP, error) {
 	v, err := strconv.ParseUint(s, 16, 32)
 	if err != nil {
-		return nil, newError(err)
+		return nil, newError().Base(err)
 	}
 	ip := make(net.IP, net.IPv4len)
 	binary.LittleEndian.PutUint32(ip, uint32(v))
@@ -84,7 +84,7 @@ func parseIPv6(s string) (net.IP, error) {
 		u, err := strconv.ParseUint(grp, 16, 32)
 		binary.LittleEndian.PutUint32(ip[i:j], uint32(u))
 		if err != nil {
-			return nil, newError(err)
+			return nil, newError().Base(err)
 		}
 		i, j = i+grpLen, j+grpLen
 		s = s[8:]
@@ -108,11 +108,11 @@ func parseAddr(s string) (*Address, error) {
 		return nil, newError("Bad formatted string")
 	}
 	if err != nil {
-		return nil, newError(err)
+		return nil, newError().Base(err)
 	}
 	v, err := strconv.ParseUint(fields[1], 16, 16)
 	if err != nil {
-		return nil, newError(err)
+		return nil, newError().Base(err)
 	}
 	return &Address{IP: ip, Port: int(v),}, nil
 }
@@ -180,7 +180,7 @@ var ErrorNotFound = newError("process not found")
 func findProcessID(pname string) (pid string, err error) {
 	f, err := ioutil.ReadDir(pathProc)
 	if err != nil {
-		err = newError(err)
+		err = newError().Base(err)
 		return
 	}
 loop1:
@@ -218,7 +218,7 @@ func getProcessName(pid string) (pn string) {
 	p := filepath.Join(pathProc, pid, "stat")
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
-		err = newError(err)
+		err = newError().Base(err)
 		return
 	}
 	sp := bytes.SplitN(b, []byte(" "), 3)
@@ -257,7 +257,7 @@ func getProcessSocketSet(pid string) (set []string) {
 	fns, err := f.Readdirnames(-1)
 	f.Close()
 	if err != nil {
-		err = newError(err)
+		err = newError().Base(err)
 		return
 	}
 	for _, fn := range fns {
@@ -302,7 +302,7 @@ func parseSocktab(r io.Reader) (map[int][]*Socket, error) {
 		s.RemoteAddress = addr
 		u, err := strconv.ParseUint(fields[3], 16, 8)
 		if err != nil {
-			err = newError(err)
+			err = newError().Base(err)
 			return tab, err
 		}
 		s.State = SkState(u)

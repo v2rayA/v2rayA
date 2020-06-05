@@ -4,7 +4,7 @@ import (
 	"v2rayA/core/v2ray"
 	"v2rayA/core/v2ray/asset/gfwlist"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"log"
 )
 

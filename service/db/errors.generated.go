@@ -1,4 +1,4 @@
-package persistence
+package db
 
 import "v2ray.com/core/common/errors"
 

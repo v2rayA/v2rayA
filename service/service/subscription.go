@@ -11,7 +11,7 @@ import (
 	"v2rayA/common/httpClient"
 	"v2rayA/core/nodeData"
 	"v2rayA/core/touch"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {

@@ -11,7 +11,7 @@ import (
 	"v2rayA/core/vmessInfo"
 	"v2rayA/extra/proxy/socks5"
 	"v2rayA/extra/proxy/ssr"
-	"v2rayA/plugins"
+	"v2rayA/plugin"
 )
 
 type SSR struct {
@@ -24,13 +24,13 @@ type Params struct {
 }
 
 func init() {
-	plugins.RegisterPlugin("ss", NewSSRPlugin)
-	plugins.RegisterPlugin("ssr", NewSSRPlugin)
-	plugins.RegisterPlugin("shadowsocks", NewSSRPlugin)
-	plugins.RegisterPlugin("shadowsocksr", NewSSRPlugin)
+	plugin.RegisterPlugin("ss", NewSSRPlugin)
+	plugin.RegisterPlugin("ssr", NewSSRPlugin)
+	plugin.RegisterPlugin("shadowsocks", NewSSRPlugin)
+	plugin.RegisterPlugin("shadowsocksr", NewSSRPlugin)
 }
 
-func NewSSRPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
+func NewSSRPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, err error) {
 	plugin = new(SSR)
 	err = plugin.Serve(localPort, v)
 	return

@@ -280,7 +280,7 @@ func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
 	u, err = common.Base64StdDecode(u)
 	if err != nil {
 		log.Println(u)
-		err = newError(err)
+		err = newError().Base(err)
 		return
 	}
 	arr := strings.Split(u, "#")
@@ -298,7 +298,7 @@ func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
 	passwd, err := common.Base64URLDecode(subMatch[2])
 	if err != nil {
 		log.Println(subMatch[2])
-		err = newError(err)
+		err = newError().Base(err)
 		return
 	}
 	data.VmessInfo = vmessInfo.VmessInfo{

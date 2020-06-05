@@ -8,7 +8,7 @@ import (
 	"v2rayA/common/jwt"
 	"v2rayA/controller"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func Run() error {

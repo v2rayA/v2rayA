@@ -1,7 +1,7 @@
 package service
 
 import (
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func DeleteWhich(ws []*configure.Which) (err error) {
@@ -13,8 +13,8 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 	data.Sort()
 	touches := data.Get()
 	cs := configure.GetConnectedServer()
-	subscriptions := configure.GetSubscriptions()
-	servers := configure.GetServers()
+	subscriptionsIndexes := make([]int, 0, len(ws))
+	serversIndexes := make([]int, 0, len(ws))
 	bDeletedSubscription := false
 	bDeletedServer := false
 	for _, v := range touches {
@@ -31,9 +31,8 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 				} else if ind < cs.Sub {
 					cs.Sub -= 1
 				}
-
 			}
-			subscriptions = append(subscriptions[:ind], subscriptions[ind+1:]...)
+			subscriptionsIndexes = append(subscriptionsIndexes, ind)
 			bDeletedSubscription = true
 		case configure.ServerType:
 			//检查现在连接的结点是否是该服务器，是的话断开连接
@@ -47,20 +46,20 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 					cs.ID -= 1
 				}
 			}
-			servers = append(servers[:ind], servers[ind+1:]...)
+			serversIndexes = append(serversIndexes, ind)
 			bDeletedServer = true
 		case configure.SubscriptionServerType: //订阅的结点的不能删的
 			continue
 		}
 	}
 	if bDeletedSubscription {
-		err = configure.SetSubscriptions(subscriptions)
+		err = configure.RemoveSubscriptions(subscriptionsIndexes)
 		if err != nil {
 			return
 		}
 	}
 	if bDeletedServer {
-		err = configure.SetServers(servers)
+		err = configure.RemoveServers(serversIndexes)
 		if err != nil {
 			return
 		}
