@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 600px;margin:auto">
+  <div class="modal-card modal-setting" style="max-width: 600px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("common.setting") }}</p>
     </header>
@@ -610,5 +610,10 @@ export default {
 }
 .no-border-radius {
   border-radius: 0;
+}
+.modal-setting {
+  .b-checkbox.checkbox {
+    margin-right: 0;
+  }
 }
 </style>
