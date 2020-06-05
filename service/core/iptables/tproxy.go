@@ -44,7 +44,6 @@ iptables -t mangle -A SETMARK -d 198.51.100.0/24 -j RETURN
 iptables -t mangle -A SETMARK -d 203.0.113.0/24 -j RETURN
 iptables -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
 iptables -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
-iptables -t mangle -A SETMARK -d 255.255.255.255/32 -j RETURN
 iptables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 

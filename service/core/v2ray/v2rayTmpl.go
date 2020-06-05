@@ -404,7 +404,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 			}
 		}
 	case configure.AntipollutionNone:
-		t.DNS.Servers = []interface{}{"119.29.29.29", "114.114.114.114"} //防止DNS劫持，使用DNSPod作为主DNS
+		t.DNS.Servers = []interface{}{"223.5.5.5", "114.114.114.114"} //防止DNS劫持，使用AliDNS作为主DNS
 	}
 	if setting.AntiPollution != configure.AntipollutionNone {
 		//统计DoH服务器信息
@@ -437,10 +437,10 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 		}
 
 		ds := DnsServer{
-			Address: "119.29.29.29",
+			Address: "223.5.5.5",
 			Port:    53,
 			Domains: []string{
-				"geosite:cn",          // 国内白名单走DNSPod
+				"geosite:cn",          // 国内白名单走AliDNS
 				"domain:ntp.org",      // NTP 服务器
 				"domain:dogedoge.com", // mzz2017爱用的多吉
 				"full:v2raya.mzz.pub", // v2rayA demo
@@ -507,7 +507,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 		RoutingRule{ // 国内DNS服务器直连，以分流
 			Type:        "field",
 			OutboundTag: "direct",
-			IP:          []string{"119.29.29.29", "114.114.114.114"},
+			IP:          []string{"223.5.5.5", "114.114.114.114"},
 			Port:        "53",
 		},
 		RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS

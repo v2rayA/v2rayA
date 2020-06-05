@@ -1,14 +1,12 @@
 package lru
 
-import "sync"
-
+// LRU is Non Thread Safe
 type LRU struct {
 	maxsize uint64
 	size    uint64
 	head    *node
 	tail    *node
 	m       map[interface{}]*node
-	sync.Mutex
 }
 type node struct {
 	value interface{}
@@ -25,7 +23,6 @@ func New(maxsize uint64) *LRU {
 		head:    head,
 		tail:    head,
 		m:       make(map[interface{}]*node),
-		Mutex:   sync.Mutex{},
 	}
 }
 
@@ -55,8 +52,6 @@ func (lru *LRU) pushLeft(value interface{}) (out interface{}) {
 }
 
 func (lru *LRU) ShiftOrInsert(value interface{}) (out interface{}) {
-	lru.Lock()
-	defer lru.Unlock()
 	p, ok := lru.m[value]
 	if !ok {
 		out = lru.pushLeft(value)

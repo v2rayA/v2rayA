@@ -1,6 +1,7 @@
 package netTools
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 	Trie "v2rayA/dataStructure/trie"
@@ -15,14 +16,12 @@ var intranet4 = []string{
 	"192.168.0.0/16",
 	"224.0.0.0/4",
 	"240.0.0.0/4",
-	"255.255.255.255/32",
 }
 
 var jokernet4 = []string{
 	"0.0.0.0/8",
 	"127.0.0.0/8",
 	"240.0.0.0/4",
-	"255.255.255.255/32",
 }
 
 var trieIntranet *Trie.Trie
@@ -54,20 +53,19 @@ func Init(CIDRs []string) *Trie.Trie {
 	return Trie.New(dict)
 }
 
-func IsIntranet4(ipv4 [4]byte) bool {
-	var buf string
+func ipv4ToBin(ipv4 *[4]byte) string {
+	var buff = new(bytes.Buffer)
 	for _, b := range ipv4 {
 		tmp := strconv.FormatInt(int64(b), 2)
-		buf += strings.Repeat("0", 8-len(tmp)) + tmp
+		buff.WriteString(strings.Repeat("0", 8-len(tmp)) + tmp)
 	}
-	return trieIntranet.Match(buf) != ""
+	return buff.String()
 }
 
-func IsJokernet4(ipv4 [4]byte) bool {
-	var buf string
-	for _, b := range ipv4 {
-		tmp := strconv.FormatInt(int64(b), 2)
-		buf += strings.Repeat("0", 8-len(tmp)) + tmp
-	}
-	return trieJokernet.Match(buf) != ""
+func IsIntranet4(ipv4 *[4]byte) bool {
+	return trieIntranet.Match(ipv4ToBin(ipv4)) != ""
+}
+
+func IsJokernet4(ipv4 *[4]byte) bool {
+	return trieJokernet.Match(ipv4ToBin(ipv4)) != ""
 }
