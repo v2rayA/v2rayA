@@ -167,12 +167,12 @@ export default {
     title: "配置DoH服务器",
     dohPriorityList: "DoH服务优先级列表",
     messages: [
-      "DoH即DNS over HTTPS，能够有效避免DNS污染，但一些DoH提供商的DoH服务可能被墙，请自行选择非代理条件下直连速度最快的DoH提供商",
+      "DoH即DNS over HTTPS，能够有效避免DNS污染，一些国内的DoH提供商自己本身也有被污染的可能，另外，一些DoH提供商的DoH服务可能被墙，请自行选择非代理条件下直连速度较快且效果较好的DoH提供商",
       "大陆较好的DoH服务有阿里dns, geekdns, rubyfish等",
       "台湾有quad101: dns.twnic.tw等",
       "美国有cloudflare: 1.0.0.1等",
       '清单：<a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>',
-      '另外，您可以在未受到DNS污染的国内服务器上自架DoH服务，以纵享丝滑。<a href="https://hub.docker.com/r/flexo3001/rust-doh" target="_blank">rust-doh</a>',
+      '另外，您可以在自己的国内服务器上自架DoH服务，以纵享丝滑 <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>。在这种情况下，建议同时运行服务端(doh-proxy/doh-httpproxy, 提供对外服务)和客户端(doh-stub, 连接至doh.opendns.com)并将他们串联，因为通常情况下在普遍受到污染的地区找到一个完全不受污染的服务器是很困难的。',
       "建议上述列表1-2行即可，留空保存可恢复默认"
     ]
   },

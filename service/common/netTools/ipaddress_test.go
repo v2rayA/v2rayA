@@ -15,7 +15,8 @@ func TestIsIntranet4(t *testing.T) {
 		{[4]byte{1, 2, 3, 4}, false},
 	}
 	for _, tt := range tests {
-		if ans := IsIntranet4(tt[0].([4]byte)); ans == tt[1] {
+		ipv4 := tt[0].([4]byte)
+		if ans := IsIntranet4(&ipv4); ans == tt[1] {
 			t.Log(tt[0], "result", tt[1])
 		} else {
 			t.Fatal(tt[0], "expect", tt[1], ", wrong answer is:", ans)

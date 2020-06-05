@@ -168,12 +168,12 @@ export default {
     title: "Configure DoH Server",
     dohPriorityList: "Priority list of DoH Servers",
     messages: [
-      "DoH(DNS over HTTPS) can be used to prevent dns spoofing, but some public DoH servers are not access in specific areas. You should choose the fastest and stablest DoH server.",
+      "DoH (DNS over HTTPS) can effectively avoid DNS pollution. But some native DoH providers may themselves be contaminated sometimes. In addition, some DoH services may be blocked by local network providers. Please choose the fastest and stablest DoH server.",
       "Awesome public DoH servers in Mainland China include alidns, geekdns, rubyfish, etc",
       "In taiwan area include quad101, etc",
       "USA: cloudflare, dns.google, etc",
       'Checklist：<a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>',
-      'Besides, setting up DoH service at your own server doesn\'t suffer dns spoofing is suggested and well-behaved int most cases. <a href="https://hub.docker.com/r/flexo3001/rust-doh" target="_blank">rust-doh</a>',
+      'Besides, setting up DoH service at your own native server is suggested and well-behaved in most cases <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>. In this case, it is recommended to run the server(doh-proxy/doh-httpproxy) providing service and client(doh-stub) connecting to doh.opendns.com at the same time and connect them in series, because you can hardly find a server that is not polluted in a generally contaminated region.',
       "Optimally, place one or two lines above. The list will restore to default after saving with empty content."
     ]
   },

@@ -16,10 +16,17 @@ import (
 func DeleteTransparentProxyRules() {
 	iptables.Tproxy.GetCleanCommands().Clean()
 	iptables.Redirect.GetCleanCommands().Clean()
+	iptables.DropSpoofing.GetCleanCommands().Clean()
 	time.Sleep(100 * time.Millisecond)
 }
 
 func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) error {
+	if entity.ShouldDnsPoisonOpen() {
+		if e := iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); e != nil {
+			log.Println(newError("[WARNING] DropSpoofing can't be enable").Base(e))
+			DeleteTransparentProxyRules()
+		}
+	}
 	setting := configure.GetSettingNotNil()
 	if !(!global.SupportTproxy || setting.EnhancedMode) {
 		if err := iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {

@@ -13,8 +13,7 @@ func (r reservedIP) IP() (ip [4]byte) {
 }
 
 func (r reservedIP) Next() reservedIP {
-	k := uint32(r)
-	if k&0xff == 254 {
+	if r&0xff == 254 {
 		return r + 3
 	}
 	return r + 1

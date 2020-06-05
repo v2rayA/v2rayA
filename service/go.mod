@@ -35,3 +35,4 @@ require (
 // use `go list -m all` to confirm the final module used
 //replace github.com/mzz2017/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
+replace v2ray.com/core => github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0

@@ -15,6 +15,7 @@ type ReservedIpPool struct {
 
 func NewReservedIpPool() *ReservedIpPool {
 	return &ReservedIpPool{
+		// (256 - 240) * 256 * 256 * (256 - 2)
 		domainLRU:              lru.New(0b10000000000000000000000000000 - 0b100000000000000000000*2),
 		lastInsertedReservedIP: 0,
 		m:                      make(map[string]reservedIP),
@@ -36,7 +37,7 @@ func (u *ReservedIpPool) Lookup(domain string) [4]byte {
 		delete(u.m, d)
 		return ip.IP()
 	} else {
-		// not full and (exists or insert)
+		// exists or (not full and insert)
 		ip, ok := u.m[domain]
 		if ok {
 			return ip.IP()

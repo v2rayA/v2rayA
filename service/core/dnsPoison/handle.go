@@ -20,7 +20,7 @@ type handle struct {
 	done      chan interface{}
 	running   bool
 	*pcapgo.EthernetHandle
-	inspectedWhiteDomains *domainWhitelist
+	inspectedBlackDomains *domainBlacklist
 	portCache             *portCache
 }
 
@@ -29,7 +29,7 @@ func newHandle(dnsPoison *DnsPoison, ethernetHandle *pcapgo.EthernetHandle) *han
 		dnsPoison:             dnsPoison,
 		done:                  make(chan interface{}),
 		EthernetHandle:        ethernetHandle,
-		inspectedWhiteDomains: newDomainWhitelist(),
+		inspectedBlackDomains: newDomainBlacklist(),
 		portCache:             newPortCache(),
 	}
 }
@@ -39,10 +39,10 @@ type handleResult int
 const (
 	Pass handleResult = iota
 	Spoofing
-	AddWhitelist
-	ProposeWhitelist
-	RemoveWhitelist
-	AgainstWhitelist
+	AddBlacklist
+	ProposeBlacklist
+	RemoveBlacklist
+	AgainstBlacklist
 )
 
 type domainHandleResult struct {
@@ -69,8 +69,8 @@ func (interfaceHandle *handle) handleSendMessage(m *dnsmessage.Message, sAddr, s
 		return
 	}
 	if q.Type == dnsmessage.TypeA {
-		//在已探测白名单中的放行
-		if interfaceHandle.inspectedWhiteDomains.Exists(q.Name.String()) {
+		//不在已探测黑名单中的放行
+		if !interfaceHandle.inspectedBlackDomains.Exists(q.Name.String()) {
 			return
 		}
 	}
@@ -94,8 +94,8 @@ func (interfaceHandle *handle) handleReceiveMessage(m *dnsmessage.Message) (resu
 			msgs = append(msgs, "CNAME:"+strings.TrimSuffix(cname, "."))
 			dms = append(dms, cname)
 		case *dnsmessage.AResource:
-			msgs = append(msgs, "A:"+fmt.Sprintf("%v.%v.%v.%v", a.A[0], a.A[1], a.A[2], a.A[3]))
-			if netTools.IsJokernet4(a.A) {
+			msgs = append(msgs, "A:"+fmt.Sprintf("%d.%d.%d.%d", a.A[0], a.A[1], a.A[2], a.A[3]))
+			if netTools.IsJokernet4(&a.A) {
 				spoofed = true
 			}
 			emptyRecord = false
@@ -111,20 +111,13 @@ func (interfaceHandle *handle) handleReceiveMessage(m *dnsmessage.Message) (resu
 		}
 	}()
 	for _, d := range dms {
-		exists := interfaceHandle.inspectedWhiteDomains.Exists(d)
+		exists := interfaceHandle.inspectedBlackDomains.Exists(d)
 		if spoofed {
-			if interfaceHandle.inspectedWhiteDomains.Against(d) {
-				results = append(results, &domainHandleResult{domain: d, result: RemoveWhitelist})
-			} else {
-				results = append(results, &domainHandleResult{domain: d, result: AgainstWhitelist})
-			}
-		} else {
 			if !exists {
-				results = append(results, &domainHandleResult{domain: d, result: ProposeWhitelist})
+				results = append(results, &domainHandleResult{domain: d, result: ProposeBlacklist})
 			}
-			//TODO: if the ip is in China, add it directly
-			if interfaceHandle.inspectedWhiteDomains.Propose(d) {
-				results = append(results, &domainHandleResult{domain: d, result: AddWhitelist})
+			if interfaceHandle.inspectedBlackDomains.Propose(d) {
+				results = append(results, &domainHandleResult{domain: d, result: AddBlacklist})
 			}
 		}
 	}
@@ -202,14 +195,14 @@ func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname strin
 			for _, r := range results {
 				// print log
 				switch r.result {
-				case ProposeWhitelist:
+				case ProposeBlacklist:
 					log.Println("dnsPoison["+ifname+"]: [propose]", r.domain, "proof:", dm+msg)
-				case AgainstWhitelist:
+				case AgainstBlacklist:
 					log.Println("dnsPoison["+ifname+"]: [against]", r.domain, "proof:", dm+msg)
-				case AddWhitelist:
-					log.Println("dnsPoison["+ifname+"]: {add whitelist}", r.domain)
-				case RemoveWhitelist:
-					log.Println("dnsPoison["+ifname+"]: {remove whitelist}", r.domain)
+				case AddBlacklist:
+					log.Println("dnsPoison["+ifname+"]: {add blacklist}", r.domain)
+				case RemoveBlacklist:
+					log.Println("dnsPoison["+ifname+"]: {remove blacklist}", r.domain)
 				}
 			}
 		}
