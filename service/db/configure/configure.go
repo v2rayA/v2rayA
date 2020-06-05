@@ -183,7 +183,7 @@ func GetSubscriptions() []SubscriptionRaw {
 }
 func GetSubscription(index int) *SubscriptionRaw {
 	s := new(SubscriptionRaw)
-	err := db.ListGet("touch", "subscription", index, &s)
+	err := db.ListGet("touch", "subscriptions", index, &s)
 	if err != nil {
 		return nil
 	}
