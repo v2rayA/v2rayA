@@ -12,7 +12,7 @@ import (
 	"v2rayA/common/netTools/ports"
 	"v2rayA/core/vmessInfo"
 	"v2rayA/global"
-	"v2rayA/plugins"
+	"v2rayA/plugin"
 )
 
 type PingTunnel struct {
@@ -21,10 +21,10 @@ type PingTunnel struct {
 }
 
 func init() {
-	plugins.RegisterPlugin("pingtunnel", NewPingTunnelPlugin)
+	plugin.RegisterPlugin("pingtunnel", NewPingTunnelPlugin)
 }
 
-func NewPingTunnelPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
+func NewPingTunnelPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, err error) {
 	plugin = new(PingTunnel)
 	err = plugin.Serve(localPort, v)
 	return
@@ -59,7 +59,11 @@ func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error
 		tcpmode, tcpmode_buffersize, tcpmode_maxwin, tcpmode_resend_timems, tcpmode_compress,
 		tcpmode_stat, open_sock5, maxconn, nil)
 	if err != nil {
-		return newError(err)
+		if err == nil {
+			return nil
+		} else {
+			return newError().Base(err)
+		}
 	}
 	tunnel.client = c
 	return c.Run()

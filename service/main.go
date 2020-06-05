@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	_ "v2rayA/plugins/pingtunnel"
-	_ "v2rayA/plugins/shadowsocksr"
-	_ "v2rayA/plugins/trojan"
+	_ "v2rayA/plugin/pingtunnel"
+	_ "v2rayA/plugin/shadowsocksr"
+	_ "v2rayA/plugin/trojan"
 )
 
 func main() {

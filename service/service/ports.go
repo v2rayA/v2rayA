@@ -4,7 +4,7 @@ import (
 	"v2rayA/common/netTools/netstat"
 	ports2 "v2rayA/common/netTools/ports"
 	"v2rayA/core/v2ray"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"fmt"
 	"strconv"
 )

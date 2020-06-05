@@ -4,7 +4,7 @@ import (
 	"v2rayA/core/ipforward"
 	"v2rayA/core/v2ray"
 	"v2rayA/core/v2ray/asset"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func GetSetting() *configure.Setting {

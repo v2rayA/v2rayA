@@ -2,7 +2,7 @@ package controller
 
 import (
 	"v2rayA/common"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"github.com/gin-gonic/gin"
 	"strings"
 )

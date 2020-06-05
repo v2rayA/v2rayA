@@ -10,7 +10,7 @@ import (
 	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/iptables"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func DeleteTransparentProxyRules() {

@@ -3,7 +3,7 @@ package service
 import (
 	"v2rayA/common"
 	"v2rayA/common/jwt"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"time"
 )
 

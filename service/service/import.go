@@ -7,7 +7,7 @@ import (
 	"v2rayA/core/nodeData"
 	"v2rayA/core/touch"
 	"v2rayA/core/v2ray"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func Import(url string, which *configure.Which) (err error) {
@@ -42,7 +42,7 @@ func Import(url string, which *configure.Which) (err error) {
 		} else {
 			//新建
 			//后端NodeData转前端TouchServerRaw压入TouchRaw.Servers
-			err = configure.AppendServer(n.ToServerRaw())
+			err = configure.AppendServers([]*configure.ServerRaw{n.ToServerRaw()})
 		}
 	} else {
 		//不是ss://也不是vmess://，有可能是订阅地址
@@ -75,11 +75,11 @@ func Import(url string, which *configure.Which) (err error) {
 				delete(unique, s)
 			}
 		}
-		err = configure.AppendSubscription(&configure.SubscriptionRaw{
+		err = configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
 			Address: url,
 			Status:  string(touch.NewUpdateStatus()),
 			Servers: uniqueServers,
-		})
+		}})
 	}
 	return
 }

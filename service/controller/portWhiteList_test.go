@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"testing"
 )
 

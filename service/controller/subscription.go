@@ -3,7 +3,7 @@ package controller
 import (
 	"v2rayA/common"
 	"v2rayA/core/touch"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"v2rayA/service"
 	"github.com/gin-gonic/gin"
 )

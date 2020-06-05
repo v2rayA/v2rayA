@@ -10,7 +10,11 @@
         <img src="../assets/logo2.png" alt="v2rayA" />
       </p>
       <b-field :label="$t('login.username')" type="is-success">
-        <b-input v-model="username" @keyup.enter.native="handleEnter"></b-input>
+        <b-input
+          ref="username"
+          v-model="username"
+          @keyup.enter.native="handleEnter"
+        ></b-input>
       </b-field>
       <b-field :label="$t('login.password')" type="is-success">
         <b-input
@@ -54,6 +58,9 @@ export default {
     username: "",
     password: ""
   }),
+  mounted() {
+    this.$refs.username.focus();
+  },
   methods: {
     handleClickSubmit() {
       const that = this;

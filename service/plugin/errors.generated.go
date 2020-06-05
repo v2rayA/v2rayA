@@ -1,4 +1,4 @@
-package plugins
+package plugin
 
 import "v2ray.com/core/common/errors"
 

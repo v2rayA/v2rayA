@@ -8,7 +8,7 @@ import (
 	"v2rayA/common"
 	"v2rayA/core/v2ray"
 	"v2rayA/extra/proxyWithHttp"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {

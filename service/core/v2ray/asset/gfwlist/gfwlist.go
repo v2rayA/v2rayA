@@ -6,7 +6,7 @@ import (
 	"v2rayA/core/v2ray"
 	"v2rayA/core/v2ray/asset"
 	"v2rayA/extra/gopeed"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"io/ioutil"

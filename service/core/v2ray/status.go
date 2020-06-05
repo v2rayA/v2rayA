@@ -17,9 +17,9 @@ import (
 	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/v2ray/asset"
 	"v2rayA/core/vmessInfo"
+	"v2rayA/db/configure"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	"v2rayA/plugins"
+	"v2rayA/plugin"
 )
 
 func IsV2RayProcessExists() bool {
@@ -224,7 +224,6 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		}
 		sr, err = cs.LocateServer()
 		if err != nil {
-			log.Println(err)
 			return
 		}
 		tmpl, extraInfo, err = NewTemplateFromVmessInfo(sr.VmessInfo)
@@ -252,12 +251,12 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	}
 	if v.Protocol != "" && v.Protocol != "vmess" {
 		// 说明是plugin，启动plugin client
-		var plugin plugins.Plugin
-		plugin, err = plugins.NewPlugin(global.GetEnvironmentConfig().PluginListenPort, *v)
+		var plu plugin.Plugin
+		plu, err = plugin.NewPlugin(global.GetEnvironmentConfig().PluginListenPort, *v)
 		if err != nil {
 			return
 		}
-		global.Plugins.Append(plugin)
+		global.Plugins.Append(plu)
 	}
 
 	entity.CheckAndSetupDnsPoisonWithExtraInfo(extraInfo)

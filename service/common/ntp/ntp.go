@@ -9,7 +9,7 @@ import (
 func IsDatetimeSynced() (bool, error) {
 	t, err := ntp.Time("ntp1.aliyun.com")
 	if err != nil {
-		return false, newError(err)
+		return false, newError().Base(err)
 	}
 	if common.Abs(t.UTC().Second()-time.Now().UTC().Second()) >= 120 {
 		return false, nil

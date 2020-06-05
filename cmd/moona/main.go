@@ -10,10 +10,10 @@ import (
 	"v2rayA/common"
 	"v2rayA/core/touch"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
-	_ "v2rayA/plugins/pingtunnel"
-	_ "v2rayA/plugins/shadowsocksr"
-	_ "v2rayA/plugins/trojan"
+	"v2rayA/db/configure"
+	_ "v2rayA/plugin/pingtunnel"
+	_ "v2rayA/plugin/shadowsocksr"
+	_ "v2rayA/plugin/trojan"
 	"v2rayA/service"
 )
 

@@ -1,4 +1,4 @@
-package plugins
+package plugin
 
 import (
 	"v2rayA/core/vmessInfo"

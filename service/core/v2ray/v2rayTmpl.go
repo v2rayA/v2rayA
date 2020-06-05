@@ -18,7 +18,7 @@ import (
 	"v2rayA/core/v2ray/asset"
 	"v2rayA/core/vmessInfo"
 	"v2rayA/global"
-	"v2rayA/persistence/configure"
+	"v2rayA/db/configure"
 )
 
 /*对应template.json*/

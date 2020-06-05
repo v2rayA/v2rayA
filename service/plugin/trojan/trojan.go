@@ -14,7 +14,7 @@ import (
 	"v2rayA/core/vmessInfo"
 	"v2rayA/extra/proxy/socks5"
 	"v2rayA/extra/proxy/trojan"
-	"v2rayA/plugins"
+	"v2rayA/plugin"
 )
 
 type Trojan struct {
@@ -30,10 +30,10 @@ type Params struct {
 }
 
 func init() {
-	plugins.RegisterPlugin("trojan", NewTrojanPlugin)
+	plugin.RegisterPlugin("trojan", NewTrojanPlugin)
 }
 
-func NewTrojanPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugins.Plugin, err error) {
+func NewTrojanPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, err error) {
 	plugin = new(Trojan)
 	err = plugin.Serve(localPort, v)
 	return
