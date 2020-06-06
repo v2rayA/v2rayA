@@ -20,8 +20,7 @@ func initDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// for privacy
-	_ = os.Chmod(confPath, os.ModeDir|0600)
+	_ = os.Chmod(confPath, os.ModeDir|0644)
 }
 
 func DB() *nutsdb.DB {
