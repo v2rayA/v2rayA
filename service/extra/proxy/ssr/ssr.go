@@ -13,7 +13,7 @@ import (
 
 	"github.com/nadoo/glider/common/socks"
 	"log"
-	"v2rayA/extra/proxy"
+	"github.com/mzz2017/v2rayA/extra/proxy"
 )
 
 // SSR struct.

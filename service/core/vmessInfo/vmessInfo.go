@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/json-iterator/go"
+	"github.com/mzz2017/v2rayA/common"
 	"net/url"
 	"reflect"
-	"v2rayA/common"
 )
 
 type VmessInfo struct {

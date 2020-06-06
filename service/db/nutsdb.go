@@ -1,11 +1,11 @@
 package db
 
 import (
+	"github.com/mzz2017/v2rayA/global"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"os"
 	"sync"
-	"v2rayA/global"
 )
 
 var once sync.Once

@@ -2,10 +2,10 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"v2rayA/common"
-	"v2rayA/core/touch"
-	"v2rayA/db/configure"
-	"v2rayA/service"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/touch"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/service"
 )
 
 /*修改Remarks*/

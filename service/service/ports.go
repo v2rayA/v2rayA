@@ -1,10 +1,10 @@
 package service
 
 import (
-	"v2rayA/common/netTools/netstat"
-	ports2 "v2rayA/common/netTools/ports"
-	"v2rayA/core/v2ray"
-	"v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/common/netTools/netstat"
+	ports2 "github.com/mzz2017/v2rayA/common/netTools/ports"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/db/configure"
 	"fmt"
 	"strconv"
 )

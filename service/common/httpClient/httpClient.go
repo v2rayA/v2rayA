@@ -5,10 +5,10 @@ import (
 	"net/url"
 	"os/exec"
 	"strings"
-	"v2rayA/common"
-	"v2rayA/core/v2ray"
-	"v2rayA/extra/proxyWithHttp"
-	"v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/extra/proxyWithHttp"
+	"github.com/mzz2017/v2rayA/db/configure"
 )
 
 func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {

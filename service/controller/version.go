@@ -3,10 +3,10 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"v2rayA/common"
-	"v2rayA/core/v2ray"
-	"v2rayA/core/v2ray/asset/gfwlist"
-	"v2rayA/global"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/mzz2017/v2rayA/global"
 )
 
 func GetVersion(ctx *gin.Context) {

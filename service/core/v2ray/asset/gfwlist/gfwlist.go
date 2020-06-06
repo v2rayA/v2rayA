@@ -1,12 +1,12 @@
 package gfwlist
 
 import (
-	"v2rayA/common/files"
-	"v2rayA/common/httpClient"
-	"v2rayA/core/v2ray"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/extra/gopeed"
-	"v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/common/files"
+	"github.com/mzz2017/v2rayA/common/httpClient"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/extra/gopeed"
+	"github.com/mzz2017/v2rayA/db/configure"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"io/ioutil"

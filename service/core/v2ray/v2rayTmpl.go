@@ -4,6 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/common/netTools/ports"
+	"github.com/mzz2017/v2rayA/core/dnsPoison/entity"
+	"github.com/mzz2017/v2rayA/core/routingA"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/global"
 	"io/ioutil"
 	"log"
 	"net"
@@ -12,14 +20,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"v2rayA/common"
-	"v2rayA/common/netTools/ports"
-	"v2rayA/core/dnsPoison/entity"
-	"v2rayA/core/routingA"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/db/configure"
-	"v2rayA/global"
 )
 
 /*对应template.json*/
@@ -372,6 +372,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 
 func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *configure.Setting) (dohIPs, dohDomains []string) {
 	//先修改DNS设置
+	dnslist := configure.GetDnsListNotNil()
 	t.DNS = new(DNS)
 	switch setting.AntiPollution {
 	case configure.DoH:
@@ -382,6 +383,10 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 			//使用DOHL模式，默认绕过routing和outbound以加快DOH速度
 			doh = strings.Replace(doh, "https://", "https+local://", 1)
 			t.DNS.Servers = append(t.DNS.Servers, doh)
+		}
+	case configure.AntipollutionNone:
+		for _, dns := range dnslist {
+			t.DNS.Servers = append(t.DNS.Servers, dns) //防止DNS劫持
 		}
 	case configure.DnsForward:
 		if supportUDP {
@@ -397,7 +402,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 			if err := CheckDohSupported(); err == nil {
 				//DNS转发，所以使用全球友好的DNS服务器
 				t.DNS.Servers = []interface{}{
-					"https://1.0.0.1/dns-query",
+					"https://1.1.1.1/dns-query",
 					"https://dns.google/dns-query",
 				}
 			}
@@ -411,8 +416,6 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 				}
 			}
 		}
-	case configure.AntipollutionNone:
-		t.DNS.Servers = []interface{}{"223.5.5.5", "114.114.114.114"} //防止DNS劫持，使用AliDNS作为主DNS
 	}
 	if setting.AntiPollution != configure.AntipollutionNone {
 		//统计DoH服务器信息
@@ -445,7 +448,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 		}
 
 		ds := DnsServer{
-			Address: "223.5.5.5",
+			Address: dnslist[0],
 			Port:    53,
 			Domains: []string{
 				"geosite:cn",          // 国内白名单走AliDNS
@@ -515,7 +518,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 		RoutingRule{ // 国内DNS服务器直连，以分流
 			Type:        "field",
 			OutboundTag: "direct",
-			IP:          []string{"223.5.5.5", "114.114.114.114"},
+			IP:          configure.GetDnsListNotNil(),
 			Port:        "53",
 		},
 		RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS

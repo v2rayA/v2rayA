@@ -3,7 +3,7 @@ package ports
 import (
 	"strconv"
 	"strings"
-	"v2rayA/common/netTools/netstat"
+	"github.com/mzz2017/v2rayA/common/netTools/netstat"
 )
 
 func generatePortMap(syntax []string) (req map[int][]string, m map[string]map[int][]*netstat.Socket, err error) {

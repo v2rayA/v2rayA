@@ -12,14 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"v2rayA/common/netTools/netstat"
-	"v2rayA/common/ntp"
-	"v2rayA/core/dnsPoison/entity"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/db/configure"
-	"v2rayA/global"
-	"v2rayA/plugin"
+	"github.com/mzz2017/v2rayA/common/netTools/netstat"
+	"github.com/mzz2017/v2rayA/common/ntp"
+	"github.com/mzz2017/v2rayA/core/dnsPoison/entity"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/global"
+	"github.com/mzz2017/v2rayA/plugin"
 )
 
 func IsV2RayProcessExists() bool {

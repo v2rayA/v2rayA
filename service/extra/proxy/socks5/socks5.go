@@ -19,8 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"v2rayA/extra/proxy"
-	"v2rayA/global"
+	"github.com/mzz2017/v2rayA/extra/proxy"
+	"github.com/mzz2017/v2rayA/global"
 )
 
 // Version is socks5 version number.

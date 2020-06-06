@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"v2rayA/common/netTools/ports"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/extra/proxy/socks5"
-	"v2rayA/extra/proxy/ssr"
-	"v2rayA/plugin"
+	"github.com/mzz2017/v2rayA/common/netTools/ports"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
+	"github.com/mzz2017/v2rayA/extra/proxy/socks5"
+	"github.com/mzz2017/v2rayA/extra/proxy/ssr"
+	"github.com/mzz2017/v2rayA/plugin"
 )
 
 type SSR struct {

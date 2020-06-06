@@ -3,8 +3,8 @@ package iptables
 import (
 	"strings"
 	"sync"
-	"v2rayA/common"
-	"v2rayA/common/cmds"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/common/cmds"
 )
 
 // http://briteming.hatenablog.com/entry/2019/06/18/175518

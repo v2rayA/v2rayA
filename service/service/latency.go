@@ -9,14 +9,14 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"v2rayA/common/httpClient"
-	"v2rayA/common/netTools/netstat"
-	"v2rayA/core/dnsPoison/entity"
-	"v2rayA/core/v2ray"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/db/configure"
-	"v2rayA/global"
-	"v2rayA/plugin"
+	"github.com/mzz2017/v2rayA/common/httpClient"
+	"github.com/mzz2017/v2rayA/common/netTools/netstat"
+	"github.com/mzz2017/v2rayA/core/dnsPoison/entity"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/global"
+	"github.com/mzz2017/v2rayA/plugin"
 )
 
 func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
