@@ -135,7 +135,7 @@ func initConfigure() {
 	//db
 	confPath := global.GetEnvironmentConfig().Config
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
-		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0755)
+		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0750)
 	}
 	if configure.IsConfigureNotExists() {
 		// need to migrate?
