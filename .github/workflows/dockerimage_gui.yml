@@ -1,4 +1,4 @@
-name: Docker Image CI - v2raya_gui
+name: v2raya_gui
 
 on:
   push:

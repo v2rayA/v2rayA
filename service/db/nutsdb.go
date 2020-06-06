@@ -18,9 +18,9 @@ func initDB() {
 	opt.Dir = confPath
 	db, err = nutsdb.Open(opt)
 	if err != nil {
+		_ = os.Chmod(confPath, os.ModeDir|0755)
 		log.Fatal(err)
 	}
-	_ = os.Chmod(confPath, os.ModeDir|0644)
 }
 
 func DB() *nutsdb.DB {
