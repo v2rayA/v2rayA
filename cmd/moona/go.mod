@@ -3,8 +3,8 @@ module moona
 go 1.14
 
 require (
+	github.com/mzz2017/v2rayA v0.7.0 // indirect
 	github.com/stevenroose/gonfig v0.1.5
-	v2rayA v0.0.0-00010101000000-000000000000
 )
 
-replace v2rayA => ../../service
+replace github.com/mzz2017/v2rayA => ../../service
