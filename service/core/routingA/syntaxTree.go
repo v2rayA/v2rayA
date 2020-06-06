@@ -1,8 +1,8 @@
 package routingA
 
 import (
-	"v2rayA/common"
-	"v2rayA/global"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/global"
 	"v2ray.com/core/common/errors"
 	"fmt"
 	"strconv"

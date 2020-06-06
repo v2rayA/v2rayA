@@ -3,11 +3,11 @@ package service
 import (
 	"strings"
 	"time"
-	"v2rayA/common/httpClient"
-	"v2rayA/core/nodeData"
-	"v2rayA/core/touch"
-	"v2rayA/core/v2ray"
-	"v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/common/httpClient"
+	"github.com/mzz2017/v2rayA/core/nodeData"
+	"github.com/mzz2017/v2rayA/core/touch"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/db/configure"
 )
 
 func Import(url string, which *configure.Which) (err error) {

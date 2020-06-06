@@ -176,6 +176,15 @@ export default {
       "建议上述列表1-2行即可，留空保存可恢复默认"
     ]
   },
+  dns: {
+    title: "配置DNS服务器",
+    dnsPriorityList: "DNS服务优先级列表",
+    messages: [
+      '在"仅防止DNS劫持"模式下该列表是的DNS配置，在其他模式下该列表的第一项作为查询国内地址的DNS服务器。',
+      "列表仅填写DNS服务器的IP或域名，不支持53以外的端口。",
+      "建议上述列表2行即可，留空保存可恢复默认"
+    ]
+  },
   egressPortWhitelist: {
     title: "出方向端口白名单",
     tcpPortWhitelist: "TCP端口白名单",

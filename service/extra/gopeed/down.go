@@ -1,8 +1,8 @@
 package gopeed
 
 import (
-	"v2rayA/extra/copyfile"
-	"v2rayA/common"
+	"github.com/mzz2017/v2rayA/extra/copyfile"
+	"github.com/mzz2017/v2rayA/common"
 	"fmt"
 	gonanoid "github.com/matoous/go-nanoid"
 	"io"

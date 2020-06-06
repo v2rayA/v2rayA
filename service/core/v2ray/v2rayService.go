@@ -7,9 +7,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"v2rayA/common"
-	"v2rayA/core/v2ray/asset"
-	"v2rayA/global"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/global"
 )
 
 func EnableV2rayService() (err error) {

@@ -1,7 +1,7 @@
 package trojan
 
 import (
-	"v2rayA/extra/proxy"
+	"github.com/mzz2017/v2rayA/extra/proxy"
 	"net"
 )
 

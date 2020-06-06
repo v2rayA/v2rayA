@@ -9,10 +9,10 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"v2rayA/common/netTools/ports"
-	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
-	"v2rayA/plugin"
+	"github.com/mzz2017/v2rayA/common/netTools/ports"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
+	"github.com/mzz2017/v2rayA/global"
+	"github.com/mzz2017/v2rayA/plugin"
 )
 
 type PingTunnel struct {

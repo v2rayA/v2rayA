@@ -1,7 +1,7 @@
 package ntp
 
 import (
-	"v2rayA/common"
+	"github.com/mzz2017/v2rayA/common"
 	"github.com/beevik/ntp"
 	"time"
 )

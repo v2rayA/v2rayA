@@ -167,6 +167,17 @@
             {{ $t("operations.configure") }}
           </b-button>
         </template>
+        <template v-if="antipollution === 'none' && showDns">
+          <b-button
+            :class="{
+              'right-extra-button': antipollution === 'closed',
+              'no-border-radius': antipollution !== 'closed'
+            }"
+            @click="handleClickDnsSetting"
+          >
+            {{ $t("operations.configure") }}
+          </b-button>
+        </template>
         <template
           v-if="antipollution !== 'closed' && iptablesMode === 'tproxy'"
         >
@@ -298,6 +309,7 @@ import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalPortWhiteList from "@/components/modalPortWhiteList";
 import modalDohSetting from "./modalDohSetting";
+import modalDnsSetting from "./modalDnsSetting";
 import axios from "../plugins/axios";
 import { waitingConnected } from "../assets/js/networkInspect";
 
@@ -324,6 +336,7 @@ export default {
     localGFWListVersion: "checking...",
     showAntipollution: false,
     showDoh: false,
+    showDns: false,
     showTransparentModeRoutingPac: false,
     showRoutingA: false,
     showAntipollutionClosed: false
@@ -371,19 +384,23 @@ export default {
         this.showDoh =
           isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
           localStorage["dohValid"] === "yes";
+        this.showDns = isVersionGreaterEqual(
+          localStorage["version"],
+          "0.7.0.6"
+        );
+        this.showTransparentModeRoutingPac = isVersionGreaterEqual(
+          localStorage["version"],
+          "0.6.4"
+        );
+        this.showAntipollutionClosed = isVersionGreaterEqual(
+          localStorage["version"],
+          "0.7.0.2"
+        );
+        this.showRoutingA = isVersionGreaterEqual(
+          localStorage["version"],
+          "0.6.8"
+        );
       });
-      this.showTransparentModeRoutingPac = isVersionGreaterEqual(
-        localStorage["version"],
-        "0.6.4"
-      );
-      this.showAntipollutionClosed = isVersionGreaterEqual(
-        localStorage["version"],
-        "0.7.0.2"
-      );
-      this.showRoutingA = isVersionGreaterEqual(
-        localStorage["version"],
-        "0.6.8"
-      );
     });
     //白名单有没有项，没有就post一下
     this.$axios({
@@ -533,6 +550,14 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: modalDohSetting,
+        hasModalCard: true,
+        canCancel: true
+      });
+    },
+    handleClickDnsSetting() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalDnsSetting,
         hasModalCard: true,
         canCancel: true
       });

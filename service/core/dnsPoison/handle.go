@@ -12,7 +12,7 @@ import (
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
-	"v2rayA/common/netTools"
+	"github.com/mzz2017/v2rayA/common/netTools"
 )
 
 type handle struct {

@@ -1,6 +1,6 @@
 package configure
 
-import "v2rayA/core/ipforward"
+import "github.com/mzz2017/v2rayA/core/ipforward"
 
 type Setting struct {
 	PacMode                    PacMode         `json:"pacMode"`

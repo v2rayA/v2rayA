@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/mzz2017/v2rayA/core/ipforward"
+	"github.com/mzz2017/v2rayA/db"
 	"github.com/tidwall/gjson"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"strings"
 	"v2ray.com/core/common/errors"
-	"v2rayA/core/ipforward"
-	"v2rayA/db"
 )
 
 type Configure struct {
@@ -22,6 +22,7 @@ type Configure struct {
 	Ports           Ports              `json:"ports"`
 	PortWhiteList   PortWhiteList      `json:"portWhiteList"`
 	DohList         string             `json:"dohlist"`
+	DnsList         string             `json:"dnslist"`
 	CustomPac       CustomPac          `json:"customPac"`
 	RoutingA        *string            `json:"routingA"`
 }
@@ -88,6 +89,9 @@ func SetConfigure(cfg *Configure) error {
 	if err := SetDohList(&cfg.DohList); err != nil {
 		return err
 	}
+	if err := SetDnsList(&cfg.DnsList); err != nil {
+		return err
+	}
 	if err := SetCustomPac(&cfg.CustomPac); err != nil {
 		return err
 	}
@@ -132,6 +136,9 @@ func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
 }
 func SetDohList(dohList *string) (err error) {
 	return db.Set("system", "dohList", strings.TrimSpace(*dohList))
+}
+func SetDnsList(dnsList *string) (err error) {
+	return db.Set("system", "dnsList", strings.TrimSpace(*dnsList))
 }
 func SetCustomPac(customPac *CustomPac) (err error) {
 	return db.Set("system", "customPac", customPac)
@@ -219,6 +226,15 @@ func GetDohListNotNil() *string {
 https://dns.alidns.com/dns-query`
 	}
 	return r
+}
+func GetDnsListNotNil() []string {
+	r := new(string)
+	_ = db.Get("system", "dnsList", &r)
+	if len(strings.TrimSpace(*r)) == 0 {
+		*r = `223.5.5.5
+114.114.114.114`
+	}
+	return strings.Split(strings.TrimSpace(*r), "\n")
 }
 func GetCustomPacNotNil() *CustomPac {
 	r := new(CustomPac)

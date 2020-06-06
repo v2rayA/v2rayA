@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"v2rayA/common"
-	"v2rayA/db/configure"
-	"v2rayA/service"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/service"
 	"github.com/gin-gonic/gin"
 	"github.com/json-iterator/go"
 )

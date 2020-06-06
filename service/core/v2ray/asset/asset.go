@@ -14,9 +14,9 @@ import (
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
-	"v2rayA/common/files"
-	"v2rayA/core/dnsPoison"
-	"v2rayA/global"
+	"github.com/mzz2017/v2rayA/common/files"
+	"github.com/mzz2017/v2rayA/core/dnsPoison"
+	"github.com/mzz2017/v2rayA/global"
 )
 
 var v2rayLocationAsset *string

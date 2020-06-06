@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"v2rayA/common"
-	"v2rayA/core/nodeData"
-	"v2rayA/core/vmessInfo"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/nodeData"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
 )
 
 /*

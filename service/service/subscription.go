@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 	"v2ray.com/core/common/errors"
-	"v2rayA/common"
-	"v2rayA/common/httpClient"
-	"v2rayA/core/nodeData"
-	"v2rayA/core/touch"
-	"v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/common/httpClient"
+	"github.com/mzz2017/v2rayA/core/nodeData"
+	"github.com/mzz2017/v2rayA/core/touch"
+	"github.com/mzz2017/v2rayA/db/configure"
 )
 
 func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {

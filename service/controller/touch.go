@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"v2rayA/common"
-	"v2rayA/core/touch"
-	"v2rayA/core/v2ray"
-	"v2rayA/db/configure"
-	"v2rayA/service"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/touch"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/service"
 	"github.com/gin-gonic/gin"
 )
 

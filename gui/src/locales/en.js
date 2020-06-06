@@ -177,6 +177,15 @@ export default {
       "Optimally, place one or two lines above. The list will restore to default after saving with empty content."
     ]
   },
+  dns: {
+    title: "Configure DNS Server",
+    dnsPriorityList: "Priority list of DNS Servers",
+    messages: [
+      "In the 'Prevent DNS Hijack Only' mode, the list is just the DNS configuration. In other modes, the first item in the list is the DNS server for querying Chinese mainland addresses.",
+      "Please fill in the IP or domain of the DNS server (without port) in the list. Ports other than 53 are not supported.",
+      "Optimally, place exact two lines above. The list will restore to default after saving with empty content."
+    ]
+  },
   egressPortWhitelist: {
     title: "Egress Port Whitelist",
     tcpPortWhitelist: "TCP Port Whitelist",
