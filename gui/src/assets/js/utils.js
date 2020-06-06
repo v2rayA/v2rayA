@@ -1,4 +1,5 @@
 import CONST from "./const.js";
+
 function locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
   let sub = whichServer.sub;
@@ -10,7 +11,7 @@ function locateServer(touch, whichServer) {
   return null;
 }
 
-function handleResponse(res, that, suc, err) {
+function handleResponse(res, that, suc, err, fail) {
   if (!res.data) {
     if (err && err instanceof Function) {
       err.apply(that);
@@ -23,13 +24,17 @@ function handleResponse(res, that, suc, err) {
     if (err && err instanceof Function) {
       err.apply(that);
     } else {
-      that.$buefy.toast.open({
-        message: res.data.message,
-        type: "is-warning",
-        position: "is-top",
-        queue: false,
-        duration: 5000
-      });
+      if (fail && fail instanceof Function) {
+        fail.apply(that);
+      } else {
+        that.$buefy.toast.open({
+          message: res.data.message,
+          type: "is-warning",
+          position: "is-top",
+          queue: false,
+          duration: 5000
+        });
+      }
     }
   }
 }

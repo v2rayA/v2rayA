@@ -14,8 +14,8 @@ import (
 	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/v2ray"
 	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
 	"v2rayA/db/configure"
+	"v2rayA/global"
 	"v2rayA/plugin"
 )
 
@@ -182,6 +182,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
+	}
+
+	if occupied, port, pname := tmpl.CheckInboundPortsOccupied(); occupied {
+		return nil, newError("Port ", port, " is occupied by ", pname)
 	}
 	err = v2ray.RestartV2rayService()
 	if err != nil {

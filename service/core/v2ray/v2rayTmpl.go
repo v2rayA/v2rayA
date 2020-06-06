@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"v2rayA/common"
+	"v2rayA/common/netTools/ports"
 	"v2rayA/core/dnsPoison/entity"
 	"v2rayA/core/routingA"
 	"v2rayA/core/v2ray/asset"
@@ -588,7 +589,7 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 	return
 }
 
-func (t *Template) SetPacRouting(setting *configure.Setting) {
+func (t *Template) SetPacRouting(setting *configure.Setting) error {
 	switch setting.PacMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules,
@@ -670,15 +671,18 @@ func (t *Template) SetPacRouting(setting *configure.Setting) {
 			})
 		}
 	case configure.RoutingAMode:
-		parseRoutingA(t, []string{"pac"})
+		if err := parseRoutingA(t, []string{"pac"}); err != nil {
+			return err
+		}
 	}
+	return nil
 }
-func parseRoutingA(t *Template, inboundTags []string) {
+func parseRoutingA(t *Template, routingInboundTags []string) error {
 	ra := configure.GetRoutingA()
 	rules, err := routingA.Parse(ra)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	defaultOutbound := "proxy"
 	for _, rule := range rules {
@@ -776,7 +780,7 @@ func parseRoutingA(t *Template, inboundTags []string) {
 								}
 							}
 							t.Inbounds = append(t.Inbounds, in)
-							inboundTags = append(inboundTags, o.Name)
+							routingInboundTags = append(routingInboundTags, o.Name)
 						}
 					case "freedom":
 						settings := new(Settings)
@@ -804,7 +808,7 @@ func parseRoutingA(t *Template, inboundTags []string) {
 			rr := RoutingRule{
 				Type:        "field",
 				OutboundTag: rule.Out,
-				InboundTag:  inboundTags,
+				InboundTag:  routingInboundTags,
 			}
 			for _, f := range rule.And {
 				switch f.Name {
@@ -847,6 +851,7 @@ func parseRoutingA(t *Template, inboundTags []string) {
 		OutboundTag: defaultOutbound,
 		InboundTag:  []string{"pac"},
 	})
+	return nil
 }
 func (t *Template) SetTransparentRouting(setting *configure.Setting) {
 	switch setting.Transparent {
@@ -1017,7 +1022,9 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 		t.DNS.Hosts[serverDomain] = serverIPs[0]
 	}
 	//PAC端口规则
-	t.SetPacRouting(setting)
+	if err = t.SetPacRouting(setting); err != nil {
+		return
+	}
 	//根据是否使用全局代理修改路由
 	if setting.Transparent != configure.TransparentClose {
 		t.SetTransparentRouting(setting)
@@ -1025,12 +1032,60 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	//置outboundSockopt
 	t.SetOutboundSockopt(supportUDP, setting)
 
+	//check dulplicated tags
+	if err = t.CheckDuplicatedTags(); err != nil {
+		return
+	}
+
 	return t, &entity.ExtraInfo{
 		DohIps:       dohIPs,
 		DohDomains:   dohHosts,
 		ServerIps:    serverIPs,
 		ServerDomain: serverDomain,
 	}, nil
+}
+
+func (t *Template) CheckDuplicatedTags() error {
+	inboundTagsSet := make(map[string]interface{})
+	for _, in := range t.Inbounds {
+		tag := in.Tag
+		if _, exists := inboundTagsSet[tag]; exists {
+			return newError("duplicated inbound tag: ", tag).AtError()
+		} else {
+			inboundTagsSet[tag] = nil
+		}
+	}
+	outboundTagsSet := make(map[string]interface{})
+	for _, out := range t.Outbounds {
+		tag := out.Tag
+		if _, exists := outboundTagsSet[tag]; exists {
+			return newError("duplicated outbound tag: ", tag)
+		} else {
+			outboundTagsSet[tag] = nil
+		}
+	}
+	return nil
+}
+
+func (t *Template) CheckInboundPortsOccupied() (occupied bool, port string, pname string) {
+	var st []string
+	for _, in := range t.Inbounds {
+		if in.Settings != nil && in.Settings.UDP {
+			st = append(st, strconv.Itoa(in.Port)+":tcp,udp")
+		} else {
+			st = append(st, strconv.Itoa(in.Port)+":tcp")
+		}
+	}
+	occupied, socket, err := ports.IsPortOccupiedWithWhitelist(st, map[string]struct{}{"v2ray": {}})
+	if err != nil {
+		return true, "unknown", err.Error()
+	}
+	if occupied {
+		port = strconv.Itoa(socket.LocalAddress.Port)
+		process, _ := socket.Process()
+		pname = process.Name
+	}
+	return
 }
 
 func (t *Template) ToConfigBytes() []byte {
