@@ -17,8 +17,9 @@ func initDB() {
 	opt := nutsdb.DefaultOptions
 	opt.Dir = confPath
 	db, err = nutsdb.Open(opt)
+	// for privacy
+	defer os.Chmod(confPath, os.ModeDir|0750)
 	if err != nil {
-		_ = os.Chmod(confPath, os.ModeDir|0755)
 		log.Fatal(err)
 	}
 }
