@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/xujiajun/nutsdb"
 	"log"
+	"os"
 	"sync"
 	"v2rayA/global"
 )
@@ -19,6 +20,8 @@ func initDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// for privacy
+	_ = os.Chmod(confPath, os.ModeDir|0600)
 }
 
 func DB() *nutsdb.DB {

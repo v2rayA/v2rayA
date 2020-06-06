@@ -1,6 +1,7 @@
 package routingA
 
 /*
+inbound: httpauthin = http(address: 0.0.0.0, port: 1080, user: 'my-username', pass: 'my-password', user: 'my-username2', pass: 'my-password2')
 outbound: httpout = http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
 default: proxy
 */
@@ -18,7 +19,7 @@ func newDefine(s symbol) (d *Define) {
 	d.Name = s.children[0].val
 	switch {
 	case symMatch(E.children, []rune("D=F")):
-		d.Value = *newOutbound(E)
+		d.Value = *newBound(E)
 	case symMatch(E.children, []rune("D")):
 		d.Value = E.children[0].val
 	default:
@@ -28,18 +29,19 @@ func newDefine(s symbol) (d *Define) {
 }
 
 /*
+httpauthin = http(address: 0.0.0.0, port: 1080, user: 'my-username', pass: 'my-password')
 httpout = http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
 */
-type Outbound struct {
+type Bound struct {
 	Name  string
 	Value Function
 }
 
-func newOutbound(s symbol) (o *Outbound) {
+func newBound(s symbol) (o *Bound) {
 	if s.sym != 'E' || !symMatch(s.children, []rune("D=F")) {
 		return nil
 	}
-	o = new(Outbound)
+	o = new(Bound)
 	o.Name = s.children[0].val
 	o.Value = *newFunction(s.children[2])
 	return
