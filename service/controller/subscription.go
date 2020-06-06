@@ -1,11 +1,11 @@
 package controller
 
 import (
+	"github.com/gin-gonic/gin"
 	"v2rayA/common"
 	"v2rayA/core/touch"
 	"v2rayA/db/configure"
 	"v2rayA/service"
-	"github.com/gin-gonic/gin"
 )
 
 /*修改Remarks*/
@@ -34,7 +34,7 @@ func PutSubscription(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&data)
 	index := data.ID - 1
 	if err != nil || data.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError(nil, "bad request: ID exceed range"))
 		return
 	}
 	err = service.UpdateSubscription(index, false)
