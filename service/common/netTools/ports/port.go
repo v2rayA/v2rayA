@@ -1,25 +1,16 @@
 package ports
 
 import (
-	"v2rayA/common/netTools/netstat"
 	"strconv"
 	"strings"
+	"v2rayA/common/netTools/netstat"
 )
 
-/*
-example:
-
-IsPortOccupied([]string{"80:tcp"})
-
-IsPortOccupied([]string{"53:tcp,udp"})
-
-IsPortOccupied([]string{"53:tcp,udp", "80:tcp"})
-*/
-func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err error) {
+func generatePortMap(syntax []string) (req map[int][]string, m map[string]map[int][]*netstat.Socket, err error) {
 	rp := make([]string, 0, 4)
 	udp := false
 	tcp := false
-	req := make(map[int][]string)
+	req = make(map[int][]string)
 	for _, s := range syntax {
 		a1 := strings.SplitN(s, ":", 2)
 		p, err := strconv.Atoi(a1[0])
@@ -49,7 +40,24 @@ func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err
 	if udp {
 		rp = append(rp, "udp", "udp6")
 	}
-	m, err := netstat.ToPortMap(rp)
+	m, err = netstat.ToPortMap(rp)
+	if err != nil {
+		return
+	}
+	return
+}
+
+/*
+example:
+
+IsPortOccupied([]string{"80:tcp"})
+
+IsPortOccupied([]string{"53:tcp,udp"})
+
+IsPortOccupied([]string{"53:tcp,udp", "80:tcp"})
+*/
+func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err error) {
+	req, m, err := generatePortMap(syntax)
 	if err != nil {
 		return
 	}
@@ -59,6 +67,35 @@ func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err
 				if proto == "udp" || v.State != netstat.Close {
 					return true, v, nil
 				}
+			}
+		}
+	}
+	return false, nil, nil
+}
+
+func IsPortOccupiedWithWhitelist(syntax []string, whitelist map[string]struct{}) (occupied bool, socket *netstat.Socket, err error) {
+	req, m, err := generatePortMap(syntax)
+	if err != nil {
+		return
+	}
+	var occupiedSockets []*netstat.Socket
+	for p, protos := range req {
+		for _, proto := range protos {
+			for _, v := range m[proto][p] {
+				if proto == "udp" || v.State != netstat.Close {
+					occupiedSockets = append(occupiedSockets, v)
+				}
+			}
+		}
+	}
+	err = netstat.FillProcesses(occupiedSockets)
+	if err != nil {
+		return
+	}
+	for _, s := range occupiedSockets {
+		if s.Proc != nil {
+			if _, exists := whitelist[s.Proc.Name]; !exists {
+				return true, s, nil
 			}
 		}
 	}

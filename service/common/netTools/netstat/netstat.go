@@ -114,7 +114,7 @@ func parseAddr(s string) (*Address, error) {
 	if err != nil {
 		return nil, newError().Base(err)
 	}
-	return &Address{IP: ip, Port: int(v),}, nil
+	return &Address{IP: ip, Port: int(v)}, nil
 }
 
 type Socket struct {
@@ -123,7 +123,7 @@ type Socket struct {
 	State         SkState
 	UID           string
 	inode         string
-	process       *Process
+	Proc          *Process
 	processMutex  sync.Mutex
 }
 
@@ -133,8 +133,49 @@ type Process struct {
 }
 
 const (
-	SocketFreed = "process not found, correspond socket was freed"
+	SocketFreed    = "process not found, correspond socket was freed"
+	ProcOpenFailed = "cannot open the directory /proc"
 )
+
+func FillProcesses(sockets []*Socket) error {
+	f, err := ioutil.ReadDir(pathProc)
+	if err != nil {
+		return newError().Base(errors.New(ProcOpenFailed))
+	}
+	mapInodeSocket := make(map[string]*Socket)
+	iNodes := make(map[string]struct{})
+	for i, s := range sockets {
+		s.processMutex.Lock()
+		defer s.processMutex.Unlock()
+		mapInodeSocket[s.inode] = sockets[i]
+		iNodes[s.inode] = struct{}{}
+	}
+loop1:
+	for _, fi := range f {
+		fn := fi.Name()
+		if !fi.IsDir() {
+			continue
+		}
+		for _, t := range fn {
+			if t > '9' || t < '0' {
+				continue loop1
+			}
+		}
+		for _, s := range sockets {
+			if s.Proc != nil {
+				continue
+			}
+		}
+		if inode := isProcessSocket(fn, iNodes); inode != "" {
+			mapInodeSocket[inode].Proc = &Process{
+				PID:  fn,
+				Name: getProcessName(fn),
+			}
+			delete(iNodes, inode)
+		}
+	}
+	return nil
+}
 
 /*
 较为消耗资源
@@ -142,8 +183,8 @@ const (
 func (s *Socket) Process() (*Process, error) {
 	s.processMutex.Lock()
 	s.processMutex.Unlock()
-	if s.process != nil {
-		return s.process, nil
+	if s.Proc != nil {
+		return s.Proc, nil
 	}
 	f, err := ioutil.ReadDir(pathProc)
 	if err != nil {
@@ -160,12 +201,12 @@ loop1:
 				continue loop1
 			}
 		}
-		if isProcessSocket(fn, []string{s.inode}) {
-			s.process = &Process{
+		if isProcessSocket(fn, map[string]struct{}{s.inode: {}}) != "" {
+			s.Proc = &Process{
 				PID:  fn,
 				Name: getProcessName(fn),
 			}
-			return s.process, nil
+			return s.Proc, nil
 		}
 	}
 	return nil, newError(SocketFreed)
@@ -226,28 +267,28 @@ func getProcessName(pid string) (pn string) {
 	return getProcName(pn)
 }
 
-func isProcessSocket(pid string, socketInode []string) bool {
+func isProcessSocket(pid string, socketInode map[string]struct{}) string {
 	// link name is of the form socket:[5860846]
 	p := filepath.Join(pathProc, pid, "fd")
 	f, err := os.Open(p)
 	fns, err := f.Readdirnames(-1)
 	f.Close()
 	if err != nil {
-		return false
+		return ""
 	}
 	for _, fn := range fns {
 		lk, err := os.Readlink(filepath.Join(p, fn))
 		if err != nil {
 			continue
 		}
-		for _, s := range socketInode {
-			target := "socket:[" + s + "]"
+		for inode := range socketInode {
+			target := "socket:[" + inode + "]"
 			if lk == target {
-				return true
+				return inode
 			}
 		}
 	}
-	return false
+	return ""
 }
 
 func getProcessSocketSet(pid string) (set []string) {
@@ -341,11 +382,11 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	if err != nil {
 		return
 	}
-	iNodes := make([]string, 0, len(protocols))
+	iNodes := make(map[string]struct{})
 	for _, proto := range protocols {
 		for _, v := range m[proto][port] {
 			if v.State == Listen || v.State == Established {
-				iNodes = append(iNodes, v.inode)
+				iNodes[v.inode] = struct{}{}
 			}
 		}
 	}
@@ -359,13 +400,13 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 		}
 		return
 	}
-	return isProcessSocket(pid, iNodes), nil
+	return isProcessSocket(pid, iNodes) != "", nil
 }
 
 func FillAllProcess(sockets []*Socket) {
 	mInodeSocket := make(map[string]*Socket)
 	for _, v := range sockets {
-		if v.process == nil {
+		if v.Proc == nil {
 			mInodeSocket[v.inode] = v
 			v.processMutex.Lock()
 			defer v.processMutex.Unlock()
@@ -389,7 +430,7 @@ loop1:
 		socketSet := getProcessSocketSet(fn)
 		for _, s := range socketSet {
 			if socket, ok := mInodeSocket[s]; ok {
-				socket.process = &Process{
+				socket.Proc = &Process{
 					PID:  fn,
 					Name: getProcessName(fn),
 				}

@@ -245,6 +245,9 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	if v == nil {
 		v = &sr.VmessInfo
 	}
+	if occupied, port, pname := tmpl.CheckInboundPortsOccupied(); occupied {
+		return newError("Port ", port, " is occupied by ", pname)
+	}
 	err = RestartV2rayService()
 	if err != nil {
 		return
@@ -283,6 +286,9 @@ func pretendToStopV2rayService() (err error) {
 		return
 	}
 	if IsV2RayRunning() {
+		if occupied, port, pname := tmplJson.CheckInboundPortsOccupied(); occupied {
+			return newError("Port ", port, " is occupied by ", pname)
+		}
 		err = RestartV2rayService()
 	}
 	return
