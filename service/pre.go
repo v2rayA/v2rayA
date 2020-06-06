@@ -139,16 +139,19 @@ func initConfigure() {
 	}
 	if configure.IsConfigureNotExists() {
 		// need to migrate?
-		jsonConfPath := "/etc/v2ray/v2raya.json"
-		if _, err := os.Stat(jsonConfPath); err == nil {
-			migrate(jsonConfPath)
-		} else if os.IsNotExist(err) {
-			jsonConfPath = "/etc/v2raya/v2raya.json"
+		camp := []string{path.Join(path.Dir(confPath), "v2raya.json"), "/etc/v2ray/v2raya.json", "/etc/v2raya/v2raya.json"}
+		var ok bool
+		for _, jsonConfPath := range camp {
 			if _, err := os.Stat(jsonConfPath); err == nil {
-				migrate(jsonConfPath)
-			} else {
-				initDBValue()
+				err = migrate(jsonConfPath)
+				if err == nil {
+					ok = true
+					break
+				}
 			}
+		}
+		if !ok {
+			initDBValue()
 		}
 	}
 
