@@ -17,8 +17,8 @@ import (
 	"v2rayA/core/routingA"
 	"v2rayA/core/v2ray/asset"
 	"v2rayA/core/vmessInfo"
-	"v2rayA/global"
 	"v2rayA/db/configure"
+	"v2rayA/global"
 )
 
 /*对应template.json*/
@@ -75,12 +75,19 @@ type Inbound struct {
 	Tag            string           `json:"tag,omitempty"`
 }
 type InboundSettings struct {
-	Auth           string      `json:"auth,omitempty"`
-	UDP            bool        `json:"udp,omitempty"`
-	IP             interface{} `json:"ip,omitempty"`
-	Clients        interface{} `json:"clients,omitempty"`
-	Network        string      `json:"network,omitempty"`
-	FollowRedirect bool        `json:"followRedirect,omitempty"`
+	Auth      string      `json:"auth,omitempty"`
+	UDP       bool        `json:"udp,omitempty"`
+	IP        interface{} `json:"ip,omitempty"`
+	Accounts  []Account   `json:"accounts,omitempty"`
+	Clients   interface{} `json:"clients,omitempty"`
+	Network   string      `json:"network,omitempty"`
+	UserLevel int         `json:"userLevel,omitempty"`
+
+	FollowRedirect bool `json:"followRedirect,omitempty"`
+}
+type Account struct {
+	User string `json:"user"`
+	Pass string `json:"pass"`
 }
 type User struct {
 	ID       string `json:"id"`
@@ -683,9 +690,9 @@ func parseRoutingA(t *Template, inboundTags []string) {
 				case string:
 					defaultOutbound = v
 				}
-			case "outbound":
+			case "inbound", "outbound":
 				switch o := rule.Value.(type) {
-				case routingA.Outbound:
+				case routingA.Bound:
 					proto := o.Value
 					switch proto.Name {
 					case "http", "socks":
@@ -712,20 +719,65 @@ func parseRoutingA(t *Template, inboundTags []string) {
 									u.Pass = passwords[i]
 								}
 								if i < len(levels) {
-									u.Level, _ = strconv.Atoi(levels[i])
+									level, err := strconv.Atoi(levels[i])
+									if err == nil {
+										u.Level = level
+									}
 								}
 								server.Users = append(server.Users, u)
 							}
 						}
-						t.Outbounds = append(t.Outbounds, Outbound{
-							Tag:      o.Name,
-							Protocol: o.Value.Name,
-							Settings: &Settings{
-								Servers: []Server{
-									server,
+						switch rule.Name {
+						case "outbound":
+							t.Outbounds = append(t.Outbounds, Outbound{
+								Tag:      o.Name,
+								Protocol: o.Value.Name,
+								Settings: &Settings{
+									Servers: []Server{
+										server,
+									},
 								},
-							},
-						})
+							})
+						case "inbound":
+							// reform from outbound
+							in := Inbound{
+								Tag:      o.Name,
+								Protocol: o.Value.Name,
+								Listen:   server.Address,
+								Port:     server.Port,
+								Settings: &InboundSettings{
+									UDP: false,
+								},
+								Sniffing: Sniffing{
+									Enabled:      true,
+									DestOverride: []string{"http", "tls"},
+								},
+							}
+							if proto.Name == "socks" {
+								if len(server.Users) > 0 {
+									in.Settings.Auth = "password"
+								}
+								if udp := proto.NamedParams["udp"]; len(udp) > 0 {
+									in.Settings.UDP = udp[0] == "true"
+								}
+								if userLevels := proto.NamedParams["userLevel"]; len(userLevels) > 0 {
+									userLevel, err := strconv.Atoi(userLevels[0])
+									if err == nil {
+										in.Settings.UserLevel = userLevel
+									}
+								}
+							}
+							if len(server.Users) > 0 {
+								for _, u := range server.Users {
+									in.Settings.Accounts = append(in.Settings.Accounts, Account{
+										User: u.User,
+										Pass: u.Pass,
+									})
+								}
+							}
+							t.Inbounds = append(t.Inbounds, in)
+							inboundTags = append(inboundTags, o.Name)
+						}
 					case "freedom":
 						settings := new(Settings)
 						if len(proto.NamedParams["domainStrategy"]) > 0 {

@@ -6,6 +6,7 @@ import (
 
 func TestNewFunction(t *testing.T) {
 	tests := []string{
+		`inbound: httpauthin = http(address: 0.0.0.0, port: 1080, user: 'my-username', pass: 'my-password')`,
 		`outbound: socksout = socks(address: 127.0.0.1, port: 10800, user: "my-username", pass: "my-password")`,
 		`outbound:   test=   socks ( 127.0.0.1,   port: 10800, user: "my-username",pass:"my-password" )`,
 		`outbound:   test2=   socks ( test,   port: 10800, user: "my-username",pass:"my-password" )`,
@@ -20,19 +21,21 @@ func TestNewFunction(t *testing.T) {
 
 func TestNewOutbound(t *testing.T) {
 	tests := []string{
+		`inbound: httpauthin = http(address: 0.0.0.0, port: 1080, user: 'my-username', pass: 'my-password')`,
 		`outbound: socksout = socks(address: 127.0.0.1, port: 10800, user: "my-username", pass: "my-password")`,
 		`outbound:   test=   socks ( 127.0.0.1,   port: 10800, user: "my-username",pass:"my-password" )`,
 		`outbound:   test2=   socks ( test,   port: 10800, user: "my-username",pass:"my-password" )`,
 	}
 	for _, test := range tests {
 		S, _ := generateSyntaxTree(test)
-		o := newOutbound(S.children[0].children[0].children[2])
+		o := newBound(S.children[0].children[0].children[2])
 		t.Log(o.Name, o.Value)
 	}
 }
 
 func TestNewDefine(t *testing.T) {
 	tests := []string{
+		`inbound: httpauthin = http(address: 0.0.0.0, port: 1080, user: 'my-username', pass: 'my-password', user: 'my-username2', pass: 'my-password2')`,
 		`outbound: socksout = socks(address: 127.0.0.1, port: 10800, user: "my-username", pass: "my-password")`,
 		`default  : httpout`,
 	}

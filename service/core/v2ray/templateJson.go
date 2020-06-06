@@ -33,12 +33,6 @@ const TemplateJson = `{
           "enabled": true,
           "destOverride": ["http", "tls"]
         },
-        "settings": {
-          "auth": "noauth",
-          "udp": true,
-          "ip": null,
-          "clients": null
-        },
         "tag": "http"
       },
       {
@@ -52,8 +46,7 @@ const TemplateJson = `{
         "settings": {
           "auth": "noauth",
           "udp": true,
-          "ip": null,
-          "clients": null
+          "ip": null
         },
         "tag": "pac"
       }
