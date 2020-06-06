@@ -17,7 +17,7 @@ build() {
     cd "v2rayA-$pkgver/service"
     export GO111MODULE=on
     export GOPROXY=https://goproxy.io
-    go build -ldflags="-X v2rayA/global.Version=$pkgver" -o v2raya
+    go build -ldflags="-X github.com/mzz2017/v2rayA/global.Version=$pkgver" -o v2raya
 }
 
 package() {
