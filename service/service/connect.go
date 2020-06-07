@@ -3,8 +3,8 @@ package service
 import (
 	"github.com/mzz2017/v2rayA/core/v2ray"
 	"github.com/mzz2017/v2rayA/core/v2ray/asset/gfwlist"
-	"github.com/mzz2017/v2rayA/global"
 	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/global"
 	"log"
 )
 
@@ -51,6 +51,12 @@ func Connect(which *configure.Which) (err error) {
 		log.Println(err)
 		return
 	}
+	cs := configure.GetConnectedServer()
+	defer func() {
+		if err != nil && cs != nil && v2ray.IsV2RayRunning() {
+			_ = configure.SetConnect(cs)
+		}
+	}()
 	//unset connectedServer to avoid refresh in advance
 	_ = configure.ClearConnected()
 	//根据找到的Server更新V2Ray的配置
