@@ -24,7 +24,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 	if entity.ShouldDnsPoisonOpen() {
 		if e := iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); e != nil {
 			log.Println(newError("[WARNING] DropSpoofing can't be enable").Base(e))
-			DeleteTransparentProxyRules()
+			iptables.DropSpoofing.GetCleanCommands().Clean()
 		}
 	}
 	setting := configure.GetSettingNotNil()

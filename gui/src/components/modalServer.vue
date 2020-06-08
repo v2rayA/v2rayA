@@ -221,9 +221,6 @@
               <option value="rc4-md5">rc4-md5</option>
               <option value="chacha20">chacha20</option>
               <option value="chacha20-ietf">chacha20-ietf</option>
-              <option value="xchacha20-ietf-poly1305"
-                >xchacha20-ietf-poly1305
-              </option>
               <option value="salsa20">salsa20</option>
               <option value="camellia-128-cfb">camellia-128-cfb</option>
               <option value="camellia-192-cfb">camellia-192-cfb</option>
@@ -295,6 +292,7 @@
               <option value="idea-cfb">idea-cfb</option>
               <option value="rc2-cfb">rc2-cfb</option>
               <option value="seed-cfb">seed-cfb</option>
+              <option value="none">none</option>
             </b-select>
           </b-field>
           <b-field label="Protocol" label-position="on-border">
@@ -304,6 +302,7 @@
               <option value="auth_sha1_v4">auth_sha1_v4</option>
               <option value="auth_aes128_md5">auth_aes128_md5</option>
               <option value="auth_aes128_sha1">auth_aes128_sha1</option>
+              <option value="auth_chain_a">auth_chain_a</option>
             </b-select>
           </b-field>
           <b-field

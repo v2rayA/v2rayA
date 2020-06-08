@@ -1,19 +1,19 @@
 package ssr
 
 import (
+	shadowsocksr "github.com/mzz2017/shadowsocksR"
+	"github.com/mzz2017/shadowsocksR/ssr"
+	"github.com/mzz2017/shadowsocksR/streamCipher"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
 
-	shadowsocksr "github.com/mzz2017/shadowsocksR"
 	"github.com/mzz2017/shadowsocksR/obfs"
 	"github.com/mzz2017/shadowsocksR/protocol"
-	"github.com/mzz2017/shadowsocksR/ssr"
-
+	"github.com/mzz2017/v2rayA/extra/proxy"
 	"github.com/nadoo/glider/common/socks"
 	"log"
-	"github.com/mzz2017/v2rayA/extra/proxy"
 )
 
 // SSR struct.
@@ -85,7 +85,7 @@ func (s *SSR) Dial(network, addr string) (net.Conn, error) {
 		return nil, newError("[ssr] unable to parse address: " + addr)
 	}
 
-	cipher, err := shadowsocksr.NewStreamCipher(s.EncryptMethod, s.EncryptPassword)
+	cipher, err := streamCipher.NewStreamCipher(s.EncryptMethod, s.EncryptPassword)
 	if err != nil {
 		return nil, err
 	}

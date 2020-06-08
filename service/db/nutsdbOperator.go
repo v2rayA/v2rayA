@@ -116,6 +116,22 @@ func ListGet(bucket string, key string, index int, val interface{}) (err error) 
 	})
 }
 
+func ListGetRaw(bucket string, key string, index int) (raw []byte, err error) {
+	var list [][]byte
+	err = DB().View(func(tx *nutsdb.Tx) error {
+		list, err = tx.LRange(bucket, []byte(key), index, index)
+		if err == nil {
+			raw = list[0]
+		}
+		if err == nil {
+			return nil
+		} else {
+			return newError().Base(err)
+		}
+	})
+	return
+}
+
 func ListAppend(bucket string, key string, val interface{}) (err error) {
 	var bArray [][]byte
 	v := reflect.ValueOf(val)
