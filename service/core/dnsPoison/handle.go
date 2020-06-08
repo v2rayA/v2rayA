@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcapgo"
+	"github.com/mzz2017/v2rayA/common/netTools"
 	"golang.org/x/net/dns/dnsmessage"
 	"log"
 	"net"
@@ -12,7 +13,6 @@ import (
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
-	"github.com/mzz2017/v2rayA/common/netTools"
 )
 
 type handle struct {
@@ -162,6 +162,14 @@ func packetFilter(portCache *portCache, pPacket *gopacket.Packet, whitelistDnsSe
 	err := dmessage.Unpack(trans.LayerPayload())
 	if err != nil {
 		return
+	}
+	//跳过非A且非AAAA，或不包含"."的域名
+	if len(dmessage.Questions) > 0 {
+		name := dmessage.Questions[0].Name.String()
+		if (dmessage.Questions[0].Type != dnsmessage.TypeA && dmessage.Questions[0].Type != dnsmessage.TypeAAAA) ||
+			!strings.ContainsRune(strings.TrimSuffix(name, "."), '.') {
+			return
+		}
 	}
 	//跳过已处理过dns响应的端口的包
 	portCache.Lock()

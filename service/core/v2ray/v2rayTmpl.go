@@ -334,6 +334,10 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
 		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
+		case "none":
+			if !strings.HasPrefix(v.Type, "auth_chain_") {
+				return o, newError("encryption method none can only used with auth_chain_*")
+			}
 		default:
 			return o, newError("unsupported shadowsocks encryption method: " + v.Net)
 		}
@@ -341,7 +345,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			v.Type = "origin"
 		}
 		switch v.Type {
-		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1":
+		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1", "auth_chain_a":
 		default:
 			return o, newError("unsupported shadowsocksR protocol: " + v.Type)
 		}
