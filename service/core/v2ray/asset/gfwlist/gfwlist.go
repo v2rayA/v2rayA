@@ -1,18 +1,23 @@
 package gfwlist
 
 import (
+	"bytes"
+	sha2562 "crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"github.com/mzz2017/v2rayA/common/files"
 	"github.com/mzz2017/v2rayA/common/httpClient"
 	"github.com/mzz2017/v2rayA/core/v2ray"
 	"github.com/mzz2017/v2rayA/core/v2ray/asset"
-	"github.com/mzz2017/v2rayA/extra/gopeed"
 	"github.com/mzz2017/v2rayA/db/configure"
-	"fmt"
+	"github.com/mzz2017/v2rayA/extra/copyfile"
+	"github.com/mzz2017/v2rayA/extra/gopeed"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -20,14 +25,14 @@ import (
 type GFWList struct {
 	UpdateTime time.Time
 	Tag        string
-	sync.Mutex
 }
 
 var g GFWList
+var gMutex sync.Mutex
 
 func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
-	g.Lock()
-	defer g.Unlock()
+	gMutex.Lock()
+	defer gMutex.Unlock()
 	if !g.UpdateTime.IsZero() {
 		return g, nil
 	}
@@ -83,11 +88,25 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 }
 
 func LoyalsoldierSiteDatExists() bool {
-	if info, err := os.Stat(asset.GetV2rayLocationAsset() + "/LoyalsoldierSite.dat"); err == nil && !info.IsDir() {
+	if info, err := os.Stat(filepath.Join(asset.GetV2rayLocationAsset(), "LoyalsoldierSite.dat")); err == nil && !info.IsDir() {
 		return true
 	}
 	return false
 }
+
+func checkSha256(p string, sha256 string) bool {
+	if b, err := ioutil.ReadFile(p); err == nil {
+		hash := sha2562.Sum256(b)
+		return hex.EncodeToString(hash[:]) == sha256
+	} else {
+		return false
+	}
+}
+
+var (
+	FailCheckSha = newError("fail in checking sum256sum of GFWList file")
+	DamagedFile  = newError("damaged GFWList file, update it again please")
+)
 
 func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	i := 0
@@ -104,17 +123,62 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	//	log.Println(err)
 	//	return
 	//}
+	pathSiteDat := filepath.Join(asset.GetV2rayLocationAsset(), "LoyalsoldierSite.dat")
+	backup := filepath.Join(asset.GetV2rayLocationAsset(), "LoyalsoldierSite.dat.bak")
+	var sucBackup bool
+	if _, err = os.Stat(pathSiteDat); err == nil {
+		//backup
+		err = copyfile.CopyFile(pathSiteDat, backup)
+		if err != nil {
+			err = newError("fail to backup gfwlist file").Base(err)
+			return
+		}
+		sucBackup = true
+	}
 	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
 	err = gopeed.Down(&gopeed.Request{
 		Method: "GET",
 		URL:    u,
-	}, asset.GetV2rayLocationAsset()+"/LoyalsoldierSite.dat")
+	}, pathSiteDat)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	_ = os.Chtimes(asset.GetV2rayLocationAsset()+"/LoyalsoldierSite.dat", gfwlist.UpdateTime, gfwlist.UpdateTime)
-	t, err := files.GetFileModTime(asset.GetV2rayLocationAsset() + "/LoyalsoldierSite.dat")
+	u2 := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geosite.dat.sha256sum`, gfwlist.Tag)
+	err = gopeed.Down(&gopeed.Request{
+		Method: "GET",
+		URL:    u2,
+	}, pathSiteDat+".sha256sum")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer func() {
+		if err != nil {
+			if sucBackup {
+				_ = copyfile.CopyFile(backup, pathSiteDat)
+			} else {
+				_ = os.Remove(pathSiteDat)
+			}
+		}
+	}()
+	var b []byte
+	if b, err = ioutil.ReadFile(pathSiteDat + ".sha256sum"); err == nil {
+		f := bytes.Fields(b)
+		if len(f) < 2 {
+			err = FailCheckSha
+			return
+		}
+		if !checkSha256(pathSiteDat, string(f[0])) {
+			err = newError(DamagedFile)
+			return
+		}
+	} else {
+		err = FailCheckSha
+		return
+	}
+	_ = os.Chtimes(pathSiteDat, gfwlist.UpdateTime, gfwlist.UpdateTime)
+	t, err := files.GetFileModTime(pathSiteDat)
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
 	}

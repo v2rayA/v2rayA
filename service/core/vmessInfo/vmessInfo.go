@@ -28,6 +28,9 @@ type VmessInfo struct {
 func (v *VmessInfo) ExportToURL() string {
 	switch v.Protocol {
 	case "", "vmess":
+		if v.V == "" {
+			v.V = "2"
+		}
 		//去除info中的protocol，减少URL体积
 		it := reflect.TypeOf(*v)
 		iv := reflect.ValueOf(*v)
