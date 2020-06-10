@@ -11,7 +11,7 @@ labels: bug
 
 2. 你通过什么方式安装v2rayA
 
-3. 你所使用的操作系统、CPU架构
+3. 你所使用的操作系统
 
 
 ### 描述问题
@@ -22,14 +22,15 @@ labels: bug
 <!-- 在下方描述如何复现问题 -->
 
 
-### v2rayA运行日志：
+### v2rayA/v2ray运行日志：
 
  ```bash
  # daemon mode
- journalctl -u v2raya | tail -n 100
+ journalctl -u v2raya | tail -n 50
+ journalctl -u v2ray | tail -n 50
  
  # docker mode
- docker logs v2raya_backend
+ docker logs v2raya
  ```
 ```shell
 # 此处贴入运行日志

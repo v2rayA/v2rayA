@@ -17,7 +17,7 @@ require (
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
-	github.com/mzz2017/shadowsocksR v0.0.0-20200608133230-599a0deea68a
+	github.com/mzz2017/shadowsocksR v0.0.0-20200609132134-0c9b4a42cfb1
 	github.com/nadoo/glider v0.9.3
 	github.com/pkg/errors v0.9.1
 	github.com/stevenroose/gonfig v0.1.4
