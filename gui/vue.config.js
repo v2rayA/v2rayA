@@ -55,7 +55,7 @@ module.exports = {
 
   pwa: {
     name: "v2rayA",
-    themeColor: "#FFDD57",
+    // themeColor: "#FFDD57",
     msTileColor: "#fff",
     appleMobileWebAppCapable: "yes",
     appleMobileWebAppStatusBarStyle: "white",
