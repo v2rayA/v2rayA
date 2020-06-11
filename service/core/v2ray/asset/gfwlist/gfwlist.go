@@ -38,7 +38,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	}
 	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/mzz2017/dist-v2ray-rules-dat/tags")
 	if err != nil {
-		err = newError("fail in get latest version of GFWList").Base(err)
+		err = newError("failed to get latest version of GFWList").Base(err)
 		return
 	}
 	b, _ := ioutil.ReadAll(resp.Body)
@@ -46,18 +46,18 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	tag := gjson.GetBytes(b, "0.name").Str
 	u := gjson.GetBytes(b, "0.commit.url").Str
 	if tag == "" || u == "" {
-		err = newError("fail in get latest version of GFWList: fail in getting latest tag")
+		err = newError("failed to get latest version of GFWList: fail in getting latest tag")
 		return
 	}
 	resp, err = httpClient.HttpGetUsingSpecificClient(c, u)
 	if err != nil {
-		err = newError("fail in get latest version of GFWList").Base(err)
+		err = newError("failed to get latest version of GFWList").Base(err)
 		return
 	}
 	b, _ = ioutil.ReadAll(resp.Body)
 	t := gjson.GetBytes(b, "commit.committer.date").Time()
 	if t.IsZero() {
-		err = newError("fail in get latest version of GFWList: fail in getting commit date of latest tag")
+		err = newError("failed to get latest version of GFWList: fail in getting commit date of latest tag")
 		return
 	}
 	g.Tag = tag
@@ -104,7 +104,7 @@ func checkSha256(p string, sha256 string) bool {
 }
 
 var (
-	FailCheckSha = newError("fail in checking sum256sum of GFWList file")
+	FailCheckSha = newError("failed to check sum256sum of GFWList file")
 	DamagedFile  = newError("damaged GFWList file, update it again please")
 )
 

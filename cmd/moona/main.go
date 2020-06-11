@@ -28,14 +28,14 @@ func ImportServers(c *config.Params) {
 		fmt.Printf("Importing %v\n", c.Link)
 		err := service.Import(c.Link, nil)
 		if err != nil {
-			fmt.Printf("Fail in importing %v: %v\n", c.Link, err)
+			fmt.Printf("Failed to import %v: %v\n", c.Link, err)
 			os.Exit(1)
 		}
 	}
 	if c.File != "" {
 		b, err := ioutil.ReadFile(c.File)
 		if err != nil {
-			fmt.Printf("Fail in importing %v: %v\n", c.File, err)
+			fmt.Printf("Failed to import %v: %v\n", c.File, err)
 			os.Exit(1)
 		}
 		lines := bytes.Split(b, []byte("\n"))
@@ -88,7 +88,7 @@ func GenerateTestList() configure.Whiches {
 	}
 	err := whiches.FillLinks()
 	if err != nil {
-		fmt.Printf("Fail in generating links: %v\n", err)
+		fmt.Printf("Failed to generate links: %v\n", err)
 		os.Exit(1)
 	}
 	return whiches
@@ -105,7 +105,7 @@ func main() {
 	testList := GenerateTestList()
 	_, err := service.TestHttpLatency(testList.Get(), time.Duration(c.Timeout)*time.Millisecond, c.Parallel, true)
 	if err != nil {
-		fmt.Printf("Fail in testing latencies: %v\n", err)
+		fmt.Printf("Failed to test latencies: %v\n", err)
 		os.Exit(1)
 	}
 }

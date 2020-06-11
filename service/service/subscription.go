@@ -58,12 +58,12 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	addr := subscriptions[index].Address
 	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
-		reason := "fail in get proxy"
+		reason := "failed to get proxy"
 		return newError(reason)
 	}
 	infos, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
-		reason := "fail in resolving subscription address: " + err.Error()
+		reason := "failed to resolve subscription address: " + err.Error()
 		log.Println(infos, err)
 		return newError(reason)
 	}
@@ -103,7 +103,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		if disconnectIfNecessary {
 			err = Disconnect()
 			if err != nil {
-				reason := "fail in disconnecting previous server"
+				reason := "failed to disconnect previous server"
 				return newError(reason)
 			}
 		} else if connectedServer != nil {
@@ -124,7 +124,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return newError("fail in finding the corresponding subscription")
+		return newError("failed to find the corresponding subscription")
 	}
 	raw.Remarks = subscription.Remarks
 	return configure.SetSubscription(subscription.ID-1, raw)
