@@ -313,7 +313,7 @@ func StopV2rayService() (err error) {
 	defer CheckAndStopTransparentProxy()
 	defer func() {
 		if IsV2RayRunning() {
-			msg := "fail in stopping v2ray"
+			msg := "failed to stop v2ray"
 			if err != nil && len(strings.TrimSpace(err.Error())) > 0 {
 				msg += ": " + err.Error()
 			}

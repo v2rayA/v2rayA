@@ -56,7 +56,7 @@ func Import(url string, which *configure.Which) (err error) {
 		c.Timeout = 90 * time.Second
 		infos, err := ResolveSubscriptionWithClient(url, c)
 		if err != nil {
-			return newError("fail in resolving subscription address").Base(err)
+			return newError("failed to resolve subscription address").Base(err)
 		}
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
 		servers := make([]configure.ServerRaw, len(infos))

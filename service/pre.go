@@ -256,7 +256,7 @@ func checkUpdate() {
 				/* 更新LoyalsoldierSite.dat */
 				localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
 				if err != nil {
-					log.Println("Fail in updating PAC file: " + err.Error())
+					log.Println("Failed to update PAC file: " + err.Error())
 					return
 				}
 				log.Println("Complete updating PAC file. Localtime: " + localGFWListVersion)
@@ -279,7 +279,7 @@ func checkUpdate() {
 					control <- struct{}{}
 					err := service.UpdateSubscription(i, false)
 					if err != nil {
-						log.Println(fmt.Sprintf("Fail in updating subscription -- ID: %d，err: %v", i, err.Error()))
+						log.Println(fmt.Sprintf("Failed to update subscription -- ID: %d，err: %v", i, err.Error()))
 					} else {
 						log.Println(fmt.Sprintf("Complete updating subscription -- ID: %d，地址: %s", i, subs[i].Address))
 					}
