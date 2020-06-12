@@ -1,6 +1,6 @@
 # moona
 
-A Fast and Convenient Multi-Protocols Latency Tester built with love in Go.
+A Fast and Convenient Multi-Protocols Latency Tester built in Go.
 
 ## Usage
 
