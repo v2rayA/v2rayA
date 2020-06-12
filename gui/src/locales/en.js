@@ -141,7 +141,7 @@ export default {
     messages: [
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
-      "We can not judge port occupations in docker mode. Confirm ports are free.",
+      "We cannot judge port occupations in docker mode. Confirm it by yourself.",
       "Zero means to close this port."
     ]
   },
@@ -243,7 +243,7 @@ export default {
           <p class="about-small">Other ports：</p>
           <p class="about-small">32345: tproxy, needed by transparent proxy </p>
           <p class="about-small">32346: port of plugins such as trojan, ssr and pingtunnel</p>
-          <p>All data is stored in local. If service is running in docker, configure will disappear with related docker volume's removing. Backup data if necessary.
+          <p>All data is stored in local instead of cloud. </p>
           <p>Problems found during use can be reported at <a href="https://github.com/mzz2017/v2rayA/issues">issues</a>.</p>`,
   axios: {
     messages: {

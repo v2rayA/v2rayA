@@ -13,9 +13,9 @@ func (r *redirect) GetSetupCommands() SetupCommands {
 iptables -t nat -N V2RAY
 # 出方向白名单端口
 iptables -t nat -A V2RAY -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
-iptables -t nat -A V2RAY -i docker+ -j RETURN
-iptables -t nat -A V2RAY -i veth+ -j RETURN
-iptables -t nat -A V2RAY -i br-+ -j RETURN
+#iptables -t nat -A V2RAY -i docker+ -j RETURN
+#iptables -t nat -A V2RAY -i veth+ -j RETURN
+#iptables -t nat -A V2RAY -i br-+ -j RETURN
 iptables -t nat -A V2RAY -d 10.0.0.0/8 -j RETURN
 iptables -t nat -A V2RAY -d 100.64.0.0/10 -j RETURN
 iptables -t nat -A V2RAY -d 127.0.0.0/8 -j RETURN
