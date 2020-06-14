@@ -11,6 +11,8 @@ package socks5
 
 import (
 	"github.com/mzz2017/shadowsocksR/tools/leakybuf"
+	"github.com/mzz2017/v2rayA/extra/proxy"
+	"github.com/mzz2017/v2rayA/global"
 	"github.com/nadoo/glider/common/socks"
 	"io"
 	"log"
@@ -19,8 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/mzz2017/v2rayA/extra/proxy"
-	"github.com/mzz2017/v2rayA/global"
 )
 
 // Version is socks5 version number.
