@@ -199,6 +199,10 @@ func GetSubscription(index int) *SubscriptionRaw {
 func GetSettingNotNil() *Setting {
 	r := new(Setting)
 	_ = db.Get("system", "setting", &r)
+	if r == nil {
+		r = NewSetting()
+		_ = db.Set("system", "setting", r)
+	}
 	r.IpForward = ipforward.IsIpForwardOn() //永远用真实值
 	if r.AntiPollution == "" {
 		r.AntiPollution = AntipollutionNone
