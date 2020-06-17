@@ -14,7 +14,7 @@ func IsDatetimeSynced() (bool, time.Time, error) {
 	if err != nil {
 		return false, time.Time{}, newError().Base(err)
 	}
-	if seconds := t.Sub(time.Now().UTC()).Seconds(); seconds >= 120 || seconds <= -120 {
+	if seconds := t.Sub(time.Now().UTC()).Seconds(); seconds >= 90 || seconds <= -90 {
 		return false, t, nil
 	}
 	return true, t, nil
