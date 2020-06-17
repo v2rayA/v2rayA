@@ -5,13 +5,6 @@ import (
 	"fmt"
 	netstat2 "github.com/cakturk/go-netstat/netstat"
 	"github.com/json-iterator/go"
-	"log"
-	"os"
-	"os/exec"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 	"github.com/mzz2017/v2rayA/common/netTools/netstat"
 	"github.com/mzz2017/v2rayA/common/ntp"
 	"github.com/mzz2017/v2rayA/core/dnsPoison/entity"
@@ -20,6 +13,13 @@ import (
 	"github.com/mzz2017/v2rayA/db/configure"
 	"github.com/mzz2017/v2rayA/global"
 	"github.com/mzz2017/v2rayA/plugin"
+	"log"
+	"os"
+	"os/exec"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func IsV2RayProcessExists() bool {
@@ -101,8 +101,8 @@ func testprint() string {
 }
 
 func RestartV2rayService() (err error) {
-	if ok, err := ntp.IsDatetimeSynced(); err == nil && !ok {
-		return newError("please sync datetime first")
+	if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
+		return newError("Please sync datetime first. Your datetime is ", time.Now().Local().Format(ntp.DisplayFormat), ", and the correct datetime is ", t.Local().Format(ntp.DisplayFormat))
 	}
 	setting := configure.GetSettingNotNil()
 	if (setting.Transparent == configure.TransparentGfwlist || setting.PacMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
