@@ -1,18 +1,21 @@
 package ntp
 
 import (
-	"github.com/mzz2017/v2rayA/common"
 	"github.com/beevik/ntp"
 	"time"
 )
 
-func IsDatetimeSynced() (bool, error) {
-	t, err := ntp.Time("ntp1.aliyun.com")
+const (
+	DisplayFormat = "2006/01/02 15:04"
+)
+
+func IsDatetimeSynced() (bool, time.Time, error) {
+	t, err := ntp.Time("ntp.aliyun.com")
 	if err != nil {
-		return false, newError().Base(err)
+		return false, time.Time{}, newError().Base(err)
 	}
-	if common.Abs(t.UTC().Second()-time.Now().UTC().Second()) >= 120 {
-		return false, nil
+	if seconds := t.Sub(time.Now().UTC()).Seconds(); seconds >= 120 || seconds <= -120 {
+		return false, t, nil
 	}
-	return true, nil
+	return true, t, nil
 }

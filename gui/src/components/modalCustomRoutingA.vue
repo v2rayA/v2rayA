@@ -100,6 +100,6 @@ export default {
 }
 
 .code-font {
-  font-family: Monaco, Menlo, Consolas, Courier New, monospace;
+  font-family: Consolas, monospace, Monaco, Menlo, Courier New;
 }
 </style>

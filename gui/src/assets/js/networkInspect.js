@@ -8,15 +8,22 @@ function waitingConnected(promise, interval, cancel, timeout) {
     axios({
       url: apiRoot + "/touch",
       timeout: interval
-    }).then(res => {
-      handleResponse(res, null, () => {
-        if (res.data.data.running && res.data.data.touch.connectedServer) {
+    })
+      .then(res => {
+        handleResponse(res, null, () => {
+          if (res.data.data.running && res.data.data.touch.connectedServer) {
+            clearInterval(timer);
+            cancel && cancel();
+            Vue.prototype.$remount();
+          }
+        });
+      })
+      .catch(err => {
+        if (err.response.status === 401) {
           clearInterval(timer);
           cancel && cancel();
-          Vue.prototype.$remount();
         }
       });
-    });
   }, interval);
   // weird cancelable promise, can not use Promise.race directly
   promise.then(() => {
