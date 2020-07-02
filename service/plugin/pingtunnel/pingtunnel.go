@@ -6,13 +6,13 @@ package pingtunnel
 import (
 	"github.com/mzz2017/go-engine/src/loggo"
 	"github.com/mzz2017/go-engine/src/pingtunnel"
-	"log"
-	"strconv"
-	"time"
 	"github.com/mzz2017/v2rayA/common/netTools/ports"
 	"github.com/mzz2017/v2rayA/core/vmessInfo"
 	"github.com/mzz2017/v2rayA/global"
 	"github.com/mzz2017/v2rayA/plugin"
+	"log"
+	"strconv"
+	"time"
 )
 
 type PingTunnel struct {
@@ -59,11 +59,7 @@ func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error
 		tcpmode, tcpmode_buffersize, tcpmode_maxwin, tcpmode_resend_timems, tcpmode_compress,
 		tcpmode_stat, open_sock5, maxconn, nil)
 	if err != nil {
-		if err == nil {
-			return nil
-		} else {
-			return newError().Base(err)
-		}
+		return newError().Base(err)
 	}
 	tunnel.client = c
 	return c.Run()

@@ -844,6 +844,8 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 					rr.Source = f.Params
 				case "user":
 					rr.User = f.Params
+				case "inboundTag":
+					rr.InboundTag = f.Params
 				}
 			}
 			t.Routing.Rules = append(t.Routing.Rules, rr)

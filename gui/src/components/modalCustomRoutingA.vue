@@ -1,7 +1,7 @@
 <template>
   <div
     class="modal-card modal-configure-pac"
-    style="max-width: 550px;height:700px;margin:auto"
+    style="width:100%;height:2000px;margin:auto"
   >
     <header class="modal-card-head">
       <p class="modal-card-title">RoutingA</p>
@@ -92,6 +92,7 @@ export default {
 <style lang="scss">
 .full-min-height {
   height: 100%;
+  max-height: unset !important;
 }
 
 .horizon-scroll {
