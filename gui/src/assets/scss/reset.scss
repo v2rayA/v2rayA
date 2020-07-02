@@ -46,3 +46,13 @@ html{
     }
   }
 }
+
+.animation-content{
+  width: 100%;
+  max-height: 100%;
+  max-width: unset !important;
+}
+
+.modal-close:not(:hover){
+  filter: drop-shadow(0 0 5px #000);
+}
