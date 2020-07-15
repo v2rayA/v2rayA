@@ -303,6 +303,7 @@
               <option value="auth_aes128_md5">auth_aes128_md5</option>
               <option value="auth_aes128_sha1">auth_aes128_sha1</option>
               <option value="auth_chain_a">auth_chain_a</option>
+              <option value="auth_chain_b">auth_chain_b</option>
             </b-select>
           </b-field>
           <b-field
