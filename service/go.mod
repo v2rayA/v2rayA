@@ -17,16 +17,15 @@ require (
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
-	github.com/mzz2017/shadowsocksR v0.0.0-20200609132134-0c9b4a42cfb1
-	github.com/nadoo/glider v0.9.3
+	github.com/mzz2017/shadowsocksR v0.0.0-20200715055834-e4bd5b179f6e
+	github.com/nadoo/glider v0.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.5
 	github.com/xujiajun/nutsdb v0.5.0
-	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
+	golang.org/x/net v0.0.0-20200505041828-1ed23360d12c
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4
+	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 	v2ray.com/core v4.19.1+incompatible
 )

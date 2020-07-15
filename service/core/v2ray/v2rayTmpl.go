@@ -341,7 +341,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			v.Type = "origin"
 		}
 		switch v.Type {
-		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1", "auth_chain_a":
+		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1", "auth_chain_a", "auth_chain_b":
 		default:
 			return o, newError("unsupported shadowsocksR protocol: " + v.Type)
 		}
