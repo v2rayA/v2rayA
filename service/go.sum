@@ -102,8 +102,8 @@ github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229 h1:fRkNTjA1D7vIg
 github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229/go.mod h1:dtxaUwnEzmoctRuP9u8gRR/tjbfD7SxOBBDz1R8xDeU=
 github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a h1:lM2cQgk1E5mNMUBw5cdE5922waAyan6jlMpbjRxfEas=
 github.com/mzz2017/shadowsocksR v0.0.0-20200126130347-721f53a7b15a/go.mod h1:1SJEvxD2Y+N7SK2NpCC4wSatvfGGTUo2rhPdthUFsCU=
-github.com/mzz2017/shadowsocksR v0.0.0-20200715055834-e4bd5b179f6e h1:QrOSueDA3GD5rUTrwEPuV5eJf7iujXXqjBCwM1poptI=
-github.com/mzz2017/shadowsocksR v0.0.0-20200715055834-e4bd5b179f6e/go.mod h1:5A4hA1y7oP4SoAqcc7gZvjFF63KpKpI5aCUIMrXV1UI=
+github.com/mzz2017/shadowsocksR v0.0.0-20200715061444-6171df64e1e2 h1:8zGPe3kemikb9jWzpp5EOoR5O9QratIN6yhy7ibF/pw=
+github.com/mzz2017/shadowsocksR v0.0.0-20200715061444-6171df64e1e2/go.mod h1:5A4hA1y7oP4SoAqcc7gZvjFF63KpKpI5aCUIMrXV1UI=
 github.com/nadoo/conflag v0.2.2/go.mod h1:dzFfDUpXdr2uS2oV+udpy5N2vfNOu/bFzjhX1WI52co=
 github.com/nadoo/conflag v0.2.3/go.mod h1:dzFfDUpXdr2uS2oV+udpy5N2vfNOu/bFzjhX1WI52co=
 github.com/nadoo/glider v0.9.2 h1:zfgJLgB8p87MRhVjeCbiXmmF2ZbCMyS5HCSqrR83J4c=
