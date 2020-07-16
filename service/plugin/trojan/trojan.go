@@ -6,6 +6,7 @@ package trojan
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"strconv"
 	"time"
@@ -96,14 +97,19 @@ func (tro *Trojan) Close() error {
 	tro.c = nil
 	time.Sleep(100 * time.Millisecond)
 	start := time.Now()
+	port := strconv.Itoa(tro.localPort)
 	for {
 		var o bool
-		o, _, err := ports.IsPortOccupied([]string{strconv.Itoa(tro.localPort) + ":tcp"})
+		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
 		if err != nil {
 			return err
 		}
 		if !o {
 			break
+		}
+		conn, e := net.Dial("tcp", ":"+port)
+		if e == nil {
+			conn.Close()
 		}
 		if time.Since(start) > 5*time.Second {
 			log.Println("Trojan.Close: timeout", tro.localPort)

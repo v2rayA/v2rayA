@@ -3,6 +3,7 @@ package shadowsocksr
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"strconv"
 	"strings"
@@ -107,6 +108,7 @@ func (self *SSR) Close() error {
 	self.c = nil
 	time.Sleep(100 * time.Millisecond)
 	start := time.Now()
+	port := strconv.Itoa(self.localPort)
 out:
 	for {
 		select {
@@ -115,12 +117,16 @@ out:
 		default:
 		}
 		var o bool
-		o, _, err := ports.IsPortOccupied([]string{strconv.Itoa(self.localPort) + ":tcp"})
+		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
 		if err != nil {
 			return err
 		}
 		if !o {
 			break
+		}
+		conn, e := net.Dial("tcp", ":"+port)
+		if e == nil {
+			conn.Close()
 		}
 		if time.Since(start) > 3*time.Second {
 			log.Println("SSR.Close: timeout", self.localPort)

@@ -11,6 +11,7 @@ import (
 	"github.com/mzz2017/v2rayA/global"
 	"github.com/mzz2017/v2rayA/plugin"
 	"log"
+	"net"
 	"strconv"
 	"time"
 )
@@ -70,14 +71,19 @@ func (tunnel *PingTunnel) Close() (err error) {
 		tunnel.client.Stop()
 	}
 	start := time.Now()
+	port := strconv.Itoa(tunnel.localPort)
 	for {
 		var o bool
-		o, _, err := ports.IsPortOccupied([]string{strconv.Itoa(tunnel.localPort) + ":tcp"})
+		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
 		if err != nil {
 			return err
 		}
 		if !o {
 			break
+		}
+		conn, e := net.Dial("tcp", ":"+port)
+		if e == nil {
+			conn.Close()
 		}
 		if time.Since(start) > 3*time.Second {
 			log.Println("PingTunnel.Close: timeout", tunnel.localPort)
