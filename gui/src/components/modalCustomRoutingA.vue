@@ -1,6 +1,7 @@
 <template>
   <div
-    class="modal-card modal-configure-pac"
+    ref="modal"
+    class="modal-card modal-routinga"
     style="width:100%;height:2000px;margin:auto"
   >
     <header class="modal-card-head">
@@ -60,8 +61,26 @@ export default {
       .catch(() => {
         this.$parent.close();
       });
+    this.initRoutingAAnimationContentStyle();
   },
   methods: {
+    initRoutingAAnimationContentStyle() {
+      let e = this.$refs.modal;
+      do {
+        e = e.parentElement;
+        console.log(
+          e,
+          e && /\banimation-content\b/.test(e.className),
+          e && e.className
+        );
+      } while (e && !/\banimation-content\b/.test(e.className));
+      if (e) {
+        e.className = e.className.replace(
+          "animation-content",
+          "routinga-animation-content"
+        );
+      }
+    },
     handleClickManual() {
       window.open("https://github.com/mzz2017/v2rayA/wiki/RoutingA", "_blank");
     },
