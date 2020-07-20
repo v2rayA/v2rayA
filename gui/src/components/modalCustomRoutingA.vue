@@ -66,14 +66,9 @@ export default {
   methods: {
     initRoutingAAnimationContentStyle() {
       let e = this.$refs.modal;
-      do {
+      while (e && !/\banimation-content\b/.test(e.className)) {
         e = e.parentElement;
-        console.log(
-          e,
-          e && /\banimation-content\b/.test(e.className),
-          e && e.className
-        );
-      } while (e && !/\banimation-content\b/.test(e.className));
+      }
       if (e) {
         e.className = e.className.replace(
           "animation-content",
