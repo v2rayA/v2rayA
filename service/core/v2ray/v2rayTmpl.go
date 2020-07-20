@@ -22,6 +22,11 @@ import (
 	"strings"
 )
 
+var DirectRuleDomains = []string{
+	"full:v2raya.mzz.pub",
+	"full:v.mzz.pub",
+}
+
 /*对应template.json*/
 type TmplJson struct {
 	Template       Template       `json:"template"`
@@ -480,7 +485,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 	return
 }
 
-func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string, setting *configure.Setting, supportUDP bool) (serverIPs []string, serverDomain string) {
+func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []string, setting *configure.Setting, supportUDP bool) {
 	dohRouting := make([]RoutingRule, 0)
 	if len(dohIPs) > 0 {
 		hosts := make([]string, len(dohHosts))
@@ -563,32 +568,6 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 			Protocol:    []string{"bittorrent"},
 		},
 	)
-	serverIPs = []string{v.Add}
-	if net.ParseIP(v.Add) == nil {
-		//如果不是IP，而是域名，将其加入白名单
-		t.Routing.Rules = append([]RoutingRule{{
-			Type:        "field",
-			OutboundTag: "direct",
-			Domain:      []string{"full:" + v.Add},
-		}}, t.Routing.Rules...
-		)
-		serverDomain = v.Add
-		//解析IP
-		ips, e := net.LookupHost(v.Add)
-		if e != nil {
-			log.Println("net.LookupHost:", e)
-		}
-		serverIPs = ips
-	}
-	//将节点IP加入白名单
-	if len(serverIPs) > 0 {
-		t.Routing.Rules = append([]RoutingRule{{
-			Type:        "field",
-			OutboundTag: "direct",
-			IP:          serverIPs,
-		}}, t.Routing.Rules...
-		)
-	}
 	return
 }
 
@@ -982,6 +961,43 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 	}
 }
 
+func (t *Template) SetDirectRuleRouting(v vmessInfo.VmessInfo) (serverIPs []string, serverDomain string) {
+	serverIPs = []string{v.Add}
+	if net.ParseIP(v.Add) == nil {
+		//如果不是IP，而是域名，将其加入白名单
+		t.Routing.Rules = append([]RoutingRule{{
+			Type:        "field",
+			OutboundTag: "direct",
+			Domain:      []string{"full:" + v.Add},
+		}}, t.Routing.Rules...
+		)
+		serverDomain = v.Add
+		//解析IP
+		ips, e := net.LookupHost(v.Add)
+		if e != nil {
+			log.Println("net.LookupHost:", e)
+		}
+		serverIPs = ips
+	}
+	//将节点IP加入白名单
+	if len(serverIPs) > 0 {
+		t.Routing.Rules = append([]RoutingRule{{
+			Type:        "field",
+			OutboundTag: "direct",
+			IP:          serverIPs,
+		}}, t.Routing.Rules...
+		)
+	}
+	//加入给定域名白名单
+	t.Routing.Rules = append([]RoutingRule{{
+		Type:        "field",
+		OutboundTag: "direct",
+		Domain:      DirectRuleDomains,
+	}}, t.Routing.Rules...
+	)
+	return
+}
+
 func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.ExtraInfo, err error) {
 	setting := configure.GetSettingNotNil()
 	var tmplJson TmplJson
@@ -1021,7 +1037,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	//再修改outbounds
 	t.AppendDNSOutbound()
 	//最后是routing
-	serverIPs, serverDomain := t.SetDNSRouting(v, dohIPs, dohHosts, setting, supportUDP)
+	t.SetDNSRouting(v, dohIPs, dohHosts, setting, supportUDP)
+	serverIPs, serverDomain := t.SetDirectRuleRouting(v)
 	//添加hosts
 	if len(serverDomain) > 0 && len(serverIPs) > 0 {
 		t.DNS.Hosts[serverDomain] = serverIPs[0]
