@@ -88,7 +88,7 @@ export default {
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
-    ipForwardOn: "开启IP转发",
+    ipForwardOn: "开启局域网共享",
     enhancedModeOn: "开启增强模式",
     concurrency: "最大并发数",
     options: {
@@ -113,7 +113,7 @@ export default {
     messages: {
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
       transparentProxy:
-        "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启IP转发”。注：非增强模式下本机docker容器不会走代理。",
+        "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机也享受代理，请勾选“开启局域网共享”。注：非增强模式下本机docker容器不会走代理。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       preventDnsSpoofing:
