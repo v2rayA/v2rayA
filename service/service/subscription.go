@@ -109,7 +109,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		} else if connectedServer != nil {
 			//将之前连接的节点append进去
 			tsrs = append(tsrs, *connectedServer)
-			cs.ID = len(tsrs) - 1
+			cs.ID = len(tsrs)
 			err = configure.SetConnect(cs)
 			if err != nil {
 				return
