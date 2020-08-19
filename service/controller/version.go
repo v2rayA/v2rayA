@@ -10,9 +10,15 @@ import (
 )
 
 func GetVersion(ctx *gin.Context) {
-	err := v2ray.CheckDohSupported()
 	var dohValid string
+	var vlessValid bool
 	var iptablesMode string
+
+	ver, err := v2ray.GetV2rayServiceVersion()
+	if err == nil {
+		vlessValid, _ = common.VersionGreaterEqual(ver, "4.27.0")
+		err = v2ray.CheckDohSupported(ver)
+	}
 	if err == nil {
 		dohValid = "yes"
 	} else {
@@ -29,6 +35,7 @@ func GetVersion(ctx *gin.Context) {
 		"remoteVersion": global.RemoteVersion,
 		"serviceValid":  v2ray.IsV2rayServiceValid(),
 		"dohValid":      dohValid,
+		"vlessValid":    vlessValid,
 		"iptablesMode":  iptablesMode, //仅代表是否支持tproxy，真实iptables所使用的表还要看是否是增强模式
 	})
 }

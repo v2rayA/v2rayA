@@ -138,7 +138,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		v2rayInboundPort := strconv.Itoa(port)
 		ssrLocalPortIfNeed := 0
 		switch strings.ToLower(v.Protocol) {
-		case "vmess", "":
+		case "vmess", "vless", "":
 			//pass
 		default:
 			if !plugin.IsProtocolValid(v) {

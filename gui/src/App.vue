@@ -181,6 +181,7 @@ export default {
         } else {
           localStorage["iptablesMode"] = res.data.data.iptablesMode;
           localStorage["dohValid"] = res.data.data.dohValid;
+          localStorage["vlessValid"] = !!res.data.data.vlessValid;
         }
       }
     });

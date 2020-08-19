@@ -6,7 +6,6 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/mzz2017/v2rayA/common"
 	"net/url"
-	"reflect"
 )
 
 type VmessInfo struct {
@@ -27,23 +26,14 @@ type VmessInfo struct {
 
 func (v *VmessInfo) ExportToURL() string {
 	switch v.Protocol {
+	case "vless":
+		//FIXME: 临时方案
+		fallthrough
 	case "", "vmess":
 		if v.V == "" {
 			v.V = "2"
 		}
-		//去除info中的protocol，减少URL体积
-		it := reflect.TypeOf(*v)
-		iv := reflect.ValueOf(*v)
-		m := make(map[string]interface{})
-		for i := 0; i < it.NumField(); i++ {
-			f := it.Field(i)
-			chKey := f.Tag.Get("json")
-			if chKey == "protocol" { //不转换protocol
-				continue
-			}
-			m[chKey] = iv.FieldByName(f.Name).Interface()
-		}
-		b, _ := jsoniter.Marshal(m)
+		b, _ := jsoniter.Marshal(v)
 		return "vmess://" + base64.StdEncoding.EncodeToString(b)
 	case "ss":
 		/* ss://BASE64(method:password)@server:port#name */

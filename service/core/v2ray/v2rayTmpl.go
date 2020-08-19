@@ -96,9 +96,10 @@ type Account struct {
 	Pass string `json:"pass"`
 }
 type User struct {
-	ID       string `json:"id"`
-	AlterID  int    `json:"alterId"`
-	Security string `json:"security"`
+	ID         string `json:"id"`
+	AlterID    int    `json:"alterId,omitempty"`
+	Encryption string `json:"encryption,omitempty"`
+	Security   string `json:"security,omitempty"`
 }
 type Vnext struct {
 	Address string `json:"address"`
@@ -126,7 +127,7 @@ type Settings struct {
 }
 type TLSSettings struct {
 	AllowInsecure        bool        `json:"allowInsecure"`
-	ServerName           interface{} `json:"serverName"`
+	ServerName           interface{} `json:"serverName,omitempty"`
 	AllowInsecureCiphers bool        `json:"allowInsecureCiphers"`
 }
 type Headers struct {
@@ -283,19 +284,36 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
 	switch strings.ToLower(v.Protocol) {
-	case "vmess":
-		o.Settings.Vnext = []Vnext{
-			{
-				Address: v.Add,
-				Port:    port,
-				Users: []User{
-					{
-						ID:       v.ID,
-						AlterID:  aid,
-						Security: "auto",
+	case "vmess", "vless":
+		switch strings.ToLower(v.Protocol) {
+		case "vmess":
+			o.Settings.Vnext = []Vnext{
+				{
+					Address: v.Add,
+					Port:    port,
+					Users: []User{
+						{
+							ID:       v.ID,
+							AlterID:  aid,
+							Security: "auto",
+						},
 					},
 				},
-			},
+			}
+		case "vless":
+			o.Settings.Vnext = []Vnext{
+				{
+					Address: v.Add,
+					Port:    port,
+					Users: []User{
+						{
+							ID: v.ID,
+							//AlterID:    0, // keep AEAD on
+							Encryption: "none",
+						},
+					},
+				},
+			}
 		}
 		o.StreamSettings = &tmplJson.StreamSettings
 		o.StreamSettings.Network = v.Net
@@ -362,7 +380,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	default:
 		return o, newError("unsupported protocol: " + v.Protocol)
 	}
-	if v.Protocol != "vmess" && pluginPort != nil {
+	if v.Protocol != "vmess" && v.Protocol != "vless" && pluginPort != nil {
 		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
 			{
@@ -404,7 +422,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 		} else {
 			//由于plugin不支持udp
 			//先优先请求DoH（tcp）
-			if err := CheckDohSupported(); err == nil {
+			if err := CheckDohSupported(""); err == nil {
 				//DNS转发，所以使用全球友好的DNS服务器
 				t.DNS.Servers = []interface{}{
 					"https://1.1.1.1/dns-query",
@@ -1021,7 +1039,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	t.Outbounds[0] = o
 	var supportUDP = true
 	switch o.Protocol {
-	case "vmess":
+	case "vmess", "vless":
 		//是否在设置了里开启了mux
 		t.Outbounds[0].Mux = &Mux{
 			Enabled:     setting.MuxOn == configure.Yes,
