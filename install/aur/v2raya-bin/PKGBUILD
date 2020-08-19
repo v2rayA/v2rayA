@@ -22,7 +22,7 @@ source=(
     "v2raya.service"
     "v2raya.png"
     "v2raya.desktop"
-    "web.tar.gz"
+    "web.tar.gz::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/web_v${pkgver}.tar.gz"
 )
 
 source_i686=(
