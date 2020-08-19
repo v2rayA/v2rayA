@@ -108,11 +108,11 @@ func Run() error {
 	if net.ParseIP(ip).IsUnspecified() && err == nil {
 		for _, addr := range addrs {
 			if ipnet, ok := addr.(*net.IPNet); ok {
-				if ipnet.IP.IsLoopback() {
-					printRunningAt("http://" + app.Address)
-					continue
+				if ipnet.IP.To4() == nil {
+					printRunningAt("http://[" + ipnet.IP.String() + ":" + port + "]")
+				} else {
+					printRunningAt("http://" + ipnet.IP.String() + ":" + port)
 				}
-				printRunningAt("http://" + ipnet.IP.String() + ":" + port)
 			}
 		}
 	} else {
