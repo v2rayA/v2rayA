@@ -153,10 +153,12 @@ func CheckAndProbeTProxy() (err error) {
 	return
 }
 
-func CheckDohSupported() (err error) {
-	ver, err := GetV2rayServiceVersion()
-	if err != nil {
-		return newError("failed to get the version of v2ray-core")
+func CheckDohSupported(ver string) (err error) {
+	if ver == "" {
+		ver, err = GetV2rayServiceVersion()
+		if err != nil {
+			return newError("failed to get the version of v2ray-core")
+		}
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
 		return newError("the version of v2ray-core is lower than 4.22.0")

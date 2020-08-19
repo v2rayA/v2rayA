@@ -4,6 +4,7 @@ import (
 	"github.com/mzz2017/v2rayA/db/configure"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -54,14 +55,21 @@ func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 		if v.VmessInfo.Protocol == "" {
 			v.VmessInfo.Protocol = "vmess"
 		}
+		protocol := strings.ToUpper(v.VmessInfo.Protocol)
 		var protoToShow string
 		switch v.VmessInfo.Protocol {
-		case "", "vmess", "ss", "shadowsocks":
-			protoToShow = fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Net)
+		case "", "vmess", "vless":
+			if v.VmessInfo.TLS == "tls" {
+				protoToShow = fmt.Sprintf("%v(%v+tls)", protocol, v.VmessInfo.Net)
+				break
+			}
+			fallthrough
+		case "ss", "shadowsocks":
+			protoToShow = fmt.Sprintf("%v(%v)", protocol, v.VmessInfo.Net)
 		case "ssr", "shadowsocksr":
-			protoToShow = fmt.Sprintf("%v(%v)", v.VmessInfo.Protocol, v.VmessInfo.Type)
+			protoToShow = fmt.Sprintf("%v(%v)", protocol, v.VmessInfo.Type)
 		default:
-			protoToShow = v.VmessInfo.Protocol
+			protoToShow = protocol
 		}
 		var address string
 		if v.VmessInfo.Port == "" {

@@ -12,19 +12,29 @@
         class="block"
         type="is-boxed is-twitter same-width-5"
       >
-        <b-tab-item label="VMESS">
+        <b-tab-item label="V2RAY">
+          <b-field
+            v-show="showVLess"
+            label="Protocol"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.protocol" expanded>
+              <option value="vmess">VMESS</option>
+              <option value="vless">VLESS</option>
+            </b-select>
+          </b-field>
           <b-field label="Name" label-position="on-border">
             <b-input
-              ref="vmess_name"
-              v-model="vmess.ps"
+              ref="v2ray_name"
+              v-model="v2ray.ps"
               :placeholder="$t('configureServer.servername')"
               expanded
             />
           </b-field>
           <b-field label="Address" label-position="on-border">
             <b-input
-              ref="vmess_add"
-              v-model="vmess.add"
+              ref="v2ray_add"
+              v-model="v2ray.add"
               required
               placeholder="IP / HOST"
               expanded
@@ -32,8 +42,8 @@
           </b-field>
           <b-field label="Port" label-position="on-border">
             <b-input
-              ref="vmess_port"
-              v-model="vmess.port"
+              ref="v2ray_port"
+              v-model="v2ray.port"
               required
               :placeholder="$t('configureServer.port')"
               type="number"
@@ -42,17 +52,21 @@
           </b-field>
           <b-field label="ID" label-position="on-border">
             <b-input
-              ref="vmess_id"
-              v-model="vmess.id"
+              ref="v2ray_id"
+              v-model="v2ray.id"
               required
               placeholder="UserID"
               expanded
             />
           </b-field>
-          <b-field label="AlterID" label-position="on-border">
+          <b-field
+            v-show="v2ray.protocol !== 'vless'"
+            label="AlterID"
+            label-position="on-border"
+          >
             <b-input
-              ref="vmess_aid"
-              v-model="vmess.aid"
+              ref="v2ray_aid"
+              v-model="v2ray.aid"
               placeholder="AlterID"
               type="number"
               min="0"
@@ -62,23 +76,23 @@
             />
           </b-field>
           <b-field
-            v-show="vmess.type !== 'dtls'"
+            v-show="v2ray.type !== 'dtls'"
             label="TLS"
             label-position="on-border"
           >
-            <b-select v-model="vmess.tls" expanded @input="handleNetworkChange">
+            <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">{{ $t("setting.options.on") }}</option>
             </b-select>
           </b-field>
           <b-field
-            v-show="vmess.tls === 'tls'"
+            v-show="v2ray.tls === 'tls'"
             label="AllowInsecure"
             label-position="on-border"
           >
             <b-select
-              ref="vmess_allow_insecure"
-              v-model="vmess.allowInsecure"
+              ref="v2ray_allow_insecure"
+              v-model="v2ray.allowInsecure"
               expanded
               required
             >
@@ -88,8 +102,8 @@
           </b-field>
           <b-field label="Network" label-position="on-border">
             <b-select
-              ref="vmess_net"
-              v-model="vmess.net"
+              ref="v2ray_net"
+              v-model="v2ray.net"
               expanded
               required
               @input="handleNetworkChange"
@@ -101,11 +115,11 @@
             </b-select>
           </b-field>
           <b-field
-            v-show="vmess.net === 'tcp'"
+            v-show="v2ray.net === 'tcp'"
             label="Type"
             label-position="on-border"
           >
-            <b-select v-model="vmess.type" expanded>
+            <b-select v-model="v2ray.type" expanded>
               <option value="none"
                 >{{ $t("configureServer.noObfuscation") }}
               </option>
@@ -115,11 +129,11 @@
             </b-select>
           </b-field>
           <b-field
-            v-show="vmess.net === 'kcp'"
+            v-show="v2ray.net === 'kcp'"
             label="Type"
             label-position="on-border"
           >
-            <b-select v-model="vmess.type" expanded>
+            <b-select v-model="v2ray.type" expanded>
               <option value="none"
                 >{{ $t("configureServer.noObfuscation") }}
               </option>
@@ -145,23 +159,25 @@
             </b-select>
           </b-field>
           <b-field
-            v-show="vmess.net === 'ws' || vmess.net === 'h2'"
+            v-show="
+              v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.tls === 'tls'
+            "
             label="Host"
             label-position="on-border"
           >
             <b-input
-              v-model="vmess.host"
+              v-model="v2ray.host"
               :placeholder="$t('configureServer.hostObfuscation')"
               expanded
             />
           </b-field>
           <b-field
-            v-show="vmess.net === 'ws' || vmess.net === 'h2'"
+            v-show="v2ray.net === 'ws' || v2ray.net === 'h2'"
             label="Path"
             label-position="on-border"
           >
             <b-input
-              v-model="vmess.path"
+              v-model="v2ray.path"
               :placeholder="$t('configureServer.pathObfuscation')"
               expanded
             />
@@ -458,7 +474,8 @@ export default {
     }
   },
   data: () => ({
-    vmess: {
+    showVLess: false,
+    v2ray: {
       ps: "",
       add: "",
       port: "",
@@ -511,6 +528,7 @@ export default {
     tabChoice: 0
   }),
   mounted() {
+    this.showVLess = localStorage["vlessValid"] === "true";
     if (this.which !== null) {
       this.$axios({
         url: apiRoot + "/sharingAddress",
@@ -523,7 +541,7 @@ export default {
           if (
             res.data.data.sharingAddress.toLowerCase().startsWith("vmess://")
           ) {
-            this.vmess = this.resolveURL(res.data.data.sharingAddress);
+            this.v2ray = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 0;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("ss://")
@@ -562,7 +580,7 @@ export default {
         obj.ps = decodeURIComponent(obj.ps);
         obj.tls = obj.tls || "none";
         obj.type = obj.type || "none";
-        obj.protocol = "vmess";
+        obj.protocol = obj.protocol || "vmess";
         return obj;
       } else if (url.toLowerCase().indexOf("ss://") >= 0) {
         const regexp = /ss:\/\/(.+)@(.+):(.+)#(.*)/;
@@ -636,6 +654,9 @@ export default {
       let obj = {};
       let params = {};
       switch (srcObj.protocol) {
+        case "vless":
+        //FIXME: 临时方案
+        // eslint-disable-next-line no-fallthrough
         case "vmess":
           //尽量减少生成的链接长度
           obj = Object.assign({}, srcObj);
@@ -643,7 +664,9 @@ export default {
             case "kcp":
             case "tcp":
               obj.path = "";
-              obj.host = "";
+              if (obj.tls !== "tls") {
+                obj.host = "";
+              }
               break;
             default:
               obj.type = "";
@@ -691,7 +714,7 @@ export default {
       return null;
     },
     handleNetworkChange() {
-      this.vmess.type = "none";
+      this.v2ray.type = "none";
     },
     handleClickSubmit() {
       let valid = true;
@@ -699,7 +722,7 @@ export default {
         if (!this.$refs.hasOwnProperty(k)) {
           continue;
         }
-        if (this.tabChoice === 0 && !k.startsWith("vmess_")) {
+        if (this.tabChoice === 0 && !k.startsWith("v2ray_")) {
           continue;
         }
         if (this.tabChoice === 1 && !k.startsWith("ss_")) {
@@ -731,7 +754,7 @@ export default {
       }
       let coded = "";
       if (this.tabChoice === 0) {
-        coded = this.generateURL(this.vmess);
+        coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
         coded = this.generateURL(this.ss);
       } else if (this.tabChoice === 2) {

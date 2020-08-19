@@ -11,7 +11,7 @@
         style="position: relative"
         ><span>{{ $t("common.latest") }}:</span>
         <a
-          href="https://github.com/Loyalsoldier/v2ray-rules-dat/releases"
+          href="https://github.com/mzz2017/dist-v2ray-rules-dat/releases"
           target="_blank"
           class="is-link"
           >{{ remoteGFWListVersion }}</a
