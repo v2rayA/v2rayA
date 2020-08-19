@@ -16,7 +16,6 @@ cp "$srcdir"/install/aur/v2raya-bin/.* ./
 cp "$srcdir"/install/universal/v2raya.desktop ./
 cp "$srcdir"/install/universal/v2raya.png ./
 cp "$srcdir"/install/universal/v2raya.service ./
-cp "$srcdir"/web.tar.gz ./
 
 sed -i s/{{pkgver}}/"${VERSION:1}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha1sums_i686}}/"${sha1sums_i686}"/g PKGBUILD .SRCINFO
