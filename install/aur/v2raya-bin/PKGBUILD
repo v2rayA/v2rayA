@@ -44,7 +44,7 @@ source_armv7h=(
 sha1sums=(
     "$sha_service"
     "$sha_png"
-    "$sha_desktop",
+    "$sha_desktop"
     "$sha_web"
 )
 
