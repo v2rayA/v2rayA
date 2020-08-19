@@ -10,6 +10,7 @@ import (
 	"github.com/mzz2017/v2rayA/controller"
 	"github.com/mzz2017/v2rayA/db/configure"
 	"github.com/mzz2017/v2rayA/global"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -18,6 +19,11 @@ import (
 )
 
 func ServeGUI(engine *gin.Engine) {
+	defer func() {
+		if msg := recover(); msg != nil {
+			log.Println(msg)
+		}
+	}()
 	webDir := path.Join(global.GetEnvironmentConfig().Config, "web")
 	filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
 		if path == webDir {
@@ -34,6 +40,24 @@ func ServeGUI(engine *gin.Engine) {
 	engine.GET("/", func(context *gin.Context) {
 		context.HTML(http.StatusOK, "index.html", nil)
 	})
+
+	app := global.GetEnvironmentConfig()
+
+	ip, port := netTools.ParseAddress(app.Address)
+	addrs, err := net.InterfaceAddrs()
+	if net.ParseIP(ip).IsUnspecified() && err == nil {
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok {
+				if ipnet.IP.To4() == nil {
+					printRunningAt("http://[" + ipnet.IP.String() + ":" + port + "]")
+				} else {
+					printRunningAt("http://" + ipnet.IP.String() + ":" + port)
+				}
+			}
+		}
+	} else {
+		printRunningAt("http://" + app.Address)
+	}
 }
 
 func Run() error {
@@ -101,24 +125,7 @@ func Run() error {
 
 	ServeGUI(engine)
 
-	app := global.GetEnvironmentConfig()
-
-	ip, port := netTools.ParseAddress(app.Address)
-	addrs, err := net.InterfaceAddrs()
-	if net.ParseIP(ip).IsUnspecified() && err == nil {
-		for _, addr := range addrs {
-			if ipnet, ok := addr.(*net.IPNet); ok {
-				if ipnet.IP.To4() == nil {
-					printRunningAt("http://[" + ipnet.IP.String() + ":" + port + "]")
-				} else {
-					printRunningAt("http://" + ipnet.IP.String() + ":" + port)
-				}
-			}
-		}
-	} else {
-		printRunningAt("http://" + app.Address)
-	}
-	return engine.Run(app.Address)
+	return engine.Run(global.GetEnvironmentConfig().Address)
 }
 
 func printRunningAt(address string) {
