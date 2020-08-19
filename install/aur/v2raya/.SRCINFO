@@ -12,6 +12,7 @@ pkgbase = v2raya
 	license = GPL
 	makedepends = go>=2:1.11.3-1
 	makedepends = nodejs>=12.13.0-1
+	makedepends = npm
 	depends = glibc
 	depends = v2ray
 	source = v2raya-{{pkgver}}.tar.gz::https://github.com/mzz2017/v2rayA/archive/v{{pkgver}}.tar.gz
