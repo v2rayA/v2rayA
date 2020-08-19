@@ -6,10 +6,35 @@ import (
 	"github.com/gookit/color"
 	"github.com/mzz2017/v2rayA/common"
 	"github.com/mzz2017/v2rayA/common/jwt"
+	"github.com/mzz2017/v2rayA/common/netTools"
 	"github.com/mzz2017/v2rayA/controller"
-	"github.com/mzz2017/v2rayA/global"
 	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/global"
+	"net"
+	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 )
+
+func ServeGUI(engine *gin.Engine) {
+	webDir := path.Join(global.GetEnvironmentConfig().Config, "web")
+	filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
+		if path == webDir {
+			return nil
+		}
+		if info.IsDir() {
+			engine.Static("/"+info.Name(), path)
+			return filepath.SkipDir
+		}
+		engine.StaticFile("/"+info.Name(), path)
+		return nil
+	})
+	engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
+	engine.GET("/", func(context *gin.Context) {
+		context.HTML(http.StatusOK, "index.html", nil)
+	})
+}
 
 func Run() error {
 	engine := gin.New()
@@ -22,10 +47,6 @@ func Run() error {
 	}
 	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
-	engine.GET("/", func(ctx *gin.Context) {
-		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		ctx.String(418, `<body>Here is v2rayA backend. Reference: <a href="https://github.com/mzz2017/v2rayA">https://github.com/mzz2017/v2rayA</a></body>`)
-	})
 	noAuth := engine.Group("api")
 	{
 		noAuth.GET("version", controller.GetVersion)
@@ -77,9 +98,29 @@ func Run() error {
 		auth.GET("routingA", controller.GetRoutingA)
 		auth.PUT("routingA", controller.PutRoutingA)
 	}
-	color.Red.Println("v2rayA is running at", global.GetEnvironmentConfig().Address)
-	color.Red.Println("GUI demo: https://v2raya.mzz.pub")
-	color.Red.Println("GUI demo: http://v.mzz.pub")
+
+	ServeGUI(engine)
+
 	app := global.GetEnvironmentConfig()
+
+	ip, port := netTools.ParseAddress(app.Address)
+	addrs, err := net.InterfaceAddrs()
+	if net.ParseIP(ip).IsUnspecified() && err == nil {
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok {
+				if ipnet.IP.IsLoopback() {
+					printRunningAt("http://" + app.Address)
+					continue
+				}
+				printRunningAt("http://" + ipnet.IP.String() + ":" + port)
+			}
+		}
+	} else {
+		printRunningAt("http://" + app.Address)
+	}
 	return engine.Run(app.Address)
+}
+
+func printRunningAt(address string) {
+	color.Red.Println("v2rayA is listening at", address)
 }

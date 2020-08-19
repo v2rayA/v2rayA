@@ -20,6 +20,7 @@ pkgbase = v2raya-bin
 	sha1sums = {{sha_service}}
 	sha1sums = {{sha_png}}
 	sha1sums = {{sha_desktop}}
+	sha1sums = {{sha_web}}
 	source_i686 = v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_386_v{{pkgver}}
 	sha1sums_i686 = {{sha1sums_i686}}
 	source_x86_64 = v2raya::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_amd64_v{{pkgver}}

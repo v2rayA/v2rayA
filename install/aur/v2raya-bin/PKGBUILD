@@ -16,11 +16,13 @@ conflicts=('v2raya')
 sha_service={{sha_service}}
 sha_png={{sha_png}}
 sha_desktop={{sha_desktop}}
+sha_web={{sha_web}}
 
 source=(
     "v2raya.service"
     "v2raya.png"
     "v2raya.desktop"
+    "web.tar.gz"
 )
 
 source_i686=(
@@ -42,7 +44,8 @@ source_armv7h=(
 sha1sums=(
     "$sha_service"
     "$sha_png"
-    "$sha_desktop"
+    "$sha_desktop",
+    "$sha_web"
 )
 
 sha1sums_i686=(
@@ -69,4 +72,7 @@ package() {
 
     install -Dm644 "v2raya.png" "$pkgdir/usr/share/icons/v2raya.png"
     install -Dm755 "v2raya.desktop" -t "$pkgdir/usr/share/applications/"
+
+    install -d -Dm755 "web" "$pkgdir/etc/v2raya/web"
+    cp -r web/* "$pkgdir/etc/v2raya/web"
 }

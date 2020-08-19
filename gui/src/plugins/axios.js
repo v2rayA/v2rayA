@@ -149,7 +149,10 @@ axios.interceptors.response.use(
           window.open("http://v.mzz.pub", "_self");
         }
       });
-    } else if (err.message === "Network Error") {
+    } else if (
+      (err.message && err.message === "Network Error") ||
+      (err.config && err.config.url === "/api/version")
+    ) {
       informNotRunning(u.source.replace(u.relative, ""));
     } else {
       //其他错误
