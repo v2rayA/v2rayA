@@ -18,7 +18,7 @@ build() {
     export GO111MODULE=on
     export GOPROXY=https://goproxy.io
     go build -ldflags="-X github.com/mzz2017/v2rayA/global.Version=$pkgver" -o v2raya
-    cd ../gui && npm install && npm run build
+    cd ../gui && npm install --registry https://registry.npm.taobao.org && npm run build
 }
 
 package() {
