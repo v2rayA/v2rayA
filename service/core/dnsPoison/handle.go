@@ -208,9 +208,9 @@ func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname strin
 				case AgainstBlacklist:
 					log.Println("dnsPoison["+ifname+"]: [against]", r.domain, "proof:", dm+msg)
 				case AddBlacklist:
-					log.Println("dnsPoison["+ifname+"]: {add blacklist}", r.domain)
+					log.Println("dnsPoison["+ifname+"]: {add blocklist}", r.domain)
 				case RemoveBlacklist:
-					log.Println("dnsPoison["+ifname+"]: {remove blacklist}", r.domain)
+					log.Println("dnsPoison["+ifname+"]: {remove blocklist}", r.domain)
 				}
 			}
 		}

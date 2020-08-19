@@ -69,3 +69,13 @@ func IsIntranet4(ipv4 *[4]byte) bool {
 func IsJokernet4(ipv4 *[4]byte) bool {
 	return trieJokernet.Match(ipv4ToBin(ipv4)) != ""
 }
+
+func ParseAddress(address string) (ip string, port string) {
+	p := strings.LastIndex(address, ":")
+	if p == -1 {
+		return
+	}
+	port = address[p+1:]
+	ip = address[:p]
+	return
+}

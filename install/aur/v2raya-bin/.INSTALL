@@ -12,11 +12,9 @@ post_install() {
     else
         ECHO='echo'
     fi;
-    $ECHO "\033[36m**************************************\033[0m"
-    $ECHO "\033[36m*         Congratulations!           *\033[0m"
-    $ECHO "\033[36m* HTTPS demo: https://v2raya.mzz.pub *\033[0m"
-    $ECHO "\033[36m* HTTP  demo: http://v.mzz.pub       *\033[0m"
-    $ECHO "\033[36m**************************************\033[0m"
+    $ECHO "\033[36m******************************\033[0m"
+    $ECHO "\033[36m*         Completed!         *\033[0m"
+    $ECHO "\033[36m******************************\033[0m"
 }
 
 post_upgrade() {
@@ -30,11 +28,9 @@ post_upgrade() {
     else
         ECHO='echo'
     fi;
-    $ECHO "\033[36m**************************************\033[0m"
-    $ECHO "\033[36m*         Congratulations!           *\033[0m"
-    $ECHO "\033[36m* HTTPS demo: https://v2raya.mzz.pub *\033[0m"
-    $ECHO "\033[36m* HTTP  demo: http://v.mzz.pub       *\033[0m"
-    $ECHO "\033[36m**************************************\033[0m"
+    $ECHO "\033[36m******************************\033[0m"
+    $ECHO "\033[36m*         Completed!         *\033[0m"
+    $ECHO "\033[36m******************************\033[0m"
 }
 
 pre_remove() {
