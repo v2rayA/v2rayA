@@ -5,5 +5,5 @@ Type=Application
 Name=v2rayA
 Categories=Network;
 Keywords=Internet;VPN;Proxy;v2ray;v2raya
-Exec=xdg-open "https://v2raya.mzz.pub"
+Exec=xdg-open "http://127.0.0.1:2017"
 Icon=/usr/share/icons/v2raya.png
