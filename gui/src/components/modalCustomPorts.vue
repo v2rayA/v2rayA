@@ -14,7 +14,6 @@
           ref="backendAddress"
           v-model="table.backendAddress"
           placeholder="http://localhost:2017"
-          required
           pattern="https?://.+(:\d+)?"
         >
           >
