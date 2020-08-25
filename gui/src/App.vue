@@ -142,8 +142,10 @@ export default {
   created() {
     console.log("app created");
     let ba = localStorage.getItem("backendAddress");
-    let u = parseURL(ba);
-    document.title = `v2rayA - ${u.host}:${u.port}`;
+    if (ba) {
+      let u = parseURL(ba);
+      document.title = `v2rayA - ${u.host}:${u.port}`;
+    }
     this.$axios({
       url: apiRoot + "/version"
     }).then(res => {
