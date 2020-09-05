@@ -43,7 +43,7 @@ func TestDown(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Remove("favicon.ico")
-			err := Down(tt.args.request)
+			err := Down(tt.args.request, "/tmp")
 			if err != nil {
 				t.Errorf("error down= %v", err)
 				return

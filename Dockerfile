@@ -15,16 +15,19 @@ RUN export VERSION=$(cat ./version) && go build -ldflags="-X github.com/mzz2017/
 FROM node:lts-alpine AS builder-web
 ADD gui /build/gui
 WORKDIR /build/gui
-RUN npm install --registry https://registry.npm.taobao.org && npm run build
+RUN yarn config set registry https://registry.npm.taobao.org
+RUN yarn config set sass_binary_site https://cdn.npm.taobao.org/dist/node-sass -g
+RUN yarn
+RUN yarn build
 
 FROM v2fly/v2fly-core AS v2ray
 
 FROM bgiddings/iptables:latest
 COPY --from=builder /build/service/v2raya /usr/bin/
-COPY --from=builder-web /build/web /etc/v2raya/web
-COPY --from=v2ray /usr/bin/v2ray/* /etc/v2ray/
-ENV PATH=$PATH:/etc/v2ray
+COPY --from=builder-web /build/web /etc/v2raya-web
+COPY --from=v2ray /usr/bin/v2ray/* /usr/share/v2ray/
+ENV PATH=$PATH:/usr/share/v2ray
 ENV GIN_MODE=release
 EXPOSE 2017
-ENTRYPOINT ["v2raya","--mode=universal"]
+ENTRYPOINT ["v2raya","--mode=universal", "--webdir=/etc/v2raya-web"]
 
