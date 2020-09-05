@@ -9,6 +9,7 @@ import (
 	"github.com/mzz2017/v2rayA/common/ntp"
 	"github.com/mzz2017/v2rayA/core/dnsPoison/entity"
 	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/core/v2ray/where"
 	"github.com/mzz2017/v2rayA/core/vmessInfo"
 	"github.com/mzz2017/v2rayA/db/configure"
 	"github.com/mzz2017/v2rayA/global"
@@ -123,7 +124,7 @@ func RestartV2rayService() (err error) {
 		}
 	case global.UniversalMode:
 		_ = killV2ray()
-		v2wd, _ := asset.GetV2rayWorkingDir()
+		v2wd, _ := where.GetV2rayWorkingDir()
 		v2ctlDir, _ := asset.GetV2ctlDir()
 		global.V2RayPID, err = os.StartProcess(v2wd+"/v2ray", []string{"--config=" + asset.GetConfigPath()}, &os.ProcAttr{
 			Dir: v2ctlDir, //防止找不到v2ctl

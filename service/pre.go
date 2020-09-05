@@ -5,6 +5,19 @@ import (
 	"github.com/gookit/color"
 	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
+	"github.com/mzz2017/v2rayA/common/netTools/ports"
+	"github.com/mzz2017/v2rayA/core/ipforward"
+	"github.com/mzz2017/v2rayA/core/iptables"
+	"github.com/mzz2017/v2rayA/core/v2ray"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/mzz2017/v2rayA/core/v2ray/where"
+	"github.com/mzz2017/v2rayA/db"
+	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/mzz2017/v2rayA/extra/gopeed"
+	"github.com/mzz2017/v2rayA/global"
+	"github.com/mzz2017/v2rayA/router"
+	"github.com/mzz2017/v2rayA/service"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
@@ -20,18 +33,6 @@ import (
 	"syscall"
 	"time"
 	"v2ray.com/core/common/errors"
-	"github.com/mzz2017/v2rayA/common/netTools/ports"
-	"github.com/mzz2017/v2rayA/core/ipforward"
-	"github.com/mzz2017/v2rayA/core/iptables"
-	"github.com/mzz2017/v2rayA/core/v2ray"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset/gfwlist"
-	"github.com/mzz2017/v2rayA/db"
-	"github.com/mzz2017/v2rayA/db/configure"
-	"github.com/mzz2017/v2rayA/extra/gopeed"
-	"github.com/mzz2017/v2rayA/global"
-	"github.com/mzz2017/v2rayA/router"
-	"github.com/mzz2017/v2rayA/service"
 )
 
 func checkEnvironment() {
@@ -172,7 +173,7 @@ func initConfigure() {
 	//检查geoip、geosite是否存在
 	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 		dld := func(repo, filename, localname string) (err error) {
-			color.Red.Println("installing" + filename)
+			color.Red.Println("installing " + filename)
 			p := asset.GetV2rayLocationAsset() + "/" + filename
 			resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 			if err != nil {
@@ -227,7 +228,7 @@ func checkConnection() {
 
 func hello() {
 	color.Red.Println("V2RayLocationAsset is", asset.GetV2rayLocationAsset())
-	wd, _ := asset.GetV2rayWorkingDir()
+	wd, _ := where.GetV2rayWorkingDir()
 	color.Red.Println("V2Ray binary is at", wd+"/v2ray")
 	wd, _ = os.Getwd()
 	color.Red.Println("v2rayA working directory is", wd)

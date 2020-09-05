@@ -3,6 +3,11 @@ package asset
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/common/files"
+	"github.com/mzz2017/v2rayA/core/dnsPoison"
+	"github.com/mzz2017/v2rayA/core/v2ray/where"
+	"github.com/mzz2017/v2rayA/global"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,9 +19,6 @@ import (
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
-	"github.com/mzz2017/v2rayA/common/files"
-	"github.com/mzz2017/v2rayA/core/dnsPoison"
-	"github.com/mzz2017/v2rayA/global"
 )
 
 var v2rayLocationAsset *string
@@ -27,7 +29,7 @@ func GetV2rayLocationAsset() (s string) {
 	}
 	switch global.ServiceControlMode {
 	case global.SystemctlMode, global.ServiceMode:
-		p, _ := GetV2rayServiceFilePath()
+		p, _ := where.GetV2rayServiceFilePath()
 		out, err := exec.Command("sh", "-c", "cat "+p+"|grep Environment=V2RAY_LOCATION_ASSET").CombinedOutput()
 		if err != nil {
 			break
@@ -37,12 +39,21 @@ func GetV2rayLocationAsset() (s string) {
 	}
 	var err error
 	if s == "" {
-		//by default, v2ray working directory
-		s, err = GetV2rayWorkingDir()
-	}
-	if err != nil {
 		//fine, guess one
-		s = "/etc/v2ray"
+		var ver string
+		var is bool
+		if ver, err = where.GetV2rayServiceVersion(); err == nil {
+			if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
+				s = "/usr/share/v2ray/"
+			}
+		}
+		if s == "" {
+			//maybe v2ray working directory
+			s, err = where.GetV2rayWorkingDir()
+			if err != nil {
+				s = "/etc/v2ray"
+			}
+		}
 	} else {
 		//save the result if not by guess
 		v2rayLocationAsset = &s
@@ -50,29 +61,8 @@ func GetV2rayLocationAsset() (s string) {
 	return
 }
 
-func GetV2rayWorkingDir() (string, error) {
-	switch global.ServiceControlMode {
-	case global.SystemctlMode, global.ServiceMode:
-		//从systemd的启动参数里找
-		p, _ := GetV2rayServiceFilePath()
-		out, err := exec.Command("sh", "-c", "cat "+p+"|grep ExecStart=").CombinedOutput()
-		if err != nil {
-			return "", newError(string(out)).Base(err)
-		}
-		arr := strings.SplitN(strings.TrimSpace(string(out)), " ", 2)
-		return path.Dir(strings.TrimPrefix(arr[0], "ExecStart=")), nil
-	case global.UniversalMode:
-		//从环境变量里找
-		out, err := exec.Command("sh", "-c", "which v2ray").CombinedOutput()
-		if err == nil {
-			return path.Dir(strings.TrimSpace(string(out))), nil
-		}
-	}
-	return "", newError("not found")
-}
-
 func GetV2ctlDir() (string, error) {
-	d, err := GetV2rayWorkingDir()
+	d, err := where.GetV2rayWorkingDir()
 	if err == nil {
 		_, err := os.Stat(d + "/v2ctl")
 		if err != nil {
@@ -135,7 +125,7 @@ func GetConfigPath() (p string) {
 	switch global.ServiceControlMode {
 	case global.SystemctlMode, global.ServiceMode:
 		//从systemd的启动参数里找
-		pa, _ := GetV2rayServiceFilePath()
+		pa, _ := where.GetV2rayServiceFilePath()
 		out, e := exec.Command("sh", "-c", "cat "+pa+"|grep ExecStart=").CombinedOutput()
 		if e != nil {
 			return
@@ -175,7 +165,7 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	var siteList v2router.GeoSiteList
 	b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
 	if err != nil {
-		return  nil, newError("GetWhitelistCn").Base(err)
+		return nil, newError("GetWhitelistCn").Base(err)
 	}
 	err = proto.Unmarshal(b, &siteList)
 	if err != nil {
@@ -213,43 +203,4 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	whitelistCn.domainMatcher = wlDomains
 	return
 }
-func GetV2rayServiceFilePath() (path string, err error) {
-	var out []byte
 
-	if global.ServiceControlMode == global.SystemctlMode {
-		out, err = exec.Command("sh", "-c", "systemctl status v2ray|grep /v2ray.service").CombinedOutput()
-		if err != nil {
-			err = newError(strings.TrimSpace(string(out)))
-			if !strings.Contains(string(out), "not be found") {
-				path = `/usr/lib/systemd/system/v2ray.service`
-				return
-			}
-		}
-	} else if global.ServiceControlMode == global.ServiceMode {
-		out, err = exec.Command("sh", "-c", "service v2ray status|grep /v2ray.service").CombinedOutput()
-		if err != nil || strings.TrimSpace(string(out)) == "(Reason:" {
-			if !strings.Contains(string(out), "not be found") {
-				path = `/lib/systemd/system/v2ray.service`
-				return
-			}
-			if err != nil {
-				err = newError(strings.TrimSpace(string(out)))
-			}
-		}
-	} else {
-		err = newError("commands systemctl and service not found")
-		return
-	}
-	if err != nil {
-		return
-	}
-	sout := string(out)
-	l := strings.Index(sout, "/")
-	r := strings.Index(sout, "/v2ray.service")
-	if l < 0 || r < 0 {
-		err = newError("fail: getV2rayServiceFilePath")
-		return
-	}
-	path = sout[l : r+len("/v2ray.service")]
-	return
-}
