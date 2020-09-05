@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/mzz2017/v2rayA/core/v2ray/where"
 	"net/http"
 	"github.com/mzz2017/v2rayA/common"
 	"github.com/mzz2017/v2rayA/core/v2ray"
@@ -14,7 +15,7 @@ func GetVersion(ctx *gin.Context) {
 	var vlessValid bool
 	var iptablesMode string
 
-	ver, err := v2ray.GetV2rayServiceVersion()
+	ver, err := where.GetV2rayServiceVersion()
 	if err == nil {
 		vlessValid, _ = common.VersionGreaterEqual(ver, "4.27.0")
 		err = v2ray.CheckDohSupported(ver)

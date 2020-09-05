@@ -2,14 +2,14 @@ package v2ray
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/core/v2ray/where"
+	"github.com/mzz2017/v2rayA/global"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset"
-	"github.com/mzz2017/v2rayA/global"
 )
 
 func EnableV2rayService() (err error) {
@@ -52,7 +52,7 @@ func OptimizeServiceFile() (err error) {
 	if global.ServiceControlMode != global.SystemctlMode && global.ServiceControlMode != global.ServiceMode {
 		return
 	}
-	p, err := asset.GetV2rayServiceFilePath()
+	p, err := where.GetV2rayServiceFilePath()
 	if err != nil {
 		return
 	}
@@ -116,15 +116,7 @@ func IsV2rayServiceValid() bool {
 	return false
 }
 
-/* get the version of v2ray-core without 'v' like 4.23.1 */
-func GetV2rayServiceVersion() (ver string, err error) {
-	dir, err := asset.GetV2rayWorkingDir()
-	if err != nil || len(dir) <= 0 {
-		return "", newError("cannot find v2ray executable binary")
-	}
-	out, err := exec.Command("sh", "-c", fmt.Sprintf("%v/v2ray -version|awk '{print $2}'|awk 'NR==1'", dir)).Output()
-	return strings.TrimSpace(string(out)), err
-}
+
 
 func IfTProxyModLoaded() bool {
 	out, err := exec.Command("sh", "-c", "lsmod|grep xt_TPROXY").Output()
@@ -132,7 +124,7 @@ func IfTProxyModLoaded() bool {
 }
 
 func CheckAndProbeTProxy() (err error) {
-	ver, err := GetV2rayServiceVersion()
+	ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		return newError("failed to get the version of v2ray-core").Base(err)
 	}
@@ -155,7 +147,7 @@ func CheckAndProbeTProxy() (err error) {
 
 func CheckDohSupported(ver string) (err error) {
 	if ver == "" {
-		ver, err = GetV2rayServiceVersion()
+		ver, err = where.GetV2rayServiceVersion()
 		if err != nil {
 			return newError("failed to get the version of v2ray-core")
 		}
@@ -165,3 +157,4 @@ func CheckDohSupported(ver string) (err error) {
 	}
 	return
 }
+

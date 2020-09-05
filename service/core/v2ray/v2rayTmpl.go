@@ -9,6 +9,7 @@ import (
 	"github.com/mzz2017/v2rayA/core/dnsPoison/entity"
 	"github.com/mzz2017/v2rayA/core/routingA"
 	"github.com/mzz2017/v2rayA/core/v2ray/asset"
+	"github.com/mzz2017/v2rayA/core/v2ray/where"
 	"github.com/mzz2017/v2rayA/core/vmessInfo"
 	"github.com/mzz2017/v2rayA/db/configure"
 	"github.com/mzz2017/v2rayA/global"
@@ -41,7 +42,7 @@ type TmplJson struct {
 	Mux            Mux            `json:"mux"`
 }
 type Template struct {
-	Log       Log        `json:"log"`
+	Log       *Log       `json:"log,omitempty"`
 	Inbounds  []Inbound  `json:"inbounds"`
 	Outbounds []Outbound `json:"outbounds"`
 	Routing   struct {
@@ -342,7 +343,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			if v.AllowInsecure {
 				o.StreamSettings.TLSSettings.AllowInsecure = true
 			}
-			ver, e := GetV2rayServiceVersion()
+			ver, e := where.GetV2rayServiceVersion()
 			if e != nil {
 				log.Println(newError("cannot get the version of v2ray-core").Base(e))
 			} else if !common.VersionMustGreaterEqual(ver, "4.23.2") {
@@ -987,8 +988,7 @@ func (t *Template) SetDirectRuleRouting(v vmessInfo.VmessInfo) (serverIPs []stri
 			Type:        "field",
 			OutboundTag: "direct",
 			Domain:      []string{"full:" + v.Add},
-		}}, t.Routing.Rules...
-		)
+		}}, t.Routing.Rules...)
 		serverDomain = v.Add
 		//解析IP
 		ips, e := net.LookupHost(v.Add)
@@ -1003,16 +1003,14 @@ func (t *Template) SetDirectRuleRouting(v vmessInfo.VmessInfo) (serverIPs []stri
 			Type:        "field",
 			OutboundTag: "direct",
 			IP:          serverIPs,
-		}}, t.Routing.Rules...
-		)
+		}}, t.Routing.Rules...)
 	}
 	//加入给定域名白名单
 	t.Routing.Rules = append([]RoutingRule{{
 		Type:        "field",
 		OutboundTag: "direct",
 		Domain:      DirectRuleDomains,
-	}}, t.Routing.Rules...
-	)
+	}}, t.Routing.Rules...)
 	return
 }
 
@@ -1029,7 +1027,13 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	t = tmplJson.Template
 	// 调试模式
 	if global.IsDebug() {
+		ioutil.WriteFile(t.Log.Access, nil, 0777)
+		ioutil.WriteFile(t.Log.Error, nil, 0777)
+		os.Chmod(t.Log.Access, 0777)
+		os.Chmod(t.Log.Error, 0777)
 		t.Log.Loglevel = "debug"
+	} else {
+		t.Log = nil
 	}
 	// 解析Outbound
 	o, err := ResolveOutbound(&v, "proxy", &global.GetEnvironmentConfig().PluginListenPort)
