@@ -129,15 +129,20 @@
               checkable
             >
               <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric>
+                <b-table-column field="id" label="ID" numeric sortable>
                   {{ props.row.id }}
                 </b-table-column>
-                <b-table-column field="host" :label="$t('subscription.host')">
+                <b-table-column
+                  field="host"
+                  :label="$t('subscription.host')"
+                  sortable
+                >
                   {{ props.row.host }}
                 </b-table-column>
                 <b-table-column
                   field="remarks"
                   :label="$t('subscription.remarks')"
+                  sortable
                 >
                   {{ props.row.remarks }}
                 </b-table-column>
@@ -145,12 +150,14 @@
                   field="status"
                   :label="$t('subscription.timeLastUpdate')"
                   width="260"
+                  sortable
                 >
                   {{ props.row.status }}
                 </b-table-column>
                 <b-table-column
                   :label="$t('subscription.numberServers')"
                   centered
+                  sortable
                 >
                   {{ props.row.servers.length }}
                 </b-table-column>
@@ -206,22 +213,35 @@
               :row-class="(row, index) => row.connected && 'is-connected'"
             >
               <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric>
+                <b-table-column field="id" label="ID" numeric sortable>
                   {{ props.row.id }}
                 </b-table-column>
-                <b-table-column field="name" :label="$t('server.name')">
+                <b-table-column
+                  field="name"
+                  :label="$t('server.name')"
+                  sortable
+                >
                   {{ props.row.name }}
                 </b-table-column>
-                <b-table-column field="address" :label="$t('server.address')">
+                <b-table-column
+                  field="address"
+                  :label="$t('server.address')"
+                  sortable
+                >
                   {{ props.row.address }}
                 </b-table-column>
-                <b-table-column field="net" :label="$t('server.protocol')">
+                <b-table-column
+                  field="net"
+                  :label="$t('server.protocol')"
+                  sortable
+                >
                   {{ props.row.net }}
                 </b-table-column>
                 <b-table-column
                   field="pingLatency"
                   :label="$t('server.latency')"
                   class="ping-latency"
+                  sortable
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
@@ -299,19 +319,28 @@
               :row-class="(row, index) => row.connected && 'is-connected'"
             >
               <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric>
+                <b-table-column field="id" label="ID" numeric sortable>
                   {{ props.row.id }}
                 </b-table-column>
-                <b-table-column field="name" :label="$t('server.name')">
+                <b-table-column
+                  field="name"
+                  :label="$t('server.name')"
+                  sortable
+                >
                   {{ props.row.name }}
                 </b-table-column>
-                <b-table-column field="address" :label="$t('server.address')">
+                <b-table-column
+                  field="address"
+                  :label="$t('server.address')"
+                  sortable
+                >
                   {{ props.row.address }}
                 </b-table-column>
                 <b-table-column
                   field="net"
                   :label="$t('server.protocol')"
                   style="font-size:0.9em"
+                  sortable
                 >
                   {{ props.row.net }}
                 </b-table-column>
@@ -319,6 +348,7 @@
                   field="pingLatency"
                   :label="$t('server.latency')"
                   class="ping-latency"
+                  sortable
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
