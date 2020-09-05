@@ -159,9 +159,9 @@ downloadV2Ray(){
     rm -rf /tmp/v2ray
     mkdir -p /tmp/v2ray
     if [[ "${DIST_SRC}" == "jsdelivr" ]]; then
-        TAG_URL="https://api.github.com/repos/v2ray/dist/tags"
+        TAG_URL="https://api.github.com/repos/mzz2017/dist/tags"
         DIST_LATEST_VER="$(normalizeVersion "$(curl ${PROXY} -s "${TAG_URL}" --connect-timeout 10| grep -Eo '"name":.*' | awk 'NR==1{print}' | cut -d\" -f4)")"
-        DOWNLOAD_LINK="https://cdn.jsdelivr.net/gh/v2ray/dist@${DIST_LATEST_VER}/v2ray-linux-${VDIS}.zip"
+        DOWNLOAD_LINK="https://cdn.jsdelivr.net/gh/mzz2017/dist@${DIST_LATEST_VER}/v2ray-linux-${VDIS}.zip"
     else
         DOWNLOAD_LINK="https://github.com/v2fly/v2ray-core/releases/download/${NEW_VER}/v2ray-linux-${VDIS}.zip"
     fi
