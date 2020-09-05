@@ -9,16 +9,21 @@ arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/mzz2017/v2rayA"
 license=('GPL')
 depends=('glibc' 'v2ray')
-makedepends=('go>=2:1.12.3-1' 'nodejs>=12.13.0-1' 'npm')
+makedepends=('go>=2:1.12.3-1' 'nodejs>=14' 'yarn')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/mzz2017/v2rayA/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 
 build() {
-    cd "v2rayA-$pkgver/service"
+    cd "$srcdir/v2rayA-$pkgver/gui"
+    yarn config set registry https://registry.npm.taobao.org
+    yarn config set sass_binary_site https://cdn.npm.taobao.org/dist/node-sass -g
+    yarn
+    yarn build
+
+    cd "$srcdir/v2rayA-$pkgver/service"
     export GO111MODULE=on
     export GOPROXY=https://goproxy.io
     go build -ldflags="-X github.com/mzz2017/v2rayA/global.Version=$pkgver" -o v2raya
-    cd ../gui && npm install --registry https://registry.npm.taobao.org && npm run build
 }
 
 package() {
