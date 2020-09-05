@@ -2,16 +2,16 @@ os:
   - linux
 language:
   - go
-  - ruby
   - node_js
-go: "1.14.x"
-node_js:
-  - 12
+  - ruby
+go:
+  - 1.14.x
 
 if: (tag =~ ^v) OR (tag =~ ^test) OR (branch = master) OR (branch == test)
 
 env:
   global:
+    - NODE_VERSION="lts/*"
     - GO111MODULE=on
     - NAME=v2raya
     - VERSION=$(git describe --abbrev=0 --tags)
@@ -28,7 +28,8 @@ addons:
       - gnupg2
       - expect
       - tar
-
+before_install:
+  - nvm install $NODE_VERSION
 install:
   - go get github.com/mitchellh/gox
   - gem install fpm
