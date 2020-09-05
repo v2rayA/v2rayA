@@ -24,7 +24,7 @@ func ServeGUI(engine *gin.Engine) {
 			log.Println(msg)
 		}
 	}()
-	webDir := path.Join(global.GetEnvironmentConfig().Config, "web")
+	webDir := global.GetEnvironmentConfig().WebDir
 	filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
 		if path == webDir {
 			return nil
