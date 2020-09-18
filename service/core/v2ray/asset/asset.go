@@ -44,7 +44,13 @@ func GetV2rayLocationAsset() (s string) {
 		var is bool
 		if ver, err = where.GetV2rayServiceVersion(); err == nil {
 			if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
-				s = "/usr/share/v2ray"
+				s = "/usr/local/share/v2ray"
+				if _, err := os.Stat(s); os.IsNotExist(err){
+					s = "/usr/share/v2ray"
+				}
+				if _, err := os.Stat(s); os.IsNotExist(err){
+					s = ""
+				}
 			}
 		}
 		if s == "" {
