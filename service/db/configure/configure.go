@@ -226,8 +226,7 @@ func GetDohListNotNil() *string {
 	r := new(string)
 	_ = db.Get("system", "dohList", &r)
 	if len(strings.TrimSpace(*r)) == 0 {
-		*r = `https://doh.opendns.com/dns-query
-https://dns.alidns.com/dns-query`
+		*r = `https://doh.opendns.com/dns-query`
 	}
 	return r
 }

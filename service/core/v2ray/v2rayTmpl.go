@@ -1061,10 +1061,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	//最后是routing
 	t.SetDNSRouting(v, dohIPs, dohHosts, setting, supportUDP)
 	serverIPs, serverDomain := t.SetDirectRuleRouting(v)
-	//添加hosts
-	if len(serverDomain) > 0 && len(serverIPs) > 0 {
-		t.DNS.Hosts[serverDomain] = serverIPs[0]
-	}
+	//添加目标服务器的ip到hosts中
+	//if len(serverDomain) > 0 && len(serverIPs) > 0 {
+	//	t.DNS.Hosts[serverDomain] = serverIPs[0]
+	//}
 	//PAC端口规则
 	if err = t.SetPacRouting(setting); err != nil {
 		return
