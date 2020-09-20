@@ -13,6 +13,7 @@ pkgbase = v2raya
 	makedepends = go>=2:1.12.3-1
 	makedepends = nodejs>=14
 	makedepends = yarn
+	makedepends = python2
 	depends = glibc
 	depends = v2ray
 	source = v2raya-{{pkgver}}.tar.gz::https://github.com/mzz2017/v2rayA/archive/v{{pkgver}}.tar.gz
