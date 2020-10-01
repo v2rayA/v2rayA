@@ -539,7 +539,6 @@ export default {
   },
   methods: {
     sortNumberServers(a, b, isAsc) {
-      console.log(a.servers.length, b.servers.length, isAsc);
       if (!isAsc) {
         return a.servers.length < b.servers.length ? 1 : -1;
       }
@@ -923,7 +922,7 @@ export default {
               { errorCorrectionLevel: "H" },
               function(error) {
                 if (error) console.error(error);
-                console.log("QRCode has been generated successfully!");
+                // console.log("QRCode has been generated successfully!");
               }
             );
             let targets = document.querySelectorAll(".sharingAddressTag");
