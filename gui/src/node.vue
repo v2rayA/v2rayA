@@ -94,7 +94,7 @@
             {{ $t("welcome.title") }}
           </p>
           <a class="card-header-icon">
-            <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"> </b-icon>
+            <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"></b-icon>
           </a>
         </div>
         <div class="card-content">
@@ -157,7 +157,9 @@
                 <b-table-column
                   :label="$t('subscription.numberServers')"
                   centered
+                  numeric
                   sortable
+                  :custom-sort="sortNumberServers"
                 >
                   {{ props.row.servers.length }}
                 </b-table-column>
@@ -194,8 +196,8 @@
                 </b-table-column>
               </template>
             </b-table>
-          </b-field></b-tab-item
-        >
+          </b-field>
+        </b-tab-item>
         <b-tab-item
           label="SERVER"
           :icon="
@@ -242,6 +244,7 @@
                   :label="$t('server.latency')"
                   class="ping-latency"
                   sortable
+                  :custom-sort="sortping"
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
@@ -349,6 +352,7 @@
                   :label="$t('server.latency')"
                   class="ping-latency"
                   sortable
+                  :custom-sort="sortping"
                 >
                   {{ props.row.pingLatency }}
                 </b-table-column>
@@ -444,6 +448,7 @@ import ModalServer from "@/components/modalServer";
 import ModalSubscription from "@/components/modalSuscription";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
+
 export default {
   name: "Node",
   components: { ModalSubscription, ModalServer },
@@ -533,6 +538,26 @@ export default {
     });
   },
   methods: {
+    sortNumberServers(a, b, isAsc) {
+      console.log(a.servers.length, b.servers.length, isAsc);
+      if (!isAsc) {
+        return a.servers.length < b.servers.length ? 1 : -1;
+      }
+      return a.servers.length > b.servers.length ? 1 : -1;
+    },
+    sortping(a, b, isAsc) {
+      if (isNaN(parseInt(a.pingLatency))) {
+        return 1;
+      }
+      if (isNaN(parseInt(b.pingLatency))) {
+        return -1;
+      }
+      if (!isAsc) {
+        return parseInt(a.pingLatency) < parseInt(b.pingLatency) ? 1 : -1;
+      } else {
+        return parseInt(a.pingLatency) > parseInt(b.pingLatency) ? 1 : -1;
+      }
+    },
     updateConnectView(runningState) {
       if (!runningState) {
         runningState = this.runningState;
@@ -1053,21 +1078,26 @@ export default {
 td {
   font-size: 0.9em;
 }
+
 .node-section {
   margin-top: 1rem;
+
   .iconfont {
     margin-right: 0.1em;
   }
+
   .operate-box {
     > * {
       margin-right: 0.5rem;
     }
   }
 }
+
 .card {
   max-width: 500px;
   margin: auto;
 }
+
 .ping-latency {
   font-size: 0.8em;
 }
@@ -1075,6 +1105,7 @@ td {
 
 <style lang="scss">
 @import "~bulma/sass/utilities/all";
+
 #toolbar {
   padding: 0.75em 0.75em 0;
   margin-bottom: 1rem;
@@ -1085,24 +1116,30 @@ td {
   width: 100%;
   border-radius: 3px;
   pointer-events: none;
+
   * {
     pointer-events: auto;
   }
+
   .right {
     position: absolute;
     right: 0.75rem;
     top: 0.75em;
     max-width: 50%;
   }
+
   transition: all 200ms linear;
+
   button {
     transition: all 100ms ease-in-out;
   }
 }
+
 .tabs {
   .icon + span {
     color: #ff6719; //方案1
   }
+
   .icon {
     display: none; //方案1
     margin: 0 0 0 -0.5em !important;
@@ -1113,12 +1150,14 @@ td {
     }
   }
 }
+
 tr.is-connected {
   //$c: #23d160;
   $c: #bbdefb;
   background: $c;
   color: findColorInvert($c);
 }
+
 @keyframes loading-rotate {
   from {
     transform: rotate(0deg);
@@ -1127,6 +1166,7 @@ tr.is-connected {
     transform: rotate(360deg);
   }
 }
+
 .not-show {
   opacity: 0;
   pointer-events: none !important;
@@ -1140,20 +1180,25 @@ tr.is-connected {
   margin-right: 0 !important;
   border-right: 0 !important;
 }
+
 .not-display {
   display: none;
 }
+
 table td,
 table th {
   vertical-align: middle !important;
 }
+
 .dialog .mdi-.iconfont.icon-alert {
   font-size: 40px;
 }
+
 .qrcode#canvas {
   min-height: 300px !important;
   min-width: 300px !important;
 }
+
 $coverBackground: rgba(0, 0, 0, 0.6);
 .tag-cover {
   height: 100%;
@@ -1168,6 +1213,7 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   line-height: 22px;
   user-select: none;
 }
+
 #tag-cover-text {
   color: findColorInvert($coverBackground);
   position: absolute;
