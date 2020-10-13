@@ -310,7 +310,11 @@
         >
           <b-field
             v-if="tab === subi + 2"
-            :label="`${sub.host.toUpperCase()}(${sub.servers.length})`"
+            :label="
+              `${sub.host.toUpperCase()}(${sub.servers.length}${
+                sub.info ? ') (' : ''
+              }${sub.info})`
+            "
           >
             <b-table
               :paginated="sub.servers.length >= 150"

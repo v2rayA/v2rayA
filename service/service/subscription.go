@@ -2,23 +2,23 @@ package service
 
 import (
 	"bytes"
-	"log"
-	"net/http"
-	"strings"
-	"time"
-	"v2ray.com/core/common/errors"
 	"github.com/mzz2017/v2rayA/common"
 	"github.com/mzz2017/v2rayA/common/httpClient"
 	"github.com/mzz2017/v2rayA/core/nodeData"
 	"github.com/mzz2017/v2rayA/core/touch"
 	"github.com/mzz2017/v2rayA/db/configure"
+	"log"
+	"net/http"
+	"strings"
+	"time"
+	"v2ray.com/core/common/errors"
 )
 
-func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
-	return ResolveSubscriptionWithClient(source, http.DefaultClient)
-}
+//func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
+//	return ResolveSubscriptionWithClient(source, http.DefaultClient)
+//}
 
-func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, err error) {
+func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, status string, err error) {
 	// get请求source
 	c := *client
 	c.Timeout = 30 * time.Second
@@ -39,6 +39,10 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	// 解析
 	infos = make([]*nodeData.NodeData, 0)
 	for _, row := range rows {
+		if strings.HasPrefix(row, "STATUS=") {
+			status = strings.TrimPrefix(row, "STATUS=")
+			continue
+		}
 		var data *nodeData.NodeData
 		data, err = ResolveURL(row)
 		if err != nil {
@@ -61,7 +65,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		reason := "failed to get proxy"
 		return newError(reason)
 	}
-	infos, err := ResolveSubscriptionWithClient(addr, c)
+	infos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		reason := "failed to resolve subscription address: " + err.Error()
 		log.Println(infos, err)
@@ -118,6 +122,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	}
 	subscriptions[index].Servers = tsrs
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
+	subscriptions[index].Info = status
 	return configure.SetSubscription(index, &subscriptions[index])
 }
 

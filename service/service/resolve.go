@@ -2,13 +2,13 @@ package service
 
 import (
 	"github.com/json-iterator/go"
+	"github.com/mzz2017/v2rayA/common"
+	"github.com/mzz2017/v2rayA/core/nodeData"
+	"github.com/mzz2017/v2rayA/core/vmessInfo"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/core/nodeData"
-	"github.com/mzz2017/v2rayA/core/vmessInfo"
 )
 
 /*
@@ -44,11 +44,15 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 			return
 		}
 		q := u.Query()
+		ps := q.Get("remarks")
+		if ps == "" {
+			ps = q.Get("remark")
+		}
 		info = vmessInfo.VmessInfo{
 			ID:            subMatch[1],
 			Add:           subMatch[2],
 			Port:          subMatch[3],
-			Ps:            q.Get("remarks"),
+			Ps:            ps,
 			Host:          q.Get("obfsParam"),
 			Path:          q.Get("path"),
 			Net:           q.Get("obfs"),
