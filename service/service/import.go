@@ -1,13 +1,13 @@
 package service
 
 import (
-	"strings"
-	"time"
 	"github.com/mzz2017/v2rayA/common/httpClient"
 	"github.com/mzz2017/v2rayA/core/nodeData"
 	"github.com/mzz2017/v2rayA/core/touch"
 	"github.com/mzz2017/v2rayA/core/v2ray"
 	"github.com/mzz2017/v2rayA/db/configure"
+	"strings"
+	"time"
 )
 
 func Import(url string, which *configure.Which) (err error) {
@@ -54,7 +54,7 @@ func Import(url string, which *configure.Which) (err error) {
 			return err
 		}
 		c.Timeout = 90 * time.Second
-		infos, err := ResolveSubscriptionWithClient(url, c)
+		infos, status, err := ResolveSubscriptionWithClient(url, c)
 		if err != nil {
 			return newError("failed to resolve subscription address").Base(err)
 		}
@@ -79,6 +79,7 @@ func Import(url string, which *configure.Which) (err error) {
 			Address: url,
 			Status:  string(touch.NewUpdateStatus()),
 			Servers: uniqueServers,
+			Info:    status,
 		}})
 	}
 	return

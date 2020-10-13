@@ -237,6 +237,7 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 		return http.ErrUseLastResponse
 	}
 	req, _ := http.NewRequest("GET", "http://www.msftconnecttest.com/connecttest.txt", nil)
+	//req, _ := http.NewRequest("GET", "http://www.gstatic.com/generate_204", nil)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Accept-Encoding", "gzip, deflate, br")

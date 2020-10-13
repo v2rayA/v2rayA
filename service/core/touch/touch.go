@@ -1,8 +1,8 @@
 package touch
 
 import (
-	"github.com/mzz2017/v2rayA/db/configure"
 	"fmt"
+	"github.com/mzz2017/v2rayA/db/configure"
 	"net/url"
 	"strings"
 	"time"
@@ -32,6 +32,7 @@ type Subscription struct {
 	TYPE    configure.TouchType `json:"_type"`
 	Host    string              `json:"host"`
 	Status  SubscriptionStatus  `json:"status"`
+	Info    string              `json:"info"`
 	Servers []TouchServer       `json:"servers"`
 }
 
@@ -104,6 +105,7 @@ func GenerateTouch() (t Touch) {
 			Host:    u.Host,
 			Status:  SubscriptionStatus(v.Status),
 			Servers: serverRawsToServers(v.Servers),
+			Info:    v.Info,
 		}
 	}
 	t.ConnectedServer = configure.GetConnectedServer()

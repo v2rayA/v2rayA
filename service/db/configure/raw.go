@@ -11,4 +11,5 @@ type SubscriptionRaw struct {
 	Address string      `json:"address"`
 	Status  string      `json:"status"` //update time, error info, etc.
 	Servers []ServerRaw `json:"servers"`
+	Info    string      `json:"info"` // maybe include some info from provider
 }
