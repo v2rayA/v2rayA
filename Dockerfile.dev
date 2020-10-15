@@ -1,4 +1,5 @@
 FROM v2fly/v2fly-core AS v2ray
+RUN ls /usr/local/share/v2ray || (mkdir -p /usr/local/share/v2ray && touch /usr/local/share/v2ray/.copykeep)
 
 FROM golang:alpine
 RUN apk --no-cache add iptables git
