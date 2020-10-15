@@ -25,9 +25,12 @@ FROM v2fly/v2fly-core AS v2ray
 FROM bgiddings/iptables:latest
 COPY --from=builder /build/service/v2raya /usr/bin/
 COPY --from=builder-web /build/web /etc/v2raya-web
-COPY --from=v2ray /usr/bin/v2ray/* /usr/share/v2ray/
+COPY --from=v2ray /usr/bin/v2ray /usr/bin/v2ctl /usr/share/v2ray/
+COPY --from=v2ray /usr/bin/*.dat /usr/local/share/v2ray/
+COPY --from=v2ray /usr/local/share/v2ray/* /usr/local/share/v2ray/
 ENV PATH=$PATH:/usr/share/v2ray
 ENV GIN_MODE=release
 EXPOSE 2017
+VOLUME /etc/v2raya
 ENTRYPOINT ["v2raya","--mode=universal", "--webdir=/etc/v2raya-web"]
 

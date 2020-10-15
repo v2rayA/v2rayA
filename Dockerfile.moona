@@ -8,7 +8,5 @@ RUN go build -o moona .
 
 FROM v2fly/v2fly-core AS v2ray
 COPY --from=builder /build/cmd/moona/moona /usr/bin/
-RUN mkdir /etc/v2ray && cp -r /usr/bin/v2ray/* /etc/v2ray/
-ENV PATH=$PATH:/etc/v2ray
 ENV GIN_MODE=release
 ENTRYPOINT ["moona"]
