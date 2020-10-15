@@ -15,6 +15,7 @@ RUN export VERSION=$(cat ./version) && go build -ldflags="-X github.com/mzz2017/
 FROM node:lts-alpine AS builder-web
 ADD gui /build/gui
 WORKDIR /build/gui
+RUN echo "network-timeout 600000" >> .yarnrc
 #RUN yarn config set registry https://registry.npm.taobao.org
 #RUN yarn config set sass_binary_site https://cdn.npm.taobao.org/dist/node-sass -g
 RUN yarn
