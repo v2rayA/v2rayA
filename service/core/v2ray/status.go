@@ -46,12 +46,12 @@ func IsV2RayRunning() bool {
 	case global.UniversalMode:
 		return IsV2RayProcessExists()
 	case global.ServiceMode:
-		out, err := exec.Command("sh", "-c", "service v2ray status|head -n 5|grep running").CombinedOutput()
+		out, err := exec.Command("sh", "-c", "service v2ray status|grep running").CombinedOutput()
 		if err != nil || strings.Contains(string(out), "not running") {
 			return false
 		}
 	case global.SystemctlMode:
-		out, err := exec.Command("sh", "-c", "systemctl status v2ray|head -n 5|grep running").Output()
+		out, err := exec.Command("sh", "-c", "systemctl status v2ray|grep Active|grep running").Output()
 		return err == nil && len(out) > 0
 	}
 	return true
