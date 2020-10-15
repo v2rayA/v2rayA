@@ -21,6 +21,7 @@ RUN yarn
 RUN yarn build
 
 FROM v2fly/v2fly-core AS v2ray
+RUN ls /usr/local/share/v2ray || (mkdir -p /usr/local/share/v2ray && touch /usr/local/share/v2ray/.copykeep)
 
 FROM bgiddings/iptables:latest
 COPY --from=builder /build/service/v2raya /usr/bin/
