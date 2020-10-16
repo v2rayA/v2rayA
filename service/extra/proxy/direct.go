@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 	"syscall"
-	"github.com/mzz2017/v2rayA/global"
+	"github.com/v2rayA/v2rayA/global"
 )
 
 // Direct proxy

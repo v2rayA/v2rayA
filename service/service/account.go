@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/common/jwt"
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/jwt"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"time"
 )
 

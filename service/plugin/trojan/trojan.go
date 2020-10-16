@@ -10,12 +10,12 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/common/netTools/ports"
-	"github.com/mzz2017/v2rayA/core/vmessInfo"
-	"github.com/mzz2017/v2rayA/extra/proxy/socks5"
-	"github.com/mzz2017/v2rayA/extra/proxy/trojan"
-	"github.com/mzz2017/v2rayA/plugin"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/core/vmessInfo"
+	"github.com/v2rayA/v2rayA/extra/proxy/socks5"
+	"github.com/v2rayA/v2rayA/extra/proxy/trojan"
+	"github.com/v2rayA/v2rayA/plugin"
 )
 
 type Trojan struct {

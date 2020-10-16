@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcapgo"
-	"github.com/mzz2017/v2rayA/common/netTools"
+	"github.com/v2rayA/v2rayA/common/netTools"
 	"golang.org/x/net/dns/dnsmessage"
 	"log"
 	"net"

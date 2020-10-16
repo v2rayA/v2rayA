@@ -1,7 +1,7 @@
 package jwt
 
 import (
-	"github.com/mzz2017/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common"
 	"encoding/base64"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"

@@ -10,7 +10,7 @@ WORKDIR /build/service
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.io
 COPY --from=version /build/version ./
-RUN export VERSION=$(cat ./version) && go build -ldflags="-X github.com/mzz2017/v2rayA/global.Version=${VERSION:1} -s -w" -o v2raya .
+RUN export VERSION=$(cat ./version) && go build -ldflags="-X github.com/v2rayA/v2rayA/global.Version=${VERSION:1} -s -w" -o v2raya .
 
 FROM node:lts-alpine AS builder-web
 ADD gui /build/gui

@@ -1,14 +1,14 @@
-# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/mzz2017/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/mzz2017/v2rayA?label=travis-ci%20build)](https://travis-ci.org/mzz2017/v2rayA)
+# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/v2rayA/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/v2rayA/dist/v2rayA?label=travis-ci%20build)](https://travis-ci.org/v2rayA/dist/v2rayA)
 
-[**English**](https://github.com/mzz2017/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/mzz2017/v2rayA/blob/master/README_zh.md)
+[**English**](https://github.com/v2rayA/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/dist/v2rayA/blob/master/README_zh.md)
 
-v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, [Trojan](https://github.com/trojan-gfw/trojan), [PingTunnel](https://github.com/esrrhs/pingtunnel) protocols. [[SS/SSR protocol list]](https://github.com/mzz2017/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
+v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, [Trojan](https://github.com/trojan-gfw/trojan), [PingTunnel](https://github.com/esrrhs/pingtunnel) protocols. [[SS/SSR protocol list]](https://github.com/v2rayA/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
 We are committed to providing the simplest operation and meet most needs.
 
 Thanks to the advantages of Web GUI, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
 
-Project：https://github.com/mzz2017/v2rayA
+Project：https://github.com/v2rayA/v2rayA
 
 Frontend demo: https://v2raya.mzz.pub
 
@@ -21,7 +21,7 @@ v2rayA mainly provides the following methods of installation:
 2. Docker
 3. Binary file and installation package
 
-See [**v2rayA - Wiki**](https://github.com/mzz2017/v2rayA/wiki/Usage)
+See [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/Usage)
 
 
 ## Screenshot
@@ -31,7 +31,7 @@ See [**v2rayA - Wiki**](https://github.com/mzz2017/v2rayA/wiki/Usage)
 ## Statement
 
 1. The program does not store any user data in the cloud, and all user data is stored in local.
-2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Fast.io](https://fast.io). If you are worried about security, you can [deploy it yourself](https://github.com/mzz2017/v2rayA/wiki/Deploy-GUI).
+2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Fast.io](https://fast.io). If you are worried about security, you can [deploy it yourself](https://github.com/v2rayA/v2rayA/wiki/Deploy-GUI).
 3. **Do not use this project for illegal purposes.**
 
 ## Credits

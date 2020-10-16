@@ -1,11 +1,11 @@
 package service
 
 import (
-	"github.com/mzz2017/v2rayA/common/httpClient"
-	"github.com/mzz2017/v2rayA/core/nodeData"
-	"github.com/mzz2017/v2rayA/core/touch"
-	"github.com/mzz2017/v2rayA/core/v2ray"
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/core/nodeData"
+	"github.com/v2rayA/v2rayA/core/touch"
+	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"strings"
 	"time"
 )

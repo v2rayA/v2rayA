@@ -2,7 +2,7 @@ package touch
 
 import (
 	"fmt"
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"net/url"
 	"strings"
 	"time"

@@ -1,6 +1,6 @@
 [Unit]
 Description=v2rayA Service
-Documentation=https://github.com/mzz2017/v2rayA/wiki
+Documentation=https://github.com/v2rayA/v2rayA/wiki
 After=network.target
 Wants=network.target
 

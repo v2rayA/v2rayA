@@ -236,7 +236,7 @@ export default {
           <p class="about-small">其他端口：</p>
           <p class="about-small">32345: tproxy，透明代理所需 </p>
           <p class="about-small">32346: 插件协议端口，如trojan、ssr和pingtunnel</p>
-          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/mzz2017/v2rayA/issues">提出issue</a>。</p>`,
+          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/v2rayA/v2rayA/issues">提出issue</a>。</p>`,
   axios: {
     messages: {
       optimizeBackend: "您是否需要调整服务端地址？",
@@ -248,7 +248,7 @@ export default {
     },
     urls: {
       usage:
-        "https://github.com/mzz2017/v2rayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
+        "https://github.com/v2rayA/v2rayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
     }
   },
   routingA: {

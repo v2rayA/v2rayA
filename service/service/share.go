@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 func GetSharingAddress(w *configure.Which) (addr string, err error) {

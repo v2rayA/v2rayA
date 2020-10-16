@@ -229,7 +229,7 @@ export default {
                         ${this.$t(`about`)}
                     </section>
                     <footer class="modal-card-foot">
-                        <a class="is-link" href="https://github.com/mzz2017/v2rayA" target="_blank">
+                        <a class="is-link" href="https://github.com/v2rayA/v2rayA" target="_blank">
                           <img class="leave-right" src="https://img.shields.io/github/stars/mzz2017/v2rayA.svg?style=social" alt="stars">
                           <img class="leave-right" src="https://img.shields.io/github/forks/mzz2017/v2rayA.svg?style=social" alt="forks">
                           <img class="leave-right" src="https://img.shields.io/github/watchers/mzz2017/v2rayA.svg?style=social" alt="watchers">

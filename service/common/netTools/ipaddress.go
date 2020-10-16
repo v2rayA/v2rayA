@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 	"strings"
-	Trie "github.com/mzz2017/v2rayA/dataStructure/trie"
+	Trie "github.com/v2rayA/v2rayA/dataStructure/trie"
 )
 
 var intranet4 = []string{
