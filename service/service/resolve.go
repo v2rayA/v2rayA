@@ -76,7 +76,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		info.Host = ""
 	}
 	if info.Aid == "" {
-		info.Aid = "6"
+		info.Aid = "2"
 	}
 	data = new(nodeData.NodeData)
 	data.VmessInfo = info

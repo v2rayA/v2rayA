@@ -11,7 +11,7 @@ RUN mkdir -p /etc/v2raya/web
 COPY --from=v2ray /usr/bin/v2ray /usr/bin/v2ctl /usr/share/v2ray/
 COPY --from=v2ray /usr/bin/*.dat /usr/local/share/v2ray/
 COPY --from=v2ray /usr/local/share/v2ray/* /usr/local/share/v2ray/
-ENV PATH=$PATH:/etc/v2ray
+ENV PATH=$PATH:/usr/share/v2ray
 ENV CONFIG=../config.json
 ENV GIN_BIN=../v2rayA
 ENV GIN_GUILD_ARGS="-o ${GIN_BIN}"
