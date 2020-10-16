@@ -34,7 +34,7 @@ install:
   - go get github.com/mitchellh/gox
   - gem install fpm
 script:
-  - cd service && gox -osarch="linux/386 linux/amd64 linux/arm linux/aarch64" -ldflags="-X github.com/v2rayA/v2rayA/global.Version=${VERSION:1} -s -w" -output="../v2raya_{{.OS}}_{{.Arch}}_$VERSION"
+  - cd service && gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/global.Version=${VERSION:1} -s -w" -output="../v2raya_{{.OS}}_{{.Arch}}_$VERSION"
   - cd ../gui && yarn && yarn build && cd ../ && tar -zcvf web.tar.gz ./web
   - files="web=/etc/v2raya install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya.png=/usr/share/icons/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
   - params="--verbose -f -n $NAME -v ${VERSION:1} --url https://github.com/v2rayA/v2raya --maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --before-remove install/universal/before_remove.sh --after-remove install/universal/after_remove.sh"
