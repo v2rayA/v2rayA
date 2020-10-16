@@ -254,7 +254,7 @@ get_version() {
         TMP_FILE="$(mktemp)"
         install_software curl
         # DO NOT QUOTE THESE `${PROXY}` VARIABLES!
-        if ! "curl" ${PROXY} -o "$TMP_FILE" 'https://api.github.com/repos/mzz2017/dist/tags'; then
+        if ! "curl" ${PROXY} -o "$TMP_FILE" 'https://api.github.com/repos/v2rayA/dist/tags'; then
             "rm" "$TMP_FILE"
             echo 'error: Failed to get release list, please check your network.'
             exit 1
@@ -300,7 +300,7 @@ get_version() {
 
 download_v2ray() {
     "mkdir" -p "$TMP_DIRECTORY"
-    DOWNLOAD_LINK="https://cdn.jsdelivr.net/gh/mzz2017/dist@v$RELEASE_VERSION/v2ray-linux-$MACHINE.zip"
+    DOWNLOAD_LINK="https://cdn.jsdelivr.net/gh/v2rayA/dist@v$RELEASE_VERSION/v2ray-linux-$MACHINE.zip"
     echo "Downloading V2Ray archive: $DOWNLOAD_LINK"
     if ! "curl" ${PROXY} -L -H 'Cache-Control: no-cache' -o "$ZIP_FILE" "$DOWNLOAD_LINK"; then
         echo 'error: Download failed! Please check your network or try again.'
