@@ -73,7 +73,7 @@ before_deploy:
       ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_amd64_$VERSION.deb &&
       ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_armel_$VERSION.deb &&
       ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_armhf_$VERSION.deb &&
-      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm64_$VERSION.deb &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_aarch64_$VERSION.deb &&
       cp ../v2raya_linux_*_$VERSION pool/main/v/v2raya/ &&
       cp ../web.tar.gz pool/main/v/v2raya/web_$VERSION.tar.gz &&
       echo "apt.v2raya.mzz.pub" > CNAME &&
