@@ -2,12 +2,12 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mzz2017/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net/http"
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/core/v2ray"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset/gfwlist"
-	"github.com/mzz2017/v2rayA/global"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/global"
 )
 
 func GetVersion(ctx *gin.Context) {

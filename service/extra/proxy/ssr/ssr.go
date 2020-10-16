@@ -11,7 +11,7 @@ import (
 
 	"github.com/mzz2017/shadowsocksR/obfs"
 	"github.com/mzz2017/shadowsocksR/protocol"
-	"github.com/mzz2017/v2rayA/extra/proxy"
+	"github.com/v2rayA/v2rayA/extra/proxy"
 	"github.com/nadoo/glider/common/socks"
 	"log"
 )

@@ -15,7 +15,7 @@ import (
 	"net"
 	"net/url"
 	"strings"
-	"github.com/mzz2017/v2rayA/extra/proxy"
+	"github.com/v2rayA/v2rayA/extra/proxy"
 )
 
 // Trojan is a base trojan struct

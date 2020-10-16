@@ -1,7 +1,7 @@
 package ssr
 
 import (
-	"github.com/mzz2017/v2rayA/extra/proxy"
+	"github.com/v2rayA/v2rayA/extra/proxy"
 	"net"
 )
 

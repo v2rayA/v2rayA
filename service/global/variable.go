@@ -2,7 +2,7 @@ package global
 
 import (
 	"os"
-	"github.com/mzz2017/v2rayA/plugin"
+	"github.com/v2rayA/v2rayA/plugin"
 )
 
 var Version = "debug"

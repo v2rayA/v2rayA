@@ -1,8 +1,8 @@
-Origin: mzz2017
+Origin: v2rayA
 Label: v2raya
 Suite: stable
 Codename: v2raya
 Architectures: i386 amd64 armel armhf arm64
 Components: main
-Description: https://github.com/mzz2017/v2raya
+Description: https://github.com/v2rayA/v2raya
 SignWith: yes

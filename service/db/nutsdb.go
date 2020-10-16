@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/mzz2017/v2rayA/global"
+	"github.com/v2rayA/v2rayA/global"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"os"

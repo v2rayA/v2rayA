@@ -2,7 +2,7 @@ pkgbase = v2raya
 	pkgdesc = A web GUI client of Project V which supports V2Ray, SS, SSR, Trojan and Pingtunnel protocols
 	pkgver = {{pkgver}}
 	pkgrel = 1
-	url = https://github.com/mzz2017/v2rayA
+	url = https://github.com/v2rayA/v2rayA
 	install = .INSTALL
 	arch = i686
 	arch = x86_64
@@ -16,7 +16,7 @@ pkgbase = v2raya
 	makedepends = python2
 	depends = glibc
 	depends = v2ray
-	source = v2raya-{{pkgver}}.tar.gz::https://github.com/mzz2017/v2rayA/archive/v{{pkgver}}.tar.gz
+	source = v2raya-{{pkgver}}.tar.gz::https://github.com/v2rayA/v2rayA/archive/v{{pkgver}}.tar.gz
 	sha512sums = SKIP
 
 pkgname = v2raya

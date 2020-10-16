@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/db/configure"
-	"github.com/mzz2017/v2rayA/service"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/service"
 	"github.com/gin-gonic/gin"
 	"sync"
 	"time"

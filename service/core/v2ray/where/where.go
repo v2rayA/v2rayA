@@ -2,7 +2,7 @@ package where
 
 import (
 	"fmt"
-	"github.com/mzz2017/v2rayA/global"
+	"github.com/v2rayA/v2rayA/global"
 	"os/exec"
 	"path"
 	"strings"

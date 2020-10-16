@@ -2,10 +2,10 @@ package v2ray
 
 import (
 	"bytes"
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset"
-	"github.com/mzz2017/v2rayA/core/v2ray/where"
-	"github.com/mzz2017/v2rayA/global"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/global"
 	"io/ioutil"
 	"os"
 	"os/exec"

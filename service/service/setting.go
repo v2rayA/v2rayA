@@ -1,10 +1,10 @@
 package service
 
 import (
-	"github.com/mzz2017/v2rayA/core/ipforward"
-	"github.com/mzz2017/v2rayA/core/v2ray"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset"
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/core/ipforward"
+	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 func GetSetting() *configure.Setting {

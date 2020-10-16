@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 	"v2ray.com/core/app/router"
-	"github.com/mzz2017/v2rayA/common/netTools"
-	"github.com/mzz2017/v2rayA/core/dnsPoison"
-	"github.com/mzz2017/v2rayA/core/v2ray/asset"
-	"github.com/mzz2017/v2rayA/global"
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/common/netTools"
+	"github.com/v2rayA/v2rayA/core/dnsPoison"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 var (

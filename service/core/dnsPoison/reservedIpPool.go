@@ -3,7 +3,7 @@ package dnsPoison
 import (
 	"log"
 	"sync"
-	"github.com/mzz2017/v2rayA/dataStructure/lru"
+	"github.com/v2rayA/v2rayA/dataStructure/lru"
 )
 
 type ReservedIpPool struct {

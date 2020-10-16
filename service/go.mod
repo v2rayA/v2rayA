@@ -1,4 +1,4 @@
-module github.com/mzz2017/v2rayA
+module github.com/v2rayA/v2rayA
 
 go 1.13
 

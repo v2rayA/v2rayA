@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mzz2017/v2rayA/common"
-	"github.com/mzz2017/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"net"
 	"strings"
 )

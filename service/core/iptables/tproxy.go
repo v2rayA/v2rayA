@@ -1,6 +1,6 @@
 package iptables
 
-import "github.com/mzz2017/v2rayA/common/cmds"
+import "github.com/v2rayA/v2rayA/common/cmds"
 
 type tproxy struct{ iptablesSetter }
 

@@ -1,6 +1,6 @@
 package configure
 
-import "github.com/mzz2017/v2rayA/core/vmessInfo"
+import "github.com/v2rayA/v2rayA/core/vmessInfo"
 
 type ServerRaw struct {
 	VmessInfo vmessInfo.VmessInfo `json:"vmessInfo"`

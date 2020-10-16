@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/json-iterator/go"
-	"github.com/mzz2017/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common"
 	"net/url"
 )
 
