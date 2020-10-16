@@ -1,6 +1,6 @@
-# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/v2rayA/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/v2rayA/dist/v2rayA?label=travis-ci%20build)](https://travis-ci.org/v2rayA/v2rayA)
+# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/v2rayA/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/v2rayA/v2rayA?label=travis-ci%20build)](https://travis-ci.org/v2rayA/v2rayA)
 
-[**English**](https://github.com/v2rayA/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/dist/v2rayA/blob/master/README_zh.md)
+[**English**](https://github.com/v2rayA/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/master/README_zh.md)
 
 v2rayA 是一个支持全局透明代理的 V2Ray Linux 客户端，同时兼容SS、SSR、[Trojan](https://github.com/trojan-gfw/trojan)、[PingTunnel](https://github.com/esrrhs/pingtunnel)协议。 [[SS/SSR支持清单]](https://github.com/v2rayA/dist/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
@@ -8,7 +8,7 @@ v2rayA 致力于提供最简单的操作，满足绝大部分需求。
 
 得益于Web客户端的优势，你不仅可以将其用于本地计算机，还可以轻松地将它部署在路由器或NAS上。
 
-项目地址：https://github.com/v2rayA/dist/v2rayA
+项目地址：https://github.com/v2rayA/v2rayA
 
 前端 demo: https://v2raya.mzz.pub
 
@@ -21,7 +21,7 @@ v2rayA主要提供了下述使用方法：
 2. docker
 3. 二进制文件、安装包
 
-详见 [**v2rayA - Wiki**](https://github.com/v2rayA/dist/v2rayA/wiki/使用方法)
+详见 [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/使用方法)
 
 
 ## 界面截图
@@ -33,7 +33,7 @@ v2rayA主要提供了下述使用方法：
 
 1. 程序不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。
 
-2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Fast.io](https://fast.io)在本 Github 项目自动部署完成的，如果担心安全性可以[自行部署](https://github.com/v2rayA/dist/v2rayA/wiki/%E9%83%A8%E7%BD%B2GUI)。
+2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Fast.io](https://fast.io)在本 Github 项目自动部署完成的，如果担心安全性可以[自行部署](https://github.com/v2rayA/v2rayA/wiki/%E9%83%A8%E7%BD%B2GUI)。
 
 3. **不要将本项目用于不合法用途。**
 
