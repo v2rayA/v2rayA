@@ -19,6 +19,7 @@ type VmessInfo struct {
 	Host          string `json:"host"`
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
+	Flow          string `json:"flow,omitempty"`
 	V             string `json:"v"`
 	AllowInsecure bool   `json:"allowInsecure"`
 	Protocol      string `json:"protocol"`

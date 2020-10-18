@@ -2,22 +2,33 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"net/http"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/global"
+	"net/http"
 )
 
 func GetVersion(ctx *gin.Context) {
 	var dohValid string
-	var vlessValid bool
+	var vlessValid int
 	var iptablesMode string
 
 	ver, err := where.GetV2rayServiceVersion()
 	if err == nil {
-		vlessValid, _ = common.VersionGreaterEqual(ver, "4.27.0")
+		if ok, _ := common.VersionGreaterEqual(ver, "4.27.0"); ok {
+			// 1: vless
+			vlessValid++
+			if ok, _ = common.VersionGreaterEqual(ver, "4.30.0"); ok {
+				// 2: xtls-rprx-origin
+				vlessValid++
+				if ok, _ = common.VersionGreaterEqual(ver, "4.31.0"); ok {
+					// 3: xtls-rprx-direct, xtls-rprx-direct-udp443
+					vlessValid++
+				}
+			}
+		}
 		err = v2ray.CheckDohSupported(ver)
 	}
 	if err == nil {
