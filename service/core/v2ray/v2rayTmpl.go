@@ -100,6 +100,7 @@ type User struct {
 	ID         string `json:"id"`
 	AlterID    int    `json:"alterId,omitempty"`
 	Encryption string `json:"encryption,omitempty"`
+	Flow       string `json:"flow,omitempty"`
 	Security   string `json:"security,omitempty"`
 }
 type Vnext struct {
@@ -131,6 +132,9 @@ type TLSSettings struct {
 	ServerName           interface{} `json:"serverName,omitempty"`
 	AllowInsecureCiphers bool        `json:"allowInsecureCiphers"`
 }
+type XTLSSettings struct {
+	ServerName interface{} `json:"serverName,omitempty"`
+}
 type Headers struct {
 	Host string `json:"Host"`
 }
@@ -143,6 +147,7 @@ type StreamSettings struct {
 	Network      string        `json:"network,omitempty"`
 	Security     string        `json:"security,omitempty"`
 	TLSSettings  *TLSSettings  `json:"tlsSettings,omitempty"`
+	XTLSSettings *XTLSSettings `json:"xtlsSettings,omitempty"`
 	TCPSettings  *TCPSettings  `json:"tcpSettings,omitempty"`
 	KcpSettings  *KcpSettings  `json:"kcpSettings,omitempty"`
 	WsSettings   *WsSettings   `json:"wsSettings,omitempty"`
@@ -353,6 +358,19 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			if v.Host != "" {
 				o.StreamSettings.TLSSettings.ServerName = v.Host
 			}
+		} else if strings.ToLower(v.TLS) == "xtls" {
+			o.StreamSettings.Security = "xtls"
+			o.StreamSettings.XTLSSettings = new(XTLSSettings)
+			// always set SNI
+			if v.Host != "" {
+				o.StreamSettings.XTLSSettings.ServerName = v.Host
+			}
+			if v.Flow == "" {
+				v.Flow = "xtls-rprx-origin"
+			}
+			vnext := o.Settings.Vnext.([]Vnext)
+			vnext[0].Users[0].Flow = v.Flow
+			o.Settings.Vnext = vnext
 		}
 	case "shadowsocks", "shadowsocksr":
 		v.Net = strings.ToLower(v.Net)

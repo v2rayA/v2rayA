@@ -82,7 +82,23 @@
           >
             <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
-              <option value="tls">{{ $t("setting.options.on") }}</option>
+              <option value="tls">tls</option>
+              <option v-if="vlessVersion >= 2" value="xtls">xtls</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-show="v2ray.tls === 'xtls'"
+            label="Flow"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.flow" expanded>
+              <option value="xtls-rprx-origin">xtls-rprx-origin</option>
+              <option v-if="vlessVersion >= 3" value="xtls-rprx-direct"
+                >xtls-rprx-direct</option
+              >
+              <option v-if="vlessVersion >= 3" value="xtls-rprx-direct-udp443"
+                >xtls-rprx-direct-udp443</option
+              >
             </b-select>
           </b-field>
           <b-field
@@ -160,7 +176,10 @@
           </b-field>
           <b-field
             v-show="
-              v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.tls === 'tls'
+              v2ray.net === 'ws' ||
+                v2ray.net === 'h2' ||
+                v2ray.tls === 'tls' ||
+                v2ray.tls === 'xtls'
             "
             label="Host"
             label-position="on-border"
@@ -475,6 +494,7 @@ export default {
   },
   data: () => ({
     showVLess: false,
+    vlessVersion: 0,
     v2ray: {
       ps: "",
       add: "",
@@ -486,6 +506,7 @@ export default {
       host: "",
       path: "",
       tls: "none",
+      flow: "xtls-rprx-origin",
       v: "",
       allowInsecure: false,
       protocol: "vmess"
@@ -528,7 +549,16 @@ export default {
     tabChoice: 0
   }),
   mounted() {
-    this.showVLess = localStorage["vlessValid"] === "true";
+    if (localStorage["vlessValid"] === "true") {
+      this.showVLess = true;
+      this.vlessVersion = 1;
+    } else {
+      const t = parseInt(localStorage["vlessValid"]);
+      if (!isNaN(t) && t > 0) {
+        this.showVLess = true;
+        this.vlessVersion = t;
+      }
+    }
     if (this.which !== null) {
       this.$axios({
         url: apiRoot + "/sharingAddress",
@@ -670,6 +700,9 @@ export default {
               break;
             default:
               obj.type = "";
+          }
+          if (!(obj.protocol === "vless" && obj.tls === "xtls")) {
+            delete obj.flow;
           }
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":
