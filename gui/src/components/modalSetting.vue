@@ -489,6 +489,7 @@ export default {
       if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
         return;
       }
+      console.log(apiRoot);
       if (this.transparent !== "close" && !isIntranet(apiRoot)) {
         let U = parseURL(apiRoot);
         let port = U.port;
