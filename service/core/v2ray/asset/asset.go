@@ -40,16 +40,16 @@ func GetV2rayLocationAsset() (s string) {
 	var err error
 	if s == "" {
 		//fine, guess one
+		var candidates = []string{`/usr/local/share/v2ray`, `/usr/share/v2ray`}
 		var ver string
 		var is bool
 		if ver, err = where.GetV2rayServiceVersion(); err == nil {
 			if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
-				s = "/usr/local/share/v2ray"
-				if _, err := os.Stat(s); os.IsNotExist(err){
-					s = "/usr/share/v2ray"
-				}
-				if _, err := os.Stat(s); os.IsNotExist(err){
-					s = ""
+				for _, c := range candidates {
+					if _, err := os.Stat(c); os.IsNotExist(err) {
+						continue
+					}
+					s = c
 				}
 			}
 		}
@@ -209,4 +209,3 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	whitelistCn.domainMatcher = wlDomains
 	return
 }
-

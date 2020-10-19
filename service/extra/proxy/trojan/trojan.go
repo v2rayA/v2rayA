@@ -12,10 +12,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/nadoo/glider/common/socks"
+	"github.com/v2rayA/v2rayA/extra/proxy"
 	"net"
 	"net/url"
 	"strings"
-	"github.com/v2rayA/v2rayA/extra/proxy"
 )
 
 // Trojan is a base trojan struct

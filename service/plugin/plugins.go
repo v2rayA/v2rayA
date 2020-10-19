@@ -6,6 +6,8 @@ import (
 	"sync"
 )
 
+var GlobalPlugins Plugins
+
 type Plugin interface {
 	Serve(localPort int, v vmessInfo.VmessInfo) (err error)
 	Close() (err error)
@@ -29,6 +31,9 @@ func (r *Plugins) CloseAll() {
 func (r *Plugins) Append(plugin Plugin) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+	if plugin == nil {
+		return
+	}
 	r.Plugins = append(r.Plugins, plugin)
 }
 
@@ -42,6 +47,14 @@ func RegisterPlugin(protocol string, pluginCreator PluginCreator) {
 
 func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) {
 	v.Protocol = strings.ToLower(v.Protocol)
+	switch v.Protocol {
+	case "shadowsocks", "ss":
+		if v.Type == "" {
+			return nil, nil
+		} else if v.Type == "http" || v.Type == "tls" {
+			v.Protocol = "simpleobfs"
+		}
+	}
 	creator, ok := pluginMap[v.Protocol]
 	if !ok {
 		return nil, newError("unregistered protocol ", v.Protocol)
@@ -50,6 +63,14 @@ func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) 
 }
 
 func IsProtocolValid(v vmessInfo.VmessInfo) bool {
+	switch v.Protocol {
+	case "shadowsocks", "ss":
+		if v.Type == "" {
+			return false
+		} else if v.Type == "http" || v.Type == "tls" {
+			v.Protocol = "simpleobfs"
+		}
+	}
 	_, ok := pluginMap[v.Protocol]
 	return ok
 }

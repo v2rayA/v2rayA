@@ -60,13 +60,17 @@ func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 		var protoToShow string
 		switch v.VmessInfo.Protocol {
 		case "", "vmess", "vless":
-			if v.VmessInfo.TLS == "tls" {
-				protoToShow = fmt.Sprintf("%v(%v+tls)", protocol, v.VmessInfo.Net)
-				break
+			if v.VmessInfo.TLS != "" && v.VmessInfo.TLS != "none" {
+				protoToShow = fmt.Sprintf("%v(%v+%v)", protocol, v.VmessInfo.Net, v.VmessInfo.TLS)
+			} else {
+				protoToShow = fmt.Sprintf("%v(%v)", protocol, v.VmessInfo.Net)
 			}
-			fallthrough
 		case "ss", "shadowsocks":
-			protoToShow = fmt.Sprintf("%v(%v)", protocol, v.VmessInfo.Net)
+			if v.VmessInfo.Type != "" {
+				protoToShow = fmt.Sprintf("%v(%v+%v)", protocol, v.VmessInfo.Net, v.VmessInfo.Type)
+			} else {
+				protoToShow = fmt.Sprintf("%v(%v)", protocol, v.VmessInfo.Net)
+			}
 		case "ssr", "shadowsocksr":
 			protoToShow = fmt.Sprintf("%v(%v)", protocol, v.VmessInfo.Type)
 		default:

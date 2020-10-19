@@ -93,6 +93,9 @@
           >
             <b-select v-model="v2ray.flow" expanded>
               <option value="xtls-rprx-origin">xtls-rprx-origin</option>
+              <option value="xtls-rprx-origin-udp443"
+                >xtls-rprx-origin-udp443</option
+              >
               <option v-if="vlessVersion >= 3" value="xtls-rprx-direct"
                 >xtls-rprx-direct</option
               >
@@ -241,29 +244,41 @@
           </b-field>
           <b-field label="Method" label-position="on-border">
             <b-select ref="ss_method" v-model="ss.method" expanded required>
-              <option value="aes-128-cfb">aes-128-cfb</option>
-              <option value="aes-192-cfb">aes-192-cfb</option>
-              <option value="aes-256-cfb">aes-256-cfb</option>
-              <option value="aes-128-ctr">aes-128-ctr</option>
-              <option value="aes-192-ctr">aes-192-ctr</option>
-              <option value="aes-256-ctr">aes-256-ctr</option>
-              <option value="aes-128-ofb">aes-128-ofb</option>
-              <option value="aes-192-ofb">aes-192-ofb</option>
-              <option value="aes-256-ofb">aes-256-ofb</option>
-              <option value="des-cfb">des-cfb</option>
-              <option value="bf-cfb">bf-cfb</option>
-              <option value="cast5-cfb">cast5-cfb</option>
-              <option value="rc4-md5">rc4-md5</option>
-              <option value="chacha20">chacha20</option>
-              <option value="chacha20-ietf">chacha20-ietf</option>
-              <option value="salsa20">salsa20</option>
-              <option value="camellia-128-cfb">camellia-128-cfb</option>
-              <option value="camellia-192-cfb">camellia-192-cfb</option>
-              <option value="camellia-256-cfb">camellia-256-cfb</option>
-              <option value="idea-cfb">idea-cfb</option>
-              <option value="rc2-cfb">rc2-cfb</option>
-              <option value="seed-cfb">seed-cfb</option>
+              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="aes-256-gcm">aes-256-gcm</option>
+              <option value="chacha20-poly1305">chacha20-poly1305</option>
+              <option value="chacha20-ietf-poly1305"
+                >chacha20-ietf-poly1305</option
+              >
+              <option value="plain">plain</option>
+              <option value="none">none</option>
             </b-select>
+          </b-field>
+          <b-field label="Obfs" label-position="on-border">
+            <b-select ref="ss_obfs" v-model="ss.obfs" expanded required>
+              <option value="">{{ $t("setting.options.off") }}</option>
+              <option value="http">http</option>
+              <option value="tls">tls</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-if="ss.obfs === 'http'"
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input ref="ss_path" v-model="ss.path" expanded />
+          </b-field>
+          <b-field
+            v-if="ss.obfs === 'http' || ss.obfs === 'tls'"
+            label="Host"
+            label-position="on-border"
+          >
+            <b-input
+              ref="ss_host"
+              v-model="ss.host"
+              placeholder="(optional)"
+              expanded
+            />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SSR">
@@ -512,7 +527,10 @@ export default {
       protocol: "vmess"
     },
     ss: {
-      method: "aes-128-cfb",
+      method: "aes-128-gcm",
+      obfs: "",
+      path: "/",
+      host: "",
       password: "",
       server: "",
       port: "",
@@ -599,6 +617,9 @@ export default {
         });
       });
     }
+    this.resolveURL(
+      `ss://cmM0LW1kNTpXUDA3bzI=@39.108.191.24:9386#香港 IPLC 02 | 2`
+    );
   },
   methods: {
     resolveURL(url) {
@@ -606,25 +627,50 @@ export default {
         let obj = JSON.parse(
           Base64.decode(url.substring(url.indexOf("://") + 3))
         );
-        console.log(obj);
+        // console.log(obj);
         obj.ps = decodeURIComponent(obj.ps);
         obj.tls = obj.tls || "none";
         obj.type = obj.type || "none";
         obj.protocol = obj.protocol || "vmess";
         return obj;
       } else if (url.toLowerCase().indexOf("ss://") >= 0) {
-        const regexp = /ss:\/\/(.+)@(.+):(.+)#(.*)/;
-        let arr = regexp.exec(url);
-        arr[1] = Base64.decode(arr[1]);
-        let mp = arr[1].split(":");
-        return {
+        let u = parseURL(url);
+        try {
+          u.username = Base64.decode(decodeURIComponent(u.username));
+        } catch (e) {
+          //pass
+        }
+        let mp = u.username.split(":");
+        u.hash = decodeURIComponent(u.hash);
+        let obj = {
           method: mp[0],
           password: mp[1],
-          server: arr[2],
-          port: arr[3],
-          name: arr[4],
+          server: u.host,
+          port: u.port,
+          name: u.hash,
           protocol: "ss"
         };
+        if (u.params.plugin) {
+          u.params.plugin = decodeURIComponent(u.params.plugin);
+          const arr = u.params.plugin.split(";");
+          for (let i = 1; i < arr.length; i++) {
+            //"obfs-local;obfs=tls;obfs-host=4cb6a43103.wns.windows.com"
+            const a = arr[i].split("=");
+            switch (a[0]) {
+              case "obfs":
+                obj.obfs = a[1];
+                break;
+              case "obfs-host":
+                obj.host = a[1];
+                break;
+              case "obfs-path":
+                obj.path = a[1];
+            }
+          }
+        } else {
+          obj.obfs = "";
+        }
+        return obj;
       } else if (url.toLowerCase().indexOf("ssr://") >= 0) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
@@ -683,6 +729,7 @@ export default {
     generateURL(srcObj) {
       let obj = {};
       let params = {};
+      let s;
       switch (srcObj.protocol) {
         case "vless":
         //FIXME: 临时方案
@@ -694,7 +741,7 @@ export default {
             case "kcp":
             case "tcp":
               obj.path = "";
-              if (obj.tls !== "tls") {
+              if (obj.tls === "" || obj.tls === "none") {
                 obj.host = "";
               }
               break;
@@ -707,12 +754,20 @@ export default {
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":
           /* ss://BASE64(method:password)@server:port#name */
-          return (
-            `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
-              srcObj.server
-            }:${srcObj.port}` +
-            (srcObj.name.length ? `#${Base64.encodeURI(srcObj.name)}` : "")
-          );
+          //TODO: simpleobfs
+          s = `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
+            srcObj.server
+          }:${srcObj.port}/`;
+          if (srcObj.obfs !== "") {
+            s += `?plugin=${encodeURIComponent(
+              `obfs-local;obfs=${srcObj.obfs};obfs-host=${srcObj.host}${
+                srcObj.obfs === "http" ? `;obfs-path=${srcObj.path}` : ""
+              }`
+            )}`;
+          }
+          s += srcObj.name.length ? `#${Base64.encodeURI(srcObj.name)}` : "";
+          return s;
+
         case "ssr":
           /* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
           return `ssr://${Base64.encode(
@@ -748,6 +803,20 @@ export default {
     },
     handleNetworkChange() {
       this.v2ray.type = "none";
+      if (this.v2ray.tls === "xtls" && this.v2ray.net === "ws") {
+        this.$buefy.toast.open({
+          message: this.$t("setting.messages.xtlsNotWithWs"),
+          type: "is-warning",
+          position: "is-top",
+          queue: false,
+          duration: 5000
+        });
+        this.$nextTick(() => {
+          this.v2ray.tls = "tls";
+        });
+      } else if (this.v2ray.tls === "xtls" && !this.v2ray.flow) {
+        this.v2ray.flow = "xtls-rprx-origin";
+      }
     },
     handleClickSubmit() {
       let valid = true;

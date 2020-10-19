@@ -2,7 +2,7 @@
 
 [**English**](https://github.com/v2rayA/v2rayA/blob/master/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/master/README_zh.md)
 
-v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, [Trojan](https://github.com/trojan-gfw/trojan), [PingTunnel](https://github.com/esrrhs/pingtunnel) protocols. [[SS/SSR protocol list]](https://github.com/v2rayA/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
+v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, [Trojan](https://github.com/trojan-gfw/trojan), [PingTunnel](https://github.com/esrrhs/pingtunnel) protocols. [[SSR protocol list]](https://github.com/v2rayA/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
 We are committed to providing the simplest operation and meet most needs.
 

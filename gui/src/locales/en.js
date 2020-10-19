@@ -129,7 +129,8 @@ export default {
       confirmEgressPorts: `<p>You are setting up transparent proxy across LANs, confirm egress port whitelist.</p>
                           <p>Whitelist:</p>
                           <p>TCP: {tcpPorts}</p>
-                          <p>UDP: {udpPorts}</p>`
+                          <p>UDP: {udpPorts}</p>`,
+      xtlsNotWithWs: `xtls cannot work with websocket`
     }
   },
   customAddressPort: {

@@ -8,7 +8,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/plugin"
 	"log"
 	"net"
@@ -140,6 +139,12 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		switch strings.ToLower(v.Protocol) {
 		case "vmess", "vless", "":
 			//pass
+		case "shadowsocks", "ss":
+			if v.Type == "" {
+				break
+			}
+			//有可能是simpleobfs
+			fallthrough
 		default:
 			if !plugin.IsProtocolValid(v) {
 				which[i].Latency = "UNSUPPORTED PROTOCOL"
@@ -176,7 +181,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			if err != nil {
 				return nil, err
 			}
-			global.Plugins.Append(plu)
+			plugin.GlobalPlugins.Append(plu)
 		}
 	}
 	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())

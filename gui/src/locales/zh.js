@@ -128,7 +128,8 @@ export default {
       confirmEgressPorts: `<p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
                           <p>当前设置的端口白名单为：</p>
                           <p>TCP: {tcpPorts}</p>
-                          <p>UDP: {udpPorts}</p>`
+                          <p>UDP: {udpPorts}</p>`,
+      xtlsNotWithWs: `xtls无法和websocket共存`
     }
   },
   customAddressPort: {

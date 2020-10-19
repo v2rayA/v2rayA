@@ -4,12 +4,12 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/plugin"
 	"log"
 )
 
 func Disconnect() (err error) {
-	global.Plugins.CloseAll()
+	plugin.GlobalPlugins.CloseAll()
 	err = v2ray.StopV2rayService()
 	if err != nil {
 		return
