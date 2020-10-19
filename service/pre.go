@@ -197,6 +197,7 @@ func initConfigure() {
 			if err != nil {
 				return errors.New("chmod: " + err.Error())
 			}
+			os.Rename(p, asset.GetV2rayLocationAsset()+"/"+localname)
 			return
 		}
 		err := dld("mzz2017/dist-geoip", "geoip.dat", "geoip.dat")

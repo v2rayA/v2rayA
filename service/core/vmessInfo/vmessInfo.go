@@ -6,6 +6,7 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"net/url"
+	"strings"
 )
 
 type VmessInfo struct {
@@ -38,17 +39,29 @@ func (v *VmessInfo) ExportToURL() string {
 		return "vmess://" + base64.StdEncoding.EncodeToString(b)
 	case "ss":
 		/* ss://BASE64(method:password)@server:port#name */
-		nameField := ""
-		if v.Ps != "" {
-			nameField = "#" + v.Ps
+		u := &url.URL{
+			Scheme:   "ss",
+			User:     url.User(base64.URLEncoding.EncodeToString([]byte(v.Net + ":" + v.ID))),
+			Host:     v.Add + ":" + v.Port,
+			Path:     "/",
+			RawQuery: "",
+			Fragment: v.Ps,
 		}
-		return fmt.Sprintf(
-			"ss://%v@%v:%v%v",
-			base64.URLEncoding.EncodeToString([]byte(v.Net+":"+v.ID)),
-			v.Add,
-			v.Port,
-			nameField,
-		)
+		if v.Type != "" {
+			a := []string{
+				`obfs-local`,
+				`obfs=` + v.Type,
+				`obfs-host=` + v.Host,
+			}
+			if v.Type == "http" {
+				a = append(a, `obfs-path=`+v.Path)
+			}
+			plugin := strings.Join(a, ";")
+			q := u.Query()
+			q.Set("plugin", plugin)
+			u.RawQuery = q.Encode()
+		}
+		return u.String()
 	case "ssr":
 		/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
 		return fmt.Sprintf("ssr://%v", base64.URLEncoding.EncodeToString([]byte(

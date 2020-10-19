@@ -107,6 +107,10 @@ func (s *Socks5) ListenAndServeTCP() error {
 	}
 }
 
+func (s *Socks5) Close() error {
+	return s.TcpListener.Close()
+}
+
 // Serve serves a connection.
 func (s *Socks5) Serve(c net.Conn) {
 	defer c.Close()

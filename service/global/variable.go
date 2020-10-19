@@ -2,7 +2,6 @@ package global
 
 import (
 	"os"
-	"github.com/v2rayA/v2rayA/plugin"
 )
 
 var Version = "debug"
@@ -12,7 +11,6 @@ var SupportTproxy = true
 
 var ServiceControlMode SystemServiceControlMode
 
-var Plugins plugin.Plugins
 
 var V2RayPID *os.Process
 

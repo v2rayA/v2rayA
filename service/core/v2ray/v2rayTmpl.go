@@ -267,6 +267,7 @@ func NewTemplate() (tmpl Template) {
 */
 
 func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Outbound, err error) {
+	socksPlugin := false
 	var tmplJson TmplJson
 	// 读入模板json
 	raw := []byte(TemplateJson)
@@ -372,7 +373,31 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			vnext[0].Users[0].Flow = v.Flow
 			o.Settings.Vnext = vnext
 		}
-	case "shadowsocks", "shadowsocksr":
+	case "shadowsocks":
+		v.Net = strings.ToLower(v.Net)
+		switch v.Net {
+		case "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "plain", "none":
+		default:
+			return o, newError("unsupported shadowsocks encryption method: " + v.Net)
+		}
+		target := v.Add
+		port := 0
+		switch v.Type {
+		case "http", "tls":
+			target = "127.0.0.1"
+			port = *pluginPort
+		case "":
+			port, _ = strconv.Atoi(v.Port)
+		default:
+			return o, newError("unsupported shadowsocks obfuscation method: " + v.TLS)
+		}
+		o.Settings.Servers = []Server{{
+			Address:  target,
+			Port:     port,
+			Method:   v.Net,
+			Password: v.ID,
+		}}
+	case "shadowsocksr":
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
 		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb", "none":
@@ -395,11 +420,13 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		default:
 			return o, newError("unsupported shadowsocksr obfuscation method: " + v.TLS)
 		}
+		socksPlugin = true
 	case "pingtunnel", "trojan":
+		socksPlugin = true
 	default:
 		return o, newError("unsupported protocol: " + v.Protocol)
 	}
-	if v.Protocol != "vmess" && v.Protocol != "vless" && pluginPort != nil {
+	if socksPlugin && pluginPort != nil {
 		o.Protocol = "socks"
 		o.Settings.Servers = []Server{
 			{
@@ -1063,8 +1090,13 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	switch o.Protocol {
 	case "vmess", "vless":
 		//是否在设置了里开启了mux
+		muxon := setting.MuxOn == configure.Yes
+		if v.TLS == "xtls" {
+			//xtls与mux不共存
+			muxon = false
+		}
 		t.Outbounds[0].Mux = &Mux{
-			Enabled:     setting.MuxOn == configure.Yes,
+			Enabled:     muxon,
 			Concurrency: setting.Mux,
 		}
 	default:

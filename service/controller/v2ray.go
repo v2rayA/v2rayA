@@ -3,9 +3,9 @@ package controller
 import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/gin-gonic/gin"
+	"github.com/v2rayA/v2rayA/plugin"
 )
 
 func PostV2ray(ctx *gin.Context) {
@@ -32,6 +32,6 @@ func DeleteV2ray(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	global.Plugins.CloseAll()
+	plugin.GlobalPlugins.CloseAll()
 	common.ResponseSuccess(ctx, gin.H{"lastConnectedServer": configure.GetConnectedServer()})
 }

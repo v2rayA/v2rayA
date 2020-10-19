@@ -211,7 +211,7 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	}()
 	//iptables.SpoofingFilter.GetCleanCommands().Clean()
 	//defer iptables.SpoofingFilter.GetSetupCommands().Setup(nil)
-	global.Plugins.CloseAll()
+	plugin.GlobalPlugins.CloseAll()
 	entity.StopDNSPoison()
 	//读配置，转换为v2ray配置并写入
 	var (
@@ -261,7 +261,7 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		if err != nil {
 			return
 		}
-		global.Plugins.Append(plu)
+		plugin.GlobalPlugins.Append(plu)
 	}
 
 	entity.CheckAndSetupDnsPoisonWithExtraInfo(extraInfo)
