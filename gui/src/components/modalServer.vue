@@ -18,7 +18,11 @@
             label="Protocol"
             label-position="on-border"
           >
-            <b-select v-model="v2ray.protocol" expanded>
+            <b-select
+              v-model="v2ray.protocol"
+              expanded
+              @input="handleV2rayProtocolSwitch"
+            >
               <option value="vmess">VMESS</option>
               <option value="vless">VLESS</option>
             </b-select>
@@ -83,7 +87,11 @@
             <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
-              <option v-if="vlessVersion >= 2" value="xtls">xtls</option>
+              <option
+                v-if="v2ray.protocol === 'vless' && vlessVersion >= 2"
+                value="xtls"
+                >xtls</option
+              >
             </b-select>
           </b-field>
           <b-field
@@ -639,11 +647,15 @@ export default {
         });
       });
     }
-    this.resolveURL(
-      `ss://cmM0LW1kNTpXUDA3bzI=@39.108.191.24:9386#香港 IPLC 02 | 2`
-    );
   },
   methods: {
+    handleV2rayProtocolSwitch() {
+      if (this.v2ray.tls === "xtls" && this.v2ray.protocol === "vmess") {
+        this.$nextTick(() => {
+          this.v2ray.tls = "tls";
+        });
+      }
+    },
     resolveURL(url) {
       if (url.toLowerCase().indexOf("vmess://") >= 0) {
         let obj = JSON.parse(
