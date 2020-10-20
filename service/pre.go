@@ -234,6 +234,7 @@ func hello() {
 	wd, _ = os.Getwd()
 	color.Red.Println("v2rayA working directory is", wd)
 	color.Red.Println("Version:", global.Version)
+	color.Red.Println("Starting...")
 }
 
 func checkUpdate() {
