@@ -33,4 +33,3 @@ func (p Proxy) NextDialer(dstAddr string) proxy.Dialer {
 	n, _ := proxy.NewDirect("")
 	return n
 }
-

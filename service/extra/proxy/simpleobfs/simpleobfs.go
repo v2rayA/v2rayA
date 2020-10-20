@@ -1,6 +1,5 @@
 package simpleobfs
 
-import "C"
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/extra/proxy"
