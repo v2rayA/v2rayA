@@ -619,7 +619,16 @@ export default {
         const file = e.target.result;
         jsqrcode.callback = result => {
           console.log(result);
-          that.handleClickImportConfirm(result);
+          if (result !== "error decoding QR Code") {
+            that.handleClickImportConfirm(result);
+          } else {
+            that.$buefy.toast.open({
+              message: that.$t("import.qrcodeError"),
+              type: "is-warning",
+              position: "is-top",
+              queue: false
+            });
+          }
         };
         jsqrcode.decode(file);
       };
