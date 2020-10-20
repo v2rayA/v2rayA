@@ -220,7 +220,7 @@ export default {
   },
   import: {
     message: "Input a vmess/ss/ssr/subscription address:",
-    qrcodeError: "Failed to import by scanning QRCode"
+    qrcodeError: "Failed to find a valid QRCode, please try again"
   },
   delete: {
     title: "Confirm to DELETE",

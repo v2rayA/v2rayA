@@ -216,7 +216,7 @@ export default {
   },
   import: {
     message: "填入vmess/ss/ssr/订阅地址：",
-    qrcodeError: "扫描二维码导入失败"
+    qrcodeError: "找不到有效的二维码，请重新尝试"
   },
   delete: {
     title: "确认删除",
