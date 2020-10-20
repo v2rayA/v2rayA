@@ -11,7 +11,7 @@ type Proxy struct {
 
 func NewProxy(s string) (p Proxy, err error) {
 	d, _ := proxy.NewDirect("")
-	simpleObfs, err := NewSimpleObfs(s, d, nil)
+	simpleObfs, err := NewSimpleObfs(s, d)
 	if err != nil {
 		return
 	}

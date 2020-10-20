@@ -33,8 +33,7 @@ func NewSimpleObfsPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Pl
 	return
 }
 
-func (so *SimpleObfs) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
-	so.s = plugin.NewServer(localPort)
+func ParseVmess(v vmessInfo.VmessInfo) (s string, err error) {
 	params := Params{
 		Address:  v.Add,
 		Port:     v.Port,
@@ -56,8 +55,18 @@ func (so *SimpleObfs) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 	q.Set("host", params.Host)
 	q.Set("path", params.Path)
 	u.RawQuery = q.Encode()
-	p, _ := simpleobfs.NewProxy(u.String())
-	return so.s.Serve(p, "tcp->"+params.Address+":"+params.Port)
+	s = u.String()
+	return
+}
+
+func (so *SimpleObfs) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
+	so.s = plugin.NewServer(localPort)
+	s, err := ParseVmess(v)
+	if err != nil {
+		return
+	}
+	p, _ := simpleobfs.NewProxy(s)
+	return so.s.Serve(p, "tcp->"+v.Add+":"+v.Port)
 }
 
 func (so *SimpleObfs) Close() error {

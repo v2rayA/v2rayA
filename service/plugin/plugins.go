@@ -45,15 +45,37 @@ func RegisterPlugin(protocol string, pluginCreator PluginCreator) {
 	pluginMap[protocol] = pluginCreator
 }
 
-func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) {
-	v.Protocol = strings.ToLower(v.Protocol)
+func preprocess(v *vmessInfo.VmessInfo) bool {
 	switch v.Protocol {
 	case "shadowsocks", "ss":
 		if v.Type == "" {
-			return nil, nil
+			switch v.Net {
+			case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
+				//使用ssr插件
+				RazorSS(v)
+				v.Protocol = "ssr"
+			default:
+				//不需要插件
+				return false
+			}
 		} else if v.Type == "http" || v.Type == "tls" {
-			v.Protocol = "simpleobfs"
+			switch v.Net {
+			case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
+				//ssr插件接simpleobfs插件
+				v.Protocol = "ssrplugin-simpleobfs"
+			default:
+				//simpleobfs插件
+				v.Protocol = "simpleobfs"
+			}
 		}
+	}
+	return true
+}
+
+func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) {
+	v.Protocol = strings.ToLower(v.Protocol)
+	if ok := preprocess(&v); !ok {
+		return nil, nil
 	}
 	creator, ok := pluginMap[v.Protocol]
 	if !ok {
@@ -63,6 +85,7 @@ func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) 
 }
 
 func IsProtocolValid(v vmessInfo.VmessInfo) bool {
+	preprocess(&v)
 	switch v.Protocol {
 	case "shadowsocks", "ss":
 		if v.Type == "" {
@@ -73,4 +96,11 @@ func IsProtocolValid(v vmessInfo.VmessInfo) bool {
 	}
 	_, ok := pluginMap[v.Protocol]
 	return ok
+}
+
+func RazorSS(ss *vmessInfo.VmessInfo) {
+	ss.TLS = "plain"
+	ss.Type = "origin"
+	ss.Path = ""
+	ss.Host = ""
 }
