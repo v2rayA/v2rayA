@@ -215,7 +215,8 @@ export default {
     password: "密码"
   },
   import: {
-    message: "填入vmess/ss/ssr/订阅地址："
+    message: "填入vmess/ss/ssr/订阅地址：",
+    qrcodeError: "扫描二维码导入失败"
   },
   delete: {
     title: "确认删除",

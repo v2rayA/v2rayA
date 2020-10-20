@@ -219,7 +219,8 @@ export default {
     title: "Configure Subscription"
   },
   import: {
-    message: "Input a vmess/ss/ssr/subscription address:"
+    message: "Input a vmess/ss/ssr/subscription address:",
+    qrcodeError: "Failed to import by scanning QRCode"
   },
   delete: {
     title: "Confirm to DELETE",

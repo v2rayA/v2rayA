@@ -435,6 +435,49 @@
         @submit="handleModalSubscriptionSubmit"
       />
     </b-modal>
+    <input
+      id="QRCodeImport"
+      type="file"
+      style="display: none"
+      accept="image/*"
+    />
+    <b-modal
+      :active.sync="showModalImport"
+      has-modal-card
+      trap-focus
+      aria-role="dialog"
+      aria-modal
+    >
+      <div class="modal-card" style="width: 350px">
+        <header class="modal-card-head">
+          <p class="modal-card-title">{{ $t("operations.import") }}</p>
+        </header>
+        <section class="modal-card-body">
+          {{ $t("import.message") }}
+          <b-input
+            v-model="importWhat"
+            icon-right=" iconfont icon-camera"
+            icon-right-clickable
+            @icon-right-click="handleClickImportQRCode"
+          ></b-input>
+        </section>
+        <footer
+          class="modal-card-foot"
+          style="display:flex;justify-content:flex-end"
+        >
+          <button class="button" type="button" @click="showModalImport = false">
+            {{ $t("operations.cancel") }}
+          </button>
+          <button
+            class="button is-primary"
+            type="button"
+            @click="handleClickImportConfirm"
+          >
+            {{ $t("operations.confirm") }}
+          </button>
+        </footer>
+      </div>
+    </b-modal>
   </section>
 </template>
 
@@ -446,6 +489,7 @@ import {
 } from "@/assets/js/utils";
 import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
+import jsqrcode from "./assets/js/jsqrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";
@@ -458,6 +502,8 @@ export default {
   components: { ModalSubscription, ModalServer },
   data() {
     return {
+      importWhat: "",
+      showModalImport: false,
       currentPage: { servers: 1, subscriptions: 1 },
       tableData: {
         servers: [],
@@ -513,6 +559,9 @@ export default {
     this.clipboard.destroy();
   },
   mounted() {
+    document
+      .querySelector("#QRCodeImport")
+      .addEventListener("change", this.handleFileChange, false);
     this.clipboard = new ClipboardJS(".sharingAddressTag");
     this.clipboard.on("success", e => {
       this.$buefy.toast.open({
@@ -542,6 +591,40 @@ export default {
     });
   },
   methods: {
+    handleFileChange(e) {
+      const that = this;
+      const file = e.target.files[0];
+      let elem = document.querySelector("#QRCodeImport");
+      // eslint-disable-next-line no-self-assign
+      elem.outerHTML = elem.outerHTML;
+      this.$nextTick(() => {
+        document
+          .querySelector("#QRCodeImport")
+          .addEventListener("change", this.handleFileChange, false);
+      });
+      // console.log(file);
+      if (!file.type.match(/image\/.*/)) {
+        this.$buefy.toast.open({
+          message: this.$t("import.qrcodeError"),
+          type: "is-warning",
+          position: "is-top",
+          queue: false
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // target.result 该属性表示目标对象的DataURL
+        // console.log(e.target.result);
+        const file = e.target.result;
+        jsqrcode.callback = result => {
+          console.log(result);
+          that.handleClickImportConfirm(result);
+        };
+        jsqrcode.decode(file);
+      };
+      reader.readAsDataURL(file);
+    },
     sortNumberServers(a, b, isAsc) {
       if (!isAsc) {
         return a.servers.length < b.servers.length ? 1 : -1;
@@ -621,50 +704,47 @@ export default {
         this.tab = serversOffset;
       }
     },
+    handleClickImportQRCode() {
+      document.querySelector("#QRCodeImport").click();
+    },
     handleClickImport() {
-      const that = this;
-      this.$buefy.dialog.prompt({
-        message: this.$t("import.message"),
-        inputAttrs: {
-          type: "text",
-          value: ""
-        },
-        trapFocus: true,
-        onConfirm: value => {
-          return that
-            .$axios({
-              url: apiRoot + "/import",
-              method: "post",
-              data: {
-                url: value
-              }
-            })
-            .then(res => {
-              if (res.data.code === "SUCCESS") {
-                this.tableData = res.data.data.touch;
-                this.runningState = {
-                  running: res.data.data.running
-                    ? this.$t("common.isRunning")
-                    : this.$t("common.notRunning"),
-                  connectedServer: this.tableData.connectedServer,
-                  lastConnectedServer: null
-                };
-                this.updateConnectView();
-                this.$buefy.toast.open({
-                  message: this.$t("common.success"),
-                  type: "is-primary",
-                  position: "is-top",
-                  queue: false
-                });
-              } else {
-                this.$buefy.toast.open({
-                  message: res.data.message,
-                  type: "is-warning",
-                  position: "is-top",
-                  queue: false
-                });
-              }
-            });
+      this.showModalImport = true;
+    },
+    handleClickImportConfirm(value) {
+      if (typeof value != "string") {
+        value = null;
+      }
+      return this.$axios({
+        url: apiRoot + "/import",
+        method: "post",
+        data: {
+          url: value || this.importWhat
+        }
+      }).then(res => {
+        if (res.data.code === "SUCCESS") {
+          this.tableData = res.data.data.touch;
+          this.runningState = {
+            running: res.data.data.running
+              ? this.$t("common.isRunning")
+              : this.$t("common.notRunning"),
+            connectedServer: this.tableData.connectedServer,
+            lastConnectedServer: null
+          };
+          this.updateConnectView();
+          this.$buefy.toast.open({
+            message: this.$t("common.success"),
+            type: "is-primary",
+            position: "is-top",
+            queue: false
+          });
+          this.showModalImport = false;
+        } else {
+          this.$buefy.toast.open({
+            message: res.data.message,
+            type: "is-warning",
+            position: "is-top",
+            queue: false
+          });
         }
       });
     },
