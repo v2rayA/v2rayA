@@ -1,16 +1,19 @@
 package service
 
 import (
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"log"
 	"strings"
 	"time"
 )
 
 func Import(url string, which *configure.Which) (err error) {
+	log.Println(url)
 	url = strings.TrimSpace(url)
 	if strings.HasPrefix(url, "vmess://") ||
 		strings.HasPrefix(url, "ss://") ||
@@ -46,6 +49,13 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 	} else {
 		//不是ss://也不是vmess://，有可能是订阅地址
+		if strings.HasPrefix(url, "sub://") {
+			var e error
+			url, e = common.Base64StdDecode(url[6:])
+			if e != nil {
+				url, _ = common.Base64URLDecode(url[6:])
+			}
+		}
 		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 			url = "http://" + url
 		}
