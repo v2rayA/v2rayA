@@ -29,8 +29,7 @@ func NewSSRPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, e
 	return
 }
 
-func (self *SSR) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
-	self.s = plugin.NewServer(localPort)
+func ParseVmess(v vmessInfo.VmessInfo) (s string, err error) {
 	params := Params{
 		Cipher:        v.Net,
 		Passwd:        v.ID,
@@ -64,7 +63,17 @@ func (self *SSR) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 	q.Set("protocol", params.Protocol)
 	q.Set("protocol_param", params.ProtocolParam)
 	u.RawQuery = q.Encode()
-	p, _ := ssr.NewProxy(u.String())
+	s = u.String()
+	return
+}
+
+func (self *SSR) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
+	self.s = plugin.NewServer(localPort)
+	s, err := ParseVmess(v)
+	if err != nil {
+		return
+	}
+	p, _ := ssr.NewProxy(s)
 	return self.s.Serve(p, "socks5")
 }
 

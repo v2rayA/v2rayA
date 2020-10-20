@@ -17,10 +17,18 @@ const (
 	TLS
 )
 
+func init() {
+	proxy.RegisterDialer("simpleobfs", NewSimpleObfsDialer)
+}
+
+// NewSimpleObfsDialer returns a simple-obfs proxy dialer.
+func NewSimpleObfsDialer(s string, d proxy.Dialer) (proxy.Dialer, error) {
+	return NewSimpleObfs(s, d)
+}
+
 // SimpleObfs is a base http-obfs struct
 type SimpleObfs struct {
 	dialer   proxy.Dialer
-	proxy    proxy.Proxy
 	obfstype ObfsType
 	addr     string
 	path     string
@@ -28,7 +36,7 @@ type SimpleObfs struct {
 }
 
 // NewSimpleobfs returns a simpleobfs proxy.
-func NewSimpleObfs(s string, d proxy.Dialer, p proxy.Proxy) (*SimpleObfs, error) {
+func NewSimpleObfs(s string, d proxy.Dialer) (*SimpleObfs, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil, newError("[simpleobfs]").Base(err)
@@ -36,7 +44,6 @@ func NewSimpleObfs(s string, d proxy.Dialer, p proxy.Proxy) (*SimpleObfs, error)
 
 	t := &SimpleObfs{
 		dialer: d,
-		proxy:  p,
 		addr:   u.Host,
 	}
 	query := u.Query()

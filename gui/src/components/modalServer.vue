@@ -246,10 +246,32 @@
             <b-select ref="ss_method" v-model="ss.method" expanded required>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
+              <option value="aes-128-cfb">aes-128-cfb</option>
+              <option value="aes-192-cfb">aes-192-cfb</option>
+              <option value="aes-256-cfb">aes-256-cfb</option>
+              <option value="aes-128-ctr">aes-128-ctr</option>
+              <option value="aes-192-ctr">aes-192-ctr</option>
+              <option value="aes-256-ctr">aes-256-ctr</option>
+              <option value="aes-128-ofb">aes-128-ofb</option>
+              <option value="aes-192-ofb">aes-192-ofb</option>
+              <option value="aes-256-ofb">aes-256-ofb</option>
+              <option value="des-cfb">des-cfb</option>
+              <option value="bf-cfb">bf-cfb</option>
+              <option value="camellia-128-cfb">camellia-128-cfb</option>
+              <option value="camellia-192-cfb">camellia-192-cfb</option>
+              <option value="camellia-256-cfb">camellia-256-cfb</option>
+              <option value="cast5-cfb">cast5-cfb</option>
+              <option value="chacha20">chacha20</option>
+              <option value="chacha20-ietf">chacha20-ietf</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
               <option value="chacha20-ietf-poly1305"
                 >chacha20-ietf-poly1305</option
               >
+              <option value="idea-cfb">idea-cfb</option>
+              <option value="rc2-cfb">rc2-cfb</option>
+              <option value="rc4-md5">rc4-md5</option>
+              <option value="salsa20">salsa20</option>
+              <option value="seed-cfb">seed-cfb</option>
               <option value="plain">plain</option>
               <option value="none">none</option>
             </b-select>
