@@ -8,7 +8,7 @@ install=.INSTALL
 pkgdesc="A web GUI client of Project V which supports V2Ray, SS, SSR, Trojan and Pingtunnel protocols"
 arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/v2rayA/v2rayA"
-license=('GPL')
+license=('GPL3')
 depends=('glibc' 'v2ray')
 provides=('v2raya')
 conflicts=('v2raya')
@@ -66,13 +66,10 @@ sha1sums_armv7h=(
 
 package() {
     cd "$srcdir"
-    
-    install -Dm644 "v2raya.service" "$pkgdir/usr/lib/systemd/system/v2raya.service"
-    install -Dm755 "v2raya_v${pkgver}" "$pkgdir/usr/bin/v2raya"
-
-    install -Dm644 "v2raya.png" "$pkgdir/usr/share/icons/v2raya.png"
-    install -Dm755 "v2raya.desktop" -t "$pkgdir/usr/share/applications/"
-
-    install -d -Dm755 "web" "$pkgdir/etc/v2raya/web"
-    cp -r web/* "$pkgdir/etc/v2raya/web"
+    install -Dm 755 v2raya_v"${pkgver}" -t "${pkgdir}"/usr/bin/
+    find web -type d -exec install -vd "${pkgdir}"/etc/v2raya/{} \;
+    find web -type f -exec install -vm 644 {} "${pkgdir}"/etc/v2raya/{} \;
+    install -Dm 644 v2raya.desktop -t "${pkgdir}"/usr/share/applications/
+    install -Dm 644 v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
+    install -Dm 644 v2raya.png "${pkgdir}"/usr/share/icons/hicolor/512x512/apps/v2raya.png
 }
