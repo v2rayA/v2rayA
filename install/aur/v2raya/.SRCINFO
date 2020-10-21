@@ -9,7 +9,7 @@ pkgbase = v2raya
 	arch = armv7h
 	arch = armv6h
 	arch = aarch64
-	license = GPL
+	license = GPL3
 	makedepends = go>=2:1.12.3-1
 	makedepends = nodejs>=14
 	makedepends = yarn
