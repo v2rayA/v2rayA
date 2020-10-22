@@ -6,4 +6,4 @@ Name=v2rayA
 Categories=Network;
 Keywords=Internet;VPN;Proxy;v2ray;v2raya
 Exec=xdg-open "http://127.0.0.1:2017"
-Icon=/usr/share/icons/v2raya.png
+Icon=/usr/share/icons/hicolor/512x512/apps/v2raya.png
