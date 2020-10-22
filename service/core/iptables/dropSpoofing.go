@@ -7,7 +7,8 @@ var DropSpoofing dropSpoofing
 func (r *dropSpoofing) GetSetupCommands() SetupCommands {
 	commands := `
 iptables -N DROP_SPOOFING
-BADIP="127.0.0.1 0.0.0.0";for IP in $BADIP ;do hexip=$(printf '%02X ' ${IP//./ }; echo) ;iptables -A DROP_SPOOFING -p udp --sport 53 -m string --algo bm --hex-string "|0004$hexip|" --from 60 --to 180 -j DROP ;done
+iptables -A DROP_SPOOFING -p udp --sport 53 -m string --algo bm --hex-string "|00047f000001|" --from 60 --to 180 -j DROP
+iptables -A DROP_SPOOFING -p udp --sport 53 -m string --algo bm --hex-string "|000400000000|" --from 60 --to 180 -j DROP
 iptables -A INPUT -j DROP_SPOOFING 
 iptables -A FORWARD -j DROP_SPOOFING
 `
