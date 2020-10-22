@@ -19,7 +19,7 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 		token, err := request.ParseFromRequest(ctx.Request, request.AuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
 				// 我们使用固定的secret，直接返回就好
-				return []byte(secret), nil
+				return secret, nil
 			})
 		if err != nil {
 			common.Response(ctx, common.UNAUTHORIZED, err.Error())
@@ -81,7 +81,7 @@ func MakeJWT(payload map[string]string, expDuration *time.Duration) (jwt string,
 	bh := base64.RawURLEncoding.EncodeToString(headerJSON)
 	bp := base64.RawURLEncoding.EncodeToString(payloadJSON)
 	signBefore := bh + "." + bp
-	signature := common.HMACSHA256(signBefore, []byte(secret))
+	signature := common.HMACSHA256(signBefore, secret)
 	bs := base64.RawURLEncoding.EncodeToString(signature)
 	return signBefore + "." + bs, nil
 }
