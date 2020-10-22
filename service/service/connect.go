@@ -66,8 +66,6 @@ func Connect(which *configure.Which) (err error) {
 	}
 	//保存节点连接成功的结果
 	err = configure.SetConnect(which)
-	if err != nil {
-		return
-	}
-	return v2ray.EnableV2rayService()
+	//v2ray.EnableV2rayService()
+	return
 }
