@@ -101,6 +101,9 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 		username := u.User.String()
 		username, _ = common.Base64URLDecode(username)
 		arr := strings.Split(username, ":")
+		if len(arr) != 2 {
+			return nil, false
+		}
 		method := arr[0]
 		password := arr[1]
 		var obfs, path, host string
