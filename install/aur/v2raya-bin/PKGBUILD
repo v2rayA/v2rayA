@@ -66,7 +66,7 @@ sha1sums_armv7h=(
 
 package() {
     cd "$srcdir"
-    install -Dm 755 v2raya_v"${pkgver}" -t "${pkgdir}"/usr/bin/
+    install -Dm 755 v2raya_v"${pkgver}" "${pkgdir}"/usr/bin/v2raya
     find web -type d -exec install -vd "${pkgdir}"/etc/v2raya/{} \;
     find web -type f -exec install -vm 644 {} "${pkgdir}"/etc/v2raya/{} \;
     install -Dm 644 v2raya.desktop -t "${pkgdir}"/usr/share/applications/
