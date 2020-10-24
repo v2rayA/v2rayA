@@ -27,7 +27,7 @@ build() {
 }
 
 package() {
-    cd "${srcdir}"/"v2raya-${pkgver}"/
+    cd "${srcdir}"/"v2rayA-${pkgver}"/
     install -Dm 755 service/v2raya -t "${pkgdir}"/usr/bin/
     find web -type d -exec install -vd "${pkgdir}"/etc/v2raya/{} \;
     find web -type f -exec install -vm 644 {} "${pkgdir}"/etc/v2raya/{} \;
