@@ -2,14 +2,16 @@ package jwt
 
 import (
 	"crypto/sha256"
-	"github.com/matoous/go-nanoid"
+	gonanoid "github.com/matoous/go-nanoid"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"log"
+	"sync"
 )
 
 var secret []byte
+var once sync.Once
 
-func init() {
+func genSecret() {
 	//屡次启动的secret都不一样
 	//为了减少输入密码的次数，如果有订阅，secret则为所有订阅地址的hash值
 	if sub := configure.GetSubscriptions(); len(sub) > 0 {
@@ -25,4 +27,8 @@ func init() {
 		}
 		secret = []byte(id)
 	}
+}
+func getSecret() []byte {
+	once.Do(genSecret)
+	return secret
 }

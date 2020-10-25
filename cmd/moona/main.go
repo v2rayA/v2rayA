@@ -9,6 +9,8 @@ import (
 	"github.com/v2rayA/v2rayA/global"
 	_ "github.com/v2rayA/v2rayA/plugin/pingtunnel"
 	_ "github.com/v2rayA/v2rayA/plugin/shadowsocksr"
+	_ "github.com/v2rayA/v2rayA/plugin/simpleobfs"
+	_ "github.com/v2rayA/v2rayA/plugin/ssrpluginSimpleobfs"
 	_ "github.com/v2rayA/v2rayA/plugin/trojan"
 	"github.com/v2rayA/v2rayA/service"
 	"io/ioutil"
@@ -96,7 +98,7 @@ func GenerateTestList() configure.Whiches {
 
 func main() {
 	if !common.IsInDocker() {
-		fmt.Printf("moona must run with docker")
+		fmt.Println("moona must run with docker")
 		os.Exit(1)
 	}
 	c := config.GetConfig()
