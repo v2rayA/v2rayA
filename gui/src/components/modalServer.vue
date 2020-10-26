@@ -285,7 +285,7 @@
             </b-select>
           </b-field>
           <b-field label="Obfs" label-position="on-border">
-            <b-select ref="ss_obfs" v-model="ss.obfs" expanded required>
+            <b-select ref="ss_obfs" v-model="ss.obfs" expanded>
               <option value="">{{ $t("setting.options.off") }}</option>
               <option value="http">http</option>
               <option value="tls">tls</option>
@@ -799,7 +799,7 @@ export default {
               }`
             )}`;
           }
-          s += srcObj.name.length ? `#${Base64.encodeURI(srcObj.name)}` : "";
+          s += srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "";
           return s;
 
         case "ssr":
