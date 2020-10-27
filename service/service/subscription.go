@@ -2,13 +2,16 @@ package service
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/touch"
+	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"v2ray.com/core/common/errors"
@@ -17,23 +20,58 @@ import (
 //func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
 //	return ResolveSubscriptionWithClient(source, http.DefaultClient)
 //}
+type SIP008 struct {
+	Version  int    `json:"version"`
+	Username string `json:"username"`
+	UserUUID string `json:"user_uuid"`
+	Servers  []struct {
+		Server     string `json:"server"`
+		ServerPort int    `json:"server_port"`
+		Password   string `json:"password"`
+		Method     string `json:"method"`
+		Plugin     string `json:"plugin"`
+		PluginOpts string `json:"plugin_opts"`
+		Remarks    string `json:"remarks"`
+		ID         string `json:"id"`
+	} `json:"servers"`
+}
 
-func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, status string, err error) {
-	// get请求source
-	c := *client
-	c.Timeout = 30 * time.Second
-	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
+func resolveSIP008(raw string) (infos []*nodeData.NodeData, err error) {
+	var sip SIP008
+	err = json.Unmarshal([]byte(raw), &sip)
 	if err != nil {
 		return
 	}
-	buf := new(bytes.Buffer)
-	_, _ = buf.ReadFrom(res.Body)
-	defer res.Body.Close()
-	// base64解码, raw是多行vmess/ss/ssr/trojan
-	raw, err := common.Base64StdDecode(buf.String())
-	if err != nil {
-		raw, _ = common.Base64URLDecode(buf.String())
+	for _, server := range sip.Servers {
+		arr := strings.Split(server.PluginOpts, ";")
+		var obfs, path, host string
+		for i := 0; i < len(arr); i++ {
+			a := strings.Split(arr[i], "=")
+			switch a[0] {
+			case "obfs":
+				obfs = a[1]
+			case "obfs-path":
+				path = a[1]
+			case "obfs-host":
+				host = a[1]
+			}
+		}
+		infos = append(infos, &nodeData.NodeData{VmessInfo: vmessInfo.VmessInfo{
+			Ps:       server.Remarks,
+			Add:      server.Server,
+			Port:     strconv.Itoa(server.ServerPort),
+			ID:       server.Password,
+			Net:      server.Method,
+			Type:     obfs,
+			Path:     path,
+			Host:     host,
+			Protocol: "ss",
+		}})
 	}
+	return
+}
+
+func resolveByLines(raw string) (infos []*nodeData.NodeData, status string, err error) {
 	// 切分raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析
@@ -53,6 +91,28 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 			continue
 		}
 		infos = append(infos, data)
+	}
+	return
+}
+
+func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, status string, err error) {
+	// get请求source
+	c := *client
+	c.Timeout = 30 * time.Second
+	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
+	if err != nil {
+		return
+	}
+	buf := new(bytes.Buffer)
+	_, _ = buf.ReadFrom(res.Body)
+	defer res.Body.Close()
+	// base64解码
+	raw, err := common.Base64StdDecode(buf.String())
+	if err != nil {
+		raw, _ = common.Base64URLDecode(buf.String())
+	}
+	if infos, err = resolveSIP008(raw); err != nil {
+		infos, status, err = resolveByLines(raw)
 	}
 	return
 }
