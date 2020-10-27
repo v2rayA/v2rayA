@@ -43,21 +43,29 @@ script:
   - fpm -s dir -t deb -p installer_debian_armel_$VERSION.deb --description "$DESC" $params --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" $params --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_aarch64_$VERSION.deb --description "$DESC" $params --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" $params --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t deb -p installer_debian_armv8_$VERSION.deb --description "$DESC" $params --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_i386_$VERSION.rpm --description "$DESC" $params --architecture=i386 v2raya_linux_386_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_amd64_$VERSION.rpm --description "$DESC" $params --architecture=amd64 v2raya_linux_amd64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_armel_$VERSION.rpm --description "$DESC" $params --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_armhf_$VERSION.rpm --description "$DESC" $params --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" $params --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t rpm -p installer_redhat_arm64_$VERSION.rpm --description "$DESC" $params --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t rpm -p installer_redhat_armv8_$VERSION.rpm --description "$DESC" $params --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_i386_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=i386 v2raya_linux_386_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_amd64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=amd64 v2raya_linux_amd64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_armel_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_armhf_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t pacman -p installer_archlinux_arm64_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t pacman -p installer_archlinux_armv8_$VERSION.pkg.tar.xz --description "$DESC" $params --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $params --description "$DESC" --architecture=i386 v2raya_linux_386_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $params --description "$DESC" --architecture=amd64 v2raya_linux_amd64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t freebsd -p installer_freebsd_armel_$VERSION.txz $params --description "$DESC" --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t freebsd -p installer_freebsd_armhf_$VERSION.txz $params --description "$DESC" --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $params --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $params --description "$DESC" --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
+  - fpm -s dir -t freebsd -p installer_freebsd_armv8_$VERSION.txz $params --description "$DESC" --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
 
 before_deploy:
   if [[ $(pwd) =~ /apt$ ]]; then
@@ -74,6 +82,8 @@ before_deploy:
       ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_armel_$VERSION.deb &&
       ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_armhf_$VERSION.deb &&
       ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_aarch64_$VERSION.deb &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_arm64_$VERSION.deb &&
+      ../install/tool/reprepro_expect --ask-passphrase -Vb . includedeb v2raya ../installer_debian_armv8_$VERSION.deb &&
       cp ../v2raya_linux_*_$VERSION pool/main/v/v2raya/ &&
       cp ../web.tar.gz pool/main/v/v2raya/web_$VERSION.tar.gz &&
       echo "apt.v2raya.mzz.pub" > CNAME &&
@@ -119,21 +129,29 @@ deploy:
       - "installer_debian_armel_$VERSION.deb"
       - "installer_debian_armhf_$VERSION.deb"
       - "installer_debian_aarch64_$VERSION.deb"
+      - "installer_debian_arm64_$VERSION.deb"
+      - "installer_debian_armv8_$VERSION.deb"
       - "installer_freebsd_i386_$VERSION.txz"
       - "installer_freebsd_amd64_$VERSION.txz"
       - "installer_freebsd_armel_$VERSION.txz"
       - "installer_freebsd_armhf_$VERSION.txz"
       - "installer_freebsd_aarch64_$VERSION.txz"
+      - "installer_freebsd_arm64_$VERSION.txz"
+      - "installer_freebsd_armv8_$VERSION.txz"
       - "installer_redhat_i386_$VERSION.rpm"
       - "installer_redhat_amd64_$VERSION.rpm"
       - "installer_redhat_armel_$VERSION.rpm"
       - "installer_redhat_armhf_$VERSION.rpm"
       - "installer_redhat_aarch64_$VERSION.rpm"
+      - "installer_redhat_arm64_$VERSION.rpm"
+      - "installer_redhat_armv8_$VERSION.rpm"
       - "installer_archlinux_i386_$VERSION.pkg.tar.xz"
       - "installer_archlinux_amd64_$VERSION.pkg.tar.xz"
       - "installer_archlinux_armel_$VERSION.pkg.tar.xz"
       - "installer_archlinux_armhf_$VERSION.pkg.tar.xz"
       - "installer_archlinux_aarch64_$VERSION.pkg.tar.xz"
+      - "installer_archlinux_arm64_$VERSION.pkg.tar.xz"
+      - "installer_archlinux_armv8_$VERSION.pkg.tar.xz"
     skip_cleanup: true
     draft: true
     overwrite: true
