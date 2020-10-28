@@ -50,6 +50,7 @@ func GetV2rayLocationAsset() (s string) {
 						continue
 					}
 					s = c
+					break
 				}
 			}
 		}
