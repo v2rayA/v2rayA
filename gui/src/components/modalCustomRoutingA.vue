@@ -111,7 +111,8 @@ export default {
 
 .horizon-scroll {
   overflow-x: auto;
-  white-space: nowrap;
+  white-space: pre;
+  line-height: 1.6em;
 }
 
 .code-font {
