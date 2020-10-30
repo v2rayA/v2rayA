@@ -222,6 +222,7 @@ type KcpSettings struct {
 		Request  interface{} `json:"request"`
 		Response interface{} `json:"response"`
 	} `json:"header"`
+	Seed string `json:"seed"`
 }
 type HttpSettings struct {
 	Path string   `json:"path"`
@@ -333,6 +334,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		case "mkcp", "kcp":
 			tmplJson.KcpSettings.Header.Type = v.Type
 			o.StreamSettings.KcpSettings = &tmplJson.KcpSettings
+			o.StreamSettings.KcpSettings.Seed = v.Path
 		case "tcp":
 			if strings.ToLower(v.Type) != "none" { //那就是http无疑了
 				tmplJson.TCPSettings.Header.Request.Headers.Host = strings.Split(v.Host, ",")
