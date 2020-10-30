@@ -1250,7 +1250,10 @@ td {
 @import "~bulma/sass/utilities/all";
 
 #toolbar {
-  padding: 0.75em 0.75em 0;
+  .field.is-grouped.is-grouped-multiline:last-child {
+    margin-bottom: 0;
+  }
+  padding: 0.75em 0.75em;
   margin-bottom: 1rem;
   position: sticky;
   top: 65px;
@@ -1268,7 +1271,7 @@ td {
     position: absolute;
     right: 0.75rem;
     top: 0.75em;
-    max-width: 50%;
+    /*max-width: 70%;*/
   }
 
   transition: all 200ms linear;
