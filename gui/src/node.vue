@@ -13,12 +13,13 @@
             : 'transparent'
         }"
       >
-        <div style="max-width: 50%">
+        <div style="max-width: 60%">
           <button
             :class="{
               button: true,
               field: true,
               'is-info': true,
+              'mobile-small': true,
               'not-display': !overHeight && !isCheckedRowsPingable()
             }"
             :disabled="!isCheckedRowsPingable()"
@@ -32,6 +33,7 @@
               button: true,
               field: true,
               'is-info': true,
+              'mobile-small': true,
               'not-display': !overHeight && !isCheckedRowsPingable()
             }"
             :disabled="!isCheckedRowsPingable()"
@@ -45,6 +47,7 @@
               button: true,
               field: true,
               'is-delete': true,
+              'mobile-small': true,
               'not-display': !overHeight && !isCheckedRowsDeletable()
             }"
             :disabled="!isCheckedRowsDeletable()"
@@ -67,11 +70,19 @@
           <span class="field not-show">placeholder</span>
         </div>
         <div class="right">
-          <b-button class="field" type="is-primary" @click="handleClickCreate">
+          <b-button
+            class="field mobile-small"
+            type="is-primary"
+            @click="handleClickCreate"
+          >
             <i class="iconfont icon-chuangjiangongdan1" />
             <span>{{ $t("operations.create") }}</span>
           </b-button>
-          <b-button class="field" type="is-primary" @click="handleClickImport">
+          <b-button
+            class="field mobile-small"
+            type="is-primary"
+            @click="handleClickImport"
+          >
             <i class="iconfont icon-daoruzupu-xianxing" />
             <span>{{ $t("operations.import") }}</span>
           </b-button>
@@ -1250,6 +1261,11 @@ td {
 @import "~bulma/sass/utilities/all";
 
 #toolbar {
+  .field.is-grouped .field:not(:last-child) {
+    @media screen and (max-width: 450px) {
+      margin-right: 0.3rem;
+    }
+  }
   .field.is-grouped.is-grouped-multiline:last-child {
     margin-bottom: 0;
   }
@@ -1373,5 +1389,11 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   z-index: 1;
   font-size: 12px;
   pointer-events: none;
+}
+.mobile-small {
+  @media screen and (max-width: 450px) {
+    border-radius: 2px;
+    font-size: 0.75rem;
+  }
 }
 </style>
