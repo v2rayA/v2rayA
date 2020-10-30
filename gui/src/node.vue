@@ -126,75 +126,88 @@
               :data="tableData.subscriptions"
               :checked-rows.sync="checkedRows"
               :row-class="(row, index) => row.connected && 'is-connected'"
+              default-sort="id"
               checkable
             >
-              <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric sortable>
-                  {{ props.row.id }}
-                </b-table-column>
-                <b-table-column
-                  field="host"
-                  :label="$t('subscription.host')"
-                  sortable
-                >
-                  {{ props.row.host }}
-                </b-table-column>
-                <b-table-column
-                  field="remarks"
-                  :label="$t('subscription.remarks')"
-                  sortable
-                >
-                  {{ props.row.remarks }}
-                </b-table-column>
-                <b-table-column
-                  field="status"
-                  :label="$t('subscription.timeLastUpdate')"
-                  width="260"
-                  sortable
-                >
-                  {{ props.row.status }}
-                </b-table-column>
-                <b-table-column
-                  :label="$t('subscription.numberServers')"
-                  centered
-                  numeric
-                  sortable
-                  :custom-sort="sortNumberServers"
-                >
-                  {{ props.row.servers.length }}
-                </b-table-column>
-                <b-table-column :label="$t('operations.name')" width="300">
-                  <div class="operate-box">
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-sync"
-                      outlined
-                      type="is-warning"
-                      @click="handleClickUpdateSubscription(props.row)"
-                    >
-                      {{ $t("operations.update") }}
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-wendangxiugai"
-                      outlined
-                      type="is-info"
-                      @click="handleClickModifySubscription(props.row)"
-                    >
-                      {{ $t("operations.modify") }}
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-share"
-                      outlined
-                      type="is-success"
-                      @click="handleClickShare(props.row)"
-                    >
-                      {{ $t("operations.share") }}
-                    </b-button>
-                  </div>
-                </b-table-column>
-              </template>
+              <b-table-column
+                v-slot="props"
+                field="id"
+                label="ID"
+                numeric
+                sortable
+              >
+                {{ props.row.id }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="host"
+                :label="$t('subscription.host')"
+                sortable
+              >
+                {{ props.row.host }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="remarks"
+                :label="$t('subscription.remarks')"
+                sortable
+              >
+                {{ props.row.remarks }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="status"
+                :label="$t('subscription.timeLastUpdate')"
+                width="260"
+                sortable
+              >
+                {{ props.row.status }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                :label="$t('subscription.numberServers')"
+                centered
+                numeric
+                sortable
+                :custom-sort="sortNumberServers"
+              >
+                {{ props.row.servers.length }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                :label="$t('operations.name')"
+                width="300"
+              >
+                <div class="operate-box">
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-sync"
+                    outlined
+                    type="is-warning"
+                    @click="handleClickUpdateSubscription(props.row)"
+                  >
+                    {{ $t("operations.update") }}
+                  </b-button>
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-wendangxiugai"
+                    outlined
+                    type="is-info"
+                    @click="handleClickModifySubscription(props.row)"
+                  >
+                    {{ $t("operations.modify") }}
+                  </b-button>
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-share"
+                    outlined
+                    type="is-success"
+                    @click="handleClickShare(props.row)"
+                  >
+                    {{ $t("operations.share") }}
+                  </b-button>
+                </div>
+              </b-table-column>
             </b-table>
           </b-field>
         </b-tab-item>
@@ -213,83 +226,96 @@
               :checked-rows.sync="checkedRows"
               checkable
               :row-class="(row, index) => row.connected && 'is-connected'"
+              default-sort="id"
             >
-              <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric sortable>
-                  {{ props.row.id }}
-                </b-table-column>
-                <b-table-column
-                  field="name"
-                  :label="$t('server.name')"
-                  sortable
-                >
-                  {{ props.row.name }}
-                </b-table-column>
-                <b-table-column
-                  field="address"
-                  :label="$t('server.address')"
-                  sortable
-                >
-                  {{ props.row.address }}
-                </b-table-column>
-                <b-table-column
-                  field="net"
-                  :label="$t('server.protocol')"
-                  sortable
-                >
-                  {{ props.row.net }}
-                </b-table-column>
-                <b-table-column
-                  field="pingLatency"
-                  :label="$t('server.latency')"
-                  class="ping-latency"
-                  sortable
-                  :custom-sort="sortping"
-                >
-                  {{ props.row.pingLatency }}
-                </b-table-column>
-                <b-table-column :label="$t('operations.name')" width="300">
-                  <div class="operate-box">
-                    <b-button
-                      size="is-small"
-                      :icon-left="
-                        ` github-circle iconfont ${
-                          props.row.connected
-                            ? 'icon-Link_disconnect'
-                            : 'icon-lianjie'
-                        }`
-                      "
-                      :outlined="!props.row.connected"
-                      :type="props.row.connected ? 'is-warning' : 'is-warning'"
-                      @click="handleClickAboutConnection(props.row)"
-                    >
-                      {{
+              <b-table-column
+                v-slot="props"
+                field="id"
+                label="ID"
+                numeric
+                sortable
+              >
+                {{ props.row.id }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="name"
+                :label="$t('server.name')"
+                sortable
+              >
+                {{ props.row.name }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="address"
+                :label="$t('server.address')"
+                sortable
+              >
+                {{ props.row.address }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="net"
+                :label="$t('server.protocol')"
+                sortable
+              >
+                {{ props.row.net }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="pingLatency"
+                :label="$t('server.latency')"
+                class="ping-latency"
+                sortable
+                :custom-sort="sortping"
+              >
+                {{ props.row.pingLatency }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                :label="$t('operations.name')"
+                width="300"
+              >
+                <div class="operate-box">
+                  <b-button
+                    size="is-small"
+                    :icon-left="
+                      ` github-circle iconfont ${
                         props.row.connected
-                          ? $t("operations.disconnect")
-                          : $t("operations.connect")
-                      }}
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-wendangxiugai"
-                      :outlined="!props.row.connected"
-                      type="is-info"
-                      @click="handleClickModifyServer(props.row)"
-                    >
-                      {{ $t("operations.modify") }}
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-share"
-                      :outlined="!props.row.connected"
-                      type="is-success"
-                      @click="handleClickShare(props.row)"
-                    >
-                      {{ $t("operations.share") }}
-                    </b-button>
-                  </div>
-                </b-table-column>
-              </template>
+                          ? 'icon-Link_disconnect'
+                          : 'icon-lianjie'
+                      }`
+                    "
+                    :outlined="!props.row.connected"
+                    :type="props.row.connected ? 'is-warning' : 'is-warning'"
+                    @click="handleClickAboutConnection(props.row)"
+                  >
+                    {{
+                      props.row.connected
+                        ? $t("operations.disconnect")
+                        : $t("operations.connect")
+                    }}
+                  </b-button>
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-wendangxiugai"
+                    :outlined="!props.row.connected"
+                    type="is-info"
+                    @click="handleClickModifyServer(props.row)"
+                  >
+                    {{ $t("operations.modify") }}
+                  </b-button>
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-share"
+                    :outlined="!props.row.connected"
+                    type="is-success"
+                    @click="handleClickShare(props.row)"
+                  >
+                    {{ $t("operations.share") }}
+                  </b-button>
+                </div>
+              </b-table-column>
             </b-table>
           </b-field>
         </b-tab-item>
@@ -324,84 +350,97 @@
               :checked-rows.sync="checkedRows"
               checkable
               :row-class="(row, index) => row.connected && 'is-connected'"
+              default-sort="id"
             >
-              <template slot-scope="props">
-                <b-table-column field="id" label="ID" numeric sortable>
-                  {{ props.row.id }}
-                </b-table-column>
-                <b-table-column
-                  field="name"
-                  :label="$t('server.name')"
-                  sortable
-                >
-                  {{ props.row.name }}
-                </b-table-column>
-                <b-table-column
-                  field="address"
-                  :label="$t('server.address')"
-                  sortable
-                >
-                  {{ props.row.address }}
-                </b-table-column>
-                <b-table-column
-                  field="net"
-                  :label="$t('server.protocol')"
-                  style="font-size:0.9em"
-                  sortable
-                >
-                  {{ props.row.net }}
-                </b-table-column>
-                <b-table-column
-                  field="pingLatency"
-                  :label="$t('server.latency')"
-                  class="ping-latency"
-                  sortable
-                  :custom-sort="sortping"
-                >
-                  {{ props.row.pingLatency }}
-                </b-table-column>
-                <b-table-column :label="$t('operations.name')" width="300">
-                  <div class="operate-box">
-                    <b-button
-                      size="is-small"
-                      :icon-left="
-                        ` github-circle iconfont ${
-                          props.row.connected
-                            ? 'icon-Link_disconnect'
-                            : 'icon-lianjie'
-                        }`
-                      "
-                      :outlined="!props.row.connected"
-                      :type="props.row.connected ? 'is-warning' : 'is-warning'"
-                      @click="handleClickAboutConnection(props.row, subi)"
-                    >
-                      {{
+              <b-table-column
+                v-slot="props"
+                field="id"
+                label="ID"
+                numeric
+                sortable
+              >
+                {{ props.row.id }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="name"
+                :label="$t('server.name')"
+                sortable
+              >
+                {{ props.row.name }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="address"
+                :label="$t('server.address')"
+                sortable
+              >
+                {{ props.row.address }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="net"
+                :label="$t('server.protocol')"
+                style="font-size:0.9em"
+                sortable
+              >
+                {{ props.row.net }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                field="pingLatency"
+                :label="$t('server.latency')"
+                class="ping-latency"
+                sortable
+                :custom-sort="sortping"
+              >
+                {{ props.row.pingLatency }}
+              </b-table-column>
+              <b-table-column
+                v-slot="props"
+                :label="$t('operations.name')"
+                width="300"
+              >
+                <div class="operate-box">
+                  <b-button
+                    size="is-small"
+                    :icon-left="
+                      ` github-circle iconfont ${
                         props.row.connected
-                          ? $t("operations.disconnect")
-                          : $t("operations.connect")
-                      }}
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-winfo-icon-chakanbaogao"
-                      :outlined="!props.row.connected"
-                      type="is-info"
-                      @click="handleClickViewServer(props.row, subi)"
-                    >
-                      {{ $t("operations.view") }}
-                    </b-button>
-                    <b-button
-                      size="is-small"
-                      icon-left=" github-circle iconfont icon-share"
-                      :outlined="!props.row.connected"
-                      type="is-success"
-                      @click="handleClickShare(props.row, subi)"
-                    >
-                      {{ $t("operations.share") }}
-                    </b-button>
-                  </div>
-                </b-table-column>
-              </template>
+                          ? 'icon-Link_disconnect'
+                          : 'icon-lianjie'
+                      }`
+                    "
+                    :outlined="!props.row.connected"
+                    :type="props.row.connected ? 'is-warning' : 'is-warning'"
+                    @click="handleClickAboutConnection(props.row, subi)"
+                  >
+                    {{
+                      props.row.connected
+                        ? $t("operations.disconnect")
+                        : $t("operations.connect")
+                    }}
+                  </b-button>
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-winfo-icon-chakanbaogao"
+                    :outlined="!props.row.connected"
+                    type="is-info"
+                    @click="handleClickViewServer(props.row, subi)"
+                  >
+                    {{ $t("operations.view") }}
+                  </b-button>
+                  <b-button
+                    size="is-small"
+                    icon-left=" github-circle iconfont icon-share"
+                    :outlined="!props.row.connected"
+                    type="is-success"
+                    @click="handleClickShare(props.row, subi)"
+                  >
+                    {{ $t("operations.share") }}
+                  </b-button>
+                </div>
+              </b-table-column>
             </b-table>
           </b-field>
         </b-tab-item>
@@ -447,6 +486,7 @@
       trap-focus
       aria-role="dialog"
       aria-modal
+      @after-enter="handleModalImportShow"
     >
       <div class="modal-card" style="width: 350px">
         <header class="modal-card-head">
@@ -455,10 +495,12 @@
         <section class="modal-card-body">
           {{ $t("import.message") }}
           <b-input
+            ref="importInput"
             v-model="importWhat"
             icon-right=" iconfont icon-camera"
             icon-right-clickable
             @icon-right-click="handleClickImportQRCode"
+            @keyup.native="handleImportEnter"
           ></b-input>
         </section>
         <footer
@@ -591,6 +633,15 @@ export default {
     });
   },
   methods: {
+    handleModalImportShow() {
+      this.$refs.importInput.focus();
+    },
+    handleImportEnter(event) {
+      if (event.keyCode !== 13) {
+        return;
+      }
+      this.handleClickImportConfirm();
+    },
     handleFileChange(e) {
       const that = this;
       const file = e.target.files[0];
