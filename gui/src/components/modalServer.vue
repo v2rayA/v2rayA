@@ -212,6 +212,17 @@
               expanded
             />
           </b-field>
+          <b-field
+            v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'"
+            label="Seed"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.seedObfuscation')"
+              expanded
+            />
+          </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
           <b-field label="Name" label-position="on-border">

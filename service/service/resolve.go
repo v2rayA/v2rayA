@@ -48,15 +48,29 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		if ps == "" {
 			ps = q.Get("remark")
 		}
+		obfs := q.Get("obfs")
+		obfsParam := q.Get("obfsParam")
+		path := q.Get("path")
+		if obfs == "kcp" || obfs == "mkcp" {
+			m := make(map[string]string)
+			//迎合v2rayN的格式定义
+			_ = jsoniter.Unmarshal([]byte(obfsParam), &m)
+			path = m["seed"]
+			obfsParam = ""
+		}
+		aid := q.Get("alterId")
+		if aid == "" {
+			aid = q.Get("aid")
+		}
 		info = vmessInfo.VmessInfo{
 			ID:            subMatch[1],
 			Add:           subMatch[2],
 			Port:          subMatch[3],
 			Ps:            ps,
-			Host:          q.Get("obfsParam"),
-			Path:          q.Get("path"),
-			Net:           q.Get("obfs"),
-			Aid:           q.Get("aid"),
+			Host:          obfsParam,
+			Path:          path,
+			Net:           obfs,
+			Aid:           aid,
 			TLS:           map[string]string{"1": "tls"}[q.Get("tls")],
 			V:             "2",
 			AllowInsecure: false,
@@ -76,7 +90,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		info.Host = ""
 	}
 	if info.Aid == "" {
-		info.Aid = "2"
+		info.Aid = "1"
 	}
 	data = new(nodeData.NodeData)
 	data.VmessInfo = info

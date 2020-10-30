@@ -212,6 +212,7 @@ export default {
     wireguardObfuscation: "伪装为WireGuard数据包",
     hostObfuscation: "域名(host)",
     pathObfuscation: "路径(path)",
+    seedObfuscation: "混淆种子",
     password: "密码"
   },
   import: {

@@ -213,6 +213,7 @@ export default {
     wireguardObfuscation: "Obfuscated as WireGuard Packets",
     hostObfuscation: "Host",
     pathObfuscation: "Path",
+    seedObfuscation: "Seed",
     password: "Password"
   },
   configureSubscription: {
