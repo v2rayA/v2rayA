@@ -64,7 +64,7 @@
             />
           </b-field>
           <b-field
-            v-show="v2ray.protocol !== 'vless'"
+            v-if="v2ray.protocol !== 'vless'"
             label="AlterID"
             label-position="on-border"
           >
