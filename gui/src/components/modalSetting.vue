@@ -66,20 +66,20 @@
             $t("setting.options.sameAsPacMode")
           }}</option>
         </b-select>
-        <template v-if="transparent !== 'close'">
-          <b-button
-            style="border-radius: 0;z-index: 2;"
-            @click="handleClickPortWhiteList"
-          >
-            {{ $t("egressPortWhitelist.title") }}
-          </b-button>
-          <b-checkbox-button
-            v-model="ipforward"
-            :native-value="true"
-            style="position:relative;left:-1px;"
-            >{{ $t("setting.ipForwardOn") }}
-          </b-checkbox-button>
-        </template>
+        <b-button
+          v-show="transparent !== 'close'"
+          style="border-radius: 0;z-index: 2;"
+          @click="handleClickPortWhiteList"
+        >
+          {{ $t("egressPortWhitelist.title") }}
+        </b-button>
+        <b-checkbox-button
+          v-show="transparent !== 'close'"
+          v-model="ipforward"
+          :native-value="true"
+          style="position:relative;left:-1px;"
+          >{{ $t("setting.ipForwardOn") }}
+        </b-checkbox-button>
       </b-field>
       <b-field label-position="on-border">
         <template slot="label">
@@ -116,9 +116,8 @@
             >{{ $t("operations.configure") }}
           </b-button>
         </template>
-        <template v-if="pacMode === 'routingA'">
+        <template v-show="pacMode === 'routingA'">
           <b-button
-            type="is-primary"
             style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
             outlined
             @click="handleClickConfigureRoutingA"
