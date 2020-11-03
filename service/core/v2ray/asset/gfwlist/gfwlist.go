@@ -36,7 +36,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	if !g.UpdateTime.IsZero() {
 		return g, nil
 	}
-	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/mzz2017/dist-v2ray-rules-dat/tags")
+	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/v2rayA/dist-v2ray-rules-dat/tags")
 	if err != nil {
 		err = newError("failed to get latest version of GFWList").Base(err)
 		return
@@ -114,7 +114,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	//u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geoip.dat`, gfwlist.Tag)
+	//u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geoip.dat`, gfwlist.Tag)
 	//err = gopeed.Down(&gopeed.Request{
 	//	Method: "GET",
 	//	URL:    u,
@@ -135,7 +135,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		}
 		sucBackup = true
 	}
-	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
+	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
 	err = gopeed.Down(&gopeed.Request{
 		Method: "GET",
 		URL:    u,
@@ -144,7 +144,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		log.Println(err)
 		return
 	}
-	u2 := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/mzz2017/dist-v2ray-rules-dat@%v/geosite.dat.sha256sum`, gfwlist.Tag)
+	u2 := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat.sha256sum`, gfwlist.Tag)
 	err = gopeed.Down(&gopeed.Request{
 		Method: "GET",
 		URL:    u2,

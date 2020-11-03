@@ -200,11 +200,11 @@ func initConfigure() {
 			os.Rename(p, asset.GetV2rayLocationAsset()+"/"+localname)
 			return
 		}
-		err := dld("mzz2017/dist-geoip", "geoip.dat", "geoip.dat")
+		err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
 		if err != nil {
 			log.Println(err)
 		}
-		err = dld("mzz2017/dist-domain-list-community", "dlc.dat", "geosite.dat")
+		err = dld("v2rayA/dist-domain-list-community", "dlc.dat", "geosite.dat")
 		if err != nil {
 			log.Println(err)
 		}
