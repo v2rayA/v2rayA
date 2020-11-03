@@ -53,7 +53,7 @@ func checkEnvironment() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("ok")
+		fmt.Println("It will work after you restart v2rayA")
 		os.Exit(0)
 	}
 	_, port, err := net.SplitHostPort(conf.Address)
