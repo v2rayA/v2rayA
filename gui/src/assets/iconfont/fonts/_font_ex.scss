@@ -5,14 +5,13 @@
   font-style: normal;
 }
 
+.mdi-chevron-right::before {
+  content: "\ea05";
+}
+
 .mdi-chevron-left::before {
   content: "\ea06";
 }
-
-.mdi-chevron-right::before {
-  content: "\ea07";
-}
-
 
 .mdi-arrow-up::before {
   content: "\ea03";
