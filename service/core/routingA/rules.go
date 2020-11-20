@@ -1,5 +1,7 @@
 package routingA
 
+import "strings"
+
 /*
 inbound: httpauthin = http(address: 0.0.0.0, port: 1080, user: 'my-username', pass: 'my-password', user: 'my-username2', pass: 'my-password2')
 outbound: httpout = http(address: 127.0.0.1, port: 8080, user: 'my-username', pass: 'my-password')
@@ -42,7 +44,7 @@ func newBound(s symbol) (o *Bound) {
 		return nil
 	}
 	o = new(Bound)
-	o.Name = s.children[0].val
+	o.Name = strings.TrimSpace(s.children[0].val)
 	o.Value = *newFunction(s.children[2])
 	return
 }
@@ -80,7 +82,7 @@ func newRouting(s symbol) (r *Routing) {
 		return nil
 	}
 	r = new(Routing)
-	r.Out = s.children[4].val
+	r.Out = strings.TrimSpace(s.children[4].val)
 	r.And = append(r.And, *newFunction(s.children[0]))
 	r.And = append(r.And, parseQ(s.children[1])...)
 	return
