@@ -51,6 +51,7 @@ func TestNewRouting(t *testing.T) {
 		`domain(domain: v2raya.mzz.pub) -> socksout`,
 		`domain(full: dns.google) -> proxy`,
 		`domain(contains: .google.) -> proxy`,
+		`domain(test.com) -> proxy`,
 		`ip(127.0.0.1) -> direct`,
 		`ip(192.168.0.0/16) -> direct`,
 		`extern(ip, geoip, private) -> direct`,

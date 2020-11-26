@@ -875,7 +875,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 						}
 					}
 					//this is not recommended
-					//rr.Domain = append(rr.Domain, f.Params...)
+					rr.Domain = append(rr.Domain, f.Params...)
 				case "ip":
 					for k, vv := range f.NamedParams {
 						for _, v := range vv {
