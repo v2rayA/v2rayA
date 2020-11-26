@@ -33,8 +33,8 @@ iptables -t nat -A V2RAY -d 240.0.0.0/4 -j RETURN
 iptables -t nat -A V2RAY -m mark --mark 0xff -j RETURN
 iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 32345
 
-iptables -t nat -A PREROUTING -p tcp -j V2RAY
-iptables -t nat -A OUTPUT -p tcp -j V2RAY
+iptables -t nat -I PREROUTING -p tcp -j V2RAY
+iptables -t nat -I OUTPUT -p tcp -j V2RAY
 `
 	if cmds.IsCommandValid("sysctl") {
 		commands += `
