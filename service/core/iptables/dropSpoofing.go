@@ -9,8 +9,8 @@ func (r *dropSpoofing) GetSetupCommands() SetupCommands {
 iptables -N DROP_SPOOFING
 iptables -A DROP_SPOOFING -p udp --sport 53 -m string --algo bm --hex-string "|00047f|" --from 60 --to 180 -j DROP
 iptables -A DROP_SPOOFING -p udp --sport 53 -m string --algo bm --hex-string "|000400000000|" --from 60 --to 180 -j DROP
-iptables -A INPUT -j DROP_SPOOFING 
-iptables -A FORWARD -j DROP_SPOOFING
+iptables -I INPUT -j DROP_SPOOFING 
+iptables -I FORWARD -j DROP_SPOOFING
 `
 	return SetupCommands(commands)
 }

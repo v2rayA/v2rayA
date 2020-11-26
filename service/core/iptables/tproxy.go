@@ -16,9 +16,9 @@ ip route add local 0.0.0.0/0 dev lo table 100
 iptables -t mangle -N SSTP_OUT
 iptables -t mangle -N SSTP_PRE
 iptables -t mangle -N SSTP_ONCE
-iptables -t mangle -A OUTPUT -j SSTP_OUT
-iptables -t mangle -A PREROUTING -m socket --transparent -j SSTP_ONCE
-iptables -t mangle -A PREROUTING -j SSTP_PRE
+iptables -t mangle -I OUTPUT -j SSTP_OUT
+iptables -t mangle -I PREROUTING -j SSTP_PRE
+iptables -t mangle -I PREROUTING -m socket --transparent -j SSTP_ONCE
 
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
