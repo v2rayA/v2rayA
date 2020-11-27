@@ -23,8 +23,6 @@ iptables -t mangle -I PREROUTING -m socket --transparent -j SSTP_ONCE
 # 打上 iptables 标记，mark 了的会走代理
 iptables -t mangle -N SETMARK
 # 出方向白名单端口
-iptables -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
-iptables -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 iptables -t mangle -A SETMARK -i docker+ -j RETURN
 iptables -t mangle -A SETMARK -i veth+ -j RETURN
 iptables -t mangle -A SETMARK -i br-+ -j RETURN
@@ -44,6 +42,8 @@ iptables -t mangle -A SETMARK -d 198.51.100.0/24 -j RETURN
 iptables -t mangle -A SETMARK -d 203.0.113.0/24 -j RETURN
 iptables -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
 iptables -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
+iptables -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
+iptables -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 iptables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
