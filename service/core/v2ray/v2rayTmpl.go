@@ -231,8 +231,9 @@ type HttpSettings struct {
 type Hosts map[string]string
 
 type DNS struct {
-	Hosts   Hosts         `json:"hosts,omitempty"`
-	Servers []interface{} `json:"servers"`
+	Hosts    Hosts         `json:"hosts,omitempty"`
+	Servers  []interface{} `json:"servers"`
+	ClientIp string        `json:"clientIp,omitempty"`
 }
 type DnsServer struct {
 	Address string   `json:"address"`
@@ -478,7 +479,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 				//DNS转发，所以使用全球友好的DNS服务器
 				t.DNS.Servers = []interface{}{
 					"https://1.1.1.1/dns-query",
-					"https://dns.google/dns-query",
+					"https://8.8.8.8/dns-query",
 				}
 			}
 			if len(t.DNS.Servers) <= 0 {
@@ -526,23 +527,19 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 			Address: dnslist[0],
 			Port:    53,
 			Domains: []string{
-				"geosite:cn",          // 国内白名单走AliDNS
-				"domain:ntp.org",      // NTP 服务器
-				"domain:dogedoge.com", // mzz2017爱用的多吉
-				"full:v2raya.mzz.pub", // v2rayA demo
-				"full:v.mzz.pub",      // v2rayA demo
+				"domain:ntp.org", // NTP 服务器
 			},
 		}
+		if !setting.DnsPrivateMode {
+			ds.Domains = append(ds.Domains, "geosite:cn") // 国内网站dns分流以加速访问
+		}
+
 		if len(dohDomains) > 0 {
 			ds.Domains = append(ds.Domains, dohDomains...)
 		}
 		if net.ParseIP(v.Add) == nil {
-			//如果节点地址不是IP而是域名，将其二级域名加入白名单
-			group := strings.Split(v.Add, ".")
-			if len(group) >= 2 {
-				domain := strings.Join(group[len(group)-2:], ".")
-				ds.Domains = append(ds.Domains, "domain:"+domain)
-			}
+			//如果节点地址不是IP而是域名，将其加入白名单
+			ds.Domains = append(ds.Domains, v.Add)
 		}
 		t.DNS.Servers = append(t.DNS.Servers,
 			ds,
