@@ -530,7 +530,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 				"domain:ntp.org", // NTP 服务器
 			},
 		}
-		if !setting.DnsPrivateMode {
+		if !setting.DnsForceMode {
 			ds.Domains = append(ds.Domains, "geosite:cn") // 国内网站dns分流以加速访问
 		}
 

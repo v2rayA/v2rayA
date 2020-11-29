@@ -14,7 +14,7 @@ type Setting struct {
 	IpForward                  bool            `json:"ipforward"`
 	EnhancedMode               bool            `json:"enhancedMode"`
 	AntiPollution              Antipollution   `json:"antipollution"`
-	DnsPrivateMode             bool            `json:"dnsPrivateMode"`
+	DnsForceMode               bool            `json:"dnsForceMode"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -30,7 +30,7 @@ func NewSetting() (setting *Setting) {
 		IpForward:                  ipforward.IsIpForwardOn(),
 		EnhancedMode:               false,
 		AntiPollution:              AntipollutionClosed,
-		DnsPrivateMode:             false,
+		DnsForceMode:               false,
 	}
 
 }
