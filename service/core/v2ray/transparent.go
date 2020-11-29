@@ -28,8 +28,8 @@ func HijackDNS() error {
 	if err != nil {
 		return fmt.Errorf("failed to hijackDNS: [copy] %v", err)
 	}
-	err = ioutil.WriteFile(originResolverFile, []byte("nameserver 2.0.1.7\n"), os.FileMode(0644))
-	//err = ioutil.WriteFile(originResolverFile, []byte("nameserver 208.67.222.220\n"), os.FileMode(0644))
+	//err = ioutil.WriteFile(originResolverFile, []byte("nameserver 2.0.1.7\n"), os.FileMode(0644))
+	err = ioutil.WriteFile(originResolverFile, []byte("# v2rayA DNS hijack\nnameserver 208.67.222.220\n"), os.FileMode(0644))
 	if err != nil {
 		_ = os.Remove(bakResolverFile)
 		err = fmt.Errorf("failed to hijackDNS: [write] %v", err)
