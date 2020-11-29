@@ -24,13 +24,9 @@ const (
 
 func HijackDNS() error {
 	RestoreDNS()
-	err := copyfile.CopyFile(originResolverFile, bakResolverFile)
+	err := copyfile.CopyFileContent(originResolverFile, bakResolverFile)
 	if err != nil {
 		return fmt.Errorf("failed to hijackDNS: [copy] %v", err)
-	}
-	err = os.Remove(originResolverFile)
-	if err != nil {
-		return fmt.Errorf("failed to hijackDNS: [remove]%v", err)
 	}
 	err = ioutil.WriteFile(originResolverFile, []byte("nameserver 2.0.1.7\n"), os.FileMode(0644))
 	//err = ioutil.WriteFile(originResolverFile, []byte("nameserver 208.67.222.220\n"), os.FileMode(0644))
@@ -42,7 +38,7 @@ func HijackDNS() error {
 }
 
 func RestoreDNS() {
-	err := copyfile.CopyFile(bakResolverFile, originResolverFile)
+	err := copyfile.CopyFileContent(bakResolverFile, originResolverFile)
 	if err != nil {
 		return
 	}
