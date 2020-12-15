@@ -102,9 +102,9 @@
             $t("setting.options.whitelistCn")
           }}</option>
           <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
-          <option v-show="showTransparentModeRoutingPac" value="custom">{{
-            $t("setting.options.customRouting")
-          }}</option>
+          <!--          <option v-show="showTransparentModeRoutingPac" value="custom">{{-->
+          <!--            $t("setting.options.customRouting")-->
+          <!--          }}</option>-->
           <option v-show="showRoutingA" value="routingA">RoutingA</option>
         </b-select>
         <template v-if="pacMode === 'custom'">

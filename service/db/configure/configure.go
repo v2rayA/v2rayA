@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/db"
-	"github.com/tidwall/gjson"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"strings"
@@ -252,6 +252,9 @@ func GetCustomPacNotNil() *CustomPac {
 }
 func GetRoutingA() (r string) {
 	_ = db.Get("system", "routingA", &r)
+	if r == "" {
+		return RoutingATemplate
+	}
 	return
 }
 func GetConnectedServer() *Which {
