@@ -116,7 +116,7 @@
             >{{ $t("operations.configure") }}
           </b-button>
         </template>
-        <template v-show="pacMode === 'routingA'">
+        <template v-if="pacMode === 'routingA'">
           <b-button
             style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
             outlined
@@ -124,6 +124,7 @@
             >{{ $t("operations.configure") }}
           </b-button>
         </template>
+        <p></p>
       </b-field>
       <b-field v-show="showAntipollution" label-position="on-border">
         <template slot="label">
