@@ -337,8 +337,16 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			o.StreamSettings.KcpSettings = &tmplJson.KcpSettings
 			o.StreamSettings.KcpSettings.Seed = v.Path
 		case "tcp":
-			if strings.ToLower(v.Type) != "none" { //那就是http无疑了
+			if strings.ToLower(v.Type) == "http" {
 				tmplJson.TCPSettings.Header.Request.Headers.Host = strings.Split(v.Host, ",")
+				if v.Path != "" {
+					tmplJson.TCPSettings.Header.Request.Path = strings.Split(v.Path, ",")
+					for i := range tmplJson.TCPSettings.Header.Request.Path {
+						if !strings.HasPrefix("/", tmplJson.TCPSettings.Header.Request.Path[i]) {
+							tmplJson.TCPSettings.Header.Request.Path[i] = "/" + tmplJson.TCPSettings.Header.Request.Path[i]
+						}
+					}
+				}
 				o.StreamSettings.TCPSettings = &tmplJson.TCPSettings
 			}
 		case "h2", "http":

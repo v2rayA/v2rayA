@@ -202,7 +202,11 @@
             />
           </b-field>
           <b-field
-            v-show="v2ray.net === 'ws' || v2ray.net === 'h2'"
+            v-show="
+              v2ray.net === 'ws' ||
+                v2ray.net === 'h2' ||
+                (v2ray.net === 'tcp' && v2ray.type === 'http')
+            "
             label="Path"
             label-position="on-border"
           >
