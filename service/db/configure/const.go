@@ -56,3 +56,13 @@ const (
 	AntipollutionNone   = Antipollution("none") //历史原因，none代表“仅防止dns劫持”，不代表关闭
 	AntipollutionClosed = Antipollution("closed") //直接iptables略过udp
 )
+
+const (
+	RoutingATemplate = `default: proxy
+
+# write your own rules below
+domain(domain:webofscience.com,domain:webofknowledge.com,domain:clarivate.com,domain:ieee.org,domain:mdpi.com,domain:qq.com)->direct
+
+ip(geoip:private, geoip:cn)->direct
+domain(geosite:cn)->direct`
+)

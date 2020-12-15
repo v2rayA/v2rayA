@@ -36,10 +36,9 @@ func GetRaw(bucket string, key string) (b []byte, err error) {
 }
 
 func Exists(bucket string, key string) bool {
-	var entry *nutsdb.Entry
 	if err := DB().View(func(tx *nutsdb.Tx) error {
 		var e error
-		if entry, e = tx.Get(bucket, []byte(key)); e != nil {
+		if _, e = tx.Get(bucket, []byte(key)); e != nil {
 			return e
 		}
 		return nil
