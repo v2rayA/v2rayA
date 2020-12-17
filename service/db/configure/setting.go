@@ -10,7 +10,7 @@ type Setting struct {
 	TcpFastOpen                DefaultYesNo    `json:"tcpFastOpen"`
 	MuxOn                      DefaultYesNo    `json:"muxOn"`
 	Mux                        int             `json:"mux"`
-	Transparent                TransparentMode `json:"transparent"` //当透明代理开启时将覆盖端口单独的配置
+	Transparent                TransparentMode `json:"transparent"`
 	IpForward                  bool            `json:"ipforward"`
 	EnhancedMode               bool            `json:"enhancedMode"`
 	AntiPollution              Antipollution   `json:"antipollution"`

@@ -90,6 +90,7 @@ export default {
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     ipForwardOn: "开启局域网共享",
     enhancedModeOn: "开启增强模式",
+    dnsForceModeOn: "关闭DNS分流",
     concurrency: "最大并发数",
     options: {
       global: "代理所有流量",
@@ -99,9 +100,9 @@ export default {
       gfwlist: "GFWList",
       sameAsPacMode: "与规则端口所选模式一致",
       customRouting: "自定义路由规则",
-      antiDnsHijack: "仅防止DNS劫持",
-      forwardDnsRequest: "防止DNS污染：转发DNS请求",
-      doh: "防止DNS污染：DoH(DNS-over-HTTPS)",
+      antiDnsHijack: "仅防止DNS劫持(快速)",
+      forwardDnsRequest: "转发DNS请求",
+      doh: "DoH(DNS-over-HTTPS)",
       default: "保持系统默认",
       on: "启用",
       off: "关闭",
@@ -120,7 +121,8 @@ export default {
         "如果透明代理出现问题，可尝试将'防止DNS污染'选为'关闭'，或打开增强模式(v0.7.0.2+)。" +
         "★转发DNS查询: 通过代理服务器转发DNS请求。" +
         "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，建议选择较快且稳定的DoH服务提供商。" +
-        "★增强模式(v0.7.0.2+)会取代通过iptables转发dns请求的方式，转而使用DnsPoison方式应对被污染的域名。",
+        "★增强模式(v0.7.0.2+)会取代通过iptables转发dns请求的方式，转而使用DnsPoison方式应对被污染的域名。" +
+        "★关闭DNS分流(v1.1.3+)不对国内站点的DNS查询进行分流(可能会影响国内站点访问速度)",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。当前仅支持vmess节点。",
       mux:

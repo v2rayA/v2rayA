@@ -89,7 +89,8 @@ export default {
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Upadate Subscriptions and GFWList",
     ipForwardOn: "Share in LAN",
-    enhancedModeOn: "Enhanced Mode",
+    enhancedModeOn: "Enhanced",
+    dnsForceModeOn: "Disable CDS",
     concurrency: "Concurrency",
     options: {
       global: "Proxy All Traffic",
@@ -99,9 +100,9 @@ export default {
       gfwlist: "Proxy Only GFWList",
       sameAsPacMode: "The Same as the Rule Port",
       customRouting: "Customized Routing",
-      antiDnsHijack: "Prevent DNS Hijack Only",
-      forwardDnsRequest: "Prevent DNS Spoofing: Forward DNS Request",
-      doh: "Prevent DNS Spoofing: DoH(dns-over-https)",
+      antiDnsHijack: "Prevent DNS Hijack Only (fast)",
+      forwardDnsRequest: "Forward DNS Request",
+      doh: "DoH(dns-over-https)",
       default: "Keep Default",
       on: "On",
       off: "Off",
@@ -120,7 +121,8 @@ export default {
         "If there is a problem with transparent proxy, try setting 'Prevent DNS Spoofing' as 'Off' or turn on 'Enhanced Mode' (v0.7.0.2+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
         "★DoH(dns-over-https, v2ray-core: 4.22.0+): Stable and fast DoH services are suggested." +
-        "★Enhanced Mode(v0.7.0.2+) will replace the method of forwarding dns-query using iptables with DnsPoison method to deal with contaminated domain names.",
+        "★Enhanced Mode(v0.7.0.2+) will replace the method of forwarding dns-query using iptables with DnsPoison method to deal with contaminated domain names."+
+        "★Disable CDS(v1.1.3+, Disable China Domain Shunt): Do not shunt DNS query of China Domains",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. Support vmess only now.",
       mux:

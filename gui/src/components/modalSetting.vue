@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card modal-setting" style="max-width: 600px;margin:auto">
+  <div class="modal-card modal-setting" style="max-width: 800px;margin:auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("common.setting") }}</p>
     </header>
@@ -178,6 +178,14 @@
             {{ $t("operations.configure") }}
           </b-button>
         </template>
+        <template v-if="showDnsForceMode">
+          <b-checkbox-button
+            v-model="dnsForceMode"
+            :native-value="true"
+            style="position:relative;left:-1px;"
+            >{{ $t("setting.dnsForceModeOn") }}
+          </b-checkbox-button>
+        </template>
         <template
           v-if="antipollution !== 'closed' && iptablesMode === 'tproxy'"
         >
@@ -324,6 +332,7 @@ export default {
     transparent: "close",
     ipforward: false,
     enhancedMode: false,
+    dnsForceMode: false,
     dnsforward: "no",
     antipollution: "none",
     pacAutoUpdateMode: "none",
@@ -339,7 +348,8 @@ export default {
     showDns: false,
     showTransparentModeRoutingPac: false,
     showRoutingA: false,
-    showAntipollutionClosed: false
+    showAntipollutionClosed: false,
+    showDnsForceMode: false
   }),
   computed: {
     dockerMode() {
@@ -384,6 +394,10 @@ export default {
         this.showDoh =
           isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
           localStorage["dohValid"] === "yes";
+        this.showDnsForceMode = isVersionGreaterEqual(
+          localStorage["version"],
+          "1.1.3"
+        );
         this.showDns = isVersionGreaterEqual(
           localStorage["version"],
           "0.7.0.6"
@@ -464,6 +478,7 @@ export default {
             transparent: this.transparent,
             ipforward: this.ipforward,
             enhancedMode: this.enhancedMode,
+            dnsForceMode: this.dnsForceMode,
             dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
             antipollution: this.antipollution
           },
