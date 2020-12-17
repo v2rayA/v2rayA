@@ -1110,6 +1110,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 			Enabled:     muxon,
 			Concurrency: setting.Mux,
 		}
+	case "ss","shadowsocks":
 	default:
 		supportUDP = false
 	}
