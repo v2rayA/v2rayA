@@ -55,7 +55,6 @@ func (h *DnsHijacker) HijackDNS() error {
 func resetDnsHijacker() {
 	if hijacker != nil {
 		hijacker.Close()
-		hijacker = nil
 	}
 	hijacker = NewDnsHijacker()
 }
