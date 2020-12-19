@@ -56,20 +56,7 @@ iptables -t mangle -A SETMARK -i br-+ -j RETURN
 iptables -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
 iptables -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
 # 注意，如果要调整位置，记得调整func AddIPWhitelist的插入位置
-# iptables -t mangle -A SETMARK -d 10.0.0.0/8 -j RETURN
-# iptables -t mangle -A SETMARK -d 100.64.0.0/10 -j RETURN
-# iptables -t mangle -A SETMARK -d 127.0.0.0/8 -j RETURN
-# iptables -t mangle -A SETMARK -d 169.254.0.0/16 -j RETURN
-# iptables -t mangle -A SETMARK -d 172.16.0.0/12 -j RETURN
-# iptables -t mangle -A SETMARK -d 192.0.0.0/24 -j RETURN
-# iptables -t mangle -A SETMARK -d 192.0.2.0/24 -j RETURN
-# iptables -t mangle -A SETMARK -d 192.88.99.0/24 -j RETURN
-# iptables -t mangle -A SETMARK -d 192.168.0.0/16 -j RETURN
-# iptables -t mangle -A SETMARK -d 198.18.0.0/15 -j RETURN
-# iptables -t mangle -A SETMARK -d 198.51.100.0/24 -j RETURN
-# iptables -t mangle -A SETMARK -d 203.0.113.0/24 -j RETURN
-# iptables -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
-# iptables -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
+# 白名单自动插入
 iptables -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
 iptables -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 iptables -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
