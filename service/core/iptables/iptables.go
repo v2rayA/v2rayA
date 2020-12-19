@@ -10,7 +10,7 @@ import (
 
 // http://briteming.hatenablog.com/entry/2019/06/18/175518
 
-const watcherInterval = 2 * time.Second
+const watcherInterval = 3 * time.Second
 
 var watcher *LocalIPWatcher
 var mutex sync.Mutex
