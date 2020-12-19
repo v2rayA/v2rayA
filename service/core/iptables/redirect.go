@@ -10,6 +10,8 @@ type redirect struct{}
 var Redirect redirect
 
 func (r *redirect) AddIPWhitelist(cidr string) {
+	// avoid duplication
+	r.RemoveIPWhitelist(cidr)
 	var commands string
 	commands = fmt.Sprintf(`iptables -t nat -I V2RAY -d %s -j RETURN`, cidr)
 	cmds.ExecCommands(commands, false)
