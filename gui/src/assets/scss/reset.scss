@@ -60,3 +60,7 @@ html{
 .icon-camera {
   font-size: 1.5em;
 }
+
+.control:last-of-type > *:first-child{
+  border-radius: 0 4px 4px 0 !important;
+}

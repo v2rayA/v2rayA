@@ -156,46 +156,42 @@
             $t("setting.options.doh")
           }}</option>
         </b-select>
-        <template v-if="antipollution === 'doh'">
-          <b-button
-            :class="{
-              'right-extra-button': antipollution === 'closed',
-              'no-border-radius': antipollution !== 'closed'
-            }"
-            @click="handleClickDohSetting"
-          >
-            {{ $t("operations.configure") }}
-          </b-button>
-        </template>
-        <template v-if="antipollution === 'none' && showDns">
-          <b-button
-            :class="{
-              'right-extra-button': antipollution === 'closed',
-              'no-border-radius': antipollution !== 'closed'
-            }"
-            @click="handleClickDnsSetting"
-          >
-            {{ $t("operations.configure") }}
-          </b-button>
-        </template>
-        <template v-if="showDnsForceMode">
-          <b-checkbox-button
-            v-model="dnsForceMode"
-            :native-value="true"
-            style="position:relative;left:-1px;"
-            >{{ $t("setting.dnsForceModeOn") }}
-          </b-checkbox-button>
-        </template>
-        <template
-          v-if="antipollution !== 'closed' && iptablesMode === 'tproxy'"
+        <b-button
+          v-if="antipollution === 'doh'"
+          :class="{
+            'right-extra-button': antipollution === 'closed',
+            'no-border-radius': antipollution !== 'closed'
+          }"
+          @click="handleClickDohSetting"
         >
-          <b-checkbox-button
-            v-model="enhancedMode"
-            :native-value="true"
-            style="position:relative;left:-1px;"
-            >{{ $t("setting.enhancedModeOn") }}
-          </b-checkbox-button>
-        </template>
+          {{ $t("operations.configure") }}
+        </b-button>
+        <b-button
+          v-if="antipollution === 'none' && showDns"
+          :class="{
+            'right-extra-button': antipollution === 'closed',
+            'no-border-radius': antipollution !== 'closed'
+          }"
+          @click="handleClickDnsSetting"
+        >
+          {{ $t("operations.configure") }}
+        </b-button>
+        <b-checkbox-button
+          v-if="showDnsForceMode"
+          v-model="dnsForceMode"
+          :native-value="true"
+          style="position:relative;left:-1px;"
+          >{{ $t("setting.dnsForceModeOn") }}
+        </b-checkbox-button>
+
+        <b-checkbox-button
+          v-if="antipollution !== 'closed' && iptablesMode === 'tproxy'"
+          v-model="enhancedMode"
+          :native-value="true"
+          style="position:relative;left:-1px;"
+          >{{ $t("setting.enhancedModeOn") }}
+        </b-checkbox-button>
+        <p></p>
       </b-field>
       <b-field label-position="on-border">
         <template slot="label">
