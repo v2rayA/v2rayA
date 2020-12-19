@@ -8,7 +8,7 @@ import (
 type SystemServiceControlMode int
 
 const (
-	SystemctlMode = SystemServiceControlMode(iota)
+	SystemctlMode SystemServiceControlMode = iota
 	ServiceMode
 	UniversalMode
 )
