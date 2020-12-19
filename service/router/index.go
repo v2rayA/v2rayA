@@ -48,11 +48,7 @@ func ServeGUI(engine *gin.Engine) {
 	if net.ParseIP(ip).IsUnspecified() && err == nil {
 		for _, addr := range addrs {
 			if ipnet, ok := addr.(*net.IPNet); ok {
-				if ipnet.IP.To4() == nil {
-					printRunningAt("http://[" + ipnet.IP.String() + ":" + port + "]")
-				} else {
-					printRunningAt("http://" + ipnet.IP.String() + ":" + port)
-				}
+				printRunningAt("http://" + net.JoinHostPort(ipnet.IP.String(), port))
 			}
 		}
 	} else {

@@ -20,5 +20,7 @@ func WriteIpForward(on bool) (err error) {
 	if err != nil {
 		err = newError(string(out)).Base(err)
 	}
+	// ipv6
+	_, _ = exec.Command("sh", "-c", "echo "+val+" > /proc/sys/net/ipv6/conf/all/forwarding").CombinedOutput()
 	return
 }
