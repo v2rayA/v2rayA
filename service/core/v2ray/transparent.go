@@ -50,6 +50,7 @@ func RestoreDNS() {
 }
 
 func DeleteTransparentProxyRules() {
+	iptables.CloseWatcher()
 	iptables.Tproxy.GetCleanCommands().Clean()
 	iptables.Redirect.GetCleanCommands().Clean()
 	iptables.DropSpoofing.GetCleanCommands().Clean()
@@ -73,6 +74,7 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 					return fmt.Errorf("cannot hijack system dns: %v", err)
 				}
 			}
+			iptables.SetWatcher(&iptables.Tproxy)
 		} else {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
 				err = newError("not compile xt_TPROXY in kernel")
@@ -82,7 +84,9 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 			global.SupportTproxy = false
 		}
 	} else {
-		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
+		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err == nil {
+			iptables.SetWatcher(&iptables.Redirect)
+		} else {
 			log.Println(err)
 			DeleteTransparentProxyRules()
 			return newError("not support transparent proxy: ").Base(err)

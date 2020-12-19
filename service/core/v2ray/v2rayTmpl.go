@@ -962,7 +962,7 @@ func (t *Template) SetTransparentRouting(setting *configure.Setting) {
 }
 func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 	dokodemo := Inbound{
-		Listen:   "0.0.0.0",
+		Listen:   "::",
 		Port:     port,
 		Protocol: "dokodemo-door",
 		Sniffing: Sniffing{
@@ -1241,7 +1241,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 	t.Inbounds = append(t.Inbounds, Inbound{
 		Port:     iPort,
 		Protocol: protocol,
-		Listen:   "0.0.0.0",
+		Listen:   "::",
 		Sniffing: Sniffing{
 			Enabled:      true,
 			DestOverride: []string{"http", "tls"},
