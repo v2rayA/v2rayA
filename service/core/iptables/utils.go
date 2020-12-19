@@ -23,4 +23,3 @@ func GetLocalCIDR() ([]string, error) {
 	}
 	return cidrs, nil
 }
-
