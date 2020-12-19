@@ -23,7 +23,7 @@ build() {
     cd "$srcdir/v2rayA-$pkgver/service"
     export GO111MODULE=on
     export GOPROXY=https://goproxy.io
-    CGO_ENABLED=0 go build -ldflags '-X github.com/v2rayA/v2rayA/global.Version=$pkgver -s -w -extldflags "-static"' -o v2raya
+    CGO_ENABLED=0 go build -ldflags '-X github.com/v2rayA/v2rayA/global.Version='$pkgver' -s -w -extldflags "-static"' -o v2raya
 }
 
 package() {

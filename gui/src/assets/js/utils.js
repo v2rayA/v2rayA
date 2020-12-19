@@ -219,8 +219,11 @@ function isIntranet(url) {
 }
 
 function isVersionGreaterEqual(va, vb) {
-  if (va.toLowerCase() === "debug") {
+  if (va === "debug" || va === "unstable") {
     return true;
+  }
+  if (vb === "debug" || vb === "unstable") {
+    return false;
   }
   va = va.trim();
   vb = vb.trim();

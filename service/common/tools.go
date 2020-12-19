@@ -49,10 +49,10 @@ func VersionMustGreaterEqual(v1, v2 string) (is bool) {
 
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
-	if v1 == "debug" {
+	if v1 == "debug" || v1 == "unstable" {
 		return true, nil
 	}
-	if v2 == "debug" {
+	if v2 == "debug" || v2 == "unstable" {
 		return false, nil
 	}
 	v1 = strings.TrimPrefix(v1, "v")
