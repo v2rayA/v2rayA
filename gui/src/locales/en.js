@@ -124,7 +124,7 @@ export default {
         "★Enhanced Mode(v0.7.0.2+) faster but not support udp and ipv6" +
         "★Disable CDS(v1.1.3+, Disable China Domain Shunt): Do not shunt DNS query of China Domains",
       tcpFastOpen:
-        "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. Support vmess only now.",
+        "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
         "Multiplexing TCP connections to reduce the number of handshake, but it will affect the use cases with high throughput, such as watching videos, downloading, and test speed. " +
         "Risk of emphasizing characteristics of packets exists. Support vmess only now.",
