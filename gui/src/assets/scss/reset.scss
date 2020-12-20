@@ -61,6 +61,6 @@ html{
   font-size: 1.5em;
 }
 
-.control:last-of-type > *:first-child{
+.control:last-of-type:not(:first-of-type) > *:first-child{
   border-radius: 0 4px 4px 0 !important;
 }
