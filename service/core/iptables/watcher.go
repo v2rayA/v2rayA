@@ -29,6 +29,8 @@ func NewLocalIPWatcher(interval time.Duration, AddedFunc func(cidr string), Remo
 }
 
 func (w *LocalIPWatcher) Close() error {
+	w.AddedFunc = func(cidr string) {}
+	w.RemovedFunc = w.AddedFunc
 	w.ticker.Stop()
 	return nil
 }
