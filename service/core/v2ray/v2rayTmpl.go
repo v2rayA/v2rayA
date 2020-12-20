@@ -342,7 +342,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 				if v.Path != "" {
 					tmplJson.TCPSettings.Header.Request.Path = strings.Split(v.Path, ",")
 					for i := range tmplJson.TCPSettings.Header.Request.Path {
-						if !strings.HasPrefix("/", tmplJson.TCPSettings.Header.Request.Path[i]) {
+						if !strings.HasPrefix(tmplJson.TCPSettings.Header.Request.Path[i], "/") {
 							tmplJson.TCPSettings.Header.Request.Path[i] = "/" + tmplJson.TCPSettings.Header.Request.Path[i]
 						}
 					}
@@ -1110,7 +1110,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 			Enabled:     muxon,
 			Concurrency: setting.Mux,
 		}
-	case "ss","shadowsocks":
+	case "ss", "shadowsocks":
 	default:
 		supportUDP = false
 	}

@@ -190,7 +190,8 @@
               v2ray.net === 'ws' ||
                 v2ray.net === 'h2' ||
                 v2ray.tls === 'tls' ||
-                v2ray.tls === 'xtls'
+                v2ray.tls === 'xtls' ||
+                (v2ray.net === 'tcp' && v2ray.type === 'http')
             "
             label="Host"
             label-position="on-border"
@@ -789,9 +790,11 @@ export default {
           switch (obj.net) {
             case "kcp":
             case "tcp":
-              obj.path = "";
-              if (obj.tls === "" || obj.tls === "none") {
-                obj.host = "";
+              if (!(obj.net === "tcp" && obj.type === "http")) {
+                obj.path = "";
+                if (obj.tls === "" || obj.tls === "none") {
+                  obj.host = "";
+                }
               }
               break;
             default:
