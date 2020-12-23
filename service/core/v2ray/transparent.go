@@ -45,7 +45,7 @@ func (h *DnsHijacker) Close() error {
 var hijacker *DnsHijacker
 
 func (h *DnsHijacker) HijackDNS() error {
-	err := ioutil.WriteFile(resolverFile, []byte("# v2rayA DNS hijack\nnameserver 210.2.4.8\n"), os.FileMode(0644))
+	err := ioutil.WriteFile(resolverFile, []byte("# v2rayA DNS hijack\nnameserver 1.2.4.8\n"), os.FileMode(0644))
 	if err != nil {
 		err = fmt.Errorf("failed to hijackDNS: [write] %v", err)
 	}
