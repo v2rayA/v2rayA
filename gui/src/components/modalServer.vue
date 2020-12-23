@@ -99,18 +99,14 @@
             label="Flow"
             label-position="on-border"
           >
-            <b-select v-model="v2ray.flow" expanded>
-              <option value="xtls-rprx-origin">xtls-rprx-origin</option>
-              <option value="xtls-rprx-origin-udp443"
-                >xtls-rprx-origin-udp443</option
-              >
-              <option v-if="vlessVersion >= 3" value="xtls-rprx-direct"
-                >xtls-rprx-direct</option
-              >
-              <option v-if="vlessVersion >= 3" value="xtls-rprx-direct-udp443"
-                >xtls-rprx-direct-udp443</option
-              >
-            </b-select>
+            <b-autocomplete
+              v-model="v2ray.flow"
+              open-on-focus
+              placeholder="xtls-rprx-origin"
+              :data="filteredDataArray"
+              @select="option => (flowSelected = option)"
+            >
+            </b-autocomplete>
           </b-field>
           <b-field
             v-show="v2ray.tls === 'tls'"
@@ -610,8 +606,24 @@ export default {
       password: "",
       protocol: "trojan"
     },
-    tabChoice: 0
+    tabChoice: 0,
+    presetFlows: [
+      "xtls-rprx-origin",
+      "xtls-rprx-origin-udp443",
+      "xtls-rprx-direct",
+      "xtls-rprx-direct-udp443",
+      "xtls-rprx-splice",
+      "xtls-rprx-splice-udp443"
+    ],
+    flowSelected: null
   }),
+  computed: {
+    filteredDataArray() {
+      return this.presetFlows.filter(option => {
+        return option.toString().indexOf(this.v2ray.flow) >= 0;
+      });
+    }
+  },
   mounted() {
     if (localStorage["vlessValid"] === "true") {
       this.showVLess = true;
