@@ -18,6 +18,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1182,7 +1183,8 @@ func (t *Template) CheckInboundPortsOccupied() (occupied bool, port string, pnam
 			st = append(st, strconv.Itoa(in.Port)+":tcp")
 		}
 	}
-	occupied, socket, err := ports.IsPortOccupiedWithWhitelist(st, map[string]struct{}{"v2ray": {}})
+	v2rayPath, _ := where.GetV2rayBinPath()
+	occupied, socket, err := ports.IsPortOccupiedWithWhitelist(st, map[string]struct{}{path.Base(v2rayPath): {}})
 	if err != nil {
 		return true, "unknown", err.Error()
 	}
@@ -1200,7 +1202,7 @@ func (t *Template) ToConfigBytes() []byte {
 }
 
 func WriteV2rayConfig(content []byte) (err error) {
-	err = ioutil.WriteFile(asset.GetConfigPath(), content, os.FileMode(0600))
+	err = ioutil.WriteFile(asset.GetV2rayConfigPath(), content, os.FileMode(0600))
 	if err != nil {
 		return newError("WriteV2rayConfig").Base(err)
 	}

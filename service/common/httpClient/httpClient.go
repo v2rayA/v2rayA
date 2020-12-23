@@ -1,14 +1,15 @@
 package httpClient
 
 import (
+	"fmt"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/extra/proxyWithHttp"
 	"net/http"
 	"net/url"
 	"os/exec"
 	"strings"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/extra/proxyWithHttp"
-	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
@@ -31,12 +32,12 @@ func GetHttpClientWithv2rayAProxy() (client *http.Client, err error) {
 	host := "127.0.0.1"
 	//是否在docker环境
 	if common.IsInDocker() {
-		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
+		//连接网关，即宿主机的端口
 		out, err := exec.Command("sh", "-c", "ip route list default|head -n 1|awk '{print $3}'").Output()
 		if err == nil {
 			host = strings.TrimSpace(string(out))
 		} else {
-			host = "v2ray"
+			return nil, fmt.Errorf("failed to get gateway: %v", err)
 		}
 	}
 	return GetHttpClientWithProxy("socks5://" + host + ":20170")
@@ -46,12 +47,12 @@ func GetHttpClientWithv2rayAPac() (client *http.Client, err error) {
 	host := "127.0.0.1"
 	//是否在docker环境
 	if common.IsInDocker() {
-		//连接网关，即宿主机的端口，失败则用同网络下v2ray容器的
+		//连接网关，即宿主机的端口
 		out, err := exec.Command("sh", "-c", "ip route|grep default|awk '{print $3}'").Output()
 		if err == nil {
 			host = strings.TrimSpace(string(out))
 		} else {
-			host = "v2ray"
+			return nil, fmt.Errorf("failed to get gateway: %v", err)
 		}
 	}
 	return GetHttpClientWithProxy("http://" + host + ":20172")

@@ -3,6 +3,7 @@ package touch
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"net"
 	"net/url"
 	"strings"
 	"time"
@@ -80,7 +81,7 @@ func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 		if v.VmessInfo.Port == "" {
 			address = v.VmessInfo.Add
 		} else {
-			address = v.VmessInfo.Add + ":" + v.VmessInfo.Port
+			address = net.JoinHostPort(v.VmessInfo.Add, v.VmessInfo.Port)
 		}
 		ts[i] = TouchServer{
 			ID:        i + 1,

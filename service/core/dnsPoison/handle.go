@@ -242,7 +242,7 @@ func (interfaceHandle *handle) poison(m *dnsmessage.Message, lAddr, lPort, rAddr
 	go func(m *dnsmessage.Message) {
 		packed, _ := m.Pack()
 		lport, _ := strconv.Atoi(lPort.String())
-		conn, err := newDialer(lAddr.String(), uint32(lport), 30*time.Second).Dial("udp", rAddr.String()+":"+rPort.String())
+		conn, err := newDialer(lAddr.String(), uint32(lport), 30*time.Second).Dial("udp", net.JoinHostPort(rAddr.String(), rPort.String()))
 		if err != nil {
 			return
 		}

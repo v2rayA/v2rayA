@@ -14,10 +14,6 @@ func Disconnect() (err error) {
 	if err != nil {
 		return
 	}
-	err = v2ray.DisableV2rayService()
-	if err != nil {
-		return
-	}
 	err = configure.ClearConnected()
 	if err != nil {
 		return

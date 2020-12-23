@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gookit/color"
 	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
+	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/iptables"
@@ -18,7 +20,6 @@ import (
 	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/router"
 	"github.com/v2rayA/v2rayA/service"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"net"
@@ -32,7 +33,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"v2ray.com/core/common/errors"
 )
 
 func checkEnvironment() {
@@ -155,14 +155,6 @@ func initConfigure() {
 			initDBValue()
 		}
 	}
-
-	//配置文件描述符上限
-	if global.ServiceControlMode == global.ServiceMode || global.ServiceControlMode == global.SystemctlMode {
-		err := v2ray.OptimizeServiceFile()
-		if err != nil {
-			log.Println(err)
-		}
-	}
 	//配置ip转发
 	setting := configure.GetSettingNotNil()
 	if setting.Transparent != configure.TransparentClose {
@@ -170,68 +162,62 @@ func initConfigure() {
 			_ = ipforward.WriteIpForward(setting.IpForward)
 		}
 	}
-	//检查geoip、geosite是否存在
-	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
-		dld := func(repo, filename, localname string) (err error) {
-			color.Red.Println("installing " + filename)
-			p := asset.GetV2rayLocationAsset() + "/" + filename
-			resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
-			if err != nil {
-				return
-			}
-			defer resp.Body.Close()
-			b, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return
-			}
-			tag := gjson.GetBytes(b, "0.name").String()
-			u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
-			err = gopeed.Down(&gopeed.Request{
-				Method: "GET",
-				URL:    u,
-			}, p)
-			if err != nil {
-				return errors.New("download<" + p + ">: " + err.Error())
-			}
-			err = os.Chmod(p, os.FileMode(0755))
-			if err != nil {
-				return errors.New("chmod: " + err.Error())
-			}
-			os.Rename(p, asset.GetV2rayLocationAsset()+"/"+localname)
-			return
-		}
-		err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
-		if err != nil {
-			log.Println(err)
-		}
-		err = dld("v2rayA/dist-domain-list-community", "dlc.dat", "geosite.dat")
-		if err != nil {
-			log.Println(err)
-		}
-	}
 	//检查config.json是否存在
-	if _, err := os.Stat(asset.GetConfigPath()); err != nil {
+	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {
 		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
 		t := v2ray.NewTemplate()
 		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
 	}
-}
 
-func checkConnection() {
-	//如果V2Ray正在运行，而配置文件中没有记录当前连接的节点是谁，就关掉V2Ray
-	if v2ray.IsV2RayRunning() && configure.GetConnectedServer() == nil {
-		err := v2ray.StopAndDisableV2rayService()
-		if err != nil {
-			log.Fatal(err)
+	//首先确定v2ray是否存在
+	if _, err := where.GetV2rayBinPath(); err == nil {
+		//检查geoip、geosite是否存在
+		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
+			dld := func(repo, filename, localname string) (err error) {
+				color.Red.Println("installing " + filename)
+				p := asset.GetV2rayLocationAsset() + "/" + filename
+				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
+				if err != nil {
+					return
+				}
+				defer resp.Body.Close()
+				b, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					return
+				}
+				tag := gjson.GetBytes(b, "0.name").String()
+				u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
+				err = gopeed.Down(&gopeed.Request{
+					Method: "GET",
+					URL:    u,
+				}, p)
+				if err != nil {
+					return errors.New("download<" + p + ">: " + err.Error())
+				}
+				err = os.Chmod(p, os.FileMode(0755))
+				if err != nil {
+					return errors.New("chmod: " + err.Error())
+				}
+				os.Rename(p, asset.GetV2rayLocationAsset()+"/"+localname)
+				return
+			}
+			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
+			if err != nil {
+				log.Println(err)
+			}
+			err = dld("v2rayA/dist-domain-list-community", "dlc.dat", "geosite.dat")
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }
 
 func hello() {
 	color.Red.Println("V2RayLocationAsset is", asset.GetV2rayLocationAsset())
-	wd, _ := where.GetV2rayWorkingDir()
-	color.Red.Println("V2Ray binary is at", wd+"/v2ray")
-	wd, _ = os.Getwd()
+	v2rayPath, _ := where.GetV2rayBinPath()
+	color.Red.Println("V2Ray binary is", v2rayPath)
+	wd, _ := os.Getwd()
 	color.Red.Println("v2rayA working directory is", wd)
 	color.Red.Println("Version:", global.Version)
 	color.Red.Println("Starting...")
@@ -311,11 +297,9 @@ func checkUpdate() {
 
 func run() (err error) {
 	//判别需要启动v2ray吗
-	if configure.GetConnectedServer() != nil {
-		_ = v2ray.RestartV2rayService()
+	if w := configure.GetConnectedServer(); w != nil {
+		_ = service.Connect(w)
 	}
-	//刷新配置以刷新透明代理、ssr server
-	err = v2ray.UpdateV2RayConfig(nil)
 	if err != nil {
 		w := configure.GetConnectedServer()
 		log.Println(err, ", which:", w)

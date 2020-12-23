@@ -7,11 +7,13 @@ import (
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/core/dnsPoison/entity"
 	"github.com/v2rayA/v2rayA/core/iptables"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -130,6 +132,10 @@ func nextPortsGroup(ports []string, groupSize int) (group []string, remain []str
 }
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
+	v2rayPath, err := where.GetV2rayBinPath()
+	if err != nil {
+		return
+	}
 	setting := configure.GetSettingNotNil()
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
@@ -187,7 +193,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		}
 		if o {
 			p, e := s.Process()
-			if e == nil && p.Name != "v2ray" {
+			if e == nil && p.Name != path.Base(v2rayPath) {
 				err = newError("transparent proxy cannot be set up, port 32345 is occupied by ", p.Name)
 				return
 			}
