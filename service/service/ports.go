@@ -1,11 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	ports2 "github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"fmt"
+	"path"
 	"strconv"
 )
 
@@ -67,7 +69,8 @@ func SetPorts(ports *configure.Ports) (err error) {
 			return
 		}
 		process, err := v.Process()
-		if err == nil && process.Name != "v2ray" {
+		v2rayPath, _ := where.GetV2rayBinPath()
+		if err == nil && process.Name != path.Base(v2rayPath) {
 			return newError(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/v2rayA/v2rayA/extra/proxy/simpleobfs"
 	"github.com/v2rayA/v2rayA/plugin"
 	"log"
+	"net"
 	"net/url"
 )
 
@@ -66,7 +67,7 @@ func (so *SimpleObfs) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 		return
 	}
 	p, _ := simpleobfs.NewProxy(s)
-	return so.s.Serve(p, "tcp->"+v.Add+":"+v.Port)
+	return so.s.Serve(p, "tcp->"+net.JoinHostPort(v.Add, v.Port))
 }
 
 func (so *SimpleObfs) Close() error {

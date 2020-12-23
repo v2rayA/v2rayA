@@ -40,7 +40,7 @@ func GetV2rayLocationAsset() (s string) {
 	var err error
 	if s == "" {
 		//fine, guess one
-		var candidates = []string{`/usr/local/share/v2ray`, `/usr/share/v2ray`}
+		var candidates = []string{`/usr/local/share/xray`, `/usr/share/xray`, `/usr/local/share/v2ray`, `/usr/share/v2ray`}
 		var ver string
 		var is bool
 		if ver, err = where.GetV2rayServiceVersion(); err == nil {
@@ -56,33 +56,17 @@ func GetV2rayLocationAsset() (s string) {
 		}
 		if s == "" {
 			//maybe v2ray working directory
-			s, err = where.GetV2rayWorkingDir()
+			v2rayPath, err := where.GetV2rayBinPath()
 			if err != nil {
 				s = "/etc/v2ray"
 			}
+			s = path.Dir(v2rayPath)
 		}
 	} else {
 		//save the result if not by guess
 		v2rayLocationAsset = &s
 	}
 	return
-}
-
-func GetV2ctlDir() (string, error) {
-	d, err := where.GetV2rayWorkingDir()
-	if err == nil {
-		_, err := os.Stat(d + "/v2ctl")
-		if err != nil {
-			return "", err
-		}
-		return d, nil
-	}
-	out, err := exec.Command("sh", "-c", "which v2ctl").Output()
-	if err != nil {
-		err = newError(string(out)).Base(err)
-		return "", err
-	}
-	return path.Dir(strings.TrimSpace(string(out))), nil
 }
 
 func IsGFWListExists() bool {
@@ -118,7 +102,7 @@ func IsCustomExists() bool {
 }
 
 func GetConfigBytes() (b []byte, err error) {
-	b, err = ioutil.ReadFile(GetConfigPath())
+	b, err = ioutil.ReadFile(GetV2rayConfigPath())
 	if err != nil {
 		log.Println(err)
 		return
@@ -127,34 +111,12 @@ func GetConfigBytes() (b []byte, err error) {
 	return
 }
 
-func GetConfigPath() (p string) {
-	p = "/etc/v2ray/config.json"
-	switch global.ServiceControlMode {
-	case global.SystemctlMode, global.ServiceMode:
-		//从systemd的启动参数里找
-		pa, _ := where.GetV2rayServiceFilePath()
-		out, e := exec.Command("sh", "-c", "cat "+pa+"|grep ExecStart=").CombinedOutput()
-		if e != nil {
-			return
-		}
-		pa = strings.TrimSpace(string(out))[len("ExecStart="):]
-		indexConfigBegin := strings.Index(pa, "-config")
-		if indexConfigBegin == -1 {
-			return
-		}
-		indexConfigBegin += len("-config") + 1
-		indexConfigEnd := strings.Index(pa[indexConfigBegin:], " ")
-		if indexConfigEnd == -1 {
-			indexConfigEnd = len(pa)
-		} else {
-			indexConfigEnd += indexConfigBegin
-		}
-		p = pa[indexConfigBegin:indexConfigEnd]
-	case global.UniversalMode:
-		p = GetV2rayLocationAsset() + "/config.json"
-	default:
-	}
-	return
+func GetV2rayConfigPath() (p string) {
+	return path.Join(global.GetEnvironmentConfig().Config, "config.json")
+}
+
+func GetV2rayConfigDirPath() (p string) {
+	return global.GetEnvironmentConfig().V2rayConfigDirectory
 }
 
 var whitelistCn struct {

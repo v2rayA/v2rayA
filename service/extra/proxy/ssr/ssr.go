@@ -2,18 +2,16 @@ package ssr
 
 import (
 	shadowsocksr "github.com/mzz2017/shadowsocksR"
+	"github.com/mzz2017/shadowsocksR/obfs"
+	"github.com/mzz2017/shadowsocksR/protocol"
 	"github.com/mzz2017/shadowsocksR/ssr"
 	"github.com/mzz2017/shadowsocksR/streamCipher"
+	"github.com/nadoo/glider/common/socks"
+	"github.com/v2rayA/v2rayA/extra/proxy"
+	"log"
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
-
-	"github.com/mzz2017/shadowsocksR/obfs"
-	"github.com/mzz2017/shadowsocksR/protocol"
-	"github.com/v2rayA/v2rayA/extra/proxy"
-	"github.com/nadoo/glider/common/socks"
-	"log"
 )
 
 // SSR struct.
@@ -102,8 +100,8 @@ func (s *SSR) Dial(network, addr string) (net.Conn, error) {
 	}
 
 	// should initialize obfs/protocol now
-	rs := strings.Split(ssrconn.RemoteAddr().String(), ":")
-	port, _ := strconv.Atoi(rs[1])
+	h, p, _ := net.SplitHostPort(ssrconn.RemoteAddr().String())
+	port, _ := strconv.Atoi(p)
 
 	ssrconn.IObfs = obfs.NewObfs(s.Obfs)
 	if ssrconn.IObfs == nil {
@@ -111,7 +109,7 @@ func (s *SSR) Dial(network, addr string) (net.Conn, error) {
 	}
 
 	obfsServerInfo := &ssr.ServerInfo{
-		Host:   rs[0],
+		Host:   h,
 		Port:   uint16(port),
 		TcpMss: 1460,
 		Param:  s.ObfsParam,
@@ -124,7 +122,7 @@ func (s *SSR) Dial(network, addr string) (net.Conn, error) {
 	}
 
 	protocolServerInfo := &ssr.ServerInfo{
-		Host:   rs[0],
+		Host:   h,
 		Port:   uint16(port),
 		TcpMss: 1460,
 		Param:  s.ProtocolParam,

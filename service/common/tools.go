@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/mzz2017/go-engine/src/common"
 	"net/url"
 	"os"
 	"strconv"
@@ -49,10 +50,17 @@ func VersionMustGreaterEqual(v1, v2 string) (is bool) {
 
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
-	if v1 == "debug" || v1 == "unstable" {
+	if v1 == "UnknownClient" {
 		return true, nil
 	}
-	if v2 == "debug" || v2 == "unstable" {
+	if v2 == "UnknownClient" {
+		return false, nil
+	}
+	var HighPriority = []string{"debug", "unstable"}
+	if common.ArrayContainString(HighPriority, v1) {
+		return true, nil
+	}
+	if common.ArrayContainString(HighPriority, v2) {
 		return false, nil
 	}
 	v1 = strings.TrimPrefix(v1, "v")

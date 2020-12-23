@@ -2,13 +2,13 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"strconv"
-	"strings"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/service"
+	"net"
+	"strconv"
 )
 
 func GetPortWhiteList(ctx *gin.Context) {
@@ -44,7 +44,7 @@ func PostPortWhiteList(ctx *gin.Context) {
 		return
 	}
 	p := service.GetPortsDefault()
-	listenPort := strings.Split(global.GetEnvironmentConfig().Address, ":")[1]
+	_, listenPort, _ := net.SplitHostPort(global.GetEnvironmentConfig().Address)
 	wpl := configure.PortWhiteList{
 		TCP: []string{"1:1023", data.RequestPort, listenPort, strconv.Itoa(p.Http), strconv.Itoa(p.HttpWithPac), strconv.Itoa(p.Socks5)},
 		UDP: []string{"1:1023", strconv.Itoa(p.Socks5)},

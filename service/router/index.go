@@ -6,7 +6,6 @@ import (
 	"github.com/gookit/color"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/jwt"
-	"github.com/v2rayA/v2rayA/common/netTools"
 	"github.com/v2rayA/v2rayA/controller"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
@@ -43,7 +42,7 @@ func ServeGUI(engine *gin.Engine) {
 
 	app := global.GetEnvironmentConfig()
 
-	ip, port := netTools.ParseAddress(app.Address)
+	ip, port, _ := net.SplitHostPort(app.Address)
 	addrs, err := net.InterfaceAddrs()
 	if net.ParseIP(ip).IsUnspecified() && err == nil {
 		for _, addr := range addrs {

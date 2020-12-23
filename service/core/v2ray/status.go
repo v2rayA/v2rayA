@@ -1,9 +1,6 @@
 package v2ray
 
 import (
-	"bytes"
-	"fmt"
-	netstat2 "github.com/cakturk/go-netstat/netstat"
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/ntp"
@@ -16,89 +13,13 @@ import (
 	"github.com/v2rayA/v2rayA/plugin"
 	"log"
 	"os"
-	"os/exec"
-	"regexp"
-	"strconv"
+	"path"
 	"strings"
 	"time"
 )
 
-func IsV2RayProcessExists() bool {
-	out, err := exec.Command("sh", "-c", "ps -e -o args").CombinedOutput()
-	if err != nil || (strings.Contains(string(out), "invalid option") && strings.Contains(strings.ToLower(string(out)), "busybox")) {
-		out, err = exec.Command("sh", "-c", "ps|awk '{print $4,$5}'").CombinedOutput()
-	}
-	if err == nil {
-		//模拟grep -E
-		regex := regexp.MustCompile(`\bv2ray\b`)
-		lines := bytes.Split(out, []byte{'\n'})
-		for _, line := range lines {
-			if regex.Match(line) && !bytes.Contains(line, []byte("-version")) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func IsV2RayRunning() bool {
-	switch global.ServiceControlMode {
-	case global.UniversalMode:
-		return IsV2RayProcessExists()
-	case global.ServiceMode:
-		out, err := exec.Command("sh", "-c", "service v2ray status|grep running").CombinedOutput()
-		if err != nil || strings.Contains(string(out), "not running") {
-			return false
-		}
-	case global.SystemctlMode:
-		out, err := exec.Command("sh", "-c", "systemctl status v2ray|grep Active|grep running").Output()
-		return err == nil && len(out) > 0
-	}
-	return true
-}
-
-func testprint() string {
-	var buffer strings.Builder
-	e, _ := netstat2.TCPSocks(func(entry *netstat2.SockTabEntry) bool {
-		return true
-	})
-	e2, _ := netstat2.TCP6Socks(func(entry *netstat2.SockTabEntry) bool {
-		return true
-	})
-	buffer.WriteString(fmt.Sprintf("%-6v%-25v%-25v%-15v%-6v%-9v%v\n", "Proto", "Local Address", "Foreign Address", "State", "User", "Inode", "PID/Program name"))
-	for _, v := range e {
-		var pstr string
-		if v.Process != nil {
-			pstr = v.Process.String()
-		}
-		buffer.WriteString(fmt.Sprintf(
-			"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
-			"tcp",
-			v.LocalAddr.IP.String()+"/"+strconv.Itoa(int(v.LocalAddr.Port)),
-			v.RemoteAddr.IP.String()+"/"+strconv.Itoa(int(v.RemoteAddr.Port)),
-			v.State.String(),
-			v.UID,
-			"",
-			pstr,
-		))
-	}
-	for _, v := range e2 {
-		var pstr string
-		if v.Process != nil {
-			pstr = v.Process.String()
-		}
-		buffer.WriteString(fmt.Sprintf(
-			"%-6v%-25v%-25v%-15v%-6v%-9v%v\n",
-			"tcp6",
-			v.LocalAddr.IP.String()+"/"+strconv.Itoa(int(v.LocalAddr.Port)),
-			v.RemoteAddr.IP.String()+"/"+strconv.Itoa(int(v.RemoteAddr.Port)),
-			v.State.String(),
-			v.UID,
-			"",
-			pstr,
-		))
-	}
-	return buffer.String()
+	return global.V2RayPID != nil
 }
 
 func RestartV2rayService() (err error) {
@@ -110,39 +31,36 @@ func RestartV2rayService() (err error) {
 		return newError("cannot find GFWList files. update GFWList and try again")
 	}
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
-	var out []byte
-	switch global.ServiceControlMode {
-	case global.ServiceMode:
-		out, err = exec.Command("sh", "-c", "service v2ray restart").CombinedOutput()
-		if err != nil {
-			err = newError(string(out)).Base(err)
-		}
-	case global.SystemctlMode:
-		out, err = exec.Command("sh", "-c", "systemctl restart v2ray").Output()
-		if err != nil {
-			err = newError(string(out)).Base(err)
-		}
-	case global.UniversalMode:
-		_ = killV2ray()
-		v2wd, _ := where.GetV2rayWorkingDir()
-		v2ctlDir, _ := asset.GetV2ctlDir()
-		log.Println(v2wd+"/v2ray", "--config="+asset.GetConfigPath(), v2ctlDir)
-		global.V2RayPID, err = os.StartProcess(v2wd+"/v2ray", []string{v2wd + "/v2ray", "--config=" + asset.GetConfigPath()}, &os.ProcAttr{
-			Dir: v2ctlDir, //防止找不到v2ctl
-			Env: os.Environ(),
-			//Files: []*os.File{
-			//	os.Stdin,
-			//	os.Stdout,
-			//	os.Stderr,
-			//},
-		})
-		if err != nil {
-			err = newError(string(out)).Base(err)
-		}
-	}
+	_ = killV2ray()
+	v2rayBinPath, err := where.GetV2rayBinPath()
 	if err != nil {
 		return
 	}
+	dir := path.Dir(v2rayBinPath)
+	var params = []string{
+		v2rayBinPath,
+		"--config=" + asset.GetV2rayConfigPath(),
+	}
+	if confdir := asset.GetV2rayConfigDirPath(); confdir != "" {
+		params = append(params, "--confdir="+confdir)
+	}
+	log.Println(strings.Join(params, " "))
+	global.V2RayPID, err = os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
+		Dir: dir, //防止找不到v2ctl
+		Env: append(os.Environ(), "V2RAY_LOCATION_ASSET="+asset.GetV2rayLocationAsset()),
+		Files: []*os.File{
+			os.Stderr,
+			os.Stdout,
+		},
+	})
+	if err != nil {
+		return newError().Base(err)
+	}
+	defer func() {
+		if err != nil && global.V2RayPID != nil {
+			_ = killV2ray()
+		}
+	}()
 	//如果inbounds中开放端口，检测端口是否已就绪
 	tmplJson := NewTemplate()
 	var b []byte
@@ -175,7 +93,7 @@ func RestartV2rayService() (err error) {
 	for {
 		if bPortOpen {
 			var is bool
-			is, err = netstat.IsProcessListenPort("v2ray", port)
+			is, err = netstat.IsProcessListenPort(path.Base(v2rayBinPath), port)
 			if err != nil {
 				return
 			}
@@ -322,28 +240,5 @@ func StopV2rayService() (err error) {
 			err = newError(msg)
 		}
 	}()
-	var out []byte
-	switch global.ServiceControlMode {
-	case global.UniversalMode:
-		return killV2ray()
-	case global.ServiceMode:
-		out, err = exec.Command("sh", "-c", "service v2ray stop").CombinedOutput()
-		if err != nil {
-			err = newError(string(out)).Base(err)
-		}
-	case global.SystemctlMode:
-		out, err = exec.Command("sh", "-c", "systemctl stop v2ray").CombinedOutput()
-		if err != nil {
-			err = newError(string(out)).Base(err)
-		}
-	}
-	return
-}
-
-func StopAndDisableV2rayService() (err error) {
-	err = StopV2rayService()
-	if err != nil {
-		return
-	}
-	return DisableV2rayService()
+	return killV2ray()
 }

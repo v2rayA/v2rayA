@@ -15,7 +15,6 @@ func main() {
 	checkEnvironment()
 	checkTProxySupportability()
 	initConfigure()
-	checkConnection()
 	go checkUpdate()
 	hello()
 	if err := run(); err != nil {

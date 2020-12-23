@@ -27,7 +27,7 @@ func PostV2ray(ctx *gin.Context) {
 }
 
 func DeleteV2ray(ctx *gin.Context) {
-	err := v2ray.StopAndDisableV2rayService()
+	err := v2ray.StopV2rayService()
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

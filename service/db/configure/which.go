@@ -123,7 +123,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 		host = hosts[0]
 	}
 	t := time.Now()
-	conn, e := net.DialTimeout("tcp", host+":"+tsr.VmessInfo.Port, timeout)
+	conn, e := net.DialTimeout("tcp", net.JoinHostPort(host, tsr.VmessInfo.Port), timeout)
 	if e == nil || (strings.Contains(e.Error(), "refuse")) {
 		if e == nil {
 			_ = conn.Close()
