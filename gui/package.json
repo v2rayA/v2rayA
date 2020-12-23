@@ -9,6 +9,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@mdi/font": "^5.8.55",
     "@vue/babel-preset-app": "^4.2.2",
     "axios": "^0.19.0",
     "buefy": "0.9.3",

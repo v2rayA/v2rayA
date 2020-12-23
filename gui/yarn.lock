@@ -904,6 +904,11 @@
     cssnano-preset-default "^4.0.0"
     postcss "^7.0.0"
 
+"@mdi/font@^5.8.55":
+  version "5.8.55"
+  resolved "https://registry.npm.taobao.org/@mdi/font/download/@mdi/font-5.8.55.tgz#1464155bcbc8a6e4af6dffd611fe8e38e09af285"
+  integrity sha1-FGQVW8vIpuSvbf/WEf6OOOCa8oU=
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.npm.taobao.org/@mrmlnc/readdir-enhanced/download/@mrmlnc/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"

@@ -1,10 +1,10 @@
 @font-face {
     font-family: iconfont;
-    src: url("iconfont.eot");src: url("iconfont.eot?5ce46c12#iefix") format("embedded-opentype"),
-             url("iconfont.woff2?5ce46c12") format("woff2"),
-             url("iconfont.woff?5ce46c12") format("woff"),
-             url("iconfont.ttf?5ce46c12") format("truetype"),
-             url("iconfont.svg?5ce46c12#iconfont") format("svg");
+    src: url("iconfont.eot");src: url("iconfont.eot?25e8bb9e#iefix") format("embedded-opentype"),
+             url("iconfont.woff2?25e8bb9e") format("woff2"),
+             url("iconfont.woff?25e8bb9e") format("woff"),
+             url("iconfont.ttf?25e8bb9e") format("truetype"),
+             url("iconfont.svg?25e8bb9e#iconfont") format("svg");
     font-weight: normal;
     font-style: normal;
 }
@@ -25,118 +25,106 @@
     content: "\ea02";
 }
 
-.icon-arrow-up::before {
+.icon-camera::before {
     content: "\ea03";
 }
 
-.icon-camera::before {
+.icon-caret-down::before {
     content: "\ea04";
 }
 
-.icon-caret-down::before {
+.icon-caret-up::before {
     content: "\ea05";
 }
 
-.icon-caret-up::before {
+.icon-chakandaorujilu::before {
     content: "\ea06";
 }
 
-.icon-chakandaorujilu::before {
+.icon-chuangjiangongdan1::before {
     content: "\ea07";
 }
 
-.icon-chevron-left::before {
+.icon-clock2::before {
     content: "\ea08";
 }
 
-.icon-chevron-right::before {
+.icon-cloud-sync::before {
     content: "\ea09";
 }
 
-.icon-chuangjiangongdan1::before {
+.icon-cloud::before {
     content: "\ea0a";
 }
 
-.icon-clock2::before {
+.icon-coding_alert_circle::before {
     content: "\ea0b";
 }
 
-.icon-cloud-sync::before {
+.icon-daoru::before {
     content: "\ea0c";
 }
 
-.icon-cloud::before {
+.icon-daoruzupu-xianxing::before {
     content: "\ea0d";
 }
 
-.icon-coding_alert_circle::before {
+.icon-delete::before {
     content: "\ea0e";
 }
 
-.icon-daoru::before {
+.icon-dian::before {
     content: "\ea0f";
 }
 
-.icon-daoruzupu-xianxing::before {
+.icon-earth::before {
     content: "\ea10";
 }
 
-.icon-delete::before {
+.icon-heart::before {
     content: "\ea11";
 }
 
-.icon-dian::before {
+.icon-help-circle-outline::before {
     content: "\ea12";
 }
 
-.icon-earth::before {
+.icon-label::before {
     content: "\ea13";
 }
 
-.icon-heart::before {
+.icon-lianjie::before {
     content: "\ea14";
 }
 
-.icon-help-circle-outline::before {
+.icon-loading_ico::before {
     content: "\ea15";
 }
 
-.icon-label::before {
+.icon-logout::before {
     content: "\ea16";
 }
 
-.icon-lianjie::before {
+.icon-setting::before {
     content: "\ea17";
 }
 
-.icon-loading_ico::before {
+.icon-share::before {
     content: "\ea18";
 }
 
-.icon-logout::before {
+.icon-sync::before {
     content: "\ea19";
 }
 
-.icon-setting::before {
+.icon-wave::before {
     content: "\ea1a";
 }
 
-.icon-share::before {
+.icon-wendangxiugai::before {
     content: "\ea1b";
 }
 
-.icon-sync::before {
-    content: "\ea1c";
-}
-
-.icon-wave::before {
-    content: "\ea1d";
-}
-
-.icon-wendangxiugai::before {
-    content: "\ea1e";
-}
-
 .icon-winfo-icon-chakanbaogao::before {
-    content: "\ea1f";
+    content: "\ea1c";
 }
