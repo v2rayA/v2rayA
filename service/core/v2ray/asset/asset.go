@@ -40,7 +40,7 @@ func GetV2rayLocationAsset() (s string) {
 	var err error
 	if s == "" {
 		//fine, guess one
-		var candidates = []string{`/usr/local/share/xray`, `/usr/share/xray`, `/usr/local/share/v2ray`, `/usr/share/v2ray`}
+		var candidates = []string{`/usr/local/share/v2ray`, `/usr/share/v2ray`}
 		var ver string
 		var is bool
 		if ver, err = where.GetV2rayServiceVersion(); err == nil {

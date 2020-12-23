@@ -8,7 +8,7 @@ import (
 )
 
 var NotFoundErr = fmt.Errorf("not found")
-var ServiceNameList = []string{"xray", "v2ray"}
+var ServiceNameList = []string{"v2ray"}
 
 func GetV2rayServiceFilePath() (path string, err error) {
 	for _, target := range ServiceNameList {
