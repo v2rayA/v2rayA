@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/core/nodeData"
@@ -21,10 +22,11 @@ import (
 //	return ResolveSubscriptionWithClient(source, http.DefaultClient)
 //}
 type SIP008 struct {
-	Version  int    `json:"version"`
-	Username string `json:"username"`
-	UserUUID string `json:"user_uuid"`
-	Servers  []struct {
+	Version   int    `json:"version"`
+	Username  string `json:"username"`
+	UserUUID  string `json:"user_uuid"`
+	BytesUsed uint64 `json:"bytes_used"`
+	Servers   []struct {
 		Server     string `json:"server"`
 		ServerPort int    `json:"server_port"`
 		Password   string `json:"password"`
@@ -36,8 +38,7 @@ type SIP008 struct {
 	} `json:"servers"`
 }
 
-func resolveSIP008(raw string) (infos []*nodeData.NodeData, err error) {
-	var sip SIP008
+func resolveSIP008(raw string) (infos []*nodeData.NodeData, sip SIP008, err error) {
 	err = json.Unmarshal([]byte(raw), &sip)
 	if err != nil {
 		return
@@ -111,7 +112,12 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	if err != nil {
 		raw, _ = common.Base64URLDecode(buf.String())
 	}
-	if infos, err = resolveSIP008(raw); err != nil {
+	var sip SIP008
+	if infos, sip, err = resolveSIP008(raw); err == nil {
+		if sip.BytesUsed != 0 {
+			status = fmt.Sprintf("Used: %.2fGB", float64(sip.BytesUsed)/1024/1024/1024)
+		}
+	} else {
 		infos, status, err = resolveByLines(raw)
 	}
 	return
