@@ -19,7 +19,6 @@ type Params struct {
 
 func init() {
 	plugin.RegisterPlugin("ssr", NewSSRPlugin)
-	plugin.RegisterPlugin("shadowsocks", NewSSRPlugin)
 	plugin.RegisterPlugin("shadowsocksr", NewSSRPlugin)
 }
 

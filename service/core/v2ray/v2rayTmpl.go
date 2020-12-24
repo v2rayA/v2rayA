@@ -389,8 +389,6 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
 		case "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "plain", "none":
-		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb":
-			socksPlugin = true
 		default:
 			return o, newError("unsupported shadowsocks encryption method: " + v.Net)
 		}
@@ -405,14 +403,12 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		default:
 			return o, newError("unsupported shadowsocks obfuscation method: " + v.TLS)
 		}
-		if !socksPlugin {
-			o.Settings.Servers = []Server{{
-				Address:  target,
-				Port:     port,
-				Method:   v.Net,
-				Password: v.ID,
-			}}
-		}
+		o.Settings.Servers = []Server{{
+			Address:  target,
+			Port:     port,
+			Method:   v.Net,
+			Password: v.ID,
+		}}
 	case "shadowsocksr":
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
