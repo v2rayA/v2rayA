@@ -22,11 +22,12 @@ import (
 //	return ResolveSubscriptionWithClient(source, http.DefaultClient)
 //}
 type SIP008 struct {
-	Version   int    `json:"version"`
-	Username  string `json:"username"`
-	UserUUID  string `json:"user_uuid"`
-	BytesUsed uint64 `json:"bytes_used"`
-	Servers   []struct {
+	Version        int    `json:"version"`
+	Username       string `json:"username"`
+	UserUUID       string `json:"user_uuid"`
+	BytesUsed      uint64 `json:"bytes_used"`
+	BytesRemaining uint64 `json:"bytes_remaining"`
+	Servers        []struct {
 		Server     string `json:"server"`
 		ServerPort int    `json:"server_port"`
 		Password   string `json:"password"`
@@ -116,6 +117,9 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	if infos, sip, err = resolveSIP008(raw); err == nil {
 		if sip.BytesUsed != 0 {
 			status = fmt.Sprintf("Used: %.2fGB", float64(sip.BytesUsed)/1024/1024/1024)
+			if sip.BytesRemaining != 0 {
+				status += fmt.Sprintf(" | Remaining: %.2fGB", float64(sip.BytesRemaining)/1024/1024/1024)
+			}
 		}
 	} else {
 		infos, status, err = resolveByLines(raw)
