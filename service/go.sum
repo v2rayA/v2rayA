@@ -37,6 +37,8 @@ github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gG
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/gocarina/gocsv v0.0.0-20200302151839-87c60d755c58 h1:rRQm5os6ffGTukb42ZgKWOFfdFrocrNkLcjPYRP1tm0=
 github.com/gocarina/gocsv v0.0.0-20200302151839-87c60d755c58/go.mod h1:5YoVOkjYAQumqlV356Hj3xeYh4BdZuLE0/nRkf2NKkI=
+github.com/gocarina/gocsv v0.0.0-20201103164230-b291445e0dd2 h1:DTpqi8htDqlk4dGMxZ3+7BVX2OoMki9akiCHWQpSXfA=
+github.com/gocarina/gocsv v0.0.0-20201103164230-b291445e0dd2/go.mod h1:5YoVOkjYAQumqlV356Hj3xeYh4BdZuLE0/nRkf2NKkI=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
@@ -148,6 +150,8 @@ github.com/ugorji/go v1.1.4 h1:j4s+tAvLfL3bZyefP2SEWmhBzmuIlH/eqNuPdFPgngw=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
 github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0 h1:beJRvss6cKPj/Qy8RLI/O8EKYaxaKlsXBjsXgmNqSUQ=
 github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0/go.mod h1:6qvbJidjCnQWxyTc9SBD/cLCtN4qLs2neS/VzwSTnTY=
+github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1 h1:PITT+h0KRoBQwifYJr9vLqkhPH0UyJTonP+sIa5yGa4=
+github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1/go.mod h1:V86dy1jY9VJKMrEinUjUQTclZaQQv+nIXBuFCSf67A4=
 github.com/xtaci/kcp-go v5.4.11+incompatible/go.mod h1:bN6vIwHQbfHaHtFpEssmWsN45a+AZwO7eyRCmEIbtvE=
 github.com/xtaci/kcp-go/v5 v5.5.12/go.mod h1:H0T/EJ+lPNytnFYsKLH0JHUtiwZjG3KXlTM6c+Q4YUo=
 github.com/xtaci/lossyconn v0.0.0-20190602105132-8df528c0c9ae/go.mod h1:gXtu8J62kEgmN++bm9BVICuT/e8yiLI2KFobd/TRFsE=
