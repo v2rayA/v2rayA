@@ -4,11 +4,10 @@ go 1.13
 
 require (
 	github.com/beevik/ntp v0.3.0
-	github.com/cakturk/go-netstat v0.0.0-20190620190123-a633b9c55b1a
+	github.com/cakturk/go-netstat v0.0.0-20190620190123-a633b9c55b1a // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
-	github.com/gocarina/gocsv v0.0.0-20200302151839-87c60d755c58
 	github.com/golang/protobuf v1.4.0
 	github.com/google/gopacket v1.1.17
 	github.com/gookit/color v1.2.0
@@ -22,6 +21,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.5
+	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/net v0.0.0-20200505041828-1ed23360d12c
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
