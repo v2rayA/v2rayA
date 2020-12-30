@@ -218,7 +218,7 @@ loop1:
 
 var ErrorNotFound = newError("process not found")
 
-func findProcessID(pname string) (pid string, err error) {
+func findProcessID(pname string) (pids []string, err error) {
 	f, err := ioutil.ReadDir(pathProc)
 	if err != nil {
 		err = newError().Base(err)
@@ -236,10 +236,13 @@ loop1:
 			}
 		}
 		if getProcessName(fn) == pname {
-			return fn, nil
+			pids = append(pids, fn)
 		}
 	}
-	return "", ErrorNotFound
+	if len(pids) > 0 {
+		return pids, nil
+	}
+	return nil, ErrorNotFound
 }
 
 func getProcName(s string) string {
@@ -393,14 +396,19 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	if len(iNodes) == 0 {
 		return false, nil
 	}
-	pid, err := findProcessID(pname)
+	pids, err := findProcessID(pname)
 	if err != nil {
 		if errors.Cause(err) == ErrorNotFound {
 			return false, nil
 		}
 		return
 	}
-	return isProcessSocket(pid, iNodes) != "", nil
+	for _, pid := range pids {
+		if isProcessSocket(pid, iNodes) != "" {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func FillAllProcess(sockets []*Socket) {

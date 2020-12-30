@@ -6,7 +6,7 @@ import (
 	"github.com/v2rayA/shadowsocksR/protocol"
 	"github.com/v2rayA/shadowsocksR/ssr"
 	"github.com/v2rayA/shadowsocksR/streamCipher"
-	"github.com/nadoo/glider/common/socks"
+	"github.com/v2rayA/shadowsocksR/tools/socks"
 	"github.com/v2rayA/v2rayA/extra/proxy"
 	"log"
 	"net"
