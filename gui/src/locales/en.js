@@ -222,7 +222,7 @@ export default {
     title: "Configure Subscription"
   },
   import: {
-    message: "Input a vmess/ss/ssr/subscription address:",
+    message: "Input a server link or subscription address:",
     qrcodeError: "Failed to find a valid QRCode, please try again"
   },
   delete: {
