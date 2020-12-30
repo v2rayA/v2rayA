@@ -809,6 +809,7 @@ export default {
             queue: false
           });
           this.showModalImport = false;
+          this.importWhat = "";
         } else {
           this.$buefy.toast.open({
             message: res.data.message,

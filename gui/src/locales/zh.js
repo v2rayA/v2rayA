@@ -218,7 +218,7 @@ export default {
     password: "密码"
   },
   import: {
-    message: "填入vmess/ss/ssr/订阅地址：",
+    message: "填入节点链接或订阅地址：",
     qrcodeError: "找不到有效的二维码，请重新尝试"
   },
   delete: {
