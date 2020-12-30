@@ -15,12 +15,12 @@ require (
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
-	github.com/mzz2017/shadowsocksR v0.0.0-20200722151714-4f4abd8a2d94
 	github.com/nadoo/glider v0.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.5
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
+	github.com/v2rayA/shadowsocksR v1.0.2
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/net v0.0.0-20200505041828-1ed23360d12c
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
@@ -31,6 +31,6 @@ require (
 
 // Replace dependency modules with local developing copy
 // use `go list -m all` to confirm the final module used
-//replace github.com/mzz2017/shadowsocksR => ../../shadowsocksR
+//replace github.com/v2rayA/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
 replace v2ray.com/core => github.com/v2ray/v2ray-core v0.0.0-20200603100350-6b5d2fed91c0

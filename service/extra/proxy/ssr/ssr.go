@@ -1,11 +1,11 @@
 package ssr
 
 import (
-	shadowsocksr "github.com/mzz2017/shadowsocksR"
-	"github.com/mzz2017/shadowsocksR/obfs"
-	"github.com/mzz2017/shadowsocksR/protocol"
-	"github.com/mzz2017/shadowsocksR/ssr"
-	"github.com/mzz2017/shadowsocksR/streamCipher"
+	shadowsocksr "github.com/v2rayA/shadowsocksR"
+	"github.com/v2rayA/shadowsocksR/obfs"
+	"github.com/v2rayA/shadowsocksR/protocol"
+	"github.com/v2rayA/shadowsocksR/ssr"
+	"github.com/v2rayA/shadowsocksR/streamCipher"
 	"github.com/nadoo/glider/common/socks"
 	"github.com/v2rayA/v2rayA/extra/proxy"
 	"log"

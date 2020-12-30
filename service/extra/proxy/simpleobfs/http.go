@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/mzz2017/shadowsocksR/tools/leakybuf"
+	"github.com/v2rayA/shadowsocksR/tools/leakybuf"
 	"io"
 	"math/rand"
 	"net"
