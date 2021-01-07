@@ -11,7 +11,7 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"fmt"
-	"github.com/nadoo/glider/common/socks"
+	"github.com/nadoo/glider/proxy/socks"
 	"github.com/v2rayA/v2rayA/extra/proxy"
 	"net"
 	"net/url"

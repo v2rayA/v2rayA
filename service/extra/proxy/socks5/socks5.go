@@ -13,7 +13,7 @@ import (
 	"github.com/v2rayA/shadowsocksR/tools/leakybuf"
 	"github.com/v2rayA/v2rayA/extra/proxy"
 	"github.com/v2rayA/v2rayA/global"
-	"github.com/nadoo/glider/common/socks"
+	"github.com/nadoo/glider/proxy/socks"
 	"io"
 	"log"
 	"net"

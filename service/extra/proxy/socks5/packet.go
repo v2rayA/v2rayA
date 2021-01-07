@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"log"
-	"github.com/nadoo/glider/common/socks"
+	"github.com/nadoo/glider/proxy/socks"
 )
 
 // PktConn .
