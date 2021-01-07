@@ -20,7 +20,7 @@ require (
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.5
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
-	github.com/v2rayA/shadowsocksR v1.0.2
+	github.com/v2rayA/shadowsocksR v1.0.3
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb
 	golang.org/x/sys v0.0.0-20201202213521-69691e467435
