@@ -100,11 +100,13 @@ func getV2rayBinPath(target string) (string, error) {
 		//从systemd的启动参数里找
 		p, err := getV2rayServiceFilePath(target)
 		if err != nil {
-			return "", err
+			pa = ""
+			break
 		}
 		out, err := exec.Command("sh", "-c", "cat "+p+"|grep ExecStart=").CombinedOutput()
 		if err != nil {
-			return "", newError(string(out)).Base(err)
+			pa = ""
+			break
 		}
 		arr := strings.SplitN(strings.TrimSpace(string(out)), " ", 2)
 		pa = strings.TrimPrefix(arr[0], "ExecStart=")
