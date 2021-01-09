@@ -7,6 +7,8 @@ Wants=network.target
 [Service]
 Type=simple
 User=root
+LimitNPROC=500
+LimitNOFILE=1000000
 ExecStart=/usr/bin/v2raya
 Restart=on-failure
 
