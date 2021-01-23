@@ -367,7 +367,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			} else if !common.VersionMustGreaterEqual(ver, "4.23.2") {
 				o.StreamSettings.TLSSettings.AllowInsecureCiphers = true
 			}
-			// always set SNI
+			// SNI
 			if v.Host != "" {
 				o.StreamSettings.TLSSettings.ServerName = v.Host
 			}
@@ -409,6 +409,34 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			Method:   v.Net,
 			Password: v.ID,
 		}}
+	case "trojan":
+		version, err := where.GetV2rayServiceVersion()
+		if err != nil {
+			return o, newError(err)
+		}
+		if ok, err := common.VersionGreaterEqual(version, "4.31.0"); err != nil || !ok {
+			return o, newError("unsupported shadowsocks obfuscation method: " + v.TLS)
+		}
+		o.Settings.Servers = []Server{{
+			Address:  v.Add,
+			Port:     port,
+			Password: v.ID,
+		}}
+
+		//tls
+		o.StreamSettings = &tmplJson.StreamSettings
+		o.StreamSettings.Network = "tcp"
+		o.StreamSettings.Security = "tls"
+		o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
+		if v.AllowInsecure {
+			o.StreamSettings.TLSSettings.AllowInsecure = true
+		}
+		// always set SNI
+		if v.Host != "" {
+			o.StreamSettings.TLSSettings.ServerName = v.Host
+		} else {
+			o.StreamSettings.TLSSettings.ServerName = v.Add
+		}
 	case "shadowsocksr":
 		v.Net = strings.ToLower(v.Net)
 		switch v.Net {
@@ -433,7 +461,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			return o, newError("unsupported shadowsocksr obfuscation method: " + v.TLS)
 		}
 		socksPlugin = true
-	case "pingtunnel", "trojan":
+	case "pingtunnel":
 		socksPlugin = true
 	default:
 		return o, newError("unsupported protocol: " + v.Protocol)
