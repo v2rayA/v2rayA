@@ -172,13 +172,14 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	if err != nil {
 		return
 	}
-	if v.Protocol != "" && v.Protocol != "vmess" && v.Protocol != "vless" {
-		// 说明是plugin，启动plugin client
-		var plu plugin.Plugin
-		plu, err = plugin.NewPlugin(global.GetEnvironmentConfig().PluginListenPort, *v)
-		if err != nil {
-			return
-		}
+
+	// try launching plugin client
+	var plu plugin.Plugin
+	plu, err = plugin.NewPlugin(global.GetEnvironmentConfig().PluginListenPort, *v)
+	if err != nil {
+		return
+	}
+	if plu != nil {
 		plugin.GlobalPlugins.Append(plu)
 	}
 

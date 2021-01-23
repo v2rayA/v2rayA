@@ -1,6 +1,3 @@
-// protocol spec:
-// https://trojan-gfw.github.io/trojan/protocol
-
 package simpleobfs
 
 import (

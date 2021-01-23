@@ -273,12 +273,19 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	}
 	allowInsecure := t.Query().Get("allowInsecure")
 	data = new(nodeData.NodeData)
+	host := t.Query().Get("peer")
+	if host == "" {
+		host = t.Query().Get("sni")
+	}
+	if host == "" {
+		host = t.Query().Get("host")
+	}
 	data.VmessInfo = vmessInfo.VmessInfo{
 		Ps:            t.Fragment,
 		Add:           t.Hostname(),
 		Port:          t.Port(),
 		ID:            t.User.String(),
-		Host:          t.Query().Get("peer"),
+		Host:          host,
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}

@@ -99,7 +99,7 @@ func (v *VmessInfo) ExportToURL() string {
 		}
 		q := u.Query()
 		if v.Host != "" {
-			q.Set("peer", v.Host)
+			q.Set("sni", v.Host)
 		}
 		if v.AllowInsecure {
 			q.Set("allowInsecure", "1")

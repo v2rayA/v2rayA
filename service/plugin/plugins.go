@@ -45,8 +45,10 @@ func RegisterPlugin(protocol string, pluginCreator PluginCreator) {
 	pluginMap[protocol] = pluginCreator
 }
 
-func preprocess(v *vmessInfo.VmessInfo) bool {
+func preprocess(v *vmessInfo.VmessInfo) (needPlugin bool) {
 	switch v.Protocol {
+	case "", "vmess", "vless", "trojan":
+		return false
 	case "shadowsocks", "ss":
 		if v.Type == "" {
 			switch v.Net {
@@ -83,7 +85,6 @@ func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) 
 	}
 	return creator(localPort, v)
 }
-
 func IsProtocolValid(v vmessInfo.VmessInfo) bool {
 	preprocess(&v)
 	switch v.Protocol {
