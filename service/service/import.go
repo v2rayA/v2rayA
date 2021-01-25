@@ -7,13 +7,13 @@ import (
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"log"
 	"strings"
 	"time"
 )
 
 func Import(url string, which *configure.Which) (err error) {
-	log.Println(url)
+	//log.Println(url)
+	checkResolvConf()
 	url = strings.TrimSpace(url)
 	if strings.HasPrefix(url, "vmess://") ||
 		strings.HasPrefix(url, "ss://") ||
