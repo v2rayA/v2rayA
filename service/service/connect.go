@@ -5,7 +5,9 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/plugin"
+	"io/ioutil"
 	"log"
+	"os"
 )
 
 func Disconnect() (err error) {
@@ -31,6 +33,13 @@ func checkAssetsExist(setting *configure.Setting) error {
 	return nil
 }
 
+func checkResolvConf() {
+	const resolvConf = "/etc/resolv.conf"
+	if _, err := os.Stat(resolvConf); os.IsNotExist(err) {
+		ioutil.WriteFile(resolvConf, []byte("nameserver 223.5.5.5"), 0644)
+	}
+}
+
 func Connect(which *configure.Which) (err error) {
 	log.Println("Connect: begin")
 	defer log.Println("Connect: done")
@@ -41,6 +50,7 @@ func Connect(which *configure.Which) (err error) {
 	if which == nil {
 		return newError("which can not be nil")
 	}
+	checkResolvConf()
 	//定位Server
 	tsr, err := which.LocateServer()
 	if err != nil {

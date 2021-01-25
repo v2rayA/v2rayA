@@ -135,6 +135,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		reason := "failed to get proxy"
 		return newError(reason)
 	}
+	checkResolvConf()
 	infos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		reason := "failed to resolve subscription address: " + err.Error()
