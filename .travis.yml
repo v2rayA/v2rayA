@@ -32,7 +32,7 @@ before_install:
   - nvm install $NODE_VERSION
 install:
   - go get github.com/mitchellh/gox
-  - gem install fpm
+  - gem install fpm -v 1.11.0
 script:
   - cd service && CGO_ENABLED=0 gox -ldflags '-extldflags "-static"' -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/global.Version=${VERSION:1} -s -w" -output="../v2raya_{{.OS}}_{{.Arch}}_$VERSION"
   - cd ../gui && yarn && yarn build && cd ../ && tar -zcvf web.tar.gz ./web
