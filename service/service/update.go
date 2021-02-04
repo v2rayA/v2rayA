@@ -9,7 +9,7 @@ import (
 )
 
 func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
-	resp, err := http.Get("https://raw.fastgit.org/v2rayA/v2raya-apt/master/dists/v2raya/main/binary-amd64/Packages")
+	resp, err := http.Get("https://apt.v2raya.mzz.pub/dists/v2raya/main/binary-amd64/Packages")
 	if err != nil {
 		return
 	}
