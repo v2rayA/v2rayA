@@ -10,7 +10,7 @@ Thanks to the advantages of Web GUI, you can not only use it on your local compu
 
 Project：https://github.com/v2rayA/v2rayA
 
-Frontend demo: https://v2raya.mzz.pub
+Frontend demo: https://v2raya.mzz.pub http://v.mzz.pub
 
 
 ## Usage
@@ -31,8 +31,7 @@ See [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/Usage)
 ## Statement
 
 1. The program does not store any user data in the cloud, and all user data is stored in local.
-2. The provided [GUI demo](https://v2raya.mzz.pub) is automatically deployed by [Fast.io](https://fast.io). If you are worried about security, you can [deploy it yourself](https://github.com/v2rayA/v2rayA/wiki/Deploy-GUI).
-3. **Do not use this project for illegal purposes.**
+2. **Do not use this project for illegal purposes.**
 
 ## Credits
 
