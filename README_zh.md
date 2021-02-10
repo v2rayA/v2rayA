@@ -10,7 +10,7 @@ v2rayA 致力于提供最简单的操作，满足绝大部分需求。
 
 项目地址：https://github.com/v2rayA/v2rayA
 
-前端 demo: https://v2raya.mzz.pub
+前端 demo: https://v2raya.mzz.pub http://v.mzz.pub
 
 
 ## 使用方法
@@ -33,9 +33,7 @@ v2rayA主要提供了下述使用方法：
 
 1. 程序不会将任何用户数据保存在云端，所有用户数据存放在用户本地配置文件中。
 
-2. 提供的[GUI demo](https://v2raya.mzz.pub)是由[Fast.io](https://fast.io)在本 Github 项目自动部署完成的，如果担心安全性可以[自行部署](https://github.com/v2rayA/v2rayA/wiki/%E9%83%A8%E7%BD%B2GUI)。
-
-3. **不要将本项目用于不合法用途。**
+2. **不要将本项目用于不合法用途。**
 
 ## 感谢
 
