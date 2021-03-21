@@ -476,7 +476,7 @@
               expanded
             />
           </b-field>
-          <b-field label="Peer" label-position="on-border">
+          <b-field label="Peer(SNI)" label-position="on-border">
             <b-input
               v-model="trojan.peer"
               :placeholder="`Peer(${$t('common.optional')})`"
@@ -758,7 +758,7 @@ export default {
           server: u.host,
           port: u.port,
           name: u.hash,
-          peer: u.params.peer || "",
+          peer: u.params.peer || u.params.sni || "",
           allowInsecure:
             u.params.allowInsecure === true || u.params.allowInsecure === "1",
           protocol: "trojan"

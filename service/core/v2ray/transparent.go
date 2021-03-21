@@ -47,7 +47,38 @@ func (h *DnsHijacker) Close() error {
 var hijacker *DnsHijacker
 
 func (h *DnsHijacker) HijackDNS() error {
-	err := ioutil.WriteFile(resolverFile, []byte("# v2rayA DNS hijack\nnameserver 223.5.5.5\nnameserver 114.114.114.114\n"), os.FileMode(0644))
+	alternatives := []string{
+		"223.5.5.5",
+		"119.29.29.29",
+		"223.6.6.6",
+		"180.76.76.76",
+		"114.114.114.114",
+		"208.67.222.222",
+	}
+	m := make(map[string]struct{})
+	userSetDns := configure.GetDnsListNotNil()
+	for _, dns := range userSetDns {
+		m[dns] = struct{}{}
+	}
+	cnt := 0
+	maxcnt := 2
+	if entity.ShouldDnsPoisonOpen() == 2 {
+		// fakedns
+		alternatives = append([]string{"127.0.0.1"}, alternatives...)
+	}
+	var builder strings.Builder
+	builder.WriteString("# v2rayA DNS hijack\n")
+	for _, dns := range alternatives {
+		// should not be duplicated with user preset dns
+		if _, ok := m[dns]; !ok {
+			builder.WriteString("nameserver " + dns + "\n")
+			cnt++
+			if cnt >= maxcnt {
+				break
+			}
+		}
+	}
+	err := ioutil.WriteFile(resolverFile, []byte(builder.String()), os.FileMode(0644))
 	if err != nil {
 		err = fmt.Errorf("failed to hijackDNS: [write] %v", err)
 	}
@@ -78,7 +109,7 @@ func DeleteTransparentProxyRules() {
 }
 
 func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) error {
-	if entity.ShouldDnsPoisonOpen() {
+	if entity.ShouldDnsPoisonOpen() == 1 {
 		if e := iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); e != nil {
 			log.Println(newError("[WARNING] DropSpoofing can't be enable").Base(e))
 			iptables.DropSpoofing.GetCleanCommands().Clean()
@@ -101,6 +132,9 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 		}
 	} else {
 		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err == nil {
+			if setting.AntiPollution != configure.AntipollutionClosed {
+				resetDnsHijacker()
+			}
 			iptables.SetWatcher(&iptables.Redirect)
 		} else {
 			log.Println(err)
@@ -177,7 +211,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		if setting.AntiPollution == configure.AntipollutionClosed {
 			commands = common.TrimLineContains(commands, "udp")
 		}
-		if entity.ShouldDnsPoisonOpen() {
+		if entity.ShouldDnsPoisonOpen() == 1 {
 			commands = common.TrimLineContains(commands, "240.0.0.0/4")
 		}
 		*c = iptables.SetupCommands(commands)

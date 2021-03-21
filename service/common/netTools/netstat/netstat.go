@@ -129,6 +129,7 @@ type Socket struct {
 
 type Process struct {
 	PID  string
+	PPID string
 	Name string
 }
 
@@ -167,9 +168,11 @@ loop1:
 			}
 		}
 		if inode := isProcessSocket(fn, iNodes); inode != "" {
+			pn, ppid := getProcessInfo(fn)
 			mapInodeSocket[inode].Proc = &Process{
 				PID:  fn,
-				Name: getProcessName(fn),
+				PPID: ppid,
+				Name: pn,
 			}
 			delete(iNodes, inode)
 		}
@@ -202,9 +205,11 @@ loop1:
 			}
 		}
 		if isProcessSocket(fn, map[string]struct{}{s.inode: {}}) != "" {
+			pn, ppid := getProcessInfo(fn)
 			s.Proc = &Process{
 				PID:  fn,
-				Name: getProcessName(fn),
+				PPID: ppid,
+				Name: pn,
 			}
 			return s.Proc, nil
 		}
@@ -235,7 +240,7 @@ loop1:
 				continue loop1
 			}
 		}
-		if getProcessName(fn) == pname {
+		if pn, _ := getProcessInfo(fn); pn == pname {
 			pids = append(pids, fn)
 		}
 	}
@@ -258,16 +263,16 @@ func getProcName(s string) string {
 	return s[:j]
 }
 
-func getProcessName(pid string) (pn string) {
+func getProcessInfo(pid string) (pn string, ppid string) {
 	p := filepath.Join(pathProc, pid, "stat")
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		err = newError().Base(err)
 		return
 	}
-	sp := bytes.SplitN(b, []byte(" "), 3)
+	sp := bytes.Fields(b)
 	pn = string(sp[1])
-	return getProcName(pn)
+	return getProcName(pn), string(sp[3])
 }
 
 func isProcessSocket(pid string, socketInode map[string]struct{}) string {
@@ -438,9 +443,11 @@ loop1:
 		socketSet := getProcessSocketSet(fn)
 		for _, s := range socketSet {
 			if socket, ok := mInodeSocket[s]; ok {
+				pn, ppid := getProcessInfo(fn)
 				socket.Proc = &Process{
 					PID:  fn,
-					Name: getProcessName(fn),
+					PPID: ppid,
+					Name: pn,
 				}
 			}
 			delete(mInodeSocket, s)
