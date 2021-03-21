@@ -1,16 +1,21 @@
 package entity
 
 import (
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/netTools"
+	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/core/dnsPoison"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/global"
 	"log"
+	"os"
 	"os/exec"
+	"strconv"
 	"sync"
 	"time"
 	"v2ray.com/core/app/router"
-	"github.com/v2rayA/v2rayA/common/netTools"
-	"github.com/v2rayA/v2rayA/core/dnsPoison"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/global"
-	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 var (
@@ -30,19 +35,60 @@ type ExtraInfo struct {
 	ServerDomain string
 }
 
-func ShouldDnsPoisonOpen() bool {
-	if setting := configure.GetSettingNotNil();
-		!(setting.Transparent != configure.TransparentClose &&
-			setting.AntiPollution != configure.AntipollutionClosed &&
-			(!global.SupportTproxy || setting.EnhancedMode)) {
-		//redirect+poison增强方案
+func dnsPortValid() bool {
+	occupied, socket, err := ports.IsPortOccupied([]string{"53:udp"})
+	if err != nil {
+		return false
+	}
+
+	if occupied {
+		p, err := socket.Process()
+		if err != nil {
+			return false
+		}
+		if p.PPID == strconv.Itoa(os.Getpid()) {
+			return true
+		}
+		log.Println("dns port is occupied:", socket.State, p.PID, p.PPID, os.Getpid())
 		return false
 	}
 	return true
 }
 
+/*
+0: neither
+
+1: redirect + poison
+
+2: redirect + fakedns
+*/
+func ShouldDnsPoisonOpen() int {
+	ver, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		ver = "0.0.0"
+	}
+	fakednsValid, _ := common.VersionGreaterEqual(ver, "4.35.0")
+	if fakednsValid && configure.GetSettingNotNil().Transparent == configure.TransparentClose {
+		fakednsValid = false
+	}
+	if fakednsValid && !dnsPortValid() {
+		fakednsValid = false
+	}
+	if setting := configure.GetSettingNotNil();
+		setting.Transparent != configure.TransparentClose &&
+			setting.AntiPollution != configure.AntipollutionClosed &&
+			(!global.SupportTproxy || setting.EnhancedMode) {
+		if fakednsValid {
+			return 2
+		} else {
+			return 1
+		}
+	}
+	return 0
+}
+
 func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
-	if !ShouldDnsPoisonOpen() {
+	if ShouldDnsPoisonOpen() != 1 {
 		return
 	}
 	whitedms := make([]*router.Domain, 0, len(info.DohDomains))

@@ -50,7 +50,12 @@ type Template struct {
 		DomainStrategy string        `json:"domainStrategy"`
 		Rules          []RoutingRule `json:"rules"`
 	} `json:"routing"`
-	DNS *DNS `json:"dns,omitempty"`
+	DNS     *DNS     `json:"dns,omitempty"`
+	FakeDns *FakeDns `json:"fakedns"`
+}
+type FakeDns struct {
+	IpPool   string `json:"ipPool"`
+	PoolSize int    `json:"poolSize"`
 }
 type RoutingRule struct {
 	Type        string   `json:"type"`
@@ -72,6 +77,7 @@ type Log struct {
 type Sniffing struct {
 	Enabled      bool     `json:"enabled"`
 	DestOverride []string `json:"destOverride"`
+	MetadataOnly bool     `json:"metadataOnly"`
 }
 type Inbound struct {
 	Port           int              `json:"port"`
@@ -83,15 +89,16 @@ type Inbound struct {
 	Tag            string           `json:"tag,omitempty"`
 }
 type InboundSettings struct {
-	Auth      string      `json:"auth,omitempty"`
-	UDP       bool        `json:"udp,omitempty"`
-	IP        interface{} `json:"ip,omitempty"`
-	Accounts  []Account   `json:"accounts,omitempty"`
-	Clients   interface{} `json:"clients,omitempty"`
-	Network   string      `json:"network,omitempty"`
-	UserLevel int         `json:"userLevel,omitempty"`
-
-	FollowRedirect bool `json:"followRedirect,omitempty"`
+	Auth           string      `json:"auth,omitempty"`
+	UDP            bool        `json:"udp,omitempty"`
+	IP             interface{} `json:"ip,omitempty"`
+	Accounts       []Account   `json:"accounts,omitempty"`
+	Clients        interface{} `json:"clients,omitempty"`
+	Network        string      `json:"network,omitempty"`
+	UserLevel      int         `json:"userLevel,omitempty"`
+	Address        string      `json:"address,omitempty"`
+	Port           int         `json:"port,omitempty"`
+	FollowRedirect bool        `json:"followRedirect,omitempty"`
 }
 type Account struct {
 	User string `json:"user"`
@@ -581,6 +588,17 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 	if t.DNS != nil {
 		//修改hosts
 		t.DNS.Hosts = getHosts()
+
+		//fakedns
+		if t.FakeDns != nil {
+			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
+				Address: "fakedns",
+				Domains: []string{
+					"domain:use-fakedns.com",
+					"geosite:geolocation-!cn",
+				},
+			})
+		}
 	}
 	return
 }
@@ -626,17 +644,24 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 			IP:          configure.GetDnsListNotNil(),
 			Port:        "53",
 		},
-		RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
-			Type:        "field",
-			Port:        "53",
-			OutboundTag: "dns-out",
-		},
-		RoutingRule{ // DNSPoison
-			Type:        "field",
-			IP:          []string{"240.0.0.0/4"},
-			OutboundTag: "proxy",
-		},
 	)
+	dnsout := RoutingRule{ // 劫持 53 端口流量，使用 V2Ray 的 DNS
+		Type:        "field",
+		Port:        "53",
+		OutboundTag: "dns-out",
+	}
+	if t.FakeDns != nil {
+		dnsout.InboundTag = []string{"dns-in"}
+	} else {
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{ // DNSPoison
+				Type:        "field",
+				IP:          []string{"240.0.0.0/4"},
+				OutboundTag: "proxy",
+			},
+		)
+	}
+	t.Routing.Rules = append(t.Routing.Rules, dnsout)
 	if setting.AntiPollution != configure.AntipollutionNone {
 		t.Routing.Rules = append(t.Routing.Rules, RoutingRule{ // 非标准端口暂时安全，直连
 			Type:        "field",
@@ -1030,6 +1055,19 @@ func (t *Template) SetOutboundSockopt(supportUDP bool, setting *configure.Settin
 	}
 }
 
+func (t *Template) SetInboundFakeDnsDestOverride() {
+	if t.FakeDns == nil {
+		return
+	}
+	for i := range t.Inbounds {
+		if t.Inbounds[i].Sniffing.Enabled == false {
+			continue
+		}
+		t.Inbounds[i].Sniffing.DestOverride = append(t.Inbounds[i].Sniffing.DestOverride, "fakedns")
+		//t.Inbounds[i].Sniffing.DestOverride = []string{"fakedns"}
+	}
+}
+
 func (t *Template) AppendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "dns-out",
@@ -1058,6 +1096,19 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 			tproxy = "redirect"
 		}
 		t.AppendDokodemo(&tproxy, 32345, "transparent")
+	}
+	if t.FakeDns != nil {
+		t.Inbounds = append(t.Inbounds, Inbound{
+			Port:     53,
+			Protocol: "dokodemo-door",
+			Listen:   "::",
+			Settings: &InboundSettings{
+				Network: "udp",
+				Address: "2.0.1.7",
+				Port:    53,
+			},
+			Tag: "dns-in",
+		})
 	}
 }
 
@@ -1116,6 +1167,13 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	} else {
 		t.Log = nil
 	}
+	// fakedns
+	if entity.ShouldDnsPoisonOpen() == 2 {
+		t.FakeDns = &FakeDns{
+			IpPool:   "198.18.0.0/15",
+			PoolSize: 65535,
+		}
+	}
 	// 解析Outbound
 	o, err := ResolveOutbound(&v, "proxy", &global.GetEnvironmentConfig().PluginListenPort)
 	if err != nil {
@@ -1162,6 +1220,9 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	}
 	//置outboundSockopt
 	t.SetOutboundSockopt(supportUDP, setting)
+
+	//置fakedns destOverride
+	t.SetInboundFakeDnsDestOverride()
 
 	//check dulplicated tags
 	if err = t.CheckDuplicatedTags(); err != nil {
