@@ -20,6 +20,7 @@ type Params struct {
 	PluginListenPort     int    `short:"s" default:"32346" desc:"ssr, pingTunnel, etc."`
 	PassCheckRoot        bool   `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
 	ResetPassword        bool   `id:"reset-password"`
+	Verbose              bool   `id:"verbose" desc:"Mixedly print the log of v2rayA and v2ray-core"`
 	ShowVersion          bool   `id:"version"`
 }
 
