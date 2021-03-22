@@ -51,7 +51,7 @@ type Template struct {
 		Rules          []RoutingRule `json:"rules"`
 	} `json:"routing"`
 	DNS     *DNS     `json:"dns,omitempty"`
-	FakeDns *FakeDns `json:"fakedns"`
+	FakeDns *FakeDns `json:"fakedns,omitempty"`
 }
 type FakeDns struct {
 	IpPool   string `json:"ipPool"`
@@ -77,7 +77,7 @@ type Log struct {
 type Sniffing struct {
 	Enabled      bool     `json:"enabled"`
 	DestOverride []string `json:"destOverride"`
-	MetadataOnly bool     `json:"metadataOnly"`
+	MetadataOnly bool     `json:"metadataOnly,omitempty"`
 }
 type Inbound struct {
 	Port           int              `json:"port"`

@@ -24,12 +24,14 @@ const (
 )
 
 type DnsHijacker struct {
-	ticker *time.Ticker
+	ticker  *time.Ticker
+	fakedns bool
 }
 
 func NewDnsHijacker() *DnsHijacker {
 	hij := DnsHijacker{
-		ticker: time.NewTicker(checkInterval),
+		ticker:  time.NewTicker(checkInterval),
+		fakedns: entity.ShouldDnsPoisonOpen() == 2,
 	}
 	hij.HijackDNS()
 	go func() {
@@ -62,7 +64,7 @@ func (h *DnsHijacker) HijackDNS() error {
 	}
 	cnt := 0
 	maxcnt := 2
-	if entity.ShouldDnsPoisonOpen() == 2 {
+	if h.fakedns {
 		// fakedns
 		alternatives = append([]string{"127.0.0.1"}, alternatives...)
 	}
