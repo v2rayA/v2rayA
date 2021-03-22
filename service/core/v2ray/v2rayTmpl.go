@@ -1158,7 +1158,11 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	// 其中Template是基础配置，替换掉t即可
 	t = tmplJson.Template
 	// 调试模式
-	if global.IsDebug() {
+	if global.GetEnvironmentConfig().Verbose {
+		t.Log.Loglevel = "info"
+		t.Log.Access = ""
+		t.Log.Error = ""
+	} else if global.IsDebug() {
 		ioutil.WriteFile(t.Log.Access, nil, 0777)
 		ioutil.WriteFile(t.Log.Error, nil, 0777)
 		os.Chmod(t.Log.Access, 0777)
