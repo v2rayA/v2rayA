@@ -86,7 +86,7 @@ func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatche
 		return newError(ifname + " is running")
 	}
 	handle.running = true
-	log.Println("DnsPoison[" + ifname + "]: running")
+	log.Println("[DnsPoison] " + ifname + ": running")
 	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
 	pkgsrc.NoCopy = true
 	d.inner.Unlock()

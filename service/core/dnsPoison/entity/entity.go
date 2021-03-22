@@ -49,7 +49,7 @@ func dnsPortValid() bool {
 		if p.PPID == strconv.Itoa(os.Getpid()) {
 			return true
 		}
-		log.Println("dns port is occupied:", socket.State, p.PID, p.PPID, os.Getpid())
+		log.Printf("[info] port 53 is occupied by %v(%v)\n", p.Name, p.PID)
 		return false
 	}
 	return true
@@ -72,6 +72,7 @@ func ShouldDnsPoisonOpen() int {
 		fakednsValid = false
 	}
 	if fakednsValid && !dnsPortValid() {
+		log.Println("[fakedns] unable to use fakedns: port 53 is occupied")
 		fakednsValid = false
 	}
 	if setting := configure.GetSettingNotNil();
@@ -183,7 +184,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 					return
 				}
 				//准备白名单
-				log.Println("DnsPoison: preparing whitelist")
+				log.Println("[DnsPoison] preparing whitelist")
 				wlDms, err := asset.GetWhitelistCn(nil, whiteDomains)
 				//var wlDms = new(strmatcher.MatcherGroup)
 				if err != nil {
