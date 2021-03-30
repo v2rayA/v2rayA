@@ -1,6 +1,7 @@
 package where
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/v2rayA/v2rayA/global"
 	"os/exec"
@@ -10,15 +11,41 @@ import (
 var NotFoundErr = fmt.Errorf("not found")
 var ServiceNameList = []string{"v2ray"}
 
-func GetV2rayServiceFilePath() (path string, err error) {
+func GetV2rayServiceFileContent() (content string, err error) {
+	switch global.ServiceControlMode {
+	case global.SystemctlMode:
+		content, err = getV2raySystemdServiceFileContent()
+		if err != nil {
+			break
+		}
+	case global.ServiceMode:
+		p, _ := getV2rayServiceFilePath()
+		var out []byte
+		out, err = exec.Command("sh", "-c", "cat "+p+"|grep Environment=V2RAY_LOCATION_ASSET").CombinedOutput()
+		if err != nil {
+			break
+		}
+		content = string(bytes.TrimSpace(out))
+	}
+	return
+}
+func getV2rayServiceFilePath() (path string, err error) {
 	for _, target := range ServiceNameList {
-		if path, err = getV2rayServiceFilePath(target); err == nil {
+		if path, err = _getV2rayServiceFilePath(target); err == nil {
 			return
 		}
 	}
 	return
 }
-func getV2rayServiceFilePath(target string) (path string, err error) {
+func getV2raySystemdServiceFileContent() (content string, err error) {
+	for _, target := range ServiceNameList {
+		if out, err := exec.Command("sh", "-c", "systemctl cat "+target).CombinedOutput(); err == nil {
+			return string(bytes.TrimSpace(out)), nil
+		}
+	}
+	return
+}
+func _getV2rayServiceFilePath(target string) (path string, err error) {
 	var out []byte
 	if global.ServiceControlMode == global.SystemctlMode {
 		out, err = exec.Command("sh", "-c", "systemctl status "+target+"|grep /"+target+".service").CombinedOutput()
@@ -51,7 +78,7 @@ func getV2rayServiceFilePath(target string) (path string, err error) {
 	l := strings.Index(sout, "/")
 	r := strings.Index(sout, "/"+target+".service")
 	if l < 0 || r < 0 {
-		err = newError("failure: getV2rayServiceFilePath")
+		err = newError("failure: _getV2rayServiceFilePath")
 		return
 	}
 	path = sout[l : r+len("/"+target+".service")]
@@ -95,30 +122,12 @@ func getV2rayBinPathAnyway() (path string, err error) {
 
 func getV2rayBinPath(target string) (string, error) {
 	var pa string
-	switch global.ServiceControlMode {
-	case global.SystemctlMode, global.ServiceMode:
-		//从systemd的启动参数里找
-		p, err := getV2rayServiceFilePath(target)
-		if err != nil {
-			pa = ""
-			break
-		}
-		out, err := exec.Command("sh", "-c", "cat "+p+"|grep ExecStart=").CombinedOutput()
-		if err != nil {
-			pa = ""
-			break
-		}
-		arr := strings.SplitN(strings.TrimSpace(string(out)), " ", 2)
-		pa = strings.TrimPrefix(arr[0], "ExecStart=")
+	//从环境变量里找
+	out, err := exec.Command("sh", "-c", "which "+target).CombinedOutput()
+	if err != nil {
+		return "", NotFoundErr
 	}
-	if pa == "" {
-		//从环境变量里找
-		out, err := exec.Command("sh", "-c", "which "+target).CombinedOutput()
-		if err != nil {
-			return "", NotFoundErr
-		}
-		pa = strings.TrimSpace(string(out))
-	}
+	pa = strings.TrimSpace(string(out))
 	if pa == "" {
 		return "", NotFoundErr
 	}
