@@ -11,60 +11,36 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 	v2router "v2ray.com/core/app/router"
 	"v2ray.com/core/common/strmatcher"
 )
 
-var v2rayLocationAsset *string
 
 func GetV2rayLocationAsset() (s string) {
-	if v2rayLocationAsset != nil {
-		return *v2rayLocationAsset
-	}
-	switch global.ServiceControlMode {
-	case global.SystemctlMode, global.ServiceMode:
-		p, _ := where.GetV2rayServiceFilePath()
-		out, err := exec.Command("sh", "-c", "cat "+p+"|grep Environment=V2RAY_LOCATION_ASSET").CombinedOutput()
-		if err != nil {
-			break
-		}
-		s = strings.TrimSpace(string(out))
-		s = s[len("Environment=V2RAY_LOCATION_ASSET="):]
-	}
-	var err error
-	if s == "" {
-		//fine, guess one
-		var candidates = []string{`/usr/local/share/v2ray`, `/usr/share/v2ray`}
-		var ver string
-		var is bool
-		if ver, err = where.GetV2rayServiceVersion(); err == nil {
-			if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
-				for _, c := range candidates {
-					if _, err := os.Stat(c); os.IsNotExist(err) {
-						continue
-					}
-					s = c
-					break
+	var candidates = []string{`/usr/local/share/v2ray`, `/usr/share/v2ray`}
+	var is bool
+	if ver, err := where.GetV2rayServiceVersion(); err == nil {
+		if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
+			for _, c := range candidates {
+				if _, err := os.Stat(c); os.IsNotExist(err) {
+					continue
 				}
+				s = c
+				break
 			}
 		}
-		if s == "" {
-			//maybe v2ray working directory
-			v2rayPath, err := where.GetV2rayBinPath()
-			if err != nil {
-				s = "/etc/v2ray"
-			}
-			s = path.Dir(v2rayPath)
+	}
+	if s == "" {
+		//maybe v2ray working directory
+		v2rayPath, err := where.GetV2rayBinPath()
+		if err != nil {
+			s = "/etc/v2ray"
 		}
-	} else {
-		//save the result if not by guess
-		v2rayLocationAsset = &s
+		s = path.Dir(v2rayPath)
 	}
 	return
 }
