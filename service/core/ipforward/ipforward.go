@@ -1,12 +1,13 @@
 package ipforward
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 )
 
 func IsIpForwardOn() bool {
-	out, err := exec.Command("sh", "-c", "cat /proc/sys/net/ipv4/ip_forward").Output()
+	out, err := os.ReadFile("/proc/sys/net/ipv4/ip_forward")
 	return err == nil && strings.TrimSpace(string(out)) == "1"
 }
 

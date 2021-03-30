@@ -1,6 +1,6 @@
 module github.com/v2rayA/v2rayA
 
-go 1.13
+go 1.16
 
 require (
 	github.com/beevik/ntp v0.3.0
