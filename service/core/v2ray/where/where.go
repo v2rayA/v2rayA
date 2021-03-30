@@ -1,7 +1,6 @@
 package where
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/v2rayA/v2rayA/global"
 	"os/exec"
@@ -9,81 +8,7 @@ import (
 )
 
 var NotFoundErr = fmt.Errorf("not found")
-var ServiceNameList = []string{"v2ray"}
-
-func GetV2rayServiceFileContent() (content string, err error) {
-	switch global.ServiceControlMode {
-	case global.SystemctlMode:
-		content, err = getV2raySystemdServiceFileContent()
-		if err != nil {
-			break
-		}
-	case global.ServiceMode:
-		p, _ := getV2rayServiceFilePath()
-		var out []byte
-		out, err = exec.Command("sh", "-c", "cat "+p+"|grep Environment=V2RAY_LOCATION_ASSET").CombinedOutput()
-		if err != nil {
-			break
-		}
-		content = string(bytes.TrimSpace(out))
-	}
-	return
-}
-func getV2rayServiceFilePath() (path string, err error) {
-	for _, target := range ServiceNameList {
-		if path, err = _getV2rayServiceFilePath(target); err == nil {
-			return
-		}
-	}
-	return
-}
-func getV2raySystemdServiceFileContent() (content string, err error) {
-	for _, target := range ServiceNameList {
-		if out, err := exec.Command("sh", "-c", "systemctl cat "+target).CombinedOutput(); err == nil {
-			return string(bytes.TrimSpace(out)), nil
-		}
-	}
-	return
-}
-func _getV2rayServiceFilePath(target string) (path string, err error) {
-	var out []byte
-	if global.ServiceControlMode == global.SystemctlMode {
-		out, err = exec.Command("sh", "-c", "systemctl status "+target+"|grep /"+target+".service").CombinedOutput()
-		if err != nil {
-			err = newError(strings.TrimSpace(string(out)))
-			if !strings.Contains(string(out), "not be found") {
-				path = `/usr/lib/systemd/system/` + target + `.service`
-				return
-			}
-		}
-	} else if global.ServiceControlMode == global.ServiceMode {
-		out, err = exec.Command("sh", "-c", "service "+target+" status|grep /"+target+".service").CombinedOutput()
-		if err != nil || strings.TrimSpace(string(out)) == "(Reason:" {
-			if !strings.Contains(string(out), "not be found") {
-				path = `/lib/systemd/system/` + target + `.service`
-				return
-			}
-			if err != nil {
-				err = newError(strings.TrimSpace(string(out)))
-			}
-		}
-	} else {
-		err = newError("commands systemctl and service not found")
-		return
-	}
-	if err != nil {
-		return
-	}
-	sout := string(out)
-	l := strings.Index(sout, "/")
-	r := strings.Index(sout, "/"+target+".service")
-	if l < 0 || r < 0 {
-		err = newError("failure: _getV2rayServiceFilePath")
-		return
-	}
-	path = sout[l : r+len("/"+target+".service")]
-	return
-}
+var ServiceNameList = []string{"v2ray", "xray"}
 
 /* get the version of v2ray-core without 'v' like 4.23.1 */
 func GetV2rayServiceVersion() (ver string, err error) {
