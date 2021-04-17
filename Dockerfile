@@ -28,7 +28,6 @@ FROM bgiddings/iptables:latest
 COPY --from=builder /build/service/v2raya /usr/bin/
 COPY --from=builder-web /build/web /etc/v2raya-web
 COPY --from=v2ray /usr/bin/v2ray /usr/bin/v2ctl /usr/share/v2ray/
-COPY --from=v2ray /usr/bin/*.dat /usr/local/share/v2ray/
 COPY --from=v2ray /usr/local/share/v2ray/* /usr/local/share/v2ray/
 RUN wget -O /usr/local/share/v2ray/LoyalsoldierSite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
 ENV PATH=$PATH:/usr/share/v2ray
