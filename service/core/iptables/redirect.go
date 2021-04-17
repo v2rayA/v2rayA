@@ -56,11 +56,7 @@ iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 32345
 iptables -t nat -I PREROUTING -p tcp -j V2RAY
 iptables -t nat -I OUTPUT -p tcp -j V2RAY
 `
-	if cmds.IsCommandValid("ip6tables") {
-		// FIXME:
-		// https://v2xtls.org/xray%E5%8F%91%E5%B8%831-1-3%E7%89%88%E6%9C%AC/
-		// https://github.com/XTLS/Xray-core/commit/f1eb5e3d081a37bcfcb49adf223a37122e13ebab
-		// v2ray may not support ipv6 in redirect mode of transparent proxy (2021.03.22)
+	if IsIPv6Supported() {
 		commands += `
 ip6tables -t nat -N V2RAY
 # 出方向白名单端口
@@ -95,7 +91,7 @@ iptables -t nat -D PREROUTING -p tcp -j V2RAY
 iptables -t nat -D OUTPUT -p tcp -j V2RAY
 iptables -t nat -X V2RAY
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if IsIPv6Supported() {
 		commands += `
 ip6tables -t nat -F V2RAY
 ip6tables -t nat -D PREROUTING -p tcp -j V2RAY

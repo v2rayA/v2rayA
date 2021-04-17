@@ -91,7 +91,7 @@ iptables -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 32345 -
 iptables -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if IsIPv6Supported() {
 		commands += `
 # 设置策略路由
 ip -6 rule add fwmark 1 table 100
@@ -163,7 +163,7 @@ iptables -t mangle -X TP_PRE
 iptables -t mangle -F SETMARK
 iptables -t mangle -X SETMARK
 `
-	if cmds.IsCommandValid("ip6tables") {
+	if IsIPv6Supported() {
 		commands += `
 ip -6 rule del fwmark 1 table 100
 ip -6 route del local ::/0 dev lo table 100
