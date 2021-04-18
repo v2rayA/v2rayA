@@ -1,7 +1,9 @@
 package iptables
 
 import (
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/v2rayA/v2rayA/global"
 	"net"
 	"os"
 	"strconv"
@@ -28,11 +30,17 @@ func GetLocalCIDR() ([]string, error) {
 }
 
 func IsIPv6Supported() bool {
+	if global.GetEnvironmentConfig().ForceIPV6On {
+		return true
+	}
+	if common.IsInDocker(){
+		return false
+	}
 	b, err := os.ReadFile("/proc/sys/net/ipv6/conf/default/disable_ipv6")
 	if err != nil {
 		return false
 	}
-	if strings.TrimSpace(string(b)) == "1"{
+	if strings.TrimSpace(string(b)) == "1" {
 		return false
 	}
 	return cmds.IsCommandValid("ip6tables")
