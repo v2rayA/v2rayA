@@ -18,9 +18,10 @@ type Params struct {
 	WebDir               string `id:"webdir" default:"/etc/v2raya/web" desc:"v2rayA web files directory"`
 	Mode                 string `id:"mode" short:"m" desc:"(deprecated) Options: systemctl, service, universal. Auto-detect if not set"`
 	PluginListenPort     int    `short:"s" default:"32346" desc:"ssr, pingTunnel, etc."`
+	ForceIPV6On          bool   `id:"force_ipv6_on" desc:"force open ipv6"`
 	PassCheckRoot        bool   `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
 	ResetPassword        bool   `id:"reset-password"`
-	Verbose              bool   `id:"verbose" desc:"Mixedly print the log of v2rayA and v2ray-core"`
+	Verbose              bool   `id:"verbose" desc:"Detailed log mixing the log of v2rayA and v2ray-core"`
 	ShowVersion          bool   `id:"version"`
 }
 
