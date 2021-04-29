@@ -87,7 +87,7 @@ func (v *VmessInfo) ExportToURL() string {
 				common.UrlEncoded(v.Ps),
 			),
 		)))
-	case "trojan":
+	case "trojan", "trojan-go":
 		// trojan://passwd@server:port#URLESCAPE(remarks)
 		u := &url.URL{
 			Scheme:   "trojan",
@@ -98,11 +98,23 @@ func (v *VmessInfo) ExportToURL() string {
 			Fragment: v.Ps,
 		}
 		q := u.Query()
-		if v.Host != "" {
-			q.Set("sni", v.Host)
-		}
 		if v.AllowInsecure {
 			q.Set("allowInsecure", "1")
+		}
+		if v.Protocol == "trojan-go" {
+			u.Scheme = "trojan-go"
+			if v.Host != "" {
+				fields := strings.SplitN(v.Host, ",", 2)
+				q.Set("sni", fields[0])
+				q.Set("host", fields[1])
+			}
+			q.Set("encryption", v.Type)
+			q.Set("type", v.Net)
+			q.Set("path", v.Path)
+		} else {
+			if v.Host != "" {
+				q.Set("sni", v.Host)
+			}
 		}
 		u.RawQuery = q.Encode()
 		return u.String()

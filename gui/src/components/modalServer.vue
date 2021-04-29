@@ -476,14 +476,54 @@
               expanded
             />
           </b-field>
-          <b-field label="Peer(SNI)" label-position="on-border">
+          <b-field label="Protocol" label-position="on-border">
+            <b-select
+              ref="trojan_method"
+              v-model="trojan.method"
+              expanded
+              required
+            >
+              <option value="origin">{{ $t("configureServer.origin") }}</option>
+              <option value="shadowsocks">shadowsocks</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-if="trojan.method === 'shadowsocks'"
+            label="Shadowsocks Cipher"
+            label-position="on-border"
+          >
+            <b-select
+              ref="trojan_ss_cipher"
+              v-model="trojan.ssCipher"
+              expanded
+              required
+            >
+              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="aes-256-gcm">aes-256-gcm</option>
+              <option value="chacha20-poly1305">chacha20-poly1305</option>
+              <option value="chacha20-ietf-poly1305"
+                >chacha20-ietf-poly1305</option
+              >
+            </b-select>
+          </b-field>
+          <b-field
+            v-if="trojan.method === 'shadowsocks'"
+            label="Shadowsocks Password"
+            label-position="on-border"
+          >
             <b-input
-              v-model="trojan.peer"
-              :placeholder="`Peer(${$t('common.optional')})`"
+              ref="trojan_ss_password"
+              v-model="trojan.ssPassword"
+              required
+              :placeholder="`shadowsocks${$t('configureServer.password')}`"
               expanded
             />
           </b-field>
-          <b-field label="AllowInsecure" label-position="on-border">
+          <b-field
+            v-show="trojan.method === 'origin' && trojan.obfs === 'none'"
+            label="AllowInsecure"
+            label-position="on-border"
+          >
             <b-select
               ref="trojan_allow_insecure"
               v-model="trojan.allowInsecure"
@@ -493,6 +533,31 @@
               <option :value="false">{{ $t("operations.no") }}</option>
               <option :value="true">{{ $t("operations.yes") }}</option>
             </b-select>
+          </b-field>
+          <b-field label="SNI(Peer)" label-position="on-border">
+            <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
+          </b-field>
+          <b-field label="Obfs" label-position="on-border">
+            <b-select ref="trojan_obfs" v-model="trojan.obfs" expanded required>
+              <option value="none">{{
+                $t("configureServer.noObfuscation")
+              }}</option>
+              <option value="websocket">websocket</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-show="trojan.obfs === 'websocket'"
+            label="Websocket Host"
+            label-position="on-border"
+          >
+            <b-input v-model="trojan.host" expanded />
+          </b-field>
+          <b-field
+            v-show="trojan.obfs === 'websocket'"
+            label="Websocket Path"
+            label-position="on-border"
+          >
+            <b-input v-model="trojan.path" placeholder="/" expanded />
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -578,10 +643,16 @@ export default {
     trojan: {
       name: "",
       server: "",
-      peer: "",
+      peer: "" /* tls sni */,
+      host: "" /* websocket host */,
+      path: "" /* websocket path */,
       allowInsecure: false,
       port: "",
       password: "",
+      method: "origin" /* shadowsocks */,
+      ssCipher: "aes-128-gcm",
+      ssPassword: "",
+      obfs: "none" /* websocket */,
       protocol: "trojan"
     },
     tabChoice: 0,
@@ -643,7 +714,12 @@ export default {
             this.pingtunnel = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 3;
           } else if (
-            res.data.data.sharingAddress.toLowerCase().startsWith("trojan://")
+            res.data.data.sharingAddress
+              .toLowerCase()
+              .startsWith("trojan://") ||
+            res.data.data.sharingAddress
+              .toLowerCase()
+              .startsWith("trojan-go://")
           ) {
             this.trojan = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 4;
@@ -712,9 +788,9 @@ export default {
       } else if (url.toLowerCase().indexOf("ssr://") >= 0) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
-        let params = arr[1].split("&");
+        let query = arr[1].split("&");
         let m = {};
-        for (let param of params) {
+        for (let param of query) {
           let [key, val] = param.split("=", 2);
           val = Base64.decode(val);
           m[key] = val;
@@ -749,9 +825,12 @@ export default {
           name: decodeURIComponent(arr[3]),
           protocol: "pingtunnel"
         };
-      } else if (url.toLowerCase().indexOf("trojan://") >= 0) {
+      } else if (
+        url.toLowerCase().indexOf("trojan://") === 0 ||
+        url.toLowerCase().indexOf("trojan-go://") === 0
+      ) {
         let u = parseURL(url);
-        return {
+        const o = {
           password: u.username,
           server: u.host,
           port: u.port,
@@ -759,15 +838,39 @@ export default {
           peer: u.params.peer || u.params.sni || "",
           allowInsecure:
             u.params.allowInsecure === true || u.params.allowInsecure === "1",
+          method: "origin",
+          obfs: "none",
+          ssCipher: "aes-128-gcm",
           protocol: "trojan"
         };
+        if (url.toLowerCase().indexOf("trojan-go://") === 0) {
+          console.log(u.params.encryption);
+          if (u.params.encryption?.startsWith("ss;")) {
+            o.method = "shadowsocks";
+            const fields = u.params.encryption.split(";");
+            o.ssCipher = fields[1];
+            o.ssPassword = fields[2];
+          }
+          const obfsMap = {
+            original: "none",
+            "": "none",
+            ws: "websocket"
+          };
+          o.obfs = obfsMap[u.params.type];
+          if (o.obfs === "ws") {
+            o.obfs = "websocket";
+          }
+          o.host = u.params.host;
+          o.path = u.params.path;
+        }
+        return o;
       }
       return null;
     },
     generateURL(srcObj) {
       let obj = {};
-      let params = {};
-      let s;
+      let query = {};
+      let tmp;
       switch (srcObj.protocol) {
         case "vless":
         //FIXME: 临时方案
@@ -795,18 +898,20 @@ export default {
         case "ss":
           /* ss://BASE64(method:password)@server:port#name */
           //TODO: simpleobfs
-          s = `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
+          tmp = `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
             srcObj.server
           }:${srcObj.port}/`;
           if (srcObj.obfs !== "") {
-            s += `?plugin=${encodeURIComponent(
+            tmp += `?plugin=${encodeURIComponent(
               `obfs-local;obfs=${srcObj.obfs};obfs-host=${srcObj.host}${
                 srcObj.obfs === "http" ? `;obfs-path=${srcObj.path}` : ""
               }`
             )}`;
           }
-          s += srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "";
-          return s;
+          tmp += srcObj.name.length
+            ? `#${encodeURIComponent(srcObj.name)}`
+            : "";
+          return tmp;
 
         case "ssr":
           /* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
@@ -825,18 +930,31 @@ export default {
               (srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "")
           )}`;
         case "trojan":
-          /* trojan://password@server:port?allowInsecure=1&peer=peer#URIESCAPE(name) */
-          params = { allowInsecure: srcObj.allowInsecure };
+          /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
+          query = {
+            allowInsecure: srcObj.allowInsecure
+          };
           if (srcObj.peer !== "") {
-            params.peer = srcObj.peer;
+            query.sni = srcObj.peer;
+          }
+          tmp = "trojan";
+          if (srcObj.method !== "origin" || srcObj.obfs !== "none") {
+            tmp = "trojan-go";
+            query.type = srcObj.obfs === "none" ? "original" : "ws";
+            if (srcObj.method === "shadowsocks") {
+              query.encryption = `ss;${srcObj.ssCipher};${srcObj.ssPassword}`;
+            }
+            query.host = srcObj.host;
+            query.path = srcObj.path;
+            delete query.allowInsecure;
           }
           return generateURL({
-            protocol: "trojan",
+            protocol: tmp,
             username: srcObj.password,
             host: srcObj.server,
             port: srcObj.port,
             hash: srcObj.name,
-            params
+            params: query
           });
       }
       return null;

@@ -94,7 +94,7 @@ function parseURL(u) {
           continue;
         }
         s = seg[i].split("=");
-        ret[s[0]] = s[1];
+        ret[s[0]] = decodeURIComponent(s[1]);
       }
       return ret;
     })(),

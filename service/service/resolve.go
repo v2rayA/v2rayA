@@ -262,8 +262,8 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 
 func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	//	trojan://password@server:port#escape(remarks)
-	if !strings.HasPrefix(u, "trojan://") {
-		err = newError("this address is not begin with trojan://")
+	if !strings.HasPrefix(u, "trojan://") && !strings.HasPrefix(u, "trojan-go://") {
+		err = newError("this address is not begin with trojan:// or trojan-go://")
 		return
 	}
 	t, err := url.Parse(u)
@@ -289,6 +289,15 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
+	if t.Scheme == "trojan-go" {
+		data.VmessInfo.Protocol = "trojan-go"
+		data.VmessInfo.Type = t.Query().Get("encryption")
+		data.VmessInfo.Host = t.Query().Get("sni") + "," + t.Query().Get("host")
+		data.VmessInfo.Path = t.Query().Get("path")
+		data.VmessInfo.Net = t.Query().Get("type")
+		data.VmessInfo.TLS = "tls"
+	}
+	log.Println(data.VmessInfo)
 	return
 }
 func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
@@ -346,7 +355,7 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 		n, err = ResolveSSRURL(u)
 	} else if strings.HasPrefix(u, "pingtunnel://") {
 		n, err = ResolvePingTunnelURL(u)
-	} else if strings.HasPrefix(u, "trojan://") {
+	} else if strings.HasPrefix(u, "trojan://") || strings.HasPrefix(u, "trojan-go://") {
 		n, err = ResolveTrojanURL(u)
 	} else {
 		err = newError("not supported protocol. we only support ss, ssr and vmess now: " + u)

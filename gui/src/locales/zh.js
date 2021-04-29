@@ -215,7 +215,8 @@ export default {
     hostObfuscation: "域名(host)",
     pathObfuscation: "路径(path)",
     seedObfuscation: "混淆种子",
-    password: "密码"
+    password: "密码",
+    origin: "原版"
   },
   import: {
     message: "填入节点链接或订阅地址：",

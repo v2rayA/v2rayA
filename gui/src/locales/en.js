@@ -216,7 +216,8 @@ export default {
     hostObfuscation: "Host",
     pathObfuscation: "Path",
     seedObfuscation: "Seed",
-    password: "Password"
+    password: "Password",
+    origin: "origin"
   },
   configureSubscription: {
     title: "Configure Subscription"

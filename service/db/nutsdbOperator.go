@@ -6,7 +6,7 @@ import (
 	"log"
 	"reflect"
 	"sort"
-	"v2ray.com/core/common/errors"
+	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 func Get(bucket string, key string, val interface{}) (err error) {

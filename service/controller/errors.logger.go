@@ -1,6 +1,6 @@
 package controller
 
-import "v2ray.com/core/common/errors"
+import "github.com/v2rayA/v2rayA/common/errors"
 
 func logError(base error, info ...interface{}) (err *errors.Error) {
 	if len(info) == 0 {
