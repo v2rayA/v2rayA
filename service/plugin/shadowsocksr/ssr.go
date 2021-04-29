@@ -3,8 +3,8 @@ package shadowsocksr
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
-	"github.com/v2rayA/v2rayA/extra/proxy/ssr"
 	"github.com/v2rayA/v2rayA/plugin"
+	"github.com/v2rayA/v2rayA/plugin/infra/ssr"
 	"log"
 	"net/url"
 	"strings"

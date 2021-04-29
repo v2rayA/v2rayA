@@ -2,9 +2,9 @@ package plugin
 
 import (
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/extra/proxy"
-	"github.com/v2rayA/v2rayA/extra/proxy/socks5"
-	"github.com/v2rayA/v2rayA/extra/proxy/tcp"
+	"github.com/v2rayA/v2rayA/plugin/infra"
+	"github.com/v2rayA/v2rayA/plugin/infra/socks5"
+	"github.com/v2rayA/v2rayA/plugin/infra/tcp"
 	"io"
 	"log"
 	"net"
@@ -31,8 +31,8 @@ func NewServer(localPort int) *Server {
 // protocol:
 // socks5
 // tcp->192.168.0.5:80
-func (s *Server) Serve(p proxy.Proxy, protocol string) error {
-	var local proxy.Server
+func (s *Server) Serve(p infra.Proxy, protocol string) error {
+	var local infra.Server
 	var err error
 	switch {
 	case protocol == "socks5":

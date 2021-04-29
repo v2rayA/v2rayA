@@ -470,6 +470,8 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		socksPlugin = true
 	case "pingtunnel":
 		socksPlugin = true
+	case "trojan-go":
+		socksPlugin = true
 	default:
 		return o, newError("unsupported protocol: " + v.Protocol)
 	}

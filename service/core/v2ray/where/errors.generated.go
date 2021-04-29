@@ -1,6 +1,6 @@
 package where
 
-import "v2ray.com/core/common/errors"
+import "github.com/v2rayA/v2rayA/common/errors"
 
 type errPathObjHolder struct{}
 

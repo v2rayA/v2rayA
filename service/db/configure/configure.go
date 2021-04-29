@@ -10,7 +10,7 @@ import (
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"strings"
-	"v2ray.com/core/common/errors"
+	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 type Configure struct {

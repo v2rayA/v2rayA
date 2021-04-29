@@ -8,15 +8,17 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.4.0
 	github.com/golang/protobuf v1.4.0
+	github.com/google/go-cmp v0.5.2
 	github.com/google/gopacket v1.1.17
 	github.com/gookit/color v1.2.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/json-iterator/go v1.1.9
 	github.com/matoous/go-nanoid v0.0.0-20200226125206-b0a1054fe39d
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20190906142622-1265e9b150c6
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
-	github.com/nadoo/glider v0.13.0
 	github.com/pkg/errors v0.9.1
+	github.com/shadowsocks/go-shadowsocks2 v0.1.4
 	github.com/stevenroose/gonfig v0.1.4
 	github.com/tidwall/gjson v1.3.5
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1

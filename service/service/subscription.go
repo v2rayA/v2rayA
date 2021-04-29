@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"v2ray.com/core/common/errors"
+	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 //func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
