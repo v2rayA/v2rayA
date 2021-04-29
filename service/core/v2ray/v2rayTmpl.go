@@ -1050,8 +1050,7 @@ func (t *Template) SetOutboundSockopt(supportUDP bool, setting *configure.Settin
 			tmp := setting.TcpFastOpen == configure.Yes
 			t.Outbounds[i].StreamSettings.Sockopt.TCPFastOpen = &tmp
 		}
-		t.Outbounds[i].StreamSettings.Sockopt.Mark = &mark
-		//t.Outbounds[i].StreamSettings.Sockopt.Tos = &tos // Experimental in the future
+		checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }
 
@@ -1306,13 +1305,11 @@ func NewTemplateFromConfig() (t Template, err error) {
 	err = jsoniter.Unmarshal(b, &t)
 	return
 }
-func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
-	o, err := ResolveOutbound(&v, "outbound"+inboundPort, &pluginPort)
-	if err != nil {
+
+func checkAndSetMark(o *Outbound, mark int) {
+	if configure.GetSettingNotNil().Transparent == configure.TransparentClose {
 		return
 	}
-	var mark = 0xff
-	//var tos = 184
 	if o.StreamSettings == nil {
 		o.StreamSettings = new(StreamSettings)
 	}
@@ -1320,7 +1317,15 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 		o.StreamSettings.Sockopt = new(Sockopt)
 	}
 	o.StreamSettings.Sockopt.Mark = &mark
-	//o.StreamSettings.Sockopt.Tos = &tos
+}
+
+func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
+	o, err := ResolveOutbound(&v, "outbound"+inboundPort, &pluginPort)
+	if err != nil {
+		return
+	}
+	var mark = 0xff
+	checkAndSetMark(&o, mark)
 	t.Outbounds = append(t.Outbounds, o)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
