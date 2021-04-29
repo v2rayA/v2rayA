@@ -21,8 +21,8 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		return newError("cannot find GFWList files. update GFWList and try again")
 	}
 	if setting.Transparent != configure.TransparentClose {
-		if setting.IpForward != ipforward.IsIpForwardOn() {
-			err = ipforward.WriteIpForward(setting.IpForward)
+		if setting.IntranetSharing != ipforward.IsIpForwardOn() {
+			err = ipforward.WriteIpForward(setting.IntranetSharing)
 			if err != nil {
 				return
 			}

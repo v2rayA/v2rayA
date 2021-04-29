@@ -1053,7 +1053,14 @@ func (t *Template) SetOutboundSockopt(supportUDP bool, setting *configure.Settin
 		checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }
-
+func (t *Template) SetInboundListenAddress(setting *configure.Setting) {
+	if setting.IntranetSharing {
+		return
+	}
+	for i := range t.Inbounds {
+		t.Inbounds[i].Listen = "::1"
+	}
+}
 func (t *Template) SetInboundFakeDnsDestOverride() {
 	if t.FakeDns == nil {
 		return
@@ -1226,6 +1233,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 
 	//置fakedns destOverride
 	t.SetInboundFakeDnsDestOverride()
+
+	//置inbound listen address
+
+	t.SetInboundListenAddress(setting)
 
 	//check dulplicated tags
 	if err = t.CheckDuplicatedTags(); err != nil {
