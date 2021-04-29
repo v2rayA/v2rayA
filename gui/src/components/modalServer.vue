@@ -102,7 +102,7 @@
             <b-autocomplete
               v-model="v2ray.flow"
               open-on-focus
-              placeholder="xtls-rprx-origin"
+              placeholder="xtls-rprx-direct"
               :data="filteredDataArray"
               @select="option => (flowSelected = option)"
             >
@@ -541,7 +541,7 @@ export default {
       host: "",
       path: "",
       tls: "none",
-      flow: "xtls-rprx-origin",
+      flow: "xtls-rprx-direct",
       v: "",
       allowInsecure: false,
       protocol: "vmess"
@@ -586,8 +586,6 @@ export default {
     },
     tabChoice: 0,
     presetFlows: [
-      "xtls-rprx-origin",
-      "xtls-rprx-origin-udp443",
       "xtls-rprx-direct",
       "xtls-rprx-direct-udp443",
       "xtls-rprx-splice",
@@ -857,7 +855,7 @@ export default {
           this.v2ray.tls = "tls";
         });
       } else if (this.v2ray.tls === "xtls" && !this.v2ray.flow) {
-        this.v2ray.flow = "xtls-rprx-origin";
+        this.v2ray.flow = this.presetFlows[0];
       }
     },
     handleClickSubmit() {
