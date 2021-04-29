@@ -74,7 +74,6 @@
           {{ $t("egressPortWhitelist.title") }}
         </b-button>
         <b-checkbox-button
-          v-show="transparent !== 'close'"
           v-model="ipforward"
           :native-value="true"
           style="position:relative;left:-1px;"

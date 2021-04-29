@@ -203,7 +203,7 @@ func GetSettingNotNil() *Setting {
 		r = NewSetting()
 		_ = db.Set("system", "setting", r)
 	}
-	r.IpForward = ipforward.IsIpForwardOn() //永远用真实值
+	r.IntranetSharing = ipforward.IsIpForwardOn() //永远用真实值
 	if r.AntiPollution == "" {
 		r.AntiPollution = AntipollutionNone
 	}

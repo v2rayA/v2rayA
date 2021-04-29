@@ -158,8 +158,8 @@ func initConfigure() {
 	//配置ip转发
 	setting := configure.GetSettingNotNil()
 	if setting.Transparent != configure.TransparentClose {
-		if setting.IpForward != ipforward.IsIpForwardOn() {
-			_ = ipforward.WriteIpForward(setting.IpForward)
+		if setting.IntranetSharing != ipforward.IsIpForwardOn() {
+			_ = ipforward.WriteIpForward(setting.IntranetSharing)
 		}
 	}
 	//检查config.json是否存在
