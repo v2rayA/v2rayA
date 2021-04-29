@@ -168,6 +168,9 @@ function generateURL({
 
 /*判断一个IPv4的地址是否是内网地址*/
 function isIntranet(url) {
+  if (!url.trim()) {
+    url = location.protocol + "//" + location.host + url;
+  }
   let u = parseURL(url);
   if (u.host === "") {
     u = parseURL(location.protocol + "//" + location.host + url);
