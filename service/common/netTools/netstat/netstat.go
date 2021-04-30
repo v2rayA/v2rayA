@@ -5,15 +5,14 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/v2rayA/v2rayA/common/errors"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
-	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 // Socket states
@@ -139,7 +138,7 @@ const (
 )
 
 func FillProcesses(sockets []*Socket) error {
-	f, err := ioutil.ReadDir(pathProc)
+	f, err := os.ReadDir(pathProc)
 	if err != nil {
 		return newError().Base(errors.New(ProcOpenFailed))
 	}
@@ -189,7 +188,7 @@ func (s *Socket) Process() (*Process, error) {
 	if s.Proc != nil {
 		return s.Proc, nil
 	}
-	f, err := ioutil.ReadDir(pathProc)
+	f, err := os.ReadDir(pathProc)
 	if err != nil {
 		return nil, nil
 	}
@@ -224,7 +223,7 @@ loop1:
 var ErrorNotFound = newError("process not found")
 
 func findProcessID(pname string) (pids []string, err error) {
-	f, err := ioutil.ReadDir(pathProc)
+	f, err := os.ReadDir(pathProc)
 	if err != nil {
 		err = newError().Base(err)
 		return
@@ -265,7 +264,7 @@ func getProcName(s string) string {
 
 func getProcessInfo(pid string) (pn string, ppid string) {
 	p := filepath.Join(pathProc, pid, "stat")
-	b, err := ioutil.ReadFile(p)
+	b, err := os.ReadFile(p)
 	if err != nil {
 		err = newError().Base(err)
 		return
@@ -425,7 +424,7 @@ func FillAllProcess(sockets []*Socket) {
 			defer v.processMutex.Unlock()
 		}
 	}
-	f, err := ioutil.ReadDir(pathProc)
+	f, err := os.ReadDir(pathProc)
 	if err != nil {
 		return
 	}

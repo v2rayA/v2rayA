@@ -13,7 +13,6 @@ import (
 	_ "github.com/v2rayA/v2rayA/plugin/ssrpluginSimpleobfs"
 	_ "github.com/v2rayA/v2rayA/plugin/trojan-go"
 	"github.com/v2rayA/v2rayA/service"
-	"io/ioutil"
 	"moona/config"
 	"os"
 	"time"
@@ -35,7 +34,7 @@ func ImportServers(c *config.Params) {
 		}
 	}
 	if c.File != "" {
-		b, err := ioutil.ReadFile(c.File)
+		b, err := os.ReadFile(c.File)
 		if err != nil {
 			fmt.Printf("Failed to import %v: %v\n", c.File, err)
 			os.Exit(1)

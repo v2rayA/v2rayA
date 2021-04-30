@@ -8,7 +8,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/dnsPoison"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/global"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -77,7 +76,7 @@ func IsCustomExists() bool {
 }
 
 func GetConfigBytes() (b []byte, err error) {
-	b, err = ioutil.ReadFile(GetV2rayConfigPath())
+	b, err = os.ReadFile(GetV2rayConfigPath())
 	if err != nil {
 		log.Println(err)
 		return
@@ -107,7 +106,7 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 	}
 	dir := GetV2rayLocationAsset()
 	var siteList v2router.GeoSiteList
-	b, err := ioutil.ReadFile(path.Join(dir, "geosite.dat"))
+	b, err := os.ReadFile(path.Join(dir, "geosite.dat"))
 	if err != nil {
 		return nil, newError("GetWhitelistCn").Base(err)
 	}

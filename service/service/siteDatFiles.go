@@ -4,8 +4,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/v2rayA/v2rayA/core/siteDat"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"strings"
 	"v2ray.com/core/app/router"
@@ -13,7 +13,7 @@ import (
 
 func GetSiteDatFiles() (siteDats []siteDat.SiteDat) {
 	dir := asset.GetV2rayLocationAsset()
-	fis, err := ioutil.ReadDir(dir)
+	fis, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
@@ -28,7 +28,7 @@ func GetSiteDatFiles() (siteDats []siteDat.SiteDat) {
 			}
 			var sd siteDat.SiteDat
 			sd.Filename = f.Name()
-			b, err := ioutil.ReadFile(path.Join(dir, f.Name()))
+			b, err := os.ReadFile(path.Join(dir, f.Name()))
 			if err != nil {
 				log.Println(err)
 				continue
