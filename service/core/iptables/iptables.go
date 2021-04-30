@@ -25,6 +25,7 @@ type iptablesSetter interface {
 	RemoveIPWhitelist(cidr string)
 }
 
+// watch interface changes and add specific IPs to whitelist on iptables
 func SetWatcher(setter iptablesSetter) {
 	if watcher != nil {
 		watcher.Close()

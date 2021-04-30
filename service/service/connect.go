@@ -5,8 +5,8 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/plugin"
-	"io/ioutil"
 	"log"
+	"net"
 	"os"
 )
 
@@ -33,10 +33,32 @@ func checkAssetsExist(setting *configure.Setting) error {
 	return nil
 }
 
+const resolvConf = "/etc/resolv.conf"
+
+func writeResolvConf() {
+	os.WriteFile(resolvConf, []byte("nameserver 223.5.5.5"), 0644)
+}
+
 func checkResolvConf() {
-	const resolvConf = "/etc/resolv.conf"
 	if _, err := os.Stat(resolvConf); os.IsNotExist(err) {
-		ioutil.WriteFile(resolvConf, []byte("nameserver 223.5.5.5"), 0644)
+		writeResolvConf()
+	} else {
+		errCnt := 0
+		maxTry := 2
+		for {
+			addrs, err := net.LookupHost("apple.com")
+			if len(addrs) == 0 || err != nil {
+				errCnt++
+				if errCnt <= maxTry {
+					continue
+				}
+			}
+			break
+		}
+		if errCnt >= maxTry {
+			log.Println("[warning] There may be no network or dns manager conflicting with v2rayA. If problems occur, paste your file /etc/resolv.conf for help.")
+			writeResolvConf()
+		}
 	}
 }
 

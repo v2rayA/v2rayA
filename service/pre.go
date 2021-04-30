@@ -20,7 +20,7 @@ import (
 	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/router"
 	"github.com/v2rayA/v2rayA/service"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -106,7 +106,7 @@ func migrate(jsonConfPath string) (err error) {
 			log.Println("[info] Migrating complete")
 		}
 	}()
-	b, err := ioutil.ReadFile(jsonConfPath)
+	b, err := os.ReadFile(jsonConfPath)
 	if err != nil {
 		return
 	}
@@ -181,7 +181,7 @@ func initConfigure() {
 					return
 				}
 				defer resp.Body.Close()
-				b, err := ioutil.ReadAll(resp.Body)
+				b, err := io.ReadAll(resp.Body)
 				if err != nil {
 					return
 				}

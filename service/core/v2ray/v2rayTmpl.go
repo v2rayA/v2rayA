@@ -13,7 +13,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/url"
@@ -1171,8 +1170,8 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 		t.Log.Access = ""
 		t.Log.Error = ""
 	} else if global.IsDebug() {
-		ioutil.WriteFile(t.Log.Access, nil, 0777)
-		ioutil.WriteFile(t.Log.Error, nil, 0777)
+		os.WriteFile(t.Log.Access, nil, 0777)
+		os.WriteFile(t.Log.Error, nil, 0777)
 		os.Chmod(t.Log.Access, 0777)
 		os.Chmod(t.Log.Error, 0777)
 		t.Log.Loglevel = "debug"
@@ -1303,7 +1302,7 @@ func (t *Template) ToConfigBytes() []byte {
 }
 
 func WriteV2rayConfig(content []byte) (err error) {
-	err = ioutil.WriteFile(asset.GetV2rayConfigPath(), content, os.FileMode(0600))
+	err = os.WriteFile(asset.GetV2rayConfigPath(), content, os.FileMode(0600))
 	if err != nil {
 		return newError("WriteV2rayConfig").Base(err)
 	}
@@ -1377,7 +1376,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 
 func getHosts() (h Hosts) {
 	h = make(Hosts)
-	b, err := ioutil.ReadFile("/etc/hosts")
+	b, err := os.ReadFile("/etc/hosts")
 	if err != nil {
 		return
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/v2rayA/v2rayA/extra/copyfile"
 	"github.com/v2rayA/v2rayA/extra/gopeed"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -41,7 +41,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 		err = newError("failed to get latest version of GFWList").Base(err)
 		return
 	}
-	b, _ := ioutil.ReadAll(resp.Body)
+	b, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	tag := gjson.GetBytes(b, "0.name").Str
 	u := gjson.GetBytes(b, "0.commit.url").Str
@@ -54,7 +54,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 		err = newError("failed to get latest version of GFWList").Base(err)
 		return
 	}
-	b, _ = ioutil.ReadAll(resp.Body)
+	b, _ = io.ReadAll(resp.Body)
 	t := gjson.GetBytes(b, "commit.committer.date").Time()
 	if t.IsZero() {
 		err = newError("failed to get latest version of GFWList: fail in getting commit date of latest tag")
@@ -95,7 +95,7 @@ func LoyalsoldierSiteDatExists() bool {
 }
 
 func checkSha256(p string, sha256 string) bool {
-	if b, err := ioutil.ReadFile(p); err == nil {
+	if b, err := os.ReadFile(p); err == nil {
 		hash := sha2562.Sum256(b)
 		return hex.EncodeToString(hash[:]) == sha256
 	} else {
@@ -163,7 +163,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		}
 	}()
 	var b []byte
-	if b, err = ioutil.ReadFile(pathSiteDat + ".sha256sum"); err == nil {
+	if b, err = os.ReadFile(pathSiteDat + ".sha256sum"); err == nil {
 		f := bytes.Fields(b)
 		if len(f) < 2 {
 			err = FailCheckSha
