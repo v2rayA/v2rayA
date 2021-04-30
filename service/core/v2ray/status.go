@@ -112,7 +112,7 @@ func RestartV2rayService() (err error) {
 		}
 
 		if time.Since(startTime) > 15*time.Second {
-			return newError("v2ray-core does not start normally, there may be a problem of the configuration file or the required port is occupied")
+			return newError("v2ray-core does not start normally, check the log for more information")
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
