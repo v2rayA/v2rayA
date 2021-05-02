@@ -333,9 +333,9 @@ func run() (err error) {
 	if w := configure.GetConnectedServer(); w != nil {
 		_ = service.Connect(w)
 	}
-	w := configure.GetConnectedServer()
-	log.Println(err, ", which:", w)
-	_ = configure.ClearConnected()
+	//w := configure.GetConnectedServer()
+	//log.Println(err, ", which:", w)
+	//_ = configure.ClearConnected()
 	errch := make(chan error)
 	//启动服务端
 	go func() {

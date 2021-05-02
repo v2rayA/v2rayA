@@ -34,7 +34,7 @@ require (
 	github.com/ugorji/go v1.2.5 // indirect
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
 	github.com/v2rayA/shadowsocksR v1.0.3
-	github.com/xujiajun/nutsdb v0.6.0
+	github.com/xujiajun/nutsdb v0.5.0
 	go.starlark.net v0.0.0-20210429133630-0c63ff3779a6 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
