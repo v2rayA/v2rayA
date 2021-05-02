@@ -63,6 +63,12 @@ func dnsPortValid() bool {
 2: redirect + fakedns
 */
 func ShouldDnsPoisonOpen() int {
+	setting := configure.GetSettingNotNil()
+	if setting.Transparent == configure.TransparentClose ||
+		setting.AntiPollution == configure.AntipollutionClosed ||
+		(global.SupportTproxy && !setting.EnhancedMode) {
+		return 0
+	}
 	ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		ver = "0.0.0"
@@ -72,20 +78,15 @@ func ShouldDnsPoisonOpen() int {
 		fakednsValid = false
 	}
 	if fakednsValid && !dnsPortValid() {
-		log.Println("[fakedns] unable to use fakedns: port 53 is occupied")
+		if setting.EnhancedMode {
+			log.Println("[fakedns] unable to use fakedns: port 53 is occupied")
+		}
 		fakednsValid = false
 	}
-	if setting := configure.GetSettingNotNil();
-		setting.Transparent != configure.TransparentClose &&
-			setting.AntiPollution != configure.AntipollutionClosed &&
-			(!global.SupportTproxy || setting.EnhancedMode) {
-		if fakednsValid {
-			return 2
-		} else {
-			return 1
-		}
+	if !fakednsValid {
+		return 1
 	}
-	return 0
+	return 2
 }
 
 func CheckAndSetupDnsPoisonWithExtraInfo(info *ExtraInfo) {
