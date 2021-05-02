@@ -194,27 +194,17 @@ func indexesToBeginTos(indexes []int) []beginTo {
 }
 
 func ListRemove(bucket, key string, indexes []int) error {
-	// TODO: waiting for https://github.com/xujiajun/nutsdb/issues/66
+	// TODO: waiting for https://github.com/xujiajun/nutsdb/issues/93
 	sort.Ints(indexes)
 	return DB().Update(func(tx *nutsdb.Tx) (err error) {
-		//for i := len(indexes) - 1; i >= 0; i-- {
-		//	err = tx.LSet(bucket, []byte(key), indexes[i], []byte{0})
-		//	if err != nil {
-		//		return newError().Base(err)
-		//	}
-		//}
-		//tx.LRem(bucket, []byte(key), 0)
-		list, err := tx.LRange(bucket, []byte(key), 0, -1)
-		if err != nil {
-			return newError().Base(err)
-		}
+		specialValue := []byte{0, 0, 0, 0, 0}
 		for i := len(indexes) - 1; i >= 0; i-- {
-			list = append(list[:indexes[i]], list[indexes[i]+1:]...)
+			err = tx.LSet(bucket, []byte(key), indexes[i], specialValue)
+			if err != nil {
+				return newError().Base(err)
+			}
 		}
-		if err = tx.LRem(bucket, []byte(key), 0); err != nil {
-			return newError().Base(err)
-		}
-		if err = tx.RPush(bucket, []byte(key), list...); err != nil {
+		if _, err = tx.LRem(bucket, []byte(key), 0, specialValue); err != nil {
 			return newError().Base(err)
 		}
 		return nil
