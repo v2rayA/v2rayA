@@ -297,7 +297,6 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 		data.VmessInfo.Net = t.Query().Get("type")
 		data.VmessInfo.TLS = "tls"
 	}
-	log.Println(data.VmessInfo)
 	return
 }
 func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {

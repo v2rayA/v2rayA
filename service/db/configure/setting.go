@@ -3,25 +3,27 @@ package configure
 import "github.com/v2rayA/v2rayA/core/ipforward"
 
 type Setting struct {
-	PacMode                    PacMode         `json:"pacMode"`
-	ProxyModeWhenSubscribe     ProxyMode       `json:"proxyModeWhenSubscribe"`
-	PacAutoUpdateMode          AutoUpdateMode  `json:"pacAutoUpdateMode"`
-	SubscriptionAutoUpdateMode AutoUpdateMode  `json:"subscriptionAutoUpdateMode"`
-	TcpFastOpen                DefaultYesNo    `json:"tcpFastOpen"`
-	MuxOn                      DefaultYesNo    `json:"muxOn"`
-	Mux                        int             `json:"mux"`
-	Transparent                TransparentMode `json:"transparent"`
-	IntranetSharing            bool            `json:"ipforward"`
-	EnhancedMode               bool            `json:"enhancedMode"`
-	AntiPollution              Antipollution   `json:"antipollution"`
-	DnsForceMode               bool            `json:"dnsForceMode"`
+	PacMode                            PacMode         `json:"pacMode"`
+	ProxyModeWhenSubscribe             ProxyMode       `json:"proxyModeWhenSubscribe"`
+	GFWListAutoUpdateMode              AutoUpdateMode  `json:"pacAutoUpdateMode"`
+	GFWListAutoUpdateIntervalHour      int             `json:"pacAutoUpdateIntervalHour"`
+	SubscriptionAutoUpdateMode         AutoUpdateMode  `json:"subscriptionAutoUpdateMode"`
+	SubscriptionAutoUpdateIntervalHour int             `json:"subscriptionAutoUpdateIntervalHour"`
+	TcpFastOpen                        DefaultYesNo    `json:"tcpFastOpen"`
+	MuxOn                              DefaultYesNo    `json:"muxOn"`
+	Mux                                int             `json:"mux"`
+	Transparent                        TransparentMode `json:"transparent"`
+	IntranetSharing                    bool            `json:"ipforward"`
+	EnhancedMode                       bool            `json:"enhancedMode"`
+	AntiPollution                      Antipollution   `json:"antipollution"`
+	DnsForceMode                       bool            `json:"dnsForceMode"`
 }
 
 func NewSetting() (setting *Setting) {
 	return &Setting{
 		PacMode:                    WhitelistMode,
 		ProxyModeWhenSubscribe:     ProxyModeDirect,
-		PacAutoUpdateMode:          NotAutoUpdate,
+		GFWListAutoUpdateMode:      NotAutoUpdate,
 		SubscriptionAutoUpdateMode: NotAutoUpdate,
 		TcpFastOpen:                Default,
 		MuxOn:                      No,
