@@ -6,7 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
-	"github.com/v2rayA/v2rayA/service"
+	"github.com/v2rayA/v2rayA/server/service"
 	"net"
 	"strconv"
 )

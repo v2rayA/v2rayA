@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/touch"
@@ -15,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 //func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
