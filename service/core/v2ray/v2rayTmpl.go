@@ -47,6 +47,7 @@ type Template struct {
 	Outbounds []Outbound `json:"outbounds"`
 	Routing   struct {
 		DomainStrategy string        `json:"domainStrategy"`
+		DomainMatcher  string        `json:"domainMatcher"`
 		Rules          []RoutingRule `json:"rules"`
 	} `json:"routing"`
 	DNS     *DNS     `json:"dns,omitempty"`
@@ -1215,6 +1216,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, info *entity.E
 	//再修改outbounds
 	t.AppendDNSOutbound()
 	//最后是routing
+	t.Routing.DomainMatcher = "mph"
 	t.SetDNSRouting(v, dohIPs, dohHosts, setting, supportUDP)
 	serverIPs, serverDomain := t.SetDirectRuleRouting(v)
 	//添加目标服务器的ip到hosts中
