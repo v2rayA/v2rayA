@@ -25,12 +25,6 @@ func DeleteTransparentProxyRules() {
 }
 
 func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) error {
-	if entity.ShouldDnsPoisonOpen() == 1 {
-		if e := iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); e != nil {
-			log.Println(newError("[WARNING] DropSpoofing can't be enable").Base(e))
-			iptables.DropSpoofing.GetCleanCommands().Clean()
-		}
-	}
 	setting := configure.GetSettingNotNil()
 	if global.SupportTproxy && !setting.EnhancedMode {
 		if err := iptables.Tproxy.GetSetupCommands().Setup(preprocess); err == nil {
@@ -47,6 +41,12 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) err
 			global.SupportTproxy = false
 		}
 	} else {
+		if entity.ShouldDnsPoisonOpen() == 1 {
+			if e := iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); e != nil {
+				log.Println(newError("[WARNING] DropSpoofing can't be enable").Base(e))
+				iptables.DropSpoofing.GetCleanCommands().Clean()
+			}
+		}
 		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err == nil {
 			if setting.AntiPollution != configure.AntipollutionClosed {
 				resetDnsHijacker()
