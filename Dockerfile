@@ -27,6 +27,5 @@ RUN wget -O /usr/local/share/v2ray/LoyalsoldierSite.dat https://raw.githubuserco
 RUN apk add --no-cache iptables ip6tables
 EXPOSE 2017
 VOLUME /etc/v2raya
-RUN echo 1 > /proc/sys/net/ipv6/conf/default/disable_ipv6
 ENTRYPOINT ["v2raya","--mode=universal", "--webdir=/etc/v2raya-web"]
 
