@@ -1060,7 +1060,7 @@ func (t *Template) SetInboundListenAddress(setting *configure.Setting) {
 		return
 	}
 	for i := range t.Inbounds {
-		t.Inbounds[i].Listen = "::1"
+		t.Inbounds[i].Listen = "127.0.0.1"
 	}
 }
 func (t *Template) SetInboundFakeDnsDestOverride() {
