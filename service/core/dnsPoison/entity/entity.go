@@ -78,9 +78,7 @@ func ShouldDnsPoisonOpen() int {
 		fakednsValid = false
 	}
 	if fakednsValid && !dnsPortValid() {
-		if setting.EnhancedMode {
-			log.Println("[fakedns] unable to use fakedns: port 53 is occupied")
-		}
+		log.Println("[fakedns] unable to use fakedns: port 53 is occupied")
 		fakednsValid = false
 	}
 	if !fakednsValid {
