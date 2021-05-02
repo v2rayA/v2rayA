@@ -257,7 +257,20 @@
           <option value="auto_update">{{
             $t("setting.options.updateGfwlistWhenStart")
           }}</option>
+          <option value="auto_update_at_intervals">{{
+            $t("setting.options.updateGfwlistAtIntervals")
+          }}</option>
         </b-select>
+        <cus-b-input
+          v-if="pacAutoUpdateMode === 'auto_update_at_intervals'"
+          ref="autoUpdatePacInput"
+          v-model="pacAutoUpdateIntervalHour"
+          custom-class="no-shadow"
+          type="number"
+          min="1"
+          validation-icon=" iconfont icon-alert"
+          style="flex: 1"
+        />
       </b-field>
       <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
@@ -265,7 +278,20 @@
           <option value="auto_update">{{
             $t("setting.options.updateSubWhenStart")
           }}</option>
+          <option value="auto_update_at_intervals">{{
+            $t("setting.options.updateSubAtIntervals")
+          }}</option>
         </b-select>
+        <cus-b-input
+          v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'"
+          ref="autoUpdateSubInput"
+          v-model="subscriptionAutoUpdateIntervalHour"
+          custom-class="no-shadow"
+          type="number"
+          min="1"
+          validation-icon=" iconfont icon-alert"
+          style="flex: 1"
+        />
       </b-field>
       <b-field
         :label="$t('setting.preferModeWhenUpdate')"
@@ -331,7 +357,9 @@ export default {
     dnsforward: "no",
     antipollution: "none",
     pacAutoUpdateMode: "none",
+    pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
+    subscriptionAutoUpdateIntervalHour: 0,
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -459,13 +487,11 @@ export default {
           data: {
             proxyModeWhenSubscribe: this.proxyModeWhenSubscribe,
             pacAutoUpdateMode: this.pacAutoUpdateMode,
-            pacAutoUpdateTime: this.pacAutoUpdateTime
-              ? this.pacAutoUpdateTime.getTime()
-              : 0,
+            pacAutoUpdateIntervalHour: parseInt(this.pacAutoUpdateIntervalHour),
             subscriptionAutoUpdateMode: this.subscriptionAutoUpdateMode,
-            subscriptionAutoUpdateTime: this.subscriptionAutoUpdateTime
-              ? this.subscriptionAutoUpdateTime.getTime()
-              : 0,
+            subscriptionAutoUpdateIntervalHour: parseInt(
+              this.subscriptionAutoUpdateIntervalHour
+            ),
             pacMode: this.pacMode,
             tcpFastOpen: this.tcpFastOpen,
             muxOn: this.muxOn,
@@ -497,6 +523,18 @@ export default {
     },
     handleClickSubmit() {
       if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
+        return;
+      }
+      if (
+        this.subscriptionAutoUpdateMode === "auto_update_at_intervals" &&
+        !this.$refs.autoUpdateSubInput.checkHtml5Validity()
+      ) {
+        return;
+      }
+      if (
+        this.pacAutoUpdateMode === "auto_update_at_intervals" &&
+        !this.$refs.autoUpdatePacInput.checkHtml5Validity()
+      ) {
         return;
       }
       console.log(apiRoot);

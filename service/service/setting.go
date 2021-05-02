@@ -5,6 +5,8 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/global"
+	"time"
 )
 
 func GetSetting() *configure.Setting {
@@ -40,6 +42,16 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		if err != nil {
 			return
 		}
+	}
+	if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {
+		global.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
+	} else {
+		global.TickerUpdateGFWList.Reset(24 * time.Hour * 365 * 100)
+	}
+	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
+		global.TickerUpdateSubscription.Reset(time.Duration(setting.SubscriptionAutoUpdateIntervalHour) * time.Hour)
+	} else {
+		global.TickerUpdateSubscription.Reset(24 * time.Hour * 365 * 100)
 	}
 	return
 }

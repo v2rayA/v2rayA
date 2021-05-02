@@ -24,8 +24,9 @@ const (
 	Yes     = DefaultYesNo("yes")
 	No      = DefaultYesNo("no")
 
-	NotAutoUpdate = AutoUpdateMode("none")
-	AutoUpdate    = AutoUpdateMode("auto_update")
+	NotAutoUpdate         = AutoUpdateMode("none")
+	AutoUpdate            = AutoUpdateMode("auto_update")
+	AutoUpdateAtIntervals = AutoUpdateMode("auto_update_at_intervals")
 
 	ProxyModeDirect = ProxyMode("direct")
 	ProxyModePac    = ProxyMode("pac")
@@ -53,7 +54,7 @@ const (
 
 	DnsForward          = Antipollution("dnsforward")
 	DoH                 = Antipollution("doh")
-	AntipollutionNone   = Antipollution("none") //历史原因，none代表“仅防止dns劫持”，不代表关闭
+	AntipollutionNone   = Antipollution("none")   //历史原因，none代表“仅防止dns劫持”，不代表关闭
 	AntipollutionClosed = Antipollution("closed") //直接iptables略过udp
 )
 
