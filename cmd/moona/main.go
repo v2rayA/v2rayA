@@ -12,7 +12,7 @@ import (
 	_ "github.com/v2rayA/v2rayA/plugin/simpleobfs"
 	_ "github.com/v2rayA/v2rayA/plugin/ssrpluginSimpleobfs"
 	_ "github.com/v2rayA/v2rayA/plugin/trojan-go"
-	"github.com/v2rayA/v2rayA/service"
+	"github.com/v2rayA/v2rayA/server/service"
 	"moona/config"
 	"os"
 	"time"

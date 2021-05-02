@@ -1,9 +1,9 @@
 package service
 
 import (
+	"bytes"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/global"
-	"bytes"
 	"net/http"
 	"strings"
 )

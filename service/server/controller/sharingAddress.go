@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/service"
 	"github.com/gin-gonic/gin"
 	"github.com/json-iterator/go"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/server/service"
 )
 
 func GetSharingAddress(ctx *gin.Context) {
