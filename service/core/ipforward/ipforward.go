@@ -2,7 +2,6 @@ package ipforward
 
 import (
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -17,11 +16,8 @@ func WriteIpForward(on bool) (err error) {
 	if on {
 		val = "1"
 	}
-	out, err := exec.Command("sh", "-c", "echo "+val+" > /proc/sys/net/ipv4/ip_forward").CombinedOutput()
-	if err != nil {
-		err = newError(string(out)).Base(err)
-	}
+	err = os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte(val), 0644)
 	// ipv6
-	_, _ = exec.Command("sh", "-c", "echo "+val+" > /proc/sys/net/ipv6/conf/all/forwarding").CombinedOutput()
+	_ = os.WriteFile("/proc/sys/net/ipv6/conf/all/forwarding", []byte(val), 0644)
 	return
 }
