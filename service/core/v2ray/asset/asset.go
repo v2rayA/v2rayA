@@ -18,37 +18,19 @@ import (
 	"v2ray.com/core/common/strmatcher"
 )
 
-type assetCandidate struct {
-	path      string
-	v2rayCore bool
-}
-
 func GetV2rayLocationAsset() (s string) {
-	var candidates = []assetCandidate{
-		{`/usr/local/share/v2ray`, true},
-		{`/usr/share/v2ray`, true},
-		{`/usr/local/share/xray`, false},
-		{`/usr/share/xray`, false},
-	}
+	var candidates = []string{`/usr/local/share/v2ray`, `/usr/share/v2ray`, `/usr/local/share/xray`, `/usr/share/xray`}
 	var is bool
 	if ver, err := where.GetV2rayServiceVersion(); err == nil {
 		if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
 			for _, c := range candidates {
-				if ver == "UnknownClient" {
-					// xray, etc.
-					if c.v2rayCore {
-						continue
-					}
-				} else {
-					// v2ray
-					if !c.v2rayCore {
-						continue
-					}
-				}
-				if _, err := os.Stat(c.path); os.IsNotExist(err) {
+				if _, err := os.Stat(c); os.IsNotExist(err) {
 					continue
 				}
-				s = c.path
+				if _, err := os.Stat(path.Join(c, "geoip.dat")); os.IsNotExist(err) {
+					continue
+				}
+				s = c
 				break
 			}
 		}
