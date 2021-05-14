@@ -43,6 +43,10 @@ See [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/Usage)
 
 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/v2rayA/v2rayA.svg)](https://starchart.cc/v2rayA/v2rayA)
+
 ## License
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
