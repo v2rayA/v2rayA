@@ -5,12 +5,11 @@ import (
 	"encoding/hex"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
-	"github.com/v2rayA/v2rayA/core/ipforward"
+	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"strings"
-	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 type Configure struct {
@@ -203,7 +202,6 @@ func GetSettingNotNil() *Setting {
 		r = NewSetting()
 		_ = db.Set("system", "setting", r)
 	}
-	r.IntranetSharing = ipforward.IsIpForwardOn() //永远用真实值
 	if r.AntiPollution == "" {
 		r.AntiPollution = AntipollutionNone
 	}

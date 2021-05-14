@@ -8,7 +8,6 @@ import (
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
@@ -153,13 +152,6 @@ func initConfigure() {
 		}
 		if !ok {
 			initDBValue()
-		}
-	}
-	//配置ip转发
-	setting := configure.GetSettingNotNil()
-	if setting.Transparent != configure.TransparentClose {
-		if setting.IntranetSharing != ipforward.IsIpForwardOn() {
-			_ = ipforward.WriteIpForward(setting.IntranetSharing)
 		}
 	}
 	//检查config.json是否存在
