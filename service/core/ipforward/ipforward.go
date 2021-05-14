@@ -10,7 +10,6 @@ func IsIpForwardOn() bool {
 	return err == nil && strings.TrimSpace(string(out)) == "1"
 }
 
-//返回ipv4.ip_forward的开启状态。该命令写的ip_forward状态重启将失效。
 func WriteIpForward(on bool) (err error) {
 	val := "0"
 	if on {

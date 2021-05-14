@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -73,6 +74,10 @@ func Connect(which *configure.Which) (err error) {
 		return newError("which can not be nil")
 	}
 	checkResolvConf()
+	//配置ip转发
+	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
+		_ = ipforward.WriteIpForward(setting.IntranetSharing)
+	}
 	//定位Server
 	tsr, err := which.LocateServer()
 	if err != nil {
