@@ -76,7 +76,10 @@ func Connect(which *configure.Which) (err error) {
 	checkResolvConf()
 	//配置ip转发
 	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
-		_ = ipforward.WriteIpForward(setting.IntranetSharing)
+		err = ipforward.WriteIpForward(setting.IntranetSharing)
+		if err != nil {
+			return
+		}
 	}
 	//定位Server
 	tsr, err := which.LocateServer()

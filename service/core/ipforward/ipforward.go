@@ -1,6 +1,7 @@
 package ipforward
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -11,6 +12,11 @@ func IsIpForwardOn() bool {
 }
 
 func WriteIpForward(on bool) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("WriteIpForward: %w", err)
+		}
+	}()
 	val := "0"
 	if on {
 		val = "1"
