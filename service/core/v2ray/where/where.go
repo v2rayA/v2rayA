@@ -48,7 +48,7 @@ func getV2rayBinPathAnyway() (path string, err error) {
 func getV2rayBinPath(target string) (string, error) {
 	var pa string
 	//从环境变量里找
-	out, err := exec.Command("sh", "-c", "which "+target).CombinedOutput()
+	out, err := exec.Command("sh", "-c", "command -v "+target).CombinedOutput()
 	if err != nil {
 		return "", NotFoundErr
 	}
