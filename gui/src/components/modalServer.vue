@@ -834,7 +834,7 @@ export default {
           password: u.username,
           server: u.host,
           port: u.port,
-          name: u.hash,
+          name: decodeURIComponent(u.hash),
           peer: u.params.peer || u.params.sni || "",
           allowInsecure:
             u.params.allowInsecure === true || u.params.allowInsecure === "1",
