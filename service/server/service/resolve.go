@@ -6,6 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"log"
+	"net"
 	"net/url"
 	"regexp"
 	"strings"
@@ -273,26 +274,26 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	}
 	allowInsecure := t.Query().Get("allowInsecure")
 	data = new(nodeData.NodeData)
-	host := t.Query().Get("peer")
-	if host == "" {
-		host = t.Query().Get("sni")
+	sni := t.Query().Get("peer")
+	if sni == "" {
+		sni = t.Query().Get("sni")
 	}
-	if host == "" {
-		host = t.Query().Get("host")
+	if sni == "" && net.ParseIP(t.Hostname()) == nil {
+		sni = t.Hostname()
 	}
 	data.VmessInfo = vmessInfo.VmessInfo{
 		Ps:            t.Fragment,
 		Add:           t.Hostname(),
 		Port:          t.Port(),
 		ID:            t.User.String(),
-		Host:          host,
+		Host:          sni,
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
 	if t.Scheme == "trojan-go" {
 		data.VmessInfo.Protocol = "trojan-go"
 		data.VmessInfo.Type = t.Query().Get("encryption")
-		data.VmessInfo.Host = t.Query().Get("sni") + "," + t.Query().Get("host")
+		data.VmessInfo.Host = sni + "," + t.Query().Get("host")
 		data.VmessInfo.Path = t.Query().Get("path")
 		data.VmessInfo.Net = t.Query().Get("type")
 		data.VmessInfo.TLS = "tls"
