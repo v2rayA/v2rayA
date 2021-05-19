@@ -99,6 +99,53 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 }
 
 /*
+根据传入的 vless://xxxxx 解析出NodeData
+*/
+func ResolveVlessURL(vless string) (data *nodeData.NodeData, err error) {
+	if !strings.HasPrefix(vless, "vless://") {
+		err = newError("this address is not begin with vless://")
+		return
+	}
+	u, err := url.Parse(vless)
+	if err != nil {
+		return
+	}
+	data = new(nodeData.NodeData)
+	data.VmessInfo = vmessInfo.VmessInfo{
+		Ps:       u.Fragment,
+		Add:      u.Hostname(),
+		Port:     u.Port(),
+		ID:       u.User.String(),
+		Net:      u.Query().Get("type"),
+		Type:     u.Query().Get("headerType"),
+		Host:     u.Query().Get("sni"),
+		Path:     u.Query().Get("path"),
+		TLS:      u.Query().Get("security"),
+		Flow:     u.Query().Get("flow"),
+		Protocol: "vless",
+	}
+	if data.VmessInfo.Net == "" {
+		data.VmessInfo.Net = "tcp"
+	}
+	if data.VmessInfo.Type == "" {
+		data.VmessInfo.Type = "none"
+	}
+	if data.VmessInfo.Host == "" {
+		data.VmessInfo.Host = u.Query().Get("host")
+	}
+	if data.VmessInfo.TLS == "" {
+		data.VmessInfo.TLS = "none"
+	}
+	if data.VmessInfo.Flow == "" {
+		data.VmessInfo.Flow = "xtls-rprx-direct"
+	}
+	if data.VmessInfo.Type == "mkcp" || data.VmessInfo.Type == "kcp" {
+		data.VmessInfo.Path = u.Query().Get("seed")
+	}
+	return
+}
+
+/*
 根据传入的 ss://xxxxx 解析出NodeData
 */
 func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
@@ -300,7 +347,7 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	}
 	return
 }
-func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
+func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
 	if len(u) < 13 || strings.ToLower(u[:13]) != "pingtunnel://" {
 		err = newError("this address is not begin with pingtunnel://")
 		return
@@ -339,6 +386,25 @@ func ResolvePingTunnelURL(u string) (data *nodeData.NodeData, err error) {
 	return
 }
 
+func ResolvePingTunnelURL2(u string) (data *nodeData.NodeData, err error) {
+	if !strings.HasPrefix(u, "ping-tunnel://") {
+		err = newError("this address is not begin with pingtunnel://")
+		return
+	}
+	U, err := url.Parse(u)
+	if err != nil {
+		return
+	}
+	data = new(nodeData.NodeData)
+	data.VmessInfo = vmessInfo.VmessInfo{
+		Ps:       U.Fragment,
+		Add:      U.Host,
+		ID:       U.User.String(),
+		Protocol: "pingtunnel",
+	}
+	return
+}
+
 var ErrorEmptyAddress = newError("ResolveURL error: empty address")
 
 func ResolveURL(u string) (n *nodeData.NodeData, err error) {
@@ -349,12 +415,16 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	}
 	if strings.HasPrefix(u, "vmess://") {
 		n, err = ResolveVmessURL(u)
+	} else if strings.HasPrefix(u, "vless://") {
+		n, err = ResolveVlessURL(u)
 	} else if strings.HasPrefix(u, "ss://") {
 		n, err = ResolveSSURL(u)
 	} else if strings.HasPrefix(u, "ssr://") {
 		n, err = ResolveSSRURL(u)
 	} else if strings.HasPrefix(u, "pingtunnel://") {
-		n, err = ResolvePingTunnelURL(u)
+		n, err = ResolvePingTunnelURL1(u)
+	} else if strings.HasPrefix(u, "ping-tunnel://") {
+		n, err = ResolvePingTunnelURL2(u)
 	} else if strings.HasPrefix(u, "trojan://") || strings.HasPrefix(u, "trojan-go://") {
 		n, err = ResolveTrojanURL(u)
 	} else {

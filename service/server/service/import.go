@@ -16,11 +16,13 @@ func Import(url string, which *configure.Which) (err error) {
 	checkResolvConf()
 	url = strings.TrimSpace(url)
 	if strings.HasPrefix(url, "vmess://") ||
+		strings.HasPrefix(url, "vless://") ||
 		strings.HasPrefix(url, "ss://") ||
 		strings.HasPrefix(url, "ssr://") ||
 		strings.HasPrefix(url, "pingtunnel://") ||
-		strings.HasPrefix(url, "trojan-go://") ||
-		strings.HasPrefix(url, "trojan://") {
+		strings.HasPrefix(url, "ping-tunnel://") ||
+		strings.HasPrefix(url, "trojan://") ||
+		strings.HasPrefix(url, "trojan-go://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)
 		if err != nil {
