@@ -692,7 +692,8 @@ export default {
       }).then(res => {
         handleResponse(res, this, () => {
           if (
-            res.data.data.sharingAddress.toLowerCase().startsWith("vmess://")
+            res.data.data.sharingAddress.toLowerCase().startsWith("vmess://") ||
+            res.data.data.sharingAddress.toLowerCase().startsWith("vless://")
           ) {
             this.v2ray = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 0;
@@ -709,7 +710,10 @@ export default {
           } else if (
             res.data.data.sharingAddress
               .toLowerCase()
-              .startsWith("pingtunnel://")
+              .startsWith("pingtunnel://") ||
+            res.data.data.sharingAddress
+              .toLowerCase()
+              .startsWith("ping-tunnel://")
           ) {
             this.pingtunnel = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 3;
@@ -737,7 +741,7 @@ export default {
       }
     },
     resolveURL(url) {
-      if (url.toLowerCase().indexOf("vmess://") >= 0) {
+      if (url.toLowerCase().startsWith("vmess://")) {
         let obj = JSON.parse(
           Base64.decode(url.substring(url.indexOf("://") + 3))
         );
@@ -747,7 +751,27 @@ export default {
         obj.type = obj.type || "none";
         obj.protocol = obj.protocol || "vmess";
         return obj;
-      } else if (url.toLowerCase().indexOf("ss://") >= 0) {
+      } else if (url.toLowerCase().startsWith("vless://")) {
+        let u = parseURL(url);
+        const o = {
+          ps: decodeURIComponent(u.hash),
+          add: u.host,
+          port: u.port,
+          id: u.username,
+          net: u.params.type || "tcp",
+          type: u.params.headerType || "none",
+          host: u.params.sni || u.params.host || "",
+          path: u.params.path || "",
+          tls: u.params.security || "none",
+          flow: u.params.flow || "xtls-rprx-direct",
+          allowInsecure: false,
+          protocol: "vless"
+        };
+        if (o.type === "mkcp" || o.type === "kcp") {
+          o.path = u.params.seed;
+        }
+        return o;
+      } else if (url.toLowerCase().startsWith("ss://")) {
         let u = parseURL(url);
         try {
           u.username = Base64.decode(decodeURIComponent(u.username));
@@ -785,7 +809,7 @@ export default {
           obj.obfs = "";
         }
         return obj;
-      } else if (url.toLowerCase().indexOf("ssr://") >= 0) {
+      } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
         let query = arr[1].split("&");
@@ -814,7 +838,7 @@ export default {
           obfsParam: m["obfsparam"],
           protocol: "ssr"
         };
-      } else if (url.toLowerCase().indexOf("pingtunnel://") >= 0) {
+      } else if (url.toLowerCase().startsWith("pingtunnel://")) {
         let u = url.substr(13);
         u = Base64.decode(u);
         const regexp = /(.+):(.+)#(.*)/;
@@ -825,9 +849,23 @@ export default {
           name: decodeURIComponent(arr[3]),
           protocol: "pingtunnel"
         };
+      } else if (url.toLowerCase().startsWith("ping-tunnel://")) {
+        let u = parseURL(url);
+        console.log({
+          server: u.host,
+          password: u.username,
+          name: decodeURIComponent(u.hash),
+          protocol: "pingtunnel"
+        });
+        return {
+          server: u.host,
+          password: u.username,
+          name: decodeURIComponent(u.hash),
+          protocol: "pingtunnel"
+        };
       } else if (
-        url.toLowerCase().indexOf("trojan://") === 0 ||
-        url.toLowerCase().indexOf("trojan-go://") === 0
+        url.toLowerCase().startsWith("trojan://") ||
+        url.toLowerCase().startsWith("trojan-go://")
       ) {
         let u = parseURL(url);
         const o = {
@@ -873,8 +911,26 @@ export default {
       let tmp;
       switch (srcObj.protocol) {
         case "vless":
-        //FIXME: 临时方案
-        // eslint-disable-next-line no-fallthrough
+          query = {
+            type: srcObj.net,
+            security: srcObj.tls,
+            path: srcObj.path,
+            host: srcObj.host,
+            headerType: srcObj.type,
+            sni: srcObj.host,
+            flow: srcObj.flow
+          };
+          if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
+            query.seed = srcObj.path;
+          }
+          return generateURL({
+            protocol: "vless",
+            username: srcObj.id,
+            host: srcObj.add,
+            port: srcObj.port,
+            hash: srcObj.ps,
+            params: query
+          });
         case "vmess":
           //尽量减少生成的链接长度
           obj = Object.assign({}, srcObj);
@@ -925,10 +981,12 @@ export default {
             )}&obfsparam=${Base64.encodeURI(srcObj.obfsParam)}`
           )}`;
         case "pingtunnel":
-          return `pingtunnel://${Base64.encode(
-            `${srcObj.server}:${Base64.encodeURI(srcObj.password)}` +
-              (srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "")
-          )}`;
+          return generateURL({
+            protocol: "ping-tunnel",
+            username: srcObj.password,
+            host: srcObj.server,
+            hash: srcObj.name
+          });
         case "trojan":
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
@@ -1006,6 +1064,7 @@ export default {
           typeof x.checkHtml5Validity === "function" &&
           !x.checkHtml5Validity()
         ) {
+          console.error("validate failed", x);
           valid = false;
         }
       }

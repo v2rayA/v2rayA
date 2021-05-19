@@ -160,7 +160,6 @@ function generateURL({
   a.password = password;
   a.search = query;
   a.hash = hash;
-  console.log(a, a.username, a.password);
   const r = a.href;
   a.remove();
   return r;

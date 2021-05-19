@@ -335,6 +335,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		o.StreamSettings = &tmplJson.StreamSettings
 		o.StreamSettings.Network = v.Net
 		// 根据传输协议(network)修改streamSettings
+		//TODO: QUIC, gRPC
 		switch strings.ToLower(v.Net) {
 		case "ws":
 			tmplJson.WsSettings.Headers.Host = v.Host
