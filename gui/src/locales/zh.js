@@ -107,9 +107,9 @@ export default {
       on: "启用",
       off: "关闭",
       updateSubWhenStart: "服务端启动时更新订阅",
-      updateSubAtIntervals: "每隔一段时间更新订阅",
+      updateSubAtIntervals: "每隔一段时间更新订阅（单位：小时）",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
-      updateGfwlistAtIntervals: "每隔一段时间更新GFWList",
+      updateGfwlistAtIntervals: "每隔一段时间更新GFWList（单位：小时）",
       dependTransparentMode: "跟随全局透明代理",
       closed: "关闭"
     },
