@@ -683,19 +683,6 @@ func (t *Template) SetDNSRouting(v vmessInfo.VmessInfo, dohIPs, dohHosts []strin
 		)
 	}
 	t.Routing.Rules = append(t.Routing.Rules, dohRouting...)
-	t.Routing.Rules = append(t.Routing.Rules,
-		RoutingRule{ // 直连 123 端口 UDP 流量（NTP 协议）
-			Type:        "field",
-			OutboundTag: "direct",
-			Network:     "udp",
-			Port:        "123",
-		},
-		RoutingRule{ // BT流量直连
-			Type:        "field",
-			OutboundTag: "direct",
-			Protocol:    []string{"bittorrent"},
-		},
-	)
 	return
 }
 
