@@ -6,7 +6,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"log"
-	"net"
 	"net/url"
 	"regexp"
 	"strings"
@@ -324,9 +323,6 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	sni := t.Query().Get("peer")
 	if sni == "" {
 		sni = t.Query().Get("sni")
-	}
-	if sni == "" && net.ParseIP(t.Hostname()) == nil {
-		sni = t.Hostname()
 	}
 	data.VmessInfo = vmessInfo.VmessInfo{
 		Ps:            t.Fragment,
