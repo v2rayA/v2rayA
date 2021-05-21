@@ -40,15 +40,21 @@ func (v *VmessInfo) ExportToURL() string {
 		var query = make(url.Values)
 		setValue(&query, "type", v.Net)
 		setValue(&query, "security", v.TLS)
-		setValue(&query, "path", v.Path)
-		setValue(&query, "host", v.Host)
-		setValue(&query, "headerType", v.Type)
-		if v.Net == "mkcp" || v.Net == "kcp" {
+		switch v.Net {
+		case "websocket", "ws", "http", "h2":
+			setValue(&query, "path", v.Path)
+			setValue(&query, "host", v.Host)
+		case "mkcp", "kcp":
+			setValue(&query, "headerType", v.Type)
 			setValue(&query, "seed", v.Path)
 		}
 		//TODO: QUIC, gRPC
-		setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
-		setValue(&query, "flow", v.Flow)
+		if v.TLS != "none" {
+			setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
+		}
+		if v.TLS == "xtls" {
+			setValue(&query, "flow", v.Flow)
+		}
 
 		U := url.URL{
 			Scheme:   "vless",
