@@ -10,7 +10,6 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/plugin"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -83,20 +82,6 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue
-		}
-		//提前将域名解析为IP，以防止第一次测试时算入域名解析时间
-		if net.ParseIP(sr.VmessInfo.Add) == nil {
-			ips, err := net.LookupHost(sr.VmessInfo.Add)
-			//如果有解析结果，取第一个
-			if err == nil && len(ips) > 0 {
-				switch sr.VmessInfo.Net {
-				case "h2", "http", "ws", "websocket":
-					if sr.VmessInfo.Host == "" {
-						sr.VmessInfo.Host = sr.VmessInfo.Add
-					}
-				}
-				sr.VmessInfo.Add = ips[0]
-			}
 		}
 		vms[i] = sr.VmessInfo
 	}
