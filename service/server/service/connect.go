@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/plugin"
 	"log"
@@ -27,7 +27,7 @@ func Disconnect() (err error) {
 func checkAssetsExist(setting *configure.Setting) error {
 	//FIXME: non-fully check
 	if setting.PacMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
-		if !gfwlist.LoyalsoldierSiteDatExists() {
+		if !asset.LoyalsoldierSiteDatExists() {
 			return newError("GFWList file not exists. Try updating GFWList please")
 		}
 	}

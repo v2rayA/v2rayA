@@ -594,13 +594,19 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, supportUDP bool, setting *confi
 
 		//fakedns
 		if t.FakeDns != nil {
-			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
+			ds := DnsServer{
 				Address: "fakedns",
 				Domains: []string{
 					"domain:use-fakedns.com",
-					"geosite:geolocation-!cn",
 				},
-			})
+			}
+			if asset.LoyalsoldierSiteDatExists() {
+				// use more accurate list to avoid misadventure
+				ds.Domains = append(ds.Domains, "ext:LoyalsoldierSite.dat:gfw")
+			} else {
+				ds.Domains = append(ds.Domains, "geosite:geolocation-!cn")
+			}
+			t.DNS.Servers = append(t.DNS.Servers, ds)
 		}
 	}
 	return

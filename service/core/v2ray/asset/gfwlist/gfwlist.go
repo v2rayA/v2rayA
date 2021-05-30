@@ -5,6 +5,7 @@ import (
 	sha2562 "crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/core/v2ray"
@@ -12,7 +13,6 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/extra/copyfile"
 	"github.com/v2rayA/v2rayA/extra/gopeed"
-	"github.com/tidwall/gjson"
 	"io"
 	"log"
 	"net/http"
@@ -85,13 +85,6 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 		return
 	}
 	return
-}
-
-func LoyalsoldierSiteDatExists() bool {
-	if info, err := os.Stat(filepath.Join(asset.GetV2rayLocationAsset(), "LoyalsoldierSite.dat")); err == nil && !info.IsDir() {
-		return true
-	}
-	return false
 }
 
 func checkSha256(p string, sha256 string) bool {
