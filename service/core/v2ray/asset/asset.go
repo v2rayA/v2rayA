@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sync"
 	"time"
@@ -95,6 +96,13 @@ func GetV2rayConfigPath() (p string) {
 
 func GetV2rayConfigDirPath() (p string) {
 	return global.GetEnvironmentConfig().V2rayConfigDirectory
+}
+
+func LoyalsoldierSiteDatExists() bool {
+	if info, err := os.Stat(filepath.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat")); err == nil && !info.IsDir() {
+		return true
+	}
+	return false
 }
 
 var whitelistCn struct {
