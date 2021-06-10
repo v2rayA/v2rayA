@@ -54,16 +54,16 @@ module.exports = {
   // : '/',
   outputDir: "../web",
 
-  pwa: {
-    name: "v2rayA",
-    // themeColor: "#FFDD57",
-    msTileColor: "#fff",
-    appleMobileWebAppCapable: "yes",
-    appleMobileWebAppStatusBarStyle: "white",
-    workboxOptions: {
-      skipWaiting: true
-    }
-  },
+  // pwa: {
+  //   name: "v2rayA",
+  //   // themeColor: "#FFDD57",
+  //   msTileColor: "#fff",
+  //   appleMobileWebAppCapable: "yes",
+  //   appleMobileWebAppStatusBarStyle: "white",
+  //   workboxOptions: {
+  //     skipWaiting: true
+  //   }
+  // },
 
   lintOnSave: false,
 
