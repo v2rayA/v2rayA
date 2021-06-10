@@ -2,7 +2,6 @@ package global
 
 import (
 	"os/exec"
-	"strings"
 )
 
 type SystemServiceControlMode int
@@ -15,10 +14,11 @@ const (
 
 func SetServiceControlMode() (mode SystemServiceControlMode) {
 	// The behaviour of this function has changed after v1.1.4
-	if out, err := exec.Command("sh", "-c", "command -v systemctl").Output(); err == nil && strings.Contains(string(out), "systemctl") {
+
+	if _, err := exec.LookPath("systemctl"); err == nil {
 		return SystemctlMode
 	}
-	if out, err := exec.Command("sh", "-c", "command -v service").Output(); err == nil && strings.Contains(string(out), "service") {
+	if _, err := exec.LookPath("service"); err == nil {
 		return ServiceMode
 	}
 	return UniversalMode

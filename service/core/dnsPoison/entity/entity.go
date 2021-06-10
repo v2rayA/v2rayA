@@ -159,7 +159,7 @@ func StartDNSPoison(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*
 		for {
 			//随时准备应对default interface变化
 			f := func() {
-				ifnames, err := netTools.GetDefaultInterface()
+				ifnames, err := netTools.GetDefaultInterfaceName()
 				if err != nil {
 					return
 				}

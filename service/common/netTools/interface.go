@@ -1,18 +1,21 @@
 package netTools
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
 
-func GetDefaultInterface() ([]string, error) {
+var NoDefaultInterface = fmt.Errorf("default interfaces not found")
+
+func GetDefaultInterfaceName() ([]string, error) {
 	b, err := exec.Command("sh", "-c", "awk '$2 == 00000000 { print $1 }' /proc/net/route").Output()
 	if err != nil {
 		return nil, err
 	}
 	ifnames := strings.Split(strings.TrimSpace(string(b)), "\n")
 	if len(ifnames) == 1 && ifnames[0] == "" {
-		ifnames = nil
+		return nil, NoDefaultInterface
 	}
 	return ifnames, nil
 }
