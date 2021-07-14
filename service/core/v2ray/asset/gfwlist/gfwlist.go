@@ -11,7 +11,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/extra/copyfile"
 	"github.com/v2rayA/v2rayA/extra/gopeed"
 	"io"
 	"log"
@@ -121,7 +120,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	var sucBackup bool
 	if _, err = os.Stat(pathSiteDat); err == nil {
 		//backup
-		err = copyfile.CopyFile(pathSiteDat, backup)
+		err = os.Rename(pathSiteDat, backup)
 		if err != nil {
 			err = newError("fail to backup gfwlist file").Base(err)
 			return
@@ -149,7 +148,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	defer func() {
 		if err != nil {
 			if sucBackup {
-				_ = copyfile.CopyFile(backup, pathSiteDat)
+				_ = os.Rename(backup, pathSiteDat)
 			} else {
 				_ = os.Remove(pathSiteDat)
 			}
