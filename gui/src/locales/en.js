@@ -23,7 +23,7 @@ export default {
     newVersion: "Detected new version: {version}",
     messages: [
       "There is no server.",
-      "You can create a server or import a subscription. Vmess, SS and SSR are supported."
+      "You can create/import a server or import a subscription."
     ]
   },
   v2ray: {
@@ -51,6 +51,7 @@ export default {
     delete: "Delete",
     create: "Create",
     import: "Import",
+    inBatch: "In batch",
     connect: "Connect",
     disconnect: "Disconnect",
     login: "Login",
@@ -226,6 +227,7 @@ export default {
   },
   import: {
     message: "Input a server link or subscription address:",
+    batchMessage: "One server link per line:",
     qrcodeError: "Failed to find a valid QRCode, please try again"
   },
   delete: {

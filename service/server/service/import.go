@@ -15,6 +15,16 @@ func Import(url string, which *configure.Which) (err error) {
 	//log.Println(url)
 	checkResolvConf()
 	url = strings.TrimSpace(url)
+	if lines := strings.Split(url, "\n"); len(lines) >= 2 {
+		infos, _, err := ResolveLines(url)
+		if err != nil {
+			return newError("failed to resolve addresses").Base(err)
+		}
+		for _, info := range infos {
+			err = configure.AppendServers([]*configure.ServerRaw{info.ToServerRaw()})
+		}
+		return err
+	}
 	if strings.HasPrefix(url, "vmess://") ||
 		strings.HasPrefix(url, "vless://") ||
 		strings.HasPrefix(url, "ss://") ||

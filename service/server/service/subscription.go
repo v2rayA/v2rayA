@@ -113,6 +113,9 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	if err != nil {
 		raw, _ = common.Base64URLDecode(buf.String())
 	}
+	return ResolveLines(raw)
+}
+func ResolveLines(raw string) (infos []*nodeData.NodeData, status string, err error) {
 	var sip SIP008
 	if infos, sip, err = resolveSIP008(raw); err == nil {
 		if sip.BytesUsed != 0 {

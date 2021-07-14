@@ -23,7 +23,7 @@ export default {
     newVersion: "检测到新版本: {version}",
     messages: [
       "我们发现你还没有创建或导入任何节点、订阅。",
-      "我们支持以vmess、ss、ssr地址，或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！"
+      "我们支持以节点地址或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！"
     ]
   },
   v2ray: {
@@ -51,6 +51,7 @@ export default {
     delete: "删除",
     create: "创建",
     import: "导入",
+    inBatch: "批量",
     connect: "连接",
     disconnect: "断开",
     login: "登录",
@@ -222,6 +223,7 @@ export default {
   },
   import: {
     message: "填入节点链接或订阅地址：",
+    batchMessage: "一行一个节点链接:",
     qrcodeError: "找不到有效的二维码，请重新尝试"
   },
   delete: {
