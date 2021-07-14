@@ -62,7 +62,8 @@ const (
 	RoutingATemplate = `default: proxy
 
 # write your own rules below
-domain(domain:webofscience.com,domain:webofknowledge.com,domain:clarivate.com,domain:ieee.org,domain:mdpi.com,domain:qq.com)->direct
+domain(geosite:google-scholar)->proxy
+domain(geosite:category-scholar-!cn,geosite:category-scholar-cn,domain:qq.com)->direct
 
 ip(geoip:private, geoip:cn)->direct
 domain(geosite:cn)->direct`

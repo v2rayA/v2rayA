@@ -123,6 +123,7 @@ func ResolveVlessURL(vless string) (data *nodeData.NodeData, err error) {
 		Flow:     u.Query().Get("flow"),
 		Protocol: "vless",
 	}
+	log.Println(data.VmessInfo)
 	if data.VmessInfo.Net == "" {
 		data.VmessInfo.Net = "tcp"
 	}

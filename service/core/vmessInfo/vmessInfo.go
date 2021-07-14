@@ -47,6 +47,10 @@ func (v *VmessInfo) ExportToURL() string {
 		case "mkcp", "kcp":
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "seed", v.Path)
+		case "tcp":
+			setValue(&query, "headerType", v.Type)
+			setValue(&query, "host", v.Host)
+			setValue(&query, "path", v.Path)
 		}
 		//TODO: QUIC, gRPC
 		if v.TLS != "none" {
