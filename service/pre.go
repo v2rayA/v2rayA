@@ -291,7 +291,7 @@ func checkUpdate() {
 				log.Println("Complete updating PAC file. Localtime: " + localGFWListVersion)
 			}()
 		case configure.CustomMode:
-			//TODO
+			// obsolete
 		}
 	}
 
