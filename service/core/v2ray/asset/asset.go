@@ -49,31 +49,31 @@ func GetV2rayLocationAsset() (s string) {
 }
 
 func IsGFWListExists() bool {
-	_, err := os.Stat(GetV2rayLocationAsset() + "/LoyalsoldierSite.dat")
+	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func IsGeoipExists() bool {
-	_, err := os.Stat(GetV2rayLocationAsset() + "/geoip.dat")
+	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geoip.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func IsGeositeExists() bool {
-	_, err := os.Stat(GetV2rayLocationAsset() + "/geosite.dat")
+	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geosite.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func GetGFWListModTime() (time.Time, error) {
-	return files.GetFileModTime(GetV2rayLocationAsset() + "/LoyalsoldierSite.dat")
+	return files.GetFileModTime(path.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat"))
 }
 func IsCustomExists() bool {
-	_, err := os.Stat(GetV2rayLocationAsset() + "/custom.dat")
+	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "custom.dat"))
 	if err != nil {
 		return false
 	}

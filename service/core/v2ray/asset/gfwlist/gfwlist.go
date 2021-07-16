@@ -2,7 +2,7 @@ package gfwlist
 
 import (
 	"bytes"
-	sha2562 "crypto/sha256"
+	libSha256 "crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"github.com/tidwall/gjson"
@@ -88,7 +88,7 @@ func IsUpdate() (update bool, remoteTime time.Time, err error) {
 
 func checkSha256(p string, sha256 string) bool {
 	if b, err := os.ReadFile(p); err == nil {
-		hash := sha2562.Sum256(b)
+		hash := libSha256.Sum256(b)
 		return hex.EncodeToString(hash[:]) == sha256
 	} else {
 		return false
@@ -100,27 +100,31 @@ var (
 	DamagedFile  = newError("damaged GFWList file, update it again please")
 )
 
+func plainDownload(path, url string) (err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, b, 0644)
+}
 func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	i := 0
 	gfwlist, err := GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		return
 	}
-	//u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geoip.dat`, gfwlist.Tag)
-	//err = gopeed.Down(&gopeed.Request{
-	//	Method: "GET",
-	//	URL:    u,
-	//}, asset.GetV2rayLocationAsset()+"/LoyalsoldierIP.dat")
-	//if err != nil {
-	//	log.Println(err)
-	//	return
-	//}
-	pathSiteDat := filepath.Join(asset.GetV2rayLocationAsset(), "LoyalsoldierSite.dat")
-	backup := filepath.Join(asset.GetV2rayLocationAsset(), "LoyalsoldierSite.dat.bak")
+	assetDir := asset.GetV2rayLocationAsset()
+	pathSiteDat := filepath.Join(assetDir, "LoyalsoldierSite.dat")
+	pathSiteDatSha256 := filepath.Join(assetDir, "LoyalsoldierSite.dat.sha256sum")
+	backupDat := filepath.Join(assetDir, "LoyalsoldierSite.dat.bak")
 	var sucBackup bool
 	if _, err = os.Stat(pathSiteDat); err == nil {
 		//backup
-		err = os.Rename(pathSiteDat, backup)
+		err = os.Rename(pathSiteDat, backupDat)
 		if err != nil {
 			err = newError("fail to backup gfwlist file").Base(err)
 			return
@@ -128,34 +132,29 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		sucBackup = true
 	}
 	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
-	err = gopeed.Down(&gopeed.Request{
+	if err = gopeed.Down(&gopeed.Request{
 		Method: "GET",
 		URL:    u,
-	}, pathSiteDat)
-	if err != nil {
+	}, pathSiteDat); err != nil {
 		log.Println(err)
 		return
 	}
 	u2 := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat.sha256sum`, gfwlist.Tag)
-	err = gopeed.Down(&gopeed.Request{
-		Method: "GET",
-		URL:    u2,
-	}, pathSiteDat+".sha256sum")
-	if err != nil {
+	if err = plainDownload(pathSiteDatSha256, u2); err != nil {
 		log.Println(err)
 		return
 	}
 	defer func() {
 		if err != nil {
 			if sucBackup {
-				_ = os.Rename(backup, pathSiteDat)
+				_ = os.Rename(backupDat, pathSiteDat)
 			} else {
 				_ = os.Remove(pathSiteDat)
 			}
 		}
 	}()
 	var b []byte
-	if b, err = os.ReadFile(pathSiteDat + ".sha256sum"); err == nil {
+	if b, err = os.ReadFile(pathSiteDatSha256); err == nil {
 		f := bytes.Fields(b)
 		if len(f) < 2 {
 			err = FailCheckSha
@@ -174,6 +173,8 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
 	}
+	_ = os.Remove(pathSiteDatSha256)
+	_ = os.Remove(backupDat)
 	log.Printf("download[%v]: %v -> SUCCESS\n", i+1, u)
 	return
 }
