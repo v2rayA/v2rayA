@@ -48,7 +48,7 @@ iptables -w 2 -t nat -A V2RAY -d 192.168.0.0/16 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 198.51.100.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 224.0.0.0/4 -j RETURN
-# dnsPoison
+# supervisor
 # iptables -w 2 -t nat -A V2RAY -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A V2RAY -m mark --mark 0xff -j RETURN
 iptables -w 2 -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 32345

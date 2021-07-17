@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
@@ -46,6 +47,41 @@ func CheckDohSupported(ver string) (err error) {
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
 		return newError("the version of v2ray-core is lower than 4.22.0")
+	}
+	return
+}
+
+func CheckTcpDnsSupported(ver string) (err error) {
+	if ver == "" {
+		ver, err = where.GetV2rayServiceVersion()
+		if err != nil {
+			return newError("failed to get the version of v2ray-core")
+		}
+	}
+	if ver == "UnknownClient" {
+		// FIXME: xray does not support tcp:// yet. 2021-07-17
+		return fmt.Errorf(ver)
+	}
+	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.40.0"); err != nil || !greaterEqual {
+		return newError("the version of v2ray-core is lower than 4.40.0")
+	}
+	return
+}
+
+
+func CheckQuicDnsSupported(ver string) (err error) {
+	if ver == "" {
+		ver, err = where.GetV2rayServiceVersion()
+		if err != nil {
+			return newError("failed to get the version of v2ray-core")
+		}
+	}
+	if ver == "UnknownClient" {
+		// FIXME: xray does not support quic:// yet. 2021-07-17
+		return fmt.Errorf(ver)
+	}
+	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.34.0"); err != nil || !greaterEqual {
+		return newError("the version of v2ray-core is lower than 4.34.0")
 	}
 	return
 }

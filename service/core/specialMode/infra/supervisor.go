@@ -1,4 +1,4 @@
-package dnsPoison
+package infra
 
 import (
 	"github.com/google/gopacket"
@@ -11,34 +11,34 @@ import (
 	"v2ray.com/core/common/strmatcher"
 )
 
-type DnsPoison struct {
+type DnsSupervisor struct {
 	handles        map[string]*handle
 	reqID          uint32
 	inner          sync.Mutex
 	reservedIpPool *ReservedIpPool
 }
 
-func New() *DnsPoison {
-	return &DnsPoison{
+func New() *DnsSupervisor {
+	return &DnsSupervisor{
 		handles:        make(map[string]*handle),
 		reservedIpPool: NewReservedIpPool(),
 	}
 }
 
-func (d *DnsPoison) Exists(ifname string) bool {
+func (d *DnsSupervisor) Exists(ifname string) bool {
 	_, ok := d.handles[ifname]
 	return ok
 }
 
-func (d *DnsPoison) Clear() {
+func (d *DnsSupervisor) Clear() {
 	handles := d.ListHandles()
 	for _, h := range handles {
 		_ = d.DeleteHandles(h)
 	}
-	log.Println("DnsPoison: Clear")
+	log.Println("DnsSupervisor: Clear")
 }
 
-func (d *DnsPoison) Prepare(ifname string) (err error) {
+func (d *DnsSupervisor) Prepare(ifname string) (err error) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	if d.Exists(ifname) {
@@ -52,7 +52,7 @@ func (d *DnsPoison) Prepare(ifname string) (err error) {
 	return
 }
 
-func (d *DnsPoison) ListHandles() (ifnames []string) {
+func (d *DnsSupervisor) ListHandles() (ifnames []string) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	for ifname := range d.handles {
@@ -61,7 +61,7 @@ func (d *DnsPoison) ListHandles() (ifnames []string) {
 	return
 }
 
-func (d *DnsPoison) DeleteHandles(ifname string) (err error) {
+func (d *DnsSupervisor) DeleteHandles(ifname string) (err error) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	if !d.Exists(ifname) {
@@ -69,11 +69,11 @@ func (d *DnsPoison) DeleteHandles(ifname string) (err error) {
 	}
 	close(d.handles[ifname].done)
 	delete(d.handles, ifname)
-	log.Println("DnsPoison:", ifname, "closed")
+	log.Println("DnsSupervisor:", ifname, "closed")
 	return
 }
 
-func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
+func (d *DnsSupervisor) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) (err error) {
 	defer func() {
 		recover()
 	}()
@@ -86,7 +86,7 @@ func (d *DnsPoison) Run(ifname string, whitelistDnsServers *v2router.GeoIPMatche
 		return newError(ifname + " is running")
 	}
 	handle.running = true
-	log.Println("[DnsPoison] " + ifname + ": running")
+	log.Println("[DnsSupervisor] " + ifname + ": running")
 	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
 	pkgsrc.NoCopy = true
 	d.inner.Unlock()

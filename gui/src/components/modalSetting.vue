@@ -67,7 +67,7 @@
           }}</option>
         </b-select>
         <b-button
-          v-show="transparent !== 'close'"
+          v-show="transparent !== 'close' && iptablesMode === 'tproxy'"
           style="border-radius: 0;z-index: 2;"
           @click="handleClickPortWhiteList"
         >
@@ -154,19 +154,12 @@
           <option v-show="showDoh" value="doh">{{
             $t("setting.options.doh")
           }}</option>
+          <option v-show="showDoh" value="advanced">{{
+            $t("setting.options.advanced")
+          }}</option>
         </b-select>
         <b-button
-          v-if="antipollution === 'doh'"
-          :class="{
-            'right-extra-button': antipollution === 'closed',
-            'no-border-radius': antipollution !== 'closed'
-          }"
-          @click="handleClickDohSetting"
-        >
-          {{ $t("operations.configure") }}
-        </b-button>
-        <b-button
-          v-if="antipollution === 'none' && showDns"
+          v-if="antipollution === 'advanced'"
           :class="{
             'right-extra-button': antipollution === 'closed',
             'no-border-radius': antipollution !== 'closed'
@@ -175,21 +168,6 @@
         >
           {{ $t("operations.configure") }}
         </b-button>
-        <b-checkbox-button
-          v-if="showDnsForceMode"
-          v-model="dnsForceMode"
-          :native-value="true"
-          style="position:relative;left:-1px;"
-          >{{ $t("setting.dnsForceModeOn") }}
-        </b-checkbox-button>
-
-        <b-checkbox-button
-          v-if="antipollution !== 'closed' && iptablesMode === 'tproxy'"
-          v-model="enhancedMode"
-          :native-value="true"
-          style="position:relative;left:-1px;"
-          >{{ $t("setting.enhancedModeOn") }}
-        </b-checkbox-button>
         <p></p>
       </b-field>
       <b-field label-position="on-border">
@@ -337,7 +315,6 @@ import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalPortWhiteList from "@/components/modalPortWhiteList";
-import modalDohSetting from "./modalDohSetting";
 import modalDnsSetting from "./modalDnsSetting";
 import axios from "../plugins/axios";
 import { waitingConnected } from "../assets/js/networkInspect";

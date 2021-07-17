@@ -1,4 +1,4 @@
-package dnsPoison
+package infra
 
 import (
 	"fmt"
@@ -16,17 +16,17 @@ import (
 )
 
 type handle struct {
-	dnsPoison *DnsPoison
-	done      chan interface{}
-	running   bool
+	dnsSupervisor *DnsSupervisor
+	done          chan interface{}
+	running       bool
 	*pcapgo.EthernetHandle
 	inspectedBlackDomains *domainBlacklist
 	portCache             *portCache
 }
 
-func newHandle(dnsPoison *DnsPoison, ethernetHandle *pcapgo.EthernetHandle) *handle {
+func newHandle(supervisor *DnsSupervisor, ethernetHandle *pcapgo.EthernetHandle) *handle {
 	return &handle{
-		dnsPoison:             dnsPoison,
+		dnsSupervisor:         supervisor,
 		done:                  make(chan interface{}),
 		EthernetHandle:        ethernetHandle,
 		inspectedBlackDomains: newDomainBlacklist(),
@@ -194,23 +194,23 @@ func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname strin
 		ip := interfaceHandle.handleSendMessage(m, sAddr, sPort, dAddr, dPort, whitelistDomains)
 		// TODO: 不显示AAAA的投毒，因为暂时不支持IPv6
 		if ip[3] != 0 && m.Questions[0].Type == dnsmessage.TypeA {
-			log.Println("dnsPoison["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), dm, "poisoned as", fmt.Sprintf("%v.%v.%v.%v", ip[0], ip[1], ip[2], ip[3]))
+			log.Println("supervisor["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), dm, "poisoned as", fmt.Sprintf("%v.%v.%v.%v", ip[0], ip[1], ip[2], ip[3]))
 		}
 	} else {
 		results, msg := interfaceHandle.handleReceiveMessage(m)
 		if results != nil {
-			log.Println("dnsPoison["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), "("+dm, "=>", msg+")")
+			log.Println("supervisor["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), "("+dm, "=>", msg+")")
 			for _, r := range results {
 				// print log
 				switch r.result {
 				case ProposeBlacklist:
-					log.Println("dnsPoison["+ifname+"]: [propose]", r.domain, "proof:", dm+msg)
+					log.Println("supervisor["+ifname+"]: [propose]", r.domain, "proof:", dm+msg)
 				case AgainstBlacklist:
-					log.Println("dnsPoison["+ifname+"]: [against]", r.domain, "proof:", dm+msg)
+					log.Println("supervisor["+ifname+"]: [against]", r.domain, "proof:", dm+msg)
 				case AddBlacklist:
-					log.Println("dnsPoison["+ifname+"]: {add blocklist}", r.domain)
+					log.Println("supervisor["+ifname+"]: {add blocklist}", r.domain)
 				case RemoveBlacklist:
-					log.Println("dnsPoison["+ifname+"]: {remove blocklist}", r.domain)
+					log.Println("supervisor["+ifname+"]: {remove blocklist}", r.domain)
 				}
 			}
 		}
@@ -225,7 +225,7 @@ func (interfaceHandle *handle) poison(m *dnsmessage.Message, lAddr, lPort, rAddr
 		//返回空回答
 	case dnsmessage.TypeA:
 		//对A查询返回一个公网地址以使得后续tcp连接经过网关嗅探，以dns污染解决dns污染
-		ip = interfaceHandle.dnsPoison.reservedIpPool.Lookup(q.Name.String())
+		ip = interfaceHandle.dnsSupervisor.reservedIpPool.Lookup(q.Name.String())
 		m.Answers = []dnsmessage.Resource{{
 			Header: dnsmessage.ResourceHeader{
 				Name:  q.Name,

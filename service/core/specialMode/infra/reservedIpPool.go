@@ -1,9 +1,9 @@
-package dnsPoison
+package infra
 
 import (
+	"github.com/v2rayA/v2rayA/dataStructure/lru"
 	"log"
 	"sync"
-	"github.com/v2rayA/v2rayA/dataStructure/lru"
 )
 
 type ReservedIpPool struct {

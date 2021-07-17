@@ -1,4 +1,4 @@
-package dnsPoison
+package infra
 
 import "github.com/v2rayA/v2rayA/common/errors"
 

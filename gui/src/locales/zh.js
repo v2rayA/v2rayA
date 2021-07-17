@@ -90,8 +90,6 @@ export default {
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     ipForwardOn: "开启局域网共享",
-    enhancedModeOn: "开启增强模式",
-    dnsForceModeOn: "关闭DNS分流",
     concurrency: "最大并发数",
     options: {
       global: "代理所有流量",
@@ -112,7 +110,8 @@ export default {
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
       updateGfwlistAtIntervals: "每隔一段时间更新GFWList（单位：小时）",
       dependTransparentMode: "跟随全局透明代理",
-      closed: "关闭"
+      closed: "关闭",
+      advanced: "自定义高级设置"
     },
     messages: {
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
@@ -123,9 +122,7 @@ export default {
       preventDnsSpoofing:
         "如果透明代理出现问题，可尝试将'防止DNS污染'选为'关闭'，或打开增强模式(v0.7.0.2+)。" +
         "★转发DNS查询: 通过代理服务器转发DNS请求。" +
-        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS，建议选择较快且稳定的DoH服务提供商。" +
-        "★增强模式(v0.7.0.2+)更快速，不支持udp和ipv6。" +
-        "★关闭DNS分流(v1.1.3+)不对国内站点的DNS查询进行分流(可能会影响国内站点访问速度)",
+        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS。",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。若系统不支持可能会导致无法正常连接。",
       mux:
@@ -184,11 +181,11 @@ export default {
   },
   dns: {
     title: "配置DNS服务器",
-    dnsPriorityList: "DNS服务优先级列表",
+    internalQueryServers: "域名查询服务器",
+    externalQueryServers: "国外域名查询服务器",
     messages: [
-      '在"仅防止DNS劫持"模式下该列表是的DNS配置，在其他模式下该列表的第一项作为查询国内地址的DNS服务器。',
-      "列表仅填写DNS服务器的IP或域名，不支持53以外的端口。",
-      "建议上述列表2行即可，留空保存可恢复默认"
+      "“@:(dns.internalQueryServers)” 用于查询国内域名，而 “@:(dns.externalQueryServers)” 用于查询国外域名。",
+      "如果将 “@:(dns.externalQueryServers)” 留空，“@:(dns.internalQueryServers)” 将会负责查询所有域名。"
     ]
   },
   egressPortWhitelist: {

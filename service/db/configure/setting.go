@@ -14,9 +14,8 @@ type Setting struct {
 	Mux                                int             `json:"mux"`
 	Transparent                        TransparentMode `json:"transparent"`
 	IntranetSharing                    bool            `json:"ipforward"`
-	EnhancedMode                       bool            `json:"enhancedMode"`
+	SpecialMode                        SpecialMode     `json:"specialMode"`
 	AntiPollution                      Antipollution   `json:"antipollution"`
-	DnsForceMode                       bool            `json:"dnsForceMode"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -30,9 +29,8 @@ func NewSetting() (setting *Setting) {
 		Mux:                        8,
 		Transparent:                TransparentClose,
 		IntranetSharing:            ipforward.IsIpForwardOn(),
-		EnhancedMode:               false,
+		SpecialMode:                SpecialModeNone,
 		AntiPollution:              AntipollutionClosed,
-		DnsForceMode:               false,
 	}
 
 }

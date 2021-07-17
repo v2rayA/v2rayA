@@ -1,71 +1,51 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"net"
-	"strings"
+	"github.com/v2rayA/v2rayA/server/service"
 )
 
-func GetDnsList(ctx *gin.Context) {
-	common.ResponseSuccess(ctx, gin.H{"dnslist": strings.Join(configure.GetDnsListNotNil(), "\n")})
-}
-
-type dnsputdata struct {
-	DnsList string `json:"dnslist"`
-}
-
-func (data *dnsputdata) Valid() bool {
-	str := strings.TrimSpace(data.DnsList)
-	dnss := strings.Split(str, "\n")
-	for _, dns := range dnss {
-		dns = strings.TrimSpace(dns)
-		if len(dns) <= 0 {
-			continue
-		}
-		if net.ParseIP(dns) == nil {
-			if l, e := net.LookupHost(dns); e != nil || len(l) == 0 {
-				return false
-			}
-		}
-	}
-	return true
-}
-func (data *dnsputdata) DeDuplicate() {
-	str := strings.TrimSpace(data.DnsList)
-	data.DnsList = ""
-	m := make(map[string]struct{})
-	dnss := strings.Split(str, "\n")
-	for _, dns := range dnss {
-		dns = strings.TrimSpace(dns)
-		if len(dns) <= 0 {
-			continue
-		}
-		if _, ok := m[dns]; !ok {
-			data.DnsList = data.DnsList + dns + "\n"
-			m[dns] = struct{}{}
-		}
-	}
-	data.DnsList = strings.TrimRight(data.DnsList, "\n")
-}
-
 func PutDnsList(ctx *gin.Context) {
-	var data dnsputdata
+	var data struct {
+		Internal string `json:"internal"`
+		External string `json:"external"`
+	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	if !data.Valid() {
-		common.ResponseError(ctx, logError(nil, "bad format of DoH server"))
+	if len(data.Internal) == 0 {
+		common.ResponseError(ctx, logError(nil, "internal dns servers cannot be empty"))
 		return
 	}
-	data.DeDuplicate()
-	err = configure.SetDnsList(&data.DnsList)
+	internal, err := service.RefineDnsList(data.Internal)
 	if err != nil {
+		common.ResponseError(ctx, logError(nil, fmt.Errorf("internal dns servers: %w", err)))
+		return
+	}
+	external, err := service.RefineDnsList(data.External)
+	if err != nil {
+		common.ResponseError(ctx, logError(nil, fmt.Errorf("external dns servers: %w", err)))
+		return
+	}
+	if err = configure.SetInternalDnsList(&internal); err != nil {
+		common.ResponseError(ctx, logError(err))
+		return
+	}
+	if err = configure.SetExternalDnsList(&external); err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, nil)
+}
+
+func GetDnsList(ctx *gin.Context) {
+	common.ResponseSuccess(ctx, gin.H{
+		"internal": configure.GetInternalDnsListNotNil(),
+		"external": configure.GetExternalDnsListNotNil(),
+	})
 }

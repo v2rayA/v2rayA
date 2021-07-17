@@ -5,7 +5,7 @@ import (
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
-	"github.com/v2rayA/v2rayA/core/dnsPoison"
+	"github.com/v2rayA/v2rayA/core/specialMode/infra"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/global"
 	"log"
@@ -127,8 +127,8 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 		return nil, newError("GetWhitelistCn").Base(err)
 	}
 	wlDomains = new(strmatcher.MatcherGroup)
-	domainMatcher := new(dnsPoison.DomainMatcherGroup)
-	fullMatcher := new(dnsPoison.FullMatcherGroup)
+	domainMatcher := new(infra.DomainMatcherGroup)
+	fullMatcher := new(infra.FullMatcherGroup)
 	for _, e := range siteList.Entry {
 		if e.CountryCode == "CN" {
 			dms := e.Domain
@@ -140,13 +140,13 @@ func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain
 				case v2router.Domain_Full:
 					fullMatcher.Add(dm.Value)
 				case v2router.Domain_Plain:
-					wlDomains.Add(dnsPoison.SubstrMatcher(dm.Value))
+					wlDomains.Add(infra.SubstrMatcher(dm.Value))
 				case v2router.Domain_Regex:
 					r, err := regexp.Compile(dm.Value)
 					if err != nil {
 						break
 					}
-					wlDomains.Add(&dnsPoison.RegexMatcher{Pattern: r})
+					wlDomains.Add(&infra.RegexMatcher{Pattern: r})
 				}
 			}
 			break

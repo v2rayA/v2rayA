@@ -1,4 +1,4 @@
-package dnsPoison
+package infra
 
 import (
 	"golang.org/x/sys/unix"

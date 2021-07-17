@@ -11,6 +11,7 @@ type (
 	DefaultYesNo            string
 	TransparentMode         string
 	Antipollution           string
+	SpecialMode             string
 )
 
 const (
@@ -52,10 +53,15 @@ const (
 	ServerType             = TouchType("server")
 	SubscriptionServerType = TouchType("subscriptionServer")
 
-	DnsForward          = Antipollution("dnsforward")
-	DoH                 = Antipollution("doh")
-	AntipollutionNone   = Antipollution("none")   //历史原因，none代表“仅防止dns劫持”，不代表关闭
-	AntipollutionClosed = Antipollution("closed") //直接iptables略过udp
+	AntipollutionDnsForward = Antipollution("dnsforward")
+	AntipollutionDoH        = Antipollution("doh")
+	AntipollutionAntiHijack = Antipollution("none")   // 历史原因，none代表“仅防止dns劫持”，不代表关闭
+	AntipollutionClosed     = Antipollution("closed") // 直接iptables略过53的udp
+	AntipollutionAdvanced   = Antipollution("advanced") // 自定义
+
+	SpecialModeNone       = SpecialMode("none")
+	SpecialModeFakeDns    = SpecialMode("fakedns")
+	SpecialModeSupervisor = SpecialMode("supervisor")
 )
 
 const (
