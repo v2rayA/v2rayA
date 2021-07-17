@@ -107,8 +107,6 @@ func Run() error {
 		auth.GET("portWhiteList", controller.GetPortWhiteList)
 		auth.PUT("portWhiteList", controller.PutPortWhiteList)
 		auth.POST("portWhiteList", controller.PostPortWhiteList)
-		auth.GET("dohList", controller.GetDohList)
-		auth.PUT("dohList", controller.PutDohList)
 		auth.GET("dnsList", controller.GetDnsList)
 		auth.PUT("dnsList", controller.PutDnsList)
 		auth.GET("siteDatFiles", controller.GetSiteDatFiles)

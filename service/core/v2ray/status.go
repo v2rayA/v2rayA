@@ -4,7 +4,7 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/ntp"
-	"github.com/v2rayA/v2rayA/core/dnsPoison/entity"
+	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
@@ -134,12 +134,11 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 	//iptables.SpoofingFilter.GetCleanCommands().Clean()
 	//defer iptables.SpoofingFilter.GetSetupCommands().Setup(nil)
 	plugin.GlobalPlugins.CloseAll()
-	entity.StopDNSPoison()
+	specialMode.StopDNSSupervisor()
 	//读配置，转换为v2ray配置并写入
 	var (
 		tmpl      Template
 		sr        *configure.ServerRaw
-		extraInfo *entity.ExtraInfo
 	)
 	if v == nil {
 		cs := configure.GetConnectedServer()
@@ -150,9 +149,9 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		if err != nil {
 			return
 		}
-		tmpl, extraInfo, err = NewTemplateFromVmessInfo(sr.VmessInfo)
+		tmpl, err = NewTemplateFromVmessInfo(sr.VmessInfo)
 	} else {
-		tmpl, extraInfo, err = NewTemplateFromVmessInfo(*v)
+		tmpl, err = NewTemplateFromVmessInfo(*v)
 	}
 	if err != nil {
 		return
@@ -187,7 +186,7 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		plugin.GlobalPlugins.Append(plu)
 	}
 
-	entity.CheckAndSetupDnsPoisonWithExtraInfo(extraInfo)
+	specialMode.CheckAndSetupDNSSupervisorWithExtraInfo()
 	return
 }
 

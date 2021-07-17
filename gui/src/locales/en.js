@@ -90,8 +90,6 @@ export default {
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Upadate Subscriptions and GFWList",
     ipForwardOn: "Share in LAN",
-    enhancedModeOn: "Enhanced",
-    dnsForceModeOn: "Disable CDS",
     concurrency: "Concurrency",
     options: {
       global: "Proxy All Traffic",
@@ -112,7 +110,8 @@ export default {
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
       updateGfwlistAtIntervals: "Update GFWList Regularly (Unit: hour)",
       dependTransparentMode: "Depend on Transparent Proxy",
-      closed: "Off"
+      closed: "Off",
+      advanced: "Advanced Setting"
     },
     messages: {
       gfwlist:
@@ -123,9 +122,7 @@ export default {
       preventDnsSpoofing:
         "If there is a problem with transparent proxy, try setting 'Prevent DNS Spoofing' as 'Off' or turn on 'Enhanced Mode' (v0.7.0.2+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): Stable and fast DoH services are suggested." +
-        "★Enhanced Mode(v0.7.0.2+) faster but not support udp and ipv6" +
-        "★Disable CDS(v1.1.3+, Disable China Domain Shunt): Do not shunt DNS query of China Domains",
+        "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
@@ -185,11 +182,11 @@ export default {
   },
   dns: {
     title: "Configure DNS Server",
-    dnsPriorityList: "Priority list of DNS Servers",
+    internalQueryServers: "Domain Query Servers",
+    externalQueryServers: "External Domain Query Servers",
     messages: [
-      "In the 'Prevent DNS Hijack Only' mode, the list is just the DNS configuration. In other modes, the first item in the list is the DNS server for querying Chinese mainland addresses.",
-      "Please fill in the IP or domain of the DNS server (without port) in the list. Ports other than 53 are not supported.",
-      "Optimally, place exact two lines above. The list will restore to default after saving with empty content."
+      '"@:(dns.internalQueryServers)" are designed to be used to look up domain names in China, while "@:(dns.externalQueryServers)" be used to look up others.',
+      '"@:(dns.internalQueryServers)" will be used to look up all domain names if "@:(dns.externalQueryServers)" is empty.'
     ]
   },
   egressPortWhitelist: {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/core/dnsPoison/entity"
+	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -63,7 +63,7 @@ func isOccupiedTCPPort(nsmap map[string]map[int][]*netstat.Socket, port int) boo
 }
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool) ([]*configure.Which, error) {
-	entity.StopDNSPoison()
+	specialMode.StopDNSSupervisor()
 	var whiches configure.Whiches
 	whiches.Set(which)
 	for i := len(which) - 1; i >= 0; i-- {

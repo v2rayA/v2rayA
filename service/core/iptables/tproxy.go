@@ -3,6 +3,8 @@ package iptables
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/v2rayA/v2rayA/core/specialMode"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"strings"
 )
 
@@ -35,6 +37,7 @@ func (t *tproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *tproxy) GetSetupCommands() SetupCommands {
+	setting := configure.GetSettingNotNil()
 	commands := `
 # 设置策略路由
 ip rule add fwmark 1 table 100
@@ -77,12 +80,26 @@ iptables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
 # 走过TPROXY的通行
 iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
+`
+	if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+		commands += ` 
+iptables -w 2 -t mangle -A TP_OUT -p udp --dport 53 -j RETURN
+`
+	}
+	commands += `
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 iptables -w 2 -t mangle -A TP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 
 # 走过TPROXY的通行
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
+`
+	if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+		commands += ` 
+iptables -w 2 -t mangle -A TP_PRE -p udp --dport 53 -j RETURN
+`
+	}
+	commands += `
 # 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -w 2 -t mangle -A TP_PRE -p udp -m mark ! --mark 1 -j SETMARK
@@ -132,12 +149,26 @@ ip6tables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
 # 走过TPROXY的通行
 ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
+`
+		if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+			commands += ` 
+ip6tables -w 2 -t mangle -A TP_OUT -p udp --dport 53 -j RETURN
+`
+		}
+		commands += `
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 ip6tables -w 2 -t mangle -A TP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 ip6tables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 
 # 走过TPROXY的通行
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
+`
+		if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+			commands += ` 
+ip6tables -w 2 -t mangle -A TP_PRE -p udp --dport 53 -j RETURN
+`
+		}
+		commands += `
 # 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark ! --mark 1 -j SETMARK

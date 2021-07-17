@@ -19,10 +19,9 @@ type Configure struct {
 	Setting         *Setting           `json:"setting"`
 	Accounts        map[string]string  `json:"accounts"`
 	Ports           Ports              `json:"ports"`
-	PortWhiteList   PortWhiteList      `json:"portWhiteList"`
-	DohList         string             `json:"dohlist"`
-	DnsList         string             `json:"dnslist"`
-	CustomPac       CustomPac          `json:"customPac"`
+	PortWhiteList   PortWhiteList      `json:"portWhiteList"` //TODO: choose to use tproxy or redirect
+	InternalDnsList *string            `json:"internalDnsList"`
+	ExternalDnsList *string            `json:"externalDnsList"`
 	RoutingA        *string            `json:"routingA"`
 }
 
@@ -85,13 +84,10 @@ func SetConfigure(cfg *Configure) error {
 	if err := SetRoutingA(cfg.RoutingA); err != nil {
 		return err
 	}
-	if err := SetDohList(&cfg.DohList); err != nil {
+	if err := SetInternalDnsList(cfg.InternalDnsList); err != nil {
 		return err
 	}
-	if err := SetDnsList(&cfg.DnsList); err != nil {
-		return err
-	}
-	if err := SetCustomPac(&cfg.CustomPac); err != nil {
+	if err := SetExternalDnsList(cfg.ExternalDnsList); err != nil {
 		return err
 	}
 	if err := SetPortWhiteList(&cfg.PortWhiteList); err != nil {
@@ -133,11 +129,11 @@ func SetPorts(ports *Ports) (err error) {
 func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
 	return db.Set("system", "portWhiteList", portWhiteList.Compressed())
 }
-func SetDohList(dohList *string) (err error) {
-	return db.Set("system", "dohList", strings.TrimSpace(*dohList))
+func SetInternalDnsList(dnsList *string) (err error) {
+	return db.Set("system", "internalDnsList", strings.TrimSpace(*dnsList))
 }
-func SetDnsList(dnsList *string) (err error) {
-	return db.Set("system", "dnsList", strings.TrimSpace(*dnsList))
+func SetExternalDnsList(dnsList *string) (err error) {
+	return db.Set("system", "externalDnsList", strings.TrimSpace(*dnsList))
 }
 func SetCustomPac(customPac *CustomPac) (err error) {
 	return db.Set("system", "customPac", customPac)
@@ -202,8 +198,8 @@ func GetSettingNotNil() *Setting {
 		r = NewSetting()
 		_ = db.Set("system", "setting", r)
 	}
-	if r.AntiPollution == "" {
-		r.AntiPollution = AntipollutionNone
+	if r.SpecialMode == "" {
+		r.SpecialMode = SpecialModeNone
 	}
 	return r
 }
@@ -220,22 +216,28 @@ func GetPortWhiteListNotNil() *PortWhiteList {
 	_ = db.Get("system", "portWhiteList", &r)
 	return r
 }
-func GetDohListNotNil() *string {
+func GetExternalDnsListNotNil() (list []string) {
 	r := new(string)
-	_ = db.Get("system", "dohList", &r)
-	if len(strings.TrimSpace(*r)) == 0 {
-		*r = `https://doh.opendns.com/dns-query`
+	_ = db.Get("system", "externalDnsList", &r)
+	list = strings.Split(strings.TrimSpace(*r), "\n")
+	if len(list) == 1 && list[0] == "" {
+		return []string{}
 	}
-	return r
+	return
 }
-func GetDnsListNotNil() []string {
+func GetInternalDnsListNotNil() (list []string) {
 	r := new(string)
-	_ = db.Get("system", "dnsList", &r)
+	_ = db.Get("system", "internalDnsList", &r)
 	if len(strings.TrimSpace(*r)) == 0 {
-		*r = `223.5.5.5
-114.114.114.114`
+		*r = `119.29.29.29 -> direct
+https://doh.alidns.com/dns-query -> direct
+tcp://dns.opendns.com:5353 -> proxy`
 	}
-	return strings.Split(strings.TrimSpace(*r), "\n")
+	list = strings.Split(strings.TrimSpace(*r), "\n")
+	if len(list) == 1 && list[0] == "" {
+		return []string{}
+	}
+	return
 }
 func GetCustomPacNotNil() *CustomPac {
 	r := new(CustomPac)

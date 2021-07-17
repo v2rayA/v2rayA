@@ -1,4 +1,4 @@
-package dnsPoison
+package infra
 
 type reservedIP uint32
 

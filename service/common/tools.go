@@ -48,6 +48,19 @@ func VersionMustGreaterEqual(v1, v2 string) (is bool) {
 	return
 }
 
+func Deduplicate(list []string) []string {
+	res := make([]string, 0, len(list))
+	m := make(map[string]struct{})
+	for _, v := range list {
+		if _, ok := m[v]; ok {
+			continue
+		}
+		m[v] = struct{}{}
+		res = append(res, v)
+	}
+	return res
+}
+
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 	if v1 == "UnknownClient" {

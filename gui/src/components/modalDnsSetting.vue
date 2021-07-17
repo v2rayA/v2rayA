@@ -8,13 +8,23 @@
     <section class="modal-card-body">
       <b-message type="is-info" class="after-line-dot5">
         <p>{{ $t("dns.messages.0") }}</p>
-        <p>{{ $t("dns.messages.1") }}</p>
       </b-message>
-      <b-field :label="$t('dns.dnsPriorityList')">
-        <b-input v-model="dnslist" type="textarea" />
+      <b-field :label="$t('dns.internalQueryServers')">
+        <b-input
+          v-model="internal"
+          type="textarea"
+          custom-class="full-min-height horizon-scroll code-font"
+        />
+      </b-field>
+      <b-field :label="$t('dns.externalQueryServers')">
+        <b-input
+          v-model="external"
+          type="textarea"
+          custom-class="full-min-height horizon-scroll code-font"
+        />
       </b-field>
       <b-message type="is-danger" class="after-line-dot5">
-        <p>{{ $t("dns.messages.2") }}</p>
+        <p>{{ $t("dns.messages.1") }}</p>
       </b-message>
     </section>
     <footer class="modal-card-foot flex-end">
@@ -34,19 +44,23 @@ import { handleResponse } from "@/assets/js/utils";
 export default {
   name: "ModalDnsSetting",
   data: () => ({
-    dnslist: ""
+    internal: "",
+    external: ""
   }),
   created() {
     this.$axios({
       url: apiRoot + "/dnsList"
     }).then(res => {
       handleResponse(res, this, () => {
-        if (res.data.data.dnslist) {
-          let dnslist = res.data.data.dnslist;
-          dnslist.trim();
-          let arr = dnslist.split("\n");
-          if (arr.length > 0) {
-            this.dnslist = dnslist;
+        if (res.data.data.internal) {
+          let internal = res.data.data.internal;
+          let external = res.data.data.external;
+          console.log(res.data.data);
+          if (internal.length) {
+            this.internal = internal.join("\n");
+          }
+          if (external.length) {
+            this.external = external.join("\n");
           }
         }
       });
@@ -58,7 +72,8 @@ export default {
         url: apiRoot + "/dnsList",
         method: "put",
         data: {
-          dnslist: this.dnslist
+          internal: this.internal,
+          external: this.external
         }
       }).then(res => {
         handleResponse(res, this, () => {
