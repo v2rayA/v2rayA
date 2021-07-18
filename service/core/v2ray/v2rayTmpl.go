@@ -7,13 +7,13 @@ import (
 	"github.com/v2rayA/routingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/core/dnsParser"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
+	dnsParser2 "github.com/v2rayA/v2rayA/infra/dnsParser"
 	"log"
 	"net"
 	"net/url"
@@ -501,7 +501,7 @@ type DnsRouting struct {
 
 func appendDnsServers(d *DNS, lines []string, domains []string) {
 	for _, line := range lines {
-		dns := dnsParser.Parse(line)
+		dns := dnsParser2.Parse(line)
 		if _, err := url.Parse(dns.Val); err == nil {
 			if domains != nil {
 				d.Servers = append(d.Servers, DnsServer{
@@ -542,7 +542,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 		if len(external) == 0 {
 			allThroughProxy = true
 			for _, line := range internal {
-				dns := dnsParser.Parse(line)
+				dns := dnsParser2.Parse(line)
 				if dns.Out != "proxy" {
 					allThroughProxy = false
 					break
@@ -551,7 +551,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 		}
 		// check UDP support
 		for _, line := range external {
-			dns := dnsParser.Parse(line)
+			dns := dnsParser2.Parse(line)
 			if dns.Out == "proxy" {
 				if net.ParseIP(dns.Val) != nil {
 					return DnsRouting{}, fmt.Errorf("sorry, your DNS setting may be invalid, because UDP is not supported for %v yet by v2rayA. Please use tcp:// or doh:// instead.", v.Protocol)
@@ -607,7 +607,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 	// routing
 	dnsList := append(append([]string{}, internal...), external...)
 	for _, line := range dnsList {
-		dns := dnsParser.Parse(line)
+		dns := dnsParser2.Parse(line)
 		if dns.Val == "localhost" {
 			// no need to routing
 			continue

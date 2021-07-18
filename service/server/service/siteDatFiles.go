@@ -2,16 +2,16 @@ package service
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/v2rayA/v2rayA/core/siteDat"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	siteDat2 "github.com/v2rayA/v2rayA/infra/siteDat"
 	"log"
 	"os"
 	"path"
 	"strings"
-	"v2ray.com/core/app/router"
+	"github.com/v2fly/v2ray-core/v4/app/router"
 )
 
-func GetSiteDatFiles() (siteDats []siteDat.SiteDat) {
+func GetSiteDatFiles() (siteDats []siteDat2.SiteDat) {
 	dir := asset.GetV2rayLocationAsset()
 	fis, err := os.ReadDir(dir)
 	if err != nil {
@@ -26,7 +26,7 @@ func GetSiteDatFiles() (siteDats []siteDat.SiteDat) {
 				//暂不支持IPDat
 				continue
 			}
-			var sd siteDat.SiteDat
+			var sd siteDat2.SiteDat
 			sd.Filename = f.Name()
 			b, err := os.ReadFile(path.Join(dir, f.Name()))
 			if err != nil {

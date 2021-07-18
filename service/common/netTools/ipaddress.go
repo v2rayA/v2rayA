@@ -2,9 +2,9 @@ package netTools
 
 import (
 	"bytes"
+	"github.com/v2rayA/v2rayA/infra/dataStructure/trie"
 	"strconv"
 	"strings"
-	Trie "github.com/v2rayA/v2rayA/dataStructure/trie"
 )
 
 var intranet4 = []string{
@@ -24,15 +24,15 @@ var jokernet4 = []string{
 	"240.0.0.0/4",
 }
 
-var trieIntranet *Trie.Trie
-var trieJokernet *Trie.Trie
+var trieIntranet *trie.Trie
+var trieJokernet *trie.Trie
 
 func init() {
 	trieIntranet = Init(intranet4)
 	trieJokernet = Init(jokernet4)
 }
 
-func Init(CIDRs []string) *Trie.Trie {
+func Init(CIDRs []string) *trie.Trie {
 	dict := make([]string, 0, len(CIDRs))
 	for _, CIDR := range CIDRs {
 		grp := strings.SplitN(CIDR, "/", 2)
@@ -50,7 +50,7 @@ func Init(CIDRs []string) *Trie.Trie {
 		}
 		dict = append(dict, builder.String()[:l])
 	}
-	return Trie.New(dict)
+	return trie.New(dict)
 }
 
 func ipv4ToBin(ipv4 *[4]byte) string {

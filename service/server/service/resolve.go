@@ -3,8 +3,8 @@ package service
 import (
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
+	"github.com/v2rayA/v2rayA/infra/nodeData"
 	"log"
 	"net/url"
 	"regexp"

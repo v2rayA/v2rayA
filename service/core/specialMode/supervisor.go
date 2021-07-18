@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"sync"
 	"time"
-	"v2ray.com/core/app/router"
+	"github.com/v2fly/v2ray-core/v4/app/router"
 )
 
 var (

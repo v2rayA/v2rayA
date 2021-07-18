@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcapgo"
+	v2router "github.com/v2fly/v2ray-core/v4/app/router"
+	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
 	"github.com/v2rayA/v2rayA/common/netTools"
 	"golang.org/x/net/dns/dnsmessage"
 	"log"
@@ -11,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	v2router "v2ray.com/core/app/router"
-	"v2ray.com/core/common/strmatcher"
 )
 
 type handle struct {
@@ -61,7 +61,7 @@ func (interfaceHandle *handle) handleSendMessage(m *dnsmessage.Message, sAddr, s
 	dmNoTQDN := strings.TrimSuffix(dm, ".")
 	if dm == "" {
 		return
-	} else if index := whitelistDomains.Match(dmNoTQDN); index > 0 {
+	} else if index := whitelistDomains.Match(dmNoTQDN); index != nil {
 		// whitelistDomains
 		return
 	} else if index := strings.Index(dmNoTQDN, "."); index <= 0 {
