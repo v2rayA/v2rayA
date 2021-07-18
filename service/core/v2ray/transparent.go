@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
@@ -43,20 +44,22 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (er
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
 				err = newError("you does not compile xt_TPROXY in kernel")
 			}
-			return err
+			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(&iptables.Tproxy)
 	} else if setting.TransparentType == configure.TransparentRedirect {
 		if err = iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
-			return newError("not support transparent proxy: ").Base(err)
+			return newError("not support \"redirect\" mode of transparent proxy: ").Base(err)
 		}
 		iptables.SetWatcher(&iptables.Redirect)
 	}
 	if specialMode.ShouldLocalDnsListen() {
-		if specialMode.CouldLocalDnsListen() == nil {
+		if e := specialMode.CouldLocalDnsListen(); e == nil {
 			resetResolvHijacker()
+		} else if specialMode.ShouldUseFakeDns() {
+			return fmt.Errorf("fakedns cannot be enabled: %w", e)
 		} else {
-			log.Printf("[Warning] %w", err)
+			log.Printf("[Warning] %v", e)
 		}
 	}
 	return nil
