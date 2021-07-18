@@ -11,8 +11,10 @@ func CouldUseFakeDns() bool {
 	if err != nil {
 		ver = "0.0.0"
 	}
-	fakeDnsValid, _ := common.VersionGreaterEqual(ver, "4.35.0")
-	return fakeDnsValid
+	if fakeDnsValid, _ := common.VersionGreaterEqual(ver, "4.35.0"); !fakeDnsValid {
+		return false
+	}
+	return configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed
 }
 
 func ShouldUseFakeDns() bool {

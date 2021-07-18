@@ -83,8 +83,10 @@ export default {
   },
   setting: {
     transparentProxy: "Transparent Proxy",
+    transparentType: "Transparent Proxy Implementation",
     pacMode: "Traffic Splitting Mode of Rule Port",
     preventDnsSpoofing: "Prevent DNS Spoofing",
+    specialMode: "Special Mode",
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
@@ -118,11 +120,15 @@ export default {
         "Based on modified time of file which sometimes is after latest version online.",
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers as the gateway should make option 'Share in LAN' on.",
+      transparentType:
+        "★tproxy: UDP supported, but egress whitelist should be confirmed manually. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution.",
       pacMode: `Here you can set the splitting traffic rule of rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing:
         "If there is a problem with transparent proxy, try setting 'Prevent DNS Spoofing' as 'Off' or turn on 'Enhanced Mode' (v0.7.0.2+)." +
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
         "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
+      specialMode:
+        "★supervisor：Monitor dns pollution, intercept in advance, use sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving, and it needs to occupy the local port 53.",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:

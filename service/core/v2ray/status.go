@@ -131,8 +131,6 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 			err = newError(e).Base(err)
 		}
 	}()
-	//iptables.SpoofingFilter.GetCleanCommands().Clean()
-	//defer iptables.SpoofingFilter.GetSetupCommands().Setup(nil)
 	plugin.GlobalPlugins.CloseAll()
 	specialMode.StopDNSSupervisor()
 	//读配置，转换为v2ray配置并写入
@@ -186,7 +184,7 @@ func UpdateV2RayConfig(v *vmessInfo.VmessInfo) (err error) {
 		plugin.GlobalPlugins.Append(plu)
 	}
 
-	specialMode.CheckAndSetupDNSSupervisorWithExtraInfo()
+	specialMode.CheckAndSetupDNSSupervisor()
 	return
 }
 

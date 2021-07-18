@@ -15,6 +15,7 @@ type Setting struct {
 	Transparent                        TransparentMode `json:"transparent"`
 	IntranetSharing                    bool            `json:"ipforward"`
 	SpecialMode                        SpecialMode     `json:"specialMode"`
+	TransparentType                    TransparentType `json:"transparentType"`
 	AntiPollution                      Antipollution   `json:"antipollution"`
 }
 
@@ -30,6 +31,7 @@ func NewSetting() (setting *Setting) {
 		Transparent:                TransparentClose,
 		IntranetSharing:            ipforward.IsIpForwardOn(),
 		SpecialMode:                SpecialModeNone,
+		TransparentType:            TransparentRedirect,
 		AntiPollution:              AntipollutionClosed,
 	}
 
