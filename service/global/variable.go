@@ -9,8 +9,6 @@ var (
 	Version                  = "debug"
 	FoundNew                 = false
 	RemoteVersion            = ""
-	SupportTproxy            = true
-	ServiceControlMode       SystemServiceControlMode
 	V2RayPID                 *os.Process
 	TickerUpdateGFWList      *time.Ticker
 	TickerUpdateSubscription *time.Ticker

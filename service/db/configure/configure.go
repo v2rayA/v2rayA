@@ -201,6 +201,9 @@ func GetSettingNotNil() *Setting {
 	if r.SpecialMode == "" {
 		r.SpecialMode = SpecialModeNone
 	}
+	if r.TransparentType == "" {
+		r.TransparentType = TransparentRedirect
+	}
 	return r
 }
 func GetPorts() *Ports {

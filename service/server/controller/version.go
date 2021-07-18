@@ -6,6 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	"net/http"
 )
@@ -36,10 +37,10 @@ func GetVersion(ctx *gin.Context) {
 	} else {
 		dohValid = err.Error()
 	}
-	if global.SupportTproxy {
-		iptablesMode = "tproxy"
-	} else {
-		iptablesMode = "redirect"
+	setting := configure.GetSettingNotNil()
+	switch setting.TransparentType {
+	case configure.TransparentTproxy, configure.TransparentRedirect:
+		iptablesMode = string(setting.TransparentType)
 	}
 	common.ResponseSuccess(ctx, gin.H{
 		"version":       global.Version,

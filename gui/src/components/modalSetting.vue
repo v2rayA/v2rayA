@@ -67,7 +67,11 @@
           }}</option>
         </b-select>
         <b-button
-          v-show="transparent !== 'close' && iptablesMode === 'tproxy'"
+          v-show="
+            transparent !== 'close' &&
+              ((!showTransparentType && iptablesMode === 'tproxy') ||
+                (showTransparentType && transparentType === 'tproxy'))
+          "
           style="border-radius: 0;z-index: 2;"
           @click="handleClickPortWhiteList"
         >
@@ -79,6 +83,31 @@
           style="position:relative;left:-1px;"
           >{{ $t("setting.ipForwardOn") }}
         </b-checkbox-button>
+      </b-field>
+
+      <b-field
+        v-show="transparent !== 'close' && showTransparentType"
+        label-position="on-border"
+      >
+        <template slot="label">
+          {{ $t("setting.transparentType") }}
+          <b-tooltip
+            type="is-dark"
+            multilined
+            :label="$t('setting.messages.transparentType')"
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            />
+          </b-tooltip>
+        </template>
+        <b-select v-model="transparentType" expanded class="left-border">
+          <option value="redirect">redirect</option>
+          <option value="tproxy">tproxy</option>
+        </b-select>
       </b-field>
       <b-field label-position="on-border">
         <template slot="label">
@@ -154,7 +183,7 @@
           <option v-show="showDoh" value="doh">{{
             $t("setting.options.doh")
           }}</option>
-          <option v-show="showDoh" value="advanced">{{
+          <option v-show="showAdvanced" value="advanced">{{
             $t("setting.options.advanced")
           }}</option>
         </b-select>
@@ -169,6 +198,30 @@
           {{ $t("operations.configure") }}
         </b-button>
         <p></p>
+      </b-field>
+      <b-field v-show="showSpecialMode" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.specialMode") }}
+          <b-tooltip
+            type="is-dark"
+            multilined
+            :label="$t('setting.messages.specialMode')"
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position:relative;top:2px;right:3px;font-weight:normal"
+            />
+          </b-tooltip>
+        </template>
+        <b-select v-model="specialMode" expanded class="left-border">
+          <option value="none">{{ $t("setting.options.closed") }}</option>
+          <option value="supervisor">supervisor</option>
+          <option v-show="antipollution !== 'closed'" value="fakedns"
+            >fakedns</option
+          >
+        </b-select>
       </b-field>
       <b-field label-position="on-border">
         <template slot="label">
@@ -328,11 +381,12 @@ export default {
     muxOn: "no",
     mux: "8",
     transparent: "close",
+    transparentType: "redirect",
     ipforward: false,
-    enhancedMode: false,
     dnsForceMode: false,
     dnsforward: "no",
     antipollution: "none",
+    specialMode: "none",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
@@ -344,8 +398,11 @@ export default {
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
     showAntipollution: false,
-    showDoh: false,
+    showSpecialMode: false,
+    showTransparentType: false,
+    showAdvanced: false,
     showDns: false,
+    showDoh: false,
     showTransparentModeRoutingPac: false,
     showRoutingA: false,
     showAntipollutionClosed: false,
@@ -366,6 +423,13 @@ export default {
     },
     iptablesMode() {
       return localStorage["iptablesMode"] || "tproxy";
+    }
+  },
+  watch: {
+    antipollution(val) {
+      if (val === "closed" && this.specialMode === "fakedns") {
+        this.specialMode = "none";
+      }
     }
   },
   created() {
@@ -390,6 +454,18 @@ export default {
         this.showAntipollution = isVersionGreaterEqual(
           localStorage["version"],
           "0.6.1"
+        );
+        this.showSpecialMode = isVersionGreaterEqual(
+          localStorage["version"],
+          "1.4.0"
+        );
+        this.showTransparentType = isVersionGreaterEqual(
+          localStorage["version"],
+          "1.4.0"
+        );
+        this.showAdvanced = isVersionGreaterEqual(
+          localStorage["version"],
+          "1.4.0"
         );
         this.showDoh =
           isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
@@ -474,11 +550,11 @@ export default {
             muxOn: this.muxOn,
             mux: parseInt(this.mux),
             transparent: this.transparent,
+            transparentType: this.transparentType,
             ipforward: this.ipforward,
-            enhancedMode: this.enhancedMode,
-            dnsForceMode: this.dnsForceMode,
             dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
-            antipollution: this.antipollution
+            antipollution: this.antipollution,
+            specialMode: this.specialMode
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;

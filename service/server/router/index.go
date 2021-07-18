@@ -90,8 +90,6 @@ func Run() error {
 		auth.DELETE("touch", controller.DeleteTouch)
 		auth.POST("connection", controller.PostConnection)
 		auth.DELETE("connection", controller.DeleteConnection)
-		auth.POST("v2ray", controller.PostV2ray)
-		auth.DELETE("v2ray", controller.DeleteV2ray)
 		auth.GET("pingLatency", controller.GetPingLatency)
 		auth.GET("httpLatency", controller.GetHttpLatency)
 		auth.GET("sharingAddress", controller.GetSharingAddress)
@@ -109,9 +107,6 @@ func Run() error {
 		auth.POST("portWhiteList", controller.PostPortWhiteList)
 		auth.GET("dnsList", controller.GetDnsList)
 		auth.PUT("dnsList", controller.PutDnsList)
-		auth.GET("siteDatFiles", controller.GetSiteDatFiles)
-		auth.GET("customPac", controller.GetCustomPac)
-		auth.PUT("customPac", controller.PutCustomPac)
 		auth.GET("routingA", controller.GetRoutingA)
 		auth.PUT("routingA", controller.PutRoutingA)
 	}

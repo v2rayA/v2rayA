@@ -18,7 +18,7 @@ func PutDnsList(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	if len(data.Internal) == 0 {
+	if len(data.Internal) == 0 && len(data.External) != 0 {
 		common.ResponseError(ctx, logError(nil, "internal dns servers cannot be empty"))
 		return
 	}

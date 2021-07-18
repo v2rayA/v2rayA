@@ -583,12 +583,12 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 				}
 			}
 		case configure.AntipollutionDoH:
-			external = []string{"https://doh.alidns.com/dns-query -> direct", "https://rubyfish.cn/dns-query -> direct"}
+			external = []string{"https://doh.pub/dns-query -> direct", "https://rubyfish.cn/dns-query -> direct"}
 		}
 	}
 	True := true
 	t.DNS = &DNS{
-		Tag: "dns-inbound",
+		Tag: "dns",
 	}
 	if allThroughProxy {
 		// guess the user want to protect the privacy
@@ -654,17 +654,39 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 		} else {
 			ds.Domains = append(ds.Domains, "geosite:geolocation-!cn")
 		}
+		if len(t.DNS.Servers) == 0 {
+			log.Println("[Fakedns]: NOT REASONABLE. Please report your config.")
+			t.DNS.Servers = append(t.DNS.Servers, "localhost")
+		}
 		t.DNS.Servers = append(t.DNS.Servers, ds)
 	}
 
 	if t.DNS.Servers == nil {
 		t.DNS.Servers = []interface{}{"localhost"}
 	} else if net.ParseIP(v.Add) == nil {
-		t.DNS.Servers = append(t.DNS.Servers, DnsServer{
-			Address:      "114.114.114.114",
-			Domains:      []string{v.Add},
-			SkipFallback: true,
-		})
+		if CheckDohSupported("") == nil {
+			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
+				Address:      "https://doh.pub/dns-query",
+				Domains:      []string{v.Add},
+				SkipFallback: true,
+			})
+			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
+				Address:      "https://doh.alidns.com/dns-query",
+				Domains:      []string{v.Add},
+				SkipFallback: true,
+			})
+		} else {
+			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
+				Address:      "119.29.29.29",
+				Domains:      []string{v.Add},
+				SkipFallback: true,
+			})
+			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
+				Address:      "dns.alidns.com",
+				Domains:      []string{v.Add},
+				SkipFallback: true,
+			})
+		}
 	}
 	for _, domain := range append(append([]Addr{}, routing.ProxyDomains...), routing.DirectDomains...) {
 		ips, err := net.LookupHost(domain.host)
@@ -682,32 +704,36 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
 	for _, r := range routing.DirectIPs {
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns-inbound"}, OutboundTag: "direct", IP: []string{r.host}, Port: r.port},
+			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct", IP: []string{r.host}, Port: r.port},
 		)
 	}
 	for _, r := range routing.ProxyIPs {
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns-inbound"}, OutboundTag: "proxy", IP: []string{r.host}, Port: r.port},
+			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "proxy", IP: []string{r.host}, Port: r.port},
 		)
 	}
 	for _, r := range routing.DirectDomains {
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns-inbound"}, OutboundTag: "direct", Domain: []string{r.host}, Port: r.port},
+			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct", Domain: []string{r.host}, Port: r.port},
 		)
 	}
 	for _, r := range routing.ProxyDomains {
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns-inbound"}, OutboundTag: "proxy", Domain: []string{r.host}, Port: r.port},
+			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "proxy", Domain: []string{r.host}, Port: r.port},
 		)
 	}
-	dnsout := RoutingRule{ // hijack traffic to port 53
+	t.Routing.Rules = append(t.Routing.Rules,
+		RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
+	)
+	dnsOut := RoutingRule{ // hijack traffic to port 53
 		Type:        "field",
 		Port:        "53",
 		OutboundTag: "dns-out",
 	}
-	if t.FakeDns != nil {
-		dnsout.InboundTag = []string{"fakedns-in"}
-	} else {
+	if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
+		dnsOut.InboundTag = []string{"dns-in"}
+	}
+	if specialMode.ShouldUseSupervisor() {
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{ // supervisor
 				Type:        "field",
@@ -716,7 +742,7 @@ func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
 			},
 		)
 	}
-	t.Routing.Rules = append(t.Routing.Rules, dnsout)
+	t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	if !supportUDP {
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{
@@ -1128,14 +1154,13 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 	}
 	if setting.Transparent != configure.TransparentClose {
 		var tproxy string
-		if global.SupportTproxy {
-			tproxy = "tproxy"
-		} else {
-			tproxy = "redirect"
+		switch setting.TransparentType {
+		case configure.TransparentTproxy, configure.TransparentRedirect:
+			tproxy = string(setting.TransparentType)
 		}
 		t.AppendDokodemo(&tproxy, 32345, "transparent")
 	}
-	if t.FakeDns != nil {
+	if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
 		// FIXME: xray cannot use fakedns+others (2021-07-17), set up a solo dokodemo-door for fakedns
 		t.Inbounds = append(t.Inbounds, Inbound{
 			Port:     53,
@@ -1146,7 +1171,7 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 				Address: "2.0.1.7",
 				Port:    53,
 			},
-			Tag: "fakedns-in",
+			Tag: "dns-in",
 		})
 	}
 }
@@ -1218,7 +1243,6 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 	t.AppendDNSOutbound()
 	//最后是routing
 	t.Routing.DomainMatcher = "mph"
-	// TODO: use what rules should depend on supportUDP in some other places
 	t.SetDNSRouting(dnsRouting, supportUDP)
 	//规则端口规则
 	if err = t.SetRulePortRouting(setting); err != nil {
@@ -1271,10 +1295,17 @@ func (t *Template) CheckDuplicatedTags() error {
 func (t *Template) CheckInboundPortsOccupied() (occupied bool, port string, pname string) {
 	var st []string
 	for _, in := range t.Inbounds {
-		if in.Settings != nil && in.Settings.UDP {
-			st = append(st, strconv.Itoa(in.Port)+":tcp,udp")
-		} else {
+		switch strings.ToLower(in.Protocol) {
+		case "http", "vmess", "vless", "trojan":
 			st = append(st, strconv.Itoa(in.Port)+":tcp")
+		case "dokodemo-door":
+			if in.Settings != nil && in.Settings.Network != "" {
+				st = append(st, strconv.Itoa(in.Port)+":"+in.Settings.Network)
+			} else {
+				st = append(st, strconv.Itoa(in.Port)+":tcp,udp")
+			}
+		default:
+			st = append(st, strconv.Itoa(in.Port)+":tcp,udp")
 		}
 	}
 	v2rayPath, _ := where.GetV2rayBinPath()

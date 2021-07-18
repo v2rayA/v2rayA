@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	"os"
 	"strconv"
+	"sync"
+	"time"
 )
 
 var (
@@ -16,9 +17,29 @@ var (
 
 func ShouldLocalDnsListen() bool {
 	setting := configure.GetSettingNotNil()
-	return setting.Transparent != configure.TransparentClose && !global.SupportTproxy
+	return setting.Transparent != configure.TransparentClose &&
+		setting.AntiPollution != configure.AntipollutionClosed && (
+		setting.TransparentType == configure.TransparentRedirect) ||
+		setting.SpecialMode == configure.SpecialModeFakeDns
 }
-func CouldLocalDnsListen() error {
+
+var couldListen struct {
+	err        error
+	lastUpdate time.Time
+	mu         sync.Mutex
+}
+
+func CouldLocalDnsListen() (err error) {
+	// cache for 3 seconds
+	couldListen.mu.Lock()
+	defer couldListen.mu.Unlock()
+	if time.Since(couldListen.lastUpdate) < 3*time.Second {
+		return couldListen.err
+	}
+	defer func() {
+		couldListen.lastUpdate = time.Now()
+		couldListen.err = err
+	}()
 	occupied, socket, err := ports.IsPortOccupied([]string{"53:udp"})
 	if err != nil {
 		return fmt.Errorf("%w: %v", DnsPortCheckFailedErr, err)

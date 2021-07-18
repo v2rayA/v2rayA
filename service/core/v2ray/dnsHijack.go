@@ -35,13 +35,15 @@ func (h *ResolvHijacker) Close() error {
 	return nil
 }
 
+const HijackFlag = "# v2rayA DNS hijack"
+
 var hijacker *ResolvHijacker
 
 func (h *ResolvHijacker) HijackResolv() error {
-	err := os.WriteFile(resolverFile, []byte(`# v2rayA DNS hijack
-223.5.5.5
-119.29.29.29
-`), os.FileMode(0644))
+	err := os.WriteFile(resolverFile,
+		[]byte(HijackFlag+"\nnameserver 127.0.0.1\nnameserver 114.114.114.114\n"),
+		os.FileMode(0644),
+	)
 	if err != nil {
 		err = fmt.Errorf("failed to hijackDNS: [write] %v", err)
 	}
@@ -58,6 +60,13 @@ func resetResolvHijacker() {
 func removeResolvHijacker() {
 	if hijacker != nil {
 		hijacker.Close()
+		if hijacker.localDNS {
+			os.WriteFile(resolverFile,
+				[]byte(HijackFlag+"\nnameserver 119.29.29.29\nnameserver 114.114.114.114\n"),
+				os.FileMode(0644),
+			)
+		}
 		hijacker = nil
+
 	}
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/v2rayA/v2rayA/core/ipforward"
+	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -13,6 +14,7 @@ import (
 
 func Disconnect() (err error) {
 	plugin.GlobalPlugins.CloseAll()
+	specialMode.StopDNSSupervisor()
 	err = v2ray.StopV2rayService()
 	if err != nil {
 		return

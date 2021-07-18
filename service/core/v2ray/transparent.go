@@ -24,34 +24,40 @@ func DeleteTransparentProxyRules() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) error {
+func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (err error) {
+	defer func() {
+		if err != nil {
+			log.Println(err)
+			DeleteTransparentProxyRules()
+		}
+	}()
 	if specialMode.ShouldUseSupervisor() {
-		if e := iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); e != nil {
-			log.Println(newError("[WARNING] DropSpoofing can't be enable").Base(e))
-			iptables.DropSpoofing.GetCleanCommands().Clean()
+		if err = iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); err != nil {
+			err = newError("[WARNING] DropSpoofing can't be enable").Base(err)
+			return err
 		}
 	}
-	if global.SupportTproxy {
-		if err := iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
+	setting := configure.GetSettingNotNil()
+	if setting.TransparentType == configure.TransparentTproxy {
+		if err = iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
 				err = newError("you does not compile xt_TPROXY in kernel")
 			}
-			DeleteTransparentProxyRules()
-			log.Println(err)
-			global.SupportTproxy = false
 			return err
 		}
 		iptables.SetWatcher(&iptables.Tproxy)
-	} else {
-		if err := iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
-			log.Println(err)
-			DeleteTransparentProxyRules()
+	} else if setting.TransparentType == configure.TransparentRedirect {
+		if err = iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
 			return newError("not support transparent proxy: ").Base(err)
 		}
 		iptables.SetWatcher(&iptables.Redirect)
 	}
 	if specialMode.ShouldLocalDnsListen() {
-		resetResolvHijacker()
+		if specialMode.CouldLocalDnsListen() == nil {
+			resetResolvHijacker()
+		} else {
+			log.Printf("[Warning] %w", err)
+		}
 	}
 	return nil
 }

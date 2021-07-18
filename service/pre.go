@@ -8,7 +8,6 @@ import (
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
@@ -26,9 +25,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"regexp"
 	"runtime"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -73,27 +70,8 @@ func checkEnvironment() {
 func checkTProxySupportability() {
 	//检查tproxy是否可以启用
 	if err := v2ray.CheckAndProbeTProxy(); err != nil {
-		log.Println("[INFO] Cannot load TPROXY module:", err, ". Switch to DNSPoison module")
+		log.Println("[INFO] Cannot load TPROXY module:", err)
 	}
-	v2ray.CheckAndStopTransparentProxy()
-	preprocess := func(c *iptables.SetupCommands) {
-		commands := string(*c)
-		lines := strings.Split(commands, "\n")
-		reg := regexp.MustCompile(`{{.+}}`)
-		for i, line := range lines {
-			if len(reg.FindString(line)) > 0 {
-				lines[i] = ""
-			}
-		}
-		commands = strings.Join(lines, "\n")
-		*c = iptables.SetupCommands(commands)
-	}
-	err := iptables.Tproxy.GetSetupCommands().Setup(&preprocess)
-	if err != nil {
-		log.Println(err)
-		global.SupportTproxy = false
-	}
-	iptables.Tproxy.GetCleanCommands().Clean()
 }
 
 func migrate(jsonConfPath string) (err error) {

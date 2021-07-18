@@ -120,22 +120,11 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	assetDir := asset.GetV2rayLocationAsset()
 	pathSiteDat := filepath.Join(assetDir, "LoyalsoldierSite.dat")
 	pathSiteDatSha256 := filepath.Join(assetDir, "LoyalsoldierSite.dat.sha256sum")
-	backupDat := filepath.Join(assetDir, "LoyalsoldierSite.dat.bak")
-	var sucBackup bool
-	if _, err = os.Stat(pathSiteDat); err == nil {
-		//backup
-		err = os.Rename(pathSiteDat, backupDat)
-		if err != nil {
-			err = newError("fail to backup gfwlist file").Base(err)
-			return
-		}
-		sucBackup = true
-	}
 	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
 	if err = gopeed.Down(&gopeed.Request{
 		Method: "GET",
 		URL:    u,
-	}, pathSiteDat); err != nil {
+	}, pathSiteDat+".new"); err != nil {
 		log.Println(err)
 		return
 	}
@@ -144,15 +133,6 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		log.Println(err)
 		return
 	}
-	defer func() {
-		if err != nil {
-			if sucBackup {
-				_ = os.Rename(backupDat, pathSiteDat)
-			} else {
-				_ = os.Remove(pathSiteDat)
-			}
-		}
-	}()
 	var b []byte
 	if b, err = os.ReadFile(pathSiteDatSha256); err == nil {
 		f := bytes.Fields(b)
@@ -160,7 +140,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 			err = FailCheckSha
 			return
 		}
-		if !checkSha256(pathSiteDat, string(f[0])) {
+		if !checkSha256(pathSiteDat+".new", string(f[0])) {
 			err = newError(DamagedFile)
 			return
 		}
@@ -168,13 +148,15 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		err = FailCheckSha
 		return
 	}
-	_ = os.Chtimes(pathSiteDat, gfwlist.UpdateTime, gfwlist.UpdateTime)
-	t, err := files.GetFileModTime(pathSiteDat)
+	_ = os.Chtimes(pathSiteDat+".new", gfwlist.UpdateTime, gfwlist.UpdateTime)
+	t, err := files.GetFileModTime(pathSiteDat + ".new")
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
 	}
 	_ = os.Remove(pathSiteDatSha256)
-	_ = os.Remove(backupDat)
+	if err := os.Rename(pathSiteDat+".new", pathSiteDat); err != nil {
+		return "", err
+	}
 	log.Printf("download[%v]: %v -> SUCCESS\n", i+1, u)
 	return
 }

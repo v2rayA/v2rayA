@@ -1,16 +1,13 @@
 package specialMode
 
 import (
+	"github.com/v2fly/v2ray-core/v4/app/router"
 	"github.com/v2rayA/v2rayA/common/netTools"
 	"github.com/v2rayA/v2rayA/core/specialMode/infra"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	"log"
-	"os/exec"
 	"sync"
 	"time"
-	"github.com/v2fly/v2ray-core/v4/app/router"
 )
 
 var (
@@ -38,7 +35,7 @@ func ShouldUseSupervisor() bool {
 	return configure.GetSettingNotNil().SpecialMode == configure.SpecialModeSupervisor
 }
 
-func CheckAndSetupDNSSupervisorWithExtraInfo() {
+func CheckAndSetupDNSSupervisor() {
 	if !ShouldUseSupervisor() {
 		return
 	}
@@ -103,7 +100,7 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 				}
 				//准备白名单
 				log.Println("[DnsSupervisor] preparing whitelist")
-				wlDms, err := asset.GetWhitelistCn(nil, nil)
+				wlDms, err := infra.GetWhitelistCn(nil)
 				//var wlDms = new(strmatcher.MatcherGroup)
 				if err != nil {
 					log.Println("StartDNSSupervisorConroutine:", err)
@@ -154,15 +151,4 @@ func StopDNSSupervisor() {
 		}
 	}
 	wg.Wait()
-	clearDNSCache()
-}
-
-// TODO:
-func clearDNSCache() {
-	switch global.ServiceControlMode {
-	case global.ServiceMode:
-		_, _ = exec.Command("sh -c", "service nscd restart").Output()
-	case global.SystemctlMode:
-		_, _ = exec.Command("sh -c", "systemctl restart nscd").Output()
-	}
 }

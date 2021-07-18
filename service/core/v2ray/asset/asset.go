@@ -1,21 +1,15 @@
 package asset
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
-	v2router "github.com/v2fly/v2ray-core/v4/app/router"
-	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
-	"github.com/v2rayA/v2rayA/core/specialMode/infra"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/global"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
-	"sync"
 	"time"
 )
 
@@ -103,58 +97,4 @@ func LoyalsoldierSiteDatExists() bool {
 		return true
 	}
 	return false
-}
-
-var whitelistCn struct {
-	domainMatcher *strmatcher.MatcherGroup
-	sync.Mutex
-}
-
-func GetWhitelistCn(externIps []*v2router.CIDR, externDomains []*v2router.Domain) (wlDomains *strmatcher.MatcherGroup, err error) {
-	whitelistCn.Lock()
-	defer whitelistCn.Unlock()
-	if whitelistCn.domainMatcher != nil {
-		return whitelistCn.domainMatcher, nil
-	}
-	dir := GetV2rayLocationAsset()
-	var siteList v2router.GeoSiteList
-	b, err := os.ReadFile(path.Join(dir, "geosite.dat"))
-	if err != nil {
-		return nil, newError("GetWhitelistCn").Base(err)
-	}
-	err = proto.Unmarshal(b, &siteList)
-	if err != nil {
-		return nil, newError("GetWhitelistCn").Base(err)
-	}
-	wlDomains = new(strmatcher.MatcherGroup)
-	domainMatcher := new(infra.DomainMatcherGroup)
-	fullMatcher := new(infra.FullMatcherGroup)
-	for _, e := range siteList.Entry {
-		if e.CountryCode == "CN" {
-			dms := e.Domain
-			dms = append(dms, externDomains...)
-			for _, dm := range dms {
-				switch dm.Type {
-				case v2router.Domain_Domain:
-					domainMatcher.Add(dm.Value)
-				case v2router.Domain_Full:
-					fullMatcher.Add(dm.Value)
-				case v2router.Domain_Plain:
-					wlDomains.Add(infra.SubstrMatcher(dm.Value))
-				case v2router.Domain_Regex:
-					r, err := regexp.Compile(dm.Value)
-					if err != nil {
-						break
-					}
-					wlDomains.Add(&infra.RegexMatcher{Pattern: r})
-				}
-			}
-			break
-		}
-	}
-	domainMatcher.Add("lan")
-	wlDomains.Add(domainMatcher)
-	wlDomains.Add(fullMatcher)
-	whitelistCn.domainMatcher = wlDomains
-	return
 }

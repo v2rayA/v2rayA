@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/core/specialMode"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"strings"
 )
 
@@ -37,7 +36,6 @@ func (t *tproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *tproxy) GetSetupCommands() SetupCommands {
-	setting := configure.GetSettingNotNil()
 	commands := `
 # 设置策略路由
 ip rule add fwmark 1 table 100
@@ -68,11 +66,13 @@ iptables -w 2 -t mangle -A SETMARK -d 192.0.0.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 192.0.2.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 192.88.99.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 192.168.0.0/16 -j RETURN
-iptables -w 2 -t mangle -A SETMARK -d 198.18.0.0/15 -j RETURN
+# fakedns
+# iptables -w 2 -t mangle -A SETMARK -d 198.18.0.0/15 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 198.51.100.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
-iptables -w 2 -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
+# supervisor
+# iptables -w 2 -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
 iptables -w 2 -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 iptables -w 2 -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
@@ -81,7 +81,7 @@ iptables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 # 走过TPROXY的通行
 iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
 `
-	if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+	if specialMode.ShouldLocalDnsListen() {
 		commands += ` 
 iptables -w 2 -t mangle -A TP_OUT -p udp --dport 53 -j RETURN
 `
@@ -94,7 +94,7 @@ iptables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 # 走过TPROXY的通行
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
 `
-	if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+	if specialMode.ShouldLocalDnsListen() {
 		commands += ` 
 iptables -w 2 -t mangle -A TP_PRE -p udp --dport 53 -j RETURN
 `
@@ -139,7 +139,8 @@ ip6tables -w 2 -t mangle -A SETMARK -d 2001::/32 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d 2001:20::/28 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d 2001:db8::/32 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d 2002::/16 -j RETURN
-ip6tables -w 2 -t mangle -A SETMARK -d fc00::/7 -j RETURN
+# fakedns
+# ip6tables -w 2 -t mangle -A SETMARK -d fc00::/7 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d fe80::/10 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d ff00::/8 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
@@ -150,7 +151,7 @@ ip6tables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 # 走过TPROXY的通行
 ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
 `
-		if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+		if specialMode.ShouldLocalDnsListen() {
 			commands += ` 
 ip6tables -w 2 -t mangle -A TP_OUT -p udp --dport 53 -j RETURN
 `
@@ -163,7 +164,7 @@ ip6tables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 # 走过TPROXY的通行
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
 `
-		if specialMode.ShouldLocalDnsListen() || setting.AntiPollution == configure.AntipollutionClosed {
+		if specialMode.ShouldLocalDnsListen() {
 			commands += ` 
 ip6tables -w 2 -t mangle -A TP_PRE -p udp --dport 53 -j RETURN
 `
