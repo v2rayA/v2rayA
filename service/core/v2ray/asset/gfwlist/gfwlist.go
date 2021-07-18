@@ -1,7 +1,6 @@
 package gfwlist
 
 import (
-	"bytes"
 	libSha256 "crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -17,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -100,16 +100,16 @@ var (
 	DamagedFile  = newError("damaged GFWList file, update it again please")
 )
 
-func plainDownload(path, url string) (err error) {
+func httpGet(url string) (data string, err error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return
 	}
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return os.WriteFile(path, b, 0644)
+	return string(b), nil
 }
 func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	i := 0
@@ -119,7 +119,6 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	}
 	assetDir := asset.GetV2rayLocationAsset()
 	pathSiteDat := filepath.Join(assetDir, "LoyalsoldierSite.dat")
-	pathSiteDatSha256 := filepath.Join(assetDir, "LoyalsoldierSite.dat.sha256sum")
 	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
 	if err = gopeed.Down(&gopeed.Request{
 		Method: "GET",
@@ -129,23 +128,14 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		return
 	}
 	u2 := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat.sha256sum`, gfwlist.Tag)
-	if err = plainDownload(pathSiteDatSha256, u2); err != nil {
+	siteDatSha256, err := httpGet(u2)
+	if err != nil {
+		err = fmt.Errorf("%w: %v", FailCheckSha, err)
 		log.Println(err)
-		return
+		return "", err
 	}
-	var b []byte
-	if b, err = os.ReadFile(pathSiteDatSha256); err == nil {
-		f := bytes.Fields(b)
-		if len(f) < 2 {
-			err = FailCheckSha
-			return
-		}
-		if !checkSha256(pathSiteDat+".new", string(f[0])) {
-			err = newError(DamagedFile)
-			return
-		}
-	} else {
-		err = FailCheckSha
+	if !checkSha256(pathSiteDat+".new", strings.Fields(siteDatSha256)[0]) {
+		err = newError(DamagedFile)
 		return
 	}
 	_ = os.Chtimes(pathSiteDat+".new", gfwlist.UpdateTime, gfwlist.UpdateTime)
@@ -153,7 +143,6 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err == nil {
 		localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
 	}
-	_ = os.Remove(pathSiteDatSha256)
 	if err := os.Rename(pathSiteDat+".new", pathSiteDat); err != nil {
 		return "", err
 	}
