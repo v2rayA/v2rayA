@@ -3,10 +3,10 @@ package service
 import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
-	"github.com/v2rayA/v2rayA/core/nodeData"
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/infra/nodeData"
 	"strings"
 	"time"
 )

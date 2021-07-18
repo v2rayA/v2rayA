@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/dnsParser"
 	"github.com/v2rayA/v2rayA/core/v2ray"
+	dnsParser2 "github.com/v2rayA/v2rayA/infra/dnsParser"
 	"net"
 	"net/url"
 	"strconv"
@@ -21,7 +21,7 @@ func RefineDnsList(dnsList string) (string, error) {
 	list = common.Deduplicate(list)
 nextLine:
 	for i, line := range list {
-		dns := dnsParser.Parse(line)
+		dns := dnsParser2.Parse(line)
 		if dns == nil {
 			return "", fmt.Errorf("invalid format: %v: no outbound found", line)
 		}

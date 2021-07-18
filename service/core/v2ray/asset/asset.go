@@ -3,6 +3,8 @@ package asset
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/muhammadmuzzammil1998/jsonc"
+	v2router "github.com/v2fly/v2ray-core/v4/app/router"
+	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/core/specialMode/infra"
@@ -15,8 +17,6 @@ import (
 	"regexp"
 	"sync"
 	"time"
-	v2router "v2ray.com/core/app/router"
-	"v2ray.com/core/common/strmatcher"
 )
 
 func GetV2rayLocationAsset() (s string) {

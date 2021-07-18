@@ -7,8 +7,8 @@ import (
 	"log"
 	"sync"
 	"time"
-	v2router "v2ray.com/core/app/router"
-	"v2ray.com/core/common/strmatcher"
+	v2router "github.com/v2fly/v2ray-core/v4/app/router"
+	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
 )
 
 type DnsSupervisor struct {
