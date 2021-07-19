@@ -62,7 +62,7 @@ func removeResolvHijacker() {
 		hijacker.Close()
 		if hijacker.localDNS {
 			os.WriteFile(resolverFile,
-				[]byte(HijackFlag+"\nnameserver 119.29.29.29\nnameserver 114.114.114.114\n"),
+				[]byte(HijackFlag+"\nnameserver 223.6.6.6\nnameserver 114.114.114.114\n"),
 				os.FileMode(0644),
 			)
 		}
