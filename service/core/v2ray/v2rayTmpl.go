@@ -563,9 +563,9 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 				}
 			}
 		}
-	} else {
+	} else if setting.AntiPollution != configure.AntipollutionClosed {
 		// preset
-		internal = []string{"223.5.5.5 -> direct", "119.29.29.29 -> direct"}
+		internal = []string{"223.6.6.6 -> direct", "114.114.114.114 -> direct"}
 		switch setting.AntiPollution {
 		case configure.AntipollutionAntiHijack:
 			break
@@ -663,7 +663,8 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 
 	if t.DNS.Servers == nil {
 		t.DNS.Servers = []interface{}{"localhost"}
-	} else if net.ParseIP(v.Add) == nil {
+	}
+	if net.ParseIP(v.Add) == nil {
 		if CheckDohSupported("") == nil {
 			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
 				Address:      "https://doh.pub/dns-query",
@@ -725,24 +726,27 @@ func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
 	t.Routing.Rules = append(t.Routing.Rules,
 		RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
 	)
-	dnsOut := RoutingRule{ // hijack traffic to port 53
-		Type:        "field",
-		Port:        "53",
-		OutboundTag: "dns-out",
+	setting := configure.GetSettingNotNil()
+	if setting.AntiPollution != configure.AntipollutionClosed {
+		dnsOut := RoutingRule{ // hijack traffic to port 53
+			Type:        "field",
+			Port:        "53",
+			OutboundTag: "dns-out",
+		}
+		if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
+			dnsOut.InboundTag = []string{"dns-in"}
+		}
+		if specialMode.ShouldUseSupervisor() {
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{ // supervisor
+					Type:        "field",
+					IP:          []string{"240.0.0.0/4"},
+					OutboundTag: "proxy",
+				},
+			)
+		}
+		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
-	if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
-		dnsOut.InboundTag = []string{"dns-in"}
-	}
-	if specialMode.ShouldUseSupervisor() {
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // supervisor
-				Type:        "field",
-				IP:          []string{"240.0.0.0/4"},
-				OutboundTag: "proxy",
-			},
-		)
-	}
-	t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	if !supportUDP {
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{
