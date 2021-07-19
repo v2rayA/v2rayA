@@ -885,6 +885,41 @@ export default {
         }
       });
     },
+    syncConnectedServer() {
+      this.$axios({
+        url: apiRoot + "/touch",
+        method: "delete",
+        data: {
+          touches: this.checkedRows.map(x => {
+            return {
+              id: x.id,
+              _type: x._type
+            };
+          })
+        }
+      }).then(res => {
+        if (res.data.code === "SUCCESS") {
+          this.tableData = res.data.data.touch;
+          this.checkedRows = [];
+          Object.assign(this.runningState, {
+            running: res.data.data.running
+              ? this.$t("common.isRunning")
+              : this.$t("common.notRunning"),
+            connectedServer: this.tableData.connectedServer,
+            lastConnectedServer: null
+          });
+          this.updateConnectView();
+        } else {
+          this.$buefy.toast.open({
+            message: res.data.message,
+            type: "is-warning",
+            position: "is-top",
+            duration: 5000,
+            queue: false
+          });
+        }
+      });
+    },
     handleClickDelete() {
       this.$buefy.dialog.confirm({
         title: this.$t("delete.title"),
@@ -894,40 +929,7 @@ export default {
         type: "is-danger",
         hasIcon: true,
         icon: " iconfont icon-alert",
-        onConfirm: () =>
-          this.$axios({
-            url: apiRoot + "/touch",
-            method: "delete",
-            data: {
-              touches: this.checkedRows.map(x => {
-                return {
-                  id: x.id,
-                  _type: x._type
-                };
-              })
-            }
-          }).then(res => {
-            if (res.data.code === "SUCCESS") {
-              this.tableData = res.data.data.touch;
-              this.checkedRows = [];
-              Object.assign(this.runningState, {
-                running: res.data.data.running
-                  ? this.$t("common.isRunning")
-                  : this.$t("common.notRunning"),
-                connectedServer: this.tableData.connectedServer,
-                lastConnectedServer: null
-              });
-              this.updateConnectView();
-            } else {
-              this.$buefy.toast.open({
-                message: res.data.message,
-                type: "is-warning",
-                position: "is-top",
-                duration: 5000,
-                queue: false
-              });
-            }
-          })
+        onConfirm: () => this.syncConnectedServer()
       });
     },
     handleClickAboutConnection(row, sub) {
@@ -959,6 +961,7 @@ export default {
                 duration: 5000,
                 queue: false
               });
+              this.syncConnectedServer();
             }
           }),
           3 * 1000,

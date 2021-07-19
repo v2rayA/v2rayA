@@ -5,6 +5,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/server/service"
+	"log"
 )
 
 func PostConnection(ctx *gin.Context) {
@@ -17,6 +18,7 @@ func PostConnection(ctx *gin.Context) {
 	lastConnectedServer := configure.GetConnectedServer()
 	err = service.Connect(&which)
 	if err != nil {
+		log.Println(err)
 		common.ResponseError(ctx, logError(err, "failed to connect"))
 		return
 	}
