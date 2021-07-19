@@ -1117,9 +1117,38 @@ func (t *Template) SetOutboundSockopt(supportUDP bool, setting *configure.Settin
 	}
 }
 func (t *Template) SetInboundListenAddress(setting *configure.Setting) {
+	const (
+		tag4Suffix = "_ipv4"
+		tag6Suffix = "_ipv6"
+	)
+	tagMap := make(map[string]struct{})
+	inbounds6 := make([]Inbound, len(t.Inbounds))
+	copy(inbounds6, t.Inbounds)
 	if !setting.IntranetSharing {
+		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
 			t.Inbounds[i].Listen = "127.0.0.1"
+			inbounds6[i].Listen = "::1"
+			if t.Inbounds[i].Tag != "" {
+				tagMap[t.Inbounds[i].Tag] = struct{}{}
+				t.Inbounds[i].Tag += tag4Suffix
+				inbounds6[i].Tag += tag6Suffix
+			}
+		}
+		t.Inbounds = append(t.Inbounds, inbounds6...)
+
+		// set routing
+		for i := range t.Routing.Rules {
+			tag6 := make([]string, 0)
+			for j, tag := range t.Routing.Rules[i].InboundTag {
+				if _, ok := tagMap[tag]; ok {
+					t.Routing.Rules[i].InboundTag[j] += tag4Suffix
+					tag6 = append(tag6, tag+tag6Suffix)
+				}
+			}
+			if len(tag6) > 0 {
+				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, tag6...)
+			}
 		}
 	}
 }
