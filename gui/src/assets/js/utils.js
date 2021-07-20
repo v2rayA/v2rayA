@@ -170,7 +170,7 @@ function generateURL({
 
 /*判断一个IPv4的地址是否是内网地址*/
 function isIntranet(url) {
-  if (!url.trim()) {
+  if (!url.trim() || url.startsWith("/")) {
     url = location.protocol + "//" + location.host + url;
   }
   let u = parseURL(url);
