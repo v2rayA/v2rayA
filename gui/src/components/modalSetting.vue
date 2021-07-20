@@ -591,7 +591,11 @@ export default {
         return;
       }
       console.log(apiRoot);
-      if (this.transparent !== "close" && !isIntranet(apiRoot)) {
+      if (
+        this.transparent !== "close" &&
+        this.transparentType === "tproxy" &&
+        !isIntranet(apiRoot)
+      ) {
         let U = parseURL(apiRoot);
         let port = U.port;
         if (!port) {
