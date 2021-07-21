@@ -760,7 +760,7 @@ func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
 }
 
 func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
-	switch setting.PacMode {
+	switch setting.RulePortMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{ // 直连中国大陆主流网站域名

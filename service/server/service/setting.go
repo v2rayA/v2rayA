@@ -20,7 +20,7 @@ func GetSetting() *configure.Setting {
 }
 
 func UpdateSetting(setting *configure.Setting) (err error) {
-	if (setting.Transparent == configure.TransparentGfwlist || setting.PacMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
+	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
 		return newError("cannot find GFWList files. update GFWList and try again")
 	}
 	if setting.IntranetSharing != ipforward.IsIpForwardOn() {

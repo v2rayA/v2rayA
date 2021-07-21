@@ -257,7 +257,7 @@ func checkUpdate() {
 		if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {
 			global.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
 		}
-		switch setting.PacMode {
+		switch setting.RulePortMode {
 		case configure.GfwlistMode:
 			go func() {
 				/* 更新LoyalsoldierSite.dat */
