@@ -33,14 +33,13 @@ func IsIPv6Supported() bool {
 	if global.GetEnvironmentConfig().ForceIPV6On {
 		return true
 	}
-	if common.IsInDocker(){
+	if common.IsInDocker() {
 		return false
 	}
-	b, err := os.ReadFile("/proc/sys/net/ipv6/conf/default/disable_ipv6")
-	if err != nil {
+	if b, err := os.ReadFile("/proc/sys/net/ipv6/conf/default/disable_ipv6"); err != nil || strings.TrimSpace(string(b)) == "1" {
 		return false
 	}
-	if strings.TrimSpace(string(b)) == "1" {
+	if b, err := os.ReadFile("/proc/sys/net/ipv6/conf/all/disable_ipv6"); err != nil || strings.TrimSpace(string(b)) == "1" {
 		return false
 	}
 	return cmds.IsCommandValid("ip6tables")

@@ -38,50 +38,36 @@ func CheckAndProbeTProxy() (err error) {
 	return
 }
 
-func CheckDohSupported(ver string) (err error) {
-	if ver == "" {
-		ver, err = where.GetV2rayServiceVersion()
-		if err != nil {
-			return newError("failed to get the version of v2ray-core")
-		}
+func isVersionSatisfied(version string, mustV2rayCore bool) error {
+	ver, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		return fmt.Errorf("failed to get the version of v2ray-core")
 	}
-	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.22.0"); err != nil || !greaterEqual {
-		return newError("the version of v2ray-core is lower than 4.22.0")
+	if ver == "UnknownClient" && mustV2rayCore {
+		return fmt.Errorf("v2ray-core only feature")
 	}
-	return
+	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
+		return fmt.Errorf("the version of v2ray-core is lower than %v", version)
+	}
+	return nil
 }
 
-func CheckTcpDnsSupported(ver string) (err error) {
-	if ver == "" {
-		ver, err = where.GetV2rayServiceVersion()
-		if err != nil {
-			return newError("failed to get the version of v2ray-core")
-		}
-	}
-	if ver == "UnknownClient" {
-		// FIXME: xray does not support tcp:// yet. 2021-07-17
-		return fmt.Errorf(ver)
-	}
-	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.40.0"); err != nil || !greaterEqual {
-		return newError("the version of v2ray-core is lower than 4.40.0")
-	}
-	return
+func CheckDohSupported() (err error) {
+	return isVersionSatisfied("4.22.0", false)
 }
 
+func CheckTcpDnsSupported() (err error) {
+	return isVersionSatisfied("4.40.0", true)
+}
 
-func CheckQuicDnsSupported(ver string) (err error) {
-	if ver == "" {
-		ver, err = where.GetV2rayServiceVersion()
-		if err != nil {
-			return newError("failed to get the version of v2ray-core")
-		}
-	}
-	if ver == "UnknownClient" {
-		// FIXME: xray does not support quic:// yet. 2021-07-17
-		return fmt.Errorf(ver)
-	}
-	if greaterEqual, err := common.VersionGreaterEqual(ver, "4.34.0"); err != nil || !greaterEqual {
-		return newError("the version of v2ray-core is lower than 4.34.0")
-	}
-	return
+func CheckQuicLocalDnsSupported() (err error) {
+	return isVersionSatisfied("4.34.0", true)
+}
+
+func CheckHostsListSupported() (err error) {
+	return isVersionSatisfied("4.37.3", true)
+}
+
+func CheckQueryStrategySupported() (err error) {
+	return isVersionSatisfied("4.37.0", true)
 }
