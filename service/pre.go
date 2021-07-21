@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/gookit/color"
@@ -236,12 +237,20 @@ func initUpdatingTicker() {
 func checkUpdate() {
 	setting := service.GetSetting()
 	//等待网络连通
+	resolver := net.Resolver{
+		PreferGo:     true,
+		StrictErrors: false,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{}
+			address = "114.114.114.114:53"
+			return d.DialContext(ctx, network, address)
+		},
+	}
 	for {
 		c := http.DefaultClient
 		c.Timeout = 5 * time.Second
-		resp, err := http.Get("http://www.gstatic.com/generate_204")
-		if err == nil {
-			_ = resp.Body.Close()
+		addrs, err := resolver.LookupHost(context.Background(), "apple.com")
+		if err == nil && len(addrs) > 0 {
 			break
 		}
 		log.Println("[info] waiting for network connected")
