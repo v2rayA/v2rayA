@@ -15,7 +15,7 @@ func main() {
 	checkEnvironment()
 	checkTProxySupportability()
 	initConfigure()
-	go checkUpdate()
+	checkUpdate()
 	hello()
 	if err := run(); err != nil {
 		log.Fatal(err)

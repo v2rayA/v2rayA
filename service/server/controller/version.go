@@ -30,7 +30,7 @@ func GetVersion(ctx *gin.Context) {
 				}
 			}
 		}
-		err = v2ray.CheckDohSupported(ver)
+		err = v2ray.CheckDohSupported()
 	}
 	if err == nil {
 		dohValid = "yes"

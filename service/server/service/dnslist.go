@@ -46,17 +46,17 @@ nextLine:
 			if u, err := url.Parse(dns.Val); err == nil {
 				switch u.Scheme {
 				case "https":
-					if v2ray.CheckDohSupported("") != nil {
+					if v2ray.CheckDohSupported() != nil {
 						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
 					}
 				case "tcp":
-					if strings.HasPrefix(u.Scheme, "tcp") && v2ray.CheckTcpDnsSupported("") != nil {
+					if strings.HasPrefix(u.Scheme, "tcp") && v2ray.CheckTcpDnsSupported() != nil {
 						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
 					}
-				case "quic":
-					if v2ray.CheckQuicDnsSupported("") != nil {
-						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
-					}
+				//case "quic":
+				//	if v2ray.CheckQuicLocalDnsSupported() != nil {
+				//		return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
+				//	}
 				case "":
 					goto invalid
 				default:

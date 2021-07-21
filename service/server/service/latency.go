@@ -220,6 +220,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	} else {
 		_ = v2ray.StopV2rayService() //没关掉那就不好意思了
 	}
+
 	return which, nil
 }
 func httpLatency(which *configure.Which, port string, timeout time.Duration) {

@@ -215,7 +215,9 @@ func updateSubscriptions() {
 	wg.Wait()
 }
 
-func updatingTicker() {
+func initUpdatingTicker() {
+	global.TickerUpdateGFWList = time.NewTicker(24 * time.Hour * 365 * 100)
+	global.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range global.TickerUpdateGFWList.C {
 			_, err := gfwlist.CheckAndUpdateGFWList()
@@ -233,9 +235,6 @@ func updatingTicker() {
 
 func checkUpdate() {
 	setting := service.GetSetting()
-	//初始化ticker
-	global.TickerUpdateGFWList = time.NewTicker(24 * time.Hour * 365 * 100)
-	global.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	//等待网络连通
 	for {
 		c := http.DefaultClient
@@ -248,10 +247,10 @@ func checkUpdate() {
 		log.Println("[info] waiting for network connected")
 		time.Sleep(c.Timeout)
 	}
-	log.Println("[info] network connected")
+	log.Println("[info] network is connected")
 
-	//updating ticker
-	updatingTicker()
+	//初始化ticker
+	initUpdatingTicker()
 
 	//检查PAC文件更新
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdate ||

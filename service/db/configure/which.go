@@ -179,3 +179,26 @@ func (ws *Whiches) FillLinks() (err error) {
 	}
 	return nil
 }
+
+func (ws *Whiches) Save() (err error) {
+	whiches := ws.GetNonDuplicated()
+	var (
+		serverIndexes       = make(map[int]*Which)
+		subscriptionIndexes = make(map[int]map[int]*Which)
+	)
+	for _, which := range whiches {
+		ind := which.ID - 1 // to index
+		switch which.TYPE {
+		case ServerType:
+			serverIndexes[ind] = which
+		case SubscriptionServerType:
+			if _, ok := subscriptionIndexes[which.Sub]; !ok {
+				subscriptionIndexes[which.Sub] = make(map[int]*Which)
+			}
+			subscriptionIndexes[which.Sub][ind] = which
+		default:
+		}
+	}
+	// TODO:
+	return nil
+}

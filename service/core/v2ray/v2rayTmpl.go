@@ -7,6 +7,7 @@ import (
 	"github.com/v2rayA/routingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
@@ -232,7 +233,7 @@ type HttpSettings struct {
 	Path string   `json:"path"`
 	Host []string `json:"host"`
 }
-type Hosts map[string]string
+type Hosts map[string]interface{}
 
 type DNS struct {
 	Hosts           Hosts         `json:"hosts,omitempty"`
@@ -240,6 +241,7 @@ type DNS struct {
 	ClientIp        string        `json:"clientIp,omitempty"`
 	Tag             string        `json:"tag,omitempty"`
 	DisableFallback *bool         `json:"disableFallback,omitempty"`
+	QueryStrategy   string        `json:"queryStrategy,omitempty"`
 }
 type DnsServer struct {
 	Address      string   `json:"address"`
@@ -492,6 +494,38 @@ type Addr struct {
 	host string
 	port string
 }
+
+func parseDnsAddr(addr string) Addr {
+	// 223.5.5.5
+	if net.ParseIP(addr) != nil {
+		return Addr{
+			host: addr,
+			port: "53",
+		}
+	}
+	// dns.google:53
+	if host, port, err := net.SplitHostPort(addr); err == nil {
+		if _, err = strconv.Atoi(port); err == nil {
+			return Addr{
+				host: host,
+				port: port,
+			}
+		}
+	}
+	// tcp://8.8.8.8:53, https://dns.google/dns-query
+	if u, err := url.Parse(addr); err == nil {
+		return Addr{
+			host: u.Hostname(),
+			port: u.Port(),
+		}
+	}
+	// dns.google, dns.pub, etc.
+	return Addr{
+		host: addr,
+		port: "53",
+	}
+}
+
 type DnsRouting struct {
 	DirectDomains []Addr
 	ProxyDomains  []Addr
@@ -502,7 +536,8 @@ type DnsRouting struct {
 func appendDnsServers(d *DNS, lines []string, domains []string) {
 	for _, line := range lines {
 		dns := dnsParser2.Parse(line)
-		if _, err := url.Parse(dns.Val); err == nil {
+		if u, err := url.Parse(dns.Val); err == nil && strings.Contains(dns.Val, "://") && !strings.Contains(u.Scheme, "://") {
+			log.Println(u, u.Scheme, u.Host, u.Path)
 			if domains != nil {
 				d.Servers = append(d.Servers, DnsServer{
 					Address: dns.Val,
@@ -511,22 +546,14 @@ func appendDnsServers(d *DNS, lines []string, domains []string) {
 			} else {
 				d.Servers = append(d.Servers, dns.Val)
 			}
-		} else if host, port, err := net.SplitHostPort(dns.Val); err == nil {
-			p, _ := strconv.Atoi(port)
+		} else {
+			addr := parseDnsAddr(dns.Val)
+			p, _ := strconv.Atoi(addr.port)
 			d.Servers = append(d.Servers, DnsServer{
-				Address: host,
+				Address: addr.host,
 				Port:    p,
 				Domains: domains,
 			})
-		} else {
-			if domains != nil {
-				d.Servers = append(d.Servers, DnsServer{
-					Address: dns.Val,
-					Domains: domains,
-				})
-			} else {
-				d.Servers = append(d.Servers, dns.Val)
-			}
 		}
 	}
 }
@@ -573,9 +600,9 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 			if supportUDP {
 				external = []string{"8.8.8.8 -> proxy", "1.1.1.1 -> proxy"}
 			} else {
-				if err := CheckTcpDnsSupported(""); err == nil {
+				if err := CheckTcpDnsSupported(); err == nil {
 					external = []string{"tcp://dns.opendns.com:5353 -> proxy", "tcp://dns.google -> proxy"}
-				} else if err = CheckDohSupported(""); err == nil {
+				} else if err = CheckDohSupported(); err == nil {
 					external = []string{"https://1.1.1.1/dns-query -> proxy", "https://dns.google/dns-query -> proxy"}
 				} else {
 					// compromise
@@ -613,17 +640,7 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 			continue
 		}
 		// we believe all lines are legal
-		var addr Addr
-		if net.ParseIP(dns.Val) != nil {
-			addr = Addr{host: dns.Val, port: "53"}
-		} else if u, err := url.Parse(dns.Val); err == nil {
-			addr = Addr{host: u.Hostname(), port: u.Port()}
-		} else if host, port, err := net.SplitHostPort(dns.Val); err == nil {
-			addr = Addr{host: host, port: port}
-		} else {
-			// like: dns.google, localhost
-			addr = Addr{host: dns.Val, port: "53"}
-		}
+		var addr = parseDnsAddr(dns.Val)
 
 		if dns.Out == "direct" {
 			if net.ParseIP(addr.host) == nil {
@@ -664,44 +681,76 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 	if t.DNS.Servers == nil {
 		t.DNS.Servers = []interface{}{"localhost"}
 	}
+	var domainsToLookup []string
 	if net.ParseIP(v.Add) == nil {
-		if CheckDohSupported("") == nil {
+		domainsToLookup = append(domainsToLookup, v.Add)
+	}
+	for _, addr := range routing.ProxyDomains {
+		domainsToLookup = append(domainsToLookup, addr.host)
+	}
+	for _, addr := range routing.DirectDomains {
+		domainsToLookup = append(domainsToLookup, addr.host)
+	}
+	var domainsToHosts []string
+	if len(domainsToLookup) > 0 {
+		if CheckDohSupported() == nil {
 			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
 				Address:      "https://doh.pub/dns-query",
-				Domains:      []string{v.Add},
+				Domains:      domainsToLookup,
 				SkipFallback: true,
 			})
 			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
 				Address:      "https://doh.alidns.com/dns-query",
-				Domains:      []string{v.Add},
+				Domains:      domainsToLookup,
 				SkipFallback: true,
 			})
+			domainsToHosts = append(domainsToHosts, "doh.pub")
+			domainsToHosts = append(domainsToHosts, "doh.alidns.com")
 		} else {
 			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
-				Address:      "119.29.29.29",
-				Domains:      []string{v.Add},
+				Address:      "dns.pub",
+				Domains:      domainsToLookup,
 				SkipFallback: true,
 			})
 			t.DNS.Servers = append(t.DNS.Servers, DnsServer{
 				Address:      "dns.alidns.com",
-				Domains:      []string{v.Add},
+				Domains:      domainsToLookup,
 				SkipFallback: true,
 			})
+			domainsToHosts = append(domainsToHosts, "dns.pub")
+			domainsToHosts = append(domainsToHosts, "dns.alidns.com")
 		}
 	}
-	for _, domain := range append(append([]Addr{}, routing.ProxyDomains...), routing.DirectDomains...) {
-		ips, err := net.LookupHost(domain.host)
+	// set hosts
+	for _, domain := range domainsToHosts {
+		ips, err := net.LookupHost(domain)
 		if err != nil {
-			return routing, err
+			return routing, fmt.Errorf("[Error] %w: please make sure you're connected to the Internet", err)
 		}
 		if t.DNS.Hosts == nil {
 			t.DNS.Hosts = make(Hosts)
 		}
-		t.DNS.Hosts[domain.host] = ips[0]
+		ips = filterIPs(ips)
+		if CheckHostsListSupported() == nil {
+			t.DNS.Hosts[domain] = ips
+		} else {
+			t.DNS.Hosts[domain] = ips[0]
+		}
 	}
 	return
 }
-
+func filterIPs(ips []string) []string {
+	if iptables.IsIPv6Supported() {
+		return ips
+	}
+	var ret []string
+	for _, ip := range ips {
+		if net.ParseIP(ip).To4() != nil {
+			ret = append(ret, ip)
+		}
+	}
+	return ret
+}
 func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
 	for _, r := range routing.DirectIPs {
 		t.Routing.Rules = append(t.Routing.Rules,
