@@ -757,7 +757,7 @@ export default {
           ps: decodeURIComponent(u.hash),
           add: u.host,
           port: u.port,
-          id: u.username,
+          id: decodeURIComponent(u.username),
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
           host: u.params.sni || u.params.host || "",

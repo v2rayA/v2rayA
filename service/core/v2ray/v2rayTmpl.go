@@ -303,6 +303,10 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	aid, _ := strconv.Atoi(v.Aid)
 	switch strings.ToLower(v.Protocol) {
 	case "vmess", "vless":
+		id := v.ID
+		if l := len([]byte(id)); l < 32 || l > 36 {
+			id = common.StringToUUID5(id)
+		}
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
 			o.Settings.Vnext = []Vnext{
@@ -311,7 +315,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 					Port:    port,
 					Users: []User{
 						{
-							ID:       v.ID,
+							ID:       id,
 							AlterID:  aid,
 							Security: "auto",
 						},
@@ -325,7 +329,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 					Port:    port,
 					Users: []User{
 						{
-							ID: v.ID,
+							ID: id,
 							//AlterID:    0, // keep AEAD on
 							Encryption: "none",
 						},
