@@ -27,7 +27,7 @@ func Disconnect() (err error) {
 
 func checkAssetsExist(setting *configure.Setting) error {
 	//FIXME: non-fully check
-	if setting.PacMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
+	if setting.RulePortMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
 		if !asset.LoyalsoldierSiteDatExists() {
 			return newError("GFWList file not exists. Try updating GFWList please")
 		}

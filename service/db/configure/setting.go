@@ -3,7 +3,7 @@ package configure
 import "github.com/v2rayA/v2rayA/core/ipforward"
 
 type Setting struct {
-	PacMode                            PacMode         `json:"pacMode"`
+	RulePortMode                       PacMode         `json:"pacMode"`
 	ProxyModeWhenSubscribe             ProxyMode       `json:"proxyModeWhenSubscribe"`
 	GFWListAutoUpdateMode              AutoUpdateMode  `json:"pacAutoUpdateMode"`
 	GFWListAutoUpdateIntervalHour      int             `json:"pacAutoUpdateIntervalHour"`
@@ -21,18 +21,20 @@ type Setting struct {
 
 func NewSetting() (setting *Setting) {
 	return &Setting{
-		PacMode:                    WhitelistMode,
-		ProxyModeWhenSubscribe:     ProxyModeDirect,
-		GFWListAutoUpdateMode:      NotAutoUpdate,
-		SubscriptionAutoUpdateMode: NotAutoUpdate,
-		TcpFastOpen:                Default,
-		MuxOn:                      No,
-		Mux:                        8,
-		Transparent:                TransparentClose,
-		IntranetSharing:            ipforward.IsIpForwardOn(),
-		SpecialMode:                SpecialModeNone,
-		TransparentType:            TransparentRedirect,
-		AntiPollution:              AntipollutionClosed,
+		RulePortMode:                       WhitelistMode,
+		ProxyModeWhenSubscribe:             ProxyModeDirect,
+		GFWListAutoUpdateMode:              NotAutoUpdate,
+		GFWListAutoUpdateIntervalHour:      0,
+		SubscriptionAutoUpdateMode:         NotAutoUpdate,
+		SubscriptionAutoUpdateIntervalHour: 0,
+		TcpFastOpen:                        Default,
+		MuxOn:                              No,
+		Mux:                                8,
+		Transparent:                        TransparentClose,
+		IntranetSharing:                    ipforward.IsIpForwardOn(),
+		SpecialMode:                        SpecialModeNone,
+		TransparentType:                    TransparentRedirect,
+		AntiPollution:                      AntipollutionClosed,
 	}
 
 }
