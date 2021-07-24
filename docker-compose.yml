@@ -1,7 +1,0 @@
-version: "3"
-services:
-  v2raya:
-    privileged: true
-    network_mode: host # --network host
-    restart: always
-    build: .
