@@ -8,3 +8,5 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./service:/service:ro
+      - /lib/modules:/lib/modules:ro
+      - /etc/resolv.conf:/etc/resolv.conf
