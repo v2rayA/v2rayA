@@ -306,7 +306,7 @@ export default {
       event.stopPropagation();
       this.$buefy.dialog.confirm({
         title: this.$t("delete.title"),
-        message: this.$t("delete.outboundMessage", { outboundName: outbound }),
+        message: this.$t("outbound.deleteMessage", { outboundName: outbound }),
         confirmText: this.$t("operations.delete"),
         cancelText: this.$t("operations.cancel"),
         type: "is-danger",

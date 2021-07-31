@@ -234,9 +234,7 @@ export default {
   },
   delete: {
     title: "确认删除",
-    message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。",
-    outboundMessage:
-      "确定要<b>删除</b>出站 {outboundName} 吗？注意，该操作是不可逆的。"
+    message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。"
   },
   latency: {
     message: "时延测试往往需要花费较长时间，请耐心等待"
@@ -273,6 +271,8 @@ export default {
     messages: ["点击“查看帮助”按钮以获取帮助"]
   },
   outbound: {
-    addMessage: "请输入你想要添加的出站(outbound)名称："
+    addMessage: "请输入你想要添加的出站(outbound)名称：",
+    deleteMessage:
+      '确定要<b>删除</b>出站 "{outboundName}" 吗？注意，该操作是不可逆的。'
   }
 };
