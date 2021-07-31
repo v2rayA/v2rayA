@@ -1,5 +1,6 @@
 os:
   - linux
+dist: focal
 language:
   - go
   - node_js
