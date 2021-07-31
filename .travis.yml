@@ -22,7 +22,7 @@ env:
 addons:
   apt:
     packages:
-      - bsdtar
+      - libarchive-tools
       - rpm
       - lintian
       - reprepro
