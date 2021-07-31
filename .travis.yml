@@ -46,7 +46,6 @@ script:
   - fpm -s dir -t deb -p installer_debian_x64_$VERSION.deb --description "$DESC" $params --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_armel_$VERSION.deb --description "$DESC" $params --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" $params --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
-  - fpm -s dir -t deb -p installer_debian_aarch64_$VERSION.deb --description "$DESC" $params --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" $params --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t deb -p installer_debian_armv8_$VERSION.deb --description "$DESC" $params --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" $params --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya $files
@@ -54,7 +53,6 @@ script:
   - fpm -s dir -t rpm -p installer_redhat_armel_$VERSION.rpm --description "$DESC" $params --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_armhf_$VERSION.rpm --description "$DESC" $params --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" $params --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
-  - fpm -s dir -t rpm -p installer_redhat_arm64_$VERSION.rpm --description "$DESC" $params --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t rpm -p installer_redhat_armv8_$VERSION.rpm --description "$DESC" $params --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_x86_$VERSION.pkg.tar.zstd --description "$DESC" $params --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya $files
   - fpm -s dir -t pacman -p installer_archlinux_x64_$VERSION.pkg.tar.zstd --description "$DESC" $params --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya $files
@@ -119,7 +117,6 @@ deploy:
       - "installer_debian_x64_$VERSION.deb"
       - "installer_debian_armel_$VERSION.deb"
       - "installer_debian_armhf_$VERSION.deb"
-      - "installer_debian_aarch64_$VERSION.deb"
       - "installer_debian_arm64_$VERSION.deb"
       - "installer_debian_armv8_$VERSION.deb"
       - "installer_freebsd_x86_$VERSION.txz"
@@ -134,7 +131,6 @@ deploy:
       - "installer_redhat_armel_$VERSION.rpm"
       - "installer_redhat_armhf_$VERSION.rpm"
       - "installer_redhat_aarch64_$VERSION.rpm"
-      - "installer_redhat_arm64_$VERSION.rpm"
       - "installer_redhat_armv8_$VERSION.rpm"
       - "installer_archlinux_x86_$VERSION.pkg.tar.zstd"
       - "installer_archlinux_x64_$VERSION.pkg.tar.zstd"
