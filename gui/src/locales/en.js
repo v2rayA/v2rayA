@@ -276,6 +276,6 @@ export default {
     messages: ["click the button 'Help&Manual' for help"]
   },
   outbound: {
-    addMessage: "please input the outbound name you want to add:"
+    addMessage: "Please input the outbound name you want to add:"
   }
 };
