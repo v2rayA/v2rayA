@@ -1,9 +1,9 @@
 package ports
 
 import (
+	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"strconv"
 	"strings"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 )
 
 func generatePortMap(syntax []string) (req map[int][]string, m map[string]map[int][]*netstat.Socket, err error) {
@@ -100,4 +100,17 @@ func IsPortOccupiedWithWhitelist(syntax []string, whitelist map[string]struct{})
 		}
 	}
 	return false, nil, nil
+}
+
+
+func IsOccupiedTCPPort(nsmap map[string]map[int][]*netstat.Socket, port int) bool {
+	v := nsmap["tcp"][port]
+	v6 := nsmap["tcp6"][port]
+	v = append(v, v6...)
+	for _, v := range v {
+		if v.State != netstat.Close {
+			return true
+		}
+	}
+	return false
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -138,7 +139,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		reason := "failed to get proxy"
 		return newError(reason)
 	}
-	checkResolvConf()
+	resolv.CheckResolvConf()
 	infos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		reason := "failed to resolve subscription address: " + err.Error()
@@ -146,15 +147,15 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		return newError(reason)
 	}
 	tsrs := make([]configure.ServerRaw, len(infos))
-	var connectedServer *configure.ServerRaw
-	cs := configure.GetConnectedServer()
-	toFindConnectedServer := false
-	var found bool
-	if cs != nil {
-		connectedServer, _ = cs.LocateServer()
-		if connectedServer != nil && cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
-			toFindConnectedServer = true
-			found = false
+	css := configure.GetConnectedServers()
+	vi2outbounds := make(map[vmessInfo.VmessInfo][]string)
+	for _, cs := range css {
+		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
+			if sRaw, err := cs.LocateServerRaw(); err != nil {
+				return err
+			} else {
+				vi2outbounds[sRaw.VmessInfo] = append(vi2outbounds[sRaw.VmessInfo], cs.Outbound)
+			}
 		}
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
@@ -162,35 +163,47 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		tsr := configure.ServerRaw{
 			VmessInfo: info.VmessInfo,
 		}
-		if toFindConnectedServer && connectedServer.VmessInfo == tsr.VmessInfo {
-			err = configure.SetConnect(&configure.Which{
-				TYPE:    configure.SubscriptionServerType,
-				ID:      i + 1,
-				Sub:     index,
-				Latency: "",
-			})
-			if err != nil {
-				return
+		if outbounds, ok := vi2outbounds[tsr.VmessInfo]; ok {
+			for _, outbound := range outbounds {
+				err = configure.SetConnect(&configure.Which{
+					TYPE:     configure.SubscriptionServerType,
+					ID:       i + 1,
+					Sub:      index,
+					Outbound: outbound,
+				})
+				if err != nil {
+					return
+				}
+				delete(vi2outbounds, tsr.VmessInfo)
 			}
-			toFindConnectedServer = false
-			found = true
 		}
 		tsrs[i] = tsr
 	}
-	if toFindConnectedServer && !found {
-		if disconnectIfNecessary {
-			err = Disconnect()
-			if err != nil {
-				reason := "failed to disconnect previous server"
-				return newError(reason)
-			}
-		} else if connectedServer != nil {
-			//将之前连接的节点append进去
-			tsrs = append(tsrs, *connectedServer)
-			cs.ID = len(tsrs)
-			err = configure.SetConnect(cs)
-			if err != nil {
-				return
+	for vi,outbounds:=range vi2outbounds{
+		for _, outbound := range outbounds {
+			if disconnectIfNecessary {
+				err = Disconnect(outbound)
+				if err != nil {
+					reason := "failed to disconnect previous server"
+					return newError(reason)
+				}
+			} else {
+				// 将之前连接的节点append进去
+				// TODO: 变更ServerRaw时可能需要考虑
+				tsrs = append(tsrs, configure.ServerRaw{
+					VmessInfo: vi,
+					Latency:   "",
+				})
+				if err = configure.SetConnect(&configure.Which{
+					TYPE:     configure.SubscriptionType,
+					ID:       len(tsrs),
+					Sub:      index,
+					Latency:  "",
+					Link:     "",
+					Outbound: outbound,
+				}); err != nil {
+					return
+				}
 			}
 		}
 	}

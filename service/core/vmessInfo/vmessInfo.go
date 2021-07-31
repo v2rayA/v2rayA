@@ -155,3 +155,13 @@ func (v *VmessInfo) ExportToURL() string {
 	}
 	return ""
 }
+
+// if v is a embedded protocol of v2ray-core
+func (v *VmessInfo) IsEmbeddedProtocol() bool {
+	switch strings.ToLower(v.Protocol) {
+	case "vmess", "vless", "trojan", "shadowsocks", "ss", "":
+		return true
+	default:
+		return false
+	}
+}

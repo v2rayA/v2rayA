@@ -5,20 +5,66 @@
         <b-navbar-item href="/">
           <img src="./assets/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
+        <b-navbar-item tag="div">
+          <b-tag
+            id="statusTag"
+            class="pointerTag"
+            :type="statusMap[runningState.running]"
+            @mouseenter.native="handleOnStatusMouseEnter"
+            @mouseleave.native="handleOnStatusMouseLeave"
+            @click.native="handleClickStatus"
+            >{{ coverStatusText ? coverStatusText : runningState.running }}
+          </b-tag>
+        </b-navbar-item>
+        <b-navbar-item tag="div">
+          <b-dropdown
+            v-if="updateOutboundDropdown"
+            :triggers="['click', 'hover']"
+            aria-role="list"
+            :close-on-click="false"
+            @mouseenter.native="handleOutboundDropdownActiveChange"
+            @active-change="handleOutboundDropdownActiveChange"
+          >
+            <template #trigger>
+              <b-tag class="pointerTag" type="is-info" icon-right="menu-down">{{
+                outboundName.toUpperCase()
+              }}</b-tag>
+            </template>
+
+            <b-dropdown-item
+              v-for="outbound in outbounds"
+              :key="outbound"
+              aria-role="listitem"
+              class="is-flex padding-right-1rem justify-content-space-between outbound-dropdown"
+              @mouseenter.native="handleOnOutboundMouseEnter(outbound)"
+              @mouseleave.native="handleOnOutboundMouseLeave"
+              @click="outboundName = outbound"
+              ><span>{{ outboundNameDecorator(outbound) }}</span>
+              <span>
+                <i
+                  v-show="
+                    outbound !== 'proxy' && outboundDropdownHover[outbound]
+                  "
+                  class="iconfont icon-close-circle-fill"
+                  style="font-size: 1.25em"
+                  @click="handleDeleteOutbound($event, outbound)"
+                ></i></span
+            ></b-dropdown-item>
+            <b-dropdown-item
+              aria-role="listitem"
+              class="is-flex padding-right-1rem"
+              separator
+            ></b-dropdown-item>
+            <b-dropdown-item
+              aria-role="listitem"
+              class="is-flex padding-right-1rem"
+              @click="handleAddOutbound"
+              >{{ $t("operations.addOutbound") }}</b-dropdown-item
+            >
+          </b-dropdown>
+        </b-navbar-item>
       </template>
-      <template slot="start">
-        <!--        <b-navbar-item tag="div">-->
-        <!--          {{ $t("common.v2rayCoreStatus") }}：-->
-        <!--          <b-tag-->
-        <!--            id="statusTag"-->
-        <!--            :type="statusMap[runningState.running]"-->
-        <!--            @mouseenter.native="handleOnStatusMouseEnter"-->
-        <!--            @mouseleave.native="handleOnStatusMouseLeave"-->
-        <!--            @click.native="handleClickStatus"-->
-        <!--            >{{ coverStatusText ? coverStatusText : runningState.running }}-->
-        <!--          </b-tag>-->
-        <!--        </b-navbar-item>-->
-      </template>
+      <template slot="start"> </template>
 
       <template slot="end">
         <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
@@ -83,7 +129,7 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node v-model="runningState" />
+    <node v-model="runningState" :outbound="outboundName" />
     <b-modal
       :active.sync="showCustomPorts"
       has-modal-card
@@ -120,13 +166,17 @@ export default {
       runningState: {
         running: this.$t("common.checkRunning"),
         connectedServer: null,
-        lastConnectedServer: null
+        outboundToServerName: {}
       },
       showCustomPorts: false,
       langs: [
         { flag: "zh", alt: "简体中文" },
         { flag: "en", alt: "English" }
-      ]
+      ],
+      outboundName: "proxy",
+      outbounds: ["proxy"],
+      outboundDropdownHover: {},
+      updateOutboundDropdown: true
     };
   },
   computed: {
@@ -187,17 +237,142 @@ export default {
         }
       }
     });
+    this.$axios({
+      url: apiRoot + "/outbounds"
+    }).then(res => {
+      if (res.data.code === "SUCCESS") {
+        this.outbounds = res.data.data.outbounds;
+      }
+    });
   },
   methods: {
+    handleOutboundDropdownActiveChange(active) {
+      if (active) {
+        this.updateOutboundDropdown = false;
+        this.updateOutboundDropdown = true;
+      }
+    },
+    outboundNameDecorator(outbound) {
+      return this.runningState.outboundToServerName[outbound]
+        ? `${outbound} - ${this.runningState.outboundToServerName[outbound]}`
+        : outbound;
+    },
+    handleAddOutbound() {
+      this.$buefy.dialog.prompt({
+        message: this.$t("outbound.addMessage"),
+        inputAttrs: {
+          maxlength: 10
+        },
+        trapFocus: true,
+        onConfirm: outbound => {
+          let cancel;
+          waitingConnected(
+            this.$axios({
+              url: apiRoot + "/outbound",
+              method: "post",
+              data: {
+                outbound
+              },
+              cancelToken: new axios.CancelToken(function executor(c) {
+                cancel = c;
+              })
+            }).then(res => {
+              if (res.data.code === "SUCCESS") {
+                this.$buefy.toast.open({
+                  message: this.$t("common.success"),
+                  type: "is-success",
+                  duration: 2000,
+                  position: "is-top",
+                  queue: false
+                });
+                this.outbounds = res.data.data.outbounds;
+              } else {
+                this.$buefy.toast.open({
+                  message: res.data.message,
+                  type: "is-warning",
+                  duration: 5000,
+                  position: "is-top",
+                  queue: false
+                });
+              }
+            }),
+            3 * 1000,
+            cancel
+          );
+        }
+      });
+    },
+    handleDeleteOutbound(event, outbound) {
+      event.stopPropagation();
+      this.$buefy.dialog.confirm({
+        title: this.$t("delete.title"),
+        message: this.$t("delete.outboundMessage", { outboundName: outbound }),
+        confirmText: this.$t("operations.delete"),
+        cancelText: this.$t("operations.cancel"),
+        type: "is-danger",
+        hasIcon: true,
+        icon: " iconfont icon-alert",
+        onConfirm: () => {
+          let cancel;
+          waitingConnected(
+            this.$axios({
+              url: apiRoot + "/outbound",
+              method: "delete",
+              data: {
+                outbound
+              },
+              cancelToken: new axios.CancelToken(function executor(c) {
+                cancel = c;
+              })
+            }).then(res => {
+              if (res.data.code === "SUCCESS") {
+                this.$buefy.toast.open({
+                  message: this.$t("common.success"),
+                  type: "is-success",
+                  duration: 2000,
+                  position: "is-top",
+                  queue: false
+                });
+                this.outbounds = res.data.data.outbounds;
+                if (this.outboundName === outbound) {
+                  this.outboundName = "proxy";
+                }
+                if (outbound in this.runningState.outboundToServerName) {
+                  this.runningState.connectedServer = this.runningState.connectedServer.filter(
+                    cs => cs.outbound !== outbound
+                  );
+                }
+              } else {
+                this.$buefy.toast.open({
+                  message: res.data.message,
+                  type: "is-warning",
+                  duration: 5000,
+                  position: "is-top",
+                  queue: false
+                });
+              }
+            }),
+            3 * 1000,
+            cancel
+          );
+        }
+      });
+    },
     handleClickLang(lang) {
       localStorage["_lang"] = lang;
       location.reload();
     },
+    handleOnOutboundMouseEnter(outbound) {
+      this.outboundDropdownHover = { [outbound]: true };
+    },
+    handleOnOutboundMouseLeave() {
+      this.outboundDropdownHover = {};
+    },
     handleOnStatusMouseEnter() {
       if (this.runningState.running === this.$t("common.isRunning")) {
-        this.coverStatusText = "　" + this.$t("v2ray.stop") + "　";
+        this.coverStatusText = this.$t("v2ray.stop");
       } else if (this.runningState.running === this.$t("common.notRunning")) {
-        this.coverStatusText = "　" + this.$t("v2ray.start") + "　";
+        this.coverStatusText = this.$t("v2ray.start");
       }
     },
     handleOnStatusMouseLeave() {
@@ -253,8 +428,7 @@ export default {
             if (res.data.code === "SUCCESS") {
               Object.assign(this.runningState, {
                 running: this.$t("common.isRunning"),
-                connectedServer: res.data.data.connectedServer,
-                lastConnectedServer: null
+                connectedServer: res.data.data.touch.connectedServer
               });
             } else {
               this.$buefy.toast.open({
@@ -277,10 +451,8 @@ export default {
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
               running: this.$t("common.notRunning"),
-              connectedServer: null,
-              lastConnectedServer: res.data.data.lastConnectedServer
+              connectedServer: res.data.data.touch.connectedServer
             });
-            console.log(this.runningState);
           } else {
             this.$buefy.toast.open({
               message: res.data.message,
@@ -325,7 +497,7 @@ export default {
   margin-right: 0.15em;
 }
 
-#statusTag:hover {
+.pointerTag:hover {
   cursor: pointer;
 }
 </style>
@@ -411,5 +583,17 @@ a {
   font-size: 0.85em;
   text-indent: 1em;
   color: rgba(0, 0, 0, 0.6);
+}
+.margin-right-2em {
+  margin-right: 2em;
+}
+.justify-content-space-between {
+  justify-content: space-between;
+}
+.padding-right-1rem {
+  padding-right: 1rem !important;
+}
+#statusTag {
+  width: 5em;
 }
 </style>

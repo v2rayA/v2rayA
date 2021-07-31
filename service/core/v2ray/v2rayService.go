@@ -56,6 +56,10 @@ func CheckDohSupported() (err error) {
 	return isVersionSatisfied("4.22.0", false)
 }
 
+func CheckLogNoneSupported() (err error) {
+	return isVersionSatisfied("4.20.0", false)
+}
+
 func CheckTcpDnsSupported() (err error) {
 	return isVersionSatisfied("4.40.0", true)
 }

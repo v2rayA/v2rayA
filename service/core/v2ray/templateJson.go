@@ -46,28 +46,7 @@ const TemplateJson = `{
         "tag": "rule"
       }
     ],
-    "outbounds": [
-      {
-        "tag": "proxy",
-        "protocol": "vmess",
-        "settings": {
-          "vnext": null,
-          "servers": null
-        },
-        "streamSettings": null,
-        "mux": null
-      },
-      {
-        "protocol": "freedom",
-        "settings": {},
-        "tag": "direct"
-      },
-      {
-        "protocol": "blackhole",
-        "settings": {},
-        "tag": "block"
-      }
-    ],
+    "outbounds": [],
     "routing": {
       "domainStrategy": "IPOnDemand",
       "rules": []

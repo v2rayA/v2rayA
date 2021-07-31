@@ -22,6 +22,9 @@ func init() {
 	plugin.RegisterPlugin("shadowsocksr", NewSSRPlugin)
 }
 
+func (self *SSR) LocalPort() int {
+	return self.s.LocalPort
+}
 func NewSSRPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, err error) {
 	plugin = new(SSR)
 	err = plugin.Serve(localPort, v)

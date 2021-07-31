@@ -14,9 +14,9 @@ Touch是树型结构的前后端通信形式，其结构设计和前端统一。
 */
 type SubscriptionStatus string
 type Touch struct {
-	Servers         []TouchServer    `json:"servers"`
-	Subscriptions   []Subscription   `json:"subscriptions"`
-	ConnectedServer *configure.Which `json:"connectedServer"` //冗余一个信息，方便查找
+	Servers          []TouchServer    `json:"servers"`
+	Subscriptions    []Subscription   `json:"subscriptions"`
+	ConnectedServers []*configure.Which `json:"connectedServer"` //冗余一个信息，方便查找
 }
 type TouchServer struct {
 	ID          int                 `json:"id"`
@@ -24,7 +24,6 @@ type TouchServer struct {
 	Name        string              `json:"name"`
 	Address     string              `json:"address"`
 	Net         string              `json:"net"`
-	Connected   bool                `json:"connected"`
 	PingLatency string              `json:"pingLatency"`
 }
 type Subscription struct {
@@ -40,18 +39,9 @@ type Subscription struct {
 func NewUpdateStatus() SubscriptionStatus {
 	return SubscriptionStatus(time.Now().Local().Format("2006-1-2 15:04:05"))
 }
-func NewUpdateFailStatus(reason string) SubscriptionStatus {
-	return SubscriptionStatus(time.Now().Local().Format("2006-1-2 15:04:05") + "尝试更新失败：" + reason)
-}
 
 /* 将[]TouchServerRaw映射到[]TouchServer */
 func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
-	w := configure.GetConnectedServer()
-	var tsr *configure.ServerRaw
-	var err error
-	if w != nil {
-		tsr, err = w.LocateServer()
-	}
 	ts = make([]TouchServer, len(rss))
 	for i, v := range rss {
 		if v.VmessInfo.Protocol == "" {
@@ -84,11 +74,11 @@ func serverRawsToServers(rss []configure.ServerRaw) (ts []TouchServer) {
 			address = net.JoinHostPort(v.VmessInfo.Add, v.VmessInfo.Port)
 		}
 		ts[i] = TouchServer{
-			ID:        i + 1,
-			Name:      v.VmessInfo.Ps,
-			Address:   address,
-			Net:       protoToShow,
-			Connected: w != nil && err == nil && &tsr.VmessInfo == &v.VmessInfo,
+			ID:          i + 1,
+			Name:        v.VmessInfo.Ps,
+			Address:     address,
+			Net:         protoToShow,
+			PingLatency: v.Latency,
 		}
 	}
 	return
@@ -113,7 +103,7 @@ func GenerateTouch() (t Touch) {
 			Info:    v.Info,
 		}
 	}
-	t.ConnectedServer = configure.GetConnectedServer()
+	t.ConnectedServers = configure.GetConnectedServers()
 	//补充TYPE
 	for i := range t.Subscriptions {
 		t.Subscriptions[i].TYPE = configure.SubscriptionType

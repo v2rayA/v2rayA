@@ -11,11 +11,12 @@ var GlobalPlugins Plugins
 type Plugin interface {
 	Serve(localPort int, v vmessInfo.VmessInfo) (err error)
 	Close() (err error)
+	LocalPort() int
 	SupportUDP() bool //TODO: support udp
 }
 
 type Plugins struct {
-	Plugins []Plugin
+	Plugins map[string]Plugin
 	mutex   sync.Mutex
 }
 
@@ -25,23 +26,32 @@ func (r *Plugins) CloseAll() {
 	for _, ssr := range r.Plugins {
 		_ = ssr.Close()
 	}
-	r.Plugins = make([]Plugin, 0)
+	r.Plugins = make(map[string]Plugin)
 }
 
-func (r *Plugins) Append(plugin Plugin) {
+func (r *Plugins) Close(outbound string) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if plu, ok := r.Plugins[outbound]; ok {
+		plu.Close()
+		delete(r.Plugins, outbound)
+	}
+}
+
+func (r *Plugins) Add(outbound string, plugin Plugin) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if plugin == nil {
 		return
 	}
-	r.Plugins = append(r.Plugins, plugin)
+	r.Plugins[outbound] = plugin
 }
 
-type PluginCreator func(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error)
+type Creator func(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error)
 
-var pluginMap = make(map[string]PluginCreator)
+var pluginMap = make(map[string]Creator)
 
-func RegisterPlugin(protocol string, pluginCreator PluginCreator) {
+func RegisterPlugin(protocol string, pluginCreator Creator) {
 	pluginMap[protocol] = pluginCreator
 }
 
@@ -74,7 +84,8 @@ func preprocess(v *vmessInfo.VmessInfo) (needPlugin bool) {
 	return true
 }
 
-func NewPlugin(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) {
+// New a plugin and serve. If no plugin is needed, returns nil, nil.
+func NewPluginAndServe(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err error) {
 	v.Protocol = strings.ToLower(v.Protocol)
 	if ok := preprocess(&v); !ok {
 		return nil, nil

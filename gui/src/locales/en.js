@@ -66,7 +66,8 @@ export default {
     helpManual: "Help & Manual",
     yes: "Yes",
     no: "No",
-    switchSite: "Switch to alternate site"
+    switchSite: "Switch to alternate site",
+    addOutbound: "Add an outbound"
   },
   register: {
     title: "Create an admin account first",
@@ -273,5 +274,8 @@ export default {
   },
   routingA: {
     messages: ["click the button 'Help&Manual' for help"]
+  },
+  outbound: {
+    addMessage: "please input the outbound name you want to add:"
   }
 };

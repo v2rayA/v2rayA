@@ -1,5 +1,6 @@
 package infra
 
+// 240.0.0.0/4
 type reservedIP uint32
 
 func (r reservedIP) IP() (ip [4]byte) {

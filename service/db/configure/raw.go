@@ -4,6 +4,7 @@ import "github.com/v2rayA/v2rayA/core/vmessInfo"
 
 type ServerRaw struct {
 	VmessInfo vmessInfo.VmessInfo `json:"vmessInfo"`
+	Latency   string              `json:"latency"`
 }
 
 type SubscriptionRaw struct {

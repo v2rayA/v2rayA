@@ -129,7 +129,7 @@
         v-model="tab"
         position="is-centered"
         type="is-toggle-rounded"
-        @change="handleTabsChange"
+        @input="handleTabsChange"
       >
         <b-tab-item label="SUBSCRIPTION">
           <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
@@ -613,6 +613,12 @@ import axios from "@/plugins/axios";
 export default {
   name: "Node",
   components: { ModalSubscription, ModalServer },
+  props: {
+    outbound: {
+      type: String,
+      default: "proxy"
+    }
+  },
   data() {
     return {
       importWhat: "",
@@ -630,7 +636,7 @@ export default {
       runningState: {
         running: this.$t("common.checkRunning"),
         connectedServer: null,
-        lastConnectedServer: null
+        outboundToServerName: {}
       },
       showModalServer: false,
       which: null,
@@ -647,23 +653,32 @@ export default {
   },
   watch: {
     "runningState.running"() {
-      let val = this.runningState;
-      this.updateConnectView(val);
-      this.$emit("input", this.runningState);
+      this.updateConnectView();
+    },
+    outbound() {
+      this.updateConnectView();
+      this.locateTabToConnected();
     }
   },
   created() {
     this.$axios({
       url: apiRoot + "/touch"
     }).then(res => {
+      res.data.data.touch.servers.forEach(v => {
+        v.connected = false;
+      });
+      res.data.data.touch.subscriptions.forEach(s => {
+        s.servers.forEach(v => {
+          v.connected = false;
+        });
+      });
       this.tableData = res.data.data.touch;
       // this.$store.commit("CONNECTED_SERVER", this.tableData.connectedServer);
       this.runningState = {
         running: res.data.data.running
           ? this.$t("common.isRunning")
           : this.$t("common.notRunning"),
-        connectedServer: this.tableData.connectedServer,
-        lastConnectedServer: null
+        connectedServer: this.tableData.connectedServer
       };
       this.locateTabToConnected();
       this.ready = true;
@@ -779,47 +794,60 @@ export default {
         return parseInt(a.pingLatency) > parseInt(b.pingLatency) ? 1 : -1;
       }
     },
-    updateConnectView(runningState) {
-      if (!runningState) {
-        runningState = this.runningState;
-      }
-      if (runningState.lastConnectedServer) {
-        let server = locateServer(
-          this.tableData,
-          runningState.lastConnectedServer
-        );
-        if (server.connected) {
-          server.connected = false;
-        } else {
-          //否则广播
-          this.tableData.servers.some(v => {
-            v.connected && (v = false);
-            return v.connected;
-          }) ||
-            this.tableData.subscriptions.some(s => {
-              return s.servers.some(v => {
-                v.connected && (v = false);
-                return v.connected;
-              });
-            });
+    filterConnectedServer(servers, outbound = this.outbound) {
+      if (servers instanceof Array) {
+        for (let s of servers) {
+          if (s.outbound === outbound) {
+            return s;
+          }
         }
+        return null;
       }
-      if (runningState.connectedServer) {
-        let server = locateServer(this.tableData, runningState.connectedServer);
+      return servers;
+    },
+    updateConnectView() {
+      let connectedServer = this.runningState.connectedServer;
+      // associate outbounds and servers
+      this.runningState.outboundToServerName = {};
+      this.runningState.connectedServer?.forEach(cs => {
+        const server = locateServer(this.tableData, cs);
+        this.runningState.outboundToServerName[cs.outbound] = server.name;
+      });
+
+      connectedServer = this.filterConnectedServer(connectedServer);
+      // clear connected state
+      this.tableData.servers.some(v => {
+        v.connected && (v.connected = false);
+        return v.connected;
+      }) ||
+        this.tableData.subscriptions.some(s => {
+          return s.servers.some(v => {
+            v.connected && (v.connected = false);
+            return v.connected;
+          });
+        });
+      if (connectedServer) {
+        let server = locateServer(this.tableData, connectedServer);
         server.connected = true;
       }
-      this.connectedServer = Object.assign(
-        this.connectedServer,
-        runningState.connectedServer
-      );
-      if (!runningState.connectedServer) {
-        this.connectedServer._type = "";
+      if (connectedServer) {
+        Object.assign(this.connectedServer, connectedServer);
+      } else {
+        Object.assign(this.connectedServer, {
+          _type: "",
+          id: 0,
+          sub: 0
+        });
       }
+
+      this.$emit("input", this.runningState);
     },
-    locateTabToConnected(whichServer) {
+    locateTabToConnected() {
+      let whichServer = this.runningState.connectedServer;
       if (!whichServer) {
-        whichServer = this.tableData.connectedServer;
+        return;
       }
+      whichServer = this.filterConnectedServer(whichServer);
       if (!whichServer) {
         return;
       }
@@ -862,8 +890,7 @@ export default {
             running: res.data.data.running
               ? this.$t("common.isRunning")
               : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer,
-            lastConnectedServer: null
+            connectedServer: this.tableData.connectedServer
           };
           this.updateConnectView();
           this.$buefy.toast.open({
@@ -905,8 +932,7 @@ export default {
             running: res.data.data.running
               ? this.$t("common.isRunning")
               : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer,
-            lastConnectedServer: null
+            connectedServer: this.tableData.connectedServer
           });
           this.updateConnectView();
         } else {
@@ -933,7 +959,6 @@ export default {
       });
     },
     handleClickAboutConnection(row, sub) {
-      const that = this;
       let cancel;
       if (!row.connected) {
         //该节点并未处于连接状态，因此进行连接
@@ -941,18 +966,26 @@ export default {
           this.$axios({
             url: apiRoot + "/connection",
             method: "post",
-            data: { id: row.id, _type: row._type, sub: sub },
+            data: {
+              id: row.id,
+              _type: row._type,
+              sub: sub,
+              outbound: this.outbound
+            },
             cancelToken: new axios.CancelToken(function executor(c) {
               cancel = c;
             })
           }).then(res => {
             if (res.data.code === "SUCCESS") {
               Object.assign(this.runningState, {
-                running: this.$t("common.isRunning"),
-                connectedServer: res.data.data.connectedServer,
-                lastConnectedServer: res.data.data.lastConnectedServer
+                running: res.data.data.running
+                  ? this.$t("common.isRunning")
+                  : this.$t("common.notRunning"),
+                connectedServer: res.data.data.touch.connectedServer
               });
-              this.updateConnectView();
+              this.$nextTick(() => {
+                this.updateConnectView();
+              });
             } else {
               this.$buefy.toast.open({
                 message: res.data.message,
@@ -970,14 +1003,21 @@ export default {
       } else {
         this.$axios({
           url: apiRoot + "/connection",
-          method: "delete"
+          method: "delete",
+          data: {
+            id: row.id,
+            _type: row._type,
+            sub: sub,
+            outbound: this.outbound
+          }
         }).then(res => {
           if (res.data.code === "SUCCESS") {
             row.connected = false;
             Object.assign(this.runningState, {
-              running: that.$t("common.notRunning"),
-              connectedServer: null,
-              lastConnectedServer: res.data.data.lastConnectedServer
+              running: res.data.data.running
+                ? this.$t("common.isRunning")
+                : this.$t("common.notRunning"),
+              connectedServer: res.data.data.touch.connectedServer
             });
             this.updateConnectView();
           } else {
@@ -1181,8 +1221,7 @@ export default {
             running: res.data.data.running
               ? this.$t("common.isRunning")
               : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer,
-            lastConnectedServer: null
+            connectedServer: this.tableData.connectedServer
           };
           this.updateConnectView();
           this.$buefy.toast.open({
@@ -1235,8 +1274,7 @@ export default {
             running: res.data.data.running
               ? this.$t("common.isRunning")
               : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer,
-            lastConnectedServer: null
+            connectedServer: this.tableData.connectedServer
           };
           this.updateConnectView();
         });
@@ -1286,8 +1324,7 @@ export default {
             running: res.data.data.running
               ? this.$t("common.isRunning")
               : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer,
-            lastConnectedServer: null
+            connectedServer: this.tableData.connectedServer
           };
           this.updateConnectView();
         });

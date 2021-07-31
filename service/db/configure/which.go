@@ -56,8 +56,12 @@ func (ws *Whiches) Add(which Which) {
 	ws.Touches = append(ws.Touches, &which)
 }
 
-func (ws *Whiches) Set(wt []*Which) {
-	ws.Touches = wt
+func NewWhiches(wt []*Which) *Whiches {
+	ws := new(Whiches)
+	var theCopy = make([]*Which, len(wt))
+	copy(theCopy, wt)
+	ws.Touches = theCopy
+	return ws
 }
 
 /*去重，并做下标范围检测，只保留符合下标范围的项*/
@@ -92,18 +96,19 @@ func (ws *Whiches) GetNonDuplicated() (w []*Which) {
 }
 
 type Which struct {
-	TYPE    TouchType `json:"_type"`                 //Server还是Subscription
-	ID      int       `json:"id"`                    //代表某个subscription或某个server的ID是多少, 从1开始. 如果是SubscriptionServer, 代表这个server在该Subscription中的ID
-	Sub     int       `json:"sub"`                   //仅当TYPE为SubscriptionServer时有效, 代表Subscription的下标, 从0开始.
-	Latency string    `json:"pingLatency,omitempty"` //历史遗留问题，前后端通信还是使用pingLatency这个名字
-	Link    string    //optional
+	TYPE     TouchType `json:"_type"`                 //Server还是Subscription
+	ID       int       `json:"id"`                    //代表某个subscription或某个server的ID是多少, 从1开始. 如果是SubscriptionServer, 代表这个server在该Subscription中的ID
+	Sub      int       `json:"sub"`                   //仅当TYPE为SubscriptionServer时有效, 代表Subscription的下标, 从0开始.
+	Latency  string    `json:"pingLatency,omitempty"` //历史遗留问题，前后端通信还是使用pingLatency这个名字，该值仅作为ping的返回值
+	Link     string    //optional
+	Outbound string    `json:"outbound"`
 }
 
 func (w *Which) Ping(timeout time.Duration) (err error) {
 	if w.TYPE == SubscriptionType {
 		return newError("you cannot ping a subscription")
 	}
-	tsr, err := w.LocateServer()
+	tsr, err := w.LocateServerRaw()
 	if err != nil {
 		return
 	}
@@ -137,23 +142,23 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 	return
 }
 
-func (w *Which) LocateServer() (sr *ServerRaw, err error) {
+func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 	ind := w.ID - 1 //转化为下标
 	switch w.TYPE {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
-			return nil, newError("LocateServer: ID exceed range")
+			return nil, newError("LocateServerRaw: ID exceed range")
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-			return nil, newError("LocateServer: ID or Sub exceed range")
+			return nil, newError("LocateServerRaw: ID or Sub exceed range")
 		}
 		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
-		return nil, newError("LocateServer: invalid TYPE")
+		return nil, newError("LocateServerRaw: invalid TYPE")
 	}
 }
 
@@ -165,27 +170,28 @@ func (ws *Whiches) FillLinks() (err error) {
 		switch w.TYPE {
 		case ServerType:
 			if ind < 0 || ind >= len(servers) {
-				return newError("LocateServer: ID exceed range")
+				return newError("LocateServerRaw: ID exceed range")
 			}
 			w.Link = servers[ind].VmessInfo.ExportToURL()
 		case SubscriptionServerType:
 			if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-				return newError("LocateServer: ID or Sub exceed range")
+				return newError("LocateServerRaw: ID or Sub exceed range")
 			}
 			w.Link = subscriptions[w.Sub].Servers[ind].VmessInfo.ExportToURL()
 		default:
-			return newError("LocateServer: invalid TYPE")
+			return newError("LocateServerRaw: invalid TYPE")
 		}
 	}
 	return nil
 }
 
-func (ws *Whiches) Save() (err error) {
+func (ws *Whiches) SaveLatencies() (err error) {
 	whiches := ws.GetNonDuplicated()
 	var (
 		serverIndexes       = make(map[int]*Which)
 		subscriptionIndexes = make(map[int]map[int]*Which)
 	)
+	// deduplicate
 	for _, which := range whiches {
 		ind := which.ID - 1 // to index
 		switch which.TYPE {
@@ -199,6 +205,26 @@ func (ws *Whiches) Save() (err error) {
 		default:
 		}
 	}
-	// TODO:
+	// set servers
+	for index, which := range serverIndexes {
+		sRaw, err := which.LocateServerRaw()
+		if err != nil {
+			return err
+		}
+		sRaw.Latency = which.Latency
+		if err := SetServer(index, sRaw); err != nil {
+			return err
+		}
+	}
+	// set subscriptions
+	for subIndex, serverIndexes := range subscriptionIndexes {
+		subRaw := GetSubscription(subIndex)
+		for index, which := range serverIndexes {
+			subRaw.Servers[index].Latency = which.Latency
+		}
+		if err := SetSubscription(subIndex, subRaw); err != nil {
+			return err
+		}
+	}
 	return nil
 }

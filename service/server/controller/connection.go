@@ -15,22 +15,44 @@ func PostConnection(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	lastConnectedServer := configure.GetConnectedServer()
 	err = service.Connect(&which)
 	if err != nil {
 		log.Println(err)
 		common.ResponseError(ctx, logError(err, "failed to connect"))
 		return
 	}
-	common.ResponseSuccess(ctx, gin.H{"connectedServer": configure.GetConnectedServer(), "lastConnectedServer": lastConnectedServer})
+	GetTouch(ctx)
 }
 
 func DeleteConnection(ctx *gin.Context) {
-	cs := configure.GetConnectedServer()
-	err := service.Disconnect()
+	var which configure.Which
+	err := ctx.ShouldBindJSON(&which)
+	if err != nil {
+		common.ResponseError(ctx, logError(nil, "bad request"))
+		return
+	}
+	err = service.Disconnect(which.Outbound)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	common.ResponseSuccess(ctx, gin.H{"lastConnectedServer": cs})
+	GetTouch(ctx)
+}
+
+func PostV2ray(ctx *gin.Context) {
+	err := service.StartV2ray()
+	if err != nil {
+		common.ResponseError(ctx, logError(err, "failed to start v2ray-core"))
+		return
+	}
+	GetTouch(ctx)
+}
+
+func DeleteV2ray(ctx *gin.Context) {
+	err := service.StopV2ray()
+	if err != nil {
+		common.ResponseError(ctx, logError(err, "failed to stop v2ray-core"))
+		return
+	}
+	GetTouch(ctx)
 }

@@ -172,7 +172,7 @@ type Mux struct {
 type Outbound struct {
 	Tag            string          `json:"tag"`
 	Protocol       string          `json:"protocol"`
-	Settings       *Settings       `json:"settings,omitempty"`
+	Settings       Settings        `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	ProxySettings  *ProxySettings  `json:"proxySettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
@@ -267,17 +267,11 @@ type Policy struct {
 	} `json:"system"`
 }
 
-func NewTemplate() (tmpl Template) {
-	return
-}
-
 /*
 根据传入的 VmessInfo 填充模板
-当协议是ss时，v.Net对应Method，v.ID对应Password
-函数会规格化传入的v
 */
-
 func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Outbound, err error) {
+	setting := configure.GetSettingNotNil()
 	socksPlugin := false
 	var tmplJson TmplJson
 	// 读入模板json
@@ -286,8 +280,6 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	if err != nil {
 		return o, newError("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
-	// 其中Template是基础配置，替换掉*t即可
-	o = tmplJson.Template.Outbounds[0]
 	// 默认协议vmess
 	switch v.Protocol {
 	case "":
@@ -298,7 +290,10 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		v.Protocol = "shadowsocksr"
 	}
 	// 根据vmessInfo修改json配置
-	o.Protocol = v.Protocol
+	o = Outbound{
+		Tag:      tag,
+		Protocol: v.Protocol,
+	}
 	port, _ := strconv.Atoi(v.Port)
 	aid, _ := strconv.Atoi(v.Aid)
 	switch strings.ToLower(v.Protocol) {
@@ -368,6 +363,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			tmplJson.HttpSettings.Path = v.Path
 			o.StreamSettings.HTTPSettings = &tmplJson.HttpSettings
 		}
+		muxOn := setting.MuxOn == configure.Yes
 		if strings.ToLower(v.TLS) == "tls" {
 			o.StreamSettings.Security = "tls"
 			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
@@ -397,6 +393,12 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			vnext := o.Settings.Vnext.([]Vnext)
 			vnext[0].Users[0].Flow = v.Flow
 			o.Settings.Vnext = vnext
+			//xtls does not support mux
+			muxOn = false
+		}
+		o.Mux = &Mux{
+			Enabled:     muxOn,
+			Concurrency: setting.Mux,
 		}
 	case "shadowsocks":
 		v.Net = strings.ToLower(v.Net)
@@ -490,13 +492,13 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			},
 		}
 	}
-	o.Tag = tag
 	return
 }
 
 type Addr struct {
 	host string
 	port string
+	udp  bool
 }
 
 func parseDnsAddr(addr string) Addr {
@@ -505,6 +507,7 @@ func parseDnsAddr(addr string) Addr {
 		return Addr{
 			host: addr,
 			port: "53",
+			udp:  true,
 		}
 	}
 	// dns.google:53
@@ -513,20 +516,24 @@ func parseDnsAddr(addr string) Addr {
 			return Addr{
 				host: host,
 				port: port,
+				udp:  true,
 			}
 		}
 	}
 	// tcp://8.8.8.8:53, https://dns.google/dns-query
+	// TODO: quic:// uses UDP
 	if u, err := url.Parse(addr); err == nil {
 		return Addr{
 			host: u.Hostname(),
 			port: u.Port(),
+			udp:  false,
 		}
 	}
 	// dns.google, dns.pub, etc.
 	return Addr{
 		host: addr,
 		port: "53",
+		udp:  true,
 	}
 }
 
@@ -562,36 +569,58 @@ func appendDnsServers(d *DNS, lines []string, domains []string) {
 	}
 }
 
-func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, supportUDP bool) (routing DnsRouting, err error) {
+// outboundTag -> outboundProtocol
+func (t *Template) outboundTags() map[string]string {
+	tags := make(map[string]string)
+	for _, o := range t.Outbounds {
+		if o.Tag != "" {
+			tags[o.Tag] = o.Protocol
+		}
+	}
+	return tags
+}
+
+func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, supportUDP map[string]bool) (routing DnsRouting, err error) {
 	// TODO: other countries and regions
-	var internal, external []string
+	firstOutboundTag := t.Outbounds[0].Tag
+	var firstUDPSupportedOutboundTag string
+	for _, o := range t.Outbounds {
+		if supportUDP[o.Tag] == true {
+			firstUDPSupportedOutboundTag = o.Tag
+			break
+		}
+	}
+	outboundTags := t.outboundTags()
+	var internal, external, all []string
 	var allThroughProxy = false
 	if setting.AntiPollution == configure.AntipollutionAdvanced {
 		// advanced
 		internal = configure.GetInternalDnsListNotNil()
 		external = configure.GetExternalDnsListNotNil()
+		all = append(all, internal...)
+		all = append(all, external...)
 		if len(external) == 0 {
 			allThroughProxy = true
 			for _, line := range internal {
 				dns := dnsParser2.Parse(line)
-				if dns.Out != "proxy" {
+				if dns.Out == "direct" {
 					allThroughProxy = false
 					break
 				}
 			}
 		}
-		// check UDP support
-		for _, line := range external {
+		// check if outbounds exist
+		for _, line := range all {
 			dns := dnsParser2.Parse(line)
-			if dns.Out == "proxy" {
-				if net.ParseIP(dns.Val) != nil {
-					return DnsRouting{}, fmt.Errorf("sorry, your DNS setting may be invalid, because UDP is not supported for %v yet by v2rayA. Please use tcp:// or doh:// instead.", v.Protocol)
-				}
-				if _, port, err := net.SplitHostPort(dns.Val); err == nil {
-					if _, err := strconv.Atoi(port); err == nil {
-						return DnsRouting{}, fmt.Errorf("sorry, your DNS setting may be invalid, because UDP is not supported for %v yet by v2rayA. Please use tcp:// or doh:// instead.", v.Protocol)
-					}
-				}
+			if _, ok := outboundTags[dns.Out]; !ok {
+				return DnsRouting{}, fmt.Errorf(`your DNS rule "%v" depends on the outbound "%v", thus it should connect to a server`, line, dns.Out)
+			}
+		}
+		// check UDP support
+		for _, line := range all {
+			dns := dnsParser2.Parse(line)
+			if parseDnsAddr(dns.Val).udp && !supportUDP[dns.Out] {
+				return DnsRouting{}, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// and doh:// DNS rule instead, or change the connected server`, dns.Out)
 			}
 		}
 	} else if setting.AntiPollution != configure.AntipollutionClosed {
@@ -601,13 +630,13 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 		case configure.AntipollutionAntiHijack:
 			break
 		case configure.AntipollutionDnsForward:
-			if supportUDP {
-				external = []string{"8.8.8.8 -> proxy", "1.1.1.1 -> proxy"}
+			if firstUDPSupportedOutboundTag != "" {
+				external = []string{"8.8.8.8 -> " + firstUDPSupportedOutboundTag, "1.1.1.1 -> " + firstUDPSupportedOutboundTag}
 			} else {
 				if err := CheckTcpDnsSupported(); err == nil {
-					external = []string{"tcp://dns.opendns.com:5353 -> proxy", "tcp://dns.google -> proxy"}
+					external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
 				} else if err = CheckDohSupported(); err == nil {
-					external = []string{"https://1.1.1.1/dns-query -> proxy", "https://dns.google/dns-query -> proxy"}
+					external = []string{"https://1.1.1.1/dns-query -> " + firstOutboundTag, "https://dns.google/dns-query -> " + firstOutboundTag}
 				} else {
 					// compromise
 					external = []string{"208.67.220.220:5353 -> direct", "208.67.222.222 -> direct"}
@@ -686,8 +715,10 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 		t.DNS.Servers = []interface{}{"localhost"}
 	}
 	var domainsToLookup []string
-	if net.ParseIP(v.Add) == nil {
-		domainsToLookup = append(domainsToLookup, v.Add)
+	for _, v := range vs {
+		if net.ParseIP(v.Add) == nil {
+			domainsToLookup = append(domainsToLookup, v.Add)
+		}
 	}
 	for _, addr := range routing.ProxyDomains {
 		domainsToLookup = append(domainsToLookup, addr.host)
@@ -743,19 +774,26 @@ func (t *Template) SetDNS(v vmessInfo.VmessInfo, setting *configure.Setting, sup
 	}
 	return
 }
+
+// The order are from v4 IPs to v6 IPs. If the system does not support IPv6, v6 IPs will not be returned.
 func filterIPs(ips []string) []string {
-	if iptables.IsIPv6Supported() {
-		return ips
-	}
 	var ret []string
 	for _, ip := range ips {
 		if net.ParseIP(ip).To4() != nil {
 			ret = append(ret, ip)
 		}
 	}
+	if !iptables.IsIPv6Supported() {
+		return ret
+	}
+	for _, ip := range ips {
+		if net.ParseIP(ip).To4() == nil {
+			ret = append(ret, ip)
+		}
+	}
 	return ret
 }
-func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
+func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP map[string]bool) {
 	for _, r := range routing.DirectIPs {
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct", IP: []string{r.host}, Port: r.port},
@@ -800,14 +838,32 @@ func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP bool) {
 		}
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
-	if !supportUDP {
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{
-				Type:        "field",
-				OutboundTag: "direct",
-				Network:     "udp",
-			},
-		)
+	if !supportUDP["proxy"] {
+		// find a outbound that supports UDP and redirect all leaky UDP traffic to it
+		var found bool
+		for outbound, support := range supportUDP {
+			if support {
+				t.Routing.Rules = append(t.Routing.Rules,
+					RoutingRule{
+						Type:        "field",
+						OutboundTag: outbound,
+						Network:     "udp",
+					},
+				)
+				found = true
+				break
+			}
+		}
+		if !found {
+			// no outbound with UDP supported, so redirect all leaky UDP traffic to outbound direct
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: "direct",
+					Network:     "udp",
+				},
+			)
+		}
 	}
 	return
 }
@@ -959,7 +1015,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 							t.Outbounds = append(t.Outbounds, Outbound{
 								Tag:      o.Name,
 								Protocol: o.Value.Name,
-								Settings: &Settings{
+								Settings: Settings{
 									Servers: []Server{
 										server,
 									},
@@ -1006,7 +1062,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 							routingInboundTags = append(routingInboundTags, o.Name)
 						}
 					case "freedom":
-						settings := new(Settings)
+						settings := Settings{}
 						if len(proto.NamedParams["domainStrategy"]) > 0 {
 							settings.DomainStrategy = proto.NamedParams["domainStrategy"][0]
 						}
@@ -1027,7 +1083,11 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 					}
 				}
 			}
-		case routingA.Routing:
+		}
+	}
+	outboundTags := t.outboundTags()
+	for _, rule := range rules {
+		if rule, ok := rule.(routingA.Routing); ok {
 			rr := RoutingRule{
 				Type:        "field",
 				OutboundTag: rule.Out,
@@ -1066,6 +1126,11 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 					rr.User = f.Params
 				case "inboundTag":
 					rr.InboundTag = f.Params
+				}
+			}
+			if rr.OutboundTag != "" {
+				if _, ok := outboundTags[rr.OutboundTag]; !ok {
+					return fmt.Errorf(`your RoutingA rules depend on the outbound "%v", thus it should connect to a server`, rr.OutboundTag)
 				}
 			}
 			t.Routing.Rules = append(t.Routing.Rules, rr)
@@ -1146,7 +1211,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
-func (t *Template) SetOutboundSockopt(supportUDP bool, setting *configure.Setting) {
+func (t *Template) SetOutboundSockopt(setting *configure.Setting) {
 	mark := 0xff
 	//tos := 184
 	for i := range t.Outbounds {
@@ -1262,7 +1327,17 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 	}
 }
 
-func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
+type OutboundInfo struct {
+	Info         vmessInfo.VmessInfo
+	OutboundName string
+	PluginPort   int
+}
+
+func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
+	vs := make([]vmessInfo.VmessInfo, 0, len(outboundInfos))
+	for _, info := range outboundInfos {
+		vs = append(vs, info.Info)
+	}
 	setting := configure.GetSettingNotNil()
 	var tmplJson TmplJson
 	// 读入模板json
@@ -1284,6 +1359,10 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		os.Chmod(t.Log.Access, 0777)
 		os.Chmod(t.Log.Error, 0777)
 		t.Log.Loglevel = "debug"
+	} else if CheckLogNoneSupported() == nil {
+		t.Log.Loglevel = "info"
+		t.Log.Access = ""
+		t.Log.Error = "none"
 	} else {
 		t.Log = nil
 	}
@@ -1295,33 +1374,27 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		}
 	}
 	// 解析Outbound
-	o, err := ResolveOutbound(&v, "proxy", &global.GetEnvironmentConfig().PluginListenPort)
-	if err != nil {
-		return t, err
-	}
-	t.Outbounds[0] = o
-	var supportUDP = true
-	switch o.Protocol {
-	case "vmess", "vless":
-		//是否在设置了里开启了mux
-		muxon := setting.MuxOn == configure.Yes
-		if v.TLS == "xtls" {
-			//xtls与mux不共存
-			muxon = false
+	var supportUDP = make(map[string]bool)
+	for _, outboundInfo := range outboundInfos {
+		o, err := ResolveOutbound(&outboundInfo.Info, outboundInfo.OutboundName, &outboundInfo.PluginPort)
+		if err != nil {
+			return t, err
 		}
-		t.Outbounds[0].Mux = &Mux{
-			Enabled:     muxon,
-			Concurrency: setting.Mux,
-		}
-	case "ss", "shadowsocks", "trojan":
-		break
-	default:
-		supportUDP = false
+		t.Outbounds = append(t.Outbounds, o)
+		supportUDP[outboundInfo.OutboundName] = outboundInfo.Info.IsEmbeddedProtocol()
 	}
+	t.Outbounds = append(t.Outbounds, Outbound{
+		Tag:      "direct",
+		Protocol: "freedom",
+	}, Outbound{
+		Tag:      "block",
+		Protocol: "blackhole",
+	})
+
 	//根据配置修改端口
 	t.SetInbound(setting)
 	//设置DNS
-	dnsRouting, err := t.SetDNS(v, setting, supportUDP)
+	dnsRouting, err := t.SetDNS(vs, setting, supportUDP)
 	if err != nil {
 		return
 	}
@@ -1339,7 +1412,7 @@ func NewTemplateFromVmessInfo(v vmessInfo.VmessInfo) (t Template, err error) {
 		t.SetTransparentRouting(setting)
 	}
 	//置outboundSockopt
-	t.SetOutboundSockopt(supportUDP, setting)
+	t.SetOutboundSockopt(setting)
 
 	//置fakedns destOverride
 	t.SetInboundFakeDnsDestOverride()
