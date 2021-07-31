@@ -136,7 +136,15 @@
             <b-table
               :data="tableData.subscriptions"
               :checked-rows.sync="checkedRows"
-              :row-class="(row, index) => row.connected && 'is-connected'"
+              :row-class="
+                (row, index) =>
+                  row.connected &&
+                  runningState.running === $t('common.isRunning')
+                    ? 'is-connected-running'
+                    : row.connected
+                    ? 'is-connected-not-running'
+                    : null
+              "
               default-sort="id"
               checkable
             >
@@ -236,7 +244,15 @@
               :data="tableData.servers"
               :checked-rows.sync="checkedRows"
               checkable
-              :row-class="(row, index) => row.connected && 'is-connected'"
+              :row-class="
+                (row, index) =>
+                  row.connected &&
+                  runningState.running === $t('common.isRunning')
+                    ? 'is-connected-running'
+                    : row.connected
+                    ? 'is-connected-not-running'
+                    : null
+              "
               default-sort="id"
             >
               <b-table-column
@@ -360,7 +376,15 @@
               :data="sub.servers"
               :checked-rows.sync="checkedRows"
               checkable
-              :row-class="(row, index) => row.connected && 'is-connected'"
+              :row-class="
+                (row, index) =>
+                  row.connected &&
+                  runningState.running === $t('common.isRunning')
+                    ? 'is-connected-running'
+                    : row.connected
+                    ? 'is-connected-not-running'
+                    : null
+              "
               default-sort="id"
             >
               <b-table-column
@@ -1421,9 +1445,13 @@ td {
   }
 }
 
-tr.is-connected {
-  //$c: #23d160;
+tr.is-connected-running {
   $c: #bbdefb;
+  background: $c;
+  color: findColorInvert($c);
+}
+tr.is-connected-not-running {
+  $c: rgba(255, 69, 58, 0.4);
   background: $c;
   color: findColorInvert($c);
 }

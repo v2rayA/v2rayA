@@ -35,6 +35,7 @@ func PutSetting(ctx *gin.Context) {
 	err = service.UpdateSetting(&data)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
+		_ = service.StopV2ray()
 		return
 	}
 	common.ResponseSuccess(ctx, nil)

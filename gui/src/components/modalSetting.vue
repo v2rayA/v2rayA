@@ -569,6 +569,15 @@ export default {
             });
             this.$parent.close();
           });
+          if (
+            res.data.code !== "SUCCESS" &&
+            res.data.message.indexOf("invalid config") >= 0
+          ) {
+            // FIXME: tricky
+            this.$parent.$parent.runningState.running = this.$t(
+              "common.notRunning"
+            );
+          }
         }),
         3 * 1000,
         cancel
@@ -648,14 +657,6 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: modalPortWhiteList,
-        hasModalCard: true,
-        canCancel: true
-      });
-    },
-    handleClickDohSetting() {
-      this.$buefy.modal.open({
-        parent: this,
-        component: modalDohSetting,
         hasModalCard: true,
         canCancel: true
       });
