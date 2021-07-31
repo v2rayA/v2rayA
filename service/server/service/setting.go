@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
@@ -38,7 +39,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if v2ray.IsV2RayRunning() && len(css) > 0 {
 		err = v2ray.UpdateV2RayConfig()
 		if err != nil {
-			return
+			return fmt.Errorf("invalid config: %w", err)
 		}
 	}
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {

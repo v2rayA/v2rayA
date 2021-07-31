@@ -619,6 +619,9 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 		// check UDP support
 		for _, line := range all {
 			dns := dnsParser2.Parse(line)
+			if dns.Out == "direct" || dns.Out == "block" {
+				continue
+			}
 			if parseDnsAddr(dns.Val).udp && !supportUDP[dns.Out] {
 				return nil, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// and doh:// DNS rule instead, or change the connected server`, dns.Out)
 			}
