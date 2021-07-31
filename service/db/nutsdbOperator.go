@@ -1,12 +1,14 @@
 package db
 
 import (
+	"bytes"
+	"encoding/gob"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"reflect"
 	"sort"
-	"github.com/v2rayA/v2rayA/common/errors"
 )
 
 func Get(bucket string, key string, val interface{}) (err error) {
@@ -80,6 +82,25 @@ func GetBucketLen(bucket string) (length int, err error) {
 	return
 }
 
+func GetBucketKeys(bucket string) (keys []string, err error) {
+	_ = DB().View(func(tx *nutsdb.Tx) error {
+		var entries nutsdb.Entries
+		entries, err = tx.GetAll(bucket)
+		if err != nil {
+			if err == nil {
+				return nil
+			} else {
+				return newError().Base(err)
+			}
+		}
+		for _, e := range entries {
+			keys = append(keys, string(e.Key))
+		}
+		return nil
+	})
+	return
+}
+
 func Set(bucket string, key string, val interface{}) (err error) {
 	b, err := jsoniter.Marshal(val)
 	if err != nil {
@@ -88,6 +109,43 @@ func Set(bucket string, key string, val interface{}) (err error) {
 	return DB().Update(func(tx *nutsdb.Tx) error {
 		return tx.Put(bucket, []byte(key), b, nutsdb.Persistent)
 	})
+}
+
+func SetAdd(bucket string, key string, val interface{}) (err error) {
+	buf := new(bytes.Buffer)
+	if err = gob.NewEncoder(buf).Encode(val); err != nil {
+		return
+	}
+	return DB().Update(func(tx *nutsdb.Tx) error {
+		return tx.SAdd(bucket, []byte(key), buf.Bytes())
+	})
+}
+
+func SetRemove(bucket string, key string, val interface{}) (err error) {
+	buf := new(bytes.Buffer)
+	if err = gob.NewEncoder(buf).Encode(val); err != nil {
+		return
+	}
+	return DB().Update(func(tx *nutsdb.Tx) error {
+		return tx.SRem(bucket, []byte(key), buf.Bytes())
+	})
+}
+
+func StringSetGetAll(bucket string, key string) (members []string, err error) {
+	err = DB().View(func(tx *nutsdb.Tx) error {
+		mbs, err := tx.SMembers(bucket, []byte(key))
+		buf := new(bytes.Buffer)
+		members = make([]string, len(mbs))
+		for i, m := range mbs {
+			buf.Reset()
+			buf.Write(m)
+			if err := gob.NewDecoder(buf).Decode(&members[i]); err != nil {
+				return err
+			}
+		}
+		return err
+	})
+	return
 }
 
 func ListSet(bucket string, key string, index int, val interface{}) (err error) {
@@ -225,6 +283,9 @@ func BucketClear(bucket string) error {
 	return DB().Update(func(tx *nutsdb.Tx) error {
 		entries, err := tx.GetAll(bucket)
 		if err != nil {
+			if err == nutsdb.ErrBucketEmpty {
+				return nil
+			}
 			return newError().Base(err)
 		}
 		for _, e := range entries {

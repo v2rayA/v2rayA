@@ -33,6 +33,9 @@ func NewTrojanGo(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, er
 	return
 }
 
+func (self *TrojanGo) LocalPort() int {
+	return self.s.LocalPort
+}
 func (self *TrojanGo) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 	fields := strings.SplitN(v.Host, ",", 2)
 	sni := fields[0]

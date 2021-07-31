@@ -31,6 +31,10 @@ func NewSimpleObfsPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Pl
 	return
 }
 
+func (so *SimpleObfs) LocalPort() int {
+	return so.s.LocalPort
+}
+
 func ParseVmess(v vmessInfo.VmessInfo) (s string, err error) {
 	params := Params{
 		Address:  v.Add,

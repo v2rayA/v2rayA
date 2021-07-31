@@ -119,24 +119,24 @@ func initConfigure() {
 	if configure.IsConfigureNotExists() {
 		// need to migrate?
 		camp := []string{path.Join(path.Dir(confPath), "v2raya.json"), "/etc/v2ray/v2raya.json", "/etc/v2raya/v2raya.json"}
-		var ok bool
+		var success bool
 		for _, jsonConfPath := range camp {
 			if _, err := os.Stat(jsonConfPath); err == nil {
 				err = migrate(jsonConfPath)
 				if err == nil {
-					ok = true
+					success = true
 					break
 				}
 			}
 		}
-		if !ok {
+		if !success {
 			initDBValue()
 		}
 	}
 	//检查config.json是否存在
 	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {
 		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
-		t := v2ray.NewTemplate()
+		t := v2ray.Template{}
 		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
 	}
 
@@ -311,10 +311,13 @@ func checkUpdate() {
 
 func run() (err error) {
 	//判别需要启动v2ray吗
-	if w := configure.GetConnectedServer(); w != nil {
-		_ = service.Connect(w)
+	if w := configure.GetConnectedServers(); len(w) > 0 {
+		err := v2ray.UpdateV2RayConfig()
+		if err != nil {
+			log.Println("failed to start v2ray-core:", err)
+		}
 	}
-	//w := configure.GetConnectedServer()
+	//w := configure.GetConnectedServers()
 	//log.Println(err, ", which:", w)
 	//_ = configure.ClearConnected()
 	errch := make(chan error)

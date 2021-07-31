@@ -31,6 +31,10 @@ func NewPingTunnelPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Pl
 	return
 }
 
+func (tunnel *PingTunnel) LocalPort() int {
+	return tunnel.localPort
+}
+
 func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
 	tunnel.localPort = localPort
 	listen := ":" + strconv.Itoa(localPort)

@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -13,7 +14,7 @@ import (
 
 func Import(url string, which *configure.Which) (err error) {
 	//log.Println(url)
-	checkResolvConf()
+	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 {
 		infos, _, err := ResolveLines(url)
@@ -45,15 +46,23 @@ func Import(url string, which *configure.Which) (err error) {
 				return newError("bad request")
 			}
 			var sr *configure.ServerRaw
-			sr, err = which.LocateServer()
+			sr, err = which.LocateServerRaw()
 			if err != nil {
 				return
 			}
 			sr.VmessInfo = n.VmessInfo
-			err = configure.SetServer(ind, n.ToServerRaw())
-			cs := configure.GetConnectedServer()
-			if cs != nil && which.TYPE == cs.TYPE && which.ID == cs.ID {
-				err = v2ray.UpdateV2RayConfig(nil)
+			if err = configure.SetServer(ind, n.ToServerRaw()); err != nil {
+				return
+			}
+			css := configure.GetConnectedServers()
+			if len(css) > 0 {
+				for _, cs := range css {
+					if which.TYPE == cs.TYPE && which.ID == cs.ID {
+						if err = v2ray.UpdateV2RayConfig(); err != nil {
+							return
+						}
+					}
+				}
 			}
 		} else {
 			//新建

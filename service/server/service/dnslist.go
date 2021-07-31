@@ -25,9 +25,6 @@ nextLine:
 		if dns == nil {
 			return "", fmt.Errorf("invalid format: %v: no outbound found", line)
 		}
-		if dns.Out != "direct" && dns.Out != "proxy" {
-			return "", fmt.Errorf("invalid outbound: %v", dns.Out)
-		}
 		if dns.Val == "localhost" {
 			return "", fmt.Errorf("instead of localhost, use 127.0.0.1 or ::1 because it is a keyword of v2ray-core")
 		}

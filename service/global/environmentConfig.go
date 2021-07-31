@@ -21,7 +21,7 @@ type Params struct {
 	ForceIPV6On          bool   `id:"force_ipv6_on" desc:"force open ipv6"`
 	PassCheckRoot        bool   `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
 	ResetPassword        bool   `id:"reset-password"`
-	Verbose              bool   `id:"verbose" desc:"Detailed log mixing the log of v2rayA and v2ray-core"`
+	Verbose              bool   `id:"verbose" desc:"Print detailed v2ray-core log to stdout"`
 	ShowVersion          bool   `id:"version"`
 }
 

@@ -12,12 +12,9 @@ import (
 func GetTouch(ctx *gin.Context) {
 	running := v2ray.IsV2RayRunning()
 	t := touch.GenerateTouch()
-	if !running { //如果没有运行，把connectedServer删掉，防止前端错误渲染
-		t.ConnectedServer = nil
-	}
 	common.ResponseSuccess(ctx, gin.H{
-		"running": running,
-		"touch":   t,
+		"running":      running,
+		"touch":        t,
 	})
 }
 

@@ -3,6 +3,7 @@ package configure
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/errors"
@@ -13,30 +14,36 @@ import (
 )
 
 type Configure struct {
-	Servers         []*ServerRaw       `json:"servers"`
-	Subscriptions   []*SubscriptionRaw `json:"subscriptions"`
-	ConnectedServer *Which             `json:"connectedServer"` //冗余一个信息，方便查找
-	Setting         *Setting           `json:"setting"`
-	Accounts        map[string]string  `json:"accounts"`
-	Ports           Ports              `json:"ports"`
-	PortWhiteList   PortWhiteList      `json:"portWhiteList"` //TODO: choose to use tproxy or redirect
-	InternalDnsList *string            `json:"internalDnsList"`
-	ExternalDnsList *string            `json:"externalDnsList"`
-	RoutingA        *string            `json:"routingA"`
+	Servers                    []*ServerRaw       `json:"servers"`
+	Subscriptions              []*SubscriptionRaw `json:"subscriptions"`
+	ConnectedServer            *Which             `json:"connectedServer"` //冗余一个信息，方便查找
+	AdditionalConnectedServers []Which            `json:"additionalConnectedServers"`
+	Setting                    *Setting           `json:"setting"`
+	Accounts                   map[string]string  `json:"accounts"`
+	Ports                      Ports              `json:"ports"`
+	PortWhiteList              PortWhiteList      `json:"portWhiteList"`
+	InternalDnsList            *string            `json:"internalDnsList"`
+	ExternalDnsList            *string            `json:"externalDnsList"`
+	RoutingA                   *string            `json:"routingA"`
 }
 
 func New() *Configure {
 	return &Configure{
-		Servers:         make([]*ServerRaw, 0),
-		Subscriptions:   make([]*SubscriptionRaw, 0),
-		ConnectedServer: nil,
-		Setting:         NewSetting(),
+		Servers:                    make([]*ServerRaw, 0),
+		Subscriptions:              make([]*SubscriptionRaw, 0),
+		ConnectedServer:            nil,
+		AdditionalConnectedServers: nil,
+		Setting:                    NewSetting(),
+		Accounts:                   map[string]string{},
 		Ports: Ports{
 			Socks5:      20170,
 			Http:        20171,
 			HttpWithPac: 20172,
 		},
-		Accounts: map[string]string{},
+		PortWhiteList:   PortWhiteList{},
+		InternalDnsList: nil,
+		ExternalDnsList: nil,
+		RoutingA:        nil,
 	}
 }
 func decode(b []byte) (result []byte) {
@@ -96,6 +103,11 @@ func SetConfigure(cfg *Configure) error {
 	if err := SetConnect(cfg.ConnectedServer); err != nil {
 		return err
 	}
+	for _, w := range cfg.AdditionalConnectedServers {
+		if err := SetConnect(&w); err != nil {
+			return err
+		}
+	}
 	if err := SetSetting(cfg.Setting); err != nil {
 		return err
 	}
@@ -134,9 +146,6 @@ func SetInternalDnsList(dnsList *string) (err error) {
 }
 func SetExternalDnsList(dnsList *string) (err error) {
 	return db.Set("system", "externalDnsList", strings.TrimSpace(*dnsList))
-}
-func SetCustomPac(customPac *CustomPac) (err error) {
-	return db.Set("system", "customPac", customPac)
 }
 func SetRoutingA(routingA *string) (err error) {
 	return db.Set("system", "routingA", routingA)
@@ -260,13 +269,35 @@ func GetRoutingA() (r string) {
 	}
 	return
 }
-func GetConnectedServer() *Which {
-	r := new(Which)
-	err := db.Get("touch", "connectedServer", &r)
-	if err != nil {
-		return nil
+func GetConnectedServers() (wts []*Which) {
+	outbounds := GetOutbounds()
+	for _, outbound := range outbounds {
+		w := GetConnectedServer(outbound)
+		if w != nil {
+			wts = append(wts, w)
+		}
 	}
-	return r
+	if len(wts) == 0 {
+		wts = nil
+	}
+	return wts
+}
+func GetConnectedServer(outbound string) *Which {
+	r := new(Which)
+	if outbound == "" || outbound == "proxy" {
+		if err := db.Get("touch", "connectedServer", &r); err != nil {
+			return nil
+		}
+		if r != nil {
+			r.Outbound = "proxy"
+		}
+		return r
+	} else {
+		if err := db.Get(fmt.Sprintf("outbound.%v", outbound), "connectedServer", &r); err != nil {
+			return nil
+		}
+		return r
+	}
 }
 
 func GetLenSubscriptions() int {
@@ -291,14 +322,45 @@ func GetLenServers() int {
 	return l
 }
 
-/*不会停止v2ray.service*/
-func ClearConnected() error {
-	return SetConnect(nil)
+func ClearConnected(outbound string) error {
+	if outbound == "" || outbound == "proxy" {
+		return db.Set("touch", "connectedServer", nil)
+	} else {
+		return db.Set(fmt.Sprintf("outbound.%v", outbound), "connectedServer", nil)
+	}
 }
 
-/*不会启动v2ray.service*/
 func SetConnect(wt *Which) (err error) {
-	return db.Set("touch", "connectedServer", wt)
+	if wt == nil || wt.Outbound == "" || wt.Outbound == "proxy" {
+		return db.Set("touch", "connectedServer", wt)
+	} else {
+		return db.Set(fmt.Sprintf("outbound.%v", wt.Outbound), "connectedServer", wt)
+	}
+}
+
+func GetOutbounds() (outbounds []string) {
+	outbounds = append(outbounds, "proxy")
+	members, _ := db.StringSetGetAll("outbounds", "names")
+	for _, m := range members {
+		outbounds = append(outbounds, m)
+	}
+	return
+}
+
+func AddOutbound(outbound string) (err error) {
+	if outbound == "proxy" ||
+		outbound == "direct" ||
+		outbound == "block" {
+		return fmt.Errorf("cannot add %v as the outbound name", outbound)
+	}
+	return db.SetAdd("outbounds", "names", outbound)
+}
+
+func RemoveOutbound(outbound string) (err error) {
+	if err = db.BucketClear(fmt.Sprintf("outbound.%v", outbound)); err != nil {
+		return err
+	}
+	return db.SetRemove("outbounds", "names", outbound)
 }
 
 func SetAccount(username, password string) (err error) {

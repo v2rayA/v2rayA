@@ -21,6 +21,10 @@ func init() {
 	plugin.RegisterPlugin("ssrplugin-simpleobfs", NewSsrSimpleobfsPlugin)
 }
 
+func (self *SSRSimpleobfs) LocalPort() int {
+	return self.s.LocalPort
+}
+
 func NewSsrSimpleobfsPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, err error) {
 	plugin = new(SSRSimpleobfs)
 	err = plugin.Serve(localPort, v)

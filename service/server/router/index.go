@@ -90,6 +90,8 @@ func Run() error {
 		auth.DELETE("touch", controller.DeleteTouch)
 		auth.POST("connection", controller.PostConnection)
 		auth.DELETE("connection", controller.DeleteConnection)
+		auth.POST("v2ray", controller.PostV2ray)
+		auth.DELETE("v2ray", controller.DeleteV2ray)
 		auth.GET("pingLatency", controller.GetPingLatency)
 		auth.GET("httpLatency", controller.GetHttpLatency)
 		auth.GET("sharingAddress", controller.GetSharingAddress)
@@ -109,6 +111,9 @@ func Run() error {
 		auth.PUT("dnsList", controller.PutDnsList)
 		auth.GET("routingA", controller.GetRoutingA)
 		auth.PUT("routingA", controller.PutRoutingA)
+		auth.GET("outbounds", controller.GetOutbounds)
+		auth.POST("outbound", controller.PostOutbound)
+		auth.DELETE("outbound", controller.DeleteOutbound)
 	}
 
 	ServeGUI(engine)
