@@ -276,6 +276,8 @@ export default {
     messages: ["click the button 'Help&Manual' for help"]
   },
   outbound: {
-    addMessage: "Please input the outbound name you want to add:"
+    addMessage: "Please input the outbound name you want to add:",
+    deleteMessage:
+      'Be sure to <b>DELETE</b> the outbound "{outboundName}"? It is not reversible.'
   }
 };
