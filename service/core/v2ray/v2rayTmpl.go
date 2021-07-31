@@ -580,7 +580,7 @@ func (t *Template) outboundTags() map[string]string {
 	return tags
 }
 
-func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, supportUDP map[string]bool) (routing DnsRouting, err error) {
+func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, supportUDP map[string]bool) (routing []RoutingRule, err error) {
 	// TODO: other countries and regions
 	firstOutboundTag := t.Outbounds[0].Tag
 	var firstUDPSupportedOutboundTag string
@@ -613,14 +613,14 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 		for _, line := range all {
 			dns := dnsParser2.Parse(line)
 			if _, ok := outboundTags[dns.Out]; !ok {
-				return DnsRouting{}, fmt.Errorf(`your DNS rule "%v" depends on the outbound "%v", thus it should connect to a server`, line, dns.Out)
+				return nil, fmt.Errorf(`your DNS rule "%v" depends on the outbound "%v", thus it should connect to a server`, line, dns.Out)
 			}
 		}
 		// check UDP support
 		for _, line := range all {
 			dns := dnsParser2.Parse(line)
 			if parseDnsAddr(dns.Val).udp && !supportUDP[dns.Out] {
-				return DnsRouting{}, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// and doh:// DNS rule instead, or change the connected server`, dns.Out)
+				return nil, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// and doh:// DNS rule instead, or change the connected server`, dns.Out)
 			}
 		}
 	} else if setting.AntiPollution != configure.AntipollutionClosed {
@@ -675,18 +675,14 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 		// we believe all lines are legal
 		var addr = parseDnsAddr(dns.Val)
 
-		if dns.Out == "direct" {
-			if net.ParseIP(addr.host) == nil {
-				routing.DirectDomains = append(routing.DirectDomains, addr)
-			} else {
-				routing.DirectIPs = append(routing.DirectIPs, addr)
-			}
+		if net.ParseIP(addr.host) == nil {
+			routing = append(routing, RoutingRule{
+				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
+			})
 		} else {
-			if net.ParseIP(addr.host) == nil {
-				routing.ProxyDomains = append(routing.ProxyDomains, addr)
-			} else {
-				routing.ProxyIPs = append(routing.ProxyIPs, addr)
-			}
+			routing = append(routing, RoutingRule{
+				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
+			})
 		}
 	}
 
@@ -720,11 +716,10 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 			domainsToLookup = append(domainsToLookup, v.Add)
 		}
 	}
-	for _, addr := range routing.ProxyDomains {
-		domainsToLookup = append(domainsToLookup, addr.host)
-	}
-	for _, addr := range routing.DirectDomains {
-		domainsToLookup = append(domainsToLookup, addr.host)
+	for _, r := range routing {
+		if len(r.Domain) > 0 {
+			domainsToLookup = append(domainsToLookup, r.Domain...)
+		}
 	}
 	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
@@ -793,27 +788,9 @@ func filterIPs(ips []string) []string {
 	}
 	return ret
 }
-func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP map[string]bool) {
-	for _, r := range routing.DirectIPs {
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct", IP: []string{r.host}, Port: r.port},
-		)
-	}
-	for _, r := range routing.ProxyIPs {
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "proxy", IP: []string{r.host}, Port: r.port},
-		)
-	}
-	for _, r := range routing.DirectDomains {
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct", Domain: []string{r.host}, Port: r.port},
-		)
-	}
-	for _, r := range routing.ProxyDomains {
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "proxy", Domain: []string{r.host}, Port: r.port},
-		)
-	}
+func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bool) {
+	firstOutboundTag := t.Outbounds[0].Tag
+	t.Routing.Rules = append(t.Routing.Rules, routing...)
 	t.Routing.Rules = append(t.Routing.Rules,
 		RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
 	)
@@ -832,7 +809,7 @@ func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP map[string]bool)
 				RoutingRule{ // supervisor
 					Type:        "field",
 					IP:          []string{"240.0.0.0/4"},
-					OutboundTag: "proxy",
+					OutboundTag: firstOutboundTag,
 				},
 			)
 		}
@@ -869,6 +846,7 @@ func (t *Template) SetDNSRouting(routing DnsRouting, supportUDP map[string]bool)
 }
 
 func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
+	firstOutboundTag := t.Outbounds[0].Tag
 	switch setting.RulePortMode {
 	case configure.WhitelistMode:
 		t.Routing.Rules = append(t.Routing.Rules,
@@ -889,7 +867,7 @@ func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{
 				Type:        "field",
-				OutboundTag: "proxy",
+				OutboundTag: firstOutboundTag,
 				InboundTag:  []string{"rule"},
 				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
 			},
@@ -963,7 +941,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 		log.Println(err)
 		return err
 	}
-	defaultOutbound := "proxy"
+	defaultOutbound := t.Outbounds[0].Tag
 	for _, rule := range rules {
 		switch rule := rule.(type) {
 		case routingA.Define:
@@ -1144,6 +1122,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	return nil
 }
 func (t *Template) SetTransparentRouting(setting *configure.Setting) {
+	firstOutboundTag := t.Outbounds[0].Tag
 	switch setting.Transparent {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
@@ -1165,7 +1144,7 @@ func (t *Template) SetTransparentRouting(setting *configure.Setting) {
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{
 				Type:        "field",
-				OutboundTag: "proxy",
+				OutboundTag: firstOutboundTag,
 				InboundTag:  []string{"transparent"},
 				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
 			},
