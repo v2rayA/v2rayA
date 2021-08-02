@@ -852,6 +852,24 @@ func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
 	firstOutboundTag := t.Outbounds[0].Tag
 	switch setting.RulePortMode {
 	case configure.WhitelistMode:
+		// 拥有国内IP的国外域名应该优先被代理而非直连
+		if asset.LoyalsoldierSiteDatExists() {
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: firstOutboundTag,
+					InboundTag:  []string{"rule"},
+					Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
+				})
+		} else {
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: firstOutboundTag,
+					InboundTag:  []string{"rule"},
+					Domain:      []string{"geosite:geolocation-!cn"},
+				})
+		}
 		t.Routing.Rules = append(t.Routing.Rules,
 			RoutingRule{ // 直连中国大陆主流网站域名
 				Type:        "field",
