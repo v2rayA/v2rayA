@@ -1216,7 +1216,7 @@ func (t *Template) SetOutboundSockopt(setting *configure.Setting) {
 		checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }
-func (t *Template) SetInboundListenAddress(setting *configure.Setting) {
+func (t *Template) SetDualStack(setting *configure.Setting) {
 	const (
 		tag4Suffix = "_ipv4"
 		tag6Suffix = "_ipv6"
@@ -1399,9 +1399,8 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 	//置fakedns destOverride
 	t.SetInboundFakeDnsDestOverride()
 
-	//置inbound listen address
-
-	t.SetInboundListenAddress(setting)
+	//置inbound listening address和routing
+	t.SetDualStack(setting)
 
 	//check dulplicated tags
 	if err = t.CheckDuplicatedTags(); err != nil {

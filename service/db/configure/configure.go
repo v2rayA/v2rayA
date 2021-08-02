@@ -6,9 +6,7 @@ import (
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
-	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/v2rayA/v2rayA/db"
-	"github.com/xujiajun/nutsdb"
 	"log"
 	"strings"
 )
@@ -68,13 +66,13 @@ func decode(b []byte) (result []byte) {
 }
 
 func SetConfigure(cfg *Configure) error {
-	if err := db.BucketClear("system"); errors.Cause(err) != nutsdb.ErrBucketEmpty {
+	if err := db.BucketClear("system"); err != nil {
 		return err
 	}
-	if err := db.BucketClear("touch"); errors.Cause(err) != nutsdb.ErrBucketEmpty {
+	if err := db.BucketClear("touch"); err != nil {
 		return err
 	}
-	if err := db.BucketClear("accounts"); errors.Cause(err) != nutsdb.ErrBucketEmpty {
+	if err := db.BucketClear("accounts"); err != nil {
 		return err
 	}
 	for username, password := range cfg.Accounts {
@@ -142,9 +140,15 @@ func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
 	return db.Set("system", "portWhiteList", portWhiteList.Compressed())
 }
 func SetInternalDnsList(dnsList *string) (err error) {
+	if dnsList == nil {
+		return db.Set("system", "internalDnsList", nil)
+	}
 	return db.Set("system", "internalDnsList", strings.TrimSpace(*dnsList))
 }
 func SetExternalDnsList(dnsList *string) (err error) {
+	if dnsList == nil {
+		return db.Set("system", "externalDnsList", nil)
+	}
 	return db.Set("system", "externalDnsList", strings.TrimSpace(*dnsList))
 }
 func SetRoutingA(routingA *string) (err error) {

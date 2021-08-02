@@ -27,7 +27,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
 		e := ipforward.WriteIpForward(setting.IntranetSharing)
 		if e != nil {
-			log.Println("[warning]", e)
+			log.Println("[Warning]", e)
 		}
 	}
 	err = configure.SetSetting(setting)

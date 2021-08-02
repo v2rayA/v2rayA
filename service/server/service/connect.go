@@ -3,17 +3,13 @@ package service
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/ipforward"
-	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/plugin"
 	"log"
 )
 
 func StopV2ray() (err error) {
-	plugin.GlobalPlugins.CloseAll()
-	specialMode.StopDNSSupervisor()
 	err = v2ray.StopV2rayService()
 	if err != nil {
 		return
@@ -82,7 +78,7 @@ func Connect(which *configure.Which) (err error) {
 	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
 		e := ipforward.WriteIpForward(setting.IntranetSharing)
 		if e != nil {
-			log.Println("[warning]", e)
+			log.Println("[Warning]", e)
 		}
 	}
 	//locate server
