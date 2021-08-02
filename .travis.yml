@@ -77,7 +77,8 @@ before_deploy: |
   $P_DIR/install/tool/reprepro_expect --ask-passphrase -Vb $P_DIR/apt export &&
   cp $P_DIR/v2raya_linux_*_$VERSION $P_DIR/apt/pool/main/v/v2raya/ &&
   cp $P_DIR/web.tar.gz $P_DIR/apt/pool/main/v/v2raya/web_$VERSION.tar.gz &&
-  echo "apt.v2raya.mzz.pub" > $P_DIR/apt/CNAME
+  echo "apt.v2raya.mzz.pub" > $P_DIR/apt/CNAME &&
+  cd $P_DIR
 
 deploy:
   - provider: pages
@@ -87,7 +88,7 @@ deploy:
     keep_history: false
     repo: v2rayA/v2raya-apt
     target_branch: master
-    local_dir: apt/
+    local_dir: $P_DIR/apt/
     on:
       tags: true
   - provider: pages
@@ -97,7 +98,7 @@ deploy:
     keep_history: false
     repo: v2rayA/v2raya-web
     target_branch: master
-    local_dir: web/
+    local_dir: $P_DIR/web/
     on:
       branch: master
   - provider: script
