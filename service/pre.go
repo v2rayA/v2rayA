@@ -99,6 +99,7 @@ func migrate(jsonConfPath string) (err error) {
 }
 
 func initDBValue() {
+	log.Println("[Info] init DB")
 	err := configure.SetConfigure(configure.New())
 	if err != nil {
 		log.Fatal(err)
@@ -122,6 +123,7 @@ func initConfigure() {
 		var success bool
 		for _, jsonConfPath := range camp {
 			if _, err := os.Stat(jsonConfPath); err == nil {
+				log.Println("[Info] migrate from", jsonConfPath)
 				err = migrate(jsonConfPath)
 				if err == nil {
 					success = true

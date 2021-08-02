@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"reflect"
@@ -45,7 +44,7 @@ func Exists(bucket string, key string) bool {
 		}
 		return nil
 	}); err != nil {
-		if errors.Cause(err) != nutsdb.ErrBucketAndKey(bucket, []byte(key)) {
+		if err.Error() != nutsdb.ErrBucketAndKey(bucket, []byte(key)).Error() {
 			log.Println(newError("[ERROR] func Exists returns a new error type").Base(err))
 		}
 		return false

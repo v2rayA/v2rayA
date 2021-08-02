@@ -153,6 +153,11 @@ func UpdateV2RayConfig() (err error) {
 		if err == nil {
 			if e := CheckAndSetupTransparentProxy(true); e != nil {
 				err = newError(e).Base(err)
+				if IsV2RayRunning() {
+					if e = StopV2rayService(); e != nil {
+						err = newError(e).Base(err)
+					}
+				}
 			}
 		}
 	}()
@@ -278,6 +283,8 @@ func killV2ray() (err error) {
 
 func StopV2rayService() (err error) {
 	defer CheckAndStopTransparentProxy()
+	defer plugin.GlobalPlugins.CloseAll()
+	defer specialMode.StopDNSSupervisor()
 	defer func() {
 		if IsV2RayRunning() {
 			msg := "failed to stop v2ray"
