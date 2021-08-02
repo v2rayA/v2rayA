@@ -1,6 +1,6 @@
 #!/bin/bash
-sha1sums_i686=$(sha1sum "$P_DIR"/v2raya_linux_386_$VERSION | awk '{print $1}')
-sha1sums_x86_64=$(sha1sum "$P_DIR"/v2raya_linux_amd64_$VERSION | awk '{print $1}')
+sha1sums_i686=$(sha1sum "$P_DIR"/v2raya_linux_x86_$VERSION | awk '{print $1}')
+sha1sums_x86_64=$(sha1sum "$P_DIR"/v2raya_linux_x64_$VERSION | awk '{print $1}')
 sha1sums_armv6h=$(sha1sum "$P_DIR"/v2raya_linux_arm_$VERSION | awk '{print $1}')
 sha1sums_armv7h=$sha1sums_armv6h
 sha1sums_aarch64=$(sha1sum "$P_DIR"/v2raya_linux_arm64_$VERSION | awk '{print $1}')
