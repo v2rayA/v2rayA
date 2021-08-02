@@ -807,16 +807,16 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 		if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
 			dnsOut.InboundTag = []string{"dns-in"}
 		}
-		if specialMode.ShouldUseSupervisor() {
-			t.Routing.Rules = append(t.Routing.Rules,
-				RoutingRule{ // supervisor
-					Type:        "field",
-					IP:          []string{"240.0.0.0/4"},
-					OutboundTag: firstOutboundTag,
-				},
-			)
-		}
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
+	}
+	if specialMode.ShouldUseSupervisor() {
+		t.Routing.Rules = append(t.Routing.Rules,
+			RoutingRule{ // supervisor
+				Type:        "field",
+				IP:          []string{"198.18.0.0/15"},
+				OutboundTag: firstOutboundTag,
+			},
+		)
 	}
 	if !supportUDP["proxy"] {
 		// find a outbound that supports UDP and redirect all leaky UDP traffic to it
@@ -1335,12 +1335,6 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = ""
-	} else if global.IsDebug() {
-		os.WriteFile(t.Log.Access, nil, 0777)
-		os.WriteFile(t.Log.Error, nil, 0777)
-		os.Chmod(t.Log.Access, 0777)
-		os.Chmod(t.Log.Error, 0777)
-		t.Log.Loglevel = "debug"
 	} else if CheckLogNoneSupported() == nil {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""

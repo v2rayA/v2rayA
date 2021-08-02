@@ -1,6 +1,7 @@
 package infra
 
-// 240.0.0.0/4
+// 198.18.0.0/15
+// FIXME: exceed
 type reservedIP uint32
 
 func (r reservedIP) IP() (ip [4]byte) {
@@ -9,7 +10,8 @@ func (r reservedIP) IP() (ip [4]byte) {
 		ip[i] = byte(k & 0xff)
 		k >>= 8
 	}
-	ip[0] += 240
+	ip[0] += 198
+	ip[1] += 18
 	return
 }
 

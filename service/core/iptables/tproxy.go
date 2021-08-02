@@ -66,13 +66,11 @@ iptables -w 2 -t mangle -A SETMARK -d 192.0.0.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 192.0.2.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 192.88.99.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 192.168.0.0/16 -j RETURN
-# fakedns
-# iptables -w 2 -t mangle -A SETMARK -d 198.18.0.0/15 -j RETURN
+iptables -w 2 -t mangle -A SETMARK -d 198.18.0.0/15 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 198.51.100.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 224.0.0.0/4 -j RETURN
-# supervisor
-# iptables -w 2 -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
+iptables -w 2 -t mangle -A SETMARK -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
 iptables -w 2 -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j RETURN
 iptables -w 2 -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
