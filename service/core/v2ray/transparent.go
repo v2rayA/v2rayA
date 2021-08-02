@@ -131,8 +131,8 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		//if setting.AntiPollution == configure.AntipollutionClosed {
 		//	commands = common.TrimLineContains(commands, "udp")
 		//}
-		if specialMode.ShouldUseSupervisor() {
-			commands = common.TrimLineContains(commands, "240.0.0.0/4")
+		if specialMode.ShouldUseSupervisor() || specialMode.ShouldUseFakeDns() {
+			commands = common.TrimLineContains(commands, "198.18.0.0/15")
 		}
 		*c = iptables.SetupCommands(commands)
 	}
