@@ -10,6 +10,21 @@ import (
 )
 
 func GetTouch(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updatingMu.Unlock()
+	}()
+	getTouch(ctx)
+
+}
+func getTouch(ctx *gin.Context) {
 	running := v2ray.IsV2RayRunning()
 	t := touch.GenerateTouch()
 	common.ResponseSuccess(ctx, gin.H{
@@ -19,6 +34,20 @@ func GetTouch(ctx *gin.Context) {
 }
 
 func DeleteTouch(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	var ws configure.Whiches
 	err := ctx.ShouldBindJSON(&ws)
 	if err != nil {
@@ -30,5 +59,5 @@ func DeleteTouch(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }

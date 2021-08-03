@@ -10,13 +10,28 @@ function waitingConnected(promise, interval, cancel, timeout) {
       timeout: interval
     })
       .then(res => {
-        handleResponse(res, null, () => {
-          if (res.data.data.running && res.data.data.touch.connectedServer) {
-            clearInterval(timer);
-            cancel && cancel();
-            Vue.prototype.$remount();
+        handleResponse(
+          res,
+          null,
+          () => {
+            if (res.data.data.running && res.data.data.touch.connectedServer) {
+              clearInterval(timer);
+              cancel && cancel();
+              Vue.prototype.$remount();
+            }
+          },
+          () => {
+            if (res.data.message !== "the last request is being processed") {
+              this.$buefy.toast.open({
+                message: res.data.message,
+                type: "is-warning",
+                position: "is-top",
+                queue: false,
+                duration: 5000
+              });
+            }
           }
-        });
+        );
       })
       .catch(err => {
         if (err.response.status === 401) {

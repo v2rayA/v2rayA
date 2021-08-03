@@ -9,6 +9,20 @@ import (
 )
 
 func PostConnection(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
@@ -21,10 +35,24 @@ func PostConnection(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err, "failed to connect"))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }
 
 func DeleteConnection(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
@@ -36,23 +64,51 @@ func DeleteConnection(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }
 
 func PostV2ray(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	err := service.StartV2ray()
 	if err != nil {
 		common.ResponseError(ctx, logError(err, "failed to start v2ray-core"))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }
 
 func DeleteV2ray(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	err := service.StopV2ray()
 	if err != nil {
 		common.ResponseError(ctx, logError(err, "failed to stop v2ray-core"))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }
