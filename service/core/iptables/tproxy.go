@@ -3,7 +3,6 @@ package iptables
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/cmds"
-	"github.com/v2rayA/v2rayA/core/specialMode"
 	"strings"
 )
 
@@ -53,8 +52,8 @@ iptables -w 2 -t mangle -N SETMARK
 iptables -w 2 -t mangle -A SETMARK -i docker+ -j RETURN
 iptables -w 2 -t mangle -A SETMARK -i veth+ -j RETURN
 iptables -w 2 -t mangle -A SETMARK -i br-+ -j RETURN
-iptables -w 2 -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-iptables -w 2 -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
+iptables -w 2 -t mangle -A SETMARK -p udp --dport 53 ! -d 127.0.0.0/8 -j MARK --set-mark 1
+iptables -w 2 -t mangle -A SETMARK -p tcp --dport 53 ! -d 127.0.0.0/8 -j MARK --set-mark 1
 # 注意，如果要调整位置，记得调整func AddIPWhitelist的插入位置
 iptables -w 2 -t mangle -A SETMARK -d 0.0.0.0/32 -j RETURN
 iptables -w 2 -t mangle -A SETMARK -d 10.0.0.0/8 -j RETURN
@@ -78,26 +77,14 @@ iptables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
 # 走过TPROXY的通行
 iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
-`
-	if specialMode.ShouldLocalDnsListen() {
-		commands += ` 
-iptables -w 2 -t mangle -A TP_OUT -p udp --dport 53 -j RETURN
-`
-	}
-	commands += `
+
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 iptables -w 2 -t mangle -A TP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 
 # 走过TPROXY的通行
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
-`
-	if specialMode.ShouldLocalDnsListen() {
-		commands += ` 
-iptables -w 2 -t mangle -A TP_PRE -p udp --dport 53 -j RETURN
-`
-	}
-	commands += `
+
 # 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -w 2 -t mangle -A TP_PRE -p udp -m mark ! --mark 1 -j SETMARK
@@ -124,8 +111,8 @@ ip6tables -w 2 -t mangle -N SETMARK
 ip6tables -w 2 -t mangle -A SETMARK -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -i veth+ -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -i br-+ -j RETURN
-ip6tables -w 2 -t mangle -A SETMARK -p udp --dport 53 -j MARK --set-mark 1
-ip6tables -w 2 -t mangle -A SETMARK -p tcp --dport 53 -j MARK --set-mark 1
+ip6tables -w 2 -t mangle -A SETMARK -p udp --dport 53 ! -d ::1/128 -j MARK --set-mark 1
+ip6tables -w 2 -t mangle -A SETMARK -p tcp --dport 53 ! -d ::1/128 -j MARK --set-mark 1
 # 注意，如果要调整位置，记得调整func AddIPWhitelist的插入位置
 ip6tables -w 2 -t mangle -A SETMARK -d ::/128 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d ::1/128 -j RETURN
@@ -148,26 +135,14 @@ ip6tables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
 # 走过TPROXY的通行
 ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
-`
-		if specialMode.ShouldLocalDnsListen() {
-			commands += ` 
-ip6tables -w 2 -t mangle -A TP_OUT -p udp --dport 53 -j RETURN
-`
-		}
-		commands += `
+
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 ip6tables -w 2 -t mangle -A TP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 ip6tables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 
 # 走过TPROXY的通行
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
-`
-		if specialMode.ShouldLocalDnsListen() {
-			commands += ` 
-ip6tables -w 2 -t mangle -A TP_PRE -p udp --dport 53 -j RETURN
-`
-		}
-		commands += `
+
 # 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark ! --mark 1 -j SETMARK
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark ! --mark 1 -j SETMARK

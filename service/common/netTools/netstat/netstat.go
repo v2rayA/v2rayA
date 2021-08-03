@@ -415,45 +415,6 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	return false, nil
 }
 
-func FillAllProcess(sockets []*Socket) {
-	mInodeSocket := make(map[string]*Socket)
-	for _, v := range sockets {
-		if v.Proc == nil {
-			mInodeSocket[v.inode] = v
-			v.processMutex.Lock()
-			defer v.processMutex.Unlock()
-		}
-	}
-	f, err := os.ReadDir(pathProc)
-	if err != nil {
-		return
-	}
-loop1:
-	for _, fi := range f {
-		if !fi.IsDir() {
-			continue
-		}
-		fn := fi.Name()
-		for _, t := range fn {
-			if t > '9' || t < '0' {
-				continue loop1
-			}
-		}
-		socketSet := getProcessSocketSet(fn)
-		for _, s := range socketSet {
-			if socket, ok := mInodeSocket[s]; ok {
-				pn, ppid := getProcessInfo(fn)
-				socket.Proc = &Process{
-					PID:  fn,
-					PPID: ppid,
-					Name: pn,
-				}
-			}
-			delete(mInodeSocket, s)
-		}
-	}
-}
-
 func Print(protocols []string) string {
 	var buffer strings.Builder
 	protos := make([]string, 0, 4)
@@ -474,7 +435,7 @@ func Print(protocols []string) string {
 			sockets = append(sockets, v...)
 		}
 	}
-	FillAllProcess(sockets)
+	_ = FillProcesses(sockets)
 	for _, proto := range protos {
 		for _, sockets := range m[proto] {
 			for _, v := range sockets {

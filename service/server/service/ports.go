@@ -1,13 +1,8 @@
 package service
 
 import (
-	"fmt"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	ports2 "github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"path"
 	"strconv"
 )
 
@@ -60,19 +55,8 @@ func SetPorts(ports *configure.Ports) (err error) {
 			detectSyntax = append(detectSyntax, strconv.Itoa(p.HttpWithPac)+":tcp")
 		}
 	}
-	var (
-		o bool
-		v *netstat.Socket
-	)
-	if o, v, err = ports2.IsPortOccupied(detectSyntax); o {
-		if err != nil {
-			return
-		}
-		process, err := v.Process()
-		v2rayPath, _ := where.GetV2rayBinPath()
-		if err == nil && process.Name != path.Base(v2rayPath) {
-			return newError(fmt.Sprintf("port %v is occupied by %v", v.LocalAddress.Port, process.Name))
-		}
+	if err = v2ray.PortOccupied(detectSyntax); err != nil {
+		return
 	}
 	err = configure.SetPorts(&p)
 	if err != nil {

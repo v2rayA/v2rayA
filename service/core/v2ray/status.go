@@ -207,8 +207,8 @@ func UpdateV2RayConfig() (err error) {
 		//no need to restart if no connected servers
 		return
 	}
-	if occupied, port, pname := tmpl.CheckInboundPortsOccupied(); occupied {
-		return newError("Port ", port, " is occupied by ", pname)
+	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
+		return newError(err)
 	}
 	err = RestartV2rayService()
 	if err != nil {
@@ -258,8 +258,8 @@ func pretendToStopV2rayService() (err error) {
 		return
 	}
 	if IsV2RayRunning() {
-		if occupied, port, pname := tmplJson.CheckInboundPortsOccupied(); occupied {
-			return newError("Port ", port, " is occupied by ", pname)
+		if err = tmplJson.CheckInboundPortsOccupied(); err != nil {
+			return newError(err)
 		}
 		err = RestartV2rayService()
 	}

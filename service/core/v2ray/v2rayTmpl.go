@@ -6,6 +6,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/routingA"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
@@ -19,7 +20,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -804,8 +804,10 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 			Port:        "53",
 			OutboundTag: "dns-out",
 		}
-		if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
-			dnsOut.InboundTag = []string{"dns-in"}
+		if specialMode.ShouldLocalDnsListen() {
+			if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
+				dnsOut.InboundTag = []string{"dns-in"}
+			}
 		}
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
@@ -1245,7 +1247,12 @@ func (t *Template) SetDualStack(setting *configure.Setting) {
 	if !setting.IntranetSharing {
 		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
-			t.Inbounds[i].Listen = "127.0.0.1"
+			if t.Inbounds[i].Tag == "dns-in" {
+				t.Inbounds[i].Listen = "127.2.0.17"
+				continue
+			} else {
+				t.Inbounds[i].Listen = "127.0.0.1"
+			}
 			inbounds6[i].Listen = "::1"
 			if t.Inbounds[i].Tag != "" {
 				tagMap[t.Inbounds[i].Tag] = struct{}{}
@@ -1266,6 +1273,35 @@ func (t *Template) SetDualStack(setting *configure.Setting) {
 			}
 			if len(tag6) > 0 {
 				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, tag6...)
+			}
+		}
+	} else {
+		// specially listen 127.2.0.17
+		hasDnsIn := false
+		for i := range t.Inbounds {
+			if t.Inbounds[i].Tag == "dns-in" {
+				if couldListenLocalhost, e := specialMode.CouldLocalDnsListen(); couldListenLocalhost && e != nil {
+					// listen only 127.2.0.17
+					t.Inbounds[i].Listen = "127.2.0.17"
+				} else {
+					// listen both 0.0.0.0 and 127.2.0.17
+					localDnsInbound := t.Inbounds[i]
+					localDnsInbound.Listen = "127.2.0.17"
+					localDnsInbound.Tag = "dns-in-local"
+					t.Inbounds = append(t.Inbounds, localDnsInbound)
+					hasDnsIn = true
+				}
+				break
+			}
+		}
+		if hasDnsIn {
+			// set routing
+			for i := range t.Routing.Rules {
+				for _, tag := range t.Routing.Rules[i].InboundTag {
+					if tag == "dns-in" {
+						t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "dns-in-local")
+					}
+				}
 			}
 		}
 	}
@@ -1311,19 +1347,22 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 		}
 		t.AppendDokodemo(&tproxy, 32345, "transparent")
 	}
-	if specialMode.ShouldLocalDnsListen() && specialMode.CouldLocalDnsListen() == nil {
-		// FIXME: xray cannot use fakedns+others (2021-07-17), set up a solo dokodemo-door for fakedns
-		t.Inbounds = append(t.Inbounds, Inbound{
-			Port:     53,
-			Protocol: "dokodemo-door",
-			Listen:   "0.0.0.0",
-			Settings: &InboundSettings{
-				Network: "udp",
-				Address: "2.0.1.7",
-				Port:    53,
-			},
-			Tag: "dns-in",
-		})
+	if specialMode.ShouldLocalDnsListen() {
+		if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
+			// FIXME: xray cannot use fakedns+others (2021-07-17)
+			// set up a solo dokodemo-door for dns
+			t.Inbounds = append(t.Inbounds, Inbound{
+				Port:     53,
+				Protocol: "dokodemo-door",
+				Listen:   "0.0.0.0",
+				Settings: &InboundSettings{
+					Network: "udp",
+					Address: "2.0.1.7",
+					Port:    53,
+				},
+				Tag: "dns-in",
+			})
+		}
 	}
 }
 
@@ -1444,14 +1483,54 @@ func (t *Template) CheckDuplicatedTags() error {
 	return nil
 }
 
-func (t *Template) CheckInboundPortsOccupied() (occupied bool, port string, pname string) {
+var OccupiedErr = fmt.Errorf("port is occupied")
+
+func PortOccupied(syntax []string) (err error) {
+	occupied, sockets, err := ports.IsPortOccupied(syntax)
+	if err != nil {
+		return
+	}
+	if occupied {
+		if err = netstat.FillProcesses(sockets); err != nil {
+			return fmt.Errorf("failed to check if port is occupied: %w", err)
+		}
+		for _, s := range sockets {
+			p := s.Proc
+			if p == nil {
+				continue
+			}
+			if ownPID := strconv.Itoa(os.Getpid());
+				p.PPID == ownPID ||
+					p.PID == ownPID {
+				continue
+			}
+			occupiedErr := fmt.Errorf("%w by %v(%v): %v", OccupiedErr, p.Name, p.PID, s.LocalAddress.Port)
+			if configure.GetSettingNotNil().IntranetSharing {
+				// want to listen 0.0.0.0, which conflicts with all IPs
+				return occupiedErr
+			}
+			if s.LocalAddress.IP.IsUnspecified() {
+				return occupiedErr
+			}
+			if s.LocalAddress.IP.IsLoopback() {
+				return occupiedErr
+			}
+		}
+	}
+	return nil
+}
+
+func (t *Template) CheckInboundPortsOccupied() (err error) {
 	var st []string
 	for _, in := range t.Inbounds {
 		switch strings.ToLower(in.Protocol) {
 		case "http", "vmess", "vless", "trojan":
 			st = append(st, strconv.Itoa(in.Port)+":tcp")
 		case "dokodemo-door":
-			if in.Settings != nil && in.Settings.Network != "" {
+			if strings.HasPrefix(in.Tag, "dns-in") {
+				// checked before
+				continue
+			} else if in.Settings != nil && in.Settings.Network != "" {
 				st = append(st, strconv.Itoa(in.Port)+":"+in.Settings.Network)
 			} else {
 				st = append(st, strconv.Itoa(in.Port)+":tcp,udp")
@@ -1460,17 +1539,7 @@ func (t *Template) CheckInboundPortsOccupied() (occupied bool, port string, pnam
 			st = append(st, strconv.Itoa(in.Port)+":tcp,udp")
 		}
 	}
-	v2rayPath, _ := where.GetV2rayBinPath()
-	occupied, socket, err := ports.IsPortOccupiedWithWhitelist(st, map[string]struct{}{path.Base(v2rayPath): {}})
-	if err != nil {
-		return true, "unknown", err.Error()
-	}
-	if occupied {
-		port = strconv.Itoa(socket.LocalAddress.Port)
-		process, _ := socket.Process()
-		pname = process.Name
-	}
-	return
+	return PortOccupied(st)
 }
 
 func (t *Template) ToConfigBytes() []byte {
