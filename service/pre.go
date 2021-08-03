@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/gookit/color"
@@ -9,6 +8,7 @@ import (
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
@@ -239,24 +239,13 @@ func initUpdatingTicker() {
 func checkUpdate() {
 	setting := service.GetSetting()
 	//等待网络连通
-	resolver := net.Resolver{
-		PreferGo:     true,
-		StrictErrors: false,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{}
-			address = "114.114.114.114:53"
-			return d.DialContext(ctx, network, address)
-		},
-	}
 	for {
-		c := http.DefaultClient
-		c.Timeout = 5 * time.Second
-		addrs, err := resolver.LookupHost(context.Background(), "apple.com")
+		addrs, err := resolv.LookupHost("apple.com")
 		if err == nil && len(addrs) > 0 {
 			break
 		}
 		log.Println("[info] waiting for network connected")
-		time.Sleep(c.Timeout)
+		time.Sleep(5 * time.Second)
 	}
 	log.Println("[info] network is connected")
 

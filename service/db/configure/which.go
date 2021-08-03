@@ -2,6 +2,7 @@ package configure
 
 import (
 	"fmt"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"log"
 	"net"
 	"sort"
@@ -116,7 +117,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 	host := tsr.VmessInfo.Add
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		hosts, err = net.LookupHost(host)
+		hosts, err = resolv.LookupHost(host)
 		if err != nil || len(hosts) <= 0 {
 			if err != nil {
 				w.Latency = err.Error()
