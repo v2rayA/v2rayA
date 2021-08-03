@@ -56,7 +56,7 @@ IsPortOccupied([]string{"53:tcp,udp"})
 
 IsPortOccupied([]string{"53:tcp,udp", "80:tcp"})
 */
-func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err error) {
+func IsPortOccupied(syntax []string) (occupied bool, sockets []*netstat.Socket, err error) {
 	req, m, err := generatePortMap(syntax)
 	if err != nil {
 		return
@@ -65,43 +65,14 @@ func IsPortOccupied(syntax []string) (occupied bool, socket *netstat.Socket, err
 		for _, proto := range protos {
 			for _, v := range m[proto][p] {
 				if proto == "udp" || v.State != netstat.Close {
-					return true, v, nil
+					occupied = true
+					sockets = append(sockets, v)
 				}
 			}
 		}
 	}
-	return false, nil, nil
+	return occupied, sockets, nil
 }
-
-func IsPortOccupiedWithWhitelist(syntax []string, whitelist map[string]struct{}) (occupied bool, socket *netstat.Socket, err error) {
-	req, m, err := generatePortMap(syntax)
-	if err != nil {
-		return
-	}
-	var occupiedSockets []*netstat.Socket
-	for p, protos := range req {
-		for _, proto := range protos {
-			for _, v := range m[proto][p] {
-				if proto == "udp" || v.State != netstat.Close {
-					occupiedSockets = append(occupiedSockets, v)
-				}
-			}
-		}
-	}
-	err = netstat.FillProcesses(occupiedSockets)
-	if err != nil {
-		return
-	}
-	for _, s := range occupiedSockets {
-		if s.Proc != nil {
-			if _, exists := whitelist[s.Proc.Name]; !exists {
-				return true, s, nil
-			}
-		}
-	}
-	return false, nil, nil
-}
-
 
 func IsOccupiedTCPPort(nsmap map[string]map[int][]*netstat.Socket, port int) bool {
 	v := nsmap["tcp"][port]

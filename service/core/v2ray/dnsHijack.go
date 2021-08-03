@@ -41,7 +41,7 @@ var hijacker *ResolvHijacker
 
 func (h *ResolvHijacker) HijackResolv() error {
 	err := os.WriteFile(resolverFile,
-		[]byte(HijackFlag+"\nnameserver 127.0.0.1\nnameserver 114.114.114.114\n"),
+		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 114.114.114.114\n"),
 		os.FileMode(0644),
 	)
 	if err != nil {

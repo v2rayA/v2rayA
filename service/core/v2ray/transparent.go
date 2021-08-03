@@ -3,15 +3,11 @@ package v2ray
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	"log"
-	"path"
 	"strings"
 	"time"
 )
@@ -54,7 +50,10 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (er
 		iptables.SetWatcher(&iptables.Redirect)
 	}
 	if specialMode.ShouldLocalDnsListen() {
-		if e := specialMode.CouldLocalDnsListen(); e == nil {
+		if couldListenLocalhost, e := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
+			if e != nil {
+				log.Printf("[Warning] %v, only listen at 127.2.0.17", e)
+			}
 			resetResolvHijacker()
 		} else if specialMode.ShouldUseFakeDns() {
 			return fmt.Errorf("fakedns cannot be enabled: %w", e)
@@ -86,10 +85,6 @@ func nextPortsGroup(ports []string, groupSize int) (group []string, remain []str
 }
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
-	v2rayPath, err := where.GetV2rayBinPath()
-	if err != nil {
-		return
-	}
 	setting := configure.GetSettingNotNil()
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
@@ -137,21 +132,6 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		*c = iptables.SetupCommands(commands)
 	}
 	if (!checkRunning || IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
-		var (
-			o bool
-			s *netstat.Socket
-		)
-		o, s, err = ports.IsPortOccupied([]string{"32345:tcp,udp"})
-		if err != nil {
-			return
-		}
-		if o {
-			p, e := s.Process()
-			if e == nil && p.Name != path.Base(v2rayPath) {
-				err = newError("transparent proxy cannot be set up, port 32345 is occupied by ", p.Name)
-				return
-			}
-		}
 		DeleteTransparentProxyRules()
 		err = WriteTransparentProxyRules(&preprocess)
 	}

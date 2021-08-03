@@ -151,8 +151,8 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		return nil, err
 	}
 
-	if occupied, port, pname := tmpl.CheckInboundPortsOccupied(); occupied {
-		return nil, newError("Port ", port, " is occupied by ", pname)
+	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
+		return nil, newError(err)
 	}
 	err = v2ray.RestartV2rayService()
 	if err != nil {

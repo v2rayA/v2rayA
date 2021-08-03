@@ -53,17 +53,19 @@ func checkEnvironment() {
 		fmt.Println("It will work after you restart v2rayA")
 		os.Exit(0)
 	}
-	_, port, err := net.SplitHostPort(conf.Address)
+	_, v2rayAListeningPort, err := net.SplitHostPort(conf.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if occupied, socket, err := ports.IsPortOccupied([]string{port + ":tcp"}); occupied {
+	if occupied, sockets, err := ports.IsPortOccupied([]string{v2rayAListeningPort + ":tcp"}); occupied {
 		if err != nil {
 			log.Fatal("netstat:", err)
 		}
-		process, err := socket.Process()
-		if err == nil {
-			log.Fatalf("Port %v is occupied by %v/%v", port, process.Name, process.PID)
+		for _, socket := range sockets {
+			process, err := socket.Process()
+			if err == nil {
+				log.Fatalf("Port %v is occupied by %v/%v", v2rayAListeningPort, process.Name, process.PID)
+			}
 		}
 	}
 }
