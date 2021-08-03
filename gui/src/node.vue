@@ -936,7 +936,7 @@ export default {
         }
       });
     },
-    syncConnectedServer() {
+    deleteSelectedServers() {
       this.$axios({
         url: apiRoot + "/touch",
         method: "delete",
@@ -979,7 +979,7 @@ export default {
         type: "is-danger",
         hasIcon: true,
         icon: " iconfont icon-alert",
-        onConfirm: () => this.syncConnectedServer()
+        onConfirm: () => this.deleteSelectedServers()
       });
     },
     handleClickAboutConnection(row, sub) {
@@ -1018,7 +1018,7 @@ export default {
                 duration: 5000,
                 queue: false
               });
-              this.syncConnectedServer();
+              this.deleteSelectedServers();
             }
           }),
           3 * 1000,
