@@ -679,7 +679,7 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 		// we believe all lines are legal
 		var addr = parseDnsAddr(dns.Val)
 
-		if net.ParseIP(addr.host) == nil {
+		if net.ParseIP(addr.host) != nil {
 			routing = append(routing, RoutingRule{
 				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
 			})
