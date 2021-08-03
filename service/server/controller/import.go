@@ -22,5 +22,5 @@ func PostImport(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }

@@ -30,6 +30,20 @@ func PostOutbound(ctx *gin.Context) {
 }
 
 func DeleteOutbound(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	var data struct {
 		Outbound string `json:"outbound"`
 	}

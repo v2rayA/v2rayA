@@ -22,6 +22,20 @@ func GetSetting(ctx *gin.Context) {
 }
 
 func PutSetting(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	var data configure.Setting
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {

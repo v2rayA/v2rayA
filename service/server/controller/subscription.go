@@ -25,11 +25,25 @@ func PatchSubscription(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }
 
 /*更新订阅*/
 func PutSubscription(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
 	var data configure.Which
 	err := ctx.ShouldBindJSON(&data)
 	index := data.ID - 1
@@ -42,5 +56,5 @@ func PutSubscription(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	GetTouch(ctx)
+	getTouch(ctx)
 }
