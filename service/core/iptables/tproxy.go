@@ -75,14 +75,14 @@ iptables -w 2 -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -j
 iptables -w 2 -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
 iptables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
-# 走过TPROXY的通行
+# CORE流量通行
 iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
 
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 iptables -w 2 -t mangle -A TP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 iptables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 
-# 走过TPROXY的通行
+# CORE流量通行
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
 
 # 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链
@@ -133,14 +133,14 @@ ip6tables -w 2 -t mangle -A SETMARK -p udp -m multiport --sports {{UDP_PORTS}} -
 ip6tables -w 2 -t mangle -A SETMARK -p tcp -j MARK --set-mark 1
 ip6tables -w 2 -t mangle -A SETMARK -p udp -j MARK --set-mark 1
 
-# 走过TPROXY的通行
+# CORE流量通行
 ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
 
 # 本机发出去的 TCP 和 UDP 走一下 SETMARK 链
 ip6tables -w 2 -t mangle -A TP_OUT -p tcp -m mark ! --mark 1 -j SETMARK
 ip6tables -w 2 -t mangle -A TP_OUT -p udp -m mark ! --mark 1 -j SETMARK
 
-# 走过TPROXY的通行
+# CORE流量通行
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 0xff -j RETURN
 
 # 让内网主机发出的 TCP 和 UDP 走一下 SETMARK 链

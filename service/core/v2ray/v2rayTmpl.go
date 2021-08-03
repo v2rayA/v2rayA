@@ -74,7 +74,7 @@ type Log struct {
 type Sniffing struct {
 	Enabled      bool     `json:"enabled"`
 	DestOverride []string `json:"destOverride"`
-	MetadataOnly bool     `json:"metadataOnly,omitempty"`
+	MetadataOnly bool     `json:"metadataOnly"`
 }
 type Inbound struct {
 	Port           int              `json:"port"`
@@ -811,9 +811,9 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 		}
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
-	if specialMode.ShouldUseSupervisor() {
+	if specialMode.ShouldUseSupervisor() || specialMode.ShouldUseFakeDns() {
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // supervisor
+			RoutingRule{
 				Type:        "field",
 				IP:          []string{"198.18.0.0/15"},
 				OutboundTag: firstOutboundTag,
@@ -1315,7 +1315,6 @@ func (t *Template) SetInboundFakeDnsDestOverride() {
 			continue
 		}
 		t.Inbounds[i].Sniffing.DestOverride = append(t.Inbounds[i].Sniffing.DestOverride, "fakedns")
-		//t.Inbounds[i].Sniffing.DestOverride = []string{"fakedns"}
 	}
 }
 

@@ -19,10 +19,13 @@ var (
 
 func ShouldLocalDnsListen() bool {
 	setting := configure.GetSettingNotNil()
-	return setting.Transparent != configure.TransparentClose &&
-		setting.AntiPollution != configure.AntipollutionClosed && (
-		setting.TransparentType == configure.TransparentRedirect) ||
-		setting.SpecialMode == configure.SpecialModeFakeDns
+	if setting.AntiPollution == configure.AntipollutionClosed {
+		return false
+	}
+	if setting.TransparentType == configure.TransparentTproxy {
+		return false
+	}
+	return true
 }
 
 var couldListen struct {
