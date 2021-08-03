@@ -128,7 +128,7 @@ export default {
         "★转发DNS查询: 通过代理服务器转发DNS请求。" +
         "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS。",
       specialMode:
-        "★supervisor：监控dns污染，提前拦截，利用v2ray-core的sniffing解决污染。★fakedns：使用fakedns策略加速解析，需要占用本地53端口。",
+        "★supervisor：监控dns污染，提前拦截，利用v2ray-core的sniffing解决污染。★fakedns：使用fakedns策略加速解析。",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。若系统不支持可能会导致无法正常连接。",
       mux:

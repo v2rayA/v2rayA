@@ -68,6 +68,10 @@ func CheckQuicLocalDnsSupported() (err error) {
 	return isVersionSatisfied("4.34.0", true)
 }
 
+func CheckFakednsOthersSupported() (err error) {
+	return isVersionSatisfied("4.38.0", true)
+}
+
 func CheckHostsListSupported() (err error) {
 	return isVersionSatisfied("4.37.3", true)
 }

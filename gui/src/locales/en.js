@@ -128,7 +128,7 @@ export default {
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
         "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
       specialMode:
-        "★supervisor：Monitor dns pollution, intercept in advance, use sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving, and it needs to occupy the local port 53.",
+        "★supervisor：Monitor dns pollution, intercept in advance, use sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving.",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
