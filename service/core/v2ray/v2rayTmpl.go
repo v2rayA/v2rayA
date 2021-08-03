@@ -8,6 +8,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
@@ -756,7 +757,7 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 	}
 	// set hosts
 	for _, domain := range domainsToHosts {
-		ips, err := net.LookupHost(domain)
+		ips, err := resolv.LookupHost(domain)
 		if err != nil {
 			return routing, fmt.Errorf("[Error] %w: please make sure you're connected to the Internet", err)
 		}
