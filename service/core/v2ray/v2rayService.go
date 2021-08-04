@@ -44,7 +44,7 @@ func isVersionSatisfied(version string, mustV2rayCore bool) error {
 		return fmt.Errorf("failed to get the version of v2ray-core")
 	}
 	if ver == "UnknownClient" && mustV2rayCore {
-		return fmt.Errorf("v2ray-core only feature")
+		return fmt.Errorf("v2fly/v2ray-core only feature")
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
 		return fmt.Errorf("the version of v2ray-core is lower than %v", version)
@@ -77,7 +77,7 @@ func CheckBalancerSupported() (err error) {
 }
 
 func CheckObservatorySupported() (err error) {
-	return isVersionSatisfied("4.38.0", false)
+	return isVersionSatisfied("4.38.0", true)
 }
 
 func CheckHostsListSupported() (err error) {

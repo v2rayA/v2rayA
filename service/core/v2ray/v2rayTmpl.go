@@ -1425,7 +1425,7 @@ func Ps2OutboundTag(ps string) string {
 	return fmt.Sprintf("『%v』", ps)
 }
 
-func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) {
+func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) (err error) {
 	outbounds := t.outNames()
 	mSubjectSelector := make(map[string]struct{})
 	for outbound, isGroup := range outbounds {
@@ -1451,6 +1451,9 @@ func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInf
 		})
 
 		if strategy == "leastPing" {
+			if err = CheckObservatorySupported(); err != nil {
+				return fmt.Errorf("not support observatory based load balance: %w", err)
+			}
 			if t.Observatory == nil {
 				t.Observatory = &Observatory{
 					ProbeURL:      "http://www.msftconnecttest.com/connecttest.txt",
@@ -1475,6 +1478,7 @@ func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInf
 			t.Routing.Rules[i].BalancerTag, t.Routing.Rules[i].OutboundTag = t.Routing.Rules[i].OutboundTag, ""
 		}
 	}
+	return nil
 }
 
 func RefineOutboundInfos(outboundInfos []OutboundInfo) (
@@ -1559,6 +1563,9 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		var groups []string
 		for _, info := range infos {
 			if len(outboundName2VmessInfos[info.OutboundName]) > 1 {
+				if err = CheckBalancerSupported(); err != nil {
+					return t, err
+				}
 				usedByBalancer = true
 				balancerPluginPort = info.PluginPort
 				groups = append(groups, info.OutboundName)
@@ -1623,7 +1630,9 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		t.SetTransparentRouting(setting)
 	}
 	//set group routing
-	t.SetGroupRouting(outboundName2VmessInfos)
+	if err = t.SetGroupRouting(outboundName2VmessInfos); err != nil {
+		return t, err
+	}
 
 	//set outboundSockopt
 	t.SetOutboundSockopt(setting)
