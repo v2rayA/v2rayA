@@ -1014,7 +1014,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 		log.Println(err)
 		return err
 	}
-	defaultOutbound := t.Outbounds[0].Tag
+	defaultOutbound, _ := t.FirstProxyOutboundName(nil)
 	for _, rule := range rules {
 		switch rule := rule.(type) {
 		case routingA.Define:
