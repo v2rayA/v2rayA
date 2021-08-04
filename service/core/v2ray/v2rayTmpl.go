@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1516,6 +1517,95 @@ func RefineOutboundInfos(outboundInfos []OutboundInfo) (
 	return vmessInfo2OutboundInfoAfter, outboundName2VmessInfos
 }
 
+func (t *Template) ResolveOutbounds(
+	outboundInfos []OutboundInfo,
+	vmessInfo2OutboundInfos map[vmessInfo.VmessInfo][]*OutboundInfo,
+	outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) (supportUDP map[string]bool, err error) {
+
+	supportUDP = make(map[string]bool)
+	type _outbound struct {
+		index    int
+		outbound Outbound
+	}
+	outboundInfo2Index := make(map[*OutboundInfo]int)
+	for i := range outboundInfos {
+		outboundInfo2Index[&outboundInfos[i]] = i
+	}
+	// keep order with outboundInfos
+	var outbounds []_outbound
+	for vmessinfo, infos := range vmessInfo2OutboundInfos {
+		vi := vmessinfo
+		var (
+			usedByBalancer     bool
+			balancerPluginPort int
+			minIndex           = -1
+		)
+		var groups []string
+		for _, info := range infos {
+			if len(outboundName2VmessInfos[info.OutboundName]) > 1 {
+				if err = CheckBalancerSupported(); err != nil {
+					return nil, err
+				}
+				usedByBalancer = true
+				balancerPluginPort = info.PluginPort
+				if minIndex == -1 || outboundInfo2Index[info] < minIndex {
+					minIndex = outboundInfo2Index[info]
+				}
+				groups = append(groups, info.OutboundName)
+			} else {
+				// pure outbound
+				o, err := ResolveOutbound(&vi, info.OutboundName, &info.PluginPort)
+				if err != nil {
+					return nil, err
+				}
+				outbounds = append(outbounds, _outbound{
+					index:    outboundInfo2Index[info],
+					outbound: o,
+				})
+
+				supportUDP[info.OutboundName] = info.Info.IsEmbeddedProtocol()
+			}
+		}
+		if usedByBalancer {
+			// the outbound is shared by balancers
+			o, err := ResolveOutbound(&vi, Ps2OutboundTag(vi.Ps), &balancerPluginPort)
+			if err != nil {
+				return nil, err
+			}
+			o.groups = groups
+			outbounds = append(outbounds, _outbound{
+				index:    minIndex,
+				outbound: o,
+			})
+
+			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
+			for _, outboundName := range o.groups {
+				_supportUDP := vi.IsEmbeddedProtocol()
+				if _, ok := supportUDP[outboundName]; !ok {
+					supportUDP[outboundName] = _supportUDP
+				}
+				if supportUDP[outboundName] && !_supportUDP {
+					supportUDP[outboundName] = false
+				}
+			}
+		}
+	}
+	sort.Slice(outbounds, func(i, j int) bool {
+		return outbounds[i].index < outbounds[j].index
+	})
+	for _, v := range outbounds {
+		t.Outbounds = append(t.Outbounds, v.outbound)
+	}
+	t.Outbounds = append(t.Outbounds, Outbound{
+		Tag:      "direct",
+		Protocol: "freedom",
+	}, Outbound{
+		Tag:      "block",
+		Protocol: "blackhole",
+	})
+	return supportUDP, nil
+}
+
 func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 	vmessInfo2OutboundInfos, outboundName2VmessInfos := RefineOutboundInfos(outboundInfos)
 	ps2OutboundNames := make(map[string][]string)
@@ -1554,60 +1644,10 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		}
 	}
 	// resolve Outbounds
-	var supportUDP = make(map[string]bool)
-	for vmessinfo, infos := range vmessInfo2OutboundInfos {
-		vi := vmessinfo
-		var outbounds []Outbound
-		var usedByBalancer bool
-		var balancerPluginPort int
-		var groups []string
-		for _, info := range infos {
-			if len(outboundName2VmessInfos[info.OutboundName]) > 1 {
-				if err = CheckBalancerSupported(); err != nil {
-					return t, err
-				}
-				usedByBalancer = true
-				balancerPluginPort = info.PluginPort
-				groups = append(groups, info.OutboundName)
-			} else {
-				// pure outbound
-				o, err := ResolveOutbound(&vi, info.OutboundName, &info.PluginPort)
-				if err != nil {
-					return t, err
-				}
-				outbounds = append(outbounds, o)
-
-				supportUDP[info.OutboundName] = info.Info.IsEmbeddedProtocol()
-			}
-		}
-		if usedByBalancer {
-			o, err := ResolveOutbound(&vi, Ps2OutboundTag(vi.Ps), &balancerPluginPort)
-			if err != nil {
-				return t, err
-			}
-			o.groups = groups
-			outbounds = append(outbounds, o)
-
-			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
-			for _, outboundName := range o.groups {
-				_supportUDP := vi.IsEmbeddedProtocol()
-				if _, ok := supportUDP[outboundName]; !ok {
-					supportUDP[outboundName] = _supportUDP
-				}
-				if supportUDP[outboundName] && !_supportUDP {
-					supportUDP[outboundName] = false
-				}
-			}
-		}
-		t.Outbounds = append(t.Outbounds, outbounds...)
+	supportUDP, err := t.ResolveOutbounds(outboundInfos, vmessInfo2OutboundInfos, outboundName2VmessInfos)
+	if err != nil {
+		return t, err
 	}
-	t.Outbounds = append(t.Outbounds, Outbound{
-		Tag:      "direct",
-		Protocol: "freedom",
-	}, Outbound{
-		Tag:      "block",
-		Protocol: "blackhole",
-	})
 
 	//set inbound ports according to the setting
 	t.SetInbound(setting)
