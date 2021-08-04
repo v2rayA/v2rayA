@@ -95,7 +95,14 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}()
 	//save the result of connecting to database
-	err = configure.AddConnect(*which)
+	if v2ray.CheckObservatorySupported() != nil {
+		if err = configure.ClearConnects(which.Outbound); err != nil {
+			return
+		}
+	}
+	if err = configure.AddConnect(*which); err != nil {
+		return
+	}
 	//update the v2ray config and start/restart v2ray
 	if v2ray.IsV2RayRunning() || len(configure.GetOutbounds()) <= 1 {
 		if err = v2ray.UpdateV2RayConfig(); err != nil {
