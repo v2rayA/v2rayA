@@ -72,6 +72,14 @@ func CheckFakednsOthersSupported() (err error) {
 	return isVersionSatisfied("4.38.0", true)
 }
 
+func CheckBalancerSupported() (err error) {
+	return isVersionSatisfied("4.4", false)
+}
+
+func CheckObservatorySupported() (err error) {
+	return isVersionSatisfied("4.38.0", false)
+}
+
 func CheckHostsListSupported() (err error) {
 	return isVersionSatisfied("4.37.3", true)
 }

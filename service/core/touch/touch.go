@@ -103,7 +103,7 @@ func GenerateTouch() (t Touch) {
 			Info:    v.Info,
 		}
 	}
-	t.ConnectedServers = configure.GetConnectedServers()
+	t.ConnectedServers = configure.GetConnectedServers().Get()
 	//补充TYPE
 	for i := range t.Subscriptions {
 		t.Subscriptions[i].TYPE = configure.SubscriptionType

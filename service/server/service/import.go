@@ -55,8 +55,8 @@ func Import(url string, which *configure.Which) (err error) {
 				return
 			}
 			css := configure.GetConnectedServers()
-			if len(css) > 0 {
-				for _, cs := range css {
+			if css.Len() > 0 {
+				for _, cs := range css.Get() {
 					if which.TYPE == cs.TYPE && which.ID == cs.ID {
 						if err = v2ray.UpdateV2RayConfig(); err != nil {
 							return

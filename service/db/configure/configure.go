@@ -12,27 +12,25 @@ import (
 )
 
 type Configure struct {
-	Servers                    []*ServerRaw       `json:"servers"`
-	Subscriptions              []*SubscriptionRaw `json:"subscriptions"`
-	ConnectedServer            *Which             `json:"connectedServer"` //冗余一个信息，方便查找
-	AdditionalConnectedServers []Which            `json:"additionalConnectedServers"`
-	Setting                    *Setting           `json:"setting"`
-	Accounts                   map[string]string  `json:"accounts"`
-	Ports                      Ports              `json:"ports"`
-	PortWhiteList              PortWhiteList      `json:"portWhiteList"`
-	InternalDnsList            *string            `json:"internalDnsList"`
-	ExternalDnsList            *string            `json:"externalDnsList"`
-	RoutingA                   *string            `json:"routingA"`
+	Servers          []*ServerRaw       `json:"servers"`
+	Subscriptions    []*SubscriptionRaw `json:"subscriptions"`
+	ConnectedServers []*Which           `json:"connectedServers"`
+	Setting          *Setting           `json:"setting"`
+	Accounts         map[string]string  `json:"accounts"`
+	Ports            Ports              `json:"ports"`
+	PortWhiteList    PortWhiteList      `json:"portWhiteList"`
+	InternalDnsList  *string            `json:"internalDnsList"`
+	ExternalDnsList  *string            `json:"externalDnsList"`
+	RoutingA         *string            `json:"routingA"`
 }
 
 func New() *Configure {
 	return &Configure{
-		Servers:                    make([]*ServerRaw, 0),
-		Subscriptions:              make([]*SubscriptionRaw, 0),
-		ConnectedServer:            nil,
-		AdditionalConnectedServers: nil,
-		Setting:                    NewSetting(),
-		Accounts:                   map[string]string{},
+		Servers:          make([]*ServerRaw, 0),
+		Subscriptions:    make([]*SubscriptionRaw, 0),
+		ConnectedServers: make([]*Which, 0),
+		Setting:          NewSetting(),
+		Accounts:         map[string]string{},
 		Ports: Ports{
 			Socks5:      20170,
 			Http:        20171,
@@ -98,13 +96,8 @@ func SetConfigure(cfg *Configure) error {
 	if err := SetPortWhiteList(&cfg.PortWhiteList); err != nil {
 		return err
 	}
-	if err := SetConnect(cfg.ConnectedServer); err != nil {
+	if err := OverwriteConnects(NewWhiches(cfg.ConnectedServers)); err != nil {
 		return err
-	}
-	for _, w := range cfg.AdditionalConnectedServers {
-		if err := SetConnect(&w); err != nil {
-			return err
-		}
 	}
 	if err := SetSetting(cfg.Setting); err != nil {
 		return err
@@ -273,35 +266,32 @@ func GetRoutingA() (r string) {
 	}
 	return
 }
-func GetConnectedServers() (wts []*Which) {
+func GetConnectedServers() (wts *Whiches) {
 	outbounds := GetOutbounds()
 	for _, outbound := range outbounds {
-		w := GetConnectedServer(outbound)
+		w := GetConnectedServersByOutbound(outbound)
 		if w != nil {
-			wts = append(wts, w)
+			if wts == nil {
+				wts = new(Whiches)
+			}
+			wts.Extend(*w)
 		}
 	}
-	if len(wts) == 0 {
+	if wts != nil && wts.Len() == 0 {
 		wts = nil
 	}
 	return wts
 }
-func GetConnectedServer(outbound string) *Which {
-	r := new(Which)
-	if outbound == "" || outbound == "proxy" {
-		if err := db.Get("touch", "connectedServer", &r); err != nil {
-			return nil
-		}
-		if r != nil {
-			r.Outbound = "proxy"
-		}
-		return r
-	} else {
-		if err := db.Get(fmt.Sprintf("outbound.%v", outbound), "connectedServer", &r); err != nil {
-			return nil
-		}
-		return r
+func GetConnectedServersByOutbound(outbound string) *Whiches {
+	r := new(Whiches)
+	if outbound == "" {
+		outbound = "proxy"
 	}
+	bucket := fmt.Sprintf("outbound.%v", outbound)
+	if err := db.Get(bucket, "connectedServers", &r); err != nil {
+		return nil
+	}
+	return r
 }
 
 func GetLenSubscriptions() int {
@@ -325,21 +315,58 @@ func GetLenServers() int {
 	}
 	return l
 }
-
-func ClearConnected(outbound string) error {
-	if outbound == "" || outbound == "proxy" {
-		return db.Set("touch", "connectedServer", nil)
-	} else {
-		return db.Set(fmt.Sprintf("outbound.%v", outbound), "connectedServer", nil)
+func ClearConnects(outbound string) error {
+	if outbound == "" {
+		outbound = "proxy"
 	}
+	return db.Set(fmt.Sprintf("outbound.%v", outbound), "connectedServers", nil)
+}
+func AddConnect(wt Which) (err error) {
+	if wt.Outbound == "" {
+		wt.Outbound = "proxy"
+	}
+	bucket := fmt.Sprintf("outbound.%v", wt.Outbound)
+	var wcs Whiches
+	_ = db.Get(bucket, "connectedServers", &wcs)
+	for _, v := range wcs.Get() {
+		if v.EqualTo(wt) {
+			return nil
+		}
+	}
+	wcs.Add(wt)
+	return db.Set(bucket, "connectedServers", wcs)
 }
 
-func SetConnect(wt *Which) (err error) {
-	if wt == nil || wt.Outbound == "" || wt.Outbound == "proxy" {
-		return db.Set("touch", "connectedServer", wt)
-	} else {
-		return db.Set(fmt.Sprintf("outbound.%v", wt.Outbound), "connectedServer", wt)
+func OverwriteConnects(ws *Whiches) (err error) {
+	outWs := make(map[string][]*Which)
+	for _, w := range ws.Get() {
+		outWs[w.Outbound] = append(outWs[w.Outbound], w)
 	}
+	for out, ws := range outWs {
+		whiches := new(Whiches)
+		whiches.Touches = ws
+		bucket := fmt.Sprintf("outbound.%v", out)
+		if err := db.Set(bucket, "connectedServers", whiches); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func RemoveConnect(wt Which) (err error) {
+	if wt.Outbound == "" {
+		wt.Outbound = "proxy"
+	}
+	bucket := fmt.Sprintf("outbound.%v", wt.Outbound)
+	var wcs Whiches
+	_ = db.Get(bucket, "connectedServers", &wcs)
+	for i, v := range wcs.Touches {
+		if v.EqualTo(wt) {
+			wcs.Touches = append(wcs.Touches[:i], wcs.Touches[i+1:]...)
+			return db.Set(bucket, "connectedServers", wcs)
+		}
+	}
+	return fmt.Errorf("given server cannot be found in database")
 }
 
 func GetOutbounds() (outbounds []string) {

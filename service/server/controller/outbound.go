@@ -51,8 +51,8 @@ func DeleteOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	if w := configure.GetConnectedServer(data.Outbound); w != nil {
-		if err := service.Disconnect(data.Outbound); err != nil {
+	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {
+		if err := service.Disconnect(configure.Which{Outbound: data.Outbound}, true); err != nil {
 			common.ResponseError(ctx, logError(err))
 			return
 		}

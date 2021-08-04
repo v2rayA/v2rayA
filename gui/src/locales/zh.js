@@ -14,7 +14,8 @@ export default {
     fail: "失败",
     message: "提示",
     none: "无",
-    optional: "可选"
+    optional: "可选",
+    loadBalance: "负载均衡"
   },
   welcome: {
     title: "初来乍到，请多关照",

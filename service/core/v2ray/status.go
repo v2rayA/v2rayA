@@ -169,12 +169,12 @@ func UpdateV2RayConfig() (err error) {
 		sr   *configure.ServerRaw
 	)
 	css := configure.GetConnectedServers()
-	if len(css) == 0 { //no connected server. stop v2ray-core.
+	if css.Len() == 0 { //no connected server. stop v2ray-core.
 		return StopV2rayService()
 	}
-	outboundInfos := make([]OutboundInfo, 0, len(css))
-	vms := make([]vmessInfo.VmessInfo, 0, len(css))
-	for _, cs := range css {
+	outboundInfos := make([]OutboundInfo, 0, css.Len())
+	vms := make([]vmessInfo.VmessInfo, 0, css.Len())
+	for _, cs := range css.Get() {
 		sr, err = cs.LocateServerRaw()
 		if err != nil {
 			return
@@ -203,7 +203,7 @@ func UpdateV2RayConfig() (err error) {
 		return
 	}
 
-	if len(css) == 0 && !IsV2RayRunning() {
+	if css.Len() == 0 && !IsV2RayRunning() {
 		//no need to restart if no connected servers
 		return
 	}
@@ -230,7 +230,7 @@ func UpdateV2RayConfig() (err error) {
 			return
 		}
 		if plu != nil {
-			plugin.GlobalPlugins.Add(css[i].Outbound, plu)
+			plugin.GlobalPlugins.Add(css.Get()[i].Outbound, plu)
 		}
 	}
 

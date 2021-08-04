@@ -1,6 +1,6 @@
 import CONST from "./const.js";
 
-function locateServer(touch, whichServer) {
+function _locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
   let sub = whichServer.sub;
   if (whichServer._type === CONST.ServerType) {
@@ -9,6 +9,20 @@ function locateServer(touch, whichServer) {
     return touch.subscriptions[sub].servers[ind];
   }
   return null;
+}
+
+function locateServer(touch, whichServer) {
+  if (whichServer instanceof Array) {
+    const servers = [];
+    for (const w of whichServer) {
+      const server = _locateServer(touch, w);
+      if (server) {
+        servers.push(server);
+      }
+    }
+    return servers;
+  }
+  return _locateServer(touch, whichServer);
 }
 
 function handleResponse(res, that, suc, err, fail) {
