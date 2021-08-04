@@ -31,7 +31,7 @@ func init() {
 		PreferGo:     true,
 		StrictErrors: false,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{}
+			d := net.Dialer{Timeout: 5 * time.Second}
 			server := dnsServers[rand.Intn(len(dnsServers))]
 			address = server.addr
 			network = server.network
