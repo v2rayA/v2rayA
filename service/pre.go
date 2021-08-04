@@ -239,6 +239,7 @@ func initUpdatingTicker() {
 func checkUpdate() {
 	setting := service.GetSetting()
 	//等待网络连通
+	v2ray.CheckAndStopTransparentProxy()
 	for {
 		addrs, err := resolv.LookupHost("apple.com")
 		if err == nil && len(addrs) > 0 {
@@ -302,7 +303,7 @@ func checkUpdate() {
 
 func run() (err error) {
 	//判别需要启动v2ray吗
-	if w := configure.GetConnectedServers(); len(w) > 0 {
+	if w := configure.GetConnectedServers(); w.Len() > 0 {
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
 			log.Println("failed to start v2ray-core:", err)
