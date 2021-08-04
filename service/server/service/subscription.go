@@ -140,49 +140,42 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		return newError(reason)
 	}
 	resolv.CheckResolvConf()
-	infos, status, err := ResolveSubscriptionWithClient(addr, c)
+	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		reason := "failed to resolve subscription address: " + err.Error()
-		log.Println(infos, err)
+		log.Println(subscriptionInfos, err)
 		return newError(reason)
 	}
-	tsrs := make([]configure.ServerRaw, len(infos))
+	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
-	vi2outbounds := make(map[vmessInfo.VmessInfo][]string)
-	for _, cs := range css {
+	cssAfter := css.Get()
+	connectedVmessInfo2CssIndex := make(map[vmessInfo.VmessInfo][]int)
+	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
 			if sRaw, err := cs.LocateServerRaw(); err != nil {
 				return err
 			} else {
-				vi2outbounds[sRaw.VmessInfo] = append(vi2outbounds[sRaw.VmessInfo], cs.Outbound)
+				connectedVmessInfo2CssIndex[sRaw.VmessInfo] = append(connectedVmessInfo2CssIndex[sRaw.VmessInfo], i)
 			}
 		}
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
-	for i, info := range infos {
-		tsr := configure.ServerRaw{
+	for i, info := range subscriptionInfos {
+		infoServerRaw := configure.ServerRaw{
 			VmessInfo: info.VmessInfo,
 		}
-		if outbounds, ok := vi2outbounds[tsr.VmessInfo]; ok {
-			for _, outbound := range outbounds {
-				err = configure.SetConnect(&configure.Which{
-					TYPE:     configure.SubscriptionServerType,
-					ID:       i + 1,
-					Sub:      index,
-					Outbound: outbound,
-				})
-				if err != nil {
-					return
-				}
-				delete(vi2outbounds, tsr.VmessInfo)
+		if cssIndexes, ok := connectedVmessInfo2CssIndex[infoServerRaw.VmessInfo]; ok {
+			for _, cssIndex := range cssIndexes {
+				cssAfter[cssIndex].ID = i + 1
 			}
+			delete(connectedVmessInfo2CssIndex, infoServerRaw.VmessInfo)
 		}
-		tsrs[i] = tsr
+		infoServerRaws[i] = infoServerRaw
 	}
-	for vi,outbounds:=range vi2outbounds{
-		for _, outbound := range outbounds {
+	for vi, cssIndexes := range connectedVmessInfo2CssIndex {
+		for _, cssIndex := range cssIndexes {
 			if disconnectIfNecessary {
-				err = Disconnect(outbound)
+				err = Disconnect(*css.Get()[cssIndex], false)
 				if err != nil {
 					reason := "failed to disconnect previous server"
 					return newError(reason)
@@ -190,24 +183,18 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			} else {
 				// 将之前连接的节点append进去
 				// TODO: 变更ServerRaw时可能需要考虑
-				tsrs = append(tsrs, configure.ServerRaw{
+				infoServerRaws = append(infoServerRaws, configure.ServerRaw{
 					VmessInfo: vi,
 					Latency:   "",
 				})
-				if err = configure.SetConnect(&configure.Which{
-					TYPE:     configure.SubscriptionType,
-					ID:       len(tsrs),
-					Sub:      index,
-					Latency:  "",
-					Link:     "",
-					Outbound: outbound,
-				}); err != nil {
-					return
-				}
+				cssAfter[cssIndex].ID = len(infoServerRaws)
 			}
 		}
 	}
-	subscriptions[index].Servers = tsrs
+	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
+		return err
+	}
+	subscriptions[index].Servers = infoServerRaws
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
 	subscriptions[index].Info = status
 	return configure.SetSubscription(index, &subscriptions[index])

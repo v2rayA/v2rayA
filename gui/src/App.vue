@@ -253,6 +253,19 @@ export default {
       }
     },
     outboundNameDecorator(outbound) {
+      if (this.runningState.outboundToServerName[outbound]) {
+        if (
+          typeof this.runningState.outboundToServerName[outbound] === "number"
+        ) {
+          return `${outbound} - ${this.$t("common.loadBalance")} (${
+            this.runningState.outboundToServerName[outbound]
+          })`;
+        } else {
+          return `${outbound} - ${this.runningState.outboundToServerName[outbound]}`;
+        }
+      } else {
+        return outbound;
+      }
       return this.runningState.outboundToServerName[outbound]
         ? `${outbound} - ${this.runningState.outboundToServerName[outbound]}`
         : outbound;

@@ -17,20 +17,24 @@ func StopV2ray() (err error) {
 	return
 }
 func StartV2ray() (err error) {
-	if css := configure.GetConnectedServers(); len(css) == 0 {
+	if css := configure.GetConnectedServers(); css.Len() == 0 {
 		return fmt.Errorf("failed: no server is connected. connect a server instead")
 	}
 	return v2ray.UpdateV2RayConfig()
 }
 
-func Disconnect(outbound string) (err error) {
+func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to disconnect: %w", err)
 		}
 	}()
-	lastConnected := configure.GetConnectedServer(outbound)
-	err = configure.ClearConnected(outbound)
+	lastConnected := configure.GetConnectedServersByOutbound(which.Outbound)
+	if clearOutbound {
+		err = configure.ClearConnects(which.Outbound)
+	} else {
+		err = configure.RemoveConnect(which)
+	}
 	if err != nil {
 		return
 	}
@@ -38,7 +42,7 @@ func Disconnect(outbound string) (err error) {
 	if v2ray.IsV2RayRunning() || len(configure.GetOutbounds()) <= 1 {
 		defer func() {
 			if err != nil && lastConnected != nil && v2ray.IsV2RayRunning() {
-				_ = configure.SetConnect(lastConnected)
+				_ = configure.OverwriteConnects(lastConnected)
 				_ = v2ray.UpdateV2RayConfig()
 			}
 		}()
@@ -82,16 +86,16 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}
 	//locate server
-	currentConnected := configure.GetConnectedServer(which.Outbound)
+	currentConnected := configure.GetConnectedServersByOutbound(which.Outbound)
 	defer func() {
 		// if error occurs, restore the result of connecting
 		if err != nil && currentConnected != nil && v2ray.IsV2RayRunning() {
-			_ = configure.SetConnect(currentConnected)
+			_ = configure.OverwriteConnects(currentConnected)
 			_ = v2ray.UpdateV2RayConfig()
 		}
 	}()
 	//save the result of connecting to database
-	err = configure.SetConnect(which)
+	err = configure.AddConnect(*which)
 	//update the v2ray config and start/restart v2ray
 	if v2ray.IsV2RayRunning() || len(configure.GetOutbounds()) <= 1 {
 		if err = v2ray.UpdateV2RayConfig(); err != nil {

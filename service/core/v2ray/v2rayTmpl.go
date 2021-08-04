@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 /*对应template.json*/
@@ -47,9 +48,24 @@ type Template struct {
 		DomainStrategy string        `json:"domainStrategy"`
 		DomainMatcher  string        `json:"domainMatcher"`
 		Rules          []RoutingRule `json:"rules"`
+		Balancers      []Balancer    `json:"balancers,omitempty"`
 	} `json:"routing"`
-	DNS     *DNS     `json:"dns,omitempty"`
-	FakeDns *FakeDns `json:"fakedns,omitempty"`
+	DNS         *DNS         `json:"dns,omitempty"`
+	FakeDns     *FakeDns     `json:"fakedns,omitempty"`
+	Observatory *Observatory `json:"observatory,omitempty"`
+}
+type Observatory struct {
+	SubjectSelector []string `json:"subjectSelector"`
+	ProbeURL        string   `json:"probeURL,omitempty"`
+	ProbeInterval   string   `json:"ProbeInterval,omitempty"`
+}
+type Balancer struct {
+	Tag      string           `json:"tag"`
+	Selector []string         `json:"selector"`
+	Strategy BalancerStrategy `json:"strategy"`
+}
+type BalancerStrategy struct {
+	Type string `json:"type"`
 }
 type FakeDns struct {
 	IpPool   string `json:"ipPool"`
@@ -57,7 +73,8 @@ type FakeDns struct {
 }
 type RoutingRule struct {
 	Type        string   `json:"type"`
-	OutboundTag string   `json:"outboundTag"`
+	OutboundTag string   `json:"outboundTag,omitempty"`
+	BalancerTag string   `json:"balancerTag,omitempty"`
 	InboundTag  []string `json:"inboundTag,omitempty"`
 	Domain      []string `json:"domain,omitempty"`
 	IP          []string `json:"ip,omitempty"`
@@ -177,6 +194,7 @@ type Outbound struct {
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	ProxySettings  *ProxySettings  `json:"proxySettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
+	groups         []string
 }
 type OutboundUser struct {
 	User  string `json:"user"`
@@ -570,28 +588,59 @@ func appendDnsServers(d *DNS, lines []string, domains []string) {
 	}
 }
 
-// outboundTag -> outboundProtocol
-func (t *Template) outboundTags() map[string]string {
-	tags := make(map[string]string)
+// outName -> isGroup
+func (t *Template) outNames() map[string]bool {
+	tags := make(map[string]bool)
 	for _, o := range t.Outbounds {
-		if o.Tag != "" {
-			tags[o.Tag] = o.Protocol
+		if len(o.groups) > 0 {
+			for _, groupName := range o.groups {
+				tags[groupName] = true
+			}
+		} else {
+			tags[o.Tag] = false
 		}
 	}
 	return tags
 }
 
-func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, supportUDP map[string]bool) (routing []RoutingRule, err error) {
-	// TODO: other countries and regions
-	firstOutboundTag := t.Outbounds[0].Tag
-	var firstUDPSupportedOutboundTag string
-	for _, o := range t.Outbounds {
-		if supportUDP[o.Tag] == true {
-			firstUDPSupportedOutboundTag = o.Tag
-			break
+func (t *Template) FirstProxyOutboundName(filter func(outboundName string, isGroup bool) bool) (outboundName string, isGroup bool) {
+	if filter == nil {
+		filter = func(outboundName string, isGroup bool) bool {
+			return true
 		}
 	}
-	outboundTags := t.outboundTags()
+	// deduplicate
+	m := make(map[string]struct{})
+
+	for _, o := range t.Outbounds {
+		switch o.Tag {
+		case "direct", "block", "dns-out":
+			continue
+		}
+		if len(o.groups) > 0 {
+			for _, v := range o.groups {
+				if _, ok := m[v]; !ok {
+					if filter(v, true) {
+						return v, true
+					}
+					m[v] = struct{}{}
+				}
+			}
+		} else {
+			if filter(o.Tag, false) {
+				return o.Tag, false
+			}
+		}
+	}
+	return
+}
+
+func (t *Template) SetDNS(outbounds []OutboundInfo, setting *configure.Setting, supportUDP map[string]bool) (routing []RoutingRule, err error) {
+	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
+	firstUDPSupportedOutboundTag, _ := t.FirstProxyOutboundName(func(outboundName string, isGroup bool) bool {
+		return supportUDP[outboundName]
+	})
+	outboundTags := t.outNames()
 	var internal, external, all []string
 	var allThroughProxy = false
 	if setting.AntiPollution == configure.AntipollutionAdvanced {
@@ -715,9 +764,9 @@ func (t *Template) SetDNS(vs []vmessInfo.VmessInfo, setting *configure.Setting, 
 		t.DNS.Servers = []interface{}{"localhost"}
 	}
 	var domainsToLookup []string
-	for _, v := range vs {
-		if net.ParseIP(v.Add) == nil {
-			domainsToLookup = append(domainsToLookup, v.Add)
+	for _, v := range outbounds {
+		if net.ParseIP(v.Info.Add) == nil {
+			domainsToLookup = append(domainsToLookup, v.Info.Add)
 		}
 	}
 	for _, r := range routing {
@@ -793,7 +842,7 @@ func filterIPs(ips []string) []string {
 	return ret
 }
 func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bool) {
-	firstOutboundTag := t.Outbounds[0].Tag
+	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	t.Routing.Rules = append(t.Routing.Rules, routing...)
 	t.Routing.Rules = append(t.Routing.Rules,
 		RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
@@ -852,7 +901,7 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 }
 
 func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
-	firstOutboundTag := t.Outbounds[0].Tag
+	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	switch setting.RulePortMode {
 	case configure.WhitelistMode:
 		// 拥有国内IP的国外域名应该优先被代理而非直连
@@ -1087,7 +1136,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 			}
 		}
 	}
-	outboundTags := t.outboundTags()
+	outboundTags := t.outNames()
 	for _, rule := range rules {
 		if rule, ok := rule.(routingA.Routing); ok {
 			rr := RoutingRule{
@@ -1146,7 +1195,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	return nil
 }
 func (t *Template) SetTransparentRouting(setting *configure.Setting) {
-	firstOutboundTag := t.Outbounds[0].Tag
+	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	switch setting.Transparent {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
@@ -1372,22 +1421,116 @@ type OutboundInfo struct {
 	PluginPort   int
 }
 
+func Ps2OutboundTag(ps string) string {
+	return fmt.Sprintf("『%v』", ps)
+}
+
+func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) {
+	outbounds := t.outNames()
+	mSubjectSelector := make(map[string]struct{})
+	for outbound, isGroup := range outbounds {
+		if !isGroup {
+			continue
+		}
+
+		strategy := "leastPing"
+		interval := 10 * time.Second
+		var selector []string
+
+		for _, vi := range outboundName2VmessInfos[outbound] {
+			selector = append(selector, Ps2OutboundTag(vi.Ps))
+		}
+
+		t.Routing.Balancers = append(t.Routing.Balancers, Balancer{
+			Tag:      outbound,
+			Selector: selector,
+			Strategy: BalancerStrategy{
+				//TODO: configure.GetOutboundSetting
+				Type: strategy,
+			},
+		})
+
+		if strategy == "leastPing" {
+			if t.Observatory == nil {
+				t.Observatory = &Observatory{
+					ProbeURL:      "http://www.msftconnecttest.com/connecttest.txt",
+					ProbeInterval: interval.String(),
+				}
+			}
+			for _, s := range selector {
+				mSubjectSelector[s] = struct{}{}
+			}
+		}
+	}
+	if t.Observatory != nil {
+		var subjectSelector []string
+		for s := range mSubjectSelector {
+			subjectSelector = append(subjectSelector, s)
+		}
+		t.Observatory.SubjectSelector = subjectSelector
+	}
+	for i := range t.Routing.Rules {
+		if t.Routing.Rules[i].OutboundTag != "" &&
+			outbounds[t.Routing.Rules[i].OutboundTag] == true {
+			t.Routing.Rules[i].BalancerTag, t.Routing.Rules[i].OutboundTag = t.Routing.Rules[i].OutboundTag, ""
+		}
+	}
+}
+
+func RefineOutboundInfos(outboundInfos []OutboundInfo) (
+	vmessInfo2OutboundInfos map[vmessInfo.VmessInfo][]*OutboundInfo,
+	outboundName2VmessInfos map[string][]vmessInfo.VmessInfo,
+) {
+	// guarantee that an v2ray outbound is reusable for groups
+	vmessInfo2OutboundInfos = make(map[vmessInfo.VmessInfo][]*OutboundInfo)
+	for i, info := range outboundInfos {
+		vmessInfo2OutboundInfos[info.Info] = append(vmessInfo2OutboundInfos[info.Info], &outboundInfos[i])
+	}
+	// make ps unique
+	vmessInfo2OutboundInfoAfter := make(map[vmessInfo.VmessInfo][]*OutboundInfo)
+	mPsRenaming := make(map[string]struct{})
+	for vi, ois := range vmessInfo2OutboundInfos {
+		ps := vi.Ps
+		cnt := 2
+		for {
+			if _, ok := mPsRenaming[ps]; !ok {
+				mPsRenaming[ps] = struct{}{}
+				vi.Ps = ps
+				vmessInfo2OutboundInfoAfter[vi] = ois
+				break
+			}
+			ps = fmt.Sprintf("%v(%v)", vi.Ps, strconv.Itoa(cnt))
+			cnt++
+		}
+	}
+	outboundName2VmessInfos = make(map[string][]vmessInfo.VmessInfo)
+	for vi, ois := range vmessInfo2OutboundInfoAfter {
+		for _, oi := range ois {
+			outboundName2VmessInfos[oi.OutboundName] = append(outboundName2VmessInfos[oi.OutboundName], vi)
+		}
+	}
+	return vmessInfo2OutboundInfoAfter, outboundName2VmessInfos
+}
+
 func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
-	vs := make([]vmessInfo.VmessInfo, 0, len(outboundInfos))
-	for _, info := range outboundInfos {
-		vs = append(vs, info.Info)
+	vmessInfo2OutboundInfos, outboundName2VmessInfos := RefineOutboundInfos(outboundInfos)
+	ps2OutboundNames := make(map[string][]string)
+	for outboundName, vis := range outboundName2VmessInfos {
+		for _, vi := range vis {
+			ps2OutboundNames[vi.Ps] = append(ps2OutboundNames[vi.Ps], outboundName)
+		}
 	}
 	setting := configure.GetSettingNotNil()
 	var tmplJson TmplJson
-	// 读入模板json
+	// read template json
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
 		return t, newError("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
-	// 其中Template是基础配置，替换掉t即可
+	// tmplJson.Template is the basic configuration
 	t = tmplJson.Template
-	// 调试模式
+	// log
 	if global.GetEnvironmentConfig().Verbose {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
@@ -1406,15 +1549,50 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 			PoolSize: 65535,
 		}
 	}
-	// 解析Outbound
+	// resolve Outbounds
 	var supportUDP = make(map[string]bool)
-	for _, outboundInfo := range outboundInfos {
-		o, err := ResolveOutbound(&outboundInfo.Info, outboundInfo.OutboundName, &outboundInfo.PluginPort)
-		if err != nil {
-			return t, err
+	for vmessinfo, infos := range vmessInfo2OutboundInfos {
+		vi := vmessinfo
+		var outbounds []Outbound
+		var usedByBalancer bool
+		var balancerPluginPort int
+		var groups []string
+		for _, info := range infos {
+			if len(outboundName2VmessInfos[info.OutboundName]) > 1 {
+				usedByBalancer = true
+				balancerPluginPort = info.PluginPort
+				groups = append(groups, info.OutboundName)
+			} else {
+				// pure outbound
+				o, err := ResolveOutbound(&vi, info.OutboundName, &info.PluginPort)
+				if err != nil {
+					return t, err
+				}
+				outbounds = append(outbounds, o)
+
+				supportUDP[info.OutboundName] = info.Info.IsEmbeddedProtocol()
+			}
 		}
-		t.Outbounds = append(t.Outbounds, o)
-		supportUDP[outboundInfo.OutboundName] = outboundInfo.Info.IsEmbeddedProtocol()
+		if usedByBalancer {
+			o, err := ResolveOutbound(&vi, Ps2OutboundTag(vi.Ps), &balancerPluginPort)
+			if err != nil {
+				return t, err
+			}
+			o.groups = groups
+			outbounds = append(outbounds, o)
+
+			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
+			for _, outboundName := range o.groups {
+				_supportUDP := vi.IsEmbeddedProtocol()
+				if _, ok := supportUDP[outboundName]; !ok {
+					supportUDP[outboundName] = _supportUDP
+				}
+				if supportUDP[outboundName] && !_supportUDP {
+					supportUDP[outboundName] = false
+				}
+			}
+		}
+		t.Outbounds = append(t.Outbounds, outbounds...)
 	}
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "direct",
@@ -1424,36 +1602,39 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		Protocol: "blackhole",
 	})
 
-	//根据配置修改端口
+	//set inbound ports according to the setting
 	t.SetInbound(setting)
-	//设置DNS
-	dnsRouting, err := t.SetDNS(vs, setting, supportUDP)
+	//set DNS
+	dnsRouting, err := t.SetDNS(outboundInfos, setting, supportUDP)
 	if err != nil {
 		return
 	}
-	//再修改outbounds
+	//append a DNS outbound
 	t.AppendDNSOutbound()
-	//最后是routing
+	//DNS routing
 	t.Routing.DomainMatcher = "mph"
 	t.SetDNSRouting(dnsRouting, supportUDP)
-	//规则端口规则
+	//rule port routing
 	if err = t.SetRulePortRouting(setting); err != nil {
 		return
 	}
-	//根据是否使用全局代理修改路由
+	//transparent routing
 	if setting.Transparent != configure.TransparentClose {
 		t.SetTransparentRouting(setting)
 	}
-	//置outboundSockopt
+	//set group routing
+	t.SetGroupRouting(outboundName2VmessInfos)
+
+	//set outboundSockopt
 	t.SetOutboundSockopt(setting)
 
-	//置fakedns destOverride
+	//set fakedns destOverride
 	t.SetInboundFakeDnsDestOverride()
 
-	//置inbound listening address和routing
+	//set inbound listening address and routing
 	t.SetDualStack(setting)
 
-	//check dulplicated tags
+	//check if there are any duplicated tags
 	if err = t.CheckDuplicatedTags(); err != nil {
 		return
 	}

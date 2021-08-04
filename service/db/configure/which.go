@@ -15,46 +15,93 @@ type Whiches struct {
 	sort.Interface `json:"-"`
 }
 
-func (ws Whiches) Len() int {
+func (ws *Whiches) Len() int {
+	if ws == nil {
+		return 0
+	}
 	return len(ws.Touches)
 }
 
-func (ws Whiches) Less(i, j int) bool {
-	//server排在subscription前面
+func (ws *Whiches) Less(i, j int) bool {
 	quantifyType := map[TouchType]int{
 		ServerType:             0,
 		SubscriptionType:       1,
 		SubscriptionServerType: 2,
 	}
-	if ws.Touches[i].TYPE == ws.Touches[j].TYPE {
-		return ws.Touches[i].ID > ws.Touches[j].ID
+	// serverType has higher priority
+	if ws.Touches[i].TYPE != ws.Touches[j].TYPE {
+		return quantifyType[ws.Touches[i].TYPE] < quantifyType[ws.Touches[j].TYPE]
 	}
-	return quantifyType[ws.Touches[i].TYPE] < quantifyType[ws.Touches[j].TYPE]
+	// they are both server
+	if ws.Touches[i].TYPE == ServerType {
+		return ws.Touches[i].ID < ws.Touches[j].ID
+	}
+	// they are both subscriptionServer, but sub indexes are different
+	if ws.Touches[i].Sub != ws.Touches[j].Sub {
+		return ws.Touches[i].Sub < ws.Touches[j].Sub
+	}
+	// they are both subscriptionServer, and sub indexes are the same
+	return ws.Touches[i].ID < ws.Touches[j].ID
 }
 
-func (ws Whiches) Swap(i, j int) {
+func (ws *Whiches) Swap(i, j int) {
 	ws.Touches[i], ws.Touches[j] = ws.Touches[j], ws.Touches[i]
 }
 
 /*
-对which排序，先按类型排，再按下标排。
+Sort whiches, first sort by type, and then by index.
 
-排序规则：
+Sorting rules: server < subscription
 
-server < subscription
-
-大下标 < 小下标
+small index < large index
 */
-func (ws Whiches) Sort() {
+func (ws *Whiches) Sort() {
 	sort.Sort(ws)
 }
 
+/*
+Sort whiches, first sort by type, and then by index.
+
+Sorting rules: server < subscription
+
+small index > large index
+*/
+func (ws *Whiches) SortSameTypeReverse() {
+	sort.Sort(ws)
+	var typ TouchType
+	var begin = 0
+	var i int
+	for i = 0; i < len(ws.Touches); i++ {
+		if typ == "" {
+			typ = ws.Touches[0].TYPE
+		}
+		if ws.Touches[i].TYPE != typ {
+			for j := 0; j < (i-begin)/2; j++ {
+				ws.Touches[begin+j], ws.Touches[i-j-1] = ws.Touches[i-j-1], ws.Touches[begin+j]
+			}
+			begin = i
+		}
+	}
+	if begin < len(ws.Touches)-1 {
+		for j := 0; j < (i-begin)/2; j++ {
+			ws.Touches[begin+j], ws.Touches[i-j-1] = ws.Touches[i-j-1], ws.Touches[begin+j]
+		}
+	}
+}
+
 func (ws *Whiches) Get() []*Which {
+	if ws == nil {
+		return nil
+	}
 	return ws.Touches
 }
 
 func (ws *Whiches) Add(which Which) {
 	ws.Touches = append(ws.Touches, &which)
+}
+
+func (ws *Whiches) Extend(which Whiches) {
+	ws.Touches = append(ws.Touches, which.Touches...)
 }
 
 func NewWhiches(wt []*Which) *Whiches {
@@ -105,6 +152,24 @@ type Which struct {
 	Outbound string    `json:"outbound"`
 }
 
+func (w *Which) EqualTo(another Which) (ok bool) {
+	switch w.TYPE {
+	case SubscriptionServerType:
+		return another.TYPE == w.TYPE &&
+			another.Sub == w.Sub &&
+			another.ID == w.ID &&
+			another.Outbound == w.Outbound
+	case ServerType:
+		return another.TYPE == w.TYPE &&
+			another.ID == w.ID &&
+			another.Outbound == w.Outbound
+	case SubscriptionType:
+		return another.TYPE == w.TYPE &&
+			another.ID == w.ID
+	default:
+		return false
+	}
+}
 func (w *Which) Ping(timeout time.Duration) (err error) {
 	if w.TYPE == SubscriptionType {
 		return newError("you cannot ping a subscription")

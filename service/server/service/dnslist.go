@@ -31,6 +31,9 @@ nextLine:
 		if dns.Val == "" {
 			return "", fmt.Errorf("illegal server: %v", line)
 		}
+		if dns.Out == "block" {
+			return "", fmt.Errorf("cannot use block as outobund")
+		}
 		if net.ParseIP(dns.Val) != nil {
 			continue nextLine
 		} else {

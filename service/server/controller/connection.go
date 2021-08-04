@@ -59,7 +59,7 @@ func DeleteConnection(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	err = service.Disconnect(which.Outbound)
+	err = service.Disconnect(which, false)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

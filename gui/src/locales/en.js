@@ -14,7 +14,8 @@ export default {
     fail: "FAIL",
     message: "Message",
     none: "none",
-    optional: "optional"
+    optional: "optional",
+    loadBalance: "Load Balance"
   },
   welcome: {
     title: "Welcome",

@@ -123,7 +123,6 @@
           }}</a>
         </footer>
       </b-collapse>
-
       <b-tabs
         v-if="tableData.subscriptions.length || tableData.servers.length"
         v-model="tab"
@@ -232,9 +231,7 @@
         </b-tab-item>
         <b-tab-item
           label="SERVER"
-          :icon="
-            `${connectedServer._type === 'server' ? ' iconfont icon-dian' : ''}`
-          "
+          :icon="`${connectedServer['server'] ? ' iconfont icon-dian' : ''}`"
         >
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
@@ -354,8 +351,7 @@
           "
           :icon="
             `${
-              connectedServer._type === 'subscriptionServer' &&
-              connectedServer.sub === subi
+              connectedServer['subscriptionServer'][subi]
                 ? ' iconfont icon-dian'
                 : ''
             }`
@@ -667,9 +663,8 @@ export default {
       modalServerReadOnly: false,
       showModalSubscription: false,
       connectedServer: {
-        _type: "",
-        id: 0,
-        sub: 0
+        subscriptionServer: Array(100),
+        server: false
       },
       overHeight: false,
       clipboard: null
@@ -681,7 +676,6 @@ export default {
     },
     outbound() {
       this.updateConnectView();
-      this.locateTabToConnected();
     }
   },
   created() {
@@ -819,13 +813,14 @@ export default {
       }
     },
     filterConnectedServer(servers, outbound = this.outbound) {
+      const connectedServers = [];
       if (servers instanceof Array) {
         for (let s of servers) {
           if (s.outbound === outbound) {
-            return s;
+            connectedServers.push(s);
           }
         }
-        return null;
+        return connectedServers.length ? connectedServers : null;
       }
       return servers;
     },
@@ -835,35 +830,61 @@ export default {
       this.runningState.outboundToServerName = {};
       this.runningState.connectedServer?.forEach(cs => {
         const server = locateServer(this.tableData, cs);
-        this.runningState.outboundToServerName[cs.outbound] = server.name;
+        if (
+          this.runningState.outboundToServerName[cs.outbound] &&
+          typeof this.runningState.outboundToServerName[cs.outbound] !==
+            "number"
+        ) {
+          this.runningState.outboundToServerName[cs.outbound] = 1;
+        }
+        if (
+          typeof this.runningState.outboundToServerName[cs.outbound] ===
+          "number"
+        ) {
+          this.runningState.outboundToServerName[cs.outbound]++;
+        } else {
+          this.runningState.outboundToServerName[cs.outbound] = server.name;
+        }
       });
 
       connectedServer = this.filterConnectedServer(connectedServer);
       // clear connected state
-      this.tableData.servers.some(v => {
+      this.tableData.servers.forEach(v => {
         v.connected && (v.connected = false);
-        return v.connected;
-      }) ||
-        this.tableData.subscriptions.some(s => {
-          return s.servers.some(v => {
-            v.connected && (v.connected = false);
-            return v.connected;
-          });
+      });
+      this.tableData.subscriptions.forEach(s => {
+        s.servers.forEach(v => {
+          v.connected && (v.connected = false);
         });
+      });
       if (connectedServer) {
         let server = locateServer(this.tableData, connectedServer);
-        server.connected = true;
-      }
-      if (connectedServer) {
-        Object.assign(this.connectedServer, connectedServer);
-      } else {
-        Object.assign(this.connectedServer, {
-          _type: "",
-          id: 0,
-          sub: 0
-        });
+        if (server instanceof Array) {
+          for (const s of server) {
+            s.connected = true;
+          }
+        } else {
+          server.connected = true;
+        }
       }
 
+      this.connectedServer.server = false;
+      for (const i in this.connectedServer.subscriptionServer) {
+        this.connectedServer.subscriptionServer[i] = false;
+      }
+      if (connectedServer) {
+        let servers = connectedServer;
+        if (!(connectedServer instanceof Array)) {
+          servers = [connectedServer];
+        }
+        for (const s of servers) {
+          if (s._type === "server") {
+            this.connectedServer.server = true;
+          } else if (s._type === "subscriptionServer") {
+            this.connectedServer.subscriptionServer[s.sub] = true;
+          }
+        }
+      }
       this.$emit("input", this.runningState);
     },
     locateTabToConnected() {
@@ -874,6 +895,9 @@ export default {
       whichServer = this.filterConnectedServer(whichServer);
       if (!whichServer) {
         return;
+      }
+      if (whichServer instanceof Array) {
+        whichServer = whichServer[0];
       }
       let sub = whichServer.sub;
       let subscriptionServersOffset = 2;
