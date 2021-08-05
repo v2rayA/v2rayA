@@ -55,6 +55,12 @@ func ServeGUI(engine *gin.Engine) {
 	}
 }
 
+func nocache(c *gin.Context) {
+	c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
+}
+
 func Run() error {
 	engine := gin.New()
 	//ginpprof.Wrap(engine)
@@ -66,13 +72,13 @@ func Run() error {
 	}
 	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
-	noAuth := engine.Group("api")
+	noAuth := engine.Group("api", nocache)
 	{
 		noAuth.GET("version", controller.GetVersion)
 		noAuth.POST("login", controller.PostLogin)
 		noAuth.POST("account", controller.PostAccount)
 	}
-	auth := engine.Group("api")
+	auth := engine.Group("api", nocache)
 	auth.Use(func(ctx *gin.Context) {
 		if !configure.HasAnyAccounts() {
 			common.Response(ctx, common.UNAUTHORIZED, gin.H{
