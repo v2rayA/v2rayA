@@ -108,21 +108,19 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
-		if !v.IsEmbeddedProtocol() {
-			if !plugin.IsProtocolValid(v) {
-				which[i].Latency = "UNSUPPORTED PROTOCOL"
-				continue
+		if !plugin.NeedPlugin(v) {
+			which[i].Latency = "UNSUPPORTED PROTOCOL"
+			continue
+		}
+		port++
+		for {
+			if !ports.IsOccupiedTCPPort(nsmap, port) {
+				break
 			}
 			port++
-			for {
-				if !ports.IsOccupiedTCPPort(nsmap, port) {
-					break
-				}
-				port++
-			}
-			pluginPort = port
-			pluginPortMap[i] = port
 		}
+		pluginPort = port
+		pluginPortMap[i] = port
 		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, pluginPort, "socks")
 		if err != nil {
 			if strings.Contains(err.Error(), "unsupported") {

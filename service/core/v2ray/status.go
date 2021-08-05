@@ -129,7 +129,7 @@ func findAvailablePluginPorts(vms []vmessInfo.VmessInfo) (pluginPortMap map[int]
 	pluginPortMap = make(map[int]int)
 	checkingPort := global.GetEnvironmentConfig().PluginListenPort - 1
 	for i, v := range vms {
-		if v.IsEmbeddedProtocol() || !plugin.IsProtocolValid(v) {
+		if !plugin.NeedPlugin(v) {
 			continue
 		}
 		//find a port that not be occupied
