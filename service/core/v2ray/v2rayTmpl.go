@@ -1312,15 +1312,15 @@ func (t *Template) SetDualStack(setting *configure.Setting) {
 				inbounds6[i].Tag += tag6Suffix
 			}
 		}
-		if !iptables.IsIPv6Supported() {
-			return
-		}
 		for i := len(inbounds6) - 1; i >= 0; i-- {
 			if inbounds6[i].Tag == "THIS_IS_A_DROPPED_TAG" {
 				inbounds6 = append(inbounds6[:i], inbounds6[i+1:]...)
 			}
 		}
-		t.Inbounds = append(t.Inbounds, inbounds6...)
+
+		if iptables.IsIPv6Supported() {
+			t.Inbounds = append(t.Inbounds, inbounds6...)
+		}
 
 		// set routing
 		for i := range t.Routing.Rules {
@@ -1331,7 +1331,7 @@ func (t *Template) SetDualStack(setting *configure.Setting) {
 					tag6 = append(tag6, tag+tag6Suffix)
 				}
 			}
-			if len(tag6) > 0 {
+			if len(tag6) > 0 && iptables.IsIPv6Supported() {
 				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, tag6...)
 			}
 		}
