@@ -48,7 +48,7 @@ type Template struct {
 	Outbounds []Outbound `json:"outbounds"`
 	Routing   struct {
 		DomainStrategy string        `json:"domainStrategy"`
-		DomainMatcher  string        `json:"domainMatcher"`
+		DomainMatcher  string        `json:"domainMatcher,omitempty"`
 		Rules          []RoutingRule `json:"rules"`
 		Balancers      []Balancer    `json:"balancers,omitempty"`
 	} `json:"routing"`
@@ -814,7 +814,7 @@ func (t *Template) SetDNS(outbounds []OutboundInfo, setting *configure.Setting, 
 		if t.DNS.Hosts == nil {
 			t.DNS.Hosts = make(Hosts)
 		}
-		ips = filterIPs(ips)
+		ips = FilterIPs(ips)
 		if CheckHostsListSupported() == nil {
 			t.DNS.Hosts[domain] = ips
 		} else {
@@ -825,7 +825,7 @@ func (t *Template) SetDNS(outbounds []OutboundInfo, setting *configure.Setting, 
 }
 
 // The order are from v4 IPs to v6 IPs. If the system does not support IPv6, v6 IPs will not be returned.
-func filterIPs(ips []string) []string {
+func FilterIPs(ips []string) []string {
 	var ret []string
 	for _, ip := range ips {
 		if net.ParseIP(ip).To4() != nil {
