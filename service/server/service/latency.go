@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+const HttpTestURL = "http://www.msftconnecttest.com/connecttest.txt"
+
 func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
 	var whiches = configure.NewWhiches(which)
 	//对要Ping的which去重
@@ -203,7 +205,7 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	req, _ := http.NewRequest("GET", "http://www.msftconnecttest.com/connecttest.txt", nil)
+	req, _ := http.NewRequest("GET", HttpTestURL, nil)
 	//req, _ := http.NewRequest("GET", "http://www.gstatic.com/generate_204", nil)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
