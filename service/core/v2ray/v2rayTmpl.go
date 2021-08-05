@@ -43,9 +43,9 @@ type TmplJson struct {
 	Mux            Mux            `json:"mux"`
 }
 type Template struct {
-	Log       *Log       `json:"log,omitempty"`
-	Inbounds  []Inbound  `json:"inbounds"`
-	Outbounds []Outbound `json:"outbounds"`
+	Log       *Log             `json:"log,omitempty"`
+	Inbounds  []Inbound        `json:"inbounds"`
+	Outbounds []OutboundObject `json:"outbounds"`
 	Routing   struct {
 		DomainStrategy string        `json:"domainStrategy"`
 		DomainMatcher  string        `json:"domainMatcher,omitempty"`
@@ -55,6 +55,11 @@ type Template struct {
 	DNS         *DNS         `json:"dns,omitempty"`
 	FakeDns     *FakeDns     `json:"fakedns,omitempty"`
 	Observatory *Observatory `json:"observatory,omitempty"`
+	API         *APIObject   `json:"api,omitempty"`
+}
+type APIObject struct {
+	Tag      string   `json:"tag"`
+	Services []string `json:"services"`
 }
 type Observatory struct {
 	SubjectSelector []string `json:"subjectSelector"`
@@ -93,7 +98,7 @@ type Log struct {
 }
 type Sniffing struct {
 	Enabled      bool     `json:"enabled"`
-	DestOverride []string `json:"destOverride"`
+	DestOverride []string `json:"destOverride,omitempty"`
 	MetadataOnly bool     `json:"metadataOnly"`
 }
 type Inbound struct {
@@ -189,7 +194,7 @@ type Mux struct {
 	Enabled     bool `json:"enabled"`
 	Concurrency int  `json:"concurrency"`
 }
-type Outbound struct {
+type OutboundObject struct {
 	Tag            string          `json:"tag"`
 	Protocol       string          `json:"protocol"`
 	Settings       Settings        `json:"settings,omitempty"`
@@ -291,7 +296,7 @@ type Policy struct {
 /*
 根据传入的 VmessInfo 填充模板
 */
-func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Outbound, err error) {
+func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o OutboundObject, err error) {
 	setting := configure.GetSettingNotNil()
 	socksPlugin := false
 	var tmplJson TmplJson
@@ -311,7 +316,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		v.Protocol = "shadowsocksr"
 	}
 	// 根据vmessInfo修改json配置
-	o = Outbound{
+	o = OutboundObject{
 		Tag:      tag,
 		Protocol: v.Protocol,
 	}
@@ -1064,7 +1069,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 						}
 						switch rule.Name {
 						case "outbound":
-							t.Outbounds = append(t.Outbounds, Outbound{
+							t.Outbounds = append(t.Outbounds, OutboundObject{
 								Tag:      o.Name,
 								Protocol: o.Value.Name,
 								Settings: Settings{
@@ -1127,7 +1132,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 								settings.UserLevel = &level
 							}
 						}
-						t.Outbounds = append(t.Outbounds, Outbound{
+						t.Outbounds = append(t.Outbounds, OutboundObject{
 							Tag:      o.Name,
 							Protocol: o.Value.Name,
 							Settings: settings,
@@ -1379,7 +1384,7 @@ func (t *Template) SetInboundFakeDnsDestOverride() {
 }
 
 func (t *Template) AppendDNSOutbound() {
-	t.Outbounds = append(t.Outbounds, Outbound{
+	t.Outbounds = append(t.Outbounds, OutboundObject{
 		Tag:      "dns-out",
 		Protocol: "dns",
 	})
@@ -1529,12 +1534,12 @@ func RefineOutboundInfos(outboundInfos []OutboundInfo) (
 func (t *Template) ResolveOutbounds(
 	outboundInfos []OutboundInfo,
 	vmessInfo2OutboundInfos map[vmessInfo.VmessInfo][]*OutboundInfo,
-	outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) (supportUDP map[string]bool, err error) {
+	outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) (supportUDP map[string]bool, outboundTags []string, err error) {
 
 	supportUDP = make(map[string]bool)
 	type _outbound struct {
 		index    int
-		outbound Outbound
+		outbound OutboundObject
 	}
 	outboundInfo2Index := make(map[*OutboundInfo]int)
 	for i := range outboundInfos {
@@ -1553,7 +1558,7 @@ func (t *Template) ResolveOutbounds(
 		for _, info := range infos {
 			if len(outboundName2VmessInfos[info.OutboundName]) > 1 {
 				if err = CheckBalancerSupported(); err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				usedByBalancer = true
 				balancerPluginPort = info.PluginPort
@@ -1565,7 +1570,7 @@ func (t *Template) ResolveOutbounds(
 				// pure outbound
 				o, err := ResolveOutbound(&vi, info.OutboundName, &info.PluginPort)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				outbounds = append(outbounds, _outbound{
 					index:    outboundInfo2Index[info],
@@ -1579,7 +1584,7 @@ func (t *Template) ResolveOutbounds(
 			// the outbound is shared by balancers
 			o, err := ResolveOutbound(&vi, Ps2OutboundTag(vi.Ps), &balancerPluginPort)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			o.groups = groups
 			outbounds = append(outbounds, _outbound{
@@ -1603,19 +1608,57 @@ func (t *Template) ResolveOutbounds(
 		return outbounds[i].index < outbounds[j].index
 	})
 	for _, v := range outbounds {
+		outboundTags = append(outboundTags, v.outbound.Tag)
 		t.Outbounds = append(t.Outbounds, v.outbound)
 	}
-	t.Outbounds = append(t.Outbounds, Outbound{
+	t.Outbounds = append(t.Outbounds, OutboundObject{
 		Tag:      "direct",
 		Protocol: "freedom",
-	}, Outbound{
+	}, OutboundObject{
 		Tag:      "block",
 		Protocol: "blackhole",
 	})
-	return supportUDP, nil
+	return supportUDP, outboundTags, nil
 }
 
-func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
+func (t *Template) SetAPI() (port int) {
+	if t.Observatory == nil {
+		return 0
+	}
+	t.API = &APIObject{
+		Tag: "api-out",
+		Services: []string{
+			"ObservatoryService",
+		},
+	}
+	// find a valid port
+	for {
+		if l, err := net.Listen("tcp4", "127.0.0.1:0"); err == nil {
+			port = l.Addr().(*net.TCPAddr).Port
+			_ = l.Close()
+			break
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+
+	t.Inbounds = append(t.Inbounds, Inbound{
+		Port:     port,
+		Protocol: "dokodemo-door",
+		Listen:   "127.0.0.1",
+		Settings: &InboundSettings{
+			Address: "127.0.0.1",
+		},
+		Tag: "api-in",
+	})
+	t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
+		Type:        "field",
+		InboundTag:  []string{"api-in"},
+		OutboundTag: "api-out",
+	})
+	return port
+}
+
+func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []string, err error) {
 	vmessInfo2OutboundInfos, outboundName2VmessInfos := RefineOutboundInfos(outboundInfos)
 	ps2OutboundNames := make(map[string][]string)
 	for outboundName, vis := range outboundName2VmessInfos {
@@ -1629,7 +1672,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return t, newError("error occurs while reading template json, please check whether templateJson variable is correct json format")
+		return Template{}, nil, newError("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
 	// tmplJson.Template is the basic configuration
 	t = tmplJson.Template
@@ -1653,9 +1696,9 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		}
 	}
 	// resolve Outbounds
-	supportUDP, err := t.ResolveOutbounds(outboundInfos, vmessInfo2OutboundInfos, outboundName2VmessInfos)
+	supportUDP, outboundTags, err := t.ResolveOutbounds(outboundInfos, vmessInfo2OutboundInfos, outboundName2VmessInfos)
 	if err != nil {
-		return t, err
+		return Template{}, nil, err
 	}
 
 	//set inbound ports according to the setting
@@ -1680,8 +1723,10 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 	}
 	//set group routing
 	if err = t.SetGroupRouting(outboundName2VmessInfos); err != nil {
-		return t, err
+		return Template{}, nil, err
 	}
+	// set api
+	apiPort = t.SetAPI()
 
 	//set outboundSockopt
 	t.SetOutboundSockopt(setting)
@@ -1697,7 +1742,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 		return
 	}
 
-	return t, nil
+	return t, outboundTags, nil
 }
 
 func (t *Template) CheckDuplicatedTags() error {
@@ -1803,7 +1848,7 @@ func NewTemplateFromConfig() (t Template, err error) {
 	return
 }
 
-func checkAndSetMark(o *Outbound, mark int) {
+func checkAndSetMark(o *OutboundObject, mark int) {
 	if configure.GetSettingNotNil().Transparent == configure.TransparentClose {
 		return
 	}

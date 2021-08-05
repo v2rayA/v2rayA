@@ -21,6 +21,8 @@ import (
 )
 
 var v2RayPID *os.Process
+var tag2WhichIndex map[string]int
+var apiPort int
 
 func SetCoreProcess(p *os.Process) {
 	configure.SetRunning(p != nil)
@@ -31,6 +33,12 @@ func CoreProcess() *os.Process {
 }
 func IsV2RayRunning() bool {
 	return CoreProcess() != nil
+}
+func ApiPort() int {
+	if !IsV2RayRunning() {
+		return 0
+	}
+	return apiPort
 }
 
 func RestartV2rayService(saveStatus bool) (err error) {
@@ -206,9 +214,16 @@ func UpdateV2RayConfig() (err error) {
 			outboundInfos[i].PluginPort = port
 		}
 	}
-	tmpl, err = NewTemplate(outboundInfos)
+	var outboundTags []string
+	tmpl, outboundTags, err = NewTemplate(outboundInfos)
 	if err != nil {
 		return
+	}
+	// NOTICE: tag2WhichIndex is reliable because once connected servers are changed when v2ray is running,
+	// the func UpdateV2RayConfig should be invoked and tag2WhichIndex will be regenerated.
+	tag2WhichIndex = make(map[string]int)
+	for i, tag := range outboundTags {
+		tag2WhichIndex[tag] = i
 	}
 	err = WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
