@@ -108,7 +108,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
-		if !plugin.NeedPlugin(v) {
+		if !plugin.HasProperPlugin(v) {
 			which[i].Latency = "UNSUPPORTED PROTOCOL"
 			continue
 		}

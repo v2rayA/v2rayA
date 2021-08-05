@@ -1361,7 +1361,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 			return t, err
 		}
 		t.Outbounds = append(t.Outbounds, o)
-		supportUDP[outboundInfo.OutboundName] = plugin.NeedPlugin(outboundInfo.Info)
+		supportUDP[outboundInfo.OutboundName] = !plugin.HasProperPlugin(outboundInfo.Info)
 	}
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "direct",

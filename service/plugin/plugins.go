@@ -66,6 +66,7 @@ func preprocess(v *vmessInfo.VmessInfo) (needPlugin bool) {
 				//使用ssr插件
 				RazorSS(v)
 				v.Protocol = "ssr"
+				return true
 			default:
 				//不需要插件
 				return false
@@ -79,9 +80,12 @@ func preprocess(v *vmessInfo.VmessInfo) (needPlugin bool) {
 				//simpleobfs插件
 				v.Protocol = "simpleobfs"
 			}
+			return true
 		}
+	case "trojan-go":
+		return true
 	}
-	return true
+	return false
 }
 
 // New a plugin and serve. If no plugin is needed, returns nil, nil.
@@ -96,8 +100,10 @@ func NewPluginAndServe(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err
 	}
 	return creator(localPort, v)
 }
-func NeedPlugin(v vmessInfo.VmessInfo) bool {
-	preprocess(&v)
+func HasProperPlugin(v vmessInfo.VmessInfo) bool {
+	if preprocess(&v) == false {
+		return false
+	}
 	switch v.Protocol {
 	case "shadowsocks", "ss":
 		if v.Type == "" {
