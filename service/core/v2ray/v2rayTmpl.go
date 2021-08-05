@@ -415,7 +415,6 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		case "http", "tls":
 			target = "127.0.0.1"
 			port = *pluginPort
-			log.Println(port)
 		case "":
 			port, _ = strconv.Atoi(v.Port)
 		default:
@@ -551,7 +550,6 @@ func appendDnsServers(d *DNS, lines []string, domains []string) {
 	for _, line := range lines {
 		dns := dnsParser2.Parse(line)
 		if u, err := url.Parse(dns.Val); err == nil && strings.Contains(dns.Val, "://") && !strings.Contains(u.Scheme, "://") {
-			log.Println(u, u.Scheme, u.Host, u.Path)
 			if domains != nil {
 				d.Servers = append(d.Servers, DnsServer{
 					Address: dns.Val,
@@ -1319,7 +1317,6 @@ type OutboundInfo struct {
 }
 
 func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
-	log.Println(outboundInfos[0])
 	vs := make([]vmessInfo.VmessInfo, 0, len(outboundInfos))
 	for _, info := range outboundInfos {
 		vs = append(vs, info.Info)
