@@ -152,7 +152,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
 		return nil, newError(err)
 	}
-	err = v2ray.RestartV2rayService()
+	err = v2ray.RestartV2rayService(false)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 	} else {
 		// no connected servers or v2ray was not running
-		_ = v2ray.StopV2rayService()
+		_ = v2ray.StopV2rayService(false)
 	}
 	if err := configure.NewWhiches(which).SaveLatencies(); err != nil {
 		return nil, fmt.Errorf("failed to save the latency test result: %v", err)

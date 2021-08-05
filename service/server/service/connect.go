@@ -10,7 +10,7 @@ import (
 )
 
 func StopV2ray() (err error) {
-	err = v2ray.StopV2rayService()
+	err = v2ray.StopV2rayService(true)
 	if err != nil {
 		return
 	}

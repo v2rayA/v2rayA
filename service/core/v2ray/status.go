@@ -20,11 +20,20 @@ import (
 	"time"
 )
 
+var v2RayPID *os.Process
+
+func SetCoreProcess(p *os.Process) {
+	configure.SetRunning(p != nil)
+	v2RayPID = p
+}
+func CoreProcess() *os.Process {
+	return v2RayPID
+}
 func IsV2RayRunning() bool {
-	return global.V2RayPID != nil
+	return CoreProcess() != nil
 }
 
-func RestartV2rayService() (err error) {
+func RestartV2rayService(saveStatus bool) (err error) {
 	if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
 		return newError("Please sync datetime first. Your datetime is ", time.Now().Local().Format(ntp.DisplayFormat), ", and the correct datetime is ", t.Local().Format(ntp.DisplayFormat))
 	}
@@ -33,7 +42,7 @@ func RestartV2rayService() (err error) {
 		return newError("cannot find GFWList files. update GFWList and try again")
 	}
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
-	_ = killV2ray()
+	_ = killV2ray(saveStatus)
 	v2rayBinPath, err := where.GetV2rayBinPath()
 	if err != nil {
 		return
@@ -48,7 +57,7 @@ func RestartV2rayService() (err error) {
 	}
 	log.Println(strings.Join(params, " "))
 	assetDir := asset.GetV2rayLocationAsset()
-	global.V2RayPID, err = os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
+	process, err := os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
 		Dir: dir, //防止找不到v2ctl
 		Env: append(os.Environ(),
 			"V2RAY_LOCATION_ASSET="+assetDir,
@@ -62,9 +71,12 @@ func RestartV2rayService() (err error) {
 	if err != nil {
 		return newError().Base(err)
 	}
+	if saveStatus {
+		SetCoreProcess(process)
+	}
 	defer func() {
-		if err != nil && global.V2RayPID != nil {
-			_ = killV2ray()
+		if err != nil && CoreProcess() != nil {
+			_ = killV2ray(true)
 		}
 	}()
 	//如果inbounds中开放端口，检测端口是否已就绪
@@ -154,7 +166,7 @@ func UpdateV2RayConfig() (err error) {
 			if e := CheckAndSetupTransparentProxy(true); e != nil {
 				err = newError(e).Base(err)
 				if IsV2RayRunning() {
-					if e = StopV2rayService(); e != nil {
+					if e = StopV2rayService(true); e != nil {
 						err = newError(e).Base(err)
 					}
 				}
@@ -170,7 +182,7 @@ func UpdateV2RayConfig() (err error) {
 	)
 	css := configure.GetConnectedServers()
 	if css.Len() == 0 { //no connected server. stop v2ray-core.
-		return StopV2rayService()
+		return StopV2rayService(true)
 	}
 	outboundInfos := make([]OutboundInfo, 0, css.Len())
 	vms := make([]vmessInfo.VmessInfo, 0, css.Len())
@@ -210,7 +222,7 @@ func UpdateV2RayConfig() (err error) {
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
 		return newError(err)
 	}
-	err = RestartV2rayService()
+	err = RestartV2rayService(true)
 	if err != nil {
 		return
 	}
@@ -238,50 +250,24 @@ func UpdateV2RayConfig() (err error) {
 	return
 }
 
-/*清空inbounds规则来假停v2ray*/
-func pretendToStopV2rayService() (err error) {
-	tmplJson := Template{}
-	b, err := asset.GetConfigBytes()
-	if err != nil {
-		return
-	}
-
-	err = jsoniter.Unmarshal(b, &tmplJson)
-	if err != nil {
-		log.Println(string(b), err)
-		return
-	}
-	tmplJson.Inbounds = make([]Inbound, 0)
-	b, _ = jsoniter.Marshal(tmplJson)
-	err = WriteV2rayConfig(b)
-	if err != nil {
-		return
-	}
-	if IsV2RayRunning() {
-		if err = tmplJson.CheckInboundPortsOccupied(); err != nil {
-			return newError(err)
+func killV2ray(saveStatus bool) (err error) {
+	if CoreProcess() != nil {
+		err = CoreProcess().Kill()
+		if err != nil {
+			return
 		}
-		err = RestartV2rayService()
+		_, err = CoreProcess().Wait()
+		if err != nil {
+			return
+		}
+		if saveStatus {
+			SetCoreProcess(nil)
+		}
 	}
 	return
 }
 
-func killV2ray() (err error) {
-	if global.V2RayPID != nil {
-		err = global.V2RayPID.Kill()
-		if err != nil {
-			return
-		}
-		_, err = global.V2RayPID.Wait()
-		if err != nil {
-			return
-		}
-		global.V2RayPID = nil
-	}
-	return
-}
-
-func StopV2rayService() (err error) {
+func StopV2rayService(saveStatus bool) (err error) {
 	defer CheckAndStopTransparentProxy()
 	defer plugin.GlobalPlugins.CloseAll()
 	defer specialMode.StopDNSSupervisor()
@@ -294,5 +280,5 @@ func StopV2rayService() (err error) {
 			err = newError(msg)
 		}
 	}()
-	return killV2ray()
+	return killV2ray(saveStatus)
 }

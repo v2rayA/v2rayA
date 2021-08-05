@@ -413,3 +413,11 @@ func HasAnyAccounts() bool {
 	l, err := db.GetBucketLen("accounts")
 	return err == nil && l > 0
 }
+
+func SetRunning(running bool) (err error) {
+	return db.Set("system", "running", running)
+}
+func GetRunning() (running bool) {
+	_ = db.Get("system", "running", &running)
+	return running
+}
