@@ -96,7 +96,7 @@ func NewPluginAndServe(localPort int, v vmessInfo.VmessInfo) (plugin Plugin, err
 	}
 	return creator(localPort, v)
 }
-func IsProtocolValid(v vmessInfo.VmessInfo) bool {
+func NeedPlugin(v vmessInfo.VmessInfo) bool {
 	preprocess(&v)
 	switch v.Protocol {
 	case "shadowsocks", "ss":

@@ -16,6 +16,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	dnsParser2 "github.com/v2rayA/v2rayA/infra/dnsParser"
+	"github.com/v2rayA/v2rayA/plugin"
 	"log"
 	"net"
 	"net/url"
@@ -414,6 +415,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		case "http", "tls":
 			target = "127.0.0.1"
 			port = *pluginPort
+			log.Println(port)
 		case "":
 			port, _ = strconv.Atoi(v.Port)
 		default:
@@ -1317,6 +1319,7 @@ type OutboundInfo struct {
 }
 
 func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
+	log.Println(outboundInfos[0])
 	vs := make([]vmessInfo.VmessInfo, 0, len(outboundInfos))
 	for _, info := range outboundInfos {
 		vs = append(vs, info.Info)
@@ -1358,7 +1361,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, err error) {
 			return t, err
 		}
 		t.Outbounds = append(t.Outbounds, o)
-		supportUDP[outboundInfo.OutboundName] = outboundInfo.Info.IsEmbeddedProtocol()
+		supportUDP[outboundInfo.OutboundName] = plugin.NeedPlugin(outboundInfo.Info)
 	}
 	t.Outbounds = append(t.Outbounds, Outbound{
 		Tag:      "direct",
