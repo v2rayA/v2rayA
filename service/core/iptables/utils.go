@@ -4,10 +4,9 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/global"
+	"golang.org/x/net/nettest"
 	"net"
-	"os"
 	"strconv"
-	"strings"
 )
 
 func IPNet2CIDR(ipnet *net.IPNet) string {
@@ -36,10 +35,7 @@ func IsIPv6Supported() bool {
 	if common.IsInDocker() {
 		return false
 	}
-	if b, err := os.ReadFile("/proc/sys/net/ipv6/conf/default/disable_ipv6"); err != nil || strings.TrimSpace(string(b)) == "1" {
-		return false
-	}
-	if b, err := os.ReadFile("/proc/sys/net/ipv6/conf/all/disable_ipv6"); err != nil || strings.TrimSpace(string(b)) == "1" {
+	if !nettest.SupportsIPv6() {
 		return false
 	}
 	return cmds.IsCommandValid("ip6tables")
