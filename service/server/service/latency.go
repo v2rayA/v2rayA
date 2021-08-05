@@ -5,12 +5,14 @@ import (
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/plugin"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -50,6 +52,42 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 	}
 	return which, nil
+}
+
+func addHosts(tmpl *v2ray.Template, vms []vmessInfo.VmessInfo) {
+	tmpl.DNS = new(v2ray.DNS)
+	tmpl.DNS.Hosts = make(v2ray.Hosts)
+	const concurrency = 5
+	var mu sync.Mutex
+	var limit = make(chan struct{}, concurrency)
+	var wg = sync.WaitGroup{}
+	for _, v := range vms {
+		if net.ParseIP(v.Add) == nil {
+			wg.Add(1)
+			go func(addr string) {
+				limit <- struct{}{}
+				defer func() {
+					wg.Done()
+					<-limit
+				}()
+				ips, err := resolv.LookupHost(addr)
+				if err != nil {
+					return
+				}
+				if len(ips) > 0 {
+					ips = v2ray.FilterIPs(ips)
+					mu.Lock()
+					if v2ray.CheckHostsListSupported() == nil {
+						tmpl.DNS.Hosts[addr] = ips
+					} else {
+						tmpl.DNS.Hosts[addr] = ips[0]
+					}
+					mu.Unlock()
+				}
+			}(v.Add)
+		}
+	}
+	wg.Wait()
 }
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool) ([]*configure.Which, error) {
@@ -145,6 +183,9 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			plugin.GlobalPlugins.Add("outbound"+strconv.Itoa(localPort), plu)
 		}
 	}
+	tmpl.Routing.DomainStrategy = "AsIs"
+	addHosts(&tmpl, vms)
+
 	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
@@ -153,6 +194,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
 		return nil, newError(err)
 	}
+
 	err = v2ray.RestartV2rayService(false)
 	if err != nil {
 		return nil, err
