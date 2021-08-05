@@ -2,7 +2,6 @@ package resolv
 
 import (
 	"context"
-	"log"
 	"math/rand"
 	"net"
 	"time"
@@ -33,13 +32,11 @@ func init() {
 			server := dnsServers[rand.Intn(len(dnsServers))]
 			address = server.addr
 			network = server.network
-			log.Println(network, address)
 			return dialer.DialContext(ctx, network, address)
 		},
 	}
 }
 
 func LookupHost(host string) (addrs []string, err error) {
-	log.Println(host)
 	return DefaultResolver.LookupHost(context.Background(), host)
 }

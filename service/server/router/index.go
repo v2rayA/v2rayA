@@ -20,25 +20,29 @@ import (
 func ServeGUI(engine *gin.Engine) {
 	defer func() {
 		if msg := recover(); msg != nil {
-			log.Println(msg)
+			log.Println("[ERROR]", msg)
 		}
 	}()
 	webDir := global.GetEnvironmentConfig().WebDir
-	filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
-		if path == webDir {
+	if _, err := os.Stat(webDir); os.IsNotExist(err) {
+		log.Printf("[Warning] web files cannot be found at %v. web UI cannot be served", webDir)
+	} else {
+		filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
+			if path == webDir {
+				return nil
+			}
+			if info.IsDir() {
+				engine.Static("/"+info.Name(), path)
+				return filepath.SkipDir
+			}
+			engine.StaticFile("/"+info.Name(), path)
 			return nil
-		}
-		if info.IsDir() {
-			engine.Static("/"+info.Name(), path)
-			return filepath.SkipDir
-		}
-		engine.StaticFile("/"+info.Name(), path)
-		return nil
-	})
-	engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
-	engine.GET("/", func(context *gin.Context) {
-		context.HTML(http.StatusOK, "index.html", nil)
-	})
+		})
+		engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
+		engine.GET("/", func(context *gin.Context) {
+			context.HTML(http.StatusOK, "index.html", nil)
+		})
+	}
 
 	app := global.GetEnvironmentConfig()
 
