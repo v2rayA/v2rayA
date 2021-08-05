@@ -17,6 +17,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	dnsParser2 "github.com/v2rayA/v2rayA/infra/dnsParser"
+	"github.com/v2rayA/v2rayA/plugin"
 	"log"
 	"net"
 	"net/url"
@@ -433,6 +434,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		case "http", "tls":
 			target = "127.0.0.1"
 			port = *pluginPort
+			log.Println(port)
 		case "":
 			port, _ = strconv.Atoi(v.Port)
 		default:
@@ -1572,7 +1574,7 @@ func (t *Template) ResolveOutbounds(
 					outbound: o,
 				})
 
-				supportUDP[info.OutboundName] = info.Info.IsEmbeddedProtocol()
+				supportUDP[info.OutboundName] = !plugin.NeedPlugin(info.Info)
 			}
 		}
 		if usedByBalancer {
@@ -1589,7 +1591,7 @@ func (t *Template) ResolveOutbounds(
 
 			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
 			for _, outboundName := range o.groups {
-				_supportUDP := vi.IsEmbeddedProtocol()
+				_supportUDP := !plugin.NeedPlugin(vi)
 				if _, ok := supportUDP[outboundName]; !ok {
 					supportUDP[outboundName] = _supportUDP
 				}
