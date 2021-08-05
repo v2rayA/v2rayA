@@ -1574,7 +1574,7 @@ func (t *Template) ResolveOutbounds(
 					outbound: o,
 				})
 
-				supportUDP[info.OutboundName] = !plugin.NeedPlugin(info.Info)
+				supportUDP[info.OutboundName] = !plugin.HasProperPlugin(info.Info)
 			}
 		}
 		if usedByBalancer {
@@ -1591,7 +1591,7 @@ func (t *Template) ResolveOutbounds(
 
 			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
 			for _, outboundName := range o.groups {
-				_supportUDP := !plugin.NeedPlugin(vi)
+				_supportUDP := !plugin.HasProperPlugin(vi)
 				if _, ok := supportUDP[outboundName]; !ok {
 					supportUDP[outboundName] = _supportUDP
 				}
