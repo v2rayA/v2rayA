@@ -23,6 +23,12 @@ func StartV2ray() (err error) {
 	return v2ray.UpdateV2RayConfig()
 }
 
+func IsClassicMode() bool {
+	supportLoadBalance := v2ray.CheckObservatorySupported() == nil
+	singleOutbound := len(configure.GetOutbounds()) <= 1
+	return singleOutbound && !supportLoadBalance
+}
+
 func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 	defer func() {
 		if err != nil {
@@ -39,7 +45,7 @@ func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 		return
 	}
 	//update the v2ray config and restart v2ray
-	if v2ray.IsV2RayRunning() || len(configure.GetOutbounds()) <= 1 {
+	if v2ray.IsV2RayRunning() || IsClassicMode() {
 		defer func() {
 			if err != nil && lastConnected != nil && v2ray.IsV2RayRunning() {
 				_ = configure.OverwriteConnects(lastConnected)
@@ -95,7 +101,8 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}()
 	//save the result of connecting to database
-	if v2ray.CheckObservatorySupported() != nil {
+	supportLoadBalance := v2ray.CheckObservatorySupported() == nil
+	if !supportLoadBalance {
 		if err = configure.ClearConnects(which.Outbound); err != nil {
 			return
 		}
@@ -104,7 +111,7 @@ func Connect(which *configure.Which) (err error) {
 		return
 	}
 	//update the v2ray config and start/restart v2ray
-	if v2ray.IsV2RayRunning() || len(configure.GetOutbounds()) <= 1 {
+	if v2ray.IsV2RayRunning() || IsClassicMode() {
 		if err = v2ray.UpdateV2RayConfig(); err != nil {
 			return
 		}
