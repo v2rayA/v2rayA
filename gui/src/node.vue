@@ -1,5 +1,61 @@
 <template>
   <section id="node-section" class="node-section container hero">
+    <b-sidebar
+      v-show="observatorySidebarValid && connectedServerInfo.length"
+      :open="true"
+      class="node-status-sidebar-reduced"
+      @mouseenter.native="showSidebar = true"
+      @click.native="showSidebar = true"
+    >
+      <img src="/img/icons/switch-menu.svg" width="36px" />
+    </b-sidebar>
+    <b-sidebar
+      v-if="observatorySidebarValid"
+      :open="showSidebar"
+      type="is-light"
+      :fullheight="false"
+      :fullwidth="false"
+      :overlay="false"
+      :right="false"
+      class="node-status-sidebar"
+      @close="showSidebar = false"
+      @mouseleave.native="showSidebar = false"
+    >
+      <b-message
+        v-for="v of connectedServerInfo"
+        :key="v.value"
+        :title="
+          `${v.info.name}${
+            v.info.subscription_name ? ` [${v.info.subscription_name}]` : ''
+          }`
+        "
+        :closable="false"
+        size="is-small"
+        :type="
+          v.info.alive
+            ? v.selected
+              ? 'is-primary'
+              : 'is-success'
+            : v.info.alive === null
+            ? 'is-light'
+            : 'is-danger'
+        "
+        @click.native="handleClickConnectedServer(v.which)"
+      >
+        <div v-if="v.showContent">
+          <p>协议：{{ v.info.net }}</p>
+          <p v-if="v.info.delay && v.info.delay < 99999">
+            时延：{{ v.info.delay }}ms
+          </p>
+          <p v-if="!v.info.alive && v.info.last_seen_time">
+            上一次存活时间：{{ v.info.last_seen_time | unix2datetime }}
+          </p>
+          <p v-if="v.info.last_try_time">
+            上一次测试时间：{{ v.info.last_try_time | unix2datetime }}
+          </p>
+        </div>
+      </b-message>
+    </b-sidebar>
     <div v-if="ready" class="hero-body">
       <b-field
         id="toolbar"
@@ -128,6 +184,7 @@
         v-model="tab"
         position="is-centered"
         type="is-toggle-rounded"
+        class="main-tabs"
         @input="handleTabsChange"
       >
         <b-tab-item label="SUBSCRIPTION">
@@ -231,7 +288,9 @@
         </b-tab-item>
         <b-tab-item
           label="SERVER"
-          :icon="`${connectedServer['server'] ? ' iconfont icon-dian' : ''}`"
+          :icon="
+            `${connectedServerInTab['server'] ? ' iconfont icon-dian' : ''}`
+          "
         >
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
@@ -351,7 +410,7 @@
           "
           :icon="
             `${
-              connectedServer['subscriptionServer'][subi]
+              connectedServerInTab['subscriptionServer'][subi]
                 ? ' iconfont icon-dian'
                 : ''
             }`
@@ -629,18 +688,32 @@ import ModalServer from "@/components/modalServer";
 import ModalSubscription from "@/components/modalSuscription";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
+import dayjs from "dayjs";
 
 export default {
   name: "Node",
   components: { ModalSubscription, ModalServer },
+  filters: {
+    unix2datetime(x) {
+      return dayjs.unix(x).format("YYYY-MM-DD HH:mm:ss");
+    }
+  },
   props: {
     outbound: {
       type: String,
       default: "proxy"
+    },
+    observatory: {
+      type: Object,
+      default() {
+        return null;
+      }
     }
   },
   data() {
     return {
+      enterReducedSidebar: false,
+      showSidebar: false,
       importWhat: "",
       showModalImport: false,
       showModalImportInBatch: false,
@@ -662,13 +735,19 @@ export default {
       which: null,
       modalServerReadOnly: false,
       showModalSubscription: false,
-      connectedServer: {
+      connectedServerInTab: {
         subscriptionServer: Array(100),
         server: false
       },
+      connectedServerInfo: [],
       overHeight: false,
       clipboard: null
     };
+  },
+  computed: {
+    observatorySidebarValid() {
+      return localStorage["observatorySidebarValid"];
+    }
   },
   watch: {
     "runningState.running"() {
@@ -676,6 +755,35 @@ export default {
     },
     outbound() {
       this.updateConnectView();
+    },
+    observatory(val) {
+      console.log(val);
+      for (const info of val.body) {
+        this.connectedServerInfo.some(x => {
+          if (JSON.stringify(info.which) === JSON.stringify(x.which)) {
+            for (const k in info) {
+              if (k === "which" || !info.hasOwnProperty(k)) {
+                continue;
+              }
+              x.info[k] = info[k];
+            }
+            return true;
+          }
+          return false;
+        });
+      }
+      let minDelay = 99999;
+      let index = -1;
+      this.connectedServerInfo.forEach((x, i) => {
+        x.selected = false;
+        if (x.info.delay && x.info.delay < minDelay) {
+          minDelay = x.info.delay;
+          index = i;
+        }
+      });
+      if (index >= 0) {
+        this.connectedServerInfo[index].selected = true;
+      }
     }
   },
   created() {
@@ -738,6 +846,53 @@ export default {
     });
   },
   methods: {
+    handleClickConnectedServer(which) {
+      const that = this;
+      this.locateTabToConnected(which);
+      let tabIndex = -1;
+      if (which._type === "server") {
+        tabIndex = 1;
+      } else {
+        tabIndex = 2 + which.sub;
+      }
+
+      let tryCnt = 0;
+      const maxTry = 5;
+      const tryInterval = 500;
+      function waitingAndLocate() {
+        let nodes = document.querySelectorAll(".main-tabs .tabs li");
+        if (!nodes[tabIndex].classList.contains("is-active")) {
+          tryCnt++;
+          if (tryCnt > maxTry) {
+            return;
+          }
+          setTimeout(waitingAndLocate, tryInterval);
+          return;
+        }
+        console.log("ok");
+        that.$nextTick(() => {
+          let nodes = document.querySelectorAll(".main-tabs .b-table");
+          if (which._type === "subscriptionServer") {
+            // solid
+            tabIndex = 2;
+          }
+          nodes = nodes[tabIndex].querySelectorAll("tbody tr");
+          const node = nodes[which.id - 1];
+          node.scrollIntoView({ block: "end", inline: "center" });
+          node.classList.add("highlight-row");
+          setTimeout(() => {
+            node.classList.remove("highlight-row");
+            setTimeout(() => {
+              node.classList.add("highlight-row");
+              setTimeout(() => {
+                node.classList.remove("highlight-row");
+              }, 200);
+            }, 50);
+          }, 200);
+        });
+      }
+      waitingAndLocate();
+    },
     handleClickImportInBatch() {
       this.showModalImportInBatch = true;
     },
@@ -865,12 +1020,41 @@ export default {
           }
         } else {
           server.connected = true;
+          server = [server];
         }
+        if (this.observatorySidebarValid) {
+          this.connectedServerInfo = [];
+          for (const i in server) {
+            let subscription_name = null;
+            if (connectedServer[i]._type === "subscriptionServer") {
+              subscription_name = this.tableData.subscriptions[
+                connectedServer[i].sub
+              ].host.toUpperCase();
+            }
+            this.connectedServerInfo.push({
+              info: {
+                ...server[i],
+                subscription_name,
+                alive: null,
+                delay: null,
+                outbound_tag: null,
+                last_seen_time: null,
+                last_error_reason: null,
+                last_try_time: null
+              },
+              which: connectedServer[i],
+              showContent: true,
+              selected: false
+            });
+          }
+        }
+      } else {
+        this.connectedServerInfo = [];
       }
 
-      this.connectedServer.server = false;
-      for (const i in this.connectedServer.subscriptionServer) {
-        this.connectedServer.subscriptionServer[i] = false;
+      this.connectedServerInTab.server = false;
+      for (const i in this.connectedServerInTab.subscriptionServer) {
+        this.connectedServerInTab.subscriptionServer[i] = false;
       }
       if (connectedServer) {
         let servers = connectedServer;
@@ -879,16 +1063,19 @@ export default {
         }
         for (const s of servers) {
           if (s._type === "server") {
-            this.connectedServer.server = true;
+            this.connectedServerInTab.server = true;
           } else if (s._type === "subscriptionServer") {
-            this.connectedServer.subscriptionServer[s.sub] = true;
+            this.connectedServerInTab.subscriptionServer[s.sub] = true;
           }
         }
       }
       this.$emit("input", this.runningState);
     },
-    locateTabToConnected() {
-      let whichServer = this.runningState.connectedServer;
+    locateTabToConnected(which) {
+      let whichServer = which;
+      if (!whichServer) {
+        whichServer = this.runningState.connectedServer;
+      }
       if (!whichServer) {
         return;
       }
@@ -1367,14 +1554,6 @@ export default {
             queue: false
           });
           this.showModalSubscription = false;
-          this.tableData = res.data.data.touch;
-          this.runningState = {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer
-          };
-          this.updateConnectView();
         });
       });
     }
@@ -1556,5 +1735,44 @@ $coverBackground: rgba(0, 0, 0, 0.6);
     border-radius: 2px;
     font-size: 0.75rem;
   }
+}
+.b-sidebar.node-status-sidebar-reduced > .sidebar-content.is-fixed {
+  left: 1px;
+  top: 4.25rem;
+  background-color: white;
+  width: unset;
+  line-height: 0;
+  border-radius: 4px;
+}
+.b-sidebar.node-status-sidebar > .sidebar-content.is-fixed {
+  left: 1px;
+  top: 4.25rem;
+  background-color: white;
+  max-height: calc(100vh - 5rem);
+  overflow-y: scroll;
+  .message {
+    cursor: pointer;
+  }
+  .tabs:not(:last-child),
+  .pagination:not(:last-child),
+  .message:not(:last-child),
+  .level:not(:last-child),
+  .breadcrumb:not(:last-child),
+  .highlight:not(:last-child),
+  .block:not(:last-child),
+  .title:not(:last-child),
+  .subtitle:not(:last-child),
+  .table-container:not(:last-child),
+  .table:not(:last-child),
+  .progress:not(:last-child),
+  .notification:not(:last-child),
+  .content:not(:last-child),
+  .box:not(:last-child) {
+    margin-bottom: 0.25rem;
+  }
+}
+tr.highlight-row {
+  transition: background-color 0.05s linear;
+  background-color: #a8cff0;
 }
 </style>

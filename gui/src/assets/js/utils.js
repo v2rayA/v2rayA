@@ -95,7 +95,11 @@ function parseURL(u) {
     password: a.password,
     protocol: fakeProto ? protocol : a.protocol.replace(":", ""),
     host: a.hostname,
-    port: a.port ? parseInt(a.port) : 80,
+    port: a.port
+      ? parseInt(a.port)
+      : protocol === "https" || protocol === "wss"
+      ? 443
+      : 80,
     query: a.search,
     params: (function() {
       var ret = {},

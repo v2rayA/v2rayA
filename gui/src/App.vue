@@ -26,9 +26,9 @@
             @active-change="handleOutboundDropdownActiveChange"
           >
             <template #trigger>
-              <b-tag class="pointerTag" type="is-info" icon-right="menu-down">{{
-                outboundName.toUpperCase()
-              }}</b-tag>
+              <b-tag class="pointerTag" type="is-info" icon-right="menu-down"
+                >{{ outboundName.toUpperCase() }}
+              </b-tag>
             </template>
 
             <b-dropdown-item
@@ -59,12 +59,12 @@
               aria-role="listitem"
               class="is-flex padding-right-1rem"
               @click="handleAddOutbound"
-              >{{ $t("operations.addOutbound") }}</b-dropdown-item
-            >
+              >{{ $t("operations.addOutbound") }}
+            </b-dropdown-item>
           </b-dropdown>
         </b-navbar-item>
       </template>
-      <template slot="start"> </template>
+      <template slot="start"></template>
 
       <template slot="end">
         <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
@@ -129,7 +129,11 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node v-model="runningState" :outbound="outboundName" />
+    <node
+      v-model="runningState"
+      :outbound="outboundName"
+      :observatory="observatory"
+    />
     <b-modal
       :active.sync="showCustomPorts"
       has-modal-card
@@ -149,7 +153,7 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
-import { parseURL } from "./assets/js/utils";
+import { isVersionGreaterEqual, parseURL } from "./assets/js/utils";
 import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
 
@@ -157,6 +161,9 @@ export default {
   components: { ModalCustomAddress, node },
   data() {
     return {
+      ws: null,
+      observatory: null,
+      showSidebar: true,
       statusMap: {
         [this.$t("common.checkRunning")]: "is-light",
         [this.$t("common.notRunning")]: "is-danger",
@@ -189,7 +196,7 @@ export default {
       return payload["uname"];
     }
   },
-  created() {
+  mounted() {
     console.log("app created");
     let ba = localStorage.getItem("backendAddress");
     if (ba) {
@@ -234,6 +241,10 @@ export default {
           localStorage["iptablesMode"] = res.data.data.iptablesMode;
           localStorage["dohValid"] = res.data.data.dohValid;
           localStorage["vlessValid"] = res.data.data.vlessValid;
+          localStorage["observatorySidebarValid"] = isVersionGreaterEqual(
+            localStorage["version"],
+            "1.4.4"
+          );
         }
       }
     });
@@ -244,8 +255,57 @@ export default {
         this.outbounds = res.data.data.outbounds;
       }
     });
+    this.connectWsMessage();
+  },
+  beforeDestroy() {
+    if (this.ws) {
+      this.ws.close();
+    }
   },
   methods: {
+    connectWsMessage() {
+      const that = this;
+      let url = apiRoot;
+      if (!url.trim() || url.startsWith("/")) {
+        url = location.protocol + "//" + location.host + url;
+      }
+      let protocol = "ws";
+      let u = parseURL(url);
+      if (u.protocol === "https") {
+        protocol = "wss";
+      }
+      url = `${protocol}://${u.host}:${
+        u.port
+      }/api/message?Authorization=${encodeURIComponent(localStorage["token"])}`;
+      if (this.ws) {
+        // console.log("ws close");
+        this.ws.close();
+      }
+      const ws = new WebSocket(url);
+      ws.onopen = () => {
+        // console.log("ws opened");
+        //
+      };
+      ws.onmessage = msg => {
+        msg.data && that.handleMessage(JSON.parse(msg.data));
+      };
+      ws.onclose = () => {
+        ws.onmessage = null;
+        that.ws = null;
+        // console.log("ws closed");
+        setTimeout(() => {
+          if (that.ws === null) {
+            that.connectWsMessage();
+          }
+        }, 3000);
+      };
+      this.ws = ws;
+    },
+    handleMessage(msg) {
+      if (msg.type === "observatory") {
+        this.observatory = msg;
+      }
+    },
     handleOutboundDropdownActiveChange(active) {
       if (active) {
         this.updateOutboundDropdown = false;
@@ -263,12 +323,8 @@ export default {
         } else {
           return `${outbound} - ${this.runningState.outboundToServerName[outbound]}`;
         }
-      } else {
-        return outbound;
       }
-      return this.runningState.outboundToServerName[outbound]
-        ? `${outbound} - ${this.runningState.outboundToServerName[outbound]}`
-        : outbound;
+      return outbound;
     },
     handleAddOutbound() {
       this.$buefy.dialog.prompt({
@@ -583,6 +639,7 @@ a {
   color: rgba(0, 0, 0, 0.45);
   animation: loading-rotate 2s infinite linear;
 }
+
 .modal-custom-ports {
   z-index: 999;
 }
@@ -592,20 +649,25 @@ a {
     margin-bottom: 0.5em;
   }
 }
+
 .about-small {
   font-size: 0.85em;
   text-indent: 1em;
   color: rgba(0, 0, 0, 0.6);
 }
+
 .margin-right-2em {
   margin-right: 2em;
 }
+
 .justify-content-space-between {
   justify-content: space-between;
 }
+
 .padding-right-1rem {
   padding-right: 1rem !important;
 }
+
 #statusTag {
   width: 5em;
 }
