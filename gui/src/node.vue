@@ -699,7 +699,14 @@ export default {
   components: { ModalSubscription, ModalServer },
   filters: {
     unix2datetime(x) {
-      return dayjs.unix(x).format("YYYY-MM-DD HH:mm:ss");
+      x = dayjs.unix(x);
+      let now = dayjs()
+      if (localStorage["_lang"] === "zh") {
+        now = now.locale("zh-cn");
+      } else if (localStorage["_lang"] === "en") {
+        now = now.locale("en");
+      }
+      return now.to(x);
     }
   },
   props: {

@@ -2,6 +2,7 @@ import "@/plugins/buefy";
 import "@/plugins/axios";
 import "@/plugins/backendPort";
 import "@/plugins/mount";
+import "@/plugins/dayjs";
 import Vue from "vue";
 import "normalize.css";
 // import "@/registerServiceWorker";
