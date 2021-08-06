@@ -124,6 +124,7 @@ func Run() error {
 		auth.GET("outbounds", controller.GetOutbounds)
 		auth.POST("outbound", controller.PostOutbound)
 		auth.DELETE("outbound", controller.DeleteOutbound)
+		auth.GET("message", controller.WsMessage)
 	}
 
 	ServeGUI(engine)

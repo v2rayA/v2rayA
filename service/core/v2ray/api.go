@@ -3,7 +3,10 @@ package v2ray
 import (
 	"context"
 	"fmt"
+	"github.com/devfeel/mapper"
+	"github.com/v2fly/v2ray-core/v4/app/observatory"
 	pb "github.com/v2fly/v2ray-core/v4/app/observatory/command"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,7 +17,7 @@ import (
 )
 
 var (
-	Products = []string{
+	ApiProducts = []string{
 		"observatory",
 	}
 	ApiFeed *Feed
@@ -22,9 +25,21 @@ var (
 
 const ApiFeedBoxSize = 10
 
+type OutboundStatus struct {
+	Alive           bool             `json:"alive,omitempty"`
+	Delay           int64            `json:"delay,omitempty"`
+	LastErrorReason string           `json:"last_error_reason,omitempty"`
+	OutboundTag     string           `json:"outbound_tag,omitempty"`
+	Which           *configure.Which `json:"which,omitempty"`
+	LastSeenTime    int64            `json:"last_seen_time,omitempty"`
+	LastTryTime     int64            `json:"last_try_time,omitempty"`
+}
+
 func init() {
+	mapper.Register(&observatory.OutboundStatus{})
+
 	ApiFeed = NewSubscriptions(ApiFeedBoxSize)
-	for _, product := range Products {
+	for _, product := range ApiProducts {
 		ApiFeed.RegisterProduct(product)
 	}
 	go observatoryProducer()
@@ -69,7 +84,13 @@ func observatoryProducer() {
 			log.Printf("[Warning] observatoryProducer: %v", err)
 		} else {
 			outboundStatus := r.GetStatus().GetStatus()
-			ApiFeed.ProductMessage(product, outboundStatus)
+			os := make([]OutboundStatus, len(outboundStatus))
+			css := configure.GetConnectedServers()
+			for i := range outboundStatus {
+				_ = mapper.AutoMapper(outboundStatus[i], &os[i])
+				os[i].Which = css.Get()[tag2WhichIndex[os[i].OutboundTag]]
+			}
+			ApiFeed.ProductMessage(product, os)
 		}
 		time.Sleep(5 * time.Second)
 	}

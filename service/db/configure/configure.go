@@ -337,6 +337,7 @@ func AddConnect(wt Which) (err error) {
 	return db.Set(bucket, "connectedServers", wcs)
 }
 
+// OverwriteConnects will replace each outbounds contained in given ws with whiches in the ws
 func OverwriteConnects(ws *Whiches) (err error) {
 	outWs := make(map[string][]*Which)
 	for _, w := range ws.Get() {

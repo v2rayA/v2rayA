@@ -12,7 +12,12 @@ type Feed struct {
 }
 type Message struct {
 	ProduceTime time.Time
+	Product     string
 	Body        interface{}
+}
+type Box struct {
+	Messages chan Message
+	Cancel   func()
 }
 
 func NewSubscriptions(boxSize int) *Feed {
@@ -35,20 +40,20 @@ func (s *Feed) RegisterProduct(product string) {
 	s.mu.Unlock()
 }
 
-func (s *Feed) SubscribeMessage(product string) (box *chan Message, cancel func()) {
+func (s *Feed) SubscribeMessage(product string) (box *Box) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.boxes[product]; !ok {
-		return nil, nil
+		return nil
 	}
-	b := make(chan Message, s.boxSize)
-	s.boxes[product] = append(s.boxes[product], &b)
+	messages := make(chan Message, s.boxSize)
+	s.boxes[product] = append(s.boxes[product], &messages)
 	index := len(s.boxes[product]) - 1
-	cancel = func() {
-		if index >= len(s.boxes[product]) || s.boxes[product][index] != &b {
+	cancel := func() {
+		if index >= len(s.boxes[product]) || s.boxes[product][index] != &messages {
 			index = -1
 			for i := range s.boxes[product] {
-				if s.boxes[product][i] == &b {
+				if s.boxes[product][i] == &messages {
 					index = i
 					break
 				}
@@ -58,15 +63,20 @@ func (s *Feed) SubscribeMessage(product string) (box *chan Message, cancel func(
 			// the cancel function is invoked more than once
 			return
 		}
+		close(*s.boxes[product][index])
 		s.boxes[product] = append(s.boxes[product][:index], s.boxes[product][index+1:]...)
 	}
-	return &b, cancel
+	return &Box{
+		Messages: messages,
+		Cancel:   cancel,
+	}
 }
 
 func (s *Feed) ProductMessage(product string, message interface{}) (numConsumer int) {
 	msg := Message{
 		ProduceTime: time.Now(),
 		Body:        message,
+		Product:     product,
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
