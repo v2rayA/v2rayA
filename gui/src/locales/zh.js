@@ -35,7 +35,9 @@ export default {
     name: "节点名",
     address: "节点地址",
     protocol: "协议",
-    latency: "时延"
+    latency: "时延",
+    lastSeenTime: "上次存活时间",
+    lastTryTime: "上次测试时间"
   },
   subscription: {
     host: "域名",

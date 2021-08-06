@@ -35,7 +35,9 @@ export default {
     name: "Server Name",
     address: "Server Address",
     protocol: "Protocol",
-    latency: "Latency"
+    latency: "Latency",
+    lastSeenTime: "Last seen time",
+    lastTryTime: "Last try time"
   },
   subscription: {
     host: "Host",
