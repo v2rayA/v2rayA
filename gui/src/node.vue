@@ -5,6 +5,7 @@
       :open="true"
       class="node-status-sidebar-reduced"
       @mouseenter.native="showSidebar = true"
+      :can-cancel="false"
       @click.native="showSidebar = true"
     >
       <img src="/img/icons/switch-menu.svg" width="36px" />
@@ -17,6 +18,7 @@
       :fullwidth="false"
       :overlay="false"
       :right="false"
+      :can-cancel="false"
       class="node-status-sidebar"
       @close="showSidebar = false"
       @mouseleave.native="showSidebar = false"
@@ -757,7 +759,6 @@ export default {
       this.updateConnectView();
     },
     observatory(val) {
-      console.log(val);
       for (const info of val.body) {
         this.connectedServerInfo.some(x => {
           if (JSON.stringify(info.which) === JSON.stringify(x.which)) {
