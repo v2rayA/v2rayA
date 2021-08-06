@@ -2,15 +2,13 @@ package service
 
 import (
 	"github.com/gorilla/websocket"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"log"
 	"sync"
 	"time"
 )
 
 const (
-	writeWait = 5 * time.Second
+	writeWait = v2ray.ApiFeedInterval
 )
 
 type MessageHandler struct {
@@ -18,7 +16,7 @@ type MessageHandler struct {
 	boxes map[string]*v2ray.Box
 }
 type Message struct {
-	ProductTime time.Time   `json:"product_time"`
+	ProduceTime int64       `json:"produce_time"`
 	Type        string      `json:"type"`
 	Body        interface{} `json:"body"`
 }
@@ -45,7 +43,7 @@ func (h *MessageHandler) Read() {
 	}()
 	for {
 		if _, _, err := h.conn.ReadMessage(); err != nil {
-			log.Println(err)
+			//log.Println(err)
 			break
 		}
 	}
@@ -62,16 +60,12 @@ func (h *MessageHandler) Write() {
 		go func(box *v2ray.Box) {
 			defer wg.Done()
 			for msg := range box.Messages {
-				b, err := jsoniter.Marshal(Message{
-					ProductTime: msg.ProduceTime,
+				_ = h.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				if err := h.conn.WriteJSON(Message{
+					ProduceTime: msg.ProduceTime,
 					Type:        msg.Product,
 					Body:        msg.Body,
-				})
-				if err != nil {
-					log.Printf("[Warning] %v", err)
-				}
-				_ = h.conn.SetWriteDeadline(time.Now().Add(writeWait))
-				if err := h.conn.WriteMessage(websocket.TextMessage, b); err != nil {
+				}); err != nil {
 					return
 				}
 			}

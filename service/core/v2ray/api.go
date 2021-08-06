@@ -23,16 +23,19 @@ var (
 	ApiFeed *Feed
 )
 
-const ApiFeedBoxSize = 10
+const (
+	ApiFeedBoxSize  = 10
+	ApiFeedInterval = 3 * time.Second
+)
 
 type OutboundStatus struct {
-	Alive           bool             `json:"alive,omitempty"`
-	Delay           int64            `json:"delay,omitempty"`
-	LastErrorReason string           `json:"last_error_reason,omitempty"`
-	OutboundTag     string           `json:"outbound_tag,omitempty"`
-	Which           *configure.Which `json:"which,omitempty"`
-	LastSeenTime    int64            `json:"last_seen_time,omitempty"`
-	LastTryTime     int64            `json:"last_try_time,omitempty"`
+	Alive           bool             `json:"alive"`
+	Delay           int64            `json:"delay"`
+	LastErrorReason string           `json:"last_error_reason"`
+	OutboundTag     string           `json:"outbound_tag"`
+	Which           *configure.Which `json:"which"`
+	LastSeenTime    int64            `json:"last_seen_time"`
+	LastTryTime     int64            `json:"last_try_time"`
 }
 
 func init() {
@@ -62,7 +65,7 @@ func observatoryProducer() {
 	var conn *grpc.ClientConn
 	for {
 		if ApiPort() == 0 {
-			time.Sleep(5 * time.Second)
+			time.Sleep(ApiFeedInterval)
 			continue
 		}
 		// Set up a connection to the server.
@@ -92,6 +95,6 @@ func observatoryProducer() {
 			}
 			ApiFeed.ProductMessage(product, os)
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(ApiFeedInterval)
 	}
 }

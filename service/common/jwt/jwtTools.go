@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"github.com/v2rayA/v2rayA/common"
 	"encoding/base64"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -9,22 +8,44 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"github.com/v2rayA/v2rayA/common"
 	"strconv"
 	"strings"
 	"time"
 )
 
+// stripBearerPrefixFromTokenString strips 'Bearer ' prefix from bearer token string
+func stripBearerPrefixFromTokenString(tok string) (string, error) {
+	// Should be a bearer token
+	if len(tok) > 6 && strings.ToUpper(tok[0:7]) == "BEARER " {
+		return tok[7:], nil
+	}
+	return tok, nil
+}
+
+// AuthorizationArgumentExtractor extracts bearer token from Argument header
+// Uses PostExtractionFilter to strip "Bearer " prefix from header
+var AuthorizationArgumentExtractor = &request.PostExtractionFilter{
+	request.ArgumentExtractor{"Authorization"},
+	stripBearerPrefixFromTokenString,
+}
+
 func JWTAuth(Admin bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token, err := request.ParseFromRequest(ctx.Request, request.AuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
-				// 我们使用固定的secret，直接返回就好
 				return getSecret(), nil
 			})
 		if err != nil {
-			common.Response(ctx, common.UNAUTHORIZED, err.Error())
-			ctx.Abort()
-			return
+			token, err = request.ParseFromRequest(ctx.Request, AuthorizationArgumentExtractor,
+				func(token *jwt.Token) (interface{}, error) {
+					return getSecret(), nil
+				});
+			if err != nil {
+				common.Response(ctx, common.UNAUTHORIZED, err.Error())
+				ctx.Abort()
+				return
+			}
 		}
 		//如果需要Admin权限
 		mapClaims := token.Claims.(jwt.MapClaims)

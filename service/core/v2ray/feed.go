@@ -11,7 +11,7 @@ type Feed struct {
 	boxSize int
 }
 type Message struct {
-	ProduceTime time.Time
+	ProduceTime int64
 	Product     string
 	Body        interface{}
 }
@@ -50,6 +50,8 @@ func (s *Feed) SubscribeMessage(product string) (box *Box) {
 	s.boxes[product] = append(s.boxes[product], &messages)
 	index := len(s.boxes[product]) - 1
 	cancel := func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
 		if index >= len(s.boxes[product]) || s.boxes[product][index] != &messages {
 			index = -1
 			for i := range s.boxes[product] {
@@ -74,7 +76,7 @@ func (s *Feed) SubscribeMessage(product string) (box *Box) {
 
 func (s *Feed) ProductMessage(product string, message interface{}) (numConsumer int) {
 	msg := Message{
-		ProduceTime: time.Now(),
+		ProduceTime: time.Now().Unix(),
 		Body:        message,
 		Product:     product,
 	}

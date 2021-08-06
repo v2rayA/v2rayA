@@ -63,6 +63,7 @@ func nocache(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
 	c.Header("Pragma", "no-cache")
 	c.Header("Expires", "0")
+	c.Next()
 }
 
 func Run() error {
@@ -74,6 +75,8 @@ func Run() error {
 	corsConfig.AllowMethods = []string{
 		"GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD",
 	}
+	corsConfig.AllowWebSockets = true
+	corsConfig.AllowCredentials = true
 	corsConfig.AddAllowHeaders("Authorization")
 	engine.Use(cors.New(corsConfig))
 	noAuth := engine.Group("api", nocache)

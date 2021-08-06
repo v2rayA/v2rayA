@@ -8,6 +8,8 @@ $primary: $warning;
 $primary-invert: findColorInvert($primary);
 $twitter: #4099FF;
 $twitter-invert: findColorInvert($twitter);
+$lightblue: #acd1f0;
+$lightblue-invert: findColorInvert($lightblue);
 $warning: #ff845e;
 $warning-invert: findColorInvert($warning);
 
@@ -35,7 +37,8 @@ $colors: (
         "danger": ($danger, $danger-invert),
         "twitter": ($twitter, $twitter-invert),
         "green": ($green, $green-invert),
-        "delete": ($delete, $delete-invert)
+        "delete": ($delete, $delete-invert),
+        "lightblue": ($lightblue, $lightblue-invert)
 );
 
 // Links
