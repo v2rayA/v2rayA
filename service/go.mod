@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/beevik/ntp v0.3.0
+	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.1
