@@ -298,7 +298,6 @@
         >
           <b-field :label="`SERVER(${tableData.servers.length})`">
             <b-table
-              :paginated="tableData.servers.length > 150"
               per-page="100"
               :current-page.sync="currentPage.servers"
               :data="tableData.servers"
@@ -429,7 +428,6 @@
             "
           >
             <b-table
-              :paginated="sub.servers.length >= 150"
               :current-page.sync="currentPage[sub.id]"
               per-page="100"
               :data="sub.servers"
@@ -700,7 +698,7 @@ export default {
   filters: {
     unix2datetime(x) {
       x = dayjs.unix(x);
-      let now = dayjs()
+      let now = dayjs();
       if (localStorage["_lang"] === "zh") {
         now = now.locale("zh-cn");
       } else if (localStorage["_lang"] === "en") {
@@ -889,13 +887,17 @@ export default {
           nodes = nodes[tabIndex].querySelectorAll("tbody tr");
           const node = nodes[which.id - 1];
           node.scrollIntoView({ block: "end", inline: "center" });
-          node.classList.add("highlight-row");
+          let highlightClass = "highlight-row-connected";
+          if (that.runningState.running !== that.$t("common.isRunning")) {
+            highlightClass = "highlight-row-disconnected";
+          }
+          node.classList.add(highlightClass);
           setTimeout(() => {
-            node.classList.remove("highlight-row");
+            node.classList.remove(highlightClass);
             setTimeout(() => {
-              node.classList.add("highlight-row");
+              node.classList.add(highlightClass);
               setTimeout(() => {
-                node.classList.remove("highlight-row");
+                node.classList.remove(highlightClass);
               }, 200);
             }, 50);
           }, 200);
@@ -1781,8 +1783,12 @@ $coverBackground: rgba(0, 0, 0, 0.6);
     margin-bottom: 0.25rem;
   }
 }
-tr.highlight-row {
+tr.highlight-row-connected {
   transition: background-color 0.05s linear;
   background-color: #a8cff0;
+}
+tr.highlight-row-disconnected {
+  transition: background-color 0.05s linear;
+  background-color: rgba(255, 69, 58, 0.55);
 }
 </style>
