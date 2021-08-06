@@ -4,8 +4,8 @@
       v-show="observatorySidebarValid && connectedServerInfo.length"
       :open="true"
       class="node-status-sidebar-reduced"
-      @mouseenter.native="showSidebar = true"
       :can-cancel="false"
+      @mouseenter.native="showSidebar = true"
       @click.native="showSidebar = true"
     >
       <img src="/img/icons/switch-menu.svg" width="36px" />
@@ -45,15 +45,17 @@
         @click.native="handleClickConnectedServer(v.which)"
       >
         <div v-if="v.showContent">
-          <p>协议：{{ v.info.net }}</p>
+          <p>{{ $t("server.protocol") }}: {{ v.info.net }}</p>
           <p v-if="v.info.delay && v.info.delay < 99999">
-            时延：{{ v.info.delay }}ms
+            {{ $t("server.latency") }}: {{ v.info.delay }}ms
           </p>
           <p v-if="!v.info.alive && v.info.last_seen_time">
-            上一次存活时间：{{ v.info.last_seen_time | unix2datetime }}
+            {{ $t("server.lastSeenTime") }}:
+            {{ v.info.last_seen_time | unix2datetime }}
           </p>
           <p v-if="v.info.last_try_time">
-            上一次测试时间：{{ v.info.last_try_time | unix2datetime }}
+            {{ $t("server.lastTryTime") }}:
+            {{ v.info.last_try_time | unix2datetime }}
           </p>
         </div>
       </b-message>
