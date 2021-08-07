@@ -20,6 +20,7 @@ build() {
     yarn config set sass_binary_site https://cdn.npm.taobao.org/dist/node-sass -g
     yarn --check-files
     yarn build
+    mv "$srcdir/v2rayA-$pkgver/web" "$srcdir/v2rayA-$pkgver/service/server/router/"
 
     cd "$srcdir/v2rayA-$pkgver/service"
     export GO111MODULE=on
