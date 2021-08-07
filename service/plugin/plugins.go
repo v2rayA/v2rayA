@@ -84,6 +84,10 @@ func preprocess(v *vmessInfo.VmessInfo) (needPlugin bool) {
 		}
 	case "trojan-go":
 		return true
+	case "shadowsocksr", "ssr":
+		return true
+	case "pingtunnel":
+		return true
 	}
 	return false
 }
