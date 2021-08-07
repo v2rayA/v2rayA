@@ -3,6 +3,7 @@ package router
 import (
 	"embed"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
 	"github.com/v2rayA/v2rayA/common"
@@ -34,11 +35,7 @@ func (c relativeFS) Open(name string) (fs.File, error) {
 }
 
 func ServeGUI(engine *gin.Engine) {
-	//defer func() {
-	//	if msg := recover(); msg != nil {
-	//		log.Println("[ERROR]", msg)
-	//	}
-	//}()
+	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
 	webDir := global.GetEnvironmentConfig().WebDir
 	if webDir == "" {
 		webFS := relativeFS{
@@ -50,19 +47,18 @@ func ServeGUI(engine *gin.Engine) {
 				return nil
 			}
 			if info.IsDir() {
-				engine.StaticFS("/"+info.Name(), http.FS(relativeFS{
+				r.StaticFS("/"+info.Name(), http.FS(relativeFS{
 					root:        webFS,
 					relativeDir: path,
 				}))
 				return filepath.SkipDir
 			}
-			engine.GET("/"+info.Name(), func(ctx *gin.Context) {
+			r.GET("/"+info.Name(), func(ctx *gin.Context) {
 				ctx.FileFromFS(path, http.FS(webFS))
 			})
 			return nil
 		})
-		//engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
-		engine.GET("/", func(ctx *gin.Context) {
+		r.GET("/", func(ctx *gin.Context) {
 			f, err := webFS.Open("index.html")
 			if err != nil {
 				ctx.Status(400)
@@ -87,14 +83,14 @@ func ServeGUI(engine *gin.Engine) {
 					return nil
 				}
 				if info.IsDir() {
-					engine.Static("/"+info.Name(), path)
+					r.Static("/"+info.Name(), path)
 					return filepath.SkipDir
 				}
-				engine.StaticFile("/"+info.Name(), path)
+				r.StaticFile("/"+info.Name(), path)
 				return nil
 			})
 			engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
-			engine.GET("/", func(context *gin.Context) {
+			r.GET("/", func(context *gin.Context) {
 				context.HTML(http.StatusOK, "index.html", nil)
 			})
 		}
