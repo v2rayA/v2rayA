@@ -1769,7 +1769,7 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   top: 4.25rem;
   background-color: white;
   max-height: calc(100vh - 5rem);
-  overflow-y: scroll;
+  overflow-y: auto;
   .message {
     cursor: pointer;
   }
