@@ -7,7 +7,6 @@ sha1sums_aarch64=$(sha1sum "$P_DIR"/v2raya_linux_arm64_$VERSION | awk '{print $1
 sha_service=$(sha1sum "$P_DIR"/install/universal/v2raya.service | awk '{print $1}')
 sha_png=$(sha1sum "$P_DIR"/install/universal/v2raya.png | awk '{print $1}')
 sha_desktop=$(sha1sum "$P_DIR"/install/universal/v2raya.desktop | awk '{print $1}')
-sha_web=$(sha1sum "$P_DIR"/web.tar.gz | awk '{print $1}')
 
 mkdir -p /tmp/prepare/v2raya-bin
 cd /tmp/prepare/v2raya-bin
@@ -26,7 +25,6 @@ sed -i s/{{sha1sums_aarch64}}/"${sha1sums_aarch64}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha_service}}/"${sha_service}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha_png}}/"${sha_png}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha_desktop}}/"${sha_desktop}"/g PKGBUILD .SRCINFO
-sed -i s/{{sha_web}}/"${sha_web}"/g PKGBUILD .SRCINFO
 
 cd /tmp/
 git clone ssh://aur@aur.archlinux.org/v2raya-bin.git
