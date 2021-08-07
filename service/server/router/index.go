@@ -1,6 +1,7 @@
 package router
 
 import (
+	"embed"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
@@ -9,6 +10,8 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/server/controller"
+	"io"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -17,31 +20,84 @@ import (
 	"path/filepath"
 )
 
+//go:embed web
+var webRoot embed.FS
+
+// relativeFS implements fs.FS
+type relativeFS struct {
+	root        fs.FS
+	relativeDir string
+}
+
+func (c relativeFS) Open(name string) (fs.File, error) {
+	return c.root.Open(path.Join(c.relativeDir, name))
+}
+
 func ServeGUI(engine *gin.Engine) {
-	defer func() {
-		if msg := recover(); msg != nil {
-			log.Println("[ERROR]", msg)
-		}
-	}()
+	//defer func() {
+	//	if msg := recover(); msg != nil {
+	//		log.Println("[ERROR]", msg)
+	//	}
+	//}()
 	webDir := global.GetEnvironmentConfig().WebDir
-	if _, err := os.Stat(webDir); os.IsNotExist(err) {
-		log.Printf("[Warning] web files cannot be found at %v. web UI cannot be served", webDir)
-	} else {
-		filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
-			if path == webDir {
+	if webDir == "" {
+		webFS := relativeFS{
+			root:        webRoot,
+			relativeDir: "web",
+		}
+		fs.WalkDir(webFS, "/", func(path string, info fs.DirEntry, err error) error {
+			if path == "/" {
 				return nil
 			}
 			if info.IsDir() {
-				engine.Static("/"+info.Name(), path)
+				engine.StaticFS("/"+info.Name(), http.FS(relativeFS{
+					root:        webFS,
+					relativeDir: path,
+				}))
 				return filepath.SkipDir
 			}
-			engine.StaticFile("/"+info.Name(), path)
+			engine.GET("/"+info.Name(), func(ctx *gin.Context) {
+				ctx.FileFromFS(path, http.FS(webFS))
+			})
 			return nil
 		})
-		engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
-		engine.GET("/", func(context *gin.Context) {
-			context.HTML(http.StatusOK, "index.html", nil)
+		//engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
+		engine.GET("/", func(ctx *gin.Context) {
+			f, err := webFS.Open("index.html")
+			if err != nil {
+				ctx.Status(400)
+				return
+			}
+			defer f.Close()
+			b, err := io.ReadAll(f)
+			if err != nil {
+				ctx.Status(400)
+				return
+			}
+			ctx.Header("Content-Type", "text/html; charset=utf-8")
+			ctx.String(http.StatusOK, string(b))
 		})
+	}
+	if webDir != "" {
+		if _, err := os.Stat(webDir); os.IsNotExist(err) {
+			log.Printf("[Warning] web files cannot be found at %v. web UI cannot be served", webDir)
+		} else {
+			filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
+				if path == webDir {
+					return nil
+				}
+				if info.IsDir() {
+					engine.Static("/"+info.Name(), path)
+					return filepath.SkipDir
+				}
+				engine.StaticFile("/"+info.Name(), path)
+				return nil
+			})
+			engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
+			engine.GET("/", func(context *gin.Context) {
+				context.HTML(http.StatusOK, "index.html", nil)
+			})
+		}
 	}
 
 	app := global.GetEnvironmentConfig()
