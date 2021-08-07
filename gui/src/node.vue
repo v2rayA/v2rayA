@@ -1566,6 +1566,14 @@ export default {
             queue: false
           });
           this.showModalSubscription = false;
+          this.tableData = res.data.data.touch;
+          this.runningState = {
+            running: res.data.data.running
+              ? this.$t("common.isRunning")
+              : this.$t("common.notRunning"),
+            connectedServer: this.tableData.connectedServer
+          };
+          this.updateConnectView();
         });
       });
     }
