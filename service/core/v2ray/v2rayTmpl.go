@@ -780,6 +780,7 @@ func (t *Template) SetDNS(outbounds []OutboundInfo, setting *configure.Setting, 
 			domainsToLookup = append(domainsToLookup, r.Domain...)
 		}
 	}
+	domainsToLookup = common.Deduplicate(domainsToLookup)
 	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
 		if CheckDohSupported() == nil {
@@ -1440,6 +1441,30 @@ func Ps2OutboundTag(ps string) string {
 	return fmt.Sprintf("『%v』", ps)
 }
 
+func (t *Template) SetWhitelistRouting(whitelist []Addr) {
+	var rules []RoutingRule
+	for _, addr := range whitelist {
+		if net.ParseIP(addr.host) != nil {
+			rules = append(rules, RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				IP:          []string{addr.host},
+				Port:        addr.port,
+			})
+		} else {
+			rules = append(rules, RoutingRule{
+				Type:        "field",
+				OutboundTag: "direct",
+				Domain:      []string{addr.host},
+				Port:        addr.port,
+			})
+		}
+	}
+	if len(rules) > 0 {
+		t.Routing.Rules = append(rules, t.Routing.Rules...)
+	}
+}
+
 func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) (err error) {
 	outbounds := t.outNames()
 	mSubjectSelector := make(map[string]struct{})
@@ -1727,6 +1752,16 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 	}
 	// set api
 	apiPort = t.SetAPI()
+
+	// set routing whitelist
+	var whitelist []Addr
+	for _, info := range outboundInfos {
+		whitelist = append(whitelist, Addr{
+			host: info.Info.Add,
+			port: info.Info.Port,
+		})
+	}
+	t.SetWhitelistRouting(whitelist)
 
 	//set outboundSockopt
 	t.SetOutboundSockopt(setting)
