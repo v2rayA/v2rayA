@@ -41,7 +41,7 @@ var hijacker *ResolvHijacker
 
 func (h *ResolvHijacker) HijackResolv() error {
 	err := os.WriteFile(resolverFile,
-		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 114.114.114.114\n"),
+		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 119.29.29.29\n"),
 		os.FileMode(0644),
 	)
 	if err != nil {
@@ -62,7 +62,7 @@ func removeResolvHijacker() {
 		hijacker.Close()
 		if hijacker.localDNS {
 			os.WriteFile(resolverFile,
-				[]byte(HijackFlag+"\nnameserver 223.6.6.6\nnameserver 114.114.114.114\n"),
+				[]byte(HijackFlag+"\nnameserver 223.6.6.6\nnameserver 119.29.29.29\n"),
 				os.FileMode(0644),
 			)
 		}

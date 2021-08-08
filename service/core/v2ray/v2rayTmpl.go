@@ -684,7 +684,7 @@ func (t *Template) SetDNS(outbounds []OutboundInfo, setting *configure.Setting, 
 		}
 	} else if setting.AntiPollution != configure.AntipollutionClosed {
 		// preset
-		internal = []string{"223.6.6.6 -> direct", "114.114.114.114 -> direct"}
+		internal = []string{"223.6.6.6 -> direct", "119.29.29.29 -> direct"}
 		switch setting.AntiPollution {
 		case configure.AntipollutionAntiHijack:
 			break
