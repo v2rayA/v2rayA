@@ -73,8 +73,7 @@ func ServeGUI(engine *gin.Engine) {
 			ctx.Header("Content-Type", "text/html; charset=utf-8")
 			ctx.String(http.StatusOK, string(b))
 		})
-	}
-	if webDir != "" {
+	} else {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
 			log.Printf("[Warning] web files cannot be found at %v. web UI cannot be served", webDir)
 		} else {
