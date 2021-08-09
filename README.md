@@ -10,8 +10,6 @@ Thanks to the advantages of Web GUI, you can not only use it on your local compu
 
 Project：https://github.com/v2rayA/v2rayA
 
-Frontend demo: https://v2raya.mzz.pub http://v.mzz.pub
-
 
 ## Usage
 
