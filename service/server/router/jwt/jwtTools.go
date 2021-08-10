@@ -56,8 +56,6 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 		}
 		//将用户名丢入参数
 		ctx.Set("Name", mapClaims["name"])
-		//在ctx.Next()前的都是before request，之后的是after request
-		ctx.Next()
 	}
 }
 

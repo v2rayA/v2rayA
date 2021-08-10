@@ -13,6 +13,7 @@ import { parseURL } from "../assets/js/utils";
 import browser from "@/assets/js/browser";
 import modalCustomPorts from "../components/modalCustomPorts";
 import i18n from "../plugins/i18n";
+import { nanoid } from "nanoid";
 
 Vue.prototype.$axios = axios;
 
@@ -22,6 +23,7 @@ axios.interceptors.request.use(
   config => {
     if (localStorage.hasOwnProperty("token")) {
       config.headers.Authorization = `${localStorage["token"]}`;
+      config.headers["X-V2raya-Request-Id"] = nanoid();
     }
     return config;
   },
