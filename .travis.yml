@@ -16,7 +16,8 @@ env:
     - GO111MODULE=on
     - NAME=v2raya
     - __BEFORE_GET_VERSION__=$(git fetch --tags)
-    - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+    - LAST_TAG_COMMIT=$(git rev-list --tags --max-count=1)
+    - VERSION=$(git describe --tags $LAST_TAG_COMMIT)
     - GOPROXY=https://goproxy.io
     - DESC="A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols."
     - P_DIR=$(pwd)
