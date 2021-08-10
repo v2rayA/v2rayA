@@ -70,11 +70,10 @@ const (
 
 const (
 	RoutingATemplate = `default: proxy
-
 # write your own rules below
+domain(geosite:geolocation-!cn)->proxy
 domain(geosite:google-scholar)->proxy
-domain(geosite:category-scholar-!cn,geosite:category-scholar-cn,domain:qq.com)->direct
-
-ip(geoip:private, geoip:cn)->direct
-domain(geosite:cn)->direct`
+domain(geosite:category-scholar-!cn, geosite:category-scholar-cn)->direct
+domain(geosite:cn)->direct
+ip(geoip:private, geoip:cn)->direct`
 )
