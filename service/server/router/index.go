@@ -7,10 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/jwt"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/server/controller"
+	"github.com/v2rayA/v2rayA/server/router/jwt"
+	"github.com/v2rayA/v2rayA/server/router/reqCache"
 	"io"
 	"io/fs"
 	"log"
@@ -114,7 +115,6 @@ func nocache(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
 	c.Header("Pragma", "no-cache")
 	c.Header("Expires", "0")
-	c.Next()
 }
 
 func Run() error {
@@ -128,27 +128,32 @@ func Run() error {
 	}
 	corsConfig.AllowWebSockets = true
 	corsConfig.AllowCredentials = true
-	corsConfig.AddAllowHeaders("Authorization")
+	corsConfig.AddAllowHeaders("Authorization", common.RequestIdHeader)
 	engine.Use(cors.New(corsConfig))
-	noAuth := engine.Group("api", nocache)
+	noAuth := engine.Group("api",
+		nocache,
+		reqCache.ReqCache,
+	)
 	{
 		noAuth.GET("version", controller.GetVersion)
 		noAuth.POST("login", controller.PostLogin)
 		noAuth.POST("account", controller.PostAccount)
 	}
-	auth := engine.Group("api", nocache)
-	auth.Use(func(ctx *gin.Context) {
-		if !configure.HasAnyAccounts() {
-			common.Response(ctx, common.UNAUTHORIZED, gin.H{
-				"first": true,
-			})
-			ctx.Abort()
-			return
-		}
-		ctx.Next()
-	}, jwt.JWTAuth(false))
+	auth := engine.Group("api",
+		nocache,
+		func(ctx *gin.Context) {
+			if !configure.HasAnyAccounts() {
+				common.Response(ctx, common.UNAUTHORIZED, gin.H{
+					"first": true,
+				})
+				ctx.Abort()
+				return
+			}
+		},
+		jwt.JWTAuth(false),
+		reqCache.ReqCache,
+	)
 	{
-		//auth.GET("resolving", controller.GetResolving)
 		auth.POST("import", controller.PostImport)
 		auth.GET("touch", controller.GetTouch)
 		auth.DELETE("touch", controller.DeleteTouch)
