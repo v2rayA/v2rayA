@@ -1714,7 +1714,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 		t.Log = nil
 	}
 	// fakedns
-	if specialMode.ShouldUseFakeDns() {
+	if specialMode.ShouldUseFakeDns() && CheckFakednsAutoConfigureSupported() != nil {
 		t.FakeDns = &FakeDns{
 			IpPool:   "198.18.0.0/15",
 			PoolSize: 65535,
