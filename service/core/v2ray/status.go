@@ -50,7 +50,9 @@ func RestartV2rayService(saveStatus bool) (err error) {
 		return newError("cannot find GFWList files. update GFWList and try again")
 	}
 	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
-	_ = killV2ray(saveStatus)
+	if err = killV2ray(saveStatus); err != nil {
+		return
+	}
 	v2rayBinPath, err := where.GetV2rayBinPath()
 	if err != nil {
 		return
@@ -268,10 +270,6 @@ func UpdateV2RayConfig() (err error) {
 func killV2ray(saveStatus bool) (err error) {
 	if CoreProcess() != nil {
 		err = CoreProcess().Kill()
-		if err != nil {
-			return
-		}
-		_, err = CoreProcess().Wait()
 		if err != nil {
 			return
 		}
