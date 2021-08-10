@@ -72,6 +72,10 @@ func CheckFakednsOthersSupported() (err error) {
 	return isVersionSatisfied("4.38.0", true)
 }
 
+func CheckFakednsAutoConfigureSupported() (err error) {
+	return isVersionSatisfied("4.38.1", true)
+}
+
 func CheckBalancerSupported() (err error) {
 	return isVersionSatisfied("4.4", false)
 }
