@@ -1026,11 +1026,6 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 		switch rule := rule.(type) {
 		case routingA.Define:
 			switch rule.Name {
-			case "default":
-				switch v := rule.Value.(type) {
-				case string:
-					defaultOutbound = v
-				}
 			case "inbound", "outbound":
 				switch o := rule.Value.(type) {
 				case routingA.Bound:
@@ -1145,7 +1140,19 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	}
 	outboundTags := t.outNames()
 	for _, rule := range rules {
-		if rule, ok := rule.(routingA.Routing); ok {
+		switch rule := rule.(type) {
+		case routingA.Define:
+			switch rule.Name {
+			case "default":
+				switch v := rule.Value.(type) {
+				case string:
+					defaultOutbound = v
+					if _, ok := outboundTags[v]; !ok {
+						return fmt.Errorf(`your RoutingA rules depend on the outbound "%v", thus it should connect to a server`, v)
+					}
+				}
+			}
+		case routingA.Routing:
 			rr := RoutingRule{
 				Type:        "field",
 				OutboundTag: rule.Out,
