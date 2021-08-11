@@ -690,7 +690,16 @@ import ModalServer from "@/components/modalServer";
 import ModalSubscription from "@/components/modalSuscription";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
-import dayjs from "dayjs";
+import * as dayjs from "dayjs";
+// import relativeTime from "dayjs/plugin/relativeTime";
+// import timezone from "dayjs/plugin/timezone";
+// import utc from "dayjs/plugin/utc";
+// import "dayjs/locale/zh-cn";
+// import "dayjs/locale/en";
+
+// dayjs.extend(relativeTime);
+// dayjs.extend(utc);
+// dayjs.extend(timezone);
 
 export default {
   name: "Node",
@@ -764,6 +773,13 @@ export default {
     },
     outbound() {
       this.updateConnectView();
+    },
+    tableData(x) {
+      for (const sub of x.subscriptions) {
+        sub.status = dayjs(sub.status)
+          .tz(dayjs.tz.guess())
+          .format("YYYY-MM-DD HH:mm:ss");
+      }
     },
     observatory(val) {
       for (const info of val.body) {
