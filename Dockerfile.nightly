@@ -12,7 +12,6 @@ WORKDIR /build/service
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.io
 COPY --from=builder-web /build/web server/router/web
-RUN ls -lha server/router/ server/router/web
 RUN go mod tidy && CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/global.Version=unstable -s -w" -o v2raya .
 
 FROM v2fly/v2fly-core
