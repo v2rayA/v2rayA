@@ -29,6 +29,6 @@ jobs:
         run: |
           docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
           v=$(git log --pretty=format:"%ad" --date=format:%Y%m%d $(git show -s --format=%H) -1)
-          docker buildx build -t mzz2017/v2raya-nightly:$v -f Dockerfile --platform="$PLATFORM" . --push
-          docker buildx build -t mzz2017/v2raya-nightly:latest -f Dockerfile --platform="$PLATFORM" . --push
+          docker buildx build -t mzz2017/v2raya-nightly:$v -f Dockerfile.nightly --platform="$PLATFORM" . --push
+          docker buildx build -t mzz2017/v2raya-nightly:latest -f Dockerfile.nightly --platform="$PLATFORM" . --push
     
