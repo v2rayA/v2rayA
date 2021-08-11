@@ -1,4 +1,4 @@
-name: v2raya_gui
+name: v2raya_gui-docker
 
 on:
   push:

@@ -1,0 +1,34 @@
+name: v2raya-nightly-docker
+
+on:
+  push:
+    push:
+      branches: [ master ]
+
+env:
+  DOCKER_CLI_EXPERIMENTAL: enabled
+  DOCKER_BUILDKIT: 1
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/arm, linux/arm64,linux/amd64]
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          buildx-version: latest
+          qemu-version: latest
+      - name: Build the Docker image
+        run: |
+          docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+          v=$(git log --pretty=format:"%ad" --date=format:%Y%m%d $(git show -s --format=%H) -1)
+          docker buildx build -t mzz2017/v2raya-nightly:$v -f Dockerfile --platform="$PLATFORM" . --push
+          docker buildx build -t mzz2017/v2raya-nightly:latest -f Dockerfile --platform="$PLATFORM" . --push
+    
