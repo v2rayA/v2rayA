@@ -5,7 +5,7 @@
         {{ $tc("configureServer.title", readonly ? 2 : 1) }}
       </p>
     </header>
-    <section :class="{ 'modal-card-body': true, readonly: readonly }">
+    <section ref="section" :class="{ 'modal-card-body': true }">
       <b-tabs
         v-model="tabChoice"
         position="is-centered"
@@ -672,6 +672,15 @@ export default {
     }
   },
   mounted() {
+    if (this.readonly) {
+      this.$refs.section
+        .querySelectorAll("input, textarea")
+        .forEach(x => (x.readOnly = "readOnly"));
+      this.$refs.section.querySelectorAll("select").forEach(x => {
+        const text = x.querySelector(`option[value="${x.value}"]`).textContent;
+        x.outerHTML = `<input type="text" class="input" readonly="readonly" value="${text}">`;
+      });
+    }
     if (localStorage["vlessValid"] === "true") {
       this.showVLess = true;
       this.vlessVersion = 1;
