@@ -672,15 +672,6 @@ export default {
     }
   },
   mounted() {
-    if (this.readonly) {
-      this.$refs.section
-        .querySelectorAll("input, textarea")
-        .forEach(x => (x.readOnly = "readOnly"));
-      this.$refs.section.querySelectorAll("select").forEach(x => {
-        const text = x.querySelector(`option[value="${x.value}"]`).textContent;
-        x.outerHTML = `<input type="text" class="input" readonly="readonly" value="${text}">`;
-      });
-    }
     if (localStorage["vlessValid"] === "true") {
       this.showVLess = true;
       this.vlessVersion = 1;
@@ -737,6 +728,19 @@ export default {
             this.trojan = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 4;
           }
+          this.$nextTick(() => {
+            if (this.readonly) {
+              this.$refs.section
+                .querySelectorAll("input, textarea")
+                .forEach(x => (x.readOnly = "readOnly"));
+              this.$refs.section.querySelectorAll("select").forEach(x => {
+                const text = x.querySelector(`option[value="${x.value}"]`)
+                  .textContent;
+                console.log(x.value, text);
+                x.outerHTML = `<input type="text" class="input" readonly="readonly" value="${text}">`;
+              });
+            }
+          });
         });
       });
     }
