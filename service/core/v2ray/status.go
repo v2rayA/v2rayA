@@ -273,6 +273,11 @@ func killV2ray(saveStatus bool) (err error) {
 		if err != nil {
 			return
 		}
+		// to prevent [defunct] process
+		_, err = CoreProcess().Wait()
+		if err != nil {
+			return
+		}
 		if saveStatus {
 			SetCoreProcess(nil)
 		}
