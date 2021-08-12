@@ -18,8 +18,8 @@
       :fullwidth="false"
       :overlay="false"
       :right="false"
-      :can-cancel="false"
       class="node-status-sidebar"
+      :can-cancel="['outside']"
       @close="showSidebar = false"
       @mouseleave.native="showSidebar = false"
     >
@@ -72,6 +72,7 @@
               : 'rgba(0, 0, 0, 0.05)'
             : 'transparent'
         }"
+        :class="{ 'float-toolbar': overHeight }"
       >
         <div style="max-width: 60%">
           <button
@@ -121,13 +122,14 @@
               button: true,
               field: true,
               'is-delete': true,
+              'mobile-small': true,
               'not-show': true
             }"
           >
             <i class="iconfont icon-delete" />
             <span>placeholder</span>
           </button>
-          <span class="field not-show">placeholder</span>
+          <span class="field not-show mobile-small">placeholder</span>
         </div>
         <div class="right">
           <b-button
@@ -1630,8 +1632,13 @@ td {
 @import "~bulma/sass/utilities/all";
 
 #toolbar {
-  .field.is-grouped .field:not(:last-child) {
-    @media screen and (max-width: 450px) {
+  @media screen and (max-width: 450px) {
+    &.float-toolbar {
+      top: 4.25rem;
+      margin-left: 25px;
+      width: calc(100% - 50px);
+    }
+    .field.is-grouped .field:not(:last-child) {
       margin-right: 0.3rem;
     }
   }
@@ -1769,10 +1776,11 @@ $coverBackground: rgba(0, 0, 0, 0.6);
 .mobile-small {
   @media screen and (max-width: 450px) {
     border-radius: 2px;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
   }
 }
 .b-sidebar.node-status-sidebar-reduced > .sidebar-content.is-fixed {
+  z-index: 1;
   left: 1px;
   top: 4.25rem;
   background-color: white;
