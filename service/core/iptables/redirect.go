@@ -61,8 +61,6 @@ ip6tables -t nat -N V2RAY
 ip6tables -w 2 -t nat -A V2RAY -p tcp -m multiport --sports {{TCP_PORTS}} -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d ::/128 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d ::1/128 -j RETURN
-ip6tables -w 2 -t nat -A V2RAY -d ::ffff:0:0/96 -j RETURN
-ip6tables -w 2 -t nat -A V2RAY -d ::ffff:0:0:0/96 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 64:ff9b::/96 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 100::/64 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 2001::/32 -j RETURN
