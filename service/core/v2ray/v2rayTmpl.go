@@ -1228,12 +1228,26 @@ func (t *Template) SetDualStack(setting *configure.Setting) {
 	if !setting.IntranetSharing {
 		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
-			t.Inbounds[i].Listen = "127.0.0.1"
+			if t.Inbounds[i].Tag == "dns-in" {
+				t.Inbounds[i].Listen = "127.0.0.1"
+				inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
+				continue
+			} else {
+				t.Inbounds[i].Listen = "127.0.0.1"
+			}
 			inbounds6[i].Listen = "::1"
 			if t.Inbounds[i].Tag != "" {
 				tagMap[t.Inbounds[i].Tag] = struct{}{}
 				t.Inbounds[i].Tag += tag4Suffix
 				inbounds6[i].Tag += tag6Suffix
+			}
+		}
+		if !iptables.IsIPv6Supported() {
+			return
+		}
+		for i := len(inbounds6) - 1; i >= 0; i-- {
+			if inbounds6[i].Tag == "THIS_IS_A_DROPPED_TAG" {
+				inbounds6 = append(inbounds6[:i], inbounds6[i+1:]...)
 			}
 		}
 		t.Inbounds = append(t.Inbounds, inbounds6...)
