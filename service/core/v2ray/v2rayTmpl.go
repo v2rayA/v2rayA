@@ -87,6 +87,7 @@ type RoutingRule struct {
 	IP          []string `json:"ip,omitempty"`
 	Network     string   `json:"network,omitempty"`
 	Port        string   `json:"port,omitempty"`
+	SourcePort  string   `json:"sourcePort,omitempty"`
 	Protocol    []string `json:"protocol,omitempty"`
 	Source      []string `json:"source,omitempty"`
 	User        []string `json:"user,omitempty"`
@@ -1160,7 +1161,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 			}
 			for _, f := range rule.And {
 				switch f.Name {
-				case "domain":
+				case "domain", "domains":
 					for k, vv := range f.NamedParams {
 						for _, v := range vv {
 							if k == "contains" {
@@ -1183,6 +1184,8 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 					rr.Network = strings.Join(f.Params, ",")
 				case "port":
 					rr.Port = strings.Join(f.Params, ",")
+				case "sourcePort":
+					rr.SourcePort = strings.Join(f.Params, ",")
 				case "protocol":
 					rr.Protocol = f.Params
 				case "source":
