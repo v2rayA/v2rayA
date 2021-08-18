@@ -43,11 +43,26 @@ func PostPortWhiteList(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(nil, "bad request"))
 		return
 	}
-	p := service.GetPortsDefault()
+	p := service.GetPorts()
 	_, listenPort, _ := net.SplitHostPort(global.GetEnvironmentConfig().Address)
+	tcpList := []string{"1:1023", data.RequestPort, listenPort}
+	udpList := []string{"1:1023"}
+	if p.Http > 0 {
+		tcpList = append(tcpList, strconv.Itoa(p.Http))
+	}
+	if p.HttpWithPac > 0 {
+		tcpList = append(tcpList, strconv.Itoa(p.HttpWithPac))
+	}
+	if p.VlessGrpc > 0 {
+		tcpList = append(tcpList, strconv.Itoa(p.VlessGrpc))
+	}
+	if p.Socks5 > 0 {
+		tcpList = append(tcpList, strconv.Itoa(p.Socks5))
+		udpList = append(udpList, strconv.Itoa(p.Socks5))
+	}
 	wpl := configure.PortWhiteList{
-		TCP: []string{"1:1023", data.RequestPort, listenPort, strconv.Itoa(p.Http), strconv.Itoa(p.HttpWithPac), strconv.Itoa(p.Socks5)},
-		UDP: []string{"1:1023", strconv.Itoa(p.Socks5)},
+		TCP: tcpList,
+		UDP: udpList,
 	}
 	err = configure.SetPortWhiteList(&wpl)
 	if err != nil {

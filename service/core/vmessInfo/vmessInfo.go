@@ -21,6 +21,7 @@ type VmessInfo struct {
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
 	Flow          string `json:"flow,omitempty"`
+	Alpn          string `json:"alpn,omitempty"`        // VLESS only
 	V             string `json:"v"`
 	AllowInsecure bool   `json:"allowInsecure"`
 	Protocol      string `json:"protocol"`
@@ -51,8 +52,10 @@ func (v *VmessInfo) ExportToURL() string {
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "host", v.Host)
 			setValue(&query, "path", v.Path)
+		case "grpc":
+			setValue(&query, "serviceName", v.Type)
 		}
-		//TODO: QUIC, gRPC
+		//TODO: QUIC
 		if v.TLS != "none" {
 			setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
 		}

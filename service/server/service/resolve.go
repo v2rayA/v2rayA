@@ -121,10 +121,14 @@ func ResolveVlessURL(vless string) (data *nodeData.NodeData, err error) {
 		Path:     u.Query().Get("path"),
 		TLS:      u.Query().Get("security"),
 		Flow:     u.Query().Get("flow"),
+		Alpn:     u.Query().Get("alpn"),
 		Protocol: "vless",
 	}
 	if data.VmessInfo.Net == "" {
 		data.VmessInfo.Net = "tcp"
+	}
+	if data.VmessInfo.Net == "grpc" {
+		data.VmessInfo.Type = u.Query().Get("serviceName")
 	}
 	if data.VmessInfo.Type == "" {
 		data.VmessInfo.Type = "none"
