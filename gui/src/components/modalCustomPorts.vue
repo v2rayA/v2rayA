@@ -56,6 +56,30 @@
             required
           ></b-input>
         </b-field>
+        <b-field
+          :label="$t('customAddressPort.portVlessGrpc')"
+          label-position="on-border"
+        >
+          <b-input
+            v-model="table.vlessGrpc"
+            placeholder="0"
+            type="number"
+            min="0"
+            required
+          ></b-input>
+        </b-field>
+        <b-message
+          v-if="table.vlessGrpc > 0 && table.vlessGrpcLink"
+          type="is-info"
+          style="font-size:13px"
+          class="after-line-dot5"
+        >
+          <p>
+            {{ $t("customAddressPort.portVlessGrpcLink") }}:
+            <code>{{ table.vlessGrpcLink }}</code>
+          </p>
+          <p v-html="$t('customAddressPort.messages[4]')"></p>
+        </b-message>
         <b-message
           type="is-info"
           style="font-size:13px"
@@ -100,7 +124,9 @@ export default {
       backendAddress: "http://localhost:2017",
       socks5: "20170",
       http: "20171",
-      httpWithPac: "20172"
+      httpWithPac: "20172",
+      vlessGrpc: "0",
+      vlessGrpcLink: ""
     },
     backendReady: false
   }),
@@ -145,10 +171,21 @@ export default {
           data: {
             socks5: parseInt(this.table.socks5),
             http: parseInt(this.table.http),
-            httpWithPac: parseInt(this.table.httpWithPac)
+            httpWithPac: parseInt(this.table.httpWithPac),
+            vlessGrpc: parseInt(this.table.vlessGrpc)
           }
         }).then(res => {
           handleResponse(res, this, () => {
+            if (res.data.data?.vlessGrpcLink) {
+              this.$buefy.dialog.confirm({
+                title: `<p>${this.$t(
+                  "customAddressPort.portVlessGrpcLink"
+                )}</p><p>${this.$t("customAddressPort.messages[4]")}</p>`,
+                message: res.data.data.vlessGrpcLink,
+                size: "is-small",
+                closeOnConfirm: true
+              });
+            }
             localStorage["backendAddress"] = backendAddress;
             this.$emit("close");
           });

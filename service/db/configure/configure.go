@@ -35,6 +35,7 @@ func New() *Configure {
 			Socks5:      20170,
 			Http:        20171,
 			HttpWithPac: 20172,
+			VlessGrpc:   0,
 		},
 		PortWhiteList:   PortWhiteList{},
 		InternalDnsList: nil,
@@ -408,6 +409,19 @@ func ExistsAccount(username string) bool {
 func GetPasswordOfAccount(username string) (pwd string, err error) {
 	err = db.Get("accounts", username, &pwd)
 	return
+}
+
+func GetAccounts() (accounts [][2]string, err error) {
+	unames, err := db.GetBucketKeys("accounts")
+	if err != nil {
+		return nil, err
+	}
+	for _, uname := range unames {
+		var passwd string
+		err = db.Get("accounts", uname, &passwd)
+		accounts = append(accounts, [2]string{uname, passwd})
+	}
+	return accounts, nil
 }
 
 func HasAnyAccounts() bool {

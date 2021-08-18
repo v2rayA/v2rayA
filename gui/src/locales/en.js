@@ -150,11 +150,17 @@ export default {
     portSocks5: "Port of SOCKS5",
     portHttp: "Port of HTTP",
     portHttpWithPac: "Port of HTTP(with Rule)",
+    portVlessGrpc: "Port of VLESS-GRPC(with Rule)",
+    portVlessGrpcPrompt: "Link of VLESS-GRPC port: {link}",
     messages: [
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
       "We cannot judge port occupations in docker mode. Confirm it by yourself.",
-      "Zero means to close this port."
+      "Zero means to close this port.",
+      "Since the self-signed certificate is used by default, if the v2ray-core of the client does not support" +
+        " pin certificates, the client needs to trust the certificate at /etc/v2raya/vlessGrpc.crt, or check" +
+        ' "AllowInsecure" (not recommended). Or you can set your own certificate, and use the command <code>v2raya --help</code> to' +
+        " look up the method."
     ]
   },
   customRouting: {

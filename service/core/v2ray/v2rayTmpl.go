@@ -2,6 +2,8 @@ package v2ray
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/routingA"
@@ -31,16 +33,13 @@ import (
 
 /*对应template.json*/
 type TmplJson struct {
-	Template       Template       `json:"template"`
-	TCPSettings    TCPSettings    `json:"tcpSettings"`
-	WsSettings     WsSettings     `json:"wsSettings"`
-	TLSSettings    TLSSettings    `json:"tlsSettings"`
-	KcpSettings    KcpSettings    `json:"kcpSettings"`
-	HttpSettings   HttpSettings   `json:"httpSettings"`
-	StreamSettings StreamSettings `json:"streamSettings"`
-	Whitelist      []RoutingRule  `json:"whitelist"`
-	Gfwlist        []RoutingRule  `json:"gfwlist"`
-	Mux            Mux            `json:"mux"`
+	Template           Template       `json:"template"`
+	TmplTCPSettings    TCPSettings    `json:"tcpSettings"`
+	TmplWsSettings     WsSettings     `json:"wsSettings"`
+	TmplTLSSettings    TLSSettings    `json:"tlsSettings"`
+	TmplKcpSettings    KcpSettings    `json:"kcpSettings"`
+	TmplHttpSettings   HttpSettings   `json:"httpSettings"`
+	TmplStreamSettings StreamSettings `json:"streamSettings"`
 }
 type Template struct {
 	Log       *Log             `json:"log,omitempty"`
@@ -108,7 +107,7 @@ type Inbound struct {
 	Listen         string           `json:"listen,omitempty"`
 	Sniffing       Sniffing         `json:"sniffing,omitempty"`
 	Settings       *InboundSettings `json:"settings,omitempty"`
-	StreamSettings interface{}      `json:"streamSettings"`
+	StreamSettings *StreamSettings  `json:"streamSettings"`
 	Tag            string           `json:"tag,omitempty"`
 }
 type InboundSettings struct {
@@ -117,11 +116,17 @@ type InboundSettings struct {
 	IP             interface{} `json:"ip,omitempty"`
 	Accounts       []Account   `json:"accounts,omitempty"`
 	Clients        interface{} `json:"clients,omitempty"`
+	Decryption     string      `json:"decryption,omitempty"`
 	Network        string      `json:"network,omitempty"`
 	UserLevel      int         `json:"userLevel,omitempty"`
 	Address        string      `json:"address,omitempty"`
 	Port           int         `json:"port,omitempty"`
 	FollowRedirect bool        `json:"followRedirect,omitempty"`
+}
+type VlessClient struct {
+	Id    string `json:"id"`
+	Level int    `json:"level,omitempty"`
+	Email string `json:"email,omitempty"`
 }
 type Account struct {
 	User string `json:"user"`
@@ -159,12 +164,15 @@ type Settings struct {
 	UserLevel      *int        `json:"userLevel,omitempty"`
 }
 type TLSSettings struct {
-	AllowInsecure        bool        `json:"allowInsecure"`
-	ServerName           interface{} `json:"serverName,omitempty"`
-	AllowInsecureCiphers bool        `json:"allowInsecureCiphers"`
+	AllowInsecure        bool          `json:"allowInsecure"`
+	ServerName           interface{}   `json:"serverName,omitempty"`
+	AllowInsecureCiphers bool          `json:"allowInsecureCiphers"`
+	Alpn                 []string      `json:"alpn"`
+	Certificates         []Certificate `json:"certificates"`
 }
-type XTLSSettings struct {
-	ServerName interface{} `json:"serverName,omitempty"`
+type Certificate struct {
+	CertificateFile string `json:"certificateFile"`
+	KeyFile         string `json:"keyFile"`
 }
 type Headers struct {
 	Host string `json:"Host"`
@@ -178,12 +186,16 @@ type StreamSettings struct {
 	Network      string        `json:"network,omitempty"`
 	Security     string        `json:"security,omitempty"`
 	TLSSettings  *TLSSettings  `json:"tlsSettings,omitempty"`
-	XTLSSettings *XTLSSettings `json:"xtlsSettings,omitempty"`
+	XTLSSettings *TLSSettings  `json:"xtlsSettings,omitempty"`
 	TCPSettings  *TCPSettings  `json:"tcpSettings,omitempty"`
 	KcpSettings  *KcpSettings  `json:"kcpSettings,omitempty"`
 	WsSettings   *WsSettings   `json:"wsSettings,omitempty"`
 	HTTPSettings *HttpSettings `json:"httpSettings,omitempty"`
+	GrpcSettings *GrpcSettings `json:"grpcSettings"`
 	Sockopt      *Sockopt      `json:"sockopt,omitempty"`
+}
+type GrpcSettings struct {
+	ServiceName string `json:"serviceName"`
 }
 type Sockopt struct {
 	Mark        *int    `json:"mark,omitempty"`
@@ -359,41 +371,49 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 				},
 			}
 		}
-		o.StreamSettings = &tmplJson.StreamSettings
+		streamSetting := tmplJson.TmplStreamSettings
+		o.StreamSettings = &streamSetting
 		o.StreamSettings.Network = v.Net
 		// 根据传输协议(network)修改streamSettings
-		//TODO: QUIC, gRPC
+		//TODO: QUIC
 		switch strings.ToLower(v.Net) {
+		case "grpc":
+			o.StreamSettings.GrpcSettings = &GrpcSettings{ServiceName: v.Type}
 		case "ws":
-			tmplJson.WsSettings.Headers.Host = v.Host
-			tmplJson.WsSettings.Path = v.Path
-			o.StreamSettings.WsSettings = &tmplJson.WsSettings
+			wsSetting := tmplJson.TmplWsSettings
+			wsSetting.Headers.Host = v.Host
+			wsSetting.Path = v.Path
+			o.StreamSettings.WsSettings = &wsSetting
 		case "mkcp", "kcp":
-			tmplJson.KcpSettings.Header.Type = v.Type
-			o.StreamSettings.KcpSettings = &tmplJson.KcpSettings
+			kcpSetting := tmplJson.TmplKcpSettings
+			kcpSetting.Header.Type = v.Type
+			o.StreamSettings.KcpSettings = &kcpSetting
 			o.StreamSettings.KcpSettings.Seed = v.Path
 		case "tcp":
 			if strings.ToLower(v.Type) == "http" {
-				tmplJson.TCPSettings.Header.Request.Headers.Host = strings.Split(v.Host, ",")
+				tcpSetting := tmplJson.TmplTCPSettings
+				tcpSetting.Header.Request.Headers.Host = strings.Split(v.Host, ",")
 				if v.Path != "" {
-					tmplJson.TCPSettings.Header.Request.Path = strings.Split(v.Path, ",")
-					for i := range tmplJson.TCPSettings.Header.Request.Path {
-						if !strings.HasPrefix(tmplJson.TCPSettings.Header.Request.Path[i], "/") {
-							tmplJson.TCPSettings.Header.Request.Path[i] = "/" + tmplJson.TCPSettings.Header.Request.Path[i]
+					tcpSetting.Header.Request.Path = strings.Split(v.Path, ",")
+					for i := range tcpSetting.Header.Request.Path {
+						if !strings.HasPrefix(tcpSetting.Header.Request.Path[i], "/") {
+							tcpSetting.Header.Request.Path[i] = "/" + tcpSetting.Header.Request.Path[i]
 						}
 					}
 				}
-				o.StreamSettings.TCPSettings = &tmplJson.TCPSettings
+				o.StreamSettings.TCPSettings = &tcpSetting
 			}
 		case "h2", "http":
-			tmplJson.HttpSettings.Host = strings.Split(v.Host, ",")
-			tmplJson.HttpSettings.Path = v.Path
-			o.StreamSettings.HTTPSettings = &tmplJson.HttpSettings
+			httpSetting := tmplJson.TmplHttpSettings
+			httpSetting.Host = strings.Split(v.Host, ",")
+			httpSetting.Path = v.Path
+			o.StreamSettings.HTTPSettings = &httpSetting
 		}
 		muxOn := setting.MuxOn == configure.Yes
 		if strings.ToLower(v.TLS) == "tls" {
 			o.StreamSettings.Security = "tls"
-			o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
+			tlsSetting := tmplJson.TmplTLSSettings
+			o.StreamSettings.TLSSettings = &tlsSetting
 			if v.AllowInsecure {
 				o.StreamSettings.TLSSettings.AllowInsecure = true
 			}
@@ -407,15 +427,30 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			if v.Host != "" {
 				o.StreamSettings.TLSSettings.ServerName = v.Host
 			}
+			// Alpn
+			if v.Alpn != "" {
+				alpn := strings.Split(v.Alpn, ",")
+				for i := range alpn {
+					alpn[i] = strings.TrimSpace(alpn[i])
+				}
+				o.StreamSettings.TLSSettings.Alpn = alpn
+			}
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			o.StreamSettings.Security = "xtls"
-			o.StreamSettings.XTLSSettings = new(XTLSSettings)
+			o.StreamSettings.XTLSSettings = new(TLSSettings)
 			// always set SNI
 			if v.Host != "" {
 				o.StreamSettings.XTLSSettings.ServerName = v.Host
 			}
 			if v.Flow == "" {
 				v.Flow = "xtls-rprx-origin"
+			}
+			if v.Alpn != "" {
+				alpn := strings.Split(v.Alpn, ",")
+				for i := range alpn {
+					alpn[i] = strings.TrimSpace(alpn[i])
+				}
+				o.StreamSettings.TLSSettings.Alpn = alpn
 			}
 			vnext := o.Settings.Vnext.([]Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -466,14 +501,15 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		}}
 
 		//tls
-		o.StreamSettings = &tmplJson.StreamSettings
+		streamSetting := tmplJson.TmplStreamSettings
+		o.StreamSettings = &streamSetting
 		o.StreamSettings.Network = "tcp"
 		o.StreamSettings.Security = "tls"
-		o.StreamSettings.TLSSettings = &tmplJson.TLSSettings
+		tlsSetting := tmplJson.TmplTLSSettings
+		o.StreamSettings.TLSSettings = &tlsSetting
 		if v.AllowInsecure {
 			o.StreamSettings.TLSSettings.AllowInsecure = true
 		}
-		// always set SNI
 		if v.Host != "" {
 			o.StreamSettings.TLSSettings.ServerName = v.Host
 		} else {
@@ -1273,7 +1309,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 		Tag:      tag,
 	}
 	if tproxy != nil {
-		dokodemo.StreamSettings = StreamSettings{Sockopt: &Sockopt{Tproxy: tproxy}}
+		dokodemo.StreamSettings = &StreamSettings{Sockopt: &Sockopt{Tproxy: tproxy}}
 		dokodemo.Settings.FollowRedirect = true
 
 	}
@@ -1401,17 +1437,75 @@ func (t *Template) AppendDNSOutbound() {
 	})
 }
 
-func (t *Template) SetInbound(setting *configure.Setting) {
-	ports := configure.GetPorts()
-	if ports != nil {
-		t.Inbounds[2].Port = ports.HttpWithPac
-		t.Inbounds[1].Port = ports.Http
-		t.Inbounds[0].Port = ports.Socks5
-		//端口为0则删除
-		for i := 2; i >= 0; i-- {
-			if t.Inbounds[i].Port == 0 {
-				t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
+func GenerateIdFromAccounts() (id string, err error) {
+	accounts, err := configure.GetAccounts()
+	if err != nil {
+		return "", err
+	}
+	sort.Slice(accounts, func(i, j int) bool {
+		if accounts[i][0] == accounts[j][0] {
+			return accounts[i][1] < accounts[j][1]
+		}
+		return accounts[i][0] < accounts[j][0]
+	})
+	h := sha256.New()
+	for _, account := range accounts {
+		h.Write([]byte(account[0]))
+		h.Write([]byte(account[1]))
+	}
+	id = common.StringToUUID5(hex.EncodeToString(h.Sum(nil)))
+	return id, nil
+}
+
+func SetVlessGrpcInbound(vlessGrpc *Inbound) (err error) {
+	if config := global.GetEnvironmentConfig(); len(config.VlessGrpcInboundCertKey) >= 2 {
+		cert, key := config.VlessGrpcInboundCertKey[0], config.VlessGrpcInboundCertKey[1]
+		vlessGrpc.StreamSettings.TLSSettings.Certificates[0].CertificateFile = cert
+		vlessGrpc.StreamSettings.TLSSettings.Certificates[0].KeyFile = key
+	} else {
+		// no specified cert and key
+		cert := "/etc/v2raya/vlessGrpc.crt"
+		key := "/etc/v2raya/vlessGrpc.key"
+		_, eCert := os.Stat(cert)
+		_, eKey := os.Stat(cert)
+		if os.IsNotExist(eCert) || os.IsNotExist(eKey) {
+			// no such files, generate them
+			if err := common.GenerateCertKey(cert, key, ""); err != nil {
+				return fmt.Errorf("failed to generate certificates for vlessGrpc inbound: %w", err)
 			}
+		}
+	}
+	id, err := GenerateIdFromAccounts()
+	if err != nil {
+		return err
+	}
+	_, commonName, err := common.GetCertInfo(vlessGrpc.StreamSettings.TLSSettings.Certificates[0].CertificateFile)
+	if err != nil {
+		return err
+	}
+	vlessGrpc.StreamSettings.TLSSettings.ServerName = commonName
+	vlessGrpc.Settings.Clients = []VlessClient{{Id: id}}
+	return nil
+}
+
+func (t *Template) SetInbound(setting *configure.Setting) error {
+	p := configure.GetPorts()
+	if p != nil {
+		t.Inbounds[0].Port = p.Socks5
+		t.Inbounds[1].Port = p.Http
+		t.Inbounds[2].Port = p.HttpWithPac
+		vlessGrpc := &t.Inbounds[3]
+		vlessGrpc.Port = p.VlessGrpc
+		if p.VlessGrpc > 0 {
+			if err := SetVlessGrpcInbound(vlessGrpc); err != nil {
+				return err
+			}
+		}
+	}
+	// remove those inbounds with zero port number
+	for i := len(t.Inbounds) - 1; i >= 0; i-- {
+		if t.Inbounds[i].Port == 0 {
+			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
 	if setting.Transparent != configure.TransparentClose {
@@ -1439,6 +1533,7 @@ func (t *Template) SetInbound(setting *configure.Setting) {
 			})
 		}
 	}
+	return nil
 }
 
 type OutboundInfo struct {
@@ -1693,6 +1788,23 @@ func (t *Template) SetAPI() (port int) {
 	return port
 }
 
+func (t *Template) SetVlessGrpcRouting() {
+	if configure.GetPorts().VlessGrpc <= 0 {
+		return
+	}
+	for i := range t.Routing.Rules {
+		var bHasRule bool
+		for _, tag := range t.Routing.Rules[i].InboundTag {
+			if tag == "rule" {
+				bHasRule = true
+			}
+		}
+		if bHasRule {
+			t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "vlessGrpc")
+		}
+	}
+}
+
 func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []string, err error) {
 	vmessInfo2OutboundInfos, outboundName2VmessInfos := RefineOutboundInfos(outboundInfos)
 	ps2OutboundNames := make(map[string][]string)
@@ -1737,7 +1849,9 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 	}
 
 	//set inbound ports according to the setting
-	t.SetInbound(setting)
+	if err = t.SetInbound(setting); err != nil {
+		return Template{}, nil, err
+	}
 	//set DNS
 	dnsRouting, err := t.SetDNS(outboundInfos, setting, supportUDP)
 	if err != nil {
@@ -1760,6 +1874,8 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 	if err = t.SetGroupRouting(outboundName2VmessInfos); err != nil {
 		return Template{}, nil, err
 	}
+	//set vlessGrpc routing
+	t.SetVlessGrpcRouting()
 	// set api
 	apiPort = t.SetAPI()
 
