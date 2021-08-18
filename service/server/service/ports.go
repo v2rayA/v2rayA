@@ -1,12 +1,8 @@
 package service
 
 import (
-	"fmt"
-	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
-	"os"
 	"strconv"
 )
 
@@ -73,9 +69,6 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if err = v2ray.PortOccupied(detectSyntax); err != nil {
 		return err
 	}
-	if err = checkAndGenerateCertForVlessGrpc(); err != nil {
-		return err
-	}
 	if err = configure.SetPorts(&origin); err != nil {
 		return err
 	}
@@ -83,21 +76,4 @@ func SetPorts(ports *configure.Ports) (err error) {
 		err = v2ray.UpdateV2RayConfig()
 	}
 	return
-}
-
-func checkAndGenerateCertForVlessGrpc() (err error) {
-	if config := global.GetEnvironmentConfig(); len(config.VlessGrpcInboundCertKey) < 2 {
-		// no specified cert and key
-		cert := "/etc/v2raya/vlessGrpc.crt"
-		key := "/etc/v2raya/vlessGrpc.key"
-		_, eCert := os.Stat(cert)
-		_, eKey := os.Stat(cert)
-		if os.IsNotExist(eCert) || os.IsNotExist(eKey) {
-			// no such files, generate them
-			if err := common.GenerateCertKey(cert, key, ""); err != nil {
-				return fmt.Errorf("failed to generate certificates for vlessGrpc inbound: %w", err)
-			}
-		}
-	}
-	return nil
 }

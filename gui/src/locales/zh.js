@@ -140,7 +140,8 @@ export default {
                           <p>当前设置的端口白名单为：</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
-      xtlsNotWithWs: `xtls无法和websocket共存`
+      xtlsNotWithWs: `xtls无法和websocket共存`,
+      grpcShouldWithTls: `gRPC必须启用TLS`
     }
   },
   customAddressPort: {
@@ -155,9 +156,7 @@ export default {
       "如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
       "docker模式下如果未使用<code>--privileged --network host</code>参数启动容器，可通过修改端口映射修改socks5、http端口。",
       "docker模式下不能正确判断端口占用，请确保输入的端口未被其他程序占用。",
-      "如将端口设为0则表示关闭该端口。",
-      "由于默认使用的是自签证书，如果连接方使用的 v2ray-core 不支持 pin 证书，连接方可能需要将证书 /etc/v2raya/vlessGrpc.crt 添加信任，或勾选" +
-        " AllowInsecure（不推荐）。或者你可以自行设定证书，具体方法使用命令 v2raya --help 查看。"
+      "如将端口设为0则表示关闭该端口。"
     ]
   },
   customRouting: {

@@ -39,23 +39,37 @@ func PutPorts(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	if data.VlessGrpc > 0 && origin.VlessGrpc <= 0 {
-		// turn VLESS-GRPC on
-		host := "example.com"
-		if h := getHostnameFromHost(ctx.Request.Host); h != "localhost" && h != "127.0.0.1" && h != "0.0.0.0" {
-			host = h
-		}
-		link, err := genLinkForVlessGrpc(host)
-		if err != nil {
-			common.ResponseError(ctx, err)
+	if certKey := global.GetEnvironmentConfig().VlessGrpcInboundCertKey; len(certKey) >= 2 {
+		// if is turning VLESS-GRPC on
+		if data.VlessGrpc > 0 && origin.VlessGrpc <= 0 {
+			link, err := getLinkForVlessGrpc(ctx.Request.Host, certKey[0])
+			if err != nil {
+				common.ResponseError(ctx, err)
+				return
+			}
+			common.ResponseSuccess(ctx, gin.H{
+				"vlessGrpcLink": link,
+			})
 			return
 		}
-		common.ResponseSuccess(ctx, gin.H{
-			"vlessGrpcLink": link,
-		})
-		return
 	}
 	common.ResponseSuccess(ctx, nil)
+}
+
+func getLinkForVlessGrpc(host string, cert string) (string, error) {
+	hostname := "example.com"
+	if h := getHostnameFromHost(host); h != "localhost" && h != "127.0.0.1" && h != "0.0.0.0" {
+		hostname = h
+	}
+	names, err := common.GetCertInfo(cert)
+	if err != nil {
+		return "", err
+	}
+	link, err := _getLinkForVlessGrpc(hostname, names[0])
+	if err != nil {
+		return "", err
+	}
+	return link, nil
 }
 
 func GetPorts(ctx *gin.Context) {
@@ -64,43 +78,33 @@ func GetPorts(ctx *gin.Context) {
 		VlessGrpcLink *string `json:"vlessGrpcLink"`
 	}
 	data.Ports = service.GetPorts()
-	if data.VlessGrpc > 0 {
-		host := "example.com"
-		if h := getHostnameFromHost(ctx.Request.Host); h != "localhost" && h != "127.0.0.1" && h != "0.0.0.0" {
-			host = h
+	if certKey := global.GetEnvironmentConfig().VlessGrpcInboundCertKey; len(certKey) >= 2 {
+		if data.VlessGrpc > 0 {
+			link, err := getLinkForVlessGrpc(ctx.Request.Host, certKey[0])
+			if err != nil {
+				common.ResponseError(ctx, err)
+				return
+			}
+			data.VlessGrpcLink = &link
 		}
-		link, err := genLinkForVlessGrpc(host)
-		if err != nil {
-			common.ResponseError(ctx, err)
-			return
-		}
-		data.VlessGrpcLink = &link
 	}
 	common.ResponseSuccess(ctx, data)
 }
 
-func genLinkForVlessGrpc(hostname string) (link string, err error) {
+func _getLinkForVlessGrpc(hostname string, sni string) (link string, err error) {
 	id, err := v2ray.GenerateIdFromAccounts()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate link for VLESS-GRPC inbound: %w", err)
 	}
-	cert := "/etc/v2raya/vlessGrpc.crt"
-	if len(global.GetEnvironmentConfig().VlessGrpcInboundCertKey) >= 2 {
-		cert = global.GetEnvironmentConfig().VlessGrpcInboundCertKey[0]
-	}
-	_, commonName, err := common.GetCertInfo(cert)
-	if err != nil {
-		return "", err
-	}
 	p := service.GetPorts()
 	info := vmessInfo.VmessInfo{
-		Ps:       hostname + " - v2rayA",
+		Ps:       "VLESS-GRPC | v2rayA",
 		Add:      hostname,
 		Port:     strconv.Itoa(p.VlessGrpc),
 		ID:       id,
 		Net:      "grpc",
-		Host:     commonName,
-		Type:     "v2rayA_VLESS_GRPC",
+		Host:     sni,
+		Path:     "v2rayA_VLESS_GRPC",
 		TLS:      "tls",
 		Alpn:     "h2",
 		V:        "2",

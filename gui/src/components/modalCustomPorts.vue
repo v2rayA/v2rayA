@@ -78,7 +78,6 @@
             {{ $t("customAddressPort.portVlessGrpcLink") }}:
             <code>{{ table.vlessGrpcLink }}</code>
           </p>
-          <p v-html="$t('customAddressPort.messages[4]')"></p>
         </b-message>
         <b-message
           type="is-info"
@@ -178,9 +177,7 @@ export default {
           handleResponse(res, this, () => {
             if (res.data.data?.vlessGrpcLink) {
               this.$buefy.dialog.confirm({
-                title: `<p>${this.$t(
-                  "customAddressPort.portVlessGrpcLink"
-                )}</p><p>${this.$t("customAddressPort.messages[4]")}</p>`,
+                title: `${this.$t("customAddressPort.portVlessGrpcLink")}`,
                 message: res.data.data.vlessGrpcLink,
                 size: "is-small",
                 closeOnConfirm: true

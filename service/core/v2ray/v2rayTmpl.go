@@ -164,11 +164,12 @@ type Settings struct {
 	UserLevel      *int        `json:"userLevel,omitempty"`
 }
 type TLSSettings struct {
-	AllowInsecure        bool          `json:"allowInsecure"`
-	ServerName           interface{}   `json:"serverName,omitempty"`
-	AllowInsecureCiphers bool          `json:"allowInsecureCiphers"`
-	Alpn                 []string      `json:"alpn"`
-	Certificates         []Certificate `json:"certificates"`
+	AllowInsecure                    bool          `json:"allowInsecure"`
+	ServerName                       interface{}   `json:"serverName,omitempty"`
+	AllowInsecureCiphers             bool          `json:"allowInsecureCiphers"`
+	Alpn                             []string      `json:"alpn,omitempty"`
+	PinnedPeerCertificateChainSha256 string        `json:"pinnedPeerCertificateChainSha256,omitempty"`
+	Certificates                     []Certificate `json:"certificates,omitempty"`
 }
 type Certificate struct {
 	CertificateFile string `json:"certificateFile"`
@@ -378,7 +379,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		//TODO: QUIC
 		switch strings.ToLower(v.Net) {
 		case "grpc":
-			o.StreamSettings.GrpcSettings = &GrpcSettings{ServiceName: v.Type}
+			o.StreamSettings.GrpcSettings = &GrpcSettings{ServiceName: v.Path}
 		case "ws":
 			wsSetting := tmplJson.TmplWsSettings
 			wsSetting.Headers.Host = v.Host
@@ -1458,32 +1459,17 @@ func GenerateIdFromAccounts() (id string, err error) {
 }
 
 func SetVlessGrpcInbound(vlessGrpc *Inbound) (err error) {
-	if config := global.GetEnvironmentConfig(); len(config.VlessGrpcInboundCertKey) >= 2 {
-		cert, key := config.VlessGrpcInboundCertKey[0], config.VlessGrpcInboundCertKey[1]
-		vlessGrpc.StreamSettings.TLSSettings.Certificates[0].CertificateFile = cert
-		vlessGrpc.StreamSettings.TLSSettings.Certificates[0].KeyFile = key
-	} else {
-		// no specified cert and key
-		cert := "/etc/v2raya/vlessGrpc.crt"
-		key := "/etc/v2raya/vlessGrpc.key"
-		_, eCert := os.Stat(cert)
-		_, eKey := os.Stat(cert)
-		if os.IsNotExist(eCert) || os.IsNotExist(eKey) {
-			// no such files, generate them
-			if err := common.GenerateCertKey(cert, key, ""); err != nil {
-				return fmt.Errorf("failed to generate certificates for vlessGrpc inbound: %w", err)
-			}
-		}
+	config := global.GetEnvironmentConfig()
+	if len(config.VlessGrpcInboundCertKey) < 2 {
+		return fmt.Errorf("VLESS-GPRC inbound depends on TLS cert, close the inbound or add cert by comand line argument --vless-grpc-inbound-cert-key or environment variable V2RAYA_VLESS_GRPC_INBOUND_CERT_KEY")
 	}
+	cert, key := config.VlessGrpcInboundCertKey[0], config.VlessGrpcInboundCertKey[1]
+	vlessGrpc.StreamSettings.TLSSettings.Certificates[0].CertificateFile = cert
+	vlessGrpc.StreamSettings.TLSSettings.Certificates[0].KeyFile = key
 	id, err := GenerateIdFromAccounts()
 	if err != nil {
 		return err
 	}
-	_, commonName, err := common.GetCertInfo(vlessGrpc.StreamSettings.TLSSettings.Certificates[0].CertificateFile)
-	if err != nil {
-		return err
-	}
-	vlessGrpc.StreamSettings.TLSSettings.ServerName = commonName
 	vlessGrpc.Settings.Clients = []VlessClient{{Id: id}}
 	return nil
 }

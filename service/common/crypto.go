@@ -1,26 +1,19 @@
 package common
 
 import (
-	"bytes"
 	"crypto/hmac"
 	"crypto/md5"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
-	"math/big"
 	"os"
 	"strings"
-	"time"
 )
 
 // 用一个花里胡哨的加密方式来加密密码，密码最多32位
@@ -87,95 +80,25 @@ func StringToUUID5(str string) string {
 	return string(buf)
 }
 
-func GetCertInfo(crt string) (sha []byte, commonName string, err error) {
+func GetCertInfo(crt string) (names []string, err error) {
 	b, err := os.ReadFile(crt)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	p, _ := pem.Decode(b)
 	if p == nil {
-		return nil, "", fmt.Errorf("bad certificate")
+		return nil, fmt.Errorf("bad certificate")
 	}
 	cert, err := x509.ParseCertificate(p.Bytes)
 	if err != nil {
-		return nil, "", fmt.Errorf("bad certificate: %w", err)
+		return nil, fmt.Errorf("bad certificate: %w", err)
 	}
-	pubDER, err := x509.MarshalPKIXPublicKey(cert.PublicKey.(*rsa.PublicKey))
-	sum := sha256.Sum256(pubDER)
-	pin := make([]byte, base64.StdEncoding.EncodedLen(len(sum)))
-	base64.StdEncoding.Encode(pin, sum[:])
-	return pin, cert.Subject.CommonName, nil
-}
-
-// KeyPairWithPin returns PEM encoded Certificate and Key along with an SKPI
-// fingerprint of the public key.
-// https://blog.afoolishmanifesto.com/posts/golang-self-signed-and-pinned-certs/
-func KeyPairWithPin(commonName string) (pemCert []byte, pemKey []byte, pin []byte, err error) {
-	bits := 4096
-	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "rsa.GenerateKey")
+	names = append(names, cert.DNSNames...)
+	for _, ip := range cert.IPAddresses {
+		names = append(names, ip.String())
 	}
-
-	tpl := x509.Certificate{
-		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{CommonName: commonName},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(2, 0, 0),
-		BasicConstraintsValid: true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+	if len(names) <= 0 {
+		return nil, fmt.Errorf("bad certificate: no names found")
 	}
-	derCert, err := x509.CreateCertificate(rand.Reader, &tpl, &tpl, &privateKey.PublicKey, privateKey)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("x509.CreateCertificate: %w", err)
-	}
-
-	buf := &bytes.Buffer{}
-	err = pem.Encode(buf, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: derCert,
-	})
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("pem.Encode: %w", err)
-	}
-
-	pemCert = buf.Bytes()
-
-	buf = &bytes.Buffer{}
-	err = pem.Encode(buf, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	})
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("pem.Encode: %w", err)
-	}
-	pemKey = buf.Bytes()
-	cert, err := x509.ParseCertificate(derCert)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("x509.ParseCertificate: %w", err)
-	}
-
-	pubDER, err := x509.MarshalPKIXPublicKey(cert.PublicKey.(*rsa.PublicKey))
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("x509.MarshalPKIXPublicKey: %w", err)
-	}
-	sum := sha256.Sum256(pubDER)
-	pin = make([]byte, base64.StdEncoding.EncodedLen(len(sum)))
-	base64.StdEncoding.Encode(pin, sum[:])
-
-	return pemCert, pemKey, pin, nil
-}
-func GenerateCertKey(certPath, keyPath string, commonName string) (err error) {
-	pemCert, pemKey, _, err := KeyPairWithPin(commonName)
-	if err != nil {
-		return err
-	}
-	if err = os.WriteFile(keyPath, pemKey, 0644); err != nil {
-		return err
-	}
-	if err = os.WriteFile(certPath, pemCert, 0644); err != nil {
-		return err
-	}
-	return nil
+	return names, nil
 }

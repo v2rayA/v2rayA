@@ -135,6 +135,7 @@
               <option value="kcp">mKCP</option>
               <option value="ws">WebSocket</option>
               <option value="h2">HTTP/2</option>
+              <option value="grpc">gRPC</option>
             </b-select>
           </b-field>
           <b-field
@@ -199,6 +200,13 @@
             />
           </b-field>
           <b-field
+            v-show="v2ray.tls === 'tls' || v2ray.tls === 'xtls'"
+            label="Alpn"
+            label-position="on-border"
+          >
+            <b-input v-model="v2ray.alpn" placeholder="h2,http/1.1" expanded />
+          </b-field>
+          <b-field
             v-show="
               v2ray.net === 'ws' ||
                 v2ray.net === 'h2' ||
@@ -222,6 +230,19 @@
               v-model="v2ray.path"
               :placeholder="$t('configureServer.seedObfuscation')"
               expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'grpc'"
+            label="ServiceName"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_service_name"
+              v-model="v2ray.path"
+              type="text"
+              expanded
+              required
             />
           </b-field>
         </b-tab-item>
@@ -607,6 +628,7 @@ export default {
       path: "",
       tls: "none",
       flow: "xtls-rprx-direct",
+      alpn: "",
       v: "",
       allowInsecure: false,
       protocol: "vmess"
@@ -774,15 +796,20 @@ export default {
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
           host: u.params.sni || u.params.host || "",
-          path: u.params.path || "",
+          path: u.params.path || u.params.serviceName || "",
+          alpn: u.params.alpn || "",
           tls: u.params.security || "none",
           flow: u.params.flow || "xtls-rprx-direct",
           allowInsecure: false,
           protocol: "vless"
         };
+        if (o.alpn !== "") {
+          o.alpn = decodeURIComponent(o.alpn);
+        }
         if (o.type === "mkcp" || o.type === "kcp") {
           o.path = u.params.seed;
         }
+        console.log(o);
         return o;
       } else if (url.toLowerCase().startsWith("ss://")) {
         let u = parseURL(url);
@@ -933,6 +960,12 @@ export default {
             sni: srcObj.host,
             flow: srcObj.flow
           };
+          if (srcObj.alpn !== "") {
+            query.alpn = srcObj.alpn;
+          }
+          if (srcObj.net === "grpc") {
+            query.serviceName = srcObj.path;
+          }
           if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
             query.seed = srcObj.path;
           }
@@ -1045,6 +1078,17 @@ export default {
         });
       } else if (this.v2ray.tls === "xtls" && !this.v2ray.flow) {
         this.v2ray.flow = this.presetFlows[0];
+      } else if (this.v2ray.tls === "none" && this.v2ray.net === "grpc") {
+        this.$buefy.toast.open({
+          message: this.$t("setting.messages.grpcShouldWithTls"),
+          type: "is-warning",
+          position: "is-top",
+          queue: false,
+          duration: 5000
+        });
+        this.$nextTick(() => {
+          this.v2ray.tls = "tls";
+        });
       }
     },
     handleClickSubmit() {
@@ -1073,6 +1117,7 @@ export default {
           continue;
         }
         if (
+          x.$el.offsetParent && // is visible
           x.hasOwnProperty("checkHtml5Validity") &&
           typeof x.checkHtml5Validity === "function" &&
           !x.checkHtml5Validity()
