@@ -128,7 +128,7 @@ func ResolveVlessURL(vless string) (data *nodeData.NodeData, err error) {
 		data.VmessInfo.Net = "tcp"
 	}
 	if data.VmessInfo.Net == "grpc" {
-		data.VmessInfo.Type = u.Query().Get("serviceName")
+		data.VmessInfo.Path = u.Query().Get("serviceName")
 	}
 	if data.VmessInfo.Type == "" {
 		data.VmessInfo.Type = "none"
