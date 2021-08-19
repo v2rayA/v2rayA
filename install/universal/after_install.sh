@@ -1,8 +1,6 @@
 #!/bin/sh
 
 systemctl daemon-reload
-systemctl enable v2raya
-systemctl start v2raya
 
 ECHOLEN=$(echo -e|awk '{print length($0)}')
 if [ ${ECHOLEN} = '0' ]
