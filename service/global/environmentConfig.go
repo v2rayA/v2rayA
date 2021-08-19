@@ -49,6 +49,11 @@ func initFunc() {
 		filepath.Dir(params.Config),
 		strings.ReplaceAll(filepath.Base(params.Config), ".", "_"),
 	)
+	if strings.Contains(params.Config, "$HOME") {
+		if h, err := os.UserHomeDir(); err == nil {
+			params.Config = strings.ReplaceAll(params.Config, "$HOME", h)
+		}
+	}
 	if params.ShowVersion {
 		fmt.Println(Version)
 		os.Exit(0)
