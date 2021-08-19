@@ -42,7 +42,10 @@ func checkEnvironment() {
 	conf := global.GetEnvironmentConfig()
 	if !conf.PassCheckRoot || conf.ResetPassword {
 		if os.Getegid() != 0 {
-			log.Fatal("Please execute this program with sudo or as a root user. If you are sure that you have root privileges, you can use the --passcheckroot parameter to skip the check")
+			log.Fatalln("Please execute this program with sudo or as a root user for the best experience.\n" +
+				"If you don't want to run as root, use the --passcheckroot parameter to skip the check.\n" +
+				"For example:\n" +
+				"$ v2raya --passcheckroot --config ~/.config/v2raya")
 		}
 	}
 	if conf.ResetPassword {

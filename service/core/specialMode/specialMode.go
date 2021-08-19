@@ -22,6 +22,9 @@ func ShouldLocalDnsListen() bool {
 	if setting.AntiPollution == configure.AntipollutionClosed {
 		return false
 	}
+	if setting.Transparent == configure.TransparentClose {
+		return false
+	}
 	if setting.TransparentType == configure.TransparentTproxy {
 		return false
 	}
@@ -54,10 +57,10 @@ func CouldLocalDnsListen() (couldListenLocalhost bool, err error) {
 	if err = netstat.FillProcesses(sockets); err != nil {
 		return false, fmt.Errorf("%w: %v. please try again later", DnsPortCheckFailedErr, err)
 	}
-	//NOTICE: Special local address. Do not use v2ray.PortOccupied
+	//NOTICE: Special local address (127.2.0.17). Do not use v2ray.PortOccupied
 	var occupiedErr error
 	if occupied {
-		// with IntranetSharing on, v2rayA will try listening at 0.0.0.0, which conflicts with all IPs
+		// with IntranetSharing on, v2ray will try listening at 0.0.0.0, which conflicts with all IPs
 		for _, socket := range sockets {
 			p := socket.Proc
 			if p == nil {
