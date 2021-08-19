@@ -1,15 +1,13 @@
 [Unit]
-Description=v2rayA Service
+Description=v2rayA Service for %i
 Documentation=https://github.com/v2rayA/v2rayA/wiki
 After=network.target nss-lookup.target iptables.service ip6tables.service
 Wants=network.target
 
 [Service]
 Type=simple
-User=root
-LimitNPROC=500
-LimitNOFILE=1000000
-ExecStart=/usr/bin/v2raya
+User=%i
+ExecStart=/usr/bin/v2raya --passcheckroot --config=$HOME/.config/v2raya
 Restart=on-failure
 
 [Install]
