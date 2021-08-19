@@ -44,9 +44,8 @@ func ParseVmess(v vmessInfo.VmessInfo) (s string, err error) {
 		Host:     v.Host,
 	}
 	u, err := url.Parse(fmt.Sprintf(
-		"simpleobfs://%v:%v",
-		url.PathEscape(params.Address),
-		url.PathEscape(params.Port),
+		"simpleobfs://%v",
+		net.JoinHostPort(params.Address, params.Port),
 	))
 	if err != nil {
 		log.Println(err)
