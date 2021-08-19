@@ -6,6 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/plugin"
 	"github.com/v2rayA/v2rayA/plugin/infra/ssr"
 	"log"
+	"net"
 	"net/url"
 	"strings"
 )
@@ -43,11 +44,10 @@ func ParseVmess(v vmessInfo.VmessInfo) (s string, err error) {
 		ProtocolParam: v.Host,
 	}
 	u, err := url.Parse(fmt.Sprintf(
-		"ssr://%v:%v@%v:%v",
+		"ssr://%v:%v@%v",
 		url.PathEscape(params.Cipher),
 		url.PathEscape(params.Passwd),
-		url.PathEscape(params.Address),
-		url.PathEscape(params.Port),
+		net.JoinHostPort(params.Address, params.Port),
 	))
 	if err != nil {
 		log.Println(err)
