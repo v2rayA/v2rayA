@@ -1,7 +1,9 @@
 package router
 
 import (
+	"crypto/md5"
 	"embed"
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -20,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 )
 
 //go:embed web
@@ -36,6 +39,8 @@ func (c relativeFS) Open(name string) (fs.File, error) {
 }
 
 func ServeGUI(engine *gin.Engine) {
+	data := []byte(time.Now().String())
+	etag := fmt.Sprintf("%x", md5.Sum(data))
 	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
 	webDir := global.GetEnvironmentConfig().WebDir
 	if webDir == "" {
@@ -71,6 +76,8 @@ func ServeGUI(engine *gin.Engine) {
 				ctx.Status(400)
 				return
 			}
+			ctx.Header("Cache-Control", "public, max-age=31536000")
+			ctx.Header("ETag", etag)
 			ctx.Header("Content-Type", "text/html; charset=utf-8")
 			ctx.String(http.StatusOK, string(b))
 		})
@@ -90,8 +97,10 @@ func ServeGUI(engine *gin.Engine) {
 				return nil
 			})
 			engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
-			r.GET("/", func(context *gin.Context) {
-				context.HTML(http.StatusOK, "index.html", nil)
+			r.GET("/", func(ctx *gin.Context) {
+				ctx.Header("Cache-Control", "public, max-age=31536000")
+				ctx.Header("ETag", etag)
+				ctx.HTML(http.StatusOK, "index.html", nil)
 			})
 		}
 	}
