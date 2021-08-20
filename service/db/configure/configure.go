@@ -213,13 +213,17 @@ func GetSettingNotNil() *Setting {
 	}
 	return r
 }
-func GetPorts() *Ports {
-	r := new(Ports)
-	err := db.Get("system", "ports", &r)
-	if err != nil {
-		return nil
+func GetPortsNotNil() *Ports {
+	p := new(Ports)
+	_ = db.Get("system", "ports", &p)
+	if p == nil {
+		p = new(Ports)
+		p.Socks5 = 20170
+		p.Http = 20171
+		p.HttpWithPac = 20172
+		p.VlessGrpc = 0
 	}
-	return r
+	return p
 }
 func GetPortWhiteListNotNil() *PortWhiteList {
 	r := new(PortWhiteList)
