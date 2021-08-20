@@ -7,14 +7,7 @@ import (
 )
 
 func GetPorts() configure.Ports {
-	p := configure.GetPorts()
-	if p == nil {
-		p = new(configure.Ports)
-		p.Socks5 = 20170
-		p.Http = 20171
-		p.HttpWithPac = 20172
-		p.VlessGrpc = 0
-	}
+	p := configure.GetPortsNotNil()
 	return *p
 }
 

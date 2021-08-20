@@ -1475,7 +1475,7 @@ func SetVlessGrpcInbound(vlessGrpc *Inbound) (err error) {
 }
 
 func (t *Template) SetInbound(setting *configure.Setting) error {
-	p := configure.GetPorts()
+	p := configure.GetPortsNotNil()
 	if p != nil {
 		t.Inbounds[0].Port = p.Socks5
 		t.Inbounds[1].Port = p.Http
@@ -1775,7 +1775,7 @@ func (t *Template) SetAPI() (port int) {
 }
 
 func (t *Template) SetVlessGrpcRouting() {
-	if configure.GetPorts().VlessGrpc <= 0 {
+	if configure.GetPortsNotNil().VlessGrpc <= 0 {
 		return
 	}
 	for i := range t.Routing.Rules {
