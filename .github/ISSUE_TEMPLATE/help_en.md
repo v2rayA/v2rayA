@@ -34,3 +34,8 @@ labels: help wanted
 
 
 ```
+
+### v2rayA setting and related screenshot
+Paste your v2rayA setting and problem related screenshot.
+<!-- Paste screenshot if possible -->
+
