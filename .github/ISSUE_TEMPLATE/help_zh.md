@@ -27,7 +27,7 @@ labels: help wanted
  journalctl -u v2ray | tail -n 50
  
  # docker mode
- docker logs v2raya_backend
+ docker logs v2raya
  ```
 ```shell
 # 此处贴入运行日志
