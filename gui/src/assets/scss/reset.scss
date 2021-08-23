@@ -64,3 +64,12 @@ html{
 .control:last-of-type:not(:first-of-type) > *:first-child{
   border-radius: 0 4px 4px 0 !important;
 }
+
+@font-face {
+  font-family: sarasa mono sc1;
+  src: url("~@/assets//font/Inter-Regular.otf")
+}
+
+.code-font {
+  font-family: sarasa mono sc1, Consolas, monospace, Monaco, Menlo, Courier New;
+}
