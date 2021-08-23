@@ -21,6 +21,10 @@
           v-model="external"
           type="textarea"
           custom-class="full-min-height horizon-scroll code-font"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
         />
       </b-field>
       <b-message type="is-danger" class="after-line-dot5">

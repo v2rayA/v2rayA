@@ -14,6 +14,10 @@
         class="full-min-height"
         custom-class="full-min-height horizon-scroll code-font"
         :placeholder="$t('routingA.messages.0')"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
       />
     </section>
     <footer class="modal-card-foot">
@@ -113,9 +117,5 @@ export default {
   overflow-x: auto;
   white-space: pre;
   line-height: 1.6em;
-}
-
-.code-font {
-  font-family: Consolas, monospace, Monaco, Menlo, Courier New;
 }
 </style>
