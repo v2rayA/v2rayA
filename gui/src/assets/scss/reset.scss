@@ -66,10 +66,10 @@ html{
 }
 
 @font-face {
-  font-family: sarasa mono sc1;
-  src: url("~@/assets//font/Inter-Regular.otf")
+  font-family: sarasa inter regular;
+  src: url("~@/assets/font/Inter-Regular.woff2")
 }
 
 .code-font {
-  font-family: sarasa mono sc1, Consolas, monospace, Monaco, Menlo, Courier New;
+  font-family: sarasa inter regular, Consolas, monospace, Monaco, Menlo, Courier New;
 }
