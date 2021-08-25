@@ -95,7 +95,6 @@ iptables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 32
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
 # 略过已建立的socket
-iptables -w 2 -t mangle -A SSTP_ONCE -j MARK --set-mark 0xff
 iptables -w 2 -t mangle -A SSTP_ONCE -j ACCEPT
 `
 	if IsIPv6Supported() {
@@ -156,7 +155,6 @@ ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 3
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
 # 略过已建立的socket
-ip6tables -w 2 -t mangle -A SSTP_ONCE -j MARK --set-mark 0xff
 ip6tables -w 2 -t mangle -A SSTP_ONCE -j ACCEPT
 `
 	}
