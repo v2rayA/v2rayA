@@ -1,9 +1,9 @@
 name: v2raya_gui-docker
 
 on:
-  push:
-    tags:
-      - v*
+  release:
+    types: # This configuration does not affect the page_build event above
+      - released
 
 jobs:
   build:
