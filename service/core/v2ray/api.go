@@ -63,6 +63,7 @@ func getObservatoryResponse(conn *grpc.ClientConn) (r *pb.GetOutboundStatusRespo
 func observatoryProducer() {
 	const product = "observatory"
 	var conn *grpc.ClientConn
+nextLoop:
 	for {
 		if ApiPort() == 0 {
 			time.Sleep(ApiFeedInterval)
@@ -91,7 +92,11 @@ func observatoryProducer() {
 			css := configure.GetConnectedServers()
 			for i := range outboundStatus {
 				_ = mapper.AutoMapper(outboundStatus[i], &os[i])
-				os[i].Which = css.Get()[tag2WhichIndex[os[i].OutboundTag]]
+				index := tag2WhichIndex[os[i].OutboundTag]
+				if index >= css.Len() {
+					continue nextLoop
+				}
+				os[i].Which = css.Get()[index]
 			}
 			ApiFeed.ProductMessage(product, os)
 		}
