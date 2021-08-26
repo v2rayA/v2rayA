@@ -428,7 +428,7 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	} else if strings.HasPrefix(u, "trojan://") || strings.HasPrefix(u, "trojan-go://") {
 		n, err = ResolveTrojanURL(u)
 	} else {
-		err = newError("not supported protocol. we only support ss, ssr and vmess now: " + u)
+		err = newError("not supported protocol:" + u)
 		return
 	}
 	if err != nil {
