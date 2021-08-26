@@ -184,7 +184,7 @@ ip -6 rule del fwmark 1 table 100
 ip -6 route del local ::/0 dev lo table 100
 
 ip6tables -w 2 -t mangle -F SSTP_ONCE
-ip6tables -w 2 -t mangle -D PREROUTING -m socket -j SSTP_ONCE
+ip6tables -w 2 -t mangle -D PREROUTING -m socket --restore-skmark -j SSTP_ONCE
 ip6tables -w 2 -t mangle -X SSTP_ONCE
 ip6tables -w 2 -t mangle -F TP_OUT
 ip6tables -w 2 -t mangle -D OUTPUT -j TP_OUT
