@@ -2,8 +2,7 @@ name: v2raya-nightly-docker
 
 on:
   push:
-    push:
-      branches: [ master ]
+    branches: [ master ]
 
 env:
   DOCKER_CLI_EXPERIMENTAL: enabled
