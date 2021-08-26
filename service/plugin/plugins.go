@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-var GlobalPlugins Plugins
+var GlobalPlugins = New()
 
 type Plugin interface {
 	Serve(localPort int, v vmessInfo.VmessInfo) (err error)
@@ -18,6 +18,12 @@ type Plugin interface {
 type Plugins struct {
 	Plugins map[string]Plugin
 	mutex   sync.Mutex
+}
+
+func New() *Plugins {
+	return &Plugins{
+		Plugins: make(map[string]Plugin),
+	}
 }
 
 func (r *Plugins) CloseAll() {

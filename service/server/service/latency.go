@@ -195,8 +195,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		return nil, newError(err)
 	}
 
-	err = v2ray.RestartV2rayService(false)
+	process, err := v2ray.RestartV2rayService(false)
 	if err != nil {
+		if process != nil {
+			_ = process.Kill()
+		}
 		return nil, err
 	}
 	//limit the concurrency
@@ -220,14 +223,15 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}(i)
 	}
 	wg.Wait()
+	if process != nil {
+		_ = process.Kill()
+		v2ray.SetCoreProcess(nil)
+	}
 	if v2rayRunning && configure.GetConnectedServers() != nil {
 		err = v2ray.UpdateV2RayConfig()
 		if err != nil {
-			return which, newError("failed to restart v2ray-core, please connect a server")
+			return which, fmt.Errorf("cannot restart v2ray-core: %w", err)
 		}
-	} else {
-		// no connected servers or v2ray was not running
-		_ = v2ray.StopV2rayService(false)
 	}
 	if err := configure.NewWhiches(which).SaveLatencies(); err != nil {
 		return nil, fmt.Errorf("failed to save the latency test result: %v", err)
