@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"errors"
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
@@ -41,15 +42,14 @@ func ApiPort() int {
 	return apiPort
 }
 
-func RestartV2rayService(saveStatus bool) (err error) {
+func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 	if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
-		return newError("Please sync datetime first. Your datetime is ", time.Now().Local().Format(ntp.DisplayFormat), ", and the correct datetime is ", t.Local().Format(ntp.DisplayFormat))
+		return nil, newError("Please sync datetime first. Your datetime is ", time.Now().Local().Format(ntp.DisplayFormat), ", and the correct datetime is ", t.Local().Format(ntp.DisplayFormat))
 	}
 	setting := configure.GetSettingNotNil()
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
-		return newError("cannot find GFWList files. update GFWList and try again")
+		return nil, newError("cannot find GFWList files. update GFWList and try again")
 	}
-	//关闭transparentProxy，防止v2ray在启动DOH时需要解析域名
 	if err = killV2ray(saveStatus); err != nil {
 		return
 	}
@@ -67,7 +67,7 @@ func RestartV2rayService(saveStatus bool) (err error) {
 	}
 	log.Println(strings.Join(params, " "))
 	assetDir := asset.GetV2rayLocationAsset()
-	process, err := os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
+	process, err = os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
 		Dir: dir, //防止找不到v2ctl
 		Env: append(os.Environ(),
 			"V2RAY_LOCATION_ASSET="+assetDir,
@@ -79,7 +79,7 @@ func RestartV2rayService(saveStatus bool) (err error) {
 		},
 	})
 	if err != nil {
-		return newError().Base(err)
+		return nil, newError().Base(err)
 	}
 	if saveStatus {
 		SetCoreProcess(process)
@@ -112,18 +112,13 @@ func RestartV2rayService(saveStatus bool) (err error) {
 			break
 		}
 	}
-	//defer func() {
-	//	log.Println(port)
-	//	log.Println("\n" + netstat.Print([]string{"tcp", "tcp6"}))
-	//	log.Println("\n" + testprint())
-	//}()
 	startTime := time.Now()
 	for {
 		if bPortOpen {
 			var is bool
 			is, err = netstat.IsProcessListenPort(path.Base(v2rayBinPath), port)
 			if err != nil {
-				return
+				return process, err
 			}
 			if is {
 				break
@@ -136,7 +131,7 @@ func RestartV2rayService(saveStatus bool) (err error) {
 		}
 
 		if time.Since(startTime) > 15*time.Second {
-			return newError("v2ray-core does not start normally, check the log for more information")
+			return nil, newError("v2ray-core does not start normally, check the log for more information")
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
@@ -239,7 +234,7 @@ func UpdateV2RayConfig() (err error) {
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
 		return newError(err)
 	}
-	err = RestartV2rayService(true)
+	_, err = RestartV2rayService(true)
 	if err != nil {
 		return
 	}
@@ -271,6 +266,11 @@ func killV2ray(saveStatus bool) (err error) {
 	if CoreProcess() != nil {
 		err = CoreProcess().Kill()
 		if err != nil {
+			if errors.Is(err, os.ErrProcessDone) {
+				if saveStatus {
+					SetCoreProcess(nil)
+				}
+			}
 			return
 		}
 		// to prevent [defunct] process
