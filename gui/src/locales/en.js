@@ -77,7 +77,7 @@ export default {
     messages: [
       "Remember your admin account which is importantly used to login.",
       "Account information is stored in local. We never send information to any server.",
-      "Once password was forgot, you could delete the config file and restart v2rayA service to reset."
+      "Once password was forgot, you could use v2raya --reset-password to reset."
     ]
   },
   login: {
