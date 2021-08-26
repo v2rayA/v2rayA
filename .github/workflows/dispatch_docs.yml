@@ -1,0 +1,17 @@
+name: v2raya_gui-docker
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke workflow in docs repo
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Pages CI
+          repo: v2rayA/v2raya.github.io
+          token: ${{ secrets.DISPATCH_BUILD_TOKEN }}
