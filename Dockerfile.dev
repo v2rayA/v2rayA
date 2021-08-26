@@ -7,15 +7,11 @@ ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn
 RUN go get github.com/codegangsta/gin
 WORKDIR /service
-RUN mkdir -p /etc/v2raya/web
-ADD web /etc/v2raya-web
 COPY --from=v2ray /usr/bin/v2ray /usr/bin/v2ctl /usr/share/v2ray/
 COPY --from=v2ray /usr/local/share/v2ray/* /usr/local/share/v2ray/
 ENV PATH=$PATH:/usr/share/v2ray
 ENV CONFIG=../config.json
 ENV GIN_BIN=../v2rayA
 ENV GIN_GUILD_ARGS="-o ${GIN_BIN}"
-ENV V2RAYA_MODE=universal
-ENV V2RAYA_WEBDIR=/etc/v2raya-web
 EXPOSE 2017
 ENTRYPOINT gin -a 2017 -i run
