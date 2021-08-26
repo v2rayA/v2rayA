@@ -35,7 +35,7 @@
               expanded
             />
           </b-field>
-          <b-field label="Address" label-position="on-border">
+          <b-field label="Host" label-position="on-border">
             <b-input
               ref="v2ray_add"
               v-model="v2ray.add"
@@ -255,7 +255,7 @@
               expanded
             />
           </b-field>
-          <b-field label="Address" label-position="on-border">
+          <b-field label="Host" label-position="on-border">
             <b-input
               ref="ss_server"
               v-model="ss.server"
@@ -331,7 +331,7 @@
               expanded
             />
           </b-field>
-          <b-field label="Address" label-position="on-border">
+          <b-field label="Host" label-position="on-border">
             <b-input
               ref="ssr_server"
               v-model="ssr.server"
@@ -440,7 +440,7 @@
               expanded
             />
           </b-field>
-          <b-field label="Address" label-position="on-border">
+          <b-field label="Host" label-position="on-border">
             <b-input
               ref="pingtunnel_server"
               v-model="pingtunnel.server"
@@ -469,7 +469,7 @@
               expanded
             />
           </b-field>
-          <b-field label="Address" label-position="on-border">
+          <b-field label="Host" label-position="on-border">
             <b-input
               ref="trojan_server"
               v-model="trojan.server"
@@ -581,6 +581,60 @@
             <b-input v-model="trojan.path" placeholder="/" expanded />
           </b-field>
         </b-tab-item>
+
+        <b-tab-item label="HTTP">
+          <b-field label="Protocol" label-position="on-border">
+            <b-select v-model="http.protocol" expanded>
+              <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
+            </b-select>
+          </b-field>
+          <b-field label="Name" label-position="on-border">
+            <b-input
+              ref="http_name"
+              v-model="http.name"
+              :placeholder="$t('configureServer.servername')"
+              expanded
+            />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input
+              ref="http_host"
+              v-model="http.host"
+              required
+              placeholder="IP / HOST"
+              expanded
+            />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input
+              ref="http_port"
+              v-model="http.port"
+              required
+              :placeholder="$t('configureServer.port')"
+              type="number"
+              expanded
+            />
+          </b-field>
+          <b-field label="Username" label-position="on-border">
+            <b-input
+              ref="http_username"
+              v-model="http.username"
+              required
+              :placeholder="$t('configureServer.username')"
+              expanded
+            />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input
+              ref="http_password"
+              v-model="http.password"
+              required
+              :placeholder="$t('configureServer.password')"
+              expanded
+            />
+          </b-field>
+        </b-tab-item>
       </b-tabs>
     </section>
     <footer v-if="!readonly" class="modal-card-foot flex-end">
@@ -677,6 +731,14 @@ export default {
       obfs: "none" /* websocket */,
       protocol: "trojan"
     },
+    http: {
+      username: "",
+      password: "",
+      host: "",
+      port: "",
+      protocol: "http",
+      name: ""
+    },
     tabChoice: 0,
     presetFlows: [
       "xtls-rprx-direct",
@@ -749,6 +811,12 @@ export default {
           ) {
             this.trojan = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 4;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("http://") ||
+            res.data.data.sharingAddress.toLowerCase().startsWith("https://")
+          ) {
+            this.http = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 5;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -891,12 +959,6 @@ export default {
         };
       } else if (url.toLowerCase().startsWith("ping-tunnel://")) {
         let u = parseURL(url);
-        console.log({
-          server: u.host,
-          password: u.username,
-          name: decodeURIComponent(u.hash),
-          protocol: "pingtunnel"
-        });
         return {
           server: u.host,
           password: u.username,
@@ -921,7 +983,7 @@ export default {
           ssCipher: "aes-128-gcm",
           protocol: "trojan"
         };
-        if (url.toLowerCase().indexOf("trojan-go://") === 0) {
+        if (url.toLowerCase().startsWith("trojan-go://") === 0) {
           console.log(u.params.encryption);
           if (u.params.encryption?.startsWith("ss;")) {
             o.method = "shadowsocks";
@@ -942,6 +1004,19 @@ export default {
           o.path = u.params.path;
         }
         return o;
+      } else if (
+        url.toLowerCase().startsWith("http://") ||
+        url.toLowerCase().startsWith("https://")
+      ) {
+        let u = parseURL(url);
+        return {
+          username: u.username,
+          password: u.password,
+          host: u.host,
+          port: u.port,
+          protocol: u.protocol,
+          name: decodeURIComponent(u.hash)
+        };
       }
       return null;
     },
@@ -1060,6 +1135,16 @@ export default {
             hash: srcObj.name,
             params: query
           });
+        case "http":
+        case "https":
+          return generateURL({
+            protocol: srcObj.protocol + "-proxy",
+            username: srcObj.username,
+            password: srcObj.password,
+            host: srcObj.host,
+            port: srcObj.port,
+            hash: srcObj.name
+          });
       }
       return null;
     },
@@ -1112,6 +1197,9 @@ export default {
         if (this.tabChoice === 4 && !k.startsWith("trojan_")) {
           continue;
         }
+        if (this.tabChoice === 5 && !k.startsWith("http_")) {
+          continue;
+        }
         let x = this.$refs[k];
         if (!x) {
           continue;
@@ -1140,6 +1228,8 @@ export default {
         coded = this.generateURL(this.pingtunnel);
       } else if (this.tabChoice === 4) {
         coded = this.generateURL(this.trojan);
+      } else if (this.tabChoice === 5) {
+        coded = this.generateURL(this.http);
       }
       this.$emit("submit", coded);
     }

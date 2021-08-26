@@ -815,7 +815,7 @@ export default {
           v.connected = false;
         });
       });
-      // this.tableData = res.data.data.touch;
+      this.tableData = res.data.data.touch;
       this.runningState = {
         running: res.data.data.running
           ? this.$t("common.isRunning")
@@ -824,9 +824,6 @@ export default {
       };
       this.locateTabToConnected();
       this.ready = true;
-      this.$nextTick(() => {
-        this.driver();
-      });
     });
   },
   beforeDestroy() {

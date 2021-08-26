@@ -33,7 +33,10 @@ func Import(url string, which *configure.Which) (err error) {
 		strings.HasPrefix(url, "pingtunnel://") ||
 		strings.HasPrefix(url, "ping-tunnel://") ||
 		strings.HasPrefix(url, "trojan://") ||
-		strings.HasPrefix(url, "trojan-go://") {
+		strings.HasPrefix(url, "trojan-go://") ||
+		strings.HasPrefix(url, "http-proxy://") ||
+		strings.HasPrefix(url, "https-proxy://") ||
+		strings.HasPrefix(url, "http2://") {
 		var n *nodeData.NodeData
 		n, err = ResolveURL(url)
 		if err != nil {
