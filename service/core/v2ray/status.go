@@ -194,14 +194,14 @@ func UpdateV2RayConfig() (err error) {
 	if css.Len() == 0 { //no connected server. stop v2ray-core.
 		return StopV2rayService(true)
 	}
-	outboundInfos := make([]OutboundInfo, 0, css.Len())
+	serverInfos := make([]serverInfo, 0, css.Len())
 	vms := make([]vmessInfo.VmessInfo, 0, css.Len())
 	for _, cs := range css.Get() {
 		sr, err = cs.LocateServerRaw()
 		if err != nil {
 			return
 		}
-		outboundInfos = append(outboundInfos, OutboundInfo{
+		serverInfos = append(serverInfos, serverInfo{
 			Info:         sr.VmessInfo,
 			OutboundName: cs.Outbound,
 		})
@@ -211,13 +211,13 @@ func UpdateV2RayConfig() (err error) {
 	if pluginPorts, err = findAvailablePluginPorts(vms); err != nil {
 		return err
 	}
-	for i := range outboundInfos {
+	for i := range serverInfos {
 		if port, ok := pluginPorts[i]; ok {
-			outboundInfos[i].PluginPort = port
+			serverInfos[i].PluginPort = port
 		}
 	}
 	var outboundTags []string
-	tmpl, outboundTags, err = NewTemplate(outboundInfos)
+	tmpl, outboundTags, err = NewTemplate(serverInfos)
 	if err != nil {
 		return
 	}

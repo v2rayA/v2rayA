@@ -215,7 +215,7 @@ type OutboundObject struct {
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	ProxySettings  *ProxySettings  `json:"proxySettings,omitempty"`
 	Mux            *Mux            `json:"mux,omitempty"`
-	groups         []string
+	balancers      []string
 }
 type OutboundUser struct {
 	User  string `json:"user"`
@@ -636,8 +636,8 @@ func appendDnsServers(d *DNS, lines []string, domains []string) {
 func (t *Template) outNames() map[string]bool {
 	tags := make(map[string]bool)
 	for _, o := range t.Outbounds {
-		if len(o.groups) > 0 {
-			for _, groupName := range o.groups {
+		if len(o.balancers) > 0 {
+			for _, groupName := range o.balancers {
 				tags[groupName] = true
 			}
 		} else {
@@ -661,8 +661,8 @@ func (t *Template) FirstProxyOutboundName(filter func(outboundName string, isGro
 		case "direct", "block", "dns-out":
 			continue
 		}
-		if len(o.groups) > 0 {
-			for _, v := range o.groups {
+		if len(o.balancers) > 0 {
+			for _, v := range o.balancers {
 				if _, ok := m[v]; !ok {
 					if filter(v, true) {
 						return v, true
@@ -679,7 +679,7 @@ func (t *Template) FirstProxyOutboundName(filter func(outboundName string, isGro
 	return
 }
 
-func (t *Template) SetDNS(outbounds []OutboundInfo, setting *configure.Setting, supportUDP map[string]bool) (routing []RoutingRule, err error) {
+func (t *Template) SetDNS(outbounds []serverInfo, setting *configure.Setting, supportUDP map[string]bool) (routing []RoutingRule, err error) {
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	firstUDPSupportedOutboundTag, _ := t.FirstProxyOutboundName(func(outboundName string, isGroup bool) bool {
 		return supportUDP[outboundName]
@@ -1522,7 +1522,7 @@ func (t *Template) SetInbound(setting *configure.Setting) error {
 	return nil
 }
 
-type OutboundInfo struct {
+type serverInfo struct {
 	Info         vmessInfo.VmessInfo
 	OutboundName string
 	PluginPort   int
@@ -1612,19 +1612,19 @@ func (t *Template) SetGroupRouting(outboundName2VmessInfos map[string][]vmessInf
 	return nil
 }
 
-func RefineOutboundInfos(outboundInfos []OutboundInfo) (
-	vmessInfo2OutboundInfos map[vmessInfo.VmessInfo][]*OutboundInfo,
+func RefineOutboundInfos(serverInfos []serverInfo) (
+	vmessInfo2ServerInfos map[vmessInfo.VmessInfo][]*serverInfo,
 	outboundName2VmessInfos map[string][]vmessInfo.VmessInfo,
 ) {
-	// guarantee that an v2ray outbound is reusable for groups
-	vmessInfo2OutboundInfos = make(map[vmessInfo.VmessInfo][]*OutboundInfo)
-	for i, info := range outboundInfos {
-		vmessInfo2OutboundInfos[info.Info] = append(vmessInfo2OutboundInfos[info.Info], &outboundInfos[i])
+	// guarantee that an v2ray outbound is reusable for balancers
+	vmessInfo2ServerInfos = make(map[vmessInfo.VmessInfo][]*serverInfo)
+	for i, info := range serverInfos {
+		vmessInfo2ServerInfos[info.Info] = append(vmessInfo2ServerInfos[info.Info], &serverInfos[i])
 	}
 	// make ps unique
-	vmessInfo2OutboundInfoAfter := make(map[vmessInfo.VmessInfo][]*OutboundInfo)
+	vmessInfo2OutboundInfoAfter := make(map[vmessInfo.VmessInfo][]*serverInfo)
 	mPsRenaming := make(map[string]struct{})
-	for vi, ois := range vmessInfo2OutboundInfos {
+	for vi, ois := range vmessInfo2ServerInfos {
 		ps := vi.Ps
 		cnt := 2
 		for {
@@ -1648,68 +1648,96 @@ func RefineOutboundInfos(outboundInfos []OutboundInfo) (
 }
 
 func (t *Template) ResolveOutbounds(
-	outboundInfos []OutboundInfo,
-	vmessInfo2OutboundInfos map[vmessInfo.VmessInfo][]*OutboundInfo,
+	serverInfos []serverInfo,
+	vmessInfo2ServerInfos map[vmessInfo.VmessInfo][]*serverInfo,
 	outboundName2VmessInfos map[string][]vmessInfo.VmessInfo) (supportUDP map[string]bool, outboundTags []string, err error) {
 
 	supportUDP = make(map[string]bool)
 	type _outbound struct {
-		index    int
+		weight   int
 		outbound OutboundObject
+		balancer bool
 	}
-	outboundInfo2Index := make(map[*OutboundInfo]int)
-	for i := range outboundInfos {
-		outboundInfo2Index[&outboundInfos[i]] = i
+	serverInfo2Index := make(map[*serverInfo]int)
+	for i := range serverInfos {
+		serverInfo2Index[&serverInfos[i]] = i
 	}
-	// keep order with outboundInfos
+	// keep order with serverInfos
+	outboundTags = make([]string, len(serverInfos))
 	var outbounds []_outbound
-	for vmessinfo, infos := range vmessInfo2OutboundInfos {
+	for vmessinfo, sInfos := range vmessInfo2ServerInfos {
 		vi := vmessinfo
 		var (
 			usedByBalancer     bool
 			balancerPluginPort int
-			minIndex           = -1
 		)
-		var groups []string
-		for _, info := range infos {
-			if len(outboundName2VmessInfos[info.OutboundName]) > 1 {
+		// a vmessInfo(server template) may is used by multiple serverInfos(a connected server)
+
+		// outbound name is not just v2ray outbound tag, it may is a balancer
+		type balancer struct {
+			name       string
+			serverInfo *serverInfo
+		}
+		var balancers []balancer
+		for _, sInfo := range sInfos {
+			if len(outboundName2VmessInfos[sInfo.OutboundName]) > 1 {
+				// balancer
 				if err = CheckBalancerSupported(); err != nil {
 					return nil, nil, err
 				}
-				usedByBalancer = true
-				balancerPluginPort = info.PluginPort
-				if minIndex == -1 || outboundInfo2Index[info] < minIndex {
-					minIndex = outboundInfo2Index[info]
+				if !usedByBalancer {
+					usedByBalancer = true
+					balancerPluginPort = sInfo.PluginPort
 				}
-				groups = append(groups, info.OutboundName)
+				balancers = append(balancers, balancer{
+					name:       sInfo.OutboundName,
+					serverInfo: sInfo,
+				})
 			} else {
 				// pure outbound
-				o, err := ResolveOutbound(&vi, info.OutboundName, &info.PluginPort)
+				outboundTag := sInfo.OutboundName
+				o, err := ResolveOutbound(&vi, outboundTag, &sInfo.PluginPort)
 				if err != nil {
 					return nil, nil, err
 				}
 				outbounds = append(outbounds, _outbound{
-					index:    outboundInfo2Index[info],
+					weight:   serverInfo2Index[sInfo],
 					outbound: o,
+					balancer: false,
 				})
-
-				supportUDP[info.OutboundName] = !plugin.HasProperPlugin(info.Info)
+				outboundTags[serverInfo2Index[sInfo]] = outboundTag
+				supportUDP[sInfo.OutboundName] = !plugin.HasProperPlugin(sInfo.Info)
 			}
 		}
 		if usedByBalancer {
-			// the outbound is shared by balancers
-			o, err := ResolveOutbound(&vi, Ps2OutboundTag(vi.Ps), &balancerPluginPort)
+			// the v2ray outbound is shared by balancers
+			outboundTag := Ps2OutboundTag(vi.Ps)
+			o, err := ResolveOutbound(&vi, outboundTag, &balancerPluginPort)
 			if err != nil {
 				return nil, nil, err
 			}
-			o.groups = groups
+			for _, v := range balancers {
+				o.balancers = append(o.balancers, v.name)
+			}
+
+			// we use the lowest serverInfo index as the order weight of the balancer outbound
+			weight := -1
+			for _, v := range balancers {
+				index := serverInfo2Index[v.serverInfo]
+				if weight == -1 || weight > index {
+					weight = index
+				}
+				// tag
+				outboundTags[index] = outboundTag
+			}
 			outbounds = append(outbounds, _outbound{
-				index:    minIndex,
+				weight:   weight,
 				outbound: o,
+				balancer: true,
 			})
 
 			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
-			for _, outboundName := range o.groups {
+			for _, outboundName := range o.balancers {
 				_supportUDP := !plugin.HasProperPlugin(vi)
 				if _, ok := supportUDP[outboundName]; !ok {
 					supportUDP[outboundName] = _supportUDP
@@ -1721,10 +1749,9 @@ func (t *Template) ResolveOutbounds(
 		}
 	}
 	sort.Slice(outbounds, func(i, j int) bool {
-		return outbounds[i].index < outbounds[j].index
+		return outbounds[i].weight < outbounds[j].weight
 	})
 	for _, v := range outbounds {
-		outboundTags = append(outboundTags, v.outbound.Tag)
 		t.Outbounds = append(t.Outbounds, v.outbound)
 	}
 	t.Outbounds = append(t.Outbounds, OutboundObject{
@@ -1791,8 +1818,8 @@ func (t *Template) SetVlessGrpcRouting() {
 	}
 }
 
-func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []string, err error) {
-	vmessInfo2OutboundInfos, outboundName2VmessInfos := RefineOutboundInfos(outboundInfos)
+func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, err error) {
+	vmessInfo2ServerInfos, outboundName2VmessInfos := RefineOutboundInfos(serverInfos)
 	ps2OutboundNames := make(map[string][]string)
 	for outboundName, vis := range outboundName2VmessInfos {
 		for _, vi := range vis {
@@ -1829,7 +1856,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 		}
 	}
 	// resolve Outbounds
-	supportUDP, outboundTags, err := t.ResolveOutbounds(outboundInfos, vmessInfo2OutboundInfos, outboundName2VmessInfos)
+	supportUDP, outboundTags, err := t.ResolveOutbounds(serverInfos, vmessInfo2ServerInfos, outboundName2VmessInfos)
 	if err != nil {
 		return Template{}, nil, err
 	}
@@ -1839,7 +1866,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 		return Template{}, nil, err
 	}
 	//set DNS
-	dnsRouting, err := t.SetDNS(outboundInfos, setting, supportUDP)
+	dnsRouting, err := t.SetDNS(serverInfos, setting, supportUDP)
 	if err != nil {
 		return
 	}
@@ -1867,7 +1894,7 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 
 	// set routing whitelist
 	var whitelist []Addr
-	for _, info := range outboundInfos {
+	for _, info := range serverInfos {
 		whitelist = append(whitelist, Addr{
 			host: info.Info.Add,
 			port: info.Info.Port,
