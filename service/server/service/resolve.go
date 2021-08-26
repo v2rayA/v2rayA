@@ -348,7 +348,7 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	return
 }
 func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
-	if len(u) < 13 || strings.ToLower(u[:13]) != "pingtunnel://" {
+	if !strings.HasPrefix(u, "pingtunnel://") {
 		err = newError("this address is not begin with pingtunnel://")
 		return
 	}
@@ -388,7 +388,7 @@ func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
 
 func ResolvePingTunnelURL2(u string) (data *nodeData.NodeData, err error) {
 	if !strings.HasPrefix(u, "ping-tunnel://") {
-		err = newError("this address is not begin with pingtunnel://")
+		err = newError("this address is not begin with ping-tunnel://")
 		return
 	}
 	U, err := url.Parse(u)
