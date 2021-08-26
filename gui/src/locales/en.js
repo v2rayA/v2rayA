@@ -228,6 +228,7 @@ export default {
     hostObfuscation: "Host",
     pathObfuscation: "Path",
     seedObfuscation: "Seed",
+    username: "Username",
     password: "Password",
     origin: "origin"
   },

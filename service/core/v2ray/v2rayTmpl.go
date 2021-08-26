@@ -192,7 +192,7 @@ type StreamSettings struct {
 	KcpSettings  *KcpSettings  `json:"kcpSettings,omitempty"`
 	WsSettings   *WsSettings   `json:"wsSettings,omitempty"`
 	HTTPSettings *HttpSettings `json:"httpSettings,omitempty"`
-	GrpcSettings *GrpcSettings `json:"grpcSettings"`
+	GrpcSettings *GrpcSettings `json:"grpcSettings,omitempty"`
 	Sockopt      *Sockopt      `json:"sockopt,omitempty"`
 }
 type GrpcSettings struct {
@@ -270,8 +270,9 @@ type KcpSettings struct {
 	Seed string `json:"seed"`
 }
 type HttpSettings struct {
-	Path string   `json:"path"`
-	Host []string `json:"host"`
+	Path   string   `json:"path"`
+	Host   []string `json:"host"`
+	Method string   `json:"method,omitempty"`
 }
 type Hosts map[string]interface{}
 
@@ -514,6 +515,35 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		if v.Host != "" {
 			o.StreamSettings.TLSSettings.ServerName = v.Host
 		} else {
+			o.StreamSettings.TLSSettings.ServerName = v.Add
+		}
+	case "http2":
+		//TODO:
+		return OutboundObject{}, fmt.Errorf("TODO")
+	case "http", "https":
+		o.Protocol = "http"
+		var users []OutboundUser
+		if v.ID != "" && v.Aid != "" {
+			users = []OutboundUser{
+				{
+					User: v.ID,
+					Pass: v.Aid,
+				},
+			}
+		}
+		o.Settings.Servers = []Server{{
+			Address: v.Add,
+			Port:    port,
+			Users:   users,
+		}}
+		if v.Protocol == "https" {
+			//tls
+			streamSetting := tmplJson.TmplStreamSettings
+			o.StreamSettings = &streamSetting
+			o.StreamSettings.Network = "tcp"
+			o.StreamSettings.Security = "tls"
+			tlsSetting := tmplJson.TmplTLSSettings
+			o.StreamSettings.TLSSettings = &tlsSetting
 			o.StreamSettings.TLSSettings.ServerName = v.Add
 		}
 	case "shadowsocksr":
@@ -915,7 +945,7 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 			},
 		)
 	}
-	if !supportUDP["proxy"] {
+	if !supportUDP[firstOutboundTag] {
 		// find a outbound that supports UDP and redirect all leaky UDP traffic to it
 		var found bool
 		for outbound, support := range supportUDP {
@@ -1593,6 +1623,17 @@ func RefineOutboundInfos(serverInfos []serverInfo) (
 	return vmessInfo2OutboundInfoAfter, outboundName2VmessInfos
 }
 
+func SupportUDP(v vmessInfo.VmessInfo) bool {
+	if plugin.HasProperPlugin(v) {
+		return false
+	}
+	switch v.Protocol {
+	case "http", "https", "socks":
+		return false
+	}
+	return true
+}
+
 func (t *Template) ResolveOutbounds(
 	serverInfos []serverInfo,
 	vmessInfo2ServerInfos map[vmessInfo.VmessInfo][]*serverInfo,
@@ -1652,7 +1693,7 @@ func (t *Template) ResolveOutbounds(
 					balancer: false,
 				})
 				outboundTags[serverInfo2Index[sInfo]] = outboundTag
-				supportUDP[sInfo.OutboundName] = !plugin.HasProperPlugin(sInfo.Info)
+				supportUDP[sInfo.OutboundName] = SupportUDP(sInfo.Info)
 			}
 		}
 		if usedByBalancer {
@@ -1684,7 +1725,7 @@ func (t *Template) ResolveOutbounds(
 
 			// if any node does not support UDP, the outbound should be tagged as UDP unsupported
 			for _, outboundName := range o.balancers {
-				_supportUDP := !plugin.HasProperPlugin(vi)
+				_supportUDP := SupportUDP(vi)
 				if _, ok := supportUDP[outboundName]; !ok {
 					supportUDP[outboundName] = _supportUDP
 				}

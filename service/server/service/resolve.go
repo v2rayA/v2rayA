@@ -15,10 +15,6 @@ import (
 根据传入的 vmess://xxxxx 解析出NodeData
 */
 func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
-	if len(vmess) < 8 || strings.ToLower(vmess[:8]) != "vmess://" {
-		err = newError("this address is not begin with vmess://")
-		return
-	}
 	var info vmessInfo.VmessInfo
 	// 进行base64解码，并unmarshal到VmessInfo上
 	raw, err := common.Base64StdDecode(vmess[8:])
@@ -101,10 +97,6 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 根据传入的 vless://xxxxx 解析出NodeData
 */
 func ResolveVlessURL(vless string) (data *nodeData.NodeData, err error) {
-	if !strings.HasPrefix(vless, "vless://") {
-		err = newError("this address is not begin with vless://")
-		return
-	}
 	u, err := url.Parse(vless)
 	if err != nil {
 		return
@@ -152,10 +144,6 @@ func ResolveVlessURL(vless string) (data *nodeData.NodeData, err error) {
 根据传入的 ss://xxxxx 解析出NodeData
 */
 func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
-	if len(u) < 5 || strings.ToLower(u[:5]) != "ss://" {
-		err = newError("this address is not begin with ss://")
-		return
-	}
 	// 该函数尝试对ss://链接进行解析
 	resolveFormat := func(content string) (v *vmessInfo.VmessInfo, ok bool) {
 		// 尝试按ss://BASE64(method:password)@server:port/?plugin=xxxx#name格式进行解析
@@ -240,10 +228,6 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 根据传入的 ss://xxxxx 解析出NodeData
 */
 func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
-	if len(u) < 6 || strings.ToLower(u[:6]) != "ssr://" {
-		err = newError("this address is not begin with ssr://")
-		return
-	}
 	// 该函数尝试对ssr://链接进行解析
 	resolveFormat := func(content string) (v vmessInfo.VmessInfo, ok bool) {
 		arr := strings.Split(content, "/?")
@@ -313,10 +297,6 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 
 func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	//	trojan://password@server:port#escape(remarks)
-	if !strings.HasPrefix(u, "trojan://") && !strings.HasPrefix(u, "trojan-go://") {
-		err = newError("this address is not begin with trojan:// or trojan-go://")
-		return
-	}
 	t, err := url.Parse(u)
 	if err != nil {
 		err = newError("invalid trojan format")
@@ -347,12 +327,46 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	}
 	return
 }
-func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
-	if !strings.HasPrefix(u, "pingtunnel://") {
-		err = newError("this address is not begin with pingtunnel://")
+
+func ResolveHttpURL(u string) (data *nodeData.NodeData, err error) {
+	t, err := url.Parse(u)
+	if err != nil {
+		err = newError("invalid http(s) format")
 		return
 	}
-	u = u[13:]
+	data = new(nodeData.NodeData)
+	data.VmessInfo = vmessInfo.VmessInfo{
+		Ps:   t.Fragment,
+		Add:  t.Hostname(),
+		Port: t.Port(),
+	}
+	if t.User != nil && len(t.User.String()) > 0 {
+		data.VmessInfo.ID = t.User.Username()
+		data.VmessInfo.Aid, _ = t.User.Password()
+	}
+	switch t.Scheme {
+	case "https-proxy":
+		data.VmessInfo.Protocol = "https"
+		if data.VmessInfo.Port == "" {
+			data.VmessInfo.Port = "443"
+		}
+	case "http2":
+		data.VmessInfo.Protocol = "http2"
+		if data.VmessInfo.Port == "" {
+			data.VmessInfo.Port = "443"
+		}
+	case "http-proxy":
+		data.VmessInfo.Protocol = "http"
+		if data.VmessInfo.Port == "" {
+			data.VmessInfo.Port = "80"
+		}
+	default:
+		data.VmessInfo.Protocol = t.Scheme
+	}
+	return
+}
+func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
+	u = strings.TrimPrefix(u, "pingtunnel://")
 	u, err = common.Base64StdDecode(u)
 	if err != nil {
 		log.Println(u)
@@ -387,10 +401,6 @@ func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
 }
 
 func ResolvePingTunnelURL2(u string) (data *nodeData.NodeData, err error) {
-	if !strings.HasPrefix(u, "ping-tunnel://") {
-		err = newError("this address is not begin with ping-tunnel://")
-		return
-	}
 	U, err := url.Parse(u)
 	if err != nil {
 		return
@@ -425,6 +435,10 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 		n, err = ResolvePingTunnelURL1(u)
 	} else if strings.HasPrefix(u, "ping-tunnel://") {
 		n, err = ResolvePingTunnelURL2(u)
+	} else if strings.HasPrefix(u, "https-proxy://") ||
+		strings.HasPrefix(u, "http-proxy://") ||
+		strings.HasPrefix(u, "http2://") {
+		n, err = ResolveHttpURL(u)
 	} else if strings.HasPrefix(u, "trojan://") || strings.HasPrefix(u, "trojan-go://") {
 		n, err = ResolveTrojanURL(u)
 	} else {

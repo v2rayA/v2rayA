@@ -82,8 +82,6 @@ func (v *VmessInfo) ExportToURL() string {
 			Scheme:   "ss",
 			User:     url.User(base64.URLEncoding.EncodeToString([]byte(v.Net + ":" + v.ID))),
 			Host:     net.JoinHostPort(v.Add, v.Port),
-			Path:     "/",
-			RawQuery: "",
 			Fragment: v.Ps,
 		}
 		if v.Type != "" {
@@ -131,7 +129,6 @@ func (v *VmessInfo) ExportToURL() string {
 			Scheme:   "trojan",
 			User:     url.User(v.ID),
 			Host:     net.JoinHostPort(v.Add, v.Port),
-			Path:     "/",
 			RawQuery: "",
 			Fragment: v.Ps,
 		}
@@ -155,6 +152,18 @@ func (v *VmessInfo) ExportToURL() string {
 			}
 		}
 		u.RawQuery = q.Encode()
+		return u.String()
+	case "http", "https":
+		var user *url.Userinfo
+		if v.ID != "" && v.Aid != "" {
+			user = url.UserPassword(v.ID, v.Aid)
+		}
+		u := &url.URL{
+			Scheme:   v.Protocol,
+			User:     user,
+			Host:     net.JoinHostPort(v.Add, v.Port),
+			Fragment: v.Ps,
+		}
 		return u.String()
 	}
 	return ""

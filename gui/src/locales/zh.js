@@ -227,6 +227,7 @@ export default {
     hostObfuscation: "域名(host)",
     pathObfuscation: "路径(path)",
     seedObfuscation: "混淆种子",
+    username: "用户名",
     password: "密码",
     origin: "原版"
   },
