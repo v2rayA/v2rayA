@@ -2,8 +2,8 @@ name: v2raya_gui-docker
 
 on:
   release:
-    types: # This configuration does not affect the page_build event above
-      - released
+    types:
+      - released # a release or draft of a release is published, or a pre-release is changed to a release
 
 jobs:
   build:
