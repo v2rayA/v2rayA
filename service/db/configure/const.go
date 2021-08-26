@@ -3,7 +3,7 @@ package configure
 type (
 	AutoUpdateMode          string
 	ProxyMode               string
-	PacMode                 string
+	RulePortMode            string
 	PacRuleType             string
 	PacMatchType            string
 	RoutingDefaultProxyMode string
@@ -16,11 +16,11 @@ type (
 )
 
 const (
-	TransparentClose     = TransparentMode("close")
-	TransparentProxy     = TransparentMode("proxy")
-	TransparentWhitelist = TransparentMode("whitelist")
-	TransparentGfwlist   = TransparentMode("gfwlist")
-	TransparentPac       = TransparentMode("pac")
+	TransparentClose      = TransparentMode("close")
+	TransparentProxy      = TransparentMode("proxy")
+	TransparentWhitelist  = TransparentMode("whitelist")
+	TransparentGfwlist    = TransparentMode("gfwlist")
+	TransparentFollowRule = TransparentMode("pac")
 
 	TransparentTproxy   = TransparentType("tproxy")
 	TransparentRedirect = TransparentType("redirect")
@@ -37,10 +37,10 @@ const (
 	ProxyModePac    = ProxyMode("pac")
 	ProxyModeProxy  = ProxyMode("proxy")
 
-	WhitelistMode = PacMode("whitelist")
-	GfwlistMode   = PacMode("gfwlist")
-	CustomMode    = PacMode("custom")
-	RoutingAMode  = PacMode("routingA")
+	WhitelistMode = RulePortMode("whitelist")
+	GfwlistMode   = RulePortMode("gfwlist")
+	CustomMode    = RulePortMode("custom")
+	RoutingAMode  = RulePortMode("routingA")
 
 	DirectRule = PacRuleType("direct")
 	ProxyRule  = PacRuleType("proxy")

@@ -28,4 +28,3 @@ RUN apk add --no-cache iptables ip6tables
 EXPOSE 2017
 VOLUME /etc/v2raya
 ENTRYPOINT ["v2raya"]
-
