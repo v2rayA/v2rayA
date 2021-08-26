@@ -18,7 +18,7 @@ type Params struct {
 	WebDir                  string   `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
 	VlessGrpcInboundCertKey []string `id:"vless-grpc-inbound-cert-key" desc:"Specify the certification path instead of automatically generating a self-signed certificate. Example: /etc/v2raya/grpc_certificate.crt,/etc/v2raya/grpc_private.key"`
 	PluginListenPort        int      `short:"s" default:"32346" desc:"ssr, pingTunnel, etc."`
-	ForceIPV6On             bool     `id:"force-ipv6-on" desc:"Force turn ipv6 support on"`
+	ForceIPV6On             bool     `id:"force-ipv6-on" desc:"Force to turn ipv6 support on"`
 	PassCheckRoot           bool     `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
 	ResetPassword           bool     `id:"reset-password"`
 	Verbose                 bool     `id:"verbose" desc:"Print detailed v2ray-core log to stdout"`

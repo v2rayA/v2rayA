@@ -63,7 +63,6 @@ export default {
   },
   methods: {
     handleClickSubmit() {
-      const that = this;
       if (this.first) {
         //register
         this.$axios({
