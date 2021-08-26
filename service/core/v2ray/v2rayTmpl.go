@@ -907,17 +907,17 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 	return
 }
 
-func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
+func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds []string) (err error) {
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
-	switch setting.RulePortMode {
+	switch mode {
 	case configure.WhitelistMode:
-		// 拥有国内IP的国外域名应该优先被代理而非直连
+		// foreign domains with intranet IP should be proxied first rather than directly connected
 		if asset.LoyalsoldierSiteDatExists() {
 			t.Routing.Rules = append(t.Routing.Rules,
 				RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  []string{"rule"},
+					InboundTag:  inbounds,
 					Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
 				})
 		} else {
@@ -925,94 +925,65 @@ func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
 				RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  []string{"rule"},
+					InboundTag:  inbounds,
 					Domain:      []string{"geosite:geolocation-!cn"},
 				})
 		}
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 直连中国大陆主流网站域名
+			RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
-				InboundTag:  []string{"rule"},
+				InboundTag:  inbounds,
 				Domain:      []string{"geosite:cn"},
 			},
-			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
+			RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
-				InboundTag:  []string{"rule"},
+				InboundTag:  inbounds,
 				IP:          []string{"geoip:private", "geoip:cn"},
 			},
 		)
 	case configure.GfwlistMode:
+		if asset.LoyalsoldierSiteDatExists() {
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: firstOutboundTag,
+					InboundTag:  inbounds,
+					Domain:      []string{"ext:LoyalsoldierSite.dat:gfw"},
+				},
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: firstOutboundTag,
+					InboundTag:  inbounds,
+					Domain:      []string{"ext:LoyalsoldierSite.dat:greatfire"},
+				})
+		} else {
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: firstOutboundTag,
+					InboundTag:  inbounds,
+					Domain:      []string{"geosite:geolocation-!cn"},
+				})
+		}
 		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{
-				Type:        "field",
-				OutboundTag: firstOutboundTag,
-				InboundTag:  []string{"rule"},
-				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
-			},
 			RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  []string{"rule"},
 			},
 		)
-	case configure.CustomMode:
-		customPac := configure.GetCustomPacNotNil()
-		var lastOutboundTag configure.PacRuleType
-		var lastMatchType configure.PacMatchType
-		for _, v := range customPac.RoutingRules {
-			reuse := false
-			var rule *RoutingRule
-			//如果相邻规则的outbound类型以及matchType相同，则合并
-			if v.RuleType == lastOutboundTag && v.MatchType == lastMatchType {
-				rule = &t.Routing.Rules[len(t.Routing.Rules)-1]
-				reuse = true
-			} else {
-				rule = &RoutingRule{
-					Type:        "field",
-					OutboundTag: string(v.RuleType),
-					InboundTag:  []string{"rule"},
-				}
-			}
-			for i := range v.Tags {
-				r := fmt.Sprintf("ext:%v:%v", v.Filename, v.Tags[i])
-				switch v.MatchType {
-				case configure.DomainMatchRule:
-					rule.Domain = append(rule.Domain, r)
-				case configure.IpMatchRule:
-					rule.IP = append(rule.IP, r)
-				}
-			}
-			if !reuse {
-				t.Routing.Rules = append(t.Routing.Rules, *rule)
-			}
-			lastOutboundTag = v.RuleType
-			lastMatchType = v.MatchType
-		}
-		switch customPac.DefaultProxyMode {
-		case configure.DefaultProxyMode:
-		case configure.DefaultDirectMode:
-			//如果默认直连，则需要加上下述规则
-			t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"rule"},
-			})
-		case configure.DefaultBlockMode:
-			//如果默认拦截，则需要加上下述规则
-			t.Routing.Rules = append(t.Routing.Rules, RoutingRule{
-				Type:        "field",
-				OutboundTag: "block",
-				InboundTag:  []string{"rule"},
-			})
-		}
 	case configure.RoutingAMode:
 		if err := parseRoutingA(t, []string{"rule"}); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (t *Template) SetRulePortRouting(setting *configure.Setting) error {
+	return t.AppendRoutingRuleByMode(setting.RulePortMode, []string{"rule"})
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	ra := configure.GetRoutingA()
@@ -1208,54 +1179,29 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	})
 	return nil
 }
-func (t *Template) SetTransparentRouting(setting *configure.Setting) {
-	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
+func (t *Template) SetTransparentRouting(setting *configure.Setting) (err error) {
 	switch setting.Transparent {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{ // 直连中国大陆主流网站域名
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"transparent"},
-				Domain:      []string{"geosite:cn"},
-			},
-			RoutingRule{ // 直连中国大陆主流网站 ip 和 私有 ip
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"transparent"},
-				IP:          []string{"geoip:private", "geoip:cn"},
-			},
-		)
+		return t.AppendRoutingRuleByMode(configure.WhitelistMode, []string{"transparent"})
 	case configure.TransparentGfwlist:
-		t.Routing.Rules = append(t.Routing.Rules,
-			RoutingRule{
-				Type:        "field",
-				OutboundTag: firstOutboundTag,
-				InboundTag:  []string{"transparent"},
-				Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
-			},
-			RoutingRule{
-				Type:        "field",
-				OutboundTag: "direct",
-				InboundTag:  []string{"transparent"},
-			},
-		)
-	case configure.TransparentPac:
-		//transparent模式跟随pac
+		return t.AppendRoutingRuleByMode(configure.GfwlistMode, []string{"transparent"})
+	case configure.TransparentFollowRule:
+		// transparent mode is the same as rule
 		for i := range t.Routing.Rules {
-			bIncludePac := false
+			ok := false
 			for _, in := range t.Routing.Rules[i].InboundTag {
 				if in == "rule" {
-					bIncludePac = true
+					ok = true
 					break
 				}
 			}
-			if bIncludePac {
+			if ok {
 				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "transparent")
 			}
 		}
 	}
+	return nil
 }
 func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 	dokodemo := Inbound{
@@ -1751,7 +1697,9 @@ func NewTemplate(outboundInfos []OutboundInfo) (t Template, outboundTags []strin
 	}
 	//transparent routing
 	if setting.Transparent != configure.TransparentClose {
-		t.SetTransparentRouting(setting)
+		if err = t.SetTransparentRouting(setting); err != nil {
+			return
+		}
 	}
 	//set group routing
 	if err = t.SetGroupRouting(outboundName2VmessInfos); err != nil {

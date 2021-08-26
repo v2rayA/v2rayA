@@ -153,7 +153,7 @@
 
       <b-collapse
         v-if="!tableData.subscriptions.length && !tableData.servers.length"
-        class="card"
+        class="card welcome-driver"
         aria-id="contentIdForA11y3"
       >
         <div
@@ -693,15 +693,6 @@ import ModalSubscription from "@/components/modalSuscription";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import * as dayjs from "dayjs";
-// import relativeTime from "dayjs/plugin/relativeTime";
-// import timezone from "dayjs/plugin/timezone";
-// import utc from "dayjs/plugin/utc";
-// import "dayjs/locale/zh-cn";
-// import "dayjs/locale/en";
-
-// dayjs.extend(relativeTime);
-// dayjs.extend(utc);
-// dayjs.extend(timezone);
 
 export default {
   name: "Node",
@@ -741,7 +732,7 @@ export default {
       tableData: {
         servers: [],
         subscriptions: [],
-        connectedServer: {}
+        connectedServer: []
       },
       checkedRows: [],
       ready: false,
@@ -824,8 +815,7 @@ export default {
           v.connected = false;
         });
       });
-      this.tableData = res.data.data.touch;
-      // this.$store.commit("CONNECTED_SERVER", this.tableData.connectedServer);
+      // this.tableData = res.data.data.touch;
       this.runningState = {
         running: res.data.data.running
           ? this.$t("common.isRunning")
@@ -834,6 +824,9 @@ export default {
       };
       this.locateTabToConnected();
       this.ready = true;
+      this.$nextTick(() => {
+        this.driver();
+      });
     });
   },
   beforeDestroy() {
@@ -1822,5 +1815,8 @@ tr.highlight-row-connected {
 tr.highlight-row-disconnected {
   transition: background-color 0.05s linear;
   background-color: rgba(255, 69, 58, 0.55);
+}
+.click-through {
+  pointer-events: none;
 }
 </style>

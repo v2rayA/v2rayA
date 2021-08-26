@@ -3,7 +3,7 @@ package configure
 import "github.com/v2rayA/v2rayA/core/ipforward"
 
 type Setting struct {
-	RulePortMode                       PacMode         `json:"pacMode"`
+	RulePortMode                       RulePortMode    `json:"pacMode"`
 	ProxyModeWhenSubscribe             ProxyMode       `json:"proxyModeWhenSubscribe"`
 	GFWListAutoUpdateMode              AutoUpdateMode  `json:"pacAutoUpdateMode"`
 	GFWListAutoUpdateIntervalHour      int             `json:"pacAutoUpdateIntervalHour"`

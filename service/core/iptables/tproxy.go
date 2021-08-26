@@ -116,8 +116,6 @@ ip6tables -w 2 -t mangle -A SETMARK -p tcp --dport 53 ! -d ::1/128 -j MARK --set
 # 注意，如果要调整位置，记得调整func AddIPWhitelist的插入位置
 ip6tables -w 2 -t mangle -A SETMARK -d ::/128 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d ::1/128 -j RETURN
-ip6tables -w 2 -t mangle -A SETMARK -d ::ffff:0:0/96 -j RETURN
-ip6tables -w 2 -t mangle -A SETMARK -d ::ffff:0:0:0/96 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d 64:ff9b::/96 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d 100::/64 -j RETURN
 ip6tables -w 2 -t mangle -A SETMARK -d 2001::/32 -j RETURN
