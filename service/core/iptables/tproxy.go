@@ -46,7 +46,7 @@ iptables -w 2 -t mangle -N TP_PRE
 iptables -w 2 -t mangle -N SSTP_ONCE
 iptables -w 2 -t mangle -I OUTPUT -j TP_OUT
 iptables -w 2 -t mangle -I PREROUTING -j TP_PRE
-iptables -w 2 -t mangle -I PREROUTING -m socket -j SSTP_ONCE
+iptables -w 2 -t mangle -I PREROUTING -m socket --restore-skmark -j SSTP_ONCE
 
 # 打上 iptables 标记，mark 了的会走代理
 iptables -w 2 -t mangle -N SETMARK
@@ -95,7 +95,7 @@ iptables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 32
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
 # 略过已建立的socket
-iptables -w 2 -t mangle -A SSTP_ONCE -j ACCEPT
+iptables -w 2 -t mangle -A SSTP_ONCE -j RETURN
 `
 	if IsIPv6Supported() {
 		commands += `
@@ -109,7 +109,7 @@ ip6tables -w 2 -t mangle -N TP_PRE
 ip6tables -w 2 -t mangle -N SSTP_ONCE
 ip6tables -w 2 -t mangle -I OUTPUT -j TP_OUT
 ip6tables -w 2 -t mangle -I PREROUTING -j TP_PRE
-ip6tables -w 2 -t mangle -I PREROUTING -m socket -j SSTP_ONCE
+ip6tables -w 2 -t mangle -I PREROUTING -m socket --restore-skmark -j SSTP_ONCE
 
 # 打上 iptables 标记，mark 了的会走代理
 ip6tables -w 2 -t mangle -N SETMARK
@@ -155,7 +155,7 @@ ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 3
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
 # 略过已建立的socket
-ip6tables -w 2 -t mangle -A SSTP_ONCE -j ACCEPT
+ip6tables -w 2 -t mangle -A SSTP_ONCE -j RETURN
 `
 	}
 	return SetupCommands(commands)
@@ -167,7 +167,7 @@ ip rule del fwmark 1 table 100
 ip route del local 0.0.0.0/0 dev lo table 100
 
 iptables -w 2 -t mangle -F SSTP_ONCE
-iptables -w 2 -t mangle -D PREROUTING -m socket -j SSTP_ONCE
+iptables -w 2 -t mangle -D PREROUTING -m socket --restore-skmark -j SSTP_ONCE
 iptables -w 2 -t mangle -X SSTP_ONCE
 iptables -w 2 -t mangle -F TP_OUT
 iptables -w 2 -t mangle -D OUTPUT -j TP_OUT
