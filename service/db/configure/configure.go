@@ -8,6 +8,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/db"
 	"log"
+	"sort"
 	"strings"
 )
 
@@ -376,11 +377,13 @@ func RemoveConnect(wt Which) (err error) {
 }
 
 func GetOutbounds() (outbounds []string) {
-	outbounds = append(outbounds, "proxy")
+	// keep order
 	members, _ := db.StringSetGetAll("outbounds", "names")
 	for _, m := range members {
 		outbounds = append(outbounds, m)
 	}
+	sort.Strings(outbounds)
+	outbounds = append([]string{"proxy"}, outbounds...)
 	return
 }
 
