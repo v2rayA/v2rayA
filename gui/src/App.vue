@@ -39,19 +39,18 @@
               @mouseenter.native="handleOnOutboundMouseEnter(outbound)"
               @mouseleave.native="handleOnOutboundMouseLeave"
               @click="outboundName = outbound"
-              ><span style="max-width: 25em">{{
-                outboundNameDecorator(outbound)
-              }}</span>
-              <span>
-                <i
-                  v-show="
-                    outbound !== 'proxy' &&
-                      (isMobile || outboundDropdownHover[outbound])
-                  "
-                  class="iconfont icon-close-circle-fill"
-                  style="font-size: 1rem"
-                  @click="handleDeleteOutbound($event, outbound)"
-                ></i></span
+              ><p class="is-relative is-fullwidth">
+                <span>{{ outboundNameDecorator(outbound) }}</span>
+                <span>
+                  <i
+                    v-show="
+                      outbound !== 'proxy' &&
+                        (isMobile || outboundDropdownHover[outbound])
+                    "
+                    class="iconfont icon-close-circle-fill"
+                    @click="handleDeleteOutbound($event, outbound)"
+                  ></i
+                ></span></p
             ></b-dropdown-item>
             <b-dropdown-item
               aria-role="listitem"
@@ -671,10 +670,21 @@ a {
 }
 
 .padding-right-1rem {
-  padding-right: 1rem !important;
+  padding-right: 2rem !important;
 }
 
 #statusTag {
   width: 5em;
+}
+
+.dropdown-menu .is-fullwidth {
+  width: 100%;
+}
+
+.dropdown-menu .icon-close-circle-fill {
+  position: absolute;
+  right: -1.5rem;
+  top: 0;
+  font-size: 1rem;
 }
 </style>
