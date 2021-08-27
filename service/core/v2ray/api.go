@@ -97,6 +97,10 @@ nextLoop:
 					continue nextLoop
 				}
 				os[i].Which = css.Get()[index]
+				var w []configure.Which
+				for _, v := range css.Get() {
+					w = append(w, *v)
+				}
 			}
 			ApiFeed.ProductMessage(product, os)
 		}
