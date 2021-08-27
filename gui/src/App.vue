@@ -19,7 +19,7 @@
         <b-navbar-item tag="div">
           <b-dropdown
             v-if="updateOutboundDropdown"
-            :triggers="['click', 'hover']"
+            :triggers="isMobile ? ['click'] : ['click', 'hover']"
             aria-role="list"
             :close-on-click="false"
             @mouseenter.native="handleOutboundDropdownActiveChange"
@@ -39,14 +39,17 @@
               @mouseenter.native="handleOnOutboundMouseEnter(outbound)"
               @mouseleave.native="handleOnOutboundMouseLeave"
               @click="outboundName = outbound"
-              ><span>{{ outboundNameDecorator(outbound) }}</span>
+              ><span style="max-width: 25em">{{
+                outboundNameDecorator(outbound)
+              }}</span>
               <span>
                 <i
                   v-show="
-                    outbound !== 'proxy' && outboundDropdownHover[outbound]
+                    outbound !== 'proxy' &&
+                      (isMobile || outboundDropdownHover[outbound])
                   "
                   class="iconfont icon-close-circle-fill"
-                  style="font-size: 1.25em"
+                  style="font-size: 1rem"
                   @click="handleDeleteOutbound($event, outbound)"
                 ></i></span
             ></b-dropdown-item>
@@ -194,6 +197,9 @@ export default {
       }
       let payload = JSON.parse(Base64.decode(token.split(".")[1]));
       return payload["uname"];
+    },
+    isMobile() {
+      return window.screen.width < 800;
     }
   },
   mounted() {
