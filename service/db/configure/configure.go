@@ -193,7 +193,7 @@ func GetSubscriptions() []SubscriptionRaw {
 }
 func GetSubscription(index int) *SubscriptionRaw {
 	s := new(SubscriptionRaw)
-	err := db.ListGet("touch", "subscriptions", index, &s)
+	err := db.ListGet("touch", "subscriptions", index, s)
 	if err != nil {
 		return nil
 	}
@@ -201,8 +201,8 @@ func GetSubscription(index int) *SubscriptionRaw {
 }
 func GetSettingNotNil() *Setting {
 	r := new(Setting)
-	_ = db.Get("system", "setting", &r)
-	if r == nil {
+	err := db.Get("system", "setting", r)
+	if err != nil {
 		r = NewSetting()
 		_ = db.Set("system", "setting", r)
 	}
@@ -228,12 +228,12 @@ func GetPortsNotNil() *Ports {
 }
 func GetPortWhiteListNotNil() *PortWhiteList {
 	r := new(PortWhiteList)
-	_ = db.Get("system", "portWhiteList", &r)
+	_ = db.Get("system", "portWhiteList", r)
 	return r
 }
 func GetExternalDnsListNotNil() (list []string) {
 	r := new(string)
-	_ = db.Get("system", "externalDnsList", &r)
+	_ = db.Get("system", "externalDnsList", r)
 	list = strings.Split(strings.TrimSpace(*r), "\n")
 	if len(list) == 1 && list[0] == "" {
 		return []string{}
@@ -242,7 +242,7 @@ func GetExternalDnsListNotNil() (list []string) {
 }
 func GetInternalDnsListNotNil() (list []string) {
 	r := new(string)
-	_ = db.Get("system", "internalDnsList", &r)
+	_ = db.Get("system", "internalDnsList", r)
 	if len(strings.TrimSpace(*r)) == 0 {
 		*r = `119.29.29.29 -> direct
 https://doh.alidns.com/dns-query -> direct
@@ -256,7 +256,7 @@ tcp://dns.opendns.com:5353 -> proxy`
 }
 func GetCustomPacNotNil() *CustomPac {
 	r := new(CustomPac)
-	_ = db.Get("system", "customPac", &r)
+	_ = db.Get("system", "customPac", r)
 	if r.DefaultProxyMode == "" {
 		r = &CustomPac{
 			DefaultProxyMode: DefaultProxyMode,
@@ -294,7 +294,7 @@ func GetConnectedServersByOutbound(outbound string) *Whiches {
 		outbound = "proxy"
 	}
 	bucket := fmt.Sprintf("outbound.%v", outbound)
-	if err := db.Get(bucket, "connectedServers", &r); err != nil {
+	if err := db.Get(bucket, "connectedServers", r); err != nil {
 		return nil
 	}
 	return r
