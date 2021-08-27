@@ -3,9 +3,9 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/server/service"
 	"net"
 	"strconv"
@@ -19,11 +19,11 @@ func PutPortWhiteList(ctx *gin.Context) {
 	var data configure.PortWhiteList
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	if !data.Valid() {
-		common.ResponseError(ctx, logError(nil, "invalid format of port"))
+		common.ResponseError(ctx, logError("invalid format of port"))
 		return
 	}
 	err = configure.SetPortWhiteList(&data)
@@ -40,11 +40,11 @@ func PostPortWhiteList(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	p := service.GetPorts()
-	_, listenPort, _ := net.SplitHostPort(global.GetEnvironmentConfig().Address)
+	_, listenPort, _ := net.SplitHostPort(conf.GetEnvironmentConfig().Address)
 	tcpList := []string{"1:1023", data.RequestPort, listenPort}
 	udpList := []string{"1:1023"}
 	if p.Http > 0 {

@@ -2,15 +2,14 @@ package v2ray
 
 import (
 	"context"
-	"fmt"
 	"github.com/devfeel/mapper"
 	"github.com/v2fly/v2ray-core/v4/app/observatory"
 	pb "github.com/v2fly/v2ray-core/v4/app/observatory/command"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -73,7 +72,7 @@ nextLoop:
 		if conn == nil {
 			c, err := grpc.Dial(net.JoinHostPort("127.0.0.1", strconv.Itoa(ApiPort())), grpc.WithInsecure(), grpc.WithBlock())
 			if err != nil {
-				log.Printf("[Warning] observatoryProducer:%v", fmt.Errorf("did not connect: %w", err))
+				log.Warn("observatoryProducer: did not connect: %v", err)
 			}
 			defer c.Close()
 			conn = c
@@ -85,7 +84,7 @@ nextLoop:
 				conn = nil
 				continue
 			}
-			log.Printf("[Warning] observatoryProducer: %v", err)
+			log.Warn("observatoryProducer: %v", err)
 		} else {
 			outboundStatus := r.GetStatus().GetStatus()
 			os := make([]OutboundStatus, len(outboundStatus))

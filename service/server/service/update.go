@@ -2,8 +2,9 @@ package service
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/conf"
 	"net/http"
 	"strings"
 )
@@ -22,13 +23,13 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	s := buf.String()
 	l := strings.Index(s, "Package: v2raya")
 	if l < 0 {
-		return false, "", newError("failed to get latest version from Package file: 1")
+		return false, "", fmt.Errorf("failed to get latest version from Package file: 1")
 	}
 	s = s[l:]
 	prefix := "Version: "
 	l = strings.Index(s, prefix)
 	if l < 0 {
-		return false, "", newError("failed to get latest version from Package file: 2")
+		return false, "", fmt.Errorf("failed to get latest version from Package file: 2")
 	}
 	s = s[l+len(prefix):]
 	r := strings.Index(s, "\n")
@@ -37,6 +38,6 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	}
 	s = s[:r]
 	// 远端版本获取完毕
-	ge, err := common.VersionGreaterEqual(global.Version, s)
+	ge, err := common.VersionGreaterEqual(conf.Version, s)
 	return !ge, s, err
 }

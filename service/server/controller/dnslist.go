@@ -15,21 +15,21 @@ func PutDnsList(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	if len(data.Internal) == 0 && len(data.External) != 0 {
-		common.ResponseError(ctx, logError(nil, "internal dns servers cannot be empty"))
+		common.ResponseError(ctx, logError("internal dns servers cannot be empty"))
 		return
 	}
 	internal, err := service.RefineDnsList(data.Internal)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, fmt.Errorf("internal dns servers: %w", err)))
+		common.ResponseError(ctx, logError(fmt.Errorf("internal dns servers: %w", err)))
 		return
 	}
 	external, err := service.RefineDnsList(data.External)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, fmt.Errorf("external dns servers: %w", err)))
+		common.ResponseError(ctx, logError(fmt.Errorf("external dns servers: %w", err)))
 		return
 	}
 	if err = configure.SetInternalDnsList(&internal); err != nil {

@@ -5,7 +5,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/extra/proxyWithHttp"
+	proxyWithHttp2 "github.com/v2rayA/v2rayA/pkg/util/proxyWithHttp"
 	"net/http"
 	"net/url"
 	"os/exec"
@@ -17,7 +17,7 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 	if err != nil {
 		return
 	}
-	dialer, err := proxyWithHttp.FromURL(u, proxyWithHttp.Direct)
+	dialer, err := proxyWithHttp2.FromURL(u, proxyWithHttp2.Direct)
 	if err != nil {
 		return
 	}

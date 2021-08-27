@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	v2router "github.com/v2fly/v2ray-core/v4/app/router"
 	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
@@ -26,11 +27,11 @@ func GetWhitelistCn(externDomains []*v2router.Domain) (wlDomains *strmatcher.Mat
 	var siteList v2router.GeoSiteList
 	b, err := os.ReadFile(path.Join(dir, "geosite.dat"))
 	if err != nil {
-		return nil, newError("GetWhitelistCn").Base(err)
+		return nil, fmt.Errorf("GetWhitelistCn: %w", err)
 	}
 	err = proto.Unmarshal(b, &siteList)
 	if err != nil {
-		return nil, newError("GetWhitelistCn").Base(err)
+		return nil, fmt.Errorf("GetWhitelistCn: %w", err)
 	}
 	wlDomains = new(strmatcher.MatcherGroup)
 	domainMatcher := new(DomainMatcherGroup)

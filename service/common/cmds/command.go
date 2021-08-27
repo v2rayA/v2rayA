@@ -1,6 +1,8 @@
 package cmds
 
 import (
+	"fmt"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os/exec"
 	"strings"
 )
@@ -20,7 +22,8 @@ func ExecCommands(commands string, stopWhenError bool) error {
 		}
 		out, err := exec.Command("sh", "-c", line).CombinedOutput()
 		if err != nil {
-			e = newError(line, " ", string(out)).Base(err)
+			e = fmt.Errorf("ExecCommands: %v %v: %w", line, string(out), err)
+			log.Trace("%v", e)
 			if stopWhenError {
 				return e
 			}

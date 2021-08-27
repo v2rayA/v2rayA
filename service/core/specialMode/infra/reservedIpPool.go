@@ -2,7 +2,7 @@ package infra
 
 import (
 	lru2 "github.com/v2rayA/v2rayA/infra/dataStructure/lru"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"sync"
 )
 

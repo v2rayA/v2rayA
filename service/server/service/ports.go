@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"strconv"
@@ -32,7 +33,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 		cnt++
 	}
 	if cnt > len(set) {
-		return newError("ports duplicate. check it")
+		return fmt.Errorf("ports duplicate. check it")
 	}
 	detectSyntax := make([]string, 0)
 	if ports.Socks5 != origin.Socks5 {

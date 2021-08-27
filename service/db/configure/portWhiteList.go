@@ -22,7 +22,7 @@ func (pwl *PortWhiteList) Valid() bool {
 		}
 	}
 	for _, t := range pwl.UDP {
-		if !r1.MatchString(t) && ! r2.MatchString(t) {
+		if !r1.MatchString(t) && !r2.MatchString(t) {
 			return false
 		}
 	}

@@ -3,7 +3,7 @@ package configure
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/resolv"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"sort"
 	"strings"
@@ -172,7 +172,7 @@ func (w *Which) EqualTo(another Which) (ok bool) {
 }
 func (w *Which) Ping(timeout time.Duration) (err error) {
 	if w.TYPE == SubscriptionType {
-		return newError("you cannot ping a subscription")
+		return fmt.Errorf("you cannot ping a subscription")
 	}
 	tsr, err := w.LocateServerRaw()
 	if err != nil {
@@ -202,7 +202,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 		//log.Println(host+":"+tsr.VmessInfo.Port, e)
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 	} else {
-		log.Println(e)
+		log.Debug("Ping: %v", e)
 		w.Latency = "TIMEOUT"
 	}
 	return
@@ -214,17 +214,17 @@ func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
-			return nil, newError("LocateServerRaw: ID exceed range")
+			return nil, fmt.Errorf("LocateServerRaw: ID exceed range")
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-			return nil, newError("LocateServerRaw: ID or Sub exceed range")
+			return nil, fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
 		}
 		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
-		return nil, newError("LocateServerRaw: invalid TYPE")
+		return nil, fmt.Errorf("LocateServerRaw: invalid TYPE")
 	}
 }
 
@@ -236,16 +236,16 @@ func (ws *Whiches) FillLinks() (err error) {
 		switch w.TYPE {
 		case ServerType:
 			if ind < 0 || ind >= len(servers) {
-				return newError("LocateServerRaw: ID exceed range")
+				return fmt.Errorf("LocateServerRaw: ID exceed range")
 			}
 			w.Link = servers[ind].VmessInfo.ExportToURL()
 		case SubscriptionServerType:
 			if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-				return newError("LocateServerRaw: ID or Sub exceed range")
+				return fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
 			}
 			w.Link = subscriptions[w.Sub].Servers[ind].VmessInfo.ExportToURL()
 		default:
-			return newError("LocateServerRaw: invalid TYPE")
+			return fmt.Errorf("LocateServerRaw: invalid TYPE")
 		}
 	}
 	return nil

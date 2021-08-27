@@ -7,8 +7,8 @@ import (
 	v2router "github.com/v2fly/v2ray-core/v4/app/router"
 	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
 	"github.com/v2rayA/v2rayA/common/netTools"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"golang.org/x/net/dns/dnsmessage"
-	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -190,23 +190,23 @@ func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname strin
 		ip := interfaceHandle.handleSendMessage(m, sAddr, sPort, dAddr, dPort, whitelistDomains)
 		// TODO: 分开显示AAAA的投毒
 		if ip[3] != 0 {
-			log.Println("supervisor["+ifname+"]:", sAddr.String()+":"+sPort.String(), "->", dAddr.String()+":"+dPort.String(), dm, "poisoned as", fmt.Sprintf("%v.%v.%v.%v", ip[0], ip[1], ip[2], ip[3]))
+			log.Info("supervisor[%v]: %v -> %v %v poisoned as %v", ifname, net.JoinHostPort(sAddr.String(), sPort.String()), net.JoinHostPort(dAddr.String(), dPort.String()), dm, fmt.Sprintf("%v.%v.%v.%v", ip[0], ip[1], ip[2], ip[3]))
 		}
 	} else {
 		results, msg := interfaceHandle.handleReceiveMessage(m)
 		if results != nil {
-			log.Println("supervisor["+ifname+"]:", dAddr.String()+":"+dPort.String(), "<-", sAddr.String()+":"+sPort.String(), "("+dm, "=>", msg+")")
+			log.Info("supervisor[%v]: %v <- %v (%v => %v)", ifname, net.JoinHostPort(dAddr.String(), dPort.String()), net.JoinHostPort(sAddr.String(), sPort.String()), dm, msg)
 			for _, r := range results {
 				// print log
 				switch r.result {
 				case ProposeBlacklist:
-					log.Println("supervisor["+ifname+"]: [propose]", r.domain, "proof:", dm+msg)
+					log.Info("supervisor[%v]: [propose] %v proof: %v", ifname, r.domain, dm+msg)
 				case AgainstBlacklist:
-					log.Println("supervisor["+ifname+"]: [against]", r.domain, "proof:", dm+msg)
+					log.Info("supervisor[%v]: [against] %v proof: %v", ifname, r.domain, dm+msg)
 				case AddBlacklist:
-					log.Println("supervisor["+ifname+"]: {add blocklist}", r.domain)
+					log.Info("supervisor[%v]: {add blocklist} %v", ifname, r.domain)
 				case RemoveBlacklist:
-					log.Println("supervisor["+ifname+"]: {remove blocklist}", r.domain)
+					log.Info("supervisor[%v]: {remove blocklist} %v", ifname, r.domain)
 				}
 			}
 		}

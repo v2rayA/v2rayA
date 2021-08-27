@@ -3,9 +3,10 @@ package db
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/xujiajun/nutsdb"
-	"log"
 	"reflect"
 	"sort"
 )
@@ -45,7 +46,7 @@ func Exists(bucket string, key string) bool {
 		return nil
 	}); err != nil {
 		if err.Error() != nutsdb.ErrBucketAndKey(bucket, []byte(key)).Error() {
-			log.Println(newError("[ERROR] func Exists returns a new error type").Base(err))
+			log.Warn("func Exists returns a new error type: %v", err)
 		}
 		return false
 	}
@@ -58,7 +59,7 @@ func ListLen(bucket string, key string) (length int, err error) {
 		if err == nil {
 			return nil
 		} else {
-			return newError().Base(err)
+			return fmt.Errorf("ListLen: %v", err)
 		}
 	})
 	return
@@ -72,7 +73,7 @@ func GetBucketLen(bucket string) (length int, err error) {
 			if err == nil {
 				return nil
 			} else {
-				return newError().Base(err)
+				return fmt.Errorf("GetBucketLen: %v", err)
 			}
 		}
 		length = len(entries)
@@ -89,7 +90,7 @@ func GetBucketKeys(bucket string) (keys []string, err error) {
 			if err == nil {
 				return nil
 			} else {
-				return newError().Base(err)
+				return fmt.Errorf("GetBucketKeys: %v", err)
 			}
 		}
 		for _, e := range entries {
@@ -167,7 +168,7 @@ func ListGet(bucket string, key string, index int, val interface{}) (err error) 
 		if err == nil {
 			return nil
 		} else {
-			return newError().Base(err)
+			return fmt.Errorf("ListGet: %v", err)
 		}
 	})
 }
@@ -182,7 +183,7 @@ func ListGetRaw(bucket string, key string, index int) (raw []byte, err error) {
 		if err == nil {
 			return nil
 		} else {
-			return newError().Base(err)
+			return fmt.Errorf("ListGetRaw: %v", err)
 		}
 	})
 	return
@@ -218,7 +219,7 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 		if err == nil {
 			return nil
 		} else {
-			return newError().Base(err)
+			return fmt.Errorf("ListGetAll: %w", err)
 		}
 	})
 	return
@@ -263,16 +264,16 @@ func ListRemove(bucket, key string, indexes []int) error {
 		//tx.LRem(bucket, []byte(key), 0)
 		list, err := tx.LRange(bucket, []byte(key), 0, -1)
 		if err != nil {
-			return newError().Base(err)
+			return fmt.Errorf("ListRemove: %v", err)
 		}
 		for i := len(indexes) - 1; i >= 0; i-- {
 			list = append(list[:indexes[i]], list[indexes[i]+1:]...)
 		}
 		if err = tx.LRem(bucket, []byte(key), 0); err != nil {
-			return newError().Base(err)
+			return fmt.Errorf("ListRemove: %v", err)
 		}
 		if err = tx.RPush(bucket, []byte(key), list...); err != nil {
-			return newError().Base(err)
+			return fmt.Errorf("ListRemove: %v", err)
 		}
 		return nil
 	})
@@ -285,12 +286,12 @@ func BucketClear(bucket string) error {
 			if err == nutsdb.ErrBucketEmpty {
 				return nil
 			}
-			return newError().Base(err)
+			return fmt.Errorf("BucketClear: %v", err)
 		}
 		for _, e := range entries {
 			err = tx.Delete(bucket, e.Key)
 			if err != nil {
-				return newError().Base(err)
+				return fmt.Errorf("BucketClear: %v", err)
 			}
 		}
 		return nil

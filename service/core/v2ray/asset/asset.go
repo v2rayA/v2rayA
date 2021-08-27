@@ -4,9 +4,9 @@ import (
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"github.com/v2rayA/v2rayA/global"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"path"
 	"path/filepath"
@@ -77,7 +77,7 @@ func IsCustomExists() bool {
 func GetConfigBytes() (b []byte, err error) {
 	b, err = os.ReadFile(GetV2rayConfigPath())
 	if err != nil {
-		log.Println(err)
+		log.Warn("failed to get config: %v", err)
 		return
 	}
 	b = jsonc.ToJSON(b)
@@ -85,11 +85,11 @@ func GetConfigBytes() (b []byte, err error) {
 }
 
 func GetV2rayConfigPath() (p string) {
-	return path.Join(global.GetEnvironmentConfig().Config, "config.json")
+	return path.Join(conf.GetEnvironmentConfig().Config, "config.json")
 }
 
 func GetV2rayConfigDirPath() (p string) {
-	return global.GetEnvironmentConfig().V2rayConfigDirectory
+	return conf.GetEnvironmentConfig().V2rayConfigDirectory
 }
 
 func LoyalsoldierSiteDatExists() bool {

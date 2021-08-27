@@ -14,8 +14,8 @@ Touch是树型结构的前后端通信形式，其结构设计和前端统一。
 */
 type SubscriptionStatus string
 type Touch struct {
-	Servers          []TouchServer    `json:"servers"`
-	Subscriptions    []Subscription   `json:"subscriptions"`
+	Servers          []TouchServer      `json:"servers"`
+	Subscriptions    []Subscription     `json:"subscriptions"`
 	ConnectedServers []*configure.Which `json:"connectedServer"` //冗余一个信息，方便查找
 }
 type TouchServer struct {

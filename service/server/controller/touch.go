@@ -28,8 +28,8 @@ func getTouch(ctx *gin.Context) {
 	running := v2ray.IsV2RayRunning()
 	t := touch.GenerateTouch()
 	common.ResponseSuccess(ctx, gin.H{
-		"running":      running,
-		"touch":        t,
+		"running": running,
+		"touch":   t,
 	})
 }
 
@@ -51,7 +51,7 @@ func DeleteTouch(ctx *gin.Context) {
 	var ws configure.Whiches
 	err := ctx.ShouldBindJSON(&ws)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	err = service.DeleteWhich(ws.Get())

@@ -2,19 +2,20 @@ package v2ray
 
 import (
 	"errors"
+	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
-	"github.com/v2rayA/v2rayA/plugin"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"path"
 	"strings"
@@ -44,11 +45,11 @@ func ApiPort() int {
 
 func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 	if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
-		return nil, newError("Please sync datetime first. Your datetime is ", time.Now().Local().Format(ntp.DisplayFormat), ", and the correct datetime is ", t.Local().Format(ntp.DisplayFormat))
+		return nil, fmt.Errorf("Please sync datetime first. Your datetime is %v, and the correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
 	}
 	setting := configure.GetSettingNotNil()
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
-		return nil, newError("cannot find GFWList files. update GFWList and try again")
+		return nil, fmt.Errorf("cannot find GFWList files. update GFWList and try again")
 	}
 	if err = killV2ray(saveStatus); err != nil {
 		return
@@ -65,7 +66,7 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 	if confdir := asset.GetV2rayConfigDirPath(); confdir != "" {
 		params = append(params, "--confdir="+confdir)
 	}
-	log.Println(strings.Join(params, " "))
+	log.Debug(strings.Join(params, " "))
 	assetDir := asset.GetV2rayLocationAsset()
 	process, err = os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
 		Dir: dir, //防止找不到v2ctl
@@ -79,7 +80,7 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 		},
 	})
 	if err != nil {
-		return nil, newError().Base(err)
+		return nil, fmt.Errorf("RestartV2rayService: %w", err)
 	}
 	if saveStatus {
 		SetCoreProcess(process)
@@ -131,7 +132,7 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 		}
 
 		if time.Since(startTime) > 15*time.Second {
-			return nil, newError("v2ray-core does not start normally, check the log for more information")
+			return nil, fmt.Errorf("v2ray-core does not start normally, check the log for more information")
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
@@ -144,7 +145,7 @@ func findAvailablePluginPorts(vms []vmessInfo.VmessInfo) (pluginPortMap map[int]
 		return nil, err
 	}
 	pluginPortMap = make(map[int]int)
-	checkingPort := global.GetEnvironmentConfig().PluginListenPort - 1
+	checkingPort := conf.GetEnvironmentConfig().PluginListenPort - 1
 	for i, v := range vms {
 		if !plugin.HasProperPlugin(v) {
 			continue
@@ -169,13 +170,16 @@ func UpdateV2RayConfig() (err error) {
 	defer func() {
 		if err == nil {
 			if e := CheckAndSetupTransparentProxy(true); e != nil {
-				err = newError(e).Base(err)
+				err = fmt.Errorf("%w: %w", err, e)
 				if IsV2RayRunning() {
 					if e = StopV2rayService(true); e != nil {
-						err = newError(e).Base(err)
+						err = fmt.Errorf("%w: %w", err, e)
 					}
 				}
 			}
+		}
+		if err != nil {
+			err = fmt.Errorf("UpdateV2RayConfig: %w", err)
 		}
 	}()
 	plugin.GlobalPlugins.CloseAll()
@@ -232,7 +236,7 @@ func UpdateV2RayConfig() (err error) {
 		return
 	}
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
-		return newError(err)
+		return fmt.Errorf("%v", err)
 	}
 	_, err = RestartV2rayService(true)
 	if err != nil {
@@ -295,7 +299,7 @@ func StopV2rayService(saveStatus bool) (err error) {
 			if err != nil && len(strings.TrimSpace(err.Error())) > 0 {
 				msg += ": " + err.Error()
 			}
-			err = newError(msg)
+			err = fmt.Errorf("StopV2rayService: %v", msg)
 		}
 	}()
 	return killV2ray(saveStatus)

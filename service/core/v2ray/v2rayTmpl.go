@@ -11,16 +11,16 @@ import (
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	dnsParser2 "github.com/v2rayA/v2rayA/infra/dnsParser"
-	"github.com/v2rayA/v2rayA/plugin"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/url"
 	"os"
@@ -319,7 +319,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return o, newError("error occurs while reading template json, please check whether templateJson variable is correct json format")
+		return o, fmt.Errorf("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
 	// 默认协议vmess
 	switch v.Protocol {
@@ -421,7 +421,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 			}
 			ver, e := where.GetV2rayServiceVersion()
 			if e != nil {
-				log.Println(newError("cannot get the version of v2ray-core").Base(e))
+				log.Warn("cannot get the version of v2ray-core: %v", e)
 			} else if !common.VersionMustGreaterEqual(ver, "4.23.2") {
 				o.StreamSettings.TLSSettings.AllowInsecureCiphers = true
 			}
@@ -469,7 +469,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		switch v.Net {
 		case "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "plain", "none":
 		default:
-			return o, newError("unsupported shadowsocks encryption method: " + v.Net)
+			return o, fmt.Errorf("unsupported shadowsocks encryption method: %v", v.Net)
 		}
 		target := v.Add
 		port := 0
@@ -480,7 +480,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		case "":
 			port, _ = strconv.Atoi(v.Port)
 		default:
-			return o, newError("unsupported shadowsocks obfuscation method: " + v.TLS)
+			return o, fmt.Errorf("unsupported shadowsocks obfuscation method: %v", v.TLS)
 		}
 		o.Settings.Servers = []Server{{
 			Address:  target,
@@ -491,10 +491,10 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	case "trojan":
 		version, err := where.GetV2rayServiceVersion()
 		if err != nil {
-			return o, newError(err)
+			return o, fmt.Errorf("ResolveOutbound: %v", err)
 		}
 		if ok, err := common.VersionGreaterEqual(version, "4.31.0"); err != nil || !ok {
-			return o, newError("unsupported shadowsocks obfuscation method: " + v.TLS)
+			return o, fmt.Errorf("unsupported shadowsocks obfuscation method: %v", v.TLS)
 		}
 		o.Settings.Servers = []Server{{
 			Address:  v.Add,
@@ -551,7 +551,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		switch v.Net {
 		case "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "aes-128-ofb", "aes-192-ofb", "aes-256-ofb", "des-cfb", "bf-cfb", "cast5-cfb", "rc4-md5", "chacha20", "chacha20-ietf", "salsa20", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "idea-cfb", "rc2-cfb", "seed-cfb", "none":
 		default:
-			return o, newError("unsupported shadowsocks encryption method: " + v.Net)
+			return o, fmt.Errorf("unsupported shadowsocks encryption method: %v", v.Net)
 		}
 		if len(strings.TrimSpace(v.Type)) <= 0 {
 			v.Type = "origin"
@@ -559,7 +559,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		switch v.Type {
 		case "origin", "verify_sha1", "auth_sha1_v4", "auth_aes128_md5", "auth_aes128_sha1", "auth_chain_a", "auth_chain_b":
 		default:
-			return o, newError("unsupported shadowsocksR protocol: " + v.Type)
+			return o, fmt.Errorf("unsupported shadowsocksR protocol: %v", v.Type)
 		}
 		if len(strings.TrimSpace(v.TLS)) <= 0 {
 			v.TLS = "plain"
@@ -567,7 +567,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 		switch v.TLS {
 		case "plain", "http_simple", "http_post", "random_head", "tls1.2_ticket_auth":
 		default:
-			return o, newError("unsupported shadowsocksr obfuscation method: " + v.TLS)
+			return o, fmt.Errorf("unsupported shadowsocksr obfuscation method: %v", v.TLS)
 		}
 		socksPlugin = true
 	case "pingtunnel":
@@ -575,7 +575,7 @@ func ResolveOutbound(v *vmessInfo.VmessInfo, tag string, pluginPort *int) (o Out
 	case "trojan-go":
 		socksPlugin = true
 	default:
-		return o, newError("unsupported protocol: " + v.Protocol)
+		return o, fmt.Errorf("unsupported protocol: %v", v.Protocol)
 	}
 	if socksPlugin && pluginPort != nil {
 		o.Protocol = "socks"
@@ -828,7 +828,7 @@ func (t *Template) SetDNS(outbounds []serverInfo, setting *configure.Setting, su
 			ds.Domains = append(ds.Domains, "geosite:geolocation-!cn")
 		}
 		if len(t.DNS.Servers) == 0 {
-			log.Println("[Fakedns]: NOT REASONABLE. Please report your config.")
+			log.Error("[Fakedns]: NOT REASONABLE. Please report your config.")
 			t.DNS.Servers = append(t.DNS.Servers, "localhost")
 		}
 		t.DNS.Servers = append(t.DNS.Servers, ds)
@@ -1057,7 +1057,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	ra := configure.GetRoutingA()
 	rules, err := routingA.Parse(ra)
 	if err != nil {
-		log.Println(err)
+		log.Warn("parseRoutingA: %v", err)
 		return err
 	}
 	defaultOutbound, _ := t.FirstProxyOutboundName(nil)
@@ -1435,7 +1435,7 @@ func GenerateIdFromAccounts() (id string, err error) {
 }
 
 func SetVlessGrpcInbound(vlessGrpc *Inbound) (err error) {
-	config := global.GetEnvironmentConfig()
+	config := conf.GetEnvironmentConfig()
 	if len(config.VlessGrpcInboundCertKey) < 2 {
 		return fmt.Errorf("VLESS-GPRC inbound depends on TLS cert, close the inbound or add cert by comand line argument --vless-grpc-inbound-cert-key or environment variable V2RAYA_VLESS_GRPC_INBOUND_CERT_KEY")
 	}
@@ -1819,16 +1819,17 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	raw := []byte(TemplateJson)
 	err = jsoniter.Unmarshal(raw, &tmplJson)
 	if err != nil {
-		return Template{}, nil, newError("error occurs while reading template json, please check whether templateJson variable is correct json format")
+		return Template{}, nil, fmt.Errorf("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
 	// tmplJson.Template is the basic configuration
 	t = tmplJson.Template
 	// log
-	if global.GetEnvironmentConfig().Verbose {
+	t.Log = new(Log)
+	if logLevel := log.ParseLevel(conf.GetEnvironmentConfig().LogLevel); logLevel >= log.ParseLevel("debug") {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = ""
-	} else if CheckLogNoneSupported() == nil {
+	} else if logLevel >= log.ParseLevel("info") && CheckLogNoneSupported() == nil {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = "none"
@@ -1913,7 +1914,7 @@ func (t *Template) CheckDuplicatedTags() error {
 	for _, in := range t.Inbounds {
 		tag := in.Tag
 		if _, exists := inboundTagsSet[tag]; exists {
-			return newError("duplicated inbound tag: ", tag).AtError()
+			return fmt.Errorf("duplicated inbound tag: %v", tag)
 		} else {
 			inboundTagsSet[tag] = nil
 		}
@@ -1922,7 +1923,7 @@ func (t *Template) CheckDuplicatedTags() error {
 	for _, out := range t.Outbounds {
 		tag := out.Tag
 		if _, exists := outboundTagsSet[tag]; exists {
-			return newError("duplicated outbound tag: ", tag)
+			return fmt.Errorf("duplicated outbound tag: %v", tag)
 		} else {
 			outboundTagsSet[tag] = nil
 		}
@@ -1997,7 +1998,7 @@ func (t *Template) ToConfigBytes() []byte {
 func WriteV2rayConfig(content []byte) (err error) {
 	err = os.WriteFile(asset.GetV2rayConfigPath(), content, os.FileMode(0600))
 	if err != nil {
-		return newError("WriteV2rayConfig").Base(err)
+		return fmt.Errorf("WriteV2rayConfig: %w", err)
 	}
 	return
 }
@@ -2034,7 +2035,7 @@ func (t *Template) AddMappingOutbound(v vmessInfo.VmessInfo, inboundPort string,
 	t.Outbounds = append(t.Outbounds, o)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
-		return newError("port of inbound must be a positive number with string type")
+		return fmt.Errorf("port of inbound must be a positive number with string type")
 	}
 	if protocol == "" {
 		protocol = "socks"

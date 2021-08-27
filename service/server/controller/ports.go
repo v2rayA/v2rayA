@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	"github.com/v2rayA/v2rayA/server/service"
 	"net"
 	"strconv"
@@ -30,7 +30,7 @@ func PutPorts(ctx *gin.Context) {
 	var data configure.Ports
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	origin := service.GetPorts()
@@ -39,7 +39,7 @@ func PutPorts(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	if certKey := global.GetEnvironmentConfig().VlessGrpcInboundCertKey; len(certKey) >= 2 {
+	if certKey := conf.GetEnvironmentConfig().VlessGrpcInboundCertKey; len(certKey) >= 2 {
 		// if is turning VLESS-GRPC on
 		if data.VlessGrpc > 0 && origin.VlessGrpc <= 0 {
 			link, err := getLinkForVlessGrpc(ctx.Request.Host, certKey[0])
@@ -78,7 +78,7 @@ func GetPorts(ctx *gin.Context) {
 		VlessGrpcLink *string `json:"vlessGrpcLink"`
 	}
 	data.Ports = service.GetPorts()
-	if certKey := global.GetEnvironmentConfig().VlessGrpcInboundCertKey; len(certKey) >= 2 {
+	if certKey := conf.GetEnvironmentConfig().VlessGrpcInboundCertKey; len(certKey) >= 2 {
 		if data.VlessGrpc > 0 {
 			link, err := getLinkForVlessGrpc(ctx.Request.Host, certKey[0])
 			if err != nil {

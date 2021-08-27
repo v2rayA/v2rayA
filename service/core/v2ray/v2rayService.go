@@ -29,10 +29,10 @@ func CheckAndProbeTProxy() (err error) {
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
 			if !strings.Contains(string(out), "not found") {
-				return newError("failed to modprobe xt_TPROXY: " + string(out))
+				return fmt.Errorf("failed to modprobe xt_TPROXY: %v", string(out))
 			}
 			// modprobe失败，不支持xt_TPROXY方案
-			return newError("not support xt_TPROXY: " + string(out))
+			return fmt.Errorf("not support xt_TPROXY: %v", string(out))
 		}
 	}
 	return

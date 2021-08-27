@@ -1,11 +1,12 @@
 package service
 
 import (
+	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/infra/nodeData"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -36,7 +37,7 @@ func ResolveVmessURL(vmess string) (data *nodeData.NodeData, err error) {
 		}
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
-			err = newError("unrecognized vmess address")
+			err = fmt.Errorf("unrecognized vmess address")
 			return
 		}
 		q := u.Query()
@@ -215,7 +216,7 @@ func ResolveSSURL(u string) (data *nodeData.NodeData, err error) {
 		v, ok = resolveFormat(t)
 	}
 	if !ok {
-		err = newError("unrecognized ss address")
+		err = fmt.Errorf("unrecognized ss address")
 		return
 	}
 	// 填充模板并处理结果
@@ -286,7 +287,7 @@ func ResolveSSRURL(u string) (data *nodeData.NodeData, err error) {
 		info, ok = resolveFormat(content)
 	}
 	if !ok {
-		err = newError("unrecognized ssr address")
+		err = fmt.Errorf("unrecognized ssr address")
 		return
 	}
 	// 填充模板并处理结果
@@ -299,7 +300,7 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	//	trojan://password@server:port#escape(remarks)
 	t, err := url.Parse(u)
 	if err != nil {
-		err = newError("invalid trojan format")
+		err = fmt.Errorf("invalid trojan format")
 		return
 	}
 	allowInsecure := t.Query().Get("allowInsecure")
@@ -331,7 +332,7 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 func ResolveHttpURL(u string) (data *nodeData.NodeData, err error) {
 	t, err := url.Parse(u)
 	if err != nil {
-		err = newError("invalid http(s) format")
+		err = fmt.Errorf("invalid http(s) format")
 		return
 	}
 	data = new(nodeData.NodeData)
@@ -369,8 +370,8 @@ func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
 	u = strings.TrimPrefix(u, "pingtunnel://")
 	u, err = common.Base64StdDecode(u)
 	if err != nil {
-		log.Println(u)
-		err = newError().Base(err)
+		log.Warn("ResolvePingTunnelURL1: %v", u)
+		err = fmt.Errorf("ResolvePingTunnelURL1: %w", err)
 		return
 	}
 	arr := strings.Split(u, "#")
@@ -382,13 +383,13 @@ func ResolvePingTunnelURL1(u string) (data *nodeData.NodeData, err error) {
 	re := regexp.MustCompile(`(.+):(.+)`)
 	subMatch := re.FindStringSubmatch(u)
 	if len(subMatch) < 3 {
-		return nil, newError("wrong format of pingtunnel")
+		return nil, fmt.Errorf("wrong format of pingtunnel")
 	}
 	data = new(nodeData.NodeData)
 	passwd, err := common.Base64URLDecode(subMatch[2])
 	if err != nil {
-		log.Println(subMatch[2])
-		err = newError().Base(err)
+		log.Warn("ResolvePingTunnelURL1: %v", subMatch[2])
+		err = fmt.Errorf("ResolvePingTunnelURL1: %w", err)
 		return
 	}
 	data.VmessInfo = vmessInfo.VmessInfo{
@@ -415,7 +416,7 @@ func ResolvePingTunnelURL2(u string) (data *nodeData.NodeData, err error) {
 	return
 }
 
-var ErrorEmptyAddress = newError("ResolveURL error: empty address")
+var ErrorEmptyAddress = fmt.Errorf("ResolveURL error: empty address")
 
 func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	u = strings.TrimSpace(u)
@@ -442,7 +443,7 @@ func ResolveURL(u string) (n *nodeData.NodeData, err error) {
 	} else if strings.HasPrefix(u, "trojan://") || strings.HasPrefix(u, "trojan-go://") {
 		n, err = ResolveTrojanURL(u)
 	} else {
-		err = newError("not supported protocol:" + u)
+		err = fmt.Errorf("not supported protocol:" + u)
 		return
 	}
 	if err != nil {

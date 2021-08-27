@@ -7,8 +7,8 @@ import (
 
 type localPort string
 type portCache struct {
-	pool       map[localPort]*time.Timer
-	mutex      sync.RWMutex
+	pool  map[localPort]*time.Timer
+	mutex sync.RWMutex
 	sync.RWMutex
 }
 

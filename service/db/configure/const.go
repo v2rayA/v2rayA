@@ -59,7 +59,7 @@ const (
 
 	AntipollutionDnsForward = Antipollution("dnsforward")
 	AntipollutionDoH        = Antipollution("doh")
-	AntipollutionAntiHijack = Antipollution("none")     // 历史原因，none代表“仅防止dns劫持”，不代表关闭
+	AntipollutionAntiHijack = Antipollution("none") // 历史原因，none代表“仅防止dns劫持”，不代表关闭
 	AntipollutionClosed     = Antipollution("closed")
 	AntipollutionAdvanced   = Antipollution("advanced") // 自定义
 

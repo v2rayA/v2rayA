@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	updating   bool
-	updatingMu sync.Mutex
+	updating      bool
+	updatingMu    sync.Mutex
 	processingErr = fmt.Errorf("the last request is being processed")
 )

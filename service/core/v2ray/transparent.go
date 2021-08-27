@@ -3,11 +3,11 @@ package v2ray
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"strings"
 	"time"
 )
@@ -24,13 +24,13 @@ func DeleteTransparentProxyRules() {
 func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (err error) {
 	defer func() {
 		if err != nil {
-			log.Println(err)
+			log.Warn("WriteTransparentProxyRules: %v", err)
 			DeleteTransparentProxyRules()
 		}
 	}()
 	if specialMode.ShouldUseSupervisor() {
 		if err = iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); err != nil {
-			err = newError("[WARNING] DropSpoofing can't be enable").Base(err)
+			log.Warn("DropSpoofing can't be enable: %v", err)
 			return err
 		}
 	}
@@ -38,27 +38,27 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (er
 	if setting.TransparentType == configure.TransparentTproxy {
 		if err = iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
-				err = newError("you does not compile xt_TPROXY in kernel")
+				err = fmt.Errorf("you does not compile xt_TPROXY in kernel")
 			}
 			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(&iptables.Tproxy)
 	} else if setting.TransparentType == configure.TransparentRedirect {
 		if err = iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
-			return newError("not support \"redirect\" mode of transparent proxy: ").Base(err)
+			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(&iptables.Redirect)
 	}
 	if specialMode.ShouldLocalDnsListen() {
 		if couldListenLocalhost, e := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
-				log.Printf("[Warning] %v, only listen at 127.2.0.17", e)
+				log.Warn("only listen at 127.2.0.17: %v", e)
 			}
 			resetResolvHijacker()
 		} else if specialMode.ShouldUseFakeDns() {
 			return fmt.Errorf("fakedns cannot be enabled: %w", e)
 		} else {
-			log.Printf("[Warning] %v", e)
+			log.Warn("WriteTransparentProxyRules: %v", e)
 		}
 	}
 	return nil
@@ -89,7 +89,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
 		//先看要不要把自己的端口加进去
-		selfPort := strings.Split(global.GetEnvironmentConfig().Address, ":")[1]
+		selfPort := strings.Split(conf.GetEnvironmentConfig().Address, ":")[1]
 		wl := configure.GetPortWhiteListNotNil()
 		if !wl.Has(selfPort, "tcp") {
 			wl.TCP = append(wl.TCP, selfPort)

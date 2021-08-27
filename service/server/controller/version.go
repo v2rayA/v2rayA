@@ -3,11 +3,11 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
 	"net/http"
 )
 
@@ -43,9 +43,9 @@ func GetVersion(ctx *gin.Context) {
 		iptablesMode = string(setting.TransparentType)
 	}
 	common.ResponseSuccess(ctx, gin.H{
-		"version":       global.Version,
-		"foundNew":      global.FoundNew,
-		"remoteVersion": global.RemoteVersion,
+		"version":       conf.Version,
+		"foundNew":      conf.FoundNew,
+		"remoteVersion": conf.RemoteVersion,
 		"serviceValid":  v2ray.IsV2rayServiceValid(),
 		"dohValid":      dohValid,
 		"vlessValid":    vlessValid,

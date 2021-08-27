@@ -10,8 +10,8 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/plugin"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/http"
 	"strconv"
@@ -30,7 +30,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	v2ray.CheckAndStopTransparentProxy()
 	defer func() {
 		if e := v2ray.CheckAndSetupTransparentProxy(true); e != nil {
-			err = newError(e).Base(err)
+			err = fmt.Errorf("Ping: %v: %v", e, err)
 		}
 	}()
 	//多线程异步ping
@@ -192,7 +192,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
-		return nil, newError(err)
+		return nil, fmt.Errorf("TestHttpLatency: %w", err)
 	}
 
 	process, err := v2ray.RestartV2rayService(false)
@@ -273,10 +273,10 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 			default:
 				which.Latency = err.Error()
 			}
-			log.Println(err, s.VmessInfo.Add+":"+s.VmessInfo.Port)
+			log.Warn("httpLatency: %v: %v", err, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 		} else {
 			which.Latency = "BAD RESPONSE"
-			log.Println(resp.Status, s.VmessInfo.Add+":"+s.VmessInfo.Port)
+			log.Warn("httpLatency: %v: %v", resp.Status, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 		}
 		return
 	}
