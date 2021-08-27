@@ -12,7 +12,6 @@ require (
 	github.com/gin-gonic/gin v1.7.1
 	github.com/gocarina/gocsv v0.0.0-20210408192840-02d7211d929d // indirect
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.6
 	github.com/google/gopacket v1.1.19
 	github.com/gookit/color v1.4.2
 	github.com/gorilla/websocket v1.4.2

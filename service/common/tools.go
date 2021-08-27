@@ -1,7 +1,6 @@
 package common
 
 import (
-	"github.com/mzz2017/go-engine/src/common"
 	"net/url"
 	"os"
 	"strconv"
@@ -61,6 +60,15 @@ func Deduplicate(list []string) []string {
 	return res
 }
 
+func PrefixListSatisfyString(prefixList []string, str string) int {
+	for i, v := range prefixList {
+		if strings.HasPrefix(str, v) {
+			return i
+		}
+	}
+	return -1
+}
+
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 	if v1 == "UnknownClient" {
@@ -70,10 +78,10 @@ func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 		return false, nil
 	}
 	var HighPriority = []string{"debug", "unstable"}
-	if common.ArrayContainString(HighPriority, v1) {
+	if PrefixListSatisfyString(HighPriority, v1) != -1 {
 		return true, nil
 	}
-	if common.ArrayContainString(HighPriority, v2) {
+	if PrefixListSatisfyString(HighPriority, v2) != -1 {
 		return false, nil
 	}
 	v1 = strings.TrimPrefix(v1, "v")
