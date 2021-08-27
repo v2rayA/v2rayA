@@ -1,14 +1,15 @@
 package infra
 
 import (
+	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
-	"log"
-	"sync"
-	"time"
 	v2router "github.com/v2fly/v2ray-core/v4/app/router"
 	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"sync"
+	"time"
 )
 
 type DnsSupervisor struct {
@@ -35,14 +36,14 @@ func (d *DnsSupervisor) Clear() {
 	for _, h := range handles {
 		_ = d.DeleteHandles(h)
 	}
-	log.Println("DnsSupervisor: Clear")
+	log.Trace("DnsSupervisor: Clear")
 }
 
 func (d *DnsSupervisor) Prepare(ifname string) (err error) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	if d.Exists(ifname) {
-		return newError(ifname + " exists")
+		return fmt.Errorf("Prepare: %v exists", ifname)
 	}
 	h, err := pcapgo.NewEthernetHandle(ifname)
 	if err != nil {
@@ -65,11 +66,11 @@ func (d *DnsSupervisor) DeleteHandles(ifname string) (err error) {
 	d.inner.Lock()
 	defer d.inner.Unlock()
 	if !d.Exists(ifname) {
-		return newError("handle not exists")
+		return fmt.Errorf("DeleteHandles: handle not exists")
 	}
 	close(d.handles[ifname].done)
 	delete(d.handles, ifname)
-	log.Println("DnsSupervisor:", ifname, "closed")
+	log.Trace("DnsSupervisor:", ifname, "closed")
 	return
 }
 
@@ -80,13 +81,13 @@ func (d *DnsSupervisor) Run(ifname string, whitelistDnsServers *v2router.GeoIPMa
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
-		return newError(ifname + " not exsits")
+		return fmt.Errorf("Run: %v not exsits", ifname)
 	}
 	if handle.running {
-		return newError(ifname + " is running")
+		return fmt.Errorf("Run: %v is running", ifname)
 	}
 	handle.running = true
-	log.Println("[DnsSupervisor] " + ifname + ": running")
+	log.Trace("[DnsSupervisor] " + ifname + ": running")
 	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
 	pkgsrc.NoCopy = true
 	d.inner.Unlock()

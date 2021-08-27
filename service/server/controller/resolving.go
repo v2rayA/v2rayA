@@ -1,7 +1,5 @@
 package controller
 
-
-
 /*
 RequestData: {
 	"url": "vmess://..."

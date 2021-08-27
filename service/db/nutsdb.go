@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/xujiajun/nutsdb"
 	"log"
 	"os"
@@ -12,7 +12,7 @@ var once sync.Once
 var db *nutsdb.DB
 
 func initDB() {
-	confPath := global.GetEnvironmentConfig().Config
+	confPath := conf.GetEnvironmentConfig().Config
 	var err error
 	opt := nutsdb.DefaultOptions
 	opt.Dir = confPath

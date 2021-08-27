@@ -6,7 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 func StopV2ray() (err error) {
@@ -63,15 +63,15 @@ func checkAssetsExist(setting *configure.Setting) error {
 	//FIXME: non-fully check
 	if setting.RulePortMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
 		if !asset.LoyalsoldierSiteDatExists() {
-			return newError("GFWList file not exists. Try updating GFWList please")
+			return fmt.Errorf("GFWList file not exists. Try updating GFWList please")
 		}
 	}
 	return nil
 }
 
 func Connect(which *configure.Which) (err error) {
-	log.Println("Connect: begin")
-	defer log.Println("Connect: done")
+	log.Trace("Connect: begin")
+	defer log.Trace("Connect: done")
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to connect: %w", err)
@@ -82,13 +82,13 @@ func Connect(which *configure.Which) (err error) {
 		return
 	}
 	if which == nil {
-		return newError("which can not be nil")
+		return fmt.Errorf("which can not be nil")
 	}
 	//configure the ip forward
 	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
 		e := ipforward.WriteIpForward(setting.IntranetSharing)
 		if e != nil {
-			log.Println("[Warning]", e)
+			log.Warn("Connect: %v", e)
 		}
 	}
 	//locate server

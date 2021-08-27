@@ -3,7 +3,7 @@ package iptables
 import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/cmds"
-	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/conf"
 	"golang.org/x/net/nettest"
 	"net"
 	"strconv"
@@ -29,7 +29,7 @@ func GetLocalCIDR() ([]string, error) {
 }
 
 func IsIPv6Supported() bool {
-	if global.GetEnvironmentConfig().ForceIPV6On {
+	if conf.GetEnvironmentConfig().ForceIPV6On {
 		return true
 	}
 	if common.IsInDocker() {

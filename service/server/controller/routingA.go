@@ -18,7 +18,7 @@ func PutRoutingA(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(err, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	_, err = routingA.Parse(data.RoutingA)

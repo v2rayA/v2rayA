@@ -9,14 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gookit/color"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/pkg/server/jwt"
+	"github.com/v2rayA/v2rayA/pkg/server/reqCache"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
-	"github.com/v2rayA/v2rayA/server/router/jwt"
-	"github.com/v2rayA/v2rayA/server/router/reqCache"
 	"io"
 	"io/fs"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -42,7 +42,7 @@ func ServeGUI(engine *gin.Engine) {
 	data := []byte(time.Now().String())
 	etag := fmt.Sprintf("%x", md5.Sum(data))
 	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
-	webDir := global.GetEnvironmentConfig().WebDir
+	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
 		webFS := relativeFS{
 			root:        webRoot,
@@ -83,7 +83,7 @@ func ServeGUI(engine *gin.Engine) {
 		})
 	} else {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
-			log.Printf("[Warning] web files cannot be found at %v. web UI cannot be served", webDir)
+			log.Warn("web files cannot be found at %v. web UI cannot be served", webDir)
 		} else {
 			filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
 				if path == webDir {
@@ -105,7 +105,7 @@ func ServeGUI(engine *gin.Engine) {
 		}
 	}
 
-	app := global.GetEnvironmentConfig()
+	app := conf.GetEnvironmentConfig()
 
 	ip, port, _ := net.SplitHostPort(app.Address)
 	addrs, err := net.InterfaceAddrs()
@@ -197,7 +197,7 @@ func Run() error {
 
 	ServeGUI(engine)
 
-	return engine.Run(global.GetEnvironmentConfig().Address)
+	return engine.Run(conf.GetEnvironmentConfig().Address)
 }
 
 func printRunningAt(address string) {

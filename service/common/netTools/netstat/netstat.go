@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
-	"github.com/v2rayA/v2rayA/common/errors"
 	"io"
 	"net"
 	"os"
@@ -67,7 +67,7 @@ type Address struct {
 func parseIPv4(s string) (net.IP, error) {
 	v, err := strconv.ParseUint(s, 16, 32)
 	if err != nil {
-		return nil, newError().Base(err)
+		return nil, fmt.Errorf("parseIPv4: %w", err)
 	}
 	ip := make(net.IP, net.IPv4len)
 	binary.LittleEndian.PutUint32(ip, uint32(v))
@@ -83,7 +83,7 @@ func parseIPv6(s string) (net.IP, error) {
 		u, err := strconv.ParseUint(grp, 16, 32)
 		binary.LittleEndian.PutUint32(ip[i:j], uint32(u))
 		if err != nil {
-			return nil, newError().Base(err)
+			return nil, fmt.Errorf("parseIPv6: %w", err)
 		}
 		i, j = i+grpLen, j+grpLen
 		s = s[8:]
@@ -104,14 +104,14 @@ func parseAddr(s string) (*Address, error) {
 	case ipv6StrLen:
 		ip, err = parseIPv6(fields[0])
 	default:
-		return nil, newError("Bad formatted string")
+		return nil, fmt.Errorf("parseAddr: Bad formatted string")
 	}
 	if err != nil {
-		return nil, newError().Base(err)
+		return nil, fmt.Errorf("parseAddr: %w", err)
 	}
 	v, err := strconv.ParseUint(fields[1], 16, 16)
 	if err != nil {
-		return nil, newError().Base(err)
+		return nil, fmt.Errorf("parseAddr: %w", err)
 	}
 	return &Address{IP: ip, Port: int(v)}, nil
 }
@@ -132,15 +132,15 @@ type Process struct {
 	Name string
 }
 
-const (
-	SocketFreed    = "process not found, correspond socket was freed"
-	ProcOpenFailed = "cannot open the directory /proc"
+var (
+	SocketFreedErr    = fmt.Errorf("process not found, correspond socket was freed")
+	ProcOpenFailedErr = fmt.Errorf("cannot open the directory /proc")
 )
 
 func FillProcesses(sockets []*Socket) error {
 	f, err := os.ReadDir(pathProc)
 	if err != nil {
-		return newError().Base(errors.New(ProcOpenFailed))
+		return ProcOpenFailedErr
 	}
 	mapInodeSocket := make(map[string]*Socket)
 	iNodes := make(map[string]struct{})
@@ -213,19 +213,19 @@ loop1:
 			return s.Proc, nil
 		}
 	}
-	return nil, newError(SocketFreed)
+	return nil, SocketFreedErr
 }
 
 /*
 没有做缓存，每次调用都会扫描，消耗资源
 */
 
-var ErrorNotFound = newError("process not found")
+var ErrorNotFound = fmt.Errorf("process not found")
 
 func findProcessID(pname string) (pids []string, err error) {
 	f, err := os.ReadDir(pathProc)
 	if err != nil {
-		err = newError().Base(err)
+		err = fmt.Errorf("findProcessID: %w", err)
 		return
 	}
 loop1:
@@ -266,7 +266,7 @@ func getProcessInfo(pid string) (pn string, ppid string) {
 	p := filepath.Join(pathProc, pid, "stat")
 	b, err := os.ReadFile(p)
 	if err != nil {
-		err = newError().Base(err)
+		err = fmt.Errorf("getProcessInfo: %w", err)
 		return
 	}
 	sp := bytes.Fields(b)
@@ -305,7 +305,7 @@ func getProcessSocketSet(pid string) (set []string) {
 	fns, err := f.Readdirnames(-1)
 	f.Close()
 	if err != nil {
-		err = newError().Base(err)
+		err = fmt.Errorf("getProcessSocketSet: %w", err)
 		return
 	}
 	for _, fn := range fns {
@@ -350,7 +350,7 @@ func parseSocktab(r io.Reader) (map[int][]*Socket, error) {
 		s.RemoteAddress = addr
 		u, err := strconv.ParseUint(fields[3], 16, 8)
 		if err != nil {
-			err = newError().Base(err)
+			err = fmt.Errorf("parseSocktab: %w", err)
 			return tab, err
 		}
 		s.State = SkState(u)
@@ -359,7 +359,7 @@ func parseSocktab(r io.Reader) (map[int][]*Socket, error) {
 		tab[s.LocalAddress.Port] = append(tab[s.LocalAddress.Port], &s)
 	}
 	if br.Err() != nil {
-		return nil, newError(br.Err())
+		return nil, fmt.Errorf("parseSocktab: %w", br.Err())
 	}
 	return tab, nil
 }
@@ -402,7 +402,7 @@ func IsProcessListenPort(pname string, port int) (is bool, err error) {
 	}
 	pids, err := findProcessID(pname)
 	if err != nil {
-		if errors.Cause(err) == ErrorNotFound {
+		if errors.Is(err, ErrorNotFound) {
 			return false, nil
 		}
 		return

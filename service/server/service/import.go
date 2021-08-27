@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
@@ -19,7 +20,7 @@ func Import(url string, which *configure.Which) (err error) {
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 {
 		infos, _, err := ResolveLines(url)
 		if err != nil {
-			return newError("failed to resolve addresses").Base(err)
+			return fmt.Errorf("failed to resolve addresses: %w", err)
 		}
 		for _, info := range infos {
 			err = configure.AppendServers([]*configure.ServerRaw{info.ToServerRaw()})
@@ -46,7 +47,7 @@ func Import(url string, which *configure.Which) (err error) {
 			//修改
 			ind := which.ID - 1
 			if which.TYPE != configure.ServerType || ind < 0 || ind >= configure.GetLenServers() {
-				return newError("bad request")
+				return fmt.Errorf("bad request")
 			}
 			var sr *configure.ServerRaw
 			sr, err = which.LocateServerRaw()
@@ -91,7 +92,7 @@ func Import(url string, which *configure.Which) (err error) {
 		c.Timeout = 90 * time.Second
 		infos, status, err := ResolveSubscriptionWithClient(url, c)
 		if err != nil {
-			return newError("failed to resolve subscription address").Base(err)
+			return fmt.Errorf("failed to resolve subscription address: %w", err)
 		}
 		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
 		servers := make([]configure.ServerRaw, len(infos))

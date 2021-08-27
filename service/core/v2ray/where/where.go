@@ -2,7 +2,7 @@ package where
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/global"
+	"github.com/v2rayA/v2rayA/conf"
 	"os/exec"
 	"strings"
 	"sync"
@@ -27,12 +27,12 @@ func GetV2rayServiceVersion() (ver string, err error) {
 	}
 	v2rayPath, err := GetV2rayBinPath()
 	if err != nil || len(v2rayPath) <= 0 {
-		return "", newError("cannot find v2ray executable binary")
+		return "", fmt.Errorf("cannot find v2ray executable binary")
 	}
 	out, err := exec.Command("sh", "-c", fmt.Sprintf("%v -version", v2rayPath)).Output()
 	var fields []string
 	if fields = strings.Fields(strings.TrimSpace(string(out))); len(fields) < 2 {
-		return "", newError("cannot parse version of v2ray")
+		return "", fmt.Errorf("cannot parse version of v2ray")
 	}
 	ver = fields[1]
 	if strings.ToUpper(fields[0]) != "V2RAY" {
@@ -44,7 +44,7 @@ func GetV2rayServiceVersion() (ver string, err error) {
 }
 
 func GetV2rayBinPath() (string, error) {
-	v2rayBinPath := global.GetEnvironmentConfig().V2rayBin
+	v2rayBinPath := conf.GetEnvironmentConfig().V2rayBin
 	if v2rayBinPath == "" {
 		return getV2rayBinPathAnyway()
 	}

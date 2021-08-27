@@ -9,18 +9,18 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/extra/gopeed"
-	"github.com/v2rayA/v2rayA/global"
+	gopeed "github.com/v2rayA/v2rayA/pkg/util/gopeed"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/router"
 	"github.com/v2rayA/v2rayA/server/service"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -39,10 +39,10 @@ func checkEnvironment() {
 		_, _ = fmt.Scanf("\n")
 		os.Exit(1)
 	}
-	conf := global.GetEnvironmentConfig()
+	conf := conf.GetEnvironmentConfig()
 	if !conf.PassCheckRoot || conf.ResetPassword {
 		if os.Getegid() != 0 {
-			log.Fatalln("Please execute this program with sudo or as a root user for the best experience.\n" +
+			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
 				"If you don't want to run as root, use the --passcheckroot parameter to skip the check.\n" +
 				"For example:\n" +
 				"$ v2raya --passcheckroot --config ~/.config/v2raya")
@@ -51,14 +51,14 @@ func checkEnvironment() {
 	if conf.ResetPassword {
 		err := configure.ResetAccounts()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("checkEnvironment: %v", err)
 		}
 		fmt.Println("It will work after you restart v2rayA")
 		os.Exit(0)
 	}
 	_, v2rayAListeningPort, err := net.SplitHostPort(conf.Address)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("checkEnvironment: %v", err)
 	}
 	if occupied, sockets, err := ports.IsPortOccupied([]string{v2rayAListeningPort + ":tcp"}); occupied {
 		if err != nil {
@@ -67,7 +67,7 @@ func checkEnvironment() {
 		for _, socket := range sockets {
 			process, err := socket.Process()
 			if err == nil {
-				log.Fatalf("Port %v is occupied by %v/%v", v2rayAListeningPort, process.Name, process.PID)
+				log.Fatal("Port %v is occupied by %v/%v", v2rayAListeningPort, process.Name, process.PID)
 			}
 		}
 	}
@@ -76,17 +76,17 @@ func checkEnvironment() {
 func checkTProxySupportability() {
 	//检查tproxy是否可以启用
 	if err := v2ray.CheckAndProbeTProxy(); err != nil {
-		log.Println("[INFO] Cannot load TPROXY module:", err)
+		log.Info("Cannot load TPROXY module: %v", err)
 	}
 }
 
 func migrate(jsonConfPath string) (err error) {
-	log.Println("[info] Migrating json to nutsdb...")
+	log.Info("Migrating json to nutsdb...")
 	defer func() {
 		if err != nil {
-			log.Println("[info] Migrating failed: ", err.Error())
+			log.Warn("Migrating failed: %v", err)
 		} else {
-			log.Println("[info] Migrating complete")
+			log.Info("Migrating complete")
 		}
 	}()
 	b, err := os.ReadFile(jsonConfPath)
@@ -104,21 +104,19 @@ func migrate(jsonConfPath string) (err error) {
 }
 
 func initDBValue() {
-	log.Println("[Info] init DB")
+	log.Info("init DB")
 	err := configure.SetConfigure(configure.New())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("initDBValue: %v", err)
 	}
 }
 
 func initConfigure() {
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
-	// Enable line numbers in logging
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	//db
-	confPath := global.GetEnvironmentConfig().Config
+	confPath := conf.GetEnvironmentConfig().Config
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
 		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0750)
 	}
@@ -128,7 +126,7 @@ func initConfigure() {
 		var success bool
 		for _, jsonConfPath := range camp {
 			if _, err := os.Stat(jsonConfPath); err == nil {
-				log.Println("[Info] migrate from", jsonConfPath)
+				log.Info("migrate from %v", jsonConfPath)
 				err = migrate(jsonConfPath)
 				if err == nil {
 					success = true
@@ -181,11 +179,11 @@ func initConfigure() {
 			}
 			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
 			if err != nil {
-				log.Println(err)
+				log.Warn("initConfigure: v2rayA/dist-geoip: %v", err)
 			}
 			err = dld("v2rayA/dist-domain-list-community", "dlc.dat", "geosite.dat")
 			if err != nil {
-				log.Println(err)
+				log.Warn("initConfigure: v2rayA/dist-domain-list-community: %v", err)
 			}
 		}
 	}
@@ -197,7 +195,7 @@ func hello() {
 	color.Red.Println("V2Ray binary is", v2rayPath)
 	wd, _ := os.Getwd()
 	color.Red.Println("v2rayA working directory is", wd)
-	color.Red.Println("Version:", global.Version)
+	color.Red.Println("Version:", conf.Version)
 	color.Red.Println("Starting...")
 }
 
@@ -212,9 +210,9 @@ func updateSubscriptions() {
 			control <- struct{}{}
 			err := service.UpdateSubscription(i, false)
 			if err != nil {
-				log.Println(fmt.Sprintf("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d，err: %v", i, err.Error()))
+				log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d，err: %v", i, err)
 			} else {
-				log.Println(fmt.Sprintf("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d，Address: %s", i, subs[i].Address))
+				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d，Address: %s", i, subs[i].Address)
 			}
 			wg.Done()
 			<-control
@@ -224,18 +222,18 @@ func updateSubscriptions() {
 }
 
 func initUpdatingTicker() {
-	global.TickerUpdateGFWList = time.NewTicker(24 * time.Hour * 365 * 100)
-	global.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
+	conf.TickerUpdateGFWList = time.NewTicker(24 * time.Hour * 365 * 100)
+	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
-		for range global.TickerUpdateGFWList.C {
+		for range conf.TickerUpdateGFWList.C {
 			_, err := gfwlist.CheckAndUpdateGFWList()
 			if err != nil {
-				log.Println("[AutoUpdate] GFWList:", err)
+				log.Info("[AutoUpdate] GFWList: %v", err)
 			}
 		}
 	}()
 	go func() {
-		for range global.TickerUpdateSubscription.C {
+		for range conf.TickerUpdateSubscription.C {
 			updateSubscriptions()
 		}
 	}()
@@ -250,10 +248,10 @@ func checkUpdate() {
 		if err == nil && len(addrs) > 0 {
 			break
 		}
-		log.Println("[info] waiting for network connected")
+		log.Warn("waiting for network connected")
 		time.Sleep(5 * time.Second)
 	}
-	log.Println("[info] network is connected")
+	log.Warn("network is connected")
 
 	//初始化ticker
 	initUpdatingTicker()
@@ -263,7 +261,7 @@ func checkUpdate() {
 		setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals ||
 		setting.Transparent == configure.TransparentGfwlist {
 		if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			global.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
+			conf.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
 		}
 		switch setting.RulePortMode {
 		case configure.GfwlistMode:
@@ -271,10 +269,10 @@ func checkUpdate() {
 				/* 更新LoyalsoldierSite.dat */
 				localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
 				if err != nil {
-					log.Println("Failed to update PAC file: " + err.Error())
+					log.Warn("Failed to update PAC file: %v", err.Error())
 					return
 				}
-				log.Println("Complete updating PAC file. Localtime: " + localGFWListVersion)
+				log.Info("Complete updating PAC file. Localtime: %v", localGFWListVersion)
 			}()
 		case configure.CustomMode:
 			// obsolete
@@ -286,7 +284,7 @@ func checkUpdate() {
 		setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
 
 		if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			global.TickerUpdateSubscription.Reset(time.Duration(setting.SubscriptionAutoUpdateIntervalHour) * time.Hour)
+			conf.TickerUpdateSubscription.Reset(time.Duration(setting.SubscriptionAutoUpdateIntervalHour) * time.Hour)
 		}
 		go updateSubscriptions()
 	}
@@ -294,8 +292,8 @@ func checkUpdate() {
 	go func() {
 		f := func() {
 			if foundNew, remote, err := service.CheckUpdate(); err == nil {
-				global.FoundNew = foundNew
-				global.RemoteVersion = remote
+				conf.FoundNew = foundNew
+				conf.RemoteVersion = remote
 			}
 		}
 		f()
@@ -311,7 +309,7 @@ func run() (err error) {
 	if configure.GetRunning() {
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
-			log.Println("failed to start v2ray-core:", err)
+			log.Error("failed to start v2ray-core: %v", err)
 		}
 	}
 	//w := configure.GetConnectedServers()
@@ -330,7 +328,7 @@ func run() (err error) {
 		errch <- nil
 	}()
 	if err = <-errch; err != nil {
-		log.Fatal(err)
+		log.Fatal("run: %v", err)
 	}
 	fmt.Println("Quitting...")
 	v2ray.CheckAndStopTransparentProxy()

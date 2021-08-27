@@ -2,7 +2,7 @@ package v2ray
 
 const TemplateJson = `{
 "template": {
-    "log": {
+    "github.com/v2rayA/v2rayA/pkg/util/log": {
         "access": "/var/log/v2ray.log",
         "error": "/var/log/v2ray.err.log",
         "loglevel": "none"

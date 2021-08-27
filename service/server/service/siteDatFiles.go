@@ -2,13 +2,13 @@ package service
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/v2fly/v2ray-core/v4/app/router"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	siteDat2 "github.com/v2rayA/v2rayA/infra/siteDat"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"path"
 	"strings"
-	"github.com/v2fly/v2ray-core/v4/app/router"
 )
 
 func GetSiteDatFiles() (siteDats []siteDat2.SiteDat) {
@@ -30,13 +30,13 @@ func GetSiteDatFiles() (siteDats []siteDat2.SiteDat) {
 			sd.Filename = f.Name()
 			b, err := os.ReadFile(path.Join(dir, f.Name()))
 			if err != nil {
-				log.Println(err)
+				log.Warn("GetSiteDatFiles: %v", err)
 				continue
 			}
 			var siteList router.GeoSiteList
 			err = proto.Unmarshal(b, &siteList)
 			if err != nil {
-				log.Println(err)
+				log.Warn("GetSiteDatFiles: %v", err)
 				continue
 			}
 			for _, e := range siteList.Entry {

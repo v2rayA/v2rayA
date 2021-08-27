@@ -23,7 +23,7 @@ func PostLogin(ctx *gin.Context) {
 	}()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	jwt, err := service.Login(data.Username, data.Password)
@@ -44,7 +44,7 @@ func PutAccount(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	if ok, err := service.ValidPasswordLength(data.Password); !ok {
@@ -53,7 +53,7 @@ func PutAccount(ctx *gin.Context) {
 	}
 	username := ctx.GetString("Name")
 	if !service.IsValidAccount(username, data.Password) {
-		common.ResponseError(ctx, logError(nil, "wrong username or password"))
+		common.ResponseError(ctx, logError("wrong username or password"))
 		return
 	}
 	//TODO: modify password
@@ -72,7 +72,7 @@ func PostAccount(ctx *gin.Context) {
 	defer muReg.Unlock()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	if ok, err := service.ValidPasswordLength(data.Password); !ok {
@@ -80,7 +80,7 @@ func PostAccount(ctx *gin.Context) {
 		return
 	}
 	if configure.HasAnyAccounts() {
-		common.ResponseError(ctx, logError(nil, "register closed"))
+		common.ResponseError(ctx, logError("register closed"))
 		return
 	}
 	token, err := service.Register(data.Username, data.Password)

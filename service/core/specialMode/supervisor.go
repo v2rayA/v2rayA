@@ -1,11 +1,12 @@
 package specialMode
 
 import (
+	"fmt"
 	"github.com/v2fly/v2ray-core/v4/app/router"
 	"github.com/v2rayA/v2rayA/common/netTools"
 	"github.com/v2rayA/v2rayA/core/specialMode/infra"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"sync"
 	"time"
 )
@@ -46,7 +47,8 @@ func CheckAndSetupDNSSupervisor() {
 func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*router.Domain) (err error) {
 	defer func() {
 		if err != nil {
-			err = newError("StartDNSSupervisor").Base(err)
+			err = fmt.Errorf("StartDNSSupervisor: %w", err)
+			log.Warn("%v", err)
 		}
 	}()
 	mutex.Lock()
@@ -56,7 +58,7 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 			//done has closed
 		default:
 			mutex.Unlock()
-			return newError("DNSSupervisor is running")
+			return fmt.Errorf("DNSSupervisor is running")
 		}
 	}
 	done = make(chan interface{})
@@ -99,11 +101,11 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 					return
 				}
 				//准备白名单
-				log.Println("[DnsSupervisor] preparing whitelist")
+				log.Trace("[DnsSupervisor] preparing whitelist")
 				wlDms, err := infra.GetWhitelistCn(nil)
 				//var wlDms = new(strmatcher.MatcherGroup)
 				if err != nil {
-					log.Println("StartDNSSupervisorConroutine:", err)
+					log.Warn("StartDNSSupervisorConroutine: %v", err)
 					return
 				}
 				ipMatcher := new(router.GeoIPMatcher)
@@ -112,7 +114,7 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 					if _, ok := mHandles[ifname]; !ok {
 						err = poison.Prepare(ifname)
 						if err != nil {
-							log.Println("StartDNSSupervisorConroutine["+ifname+"]:", err)
+							log.Warn("StartDNSSupervisorConroutine[%v]: %v", ifname, err)
 							return
 						}
 						go func(ifname string) {
@@ -120,7 +122,7 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 							defer wg.Done()
 							err = poison.Run(ifname, ipMatcher, wlDms)
 							if err != nil {
-								log.Println("StartDNSSupervisorConroutine["+ifname+"]:", err)
+								log.Warn("StartDNSSupervisorConroutine[%v]: %v", ifname, err)
 							}
 						}(ifname)
 					}

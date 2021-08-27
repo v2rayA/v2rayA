@@ -3,16 +3,16 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/errors"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/infra/nodeData"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -87,8 +87,8 @@ func resolveByLines(raw string) (infos []*nodeData.NodeData, status string, err 
 		var data *nodeData.NodeData
 		data, err = ResolveURL(row)
 		if err != nil {
-			if errors.Cause(err) != ErrorEmptyAddress {
-				log.Println(row, err)
+			if !errors.Is(err, ErrorEmptyAddress) {
+				log.Warn("resolveByLines: %v: %v", err, row)
 			}
 			err = nil
 			continue
@@ -137,14 +137,14 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
 		reason := "failed to get proxy"
-		return newError(reason)
+		return fmt.Errorf("UpdateSubscription: %v", reason)
 	}
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		reason := "failed to resolve subscription address: " + err.Error()
-		log.Println(subscriptionInfos, err)
-		return newError(reason)
+		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
+		return fmt.Errorf("UpdateSubscription: %v", reason)
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -178,7 +178,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 				err = Disconnect(*css.Get()[cssIndex], false)
 				if err != nil {
 					reason := "failed to disconnect previous server"
-					return newError(reason)
+					return fmt.Errorf("UpdateSubscription: %v", reason)
 				}
 			} else {
 				// 将之前连接的节点append进去
@@ -203,7 +203,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return newError("failed to find the corresponding subscription")
+		return fmt.Errorf("failed to find the corresponding subscription")
 	}
 	raw.Remarks = subscription.Remarks
 	return configure.SetSubscription(subscription.ID-1, raw)

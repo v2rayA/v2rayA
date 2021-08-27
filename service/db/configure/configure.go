@@ -7,7 +7,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/db"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"sort"
 	"strings"
 )
@@ -310,7 +310,7 @@ func GetLenSubscriptions() int {
 func GetLenSubscriptionServers(index int) int {
 	b, err := db.ListGetRaw("touch", "subscriptions", index)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("GetLenSubscriptionServers: %v", err)
 	}
 	return len(gjson.GetBytes(b, "servers").Array())
 }

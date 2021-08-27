@@ -19,7 +19,7 @@ func PostOutbound(ctx *gin.Context) {
 		Outbound string `json:"outbound"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	if err := configure.AddOutbound(data.Outbound); err != nil {
@@ -48,7 +48,7 @@ func DeleteOutbound(ctx *gin.Context) {
 		Outbound string `json:"outbound"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError(nil, "bad request"))
+		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
 	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {

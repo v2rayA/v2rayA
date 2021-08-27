@@ -2,6 +2,6 @@ package ports
 
 /* socketstat */
 //deprecated
-func ss()  {
+func ss() {
 
 }
