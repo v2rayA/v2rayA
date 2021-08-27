@@ -6,7 +6,7 @@ export default {
     v2rayCoreStatus: "Status of v2ray-core",
     checkRunning: "Checking",
     isRunning: "Running",
-    notRunning: "Stopped",
+    notRunning: "Ready",
     notLogin: "Login please",
     latest: "Latest",
     local: "Local",

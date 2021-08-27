@@ -6,7 +6,7 @@ export default {
     v2rayCoreStatus: "v2ray-core状态",
     checkRunning: "检测中",
     isRunning: "正在运行",
-    notRunning: "尚未运行",
+    notRunning: "就绪",
     notLogin: "未登录",
     latest: "最新",
     local: "本地",
