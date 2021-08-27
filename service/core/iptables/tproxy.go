@@ -43,10 +43,8 @@ ip route add local 0.0.0.0/0 dev lo table 100
 # 建链
 iptables -w 2 -t mangle -N TP_OUT
 iptables -w 2 -t mangle -N TP_PRE
-iptables -w 2 -t mangle -N SSTP_ONCE
 iptables -w 2 -t mangle -I OUTPUT -j TP_OUT
 iptables -w 2 -t mangle -I PREROUTING -j TP_PRE
-iptables -w 2 -t mangle -I PREROUTING -m socket --restore-skmark -j SSTP_ONCE
 
 # 打上 iptables 标记，mark 了的会走代理
 iptables -w 2 -t mangle -N SETMARK
@@ -94,8 +92,6 @@ iptables -w 2 -t mangle -A TP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 32345 --tproxy-mark 1
 iptables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
-# 略过已建立的socket
-iptables -w 2 -t mangle -A SSTP_ONCE -j RETURN
 `
 	if IsIPv6Supported() {
 		commands += `
@@ -106,10 +102,8 @@ ip -6 route add local ::/0 dev lo table 100
 # 建链
 ip6tables -w 2 -t mangle -N TP_OUT
 ip6tables -w 2 -t mangle -N TP_PRE
-ip6tables -w 2 -t mangle -N SSTP_ONCE
 ip6tables -w 2 -t mangle -I OUTPUT -j TP_OUT
 ip6tables -w 2 -t mangle -I PREROUTING -j TP_PRE
-ip6tables -w 2 -t mangle -I PREROUTING -m socket --restore-skmark -j SSTP_ONCE
 
 # 打上 iptables 标记，mark 了的会走代理
 ip6tables -w 2 -t mangle -N SETMARK
@@ -154,8 +148,6 @@ ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark ! --mark 1 -j SETMARK
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p tcp -j TPROXY --on-port 32345 --tproxy-mark 1
 ip6tables -w 2 -t mangle -A TP_PRE -m mark --mark 1 -p udp -j TPROXY --on-port 32345 --tproxy-mark 1
 
-# 略过已建立的socket
-ip6tables -w 2 -t mangle -A SSTP_ONCE -j RETURN
 `
 	}
 	return SetupCommands(commands)
@@ -166,9 +158,6 @@ func (t *tproxy) GetCleanCommands() CleanCommands {
 ip rule del fwmark 1 table 100 
 ip route del local 0.0.0.0/0 dev lo table 100
 
-iptables -w 2 -t mangle -F SSTP_ONCE
-iptables -w 2 -t mangle -D PREROUTING -m socket --restore-skmark -j SSTP_ONCE
-iptables -w 2 -t mangle -X SSTP_ONCE
 iptables -w 2 -t mangle -F TP_OUT
 iptables -w 2 -t mangle -D OUTPUT -j TP_OUT
 iptables -w 2 -t mangle -X TP_OUT
@@ -183,9 +172,6 @@ iptables -w 2 -t mangle -X SETMARK
 ip -6 rule del fwmark 1 table 100
 ip -6 route del local ::/0 dev lo table 100
 
-ip6tables -w 2 -t mangle -F SSTP_ONCE
-ip6tables -w 2 -t mangle -D PREROUTING -m socket --restore-skmark -j SSTP_ONCE
-ip6tables -w 2 -t mangle -X SSTP_ONCE
 ip6tables -w 2 -t mangle -F TP_OUT
 ip6tables -w 2 -t mangle -D OUTPUT -j TP_OUT
 ip6tables -w 2 -t mangle -X TP_OUT
