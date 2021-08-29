@@ -620,7 +620,6 @@
             <b-input
               ref="http_username"
               v-model="http.username"
-              required
               :placeholder="$t('configureServer.username')"
               expanded
             />
@@ -629,7 +628,6 @@
             <b-input
               ref="http_password"
               v-model="http.password"
-              required
               :placeholder="$t('configureServer.password')"
               expanded
             />
@@ -1137,14 +1135,19 @@ export default {
           });
         case "http":
         case "https":
-          return generateURL({
+          tmp = {
             protocol: srcObj.protocol + "-proxy",
-            username: srcObj.username,
-            password: srcObj.password,
             host: srcObj.host,
             port: srcObj.port,
             hash: srcObj.name
-          });
+          };
+          if (srcObj.username && srcObj.password) {
+            Object.assign(tmp, {
+              username: srcObj.username,
+              password: srcObj.password
+            });
+          }
+          return generateURL(tmp);
       }
       return null;
     },
