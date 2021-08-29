@@ -38,6 +38,7 @@ func IsV2RayRunning() bool {
 }
 func ApiPort() int {
 	if !IsV2RayRunning() {
+		log.Trace("v2ray not running")
 		return 0
 	}
 	return apiPort
@@ -105,17 +106,10 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 
 	startTime := time.Now()
 	for {
-		if ApiPort() != 0 {
-			conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(ApiPort())))
-			if err == nil {
-				conn.Close()
-				break
-			}
-		} else {
-			if IsV2RayRunning() {
-				time.Sleep(1000 * time.Millisecond)
-				break
-			}
+		conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(apiPort)))
+		if err == nil {
+			conn.Close()
+			break
 		}
 
 		if time.Since(startTime) > 15*time.Second {

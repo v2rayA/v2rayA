@@ -139,5 +139,8 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 }
 
 func CheckAndStopTransparentProxy() {
+	if conf.GetEnvironmentConfig().Lite {
+		return
+	}
 	DeleteTransparentProxyRules()
 }

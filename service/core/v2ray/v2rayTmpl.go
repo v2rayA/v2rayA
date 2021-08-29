@@ -1793,6 +1793,7 @@ func (t *Template) SetAPI() (port int) {
 		InboundTag:  []string{"api-in"},
 		OutboundTag: "api-out",
 	})
+	apiPort = port
 	return port
 }
 
@@ -1888,7 +1889,7 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	//set vlessGrpc routing
 	t.SetVlessGrpcRouting()
 	// set api
-	apiPort = t.SetAPI()
+	t.SetAPI()
 
 	// set routing whitelist
 	var whitelist []Addr
