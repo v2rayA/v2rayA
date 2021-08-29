@@ -120,6 +120,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 	} else {
 		tmpl = v2ray.Template{}
+		tmpl.SetAPI()
 	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
@@ -137,7 +138,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 				port = l.Addr().(*net.TCPAddr).Port
 				break
 			}
-			time.Sleep(100*time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
@@ -150,7 +151,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 					port = l.Addr().(*net.TCPAddr).Port
 					break
 				}
-				time.Sleep(100*time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 			}
 			pluginPort = port
 			pluginPortMap[i] = port
@@ -165,6 +166,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		inboundPortMap[i] = v2rayInboundPort
 	}
+	for _, l := range toClose {
+		_ = l.Close()
+	}
+	time.Sleep(100 * time.Millisecond)
 	//start plugins
 	//do not clean plugins to prevent current connections disconnecting
 	if len(pluginPortMap) > 0 {
