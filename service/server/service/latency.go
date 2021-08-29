@@ -3,8 +3,6 @@ package service
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/httpClient"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
@@ -125,37 +123,34 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
-	port := 0
-	nsmap, err := netstat.ToPortMap([]string{"tcp", "tcp6"})
-	if err != nil {
-		return nil, err
-	}
+	var toClose []net.Listener
 	for i, v := range vms {
 		if which[i].Latency != "" {
 			continue
 		}
 		//find a port for the inbound
-		if port == 0 {
-			port = 14321 //starting port
-		} else {
-			port = port + 1
-		}
+		var port int
 		for {
-			if !ports.IsOccupiedTCPPort(nsmap, port) {
+			l, err := net.Listen("tcp", "0.0.0.0:0")
+			if err == nil {
+				toClose = append(toClose, l)
+				port = l.Addr().(*net.TCPAddr).Port
 				break
 			}
-			port++
+			time.Sleep(100*time.Millisecond)
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
 		if plugin.HasProperPlugin(v) {
 			// find a port for the plugin
-			port++
 			for {
-				if !ports.IsOccupiedTCPPort(nsmap, port) {
+				l, err := net.Listen("tcp", "127.0.0.1:0")
+				if err == nil {
+					toClose = append(toClose, l)
+					port = l.Addr().(*net.TCPAddr).Port
 					break
 				}
-				port++
+				time.Sleep(100*time.Millisecond)
 			}
 			pluginPort = port
 			pluginPortMap[i] = port
@@ -176,7 +171,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		for i, localPort := range pluginPortMap {
 			v := vms[i]
 			var plu plugin.Plugin
-			plu, err = plugin.NewPluginAndServe(localPort, v)
+			plu, err := plugin.NewPluginAndServe(localPort, v)
 			if err != nil {
 				return nil, err
 			}
@@ -186,7 +181,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(&tmpl, vms)
 
-	err = v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
+	err := v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
 	}

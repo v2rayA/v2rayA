@@ -44,7 +44,6 @@ func init() {
 	for _, product := range ApiProducts {
 		ApiFeed.RegisterProduct(product)
 	}
-	go observatoryProducer()
 }
 
 func getObservatoryResponse(conn *grpc.ClientConn) (r *pb.GetOutboundStatusResponse, err error) {
@@ -59,50 +58,61 @@ func getObservatoryResponse(conn *grpc.ClientConn) (r *pb.GetOutboundStatusRespo
 	return r, nil
 }
 
-func observatoryProducer() {
-	const product = "observatory"
-	var conn *grpc.ClientConn
-nextLoop:
-	for {
-		if ApiPort() == 0 {
-			time.Sleep(ApiFeedInterval)
-			continue
-		}
-		// Set up a connection to the server.
-		if conn == nil {
-			c, err := grpc.Dial(net.JoinHostPort("127.0.0.1", strconv.Itoa(ApiPort())), grpc.WithInsecure(), grpc.WithBlock())
-			if err != nil {
-				log.Warn("observatoryProducer: did not connect: %v", err)
+func ObservatoryProducer() (closeFunc func()) {
+	closed := make(chan struct{})
+	go func() {
+		const product = "observatory"
+		var conn *grpc.ClientConn
+	nextLoop:
+		for {
+			select {
+			case <-closed:
+				return
+			default:
 			}
-			defer c.Close()
-			conn = c
-		}
-		r, err := getObservatoryResponse(conn)
-		if err != nil {
-			if status.Code(err) == codes.Unavailable {
-				// the connection is reliable, and reconnect
-				conn = nil
+			if ApiPort() == 0 {
+				time.Sleep(ApiFeedInterval)
 				continue
 			}
-			log.Warn("observatoryProducer: %v", err)
-		} else {
-			outboundStatus := r.GetStatus().GetStatus()
-			os := make([]OutboundStatus, len(outboundStatus))
-			css := configure.GetConnectedServers()
-			for i := range outboundStatus {
-				_ = mapper.AutoMapper(outboundStatus[i], &os[i])
-				index := tag2WhichIndex[os[i].OutboundTag]
-				if index >= css.Len() {
-					continue nextLoop
+			// Set up a connection to the server.
+			if conn == nil {
+				c, err := grpc.Dial(net.JoinHostPort("127.0.0.1", strconv.Itoa(ApiPort())), grpc.WithInsecure(), grpc.WithBlock())
+				if err != nil {
+					log.Warn("ObservatoryProducer: did not connect: %v", err)
 				}
-				os[i].Which = css.Get()[index]
-				var w []configure.Which
-				for _, v := range css.Get() {
-					w = append(w, *v)
-				}
+				defer c.Close()
+				conn = c
 			}
-			ApiFeed.ProductMessage(product, os)
+			r, err := getObservatoryResponse(conn)
+			if err != nil {
+				if status.Code(err) == codes.Unavailable {
+					// the connection is reliable, and reconnect
+					conn = nil
+					continue
+				}
+				log.Warn("ObservatoryProducer: %v", err)
+			} else {
+				outboundStatus := r.GetStatus().GetStatus()
+				os := make([]OutboundStatus, len(outboundStatus))
+				css := configure.GetConnectedServers()
+				for i := range outboundStatus {
+					_ = mapper.AutoMapper(outboundStatus[i], &os[i])
+					index := tag2WhichIndex[os[i].OutboundTag]
+					if index >= css.Len() {
+						continue nextLoop
+					}
+					os[i].Which = css.Get()[index]
+					var w []configure.Which
+					for _, v := range css.Get() {
+						w = append(w, *v)
+					}
+				}
+				ApiFeed.ProductMessage(product, os)
+			}
+			time.Sleep(ApiFeedInterval)
 		}
-		time.Sleep(ApiFeedInterval)
+	}()
+	return func() {
+		close(closed)
 	}
 }

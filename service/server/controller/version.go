@@ -7,14 +7,13 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"net/http"
 )
 
 func GetVersion(ctx *gin.Context) {
 	var dohValid string
 	var vlessValid int
-	var iptablesMode string
+	var lite int
 
 	ver, err := where.GetV2rayServiceVersion()
 	if err == nil {
@@ -37,10 +36,8 @@ func GetVersion(ctx *gin.Context) {
 	} else {
 		dohValid = err.Error()
 	}
-	setting := configure.GetSettingNotNil()
-	switch setting.TransparentType {
-	case configure.TransparentTproxy, configure.TransparentRedirect:
-		iptablesMode = string(setting.TransparentType)
+	if conf.GetEnvironmentConfig().Lite{
+		lite = 1
 	}
 	common.ResponseSuccess(ctx, gin.H{
 		"version":       conf.Version,
@@ -49,7 +46,7 @@ func GetVersion(ctx *gin.Context) {
 		"serviceValid":  v2ray.IsV2rayServiceValid(),
 		"dohValid":      dohValid,
 		"vlessValid":    vlessValid,
-		"iptablesMode":  iptablesMode, //仅代表是否支持tproxy，真实iptables所使用的表还要看是否是增强模式
+		"lite":          lite,
 	})
 }
 

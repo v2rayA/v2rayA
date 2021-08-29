@@ -8,6 +8,7 @@ import (
 
 var NoDefaultInterface = fmt.Errorf("default interfaces not found")
 
+// only for linux
 func GetDefaultInterfaceName() ([]string, error) {
 	b, err := exec.Command("sh", "-c", "awk '$2 == 00000000 { print $1 }' /proc/net/route").Output()
 	if err != nil {

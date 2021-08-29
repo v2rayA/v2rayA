@@ -1,7 +1,9 @@
 package plugin
 
 import (
+	"errors"
 	"fmt"
+	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/pkg/plugin/infra"
 	"github.com/v2rayA/v2rayA/pkg/plugin/infra/socks5"
@@ -87,7 +89,7 @@ out:
 		}
 		var o bool
 		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
-		if err != nil {
+		if err != nil && !errors.Is(err, netstat.ErrorNotSupportOSErr) {
 			return err
 		}
 		if !o {

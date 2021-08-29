@@ -79,16 +79,7 @@ func dial(network, addr string, localIP net.IP) (net.Conn, error) {
 	dialer := &net.Dialer{
 		LocalAddr: la,
 		Control: func(network, address string, c syscall.RawConn) error {
-			return c.Control(func(fd uintptr) {
-				//TODO: force to set 0xff. any chances to customize this value?
-				err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
-				if err != nil {
-					//if conf.IsDebug() {
-					//	log.Printf("control: %s", err)
-					//}
-					return
-				}
-			})
+			return SoMarkControl(c)
 		},
 	}
 	c, err := dialer.Dial(network, addr)

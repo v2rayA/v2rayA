@@ -4,9 +4,11 @@
 package pingtunnel
 
 import (
+	"errors"
 	"fmt"
 	"github.com/mzz2017/go-engine/src/loggo"
 	"github.com/mzz2017/go-engine/src/pingtunnel"
+	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
@@ -80,7 +82,7 @@ func (tunnel *PingTunnel) Close() (err error) {
 	for {
 		var o bool
 		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
-		if err != nil {
+		if err != nil && !errors.Is(err, netstat.ErrorNotSupportOSErr) {
 			return err
 		}
 		if !o {

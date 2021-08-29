@@ -3,10 +3,11 @@ package specialMode
 import (
 	"fmt"
 	"github.com/v2fly/v2ray-core/v4/app/router"
-	"github.com/v2rayA/v2rayA/common/netTools"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/specialMode/infra"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"net"
 	"sync"
 	"time"
 )
@@ -29,10 +30,14 @@ type ExtraInfo struct {
 }
 
 func CouldUseSupervisor() bool {
+	// TODO
 	return true
 }
 
 func ShouldUseSupervisor() bool {
+	if conf.GetEnvironmentConfig().Lite {
+		return false
+	}
 	return configure.GetSettingNotNil().SpecialMode == configure.SpecialModeSupervisor
 }
 
@@ -75,11 +80,15 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 		defer func() { <-limit }()
 	out:
 		for {
-			//随时准备应对default interface变化
+			//随时准备应对interface变化
 			f := func() {
-				ifnames, err := netTools.GetDefaultInterfaceName()
+				ifces, err := net.Interfaces()
 				if err != nil {
 					return
+				}
+				var ifnames = make([]string, 0, len(ifces))
+				for _, ifce := range ifces {
+					ifnames = append(ifnames, ifce.Name)
 				}
 				mIfnames := make(map[string]interface{})
 				mHandles := make(map[string]interface{})

@@ -243,7 +243,7 @@ export default {
             duration: 10000
           });
         } else {
-          localStorage["iptablesMode"] = res.data.data.iptablesMode;
+          localStorage["lite"] = res.data.data.lite;
           localStorage["dohValid"] = res.data.data.dohValid;
           localStorage["vlessValid"] = res.data.data.vlessValid;
           localStorage["observatorySidebarValid"] = isVersionGreaterEqual(

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"net"
 	"os"
@@ -26,6 +27,9 @@ func ShouldLocalDnsListen() bool {
 		return false
 	}
 	if setting.TransparentType == configure.TransparentTproxy {
+		return false
+	}
+	if conf.GetEnvironmentConfig().Lite {
 		return false
 	}
 	return true

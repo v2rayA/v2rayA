@@ -1,6 +1,7 @@
 package resolv
 
 import (
+	"github.com/v2rayA/v2rayA/conf"
 	"os"
 	"strings"
 )
@@ -16,6 +17,9 @@ func WriteResolvConf(servers []string) {
 }
 
 func CheckResolvConf() {
+	if conf.GetEnvironmentConfig().Lite {
+		return
+	}
 	if _, err := os.Stat(resolvConf); os.IsNotExist(err) {
 		WriteResolvConf([]string{"223.6.6.6"})
 	}
