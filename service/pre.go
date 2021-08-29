@@ -112,6 +112,17 @@ func initDBValue() {
 }
 
 func initConfigure() {
+	//等待网络连通
+	v2ray.CheckAndStopTransparentProxy()
+	for {
+		addrs, err := resolv.LookupHost("apple.com")
+		if err == nil && len(addrs) > 0 {
+			break
+		}
+		log.Warn("waiting for network connected")
+		time.Sleep(5 * time.Second)
+	}
+	log.Warn("network is connected")
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 
@@ -245,17 +256,6 @@ func initUpdatingTicker() {
 
 func checkUpdate() {
 	setting := service.GetSetting()
-	//等待网络连通
-	v2ray.CheckAndStopTransparentProxy()
-	for {
-		addrs, err := resolv.LookupHost("apple.com")
-		if err == nil && len(addrs) > 0 {
-			break
-		}
-		log.Warn("waiting for network connected")
-		time.Sleep(5 * time.Second)
-	}
-	log.Warn("network is connected")
 
 	//初始化ticker
 	initUpdatingTicker()
