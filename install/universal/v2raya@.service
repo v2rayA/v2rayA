@@ -7,7 +7,7 @@ Wants=network.target
 [Service]
 Type=simple
 User=%i
-ExecStart=/usr/bin/v2raya --passcheckroot --config=$HOME/.config/v2raya
+ExecStart=/usr/bin/v2raya --lite
 Restart=on-failure
 
 [Install]
