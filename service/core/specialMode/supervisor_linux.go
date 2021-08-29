@@ -88,7 +88,9 @@ func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains
 				}
 				var ifnames = make([]string, 0, len(ifces))
 				for _, ifce := range ifces {
-					ifnames = append(ifnames, ifce.Name)
+					if ifce.Flags&net.FlagUp == net.FlagUp {
+						ifnames = append(ifnames, ifce.Name)
+					}
 				}
 				mIfnames := make(map[string]interface{})
 				mHandles := make(map[string]interface{})
