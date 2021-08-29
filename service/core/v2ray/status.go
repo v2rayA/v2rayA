@@ -4,11 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/common/resolv"
-	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
@@ -16,8 +13,10 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"net"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -25,6 +24,7 @@ import (
 var v2RayPID *os.Process
 var tag2WhichIndex map[string]int
 var apiPort int
+var apiCloseFuncs []func()
 
 func SetCoreProcess(p *os.Process) {
 	configure.SetRunning(p != nil)
@@ -75,8 +75,9 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 			"XRAY_LOCATION_ASSET="+assetDir,
 		),
 		Files: []*os.File{
-			os.Stderr,
+			nil,
 			os.Stdout,
+			os.Stderr,
 		},
 	})
 	if err != nil {
@@ -101,32 +102,18 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 	if err != nil {
 		return
 	}
-	bPortOpen := false
-	var port int
-	for _, v := range tmplJson.Inbounds {
-		if v.Port != 0 {
-			if v.Settings != nil && v.Settings.Network != "" && !strings.Contains(v.Settings.Network, "tcp") {
-				continue
-			}
-			bPortOpen = true
-			port = v.Port
-			break
-		}
-	}
+
 	startTime := time.Now()
 	for {
-		if bPortOpen {
-			var is bool
-			is, err = netstat.IsProcessListenPort(path.Base(v2rayBinPath), port)
-			if err != nil {
-				return process, err
-			}
-			if is {
+		if ApiPort() != 0 {
+			conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(ApiPort())))
+			if err == nil {
+				conn.Close()
 				break
 			}
 		} else {
 			if IsV2RayRunning() {
-				time.Sleep(1000 * time.Millisecond) //距离v2ray进程启动到端口绑定可能需要一些时间
+				time.Sleep(1000 * time.Millisecond)
 				break
 			}
 		}
@@ -140,26 +127,23 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 }
 
 func findAvailablePluginPorts(vms []vmessInfo.VmessInfo) (pluginPortMap map[int]int, err error) {
-	nsmap, err := netstat.ToPortMap([]string{"tcp", "tcp6"})
-	if err != nil {
-		return nil, err
-	}
 	pluginPortMap = make(map[int]int)
-	checkingPort := conf.GetEnvironmentConfig().PluginListenPort - 1
 	for i, v := range vms {
 		if !plugin.HasProperPlugin(v) {
 			continue
 		}
 		//find a port that not be occupied
-		checkingPort++
+		var port int
 		for {
-			if !ports.IsOccupiedTCPPort(nsmap, checkingPort) {
-				// this port is available
+			l, err := net.Listen("tcp", "127.0.0.1:0")
+			if err == nil {
+				defer l.Close()
+				port = l.Addr().(*net.TCPAddr).Port
 				break
 			}
-			checkingPort++
+			time.Sleep(100 * time.Millisecond)
 		}
-		pluginPortMap[i] = checkingPort
+		pluginPortMap[i] = port
 	}
 	return pluginPortMap, nil
 }

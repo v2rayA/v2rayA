@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"log"
 	"io"
 	"os"
 	"reflect"

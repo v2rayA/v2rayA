@@ -57,21 +57,21 @@
         </template>
         <b-select v-model="transparent" expanded>
           <option value="close">{{ $t("setting.options.off") }}</option>
-          <option value="proxy">{{ $t("setting.options.global") }}</option>
-          <option value="whitelist">{{
+          <option v-show="!lite" value="proxy">{{
+            $t("setting.options.global")
+          }}</option>
+          <option v-show="!lite" value="whitelist">{{
             $t("setting.options.whitelistCn")
           }}</option>
-          <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
-          <option v-show="showTransparentModeRoutingPac" value="pac">{{
+          <option v-show="!lite" value="gfwlist">{{
+            $t("setting.options.gfwlist")
+          }}</option>
+          <option v-show="!lite && showTransparentModeRoutingPac" value="pac">{{
             $t("setting.options.sameAsPacMode")
           }}</option>
         </b-select>
         <b-button
-          v-show="
-            transparent !== 'close' &&
-              ((!showTransparentType && iptablesMode === 'tproxy') ||
-                (showTransparentType && transparentType === 'tproxy'))
-          "
+          v-show="transparent !== 'close' && transparentType === 'tproxy'"
           style="border-radius: 0;z-index: 2;"
           @click="handleClickPortWhiteList"
         >
@@ -85,10 +85,7 @@
         </b-checkbox-button>
       </b-field>
 
-      <b-field
-        v-show="transparent !== 'close' && showTransparentType"
-        label-position="on-border"
-      >
+      <b-field v-show="transparent !== 'close'" label-position="on-border">
         <template slot="label">
           {{ $t("setting.transparentType") }}
           <b-tooltip
@@ -330,7 +327,7 @@
       >
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">{{
-            transparent === "close"
+            transparent === "close" || lite
               ? $t("setting.options.direct")
               : $t("setting.options.dependTransparentMode")
           }}</option>
@@ -399,7 +396,6 @@ export default {
     localGFWListVersion: "checking...",
     showAntipollution: false,
     showSpecialMode: false,
-    showTransparentType: false,
     showAdvanced: false,
     showDns: false,
     showDoh: false,
@@ -409,6 +405,11 @@ export default {
     showDnsForceMode: false
   }),
   computed: {
+    lite() {
+      return (
+        window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0
+      );
+    },
     dockerMode() {
       return window.localStorage["docker"] === "true";
     },
@@ -420,9 +421,6 @@ export default {
           U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return toInt(port);
-    },
-    iptablesMode() {
-      return localStorage["iptablesMode"] || "tproxy";
     }
   },
   watch: {
@@ -459,10 +457,6 @@ export default {
           localStorage["version"],
           "1.4.0"
         );
-        this.showTransparentType = isVersionGreaterEqual(
-          localStorage["version"],
-          "1.4.0"
-        );
         this.showAdvanced = isVersionGreaterEqual(
           localStorage["version"],
           "1.4.0"
@@ -490,6 +484,10 @@ export default {
           localStorage["version"],
           "0.6.8"
         );
+        if (this.lite) {
+          this.transparent = "close";
+          this.showSpecialMode = false;
+        }
       });
     });
     //白名单有没有项，没有就post一下

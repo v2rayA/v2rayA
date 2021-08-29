@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/routingA"
@@ -1752,14 +1753,21 @@ func (t *Template) ResolveOutbounds(
 }
 
 func (t *Template) SetAPI() (port int) {
-	if t.Observatory == nil {
-		return 0
+	// TODO: refine code
+	for _, closeFunc := range apiCloseFuncs {
+		closeFunc()
+	}
+	apiCloseFuncs = []func(){}
+	services := []string{
+		"LoggerService",
+	}
+	if t.Observatory != nil {
+		services = append(services, "ObservatoryService")
+		apiCloseFuncs = append(apiCloseFuncs, ObservatoryProducer())
 	}
 	t.API = &APIObject{
-		Tag: "api-out",
-		Services: []string{
-			"ObservatoryService",
-		},
+		Tag:      "api-out",
+		Services: services,
 	}
 	// find a valid port
 	for {
@@ -1768,7 +1776,7 @@ func (t *Template) SetAPI() (port int) {
 			_ = l.Close()
 			break
 		}
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	t.Inbounds = append(t.Inbounds, Inbound{
@@ -1936,10 +1944,18 @@ var OccupiedErr = fmt.Errorf("port is occupied")
 func PortOccupied(syntax []string) (err error) {
 	occupied, sockets, err := ports.IsPortOccupied(syntax)
 	if err != nil {
+		if errors.Is(err, netstat.ErrorNotSupportOSErr) {
+			log.Trace("PortOccupied: %v", err)
+			return nil
+		}
 		return
 	}
 	if occupied {
 		if err = netstat.FillProcesses(sockets); err != nil {
+			if errors.Is(err, netstat.ErrorNotSupportOSErr) {
+				log.Warn("cannot judge port occupation: %v", err)
+				return nil
+			}
 			return fmt.Errorf("failed to check if port is occupied: %w", err)
 		}
 		for _, s := range sockets {

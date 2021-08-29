@@ -33,14 +33,11 @@ import (
 )
 
 func checkEnvironment() {
-	if runtime.GOOS == "windows" {
-		fmt.Println("v2rayA cannot run on windows")
-		fmt.Println("Press any key to continue...")
-		_, _ = fmt.Scanf("\n")
-		os.Exit(1)
+	if runtime.GOOS != "linux" {
+		fmt.Println("v2rayA has not been fully tested on non-linux platform")
 	}
-	conf := conf.GetEnvironmentConfig()
-	if !conf.PassCheckRoot || conf.ResetPassword {
+	config := conf.GetEnvironmentConfig()
+	if !config.PassCheckRoot || config.ResetPassword {
 		if os.Getegid() != 0 {
 			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
 				"If you don't want to run as root, use the --passcheckroot parameter to skip the check.\n" +
@@ -48,7 +45,7 @@ func checkEnvironment() {
 				"$ v2raya --passcheckroot --config ~/.config/v2raya")
 		}
 	}
-	if conf.ResetPassword {
+	if config.ResetPassword {
 		err := configure.ResetAccounts()
 		if err != nil {
 			log.Fatal("checkEnvironment: %v", err)
@@ -56,7 +53,7 @@ func checkEnvironment() {
 		fmt.Println("It will work after you restart v2rayA")
 		os.Exit(0)
 	}
-	_, v2rayAListeningPort, err := net.SplitHostPort(conf.Address)
+	_, v2rayAListeningPort, err := net.SplitHostPort(config.Address)
 	if err != nil {
 		log.Fatal("checkEnvironment: %v", err)
 	}
@@ -74,6 +71,9 @@ func checkEnvironment() {
 }
 
 func checkTProxySupportability() {
+	if conf.GetEnvironmentConfig().Lite {
+		return
+	}
 	//检查tproxy是否可以启用
 	if err := v2ray.CheckAndProbeTProxy(); err != nil {
 		log.Info("Cannot load TPROXY module: %v", err)
@@ -195,6 +195,10 @@ func hello() {
 	color.Red.Println("V2Ray binary is", v2rayPath)
 	wd, _ := os.Getwd()
 	color.Red.Println("v2rayA working directory is", wd)
+	color.Red.Println("v2rayA configuration directory is", conf.GetEnvironmentConfig().Config)
+	color.Red.Println("OS:", runtime.GOOS)
+	color.Red.Println("Arch:", runtime.GOARCH)
+	color.Red.Println("Lite:", conf.GetEnvironmentConfig().Lite)
 	color.Red.Println("Version:", conf.Version)
 	color.Red.Println("Starting...")
 }

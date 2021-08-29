@@ -8,12 +8,15 @@ import (
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ssrpluginSimpleobfs"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/trojan-go"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"runtime"
 )
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
-	checkTProxySupportability()
+	if runtime.GOOS == "linux" {
+		checkTProxySupportability()
+	}
 	initConfigure()
 	checkUpdate()
 	hello()

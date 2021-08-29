@@ -3,7 +3,9 @@ package where
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/conf"
+	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -29,7 +31,7 @@ func GetV2rayServiceVersion() (ver string, err error) {
 	if err != nil || len(v2rayPath) <= 0 {
 		return "", fmt.Errorf("cannot find v2ray executable binary")
 	}
-	out, err := exec.Command("sh", "-c", fmt.Sprintf("%v -version", v2rayPath)).Output()
+	out, err := exec.Command(v2rayPath, "-version").Output()
 	var fields []string
 	if fields = strings.Fields(strings.TrimSpace(string(out))); len(fields) < 2 {
 		return "", fmt.Errorf("cannot parse version of v2ray")
@@ -64,8 +66,17 @@ func getV2rayBinPath(target string) (string, error) {
 	var pa string
 	//从环境变量里找
 	pa, err := exec.LookPath(target)
+	if err == nil {
+		return pa, nil
+	}
+	//从 pwd 里找
+	pwd, err := os.Getwd()
 	if err != nil {
 		return "", NotFoundErr
 	}
-	return pa, nil
+	pa = path.Join(pwd, target)
+	if _, err := os.Stat(pa); err == nil {
+		return pa, nil
+	}
+	return "", NotFoundErr
 }
