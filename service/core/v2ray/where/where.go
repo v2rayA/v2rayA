@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -63,6 +64,9 @@ func getV2rayBinPathAnyway() (path string, err error) {
 }
 
 func getV2rayBinPath(target string) (string, error) {
+	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(target), ".exe") {
+		target += ".exe"
+	}
 	var pa string
 	//从环境变量里找
 	pa, err := exec.LookPath(target)

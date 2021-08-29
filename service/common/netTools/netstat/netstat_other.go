@@ -2,10 +2,6 @@
 
 package netstat
 
-import (
-	"fmt"
-)
-
 func FillProcesses(sockets []*Socket) error {
 	return ErrorNotSupportOSErr
 }
