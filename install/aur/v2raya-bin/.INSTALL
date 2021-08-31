@@ -1,8 +1,6 @@
 #!/bin/sh
 
 post_install() {
-    systemctl daemon-reload
-
     ECHOLEN=$(echo -e|awk '{print length($0)}')
     if [ ${ECHOLEN} = '0' ]
     then
@@ -16,8 +14,6 @@ post_install() {
 }
 
 post_upgrade() {
-    systemctl daemon-reload
-
     ECHOLEN=$(echo -e|awk '{print length($0)}')
     if [ ${ECHOLEN} = '0' ]
     then
