@@ -309,11 +309,12 @@ func ResolveTrojanURL(u string) (data *nodeData.NodeData, err error) {
 	if sni == "" {
 		sni = t.Query().Get("sni")
 	}
+	log.Info(u)
 	data.VmessInfo = vmessInfo.VmessInfo{
 		Ps:            t.Fragment,
 		Add:           t.Hostname(),
 		Port:          t.Port(),
-		ID:            t.User.String(),
+		ID:            t.User.Username(),
 		Host:          sni,
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",

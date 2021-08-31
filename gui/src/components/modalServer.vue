@@ -959,7 +959,7 @@ export default {
         let u = parseURL(url);
         return {
           server: u.host,
-          password: u.username,
+          password: decodeURIComponent(u.username),
           name: decodeURIComponent(u.hash),
           protocol: "pingtunnel"
         };
@@ -969,7 +969,7 @@ export default {
       ) {
         let u = parseURL(url);
         const o = {
-          password: u.username,
+          password: decodeURIComponent(u.username),
           server: u.host,
           port: u.port,
           name: decodeURIComponent(u.hash),
@@ -1008,8 +1008,8 @@ export default {
       ) {
         let u = parseURL(url);
         return {
-          username: u.username,
-          password: u.password,
+          username: decodeURIComponent(u.username),
+          password: decodeURIComponent(u.password),
           host: u.host,
           port: u.port,
           protocol: u.protocol,
