@@ -17,7 +17,7 @@ type (
 
 const (
 	TransparentClose      = TransparentMode("close")
-	TransparentProxy      = TransparentMode("proxy")
+	TransparentProxy      = TransparentMode("proxy") // proxy all traffic
 	TransparentWhitelist  = TransparentMode("whitelist")
 	TransparentGfwlist    = TransparentMode("gfwlist")
 	TransparentFollowRule = TransparentMode("pac")

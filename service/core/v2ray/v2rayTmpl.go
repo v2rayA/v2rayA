@@ -52,10 +52,11 @@ type Template struct {
 		Rules          []RoutingRule `json:"rules"`
 		Balancers      []Balancer    `json:"balancers,omitempty"`
 	} `json:"routing"`
-	DNS         *DNS         `json:"dns,omitempty"`
-	FakeDns     *FakeDns     `json:"fakedns,omitempty"`
-	Observatory *Observatory `json:"observatory,omitempty"`
-	API         *APIObject   `json:"api,omitempty"`
+	DNS          *DNS         `json:"dns,omitempty"`
+	FakeDns      *FakeDns     `json:"fakedns,omitempty"`
+	Observatory  *Observatory `json:"observatory,omitempty"`
+	API          *APIObject   `json:"api,omitempty"`
+	PrivateAddrs []string     `json:"-"`
 }
 type APIObject struct {
 	Tag      string   `json:"tag"`
@@ -972,6 +973,19 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 				},
 			)
 		}
+	} else {
+		if setting.Transparent != configure.TransparentClose {
+			t.Routing.Rules = append(t.Routing.Rules,
+				RoutingRule{
+					Type:        "field",
+					OutboundTag: "direct",
+					InboundTag: []string{
+						"transparent",
+					},
+					Port: "53",
+					IP:   append([]string{"geoip:private"}, t.PrivateAddrs...),
+				})
+		}
 	}
 	return
 }
@@ -1009,7 +1023,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  inbounds,
-				IP:          []string{"geoip:private", "geoip:cn"},
+				IP:          append([]string{"geoip:private", "geoip:cn"}, t.PrivateAddrs...),
 			},
 		)
 	case configure.GfwlistMode:
@@ -1832,6 +1846,8 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	}
 	// tmplJson.Template is the basic configuration
 	t = tmplJson.Template
+	// private addrs
+	t.PrivateAddrs, _ = iptables.GetLocalCIDR()
 	// log
 	t.Log = new(Log)
 	if logLevel := log.ParseLevel(conf.GetEnvironmentConfig().LogLevel); logLevel >= log.ParseLevel("debug") {
