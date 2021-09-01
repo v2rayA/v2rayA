@@ -1522,8 +1522,7 @@ func Ps2OutboundTag(ps string) string {
 	return fmt.Sprintf("『%v』", ps)
 }
 
-func (t *Template) SetPrivateRouting() {
-	// private addrs
+func (t *Template) UpdatePrivateRouting() {
 	privateAddrs, _ := iptables.GetLocalCIDR()
 	if len(privateAddrs) == 0 {
 		return
@@ -1929,6 +1928,8 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 		})
 	}
 	t.SetWhitelistRouting(whitelist)
+
+	t.UpdatePrivateRouting()
 
 	//set outboundSockopt
 	t.SetOutboundSockopt(setting)
