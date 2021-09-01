@@ -52,11 +52,10 @@ type Template struct {
 		Rules          []RoutingRule `json:"rules"`
 		Balancers      []Balancer    `json:"balancers,omitempty"`
 	} `json:"routing"`
-	DNS          *DNS         `json:"dns,omitempty"`
-	FakeDns      *FakeDns     `json:"fakedns,omitempty"`
-	Observatory  *Observatory `json:"observatory,omitempty"`
-	API          *APIObject   `json:"api,omitempty"`
-	PrivateAddrs []string     `json:"-"`
+	DNS         *DNS         `json:"dns,omitempty"`
+	FakeDns     *FakeDns     `json:"fakedns,omitempty"`
+	Observatory *Observatory `json:"observatory,omitempty"`
+	API         *APIObject   `json:"api,omitempty"`
 }
 type APIObject struct {
 	Tag      string   `json:"tag"`
@@ -983,7 +982,7 @@ func (t *Template) SetDNSRouting(routing []RoutingRule, supportUDP map[string]bo
 						"transparent",
 					},
 					Port: "53",
-					IP:   append([]string{"geoip:private"}, t.PrivateAddrs...),
+					IP:   []string{"geoip:private"},
 				})
 		}
 	}
@@ -1023,7 +1022,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  inbounds,
-				IP:          append([]string{"geoip:private", "geoip:cn"}, t.PrivateAddrs...),
+				IP:          []string{"geoip:private", "geoip:cn"},
 			},
 		)
 	case configure.GfwlistMode:
@@ -1523,6 +1522,22 @@ func Ps2OutboundTag(ps string) string {
 	return fmt.Sprintf("『%v』", ps)
 }
 
+func (t *Template) SetPrivateRouting() {
+	// private addrs
+	privateAddrs, _ := iptables.GetLocalCIDR()
+	if len(privateAddrs) == 0 {
+		return
+	}
+	for i := range t.Routing.Rules {
+		for j := range t.Routing.Rules[i].IP {
+			if t.Routing.Rules[i].IP[j] == "geoip:private" {
+				t.Routing.Rules[i].IP = append(t.Routing.Rules[i].IP, privateAddrs...)
+				break
+			}
+		}
+	}
+}
+
 func (t *Template) SetWhitelistRouting(whitelist []Addr) {
 	var rules []RoutingRule
 	for _, addr := range whitelist {
@@ -1846,8 +1861,6 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	}
 	// tmplJson.Template is the basic configuration
 	t = tmplJson.Template
-	// private addrs
-	t.PrivateAddrs, _ = iptables.GetLocalCIDR()
 	// log
 	t.Log = new(Log)
 	if logLevel := log.ParseLevel(conf.GetEnvironmentConfig().LogLevel); logLevel >= log.ParseLevel("debug") {
