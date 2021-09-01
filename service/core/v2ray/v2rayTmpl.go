@@ -1020,6 +1020,12 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			},
 			RoutingRule{
 				Type:        "field",
+				OutboundTag: "proxy",
+				InboundTag:  inbounds,
+				IP:          []string{"geoip:hk", "geoip:mo"},
+			},
+			RoutingRule{
+				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  inbounds,
 				IP:          []string{"geoip:private", "geoip:cn"},
