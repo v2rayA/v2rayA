@@ -1893,7 +1893,7 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	//set DNS
 	dnsRouting, err := t.SetDNS(serverInfos, setting, supportUDP)
 	if err != nil {
-		return
+		return Template{}, nil, err
 	}
 	//append a DNS outbound
 	t.AppendDNSOutbound()
@@ -1902,12 +1902,12 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	t.SetDNSRouting(dnsRouting, supportUDP)
 	//rule port routing
 	if err = t.SetRulePortRouting(setting); err != nil {
-		return
+		return Template{}, nil, err
 	}
 	//transparent routing
 	if setting.Transparent != configure.TransparentClose {
 		if err = t.SetTransparentRouting(setting); err != nil {
-			return
+			return Template{}, nil, err
 		}
 	}
 	//set group routing
@@ -1942,7 +1942,11 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 
 	//check if there are any duplicated tags
 	if err = t.CheckDuplicatedTags(); err != nil {
-		return
+		return Template{}, nil, err
+	}
+	//check if there are any duplicated inbound ports
+	if err = t.CheckDuplicatedInboundSockets(); err != nil {
+		return Template{}, nil, err
 	}
 
 	return t, outboundTags, nil
@@ -1965,6 +1969,23 @@ func (t *Template) CheckDuplicatedTags() error {
 			return fmt.Errorf("duplicated outbound tag: %v", tag)
 		} else {
 			outboundTagsSet[tag] = nil
+		}
+	}
+	return nil
+}
+
+func (t *Template) CheckDuplicatedInboundSockets() error {
+	inboundSocketSet := make(map[string]interface{})
+	for _, in := range t.Inbounds {
+		if in.Listen == "" {
+			// https://www.v2fly.org/config/inbounds.html#inboundobject
+			in.Listen = "0.0.0.0"
+		}
+		socket := net.JoinHostPort(in.Listen, strconv.Itoa(in.Port))
+		if _, exists := inboundSocketSet[socket]; exists {
+			return fmt.Errorf("duplicated inbound listening address: %v", socket)
+		} else {
+			inboundSocketSet[socket] = nil
 		}
 	}
 	return nil
