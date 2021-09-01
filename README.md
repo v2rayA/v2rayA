@@ -41,6 +41,8 @@ See [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/Usage)
 
 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
 
+[zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy/blob/master/ss-tproxy)
+
 ## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/v2rayA/v2rayA.svg)](https://starchart.cc/v2rayA/v2rayA)
