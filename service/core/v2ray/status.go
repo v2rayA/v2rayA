@@ -148,7 +148,7 @@ func UpdateV2RayConfig() (err error) {
 	defer func() {
 		if err == nil {
 			if e := CheckAndSetupTransparentProxy(true); e != nil {
-				err = fmt.Errorf("%w: %w", err, e)
+				err = e
 				if IsV2RayRunning() {
 					if e = StopV2rayService(true); e != nil {
 						err = fmt.Errorf("%w: %w", err, e)

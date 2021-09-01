@@ -70,7 +70,7 @@ func (d *DnsSupervisor) DeleteHandles(ifname string) (err error) {
 	}
 	close(d.handles[ifname].done)
 	delete(d.handles, ifname)
-	log.Trace("DnsSupervisor:", ifname, "closed")
+	log.Trace("DnsSupervisor:%v closed", ifname)
 	return
 }
 
