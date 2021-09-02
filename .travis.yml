@@ -40,7 +40,7 @@ install:
 script:
   - yarn --cwd $P_DIR/gui && yarn --cwd $P_DIR/gui build
   - cp -r $P_DIR/web $P_DIR/service/server/router/
-  - cd $P_DIR/service && CGO_ENABLED=0 gox -ldflags '-extldflags "-static"' -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/global.Version=${VERSION:1} -s -w" -output="$P_DIR/v2raya_{{.OS}}_{{.Arch}}_$VERSION"
+  - cd $P_DIR/service && CGO_ENABLED=0 gox -ldflags '-extldflags "-static"' -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${VERSION:1} -s -w" -output="$P_DIR/v2raya_{{.OS}}_{{.Arch}}_$VERSION"
   - mv $P_DIR/v2raya_linux_386_$VERSION $P_DIR/v2raya_linux_x86_$VERSION && mv $P_DIR/v2raya_linux_amd64_$VERSION $P_DIR/v2raya_linux_x64_$VERSION
   - files="install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya@.service=/etc/systemd/system/v2raya@.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
   - params="--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade $P_DIR/install/universal/after_upgrade.sh --verbose -f -n $NAME -v ${VERSION:1} --url https://github.com/v2rayA/v2raya"
