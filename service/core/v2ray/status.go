@@ -63,6 +63,7 @@ func (p *Process) LoggerBackground() {
 	var buff bytes.Buffer
 	var off int64
 	for {
+		time.Sleep(500 * time.Millisecond)
 		n, err := r.ReadAt(buf[:], off)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -86,7 +87,6 @@ func (p *Process) LoggerBackground() {
 						buff.Reset()
 					}
 				}
-				time.Sleep(500 * time.Millisecond)
 				continue
 			}
 			log.Debug("LoggerBackground: %v", err)
