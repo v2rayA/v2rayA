@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
@@ -13,6 +14,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"io"
 	"net"
 	"os"
 	"path"
@@ -21,16 +23,16 @@ import (
 	"time"
 )
 
-var v2RayPID *os.Process
+var v2RayPID *Process
 var tag2WhichIndex map[string]int
 var apiPort int
 var apiCloseFuncs []func()
 
-func SetCoreProcess(p *os.Process) {
+func SetCoreProcess(p *Process) {
 	configure.SetRunning(p != nil)
 	v2RayPID = p
 }
-func CoreProcess() *os.Process {
+func CoreProcess() *Process {
 	return v2RayPID
 }
 func IsV2RayRunning() bool {
@@ -44,7 +46,120 @@ func ApiPort() int {
 	return apiPort
 }
 
-func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
+// Process is a v2ray-core process
+type Process struct {
+	p       *os.Process
+	logFile *os.File
+	l       net.Listener
+}
+
+func (p *Process) LoggerBackground() {
+	r := p.logFile
+	go func() {
+		p.p.Wait()
+		p.logFile.Close()
+	}()
+	var buf [1024]byte
+	var buff bytes.Buffer
+	var off int64
+	for {
+		n, err := r.ReadAt(buf[:], off)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				if n > 0 {
+					off += int64(n)
+					var toWrite []byte
+					if buff.Len() > 0 {
+						buff.Write(buf[:n])
+						toWrite = buff.Bytes()
+					} else {
+						toWrite = buf[:n]
+					}
+					lines := bytes.Split(toWrite, []byte("\n"))
+					for _, line := range lines {
+						if len(line) == 0 {
+							continue
+						}
+						log.Info("%v", string(line))
+					}
+					if buff.Len() > 0 {
+						buff.Reset()
+					}
+				}
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+			log.Debug("LoggerBackground: %v", err)
+			return
+		}
+		buff.Write(buf[:n])
+	}
+}
+
+func (p *Process) Close() error {
+	err := p.p.Kill()
+	if err != nil {
+		return err
+	}
+	p.p.Wait()
+	return nil
+}
+
+func NewProcess(name string, argv []string, dir string, env []string) (*Process, error) {
+	f, err := os.CreateTemp("", "v2raya_v2ray_*.log")
+	if err != nil {
+		log.Warn("cannot redirect v2ray log: %v", err)
+		f = nil
+	}
+	p, err := os.StartProcess(name, argv, &os.ProcAttr{
+		Dir: dir, //防止找不到v2ctl
+		Env: env,
+		Files: []*os.File{
+			nil,
+			f,
+			f,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	proc := &Process{
+		p:       p,
+		logFile: f,
+		l:       nil,
+	}
+	if f != nil {
+		go proc.LoggerBackground()
+	}
+	return proc, nil
+}
+
+func StartCoreProcess() (*Process, error) {
+	v2rayBinPath, err := where.GetV2rayBinPath()
+	if err != nil {
+		return nil, err
+	}
+	dir := path.Dir(v2rayBinPath)
+	var arguments = []string{
+		v2rayBinPath,
+		"--config=" + asset.GetV2rayConfigPath(),
+	}
+	if confdir := asset.GetV2rayConfigDirPath(); confdir != "" {
+		arguments = append(arguments, "--confdir="+confdir)
+	}
+	log.Debug(strings.Join(arguments, " "))
+	assetDir := asset.GetV2rayLocationAsset()
+	proc, err := NewProcess(v2rayBinPath, arguments, dir, append(os.Environ(),
+		"V2RAY_LOCATION_ASSET="+assetDir,
+		"XRAY_LOCATION_ASSET="+assetDir,
+	))
+	if err != nil {
+		return nil, err
+	}
+	return proc, nil
+}
+
+func RestartV2rayService(saveStatus bool) (process *Process, err error) {
 	if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
 		return nil, fmt.Errorf("Please sync datetime first. Your datetime is %v, and the correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
 	}
@@ -55,32 +170,7 @@ func RestartV2rayService(saveStatus bool) (process *os.Process, err error) {
 	if err = killV2ray(saveStatus); err != nil {
 		return
 	}
-	v2rayBinPath, err := where.GetV2rayBinPath()
-	if err != nil {
-		return
-	}
-	dir := path.Dir(v2rayBinPath)
-	var params = []string{
-		v2rayBinPath,
-		"--config=" + asset.GetV2rayConfigPath(),
-	}
-	if confdir := asset.GetV2rayConfigDirPath(); confdir != "" {
-		params = append(params, "--confdir="+confdir)
-	}
-	log.Debug(strings.Join(params, " "))
-	assetDir := asset.GetV2rayLocationAsset()
-	process, err = os.StartProcess(v2rayBinPath, params, &os.ProcAttr{
-		Dir: dir, //防止找不到v2ctl
-		Env: append(os.Environ(),
-			"V2RAY_LOCATION_ASSET="+assetDir,
-			"XRAY_LOCATION_ASSET="+assetDir,
-		),
-		Files: []*os.File{
-			nil,
-			os.Stdout,
-			os.Stderr,
-		},
-	})
+	process, err = StartCoreProcess()
 	if err != nil {
 		return nil, fmt.Errorf("RestartV2rayService: %w", err)
 	}
@@ -246,18 +336,13 @@ func UpdateV2RayConfig() (err error) {
 
 func killV2ray(saveStatus bool) (err error) {
 	if CoreProcess() != nil {
-		err = CoreProcess().Kill()
+		err = CoreProcess().Close()
 		if err != nil {
 			if errors.Is(err, os.ErrProcessDone) {
 				if saveStatus {
 					SetCoreProcess(nil)
 				}
 			}
-			return
-		}
-		// to prevent [defunct] process
-		_, err = CoreProcess().Wait()
-		if err != nil {
 			return
 		}
 		if saveStatus {
