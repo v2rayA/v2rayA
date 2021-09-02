@@ -22,7 +22,6 @@ type Params struct {
 	PassCheckRoot           bool     `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
 	ResetPassword           bool     `id:"reset-password"`
 	LogLevel                string   `id:"log-level" default:"info" desc:"Optional values: trace, debug, info, warn or error"`
-	LogWay                  string   `id:"log-way" default:"console" desc:"Optional values: file or console"`
 	LogFile                 string   `id:"log-file" desc:"The path of log file"`
 	LogMaxDays              int64    `id:"log-max-days" default:"3" desc:"Maximum number of days to keep log files"`
 	LogDisableColor         bool     `id:"log-disable-color"`
@@ -73,7 +72,11 @@ func initFunc() {
 			params.Config = strings.ReplaceAll(params.Config, "$HOME", h)
 		}
 	}
-	log.InitLog(params.LogWay, params.LogFile, params.LogLevel, params.LogMaxDays, params.LogDisableColor)
+	logWay := "console"
+	if params.LogFile != "" {
+		logWay = "file"
+	}
+	log.InitLog(logWay, params.LogFile, params.LogLevel, params.LogMaxDays, params.LogDisableColor)
 }
 
 var once sync.Once
