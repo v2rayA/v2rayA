@@ -208,7 +208,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	for i := range which {
 		if which[i].Latency != "" {
 			if showLog {
-				fmt.Printf("Error[%v]%v: %v\n", i+1, which[i].Latency, which[i].Link)
+				log.Warn("Error[%v]%v: %v", i+1, which[i].Latency, which[i].Link)
 			}
 			continue
 		}
@@ -218,7 +218,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			defer func() { <-cc; wg.Done() }()
 			httpLatency(which[i], inboundPortMap[i], timeout)
 			if showLog {
-				fmt.Printf("Test done[%v]%v: %v\n", i+1, which[i].Latency, which[i].Link)
+				log.Info("Test done[%v]%v: %v", i+1, which[i].Latency, which[i].Link)
 			}
 		}(i)
 	}
