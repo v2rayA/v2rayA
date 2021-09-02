@@ -198,7 +198,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	process, err := v2ray.RestartV2rayService(false)
 	if err != nil {
 		if process != nil {
-			_ = process.Kill()
+			_ = process.Close()
 		}
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	wg.Wait()
 	if process != nil {
-		_ = process.Kill()
+		_ = process.Close()
 		v2ray.SetCoreProcess(nil)
 	}
 	if v2rayRunning && configure.GetConnectedServers() != nil {
