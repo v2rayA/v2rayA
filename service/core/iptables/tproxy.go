@@ -45,7 +45,6 @@ iptables -w 2 -t mangle -N TP_RULE
 
 iptables -w 2 -t mangle -I OUTPUT -j TP_OUT
 iptables -w 2 -t mangle -I PREROUTING -j TP_PRE
-iptables -w 2 -t mangle -I OUTPUT -j TP_OUT
 
 iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
 iptables -w 2 -t mangle -A TP_OUT -p tcp -m addrtype --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
@@ -91,7 +90,6 @@ ip6tables -w 2 -t mangle -N TP_RULE
 
 ip6tables -w 2 -t mangle -I OUTPUT -j TP_OUT
 ip6tables -w 2 -t mangle -I PREROUTING -j TP_PRE
-ip6tables -w 2 -t mangle -I OUTPUT -j TP_OUT
 
 ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
 ip6tables -w 2 -t mangle -A TP_OUT -p tcp -m addrtype --src-type LOCAL ! --dst-type LOCAL -j TP_RULE

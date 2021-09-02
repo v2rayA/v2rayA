@@ -70,13 +70,6 @@
             $t("setting.options.sameAsPacMode")
           }}</option>
         </b-select>
-        <b-button
-          v-show="transparent !== 'close' && transparentType === 'tproxy'"
-          style="border-radius: 0;z-index: 2;"
-          @click="handleClickPortWhiteList"
-        >
-          {{ $t("egressPortWhitelist.title") }}
-        </b-button>
         <b-checkbox-button
           v-model="ipforward"
           :native-value="true"
@@ -364,7 +357,6 @@ import { isVersionGreaterEqual, parseURL, toInt } from "../assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
-import modalPortWhiteList from "@/components/modalPortWhiteList";
 import modalDnsSetting from "./modalDnsSetting";
 import axios from "../plugins/axios";
 import { waitingConnected } from "../assets/js/networkInspect";
@@ -490,22 +482,6 @@ export default {
         }
       });
     });
-    //白名单有没有项，没有就post一下
-    this.$axios({
-      url: apiRoot + "/portWhiteList"
-    }).then(res => {
-      handleResponse(res, this, () => {
-        if (res.data.data.tcp === null && res.data.data.udp === null) {
-          this.$axios({
-            url: apiRoot + "/portWhiteList",
-            method: "post",
-            data: {
-              requestPort: this.v2rayaPort.toString()
-            }
-          });
-        }
-      });
-    });
   },
   methods: {
     dayjs() {
@@ -598,42 +574,7 @@ export default {
         return;
       }
       console.log(apiRoot);
-      if (
-        this.transparent !== "close" &&
-        this.transparentType === "tproxy" &&
-        !isIntranet(apiRoot)
-      ) {
-        let U = parseURL(apiRoot);
-        let port = U.port;
-        if (!port) {
-          port =
-            U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
-        }
-        this.$axios({
-          url: apiRoot + "/portWhiteList"
-        })
-          .then(res => {
-            handleResponse(res, this, () => {
-              this.$buefy.dialog.confirm({
-                title: this.$t("common.message"),
-                message: this.$t("setting.messages.confirmEgressPorts", {
-                  tcpPorts: res.data.data.tcp.join(", "),
-                  udpPorts: res.data.data.udp.join(", ")
-                }),
-                cancelText: this.$t("operations.cancel"),
-                confirmText: this.$t("operations.confirm2"),
-                type: "is-danger",
-                onConfirm: () => this.requestUpdateSetting()
-              });
-            });
-          })
-          .catch(() => {
-            //可能是服务端是老旧版本，没这个接口
-            this.requestUpdateSetting();
-          });
-      } else {
-        this.requestUpdateSetting();
-      }
+      this.requestUpdateSetting();
     },
     handleClickConfigurePac() {
       this.$buefy.modal.open({
@@ -647,14 +588,6 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: ModalCustomRoutingA,
-        hasModalCard: true,
-        canCancel: true
-      });
-    },
-    handleClickPortWhiteList() {
-      this.$buefy.modal.open({
-        parent: this,
-        component: modalPortWhiteList,
         hasModalCard: true,
         canCancel: true
       });
