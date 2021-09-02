@@ -6,7 +6,7 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fatedier/beego v1.7.2
+	github.com/fatedier/beego v0.0.0-20171024143340-6c6a4f5bd5eb
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-gonic/gin v1.7.1
