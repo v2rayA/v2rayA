@@ -14,7 +14,7 @@ import (
 )
 
 func Import(url string, which *configure.Which) (err error) {
-	//log.Println(url)
+	//log.Trace(url)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 {

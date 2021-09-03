@@ -7,7 +7,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"github.com/gookit/color"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -208,5 +207,5 @@ func Run() error {
 }
 
 func printRunningAt(address string) {
-	color.Red.Println("v2rayA is listening at", address)
+	log.Alert("v2rayA is listening at %v", address)
 }
