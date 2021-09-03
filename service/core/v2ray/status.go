@@ -1,7 +1,6 @@
 package v2ray
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/json-iterator/go"
@@ -14,9 +13,9 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"io"
 	"net"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -48,53 +47,23 @@ func ApiPort() int {
 
 // Process is a v2ray-core process
 type Process struct {
-	p       *os.Process
-	logFile *os.File
-	l       net.Listener
+	p *os.Process
+}
+type logInfoWriter struct {
 }
 
-func (p *Process) LoggerBackground() {
-	r := p.logFile
-	go func() {
-		p.p.Wait()
-		p.logFile.Close()
-	}()
-	var buf [1024]byte
-	var buff bytes.Buffer
-	var off int64
-	for {
-		time.Sleep(500 * time.Millisecond)
-		n, err := r.ReadAt(buf[:], off)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				if n > 0 {
-					off += int64(n)
-					var toWrite []byte
-					if buff.Len() > 0 {
-						buff.Write(buf[:n])
-						toWrite = buff.Bytes()
-					} else {
-						toWrite = buf[:n]
-					}
-					lines := bytes.Split(toWrite, []byte("\n"))
-					for _, line := range lines {
-						if len(line) == 0 {
-							continue
-						}
-						log.Info("%v", string(line))
-					}
-					if buff.Len() > 0 {
-						buff.Reset()
-					}
-				}
-				continue
-			}
-			log.Debug("LoggerBackground: %v", err)
-			return
-		}
-		buff.Write(buf[:n])
+func (w logInfoWriter) Write(p []byte) (n int, err error) {
+	s := string(p)
+	// trim the ending \n
+	length := len(s)
+	if s[length-1] == '\n' {
+		s = s[:length-1]
 	}
+	log.Info("%v", s)
+	return len(p), nil
 }
+
+var logWriter logInfoWriter
 
 func (p *Process) Close() error {
 	err := p.p.Kill()
@@ -106,30 +75,18 @@ func (p *Process) Close() error {
 }
 
 func NewProcess(name string, argv []string, dir string, env []string) (*Process, error) {
-	f, err := os.CreateTemp("", "v2raya_v2ray_*.log")
-	if err != nil {
-		log.Warn("cannot redirect v2ray log: %v", err)
-		f = nil
-	}
-	p, err := os.StartProcess(name, argv, &os.ProcAttr{
-		Dir: dir, //防止找不到v2ctl
-		Env: env,
-		Files: []*os.File{
-			nil,
-			f,
-			f,
-		},
-	})
+	cmd := exec.Command(name)
+	cmd.Args = argv
+	cmd.Dir = dir
+	cmd.Env = env
+	cmd.Stdout = logWriter
+	cmd.Stderr = logWriter
+	err := cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 	proc := &Process{
-		p:       p,
-		logFile: f,
-		l:       nil,
-	}
-	if f != nil {
-		go proc.LoggerBackground()
+		p: cmd.Process,
 	}
 	return proc, nil
 }

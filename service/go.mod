@@ -6,7 +6,6 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fatedier/beego v0.0.0-20171024143340-6c6a4f5bd5eb
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-gonic/gin v1.7.1
@@ -19,22 +18,20 @@ require (
 	github.com/matoous/go-nanoid v1.5.0
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20201229145248-615b0916ca38
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
-	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5-0.20210421162817-acdbac05f5a5
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.7.5
 	github.com/ugorji/go v1.2.5 // indirect
 	github.com/v2fly/v2ray-core/v4 v4.41.0
+	github.com/v2rayA/beego/v2 v2.0.3
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
 	github.com/v2rayA/shadowsocksR v1.0.3
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
-	google.golang.org/genproto v0.0.0-20210429181445-86c259c2b4ab // indirect
 	google.golang.org/grpc v1.38.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
 // Replace dependency modules with local developing copy
