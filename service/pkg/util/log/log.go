@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatedier/beego/logs"
+	"github.com/v2rayA/beego/v2/logs"
 )
 
 // Log is the under log object
