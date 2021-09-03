@@ -39,10 +39,10 @@ func checkEnvironment() {
 	config := conf.GetEnvironmentConfig()
 	if !config.PassCheckRoot || config.ResetPassword {
 		if os.Getegid() != 0 {
-			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n"+
-				"If you are sure you are root user, use the --passcheckroot parameter to skip the check.\n",
-				"If you don't want to run as root or you are a non-linux user, use --lite please.",
-				"For example:",
+			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
+				"If you are sure you are root user, use the --passcheckroot parameter to skip the check.\n" +
+				"If you don't want to run as root or you are a non-linux user, use --lite please.\n" +
+				"For example:\n" +
 				"$ v2raya --lite",
 			)
 		}

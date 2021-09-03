@@ -96,7 +96,7 @@ func Down(request *Request, to string) error {
 	// allocate file
 	nanoid, _ := gonanoid.Nanoid()
 	filename := response.Name + "." + nanoid
-	tmpPath := path.Join("/tmp", filename)
+	tmpPath := path.Join(os.TempDir(), filename)
 	file, err := os.Create(tmpPath)
 	if err != nil {
 		return err
