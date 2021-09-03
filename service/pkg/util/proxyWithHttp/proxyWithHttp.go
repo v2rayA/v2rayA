@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"fmt"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"golang.org/x/net/proxy"
 	"net"
 	"net/http"
@@ -29,7 +30,7 @@ var TlsConfig = &tls.Config{}
 func (d httpsDialer) Dial(network, addr string) (c net.Conn, err error) {
 	c, err = tls.Dial("tcp", addr, TlsConfig)
 	if err != nil {
-		fmt.Println(err)
+		log.Warn("%v", err)
 	}
 	return
 }

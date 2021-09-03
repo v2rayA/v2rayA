@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/gookit/color"
 	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/tidwall/gjson"
@@ -33,9 +32,6 @@ import (
 )
 
 func checkEnvironment() {
-	if runtime.GOOS != "linux" {
-		fmt.Println("v2rayA has not been fully tested on non-linux platform")
-	}
 	config := conf.GetEnvironmentConfig()
 	if !config.PassCheckRoot || config.ResetPassword {
 		if os.Getegid() != 0 {
@@ -163,7 +159,7 @@ func initConfigure() {
 		//检查geoip、geosite是否存在
 		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 			dld := func(repo, filename, localname string) (err error) {
-				color.Red.Println("installing " + filename)
+				log.Warn("installing " + filename)
 				p := path.Join(asset.GetV2rayLocationAsset(), filename)
 				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 				if err != nil {
@@ -203,17 +199,17 @@ func initConfigure() {
 }
 
 func hello() {
-	color.Red.Println("V2RayLocationAsset is", asset.GetV2rayLocationAsset())
+	log.Alert("V2RayLocationAsset is %v", asset.GetV2rayLocationAsset())
 	v2rayPath, _ := where.GetV2rayBinPath()
-	color.Red.Println("V2Ray binary is", v2rayPath)
+	log.Alert("V2Ray binary is %v", v2rayPath)
 	wd, _ := os.Getwd()
-	color.Red.Println("v2rayA working directory is", wd)
-	color.Red.Println("v2rayA configuration directory is", conf.GetEnvironmentConfig().Config)
-	color.Red.Println("OS:", runtime.GOOS)
-	color.Red.Println("Arch:", runtime.GOARCH)
-	color.Red.Println("Lite:", conf.GetEnvironmentConfig().Lite)
-	color.Red.Println("Version:", conf.Version)
-	color.Red.Println("Starting...")
+	log.Alert("v2rayA working directory is %v", wd)
+	log.Alert("v2rayA configuration directory is %v", conf.GetEnvironmentConfig().Config)
+	log.Alert("OS: %v", runtime.GOOS)
+	log.Alert("Arch: %v", runtime.GOARCH)
+	log.Alert("Lite: %v", conf.GetEnvironmentConfig().Lite)
+	log.Alert("Version: %v", conf.Version)
+	log.Alert("Starting...")
 }
 
 func updateSubscriptions() {

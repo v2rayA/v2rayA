@@ -5,6 +5,7 @@ import (
 	gonanoid "github.com/matoous/go-nanoid"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"mime"
 	"net/http"
@@ -165,11 +166,11 @@ func downChunk(request *Request, response *Response, file *os.File, start int64,
 	}
 	httpRequest, _ := BuildHTTPRequest(request)
 	httpRequest.Header.Add("Range", fmt.Sprintf("bytes=%d-%d", start, end))
-	fmt.Printf("down<%v> %d-%d\n", response.Name, start, end)
+	log.Info("down<%v> %d-%d\n", response.Name, start, end)
 	httpClient := BuildHTTPClient()
 	httpResponse, err := httpClient.Do(httpRequest)
 	if err != nil {
-		fmt.Println(err)
+		log.Warn("%v", err)
 		return
 	}
 	defer httpResponse.Body.Close()
@@ -180,14 +181,14 @@ func downChunk(request *Request, response *Response, file *os.File, start int64,
 		if n > 0 {
 			writeSize, err := file.WriteAt(buf[0:n], writeIndex)
 			if err != nil {
-				fmt.Println(err)
+				log.Warn("%v", err)
 				return
 			}
 			writeIndex += int64(writeSize)
 		}
 		if err != nil {
 			if err != io.EOF {
-				fmt.Println(err)
+				log.Warn("%v", err)
 				return
 			}
 			break

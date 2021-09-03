@@ -77,6 +77,10 @@ func SetLogLevel(logLevel string) {
 
 // wrap log
 
+func Alert(format string, v ...interface{}) {
+	Log.Alert(format, v...)
+}
+
 func Error(format string, v ...interface{}) {
 	Log.Error(format, v...)
 }
