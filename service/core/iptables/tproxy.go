@@ -3,6 +3,7 @@ package iptables
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"strings"
 )
 
@@ -15,8 +16,13 @@ var Tproxy tproxy
 func (t *tproxy) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	t.RemoveIPWhitelist(cidr)
+	pos := 5
+	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
+		pos += 3
+	}
+
 	var commands string
-	commands = fmt.Sprintf(`iptables -w 2 -t mangle -I TP_RULE 6 -d %s -j RETURN`, cidr)
+	commands = fmt.Sprintf(`iptables -w 2 -t mangle -I TP_RULE %v -d %s -j RETURN`, pos, cidr)
 	if !strings.Contains(cidr, ".") {
 		//ipv6
 		commands = strings.Replace(commands, "iptables", "ip6tables", 1)
@@ -61,9 +67,15 @@ iptables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
+`
+	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
+		commands += `
 iptables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
+`
+	}
+	commands += `
 iptables -w 2 -t mangle -A TP_RULE -d 0.0.0.0/32 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 10.0.0.0/8 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 100.64.0.0/10 -j RETURN
@@ -112,9 +124,15 @@ ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
+`
+		if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
+			commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
+`
+		}
+		commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -d ::/128 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -d ::1/128 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -d 64:ff9b::/96 -j RETURN
