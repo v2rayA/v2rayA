@@ -117,10 +117,10 @@ func initConfigure() {
 		if err == nil && len(addrs) > 0 {
 			break
 		}
-		log.Warn("waiting for network connected")
+		log.Alert("waiting for network connected")
 		time.Sleep(5 * time.Second)
 	}
-	log.Warn("network is connected")
+	log.Alert("network is connected")
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 
