@@ -118,6 +118,7 @@ func StartCoreProcess() (*Process, error) {
 		} else {
 			if memstat.Available/1024/1024 <= 2048 {
 				env = append(env, "V2RAY_CONF_GEOLOADER=memconservative")
+				log.Info("set V2RAY_CONF_GEOLOADER=memconservative")
 			}
 		}
 	}
