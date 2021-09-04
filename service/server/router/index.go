@@ -22,7 +22,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 //go:embed web
@@ -38,9 +37,27 @@ func (c relativeFS) Open(name string) (fs.File, error) {
 	return c.root.Open(path.Join(c.relativeDir, name))
 }
 
+func cachedHTML(html []byte) func(ctx *gin.Context) {
+	etag := fmt.Sprintf("W/%x", md5.Sum(html))
+	h := string(html)
+	return func(ctx *gin.Context) {
+		if ctx.IsAborted() {
+			return
+		}
+		ctx.Header("Content-Type", "text/html; charset=utf-8")
+		ctx.Header("Cache-Control", "public, max-age=31536000")
+		ctx.Header("ETag", etag)
+		if match := ctx.GetHeader("If-None-Match"); match != "" {
+			if strings.Contains(match, etag) {
+				ctx.Status(http.StatusNotModified)
+				return
+			}
+		}
+		ctx.String(http.StatusOK, h)
+	}
+}
+
 func ServeGUI(engine *gin.Engine) {
-	data := []byte(time.Now().String())
-	etag := fmt.Sprintf("W/%x", md5.Sum(data))
 	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
@@ -64,29 +81,17 @@ func ServeGUI(engine *gin.Engine) {
 			})
 			return nil
 		})
-		r.GET("/", func(ctx *gin.Context) {
-			ctx.Header("Content-Type", "text/html; charset=utf-8")
-			ctx.Header("Cache-Control", "public, max-age=31536000")
-			ctx.Header("ETag", etag)
-			if match := ctx.GetHeader("If-None-Match"); match != "" {
-				if strings.Contains(match, etag) {
-					ctx.Status(http.StatusNotModified)
-					return
-				}
-			}
-			f, err := webFS.Open("index.html")
-			if err != nil {
-				ctx.Status(http.StatusInternalServerError)
-				return
-			}
-			defer f.Close()
-			b, err := io.ReadAll(f)
-			if err != nil {
-				ctx.Status(http.StatusInternalServerError)
-				return
-			}
-			ctx.String(http.StatusOK, string(b))
-		})
+
+		f, err := webFS.Open("index.html")
+		if err != nil {
+			log.Fatal("%v", err)
+		}
+		defer f.Close()
+		html, err := io.ReadAll(f)
+		if err != nil {
+			log.Fatal("%v", err)
+		}
+		r.GET("/", cachedHTML(html))
 	} else {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
 			log.Warn("web files cannot be found at %v. web UI cannot be served", webDir)
@@ -102,12 +107,17 @@ func ServeGUI(engine *gin.Engine) {
 				r.StaticFile("/"+info.Name(), path)
 				return nil
 			})
-			engine.LoadHTMLFiles(path.Join(webDir, "index.html"))
-			r.GET("/", func(ctx *gin.Context) {
-				ctx.Header("Cache-Control", "public, max-age=31536000")
-				ctx.Header("ETag", etag)
-				ctx.HTML(http.StatusOK, "index.html", nil)
-			})
+
+			f, err := os.Open(path.Join(webDir, "index.html"))
+			if err != nil {
+				log.Fatal("%v", err)
+			}
+			defer f.Close()
+			html, err := io.ReadAll(f)
+			if err != nil {
+				log.Fatal("%v", err)
+			}
+			r.GET("/", cachedHTML(html))
 		}
 	}
 
