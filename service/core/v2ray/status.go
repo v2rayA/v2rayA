@@ -13,6 +13,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"github.com/shirou/gopsutil/mem"
 	"net"
 	"os"
 	"os/exec"
@@ -106,10 +107,21 @@ func StartCoreProcess() (*Process, error) {
 	}
 	log.Debug(strings.Join(arguments, " "))
 	assetDir := asset.GetV2rayLocationAsset()
-	proc, err := NewProcess(v2rayBinPath, arguments, dir, append(os.Environ(),
+	env := append(os.Environ(),
 		"V2RAY_LOCATION_ASSET="+assetDir,
 		"XRAY_LOCATION_ASSET="+assetDir,
-	))
+	)
+	if CheckMemconservativeSupported() == nil {
+		memstat, err := mem.VirtualMemory()
+		if err != nil {
+			log.Warn("cannot get memory info: %v", err)
+		} else {
+			if memstat.Available/1024/1024 <= 2048 {
+				env = append(env, "V2RAY_CONF_GEOLOADER=memconservative")
+			}
+		}
+	}
+	proc, err := NewProcess(v2rayBinPath, arguments, dir, env)
 	if err != nil {
 		return nil, err
 	}
