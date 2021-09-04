@@ -35,14 +35,9 @@ func GetV2rayLocationAsset() (s string) {
 			}
 		}
 	}
-	// old version of v2ray
 	if s == "" {
-		//maybe v2ray working directory
-		v2rayPath, err := where.GetV2rayBinPath()
-		if err != nil {
-			s = "/etc/v2ray"
-		}
-		s = path.Dir(v2rayPath)
+		// set as v2rayA config directory
+		s = conf.GetEnvironmentConfig().Config
 	}
 	return
 }
