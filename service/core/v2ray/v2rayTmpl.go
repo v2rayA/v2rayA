@@ -1543,6 +1543,19 @@ func (t *Template) UpdatePrivateRouting() {
 	}
 }
 
+func (t *Template) OptimizeGeoipMemoryOccupation() {
+	if asset.IsGeoipOnlyCnPrivateExists() {
+		for i := range t.Routing.Rules {
+			for j := range t.Routing.Rules[i].IP {
+				switch t.Routing.Rules[i].IP[j] {
+				case "geoip:private", "geoip:cn":
+					t.Routing.Rules[i].IP[j] = "ext:geoip-only-cn-private.dat:" + strings.TrimPrefix(t.Routing.Rules[i].IP[j], "geoip:")
+				}
+			}
+		}
+	}
+}
+
 func (t *Template) SetWhitelistRouting(whitelist []Addr) {
 	var rules []RoutingRule
 	for _, addr := range whitelist {
@@ -1936,6 +1949,8 @@ func NewTemplate(serverInfos []serverInfo) (t Template, outboundTags []string, e
 	t.SetWhitelistRouting(whitelist)
 
 	t.UpdatePrivateRouting()
+
+	t.OptimizeGeoipMemoryOccupation()
 
 	//set outboundSockopt
 	t.SetOutboundSockopt(setting)
