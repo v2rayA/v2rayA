@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -40,7 +41,7 @@ func (c relativeFS) Open(name string) (fs.File, error) {
 
 func ServeGUI(engine *gin.Engine) {
 	data := []byte(time.Now().String())
-	etag := fmt.Sprintf("%x", md5.Sum(data))
+	etag := fmt.Sprintf("W/%x", md5.Sum(data))
 	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
@@ -65,20 +66,26 @@ func ServeGUI(engine *gin.Engine) {
 			return nil
 		})
 		r.GET("/", func(ctx *gin.Context) {
+			ctx.Header("Content-Type", "text/html; charset=utf-8")
+			ctx.Header("Cache-Control", "public, max-age=31536000")
+			ctx.Header("ETag", etag)
+			if match := ctx.GetHeader("If-None-Match"); match != "" {
+				if strings.Contains(match, etag) {
+					ctx.Status(http.StatusNotModified)
+					return
+				}
+			}
 			f, err := webFS.Open("index.html")
 			if err != nil {
-				ctx.Status(400)
+				ctx.Status(http.StatusInternalServerError)
 				return
 			}
 			defer f.Close()
 			b, err := io.ReadAll(f)
 			if err != nil {
-				ctx.Status(400)
+				ctx.Status(http.StatusInternalServerError)
 				return
 			}
-			ctx.Header("Cache-Control", "public, max-age=31536000")
-			ctx.Header("ETag", etag)
-			ctx.Header("Content-Type", "text/html; charset=utf-8")
 			ctx.String(http.StatusOK, string(b))
 		})
 	} else {

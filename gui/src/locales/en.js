@@ -57,6 +57,7 @@ export default {
     inBatch: "In batch",
     connect: "Connect",
     disconnect: "Disconnect",
+    select: "Select",
     login: "Login",
     logout: "Logout",
     configure: "Configure",

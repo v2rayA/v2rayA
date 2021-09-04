@@ -379,7 +379,11 @@
                     @click="handleClickAboutConnection(props.row)"
                   >
                     {{
-                      props.row.connected
+                      loadBalanceValid
+                        ? props.row.connected
+                          ? $t("operations.cancel")
+                          : $t("operations.select")
+                        : props.row.connected
                         ? $t("operations.disconnect")
                         : $t("operations.connect")
                     }}
@@ -510,7 +514,11 @@
                     @click="handleClickAboutConnection(props.row, subi)"
                   >
                     {{
-                      props.row.connected
+                      loadBalanceValid
+                        ? props.row.connected
+                          ? $t("operations.cancel")
+                          : $t("operations.select")
+                        : props.row.connected
                         ? $t("operations.disconnect")
                         : $t("operations.connect")
                     }}
@@ -757,7 +765,10 @@ export default {
   },
   computed: {
     observatorySidebarValid() {
-      return localStorage["observatorySidebarValid"];
+      return localStorage["observatorySidebarValid"] === "true";
+    },
+    loadBalanceValid() {
+      return localStorage["loadBalanceValid"] === "true";
     }
   },
   watch: {

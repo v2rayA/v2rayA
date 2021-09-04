@@ -250,6 +250,7 @@ export default {
             localStorage["version"],
             "1.4.4"
           );
+          localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
         }
       }
     });

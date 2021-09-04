@@ -57,6 +57,7 @@ export default {
     inBatch: "批量",
     connect: "连接",
     disconnect: "断开",
+    select: "选择",
     login: "登录",
     logout: "注销",
     configure: "配置",
