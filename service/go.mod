@@ -20,7 +20,7 @@ require (
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
 	github.com/pkg/errors v0.9.1
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5-0.20210421162817-acdbac05f5a5
-	github.com/shirou/gopsutil v3.21.8+incompatible
+	github.com/shirou/gopsutil/v3 v3.21.8
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.7.5
 	github.com/ugorji/go v1.2.5 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/v2rayA/shadowsocksR v1.0.3
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+	golang.org/x/sys v0.0.0-20210816074244-15123e1e1f71
 	google.golang.org/grpc v1.38.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

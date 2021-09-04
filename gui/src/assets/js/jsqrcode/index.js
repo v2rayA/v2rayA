@@ -53,7 +53,7 @@ qrcode.vidSuccess = function (stream)
 qrcode.vidError = function(error)
 {
 	qrcode.gUM=false;
-	return;
+
 }
 
 qrcode.captureToCanvas = function()
@@ -78,12 +78,12 @@ qrcode.captureToCanvas = function()
 			catch(e){
 				console.log(e);
 				setTimeout(qrcode.captureToCanvas, 500);
-			};
+			}
 		}
 		catch(e){
 			console.log(e);
 			setTimeout(qrcode.captureToCanvas, 500);
-		};
+		}
 	}
 }
 
@@ -355,7 +355,7 @@ qrcode.getMiddleBrightnessPerArea=function(image)
 		minmax[i] = new Array(numSqrtArea);
 		for (var i2 = 0; i2 < numSqrtArea; i2++)
 		{
-			minmax[i][i2] = new Array(0,0);
+			minmax[i][i2] = [0,0];
 		}
 	}
 	for (var ay = 0; ay < numSqrtArea; ay++)
@@ -578,7 +578,7 @@ function ReedSolomonDecoder(field)
 			var inverse = this.field.inverse(sigmaTildeAtZero);
 			var sigma = t.multiply2(inverse);
 			var omega = r.multiply2(inverse);
-			return new Array(sigma, omega);
+			return [sigma, omega];
 		}
 	this.findErrorLocations=function( errorLocator)
 		{
@@ -2136,11 +2136,11 @@ function Detector(image)
 			var points;
 			if (alignmentPattern == null)
 			{
-				points = new Array(bottomLeft, topLeft, topRight);
+				points = [bottomLeft, topLeft, topRight];
 			}
 			else
 			{
-				points = new Array(bottomLeft, topLeft, topRight, alignmentPattern);
+				points = [bottomLeft, topLeft, topRight, alignmentPattern];
 			}
 			return new DetectorResult(bits, points);
 		}
