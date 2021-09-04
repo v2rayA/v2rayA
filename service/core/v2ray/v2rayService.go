@@ -91,3 +91,7 @@ func CheckHostsListSupported() (err error) {
 func CheckQueryStrategySupported() (err error) {
 	return isVersionSatisfied("4.37.0", true)
 }
+
+func CheckMemconservativeSupported() (err error) {
+	return isVersionSatisfied("4.39.0", true)
+}
