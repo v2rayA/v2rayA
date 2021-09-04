@@ -6,11 +6,7 @@ import (
 )
 
 func GetFileModTime(path string) (t time.Time, err error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	fi, err := f.Stat()
+	fi, err := os.Stat(path)
 	if err != nil {
 		return
 	}

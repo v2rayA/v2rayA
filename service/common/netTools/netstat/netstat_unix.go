@@ -313,14 +313,16 @@ func ToPortMap(protocols []string) (map[string]map[int][]*Socket, error) {
 	for _, proto := range protocols {
 		switch proto {
 		case "tcp", "tcp6", "udp", "udp6":
-			b, err := os.Open(filepath.Join(pathNet, proto))
+			f, err := os.Open(filepath.Join(pathNet, proto))
 			if err != nil {
 				continue
 			}
-			m[proto], err = parseSocktab(b)
+			m[proto], err = parseSocktab(f)
 			if err != nil {
+				f.Close()
 				return nil, err
 			}
+			f.Close()
 		default:
 		}
 	}
