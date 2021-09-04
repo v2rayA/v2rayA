@@ -18,7 +18,7 @@ func StopV2ray() (err error) {
 }
 func StartV2ray() (err error) {
 	if css := configure.GetConnectedServers(); css.Len() == 0 {
-		return fmt.Errorf("failed: no server is connected. connect a server instead")
+		return fmt.Errorf("failed: no server is selected. please select at least one server")
 	}
 	return v2ray.UpdateV2RayConfig()
 }
