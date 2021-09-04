@@ -29,8 +29,12 @@ func GetLocalCIDR() ([]string, error) {
 }
 
 func IsIPv6Supported() bool {
-	if conf.GetEnvironmentConfig().ForceIPV6On {
+	switch conf.GetEnvironmentConfig().IPV6Support {
+	case "on":
 		return true
+	case "off":
+		return false
+	default:
 	}
 	if common.IsInDocker() {
 		return false
