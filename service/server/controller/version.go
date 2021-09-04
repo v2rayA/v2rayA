@@ -36,17 +36,18 @@ func GetVersion(ctx *gin.Context) {
 	} else {
 		dohValid = err.Error()
 	}
-	if conf.GetEnvironmentConfig().Lite{
+	if conf.GetEnvironmentConfig().Lite {
 		lite = 1
 	}
 	common.ResponseSuccess(ctx, gin.H{
-		"version":       conf.Version,
-		"foundNew":      conf.FoundNew,
-		"remoteVersion": conf.RemoteVersion,
-		"serviceValid":  v2ray.IsV2rayServiceValid(),
-		"dohValid":      dohValid,
-		"vlessValid":    vlessValid,
-		"lite":          lite,
+		"version":          conf.Version,
+		"foundNew":         conf.FoundNew,
+		"remoteVersion":    conf.RemoteVersion,
+		"serviceValid":     v2ray.IsV2rayServiceValid(),
+		"dohValid":         dohValid,
+		"vlessValid":       vlessValid,
+		"lite":             lite,
+		"loadBalanceValid": v2ray.CheckObservatorySupported() == nil,
 	})
 }
 
