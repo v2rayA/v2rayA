@@ -738,7 +738,7 @@ func (t *Template) SetDNS(outbounds []serverInfo, setting *configure.Setting, su
 		for _, line := range all {
 			dns := dnsParser2.Parse(line)
 			if _, ok := outboundTags[dns.Out]; !ok {
-				return nil, fmt.Errorf(`your DNS rule "%v" depends on the outbound "%v", thus it should connect to a server`, line, dns.Out)
+				return nil, fmt.Errorf(`your DNS rule "%v" depends on the outbound "%v", thus you should select at least one server in this outbound`, line, dns.Out)
 			}
 		}
 		// check UDP support
@@ -1207,7 +1207,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 				case string:
 					defaultOutbound = v
 					if _, ok := outboundTags[v]; !ok {
-						return fmt.Errorf(`your RoutingA rules depend on the outbound "%v", thus it should connect to a server`, v)
+						return fmt.Errorf(`your RoutingA rules depend on the outbound "%v", thus you should select at least one server in this outbound`, v)
 					}
 				}
 			}
@@ -1256,7 +1256,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 			}
 			if rr.OutboundTag != "" {
 				if _, ok := outboundTags[rr.OutboundTag]; !ok {
-					return fmt.Errorf(`your RoutingA rules depend on the outbound "%v", thus it should connect to a server`, rr.OutboundTag)
+					return fmt.Errorf(`your RoutingA rules depend on the outbound "%v", thus you should select at least one server in this outbound`, rr.OutboundTag)
 				}
 			}
 			t.Routing.Rules = append(t.Routing.Rules, rr)
