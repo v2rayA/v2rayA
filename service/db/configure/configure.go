@@ -6,6 +6,7 @@ import (
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"sort"
@@ -201,11 +202,8 @@ func GetSubscription(index int) *SubscriptionRaw {
 }
 func GetSettingNotNil() *Setting {
 	r := new(Setting)
-	err := db.Get("system", "setting", r)
-	if err != nil {
-		r = NewSetting()
-		_ = db.Set("system", "setting", r)
-	}
+	_ = db.Get("system", "setting", r)
+	_ = common.FillEmpty(r, NewSetting())
 	if r.SpecialMode == "" {
 		r.SpecialMode = SpecialModeNone
 	}

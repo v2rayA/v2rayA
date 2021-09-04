@@ -1,10 +1,17 @@
 package common
 
 import (
+	"fmt"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
+)
+
+var (
+	NotSameTypeErr    = fmt.Errorf("cannot fill empty: the two value have different type")
+	NeedPassInPointer = fmt.Errorf("the structure passed in should be a pointer")
 )
 
 func Max(a, b int) int {
@@ -133,4 +140,33 @@ func TrimLineContains(parent, sub string) string {
 		}
 	}
 	return strings.Join(result, "\n")
+}
+
+// FillEmpty fill the empty field of the struct with default value given
+func FillEmpty(toFill interface{}, defaultVal interface{}) error {
+	ta := reflect.TypeOf(toFill)
+	if ta.Kind() != reflect.Ptr {
+		return NeedPassInPointer
+	}
+	tb := reflect.TypeOf(defaultVal)
+	va := reflect.ValueOf(toFill)
+	vb := reflect.ValueOf(defaultVal)
+	for ta.Kind() == reflect.Ptr {
+		ta = ta.Elem()
+		va = va.Elem()
+	}
+	for tb.Kind() == reflect.Ptr {
+		tb = tb.Elem()
+		vb = vb.Elem()
+	}
+	if ta != tb {
+		return NotSameTypeErr
+	}
+	for i := 0; i < va.NumField(); i++ {
+		v := va.Field(i)
+		if v.IsZero() {
+			v.Set(vb.Field(i))
+		}
+	}
+	return nil
 }
