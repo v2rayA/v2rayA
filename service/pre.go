@@ -164,7 +164,7 @@ func initConfigure() {
 		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 			dld := func(repo, filename, localname string) (err error) {
 				color.Red.Println("installing " + filename)
-				p := asset.GetV2rayLocationAsset() + "/" + filename
+				p := path.Join(asset.GetV2rayLocationAsset(), filename)
 				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 				if err != nil {
 					return
@@ -187,7 +187,7 @@ func initConfigure() {
 				if err != nil {
 					return errors.New("chmod: " + err.Error())
 				}
-				os.Rename(p, asset.GetV2rayLocationAsset()+"/"+localname)
+				os.Rename(p, path.Join(asset.GetV2rayLocationAsset(), localname))
 				return
 			}
 			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")

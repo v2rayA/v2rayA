@@ -127,6 +127,7 @@ func Down(request *Request, to string) error {
 	if err != nil {
 		return err
 	}
+	file.Close()
 	_ = os.Remove(tmpPath)
 	return nil
 }
