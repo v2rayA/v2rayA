@@ -61,6 +61,13 @@ func IsGeoipExists() bool {
 	}
 	return true
 }
+func IsGeoipOnlyCnPrivateExists() bool {
+	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geoip-only-cn-private.dat"))
+	if err != nil {
+		return false
+	}
+	return true
+}
 func IsGeositeExists() bool {
 	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geosite.dat"))
 	if err != nil {
