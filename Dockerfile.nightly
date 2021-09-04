@@ -1,9 +1,9 @@
 FROM mzz2017/git:alpine AS version
 WORKDIR /build
 ADD .git ./.git
-ENV date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
-ENV count=$(git rev-list --count HEAD)
-ENV commit=$(git rev-parse --short HEAD)
+ENV date="$(git log -1 --format="%cd" --date=short | sed s/-//g)"
+ENV count="$(git rev-list --count HEAD)"
+ENV commit="$(git rev-parse --short HEAD)"
 RUN echo "$date.r${count}.$commit" > ./version
 
 
