@@ -20,6 +20,95 @@ import (
 	"time"
 )
 
+//func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
+//	return ResolveSubscriptionWithClient(source, http.DefaultClient)
+//}
+
+// OOCv1ApiToken is used to exchange API access info for OOCv1.
+type OOCv1ApiToken struct {
+	Version    int    `json:"version"`
+	BaseUrl    string `json:"baseUrl"`
+	Secret     string `json:"secret"`
+	UserId     string `json:"userId"`
+	CertSha256 string `json:"certSha256"`
+}
+
+// OOCv1 contains fields for all supported protocols
+// for easy serialization and deserialization.
+type OOCv1 struct {
+	Username       string   `json:"username"`
+	BytesUsed      uint64   `json:"bytesUsed"`
+	BytesRemaining uint64   `json:"bytesRemaining"`
+	ExpiryDate     int64    `json:"expiryDate"`
+	Protocols      []string `json:"protocols"`
+
+	Shadowsocks []OOCv1Shadowsocks `json:"shadowsocks"`
+}
+
+// OOCv1Shadowsocks represents a Shadowsocks server
+// in the `shadowsocks` array of an OOCv1 JSON document.
+type OOCv1Shadowsocks struct {
+	Id              string `json:"id"`
+	Name            string `json:"name"`
+	Address         string `json:"address"`
+	Port            int    `json:"port"`
+	Method          string `json:"method"`
+	Password        string `json:"password"`
+	PluginName      string `json:"pluginName"`
+	PluginVersion   string `json:"pluginVersion"`
+	PluginOptions   string `json:"pluginOptions"`
+	PluginArguments string `json:"pluginArguments"`
+}
+
+// resolveOOCv1 unmarshals a raw OOCv1 JSON document into an OOCv1 value.
+func resolveOOCv1(raw string) (infos []serverObj.ServerObj, oocv1 OOCv1, err error) {
+	err = json.Unmarshal([]byte(raw), &oocv1)
+	if err != nil {
+		return
+	}
+
+	// Detect protocols
+	// Emit a warning if unsupported protocols exist.
+	for _, protocol := range oocv1.Protocols {
+		if protocol != "shadowsocks" {
+			log.Warn("OOCv1: unsupported protocol: %v", protocol)
+		}
+	}
+
+	for _, server := range oocv1.Shadowsocks {
+		var sip003 *serverObj.Sip003
+		switch server.PluginName {
+		case "simple-obfs", "obfs-local":
+			sip003 = &serverObj.Sip003{
+				Name: server.PluginName,
+				Opts: serverObj.ParseSip003Opts(server.PluginOptions),
+			}
+		case "":
+			// no plugin
+		default:
+			log.Warn("failed to parse (OOCv1): %v: unsupported plugin: %v", server.Name, server.PluginName)
+			continue
+		}
+		u := url.URL{
+			Scheme:   "ss",
+			User:     url.UserPassword(server.Method, server.Password),
+			Host:     net.JoinHostPort(server.Address, strconv.Itoa(server.Port)),
+			Fragment: server.Name,
+		}
+		if sip003 != nil {
+			u.RawQuery = url.Values{"plugin": []string{sip003.String()}}.Encode()
+		}
+		obj, err := serverObj.NewFromLink(u.Scheme, u.String())
+		if err != nil {
+			log.Warn("failed to parse (OOCv1): %v: %v", server.Name, err)
+			continue
+		}
+		infos = append(infos, obj)
+	}
+
+	return
+}
+
 type SIP008 struct {
 	Version        int    `json:"version"`
 	Username       string `json:"username"`
@@ -88,10 +177,25 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	// get请求source
 	c := *client
 	c.Timeout = 30 * time.Second
-	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
+
+	// Check if source is OOCv1 API token.
+	var url string
+	var token OOCv1ApiToken
+	if err = json.Unmarshal([]byte(source), &token); err == nil {
+		if token.CertSha256 == "" {
+			url = token.BaseUrl + "/" + token.Secret + "/ooc/v1/" + token.UserId
+		} else {
+			return // TODO: Support self-signed certificates.
+		}
+	} else {
+		url = source
+	}
+
+	res, err := httpClient.HttpGetUsingSpecificClient(&c, url)
 	if err != nil {
 		return
 	}
+
 	buf := new(bytes.Buffer)
 	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
@@ -102,17 +206,26 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	}
 	return ResolveLines(raw)
 }
+
 func ResolveLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
+	var oocv1 OOCv1
 	var sip SIP008
-	if infos, sip, err = resolveSIP008(raw); err == nil {
-		if sip.BytesUsed != 0 {
-			status = fmt.Sprintf("Used: %.2fGB", float64(sip.BytesUsed)/1024/1024/1024)
-			if sip.BytesRemaining != 0 {
-				status += fmt.Sprintf(" | Remaining: %.2fGB", float64(sip.BytesRemaining)/1024/1024/1024)
-			}
-		}
+	if infos, oocv1, err = resolveOOCv1(raw); err == nil && len(oocv1.Protocols) > 0 {
+		status = "Username: " + oocv1.Username + " | " + getDataUsageStatus(oocv1.BytesUsed, oocv1.BytesRemaining)
+	} else if infos, sip, err = resolveSIP008(raw); err == nil {
+		status = getDataUsageStatus(sip.BytesUsed, sip.BytesRemaining)
 	} else {
 		infos, status, err = resolveByLines(raw)
+	}
+	return
+}
+
+func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
+	if bytesUsed != 0 {
+		status = fmt.Sprintf("Used: %.2f GiB", float64(bytesUsed)/1024/1024/1024)
+		if bytesRemaining != 0 {
+			status += fmt.Sprintf(" | Remaining: %.2f GiB", float64(bytesRemaining)/1024/1024/1024)
+		}
 	}
 	return
 }
