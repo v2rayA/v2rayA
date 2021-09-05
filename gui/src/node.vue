@@ -697,7 +697,7 @@ import jsqrcode from "./assets/js/jsqrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";
-import ModalSubscription from "@/components/modalSuscription";
+import ModalSubscription from "@/components/modalSubcription";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import * as dayjs from "dayjs";
