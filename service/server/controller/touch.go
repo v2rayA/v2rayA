@@ -25,7 +25,7 @@ func GetTouch(ctx *gin.Context) {
 
 }
 func getTouch(ctx *gin.Context) {
-	running := v2ray.IsV2RayRunning()
+	running := v2ray.ProcessManager.Running()
 	t := touch.GenerateTouch()
 	common.ResponseSuccess(ctx, gin.H{
 		"running": running,

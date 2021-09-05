@@ -158,19 +158,22 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 	})
 }
 
-func ListGet(bucket string, key string, index int, val interface{}) (err error) {
+func ListGet(bucket string, key string, index int) (b []byte, err error) {
 	var list [][]byte
-	return DB().View(func(tx *nutsdb.Tx) error {
+	if err = DB().View(func(tx *nutsdb.Tx) error {
 		list, err = tx.LRange(bucket, []byte(key), index, index)
 		if err == nil {
-			err = jsoniter.Unmarshal(list[0], &val)
+			return nil
 		}
 		if err == nil {
 			return nil
 		} else {
 			return fmt.Errorf("ListGet: %v", err)
 		}
-	})
+	}); err != nil {
+		return nil, err
+	}
+	return list[0], nil
 }
 
 func ListGetRaw(bucket string, key string, index int) (raw []byte, err error) {

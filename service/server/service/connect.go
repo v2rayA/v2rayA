@@ -10,11 +10,8 @@ import (
 )
 
 func StopV2ray() (err error) {
-	err = v2ray.StopV2rayService(true)
-	if err != nil {
-		return
-	}
-	return
+	v2ray.ProcessManager.Stop(true)
+	return nil
 }
 func StartV2ray() (err error) {
 	if css := configure.GetConnectedServers(); css.Len() == 0 {
@@ -45,9 +42,9 @@ func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 		return
 	}
 	//update the v2ray config and restart v2ray
-	if v2ray.IsV2RayRunning() || IsClassicMode() {
+	if v2ray.ProcessManager.Running() || IsClassicMode() {
 		defer func() {
-			if err != nil && lastConnected != nil && v2ray.IsV2RayRunning() {
+			if err != nil && lastConnected != nil && v2ray.ProcessManager.Running() {
 				_ = configure.OverwriteConnects(lastConnected)
 				_ = v2ray.UpdateV2RayConfig()
 			}
@@ -95,7 +92,7 @@ func Connect(which *configure.Which) (err error) {
 	currentConnected := configure.GetConnectedServersByOutbound(which.Outbound)
 	defer func() {
 		// if error occurs, restore the result of connecting
-		if err != nil && currentConnected != nil && v2ray.IsV2RayRunning() {
+		if err != nil && currentConnected != nil && v2ray.ProcessManager.Running() {
 			_ = configure.OverwriteConnects(currentConnected)
 			_ = v2ray.UpdateV2RayConfig()
 		}
@@ -111,7 +108,7 @@ func Connect(which *configure.Which) (err error) {
 		return
 	}
 	//update the v2ray config and start/restart v2ray
-	if v2ray.IsV2RayRunning() || IsClassicMode() {
+	if v2ray.ProcessManager.Running() || IsClassicMode() {
 		if err = v2ray.UpdateV2RayConfig(); err != nil {
 			return
 		}

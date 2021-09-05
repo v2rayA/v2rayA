@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/core/coreObj"
+	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/http"
@@ -52,15 +52,15 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	return which, nil
 }
 
-func addHosts(tmpl *v2ray.Template, vms []vmessInfo.VmessInfo) {
-	tmpl.DNS = new(v2ray.DNS)
-	tmpl.DNS.Hosts = make(v2ray.Hosts)
+func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
+	tmpl.DNS = new(coreObj.DNS)
+	tmpl.DNS.Hosts = make(coreObj.Hosts)
 	const concurrency = 5
 	var mu sync.Mutex
 	var limit = make(chan struct{}, concurrency)
 	var wg = sync.WaitGroup{}
 	for _, v := range vms {
-		if net.ParseIP(v.Add) == nil {
+		if net.ParseIP(v.GetHostname()) == nil {
 			wg.Add(1)
 			go func(addr string) {
 				limit <- struct{}{}
@@ -82,7 +82,7 @@ func addHosts(tmpl *v2ray.Template, vms []vmessInfo.VmessInfo) {
 					}
 					mu.Unlock()
 				}
-			}(v.Add)
+			}(v.GetHostname())
 		}
 	}
 	wg.Wait()
@@ -97,9 +97,9 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 	}
 	which = whiches.Get()
-	v2rayRunning := v2ray.IsV2RayRunning()
+	v2rayRunning := v2ray.ProcessManager.Running()
 	wg := new(sync.WaitGroup)
-	vms := make([]vmessInfo.VmessInfo, len(which))
+	vms := make([]serverObj.ServerObj, len(which))
 	//init vmessInfos
 	for i := range which {
 		which[i].Latency = ""
@@ -108,20 +108,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			which[i].Latency = err.Error()
 			continue
 		}
-		vms[i] = sr.VmessInfo
+		vms[i] = sr.ServerObj
 	}
 	//modify the template based on current configuration
-	var tmpl v2ray.Template
-	if v2rayRunning {
-		var err error
-		tmpl, err = v2ray.NewTemplateFromConfig()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		tmpl = v2ray.Template{}
-		tmpl.SetAPI()
-	}
+	tmpl := v2ray.NewEmptyTemplate()
+	tmpl.SetAPI()
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
 	var toClose []net.Listener
@@ -142,7 +133,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
-		if plugin.HasProperPlugin(v) {
+		if v.NeedPlugin() {
 			// find a port for the plugin
 			for {
 				l, err := net.Listen("tcp", "127.0.0.1:0")
@@ -170,36 +161,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		_ = l.Close()
 	}
 	time.Sleep(100 * time.Millisecond)
-	//start plugins
-	//do not clean plugins to prevent current connections disconnecting
-	if len(pluginPortMap) > 0 {
-		for i, localPort := range pluginPortMap {
-			v := vms[i]
-			var plu plugin.Plugin
-			plu, err := plugin.NewPluginAndServe(localPort, v)
-			if err != nil {
-				return nil, err
-			}
-			plugin.GlobalPlugins.Add("outbound"+strconv.Itoa(localPort), plu)
-		}
-	}
 	tmpl.Routing.DomainStrategy = "AsIs"
-	addHosts(&tmpl, vms)
+	addHosts(tmpl, vms)
 
-	err := v2ray.WriteV2rayConfig(tmpl.ToConfigBytes())
-	if err != nil {
-		return nil, err
-	}
-
-	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
-		return nil, fmt.Errorf("TestHttpLatency: %w", err)
-	}
-
-	process, err := v2ray.RestartV2rayService(false)
-	if err != nil {
-		if process != nil {
-			_ = process.Close()
-		}
+	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		return nil, err
 	}
 	//limit the concurrency
@@ -223,12 +188,8 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}(i)
 	}
 	wg.Wait()
-	if process != nil {
-		_ = process.Close()
-		v2ray.SetCoreProcess(nil)
-	}
 	if v2rayRunning && configure.GetConnectedServers() != nil {
-		err = v2ray.UpdateV2RayConfig()
+		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
 			return which, fmt.Errorf("cannot restart v2ray-core: %w", err)
 		}
@@ -260,7 +221,6 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	req.Header.Set("User-Agent", "curl/7.70.0")
 	resp, err := c.Do(req)
 	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		s, _ := which.LocateServerRaw()
 		if err != nil {
 			es := strings.ToLower(err.Error())
 			switch {
@@ -273,10 +233,8 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 			default:
 				which.Latency = err.Error()
 			}
-			log.Warn("httpLatency: %v: %v", err, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 		} else {
 			which.Latency = "BAD RESPONSE"
-			log.Warn("httpLatency: %v: %v", resp.Status, s.VmessInfo.Add+":"+s.VmessInfo.Port)
 		}
 		return
 	}

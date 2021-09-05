@@ -6,6 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -179,7 +180,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 		return
 	}
 	//BEGIN
-	host := tsr.VmessInfo.Add
+	host := tsr.ServerObj.GetHostname()
 	if net.ParseIP(host) == nil {
 		var hosts []string
 		hosts, err = resolv.LookupHost(host)
@@ -194,7 +195,7 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 		host = hosts[0]
 	}
 	t := time.Now()
-	conn, e := net.DialTimeout("tcp", net.JoinHostPort(host, tsr.VmessInfo.Port), timeout)
+	conn, e := net.DialTimeout("tcp", net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort())), timeout)
 	if e == nil || (strings.Contains(e.Error(), "refuse")) {
 		if e == nil {
 			_ = conn.Close()
@@ -208,17 +209,17 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 	return
 }
 
-func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
+func (w *Which) LocateServerRaw() (sr *ServerRawV2, err error) {
 	ind := w.ID - 1 //转化为下标
 	switch w.TYPE {
 	case ServerType:
-		servers := GetServers()
+		servers := GetServersV2()
 		if ind < 0 || ind >= len(servers) {
 			return nil, fmt.Errorf("LocateServerRaw: ID exceed range")
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
-		subscriptions := GetSubscriptions()
+		subscriptions := GetSubscriptionsV2()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
 			return nil, fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
 		}
@@ -229,8 +230,8 @@ func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 }
 
 func (ws *Whiches) FillLinks() (err error) {
-	servers := GetServers()
-	subscriptions := GetSubscriptions()
+	servers := GetServersV2()
+	subscriptions := GetSubscriptionsV2()
 	for _, w := range ws.Touches {
 		ind := w.ID - 1 //转化为下标
 		switch w.TYPE {
@@ -238,12 +239,12 @@ func (ws *Whiches) FillLinks() (err error) {
 			if ind < 0 || ind >= len(servers) {
 				return fmt.Errorf("LocateServerRaw: ID exceed range")
 			}
-			w.Link = servers[ind].VmessInfo.ExportToURL()
+			w.Link = servers[ind].ServerObj.ExportToURL()
 		case SubscriptionServerType:
 			if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
 				return fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
 			}
-			w.Link = subscriptions[w.Sub].Servers[ind].VmessInfo.ExportToURL()
+			w.Link = subscriptions[w.Sub].Servers[ind].ServerObj.ExportToURL()
 		default:
 			return fmt.Errorf("LocateServerRaw: invalid TYPE")
 		}

@@ -85,6 +85,9 @@ func nextPortsGroup(ports []string, groupSize int) (group []string, remain []str
 }
 
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
+	if conf.GetEnvironmentConfig().Lite {
+		return nil
+	}
 	setting := configure.GetSettingNotNil()
 	preprocess := func(c *iptables.SetupCommands) {
 		commands := string(*c)
@@ -131,7 +134,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 		}
 		*c = iptables.SetupCommands(commands)
 	}
-	if (!checkRunning || IsV2RayRunning()) && setting.Transparent != configure.TransparentClose {
+	if (!checkRunning || ProcessManager.Running()) && setting.Transparent != configure.TransparentClose {
 		DeleteTransparentProxyRules()
 		err = WriteTransparentProxyRules(&preprocess)
 	}

@@ -3,10 +3,14 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/pingtunnel"
-	_ "github.com/v2rayA/v2rayA/pkg/plugin/shadowsocksr"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/simpleobfs"
-	_ "github.com/v2rayA/v2rayA/pkg/plugin/ssrpluginSimpleobfs"
-	_ "github.com/v2rayA/v2rayA/pkg/plugin/trojan-go"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/socks5"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/ss"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/ssr"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/tcp"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/tls"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/trojanc"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/ws"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"runtime"
 )

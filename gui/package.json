@@ -31,7 +31,6 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.2.2",
     "@vue/cli-plugin-eslint": "^4.0.5",
-    "@vue/cli-plugin-pwa": "^4.0.4",
     "@vue/cli-plugin-router": "^4.0.0",
     "@vue/cli-plugin-vuex": "^4.0.0",
     "@vue/cli-service": "^4.0.0",

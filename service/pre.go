@@ -9,6 +9,7 @@ import (
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
@@ -109,6 +110,64 @@ func initDBValue() {
 	}
 }
 
+func migrateServerFormat() {
+	serverRaw := configure.GetServers()
+	var serverRawV2 []*configure.ServerRawV2
+	for _, raw := range serverRaw {
+		if raw.VmessInfo.Protocol == "" {
+			raw.VmessInfo.Protocol = "vmess"
+		}
+		obj, err := serverObj.NewFromLink(raw.VmessInfo.Protocol, raw.VmessInfo.ExportToURL())
+		if err != nil {
+			log.Warn("failed to migrate: %v", raw.VmessInfo.Ps)
+			continue
+		}
+		serverRawV2 = append(serverRawV2, &configure.ServerRawV2{
+			ServerObj: obj,
+			Latency:   raw.Latency,
+		})
+	}
+	if len(serverRawV2) > 0 {
+		err := configure.AppendServers(serverRawV2)
+		if err != nil {
+			log.Warn("failed to migrate: %v", err)
+		}
+	}
+	subscriptionsRaw := configure.GetSubscriptions()
+	var subV2 []*configure.SubscriptionRawV2
+	for _, raw := range subscriptionsRaw {
+		var serversV2 []configure.ServerRawV2
+		for _, sraw := range raw.Servers {
+			if sraw.VmessInfo.Protocol == "" {
+				sraw.VmessInfo.Protocol = "vmess"
+			}
+			obj, err := serverObj.NewFromLink(sraw.VmessInfo.Protocol, sraw.VmessInfo.ExportToURL())
+			if err != nil {
+				log.Warn("failed to migrate: %v", sraw.VmessInfo.Ps)
+				continue
+			}
+			serversV2 = append(serversV2, configure.ServerRawV2{
+				ServerObj: obj,
+				Latency:   sraw.Latency,
+			})
+		}
+		subRawV2 := configure.SubscriptionRawV2{
+			Remarks: raw.Remarks,
+			Address: raw.Address,
+			Status:  raw.Status,
+			Servers: serversV2,
+			Info:    raw.Info,
+		}
+		subV2 = append(subV2, &subRawV2)
+	}
+	if len(subV2) > 0 {
+		err := configure.AppendSubscriptions(subV2)
+		if err != nil {
+			log.Warn("failed to migrate: %v", err)
+		}
+	}
+}
+
 func initConfigure() {
 	//等待网络连通
 	v2ray.CheckAndStopTransparentProxy()
@@ -145,6 +204,13 @@ func initConfigure() {
 		}
 		if !success {
 			initDBValue()
+		}
+	} else {
+		// need to migrate server format from v1 to v2?
+		if (len(configure.GetServers())+len(configure.GetSubscriptions())) > 0 &&
+			(len(configure.GetServersV2())+len(configure.GetSubscriptionsV2())) == 0 {
+			log.Info("migrating server format from v1 to v2...")
+			migrateServerFormat()
 		}
 	}
 	//检查config.json是否存在
@@ -334,7 +400,7 @@ func run() (err error) {
 	}
 	fmt.Println("Quitting...")
 	v2ray.CheckAndStopTransparentProxy()
-	_ = v2ray.StopV2rayService(false)
+	v2ray.ProcessManager.Stop(false)
 	_ = db.DB().Close()
 	return nil
 }
