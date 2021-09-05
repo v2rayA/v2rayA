@@ -22,13 +22,13 @@ func init() {
 }
 
 type Shadowsocks struct {
-	Name     string `json:"name"`
-	Server   string `json:"server"`
-	Port     int    `json:"port"`
-	Password string `json:"password"`
-	Cipher   string `json:"cipher"`
-	Plugin   Sip003 `json:"plugin"`
-	Protocol string `json:"protocol"`
+	Name     string  `json:"name"`
+	Server   string  `json:"server"`
+	Port     int     `json:"port"`
+	Password string  `json:"password"`
+	Cipher   string  `json:"cipher"`
+	Plugin   *Sip003 `json:"plugin"`
+	Protocol string  `json:"protocol"`
 }
 
 func NewShadowsocks(link string) (ServerObj, error) {
@@ -51,29 +51,10 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		}
 		cipher := arr[0]
 		password := arr[1]
-		var sip003 Sip003
+		var sip003 *Sip003
 		plugin := u.Query().Get("plugin")
 		if len(plugin) > 0 {
-			arr = strings.Split(plugin, ";")
-			sip003.Name = arr[0]
-			switch sip003.Name {
-			case "obfs-local", "simpleobfs":
-				sip003.Name = "simple-obfs"
-			}
-			for i := 1; i < len(arr); i++ {
-				a := strings.Split(arr[i], "=")
-				switch a[0] {
-				case "obfs":
-					sip003.Obfs = a[1]
-				case "obfs-path", "obfs-uri":
-					if !strings.HasPrefix(a[1], "/") {
-						a[1] += "/"
-					}
-					sip003.Uri = a[1]
-				case "obfs-host":
-					sip003.Host = a[1]
-				}
-			}
+			sip003 = ParseSip003(plugin)
 		}
 		port, err := strconv.Atoi(u.Port())
 		if err != nil {
@@ -150,16 +131,16 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 			Scheme: "simple-obfs",
 			Host:   net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 			RawQuery: url.Values{
-				"obfs": []string{s.Plugin.Obfs},
-				"host": []string{s.Plugin.Host},
-				"uri":  []string{s.Plugin.Uri},
+				"obfs": []string{s.Plugin.Opts.Obfs},
+				"host": []string{s.Plugin.Opts.Host},
+				"uri":  []string{s.Plugin.Opts.Uri},
 			}.Encode(),
 		}
 		chain = append(chain, tcp.String(), simpleObfs.String())
-		switch s.Plugin.Obfs {
+		switch s.Plugin.Opts.Obfs {
 		case "http", "tls":
 		default:
-			return c, fmt.Errorf("unsupported obfs %v of plugin %v", s.Plugin.Obfs, s.Plugin.Name)
+			return c, fmt.Errorf("unsupported obfs %v of plugin %v", s.Plugin.Opts.Obfs, s.Plugin.Name)
 		}
 	// TODO: v2ray-plugin
 	//case "v2ray-plugin":
@@ -207,7 +188,7 @@ func (s *Shadowsocks) GetProtocol() string {
 
 func (s *Shadowsocks) ProtoToShow() string {
 	if s.Plugin.Name != "" {
-		return fmt.Sprintf("%v(%v+%v)", s.Protocol, s.Cipher, s.Plugin.Obfs)
+		return fmt.Sprintf("%v(%v+%v)", s.Protocol, s.Cipher, s.Plugin.Opts.Obfs)
 	}
 	return fmt.Sprintf("%v(%v)", s.Protocol, s.Cipher)
 }
@@ -229,22 +210,56 @@ func (s *Shadowsocks) SetName(name string) {
 }
 
 type Sip003 struct {
-	Name string `json:"name"`
+	Name string     `json:"name"`
+	Opts Sip003Opts `json:"opts"`
+}
+type Sip003Opts struct {
 	Obfs string `json:"obfs"`
 	Host string `json:"host"`
 	Uri  string `json:"uri"`
 }
 
+func ParseSip003Opts(opts string) Sip003Opts {
+	var sip003Opts Sip003Opts
+	fields := strings.Split(opts, ";")
+	for i := range fields {
+		a := strings.Split(fields[i], "=")
+		switch a[0] {
+		case "obfs":
+			sip003Opts.Obfs = a[1]
+		case "obfs-path", "obfs-uri":
+			if !strings.HasPrefix(a[1], "/") {
+				a[1] += "/"
+			}
+			sip003Opts.Uri = a[1]
+		case "obfs-host":
+			sip003Opts.Host = a[1]
+		}
+	}
+	return sip003Opts
+}
+func ParseSip003(plugin string) *Sip003 {
+	sip003 := new(Sip003)
+	fields := strings.SplitN(plugin, ";", 2)
+	sip003.Name = fields[0]
+	switch sip003.Name {
+	case "obfs-local", "simpleobfs":
+		sip003.Name = "simple-obfs"
+	}
+	sip003.Opts = ParseSip003Opts(fields[1])
+	return sip003
+}
+
 func (s *Sip003) String() string {
 	list := []string{s.Name}
-	if s.Obfs != "" {
-		list = append(list, "obfs="+s.Obfs)
+	if s.Opts.Obfs != "" {
+		list = append(list, "obfs="+s.Opts.Obfs)
 	}
-	if s.Host != "" {
-		list = append(list, "obfs-host="+s.Host)
+	if s.Opts.Host != "" {
+		list = append(list, "obfs-host="+s.Opts.Host)
 	}
-	if s.Uri != "" {
-		list = append(list, "obfs-uri="+s.Uri)
+	if s.Opts.Uri != "" {
+		list = append(list, "obfs-uri="+s.Opts.Uri)
 	}
 	return strings.Join(list, ";")
 }
