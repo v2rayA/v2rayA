@@ -2,6 +2,10 @@ package service
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -179,19 +183,33 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	c.Timeout = 30 * time.Second
 
 	// Check if source is OOCv1 API token.
-	var url string
+	var u string
 	var token OOCv1ApiToken
 	if err = json.Unmarshal([]byte(source), &token); err == nil {
-		if token.CertSha256 == "" {
-			url = token.BaseUrl + "/" + token.Secret + "/ooc/v1/" + token.UserId
-		} else {
-			return // TODO: Support self-signed certificates.
+		u = token.BaseUrl + "/" + token.Secret + "/ooc/v1/" + token.UserId
+		if token.CertSha256 != "" {
+			client = &http.Client{
+				Transport: &http.Transport{TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+					VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+						h := crypto.SHA256.New()
+						for _, line := range rawCerts {
+							h.Write(line)
+						}
+						fingerprint := hex.EncodeToString(h.Sum(nil))
+						if fingerprint == token.CertSha256 {
+							return fmt.Errorf("server certificate fingerprint mismatch (actual: %s, expected: %s)", fingerprint, token.CertSha256)
+						}
+						return nil
+					},
+				}},
+			}
 		}
 	} else {
-		url = source
+		u = source
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(&c, url)
+	res, err := httpClient.HttpGetUsingSpecificClient(client, u)
 	if err != nil {
 		return
 	}
