@@ -42,6 +42,9 @@ func ShouldUseSupervisor() bool {
 }
 
 func CheckAndSetupDNSSupervisor() {
+	if conf.GetEnvironmentConfig().Lite {
+		return
+	}
 	if !ShouldUseSupervisor() {
 		return
 	}

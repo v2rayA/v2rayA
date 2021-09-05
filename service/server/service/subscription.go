@@ -8,20 +8,18 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/touch"
-	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/infra/nodeData"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
-//func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
-//	return ResolveSubscriptionWithClient(source, http.DefaultClient)
-//}
 type SIP008 struct {
 	Version        int    `json:"version"`
 	Username       string `json:"username"`
@@ -40,54 +38,42 @@ type SIP008 struct {
 	} `json:"servers"`
 }
 
-func resolveSIP008(raw string) (infos []*nodeData.NodeData, sip SIP008, err error) {
+func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err error) {
 	err = json.Unmarshal([]byte(raw), &sip)
 	if err != nil {
 		return
 	}
 	for _, server := range sip.Servers {
-		arr := strings.Split(server.PluginOpts, ";")
-		var obfs, path, host string
-		for i := 0; i < len(arr); i++ {
-			a := strings.Split(arr[i], "=")
-			switch a[0] {
-			case "obfs":
-				obfs = a[1]
-			case "obfs-path":
-				path = a[1]
-			case "obfs-host":
-				host = a[1]
-			}
+		u := url.URL{
+			Scheme:   "ss",
+			User:     url.UserPassword(server.Method, server.Password),
+			Host:     net.JoinHostPort(server.Server, strconv.Itoa(server.ServerPort)),
+			RawQuery: url.Values{"plugin": []string{server.PluginOpts}}.Encode(),
+			Fragment: server.Remarks,
 		}
-		infos = append(infos, &nodeData.NodeData{VmessInfo: vmessInfo.VmessInfo{
-			Ps:       server.Remarks,
-			Add:      server.Server,
-			Port:     strconv.Itoa(server.ServerPort),
-			ID:       server.Password,
-			Net:      server.Method,
-			Type:     obfs,
-			Path:     path,
-			Host:     host,
-			Protocol: "ss",
-		}})
+		obj, err := serverObj.NewFromLink("shadowsocks", u.String())
+		if err != nil {
+			return nil, SIP008{}, err
+		}
+		infos = append(infos, obj)
 	}
 	return
 }
 
-func resolveByLines(raw string) (infos []*nodeData.NodeData, status string, err error) {
+func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
 	// 切分raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
 	// 解析
-	infos = make([]*nodeData.NodeData, 0)
+	infos = make([]serverObj.ServerObj, 0)
 	for _, row := range rows {
 		if strings.HasPrefix(row, "STATUS=") {
 			status = strings.TrimPrefix(row, "STATUS=")
 			continue
 		}
-		var data *nodeData.NodeData
+		var data serverObj.ServerObj
 		data, err = ResolveURL(row)
 		if err != nil {
-			if !errors.Is(err, ErrorEmptyAddress) {
+			if !errors.Is(err, EmptyAddressErr) {
 				log.Warn("resolveByLines: %v: %v", err, row)
 			}
 			err = nil
@@ -98,7 +84,7 @@ func resolveByLines(raw string) (infos []*nodeData.NodeData, status string, err 
 	return
 }
 
-func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []*nodeData.NodeData, status string, err error) {
+func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
 	// get请求source
 	c := *client
 	c.Timeout = 30 * time.Second
@@ -116,7 +102,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	}
 	return ResolveLines(raw)
 }
-func ResolveLines(raw string) (infos []*nodeData.NodeData, status string, err error) {
+func ResolveLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
 	var sip SIP008
 	if infos, sip, err = resolveSIP008(raw); err == nil {
 		if sip.BytesUsed != 0 {
@@ -132,7 +118,7 @@ func ResolveLines(raw string) (infos []*nodeData.NodeData, status string, err er
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
-	subscriptions := configure.GetSubscriptions()
+	subscriptions := configure.GetSubscriptionsV2()
 	addr := subscriptions[index].Address
 	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
@@ -146,29 +132,29 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
 		return fmt.Errorf("UpdateSubscription: %v", reason)
 	}
-	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
+	infoServerRaws := make([]configure.ServerRawV2, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
 	cssAfter := css.Get()
-	connectedVmessInfo2CssIndex := make(map[vmessInfo.VmessInfo][]int)
+	connectedVmessInfo2CssIndex := make(map[serverObj.ServerObj][]int)
 	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
 			if sRaw, err := cs.LocateServerRaw(); err != nil {
 				return err
 			} else {
-				connectedVmessInfo2CssIndex[sRaw.VmessInfo] = append(connectedVmessInfo2CssIndex[sRaw.VmessInfo], i)
+				connectedVmessInfo2CssIndex[sRaw.ServerObj] = append(connectedVmessInfo2CssIndex[sRaw.ServerObj], i)
 			}
 		}
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
 	for i, info := range subscriptionInfos {
-		infoServerRaw := configure.ServerRaw{
-			VmessInfo: info.VmessInfo,
+		infoServerRaw := configure.ServerRawV2{
+			ServerObj: info,
 		}
-		if cssIndexes, ok := connectedVmessInfo2CssIndex[infoServerRaw.VmessInfo]; ok {
+		if cssIndexes, ok := connectedVmessInfo2CssIndex[infoServerRaw.ServerObj]; ok {
 			for _, cssIndex := range cssIndexes {
 				cssAfter[cssIndex].ID = i + 1
 			}
-			delete(connectedVmessInfo2CssIndex, infoServerRaw.VmessInfo)
+			delete(connectedVmessInfo2CssIndex, infoServerRaw.ServerObj)
 		}
 		infoServerRaws[i] = infoServerRaw
 	}
@@ -183,8 +169,8 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			} else {
 				// 将之前连接的节点append进去
 				// TODO: 变更ServerRaw时可能需要考虑
-				infoServerRaws = append(infoServerRaws, configure.ServerRaw{
-					VmessInfo: vi,
+				infoServerRaws = append(infoServerRaws, configure.ServerRawV2{
+					ServerObj: vi,
 					Latency:   "",
 				})
 				cssAfter[cssIndex].ID = len(infoServerRaws)

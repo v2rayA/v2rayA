@@ -36,7 +36,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	}
 	//如果v2ray正在运行且有连接，则重写配置并重启连接，使得对透明代理、TCPFastOpen等配置的修改立即生效
 	css := configure.GetConnectedServers()
-	if v2ray.IsV2RayRunning() && css.Len() > 0 {
+	if v2ray.ProcessManager.Running() && css.Len() > 0 {
 		err = v2ray.UpdateV2RayConfig()
 		if err != nil {
 			return fmt.Errorf("invalid config: %w", err)

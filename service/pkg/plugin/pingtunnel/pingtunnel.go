@@ -4,50 +4,85 @@
 package pingtunnel
 
 import (
-	"errors"
 	"fmt"
 	"github.com/mzz2017/go-engine/src/loggo"
 	"github.com/mzz2017/go-engine/src/pingtunnel"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
+	"net/url"
 	"strconv"
 	"time"
 )
 
 type PingTunnel struct {
-	client    *pingtunnel.Client
-	localPort int
+	client        *pingtunnel.Client
+	key           int
+	remote        string
+	listenAddress string
+	localPort     int
 }
 
 func init() {
-	plugin.RegisterPlugin("pingtunnel", NewPingTunnelPlugin)
+	plugin.RegisterServer("ping-tunnel", NewPingTunnelDialer)
 }
 
-func NewPingTunnelPlugin(localPort int, v vmessInfo.VmessInfo) (plugin plugin.Plugin, err error) {
-	plugin = new(PingTunnel)
-	err = plugin.Serve(localPort, v)
-	return
+func NewPingTunnel(s string, p plugin.Proxy) (*PingTunnel, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil, err
+	}
+	key, err := strconv.Atoi(u.Query().Get("password"))
+	if err != nil {
+		return nil, fmt.Errorf("password must be a string of numbers")
+	}
+	return &PingTunnel{
+		key:           key,
+		listenAddress: u.Host,
+		remote:        u.Query().Get("server"),
+		localPort:     0,
+	}, nil
+}
+
+func NewPingTunnelDialer(s string, p plugin.Proxy) (plugin.Server, error) {
+	return NewPingTunnel(s, p)
 }
 
 func (tunnel *PingTunnel) LocalPort() int {
 	return tunnel.localPort
 }
 
-func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error) {
-	tunnel.localPort = localPort
-	listen := ":" + strconv.Itoa(localPort)
-	target := ""
-	server := v.Add
-	timeout := 60
-	key, err := strconv.Atoi(v.ID)
-	if err != nil {
-		return fmt.Errorf("password must be a string of numbers")
+func (tunnel *PingTunnel) Close() (err error) {
+	if tunnel.client != nil {
+		tunnel.client.Stop()
 	}
+	start := time.Now()
+	for {
+		conn, e := net.Dial("tcp", tunnel.listenAddress)
+		if e == nil {
+			conn.Close()
+		}
+		if time.Since(start) > 3*time.Second {
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+// ListenAndServe serves pingtunnel requests.
+func (tunnel *PingTunnel) ListenAndServe() error {
+	//go s.ListenAndServeUDP()
+	return tunnel.ListenAndServeTCP()
+}
+
+// ListenAndServeTCP listen and serve on tcp port.
+func (tunnel *PingTunnel) ListenAndServeTCP() error {
+	listen := tunnel.listenAddress
+	target := ""
+	server := tunnel.remote
+	timeout := 60
+	key := tunnel.key
 	tcpmode := 1
 	tcpmode_buffersize := 1 * 1024 * 1024 //1MB
 	tcpmode_maxwin := 10000
@@ -70,37 +105,5 @@ func (tunnel *PingTunnel) Serve(localPort int, v vmessInfo.VmessInfo) (err error
 		return fmt.Errorf("[PingTunnel] Serve: %w", err)
 	}
 	tunnel.client = c
-	return c.Run()
-}
-
-func (tunnel *PingTunnel) Close() (err error) {
-	if tunnel.client != nil {
-		tunnel.client.Stop()
-	}
-	start := time.Now()
-	port := strconv.Itoa(tunnel.localPort)
-	for {
-		var o bool
-		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
-		if err != nil && !errors.Is(err, netstat.ErrorNotSupportOSErr) {
-			return err
-		}
-		if !o {
-			break
-		}
-		conn, e := net.Dial("tcp", ":"+port)
-		if e == nil {
-			conn.Close()
-		}
-		if time.Since(start) > 3*time.Second {
-			log.Warn("PingTunnel.Close: timeout: %v", tunnel.localPort)
-			return fmt.Errorf("[PingTunnel] Close: timeout")
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
-	return nil
-}
-
-func (tunnel *PingTunnel) SupportUDP() bool {
-	return false
+	return tunnel.client.Run()
 }

@@ -1,7 +1,7 @@
 package infra
 
 import (
-	"github.com/v2rayA/v2rayA/pkg/plugin/infra"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"net"
 	"syscall"
 	"time"
@@ -11,7 +11,7 @@ func newDialer(laddr string, lport uint32, timeout time.Duration) (dialer *net.D
 	return &net.Dialer{
 		Timeout: timeout,
 		Control: func(network, address string, c syscall.RawConn) error {
-			return infra.BindControl(c, laddr, lport)
+			return plugin.BindControl(c, laddr, lport)
 		},
 	}
 }

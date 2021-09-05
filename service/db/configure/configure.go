@@ -14,22 +14,22 @@ import (
 )
 
 type Configure struct {
-	Servers          []*ServerRaw       `json:"servers"`
-	Subscriptions    []*SubscriptionRaw `json:"subscriptions"`
-	ConnectedServers []*Which           `json:"connectedServers"`
-	Setting          *Setting           `json:"setting"`
-	Accounts         map[string]string  `json:"accounts"`
-	Ports            Ports              `json:"ports"`
-	PortWhiteList    PortWhiteList      `json:"portWhiteList"`
-	InternalDnsList  *string            `json:"internalDnsList"`
-	ExternalDnsList  *string            `json:"externalDnsList"`
-	RoutingA         *string            `json:"routingA"`
+	Servers          []*ServerRawV2       `json:"servers_v2"`
+	Subscriptions    []*SubscriptionRawV2 `json:"subscriptions_v2"`
+	ConnectedServers []*Which             `json:"connectedServers"`
+	Setting          *Setting             `json:"setting"`
+	Accounts         map[string]string    `json:"accounts"`
+	Ports            Ports                `json:"ports"`
+	PortWhiteList    PortWhiteList        `json:"portWhiteList"`
+	InternalDnsList  *string              `json:"internalDnsList"`
+	ExternalDnsList  *string              `json:"externalDnsList"`
+	RoutingA         *string              `json:"routingA"`
 }
 
 func New() *Configure {
 	return &Configure{
-		Servers:          make([]*ServerRaw, 0),
-		Subscriptions:    make([]*SubscriptionRaw, 0),
+		Servers:          make([]*ServerRawV2, 0),
+		Subscriptions:    make([]*SubscriptionRawV2, 0),
 		ConnectedServers: make([]*Which, 0),
 		Setting:          NewSetting(),
 		Accounts:         map[string]string{},
@@ -113,18 +113,18 @@ func SetConfigure(cfg *Configure) error {
 
 func RemoveSubscriptions(indexes []int) (err error) {
 	//TODO: separate the SubscriptionRaw and []ServerRaw
-	return db.ListRemove("touch", "subscriptions", indexes)
+	return db.ListRemove("touch", "subscriptions_v2", indexes)
 }
 
 func RemoveServers(indexes []int) (err error) {
 	//TODO: separate the SubscriptionRaw and []ServerRaw
-	return db.ListRemove("touch", "servers", indexes)
+	return db.ListRemove("touch", "servers_v2", indexes)
 }
-func SetServer(index int, server *ServerRaw) (err error) {
-	return db.ListSet("touch", "servers", index, server)
+func SetServer(index int, server *ServerRawV2) (err error) {
+	return db.ListSet("touch", "servers_v2", index, server)
 }
-func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
-	return db.ListSet("touch", "subscriptions", index, subscription)
+func SetSubscription(index int, subscription *SubscriptionRawV2) (err error) {
+	return db.ListSet("touch", "subscriptions_v2", index, subscription)
 }
 func SetSetting(setting *Setting) (err error) {
 	return db.Set("system", "setting", setting)
@@ -151,17 +151,34 @@ func SetRoutingA(routingA *string) (err error) {
 	return db.Set("system", "routingA", routingA)
 }
 
-func AppendServers(server []*ServerRaw) (err error) {
-	return db.ListAppend("touch", "servers", server)
+func AppendServers(server []*ServerRawV2) (err error) {
+	return db.ListAppend("touch", "servers_v2", server)
 }
-func AppendSubscriptions(subscription []*SubscriptionRaw) (err error) {
-	return db.ListAppend("touch", "subscriptions", subscription)
+func AppendSubscriptions(subscription []*SubscriptionRawV2) (err error) {
+	return db.ListAppend("touch", "subscriptions_v2", subscription)
 }
 
 func IsConfigureNotExists() bool {
 	l, err := db.GetBucketLen("system")
 	return err != nil || l == 0
 }
+
+func GetServersV2() []ServerRawV2 {
+	r := make([]ServerRawV2, 0)
+	raw, err := db.ListGetAll("touch", "servers_v2")
+	if err == nil {
+		for _, b := range raw {
+			t, e := Bytes2ServerRaw2(b)
+			if e != nil {
+				continue
+			}
+			r = append(r, *t)
+		}
+	}
+	return r
+}
+
+// Deprecated
 func GetServers() []ServerRaw {
 	r := make([]ServerRaw, 0)
 	raw, err := db.ListGetAll("touch", "servers")
@@ -177,6 +194,8 @@ func GetServers() []ServerRaw {
 	}
 	return r
 }
+
+//Deprecated
 func GetSubscriptions() []SubscriptionRaw {
 	r := make([]SubscriptionRaw, 0)
 	raw, err := db.ListGetAll("touch", "subscriptions")
@@ -192,14 +211,35 @@ func GetSubscriptions() []SubscriptionRaw {
 	}
 	return r
 }
-func GetSubscription(index int) *SubscriptionRaw {
-	s := new(SubscriptionRaw)
-	err := db.ListGet("touch", "subscriptions", index, s)
+
+func GetSubscriptionsV2() []SubscriptionRawV2 {
+	r := make([]SubscriptionRawV2, 0)
+	raw, err := db.ListGetAll("touch", "subscriptions_v2")
+	if err == nil {
+		for _, b := range raw {
+			t, e := Bytes2SubscriptionRaw2(b)
+			if e != nil {
+				log.Warn("%v", e)
+				continue
+			}
+			r = append(r, *t)
+		}
+	}
+	return r
+}
+func GetSubscription(index int) *SubscriptionRawV2 {
+	b, err := db.ListGet("touch", "subscriptions_v2", index)
 	if err != nil {
+		return nil
+	}
+	s, err := Bytes2SubscriptionRaw2(b)
+	if err != nil {
+		log.Warn("%v", err)
 		return nil
 	}
 	return s
 }
+
 func GetSettingNotNil() *Setting {
 	r := new(Setting)
 	_ = db.Get("system", "setting", r)
@@ -299,21 +339,21 @@ func GetConnectedServersByOutbound(outbound string) *Whiches {
 }
 
 func GetLenSubscriptions() int {
-	l, err := db.ListLen("touch", "subscriptions")
+	l, err := db.ListLen("touch", "subscriptions_v2")
 	if err != nil {
 		panic(err)
 	}
 	return l
 }
 func GetLenSubscriptionServers(index int) int {
-	b, err := db.ListGetRaw("touch", "subscriptions", index)
+	b, err := db.ListGetRaw("touch", "subscriptions_v2", index)
 	if err != nil {
 		log.Fatal("GetLenSubscriptionServers: %v", err)
 	}
 	return len(gjson.GetBytes(b, "servers").Array())
 }
 func GetLenServers() int {
-	l, err := db.ListLen("touch", "servers")
+	l, err := db.ListLen("touch", "servers_v2")
 	if err != nil {
 		panic(err)
 	}

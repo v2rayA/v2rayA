@@ -58,7 +58,7 @@ func getObservatoryResponse(conn *grpc.ClientConn) (r *pb.GetOutboundStatusRespo
 	return r, nil
 }
 
-func ObservatoryProducer() (closeFunc func()) {
+func ObservatoryProducer(apiPort int) (closeFunc func()) {
 	closed := make(chan struct{})
 	go func() {
 		const product = "observatory"
@@ -70,15 +70,24 @@ func ObservatoryProducer() (closeFunc func()) {
 				return
 			default:
 			}
-			if ApiPort() == 0 {
+			p := ProcessManager.Process()
+			if p == nil {
 				time.Sleep(ApiFeedInterval)
 				continue
 			}
 			// Set up a connection to the server.
 			if conn == nil {
-				c, err := grpc.Dial(net.JoinHostPort("127.0.0.1", strconv.Itoa(ApiPort())), grpc.WithInsecure(), grpc.WithBlock())
+				ctx, cancel := context.WithTimeout(context.Background(), ApiFeedInterval)
+				defer cancel()
+				c, err := grpc.DialContext(
+					ctx,
+					net.JoinHostPort("127.0.0.1", strconv.Itoa(apiPort)),
+					grpc.WithInsecure(),
+					grpc.WithBlock(),
+				)
 				if err != nil {
 					log.Warn("ObservatoryProducer: did not connect: %v", err)
+					continue nextLoop
 				}
 				defer c.Close()
 				conn = c
@@ -88,7 +97,7 @@ func ObservatoryProducer() (closeFunc func()) {
 				if status.Code(err) == codes.Unavailable {
 					// the connection is reliable, and reconnect
 					conn = nil
-					continue
+					continue nextLoop
 				}
 				log.Warn("ObservatoryProducer: %v", err)
 			} else {
@@ -97,7 +106,7 @@ func ObservatoryProducer() (closeFunc func()) {
 				css := configure.GetConnectedServers()
 				for i := range outboundStatus {
 					_ = mapper.AutoMapper(outboundStatus[i], &os[i])
-					index := tag2WhichIndex[os[i].OutboundTag]
+					index := p.tag2WhichIndex[os[i].OutboundTag]
 					if index >= css.Len() {
 						continue nextLoop
 					}

@@ -66,7 +66,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if err = configure.SetPorts(&origin); err != nil {
 		return err
 	}
-	if v2ray.IsV2RayRunning() {
+	if v2ray.ProcessManager.Running() {
 		err = v2ray.UpdateV2RayConfig()
 	}
 	return

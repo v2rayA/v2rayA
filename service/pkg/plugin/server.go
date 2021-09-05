@@ -1,109 +1,54 @@
 package plugin
 
 import (
-	"errors"
 	"fmt"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/pkg/plugin/infra"
-	"github.com/v2rayA/v2rayA/pkg/plugin/infra/socks5"
-	"github.com/v2rayA/v2rayA/pkg/plugin/infra/tcp"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"io"
-	"net"
 	"net/url"
-	"strconv"
 	"strings"
-	"time"
+
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
-type Server struct {
-	C         chan interface{}
-	LocalPort int
-	closed    chan interface{}
+// Server interface
+type Server interface {
+	// ListenAndServe sets up a listener and serve on it
+	ListenAndServe() error
+
+	Close() error
 }
 
-func NewServer(localPort int) *Server {
-	s := new(Server)
-	s.C = make(chan interface{}, 0)
-	s.closed = make(chan interface{}, 0)
-	s.LocalPort = localPort
-	return s
+// ServerCreator is a function to create proxy servers
+type ServerCreator func(s string, proxy Proxy) (Server, error)
+
+var (
+	serverCreators = make(map[string]ServerCreator)
+)
+
+// RegisterServer is used to register a proxy server
+func RegisterServer(name string, c ServerCreator) {
+	serverCreators[name] = c
 }
 
-// protocol:
-// socks5
-// tcp->192.168.0.5:80
-func (s *Server) Serve(p infra.Proxy, protocol string) error {
-	var local infra.Server
-	var err error
-	switch {
-	case protocol == "socks5":
-		local, err = socks5.NewSocks5Server("socks5://127.0.0.1:"+strconv.Itoa(s.LocalPort), p)
-	case strings.HasPrefix(protocol, "tcp"):
-		arr := strings.Split(protocol, "->")
-		if len(arr) != 2 {
-			return fmt.Errorf("func Serve: wrong format of tcp")
-		}
-		local, err = tcp.NewTcpServer("tcp://127.0.0.1:"+strconv.Itoa(s.LocalPort)+"/?target="+url.PathEscape(arr[1]), p)
+// ServerFromURL calls the registered creator to create proxy servers
+// dialer is the default upstream dialer so cannot be nil, we can use Default when calling this function
+func ServerFromURL(s string, p Proxy) (Server, error) {
+	if p == nil {
+		return nil, fmt.Errorf("ServerFromURL: dialer cannot be nil")
 	}
+
+	if !strings.Contains(s, "://") {
+		s = "socks5://" + s
+	}
+
+	u, err := url.Parse(s)
 	if err != nil {
-		return err
+		log.Warn("parse err: %s\n", err)
+		return nil, err
 	}
-	go func() {
-		go func() {
-			e := local.ListenAndServe()
-			if e != nil {
-				err = e
-			}
-		}()
-		<-s.C
-		if closer, ok := local.(io.Closer); ok {
-			close(s.closed)
-			_ = closer.Close()
-		}
-	}()
-	//等待100ms的error
-	time.Sleep(100 * time.Millisecond)
-	return err
-}
 
-func (s *Server) Close() error {
-	if s.C == nil {
-		return fmt.Errorf("close fail: server not running")
+	c, ok := serverCreators[strings.ToLower(u.Scheme)]
+	if ok {
+		return c(s, p)
 	}
-	if len(s.C) > 0 {
-		return fmt.Errorf("close fail: duplicate close")
-	}
-	s.C <- nil
-	s.C = nil
-	time.Sleep(100 * time.Millisecond)
-	start := time.Now()
-	port := strconv.Itoa(s.LocalPort)
-out:
-	for {
-		select {
-		case <-s.closed:
-			break out
-		default:
-		}
-		var o bool
-		o, _, err := ports.IsPortOccupied([]string{port + ":tcp"})
-		if err != nil && !errors.Is(err, netstat.ErrorNotSupportOSErr) {
-			return err
-		}
-		if !o {
-			break
-		}
-		conn, e := net.Dial("tcp", ":"+port)
-		if e == nil {
-			conn.Close()
-		}
-		if time.Since(start) > 3*time.Second {
-			log.Warn("plugin.Server.Close: timeout: %v", s.LocalPort)
-			return fmt.Errorf("Server.Close: timeout")
-		}
-		time.Sleep(1000 * time.Millisecond)
-	}
-	return nil
+
+	return nil, fmt.Errorf("unknown scheme '" + u.Scheme + "'")
 }

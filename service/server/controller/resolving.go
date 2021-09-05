@@ -10,7 +10,7 @@ RequestData: {
 */
 //func GetResolving(ctx *gin.Context) {
 //	var (
-//		n   *nodeData.NodeData
+//		n   serverObj.ServerObj
 //		err error
 //	)
 //	u, ok := ctx.GetQuery("url")
