@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -207,6 +208,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		url = source
 	}
 
+	client.Timeout = 30 * time.Second
 	res, err := httpClient.HttpGetUsingSpecificClient(client, url)
 	if err != nil {
 		return
