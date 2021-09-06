@@ -5,6 +5,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/vmessInfo"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type ServerRawV2 struct {
@@ -40,7 +41,12 @@ func Bytes2SubscriptionRaw2(b []byte) (*SubscriptionRawV2, error) {
 func Bytes2ServerRaw2(b []byte) (*ServerRawV2, error) {
 	var s ServerRawV2
 	var obj serverObj.ServerObj
-	obj, err := serverObj.New(gjson.GetBytes(b, "serverObj.protocol").String())
+	protocol := gjson.GetBytes(b, "serverObj.protocol").String()
+	if protocol == "" {
+		log.Warn("empty protocol, fallback to vmess: %v", gjson.GetBytes(b, "serverObj.ps").String())
+		protocol = "vmess"
+	}
+	obj, err := serverObj.New(protocol)
 	if err != nil {
 		return nil, err
 	}

@@ -170,6 +170,7 @@ func GetServersV2() []ServerRawV2 {
 		for _, b := range raw {
 			t, e := Bytes2ServerRaw2(b)
 			if e != nil {
+				log.Warn("GetServersV2: %v", e)
 				continue
 			}
 			r = append(r, *t)
