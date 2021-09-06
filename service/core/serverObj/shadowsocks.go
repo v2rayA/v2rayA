@@ -22,13 +22,13 @@ func init() {
 }
 
 type Shadowsocks struct {
-	Name     string  `json:"name"`
-	Server   string  `json:"server"`
-	Port     int     `json:"port"`
-	Password string  `json:"password"`
-	Cipher   string  `json:"cipher"`
-	Plugin   *Sip003 `json:"plugin"`
-	Protocol string  `json:"protocol"`
+	Name     string `json:"name"`
+	Server   string `json:"server"`
+	Port     int    `json:"port"`
+	Password string `json:"password"`
+	Cipher   string `json:"cipher"`
+	Plugin   Sip003 `json:"plugin"`
+	Protocol string `json:"protocol"`
 }
 
 func NewShadowsocks(link string) (ServerObj, error) {
@@ -51,7 +51,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		}
 		cipher := arr[0]
 		password := arr[1]
-		var sip003 *Sip003
+		var sip003 Sip003
 		plugin := u.Query().Get("plugin")
 		if len(plugin) > 0 {
 			sip003 = ParseSip003(plugin)
@@ -238,8 +238,8 @@ func ParseSip003Opts(opts string) Sip003Opts {
 	}
 	return sip003Opts
 }
-func ParseSip003(plugin string) *Sip003 {
-	sip003 := new(Sip003)
+func ParseSip003(plugin string) Sip003 {
+	var sip003 Sip003
 	fields := strings.SplitN(plugin, ";", 2)
 	sip003.Name = fields[0]
 	switch sip003.Name {
