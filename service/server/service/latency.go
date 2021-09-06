@@ -193,6 +193,8 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		if err != nil {
 			return which, fmt.Errorf("cannot restart v2ray-core: %w", err)
 		}
+	} else {
+		v2ray.ProcessManager.Stop(true)
 	}
 	if err := configure.NewWhiches(which).SaveLatencies(); err != nil {
 		return nil, fmt.Errorf("failed to save the latency test result: %v", err)
