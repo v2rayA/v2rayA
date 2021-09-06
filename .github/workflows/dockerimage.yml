@@ -5,25 +5,55 @@ on:
     tags:
       - v*
 
-env:
-  DOCKER_CLI_EXPERIMENTAL: enabled
-  DOCKER_BUILDKIT: 1
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
-      - uses: actions/checkout@v2      # https://github.com/docker/setup-qemu-action
+      - uses: actions/checkout@v2
+
+      - name: Prepare
+        id: prep
+        run: |
+          TAG=$(echo $GITHUB_REF | cut -d / -f 3)
+          IMAGE="mzz2017/v2raya"
+          echo ::set-output name=image::${IMAGE}
+          echo ::set-output name=tag::${TAG}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Build the Docker image
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-single-buildx-${{ steps.prep.outputs.tag }}
+          restore-keys: |
+            ${{ runner.os }}-single-buildx
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build production image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          builder: ${{ steps.buildx.outputs.name }}
+          file: Dockerfile
+          platforms: linux/arm,linux/arm64,linux/amd64
+          push: true
+          tags: |
+            ${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
+            ${{ steps.prep.outputs.image }}:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+        # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
         run: |
-          docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-          v=$(echo ${{ steps.get_version.outputs.VERSION }} | cut -c2-)
-          docker buildx build -t mzz2017/v2raya:$v -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
-          docker buildx build -t mzz2017/v2raya:latest -f Dockerfile --platform=linux/arm,linux/arm64,linux/amd64 . --push
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
