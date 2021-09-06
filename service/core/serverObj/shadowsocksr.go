@@ -154,7 +154,7 @@ func (s *ShadowsocksR) NeedPlugin() bool {
 }
 
 func (s *ShadowsocksR) ProtoToShow() string {
-	return fmt.Sprintf("%v(%v)", s.Protocol, s.Proto)
+	return fmt.Sprintf("SSR(%v+%v)", s.Proto, s.Obfs)
 }
 
 func (s *ShadowsocksR) GetProtocol() string {
