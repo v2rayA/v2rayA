@@ -5,22 +5,45 @@ on:
     tags:
       - v*
 
-env:
-  DOCKER_CLI_EXPERIMENTAL: enabled
-  DOCKER_BUILDKIT: 1
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build Docker Buildx
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-single-buildx-${{ steps.prep.outputs.tag }}
+          restore-keys: |
+            ${{ runner.os }}-single-buildx
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build production image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          builder: ${{ steps.buildx.outputs.name }}
+          file: Dockerfile.gui
+          platforms: linux/arm,linux/arm64,linux/amd64
+          push: true
+          tags: mzz2017/v2raya-gui:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+        # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
         run: |
-          docker build --platform=local -o . git://github.com/docker/buildx
-          mkdir -p ~/.docker/cli-plugins && mv buildx ~/.docker/cli-plugins/docker-buildx
-      - name: Build the Docker image
-        run: |
-          docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
-          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-          docker buildx create --use --name crossbuilder
-          docker buildx build -t mzz2017/v2raya-gui -f Dockerfile.gui --platform=linux/arm,linux/arm64,linux/amd64 . --push
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
