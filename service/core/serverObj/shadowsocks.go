@@ -188,9 +188,9 @@ func (s *Shadowsocks) GetProtocol() string {
 
 func (s *Shadowsocks) ProtoToShow() string {
 	if s.Plugin.Name != "" {
-		return fmt.Sprintf("%v(%v+%v)", s.Protocol, s.Cipher, s.Plugin.Opts.Obfs)
+		return fmt.Sprintf("SS(%v+%v)", s.Cipher, s.Plugin.Opts.Obfs)
 	}
-	return fmt.Sprintf("%v(%v)", s.Protocol, s.Cipher)
+	return fmt.Sprintf("SS(%v)", s.Cipher)
 }
 
 func (s *Shadowsocks) GetHostname() string {

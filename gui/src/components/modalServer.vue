@@ -879,12 +879,17 @@ export default {
         return o;
       } else if (url.toLowerCase().startsWith("ss://")) {
         let u = parseURL(url);
-        try {
-          u.username = Base64.decode(decodeURIComponent(u.username));
-        } catch (e) {
-          //pass
+        let mp;
+        if (!u.password) {
+          try {
+            u.username = Base64.decode(decodeURIComponent(u.username));
+            mp = u.username.split(":");
+          } catch (e) {
+            //pass
+          }
+        } else {
+          mp = [u.username, u.password];
         }
-        let mp = u.username.split(":");
         u.hash = decodeURIComponent(u.hash);
         let obj = {
           method: mp[0],
@@ -981,7 +986,7 @@ export default {
           ssCipher: "aes-128-gcm",
           protocol: "trojan"
         };
-        if (url.toLowerCase().startsWith("trojan-go://") === 0) {
+        if (url.toLowerCase().startsWith("" + "")) {
           console.log(u.params.encryption);
           if (u.params.encryption?.startsWith("ss;")) {
             o.method = "shadowsocks";
@@ -998,8 +1003,10 @@ export default {
           if (o.obfs === "ws") {
             o.obfs = "websocket";
           }
-          o.host = u.params.host;
-          o.path = u.params.path;
+          if (o.obfs === "websocket") {
+            o.host = u.params.host || "";
+            o.path = u.params.path || "/";
+          }
         }
         return o;
       } else if (
@@ -1121,8 +1128,10 @@ export default {
             if (srcObj.method === "shadowsocks") {
               query.encryption = `ss;${srcObj.ssCipher};${srcObj.ssPassword}`;
             }
-            query.host = srcObj.host;
-            query.path = srcObj.path;
+            if (query.type === "ws") {
+              query.host = srcObj.host || "";
+              query.path = srcObj.path || "/";
+            }
             delete query.allowInsecure;
           }
           return generateURL({
