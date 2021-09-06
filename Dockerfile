@@ -1,7 +1,7 @@
 FROM mzz2017/git:alpine AS version
 WORKDIR /build
 ADD .git ./.git
-RUN git describe --abbrev=0 --tags > ./version
+RUN git describe --abbrev=0 --tags | tee ./version
 
 
 FROM node:lts-alpine AS builder-web
