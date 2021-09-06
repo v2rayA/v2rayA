@@ -242,10 +242,10 @@ function isIntranet(url) {
 }
 
 function isVersionGreaterEqual(va, vb) {
-  if (va === "debug" || va === "unstable") {
+  if (va === "debug" || va.startsWith("unstable")) {
     return true;
   }
-  if (vb === "debug" || vb === "unstable") {
+  if (vb === "debug" || vb.startsWith("unstable")) {
     return false;
   }
   va = va.trim();
