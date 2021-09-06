@@ -168,6 +168,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 	if info.Aid == "" {
 		info.Aid = "0"
 	}
+	info.Protocol = "vmess"
 	return &info, nil
 }
 
