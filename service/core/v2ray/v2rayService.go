@@ -24,7 +24,7 @@ func IfTProxyModLoaded() bool {
 }
 
 func CheckAndProbeTProxy() (err error) {
-	if !IfTProxyModLoaded() && !common.IsInDocker() { //docker下无法判断
+	if !IfTProxyModLoaded() && !common.IsDocker() { //docker下无法判断
 		var out []byte
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {

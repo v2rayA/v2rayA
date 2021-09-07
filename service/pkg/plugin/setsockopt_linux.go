@@ -11,7 +11,7 @@ import (
 func SoMarkControl(c syscall.RawConn) error {
 	return c.Control(func(fd uintptr) {
 		//TODO: force to set 0xff. any chances to customize this value?
-		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
+		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0x80)
 		if err != nil {
 			return
 		}
@@ -19,7 +19,7 @@ func SoMarkControl(c syscall.RawConn) error {
 }
 func BindControl(c syscall.RawConn, laddr string, lport uint32) error {
 	return c.Control(func(fd uintptr) {
-		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0xff)
+		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0x80)
 		if err != nil {
 			log.Warn("control: %s", err)
 			return

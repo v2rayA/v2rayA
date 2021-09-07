@@ -40,14 +40,14 @@ func CloseWatcher() {
 	}
 }
 
-func (c SetupCommands) Setup(preprocess *func(c *SetupCommands)) (err error) {
+func (c SetupCommands) Setup(preprocess func(c *SetupCommands)) (err error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if preprocess != nil {
-		(*preprocess)(&c)
+		preprocess(&c)
 	}
 	commands := string(c)
-	if common.IsInDocker() {
+	if common.IsDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
 	}
@@ -62,7 +62,7 @@ func (c CleanCommands) Clean() {
 	mutex.Lock()
 	defer mutex.Unlock()
 	commands := string(c)
-	if common.IsInDocker() {
+	if common.IsDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
 	}

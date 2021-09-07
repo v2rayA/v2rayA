@@ -804,7 +804,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 }
 
 func (t *Template) setOutboundSockopt(setting *configure.Setting) {
-	mark := 0xff
+	mark := 0x80
 	//tos := 184
 	for i := range t.Outbounds {
 		if t.Outbounds[i].Protocol == "blackhole" {
@@ -1639,7 +1639,7 @@ func (t *Template) AddMappingOutbound(o serverObj.ServerObj, inboundPort string,
 			t.Plugins = append(t.Plugins, server)
 		}
 	}
-	var mark = 0xff
+	var mark = 0x80
 	checkAndSetMark(&c.CoreOutbound, mark)
 	t.Outbounds = append(t.Outbounds, c.CoreOutbound)
 	iPort, err := strconv.Atoi(inboundPort)

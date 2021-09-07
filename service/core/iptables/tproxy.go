@@ -42,7 +42,7 @@ func (t *tproxy) RemoveIPWhitelist(cidr string) {
 
 func (t *tproxy) GetSetupCommands() SetupCommands {
 	commands := `
-ip rule add fwmark 1 table 100
+ip rule add fwmark 0x40/0xc0 table 100
 ip route add local 0.0.0.0/0 dev lo table 100
 
 iptables -w 2 -t mangle -N TP_OUT
@@ -53,18 +53,18 @@ iptables -w 2 -t mangle -N TP_MARK
 iptables -w 2 -t mangle -I OUTPUT -j TP_OUT
 iptables -w 2 -t mangle -I PREROUTING -j TP_PRE
 
-iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
+iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0x80/0x80 -j RETURN
 iptables -w 2 -t mangle -A TP_OUT -p tcp -m addrtype --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 iptables -w 2 -t mangle -A TP_OUT -p udp -m addrtype --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 
-iptables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 1 -j RETURN
+iptables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 iptables -w 2 -t mangle -A TP_PRE -p udp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
-iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 1 -j TPROXY --on-port 32345 --on-ip 127.0.0.1
-iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 1 -j TPROXY --on-port 32345 --on-ip 127.0.0.1
+iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 32345 --on-ip 127.0.0.1
+iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 32345 --on-ip 127.0.0.1
 
 iptables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
-iptables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
+iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 `
@@ -72,7 +72,7 @@ iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 		commands += `
 iptables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
-iptables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
+iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 	}
 	commands += `
@@ -93,13 +93,13 @@ iptables -w 2 -t mangle -A TP_RULE -d 224.0.0.0/4 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -j TP_MARK
 
-iptables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-mark 1
-iptables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --set-mark 1
+iptables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-xmark 0x40/0x40
+iptables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 0x40/0x40
 iptables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 `
 	if IsIPv6Supported() {
 		commands += `
-ip -6 rule add fwmark 1 table 100
+ip -6 rule add fwmark 0x40/0xc0 table 100
 ip -6 route add local ::/0 dev lo table 100
 
 ip6tables -w 2 -t mangle -N TP_OUT
@@ -110,18 +110,18 @@ ip6tables -w 2 -t mangle -N TP_MARK
 ip6tables -w 2 -t mangle -I OUTPUT -j TP_OUT
 ip6tables -w 2 -t mangle -I PREROUTING -j TP_PRE
 
-ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0xff -j RETURN
+ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0x80/0x80 -j RETURN
 ip6tables -w 2 -t mangle -A TP_OUT -p tcp -m addrtype --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 ip6tables -w 2 -t mangle -A TP_OUT -p udp -m addrtype --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 
-ip6tables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 1 -j RETURN
+ip6tables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 0x40/0xc0 -j RETURN
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
-ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 1 -j TPROXY --on-port 32345 --on-ip ::1
-ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 1 -j TPROXY --on-port 32345 --on-ip ::1
+ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 32345 --on-ip ::1
+ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 32345 --on-ip ::1
 
 ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
-ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
+ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 `
@@ -129,7 +129,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 			commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
-ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 1 -j RETURN
+ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 		}
 		commands += `
@@ -143,8 +143,8 @@ ip6tables -w 2 -t mangle -A TP_RULE -d fe80::/10 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -j TP_MARK
 
-ip6tables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-mark 1
-ip6tables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --set-mark 1
+ip6tables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-xmark 0x40/0x40
+ip6tables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 0x40/0x40
 ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 `
 	}
@@ -153,7 +153,7 @@ ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 
 func (t *tproxy) GetCleanCommands() CleanCommands {
 	commands := `
-ip rule del fwmark 1 table 100 
+ip rule del fwmark 0x40/0xc0 table 100 
 ip route del local 0.0.0.0/0 dev lo table 100
 
 iptables -w 2 -t mangle -F TP_OUT
@@ -169,7 +169,7 @@ iptables -w 2 -t mangle -X TP_MARK
 `
 	if IsIPv6Supported() {
 		commands += `
-ip -6 rule del fwmark 1 table 100 
+ip -6 rule del fwmark 0x40/0xc0 table 100 
 ip -6 route del local ::/0 dev lo table 100
 
 ip6tables -w 2 -t mangle -F TP_OUT
