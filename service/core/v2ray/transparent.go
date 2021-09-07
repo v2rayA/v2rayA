@@ -20,7 +20,7 @@ func DeleteTransparentProxyRules() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (err error) {
+func WriteTransparentProxyRules(preprocess func(c *iptables.SetupCommands)) (err error) {
 	defer func() {
 		if err != nil {
 			log.Warn("WriteTransparentProxyRules: %v", err)
@@ -63,37 +63,16 @@ func WriteTransparentProxyRules(preprocess *func(c *iptables.SetupCommands)) (er
 	return nil
 }
 
-func nextPortsGroup(ports []string, groupSize int) (group []string, remain []string) {
-	var cnt int
-	for i := range ports {
-		if strings.ContainsRune(ports[i], ':') {
-			cnt += 2
-		} else {
-			cnt++
-		}
-		if cnt == groupSize {
-			return ports[:i+1], ports[i+1:]
-		} else if cnt > groupSize {
-			return ports[:i], ports[i:]
-		}
-	}
-	if len(ports) > 0 {
-		return ports, nil
-	}
-	return nil, nil
-}
-
 func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
 	if conf.GetEnvironmentConfig().Lite {
 		return nil
 	}
 	setting := configure.GetSettingNotNil()
-	preprocess := func(c *iptables.SetupCommands) {
-
-	}
 	if (!checkRunning || ProcessManager.Running()) && setting.Transparent != configure.TransparentClose {
 		DeleteTransparentProxyRules()
-		err = WriteTransparentProxyRules(&preprocess)
+		err = WriteTransparentProxyRules(func(c *iptables.SetupCommands) {
+
+		})
 	}
 	return
 }

@@ -179,8 +179,6 @@ github.com/googleapis/gax-go v2.0.0+incompatible/go.mod h1:SFVmujtThgffbyetf+mdk
 github.com/googleapis/gax-go/v2 v2.0.3/go.mod h1:LLvjysVCY1JZeum8Z6l8qUty8fiNwE08qbEPm1M08qg=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
-github.com/gookit/color v1.4.2 h1:tXy44JFSFkKnELV6WaMo/lLfu/meqITX3iAV52do7lk=
-github.com/gookit/color v1.4.2/go.mod h1:fqRyamkC1W8uxl+lxCQxOT09l/vYfZ+QeiX3rKQHCoQ=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gopherjs/gopherjs v0.0.0-20210420193930-a4630ec28c79/go.mod h1:Opf9rtYVq0eTyX+aRVmRO9hE8ERAozcdrBxWG9Q6mkQ=
 github.com/gopherjs/websocket v0.0.0-20191103002815-9a42957e2b3a/go.mod h1:jd+zY81Fx2lC4bfw58+Rflg1srqmedQjbBUejKOjYNY=
@@ -448,6 +446,8 @@ github.com/v2fly/v2ray-core/v4 v4.41.0 h1:6Evcb6y6L2baziwF5j6Ka93yaSQnTCj73jjZoA
 github.com/v2fly/v2ray-core/v4 v4.41.0/go.mod h1:bLmI6lxFf3HNhTch4PmSbuKsUL2ntPG3zZUk4iRbkuQ=
 github.com/v2rayA/beego/v2 v2.0.3 h1:J1k9DAwLfKQX/28cpFdnP7N1WjYUFe/zXr9lsm/c6kI=
 github.com/v2rayA/beego/v2 v2.0.3/go.mod h1:PlQvo/G/eyvrJ1OaZ8rdgp/m0kh9CPIV3X1gSHS9UlE=
+github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41 h1:8DNSAuEGcy3NbaLj2wjAQ5xl05nNyY1Eqk7TzuLeaqE=
+github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41/go.mod h1:hTWxob9jCQKRsADPzl8HTUjiPLIlANFalkyEkEZeEAc=
 github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1 h1:PITT+h0KRoBQwifYJr9vLqkhPH0UyJTonP+sIa5yGa4=
 github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1/go.mod h1:V86dy1jY9VJKMrEinUjUQTclZaQQv+nIXBuFCSf67A4=
 github.com/v2rayA/shadowsocksR v1.0.3 h1:My9AYyeMx8E9x8o00lCdrglOtlM6uuQnGV7LvUxSOuE=
@@ -455,8 +455,6 @@ github.com/v2rayA/shadowsocksR v1.0.3/go.mod h1:umPpjkl+2aMYg2qH8Dd+jV1IdUUcMzr8
 github.com/viant/assertly v0.4.8/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
-github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 h1:QldyIu/L63oPpyvQmHgvgickp1Yw510KJOqX7H24mg8=
-github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778/go.mod h1:2MuV+tbUrU1zIOPMxZ5EncGwgmMJsa+9ucAQZXxsObs=
 github.com/xtaci/kcp-go/v5 v5.6.1/go.mod h1:W3kVPyNYwZ06p79dNwFWQOVFrdcBpDBsdyvK8moQrYo=
 github.com/xtaci/lossyconn v0.0.0-20190602105132-8df528c0c9ae/go.mod h1:gXtu8J62kEgmN++bm9BVICuT/e8yiLI2KFobd/TRFsE=
 github.com/xtaci/smux v1.5.15 h1:6hMiXswcleXj5oNfcJc+DXS8Vj36XX2LaX98udog6Kc=

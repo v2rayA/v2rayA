@@ -36,7 +36,7 @@ func IsIPv6Supported() bool {
 		return false
 	default:
 	}
-	if common.IsInDocker() {
+	if common.IsDocker() {
 		return false
 	}
 	if !nettest.SupportsIPv6() {

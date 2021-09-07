@@ -12,7 +12,6 @@ require (
 	github.com/gocarina/gocsv v0.0.0-20210408192840-02d7211d929d // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/gopacket v1.1.19
-	github.com/gookit/color v1.4.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/json-iterator/go v1.1.11
 	github.com/matoous/go-nanoid v1.5.0
@@ -26,6 +25,7 @@ require (
 	github.com/ugorji/go v1.2.5 // indirect
 	github.com/v2fly/v2ray-core/v4 v4.41.0
 	github.com/v2rayA/beego/v2 v2.0.3
+	github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
 	github.com/v2rayA/shadowsocksR v1.0.3
 	github.com/xujiajun/nutsdb v0.5.0

@@ -31,7 +31,7 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 func GetHttpClientWithv2rayAProxy() (client *http.Client, err error) {
 	host := "127.0.0.1"
 	//是否在docker环境
-	if common.IsInDocker() {
+	if common.IsDocker() {
 		//连接网关，即宿主机的端口
 		out, err := exec.Command("sh", "-c", "ip route list default|head -n 1|awk '{print $3}'").Output()
 		if err == nil {
@@ -46,7 +46,7 @@ func GetHttpClientWithv2rayAProxy() (client *http.Client, err error) {
 func GetHttpClientWithv2rayAPac() (client *http.Client, err error) {
 	host := "127.0.0.1"
 	//是否在docker环境
-	if common.IsInDocker() {
+	if common.IsDocker() {
 		//连接网关，即宿主机的端口
 		out, err := exec.Command("sh", "-c", "ip route|grep default|awk '{print $3}'").Output()
 		if err == nil {

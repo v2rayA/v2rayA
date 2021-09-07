@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -117,9 +118,10 @@ func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
 	return len(a1) >= len(a2), nil
 }
 
-func IsInDocker() bool {
+// IsDocker return true only if the environment SHOULD be docker
+func IsDocker() bool {
 	_, err := os.Stat("/.dockerenv")
-	return !os.IsNotExist(err)
+	return err == nil
 }
 
 // UrlEncoded encodes a string like Javascript's encodeURIComponent()
@@ -169,4 +171,14 @@ func FillEmpty(toFill interface{}, defaultVal interface{}) error {
 		}
 	}
 	return nil
+}
+
+// IsOpenWrt return true only if the operating system SHOULD be openwrt
+func IsOpenWrt() bool {
+	if runtime.GOOS == "linux" {
+		if _, err := os.Stat("/etc/openwrt_release"); err == nil {
+			return true
+		}
+	}
+	return false
 }
