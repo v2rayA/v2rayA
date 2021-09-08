@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"net"
 	"net/url"
 	"strconv"
@@ -45,11 +46,11 @@ nextLine:
 			if u, err := url.Parse(dns.Val); err == nil {
 				switch u.Scheme {
 				case "https":
-					if v2ray.CheckDohSupported() != nil {
+					if service.CheckDohSupported() != nil {
 						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
 					}
 				case "tcp":
-					if strings.HasPrefix(u.Scheme, "tcp") && v2ray.CheckTcpDnsSupported() != nil {
+					if strings.HasPrefix(u.Scheme, "tcp") && service.CheckTcpDnsSupported() != nil {
 						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
 					}
 				//case "quic":

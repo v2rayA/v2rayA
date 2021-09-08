@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net/http"
 )
@@ -29,7 +29,7 @@ func GetVersion(ctx *gin.Context) {
 				}
 			}
 		}
-		err = v2ray.CheckDohSupported()
+		err = service.CheckDohSupported()
 	}
 	if err == nil {
 		dohValid = "yes"
@@ -43,11 +43,11 @@ func GetVersion(ctx *gin.Context) {
 		"version":          conf.Version,
 		"foundNew":         conf.FoundNew,
 		"remoteVersion":    conf.RemoteVersion,
-		"serviceValid":     v2ray.IsV2rayServiceValid(),
+		"serviceValid":     service.IsV2rayServiceValid(),
 		"dohValid":         dohValid,
 		"vlessValid":       vlessValid,
 		"lite":             lite,
-		"loadBalanceValid": v2ray.CheckObservatorySupported() == nil,
+		"loadBalanceValid": service.CheckObservatorySupported() == nil,
 	})
 }
 

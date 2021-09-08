@@ -1,4 +1,4 @@
-package v2ray
+package service
 
 import (
 	"bytes"
@@ -94,4 +94,8 @@ func CheckQueryStrategySupported() (err error) {
 
 func CheckMemconservativeSupported() (err error) {
 	return isVersionSatisfied("4.39.0", true)
+}
+
+func CheckGrpcSupported() (err error) {
+	return isVersionSatisfied("4.36.0", false)
 }

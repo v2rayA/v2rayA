@@ -13,6 +13,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	service2 "github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -74,7 +75,7 @@ func checkTProxySupportability() {
 		return
 	}
 	//检查tproxy是否可以启用
-	if err := v2ray.CheckAndProbeTProxy(); err != nil {
+	if err := service2.CheckAndProbeTProxy(); err != nil {
 		log.Info("Cannot load TPROXY module: %v", err)
 	}
 }

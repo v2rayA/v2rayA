@@ -9,6 +9,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
@@ -80,7 +81,7 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 				if len(ips) > 0 {
 					ips = v2ray.FilterIPs(ips)
 					mu.Lock()
-					if v2ray.CheckHostsListSupported() == nil {
+					if service.CheckHostsListSupported() == nil {
 						tmpl.DNS.Hosts[addr] = ips
 					} else {
 						tmpl.DNS.Hosts[addr] = ips[0]
