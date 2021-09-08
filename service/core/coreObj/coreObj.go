@@ -7,7 +7,7 @@ type APIObject struct {
 type Observatory struct {
 	SubjectSelector []string `json:"subjectSelector"`
 	ProbeURL        string   `json:"probeURL,omitempty"`
-	ProbeInterval   string   `json:"ProbeInterval,omitempty"`
+	ProbeInterval   string   `json:"probeInterval,omitempty"`
 }
 type Balancer struct {
 	Tag      string           `json:"tag"`
