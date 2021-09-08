@@ -63,11 +63,15 @@ func WriteTransparentProxyRules(preprocess func(c *iptables.SetupCommands)) (err
 	return nil
 }
 
-func CheckAndSetupTransparentProxy(checkRunning bool) (err error) {
+func CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting) (err error) {
 	if conf.GetEnvironmentConfig().Lite {
 		return nil
 	}
-	setting := configure.GetSettingNotNil()
+	if setting != nil {
+		setting.FillEmpty()
+	} else {
+		setting = configure.GetSettingNotNil()
+	}
 	if (!checkRunning || ProcessManager.Running()) && setting.Transparent != configure.TransparentClose {
 		DeleteTransparentProxyRules()
 		err = WriteTransparentProxyRules(func(c *iptables.SetupCommands) {

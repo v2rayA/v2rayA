@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
@@ -27,7 +28,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	//暂时关闭透明代理
 	v2ray.CheckAndStopTransparentProxy()
 	defer func() {
-		if e := v2ray.CheckAndSetupTransparentProxy(true); e != nil {
+		if e := v2ray.CheckAndSetupTransparentProxy(true, nil); e != nil {
 			err = fmt.Errorf("Ping: %v: %v", e, err)
 		}
 	}()
@@ -53,8 +54,12 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 }
 
 func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
-	tmpl.DNS = new(coreObj.DNS)
-	tmpl.DNS.Hosts = make(coreObj.Hosts)
+	if tmpl.DNS == nil {
+		tmpl.DNS = new(coreObj.DNS)
+	}
+	if tmpl.DNS.Hosts == nil {
+		tmpl.DNS.Hosts = make(coreObj.Hosts)
+	}
 	const concurrency = 5
 	var mu sync.Mutex
 	var limit = make(chan struct{}, concurrency)
@@ -90,6 +95,8 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool) ([]*configure.Which, error) {
 	specialMode.StopDNSSupervisor()
+	v2ray.CheckAndStopTransparentProxy()
+
 	var whiches = configure.NewWhiches(which)
 	for i := len(which) - 1; i >= 0; i-- {
 		if which[i].TYPE == configure.SubscriptionType { //去掉subscriptionType
@@ -111,8 +118,29 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		vms[i] = sr.ServerObj
 	}
 	//modify the template based on current configuration
-	tmpl := v2ray.NewEmptyTemplate()
-	tmpl.SetAPI()
+	var (
+		tmpl *v2ray.Template
+		err  error
+	)
+	if v2rayRunning {
+		tmpl, err = v2ray.NewTemplateFromConnectedServers(nil)
+		if err != nil {
+			if !errors.Is(err, v2ray.NoConnectedServerErr) {
+				log.Warn("NewTemplateFromConnectedServers: %v", err)
+			}
+		}
+	}
+	if tmpl == nil {
+		tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
+			RulePortMode:  configure.WhitelistMode,
+			TcpFastOpen:   configure.Default,
+			MuxOn:         configure.No,
+			Transparent:   configure.TransparentClose,
+			SpecialMode:   configure.SpecialModeNone,
+			AntiPollution: configure.AntipollutionClosed,
+		})
+		tmpl.SetAPI()
+	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
 	var toClose []net.Listener
@@ -147,7 +175,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			pluginPort = port
 			pluginPortMap[i] = port
 		}
-		err := tmpl.AddMappingOutbound(v, v2rayInboundPort, false, pluginPort, "socks")
+		err := tmpl.InsertMappingOutbound(v, v2rayInboundPort, false, pluginPort, "socks")
 		if err != nil {
 			if strings.Contains(err.Error(), "unsupported") {
 				which[i].Latency = "UNSUPPORTED PROTOCOL"

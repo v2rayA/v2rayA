@@ -1,6 +1,10 @@
 package configure
 
-import "github.com/v2rayA/v2rayA/core/ipforward"
+import (
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/ipforward"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
+)
 
 type Setting struct {
 	RulePortMode                       RulePortMode    `json:"pacMode"`
@@ -36,7 +40,12 @@ func NewSetting() (setting *Setting) {
 		TransparentType:                    TransparentRedirect,
 		AntiPollution:                      AntipollutionClosed,
 	}
+}
 
+func (s *Setting) FillEmpty() {
+	if err := common.FillEmpty(s, GetSettingNotNil()); err != nil {
+		log.Warn("FillEmpty: %v:", err)
+	}
 }
 
 type CustomPac struct {

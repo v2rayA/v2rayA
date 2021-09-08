@@ -1,5 +1,5 @@
-//go:build !linux
-// +build !linux
+//go:build !linux && !openbsd && !freebsd
+// +build !linux,!openbsd,!freebsd
 
 package plugin
 

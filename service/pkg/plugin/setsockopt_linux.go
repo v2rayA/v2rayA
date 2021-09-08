@@ -1,3 +1,6 @@
+//go:build linux || openbsd || freebsd
+// +build linux openbsd freebsd
+
 package plugin
 
 import (
@@ -5,13 +8,27 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"golang.org/x/sys/unix"
 	"net"
+	"runtime"
 	"syscall"
 )
+
+var fwmarkIoctl int
+
+func init() {
+	switch runtime.GOOS {
+	case "linux", "android":
+		fwmarkIoctl = 36 /* unix.SO_MARK */
+	case "freebsd":
+		fwmarkIoctl = 0x1015 /* unix.SO_USER_COOKIE */
+	case "openbsd":
+		fwmarkIoctl = 0x1021 /* unix.SO_RTABLE */
+	}
+}
 
 func SoMarkControl(c syscall.RawConn) error {
 	return c.Control(func(fd uintptr) {
 		//TODO: force to set 0xff. any chances to customize this value?
-		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0x80)
+		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, fwmarkIoctl, 0x80)
 		if err != nil {
 			return
 		}
@@ -19,7 +36,7 @@ func SoMarkControl(c syscall.RawConn) error {
 }
 func BindControl(c syscall.RawConn, laddr string, lport uint32) error {
 	return c.Control(func(fd uintptr) {
-		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, 0x80)
+		err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, fwmarkIoctl, 0x80)
 		if err != nil {
 			log.Warn("control: %s", err)
 			return
