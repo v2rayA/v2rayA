@@ -18,6 +18,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
@@ -252,9 +253,9 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 			if firstUDPSupportedOutboundTag != "" {
 				external = []string{"8.8.8.8 -> " + firstUDPSupportedOutboundTag, "1.1.1.1 -> " + firstUDPSupportedOutboundTag}
 			} else {
-				if err := CheckTcpDnsSupported(); err == nil {
+				if err := service.CheckTcpDnsSupported(); err == nil {
 					external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
-				} else if err = CheckDohSupported(); err == nil {
+				} else if err = service.CheckDohSupported(); err == nil {
 					external = []string{"https://1.1.1.1/dns-query -> " + firstOutboundTag, "https://dns.google/dns-query -> " + firstOutboundTag}
 				} else {
 					// compromise
@@ -343,7 +344,7 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	domainsToLookup = common.Deduplicate(domainsToLookup)
 	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
-		if CheckDohSupported() == nil {
+		if service.CheckDohSupported() == nil {
 			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
 				Address:      "https://doh.pub/dns-query",
 				Domains:      domainsToLookup,
@@ -381,7 +382,7 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 			t.DNS.Hosts = make(coreObj.Hosts)
 		}
 		ips = FilterIPs(ips)
-		if CheckHostsListSupported() == nil {
+		if service.CheckHostsListSupported() == nil {
 			t.DNS.Hosts[domain] = ips
 		} else {
 			t.DNS.Hosts[domain] = ips[0]
@@ -971,6 +972,9 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 		vlessGrpc := &t.Inbounds[3]
 		vlessGrpc.Port = p.VlessGrpc
 		if p.VlessGrpc > 0 {
+			if err := service.CheckGrpcSupported(); err != nil {
+				return fmt.Errorf("not support grpc: %w", err)
+			}
 			if err := SetVlessGrpcInbound(vlessGrpc); err != nil {
 				return err
 			}
@@ -1098,7 +1102,7 @@ func (t *Template) setGroupRouting(outboundName2VmessInfos map[string][]serverOb
 		})
 
 		if strategy == "leastPing" {
-			if err = CheckObservatorySupported(); err != nil {
+			if err = service.CheckObservatorySupported(); err != nil {
 				return fmt.Errorf("not support observatory based load balance: %w", err)
 			}
 			if t.Observatory == nil {
@@ -1199,7 +1203,7 @@ func (t *Template) resolveOutbounds(
 		for _, sInfo := range sInfos {
 			if len(outboundName2VmessInfos[sInfo.OutboundName]) > 1 {
 				// balancer
-				if err = CheckBalancerSupported(); err != nil {
+				if err = service.CheckBalancerSupported(); err != nil {
 					return nil, nil, err
 				}
 				if !usedByBalancer {
@@ -1395,7 +1399,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = ""
-	} else if logLevel >= log.ParseLevel("info") && CheckLogNoneSupported() == nil {
+	} else if logLevel >= log.ParseLevel("info") && service.CheckLogNoneSupported() == nil {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = "none"
@@ -1403,7 +1407,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		t.Log = nil
 	}
 	// fakedns
-	if specialMode.ShouldUseFakeDns() && CheckFakednsAutoConfigureSupported() != nil {
+	if specialMode.ShouldUseFakeDns() && service.CheckFakednsAutoConfigureSupported() != nil {
 		t.FakeDns = &coreObj.FakeDns{
 			IpPool:   "198.18.0.0/15",
 			PoolSize: 65535,

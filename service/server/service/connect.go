@@ -5,6 +5,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -21,7 +22,7 @@ func StartV2ray() (err error) {
 }
 
 func IsClassicMode() bool {
-	supportLoadBalance := v2ray.CheckObservatorySupported() == nil
+	supportLoadBalance := service.CheckObservatorySupported() == nil
 	singleOutbound := len(configure.GetOutbounds()) <= 1
 	return singleOutbound && !supportLoadBalance
 }
@@ -98,7 +99,7 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}()
 	//save the result of connecting to database
-	supportLoadBalance := v2ray.CheckObservatorySupported() == nil
+	supportLoadBalance := service.CheckObservatorySupported() == nil
 	if !supportLoadBalance {
 		if err = configure.ClearConnects(which.Outbound); err != nil {
 			return

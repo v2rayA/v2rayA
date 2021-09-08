@@ -6,6 +6,7 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -147,7 +148,7 @@ func StartCoreProcess() (*os.Process, error) {
 		"V2RAY_LOCATION_ASSET="+assetDir,
 		"XRAY_LOCATION_ASSET="+assetDir,
 	)
-	if CheckMemconservativeSupported() == nil {
+	if service.CheckMemconservativeSupported() == nil {
 		memstat, err := mem.VirtualMemory()
 		if err != nil {
 			log.Warn("cannot get memory info: %v", err)
