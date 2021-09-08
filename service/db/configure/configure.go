@@ -20,7 +20,6 @@ type Configure struct {
 	Setting          *Setting             `json:"setting"`
 	Accounts         map[string]string    `json:"accounts"`
 	Ports            Ports                `json:"ports"`
-	PortWhiteList    PortWhiteList        `json:"portWhiteList"`
 	InternalDnsList  *string              `json:"internalDnsList"`
 	ExternalDnsList  *string              `json:"externalDnsList"`
 	RoutingA         *string              `json:"routingA"`
@@ -39,7 +38,6 @@ func New() *Configure {
 			HttpWithPac: 20172,
 			VlessGrpc:   0,
 		},
-		PortWhiteList:   PortWhiteList{},
 		InternalDnsList: nil,
 		ExternalDnsList: nil,
 		RoutingA:        nil,
@@ -96,9 +94,6 @@ func SetConfigure(cfg *Configure) error {
 	if err := SetExternalDnsList(cfg.ExternalDnsList); err != nil {
 		return err
 	}
-	if err := SetPortWhiteList(&cfg.PortWhiteList); err != nil {
-		return err
-	}
 	if err := OverwriteConnects(NewWhiches(cfg.ConnectedServers)); err != nil {
 		return err
 	}
@@ -131,9 +126,6 @@ func SetSetting(setting *Setting) (err error) {
 }
 func SetPorts(ports *Ports) (err error) {
 	return db.Set("system", "ports", ports)
-}
-func SetPortWhiteList(portWhiteList *PortWhiteList) (err error) {
-	return db.Set("system", "portWhiteList", portWhiteList.Compressed())
 }
 func SetInternalDnsList(dnsList *string) (err error) {
 	if dnsList == nil {
@@ -264,11 +256,6 @@ func GetPortsNotNil() *Ports {
 		p.VlessGrpc = 0
 	}
 	return p
-}
-func GetPortWhiteListNotNil() *PortWhiteList {
-	r := new(PortWhiteList)
-	_ = db.Get("system", "portWhiteList", r)
-	return r
 }
 func GetExternalDnsListNotNil() (list []string) {
 	r := new(string)

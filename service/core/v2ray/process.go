@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/v2rayA/v2rayA/core/serverObj"
@@ -16,6 +17,8 @@ import (
 	"strings"
 	"time"
 )
+
+var NoConnectedServerErr = fmt.Errorf("no selected servers")
 
 // Process is a v2ray-core process
 type Process struct {
@@ -205,29 +208,40 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 	return serverObjs, serverInfos, nil
 }
 
-func UpdateV2RayConfig() (err error) {
+func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template, err error) {
 	//read the database and convert to the v2ray-core template
 	serverObjs, serverInfos, err := getConnectedServerObjs()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(serverObjs) == 0 {
-		//no servers are selected, which means to stop the v2ray-core
-		ProcessManager.Stop(true)
-		return nil
+		return nil, NoConnectedServerErr
 	}
 	var pluginPorts map[int]int
 	if pluginPorts, err = findAvailablePluginPorts(serverObjs); err != nil {
-		return err
+		return nil, err
 	}
 	for i := range serverInfos {
 		if port, ok := pluginPorts[i]; ok {
 			serverInfos[i].PluginPort = port
 		}
 	}
-	tmpl, err := NewTemplate(serverInfos)
+	tmpl, err = NewTemplate(serverInfos, setting)
 	if err != nil {
-		return
+		return nil, err
+	}
+	return tmpl, nil
+}
+
+func UpdateV2RayConfig() (err error) {
+	tmpl, err := NewTemplateFromConnectedServers(nil)
+	if err != nil {
+		if errors.Is(err, NoConnectedServerErr) {
+			//no servers are selected, which means to stop the v2ray-core
+			ProcessManager.Stop(true)
+			return nil
+		}
+		return err
 	}
 	err = ProcessManager.Start(tmpl)
 	if err != nil {

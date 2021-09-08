@@ -49,8 +49,7 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 		return fmt.Errorf("Please sync datetime first. Your datetime is %v, and the correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
 	}
 
-	setting := configure.GetSettingNotNil()
-	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
+	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
 		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
 	}
 
@@ -61,7 +60,7 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 }
 
 func (m *CoreProcessManager) afterStart(t *Template) (err error) {
-	if err = CheckAndSetupTransparentProxy(true); err != nil {
+	if err = CheckAndSetupTransparentProxy(true, t.Setting); err != nil {
 		m.Stop(true)
 		return
 	}

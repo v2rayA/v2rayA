@@ -52,6 +52,7 @@ type Template struct {
 	OutboundTags []string        `json:"-"`
 	ApiCloses    []func()        `json:"-"`
 	ApiPort      int             `json:"-"`
+	Setting      *configure.Setting
 }
 
 func (t *Template) Close() error {
@@ -413,7 +414,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 	t.Routing.Rules = append(t.Routing.Rules,
 		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
 	)
-	setting := configure.GetSettingNotNil()
+	setting := t.Setting
 	if setting.AntiPollution != configure.AntipollutionClosed {
 		dnsOut := coreObj.RoutingRule{ // hijack traffic to port 53
 			Type:        "field",
@@ -759,6 +760,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	})
 	return nil
 }
+
 func (t *Template) setTransparentRouting(setting *configure.Setting) (err error) {
 	switch setting.Transparent {
 	case configure.TransparentProxy:
@@ -823,7 +825,7 @@ func (t *Template) setOutboundSockopt(setting *configure.Setting) {
 			tmp := setting.TcpFastOpen == configure.Yes
 			t.Outbounds[i].StreamSettings.Sockopt.TCPFastOpen = &tmp
 		}
-		checkAndSetMark(&t.Outbounds[i], mark)
+		t.checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }
 func (t *Template) setDualStack(setting *configure.Setting) {
@@ -1363,7 +1365,7 @@ func (t *Template) setVlessGrpcRouting() {
 	}
 }
 
-func NewTemplate(serverInfos []serverInfo) (t *Template, err error) {
+func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Template, err error) {
 	vmessInfo2ServerInfos, outboundName2VmessInfos := RefineOutboundInfos(serverInfos)
 	ps2OutboundNames := make(map[string][]string)
 	for outboundName, vis := range outboundName2VmessInfos {
@@ -1371,7 +1373,12 @@ func NewTemplate(serverInfos []serverInfo) (t *Template, err error) {
 			ps2OutboundNames[vi.GetName()] = append(ps2OutboundNames[vi.GetName()], outboundName)
 		}
 	}
-	setting := configure.GetSettingNotNil()
+	if setting != nil {
+		setting.FillEmpty()
+	} else {
+		setting = configure.GetSettingNotNil()
+	}
+
 	var tmplJson Template
 	// read template json
 	raw := []byte(TemplateJson)
@@ -1381,6 +1388,7 @@ func NewTemplate(serverInfos []serverInfo) (t *Template, err error) {
 	}
 	tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
 	t = &tmplJson
+	t.Setting = setting
 	// log
 	t.Log = new(coreObj.Log)
 	if logLevel := log.ParseLevel(conf.GetEnvironmentConfig().LogLevel); logLevel >= log.ParseLevel("debug") {
@@ -1601,14 +1609,20 @@ func WriteV2rayConfig(content []byte) (err error) {
 	return
 }
 
-func NewEmptyTemplate() (t *Template) {
+func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 	t = new(Template)
 	t.CoreVersion, _ = where.GetV2rayServiceVersion()
+	if setting != nil {
+		setting.FillEmpty()
+	} else {
+		setting = configure.GetSettingNotNil()
+	}
+	t.Setting = setting
 	return t
 }
 
-func checkAndSetMark(o *coreObj.OutboundObject, mark int) {
-	if configure.GetSettingNotNil().Transparent == configure.TransparentClose {
+func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
+	if t.Setting.Transparent == configure.TransparentClose {
 		return
 	}
 	if o.StreamSettings == nil {
@@ -1620,7 +1634,7 @@ func checkAndSetMark(o *coreObj.OutboundObject, mark int) {
 	o.StreamSettings.Sockopt.Mark = &mark
 }
 
-func (t *Template) AddMappingOutbound(o serverObj.ServerObj, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
+func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
 	if t.CoreVersion == "" {
 		t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	}
@@ -1640,7 +1654,7 @@ func (t *Template) AddMappingOutbound(o serverObj.ServerObj, inboundPort string,
 		}
 	}
 	var mark = 0x80
-	checkAndSetMark(&c.CoreOutbound, mark)
+	t.checkAndSetMark(&c.CoreOutbound, mark)
 	t.Outbounds = append(t.Outbounds, c.CoreOutbound)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
