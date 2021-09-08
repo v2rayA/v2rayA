@@ -48,12 +48,12 @@ type Template struct {
 	Observatory *coreObj.Observatory `json:"observatory,omitempty"`
 	API         *coreObj.APIObject   `json:"api,omitempty"`
 
-	CoreVersion  string          `json:"-"`
-	Plugins      []plugin.Server `json:"-"`
-	OutboundTags []string        `json:"-"`
-	ApiCloses    []func()        `json:"-"`
-	ApiPort      int             `json:"-"`
-	Setting      *configure.Setting
+	CoreVersion  string             `json:"-"`
+	Plugins      []plugin.Server    `json:"-"`
+	OutboundTags []string           `json:"-"`
+	ApiCloses    []func()           `json:"-"`
+	ApiPort      int                `json:"-"`
+	Setting      *configure.Setting `json:"-"`
 }
 
 func (t *Template) Close() error {
