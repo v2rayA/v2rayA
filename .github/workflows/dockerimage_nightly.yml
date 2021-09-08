@@ -18,6 +18,8 @@ jobs:
           echo ::set-output name=image::${IMAGE}
           echo ::set-output name=tag::${TAG}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
