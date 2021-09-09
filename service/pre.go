@@ -280,7 +280,7 @@ func hello() {
 }
 
 func updateSubscriptions() {
-	subs := configure.GetSubscriptions()
+	subs := configure.GetSubscriptionsV2()
 	lenSubs := len(subs)
 	control := make(chan struct{}, 2) //并发限制同时更新2个订阅
 	wg := new(sync.WaitGroup)
