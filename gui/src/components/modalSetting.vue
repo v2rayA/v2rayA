@@ -66,7 +66,7 @@
           <option v-show="!lite" value="gfwlist">{{
             $t("setting.options.gfwlist")
           }}</option>
-          <option v-show="!lite && showTransparentModeRoutingPac" value="pac">{{
+          <option v-show="!lite" value="pac">{{
             $t("setting.options.sameAsPacMode")
           }}</option>
         </b-select>
@@ -120,10 +120,10 @@
             $t("setting.options.whitelistCn")
           }}</option>
           <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
-          <!--          <option v-show="showTransparentModeRoutingPac" value="custom">{{-->
+          <!--          <option value="custom">{{-->
           <!--            $t("setting.options.customRouting")-->
           <!--          }}</option>-->
-          <option v-show="showRoutingA" value="routingA">RoutingA</option>
+          <option value="routingA">RoutingA</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
           <b-button
@@ -144,7 +144,7 @@
         </template>
         <p></p>
       </b-field>
-      <b-field v-show="showAntipollution" label-position="on-border">
+      <b-field label-position="on-border">
         <template slot="label">
           {{ $t("setting.preventDnsSpoofing") }}
           <b-tooltip
@@ -161,9 +161,7 @@
           </b-tooltip>
         </template>
         <b-select v-model="antipollution" expanded class="left-border">
-          <option v-if="showAntipollutionClosed" value="closed">{{
-            $t("setting.options.closed")
-          }}</option>
+          <option value="closed">{{ $t("setting.options.closed") }}</option>
           <option value="none">{{
             $t("setting.options.antiDnsHijack")
           }}</option>
@@ -173,9 +171,7 @@
           <option v-show="showDoh" value="doh">{{
             $t("setting.options.doh")
           }}</option>
-          <option v-show="showAdvanced" value="advanced">{{
-            $t("setting.options.advanced")
-          }}</option>
+          <option value="advanced">{{ $t("setting.options.advanced") }}</option>
         </b-select>
         <b-button
           v-if="antipollution === 'advanced'"
@@ -348,18 +344,18 @@
 </template>
 
 <script>
-import { handleResponse, isIntranet } from "@/assets/js/utils";
+import { handleResponse } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
 import CusBInput from "./input/Input.vue";
-import { isVersionGreaterEqual, parseURL, toInt } from "../assets/js/utils";
+import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
 import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalDnsSetting from "./modalDnsSetting";
 import axios from "../plugins/axios";
-import { waitingConnected } from "../assets/js/networkInspect";
+import { waitingConnected } from "@/assets/js/networkInspect";
 
 export default {
   name: "ModalSetting",
@@ -386,15 +382,8 @@ export default {
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
-    showAntipollution: false,
-    showSpecialMode: false,
-    showAdvanced: false,
-    showDns: false,
-    showDoh: false,
-    showTransparentModeRoutingPac: false,
-    showRoutingA: false,
-    showAntipollutionClosed: false,
-    showDnsForceMode: false
+    showSpecialMode: true,
+    showDoh: false
   }),
   computed: {
     lite() {
@@ -441,41 +430,7 @@ export default {
           this.subscriptionAutoUpdateTime
         );
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
-        this.showAntipollution = isVersionGreaterEqual(
-          localStorage["version"],
-          "0.6.1"
-        );
-        this.showSpecialMode = isVersionGreaterEqual(
-          localStorage["version"],
-          "1.4.0"
-        );
-        this.showAdvanced = isVersionGreaterEqual(
-          localStorage["version"],
-          "1.4.0"
-        );
-        this.showDoh =
-          isVersionGreaterEqual(localStorage["version"], "0.6.2") &&
-          localStorage["dohValid"] === "yes";
-        this.showDnsForceMode = isVersionGreaterEqual(
-          localStorage["version"],
-          "1.1.3"
-        );
-        this.showDns = isVersionGreaterEqual(
-          localStorage["version"],
-          "0.7.0.6"
-        );
-        this.showTransparentModeRoutingPac = isVersionGreaterEqual(
-          localStorage["version"],
-          "0.6.4"
-        );
-        this.showAntipollutionClosed = isVersionGreaterEqual(
-          localStorage["version"],
-          "0.7.0.2"
-        );
-        this.showRoutingA = isVersionGreaterEqual(
-          localStorage["version"],
-          "0.6.8"
-        );
+        this.showDoh = localStorage["dohValid"] === "yes";
         if (this.lite) {
           this.transparent = "close";
           this.showSpecialMode = false;
