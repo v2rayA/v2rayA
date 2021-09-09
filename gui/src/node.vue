@@ -686,11 +686,7 @@
 </template>
 
 <script>
-import {
-  locateServer,
-  handleResponse,
-  isVersionGreaterEqual
-} from "@/assets/js/utils";
+import { locateServer, handleResponse } from "@/assets/js/utils";
 import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
 import jsqrcode from "./assets/js/jsqrcode";
@@ -1547,23 +1543,6 @@ export default {
       });
     },
     handleClickModifySubscription(row) {
-      if (!isVersionGreaterEqual(localStorage["version"], "0.5.0")) {
-        this.$buefy.snackbar.open({
-          message: this.$t("version.higherVersionNeeded"),
-          type: "is-warning",
-          queue: false,
-          position: "is-top",
-          duration: 3000,
-          actionText: this.$t("operations.helpManual"),
-          onAction: () => {
-            window.open(
-              "https://github.com/v2rayA/v2rayA#%E4%BD%BF%E7%94%A8",
-              "_blank"
-            );
-          }
-        });
-        return;
-      }
       this.which = Object.assign({}, row);
       this.which.servers = [];
       this.showModalSubscription = true;

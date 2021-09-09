@@ -155,7 +155,7 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
-import { isVersionGreaterEqual, parseURL } from "./assets/js/utils";
+import { parseURL } from "./assets/js/utils";
 import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
 
@@ -244,12 +244,7 @@ export default {
           });
         } else {
           localStorage["lite"] = res.data.data.lite;
-          localStorage["dohValid"] = res.data.data.dohValid;
           localStorage["vlessValid"] = res.data.data.vlessValid;
-          localStorage["observatorySidebarValid"] = isVersionGreaterEqual(
-            localStorage["version"],
-            "1.4.4"
-          );
           localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
         }
       }
