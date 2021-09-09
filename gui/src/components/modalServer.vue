@@ -999,7 +999,7 @@ export default {
             "": "none",
             ws: "websocket"
           };
-          o.obfs = obfsMap[u.params.type];
+          o.obfs = obfsMap[u.params.type || ""];
           if (o.obfs === "ws") {
             o.obfs = "websocket";
           }
