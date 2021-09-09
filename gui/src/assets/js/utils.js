@@ -202,6 +202,5 @@ export {
   handleResponse,
   parseURL,
   generateURL,
-  isIntranet,
   toInt
 };
