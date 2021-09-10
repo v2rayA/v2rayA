@@ -1076,7 +1076,7 @@ func (t *Template) setWhitelistRouting(whitelist []Addr) {
 	}
 }
 
-func (t *Template) setGroupRouting(outboundName2VmessInfos map[string][]serverObj.ServerObj) (err error) {
+func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
 	outbounds := t.outNames()
 	mSubjectSelector := make(map[string]struct{})
 	for outbound, isGroup := range outbounds {
@@ -1088,7 +1088,7 @@ func (t *Template) setGroupRouting(outboundName2VmessInfos map[string][]serverOb
 		interval := 10 * time.Second
 		var selector []string
 
-		for _, vi := range outboundName2VmessInfos[outbound] {
+		for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
 			selector = append(selector, Ps2OutboundTag(vi.GetName()))
 		}
 
@@ -1132,45 +1132,80 @@ func (t *Template) setGroupRouting(outboundName2VmessInfos map[string][]serverOb
 	return nil
 }
 
-func RefineOutboundInfos(serverInfos []serverInfo) (
-	vmessInfo2ServerInfos map[serverObj.ServerObj][]*serverInfo,
-	outboundName2VmessInfos map[string][]serverObj.ServerObj,
-) {
+type ServerData struct {
+	RawServerInfos          []serverInfo
+	ServerInfos             []serverInfo
+	Link2ServerInfos        map[string][]*serverInfo
+	Link2ServerObj          map[string]serverObj.ServerObj
+	OutboundName2ServerObjs map[string][]serverObj.ServerObj
+}
+
+func NewServerData(serverInfos []serverInfo) (serverData *ServerData) {
 	// guarantee that an v2ray outbound is reusable for balancers
-	vmessInfo2ServerInfos = make(map[serverObj.ServerObj][]*serverInfo)
+	var rawServerInfos = make([]serverInfo, len(serverInfos))
+	copy(rawServerInfos, serverInfos)
+	link2ServerInfos := make(map[string][]*serverInfo)
+	link2ServerObj := make(map[string]serverObj.ServerObj)
 	for i, info := range serverInfos {
-		vmessInfo2ServerInfos[info.Info] = append(vmessInfo2ServerInfos[info.Info], &serverInfos[i])
+		link := info.Info.ExportToURL()
+		link2ServerObj[link] = info.Info
+		link2ServerInfos[link] = append(link2ServerInfos[link], &serverInfos[i])
 	}
 	// make ps unique
-	vmessInfo2OutboundInfoAfter := make(map[serverObj.ServerObj][]*serverInfo)
+	link2ServerInfosAfter := make(map[string][]*serverInfo)
 	mPsRenaming := make(map[string]struct{})
-	for vi, ois := range vmessInfo2ServerInfos {
-		ps := vi.GetName()
+	for link, ois := range link2ServerInfos {
+		ps := link2ServerObj[link].GetName()
 		cnt := 2
 		for {
 			if _, ok := mPsRenaming[ps]; !ok {
 				mPsRenaming[ps] = struct{}{}
-				vi.SetName(ps)
-				vmessInfo2OutboundInfoAfter[vi] = ois
+				link2ServerObj[link].SetName(ps)
+				link2ServerInfosAfter[link] = ois
 				break
 			}
-			ps = fmt.Sprintf("%v(%v)", vi.GetName(), strconv.Itoa(cnt))
+			ps = fmt.Sprintf("%v(%v)", link2ServerObj[link].GetName(), strconv.Itoa(cnt))
 			cnt++
 		}
 	}
-	outboundName2VmessInfos = make(map[string][]serverObj.ServerObj)
-	for vi, ois := range vmessInfo2OutboundInfoAfter {
+
+	outboundName2ServerObjs := make(map[string][]serverObj.ServerObj)
+	for link, ois := range link2ServerInfosAfter {
 		for _, oi := range ois {
-			outboundName2VmessInfos[oi.OutboundName] = append(outboundName2VmessInfos[oi.OutboundName], vi)
+			outboundName2ServerObjs[oi.OutboundName] = append(outboundName2ServerObjs[oi.OutboundName], link2ServerObj[link])
 		}
 	}
-	return vmessInfo2OutboundInfoAfter, outboundName2VmessInfos
+
+	return &ServerData{
+		RawServerInfos:          rawServerInfos,
+		ServerInfos:             serverInfos,
+		Link2ServerInfos:        link2ServerInfosAfter,
+		Link2ServerObj:          link2ServerObj,
+		OutboundName2ServerObjs: outboundName2ServerObjs,
+	}
+}
+
+func (sd *ServerData) ServerObj2ServerInfos() map[serverObj.ServerObj][]*serverInfo {
+	m := make(map[serverObj.ServerObj][]*serverInfo)
+	for link, sObj := range sd.Link2ServerObj {
+		m[sObj] = sd.Link2ServerInfos[link]
+	}
+	return m
+}
+
+func (sd *ServerData) Ps2OutboundNames() map[string][]string {
+	ps2OutboundNames := make(map[string][]string)
+	for outboundName, objs := range sd.OutboundName2ServerObjs {
+		for _, vi := range objs {
+			ps2OutboundNames[vi.GetName()] = append(ps2OutboundNames[vi.GetName()], outboundName)
+		}
+	}
+	return ps2OutboundNames
 }
 
 func (t *Template) resolveOutbounds(
-	serverInfos []serverInfo,
-	vmessInfo2ServerInfos map[serverObj.ServerObj][]*serverInfo,
-	outboundName2VmessInfos map[string][]serverObj.ServerObj) (supportUDP map[string]bool, outboundTags []string, err error) {
+	serverData *ServerData,
+) (supportUDP map[string]bool, outboundTags []string, err error) {
 
 	supportUDP = make(map[string]bool)
 	type _outbound struct {
@@ -1180,14 +1215,13 @@ func (t *Template) resolveOutbounds(
 		plugin   plugin.Server
 	}
 	serverInfo2Index := make(map[*serverInfo]int)
-	for i := range serverInfos {
-		serverInfo2Index[&serverInfos[i]] = i
+	for i := range serverData.ServerInfos {
+		serverInfo2Index[&serverData.ServerInfos[i]] = i
 	}
 	// keep order with serverInfos
-	outboundTags = make([]string, len(serverInfos))
+	outboundTags = make([]string, len(serverData.ServerInfos))
 	var outbounds []_outbound
-	for vmessinfo, sInfos := range vmessInfo2ServerInfos {
-		vi := vmessinfo
+	for obj, sInfos := range serverData.ServerObj2ServerInfos() {
 		var (
 			usedByBalancer     bool
 			balancerPluginPort int
@@ -1201,7 +1235,7 @@ func (t *Template) resolveOutbounds(
 		}
 		var balancers []balancer
 		for _, sInfo := range sInfos {
-			if len(outboundName2VmessInfos[sInfo.OutboundName]) > 1 {
+			if len(serverData.OutboundName2ServerObjs[sInfo.OutboundName]) > 1 {
 				// balancer
 				if err = service.CheckBalancerSupported(); err != nil {
 					return nil, nil, err
@@ -1217,7 +1251,7 @@ func (t *Template) resolveOutbounds(
 			} else {
 				// pure outbound
 				outboundTag := sInfo.OutboundName
-				c, err := vi.Configuration(serverObj.PriorInfo{
+				c, err := obj.Configuration(serverObj.PriorInfo{
 					CoreVersion: t.CoreVersion,
 					Tag:         outboundTag,
 					PluginPort:  sInfo.PluginPort,
@@ -1244,8 +1278,8 @@ func (t *Template) resolveOutbounds(
 		}
 		if usedByBalancer {
 			// the v2ray outbound is shared by balancers
-			outboundTag := Ps2OutboundTag(vi.GetName())
-			c, err := vi.Configuration(serverObj.PriorInfo{
+			outboundTag := Ps2OutboundTag(obj.GetName())
+			c, err := obj.Configuration(serverObj.PriorInfo{
 				CoreVersion: t.CoreVersion,
 				Tag:         outboundTag,
 				PluginPort:  balancerPluginPort,
@@ -1370,13 +1404,7 @@ func (t *Template) setVlessGrpcRouting() {
 }
 
 func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Template, err error) {
-	vmessInfo2ServerInfos, outboundName2VmessInfos := RefineOutboundInfos(serverInfos)
-	ps2OutboundNames := make(map[string][]string)
-	for outboundName, vis := range outboundName2VmessInfos {
-		for _, vi := range vis {
-			ps2OutboundNames[vi.GetName()] = append(ps2OutboundNames[vi.GetName()], outboundName)
-		}
-	}
+	serverData := NewServerData(serverInfos)
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
@@ -1414,7 +1442,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		}
 	}
 	// resolve Outbounds
-	supportUDP, outboundTags, err := t.resolveOutbounds(serverInfos, vmessInfo2ServerInfos, outboundName2VmessInfos)
+	supportUDP, outboundTags, err := t.resolveOutbounds(serverData)
 	if err != nil {
 		return nil, err
 	}
@@ -1445,7 +1473,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		}
 	}
 	//set group routing
-	if err = t.setGroupRouting(outboundName2VmessInfos); err != nil {
+	if err = t.setGroupRouting(serverData); err != nil {
 		return nil, err
 	}
 	//set vlessGrpc routing

@@ -38,5 +38,18 @@ func init() {
 }
 
 func LookupHost(host string) (addrs []string, err error) {
-	return DefaultResolver.LookupHost(context.Background(), host)
+	addrs, err = net.LookupHost(host)
+	lookupAgain := err != nil
+	if !lookupAgain {
+		for _, addr := range addrs {
+			if ip := net.ParseIP(addr); ip != nil && (ip.IsLoopback() || ip.IsUnspecified()) {
+				lookupAgain = true
+				break
+			}
+		}
+	}
+	if lookupAgain {
+		return DefaultResolver.LookupHost(context.Background(), host)
+	}
+	return addrs, err
 }
