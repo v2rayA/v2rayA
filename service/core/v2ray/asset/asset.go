@@ -17,8 +17,10 @@ func GetV2rayLocationAsset() (s string) {
 	var candidates = []string{
 		"/usr/local/share/v2ray",
 		"/usr/share/v2ray",
+		"/opt/share/v2ray",
 		"/usr/local/share/xray",
 		"/usr/share/xray",
+		"/opt/share/xray",
 	}
 	var is bool
 	if ver, err := where.GetV2rayServiceVersion(); err == nil {
