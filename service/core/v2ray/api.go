@@ -24,7 +24,7 @@ var (
 
 const (
 	ApiFeedBoxSize  = 10
-	ApiFeedInterval = 3 * time.Second
+	ApiFeedInterval = 1 * time.Second
 )
 
 type OutboundStatus struct {

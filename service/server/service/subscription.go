@@ -267,13 +267,17 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	infoServerRaws := make([]configure.ServerRawV2, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
 	cssAfter := css.Get()
-	connectedVmessInfo2CssIndex := make(map[serverObj.ServerObj][]int)
+	// serverObj.ServerObj is a pointer(interface), and shouldn't be as a key
+	link2Raw := make(map[string]*configure.ServerRawV2)
+	connectedVmessInfo2CssIndex := make(map[string][]int)
 	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
 			if sRaw, err := cs.LocateServerRaw(); err != nil {
 				return err
 			} else {
-				connectedVmessInfo2CssIndex[sRaw.ServerObj] = append(connectedVmessInfo2CssIndex[sRaw.ServerObj], i)
+				link := sRaw.ServerObj.ExportToURL()
+				link2Raw[link] = sRaw
+				connectedVmessInfo2CssIndex[link] = append(connectedVmessInfo2CssIndex[link], i)
 			}
 		}
 	}
@@ -282,15 +286,16 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		infoServerRaw := configure.ServerRawV2{
 			ServerObj: info,
 		}
-		if cssIndexes, ok := connectedVmessInfo2CssIndex[infoServerRaw.ServerObj]; ok {
+		link := infoServerRaw.ServerObj.ExportToURL()
+		if cssIndexes, ok := connectedVmessInfo2CssIndex[link]; ok {
 			for _, cssIndex := range cssIndexes {
 				cssAfter[cssIndex].ID = i + 1
 			}
-			delete(connectedVmessInfo2CssIndex, infoServerRaw.ServerObj)
+			delete(connectedVmessInfo2CssIndex, link)
 		}
 		infoServerRaws[i] = infoServerRaw
 	}
-	for vi, cssIndexes := range connectedVmessInfo2CssIndex {
+	for link, cssIndexes := range connectedVmessInfo2CssIndex {
 		for _, cssIndex := range cssIndexes {
 			if disconnectIfNecessary {
 				err = Disconnect(*css.Get()[cssIndex], false)
@@ -301,10 +306,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			} else {
 				// 将之前连接的节点append进去
 				// TODO: 变更ServerRaw时可能需要考虑
-				infoServerRaws = append(infoServerRaws, configure.ServerRawV2{
-					ServerObj: vi,
-					Latency:   "",
-				})
+				infoServerRaws = append(infoServerRaws, *link2Raw[link])
 				cssAfter[cssIndex].ID = len(infoServerRaws)
 			}
 		}
