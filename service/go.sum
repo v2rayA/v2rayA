@@ -444,8 +444,8 @@ github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e h1:5QefA066A1tF
 github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e/go.mod h1:5t19P9LBIrNamL6AcMQOncg/r10y3Pc01AbHeMhwlpU=
 github.com/v2fly/v2ray-core/v4 v4.41.0 h1:6Evcb6y6L2baziwF5j6Ka93yaSQnTCj73jjZoAZfQo0=
 github.com/v2fly/v2ray-core/v4 v4.41.0/go.mod h1:bLmI6lxFf3HNhTch4PmSbuKsUL2ntPG3zZUk4iRbkuQ=
-github.com/v2rayA/beego/v2 v2.0.3 h1:J1k9DAwLfKQX/28cpFdnP7N1WjYUFe/zXr9lsm/c6kI=
-github.com/v2rayA/beego/v2 v2.0.3/go.mod h1:PlQvo/G/eyvrJ1OaZ8rdgp/m0kh9CPIV3X1gSHS9UlE=
+github.com/v2rayA/beego/v2 v2.0.4 h1:rnlnGhip6akWhl7gUw0lYiW0x+9Q9q4eba+bBQgSCnY=
+github.com/v2rayA/beego/v2 v2.0.4/go.mod h1:PlQvo/G/eyvrJ1OaZ8rdgp/m0kh9CPIV3X1gSHS9UlE=
 github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41 h1:8DNSAuEGcy3NbaLj2wjAQ5xl05nNyY1Eqk7TzuLeaqE=
 github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41/go.mod h1:hTWxob9jCQKRsADPzl8HTUjiPLIlANFalkyEkEZeEAc=
 github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1 h1:PITT+h0KRoBQwifYJr9vLqkhPH0UyJTonP+sIa5yGa4=
