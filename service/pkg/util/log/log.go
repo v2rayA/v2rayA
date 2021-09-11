@@ -16,6 +16,7 @@ package log
 
 import (
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"os"
 
 	"github.com/v2rayA/beego/v2/logs"
@@ -30,19 +31,21 @@ func init() {
 	Log.SetLogFuncCallDepth(Log.GetLogFuncCallDepth() + 1)
 }
 
-func InitLog(logWay string, logFile string, logLevel string, maxdays int64, disableLogColor bool) {
-	SetLogFile(logWay, logFile, maxdays, disableLogColor)
+func InitLog(logWay string, logFile string, logLevel string, maxdays int64, disableLogColor bool, disableTimestamp bool) {
+	SetLogFile(logWay, logFile, maxdays, disableLogColor, disableTimestamp)
 	SetLogLevel(logLevel)
 }
 
 // SetLogFile to configure log params
 // logWay: file or console
-func SetLogFile(logWay string, logFile string, maxdays int64, disableLogColor bool) {
+func SetLogFile(logWay string, logFile string, maxdays int64, disableLogColor bool, disableTimestamp bool) {
 	if logWay == "console" {
 		params := ""
-		if disableLogColor {
-			params = fmt.Sprintf(`{"color": false}`)
-		}
+		b, _ := jsoniter.Marshal(map[string]interface{}{
+			"color":     !disableLogColor,
+			"timestamp": !disableTimestamp,
+		})
+		params = string(b)
 		Log.SetLogger("console", params)
 	} else {
 		params := fmt.Sprintf(`{"filename": "%s", "maxdays": %d}`, logFile, maxdays)

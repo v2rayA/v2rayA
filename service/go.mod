@@ -24,7 +24,7 @@ require (
 	github.com/tidwall/gjson v1.7.5
 	github.com/ugorji/go v1.2.5 // indirect
 	github.com/v2fly/v2ray-core/v4 v4.41.0
-	github.com/v2rayA/beego/v2 v2.0.3
+	github.com/v2rayA/beego/v2 v2.0.4
 	github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41
 	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
 	github.com/v2rayA/shadowsocksR v1.0.3
@@ -39,3 +39,4 @@ require (
 // use `go list -m all` to confirm the final module used
 //replace github.com/v2rayA/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
+//replace github.com/v2rayA/beego/v2 => ../../beego
