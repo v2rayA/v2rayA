@@ -48,7 +48,8 @@ func NewTls(s string, d plugin.Dialer) (*Tls, error) {
 	}
 
 	// skipVerify
-	if query.Get("skipVerify") == "true" || query.Get("skipVerify") == "1" {
+	if query.Get("allowInsecure") == "true" || query.Get("allowInsecure") == "1" ||
+		query.Get("skipVerify") == "true" || query.Get("skipVerify") == "1" {
 		t.skipVerify = true
 	}
 

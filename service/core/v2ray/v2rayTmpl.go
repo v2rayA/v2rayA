@@ -30,6 +30,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -70,11 +71,16 @@ func (t *Template) Close() error {
 }
 
 func (t *Template) ServePlugins() error {
+	var wg sync.WaitGroup
 	var err error
 	for _, p := range t.Plugins {
-		if e := p.ListenAndServe(); err == nil && e != nil {
-			err = e
-		}
+		wg.Add(1)
+		go func(p plugin.Server) {
+			if e := p.ListenAndServe(); e != nil {
+				err = e
+			}
+			wg.Done()
+		}(p)
 	}
 	return err
 }

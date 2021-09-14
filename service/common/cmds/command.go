@@ -23,8 +23,8 @@ func ExecCommands(commands string, stopWhenError bool) error {
 		out, err := exec.Command("sh", "-c", line).CombinedOutput()
 		if err != nil {
 			e = fmt.Errorf("ExecCommands: %v %v: %w", line, string(out), err)
-			log.Trace("%v", e)
 			if stopWhenError {
+				log.Trace("%v", e)
 				return e
 			}
 		}

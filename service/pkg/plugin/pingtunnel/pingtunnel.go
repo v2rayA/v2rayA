@@ -76,6 +76,10 @@ func (tunnel *PingTunnel) ListenAndServe() error {
 	return tunnel.ListenAndServeTCP()
 }
 
+func (tunnel *PingTunnel) ListenAddr() string {
+	return tunnel.listenAddress
+}
+
 // ListenAndServeTCP listen and serve on tcp port.
 func (tunnel *PingTunnel) ListenAndServeTCP() error {
 	listen := tunnel.listenAddress
