@@ -14,7 +14,7 @@ func (r *redirect) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	r.RemoveIPWhitelist(cidr)
 	var commands string
-	commands = fmt.Sprintf(`iptables -w 2 -t nat -I V2RAY -d %s -j RETURN`, cidr)
+	commands = fmt.Sprintf(`iptables -w 2 -t nat -I V2RAY 2 -d %s -j RETURN`, cidr)
 	if !strings.Contains(cidr, ".") {
 		//ipv6
 		commands = strings.Replace(commands, "iptables", "ip6tables", 1)
@@ -31,6 +31,7 @@ func (r *redirect) RemoveIPWhitelist(cidr string) {
 func (r *redirect) GetSetupCommands() SetupCommands {
 	commands := `
 iptables -w 2 -t nat -N V2RAY
+iptables -w 2 -t nat -A V2RAY -i xdroid+ -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 0.0.0.0/32 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 10.0.0.0/8 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 100.64.0.0/10 -j RETURN
@@ -55,6 +56,7 @@ iptables -w 2 -t nat -I OUTPUT -p tcp -j V2RAY
 	if IsIPv6Supported() {
 		commands += `
 ip6tables -t nat -N V2RAY
+ip6tables -w 2 -t nat -A V2RAY -i xdroid+ -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d ::/128 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d ::1/128 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 64:ff9b::/96 -j RETURN
