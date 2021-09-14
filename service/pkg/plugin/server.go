@@ -12,7 +12,7 @@ import (
 type Server interface {
 	// ListenAndServe sets up a listener and serve on it
 	ListenAndServe() error
-
+	ListenAddr() string
 	Close() error
 }
 

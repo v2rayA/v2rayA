@@ -59,6 +59,10 @@ func (s *Tcp) ListenAndServe() error {
 	return s.ListenAndServeTCP()
 }
 
+func (s *Tcp) ListenAddr() string {
+	return s.listenAddr
+}
+
 // ListenAndServeTCP listen and serve on tcp port.
 func (s *Tcp) ListenAndServeTCP() error {
 	l, err := net.Listen("tcp", s.listenAddr)

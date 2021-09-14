@@ -69,18 +69,28 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 			}
 		}
 	}()
+	// ports to check
+	portList := []string{strconv.Itoa(tmpl.ApiPort)}
+	for _, plu := range tmpl.Plugins {
+		_, port, err := net.SplitHostPort(plu.ListenAddr())
+		if err != nil {
+			return nil, err
+		}
+		portList = append(portList, port)
+	}
 	startTime := time.Now()
-	for {
-		conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(tmpl.ApiPort)))
+	for i := 0; i < len(portList); {
+		conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", portList[i]))
 		if err == nil {
 			conn.Close()
-			break
+			i++
+			continue
 		}
 
 		if time.Since(startTime) > 15*time.Second {
 			return nil, fmt.Errorf("v2ray-core does not start normally, check the log for more information")
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 	process.proc = proc
 	return process, nil

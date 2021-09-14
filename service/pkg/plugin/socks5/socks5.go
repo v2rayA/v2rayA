@@ -83,6 +83,10 @@ func (s *Socks5) ListenAndServe() error {
 	return s.ListenAndServeTCP()
 }
 
+func (s *Socks5) ListenAddr() string {
+	return s.addr
+}
+
 // ListenAndServeTCP listen and serve on tcp port.
 func (s *Socks5) ListenAndServeTCP() error {
 	l, err := net.Listen("tcp", s.addr)
