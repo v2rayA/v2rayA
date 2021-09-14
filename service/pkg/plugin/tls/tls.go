@@ -35,7 +35,10 @@ func NewTls(s string, d plugin.Dialer) (*Tls, error) {
 	}
 
 	query := u.Query()
-	t.serverName = query.Get("host")
+	t.serverName = query.Get("sni")
+	if t.serverName == "" {
+		t.serverName = query.Get("host")
+	}
 	if t.serverName == "" {
 		colonPos := strings.LastIndex(t.addr, ":")
 		if colonPos == -1 {
