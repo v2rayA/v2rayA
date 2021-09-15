@@ -128,10 +128,6 @@ jobs:
         build_dir: web
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-    - name: Import SSH key
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: AUR Release
       env:
         P_DIR: ${{ steps.get_filename.outputs.P_DIR }}
