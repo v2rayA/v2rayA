@@ -62,7 +62,7 @@ func serverRawsToServers(rss []configure.ServerRawV2) (ts []Server) {
 	return
 }
 
-/* 根据Configure创建一个Touch */
+// GenerateTouch generates a touch from database
 func GenerateTouch() (t Touch) {
 	t.Servers = serverRawsToServers(configure.GetServersV2())
 	subscriptions := configure.GetSubscriptionsV2()
@@ -78,6 +78,10 @@ func GenerateTouch() (t Touch) {
 				continue
 			} else {
 				u, err = url.Parse(addr)
+				if err != nil {
+					log.Warn("%v", err)
+					continue
+				}
 			}
 		}
 		t.Subscriptions[i] = Subscription{
