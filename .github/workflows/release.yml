@@ -14,6 +14,10 @@ jobs:
       GO111MODULE: on
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols."
+      CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
+      CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
+      CF_ZONE: ${{ secrets.CF_ZONE }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
     steps:
     
     - uses: actions/checkout@v2
@@ -86,13 +90,13 @@ jobs:
         fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t pacman -p installer_archlinux_arm64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t pacman -p installer_archlinux_armv8_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armv8 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_x86_$VERSION.txz $PARAMS --description "$DESC--architecture=i386 " v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_x64_$VERSION.txz $PARAMS --description "$DESC--architecture=amd64 " v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_armel_$VERSION.txz $PARAMS --description "$DESC--architecture=armel " v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_armhf_$VERSION.txz $PARAMS --description "$DESC--architecture=armhf " v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC--architecture=aarch64 " v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $PARAMS --description "$DESC--architecture=arm64 " v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_armv8_$VERSION.txz $PARAMS --description "$DESC--architecture=armv8 " v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_x86_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_x64_$VERSION.txz $PARAMS --description "$DESC" --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_armel_$VERSION.txz $PARAMS --description "$DESC" --architecture=armel v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_armhf_$VERSION.txz $PARAMS --description "$DESC" --architecture=armhf v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $PARAMS --description "$DESC" --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_armv8_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
     - name: Generate APT repository
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
