@@ -1,8 +1,9 @@
-name: Go
+name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - v*
 
 jobs:
 
@@ -31,21 +32,23 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: ^1.17
     - name: Set up Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v2.4.0
       with:
         node-version: lts/*
         cache: 'yarn'
+        cache-dependency-path: gui/yarn.lock
     - uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
       with:
         ruby-version: 2.7
         bundler-cache: true
 
-    - name: Install Binary Dependencies
+    - name: Install Build Dependencies
       run: |
-        go get github.com/mitchellh/gox
+        go install github.com/mitchellh/gox@latest
         gem install fpm -v 1.13.1
+        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar
     - name: Build GUI
       run: |
         yarn --cwd gui --check-files
@@ -54,16 +57,15 @@ jobs:
       run: |
         cp -r web service/server/router/
         cd service
-        CGO_ENABLED=0 gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -output="v2raya_{{.OS}}_{{.Arch}}_$VERSION"
-    - name: Rename to Friendly Filenames
+        CGO_ENABLED=0 gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -output="../v2raya_{{.OS}}_{{.Arch}}_$VERSION"
+    - name: Rename Binaries to Friendly Filenames
       run: |
         mv v2raya_linux_386_$VERSION v2raya_linux_x86_$VERSION
         mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
     - name: Package
-      env:
-        FILES: "install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya@.service=/etc/systemd/system/v2raya@.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
-        PARAMS: "--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
       run: |
+        export FILES="install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya@.service=/etc/systemd/system/v2raya@.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+        export PARAMS="--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
         tar -zcvf web.tar.gz web/
         fpm -s dir -t deb -p installer_debian_x86_$VERSION.deb --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t deb -p installer_debian_x64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
@@ -108,7 +110,7 @@ jobs:
         repo: v2rayA/v2raya-apt
         target_branch: master
         build_dir: apt
-    - name: Deploy demo repository
+    - name: Deploy Demo Site repository
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-web
@@ -152,3 +154,10 @@ jobs:
           installer_archlinux_aarch64_$VERSION.pkg.tar.zstd
           installer_archlinux_arm64_$VERSION.pkg.tar.zstd
           installer_archlinux_armv8_$VERSION.pkg.tar.zstd
+    - name: Refresh Cloudflare Cache
+      run: |
+        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+          -H "X-Auth-Email: $CF_AUTH_EMAIL" \
+          -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
+          -H "Content-Type: application/json" \
+          --data '{"purge_everything":true}'
