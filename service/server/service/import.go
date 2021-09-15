@@ -2,6 +2,9 @@ package service
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
@@ -9,8 +12,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"strings"
-	"time"
 )
 
 func Import(url string, which *configure.Which) (err error) {
@@ -76,13 +77,16 @@ func Import(url string, which *configure.Which) (err error) {
 	} else {
 		//不是ss://也不是vmess://，有可能是订阅地址
 		if strings.HasPrefix(url, "sub://") {
+			if len(url) == 6 {
+				return fmt.Errorf("empty sub://")
+			}
 			var e error
 			url, e = common.Base64StdDecode(url[6:])
 			if e != nil {
 				url, _ = common.Base64URLDecode(url[6:])
 			}
 		}
-		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		if len(url) > 0 && !(url[0] == '{' && url[len(url)-1] == '}') && !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 			url = "http://" + url
 		}
 		c, err := httpClient.GetHttpClientAutomatically()
