@@ -1,4 +1,6 @@
 #!/bin/bash
+set -ex
+
 eval $(ssh-agent)
 chmod 600 ./install/aur/deploy_key
 ./install/tool/ssh-add_expect ./install/aur/deploy_key

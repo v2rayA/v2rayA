@@ -1,4 +1,6 @@
 #!/bin/bash
+set -ex
+
 mkdir -p /tmp/prepare/v2raya
 cd /tmp/prepare/v2raya
 cp "$P_DIR"/install/aur/v2raya/* ./
