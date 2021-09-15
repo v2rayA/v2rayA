@@ -19,7 +19,7 @@ cp "$P_DIR"/install/universal/v2raya.png ./
 cp "$P_DIR"/install/universal/v2raya.service ./
 cp "$P_DIR"/install/universal/v2raya@.service ./
 
-sed -i s/{{pkgver}}/"${VERSION:1}"/g PKGBUILD .SRCINFO
+sed -i s/{{pkgver}}/"$VERSION"/g PKGBUILD .SRCINFO
 sed -i s/{{sha1sums_i686}}/"${sha1sums_i686}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha1sums_x86_64}}/"${sha1sums_x86_64}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha1sums_armv6h}}/"${sha1sums_armv6h}"/g PKGBUILD .SRCINFO
