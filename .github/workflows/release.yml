@@ -130,7 +130,7 @@ jobs:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: AUR Release
       env:
-        P_DIR: ${{ steps.get_filename.outputs.P_DIR }}
+        P_DIR: ${{ steps.prep.outputs.P_DIR }}
       run: bash install/aur/deploy.sh
     - name: Github Release
       uses: softprops/action-gh-release@v1
@@ -138,36 +138,36 @@ jobs:
         draft: true
         prerelease: true
         files: |
-          v2raya_linux_x86_${{ steps.get_filename.outputs.VERSION }}
-          v2raya_linux_x64_${{ steps.get_filename.outputs.VERSION }}
-          v2raya_linux_arm_${{ steps.get_filename.outputs.VERSION }}
-          v2raya_linux_arm64_${{ steps.get_filename.outputs.VERSION }}
-          installer_debian_x86_${{ steps.get_filename.outputs.VERSION }}.deb
-          installer_debian_x64_${{ steps.get_filename.outputs.VERSION }}.deb
-          installer_debian_armel_${{ steps.get_filename.outputs.VERSION }}.deb
-          installer_debian_armhf_${{ steps.get_filename.outputs.VERSION }}.deb
-          installer_debian_arm64_${{ steps.get_filename.outputs.VERSION }}.deb
-          installer_debian_armv8_${{ steps.get_filename.outputs.VERSION }}.deb
-          installer_freebsd_x86_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_freebsd_x64_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_freebsd_armel_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_freebsd_armhf_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_freebsd_aarch64_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_freebsd_arm64_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_freebsd_armv8_${{ steps.get_filename.outputs.VERSION }}.txz
-          installer_redhat_x86_${{ steps.get_filename.outputs.VERSION }}.rpm
-          installer_redhat_x64_${{ steps.get_filename.outputs.VERSION }}.rpm
-          installer_redhat_armel_${{ steps.get_filename.outputs.VERSION }}.rpm
-          installer_redhat_armhf_${{ steps.get_filename.outputs.VERSION }}.rpm
-          installer_redhat_aarch64_${{ steps.get_filename.outputs.VERSION }}.rpm
-          installer_redhat_armv8_${{ steps.get_filename.outputs.VERSION }}.rpm
-          installer_archlinux_x86_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_x64_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armel_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armhf_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_aarch64_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_arm64_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armv8_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
+          installer_debian_x86_${{ steps.prep.outputs.VERSION }}.deb
+          installer_debian_x64_${{ steps.prep.outputs.VERSION }}.deb
+          installer_debian_armel_${{ steps.prep.outputs.VERSION }}.deb
+          installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb
+          installer_debian_arm64_${{ steps.prep.outputs.VERSION }}.deb
+          installer_debian_armv8_${{ steps.prep.outputs.VERSION }}.deb
+          installer_freebsd_x86_${{ steps.prep.outputs.VERSION }}.txz
+          installer_freebsd_x64_${{ steps.prep.outputs.VERSION }}.txz
+          installer_freebsd_armel_${{ steps.prep.outputs.VERSION }}.txz
+          installer_freebsd_armhf_${{ steps.prep.outputs.VERSION }}.txz
+          installer_freebsd_aarch64_${{ steps.prep.outputs.VERSION }}.txz
+          installer_freebsd_arm64_${{ steps.prep.outputs.VERSION }}.txz
+          installer_freebsd_armv8_${{ steps.prep.outputs.VERSION }}.txz
+          installer_redhat_x86_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_redhat_x64_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_redhat_armel_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_redhat_armhf_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_redhat_armv8_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_archlinux_x86_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_x64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_armel_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_armhf_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_arm64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_armv8_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
     - name: Refresh Cloudflare Cache
       run: |
         curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
