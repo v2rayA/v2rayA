@@ -97,11 +97,15 @@ jobs:
         fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $PARAMS --description "$DESC" --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t freebsd -p installer_freebsd_armv8_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+    - name: Import GPG key
+      id: import_gpg
+      uses: crazy-max/ghaction-import-gpg@v4
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.SIGNING_PASSWORD }}
     - name: Generate APT repository
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
-        gpg2 --import apt/key/public-key.asc
-        install/tool/gpg2_expect --allow-secret-key-import --import install/debian/private-key.asc
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
         cp v2raya_linux_*_$VERSION apt/pool/main/v/v2raya/
@@ -114,12 +118,20 @@ jobs:
         repo: v2rayA/v2raya-apt
         target_branch: master
         build_dir: apt
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Deploy Demo Site repository
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-web
         target_branch: master
         build_dir: web
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Import SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: AUR Release
       env:
         P_DIR: ${{ steps.get_filename.outputs.P_DIR }}
