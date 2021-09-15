@@ -11,4 +11,4 @@ git config --global user.email "$(git show -s --format='%ae')"
 bash ./install/aur/deploy_v2raya.sh
 bash ./install/aur/deploy_v2raya_bin.sh
 echo "ok"
-cd $P_DIR #回项目目录
+cd $P_DIR

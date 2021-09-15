@@ -13,8 +13,7 @@ sha_desktop=$(sha1sum "$P_DIR"/install/universal/v2raya.desktop | awk '{print $1
 
 mkdir -p /tmp/prepare/v2raya-bin
 cd /tmp/prepare/v2raya-bin
-cp "$P_DIR"/install/aur/v2raya-bin/* ./
-cp "$P_DIR"/install/aur/v2raya-bin/.* ./
+cp -r "$P_DIR"/install/aur/v2raya-bin/. ./
 cp "$P_DIR"/install/universal/v2raya.desktop ./
 cp "$P_DIR"/install/universal/v2raya.png ./
 cp "$P_DIR"/install/universal/v2raya.service ./
@@ -34,9 +33,8 @@ sed -i s/{{sha_desktop}}/"${sha_desktop}"/g PKGBUILD .SRCINFO
 cd /tmp/
 git clone ssh://aur@aur.archlinux.org/v2raya-bin.git
 cd v2raya-bin
-cp -f /tmp/prepare/v2raya-bin/* ./
-cp -f /tmp/prepare/v2raya-bin/.* ./
+cp -rf /tmp/prepare/v2raya-bin/. ./
 git add .
 git commit -m "release $VERSION"
 git push -u -f origin master
-cd $P_DIR #回项目目录
+cd $P_DIR
