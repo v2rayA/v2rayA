@@ -119,7 +119,7 @@ jobs:
         target_branch: master
         build_dir: apt
       env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: Deploy Demo Site repository
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
@@ -127,7 +127,7 @@ jobs:
         target_branch: master
         build_dir: web
       env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: Import SSH key
       uses: webfactory/ssh-agent@v0.5.3
       with:
