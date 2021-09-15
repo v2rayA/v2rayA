@@ -35,6 +35,9 @@ func Bytes2SubscriptionRaw2(b []byte) (*SubscriptionRawV2, error) {
 	if err := jsoniter.Unmarshal(b, &s); err != nil {
 		return nil, err
 	}
+	if s.Servers == nil {
+		s.Servers = []ServerRawV2{}
+	}
 	return &s, nil
 }
 

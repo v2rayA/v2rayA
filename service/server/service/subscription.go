@@ -178,9 +178,10 @@ func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err
 }
 
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
-	// get请求source
 	c := *client
-	c.Timeout = 30 * time.Second
+	if c.Timeout < 30*time.Second {
+		c.Timeout = 30 * time.Second
+	}
 
 	// Check if source is OOCv1 API token.
 	var u string
@@ -218,7 +219,8 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	buf := new(bytes.Buffer)
 	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
-	// base64解码
+
+	// base64 decode
 	raw, err := common.Base64StdDecode(buf.String())
 	if err != nil {
 		raw, _ = common.Base64URLDecode(buf.String())
@@ -321,7 +323,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
-	raw := configure.GetSubscription(subscription.ID - 1)
+	raw := configure.GetSubscriptionV2(subscription.ID - 1)
 	if raw == nil {
 		return fmt.Errorf("failed to find the corresponding subscription")
 	}
