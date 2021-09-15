@@ -899,8 +899,17 @@ export default {
             // solid
             tabIndex = 2;
           }
-          nodes = nodes[tabIndex].querySelectorAll("tbody tr");
-          const node = nodes[which.id - 1];
+          nodes = nodes[tabIndex].querySelectorAll("table > tbody > tr");
+          const node = Array.from(nodes).find(
+            node =>
+              parseInt(
+                node.querySelector('td[data-label="ID"]')?.textContent
+              ) === which.id
+          );
+          if (!node) {
+            console.warn("node not found");
+            return;
+          }
           node.scrollIntoView({ block: "end", inline: "center" });
           let highlightClass = "highlight-row-connected";
           if (that.runningState.running !== that.$t("common.isRunning")) {
