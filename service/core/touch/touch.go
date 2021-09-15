@@ -1,7 +1,9 @@
 package touch
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/url"
 	"strconv"
@@ -68,7 +70,15 @@ func GenerateTouch() (t Touch) {
 	for i, v := range subscriptions {
 		u, err := url.Parse(v.Address)
 		if err != nil {
-			continue
+			// it may is OOCv1
+			tmp := make(map[string]string)
+			_ = jsoniter.Unmarshal([]byte(v.Address), &tmp)
+			if addr, ok := tmp["baseUrl"]; !ok {
+				log.Warn("%v", err)
+				continue
+			} else {
+				u, err = url.Parse(addr)
+			}
 		}
 		t.Subscriptions[i] = Subscription{
 			Remarks: v.Remarks,

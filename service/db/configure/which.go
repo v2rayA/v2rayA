@@ -285,7 +285,7 @@ func (ws *Whiches) SaveLatencies() (err error) {
 	}
 	// set subscriptions
 	for subIndex, serverIndexes := range subscriptionIndexes {
-		subRaw := GetSubscription(subIndex)
+		subRaw := GetSubscriptionV2(subIndex)
 		for index, which := range serverIndexes {
 			subRaw.Servers[index].Latency = which.Latency
 		}

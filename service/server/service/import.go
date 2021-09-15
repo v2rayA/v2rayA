@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	url2 "net/url"
 	"strings"
 	"time"
 
@@ -45,7 +46,7 @@ func Import(url string, which *configure.Which) (err error) {
 			return
 		}
 		if which != nil {
-			//修改
+			// the request is to modify a server
 			ind := which.ID - 1
 			if which.TYPE != configure.ServerType || ind < 0 || ind >= configure.GetLenServers() {
 				return fmt.Errorf("bad request")
@@ -70,40 +71,43 @@ func Import(url string, which *configure.Which) (err error) {
 				}
 			}
 		} else {
-			//新建
-			//后端NodeData转前端TouchServerRaw压入TouchRaw.Servers
+			// append a server
 			err = configure.AppendServers([]*configure.ServerRawV2{{ServerObj: obj}})
 		}
 	} else {
-		//不是ss://也不是vmess://，有可能是订阅地址
-		if strings.HasPrefix(url, "sub://") {
-			if len(url) == 6 {
-				return fmt.Errorf("empty sub://")
+		// subscription
+		source := url
+		if u, err := url2.Parse(source); err == nil {
+			if u.Scheme == "sub" {
+				var e error
+				source, e = common.Base64StdDecode(source[6:])
+				if e != nil {
+					source, _ = common.Base64URLDecode(source[6:])
+				}
+			} else if u.Scheme == "" {
+				u.Scheme = "http"
+				source = u.String()
 			}
-			var e error
-			url, e = common.Base64StdDecode(url[6:])
-			if e != nil {
-				url, _ = common.Base64URLDecode(url[6:])
-			}
-		}
-		if len(url) > 0 && !(url[0] == '{' && url[len(url)-1] == '}') && !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-			url = "http://" + url
+		} else {
+			// maybe it is a OOCv1 token
 		}
 		c, err := httpClient.GetHttpClientAutomatically()
 		if err != nil {
 			return err
 		}
 		c.Timeout = 90 * time.Second
-		infos, status, err := ResolveSubscriptionWithClient(url, c)
+		infos, status, err := ResolveSubscriptionWithClient(source, c)
 		if err != nil {
 			return fmt.Errorf("failed to resolve subscription address: %w", err)
 		}
-		//后端NodeData转前端TouchServerRaw压入TouchRaw.Subscriptions.Servers
+
+		// info to serverRawV2
 		servers := make([]configure.ServerRawV2, len(infos))
 		for i, v := range infos {
 			servers[i] = configure.ServerRawV2{ServerObj: v}
 		}
-		//去重
+
+		// deduplicate
 		unique := make(map[configure.ServerRawV2]interface{})
 		for _, s := range servers {
 			unique[s] = nil
@@ -116,7 +120,7 @@ func Import(url string, which *configure.Which) (err error) {
 			}
 		}
 		err = configure.AppendSubscriptions([]*configure.SubscriptionRawV2{{
-			Address: url,
+			Address: source,
 			Status:  string(touch.NewUpdateStatus()),
 			Servers: uniqueServers,
 			Info:    status,

@@ -220,7 +220,7 @@ func GetSubscriptionsV2() []SubscriptionRawV2 {
 	}
 	return r
 }
-func GetSubscription(index int) *SubscriptionRawV2 {
+func GetSubscriptionV2(index int) *SubscriptionRawV2 {
 	b, err := db.ListGet("touch", "subscriptions_v2", index)
 	if err != nil {
 		return nil
