@@ -1,0 +1,154 @@
+name: Go
+
+on:
+  release:
+    types: [created]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: "lts/*"
+      GO111MODULE: on
+      NAME: v2raya
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols."
+    steps:
+    
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Prepare
+      id: prep
+      run: |
+        echo ::set-output name=P_DIR::$(pwd)
+        
+        TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        echo ::set-output name=version::${TAG:1}
+        echo "VERSION=${TAG:1}" >> $GITHUB_ENV
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+    - uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
+      with:
+        ruby-version: 2.7
+        bundler-cache: true
+
+    - name: Install Binary Dependencies
+      run: |
+        go get github.com/mitchellh/gox
+        gem install fpm -v 1.13.1
+    - name: Build GUI
+      run: |
+        yarn --cwd gui --check-files
+        yarn --cwd gui build
+    - name: Build V2rayA Binaries
+      run: |
+        cp -r web service/server/router/
+        cd service
+        CGO_ENABLED=0 gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64" -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -output="v2raya_{{.OS}}_{{.Arch}}_$VERSION"
+    - name: Rename to Friendly Filenames
+      run: |
+        mv v2raya_linux_386_$VERSION v2raya_linux_x86_$VERSION
+        mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
+    - name: Package
+      env:
+        FILES: "install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya@.service=/etc/systemd/system/v2raya@.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+        PARAMS: "--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
+      run: |
+        tar -zcvf web.tar.gz web/
+        fpm -s dir -t deb -p installer_debian_x86_$VERSION.deb --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_x64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_armel_$VERSION.deb --description "$DESC" --architecture=armel $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_armv8_$VERSION.deb --description "$DESC" --architecture=armv8 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_x64_$VERSION.rpm --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_armel_$VERSION.rpm --description "$DESC" --architecture=armel $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_armhf_$VERSION.rpm --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_armv8_$VERSION.rpm --description "$DESC" --architecture=armv8 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_x86_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_x64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_armel_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armel $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_armhf_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_arm64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_armv8_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armv8 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_x86_$VERSION.txz $PARAMS --description "$DESC--architecture=i386 " v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_x64_$VERSION.txz $PARAMS --description "$DESC--architecture=amd64 " v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_armel_$VERSION.txz $PARAMS --description "$DESC--architecture=armel " v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_armhf_$VERSION.txz $PARAMS --description "$DESC--architecture=armhf " v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC--architecture=aarch64 " v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $PARAMS --description "$DESC--architecture=arm64 " v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t freebsd -p installer_freebsd_armv8_$VERSION.txz $PARAMS --description "$DESC--architecture=armv8 " v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+    - name: Generate APT repository
+      run: |
+        mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
+        gpg2 --import apt/key/public-key.asc
+        install/tool/gpg2_expect --allow-secret-key-import --import install/debian/private-key.asc
+        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
+        install/tool/reprepro_expect --ask-passphrase -Vb apt export
+        cp v2raya_linux_*_$VERSION apt/pool/main/v/v2raya/
+        cp web.tar.gz apt/pool/main/v/v2raya/web_$VERSION.tar.gz
+        echo "apt.v2raya.mzz.pub" > apt/CNAME
+
+    - name: Deploy APT repository
+      uses: crazy-max/ghaction-github-pages@v2.5.0
+      with:
+        repo: v2rayA/v2raya-apt
+        target_branch: master
+        build_dir: apt
+    - name: Deploy demo repository
+      uses: crazy-max/ghaction-github-pages@v2.5.0
+      with:
+        repo: v2rayA/v2raya-web
+        target_branch: master
+        build_dir: web
+    - name: AUR Release
+      env:
+        P_DIR: ${{ steps.get_filename.outputs.P_DIR }}
+      run: bash install/aur/deploy.sh
+    - name: Github Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          v2raya_linux_x86_$VERSION
+          v2raya_linux_x64_$VERSION
+          v2raya_linux_arm_$VERSION
+          v2raya_linux_arm64_$VERSION
+          installer_debian_x86_$VERSION.deb
+          installer_debian_x64_$VERSION.deb
+          installer_debian_armel_$VERSION.deb
+          installer_debian_armhf_$VERSION.deb
+          installer_debian_arm64_$VERSION.deb
+          installer_debian_armv8_$VERSION.deb
+          installer_freebsd_x86_$VERSION.txz
+          installer_freebsd_x64_$VERSION.txz
+          installer_freebsd_armel_$VERSION.txz
+          installer_freebsd_armhf_$VERSION.txz
+          installer_freebsd_aarch64_$VERSION.txz
+          installer_freebsd_arm64_$VERSION.txz
+          installer_freebsd_armv8_$VERSION.txz
+          installer_redhat_x86_$VERSION.rpm
+          installer_redhat_x64_$VERSION.rpm
+          installer_redhat_armel_$VERSION.rpm
+          installer_redhat_armhf_$VERSION.rpm
+          installer_redhat_aarch64_$VERSION.rpm
+          installer_redhat_armv8_$VERSION.rpm
+          installer_archlinux_x86_$VERSION.pkg.tar.zstd
+          installer_archlinux_x64_$VERSION.pkg.tar.zstd
+          installer_archlinux_armel_$VERSION.pkg.tar.zstd
+          installer_archlinux_armhf_$VERSION.pkg.tar.zstd
+          installer_archlinux_aarch64_$VERSION.pkg.tar.zstd
+          installer_archlinux_arm64_$VERSION.pkg.tar.zstd
+          installer_archlinux_armv8_$VERSION.pkg.tar.zstd
