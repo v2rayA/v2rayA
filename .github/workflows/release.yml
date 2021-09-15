@@ -30,7 +30,7 @@ jobs:
         echo ::set-output name=P_DIR::$(pwd)
         
         TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-        echo ::set-output name=version::${TAG:1}
+        echo ::set-output name=VERSION::${TAG:1}
         echo "VERSION=${TAG:1}" >> $GITHUB_ENV
 
     - name: Set up Go
@@ -135,37 +135,39 @@ jobs:
     - name: Github Release
       uses: softprops/action-gh-release@v1
       with:
+        draft: true
+        prerelease: true
         files: |
-          v2raya_linux_x86_$VERSION
-          v2raya_linux_x64_$VERSION
-          v2raya_linux_arm_$VERSION
-          v2raya_linux_arm64_$VERSION
-          installer_debian_x86_$VERSION.deb
-          installer_debian_x64_$VERSION.deb
-          installer_debian_armel_$VERSION.deb
-          installer_debian_armhf_$VERSION.deb
-          installer_debian_arm64_$VERSION.deb
-          installer_debian_armv8_$VERSION.deb
-          installer_freebsd_x86_$VERSION.txz
-          installer_freebsd_x64_$VERSION.txz
-          installer_freebsd_armel_$VERSION.txz
-          installer_freebsd_armhf_$VERSION.txz
-          installer_freebsd_aarch64_$VERSION.txz
-          installer_freebsd_arm64_$VERSION.txz
-          installer_freebsd_armv8_$VERSION.txz
-          installer_redhat_x86_$VERSION.rpm
-          installer_redhat_x64_$VERSION.rpm
-          installer_redhat_armel_$VERSION.rpm
-          installer_redhat_armhf_$VERSION.rpm
-          installer_redhat_aarch64_$VERSION.rpm
-          installer_redhat_armv8_$VERSION.rpm
-          installer_archlinux_x86_$VERSION.pkg.tar.zstd
-          installer_archlinux_x64_$VERSION.pkg.tar.zstd
-          installer_archlinux_armel_$VERSION.pkg.tar.zstd
-          installer_archlinux_armhf_$VERSION.pkg.tar.zstd
-          installer_archlinux_aarch64_$VERSION.pkg.tar.zstd
-          installer_archlinux_arm64_$VERSION.pkg.tar.zstd
-          installer_archlinux_armv8_$VERSION.pkg.tar.zstd
+          v2raya_linux_x86_${{ steps.get_filename.outputs.VERSION }}
+          v2raya_linux_x64_${{ steps.get_filename.outputs.VERSION }}
+          v2raya_linux_arm_${{ steps.get_filename.outputs.VERSION }}
+          v2raya_linux_arm64_${{ steps.get_filename.outputs.VERSION }}
+          installer_debian_x86_${{ steps.get_filename.outputs.VERSION }}.deb
+          installer_debian_x64_${{ steps.get_filename.outputs.VERSION }}.deb
+          installer_debian_armel_${{ steps.get_filename.outputs.VERSION }}.deb
+          installer_debian_armhf_${{ steps.get_filename.outputs.VERSION }}.deb
+          installer_debian_arm64_${{ steps.get_filename.outputs.VERSION }}.deb
+          installer_debian_armv8_${{ steps.get_filename.outputs.VERSION }}.deb
+          installer_freebsd_x86_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_freebsd_x64_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_freebsd_armel_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_freebsd_armhf_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_freebsd_aarch64_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_freebsd_arm64_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_freebsd_armv8_${{ steps.get_filename.outputs.VERSION }}.txz
+          installer_redhat_x86_${{ steps.get_filename.outputs.VERSION }}.rpm
+          installer_redhat_x64_${{ steps.get_filename.outputs.VERSION }}.rpm
+          installer_redhat_armel_${{ steps.get_filename.outputs.VERSION }}.rpm
+          installer_redhat_armhf_${{ steps.get_filename.outputs.VERSION }}.rpm
+          installer_redhat_aarch64_${{ steps.get_filename.outputs.VERSION }}.rpm
+          installer_redhat_armv8_${{ steps.get_filename.outputs.VERSION }}.rpm
+          installer_archlinux_x86_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_x64_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_armel_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_armhf_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_aarch64_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_arm64_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_armv8_${{ steps.get_filename.outputs.VERSION }}.pkg.tar.zstd
     - name: Refresh Cloudflare Cache
       run: |
         curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
