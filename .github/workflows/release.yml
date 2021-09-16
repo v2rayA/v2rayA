@@ -10,14 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: "lts/*"
-      GO111MODULE: on
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols."
-      CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
-      CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
-      CF_ZONE: ${{ secrets.CF_ZONE }}
-      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
     steps:
     
     - uses: actions/checkout@v2
@@ -97,13 +91,24 @@ jobs:
         fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t freebsd -p installer_freebsd_arm64_$VERSION.txz $PARAMS --description "$DESC" --architecture=arm64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t freebsd -p installer_freebsd_armv8_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv8 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+
     - name: Import GPG key
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v4
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
+    - name: Import SSH key
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      run: |
+        eval $(ssh-agent)
+        echo "$SSH_PRIVATE_KEY" | ./install/tool/ssh-add_expect -
+
     - name: Generate APT repository
+      env:
+        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
@@ -169,6 +174,10 @@ jobs:
           installer_archlinux_arm64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_armv8_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
     - name: Refresh Cloudflare Cache
+      env:
+        CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
+        CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
+        CF_ZONE: ${{ secrets.CF_ZONE }}
       run: |
         curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
           -H "X-Auth-Email: $CF_AUTH_EMAIL" \
