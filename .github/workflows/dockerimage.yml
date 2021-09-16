@@ -17,7 +17,7 @@ jobs:
           TAG=$(echo $GITHUB_REF | cut -d / -f 3)
           IMAGE="mzz2017/v2raya"
           echo ::set-output name=image::${IMAGE}
-          echo ::set-output name=tag::${TAG}
+          echo ::set-output name=tag::${TAG:1}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
