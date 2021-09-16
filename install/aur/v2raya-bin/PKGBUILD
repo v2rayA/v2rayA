@@ -8,7 +8,7 @@ install=.INSTALL
 pkgdesc="A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols"
 arch=('i686' 'x86_64' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/v2rayA/v2rayA"
-license=('GPL3')
+license=('AGPL3')
 depends=('glibc')
 optdepends=('v2ray>=4.37.0-1' 'xray>=1.4.2-1')
 provides=('v2raya')
@@ -27,19 +27,19 @@ source=(
 )
 
 source_i686=(
-    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_x86_v${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_x86_${pkgver}"
 )
 source_x86_64=(
-    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_x64_v${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_x64_${pkgver}"
 )
 source_aarch64=(
-    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm64_v${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm64_${pkgver}"
 )
 source_armv6h=(
-    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_v${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_${pkgver}"
 )
 source_armv7h=(
-    "v2raya_v${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_v${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_${pkgver}"
 )
 
 sha1sums=(
@@ -67,7 +67,7 @@ sha1sums_armv7h=(
 
 package() {
     cd "$srcdir"
-    install -Dm 755 v2raya_v"${pkgver}" "${pkgdir}"/usr/bin/v2raya
+    install -Dm 755 v2raya_"${pkgver}" "${pkgdir}"/usr/bin/v2raya
     install -Dm 644 v2raya.desktop -t "${pkgdir}"/usr/share/applications/
     install -Dm 644 v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
     install -Dm 644 v2raya@.service -t "${pkgdir}"/usr/lib/systemd/system/
