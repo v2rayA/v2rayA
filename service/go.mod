@@ -3,6 +3,7 @@ module github.com/v2rayA/v2rayA
 go 1.16
 
 require (
+	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -19,6 +20,7 @@ require (
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
 	github.com/pkg/errors v0.9.1
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5-0.20210421162817-acdbac05f5a5
+	github.com/shirou/gopsutil v3.21.8+incompatible // indirect
 	github.com/shirou/gopsutil/v3 v3.21.8
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.7.5
@@ -43,3 +45,5 @@ require (
 
 // windows/arm64 support
 replace github.com/go-ole/go-ole => github.com/go-ole/go-ole v0.0.0-20210915003542-8b1f7f90f6b1
+
+replace github.com/shirou/gopsutil/v3 => github.com/rasa/gopsutil v0.0.0-20210915000654-14b723191732
