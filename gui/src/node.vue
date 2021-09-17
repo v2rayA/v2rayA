@@ -814,21 +814,7 @@ export default {
     this.$axios({
       url: apiRoot + "/touch"
     }).then(res => {
-      res.data.data.touch.servers.forEach(v => {
-        v.connected = false;
-      });
-      res.data.data.touch.subscriptions.forEach(s => {
-        s.servers.forEach(v => {
-          v.connected = false;
-        });
-      });
-      this.tableData = res.data.data.touch;
-      this.runningState = {
-        running: res.data.data.running
-          ? this.$t("common.isRunning")
-          : this.$t("common.notRunning"),
-        connectedServer: this.tableData.connectedServer
-      };
+      this.refreshTableData(res.data.data.touch, res.data.data.running);
       this.locateTabToConnected();
       this.ready = true;
     });
@@ -869,6 +855,25 @@ export default {
     });
   },
   methods: {
+    refreshTableData(touch, running) {
+      touch.servers.forEach(v => {
+        v.connected = false;
+      });
+      touch.subscriptions.forEach(s => {
+        s.servers.forEach(v => {
+          v.connected = false;
+        });
+      });
+      this.tableData = touch;
+      if (running !== undefined) {
+        Object.assign(this.runningState, {
+          running: running
+            ? this.$t("common.isRunning")
+            : this.$t("common.notRunning"),
+          connectedServer: touch.connectedServer
+        });
+      }
+    },
     handleClickConnectedServer(which) {
       const that = this;
       this.locateTabToConnected(which);
@@ -1156,13 +1161,7 @@ export default {
         }
       }).then(res => {
         if (res.data.code === "SUCCESS") {
-          this.tableData = res.data.data.touch;
-          this.runningState = {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer
-          };
+          this.refreshTableData(res.data.data.touch, res.data.data.running);
           this.updateConnectView();
           this.$buefy.toast.open({
             message: this.$t("common.success"),
@@ -1197,14 +1196,8 @@ export default {
         }
       }).then(res => {
         if (res.data.code === "SUCCESS") {
-          this.tableData = res.data.data.touch;
+          this.refreshTableData(res.data.data.touch, res.data.data.running);
           this.checkedRows = [];
-          Object.assign(this.runningState, {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer
-          });
           this.updateConnectView();
         } else {
           this.$buefy.toast.open({
@@ -1487,13 +1480,7 @@ export default {
         }
       }).then(res => {
         handleResponse(res, this, () => {
-          this.tableData = res.data.data.touch;
-          this.runningState = {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer
-          };
+          this.refreshTableData(res.data.data.touch, res.data.data.running);
           this.updateConnectView();
           this.$buefy.toast.open({
             message: this.$t("common.success"),
@@ -1540,13 +1527,7 @@ export default {
             queue: false
           });
           this.showModalServer = false;
-          this.tableData = res.data.data.touch;
-          this.runningState = {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer
-          };
+          this.refreshTableData(res.data.data.touch, res.data.data.running);
           this.updateConnectView();
         });
       });
@@ -1573,13 +1554,7 @@ export default {
             queue: false
           });
           this.showModalSubscription = false;
-          this.tableData = res.data.data.touch;
-          this.runningState = {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
-            connectedServer: this.tableData.connectedServer
-          };
+          this.refreshTableData(res.data.data.touch, res.data.data.running);
           this.updateConnectView();
         });
       });
