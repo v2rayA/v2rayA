@@ -2,6 +2,7 @@ name: Release
 
 on:
   push:
+    branches: [ master ]
     tags:
       - v*
 
@@ -20,12 +21,22 @@ jobs:
 
     - name: Prepare
       id: prep
+      env:
+        REF: ${{ github.ref }}
       run: |
         echo ::set-output name=P_DIR::$(pwd)
-        
-        TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-        echo ::set-output name=VERSION::${TAG:1}
-        echo "VERSION=${TAG:1}" >> $GITHUB_ENV
+
+        if [[ "$REF" == "refs/tags/v"* ]]; then
+          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          version=${tag:1}
+        else
+          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+        fi
+        echo ::set-output name=VERSION::"$version"
+        echo "VERSION=$version" >> $GITHUB_ENV
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -42,7 +53,8 @@ jobs:
         ruby-version: 2.7
         bundler-cache: true
 
-    - name: Install Build Dependencies
+    - name: Install Package Dependencies
+      if: startsWith(github.ref, 'refs/tags/v')
       run: |
         go install github.com/mitchellh/gox@latest
         gem install fpm -v 1.13.1
@@ -60,7 +72,15 @@ jobs:
       run: |
         mv v2raya_linux_386_$VERSION v2raya_linux_x86_$VERSION
         mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
+
+    - uses: actions/upload-artifact@v2
+      if: "!startsWith(github.ref, 'refs/tags/v')"
+      with:
+        name: v2raya-binaries
+        path: v2raya_*_*_${{ steps.prep.outputs.VERSION }}*
+
     - name: Package
+      if: startsWith(github.ref, 'refs/tags/v')
       run: |
         export FILES="install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya@.service=/etc/systemd/system/v2raya@.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
         export PARAMS="--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
@@ -97,12 +117,14 @@ jobs:
         # MacOSX
 
     - name: Import GPG key
+      if: startsWith(github.ref, 'refs/tags/v')
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v4
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
     - name: Import SSH key
+      if: startsWith(github.ref, 'refs/tags/v')
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
@@ -111,17 +133,19 @@ jobs:
         echo "$SSH_PRIVATE_KEY" | ./install/tool/ssh-add_expect -
 
     - name: Generate APT repository
+      if: startsWith(github.ref, 'refs/tags/v')
       env:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
-        cp v2raya_linux_*_$VERSION apt/pool/main/v/v2raya/
+        cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/pool/main/v/v2raya/
         cp web.tar.gz apt/pool/main/v/v2raya/web_$VERSION.tar.gz
         echo "apt.v2raya.mzz.pub" > apt/CNAME
 
     - name: Deploy APT repository
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-apt
@@ -130,6 +154,7 @@ jobs:
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: Deploy Demo Site repository
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-web
@@ -138,10 +163,12 @@ jobs:
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - name: AUR Release
+      if: startsWith(github.ref, 'refs/tags/v')
       env:
         P_DIR: ${{ steps.prep.outputs.P_DIR }}
       run: bash install/aur/deploy.sh
     - name: Github Release
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
         draft: true
@@ -151,7 +178,7 @@ jobs:
           v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_windows_amd64_${{ steps.prep.outputs.VERSION }}
+          v2raya_windows_amd64_${{ steps.prep.outputs.VERSION }}.exe
           v2raya_darwin_amd64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
           installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb
@@ -174,6 +201,7 @@ jobs:
           installer_freebsd_armv7_${{ steps.prep.outputs.VERSION }}.txz
           installer_freebsd_aarch64_${{ steps.prep.outputs.VERSION }}.txz
     - name: Refresh Cloudflare Cache
+      if: startsWith(github.ref, 'refs/tags/v')
       env:
         CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
         CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}

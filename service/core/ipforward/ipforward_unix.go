@@ -5,16 +5,12 @@ package ipforward
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"os/exec"
 	"strings"
 	"syscall"
 )
 
 func IsIpForwardOn() bool {
-	if setting := configure.GetSettingNotNil(); setting.Transparent == configure.TransparentClose {
-		return setting.IntranetSharing
-	}
 	out, err := syscall.Sysctl("net.inet.ip.forwarding")
 	return err == nil && strings.TrimSpace(out) == "1"
 }
@@ -25,9 +21,6 @@ func WriteIpForward(on bool) (err error) {
 			err = fmt.Errorf("WriteIpForward: %w", err)
 		}
 	}()
-	if setting := configure.GetSettingNotNil(); setting.Transparent == configure.TransparentClose {
-		setting.IntranetSharing = on
-	}
 	val := "0"
 	if on {
 		val = "1"
