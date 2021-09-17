@@ -57,14 +57,18 @@ jobs:
       run: |
         yarn --cwd gui --check-files
         yarn --cwd gui build
-    - name: Build V2rayA Binaries
+    - name: Build v2rayA Binaries
       run: |
         cp -r web service/server/router/
         cd service
         for osarch in linux/386 linux/amd64 linux/arm linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64; do
           export GOOS=$(echo $osarch | cut -d/ -f1)
           export GOARCH=$(echo $osarch | cut -d/ -f2)
-          CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../v2raya_"$GOOS"_"$GOARCH"_"$VERSION"
+          SUFFIX=""
+          if [ "$GOOS" == "windows" ]; then
+            SUFFIX=".exe"
+          fi
+          CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../v2raya_"$GOOS"_"$GOARCH"_"$VERSION""$SUFFIX"
         done
     - name: Rename Binaries to Friendly Filenames
       run: |
