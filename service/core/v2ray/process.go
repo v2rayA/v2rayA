@@ -90,8 +90,9 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 		if time.Since(startTime) > 15*time.Second {
 			return nil, fmt.Errorf("v2ray-core does not start normally, check the log for more information")
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
+	log.Trace("Cost of waiting for v2ray-core: %v", time.Since(startTime).String())
 	process.proc = proc
 	return process, nil
 }

@@ -379,25 +379,43 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 		}
 	}
 	// set hosts
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	ech := make(chan error, len(domainsToHosts))
 	for _, domain := range domainsToHosts {
-		ips, err := resolv.LookupHost(domain)
-		if err != nil {
-			return routing, fmt.Errorf("[Error] %w: please make sure you're connected to the Internet", err)
-		}
-		if t.DNS.Hosts == nil {
-			t.DNS.Hosts = make(coreObj.Hosts)
-		}
-		ips = FilterIPs(ips)
-		if service.CheckHostsListSupported() == nil {
-			t.DNS.Hosts[domain] = ips
-		} else {
-			t.DNS.Hosts[domain] = ips[0]
-		}
+		wg.Add(1)
+		go func(domain string) {
+			defer wg.Done()
+			ips, err := resolv.LookupHost(domain)
+			if err != nil {
+				ech <- fmt.Errorf("%w: please make sure you're connected to the Internet", err)
+				return
+			}
+			ips = FilterIPs(ips)
+			mu.Lock()
+			if t.DNS.Hosts == nil {
+				t.DNS.Hosts = make(coreObj.Hosts)
+			}
+			if service.CheckHostsListSupported() == nil {
+				t.DNS.Hosts[domain] = ips
+			} else {
+				t.DNS.Hosts[domain] = ips[0]
+			}
+			mu.Unlock()
+		}(domain)
 	}
-	return
+	wg.Wait()
+	select {
+	case err = <-ech:
+		return nil, err
+	default:
+		return routing, nil
+	}
 }
 
-// The order are from v4 IPs to v6 IPs. If the system does not support IPv6, v6 IPs will not be returned.
+// FilterIPs returns filtered IP list.
+// The order are from v4 IPs to v6 IPs.
+// If the system does not support IPv6, v6 IPs will not be returned.
 func FilterIPs(ips []string) []string {
 	var ret []string
 	for _, ip := range ips {
