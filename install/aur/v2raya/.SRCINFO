@@ -5,12 +5,14 @@ pkgbase = v2raya
 	url = https://github.com/v2rayA/v2rayA
 	install = .INSTALL
 	arch = i686
+	arch = pentium4
 	arch = x86_64
+	arch = arm
 	arch = armv7h
 	arch = armv6h
 	arch = aarch64
 	license = AGPL3
-	makedepends = go>=2:1.16.0-1
+	makedepends = go>=2:1.17.0-1
 	makedepends = nodejs>=14
 	makedepends = yarn
 	makedepends = python2
