@@ -40,3 +40,6 @@ require (
 //replace github.com/v2rayA/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
 //replace github.com/v2rayA/beego/v2 => ../../beego
+
+// windows/arm64 support
+replace github.com/go-ole/go-ole => github.com/go-ole/go-ole v0.0.0-20210915003542-8b1f7f90f6b1
