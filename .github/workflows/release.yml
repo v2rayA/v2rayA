@@ -67,12 +67,21 @@ jobs:
       run: |
         mv v2raya_linux_386_$VERSION v2raya_linux_x86_$VERSION
         mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
+        mv v2raya_windows_amd64_$VERSION.exe v2raya_windows_x64_$VERSION.exe
+        mv v2raya_darwin_amd64_$VERSION v2raya_darwin_x64_$VERSION
 
-    - uses: actions/upload-artifact@v2
+    - name: Upload artifact and release
       if: "!startsWith(github.ref, 'refs/tags/v')"
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.4
       with:
-        name: v2raya-binaries
-        path: v2raya_*_*_${{ steps.prep.outputs.VERSION }}*
+        path: |
+          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
+          v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
+          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
 
     - name: Install Package Dependencies
       if: startsWith(github.ref, 'refs/tags/v')
@@ -178,8 +187,8 @@ jobs:
           v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_windows_amd64_${{ steps.prep.outputs.VERSION }}.exe
-          v2raya_darwin_amd64_${{ steps.prep.outputs.VERSION }}
+          v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
           installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb
           installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb
