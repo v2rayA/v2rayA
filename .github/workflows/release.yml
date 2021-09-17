@@ -53,12 +53,6 @@ jobs:
         ruby-version: 2.7
         bundler-cache: true
 
-    - name: Install Package Dependencies
-      if: startsWith(github.ref, 'refs/tags/v')
-      run: |
-        go install github.com/mitchellh/gox@latest
-        gem install fpm -v 1.13.1
-        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar
     - name: Build GUI
       run: |
         yarn --cwd gui --check-files
@@ -67,6 +61,7 @@ jobs:
       run: |
         cp -r web service/server/router/
         cd service
+        go install github.com/mitchellh/gox@latest
         CGO_ENABLED=0 gox -osarch="linux/386 linux/amd64 linux/arm linux/arm64 windows/amd64 darwin/amd64 darwin/arm64" -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -output="../v2raya_{{.OS}}_{{.Arch}}_$VERSION"
     - name: Rename Binaries to Friendly Filenames
       run: |
@@ -79,6 +74,11 @@ jobs:
         name: v2raya-binaries
         path: v2raya_*_*_${{ steps.prep.outputs.VERSION }}*
 
+    - name: Install Package Dependencies
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        gem install fpm -v 1.13.1
+        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
