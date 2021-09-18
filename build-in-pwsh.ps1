@@ -31,6 +31,7 @@ else {
             ## Get current folder
             ## $SHELL_FOLDER = Get-Item -LiteralPath ./ | ForEach-Object  -Process { $_.FullName }
             $CWD = Get-Location
+            Write-Output "Current path is $CWD"
             $shell_path = Resolve-Path -Path $PSCommandPath
             $SHELL_FOLDER = Split-Path $shell_path
 
