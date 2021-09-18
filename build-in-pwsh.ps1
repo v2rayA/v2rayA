@@ -1,4 +1,4 @@
-Set-PSDebug -Trace 1
+## Set-PSDebug -Trace 1
 
 ## Check OS
 $TestWinDir = Test-Path $env:windir -ErrorAction Ignore
