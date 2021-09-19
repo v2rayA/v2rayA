@@ -1,7 +1,7 @@
 <template>
   <section id="node-section" class="node-section container hero">
     <b-sidebar
-      v-show="observatorySidebarValid && connectedServerInfo.length"
+      v-show="connectedServerInfo.length"
       :open="true"
       class="node-status-sidebar-reduced"
       :can-cancel="false"
@@ -11,7 +11,6 @@
       <img src="/img/icons/switch-menu.svg" width="36px" />
     </b-sidebar>
     <b-sidebar
-      v-if="observatorySidebarValid"
       :open="showSidebar"
       type="is-light"
       :fullheight="false"
@@ -760,9 +759,6 @@ export default {
     };
   },
   computed: {
-    observatorySidebarValid() {
-      return localStorage["observatorySidebarValid"] === "true";
-    },
     loadBalanceValid() {
       return localStorage["loadBalanceValid"] === "true";
     }
@@ -1063,31 +1059,29 @@ export default {
           server.connected = true;
           server = [server];
         }
-        if (this.observatorySidebarValid) {
-          this.connectedServerInfo = [];
-          for (const i in server) {
-            let subscription_name = null;
-            if (connectedServer[i]._type === "subscriptionServer") {
-              subscription_name = this.tableData.subscriptions[
-                connectedServer[i].sub
-              ].host.toUpperCase();
-            }
-            this.connectedServerInfo.push({
-              info: {
-                ...server[i],
-                subscription_name,
-                alive: null,
-                delay: null,
-                outbound_tag: null,
-                last_seen_time: null,
-                last_error_reason: null,
-                last_try_time: null
-              },
-              which: connectedServer[i],
-              showContent: true,
-              selected: false
-            });
+        this.connectedServerInfo = [];
+        for (const i in server) {
+          let subscription_name = null;
+          if (connectedServer[i]._type === "subscriptionServer") {
+            subscription_name = this.tableData.subscriptions[
+                    connectedServer[i].sub
+                    ].host.toUpperCase();
           }
+          this.connectedServerInfo.push({
+            info: {
+              ...server[i],
+              subscription_name,
+              alive: null,
+              delay: null,
+              outbound_tag: null,
+              last_seen_time: null,
+              last_error_reason: null,
+              last_try_time: null
+            },
+            which: connectedServer[i],
+            showContent: true,
+            selected: false
+          });
         }
       } else {
         this.connectedServerInfo = [];
