@@ -388,7 +388,7 @@ func (v *V2Ray) ExportToURL() string {
 	case "vmess":
 		v.V = "2"
 		b, _ := jsoniter.Marshal(v)
-		return "vmess://" + base64.StdEncoding.EncodeToString(b)
+		return "vmess://" + strings.TrimSuffix(base64.StdEncoding.EncodeToString(b), "=")
 	}
 	log.Warn("unexpected protocol: %v", v.Protocol)
 	return ""

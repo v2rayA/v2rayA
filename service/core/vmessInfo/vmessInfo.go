@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Deprecated
 type VmessInfo struct {
 	Ps            string `json:"ps"`
 	Add           string `json:"add"`
@@ -86,7 +87,7 @@ func (v *VmessInfo) ExportToURL() string {
 		}
 		if v.Type != "" {
 			a := []string{
-				`obfs-local`,
+				`simple-obfs`,
 				`obfs=` + v.Type,
 				`obfs-host=` + v.Host,
 			}
