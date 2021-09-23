@@ -37,7 +37,11 @@ export default {
     protocol: "Protocol",
     latency: "Latency",
     lastSeenTime: "Last seen time",
-    lastTryTime: "Last try time"
+    lastTryTime: "Last try time",
+    messages: {
+      notAllowInsecure:
+        "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden."
+    }
   },
   subscription: {
     host: "Host",
