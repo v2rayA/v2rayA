@@ -575,11 +575,11 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
-				InboundTag:  []string{"rule"},
+				InboundTag:  inbounds,
 			},
 		)
 	case configure.RoutingAMode:
-		if err := parseRoutingA(t, []string{"rule"}); err != nil {
+		if err := parseRoutingA(t, inbounds); err != nil {
 			return err
 		}
 	}
