@@ -108,11 +108,25 @@
             >
             </b-autocomplete>
           </b-field>
-          <b-field
-            v-show="v2ray.tls === 'tls'"
-            label="AllowInsecure"
-            label-position="on-border"
-          >
+          <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
+            <template slot="label">
+              AllowInsecure
+              <b-tooltip
+                v-show="v2ray.protocol === 'vless'"
+                type="is-dark"
+                :label="
+                  $t('server.messages.notAllowInsecure', { name: 'VLESS' })
+                "
+                multilined
+                position="is-right"
+              >
+                <b-icon
+                  size="is-small"
+                  icon=" iconfont icon-help-circle-outline"
+                  style="position:relative;top:2px;right:3px;font-weight:normal"
+                />
+              </b-tooltip>
+            </template>
             <b-select
               ref="v2ray_allow_insecure"
               v-model="v2ray.allowInsecure"
@@ -120,7 +134,9 @@
               required
             >
               <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
+              <option :value="true" :disabled="v2ray.protocol === 'vless'">{{
+                $t("operations.yes")
+              }}</option>
             </b-select>
           </b-field>
           <b-field label="Network" label-position="on-border">
@@ -540,11 +556,25 @@
               expanded
             />
           </b-field>
-          <b-field
-            v-show="trojan.method === 'origin' && trojan.obfs === 'none'"
-            label="AllowInsecure"
-            label-position="on-border"
-          >
+          <b-field label-position="on-border">
+            <template slot="label">
+              AllowInsecure
+              <b-tooltip
+                v-show="trojan.method !== 'origin' || trojan.obfs !== 'none'"
+                type="is-dark"
+                :label="
+                  $t('server.messages.notAllowInsecure', { name: 'Trojan-Go' })
+                "
+                multilined
+                position="is-right"
+              >
+                <b-icon
+                  size="is-small"
+                  icon=" iconfont icon-help-circle-outline"
+                  style="position:relative;top:2px;right:3px;font-weight:normal"
+                />
+              </b-tooltip>
+            </template>
             <b-select
               ref="trojan_allow_insecure"
               v-model="trojan.allowInsecure"
@@ -552,7 +582,11 @@
               required
             >
               <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
+              <option
+                :value="true"
+                :disabled="trojan.method !== 'origin' || trojan.obfs !== 'none'"
+                >{{ $t("operations.yes") }}</option
+              >
             </b-select>
           </b-field>
           <b-field label="SNI(Peer)" label-position="on-border">

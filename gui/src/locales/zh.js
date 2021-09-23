@@ -37,7 +37,11 @@ export default {
     protocol: "协议",
     latency: "时延",
     lastSeenTime: "上次存活时间",
-    lastTryTime: "上次测试时间"
+    lastTryTime: "上次测试时间",
+    messages: {
+      notAllowInsecure:
+        "根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure"
+    }
   },
   subscription: {
     host: "域名",
