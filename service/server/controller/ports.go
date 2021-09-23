@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/core/vmessInfo"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/server/service"
 	"net"
@@ -97,7 +97,7 @@ func _getLinkForVlessGrpc(hostname string, sni string) (link string, err error) 
 		return "", fmt.Errorf("failed to generate link for VLESS-GRPC inbound: %w", err)
 	}
 	p := service.GetPorts()
-	info := vmessInfo.VmessInfo{
+	info := serverObj.V2Ray{
 		Ps:       "VLESS-GRPC | v2rayA",
 		Add:      hostname,
 		Port:     strconv.Itoa(p.VlessGrpc),

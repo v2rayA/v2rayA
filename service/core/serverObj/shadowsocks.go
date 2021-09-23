@@ -1,6 +1,7 @@
 package serverObj
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/coreObj"
@@ -166,7 +167,7 @@ func (s *Shadowsocks) ExportToURL() string {
 	// sip002
 	u := &url.URL{
 		Scheme:   "ss",
-		User:     url.UserPassword(s.Cipher, s.Password),
+		User:     url.User(strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(s.Cipher+":"+s.Password)), "=")),
 		Host:     net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 		Fragment: s.Name,
 	}
