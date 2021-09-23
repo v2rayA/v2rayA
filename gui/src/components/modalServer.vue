@@ -872,7 +872,7 @@ export default {
         if (o.alpn !== "") {
           o.alpn = decodeURIComponent(o.alpn);
         }
-        if (o.type === "mkcp" || o.type === "kcp") {
+        if (o.net === "mkcp" || o.net === "kcp") {
           o.path = u.params.seed;
         }
         console.log(o);
@@ -1031,6 +1031,7 @@ export default {
       let tmp;
       switch (srcObj.protocol) {
         case "vless":
+          // https://github.com/XTLS/Xray-core/discussions/716
           query = {
             type: srcObj.net,
             security: srcObj.tls,
@@ -1058,20 +1059,27 @@ export default {
             params: query
           });
         case "vmess":
-          //尽量减少生成的链接长度
+          //https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2)
           obj = Object.assign({}, srcObj);
           switch (obj.net) {
             case "kcp":
             case "tcp":
-              if (!(obj.net === "tcp" && obj.type === "http")) {
-                obj.path = "";
-                if (obj.tls === "" || obj.tls === "none") {
-                  obj.host = "";
-                }
-              }
+            case "quic":
               break;
             default:
               obj.type = "";
+          }
+          switch (obj.net) {
+            case "ws":
+            case "h2":
+            case "http":
+            case "quic":
+            case "grpc":
+            case "kcp":
+            case "mkcp":
+              break;
+            default:
+              obj.path = "";
           }
           if (!(obj.protocol === "vless" && obj.tls === "xtls")) {
             delete obj.flow;
