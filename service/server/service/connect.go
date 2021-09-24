@@ -83,8 +83,8 @@ func Connect(which *configure.Which) (err error) {
 		return fmt.Errorf("which can not be nil")
 	}
 	//configure the ip forward
-	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
-		e := ipforward.WriteIpForward(setting.IntranetSharing)
+	if setting.IpForward != ipforward.IsIpForwardOn() {
+		e := ipforward.WriteIpForward(setting.IpForward)
 		if e != nil {
 			log.Warn("Connect: %v", e)
 		}

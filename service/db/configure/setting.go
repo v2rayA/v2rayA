@@ -17,7 +17,8 @@ type Setting struct {
 	MuxOn                              DefaultYesNo    `json:"muxOn"`
 	Mux                                int             `json:"mux"`
 	Transparent                        TransparentMode `json:"transparent"`
-	IntranetSharing                    bool            `json:"ipforward"`
+	IpForward                          bool            `json:"ipforward"`
+	PortSharing                        bool            `json:"portSharing"`
 	SpecialMode                        SpecialMode     `json:"specialMode"`
 	TransparentType                    TransparentType `json:"transparentType"`
 	AntiPollution                      Antipollution   `json:"antipollution"`
@@ -35,7 +36,8 @@ func NewSetting() (setting *Setting) {
 		MuxOn:                              No,
 		Mux:                                8,
 		Transparent:                        TransparentClose,
-		IntranetSharing:                    ipforward.IsIpForwardOn(),
+		IpForward:                          ipforward.IsIpForwardOn(),
+		PortSharing:                        false,
 		SpecialMode:                        SpecialModeNone,
 		TransparentType:                    TransparentRedirect,
 		AntiPollution:                      AntipollutionClosed,

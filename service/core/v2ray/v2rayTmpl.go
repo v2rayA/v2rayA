@@ -861,7 +861,7 @@ func (t *Template) setDualStack(setting *configure.Setting) {
 	tagMap := make(map[string]struct{})
 	inbounds6 := make([]coreObj.Inbound, len(t.Inbounds))
 	copy(inbounds6, t.Inbounds)
-	if !setting.IntranetSharing {
+	if !setting.PortSharing {
 		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
 			if t.Inbounds[i].Tag == "dns-in" {
@@ -1615,7 +1615,7 @@ func PortOccupied(syntax []string) (err error) {
 				continue
 			}
 			occupiedErr := fmt.Errorf("%w by %v(%v): %v", OccupiedErr, p.Name, p.PID, s.LocalAddress.Port)
-			if configure.GetSettingNotNil().IntranetSharing {
+			if configure.GetSettingNotNil().PortSharing {
 				// want to listen 0.0.0.0, which conflicts with all IPs
 				return occupiedErr
 			}

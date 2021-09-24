@@ -272,6 +272,7 @@ func hello() {
 	wd, _ := os.Getwd()
 	log.Alert("v2rayA working directory is %v", wd)
 	log.Alert("v2rayA configuration directory is %v", conf.GetEnvironmentConfig().Config)
+	log.Alert("Golang: %v", runtime.Version())
 	log.Alert("OS: %v", runtime.GOOS)
 	log.Alert("Arch: %v", runtime.GOARCH)
 	log.Alert("Lite: %v", conf.GetEnvironmentConfig().Lite)

@@ -166,6 +166,9 @@ func FillEmpty(toFill interface{}, defaultVal interface{}) error {
 	}
 	for i := 0; i < va.NumField(); i++ {
 		v := va.Field(i)
+		if v.Type().Name() == "bool" {
+			continue
+		}
 		if v.IsZero() {
 			v.Set(vb.Field(i))
 		}

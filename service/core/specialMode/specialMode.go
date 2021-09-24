@@ -64,7 +64,7 @@ func CouldLocalDnsListen() (couldListenLocalhost bool, err error) {
 	//NOTICE: Special local address (127.2.0.17). Do not use v2ray.PortOccupied
 	var occupiedErr error
 	if occupied {
-		// with IntranetSharing on, v2ray will try listening at 0.0.0.0, which conflicts with all IPs
+		// with PortSharing on, v2ray will try listening at 0.0.0.0, which conflicts with all IPs
 		for _, socket := range sockets {
 			p := socket.Proc
 			if p == nil {

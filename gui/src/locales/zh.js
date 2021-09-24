@@ -100,7 +100,8 @@ export default {
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
-    ipForwardOn: "开启局域网共享",
+    ipForwardOn: "开启IP转发",
+    portSharingOn: "开启端口分享",
     concurrency: "最大并发数",
     options: {
       global: "代理所有流量",
