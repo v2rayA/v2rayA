@@ -333,7 +333,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				for i := range alpn {
 					alpn[i] = strings.TrimSpace(alpn[i])
 				}
-				core.StreamSettings.TLSSettings.Alpn = alpn
+				core.StreamSettings.XTLSSettings.Alpn = alpn
 			}
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
