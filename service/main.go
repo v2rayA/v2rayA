@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	_ "github.com/v2rayA/v2rayA/conf/report"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/pingtunnel"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/simpleobfs"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/socks5"

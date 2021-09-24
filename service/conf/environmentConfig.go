@@ -28,17 +28,12 @@ type Params struct {
 	LogDisableTimestamp     bool     `id:"log-disable-timestamp"`
 	Lite                    bool     `id:"lite" desc:"Lite mode for non-root and non-linux users"`
 	ShowVersion             bool     `id:"version"`
+	PrintReport             string   `id:"report" desc:"Print report"`
 }
 
 var params Params
 
-var dontLoadConfig bool
-
 func initFunc() {
-	defer SetServiceControlMode()
-	if dontLoadConfig {
-		return
-	}
 	err := gonfig.Load(&params, gonfig.Conf{
 		FileDisable:       true,
 		FlagIgnoreUnknown: false,
@@ -89,8 +84,4 @@ func GetEnvironmentConfig() *Params {
 
 func SetConfig(config Params) {
 	params = config
-}
-
-func DontLoadConfig() {
-	dontLoadConfig = true
 }
