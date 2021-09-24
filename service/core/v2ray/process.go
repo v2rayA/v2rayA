@@ -65,7 +65,17 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 		if err != nil {
 			e := proc.Kill()
 			if e == nil {
-				proc.Wait()
+				p, e := proc.Wait()
+				var t []string
+				if p != nil {
+					t = append(t, p.String())
+				}
+				if e != nil {
+					t = append(t, e.Error())
+				}
+				log.Warn("v2ray-core: %v", strings.Join(t, ": "))
+			} else {
+				log.Warn("v2ray-core: %v", e)
 			}
 		}
 	}()
