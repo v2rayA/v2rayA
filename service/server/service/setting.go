@@ -24,8 +24,8 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
 		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
 	}
-	if setting.IntranetSharing != ipforward.IsIpForwardOn() {
-		e := ipforward.WriteIpForward(setting.IntranetSharing)
+	if setting.IpForward != ipforward.IsIpForwardOn() {
+		e := ipforward.WriteIpForward(setting.IpForward)
 		if e != nil {
 			log.Warn("UpdateSetting: %v", e)
 		}

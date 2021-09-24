@@ -71,10 +71,17 @@
           }}</option>
         </b-select>
         <b-checkbox-button
+          v-show="!lite"
           v-model="ipforward"
           :native-value="true"
           style="position:relative;left:-1px;"
           >{{ $t("setting.ipForwardOn") }}
+        </b-checkbox-button>
+        <b-checkbox-button
+          v-model="portSharing"
+          :native-value="true"
+          style="position:relative;left:-1px;"
+          >{{ $t("setting.portSharingOn") }}
         </b-checkbox-button>
       </b-field>
 
@@ -368,6 +375,7 @@ export default {
     transparent: "close",
     transparentType: "redirect",
     ipforward: false,
+    portSharing: false,
     dnsForceMode: false,
     dnsforward: "no",
     antipollution: "none",
@@ -481,6 +489,7 @@ export default {
             transparent: this.transparent,
             transparentType: this.transparentType,
             ipforward: this.ipforward,
+            portSharing: this.portSharing,
             dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
             antipollution: this.antipollution,
             specialMode: this.specialMode

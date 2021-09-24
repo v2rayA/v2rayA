@@ -100,7 +100,8 @@ export default {
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Upadate Subscriptions and GFWList",
-    ipForwardOn: "Share in LAN",
+    ipForwardOn: "IP Forward",
+    portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
     options: {
       global: "Proxy All Traffic",
