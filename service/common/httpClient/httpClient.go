@@ -6,9 +6,11 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	proxyWithHttp2 "github.com/v2rayA/v2rayA/pkg/util/proxyWithHttp"
+	"net"
 	"net/http"
 	"net/url"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -40,7 +42,7 @@ func GetHttpClientWithv2rayAProxy() (client *http.Client, err error) {
 			return nil, fmt.Errorf("failed to get gateway: %v", err)
 		}
 	}
-	return GetHttpClientWithProxy("socks5://" + host + ":20170")
+	return GetHttpClientWithProxy("socks5://" + net.JoinHostPort(host, strconv.Itoa(configure.GetPortsNotNil().Socks5)))
 }
 
 func GetHttpClientWithv2rayAPac() (client *http.Client, err error) {
@@ -55,7 +57,7 @@ func GetHttpClientWithv2rayAPac() (client *http.Client, err error) {
 			return nil, fmt.Errorf("failed to get gateway: %v", err)
 		}
 	}
-	return GetHttpClientWithProxy("http://" + host + ":20172")
+	return GetHttpClientWithProxy("http://" + net.JoinHostPort(host, strconv.Itoa(configure.GetPortsNotNil().HttpWithPac)))
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {

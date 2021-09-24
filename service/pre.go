@@ -35,6 +35,10 @@ import (
 
 func checkEnvironment() {
 	config := conf.GetEnvironmentConfig()
+	if len(config.PrintReport) > 0 {
+		config.Report()
+		os.Exit(0)
+	}
 	if !config.PassCheckRoot || config.ResetPassword {
 		if os.Getegid() != 0 {
 			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
