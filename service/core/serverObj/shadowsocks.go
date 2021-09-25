@@ -236,10 +236,14 @@ func (s *Shadowsocks) GetProtocol() string {
 }
 
 func (s *Shadowsocks) ProtoToShow() string {
-	if s.Plugin.Name != "" {
-		return fmt.Sprintf("SS(%v+%v)", s.Cipher, s.Plugin.Opts.Obfs)
+	ciph := s.Cipher
+	if ciph == "chacha20-ietf-poly1305" || ciph == "chacha20-poly1305" {
+		ciph = "c20p1305"
 	}
-	return fmt.Sprintf("SS(%v)", s.Cipher)
+	if s.Plugin.Name != "" {
+		return fmt.Sprintf("SS(%v+%v)", ciph, s.Plugin.Name)
+	}
+	return fmt.Sprintf("SS(%v)", ciph)
 }
 
 func (s *Shadowsocks) GetHostname() string {

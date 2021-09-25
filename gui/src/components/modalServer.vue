@@ -311,22 +311,48 @@
               <option value="none">none</option>
             </b-select>
           </b-field>
-          <b-field label="Obfs" label-position="on-border">
-            <b-select ref="ss_obfs" v-model="ss.obfs" expanded>
+          <b-field label="Plugin" label-position="on-border">
+            <b-select ref="ss_plugin" v-model="ss.plugin" expanded>
               <option value="">{{ $t("setting.options.off") }}</option>
+              <option value="simple-obfs">simple-obfs</option>
+              <option value="v2ray-plugin">v2ray-plugin</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-show="ss.plugin === 'simple-obfs'"
+            label="Obfs"
+            label-position="on-border"
+          >
+            <b-select ref="ss_obfs" v-model="ss.obfs" expanded>
               <option value="http">http</option>
               <option value="tls">tls</option>
             </b-select>
           </b-field>
           <b-field
-            v-if="ss.obfs === 'http'"
-            label="Path"
+            v-show="ss.plugin === 'v2ray-plugin'"
+            label="Mode"
             label-position="on-border"
           >
-            <b-input ref="ss_path" v-model="ss.path" expanded />
+            <b-select ref="ss_mode" value="websocket" expanded>
+              <option value="websocket">websocket</option>
+            </b-select>
           </b-field>
           <b-field
-            v-if="ss.obfs === 'http' || ss.obfs === 'tls'"
+            v-show="ss.plugin === 'v2ray-plugin'"
+            label="TLS"
+            label-position="on-border"
+          >
+            <b-select ref="ss_tls" v-model="ss.tls" expanded>
+              <option value="">{{ $t("setting.options.off") }}</option>
+              <option value="tls">tls</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-if="
+              ss.obfs === 'http' ||
+                ss.obfs === 'tls' ||
+                ss.plugin === 'v2ray-plugin'
+            "
             label="Host"
             label-position="on-border"
           >
@@ -336,6 +362,13 @@
               placeholder="(optional)"
               expanded
             />
+          </b-field>
+          <b-field
+            v-if="ss.obfs === 'http' || ss.plugin === 'v2ray-plugin'"
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input ref="ss_path" v-model="ss.path" placeholder="/" expanded />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SSR">
@@ -721,7 +754,9 @@ export default {
     },
     ss: {
       method: "aes-128-gcm",
-      obfs: "",
+      plugin: "",
+      obfs: "http",
+      tls: "",
       path: "/",
       host: "",
       password: "",
@@ -931,11 +966,22 @@ export default {
           server: u.host,
           port: u.port,
           name: u.hash,
+          obfs: "http",
           protocol: "ss"
         };
         if (u.params.plugin) {
           u.params.plugin = decodeURIComponent(u.params.plugin);
           const arr = u.params.plugin.split(";");
+          obj.plugin = arr[0];
+          switch (obj.plugin) {
+            case "obfs-local":
+            case "simpleobfs":
+              obj.plugin = "simple-obfs";
+              break;
+            case "v2ray-plugin":
+              obj.tls = "";
+              break;
+          }
           for (let i = 1; i < arr.length; i++) {
             //"obfs-local;obfs=tls;obfs-host=4cb6a43103.wns.windows.com"
             const a = arr[i].split("=");
@@ -950,8 +996,6 @@ export default {
                 obj.path = a[1];
             }
           }
-        } else {
-          obj.obfs = "";
         }
         return obj;
       } else if (url.toLowerCase().startsWith("ssr://")) {
@@ -1121,16 +1165,35 @@ export default {
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":
           /* ss://BASE64(method:password)@server:port#name */
-          //TODO: simpleobfs
           tmp = `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${
             srcObj.server
           }:${srcObj.port}/`;
-          if (srcObj.obfs !== "") {
-            tmp += `?plugin=${encodeURIComponent(
-              `obfs-local;obfs=${srcObj.obfs};obfs-host=${srcObj.host}${
-                srcObj.obfs === "http" ? `;obfs-path=${srcObj.path}` : ""
-              }`
-            )}`;
+          if (srcObj.plugin) {
+            const plugin = [srcObj.plugin];
+            if (srcObj.plugin === "v2ray-plugin") {
+              if (srcObj.tls) {
+                plugin.push("tls");
+              }
+              if (srcObj.mode !== "websocket") {
+                plugin.push("mode=" + srcObj.mode);
+              }
+              if (srcObj.host) {
+                plugin.push("host=" + srcObj.host);
+              }
+              if (srcObj.path) {
+                if (!srcObj.path.startsWith("/")) {
+                  srcObj.path = "/" + srcObj.path;
+                }
+                plugin.push("path=" + srcObj.path);
+              }
+            } else {
+              plugin.push("obfs=" + srcObj.obfs);
+              plugin.push("obfs-host=" + srcObj.host);
+              if (srcObj.obfs === "http") {
+                plugin.push("obfs-path=" + srcObj.path);
+              }
+            }
+            tmp += `?plugin=${encodeURIComponent(plugin.join(";"))}`;
           }
           tmp += srcObj.name.length
             ? `#${encodeURIComponent(srcObj.name)}`
