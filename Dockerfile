@@ -15,8 +15,8 @@ RUN yarn cache clean && yarn && yarn build
 FROM golang:alpine AS builder
 ADD service /build/service
 WORKDIR /build/service
-ENV GO111MODULE=on
-ENV GOPROXY=https://goproxy.io
+#ENV GO111MODULE=on
+#ENV GOPROXY=https://goproxy.cn
 COPY --from=version /build/version ./
 COPY --from=builder-web /build/web server/router/web
 RUN export VERSION=$(cat ./version) && CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${VERSION:1} -s -w" -o v2raya .
