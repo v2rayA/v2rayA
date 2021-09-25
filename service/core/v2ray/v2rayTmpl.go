@@ -1370,7 +1370,6 @@ func (t *Template) resolveOutbounds(
 		Tag:      "block",
 		Protocol: "blackhole",
 	})
-	log.Warn("%v", extraOutbounds)
 	t.Outbounds = append(t.Outbounds, extraOutbounds...)
 	return supportUDP, outboundTags, nil
 }

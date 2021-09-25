@@ -154,7 +154,11 @@ func (s *ShadowsocksR) NeedPlugin() bool {
 }
 
 func (s *ShadowsocksR) ProtoToShow() string {
-	return fmt.Sprintf("SSR(%v+%v)", s.Proto, s.Obfs)
+	obfs := s.Obfs
+	if obfs == "tls1.2_ticket_auth" {
+		obfs = "tls1.2"
+	}
+	return fmt.Sprintf("SSR(%v+%v)", s.Proto, obfs)
 }
 
 func (s *ShadowsocksR) GetProtocol() string {
