@@ -21,9 +21,10 @@ type ServerObj interface {
 }
 
 type Configuration struct {
-	CoreOutbound coreObj.OutboundObject
-	PluginChain  string // The first is a server plugin, and the others are client plugins. Split by ",".
-	UDPSupport   bool
+	CoreOutbound   coreObj.OutboundObject
+	ExtraOutbounds []coreObj.OutboundObject
+	PluginChain    string // The first is a server plugin, and the others are client plugins. Split by ",".
+	UDPSupport     bool
 }
 
 type PriorInfo struct {

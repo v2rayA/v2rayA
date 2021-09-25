@@ -122,7 +122,6 @@ type Headers struct {
 	Host string `json:"Host"`
 }
 type WsSettings struct {
-	ConnectionReuse bool    `json:"connectionReuse"`
 	Path            string  `json:"path"`
 	Headers         Headers `json:"headers"`
 }

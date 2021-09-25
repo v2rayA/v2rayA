@@ -229,7 +229,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: v.Path}
 		case "ws":
 			core.StreamSettings.WsSettings = &coreObj.WsSettings{
-				ConnectionReuse: true,
 				Path:            v.Path,
 				Headers: coreObj.Headers{
 					Host: v.Host,
@@ -321,7 +320,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
-			// always set SNI
+			// SNI
 			if v.Host != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.Host
 			}
