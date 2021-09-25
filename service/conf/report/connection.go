@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/ipforward"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"strings"
 )
@@ -32,6 +33,14 @@ func ConnectionReport(arg []string) (report string) {
 		"",
 	)
 
+	// get version of v2ray-core
+	ver, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		lines = append(lines, fmt.Sprintf("failed to get version of v2ray-core: %v", err))
+		return
+	} else {
+		lines = append(lines, fmt.Sprintf("Core Version: %v", ver))
+	}
 	// check if v2ray-core is running
 	ok, report := DefaultCoreStatusReporter.FromDatabase()
 	lines = append(lines, report)
