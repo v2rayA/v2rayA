@@ -1244,6 +1244,7 @@ func (t *Template) resolveOutbounds(
 	}
 	// keep order with serverInfos
 	outboundTags = make([]string, len(serverData.ServerInfos))
+	var extraOutbounds []coreObj.OutboundObject
 	var outbounds []_outbound
 	for obj, sInfos := range serverData.ServerObj2ServerInfos() {
 		var (
@@ -1283,6 +1284,7 @@ func (t *Template) resolveOutbounds(
 				if err != nil {
 					return nil, nil, err
 				}
+				extraOutbounds = append(extraOutbounds, c.ExtraOutbounds...)
 				var s plugin.Server
 				if len(c.PluginChain) > 0 {
 					s, err = plugin.ServerFromChain(c.PluginChain)
@@ -1311,6 +1313,7 @@ func (t *Template) resolveOutbounds(
 			if err != nil {
 				return nil, nil, err
 			}
+			extraOutbounds = append(extraOutbounds, c.ExtraOutbounds...)
 			for _, v := range balancers {
 				c.CoreOutbound.Balancers = append(c.CoreOutbound.Balancers, v.name)
 			}
@@ -1367,6 +1370,8 @@ func (t *Template) resolveOutbounds(
 		Tag:      "block",
 		Protocol: "blackhole",
 	})
+	log.Warn("%v", extraOutbounds)
+	t.Outbounds = append(t.Outbounds, extraOutbounds...)
 	return supportUDP, outboundTags, nil
 }
 
@@ -1712,6 +1717,7 @@ func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort stri
 	var mark = 0x80
 	t.checkAndSetMark(&c.CoreOutbound, mark)
 	t.Outbounds = append(t.Outbounds, c.CoreOutbound)
+	t.Outbounds = append(t.Outbounds, c.ExtraOutbounds...)
 	iPort, err := strconv.Atoi(inboundPort)
 	if err != nil || iPort <= 0 {
 		return fmt.Errorf("port of inbound must be a positive number with string type")

@@ -118,6 +118,8 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 		Method:   s.Cipher,
 		Password: s.Password,
 	}
+	var proxySettings *coreObj.ProxySettings
+	var extraOutbounds []coreObj.OutboundObject
 	var chain []string
 	switch s.Plugin.Name {
 	case "simple-obfs":
@@ -134,7 +136,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 			RawQuery: url.Values{
 				"obfs": []string{s.Plugin.Opts.Obfs},
 				"host": []string{s.Plugin.Opts.Host},
-				"uri":  []string{s.Plugin.Opts.Uri},
+				"uri":  []string{s.Plugin.Opts.Path},
 			}.Encode(),
 		}
 		chain = append(chain, tcp.String(), simpleObfs.String())
@@ -143,8 +145,52 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 		default:
 			return c, fmt.Errorf("unsupported obfs %v of plugin %v", s.Plugin.Opts.Obfs, s.Plugin.Name)
 		}
-	// TODO: v2ray-plugin
-	//case "v2ray-plugin":
+	case "v2ray-plugin":
+		dialerTag := info.Tag + "-dialer"
+		proxySettings = &coreObj.ProxySettings{
+			Tag: dialerTag,
+		}
+		streamSettings := &coreObj.StreamSettings{}
+		host := s.Plugin.Opts.Host
+		if host == "" {
+			host = "cloudflare.com"
+		}
+		path := s.Plugin.Opts.Path
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+		if s.Plugin.Opts.Tls == "tls" {
+			streamSettings.Security = "tls"
+			streamSettings.TLSSettings = &coreObj.TLSSettings{}
+			// SNI
+			streamSettings.TLSSettings.ServerName = host
+		}
+		switch s.Plugin.Opts.Obfs {
+		case "quic":
+			return c, fmt.Errorf("quic is not yet supported")
+		default:
+			// "websocket" or ""
+			streamSettings.Network = "ws"
+			streamSettings.WsSettings = &coreObj.WsSettings{
+				Path: path,
+				Headers: coreObj.Headers{
+					Host: host,
+				},
+			}
+		}
+		extraOutbounds = append(extraOutbounds, coreObj.OutboundObject{
+			Tag:      dialerTag,
+			Protocol: "freedom",
+			Settings: coreObj.Settings{
+				DomainStrategy: "AsIs",
+				Redirect:       net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
+			},
+			StreamSettings: streamSettings,
+			Mux: &coreObj.Mux{
+				Enabled:     true,
+				Concurrency: 1,
+			},
+		})
 	case "":
 		// no plugin
 	default:
@@ -157,9 +203,11 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 			Settings: coreObj.Settings{
 				Servers: []coreObj.Server{v2rayServer},
 			},
+			ProxySettings: proxySettings,
 		},
-		PluginChain: strings.Join(chain, ","),
-		UDPSupport:  true,
+		ExtraOutbounds: extraOutbounds,
+		PluginChain:    strings.Join(chain, ","),
+		UDPSupport:     true,
 	}, nil
 }
 
@@ -215,9 +263,10 @@ type Sip003 struct {
 	Opts Sip003Opts `json:"opts"`
 }
 type Sip003Opts struct {
+	Tls  string `json:"tls"`
 	Obfs string `json:"obfs"`
 	Host string `json:"host"`
-	Uri  string `json:"uri"`
+	Path string `json:"uri"`
 }
 
 func ParseSip003Opts(opts string) Sip003Opts {
@@ -225,15 +274,21 @@ func ParseSip003Opts(opts string) Sip003Opts {
 	fields := strings.Split(opts, ";")
 	for i := range fields {
 		a := strings.Split(fields[i], "=")
+		if len(a) == 1 {
+			// to avoid panic
+			a = append(a, "")
+		}
 		switch a[0] {
-		case "obfs":
+		case "tls":
+			sip003Opts.Tls = "tls"
+		case "obfs", "mode":
 			sip003Opts.Obfs = a[1]
-		case "obfs-path", "obfs-uri":
+		case "obfs-path", "obfs-uri", "path":
 			if !strings.HasPrefix(a[1], "/") {
 				a[1] += "/"
 			}
-			sip003Opts.Uri = a[1]
-		case "obfs-host":
+			sip003Opts.Path = a[1]
+		case "obfs-host", "host":
 			sip003Opts.Host = a[1]
 		}
 	}
@@ -242,10 +297,11 @@ func ParseSip003Opts(opts string) Sip003Opts {
 func ParseSip003(plugin string) Sip003 {
 	var sip003 Sip003
 	fields := strings.SplitN(plugin, ";", 2)
-	sip003.Name = fields[0]
-	switch sip003.Name {
+	switch fields[0] {
 	case "obfs-local", "simpleobfs":
 		sip003.Name = "simple-obfs"
+	default:
+		sip003.Name = fields[0]
 	}
 	sip003.Opts = ParseSip003Opts(fields[1])
 	return sip003
@@ -259,8 +315,8 @@ func (s *Sip003) String() string {
 	if s.Opts.Host != "" {
 		list = append(list, "obfs-host="+s.Opts.Host)
 	}
-	if s.Opts.Uri != "" {
-		list = append(list, "obfs-uri="+s.Opts.Uri)
+	if s.Opts.Path != "" {
+		list = append(list, "obfs-uri="+s.Opts.Path)
 	}
 	return strings.Join(list, ";")
 }
