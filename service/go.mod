@@ -46,4 +46,4 @@ require (
 // windows/arm64 support
 replace github.com/go-ole/go-ole => github.com/go-ole/go-ole v0.0.0-20210915003542-8b1f7f90f6b1
 
-replace github.com/shirou/gopsutil/v3 => github.com/rasa/gopsutil v0.0.0-20210915000654-14b723191732
+replace github.com/shirou/gopsutil/v3 => github.com/shirou/gopsutil v0.0.0-20210919144451-80d5b574053f
