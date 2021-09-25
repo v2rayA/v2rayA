@@ -45,7 +45,7 @@ func (r *CoreStatusReporter) FromApiListening() (ok bool, report string) {
 	if apiPort == 0 {
 		return false, "cannot get api port from config file"
 	}
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(apiPort)), 3*time.Second)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(apiPort)), 5*time.Second)
 	if err != nil {
 		return false, "v2ray-core is NOT running"
 	}
