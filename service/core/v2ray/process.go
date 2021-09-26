@@ -61,23 +61,30 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 	if err != nil {
 		return nil, err
 	}
+	var unexpectedExiting = make(chan string, 1)
 	defer func() {
 		if err != nil {
 			e := proc.Kill()
 			if e == nil {
-				p, e := proc.Wait()
-				var t []string
-				if p != nil {
-					t = append(t, p.String())
-				}
-				if e != nil {
-					t = append(t, e.Error())
-				}
-				log.Warn("v2ray-core: %v", strings.Join(t, ": "))
-			} else {
+				log.Warn("v2ray-core: %v", <-unexpectedExiting)
+			} else if !errors.Is(e, os.ErrProcessDone) {
 				log.Warn("v2ray-core: %v", e)
 			}
 		}
+	}()
+	go func() {
+		p, e := proc.Wait()
+		var t []string
+		if p != nil {
+			if p.Success() {
+				return
+			}
+			t = append(t, p.String())
+		}
+		if e != nil {
+			t = append(t, e.Error())
+		}
+		unexpectedExiting <- fmt.Sprintf("%v", strings.Join(t, ": "))
 	}()
 	// ports to check
 	portList := []string{strconv.Itoa(tmpl.ApiPort)}
@@ -96,7 +103,12 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 			i++
 			continue
 		}
-
+		select {
+		case msg := <-unexpectedExiting:
+			unexpectedExiting <- msg
+			return nil, fmt.Errorf("%v: check the log for more information", msg)
+		default:
+		}
 		if time.Since(startTime) > 15*time.Second {
 			return nil, fmt.Errorf("v2ray-core does not start normally, check the log for more information")
 		}
