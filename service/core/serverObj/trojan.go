@@ -80,8 +80,8 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 
 func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 	if t.Protocol == "trojan-go" {
-		// "socks5:// -> tls,ws,ss,trojanc"
-		socks5 := url.URL{
+		// "trojanc -> tcp:// -> ss,ws,tls"
+		tcpListener := url.URL{
 			Scheme: "tcp",
 			Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
 		}
@@ -93,7 +93,7 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 				"allowInsecure": []string{common.BoolToString(t.AllowInsecure)},
 			}.Encode(),
 		}
-		chain := []string{socks5.String(), tls.String()}
+		chain := []string{tcpListener.String(), tls.String()}
 		if t.Type == "ws" {
 			ws := url.URL{
 				Scheme: "ws",
