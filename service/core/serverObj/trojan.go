@@ -82,7 +82,7 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 	if t.Protocol == "trojan-go" {
 		// "socks5:// -> tls,ws,ss,trojanc"
 		socks5 := url.URL{
-			Scheme: "socks5",
+			Scheme: "tcp",
 			Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
 		}
 		tls := url.URL{
@@ -114,16 +114,20 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 			chain = append(chain, ss.String())
 		}
-		trojanc := url.URL{
-			Scheme: "trojanc",
-			User:   url.User(t.Password),
-			Host:   net.JoinHostPort(t.Server, strconv.Itoa(t.Port)),
-		}
-		chain = append(chain, trojanc.String())
 		return Configuration{
-			CoreOutbound: info.PluginObj(),
+			CoreOutbound: coreObj.OutboundObject{
+				Tag:      info.Tag,
+				Protocol: "trojan",
+				Settings: coreObj.Settings{
+					Servers: []coreObj.Server{{
+						Address:  "127.0.0.1",
+						Port:     info.PluginPort,
+						Password: t.Password,
+					}},
+				},
+			},
 			PluginChain:  strings.Join(chain, ","),
-			UDPSupport:   false,
+			UDPSupport:   true,
 		}, nil
 	}
 

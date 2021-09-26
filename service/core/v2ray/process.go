@@ -148,6 +148,9 @@ var logWriter logInfoWriter
 func (p *Process) Close() error {
 	err := p.proc.Kill()
 	if err != nil {
+		if errors.Is(err, os.ErrProcessDone) {
+			return nil
+		}
 		return err
 	}
 	p.proc.Wait()

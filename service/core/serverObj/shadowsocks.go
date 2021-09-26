@@ -118,6 +118,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 		Method:   s.Cipher,
 		Password: s.Password,
 	}
+	udpSupport := false
 	var proxySettings *coreObj.ProxySettings
 	var extraOutbounds []coreObj.OutboundObject
 	var chain []string
@@ -193,6 +194,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 		})
 	case "":
 		// no plugin
+		udpSupport = true
 	default:
 		return c, fmt.Errorf("unsupported plugin %v", s.Plugin.Name)
 	}
@@ -207,7 +209,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 		},
 		ExtraOutbounds: extraOutbounds,
 		PluginChain:    strings.Join(chain, ","),
-		UDPSupport:     true,
+		UDPSupport:     udpSupport,
 	}, nil
 }
 
