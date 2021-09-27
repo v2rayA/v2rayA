@@ -53,10 +53,11 @@ nextLine:
 					if strings.HasPrefix(u.Scheme, "tcp") && service.CheckTcpDnsSupported() != nil {
 						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
 					}
-				//case "quic":
-				//	if v2ray.CheckQuicLocalDnsSupported() != nil {
-				//		return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
-				//	}
+				case "quic":
+					// FIXME: after quic:// supported
+					if service.CheckQuicLocalDnsSupported() != nil {
+						return "", fmt.Errorf("%w: %v", UnsupportedProtocol, u.Scheme)
+					}
 				case "":
 					goto invalid
 				default:
