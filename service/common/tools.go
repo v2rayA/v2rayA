@@ -185,3 +185,39 @@ func IsOpenWrt() bool {
 	}
 	return false
 }
+
+func SliceSub(slice []string, toSub []string) []string {
+	var res = make([]string, 0, len(slice))
+	var m = make(map[string]struct{})
+	for _, s := range toSub {
+		m[s] = struct{}{}
+	}
+	for _, s := range slice {
+		if _, ok := m[s]; !ok {
+			res = append(res, s)
+		}
+	}
+	return res
+}
+
+func SliceHas(slice []string, set []string) []string {
+	var res = make([]string, 0, len(slice))
+	var m = make(map[string]struct{})
+	for _, s := range set {
+		m[s] = struct{}{}
+	}
+	for _, s := range slice {
+		if _, ok := m[s]; ok {
+			res = append(res, s)
+		}
+	}
+	return res
+}
+
+func SliceToSet(slice []string) map[string]struct{} {
+	var m = make(map[string]struct{})
+	for _, s := range slice {
+		m[s] = struct{}{}
+	}
+	return m
+}
