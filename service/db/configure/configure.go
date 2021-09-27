@@ -278,9 +278,9 @@ func GetInternalDnsListNotNil() (list []string) {
 	r := new(string)
 	_ = db.Get("system", "internalDnsList", r)
 	if len(strings.TrimSpace(*r)) == 0 {
-		*r = `119.29.29.29 -> direct
-https://doh.alidns.com/dns-query -> direct
-tcp://dns.opendns.com:5353 -> proxy`
+		*r = `https://dns.alidns.com/dns-query -> direct
+tcp://dns.opendns.com:5353 -> proxy
+119.29.29.29 -> direct`
 	}
 	list = strings.Split(strings.TrimSpace(*r), "\n")
 	if len(list) == 1 && list[0] == "" {

@@ -350,32 +350,24 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	domainsToLookup = common.Deduplicate(domainsToLookup)
 	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
-		if service.CheckDohSupported() == nil {
+		if service.CheckTcpDnsSupported() == nil {
 			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address:      "https://doh.pub/dns-query",
-				Domains:      domainsToLookup,
-				SkipFallback: true,
+				Address: "tcp://208.67.220.220:5353",
+				Domains: domainsToLookup,
 			})
 			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address:      "https://doh.alidns.com/dns-query",
-				Domains:      domainsToLookup,
-				SkipFallback: true,
+				Address: "tcp://119.29.29.29:53",
+				Domains: domainsToLookup,
 			})
-			domainsToHosts = append(domainsToHosts, "doh.pub")
-			domainsToHosts = append(domainsToHosts, "doh.alidns.com")
 		} else {
 			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address:      "dns.pub",
-				Domains:      domainsToLookup,
-				SkipFallback: true,
+				Address: "208.67.220.220",
+				Domains: domainsToLookup,
 			})
 			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address:      "dns.alidns.com",
-				Domains:      domainsToLookup,
-				SkipFallback: true,
+				Address: "119.29.29.29",
+				Domains: domainsToLookup,
 			})
-			domainsToHosts = append(domainsToHosts, "dns.pub")
-			domainsToHosts = append(domainsToHosts, "dns.alidns.com")
 		}
 	}
 	// set hosts
@@ -590,8 +582,7 @@ func (t *Template) setRulePortRouting(setting *configure.Setting) error {
 	return t.AppendRoutingRuleByMode(setting.RulePortMode, []string{"rule"})
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
-	ra := configure.GetRoutingA()
-	lines := strings.Split(ra, "\n")
+	lines := strings.Split(configure.GetRoutingA(), "\n")
 	hardcodeReplacement := regexp.MustCompile(`\$\$.+?\$\$`)
 	for i := range lines {
 		hardcodes := hardcodeReplacement.FindAllString(lines[i], -1)
@@ -599,15 +590,14 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 			env := strings.TrimSuffix(strings.TrimPrefix(hardcode, "$$"), "$$")
 			val, ok := os.LookupEnv(env)
 			if !ok {
-				log.Error("RoutingA: Environment variable \"%v\" is not found.", env)
+				log.Error("RoutingA: Environment variable \"%v\" is not found", env)
 			} else {
 				log.Info("RoutingA: Environment variable %v=%v", env, strconv.Quote(val))
 			}
 			lines[i] = strings.Replace(lines[i], hardcode, val, 1)
 		}
 	}
-	ra = strings.Join(lines, "\n")
-	rules, err := RoutingA.Parse(ra)
+	rules, err := RoutingA.Parse(strings.Join(lines, "\n"))
 	if err != nil {
 		log.Warn("parseRoutingA: %v", err)
 		return err
