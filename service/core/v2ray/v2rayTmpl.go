@@ -369,7 +369,6 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 		d, r := parseAdvancedDnsServers(dnsList, domainsToLookup)
 		t.DNS.Servers = append(t.DNS.Servers, d...)
 		routing = append(routing, r...)
-		internal = append(internal, dnsList...)
 	}
 	// set hosts
 	var wg sync.WaitGroup
