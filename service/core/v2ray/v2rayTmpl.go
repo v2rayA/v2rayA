@@ -110,13 +110,16 @@ func parseDnsAddr(addr string) Addr {
 			}
 		}
 	}
-	// tcp://8.8.8.8:53, https://dns.google/dns-query
-	// TODO: quic:// uses UDP
+	// tcp://8.8.8.8:53, https://dns.google/dns-query, quic://dns.nextdns.io
 	if u, err := url.Parse(addr); err == nil {
+		udp := false
+		if u.Scheme == "quic" {
+			udp = true
+		}
 		return Addr{
 			host: u.Hostname(),
 			port: u.Port(),
-			udp:  false,
+			udp:  udp,
 		}
 	}
 	// dns.google, dns.pub, etc.
@@ -140,7 +143,14 @@ func parseAdvancedDnsServers(lines []string, domains []string) (domainNameServer
 			continue
 		}
 		dns := ParseAdvancedDnsLine(line)
-		if u, err := url.Parse(dns.Val); err == nil && strings.Contains(dns.Val, "://") && !strings.Contains(u.Scheme, "://") {
+		if u, err := url.Parse(dns.Val); err == nil &&
+			strings.Contains(dns.Val, "://") &&
+			!strings.Contains(u.Scheme, "://") {
+			// FIXME: after quic:// supported
+			if u.Scheme == "quic" {
+				u.Scheme = "quic+local"
+				dns.Val = u.String()
+			}
 			if domains != nil {
 				domainNameServers = append(domainNameServers, coreObj.DnsServer{
 					Address: dns.Val,
