@@ -24,11 +24,10 @@ require (
 	github.com/shirou/gopsutil/v3 v3.21.8
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.7.5
-	github.com/ugorji/go v1.2.5 // indirect
 	github.com/v2fly/v2ray-core/v4 v4.41.0
+	github.com/v2rayA/RoutingA v1.0.0
 	github.com/v2rayA/beego/v2 v2.0.4
 	github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41
-	github.com/v2rayA/routingA v0.0.0-20201204065601-aef348ea7aa1
 	github.com/v2rayA/shadowsocksR v1.0.3
 	github.com/xujiajun/nutsdb v0.5.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e

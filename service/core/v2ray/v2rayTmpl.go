@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/v2rayA/routingA"
+	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
@@ -591,7 +591,7 @@ func (t *Template) setRulePortRouting(setting *configure.Setting) error {
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	ra := configure.GetRoutingA()
-	rules, err := routingA.Parse(ra)
+	rules, err := RoutingA.Parse(ra)
 	if err != nil {
 		log.Warn("parseRoutingA: %v", err)
 		return err
@@ -599,11 +599,11 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	defaultOutbound, _ := t.FirstProxyOutboundName(nil)
 	for _, rule := range rules {
 		switch rule := rule.(type) {
-		case routingA.Define:
+		case RoutingA.Define:
 			switch rule.Name {
 			case "inbound", "outbound":
 				switch o := rule.Value.(type) {
-				case routingA.Bound:
+				case RoutingA.Bound:
 					proto := o.Value
 					switch proto.Name {
 					case "http", "socks":
@@ -716,7 +716,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	outboundTags := t.outNames()
 	for _, rule := range rules {
 		switch rule := rule.(type) {
-		case routingA.Define:
+		case RoutingA.Define:
 			switch rule.Name {
 			case "default":
 				switch v := rule.Value.(type) {
@@ -727,7 +727,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 					}
 				}
 			}
-		case routingA.Routing:
+		case RoutingA.Routing:
 			rr := coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: rule.Out,
