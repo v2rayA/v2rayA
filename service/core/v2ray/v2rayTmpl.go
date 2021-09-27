@@ -591,6 +591,22 @@ func (t *Template) setRulePortRouting(setting *configure.Setting) error {
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	ra := configure.GetRoutingA()
+	lines := strings.Split(ra, "\n")
+	hardcodeReplacement := regexp.MustCompile(`\$\$.+?\$\$`)
+	for i := range lines {
+		hardcodes := hardcodeReplacement.FindAllString(lines[i], -1)
+		for _, hardcode := range hardcodes {
+			env := strings.TrimSuffix(strings.TrimPrefix(hardcode, "$$"), "$$")
+			val, ok := os.LookupEnv(env)
+			if !ok {
+				log.Error("RoutingA: Environment variable \"%v\" is not found.", env)
+			} else {
+				log.Info("RoutingA: Environment variable %v=%v", env, strconv.Quote(val))
+			}
+			lines[i] = strings.Replace(lines[i], hardcode, val, 1)
+		}
+	}
+	ra = strings.Join(lines, "\n")
 	rules, err := RoutingA.Parse(ra)
 	if err != nil {
 		log.Warn("parseRoutingA: %v", err)
@@ -1613,9 +1629,8 @@ func PortOccupied(syntax []string) (err error) {
 			if p == nil {
 				continue
 			}
-			if ownPID := strconv.Itoa(os.Getpid());
-				p.PPID == ownPID ||
-					p.PID == ownPID {
+			if ownPID := strconv.Itoa(os.Getpid()); p.PPID == ownPID ||
+				p.PID == ownPID {
 				continue
 			}
 			occupiedErr := fmt.Errorf("%w by %v(%v): %v", OccupiedErr, p.Name, p.PID, s.LocalAddress.Port)
