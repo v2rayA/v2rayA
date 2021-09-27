@@ -12,12 +12,19 @@ var secret []byte
 var once sync.Once
 
 func genSecret() {
-	//屡次启动的secret都不一样
-	//为了减少输入密码的次数，如果有订阅，secret则为所有订阅地址的hash值
+	// In order to reduce the number of times to enter the password,
+	// if there is a subscription, the secret is the hash value of all subscription addresses.
+	// Otherwise, the hash value of all server addresses.
 	if sub := configure.GetSubscriptionsV2(); len(sub) > 0 {
 		sha := sha256.New()
 		for _, s := range sub {
 			sha.Write([]byte(s.Address))
+		}
+		secret = sha.Sum(nil)
+	} else if servers := configure.GetServersV2(); len(servers) > 0 {
+		sha := sha256.New()
+		for _, s := range servers {
+			sha.Write([]byte(s.ServerObj.GetHostname()))
 		}
 		secret = sha.Sum(nil)
 	} else {
