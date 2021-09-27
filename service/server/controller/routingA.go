@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/v2rayA/routingA"
+	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 )
@@ -21,7 +21,7 @@ func PutRoutingA(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
-	_, err = routingA.Parse(data.RoutingA)
+	_, err = RoutingA.Parse(data.RoutingA)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
