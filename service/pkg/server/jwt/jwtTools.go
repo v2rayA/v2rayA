@@ -1,15 +1,11 @@
 package jwt
 
 import (
-	"encoding/base64"
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/dgrijalva/jwt-go/request"
+	"github.com/dgrijalva/jwt-go/v4"
+	"github.com/dgrijalva/jwt-go/v4/request"
 	"github.com/gin-gonic/gin"
-	"github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/v2rayA/v2rayA/common"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -37,18 +33,34 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 				return getSecret(), nil
 			})
 		if err != nil {
-			token, err = request.ParseFromRequest(ctx.Request, AuthorizationArgumentExtractor,
-				func(token *jwt.Token) (interface{}, error) {
-					return getSecret(), nil
-				})
+			if errors.Is(err, request.ErrNoTokenInRequest) {
+				token, err = request.ParseFromRequest(ctx.Request, AuthorizationArgumentExtractor,
+					func(token *jwt.Token) (interface{}, error) {
+						return getSecret(), nil
+					})
+			}
 			if err != nil {
 				common.Response(ctx, common.UNAUTHORIZED, err.Error())
 				ctx.Abort()
 				return
 			}
 		}
-		//如果需要Admin权限
 		mapClaims := token.Claims.(jwt.MapClaims)
+		exp, ok := mapClaims["exp"]
+		if ok {
+			fExp, ok := exp.(float64)
+			if !ok {
+				common.ResponseError(ctx, errors.New("bad token: 4"))
+				ctx.Abort()
+				return
+			}
+			if time.Now().After(time.Unix(int64(fExp), 0)) {
+				common.ResponseError(ctx, errors.New("expired token"))
+				ctx.Abort()
+				return
+			}
+		}
+		//如果需要Admin权限
 		if Admin && mapClaims["admin"] == false {
 			common.ResponseError(ctx, errors.New("admin required"))
 			ctx.Abort()
@@ -59,58 +71,13 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 	}
 }
 
-func ValidToken(token, secret string) (err error) {
-	arr := strings.Split(token, ".")
-	if len(arr) != 3 {
-		return errors.New("bad token: 1")
+func MakeJWT(payload map[string]string, expDuration *time.Duration) (string, error) {
+	claims := jwt.MapClaims{}
+	for k := range payload {
+		claims[k] = payload[k]
 	}
-	sign := base64.RawURLEncoding.EncodeToString(common.HMACSHA256(arr[0]+"."+arr[1], []byte(secret)))
-	if sign != arr[2] { //签名核对失败
-		return errors.New("bad token: 2")
-	}
-	pl, err := GetJWTPayload(token)
-	if err != nil { //decode发生意外
-		return errors.New("bad token: 3")
-	}
-	strExp, ok := pl["exp"]
-	if ok {
-		iExp, err := strconv.Atoi(strExp)
-		if err != nil { //str转int失败
-			return errors.New("bad token: 4")
-		}
-		if time.Now().After(time.Unix(int64(iExp), 0)) { //token过期
-			return errors.New("expired token")
-		}
-	}
-	return nil
-}
-
-func MakeJWT(payload map[string]string, expDuration *time.Duration) (jwt string, err error) {
-	headerJSON, _ := jsoniter.Marshal(map[string]string{
-		"alg": "HS256",
-		"typ": "JWT",
-	})
 	if expDuration != nil {
-		payload["exp"] = fmt.Sprint(time.Now().Add(*expDuration).Unix())
+		claims["exp"] = time.Now().Add(*expDuration).Unix()
 	}
-	payloadJSON, err := jsoniter.Marshal(payload)
-	if err != nil {
-		return
-	}
-	bh := base64.RawURLEncoding.EncodeToString(headerJSON)
-	bp := base64.RawURLEncoding.EncodeToString(payloadJSON)
-	signBefore := bh + "." + bp
-	signature := common.HMACSHA256(signBefore, getSecret())
-	bs := base64.RawURLEncoding.EncodeToString(signature)
-	return signBefore + "." + bs, nil
-}
-
-func GetJWTPayload(jwt string) (payload map[string]string, err error) {
-	arr := strings.Split(jwt, ".")
-	pl, err := base64.RawURLEncoding.DecodeString(arr[1])
-	if err != nil {
-		return
-	}
-	err = jsoniter.Unmarshal(pl, &payload)
-	return
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(getSecret())
 }
