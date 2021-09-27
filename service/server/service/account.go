@@ -12,7 +12,7 @@ func Login(username, password string) (token string, err error) {
 	if !IsValidAccount(username, password) {
 		return "", fmt.Errorf("wrong username or password")
 	}
-	dur := 3 * time.Hour
+	dur := 30 * 24 * time.Hour
 	return jwt.MakeJWT(map[string]string{
 		"uname": username,
 	}, &dur)
