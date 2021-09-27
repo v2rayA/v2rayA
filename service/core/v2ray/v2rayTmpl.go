@@ -134,7 +134,7 @@ type DnsRouting struct {
 	ProxyIPs      []Addr
 }
 
-func appendAdvancedDnsServers(d *coreObj.DNS, lines []string, domains []string) {
+func parseAdvancedDnsServers(lines []string, domains []string) (domainNameServers []interface{}, routing []coreObj.RoutingRule) {
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
@@ -142,23 +142,41 @@ func appendAdvancedDnsServers(d *coreObj.DNS, lines []string, domains []string) 
 		dns := ParseAdvancedDnsLine(line)
 		if u, err := url.Parse(dns.Val); err == nil && strings.Contains(dns.Val, "://") && !strings.Contains(u.Scheme, "://") {
 			if domains != nil {
-				d.Servers = append(d.Servers, coreObj.DnsServer{
+				domainNameServers = append(domainNameServers, coreObj.DnsServer{
 					Address: dns.Val,
 					Domains: domains,
 				})
 			} else {
-				d.Servers = append(d.Servers, dns.Val)
+				domainNameServers = append(domainNameServers, dns.Val)
 			}
 		} else {
 			addr := parseDnsAddr(dns.Val)
 			p, _ := strconv.Atoi(addr.port)
-			d.Servers = append(d.Servers, coreObj.DnsServer{
+			domainNameServers = append(domainNameServers, coreObj.DnsServer{
 				Address: addr.host,
 				Port:    p,
 				Domains: domains,
 			})
 		}
+
+		if dns.Val == "localhost" {
+			// no need to routing
+			continue
+		}
+		// we believe all lines are legal
+		var addr = parseDnsAddr(dns.Val)
+
+		if net.ParseIP(addr.host) != nil {
+			routing = append(routing, coreObj.RoutingRule{
+				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
+			})
+		} else {
+			routing = append(routing, coreObj.RoutingRule{
+				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
+			})
+		}
 	}
+	return domainNameServers, routing
 }
 
 // outName -> isGroup
@@ -283,32 +301,18 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	if setting.AntiPollution != configure.AntipollutionClosed {
 		if len(external) == 0 {
 			// not split traffic
-			appendAdvancedDnsServers(t.DNS, internal, nil)
+			d, r := parseAdvancedDnsServers(internal, nil)
+			t.DNS.Servers = append(t.DNS.Servers, d...)
+			routing = append(routing, r...)
 		} else {
 			// split traffic
-			appendAdvancedDnsServers(t.DNS, external, nil)
-			appendAdvancedDnsServers(t.DNS, internal, []string{"geosite:cn"})
-		}
-	}
-	// routing
-	dnsList := append(append([]string{}, internal...), external...)
-	for _, line := range dnsList {
-		dns := ParseAdvancedDnsLine(line)
-		if dns.Val == "localhost" {
-			// no need to routing
-			continue
-		}
-		// we believe all lines are legal
-		var addr = parseDnsAddr(dns.Val)
+			d, r := parseAdvancedDnsServers(external, nil)
+			t.DNS.Servers = append(t.DNS.Servers, d...)
+			routing = append(routing, r...)
 
-		if net.ParseIP(addr.host) != nil {
-			routing = append(routing, coreObj.RoutingRule{
-				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
-			})
-		} else {
-			routing = append(routing, coreObj.RoutingRule{
-				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
-			})
+			d, r = parseAdvancedDnsServers(internal, []string{"geosite:cn"})
+			t.DNS.Servers = append(t.DNS.Servers, d...)
+			routing = append(routing, r...)
 		}
 	}
 
@@ -350,25 +354,22 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	domainsToLookup = common.Deduplicate(domainsToLookup)
 	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
+		var dnsList []string
 		if service.CheckTcpDnsSupported() == nil {
-			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address: "tcp://208.67.220.220:5353",
-				Domains: domainsToLookup,
-			})
-			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address: "tcp://119.29.29.29:53",
-				Domains: domainsToLookup,
-			})
+			dnsList = []string{
+				"tcp://208.67.220.220:5353 -> direct",
+				"tcp://119.29.29.29:53 -> direct",
+			}
 		} else {
-			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address: "208.67.220.220",
-				Domains: domainsToLookup,
-			})
-			t.DNS.Servers = append(t.DNS.Servers, coreObj.DnsServer{
-				Address: "119.29.29.29",
-				Domains: domainsToLookup,
-			})
+			dnsList = []string{
+				"208.67.220.220:5353 -> direct",
+				"119.29.29.29:53 -> direct",
+			}
 		}
+		d, r := parseAdvancedDnsServers(dnsList, domainsToLookup)
+		t.DNS.Servers = append(t.DNS.Servers, d...)
+		routing = append(routing, r...)
+		internal = append(internal, dnsList...)
 	}
 	// set hosts
 	var wg sync.WaitGroup
@@ -401,6 +402,25 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	case err = <-ech:
 		return nil, err
 	default:
+		// deduplicate
+		strRouting := make([]string, 0, len(routing))
+		for _, r := range routing {
+			b, err := jsoniter.Marshal(r)
+			if err != nil {
+				log.Fatal("%v", err)
+			}
+			log.Warn("%v", string(b))
+			strRouting = append(strRouting, string(b))
+		}
+		strRouting = common.Deduplicate(strRouting)
+		routing = routing[:0]
+		for _, sr := range strRouting {
+			var r coreObj.RoutingRule
+			if err := jsoniter.Unmarshal([]byte(sr), &r); err != nil {
+				log.Fatal("%v: %v", err, sr)
+			}
+			routing = append(routing, r)
+		}
 		return routing, nil
 	}
 }
