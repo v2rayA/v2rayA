@@ -378,13 +378,9 @@
                     @click="handleClickAboutConnection(props.row)"
                   >
                     {{
-                      loadBalanceValid
-                        ? props.row.connected
-                          ? $t("operations.cancel")
-                          : $t("operations.select")
-                        : props.row.connected
-                        ? $t("operations.disconnect")
-                        : $t("operations.connect")
+                      props.row.connected
+                        ? $t("operations.cancel")
+                        : $t("operations.select")
                     }}
                   </b-button>
                   <b-button
@@ -513,13 +509,9 @@
                     @click="handleClickAboutConnection(props.row, subi)"
                   >
                     {{
-                      loadBalanceValid
-                        ? props.row.connected
-                          ? $t("operations.cancel")
-                          : $t("operations.select")
-                        : props.row.connected
-                        ? $t("operations.disconnect")
-                        : $t("operations.connect")
+                      props.row.connected
+                        ? $t("operations.cancel")
+                        : $t("operations.select")
                     }}
                   </b-button>
                   <b-button
@@ -757,11 +749,6 @@ export default {
       overHeight: false,
       clipboard: null
     };
-  },
-  computed: {
-    loadBalanceValid() {
-      return localStorage["loadBalanceValid"] === "true";
-    }
   },
   watch: {
     "runningState.running"() {
@@ -1064,8 +1051,8 @@ export default {
           let subscription_name = null;
           if (connectedServer[i]._type === "subscriptionServer") {
             subscription_name = this.tableData.subscriptions[
-                    connectedServer[i].sub
-                    ].host.toUpperCase();
+              connectedServer[i].sub
+            ].host.toUpperCase();
           }
           this.connectedServerInfo.push({
             info: {

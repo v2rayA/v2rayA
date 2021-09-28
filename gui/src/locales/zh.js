@@ -1,5 +1,6 @@
 export default {
   common: {
+    outboundSetting: "出站设置",
     setting: "设置",
     about: "关于",
     loggedAs: "正在以 <b>{username}</b> 的身份登录",
@@ -123,7 +124,8 @@ export default {
       updateGfwlistAtIntervals: "每隔一段时间更新GFWList（单位：小时）",
       dependTransparentMode: "跟随透明代理",
       closed: "关闭",
-      advanced: "自定义高级设置"
+      advanced: "自定义高级设置",
+      leastPing: "最小时延优先"
     },
     messages: {
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
@@ -146,7 +148,6 @@ export default {
                           <p>当前设置的端口白名单为：</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
-      xtlsNotWithWs: `xtls无法和websocket共存`,
       grpcShouldWithTls: `gRPC必须启用TLS`
     }
   },
@@ -253,10 +254,12 @@ export default {
     message: "时延测试往往需要花费较长时间，请耐心等待"
   },
   version: {
-    higherVersionNeeded: "该操作需要v2rayA的版本高于{version}",
-    v2rayInvalid: "检测到v2ray-core可能未正确安装，请检查"
+    higherVersionNeeded: "该操作需要 v2rayA 的版本高于{version}",
+    v2rayInvalid: "检测到 v2ray-core 可能未正确安装，请检查",
+    v2rayNotV5:
+      "检测到 v2ray-core 的版本并非 v5，请使用 v5 版本或将 v2rayA 降级至 v1.5"
   },
-  about: `<p>v2rayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
+  about: `<p>v2rayA 是 V2Ray 的一个 Web 客户端。</p>
           <p class="about-small">默认端口：</p>
           <p class="about-small">2017: v2rayA后端端口</p>
           <p class="about-small">20170: SOCKS协议</p>
@@ -265,7 +268,8 @@ export default {
           <p class="about-small">其他端口：</p>
           <p class="about-small">32345: tproxy，透明代理所需 </p>
           <p class="about-small">32346: 插件协议端口，如trojan、ssr和pingtunnel</p>
-          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/v2rayA/v2rayA/issues">提出issue</a>。</p>`,
+          <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/v2rayA/v2rayA/issues">提出issue</a>.</p>
+          <p>文档：<a href="https://v2raya.org">https://v2raya.org</a>.</p>`,
   axios: {
     messages: {
       optimizeBackend: "您是否需要调整服务端地址？",
@@ -276,8 +280,7 @@ export default {
       ]
     },
     urls: {
-      usage:
-        "https://github.com/v2rayA/v2rayA/wiki/%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"
+      usage: "https://v2raya.org/"
     }
   },
   routingA: {

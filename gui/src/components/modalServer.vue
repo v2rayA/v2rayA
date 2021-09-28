@@ -14,7 +14,6 @@
       >
         <b-tab-item label="V2RAY">
           <b-field
-            v-show="showVLess"
             label="Protocol"
             label-position="on-border"
           >
@@ -87,26 +86,7 @@
             <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
-              <option
-                v-if="v2ray.protocol === 'vless' && vlessVersion >= 2"
-                value="xtls"
-                >xtls</option
-              >
             </b-select>
-          </b-field>
-          <b-field
-            v-show="v2ray.tls === 'xtls'"
-            label="Flow"
-            label-position="on-border"
-          >
-            <b-autocomplete
-              v-model="v2ray.flow"
-              open-on-focus
-              placeholder="xtls-rprx-direct"
-              :data="filteredDataArray"
-              @select="option => (flowSelected = option)"
-            >
-            </b-autocomplete>
           </b-field>
           <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
             <template slot="label">
@@ -203,7 +183,6 @@
               v2ray.net === 'ws' ||
                 v2ray.net === 'h2' ||
                 v2ray.tls === 'tls' ||
-                v2ray.tls === 'xtls' ||
                 (v2ray.net === 'tcp' && v2ray.type === 'http')
             "
             label="Host"
@@ -216,7 +195,7 @@
             />
           </b-field>
           <b-field
-            v-show="v2ray.tls === 'tls' || v2ray.tls === 'xtls'"
+            v-show="v2ray.tls === 'tls'"
             label="Alpn"
             label-position="on-border"
           >
@@ -733,7 +712,6 @@ export default {
     }
   },
   data: () => ({
-    showVLess: false,
     vlessVersion: 0,
     v2ray: {
       ps: "",
@@ -746,7 +724,6 @@ export default {
       host: "",
       path: "",
       tls: "none",
-      flow: "xtls-rprx-direct",
       alpn: "",
       v: "",
       allowInsecure: false,
@@ -806,14 +783,7 @@ export default {
       protocol: "http",
       name: ""
     },
-    tabChoice: 0,
-    presetFlows: [
-      "xtls-rprx-direct",
-      "xtls-rprx-direct-udp443",
-      "xtls-rprx-splice",
-      "xtls-rprx-splice-udp443"
-    ],
-    flowSelected: null
+    tabChoice: 0
   }),
   computed: {
     filteredDataArray() {
@@ -823,16 +793,6 @@ export default {
     }
   },
   mounted() {
-    if (localStorage["vlessValid"] === "true") {
-      this.showVLess = true;
-      this.vlessVersion = 1;
-    } else {
-      const t = parseInt(localStorage["vlessValid"]);
-      if (!isNaN(t) && t > 0) {
-        this.showVLess = true;
-        this.vlessVersion = t;
-      }
-    }
     if (this.which !== null) {
       this.$axios({
         url: apiRoot + "/sharingAddress",
@@ -903,13 +863,7 @@ export default {
     }
   },
   methods: {
-    handleV2rayProtocolSwitch() {
-      if (this.v2ray.tls === "xtls" && this.v2ray.protocol === "vmess") {
-        this.$nextTick(() => {
-          this.v2ray.tls = "tls";
-        });
-      }
-    },
+    handleV2rayProtocolSwitch() {},
     resolveURL(url) {
       if (url.toLowerCase().startsWith("vmess://")) {
         let obj = JSON.parse(
@@ -934,7 +888,6 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           tls: u.params.security || "none",
-          flow: u.params.flow || "xtls-rprx-direct",
           allowInsecure: false,
           protocol: "vless"
         };
@@ -1116,8 +1069,7 @@ export default {
             path: srcObj.path,
             host: srcObj.host,
             headerType: srcObj.type,
-            sni: srcObj.host,
-            flow: srcObj.flow
+            sni: srcObj.host
           };
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
@@ -1267,20 +1219,7 @@ export default {
     },
     handleNetworkChange() {
       this.v2ray.type = "none";
-      if (this.v2ray.tls === "xtls" && this.v2ray.net === "ws") {
-        this.$buefy.toast.open({
-          message: this.$t("setting.messages.xtlsNotWithWs"),
-          type: "is-warning",
-          position: "is-top",
-          queue: false,
-          duration: 5000
-        });
-        this.$nextTick(() => {
-          this.v2ray.tls = "tls";
-        });
-      } else if (this.v2ray.tls === "xtls" && !this.v2ray.flow) {
-        this.v2ray.flow = this.presetFlows[0];
-      } else if (this.v2ray.tls === "none" && this.v2ray.net === "grpc") {
+      if (this.v2ray.tls === "none" && this.v2ray.net === "grpc") {
         this.$buefy.toast.open({
           message: this.$t("setting.messages.grpcShouldWithTls"),
           type: "is-warning",

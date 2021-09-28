@@ -203,7 +203,9 @@ func Run() error {
 		auth.GET("routingA", controller.GetRoutingA)
 		auth.PUT("routingA", controller.PutRoutingA)
 		auth.GET("outbounds", controller.GetOutbounds)
+		auth.GET("outbound", controller.GetOutbound)
 		auth.POST("outbound", controller.PostOutbound)
+		auth.PUT("outbound", controller.PutOutbound)
 		auth.DELETE("outbound", controller.DeleteOutbound)
 		auth.GET("message", controller.WsMessage)
 	}
