@@ -24,14 +24,14 @@ require (
 	github.com/shirou/gopsutil/v3 v3.21.8
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.7.5
-	github.com/v2fly/v2ray-core/v4 v4.42.1
+	github.com/v2fly/v2ray-core/v4 v4.42.2
 	github.com/v2rayA/RoutingA v1.0.0
 	github.com/v2rayA/beego/v2 v2.0.4
 	github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41
 	github.com/v2rayA/shadowsocksR v1.0.3
 	github.com/xujiajun/nutsdb v0.5.0
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
-	golang.org/x/sys v0.0.0-20210820121016-41cdb8703e55
+	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
+	golang.org/x/sys v0.0.0-20210903071746-97244b99971b
 	google.golang.org/grpc v1.40.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

@@ -5,7 +5,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -19,12 +18,6 @@ func StartV2ray() (err error) {
 		return fmt.Errorf("failed: no server is selected. please select at least one server")
 	}
 	return v2ray.UpdateV2RayConfig()
-}
-
-func IsClassicMode() bool {
-	supportLoadBalance := service.CheckObservatorySupported() == nil
-	singleOutbound := len(configure.GetOutbounds()) <= 1
-	return singleOutbound && !supportLoadBalance
 }
 
 func Disconnect(which configure.Which, clearOutbound bool) (err error) {
@@ -43,7 +36,7 @@ func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 		return
 	}
 	//update the v2ray config and restart v2ray
-	if v2ray.ProcessManager.Running() || IsClassicMode() {
+	if v2ray.ProcessManager.Running() {
 		defer func() {
 			if err != nil && lastConnected != nil && v2ray.ProcessManager.Running() {
 				_ = configure.OverwriteConnects(lastConnected)
@@ -99,17 +92,11 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}()
 	//save the result of connecting to database
-	supportLoadBalance := service.CheckObservatorySupported() == nil
-	if !supportLoadBalance {
-		if err = configure.ClearConnects(which.Outbound); err != nil {
-			return
-		}
-	}
 	if err = configure.AddConnect(*which); err != nil {
 		return
 	}
 	//update the v2ray config and start/restart v2ray
-	if v2ray.ProcessManager.Running() || IsClassicMode() {
+	if v2ray.ProcessManager.Running() {
 		if err = v2ray.UpdateV2RayConfig(); err != nil {
 			return
 		}

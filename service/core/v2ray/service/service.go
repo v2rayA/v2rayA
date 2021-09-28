@@ -52,50 +52,6 @@ func isVersionSatisfied(version string, mustV2rayCore bool) error {
 	return nil
 }
 
-func CheckDohSupported() (err error) {
-	return isVersionSatisfied("4.22.0", false)
-}
-
-func CheckLogNoneSupported() (err error) {
-	return isVersionSatisfied("4.20.0", false)
-}
-
-func CheckTcpDnsSupported() (err error) {
-	return isVersionSatisfied("4.40.0", true)
-}
-
-func CheckQuicLocalDnsSupported() (err error) {
-	return isVersionSatisfied("4.34.0", true)
-}
-
-func CheckFakednsOthersSupported() (err error) {
-	return isVersionSatisfied("4.38.0", true)
-}
-
-func CheckFakednsAutoConfigureSupported() (err error) {
-	return isVersionSatisfied("4.38.1", true)
-}
-
-func CheckBalancerSupported() (err error) {
-	return isVersionSatisfied("4.4", false)
-}
-
-func CheckObservatorySupported() (err error) {
-	return isVersionSatisfied("4.38.0", true)
-}
-
-func CheckHostsListSupported() (err error) {
-	return isVersionSatisfied("4.37.3", true)
-}
-
-func CheckQueryStrategySupported() (err error) {
-	return isVersionSatisfied("4.37.0", true)
-}
-
-func CheckMemconservativeSupported() (err error) {
-	return isVersionSatisfied("4.39.0", true)
-}
-
-func CheckGrpcSupported() (err error) {
-	return isVersionSatisfied("4.36.0", false)
+func CheckV5() (err error) {
+	return isVersionSatisfied("5.0.0", true)
 }

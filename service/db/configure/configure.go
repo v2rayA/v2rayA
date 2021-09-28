@@ -430,6 +430,22 @@ func AddOutbound(outbound string) (err error) {
 	return db.SetAdd("outbounds", "names", outbound)
 }
 
+func SetOutboundSetting(outbound string, setting OutboundSetting) (err error) {
+	return db.Set(fmt.Sprintf("outbound.%v", outbound), "setting", setting)
+}
+
+func GetOutboundSetting(outbound string) (setting OutboundSetting) {
+	err := db.Get(fmt.Sprintf("outbound.%v", outbound), "setting", &setting)
+	if err != nil {
+		return OutboundSetting{
+			ProbeURL:      "http://www.msftconnecttest.com/connecttest.txt",
+			ProbeInterval: "10s",
+			Type:          LeastPing,
+		}
+	}
+	return setting
+}
+
 func RemoveOutbound(outbound string) (err error) {
 	if err = db.BucketClear(fmt.Sprintf("outbound.%v", outbound)); err != nil {
 		return err

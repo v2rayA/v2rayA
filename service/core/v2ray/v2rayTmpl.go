@@ -1,7 +1,6 @@
 package v2ray
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -18,7 +17,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
@@ -44,10 +42,11 @@ type Template struct {
 		Rules          []coreObj.RoutingRule `json:"rules"`
 		Balancers      []coreObj.Balancer    `json:"balancers,omitempty"`
 	} `json:"routing"`
-	DNS         *coreObj.DNS         `json:"dns,omitempty"`
-	FakeDns     *coreObj.FakeDns     `json:"fakedns,omitempty"`
-	Observatory *coreObj.Observatory `json:"observatory,omitempty"`
-	API         *coreObj.APIObject   `json:"api,omitempty"`
+	DNS              *coreObj.DNS              `json:"dns,omitempty"`
+	FakeDns          *coreObj.FakeDns          `json:"fakedns,omitempty"`
+	Observatory      *coreObj.Observatory      `json:"observatory,omitempty"`
+	MultiObservatory *coreObj.MultiObservatory `json:"multiObservatory,omitempty"`
+	API              *coreObj.APIObject        `json:"api,omitempty"`
 
 	CoreVersion  string             `json:"-"`
 	Plugins      []plugin.Server    `json:"-"`
@@ -287,14 +286,7 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 			if firstUDPSupportedOutboundTag != "" {
 				external = []string{"8.8.8.8 -> " + firstUDPSupportedOutboundTag, "1.1.1.1 -> " + firstUDPSupportedOutboundTag}
 			} else {
-				if err := service.CheckTcpDnsSupported(); err == nil {
-					external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
-				} else if err = service.CheckDohSupported(); err == nil {
-					external = []string{"https://1.1.1.1/dns-query -> " + firstOutboundTag, "https://dns.google/dns-query -> " + firstOutboundTag}
-				} else {
-					// compromise
-					external = []string{"208.67.220.220:5353 -> direct", "208.67.222.222 -> direct"}
-				}
+				external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
 			}
 		case configure.AntipollutionDoH:
 			external = []string{"https://doh.pub/dns-query -> direct", "https://rubyfish.cn/dns-query -> direct"}
@@ -365,16 +357,9 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
 		var dnsList []string
-		if service.CheckTcpDnsSupported() == nil {
-			dnsList = []string{
-				"tcp://208.67.220.220:5353 -> direct",
-				"tcp://119.29.29.29:53 -> direct",
-			}
-		} else {
-			dnsList = []string{
-				"208.67.220.220:5353 -> direct",
-				"119.29.29.29:53 -> direct",
-			}
+		dnsList = []string{
+			"tcp://208.67.220.220:5353 -> direct",
+			"tcp://119.29.29.29:53 -> direct",
 		}
 		d, r := parseAdvancedDnsServers(dnsList, domainsToLookup)
 		t.DNS.Servers = append(t.DNS.Servers, d...)
@@ -398,11 +383,7 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 			if t.DNS.Hosts == nil {
 				t.DNS.Hosts = make(coreObj.Hosts)
 			}
-			if service.CheckHostsListSupported() == nil {
-				t.DNS.Hosts[domain] = ips
-			} else {
-				t.DNS.Hosts[domain] = ips[0]
-			}
+			t.DNS.Hosts[domain] = ips
 			mu.Unlock()
 		}(domain)
 	}
@@ -418,7 +399,6 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 			if err != nil {
 				log.Fatal("%v", err)
 			}
-			log.Warn("%v", string(b))
 			strRouting = append(strRouting, string(b))
 		}
 		strRouting = common.Deduplicate(strRouting)
@@ -1031,9 +1011,6 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 		vlessGrpc := &t.Inbounds[3]
 		vlessGrpc.Port = p.VlessGrpc
 		if p.VlessGrpc > 0 {
-			if err := service.CheckGrpcSupported(); err != nil {
-				return fmt.Errorf("not support grpc: %w", err)
-			}
 			if err := SetVlessGrpcInbound(vlessGrpc); err != nil {
 				return err
 			}
@@ -1079,7 +1056,7 @@ type serverInfo struct {
 	PluginPort   int
 }
 
-func Ps2OutboundTag(ps string) string {
+func GroupWrapper(ps string) string {
 	return fmt.Sprintf("『%v』", ps)
 }
 
@@ -1137,54 +1114,56 @@ func (t *Template) setWhitelistRouting(whitelist []Addr) {
 
 func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
 	outbounds := t.outNames()
-	mSubjectSelector := make(map[string]struct{})
 	for outbound, isGroup := range outbounds {
 		if !isGroup {
 			continue
 		}
 
-		strategy := "leastPing"
-		interval := 10 * time.Second
+		//TODO: random, leastload
+		strategy := serverData.OutboundName2Setting[outbound].Type
+		interval, err := time.ParseDuration(serverData.OutboundName2Setting[outbound].ProbeInterval)
+		if err != nil {
+			log.Warn("observatory: %v", err)
+			interval = 10 * time.Second
+		}
 		var selector []string
 
 		for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
-			selector = append(selector, Ps2OutboundTag(vi.GetName()))
+			selector = append(selector, GroupWrapper(vi.GetName()))
 		}
 
 		t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
 			Tag:      outbound,
 			Selector: selector,
 			Strategy: coreObj.BalancerStrategy{
-				//TODO: configure.GetOutboundSetting
-				Type: strategy,
+				Type: strategy.String(),
+			},
+			StrategySettings: &coreObj.StrategySettings{
+				ObserverTag: outbound,
 			},
 		})
 
-		if strategy == "leastPing" {
-			if err = service.CheckObservatorySupported(); err != nil {
-				return fmt.Errorf("not support observatory based load balance: %w", err)
+		if strings.ToLower(strategy.String()) == "leastping" {
+			if t.MultiObservatory == nil {
+				t.MultiObservatory = &coreObj.MultiObservatory{}
 			}
-			if t.Observatory == nil {
-				t.Observatory = &coreObj.Observatory{
-					ProbeURL:      "http://www.msftconnecttest.com/connecttest.txt",
-					ProbeInterval: interval.String(),
-				}
+			probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
+			if _, err := url.Parse(probeUrl); err != nil {
+				log.Warn("observatory: %v", err)
+				probeUrl = "http://www.msftconnecttest.com/connecttest.txt"
 			}
-			for _, s := range selector {
-				mSubjectSelector[s] = struct{}{}
-			}
+			t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
+				Tag: outbound,
+				Settings: coreObj.Observatory{
+					SubjectSelector: selector,
+					ProbeURL:        probeUrl,
+					ProbeInterval:   interval.String(),
+				},
+			})
 		}
-	}
-	if t.Observatory != nil {
-		var subjectSelector []string
-		for s := range mSubjectSelector {
-			subjectSelector = append(subjectSelector, s)
-		}
-		t.Observatory.SubjectSelector = subjectSelector
 	}
 	for i := range t.Routing.Rules {
-		if t.Routing.Rules[i].OutboundTag != "" &&
-			outbounds[t.Routing.Rules[i].OutboundTag] == true {
+		if t.Routing.Rules[i].OutboundTag != "" && outbounds[t.Routing.Rules[i].OutboundTag] == true {
 			t.Routing.Rules[i].BalancerTag, t.Routing.Rules[i].OutboundTag = t.Routing.Rules[i].OutboundTag, ""
 		}
 	}
@@ -1194,6 +1173,7 @@ func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
 type ServerData struct {
 	RawServerInfos          []serverInfo
 	ServerInfos             []serverInfo
+	OutboundName2Setting    map[string]configure.OutboundSetting
 	Link2ServerInfos        map[string][]*serverInfo
 	Link2ServerObj          map[string]serverObj.ServerObj
 	OutboundName2ServerObjs map[string][]serverObj.ServerObj
@@ -1235,12 +1215,18 @@ func NewServerData(serverInfos []serverInfo) (serverData *ServerData) {
 		}
 	}
 
+	OutboundName2Setting := make(map[string]configure.OutboundSetting)
+	for outbound := range outboundName2ServerObjs {
+		OutboundName2Setting[outbound] = configure.GetOutboundSetting(outbound)
+	}
+
 	return &ServerData{
 		RawServerInfos:          rawServerInfos,
 		ServerInfos:             serverInfos,
 		Link2ServerInfos:        link2ServerInfosAfter,
 		Link2ServerObj:          link2ServerObj,
 		OutboundName2ServerObjs: outboundName2ServerObjs,
+		OutboundName2Setting:    OutboundName2Setting,
 	}
 }
 
@@ -1297,9 +1283,6 @@ func (t *Template) resolveOutbounds(
 		for _, sInfo := range sInfos {
 			if len(serverData.OutboundName2ServerObjs[sInfo.OutboundName]) > 1 {
 				// balancer
-				if err = service.CheckBalancerSupported(); err != nil {
-					return nil, nil, err
-				}
 				if !usedByBalancer {
 					usedByBalancer = true
 					balancerPluginPort = sInfo.PluginPort
@@ -1339,7 +1322,7 @@ func (t *Template) resolveOutbounds(
 		}
 		if usedByBalancer {
 			// the v2ray outbound is shared by balancers
-			outboundTag := Ps2OutboundTag(obj.GetName())
+			outboundTag := GroupWrapper(obj.GetName())
 			c, err := obj.Configuration(serverObj.PriorInfo{
 				CoreVersion: t.CoreVersion,
 				Tag:         outboundTag,
@@ -1490,19 +1473,12 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = ""
-	} else if logLevel >= log.ParseLevel("info") && service.CheckLogNoneSupported() == nil {
+	} else if logLevel >= log.ParseLevel("info") {
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = "none"
 	} else {
 		t.Log = nil
-	}
-	// fakedns
-	if specialMode.ShouldUseFakeDns() && service.CheckFakednsAutoConfigureSupported() != nil {
-		t.FakeDns = &coreObj.FakeDns{
-			IpPool:   "198.18.0.0/15",
-			PoolSize: 65535,
-		}
 	}
 	// resolve Outbounds
 	supportUDP, outboundTags, err := t.resolveOutbounds(serverData)
@@ -1783,30 +1759,5 @@ func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort stri
 		InboundTag:  []string{"inbound" + inboundPort},
 	}
 	t.Routing.Rules = append(tmp, t.Routing.Rules...)
-	return
-}
-
-func getHosts() (h coreObj.Hosts) {
-	h = make(coreObj.Hosts)
-	b, err := os.ReadFile("/etc/hosts")
-	if err != nil {
-		return
-	}
-	regex := regexp.MustCompile(`\s+`)
-	lines := bytes.Split(b, []byte("\n"))
-	for _, line := range lines {
-		line = bytes.TrimSpace(line)
-		if bytes.HasPrefix(line, []byte("#")) {
-			continue
-		}
-		s := string(regex.ReplaceAll(line, []byte(" ")))
-		arr := strings.Split(s, " ")
-		lenArr := len(arr)
-		if lenArr > 1 {
-			for i := 1; i < lenArr; i++ {
-				h[arr[i]] = arr[0]
-			}
-		}
-	}
 	return
 }

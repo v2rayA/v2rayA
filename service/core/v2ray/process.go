@@ -6,7 +6,6 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -134,11 +133,16 @@ func (w logInfoWriter) Write(p []byte) (n int, err error) {
 	for _, line := range lines {
 		// remove timestamp
 		fields := strings.SplitN(line, " ", 3)
-		if _, err := time.Parse("2006/01/02 15:04:05", fields[0]+" "+fields[1]); err == nil {
-			log.Info("%v", fields[2])
+		if len(fields) >= 3 {
+			if _, err := time.Parse("2006/01/02 15:04:05", fields[0]+" "+fields[1]); err == nil {
+				log.Info("%v", fields[2])
+			} else {
+				log.Info("%v", line)
+			}
 		} else {
 			log.Info("%v", line)
 		}
+
 	}
 	return len(p), nil
 }
@@ -183,6 +187,7 @@ func StartCoreProcess() (*os.Process, error) {
 	dir := path.Dir(v2rayBinPath)
 	var arguments = []string{
 		v2rayBinPath,
+		"run",
 		"--config=" + asset.GetV2rayConfigPath(),
 	}
 	if confdir := asset.GetV2rayConfigDirPath(); confdir != "" {
@@ -192,17 +197,14 @@ func StartCoreProcess() (*os.Process, error) {
 	assetDir := asset.GetV2rayLocationAsset()
 	env := append(os.Environ(),
 		"V2RAY_LOCATION_ASSET="+assetDir,
-		"XRAY_LOCATION_ASSET="+assetDir,
 	)
-	if service.CheckMemconservativeSupported() == nil {
-		memstat, err := mem.VirtualMemory()
-		if err != nil {
-			log.Warn("cannot get memory info: %v", err)
-		} else {
-			if memMiB := memstat.Available / 1024 / 1024; memMiB < 2048 {
-				env = append(env, "V2RAY_CONF_GEOLOADER=memconservative")
-				log.Info("low memory: %vMiB, set V2RAY_CONF_GEOLOADER=memconservative", memMiB)
-			}
+	memstat, err := mem.VirtualMemory()
+	if err != nil {
+		log.Warn("cannot get memory info: %v", err)
+	} else {
+		if memMiB := memstat.Available / 1024 / 1024; memMiB < 2048 {
+			env = append(env, "V2RAY_CONF_GEOLOADER=memconservative")
+			log.Info("low memory: %vMiB, set V2RAY_CONF_GEOLOADER=memconservative", memMiB)
 		}
 	}
 	proc, err := RunWithLog(v2rayBinPath, arguments, dir, env)

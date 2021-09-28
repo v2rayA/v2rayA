@@ -130,10 +130,6 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 			UDPSupport:   true,
 		}, nil
 	}
-
-	if ok, err := common.VersionGreaterEqual(info.CoreVersion, "4.31.0"); err != nil || !ok {
-		return c, fmt.Errorf("not support Trojan: %w", err)
-	}
 	core := coreObj.OutboundObject{
 		Tag:      info.Tag,
 		Protocol: "trojan",

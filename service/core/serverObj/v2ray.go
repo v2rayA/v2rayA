@@ -6,7 +6,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/coreObj"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/url"
@@ -223,9 +222,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		//TODO: QUIC
 		switch strings.ToLower(v.Net) {
 		case "grpc":
-			if err := service.CheckGrpcSupported(); err != nil {
-				return Configuration{}, err
-			}
 			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: v.Path}
 		case "ws":
 			core.StreamSettings.WsSettings = &coreObj.WsSettings{
