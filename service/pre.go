@@ -17,6 +17,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
 	"github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/router"
@@ -229,9 +230,10 @@ func initConfigure() {
 	if _, err := where.GetV2rayBinPath(); err == nil {
 		//检查geoip、geosite是否存在
 		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
-			dld := func(repo, filename, localname string) (err error) {
-				log.Warn("installing " + filename)
-				p := path.Join(asset.GetV2rayLocationAsset(), filename)
+			assetDir := asset.GetV2rayLocationAsset()
+			dld := func(repo, remoteFilename, localFilename string) (err error) {
+				log.Warn("downloading %v to %v", remoteFilename, assetDir)
+				p := path.Join(os.TempDir(), remoteFilename)
 				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 				if err != nil {
 					return
@@ -242,7 +244,7 @@ func initConfigure() {
 					return
 				}
 				tag := gjson.GetBytes(b, "0.name").String()
-				u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
+				u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, remoteFilename)
 				err = gopeed.Down(&gopeed.Request{
 					Method: "GET",
 					URL:    u,
@@ -254,8 +256,7 @@ func initConfigure() {
 				if err != nil {
 					return errors.New("chmod: " + err.Error())
 				}
-				os.Rename(p, path.Join(asset.GetV2rayLocationAsset(), localname))
-				return
+				return copyfile.CopyFile(p, path.Join(assetDir, localFilename))
 			}
 			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
 			if err != nil {

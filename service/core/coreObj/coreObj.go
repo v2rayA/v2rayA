@@ -4,18 +4,29 @@ type APIObject struct {
 	Tag      string   `json:"tag"`
 	Services []string `json:"services"`
 }
+type MultiObservatory struct {
+	Observers []ObservatoryItem `json:"observers"`
+}
+type ObservatoryItem struct {
+	Tag      string      `json:"tag"`
+	Settings Observatory `json:"settings"`
+}
 type Observatory struct {
 	SubjectSelector []string `json:"subjectSelector"`
 	ProbeURL        string   `json:"probeURL,omitempty"`
 	ProbeInterval   string   `json:"probeInterval,omitempty"`
 }
 type Balancer struct {
-	Tag      string           `json:"tag"`
-	Selector []string         `json:"selector"`
-	Strategy BalancerStrategy `json:"strategy"`
+	Tag              string            `json:"tag"`
+	Selector         []string          `json:"selector"`
+	Strategy         BalancerStrategy  `json:"strategy"`
+	StrategySettings *StrategySettings `json:"strategySettings,omitempty"`
 }
 type BalancerStrategy struct {
 	Type string `json:"type"`
+}
+type StrategySettings struct {
+	ObserverTag string `json:"observerTag"`
 }
 type FakeDns struct {
 	IpPool   string `json:"ipPool"`
@@ -122,8 +133,8 @@ type Headers struct {
 	Host string `json:"Host"`
 }
 type WsSettings struct {
-	Path            string  `json:"path"`
-	Headers         Headers `json:"headers"`
+	Path    string  `json:"path"`
+	Headers Headers `json:"headers"`
 }
 type StreamSettings struct {
 	Network      string        `json:"network,omitempty"`
@@ -222,7 +233,7 @@ type HttpSettings struct {
 	Host   []string `json:"host"`
 	Method string   `json:"method,omitempty"`
 }
-type Hosts map[string]interface{}
+type Hosts map[string][]string
 
 type DNS struct {
 	Hosts           Hosts         `json:"hosts,omitempty"`

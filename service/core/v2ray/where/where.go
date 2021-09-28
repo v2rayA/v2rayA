@@ -13,11 +13,31 @@ import (
 )
 
 var NotFoundErr = fmt.Errorf("not found")
-var ServiceNameList = []string{"v2ray", "xray"}
+var ServiceNameList = []string{"v2ray"}
 var v2rayVersion struct {
 	version    string
 	lastUpdate time.Time
 	mu         sync.Mutex
+}
+
+type onceWriter struct {
+	buf      []byte
+	callback func(buf []byte)
+}
+
+func newOnceWriter(callback func(buf []byte)) *onceWriter {
+	return &onceWriter{
+		callback: callback,
+	}
+}
+
+func (r *onceWriter) Write(p []byte) (n int, err error) {
+	defer func() {
+		go r.callback(r.buf)
+	}()
+	r.buf = make([]byte, len(p))
+	copy(r.buf, p)
+	return len(p), nil
 }
 
 /* get the version of v2ray-core without 'v' like 4.23.1 */
@@ -32,9 +52,25 @@ func GetV2rayServiceVersion() (ver string, err error) {
 	if err != nil || len(v2rayPath) <= 0 {
 		return "", fmt.Errorf("cannot find v2ray executable binary")
 	}
-	out, err := exec.Command(v2rayPath, "-version").Output()
+	var output []byte
+	var done = make(chan struct{}, 2)
+	cmd := exec.Command(v2rayPath, "version")
+	cmd.Stdout = newOnceWriter(func(buf []byte) {
+		output = buf
+		done <- struct{}{}
+	})
+	cmd.Stderr = cmd.Stdout
+	if err := cmd.Start(); err != nil {
+		return "", err
+	}
+	go func() {
+		time.Sleep(3 * time.Second)
+		_ = cmd.Process.Kill()
+		done <- struct{}{}
+	}()
+	<-done
 	var fields []string
-	if fields = strings.Fields(strings.TrimSpace(string(out))); len(fields) < 2 {
+	if fields = strings.Fields(strings.TrimSpace(string(output))); len(fields) < 2 {
 		return "", fmt.Errorf("cannot parse version of v2ray")
 	}
 	ver = fields[1]

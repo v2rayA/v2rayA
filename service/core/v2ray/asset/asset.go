@@ -2,10 +2,8 @@ package asset
 
 import (
 	"github.com/muhammadmuzzammil1998/jsonc"
-	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"path"
@@ -18,24 +16,16 @@ func GetV2rayLocationAsset() (s string) {
 		"/usr/local/share/v2ray",
 		"/usr/share/v2ray",
 		"/opt/share/v2ray",
-		"/usr/local/share/xray",
-		"/usr/share/xray",
-		"/opt/share/xray",
 	}
-	var is bool
-	if ver, err := where.GetV2rayServiceVersion(); err == nil {
-		if is, err = common.VersionGreaterEqual(ver, "4.27.1"); is {
-			for _, c := range candidates {
-				if _, err := os.Stat(c); os.IsNotExist(err) {
-					continue
-				}
-				if _, err := os.Stat(path.Join(c, "geoip.dat")); os.IsNotExist(err) {
-					continue
-				}
-				s = c
-				break
-			}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); os.IsNotExist(err) {
+			continue
 		}
+		if _, err := os.Stat(path.Join(c, "geoip.dat")); os.IsNotExist(err) {
+			continue
+		}
+		s = c
+		break
 	}
 	if s == "" {
 		// set as v2rayA config directory
