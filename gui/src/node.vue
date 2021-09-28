@@ -767,7 +767,11 @@ export default {
     observatory(val) {
       for (const info of val.body) {
         this.connectedServerInfo.some(x => {
-          if (JSON.stringify(info.which) === JSON.stringify(x.which)) {
+          if (
+            info.which._type === x.which._type &&
+            info.which.id === x.which.id &&
+            info.which.sub === x.which.sub
+          ) {
             for (const k in info) {
               if (k === "which" || !info.hasOwnProperty(k)) {
                 continue;
