@@ -134,8 +134,12 @@ func (w logInfoWriter) Write(p []byte) (n int, err error) {
 	for _, line := range lines {
 		// remove timestamp
 		fields := strings.SplitN(line, " ", 3)
-		if _, err := time.Parse("2006/01/02 15:04:05", fields[0]+" "+fields[1]); err == nil {
-			log.Info("%v", fields[2])
+		if len(fields) >= 3 {
+			if _, err := time.Parse("2006/01/02 15:04:05", fields[0]+" "+fields[1]); err == nil {
+				log.Info("%v", fields[2])
+			} else {
+				log.Info("%v", line)
+			}
 		} else {
 			log.Info("%v", line)
 		}
