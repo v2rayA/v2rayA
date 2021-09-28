@@ -11,6 +11,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Configure struct {
@@ -431,6 +432,9 @@ func AddOutbound(outbound string) (err error) {
 }
 
 func SetOutboundSetting(outbound string, setting OutboundSetting) (err error) {
+	if _, err := time.ParseDuration(setting.ProbeInterval); err != nil {
+		return err
+	}
 	return db.Set(fmt.Sprintf("outbound.%v", outbound), "setting", setting)
 }
 

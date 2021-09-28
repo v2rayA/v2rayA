@@ -175,9 +175,7 @@
           <option value="dnsforward">{{
             $t("setting.options.forwardDnsRequest")
           }}</option>
-          <option v-show="showDoh" value="doh">{{
-            $t("setting.options.doh")
-          }}</option>
+          <option value="doh">{{ $t("setting.options.doh") }}</option>
           <option value="advanced">{{ $t("setting.options.advanced") }}</option>
         </b-select>
         <b-button
@@ -390,8 +388,7 @@ export default {
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
-    showSpecialMode: true,
-    showDoh: false
+    showSpecialMode: true
   }),
   computed: {
     lite() {
@@ -438,7 +435,6 @@ export default {
           this.subscriptionAutoUpdateTime
         );
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
-        this.showDoh = localStorage["dohValid"] === "yes";
         if (this.lite) {
           this.transparent = "close";
           this.showSpecialMode = false;

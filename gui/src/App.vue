@@ -43,12 +43,9 @@
                 <span>{{ outboundNameDecorator(outbound) }}</span>
                 <span>
                   <i
-                    v-show="
-                      outbound !== 'proxy' &&
-                        (isMobile || outboundDropdownHover[outbound])
-                    "
-                    class="iconfont icon-close-circle-fill"
-                    @click="handleDeleteOutbound($event, outbound)"
+                    v-show="isMobile || outboundDropdownHover[outbound]"
+                    class="iconfont icon-setting outbound-setting"
+                    @click="handleClickOutboundSetting($event, outbound)"
                   ></i
                 ></span></p
             ></b-dropdown-item>
@@ -155,12 +152,13 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
+import ModalOutboundSetting from "./components/modalOutboundSetting";
 import { parseURL } from "./assets/js/utils";
 import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
 
 export default {
-  components: { ModalCustomAddress, node },
+  components: { ModalCustomAddress, node, ModalOutboundSetting },
   data() {
     return {
       ws: null,
@@ -185,7 +183,7 @@ export default {
       outboundName: "proxy",
       outbounds: ["proxy"],
       outboundDropdownHover: {},
-      updateOutboundDropdown: true
+      updateOutboundDropdown: true,
     };
   },
   computed: {
@@ -242,10 +240,16 @@ export default {
             queue: false,
             duration: 10000
           });
+        } else if (!res.data.data.v5) {
+          this.$buefy.toast.open({
+            message: this.$t("version.v2rayNotV5"),
+            type: "is-danger",
+            position: "is-top",
+            queue: false,
+            duration: 10000
+          });
         } else {
           localStorage["lite"] = res.data.data.lite;
-          localStorage["vlessValid"] = res.data.data.vlessValid;
-          localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
         }
       }
     });
@@ -372,59 +376,15 @@ export default {
         }
       });
     },
-    handleDeleteOutbound(event, outbound) {
+    handleClickOutboundSetting(event, outbound) {
       event.stopPropagation();
-      this.$buefy.dialog.confirm({
-        title: this.$t("delete.title"),
-        message: this.$t("outbound.deleteMessage", { outboundName: outbound }),
-        confirmText: this.$t("operations.delete"),
-        cancelText: this.$t("operations.cancel"),
-        type: "is-danger",
-        hasIcon: true,
-        icon: " iconfont icon-alert",
-        onConfirm: () => {
-          let cancel;
-          waitingConnected(
-            this.$axios({
-              url: apiRoot + "/outbound",
-              method: "delete",
-              data: {
-                outbound
-              },
-              cancelToken: new axios.CancelToken(function executor(c) {
-                cancel = c;
-              })
-            }).then(res => {
-              if (res.data.code === "SUCCESS") {
-                this.$buefy.toast.open({
-                  message: this.$t("common.success"),
-                  type: "is-success",
-                  duration: 2000,
-                  position: "is-top",
-                  queue: false
-                });
-                this.outbounds = res.data.data.outbounds;
-                if (this.outboundName === outbound) {
-                  this.outboundName = "proxy";
-                }
-                if (outbound in this.runningState.outboundToServerName) {
-                  this.runningState.connectedServer = this.runningState.connectedServer.filter(
-                    cs => cs.outbound !== outbound
-                  );
-                }
-              } else {
-                this.$buefy.toast.open({
-                  message: res.data.message,
-                  type: "is-warning",
-                  duration: 5000,
-                  position: "is-top",
-                  queue: false
-                });
-              }
-            }),
-            3 * 1000,
-            cancel
-          );
+      this.$buefy.modal.open({
+        parent: this,
+        component: ModalOutboundSetting,
+        hasModalCard: true,
+        canCancel: true,
+        props: {
+          outbound: outbound
         }
       });
     },
@@ -677,7 +637,7 @@ a {
   width: 100%;
 }
 
-.dropdown-menu .icon-close-circle-fill {
+.dropdown-menu .outbound-setting {
   position: absolute;
   right: -1.5rem;
   top: 0;

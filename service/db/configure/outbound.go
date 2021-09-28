@@ -7,11 +7,11 @@ func (t ObservatoryType) String() string {
 }
 
 const (
-	LeastPing ObservatoryType = "leastPing"
+	LeastPing ObservatoryType = "leastping"
 )
 
 type OutboundSetting struct {
-	ProbeURL      string
-	ProbeInterval string
-	Type          ObservatoryType
+	ProbeURL      string          `json:"probeURL"`
+	ProbeInterval string          `json:"probeInterval"`
+	Type          ObservatoryType `json:"type"`
 }
