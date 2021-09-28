@@ -418,7 +418,6 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 			if err != nil {
 				log.Fatal("%v", err)
 			}
-			log.Warn("%v", string(b))
 			strRouting = append(strRouting, string(b))
 		}
 		strRouting = common.Deduplicate(strRouting)
