@@ -31,11 +31,11 @@ type V2Ray struct {
 	Port          string `json:"port"`
 	ID            string `json:"id"`
 	Aid           string `json:"aid"`
-	Net           string `json:"net"`
-	Type          string `json:"type"`
-	Host          string `json:"host"`
-	Path          string `json:"path"`
-	TLS           string `json:"tls"`
+	Net           string `json:"net,omitempty"`
+	Type          string `json:"type,omitempty"`
+	Host          string `json:"host,omitempty"`
+	Path          string `json:"path,omitempty"`
+	TLS           string `json:"tls,omitempty"`
 	Flow          string `json:"flow,omitempty"`
 	Alpn          string `json:"alpn,omitempty"`
 	AllowInsecure bool   `json:"allowInsecure"`

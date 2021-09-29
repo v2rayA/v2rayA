@@ -57,11 +57,11 @@
           ></b-input>
         </b-field>
         <b-field
-          :label="$t('customAddressPort.portVlessGrpc')"
+          :label="$t('customAddressPort.portVmess')"
           label-position="on-border"
         >
           <b-input
-            v-model="table.vlessGrpc"
+            v-model="table.vmess"
             placeholder="0"
             type="number"
             min="0"
@@ -69,15 +69,17 @@
           ></b-input>
         </b-field>
         <b-message
-          v-if="table.vlessGrpc > 0 && table.vlessGrpcLink"
+          v-if="table.vmess > 0 && table.vmessLink"
           type="is-info"
           style="font-size:13px"
           class="after-line-dot5"
         >
-          <p>
-            {{ $t("customAddressPort.portVlessGrpcLink") }}:
-            <code>{{ table.vlessGrpcLink }}</code>
-          </p>
+          <b-button
+            type="is-link is-info is-outlined"
+            @click="handleClickShowVmessLink"
+          >
+            {{ $t("customAddressPort.portVmessLink") }}
+          </b-button>
         </b-message>
         <b-message
           type="is-info"
@@ -114,6 +116,8 @@
 <script>
 import { handleResponse } from "../assets/js/utils";
 import i18n from "@/plugins/i18n";
+import ModalSharing from "@/components/modalSharing";
+import CONST from "@/assets/js/const";
 
 export default {
   name: "ModalCustomPorts",
@@ -124,8 +128,8 @@ export default {
       socks5: "20170",
       http: "20171",
       httpWithPac: "20172",
-      vlessGrpc: "0",
-      vlessGrpcLink: ""
+      vmess: "0",
+      vmessLink: ""
     },
     backendReady: false
   }),
@@ -153,6 +157,29 @@ export default {
     });
   },
   methods: {
+    handleClickShowVmessLink() {
+      if (this.table.vmessLink) {
+        this.$parent.close();
+        this.$buefy.modal.open({
+          width: 500,
+          component: ModalSharing,
+          props: {
+            title: this.$t("customAddressPort.portVmessLink"),
+            sharingAddress: this.table.vmessLink,
+            shortDesc: "VMess | v2rayA",
+            type: CONST.ServerType
+          }
+        });
+      } else {
+        this.$buefy.toast.open({
+          message: "no vmessLink found",
+          type: "is-warning",
+          position: "is-top",
+          queue: false,
+          duration: 5000
+        });
+      }
+    },
     handleClickSubmit() {
       if (!this.$refs.backendAddress.checkHtml5Validity()) {
         return;
@@ -171,16 +198,20 @@ export default {
             socks5: parseInt(this.table.socks5),
             http: parseInt(this.table.http),
             httpWithPac: parseInt(this.table.httpWithPac),
-            vlessGrpc: parseInt(this.table.vlessGrpc)
+            vmess: parseInt(this.table.vmess)
           }
         }).then(res => {
           handleResponse(res, this, () => {
-            if (res.data.data?.vlessGrpcLink) {
-              this.$buefy.dialog.confirm({
-                title: `${this.$t("customAddressPort.portVlessGrpcLink")}`,
-                message: res.data.data.vlessGrpcLink,
-                size: "is-small",
-                closeOnConfirm: true
+            if (res.data.data?.vmessLink) {
+              this.$buefy.modal.open({
+                width: 500,
+                component: ModalSharing,
+                props: {
+                  title: this.$t("customAddressPort.portVmessLink"),
+                  sharingAddress: res.data.data.vmessLink,
+                  shortDesc: "VMess | v2rayA",
+                  type: CONST.ServerType
+                }
               });
             }
             localStorage["backendAddress"] = backendAddress;
