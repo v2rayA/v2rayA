@@ -52,27 +52,27 @@ type ObservatoryResp struct {
 	Resp         *pb.GetOutboundStatusResponse
 }
 
-func getObservatoryResponses(conn *grpc.ClientConn, outboundNames []string) (r []ObservatoryResp, err error) {
+func getObservatoryResponses(conn *grpc.ClientConn, observatoryTags []string) (r []ObservatoryResp, err error) {
 	c := pb.NewObservatoryServiceClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	if len(outboundNames) == 0 {
-		outboundNames = append(outboundNames, "")
+	if len(observatoryTags) == 0 {
+		observatoryTags = append(observatoryTags, "")
 	}
-	for _, name := range outboundNames {
+	for _, tag := range observatoryTags {
 		resp, err := c.GetOutboundStatus(ctx, &pb.GetOutboundStatusRequest{
-			Tag: name,
+			Tag: tag,
 		})
 		if err != nil {
 			return nil, err
 		}
-		r = append(r, ObservatoryResp{OutboundName: name, Resp: resp})
+		r = append(r, ObservatoryResp{OutboundName: tag, Resp: resp})
 	}
 	return r, nil
 }
 
-func ObservatoryProducer(apiPort int) (closeFunc func()) {
+func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func()) {
 	closed := make(chan struct{})
 	go func() {
 		const product = "observatory"
@@ -106,7 +106,7 @@ func ObservatoryProducer(apiPort int) (closeFunc func()) {
 				defer c.Close()
 				conn = c
 			}
-			resps, err := getObservatoryResponses(conn, configure.GetOutbounds())
+			resps, err := getObservatoryResponses(conn, observatoryTags)
 			if err != nil {
 				if status.Code(err) == codes.Unavailable {
 					// the connection is reliable, and reconnect

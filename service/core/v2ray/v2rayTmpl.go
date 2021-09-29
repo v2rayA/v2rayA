@@ -1406,7 +1406,14 @@ func (t *Template) SetAPI() (port int) {
 	}
 	if t.MultiObservatory != nil {
 		services = append(services, "ObservatoryService")
-		t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port))
+
+		var observatoryTags []string
+		for name, isGroup := range t.outNames() {
+			if isGroup {
+				observatoryTags = append(observatoryTags, name)
+			}
+		}
+		t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port, observatoryTags))
 	}
 	t.API = &coreObj.APIObject{
 		Tag:      "api-out",
