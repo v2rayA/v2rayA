@@ -3,6 +3,7 @@ package v2ray
 import (
 	"context"
 	"github.com/devfeel/mapper"
+	"github.com/gin-gonic/gin"
 	"github.com/v2fly/v2ray-core/v4/app/observatory"
 	pb "github.com/v2fly/v2ray-core/v4/app/observatory/command"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -28,13 +29,13 @@ const (
 )
 
 type OutboundStatus struct {
-	Alive           bool             `json:"alive"`
-	Delay           int64            `json:"delay"`
-	LastErrorReason string           `json:"last_error_reason"`
-	OutboundTag     string           `json:"outbound_tag"`
-	Which           *configure.Which `json:"which"`
-	LastSeenTime    int64            `json:"last_seen_time"`
-	LastTryTime     int64            `json:"last_try_time"`
+	Alive bool  `json:"alive"`
+	Delay int64 `json:"delay"`
+	//LastErrorReason string           `json:"last_error_reason"`
+	OutboundTag  string           `json:"outbound_tag"`
+	Which        *configure.Which `json:"which"`
+	LastSeenTime int64            `json:"last_seen_time"`
+	LastTryTime  int64            `json:"last_try_time"`
 }
 
 func init() {
@@ -46,14 +47,27 @@ func init() {
 	}
 }
 
-func getObservatoryResponse(conn *grpc.ClientConn) (r *pb.GetOutboundStatusResponse, err error) {
+type ObservatoryResp struct {
+	OutboundName string
+	Resp         *pb.GetOutboundStatusResponse
+}
+
+func getObservatoryResponses(conn *grpc.ClientConn, outboundNames []string) (r []ObservatoryResp, err error) {
 	c := pb.NewObservatoryServiceClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err = c.GetOutboundStatus(ctx, &pb.GetOutboundStatusRequest{})
-	if err != nil {
-		return nil, err
+	if len(outboundNames) == 0 {
+		outboundNames = append(outboundNames, "")
+	}
+	for _, name := range outboundNames {
+		resp, err := c.GetOutboundStatus(ctx, &pb.GetOutboundStatusRequest{
+			Tag: name,
+		})
+		if err != nil {
+			return nil, err
+		}
+		r = append(r, ObservatoryResp{OutboundName: name, Resp: resp})
 	}
 	return r, nil
 }
@@ -92,7 +106,7 @@ func ObservatoryProducer(apiPort int) (closeFunc func()) {
 				defer c.Close()
 				conn = c
 			}
-			r, err := getObservatoryResponse(conn)
+			resps, err := getObservatoryResponses(conn, configure.GetOutbounds())
 			if err != nil {
 				if status.Code(err) == codes.Unavailable {
 					// the connection is reliable, and reconnect
@@ -101,22 +115,28 @@ func ObservatoryProducer(apiPort int) (closeFunc func()) {
 				}
 				log.Warn("ObservatoryProducer: %v", err)
 			} else {
-				outboundStatus := r.GetStatus().GetStatus()
-				os := make([]OutboundStatus, len(outboundStatus))
 				css := configure.GetConnectedServers()
-				for i := range outboundStatus {
-					_ = mapper.AutoMapper(outboundStatus[i], &os[i])
-					index := p.tag2WhichIndex[os[i].OutboundTag]
-					if index >= css.Len() {
-						continue nextLoop
+				for _, r := range resps {
+					outboundStatus := r.Resp.GetStatus().GetStatus()
+					os := make([]OutboundStatus, len(outboundStatus))
+					for i := range outboundStatus {
+						_ = mapper.AutoMapper(outboundStatus[i], &os[i])
+						index := p.tag2WhichIndex[os[i].OutboundTag]
+						if index >= css.Len() {
+							continue nextLoop
+						}
+						os[i].Which = css.Get()[index]
+						var w []configure.Which
+						for _, v := range css.Get() {
+							w = append(w, *v)
+						}
 					}
-					os[i].Which = css.Get()[index]
-					var w []configure.Which
-					for _, v := range css.Get() {
-						w = append(w, *v)
+					msg := gin.H{
+						"outboundName":   r.OutboundName,
+						"outboundStatus": os,
 					}
+					ApiFeed.ProductMessage(product, msg)
 				}
-				ApiFeed.ProductMessage(product, os)
 			}
 			time.Sleep(ApiFeedInterval)
 		}

@@ -158,7 +158,7 @@ import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
 
 export default {
-  components: { ModalCustomAddress, node, ModalOutboundSetting },
+  components: { ModalCustomAddress, node },
   data() {
     return {
       ws: null,
@@ -183,7 +183,7 @@ export default {
       outboundName: "proxy",
       outbounds: ["proxy"],
       outboundDropdownHover: {},
-      updateOutboundDropdown: true,
+      updateOutboundDropdown: true
     };
   },
   computed: {
@@ -307,7 +307,10 @@ export default {
       this.ws = ws;
     },
     handleMessage(msg) {
-      if (msg.type === "observatory") {
+      if (
+        msg.type === "observatory" &&
+        msg.body.outboundName === this.outboundName
+      ) {
         this.observatory = msg;
       }
     },
@@ -376,8 +379,53 @@ export default {
         }
       });
     },
+    handleDeleteOutbound(outbound) {
+      let cancel;
+      waitingConnected(
+        this.$axios({
+          url: apiRoot + "/outbound",
+          method: "delete",
+          data: {
+            outbound
+          },
+          cancelToken: new axios.CancelToken(function executor(c) {
+            cancel = c;
+          })
+        }).then(res => {
+          if (res.data.code === "SUCCESS") {
+            this.$buefy.toast.open({
+              message: this.$t("common.success"),
+              type: "is-success",
+              duration: 2000,
+              position: "is-top",
+              queue: false
+            });
+            this.outbounds = res.data.data.outbounds;
+            if (this.outboundName === outbound) {
+              this.outboundName = "proxy";
+            }
+            if (outbound in this.runningState.outboundToServerName) {
+              this.runningState.connectedServer = this.runningState.connectedServer.filter(
+                cs => cs.outbound !== outbound
+              );
+            }
+          } else {
+            this.$buefy.toast.open({
+              message: res.data.message,
+              type: "is-warning",
+              duration: 5000,
+              position: "is-top",
+              queue: false
+            });
+          }
+        }),
+        3 * 1000,
+        cancel
+      );
+    },
     handleClickOutboundSetting(event, outbound) {
       event.stopPropagation();
+      const that = this;
       this.$buefy.modal.open({
         parent: this,
         component: ModalOutboundSetting,
@@ -385,6 +433,11 @@ export default {
         canCancel: true,
         props: {
           outbound: outbound
+        },
+        events: {
+          delete() {
+            that.handleDeleteOutbound(outbound);
+          }
         }
       });
     },

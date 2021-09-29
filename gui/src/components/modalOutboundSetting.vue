@@ -26,12 +26,17 @@
       </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
-      <button class="button" @click="$emit('close')">
-        {{ $t("operations.cancel") }}
+      <button class="button is-danger" type="button" @click="handleClickDelete">
+        {{ $t("operations.delete") }}
       </button>
-      <button class="button is-primary" @click="handleClickSubmit">
-        {{ $t("operations.confirm") }}
-      </button>
+      <div style="display:flex;justify-content:flex-end;width: -moz-available;">
+        <button class="button" @click="$emit('close')">
+          {{ $t("operations.cancel") }}
+        </button>
+        <button class="button is-primary" @click="handleClickSubmit">
+          {{ $t("operations.confirm") }}
+        </button>
+      </div>
     </footer>
   </div>
 </template>
@@ -70,6 +75,24 @@ export default {
     });
   },
   methods: {
+    handleClickDelete() {
+      const that = this;
+      this.$buefy.dialog.confirm({
+        title: that.$t("delete.title"),
+        message: that.$t("outbound.deleteMessage", {
+          outboundName: that.outbound
+        }),
+        confirmText: that.$t("operations.delete"),
+        cancelText: that.$t("operations.cancel"),
+        type: "is-danger",
+        hasIcon: true,
+        icon: " iconfont icon-alert",
+        onConfirm: () => {
+          that.$emit("delete");
+          that.$parent.close();
+        }
+      });
+    },
     handleClickSubmit() {
       let valid = true;
       for (let k in this.$refs) {
