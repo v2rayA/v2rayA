@@ -28,8 +28,8 @@ func SetPorts(ports *configure.Ports) (err error) {
 		set[ports.HttpWithPac] = struct{}{}
 		cnt++
 	}
-	if ports.VlessGrpc != 0 {
-		set[ports.VlessGrpc] = struct{}{}
+	if ports.Vmess != 0 {
+		set[ports.Vmess] = struct{}{}
 		cnt++
 	}
 	if cnt > len(set) {
@@ -54,10 +54,10 @@ func SetPorts(ports *configure.Ports) (err error) {
 			detectSyntax = append(detectSyntax, strconv.Itoa(origin.HttpWithPac)+":tcp")
 		}
 	}
-	if ports.VlessGrpc != origin.VlessGrpc {
-		origin.VlessGrpc = ports.VlessGrpc
-		if origin.VlessGrpc != 0 {
-			detectSyntax = append(detectSyntax, strconv.Itoa(origin.VlessGrpc)+":tcp")
+	if ports.Vmess != origin.Vmess {
+		origin.Vmess = ports.Vmess
+		if origin.Vmess != 0 {
+			detectSyntax = append(detectSyntax, strconv.Itoa(origin.Vmess)+":tcp")
 		}
 	}
 	if err = v2ray.PortOccupied(detectSyntax); err != nil {

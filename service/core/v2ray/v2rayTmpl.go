@@ -985,19 +985,12 @@ func GenerateIdFromAccounts() (id string, err error) {
 	return id, nil
 }
 
-func SetVlessGrpcInbound(vlessGrpc *coreObj.Inbound) (err error) {
-	config := conf.GetEnvironmentConfig()
-	if len(config.VlessGrpcInboundCertKey) < 2 {
-		return fmt.Errorf("VLESS-GPRC inbound depends on TLS cert, close the inbound or add cert by comand line argument --vless-grpc-inbound-cert-key or environment variable V2RAYA_VLESS_GRPC_INBOUND_CERT_KEY")
-	}
-	cert, key := config.VlessGrpcInboundCertKey[0], config.VlessGrpcInboundCertKey[1]
-	vlessGrpc.StreamSettings.TLSSettings.Certificates[0].CertificateFile = cert
-	vlessGrpc.StreamSettings.TLSSettings.Certificates[0].KeyFile = key
+func SetVmessInbound(vmess *coreObj.Inbound) (err error) {
 	id, err := GenerateIdFromAccounts()
 	if err != nil {
 		return err
 	}
-	vlessGrpc.Settings.Clients = []coreObj.VlessClient{{Id: id}}
+	vmess.Settings.Clients = []coreObj.VlessClient{{Id: id}}
 	return nil
 }
 
@@ -1007,10 +1000,10 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 		t.Inbounds[0].Port = p.Socks5
 		t.Inbounds[1].Port = p.Http
 		t.Inbounds[2].Port = p.HttpWithPac
-		vlessGrpc := &t.Inbounds[3]
-		vlessGrpc.Port = p.VlessGrpc
-		if p.VlessGrpc > 0 {
-			if err := SetVlessGrpcInbound(vlessGrpc); err != nil {
+		vmess := &t.Inbounds[3]
+		vmess.Port = p.Vmess
+		if p.Vmess > 0 {
+			if err := SetVmessInbound(vmess); err != nil {
 				return err
 			}
 		}
@@ -1438,8 +1431,8 @@ func (t *Template) SetAPI() (port int) {
 	return port
 }
 
-func (t *Template) setVlessGrpcRouting() {
-	if configure.GetPortsNotNil().VlessGrpc <= 0 {
+func (t *Template) setVmessInboundRouting() {
+	if configure.GetPortsNotNil().Vmess <= 0 {
 		return
 	}
 	for i := range t.Routing.Rules {
@@ -1450,7 +1443,7 @@ func (t *Template) setVlessGrpcRouting() {
 			}
 		}
 		if bHasRule {
-			t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "vlessGrpc")
+			t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "vmess")
 		}
 	}
 }
@@ -1521,8 +1514,8 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	if err = t.setGroupRouting(serverData); err != nil {
 		return nil, err
 	}
-	//set vlessGrpc routing
-	t.setVlessGrpcRouting()
+	//set vmess inbound routing
+	t.setVmessInboundRouting()
 	// set api
 	if t.API == nil {
 		t.SetAPI()

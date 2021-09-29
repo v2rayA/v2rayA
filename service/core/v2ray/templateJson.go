@@ -52,35 +52,15 @@ const TemplateJson = `
         {
             "listen": "0.0.0.0",
             "port": 0,
-            "protocol": "vless",
+            "protocol": "vmess",
             "settings": {
                 "clients": [
                     {
                         "id": ""
                     }
-                ],
-                "decryption": "none"
+                ]
             },
-            "streamSettings": {
-                "network": "grpc",
-                "security": "tls",
-                "tlsSettings": {
-                    "serverName": "",
-                    "alpn": [
-                        "h2"
-                    ],
-                    "certificates": [
-                        {
-                            "certificateFile": "/etc/v2raya/vlessGrpc.crt",
-                            "keyFile": "/etc/v2raya/vlessGrpc.key"
-                        }
-                    ]
-                },
-                "grpcSettings": {
-                    "serviceName": "v2rayA_VLESS_GRPC"
-                }
-            },
-            "tag": "vlessGrpc"
+            "tag": "vmess"
         }
     ],
     "outbounds": [],

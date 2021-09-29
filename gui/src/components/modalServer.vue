@@ -13,10 +13,7 @@
         type="is-boxed is-twitter same-width-5"
       >
         <b-tab-item label="V2RAY">
-          <b-field
-            label="Protocol"
-            label-position="on-border"
-          >
+          <b-field label="Protocol" label-position="on-border">
             <b-select
               v-model="v2ray.protocol"
               expanded

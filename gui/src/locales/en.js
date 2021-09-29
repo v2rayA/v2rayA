@@ -158,8 +158,8 @@ export default {
     portSocks5: "Port of SOCKS5",
     portHttp: "Port of HTTP",
     portHttpWithPac: "Port of HTTP(with Rule)",
-    portVlessGrpc: "Port of VLESS-GRPC(with Rule)",
-    portVlessGrpcPrompt: "Link of VLESS-GRPC port",
+    portVmess: "Port of VMess(with Rule)",
+    portVmessPrompt: "Link of VMess port",
     messages: [
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",

@@ -37,7 +37,7 @@ func New() *Configure {
 			Socks5:      20170,
 			Http:        20171,
 			HttpWithPac: 20172,
-			VlessGrpc:   0,
+			Vmess:       0,
 		},
 		InternalDnsList: nil,
 		ExternalDnsList: nil,
@@ -262,7 +262,7 @@ func GetPortsNotNil() *Ports {
 		p.Socks5 = 20170
 		p.Http = 20171
 		p.HttpWithPac = 20172
-		p.VlessGrpc = 0
+		p.Vmess = 0
 	}
 	return p
 }
