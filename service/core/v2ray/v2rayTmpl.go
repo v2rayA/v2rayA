@@ -926,12 +926,13 @@ func (t *Template) setDualStack(setting *configure.Setting) {
 		for i := range t.Routing.Rules {
 			tag6 := make([]string, 0)
 			for j, tag := range t.Routing.Rules[i].InboundTag {
+				tag := strings.TrimSuffix(tag, tag4Suffix)
 				if _, ok := tagMap[tag]; ok {
-					t.Routing.Rules[i].InboundTag[j] += tag4Suffix
+					t.Routing.Rules[i].InboundTag[j] = tag + tag4Suffix
 					tag6 = append(tag6, tag+tag6Suffix)
 				}
 			}
-			if len(tag6) > 0 && iptables.IsIPv6Supported() {
+			if v6supported := iptables.IsIPv6Supported(); len(tag6) > 0 && v6supported {
 				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, tag6...)
 			}
 		}
