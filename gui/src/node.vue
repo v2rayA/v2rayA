@@ -765,7 +765,7 @@ export default {
       }
     },
     observatory(val) {
-      for (const info of val.body) {
+      for (const info of val.body.outboundStatus) {
         this.connectedServerInfo.some(x => {
           if (
             info.which._type === x.which._type &&
@@ -902,7 +902,7 @@ export default {
             console.warn("node not found");
             return;
           }
-          node.scrollIntoView({ block: "end", inline: "center" });
+          node.scrollIntoView({ block: "center", inline: "center" });
           let highlightClass = "highlight-row-connected";
           if (that.runningState.running !== that.$t("common.isRunning")) {
             highlightClass = "highlight-row-disconnected";
@@ -1077,6 +1077,10 @@ export default {
       } else {
         this.connectedServerInfo = [];
       }
+
+      this.connectedServerInfo.sort((x, y) => {
+        return x.info.name > y.info.name;
+      });
 
       this.connectedServerInTab.server = false;
       for (const i in this.connectedServerInTab.subscriptionServer) {

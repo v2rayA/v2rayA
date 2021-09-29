@@ -31,7 +31,7 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 	process = &Process{
 		template: tmpl,
 	}
-	if tmpl.Observatory != nil {
+	if tmpl.MultiObservatory != nil {
 		// NOTICE: tag2WhichIndex is reliable because once connected servers are changed when v2ray is running,
 		// the func UpdateV2RayConfig should be invoked and tag2WhichIndex will be regenerated.
 		tag2WhichIndex := make(map[string]int)

@@ -44,7 +44,6 @@ type Template struct {
 	} `json:"routing"`
 	DNS              *coreObj.DNS              `json:"dns,omitempty"`
 	FakeDns          *coreObj.FakeDns          `json:"fakedns,omitempty"`
-	Observatory      *coreObj.Observatory      `json:"observatory,omitempty"`
 	MultiObservatory *coreObj.MultiObservatory `json:"multiObservatory,omitempty"`
 	API              *coreObj.APIObject        `json:"api,omitempty"`
 
@@ -1405,7 +1404,7 @@ func (t *Template) SetAPI() (port int) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	if t.Observatory != nil {
+	if t.MultiObservatory != nil {
 		services = append(services, "ObservatoryService")
 		t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port))
 	}
