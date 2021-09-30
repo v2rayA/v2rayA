@@ -456,35 +456,6 @@
             />
           </b-field>
         </b-tab-item>
-        <b-tab-item label="PingTunnel">
-          <b-field label="Name" label-position="on-border">
-            <b-input
-              ref="pingtunnel_name"
-              v-model="pingtunnel.name"
-              :placeholder="$t('configureServer.servername')"
-              expanded
-            />
-          </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input
-              ref="pingtunnel_server"
-              v-model="pingtunnel.server"
-              required
-              placeholder="IP / HOST"
-              expanded
-            />
-          </b-field>
-          <b-field label="Password" label-position="on-border">
-            <b-input
-              ref="pingtunnel_password"
-              v-model="pingtunnel.password"
-              required
-              :placeholder="$t('configureServer.password')"
-              type="number"
-              expanded
-            />
-          </b-field>
-        </b-tab-item>
         <b-tab-item label="Trojan">
           <b-field label="Name" label-position="on-border">
             <b-input
@@ -751,12 +722,6 @@ export default {
       obfsParam: "",
       protocol: "ssr"
     },
-    pingtunnel: {
-      name: "",
-      server: "",
-      password: "",
-      protocol: "pingtunnel"
-    },
     trojan: {
       name: "",
       server: "",
@@ -815,16 +780,6 @@ export default {
           ) {
             this.ssr = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 2;
-          } else if (
-            res.data.data.sharingAddress
-              .toLowerCase()
-              .startsWith("pingtunnel://") ||
-            res.data.data.sharingAddress
-              .toLowerCase()
-              .startsWith("ping-tunnel://")
-          ) {
-            this.pingtunnel = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 3;
           } else if (
             res.data.data.sharingAddress
               .toLowerCase()
@@ -977,66 +932,6 @@ export default {
           obfsParam: m["obfsparam"],
           protocol: "ssr"
         };
-      } else if (url.toLowerCase().startsWith("pingtunnel://")) {
-        let u = url.substr(13);
-        u = Base64.decode(u);
-        const regexp = /(.+):(.+)#(.*)/;
-        let arr = regexp.exec(u);
-        return {
-          server: arr[1],
-          password: Base64.decode(arr[2]),
-          name: decodeURIComponent(arr[3]),
-          protocol: "pingtunnel"
-        };
-      } else if (url.toLowerCase().startsWith("ping-tunnel://")) {
-        let u = parseURL(url);
-        return {
-          server: u.host,
-          password: decodeURIComponent(u.username),
-          name: decodeURIComponent(u.hash),
-          protocol: "pingtunnel"
-        };
-      } else if (
-        url.toLowerCase().startsWith("trojan://") ||
-        url.toLowerCase().startsWith("trojan-go://")
-      ) {
-        let u = parseURL(url);
-        const o = {
-          password: decodeURIComponent(u.username),
-          server: u.host,
-          port: u.port,
-          name: decodeURIComponent(u.hash),
-          peer: u.params.peer || u.params.sni || "",
-          allowInsecure:
-            u.params.allowInsecure === true || u.params.allowInsecure === "1",
-          method: "origin",
-          obfs: "none",
-          ssCipher: "aes-128-gcm",
-          protocol: "trojan"
-        };
-        if (url.toLowerCase().startsWith("" + "")) {
-          console.log(u.params.encryption);
-          if (u.params.encryption?.startsWith("ss;")) {
-            o.method = "shadowsocks";
-            const fields = u.params.encryption.split(";");
-            o.ssCipher = fields[1];
-            o.ssPassword = fields[2];
-          }
-          const obfsMap = {
-            original: "none",
-            "": "none",
-            ws: "websocket"
-          };
-          o.obfs = obfsMap[u.params.type || ""];
-          if (o.obfs === "ws") {
-            o.obfs = "websocket";
-          }
-          if (o.obfs === "websocket") {
-            o.host = u.params.host || "";
-            o.path = u.params.path || "/";
-          }
-        }
-        return o;
       } else if (
         url.toLowerCase().startsWith("http://") ||
         url.toLowerCase().startsWith("https://")
@@ -1160,13 +1055,6 @@ export default {
               srcObj.protoParam
             )}&obfsparam=${Base64.encodeURI(srcObj.obfsParam)}`
           )}`;
-        case "pingtunnel":
-          return generateURL({
-            protocol: "ping-tunnel",
-            username: srcObj.password,
-            host: srcObj.server,
-            hash: srcObj.name
-          });
         case "trojan":
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
@@ -1244,13 +1132,10 @@ export default {
         if (this.tabChoice === 2 && !k.startsWith("ssr_")) {
           continue;
         }
-        if (this.tabChoice === 3 && !k.startsWith("pingtunnel_")) {
+        if (this.tabChoice === 3 && !k.startsWith("trojan_")) {
           continue;
         }
-        if (this.tabChoice === 4 && !k.startsWith("trojan_")) {
-          continue;
-        }
-        if (this.tabChoice === 5 && !k.startsWith("http_")) {
+        if (this.tabChoice === 4 && !k.startsWith("http_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1278,10 +1163,8 @@ export default {
       } else if (this.tabChoice === 2) {
         coded = this.generateURL(this.ssr);
       } else if (this.tabChoice === 3) {
-        coded = this.generateURL(this.pingtunnel);
-      } else if (this.tabChoice === 4) {
         coded = this.generateURL(this.trojan);
-      } else if (this.tabChoice === 5) {
+      } else if (this.tabChoice === 4) {
         coded = this.generateURL(this.http);
       }
       this.$emit("submit", coded);
