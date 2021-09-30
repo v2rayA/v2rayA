@@ -789,13 +789,13 @@ export default {
               .startsWith("trojan-go://")
           ) {
             this.trojan = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 4;
+            this.tabChoice = 3;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("http://") ||
             res.data.data.sharingAddress.toLowerCase().startsWith("https://")
           ) {
             this.http = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 5;
+            this.tabChoice = 4;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -932,6 +932,47 @@ export default {
           obfsParam: m["obfsparam"],
           protocol: "ssr"
         };
+      }else if (
+          url.toLowerCase().startsWith("trojan://") ||
+          url.toLowerCase().startsWith("trojan-go://")
+      ) {
+        let u = parseURL(url);
+        const o = {
+          password: decodeURIComponent(u.username),
+          server: u.host,
+          port: u.port,
+          name: decodeURIComponent(u.hash),
+          peer: u.params.peer || u.params.sni || "",
+          allowInsecure:
+              u.params.allowInsecure === true || u.params.allowInsecure === "1",
+          method: "origin",
+          obfs: "none",
+          ssCipher: "aes-128-gcm",
+          protocol: "trojan"
+        };
+        if (url.toLowerCase().startsWith("" + "")) {
+          console.log(u.params.encryption);
+          if (u.params.encryption?.startsWith("ss;")) {
+            o.method = "shadowsocks";
+            const fields = u.params.encryption.split(";");
+            o.ssCipher = fields[1];
+            o.ssPassword = fields[2];
+          }
+          const obfsMap = {
+            original: "none",
+            "": "none",
+            ws: "websocket"
+          };
+          o.obfs = obfsMap[u.params.type || ""];
+          if (o.obfs === "ws") {
+            o.obfs = "websocket";
+          }
+          if (o.obfs === "websocket") {
+            o.host = u.params.host || "";
+            o.path = u.params.path || "/";
+          }
+        }
+        return o;
       } else if (
         url.toLowerCase().startsWith("http://") ||
         url.toLowerCase().startsWith("https://")
