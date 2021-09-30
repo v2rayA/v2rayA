@@ -865,7 +865,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
-func (t *Template) setOutboundSockopt(setting *configure.Setting) {
+func (t *Template) SetOutboundSockopt(setting *configure.Setting) {
 	mark := 0x80
 	//tos := 184
 	for i := range t.Outbounds {
@@ -1564,7 +1564,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.optimizeGeoipMemoryOccupation()
 
 	//set outboundSockopt
-	t.setOutboundSockopt(setting)
+	t.SetOutboundSockopt(setting)
 
 	//set fakedns destOverride
 	t.setInboundFakeDnsDestOverride()
