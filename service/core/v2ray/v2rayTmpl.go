@@ -237,7 +237,7 @@ func (t *Template) FirstProxyOutboundName(filter func(outboundName string, isGro
 	return
 }
 
-func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, supportUDP map[string]bool) (routing []coreObj.RoutingRule, err error) {
+func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (routing []coreObj.RoutingRule, err error) {
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	firstUDPSupportedOutboundTag, _ := t.FirstProxyOutboundName(func(outboundName string, isGroup bool) bool {
 		return supportUDP[outboundName]
@@ -245,7 +245,7 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 	outboundTags := t.outNames()
 	var internal, external, all []string
 	var allThroughProxy = false
-	if setting.AntiPollution == configure.AntipollutionAdvanced {
+	if t.Setting.AntiPollution == configure.AntipollutionAdvanced {
 		// advanced
 		internal = configure.GetInternalDnsListNotNil()
 		external = configure.GetExternalDnsListNotNil()
@@ -278,10 +278,10 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 				return nil, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// and doh:// DNS rule instead, or change the connected server`, dns.Out)
 			}
 		}
-	} else if setting.AntiPollution != configure.AntipollutionClosed {
+	} else if t.Setting.AntiPollution != configure.AntipollutionClosed {
 		// preset
 		internal = []string{"223.6.6.6 -> direct", "119.29.29.29 -> direct"}
-		switch setting.AntiPollution {
+		switch t.Setting.AntiPollution {
 		case configure.AntipollutionAntiHijack:
 			break
 		case configure.AntipollutionDnsForward:
@@ -309,7 +309,7 @@ func (t *Template) setDNS(outbounds []serverInfo, setting *configure.Setting, su
 		// guess the user want to protect the privacy
 		t.DNS.DisableFallback = &True
 	}
-	if setting.AntiPollution != configure.AntipollutionClosed {
+	if t.Setting.AntiPollution != configure.AntipollutionClosed {
 		if len(external) == 0 {
 			// not split traffic
 			d, r := parseAdvancedDnsServers(internal, nil)
@@ -607,8 +607,8 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 	return nil
 }
 
-func (t *Template) setRulePortRouting(setting *configure.Setting) error {
-	return t.AppendRoutingRuleByMode(setting.RulePortMode, []string{"rule"})
+func (t *Template) setRulePortRouting() error {
+	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule"})
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	lines := strings.Split(configure.GetRoutingA(), "\n")
@@ -821,8 +821,8 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	return nil
 }
 
-func (t *Template) setTransparentRouting(setting *configure.Setting) (err error) {
-	switch setting.Transparent {
+func (t *Template) setTransparentRouting() (err error) {
+	switch t.Setting.Transparent {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
 		return t.AppendRoutingRuleByMode(configure.WhitelistMode, []string{"transparent"})
@@ -865,7 +865,7 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
-func (t *Template) SetOutboundSockopt(setting *configure.Setting) {
+func (t *Template) SetOutboundSockopt() {
 	mark := 0x80
 	//tos := 184
 	for i := range t.Outbounds {
@@ -881,21 +881,21 @@ func (t *Template) SetOutboundSockopt(setting *configure.Setting) {
 		if t.Outbounds[i].Protocol == "freedom" && t.Outbounds[i].Tag == "direct" {
 			t.Outbounds[i].Settings.DomainStrategy = "UseIP"
 		}
-		if setting.TcpFastOpen != configure.Default {
-			tmp := setting.TcpFastOpen == configure.Yes
+		if t.Setting.TcpFastOpen != configure.Default {
+			tmp := t.Setting.TcpFastOpen == configure.Yes
 			t.Outbounds[i].StreamSettings.Sockopt.TCPFastOpen = &tmp
 		}
 		t.checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }
-func (t *Template) setDualStack(setting *configure.Setting) {
+func (t *Template) setDualStack() {
 	const (
 		tag4Suffix = "_ipv4"
 		tag6Suffix = "_ipv6"
 	)
 	tagMap := make(map[string]struct{})
 	inbounds6 := deepcopy.Copy(t.Inbounds).([]coreObj.Inbound)
-	if !setting.PortSharing {
+	if !t.Setting.PortSharing {
 		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
 			if t.Inbounds[i].Tag == "dns-in" {
@@ -1021,7 +1021,7 @@ func SetVlessGrpcInbound(vlessGrpc *coreObj.Inbound) (err error) {
 	return nil
 }
 
-func (t *Template) setInbound(setting *configure.Setting) error {
+func (t *Template) setInbound() error {
 	p := configure.GetPortsNotNil()
 	if p != nil {
 		t.Inbounds[0].Port = p.Socks5
@@ -1044,11 +1044,11 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
-	if setting.Transparent != configure.TransparentClose {
+	if t.Setting.Transparent != configure.TransparentClose {
 		var tproxy string
-		switch setting.TransparentType {
+		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
-			tproxy = string(setting.TransparentType)
+			tproxy = string(t.Setting.TransparentType)
 		}
 		t.AppendDokodemo(&tproxy, 32345, "transparent")
 	}
@@ -1511,11 +1511,11 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.OutboundTags = outboundTags
 
 	//set inbound ports according to the setting
-	if err = t.setInbound(setting); err != nil {
+	if err = t.setInbound(); err != nil {
 		return nil, err
 	}
 	//set DNS
-	dnsRouting, err := t.setDNS(serverInfos, setting, supportUDP)
+	dnsRouting, err := t.setDNS(serverInfos, supportUDP)
 	if err != nil {
 		return nil, err
 	}
@@ -1525,12 +1525,12 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.Routing.DomainMatcher = "mph"
 	t.setDNSRouting(dnsRouting, supportUDP)
 	//rule port routing
-	if err = t.setRulePortRouting(setting); err != nil {
+	if err = t.setRulePortRouting(); err != nil {
 		return nil, err
 	}
 	//transparent routing
-	if setting.Transparent != configure.TransparentClose {
-		if err = t.setTransparentRouting(setting); err != nil {
+	if t.Setting.Transparent != configure.TransparentClose {
+		if err = t.setTransparentRouting(); err != nil {
 			return nil, err
 		}
 	}
@@ -1564,13 +1564,13 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.optimizeGeoipMemoryOccupation()
 
 	//set outboundSockopt
-	t.SetOutboundSockopt(setting)
+	t.SetOutboundSockopt()
 
 	//set fakedns destOverride
 	t.setInboundFakeDnsDestOverride()
 
 	//set inbound listening address and routing
-	t.setDualStack(setting)
+	t.setDualStack()
 
 	//check if there are any duplicated tags
 	if err = t.checkDuplicatedTags(); err != nil {
