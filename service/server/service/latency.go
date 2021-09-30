@@ -192,7 +192,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	time.Sleep(100 * time.Millisecond)
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(tmpl, vms)
-	tmpl.SetOutboundSockopt(GetSetting())
+	tmpl.SetOutboundSockopt()
 
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		return nil, err
