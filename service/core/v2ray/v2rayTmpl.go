@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
@@ -762,11 +763,11 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 				}
 			}
 		case RoutingA.Routing:
-			rr := coreObj.RoutingRule{
+			rr := deepcopy.Copy(coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: rule.Out,
 				InboundTag:  routingInboundTags,
-			}
+			}).(coreObj.RoutingRule)
 			for _, f := range rule.And {
 				switch f.Name {
 				case "domain", "domains":
@@ -893,8 +894,7 @@ func (t *Template) setDualStack(setting *configure.Setting) {
 		tag6Suffix = "_ipv6"
 	)
 	tagMap := make(map[string]struct{})
-	inbounds6 := make([]coreObj.Inbound, len(t.Inbounds))
-	copy(inbounds6, t.Inbounds)
+	inbounds6 := deepcopy.Copy(t.Inbounds).([]coreObj.Inbound)
 	if !setting.PortSharing {
 		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
@@ -926,9 +926,8 @@ func (t *Template) setDualStack(setting *configure.Setting) {
 		for i := range t.Routing.Rules {
 			tag6 := make([]string, 0)
 			for j, tag := range t.Routing.Rules[i].InboundTag {
-				tag := strings.TrimSuffix(tag, tag4Suffix)
 				if _, ok := tagMap[tag]; ok {
-					t.Routing.Rules[i].InboundTag[j] = tag + tag4Suffix
+					t.Routing.Rules[i].InboundTag[j] += tag4Suffix
 					tag6 = append(tag6, tag+tag6Suffix)
 				}
 			}
