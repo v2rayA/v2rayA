@@ -115,15 +115,6 @@ func (v *VmessInfo) ExportToURL() string {
 				base64.URLEncoding.EncodeToString([]byte(v.Path)),
 			),
 		)))
-	case "pingtunnel":
-		// ping-tunnel://passwd@host:port#remarks
-		U := url.URL{
-			Scheme:   "ping-tunnel",
-			User:     url.User(v.ID),
-			Host:     v.Add,
-			Fragment: v.Ps,
-		}
-		return U.String()
 	case "trojan", "trojan-go":
 		// trojan://passwd@server:port#URLESCAPE(remarks)
 		u := &url.URL{

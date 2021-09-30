@@ -267,7 +267,6 @@ export default {
           <p class="about-small">20172: 带分流规则的HTTP协议</p>
           <p class="about-small">其他端口：</p>
           <p class="about-small">32345: tproxy，透明代理所需 </p>
-          <p class="about-small">32346: 插件协议端口，如trojan、ssr和pingtunnel</p>
           <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/v2rayA/v2rayA/issues">提出issue</a>.</p>
           <p>文档：<a href="https://v2raya.org">https://v2raya.org</a>.</p>`,
   axios: {

@@ -33,8 +33,6 @@ func Import(url string, which *configure.Which) (err error) {
 		strings.HasPrefix(url, "vless://") ||
 		strings.HasPrefix(url, "ss://") ||
 		strings.HasPrefix(url, "ssr://") ||
-		strings.HasPrefix(url, "pingtunnel://") ||
-		strings.HasPrefix(url, "ping-tunnel://") ||
 		strings.HasPrefix(url, "trojan://") ||
 		strings.HasPrefix(url, "trojan-go://") ||
 		strings.HasPrefix(url, "http-proxy://") ||

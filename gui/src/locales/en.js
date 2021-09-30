@@ -271,7 +271,6 @@ export default {
           <p class="about-small">20172: HTTP protocol with "Rule of Splitting Traffic"</p>
           <p class="about-small">Other ports：</p>
           <p class="about-small">32345: tproxy, needed by transparent proxy </p>
-          <p class="about-small">32346: port of plugins such as trojan, ssr and pingtunnel</p>
           <p>All data is stored in local instead of cloud. </p>
           <p>Problems found during use can be reported at <a href="https://github.com/v2rayA/v2rayA/issues">issues</a>.</p>
           <p>Documentation: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
