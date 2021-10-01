@@ -82,6 +82,10 @@ func DeleteOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
+	if data.Outbound == "proxy" {
+		common.ResponseError(ctx, logError("outbound \"proxy\" cannot be deleted"))
+		return
+	}
 	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {
 		if err := service.Disconnect(configure.Which{Outbound: data.Outbound}, true); err != nil {
 			common.ResponseError(ctx, logError(err))

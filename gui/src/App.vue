@@ -248,9 +248,8 @@ export default {
             queue: false,
             duration: 10000
           });
-        } else {
-          localStorage["lite"] = res.data.data.lite;
         }
+        localStorage["lite"] = res.data.data.lite;
       }
     });
     this.$axios({

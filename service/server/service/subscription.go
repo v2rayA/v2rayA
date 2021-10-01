@@ -252,7 +252,7 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
-	subscriptions := configure.GetSubscriptionsV2()
+	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
 	c, err := httpClient.GetHttpClientAutomatically()
 	if err != nil {
@@ -266,11 +266,11 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
 		return fmt.Errorf("UpdateSubscription: %v", reason)
 	}
-	infoServerRaws := make([]configure.ServerRawV2, len(subscriptionInfos))
+	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
 	cssAfter := css.Get()
 	// serverObj.ServerObj is a pointer(interface), and shouldn't be as a key
-	link2Raw := make(map[string]*configure.ServerRawV2)
+	link2Raw := make(map[string]*configure.ServerRaw)
 	connectedVmessInfo2CssIndex := make(map[string][]int)
 	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
@@ -285,7 +285,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	}
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
 	for i, info := range subscriptionInfos {
-		infoServerRaw := configure.ServerRawV2{
+		infoServerRaw := configure.ServerRaw{
 			ServerObj: info,
 		}
 		link := infoServerRaw.ServerObj.ExportToURL()
@@ -323,7 +323,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
-	raw := configure.GetSubscriptionV2(subscription.ID - 1)
+	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
 		return fmt.Errorf("failed to find the corresponding subscription")
 	}

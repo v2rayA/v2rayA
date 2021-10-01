@@ -15,13 +15,13 @@ func genSecret() {
 	// In order to reduce the number of times to enter the password,
 	// if there is a subscription, the secret is the hash value of all subscription addresses.
 	// Otherwise, the hash value of all server addresses.
-	if sub := configure.GetSubscriptionsV2(); len(sub) > 0 {
+	if sub := configure.GetSubscriptions(); len(sub) > 0 {
 		sha := sha256.New()
 		for _, s := range sub {
 			sha.Write([]byte(s.Address))
 		}
 		secret = sha.Sum(nil)
-	} else if servers := configure.GetServersV2(); len(servers) > 0 {
+	} else if servers := configure.GetServers(); len(servers) > 0 {
 		sha := sha256.New()
 		for _, s := range servers {
 			sha.Write([]byte(s.ServerObj.GetHostname()))

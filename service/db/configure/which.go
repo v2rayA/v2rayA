@@ -209,17 +209,17 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 	return
 }
 
-func (w *Which) LocateServerRaw() (sr *ServerRawV2, err error) {
+func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 	ind := w.ID - 1 //转化为下标
 	switch w.TYPE {
 	case ServerType:
-		servers := GetServersV2()
+		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
 			return nil, fmt.Errorf("LocateServerRaw: ID exceed range")
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
-		subscriptions := GetSubscriptionsV2()
+		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
 			return nil, fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
 		}
@@ -230,8 +230,8 @@ func (w *Which) LocateServerRaw() (sr *ServerRawV2, err error) {
 }
 
 func (ws *Whiches) FillLinks() (err error) {
-	servers := GetServersV2()
-	subscriptions := GetSubscriptionsV2()
+	servers := GetServers()
+	subscriptions := GetSubscriptions()
 	for _, w := range ws.Touches {
 		ind := w.ID - 1 //转化为下标
 		switch w.TYPE {
@@ -285,7 +285,7 @@ func (ws *Whiches) SaveLatencies() (err error) {
 	}
 	// set subscriptions
 	for subIndex, serverIndexes := range subscriptionIndexes {
-		subRaw := GetSubscriptionV2(subIndex)
+		subRaw := GetSubscription(subIndex)
 		for index, which := range serverIndexes {
 			subRaw.Servers[index].Latency = which.Latency
 		}

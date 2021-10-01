@@ -42,7 +42,7 @@ func NewUpdateStatus() SubscriptionStatus {
 }
 
 /* Mapping []TouchServerRaw to []Server */
-func serverRawsToServers(rss []configure.ServerRawV2) (ts []Server) {
+func serverRawsToServers(rss []configure.ServerRaw) (ts []Server) {
 	ts = make([]Server, len(rss))
 	for i, v := range rss {
 		var address string
@@ -64,8 +64,8 @@ func serverRawsToServers(rss []configure.ServerRawV2) (ts []Server) {
 
 // GenerateTouch generates a touch from database
 func GenerateTouch() (t Touch) {
-	t.Servers = serverRawsToServers(configure.GetServersV2())
-	subscriptions := configure.GetSubscriptionsV2()
+	t.Servers = serverRawsToServers(configure.GetServers())
+	subscriptions := configure.GetSubscriptions()
 	t.Subscriptions = make([]Subscription, len(subscriptions))
 	for i, v := range subscriptions {
 		u, err := url.Parse(v.Address)
