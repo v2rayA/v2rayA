@@ -3,13 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
@@ -85,92 +83,11 @@ func checkTProxySupportability() {
 	}
 }
 
-func migrate(jsonConfPath string) (err error) {
-	log.Info("Migrating json to nutsdb...")
-	defer func() {
-		if err != nil {
-			log.Warn("Migrating failed: %v", err)
-		} else {
-			log.Info("Migrating complete")
-		}
-	}()
-	b, err := os.ReadFile(jsonConfPath)
-	if err != nil {
-		return
-	}
-	var cfg configure.Configure
-	if err = jsoniter.Unmarshal(b, &cfg); err != nil {
-		return
-	}
-	if err = configure.SetConfigure(&cfg); err != nil {
-		return
-	}
-	return nil
-}
-
 func initDBValue() {
 	log.Info("init DB")
 	err := configure.SetConfigure(configure.New())
 	if err != nil {
 		log.Fatal("initDBValue: %v", err)
-	}
-}
-
-func migrateServerFormat() {
-	serverRaw := configure.GetServers()
-	var serverRawV2 []*configure.ServerRawV2
-	for _, raw := range serverRaw {
-		if raw.VmessInfo.Protocol == "" {
-			raw.VmessInfo.Protocol = "vmess"
-		}
-		obj, err := serverObj.NewFromLink(raw.VmessInfo.Protocol, raw.VmessInfo.ExportToURL())
-		if err != nil {
-			log.Warn("failed to migrate: %v", raw.VmessInfo.Ps)
-			continue
-		}
-		serverRawV2 = append(serverRawV2, &configure.ServerRawV2{
-			ServerObj: obj,
-			Latency:   raw.Latency,
-		})
-	}
-	if len(serverRawV2) > 0 {
-		err := configure.AppendServers(serverRawV2)
-		if err != nil {
-			log.Warn("failed to migrate: %v", err)
-		}
-	}
-	subscriptionsRaw := configure.GetSubscriptions()
-	var subV2 []*configure.SubscriptionRawV2
-	for _, raw := range subscriptionsRaw {
-		var serversV2 []configure.ServerRawV2
-		for _, sraw := range raw.Servers {
-			if sraw.VmessInfo.Protocol == "" {
-				sraw.VmessInfo.Protocol = "vmess"
-			}
-			obj, err := serverObj.NewFromLink(sraw.VmessInfo.Protocol, sraw.VmessInfo.ExportToURL())
-			if err != nil {
-				log.Warn("failed to migrate: %v", sraw.VmessInfo.Ps)
-				continue
-			}
-			serversV2 = append(serversV2, configure.ServerRawV2{
-				ServerObj: obj,
-				Latency:   sraw.Latency,
-			})
-		}
-		subRawV2 := configure.SubscriptionRawV2{
-			Remarks: raw.Remarks,
-			Address: raw.Address,
-			Status:  raw.Status,
-			Servers: serversV2,
-			Info:    raw.Info,
-		}
-		subV2 = append(subV2, &subRawV2)
-	}
-	if len(subV2) > 0 {
-		err := configure.AppendSubscriptions(subV2)
-		if err != nil {
-			log.Warn("failed to migrate: %v", err)
-		}
 	}
 }
 
@@ -195,29 +112,7 @@ func initConfigure() {
 		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0750)
 	}
 	if configure.IsConfigureNotExists() {
-		// need to migrate?
-		camp := []string{path.Join(path.Dir(confPath), "v2raya.json"), "/etc/v2ray/v2raya.json", "/etc/v2raya/v2raya.json"}
-		var success bool
-		for _, jsonConfPath := range camp {
-			if _, err := os.Stat(jsonConfPath); err == nil {
-				log.Info("migrate from %v", jsonConfPath)
-				err = migrate(jsonConfPath)
-				if err == nil {
-					success = true
-					break
-				}
-			}
-		}
-		if !success {
-			initDBValue()
-		}
-	} else {
-		// need to migrate server format from v1 to v2?
-		if (len(configure.GetServers())+len(configure.GetSubscriptions())) > 0 &&
-			(len(configure.GetServersV2())+len(configure.GetSubscriptionsV2())) == 0 {
-			log.Info("migrating server format from v1 to v2...")
-			migrateServerFormat()
-		}
+		initDBValue()
 	}
 	//检查config.json是否存在
 	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {
