@@ -66,6 +66,7 @@ func GetV2rayServiceVersion() (ver string, err error) {
 	go func() {
 		time.Sleep(3 * time.Second)
 		_ = cmd.Process.Kill()
+		_, _ = cmd.Process.Wait()
 		done <- struct{}{}
 	}()
 	<-done
