@@ -140,15 +140,6 @@ jobs:
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
-    - name: Import SSH key
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      run: |
-        eval $(ssh-agent)
-        echo "$SSH_PRIVATE_KEY" | ./install/tool/ssh-add_expect -
-
     - name: Generate APT repository
       if: startsWith(github.ref, 'refs/tags/v')
       env:
@@ -183,7 +174,14 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       env:
         P_DIR: ${{ steps.prep.outputs.P_DIR }}
-      run: bash install/aur/deploy.sh
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      run: |
+        eval $(ssh-agent)
+        echo "$SSH_PRIVATE_KEY" > ./key
+        chmod 0600 ./key
+        ./install/tool/ssh-add_expect ./key
+        bash install/aur/deploy.sh
     - name: Github Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
