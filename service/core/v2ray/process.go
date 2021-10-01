@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -15,6 +16,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -22,7 +24,10 @@ var NoConnectedServerErr = fmt.Errorf("no selected servers")
 
 // Process is a v2ray-core process
 type Process struct {
+	// mutex protect the proc
+	mutex          sync.Mutex
 	proc           *os.Process
+	procCancel     func()
 	template       *Template
 	tag2WhichIndex map[string]int
 }
@@ -56,23 +61,21 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 	if tmpl.API == nil {
 		tmpl.SetAPI()
 	}
-	proc, err := StartCoreProcess()
+	ctx, cancel := context.WithCancel(context.Background())
+	process.procCancel = cancel
+	proc, err := StartCoreProcess(ctx)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
-	var unexpectedExiting = make(chan string, 1)
-	defer func() {
-		if err != nil {
-			e := proc.Kill()
-			if e == nil {
-				log.Warn("v2ray-core: %v", <-unexpectedExiting)
-			} else if !errors.Is(e, os.ErrProcessDone) {
-				log.Warn("v2ray-core: %v", e)
-			}
-		}
-	}()
+	process.proc = proc
+	var unexpectedExiting bool
 	go func() {
 		p, e := proc.Wait()
+		if process.procCancel == nil {
+			// canceled by v2rayA
+			return
+		}
 		var t []string
 		if p != nil {
 			if p.Success() {
@@ -83,13 +86,15 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 		if e != nil {
 			t = append(t, e.Error())
 		}
-		unexpectedExiting <- fmt.Sprintf("%v", strings.Join(t, ": "))
+		log.Warn("v2ray-core: %v", strings.Join(t, ": "))
+		unexpectedExiting = true
 	}()
 	// ports to check
 	portList := []string{strconv.Itoa(tmpl.ApiPort)}
 	for _, plu := range tmpl.Plugins {
 		_, port, err := net.SplitHostPort(plu.ListenAddr())
 		if err != nil {
+			cancel()
 			return nil, err
 		}
 		portList = append(portList, port)
@@ -102,19 +107,17 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 			i++
 			continue
 		}
-		select {
-		case msg := <-unexpectedExiting:
-			unexpectedExiting <- msg
-			return nil, fmt.Errorf("%v: check the log for more information", msg)
-		default:
+		if unexpectedExiting {
+			cancel()
+			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
 		}
 		if time.Since(startTime) > 15*time.Second {
-			return nil, fmt.Errorf("v2ray-core does not start normally, check the log for more information")
+			cancel()
+			return nil, fmt.Errorf("timeout: check the log for more information")
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
 	log.Trace("Cost of waiting for v2ray-core: %v", time.Since(startTime).String())
-	process.proc = proc
 	return process, nil
 }
 
@@ -150,23 +153,24 @@ func (w logInfoWriter) Write(p []byte) (n int, err error) {
 var logWriter logInfoWriter
 
 func (p *Process) Close() error {
-	err := p.proc.Kill()
-	if err != nil {
-		if errors.Is(err, os.ErrProcessDone) {
-			return nil
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	if p.procCancel != nil {
+		p.procCancel()
+		p.procCancel = nil
+		err := p.template.Close()
+		if err != nil {
+			return err
 		}
+		return nil
+	} else {
+		_, err := p.proc.Wait()
 		return err
 	}
-	p.proc.Wait()
-	err = p.template.Close()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-func RunWithLog(name string, argv []string, dir string, env []string) (*os.Process, error) {
-	cmd := exec.Command(name)
+func RunWithLog(ctx context.Context, name string, argv []string, dir string, env []string) (*os.Process, error) {
+	cmd := exec.CommandContext(ctx, name)
 	cmd.Args = argv
 	cmd.Dir = dir
 	cmd.Env = env
@@ -179,7 +183,7 @@ func RunWithLog(name string, argv []string, dir string, env []string) (*os.Proce
 	return cmd.Process, nil
 }
 
-func StartCoreProcess() (*os.Process, error) {
+func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 	v2rayBinPath, err := where.GetV2rayBinPath()
 	if err != nil {
 		return nil, err
@@ -207,7 +211,7 @@ func StartCoreProcess() (*os.Process, error) {
 			log.Info("low memory: %vMiB, set V2RAY_CONF_GEOLOADER=memconservative", memMiB)
 		}
 	}
-	proc, err := RunWithLog(v2rayBinPath, arguments, dir, env)
+	proc, err := RunWithLog(ctx, v2rayBinPath, arguments, dir, env)
 	if err != nil {
 		return nil, err
 	}
