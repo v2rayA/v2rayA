@@ -843,13 +843,17 @@ export default {
       } else {
         tabIndex = 2 + which.sub;
       }
-
       let tryCnt = 0;
       const maxTry = 5;
       const tryInterval = 500;
       function waitingAndLocate() {
-        let nodes = document.querySelectorAll(".main-tabs .tabs li");
-        if (!nodes[tabIndex].classList.contains("is-active")) {
+        if (
+          !document
+            .querySelector(
+              `.main-tabs > .tabs > ul > li:nth-child(${1 + tabIndex})`
+            )
+            .classList.contains("is-active")
+        ) {
           tryCnt++;
           if (tryCnt > maxTry) {
             return;
