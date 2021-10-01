@@ -9,7 +9,7 @@ func GetSharingAddress(w *configure.Which) (addr string, err error) {
 	if w == nil {
 		return "", fmt.Errorf("which can not be nil")
 	}
-	subscriptions := configure.GetSubscriptionsV2()
+	subscriptions := configure.GetSubscriptions()
 	if w.TYPE == configure.SubscriptionType {
 		ind := w.ID - 1
 		if ind < 0 || ind >= len(subscriptions) {
@@ -17,7 +17,7 @@ func GetSharingAddress(w *configure.Which) (addr string, err error) {
 		}
 		addr = subscriptions[ind].Address
 	} else {
-		var tsr *configure.ServerRawV2
+		var tsr *configure.ServerRaw
 		tsr, err = w.LocateServerRaw()
 		if err != nil {
 			return
