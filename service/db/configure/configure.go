@@ -239,11 +239,6 @@ func GetSettingNotNil() *Setting {
 	b, e := db.GetRaw("system", "setting")
 	if e == nil {
 		_ = jsoniter.Unmarshal(b, r)
-		// migrate
-		if gjson.GetBytes(b, "ipforward").Exists() &&
-			!gjson.GetBytes(b, "portSharing").Exists() {
-			r.PortSharing = r.IpForward
-		}
 	}
 	_ = common.FillEmpty(r, NewSetting())
 	if r.SpecialMode == "" {
