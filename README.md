@@ -49,4 +49,4 @@ See [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/Usage)
 
 ## License
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: AGPL v3-only](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
