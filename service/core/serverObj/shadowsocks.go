@@ -46,7 +46,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		}
 		username := u.User.String()
 		username, _ = common.Base64URLDecode(username)
-		arr := strings.Split(username, ":")
+		arr := strings.SplitN(username, ":", 2)
 		if len(arr) != 2 {
 			return nil, false
 		}

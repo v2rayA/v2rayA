@@ -953,6 +953,10 @@ export default {
           try {
             u.username = Base64.decode(decodeURIComponent(u.username));
             mp = u.username.split(":");
+            if (mp.length > 2) {
+              mp[1] = mp.slice(1).join(":");
+              mp = mp.slice(0, 2);
+            }
           } catch (e) {
             //pass
           }
@@ -967,6 +971,7 @@ export default {
           port: u.port,
           name: u.hash,
           obfs: "http",
+          plugin: "",
           protocol: "ss"
         };
         if (u.params.plugin) {
