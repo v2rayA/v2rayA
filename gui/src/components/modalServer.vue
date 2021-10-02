@@ -858,12 +858,17 @@ export default {
           try {
             u.username = Base64.decode(decodeURIComponent(u.username));
             mp = u.username.split(":");
+            if (mp.length > 2) {
+              mp[1] = mp.slice(1).join(":");
+              mp = mp.slice(0, 2);
+            }
           } catch (e) {
             //pass
           }
         } else {
           mp = [u.username, u.password];
         }
+        console.log(mp);
         u.hash = decodeURIComponent(u.hash);
         let obj = {
           method: mp[0],
@@ -872,6 +877,7 @@ export default {
           port: u.port,
           name: u.hash,
           obfs: "http",
+          plugin: "",
           protocol: "ss"
         };
         if (u.params.plugin) {
@@ -932,9 +938,9 @@ export default {
           obfsParam: m["obfsparam"],
           protocol: "ssr"
         };
-      }else if (
-          url.toLowerCase().startsWith("trojan://") ||
-          url.toLowerCase().startsWith("trojan-go://")
+      } else if (
+        url.toLowerCase().startsWith("trojan://") ||
+        url.toLowerCase().startsWith("trojan-go://")
       ) {
         let u = parseURL(url);
         const o = {
@@ -944,7 +950,7 @@ export default {
           name: decodeURIComponent(u.hash),
           peer: u.params.peer || u.params.sni || "",
           allowInsecure:
-              u.params.allowInsecure === true || u.params.allowInsecure === "1",
+            u.params.allowInsecure === true || u.params.allowInsecure === "1",
           method: "origin",
           obfs: "none",
           ssCipher: "aes-128-gcm",
