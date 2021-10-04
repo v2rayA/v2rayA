@@ -12,7 +12,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -97,7 +97,7 @@ func Down(request *Request, to string) error {
 	// allocate file
 	nanoid, _ := gonanoid.Nanoid()
 	filename := response.Name + "." + nanoid
-	tmpPath := path.Join(os.TempDir(), filename)
+	tmpPath := filepath.Join(os.TempDir(), filename)
 	file, err := os.Create(tmpPath)
 	if err != nil {
 		return err

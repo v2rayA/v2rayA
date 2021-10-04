@@ -13,7 +13,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -188,7 +188,7 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 	if err != nil {
 		return nil, err
 	}
-	dir := path.Dir(v2rayBinPath)
+	dir := filepath.Dir(v2rayBinPath)
 	var arguments = []string{
 		v2rayBinPath,
 		"run",

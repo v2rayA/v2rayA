@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"syscall"
@@ -109,7 +109,7 @@ func initConfigure() {
 	//db
 	confPath := conf.GetEnvironmentConfig().Config
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
-		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0750)
+		_ = os.MkdirAll(filepath.Dir(confPath), os.ModeDir|0750)
 	}
 	if configure.IsConfigureNotExists() {
 		initDBValue()
@@ -128,7 +128,7 @@ func initConfigure() {
 			assetDir := asset.GetV2rayLocationAsset()
 			dld := func(repo, remoteFilename, localFilename string) (err error) {
 				log.Warn("downloading %v to %v", remoteFilename, assetDir)
-				p := path.Join(os.TempDir(), remoteFilename)
+				p := filepath.Join(os.TempDir(), remoteFilename)
 				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
 				if err != nil {
 					return
@@ -151,7 +151,7 @@ func initConfigure() {
 				if err != nil {
 					return errors.New("chmod: " + err.Error())
 				}
-				return copyfile.CopyFile(p, path.Join(assetDir, localFilename))
+				return copyfile.CopyFile(p, filepath.Join(assetDir, localFilename))
 			}
 			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
 			if err != nil {

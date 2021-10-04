@@ -5,7 +5,7 @@ import (
 	"github.com/v2rayA/v2rayA/conf"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -115,7 +115,7 @@ func getV2rayBinPath(target string) (string, error) {
 	if err != nil {
 		return "", NotFoundErr
 	}
-	pa = path.Join(pwd, target)
+	pa = filepath.Join(pwd, target)
 	if _, err := os.Stat(pa); err == nil {
 		return pa, nil
 	}
