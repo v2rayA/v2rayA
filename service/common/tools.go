@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/user"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -236,4 +238,16 @@ func ToBytes(val interface{}) (b []byte, err error) {
 		return nil, err
 	}
 	return BytesCopy(buf.Bytes()), nil
+}
+
+func HomeExpand(path string) (string, error) {
+	if !strings.HasPrefix(path, "~") {
+		return path, nil
+	}
+
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(usr.HomeDir, path[1:]), nil
 }
