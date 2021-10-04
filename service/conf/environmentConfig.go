@@ -3,6 +3,7 @@ package conf
 import (
 	"fmt"
 	"github.com/stevenroose/gonfig"
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	log2 "log"
 	"os"
@@ -63,6 +64,11 @@ func initFunc() {
 		filepath.Dir(params.Config),
 		strings.ReplaceAll(filepath.Base(params.Config), ".", "_"),
 	)
+	// expand '~' with user home
+	params.Config, err = common.HomeExpand(params.Config)
+	if err != nil {
+		log2.Fatal(err)
+	}
 	if strings.Contains(params.Config, "$HOME") {
 		if h, err := os.UserHomeDir(); err == nil {
 			params.Config = strings.ReplaceAll(params.Config, "$HOME", h)
