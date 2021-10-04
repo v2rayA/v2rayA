@@ -4,7 +4,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/v2rayA/v2rayA/conf"
 	"log"
-	"path"
+	"path/filepath"
 	"sync"
 )
 
@@ -14,7 +14,7 @@ var db *bolt.DB
 func initDB() {
 	confPath := conf.GetEnvironmentConfig().Config
 	var err error
-	db, err = bolt.Open(path.Join(confPath, "bolt.db"), 0600, nil)
+	db, err = bolt.Open(filepath.Join(confPath, "bolt.db"), 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

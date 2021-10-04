@@ -6,7 +6,6 @@ import (
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -21,7 +20,7 @@ func GetV2rayLocationAsset() (s string) {
 		if _, err := os.Stat(c); os.IsNotExist(err) {
 			continue
 		}
-		if _, err := os.Stat(path.Join(c, "geoip.dat")); os.IsNotExist(err) {
+		if _, err := os.Stat(filepath.Join(c, "geoip.dat")); os.IsNotExist(err) {
 			continue
 		}
 		s = c
@@ -35,38 +34,38 @@ func GetV2rayLocationAsset() (s string) {
 }
 
 func IsGFWListExists() bool {
-	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat"))
+	_, err := os.Stat(filepath.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func IsGeoipExists() bool {
-	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geoip.dat"))
+	_, err := os.Stat(filepath.Join(GetV2rayLocationAsset(), "geoip.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func IsGeoipOnlyCnPrivateExists() bool {
-	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geoip-only-cn-private.dat"))
+	_, err := os.Stat(filepath.Join(GetV2rayLocationAsset(), "geoip-only-cn-private.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func IsGeositeExists() bool {
-	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "geosite.dat"))
+	_, err := os.Stat(filepath.Join(GetV2rayLocationAsset(), "geosite.dat"))
 	if err != nil {
 		return false
 	}
 	return true
 }
 func GetGFWListModTime() (time.Time, error) {
-	return files.GetFileModTime(path.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat"))
+	return files.GetFileModTime(filepath.Join(GetV2rayLocationAsset(), "LoyalsoldierSite.dat"))
 }
 func IsCustomExists() bool {
-	_, err := os.Stat(path.Join(GetV2rayLocationAsset(), "custom.dat"))
+	_, err := os.Stat(filepath.Join(GetV2rayLocationAsset(), "custom.dat"))
 	if err != nil {
 		return false
 	}
@@ -84,7 +83,7 @@ func GetConfigBytes() (b []byte, err error) {
 }
 
 func GetV2rayConfigPath() (p string) {
-	return path.Join(conf.GetEnvironmentConfig().Config, "config.json")
+	return filepath.Join(conf.GetEnvironmentConfig().Config, "config.json")
 }
 
 func GetV2rayConfigDirPath() (p string) {

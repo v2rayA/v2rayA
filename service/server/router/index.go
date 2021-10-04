@@ -19,7 +19,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -34,7 +33,7 @@ type relativeFS struct {
 }
 
 func (c relativeFS) Open(name string) (fs.File, error) {
-	return c.root.Open(path.Join(c.relativeDir, name))
+	return c.root.Open(filepath.Join(c.relativeDir, name))
 }
 
 func cachedHTML(html []byte) func(ctx *gin.Context) {
@@ -108,7 +107,7 @@ func ServeGUI(engine *gin.Engine) {
 				return nil
 			})
 
-			f, err := os.Open(path.Join(webDir, "index.html"))
+			f, err := os.Open(filepath.Join(webDir, "index.html"))
 			if err != nil {
 				log.Fatal("%v", err)
 			}
