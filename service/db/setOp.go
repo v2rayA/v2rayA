@@ -80,11 +80,7 @@ func SetRemove(bucket string, key string, val interface{}) (err error) {
 func StringSetGetAll(bucket string, key string) (members []string, err error) {
 	err = setOp(bucket, key, func(m set) (readonly bool, err error) {
 		for _, v := range m {
-			buf := new(bytes.Buffer)
-			if e := gob.NewDecoder(buf).Decode(&v); e != nil {
-				return true, e
-			}
-			members = append(members, buf.String())
+			members = append(members, v.(string))
 		}
 		return true, nil
 	})
