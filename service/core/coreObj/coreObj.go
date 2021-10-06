@@ -17,13 +17,13 @@ type Observatory struct {
 	ProbeInterval   string   `json:"probeInterval,omitempty"`
 }
 type Balancer struct {
-	Tag              string            `json:"tag"`
-	Selector         []string          `json:"selector"`
-	Strategy         BalancerStrategy  `json:"strategy"`
-	StrategySettings *StrategySettings `json:"strategySettings,omitempty"`
+	Tag      string           `json:"tag"`
+	Selector []string         `json:"selector"`
+	Strategy BalancerStrategy `json:"strategy"`
 }
 type BalancerStrategy struct {
-	Type string `json:"type"`
+	Type     string            `json:"type"`
+	Settings *StrategySettings `json:"settings,omitempty"`
 }
 type StrategySettings struct {
 	ObserverTag string `json:"observerTag"`

@@ -1129,9 +1129,9 @@ func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
 			Selector: selector,
 			Strategy: coreObj.BalancerStrategy{
 				Type: strategy.String(),
-			},
-			StrategySettings: &coreObj.StrategySettings{
-				ObserverTag: outbound,
+				Settings: &coreObj.StrategySettings{
+					ObserverTag: outbound,
+				},
 			},
 		})
 
