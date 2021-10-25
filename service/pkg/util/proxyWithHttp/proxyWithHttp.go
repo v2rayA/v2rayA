@@ -44,6 +44,10 @@ type httpProxy struct {
 	forward  proxy.Dialer
 }
 
+func newHTTPSProxy(uri *url.URL, forward proxy.Dialer) (proxy.Dialer, error) {
+	return newHTTPProxy(uri, HttpsDialer)
+}
+
 func newHTTPProxy(uri *url.URL, forward proxy.Dialer) (proxy.Dialer, error) {
 	s := new(httpProxy)
 	s.host = uri.Host
@@ -80,8 +84,10 @@ func (s *httpProxy) Dial(network, addr string) (net.Conn, error) {
 	req.Close = false
 	if s.haveAuth {
 		req.SetBasicAuth(s.username, s.password)
+		req.Header.Set("Proxy-Authorization", req.Header.Get("Authorization"))
+		req.Header.Del("Authorization")
 	}
-	req.Header.Set("User-Agent", "Powerby Gota")
+	req.Header.Set("User-Agent", "v2rayA")
 
 	err = req.Write(c)
 	if err != nil {
@@ -117,5 +123,5 @@ func FromEnvironment() proxy.Dialer {
 
 func init() {
 	proxy.RegisterDialerType("http", newHTTPProxy)
-	proxy.RegisterDialerType("https", newHTTPProxy)
+	proxy.RegisterDialerType("https", newHTTPSProxy)
 }
