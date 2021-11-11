@@ -401,7 +401,7 @@ func GetOutboundSetting(outbound string) (setting OutboundSetting) {
 	err := db.Get(fmt.Sprintf("outbound.%v", outbound), "setting", &setting)
 	if err != nil {
 		return OutboundSetting{
-			ProbeURL:      "http://www.msftconnecttest.com/connecttest.txt",
+			ProbeURL:      "https://gstatic.com/generate_204",
 			ProbeInterval: "10s",
 			Type:          LeastPing,
 		}
