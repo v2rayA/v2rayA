@@ -1165,7 +1165,7 @@ func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
 			}
 			if t.Observatory == nil {
 				t.Observatory = &coreObj.Observatory{
-					ProbeURL:      "http://www.msftconnecttest.com/connecttest.txt",
+					ProbeURL:      "https://gstatic.com/generate_204",
 					ProbeInterval: interval.String(),
 				}
 			}
