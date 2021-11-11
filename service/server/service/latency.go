@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-const HttpTestURL = "http://www.msftconnecttest.com/connecttest.txt"
+const HttpTestURL = "https://gstatic.com/generate_204"
 
 func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
 	var whiches = configure.NewWhiches(which)

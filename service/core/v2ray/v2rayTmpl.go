@@ -1142,7 +1142,7 @@ func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
 			probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
 			if _, err := url.Parse(probeUrl); err != nil {
 				log.Warn("observatory: %v", err)
-				probeUrl = "http://www.msftconnecttest.com/connecttest.txt"
+				probeUrl = "https://gstatic.com/generate_204"
 			}
 			t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
 				Tag: outbound,
