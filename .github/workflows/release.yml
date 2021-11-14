@@ -109,7 +109,7 @@ jobs:
         fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t deb -p installer_debian_ppc64le_$VERSION.deb --description "$DESC" --architecture=ppc64le $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_ppc64le_$VERSION.deb --description "$DESC" --architecture=ppc64el $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya $FILES
         
         # https://fedoraproject.org/wiki/Architectures
         fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" --architecture=x86 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
