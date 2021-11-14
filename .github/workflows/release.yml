@@ -61,7 +61,7 @@ jobs:
       run: |
         cp -r web service/server/router/
         cd service
-        for osarch in linux/386 linux/amd64 linux/arm linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64; do
+        for osarch in linux/386 linux/amd64 linux/arm linux/ppc64le linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64; do
           export GOOS=$(echo $osarch | cut -d/ -f1)
           export GOARCH=$(echo $osarch | cut -d/ -f2)
           SUFFIX=""
@@ -86,6 +86,7 @@ jobs:
           v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}
           v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
           v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
           v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
@@ -108,12 +109,14 @@ jobs:
         fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_ppc64le_$VERSION.deb --description "$DESC" --architecture=ppc64el $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya $FILES
         
         # https://fedoraproject.org/wiki/Architectures
         fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" --architecture=x86 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t rpm -p installer_redhat_x64_$VERSION.rpm --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t rpm -p installer_redhat_armv7_$VERSION.rpm --description "$DESC" --architecture=armv7 $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
         fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_ppc64le_$VERSION.rpm --description "$DESC" --architecture=ppc64le $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya $FILES
         
         # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=yay
         fpm -s dir -t pacman -p installer_archlinux_i686_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=i686 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
@@ -193,6 +196,7 @@ jobs:
           v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}
           v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
           v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
           v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
@@ -201,10 +205,12 @@ jobs:
           installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb
           installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb
           installer_debian_arm64_${{ steps.prep.outputs.VERSION }}.deb
+          installer_debian_ppc64le_${{ steps.prep.outputs.VERSION }}.deb
           installer_redhat_x86_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_x64_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm
           installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
