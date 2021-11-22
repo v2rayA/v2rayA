@@ -62,7 +62,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		Name:          t.Fragment,
 		Server:        t.Hostname(),
 		Port:          port,
-		Password:      t.User.String(),
+		Password:      t.User.Username(),
 		Sni:           sni,
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
