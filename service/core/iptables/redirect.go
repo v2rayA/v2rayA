@@ -41,7 +41,8 @@ iptables -w 2 -t nat -A V2RAY -d 192.0.0.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 192.0.2.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 192.88.99.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 192.168.0.0/16 -j RETURN
-iptables -w 2 -t nat -A V2RAY -d 198.18.0.0/15 -j RETURN
+# fakedns
+# iptables -w 2 -t nat -A V2RAY -d 198.18.0.0/15 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 198.51.100.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t nat -A V2RAY -d 224.0.0.0/4 -j RETURN
@@ -63,7 +64,8 @@ ip6tables -w 2 -t nat -A V2RAY -d 2001::/32 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 2001:20::/28 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 2001:db8::/32 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d 2002::/16 -j RETURN
-ip6tables -w 2 -t nat -A V2RAY -d fc00::/7 -j RETURN
+# fakedns
+# ip6tables -w 2 -t nat -A V2RAY -d fc00::/7 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d fe80::/10 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -d ff00::/8 -j RETURN
 ip6tables -w 2 -t nat -A V2RAY -m mark --mark 0x80/0x80 -j RETURN
