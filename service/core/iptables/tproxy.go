@@ -86,7 +86,8 @@ iptables -w 2 -t mangle -A TP_RULE -d 192.0.0.0/24 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 192.0.2.0/24 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 192.88.99.0/24 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 192.168.0.0/16 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 198.18.0.0/15 -j RETURN
+# fakedns
+# iptables -w 2 -t mangle -A TP_RULE -d 198.18.0.0/15 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 198.51.100.0/24 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -d 224.0.0.0/4 -j RETURN
