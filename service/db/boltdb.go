@@ -1,30 +1,26 @@
 package db
 
 import (
+	"github.com/boltdb/bolt"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/xujiajun/nutsdb"
 	"log"
-	"os"
+	"path/filepath"
 	"sync"
 )
 
 var once sync.Once
-var db *nutsdb.DB
+var db *bolt.DB
 
 func initDB() {
 	confPath := conf.GetEnvironmentConfig().Config
 	var err error
-	opt := nutsdb.DefaultOptions
-	opt.Dir = confPath
-	db, err = nutsdb.Open(opt)
-	// for privacy
-	defer os.Chmod(confPath, os.ModeDir|0750)
+	db, err = bolt.Open(filepath.Join(confPath, "boltv4.db"), 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func DB() *nutsdb.DB {
+func DB() *bolt.DB {
 	once.Do(initDB)
 	return db
 }
