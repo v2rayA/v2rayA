@@ -342,7 +342,7 @@ func GetLenSubscriptions() int {
 	return l
 }
 func GetLenSubscriptionServers(index int) int {
-	b, err := db.ListGetRaw("touch", "subscriptions_v2", index)
+	b, err := db.ListGet("touch", "subscriptions_v2", index)
 	if err != nil {
 		log.Fatal("GetLenSubscriptionServers: %v", err)
 	}

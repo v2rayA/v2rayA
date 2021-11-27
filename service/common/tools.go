@@ -1,6 +1,8 @@
 package common
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"net/url"
 	"os"
@@ -220,4 +222,18 @@ func SliceToSet(slice []string) map[string]struct{} {
 		m[s] = struct{}{}
 	}
 	return m
+}
+
+func BytesCopy(b []byte) []byte {
+	var a = make([]byte, len(b))
+	copy(a, b)
+	return a
+}
+
+func ToBytes(val interface{}) (b []byte, err error) {
+	buf := new(bytes.Buffer)
+	if err = gob.NewEncoder(buf).Encode(val); err != nil {
+		return nil, err
+	}
+	return BytesCopy(buf.Bytes()), nil
 }
