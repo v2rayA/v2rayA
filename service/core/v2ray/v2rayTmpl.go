@@ -329,7 +329,12 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 
 	// fakedns
 	if specialMode.ShouldUseFakeDns() {
-		t.DNS.Servers = append([]interface{}{"fakedns"}, t.DNS.Servers...)
+		t.DNS.Servers = append([]interface{}{
+			"fakedns",
+			coreObj.DnsServer{
+				Address: "fakedns", Domains: []string{"geosite:cn"},
+			},
+		}, t.DNS.Servers...)
 	}
 
 	if t.DNS.Servers == nil {
