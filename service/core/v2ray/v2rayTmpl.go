@@ -328,7 +328,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 	}
 
 	// fakedns
-	if t.FakeDns != nil {
+	if specialMode.ShouldUseFakeDns() {
 		ds := coreObj.DnsServer{
 			Address: "fakedns",
 			Domains: []string{
@@ -967,14 +967,14 @@ func (t *Template) setDualStack() {
 	}
 }
 func (t *Template) setInboundFakeDnsDestOverride() {
-	if t.FakeDns == nil {
+	if !specialMode.ShouldUseFakeDns() {
 		return
 	}
 	for i := range t.Inbounds {
 		if t.Inbounds[i].Sniffing.Enabled == false {
 			continue
 		}
-		t.Inbounds[i].Sniffing.DestOverride = append(t.Inbounds[i].Sniffing.DestOverride, "fakedns")
+		t.Inbounds[i].Sniffing.DestOverride = []string{"fakedns"}
 	}
 }
 
