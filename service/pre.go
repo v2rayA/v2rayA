@@ -189,15 +189,9 @@ func initConfigure() {
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 
 	//db
-	confPath := conf.GetEnvironmentConfig().Config
-	if _, err := os.Stat(confPath); os.IsNotExist(err) {
-		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0750)
-	} else if err != nil {
-		log.Warn("%v", err)
-	}
 	if configure.IsConfigureNotExists() {
 		// need to migrate?
-		camp := []string{path.Join(path.Dir(confPath), "v2raya.json"), "/etc/v2ray/v2raya.json", "/etc/v2raya/v2raya.json"}
+		camp := []string{path.Join(conf.GetEnvironmentConfig().Config, "v2raya.json"), "/etc/v2ray/v2raya.json", "/etc/v2raya/v2raya.json"}
 		var success bool
 		for _, jsonConfPath := range camp {
 			if _, err := os.Stat(jsonConfPath); err == nil {
