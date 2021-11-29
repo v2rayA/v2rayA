@@ -74,6 +74,11 @@ func initFunc() {
 			params.Config = strings.ReplaceAll(params.Config, "$HOME", h)
 		}
 	}
+	if _, err := os.Stat(params.Config); os.IsNotExist(err) {
+		_ = os.MkdirAll(params.Config, os.ModeDir|0750)
+	} else if err != nil {
+		log.Warn("%v", err)
+	}
 	logWay := "console"
 	if params.LogFile != "" {
 		logWay = "file"
