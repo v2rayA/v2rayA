@@ -110,6 +110,8 @@ func initConfigure() {
 	confPath := conf.GetEnvironmentConfig().Config
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
 		_ = os.MkdirAll(filepath.Dir(confPath), os.ModeDir|0750)
+	} else if err != nil {
+		log.Warn("%v", err)
 	}
 	if configure.IsConfigureNotExists() {
 		initDBValue()
