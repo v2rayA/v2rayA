@@ -192,6 +192,8 @@ func initConfigure() {
 	confPath := conf.GetEnvironmentConfig().Config
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
 		_ = os.MkdirAll(path.Dir(confPath), os.ModeDir|0750)
+	} else if err != nil {
+		log.Warn("%v", err)
 	}
 	if configure.IsConfigureNotExists() {
 		// need to migrate?
