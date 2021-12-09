@@ -26,7 +26,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	dialer := net.Dialer{Timeout: 1000 * time.Millisecond}
 	DefaultResolver = &net.Resolver{
-		PreferGo:     true,
+		PreferGo:     false,
 		StrictErrors: false,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			server := dnsServers[rand.Intn(len(dnsServers))]
