@@ -95,7 +95,7 @@ func initConfigure() {
 	//等待网络连通
 	v2ray.CheckAndStopTransparentProxy()
 	for {
-		addrs, err := resolv.LookupHost("apple.com")
+		addrs, err := resolv.LookupHost("www.apple.com")
 		if err == nil && len(addrs) > 0 {
 			break
 		}
