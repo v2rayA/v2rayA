@@ -96,7 +96,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
         gem install fpm -v 1.13.1
-        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar
+        sudo apt-get update -y && sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
