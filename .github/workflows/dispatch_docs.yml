@@ -1,4 +1,4 @@
-name: v2raya_gui-docker
+name: dispatch_docs
 
 on:
   release:
@@ -14,4 +14,5 @@ jobs:
         with:
           workflow: Pages CI
           repo: v2rayA/v2raya.github.io
+          ref: main
           token: ${{ secrets.DISPATCH_BUILD_TOKEN }}
