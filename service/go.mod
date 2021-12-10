@@ -3,7 +3,6 @@ module github.com/v2rayA/v2rayA
 go 1.16
 
 require (
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/boltdb/bolt v1.3.1
 	github.com/devfeel/mapper v0.7.5
@@ -22,8 +21,7 @@ require (
 	github.com/mzz2017/go-engine v0.0.0-20200509094339-b56921189229
 	github.com/pkg/errors v0.9.1
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5-0.20210421162817-acdbac05f5a5
-	github.com/shirou/gopsutil v3.21.8+incompatible // indirect
-	github.com/shirou/gopsutil/v3 v3.21.8
+	github.com/shirou/gopsutil/v3 v3.21.11
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.10.2
 	github.com/tidwall/sjson v1.2.3
@@ -33,7 +31,7 @@ require (
 	github.com/v2rayA/go-uci v0.0.0-20210907104827-4cf744297b41
 	github.com/v2rayA/shadowsocksR v1.0.3
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
-	golang.org/x/sys v0.0.0-20210820121016-41cdb8703e55
+	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c
 	google.golang.org/grpc v1.40.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
@@ -44,7 +42,4 @@ require (
 //replace github.com/mzz2017/go-engine => ../../go-engine
 //replace github.com/v2rayA/beego/v2 => ../../beego
 
-// windows/arm64 support
-replace github.com/go-ole/go-ole => github.com/go-ole/go-ole v0.0.0-20210915003542-8b1f7f90f6b1
-
-replace github.com/shirou/gopsutil/v3 => github.com/shirou/gopsutil v0.0.0-20210919144451-80d5b574053f
+replace github.com/boltdb/bolt => github.com/go-gitea/bolt v0.0.0-20170420010917-ccd680d8c1a0
