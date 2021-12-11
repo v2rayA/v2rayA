@@ -39,7 +39,7 @@ func init() {
 
 func LookupHost(host string) (addrs []string, err error) {
 	addrs, err = net.LookupHost(host)
-	lookupAgain := err != nil
+	lookupAgain := len(addrs) == 0 || err != nil
 	if !lookupAgain {
 		for _, addr := range addrs {
 			if ip := net.ParseIP(addr); ip != nil && (ip.IsLoopback() || ip.IsUnspecified()) {
