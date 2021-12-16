@@ -516,7 +516,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 				coreObj.RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  inbounds,
+					InboundTag:  deepcopy.Copy(inbounds).([]string),
 					Domain:      []string{"ext:LoyalsoldierSite.dat:geolocation-!cn"},
 				})
 		} else {
@@ -524,7 +524,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 				coreObj.RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  inbounds,
+					InboundTag:  deepcopy.Copy(inbounds).([]string),
 					Domain:      []string{"geosite:geolocation-!cn"},
 				})
 		}
@@ -532,19 +532,19 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
-				InboundTag:  inbounds,
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
 				Domain:      []string{"geosite:cn"},
 			},
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "proxy",
-				InboundTag:  inbounds,
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
 				IP:          []string{"geoip:hk", "geoip:mo"},
 			},
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
-				InboundTag:  inbounds,
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
 				IP:          []string{"geoip:private", "geoip:cn"},
 			},
 		)
@@ -554,13 +554,13 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 				coreObj.RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  inbounds,
+					InboundTag:  deepcopy.Copy(inbounds).([]string),
 					Domain:      []string{"ext:LoyalsoldierSite.dat:gfw"},
 				},
 				coreObj.RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  inbounds,
+					InboundTag:  deepcopy.Copy(inbounds).([]string),
 					Domain:      []string{"ext:LoyalsoldierSite.dat:greatfire"},
 				})
 		} else {
@@ -568,7 +568,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 				coreObj.RoutingRule{
 					Type:        "field",
 					OutboundTag: firstOutboundTag,
-					InboundTag:  inbounds,
+					InboundTag:  deepcopy.Copy(inbounds).([]string),
 					Domain:      []string{"geosite:geolocation-!cn"},
 				})
 		}
@@ -576,11 +576,11 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
-				InboundTag:  inbounds,
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
 			},
 		)
 	case configure.RoutingAMode:
-		if err := parseRoutingA(t, inbounds); err != nil {
+		if err := parseRoutingA(t, deepcopy.Copy(inbounds).([]string)); err != nil {
 			return err
 		}
 	}
