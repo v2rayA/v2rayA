@@ -858,6 +858,13 @@ func (t *Template) setDualStack() {
 	if !t.Setting.PortSharing {
 		// copy a group of ipv6 inbounds and set the tag
 		for i := range t.Inbounds {
+			if t.Inbounds[i].Tag == "transparent" && t.Setting.TransparentType == configure.TransparentRedirect {
+				// https://ipset.netfilter.org/iptables-extensions.man.html#lbDK
+				// REDIRECT redirects the packet to the machine itself by changing the destination IP to the primary address of the incoming interface.
+				// So we should listen at 0.0.0.0 instead of 127.0.0.1
+				inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
+				continue
+			}
 			if t.Inbounds[i].Tag == "dns-in" {
 				t.Inbounds[i].Listen = "127.2.0.17"
 				inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
