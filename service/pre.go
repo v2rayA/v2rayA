@@ -36,6 +36,7 @@ import (
 func checkEnvironment() {
 	config := conf.GetEnvironmentConfig()
 	if len(config.PrintReport) > 0 {
+		db.SetReadOnly()
 		config.Report()
 		os.Exit(0)
 	}
@@ -50,11 +51,12 @@ func checkEnvironment() {
 		}
 	}
 	if config.ResetPassword {
+		fmt.Println("Resetting password...\nIf no response for a long time, please stop other v2rayA instances and try again.")
 		err := configure.ResetAccounts()
 		if err != nil {
 			log.Fatal("checkEnvironment: %v", err)
 		}
-		fmt.Println("It will work after you restart v2rayA")
+		fmt.Println("Succeed. It will work after you restart v2rayA.")
 		os.Exit(0)
 	}
 	_, v2rayAListeningPort, err := net.SplitHostPort(config.Address)
