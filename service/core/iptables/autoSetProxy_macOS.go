@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+type AutoSetProxyOnMac interface {
+	SetProxyOnMac()
+}
+
 type ports struct {
 	portHttpWithPac int32
 	portSocks5      int32
@@ -50,8 +54,8 @@ func (p *ports) SetProxyOnMacOS() string {
 	return commands
 }
 
-// AutoSetProxyOnMac 用于配置代理模块的运行
-func (p *ports) AutoSetProxyOnMac() {
+// SetProxyOnMac 用于配置代理模块的运行
+func (p *ports) SetProxyOnMac() {
 	commands := p.SetProxyOnMacOS()
 	cmds.ExecCommands(commands, false)
 }
