@@ -100,7 +100,7 @@ export default {
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
-    preferModeWhenUpdate: "Mode when Upadate Subscriptions and GFWList",
+    preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
@@ -134,12 +134,12 @@ export default {
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers and docker as the gateway should make option 'Share in LAN' on.",
       transparentType:
         "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution.",
-      pacMode: `Here you can set the splitting traffic rule of rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
+      pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing:
         "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
         "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
       specialMode:
-        "★supervisor：Monitor dns pollution, intercept in advance, use sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving.",
+        "★supervisor：Monitor dns pollution, intercept in advance, use the sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving.",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
@@ -254,7 +254,7 @@ export default {
   },
   latency: {
     message:
-      "Latency test used to cost one or several minutes. Wait patiently please."
+      "Latency tests used to cost one or several minutes. Wait patiently please."
   },
   version: {
     higherVersionNeeded:
@@ -271,7 +271,7 @@ export default {
           <p class="about-small">20172: HTTP protocol with "Rule of Splitting Traffic"</p>
           <p class="about-small">Other ports：</p>
           <p class="about-small">32345: tproxy, needed by transparent proxy </p>
-          <p>All data is stored in local instead of cloud. </p>
+          <p>All data is stored in local instead of in the cloud. </p>
           <p>Problems found during use can be reported at <a href="https://github.com/v2rayA/v2rayA/issues">issues</a>.</p>
           <p>Documentation: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
   axios: {
@@ -281,7 +281,7 @@ export default {
         "Cannot find v2rayA at {url}. Make sure v2rayA is running at this address.",
       cannotCommunicate: [
         "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
-        "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http site."
+        "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http sites."
       ]
     },
     urls: {
