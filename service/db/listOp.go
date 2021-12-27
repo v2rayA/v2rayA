@@ -20,6 +20,7 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 			if b == nil {
 				return fmt.Errorf("ListSet: can't set element to an empty list")
 			}
+
 			if b, e := sjson.SetBytes(b, strconv.Itoa(index), val); e != nil {
 				return e
 			} else {

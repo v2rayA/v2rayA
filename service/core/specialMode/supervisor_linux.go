@@ -2,8 +2,8 @@ package specialMode
 
 import (
 	"fmt"
-	"github.com/v2fly/v2ray-core/v4/app/router"
-	"github.com/v2fly/v2ray-core/v4/app/router/routercommon"
+	"github.com/v2rayA/v2ray-lib/router/routercommon"
+	"github.com/v2rayA/v2ray-lib/router"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/specialMode/infra"
 	"github.com/v2rayA/v2rayA/db/configure"
