@@ -2,7 +2,8 @@ package specialMode
 
 import (
 	"fmt"
-	"github.com/v2fly/v2ray-core/v4/app/router"
+	"github.com/v2rayA/v2ray-lib/router/routercommon"
+	"github.com/v2rayA/v2ray-lib/router"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/specialMode/infra"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -17,8 +18,8 @@ var (
 	done              chan interface{}
 	mutex             sync.Mutex
 	limit             = make(chan interface{}, 1)
-	whiteDnsServerIps []*router.CIDR
-	whiteDomains      []*router.Domain
+	whiteDnsServerIps []*routercommon.CIDR
+	whiteDomains      []*routercommon.Domain
 	wg                sync.WaitGroup
 )
 
@@ -52,7 +53,7 @@ func CheckAndSetupDNSSupervisor() {
 		nil)
 }
 
-func StartDNSSupervisor(externWhiteDnsServers []*router.CIDR, externWhiteDomains []*router.Domain) (err error) {
+func StartDNSSupervisor(externWhiteDnsServers []*routercommon.CIDR, externWhiteDomains []*routercommon.Domain) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("StartDNSSupervisor: %w", err)
