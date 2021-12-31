@@ -21,7 +21,7 @@ function waitingConnected(promise, interval, cancel, timeout) {
             }
           },
           () => {
-            if (res.data.message !== "the last request is being processed") {
+            if (res.data.message !== "Processing last request") {
               this.$buefy.toast.open({
                 message: res.data.message,
                 type: "is-warning",
