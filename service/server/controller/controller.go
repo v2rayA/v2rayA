@@ -8,5 +8,5 @@ import (
 var (
 	updating      bool
 	updatingMu    sync.Mutex
-	processingErr = fmt.Errorf("the last request is being processed")
+	processingErr = fmt.Errorf("Processing last request")
 )
