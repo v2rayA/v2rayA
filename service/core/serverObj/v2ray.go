@@ -294,9 +294,15 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				core.StreamSettings.TCPSettings = &tcpSetting
 			}
 		case "h2", "http":
-			core.StreamSettings.HTTPSettings = &coreObj.HttpSettings{
-				Path: v.Path,
-				Host: strings.Split(v.Host, ","),
+			if v.Host != "" {
+				core.StreamSettings.HTTPSettings = &coreObj.HttpSettings{
+					Path: v.Path,
+					Host: strings.Split(v.Host, ","),
+				}
+			} else {
+				core.StreamSettings.HTTPSettings = &coreObj.HttpSettings{
+					Path: v.Path,
+				}
 			}
 		}
 		if strings.ToLower(v.TLS) == "tls" {
