@@ -219,7 +219,7 @@ type KcpHeader struct {
 }
 type HttpSettings struct {
 	Path   string   `json:"path"`
-	Host   []string `json:"host"`
+	Host   []string `json:"host,omitempty"`
 	Method string   `json:"method,omitempty"`
 }
 type Hosts map[string]interface{}
