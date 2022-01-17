@@ -361,6 +361,8 @@
               <b-table-column
                 v-slot="props"
                 :label="$t('operations.name')"
+                sortable
+                :custom-sort="sortConnections"
                 width="300"
               >
                 <div class="operate-box">
@@ -492,6 +494,8 @@
               <b-table-column
                 v-slot="props"
                 :label="$t('operations.name')"
+                sortable
+                :custom-sort="sortConnections"
                 width="300"
               >
                 <div class="operate-box">
@@ -926,6 +930,34 @@ export default {
       if (!isAsc) {
         return parseInt(a.pingLatency) < parseInt(b.pingLatency) ? 1 : -1;
       } else {
+        return parseInt(a.pingLatency) > parseInt(b.pingLatency) ? 1 : -1;
+      }
+    },
+    sortConnections(a, b, isAsc) {
+      // when sorted, only connected servers on top
+      // desc: error > high ping > low ping > unconnected
+      // asc: low ping > high ping > error > unconnected
+      if (a.connected && !b.connected) {
+        return -1;
+      }
+      if (!a.connected && b.connected) {
+        return 1;
+      }
+      if (!isAsc) {
+        if (isNaN(parseInt(a.pingLatency))) {
+          return -1;
+        }
+        if (isNaN(parseInt(b.pingLatency))) {
+          return 1;
+        }
+        return parseInt(a.pingLatency) < parseInt(b.pingLatency) ? 1 : -1;
+      } else {
+        if (isNaN(parseInt(a.pingLatency))) {
+          return 1;
+        }
+        if (isNaN(parseInt(b.pingLatency))) {
+          return -1;
+        }
         return parseInt(a.pingLatency) > parseInt(b.pingLatency) ? 1 : -1;
       }
     },
