@@ -65,14 +65,6 @@
             </b-dropdown-item>
           </b-dropdown>
         </b-navbar-item>
-        <b-navbar-item tag="div">
-          <b-tag
-            type="is-warning"
-            class="pointerTag"
-            @click.native="handleClickLogs"
-            >{{ $t("common.log") }}</b-tag
-          >
-        </b-navbar-item>
       </template>
       <template slot="start"></template>
 
@@ -88,6 +80,10 @@
         <b-navbar-item tag="a" @click.native="handleClickAbout">
           <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
+        </b-navbar-item>
+        <b-navbar-item tag="a" @click.native="handleClickLogs">
+          <i class="iconfont icon-info" style="font-size: 1.25em"></i>
+          {{ $t("common.log") }}
         </b-navbar-item>
         <b-dropdown
           position="is-bottom-left"
