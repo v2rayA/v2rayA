@@ -15,7 +15,8 @@ export default {
     message: "提示",
     none: "无",
     optional: "可选",
-    loadBalance: "负载均衡"
+    loadBalance: "负载均衡",
+    log: "日志"
   },
   welcome: {
     title: "初来乍到，请多关照",
@@ -297,5 +298,10 @@ export default {
       "订阅与节点服务器",
       "导入订阅、节点服务器后，在这里切换和管理你的订阅、普通节点以及订阅节点。"
     ]
+  },
+  log: {
+    logModalTitle: "查看日志",
+    refreshInterval: "刷新间隔",
+    seconds: "秒"
   }
 };

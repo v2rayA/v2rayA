@@ -65,6 +65,14 @@
             </b-dropdown-item>
           </b-dropdown>
         </b-navbar-item>
+        <b-navbar-item tag="div">
+          <b-tag
+            type="is-warning"
+            class="pointerTag"
+            @click.native="handleClickLogs"
+            >{{ $t("common.log") }}</b-tag
+          >
+        </b-navbar-item>
       </template>
       <template slot="start"></template>
 
@@ -158,6 +166,7 @@ import ModalCustomAddress from "./components/modalCustomPorts";
 import { parseURL } from "./assets/js/utils";
 import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
+import ModalLog from "@/components/modalLog";
 
 export default {
   components: { ModalCustomAddress, node },
@@ -538,6 +547,14 @@ export default {
     handleClickLogout() {
       localStorage.removeItem("token");
       this.$remount();
+    },
+    handleClickLogs() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: ModalLog,
+        hasModalCard: true,
+        canCancel: true
+      });
     }
   }
 };
