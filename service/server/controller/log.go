@@ -19,16 +19,19 @@ type getLogQuery struct {
 
 func GetLog(ctx *gin.Context) {
 	config := conf.GetEnvironmentConfig()
-	if config.LogFile == "" {
-		ctx.String(200, "log printed to console, please see log in console.")
-		return
-	}
 	query := getLogQuery{}
 	if ctx.ShouldBindQuery(&query) != nil {
 		common.ResponseError(ctx, errors.New("invalid query"))
 		return
 	}
-
+	if config.LogFile == "" {
+		if query.Skip == 0 {
+			ctx.String(200, "log printed to console, please see log in console.")
+		} else {
+			ctx.String(200, "")
+		}
+		return
+	}
 	f, err := os.Open(config.LogFile)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
