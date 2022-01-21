@@ -15,7 +15,8 @@ export default {
     message: "Message",
     none: "none",
     optional: "optional",
-    loadBalance: "Load Balance"
+    loadBalance: "Load Balance",
+    log: "Logs"
   },
   welcome: {
     title: "Welcome",
@@ -292,5 +293,10 @@ export default {
     addMessage: "Please input the outbound name you want to add:",
     deleteMessage:
       'Be sure to <b>DELETE</b> the outbound "{outboundName}"? It is not reversible.'
+  },
+  log: {
+    logModalTitle: "View logs",
+    refreshInterval: "Refresh Interval",
+    seconds: "seconds"
   }
 };

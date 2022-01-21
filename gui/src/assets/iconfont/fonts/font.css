@@ -1,10 +1,10 @@
 @font-face {
     font-family: iconfont;
-    src: url("iconfont.eot");src: url("iconfont.eot?238fde36#iefix") format("embedded-opentype"),
-             url("iconfont.woff2?238fde36") format("woff2"),
-             url("iconfont.woff?238fde36") format("woff"),
-             url("iconfont.ttf?238fde36") format("truetype"),
-             url("iconfont.svg?238fde36#iconfont") format("svg");
+    src: url("iconfont.eot");src: url("iconfont.eot?8c351043#iefix") format("embedded-opentype"),
+             url("iconfont.woff2?8c351043") format("woff2"),
+             url("iconfont.woff?8c351043") format("woff"),
+             url("iconfont.ttf?8c351043") format("truetype"),
+             url("iconfont.svg?8c351043#iconfont") format("svg");
     font-weight: normal;
     font-style: normal;
 }
@@ -97,46 +97,50 @@
     content: "\ea14";
 }
 
-.icon-label::before {
+.icon-info::before {
     content: "\ea15";
 }
 
-.icon-lianjie::before {
+.icon-label::before {
     content: "\ea16";
 }
 
-.icon-loading_ico::before {
+.icon-lianjie::before {
     content: "\ea17";
 }
 
-.icon-logout::before {
+.icon-loading_ico::before {
     content: "\ea18";
 }
 
-.icon-setting::before {
+.icon-logout::before {
     content: "\ea19";
 }
 
-.icon-share::before {
+.icon-setting::before {
     content: "\ea1a";
 }
 
-.icon-switch-menu::before {
+.icon-share::before {
     content: "\ea1b";
 }
 
-.icon-sync::before {
+.icon-switch-menu::before {
     content: "\ea1c";
 }
 
-.icon-wave::before {
+.icon-sync::before {
     content: "\ea1d";
 }
 
-.icon-wendangxiugai::before {
+.icon-wave::before {
     content: "\ea1e";
 }
 
-.icon-winfo-icon-chakanbaogao::before {
+.icon-wendangxiugai::before {
     content: "\ea1f";
+}
+
+.icon-winfo-icon-chakanbaogao::before {
+    content: "\ea20";
 }
