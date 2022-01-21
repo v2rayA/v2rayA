@@ -127,7 +127,7 @@ func initConfigure() {
 			dld := func(repo, remoteFilename, localFilename string) (err error) {
 				log.Warn("downloading %v to %v", remoteFilename, assetDir)
 				p := filepath.Join(os.TempDir(), remoteFilename)
-				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
+				resp, err := http.Get("https://hubmirror.v2raya.org/api/" + repo + "/tags")
 				if err != nil {
 					return
 				}
@@ -137,7 +137,7 @@ func initConfigure() {
 					return
 				}
 				tag := gjson.GetBytes(b, "0.name").String()
-				u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, remoteFilename)
+				u := fmt.Sprintf("https://hubmirror.v2raya.org/%v/raw/%v/%v", repo, tag, remoteFilename)
 				err = gopeed.Down(&gopeed.Request{
 					Method: "GET",
 					URL:    u,
