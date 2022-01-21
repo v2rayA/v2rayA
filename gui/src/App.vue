@@ -78,6 +78,10 @@
           <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
         </b-navbar-item>
+        <b-navbar-item tag="a" @click.native="handleClickLogs">
+          <i class="iconfont icon-info" style="font-size: 1.25em"></i>
+          {{ $t("common.log") }}
+        </b-navbar-item>
         <b-dropdown
           position="is-bottom-left"
           aria-role="menu"
@@ -156,6 +160,7 @@ import ModalOutboundSetting from "./components/modalOutboundSetting";
 import { parseURL } from "./assets/js/utils";
 import { waitingConnected } from "./assets/js/networkInspect";
 import axios from "./plugins/axios";
+import ModalLog from "@/components/modalLog";
 
 export default {
   components: { ModalCustomAddress, node },
@@ -550,6 +555,14 @@ export default {
     handleClickLogout() {
       localStorage.removeItem("token");
       this.$remount();
+    },
+    handleClickLogs() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: ModalLog,
+        hasModalCard: true,
+        canCancel: true
+      });
     }
   }
 };
