@@ -230,7 +230,7 @@ func initConfigure() {
 			dld := func(repo, filename, localname string) (err error) {
 				log.Warn("installing " + filename)
 				p := path.Join(asset.GetV2rayLocationAsset(), filename)
-				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
+				resp, err := http.Get("https://hubmirror.v2raya.org/api/" + repo + "/tags")
 				if err != nil {
 					return
 				}
@@ -240,7 +240,7 @@ func initConfigure() {
 					return
 				}
 				tag := gjson.GetBytes(b, "0.name").String()
-				u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
+				u := fmt.Sprintf("https://hubmirror.v2raya.org/%v/raw/%v/%v", repo, tag, filename)
 				err = gopeed.Down(&gopeed.Request{
 					Method: "GET",
 					URL:    u,
