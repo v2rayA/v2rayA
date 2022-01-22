@@ -60,7 +60,7 @@ export default {
     updateLog(logs) {
       if (logs.data.length !== 0) {
         this.logText += logs.data;
-        this.currentSkip += logs.data.length;
+        this.currentSkip += new Blob([logs.data]).size;
         this.$refs.logBox.$refs.textarea.scrollTop = this.$refs.logBox.$refs.textarea.scrollHeight;
       }
     },
