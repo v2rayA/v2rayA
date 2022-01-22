@@ -17,7 +17,7 @@
     "core-js": "^3.1.2",
     "dayjs": "^1.10.6",
     "js-base64": "^2.5.1",
-    "nanoid": "^3.1.23",
+    "nanoid": "^3.1.31",
     "normalize.css": "^8.0.1",
     "qrcode": "^1.4.2",
     "register-service-worker": "^1.6.2",
