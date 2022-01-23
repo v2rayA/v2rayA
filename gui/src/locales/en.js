@@ -260,7 +260,7 @@ export default {
   version: {
     higherVersionNeeded:
       "This operation need higher version of v2rayA than {version}",
-    v2rayInvalid: "v2ray-core may not be installed correctly",
+    v2rayInvalid: "geosite.dat, geoip.dat or v2ray-core may not be installed correctly",
     v2rayNotV5:
       "The version of v2ray-core is not v5. Use v5 or downgrade v2rayA to v1.5"
   },

@@ -256,7 +256,7 @@ export default {
   },
   version: {
     higherVersionNeeded: "该操作需要 v2rayA 的版本高于{version}",
-    v2rayInvalid: "检测到 v2ray-core 可能未正确安装，请检查",
+    v2rayInvalid: "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查",
     v2rayNotV5:
       "检测到 v2ray-core 的版本并非 v5，请使用 v5 版本或将 v2rayA 降级至 v1.5"
   },
