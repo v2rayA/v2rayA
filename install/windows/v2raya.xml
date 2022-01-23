@@ -28,7 +28,7 @@
   <id>v2rayA</id>
   <name>v2rayA</name>
   <description>v2rayA is a V2Ray client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.</description>
-  <executable>%BASE%\v2raya_windows_x64_1.5.5.exe</executable>
+  <executable>%BASE%\v2raya_windows_ARCH_VERSION.exe</executable>
   <arguments>--lite --v2ray-bin "%BASE%\v2ray-core\v2ray.exe"</arguments>
   <onfailure action="restart" delay="10 sec"/>
 
