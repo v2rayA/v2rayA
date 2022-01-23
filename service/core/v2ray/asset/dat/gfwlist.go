@@ -1,4 +1,4 @@
-package gfwlist
+package dat
 
 import (
 	libSha256 "crypto/sha256"
@@ -63,7 +63,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	g.UpdateTime = t
 	return g, nil
 }
-func IsUpdate() (update bool, remoteTime time.Time, err error) {
+func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {
 	gfwlist, err := GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		return
@@ -151,7 +151,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 }
 
 func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) {
-	update, tRemote, err := IsUpdate()
+	update, tRemote, err := IsGFWListUpdate()
 	if err != nil {
 		return
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net/http"
@@ -57,7 +57,7 @@ func GetRemoteGFWListVersion(ctx *gin.Context) {
 	//	tools.ResponseError(ctx, err)
 	//	return
 	//}
-	g, err := gfwlist.GetRemoteGFWListUpdateTime(http.DefaultClient)
+	g, err := dat.GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
