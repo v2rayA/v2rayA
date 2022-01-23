@@ -72,6 +72,7 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 	var unexpectedExiting bool
 	go func() {
 		p, e := proc.Wait()
+		defer ProcessManager.Stop(false)
 		if process.procCancel == nil {
 			// canceled by v2rayA
 			return
