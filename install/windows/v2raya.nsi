@@ -7,7 +7,7 @@
 ;General
 
   Name "v2rayA"
-  OutFile "installer_windows_ARCH_VERSION.exe"
+  OutFile "installer_windows_@ARCH@_@VERSION@.exe"
   SetCompressor /solid lzma
   ;SetCompress off ;Uncomment for development
   Unicode True
