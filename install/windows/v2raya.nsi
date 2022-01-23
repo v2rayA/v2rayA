@@ -10,7 +10,6 @@
   OutFile "installer_windows_@ARCH@_@VERSION@.exe"
   SetCompressor /solid lzma
   ;SetCompress off ;Uncomment for development
-  Unicode True
 
   InstallDir "$PROGRAMFILES\v2rayA"
   
