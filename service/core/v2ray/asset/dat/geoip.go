@@ -1,0 +1,38 @@
+package dat
+
+import (
+	"fmt"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	gopeed2 "github.com/v2rayA/v2rayA/pkg/util/gopeed"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func UpdateLocalGeoIP() (err error) {
+	assetDir := asset.GetV2rayLocationAsset()
+	pathSiteDat := filepath.Join(assetDir, "geoip.dat")
+	if err = gopeed2.Down(&gopeed2.Request{
+		Method: "GET",
+		URL:    "https://hubmirror.v2raya.org/v2fly/geoip/releases/latest/download/geoip.dat",
+	}, pathSiteDat+".new"); err != nil {
+		log.Warn("UpdateLocalGeoIP: %v", err)
+		return
+	}
+	siteDatSha256, err := httpGet("https://hubmirror.v2raya.org/v2fly/geoip/releases/latest/download/geoip.dat.sha256sum")
+	if err != nil {
+		err = fmt.Errorf("%w: %v", FailCheckSha, err)
+		log.Warn("UpdateLocalGeoIP: %v", err)
+		return err
+	}
+	if !checkSha256(pathSiteDat+".new", strings.Fields(siteDatSha256)[0]) {
+		err = fmt.Errorf("UpdateLocalGeoIP: %v", DamagedFile)
+		return
+	}
+	if err := os.Rename(pathSiteDat+".new", pathSiteDat); err != nil {
+		return err
+	}
+	log.Info("download[geoip.dat]: SUCCESS\n")
+	return
+}

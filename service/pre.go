@@ -1,31 +1,24 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
-	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	service2 "github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
-	"github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/router"
 	"github.com/v2rayA/v2rayA/server/service"
-	"io"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"sync"
 	"syscall"
@@ -122,42 +115,16 @@ func initConfigure() {
 	//首先确定v2ray是否存在
 	if _, err := where.GetV2rayBinPath(); err == nil {
 		//检查geoip、geosite是否存在
-		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
-			assetDir := asset.GetV2rayLocationAsset()
-			dld := func(repo, remoteFilename, localFilename string) (err error) {
-				log.Warn("downloading %v to %v", remoteFilename, assetDir)
-				p := filepath.Join(os.TempDir(), remoteFilename)
-				resp, err := http.Get("https://hubmirror.v2raya.org/api/" + repo + "/tags")
-				if err != nil {
-					return
-				}
-				defer resp.Body.Close()
-				b, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return
-				}
-				tag := gjson.GetBytes(b, "0.name").String()
-				u := fmt.Sprintf("https://hubmirror.v2raya.org/%v/raw/%v/%v", repo, tag, remoteFilename)
-				err = gopeed.Down(&gopeed.Request{
-					Method: "GET",
-					URL:    u,
-				}, p)
-				if err != nil {
-					return errors.New("download<" + p + ">: " + err.Error())
-				}
-				err = os.Chmod(p, os.FileMode(0755))
-				if err != nil {
-					return errors.New("chmod: " + err.Error())
-				}
-				return copyfile.CopyFile(p, filepath.Join(assetDir, localFilename))
-			}
-			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
+		if !asset.IsGeoipExists() {
+			err := dat.UpdateLocalGeoIP()
 			if err != nil {
-				log.Warn("initConfigure: v2rayA/dist-geoip: %v", err)
+				log.Fatal("%v", err)
 			}
-			err = dld("v2rayA/dist-domain-list-community", "dlc.dat", "geosite.dat")
+		}
+		if !asset.IsGeositeExists() {
+			err = dat.UpdateLocalGeoSite()
 			if err != nil {
-				log.Warn("initConfigure: v2rayA/dist-domain-list-community: %v", err)
+				log.Fatal("%v", err)
 			}
 		}
 	}
@@ -205,7 +172,7 @@ func initUpdatingTicker() {
 	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range conf.TickerUpdateGFWList.C {
-			_, err := gfwlist.CheckAndUpdateGFWList()
+			_, err := dat.CheckAndUpdateGFWList()
 			if err != nil {
 				log.Info("[AutoUpdate] GFWList: %v", err)
 			}
@@ -235,7 +202,7 @@ func checkUpdate() {
 		case configure.GfwlistMode:
 			go func() {
 				/* 更新LoyalsoldierSite.dat */
-				localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
+				localGFWListVersion, err := dat.CheckAndUpdateGFWList()
 				if err != nil {
 					log.Warn("Failed to update PAC file: %v", err.Error())
 					return
