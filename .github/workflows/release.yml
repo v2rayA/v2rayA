@@ -136,55 +136,55 @@ jobs:
         # Windows
         # MacOSX
 
-    - name: Import GPG key
-      if: startsWith(github.ref, 'refs/tags/v')
-      id: import_gpg
-      uses: crazy-max/ghaction-import-gpg@v4
-      with:
-        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-        passphrase: ${{ secrets.SIGNING_PASSWORD }}
-    - name: Generate APT repository
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      run: |
-        mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
-        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
-        install/tool/reprepro_expect --ask-passphrase -Vb apt export
-        cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/pool/main/v/v2raya/
-        cp web.tar.gz apt/pool/main/v/v2raya/web_$VERSION.tar.gz
-        echo "apt.v2raya.mzz.pub" > apt/CNAME
-
-    - name: Deploy APT repository
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: crazy-max/ghaction-github-pages@v2.5.0
-      with:
-        repo: v2rayA/v2raya-apt
-        target_branch: master
-        build_dir: apt
-      env:
-          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-    - name: Deploy Demo Site repository
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: crazy-max/ghaction-github-pages@v2.5.0
-      with:
-        repo: v2rayA/v2raya-web
-        target_branch: master
-        build_dir: web
-      env:
-          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-    - name: AUR Release
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        P_DIR: ${{ steps.prep.outputs.P_DIR }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      run: |
-        eval $(ssh-agent)
-        echo "$SSH_PRIVATE_KEY" > ./key
-        chmod 0600 ./key
-        ./install/tool/ssh-add_expect ./key
-        bash install/aur/deploy.sh
+#    - name: Import GPG key
+#      if: startsWith(github.ref, 'refs/tags/v')
+#      id: import_gpg
+#      uses: crazy-max/ghaction-import-gpg@v4
+#      with:
+#        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+#        passphrase: ${{ secrets.SIGNING_PASSWORD }}
+#    - name: Generate APT repository
+#      if: startsWith(github.ref, 'refs/tags/v')
+#      env:
+#        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+#      run: |
+#        mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
+#        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
+#        install/tool/reprepro_expect --ask-passphrase -Vb apt export
+#        cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/pool/main/v/v2raya/
+#        cp web.tar.gz apt/pool/main/v/v2raya/web_$VERSION.tar.gz
+#        echo "apt.v2raya.mzz.pub" > apt/CNAME
+#
+#    - name: Deploy APT repository
+#      if: startsWith(github.ref, 'refs/tags/v')
+#      uses: crazy-max/ghaction-github-pages@v2.5.0
+#      with:
+#        repo: v2rayA/v2raya-apt
+#        target_branch: master
+#        build_dir: apt
+#      env:
+#          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+#    - name: Deploy Demo Site repository
+#      if: startsWith(github.ref, 'refs/tags/v')
+#      uses: crazy-max/ghaction-github-pages@v2.5.0
+#      with:
+#        repo: v2rayA/v2raya-web
+#        target_branch: master
+#        build_dir: web
+#      env:
+#          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+#    - name: AUR Release
+#      if: startsWith(github.ref, 'refs/tags/v')
+#      env:
+#        P_DIR: ${{ steps.prep.outputs.P_DIR }}
+#        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+#        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+#      run: |
+#        eval $(ssh-agent)
+#        echo "$SSH_PRIVATE_KEY" > ./key
+#        chmod 0600 ./key
+#        ./install/tool/ssh-add_expect ./key
+#        bash install/aur/deploy.sh
     - name: Windows Installer
       if: startsWith(github.ref, 'refs/tags/v')
       env:
@@ -244,15 +244,15 @@ jobs:
           installer_freebsd_armv7_${{ steps.prep.outputs.VERSION }}.txz
           installer_freebsd_aarch64_${{ steps.prep.outputs.VERSION }}.txz
           installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
-    - name: Refresh Cloudflare Cache
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
-        CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
-        CF_ZONE: ${{ secrets.CF_ZONE }}
-      run: |
-        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
-          -H "X-Auth-Email: $CF_AUTH_EMAIL" \
-          -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
-          -H "Content-Type: application/json" \
-          --data '{"purge_everything":true}'
+#    - name: Refresh Cloudflare Cache
+#      if: startsWith(github.ref, 'refs/tags/v')
+#      env:
+#        CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
+#        CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
+#        CF_ZONE: ${{ secrets.CF_ZONE }}
+#      run: |
+#        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+#          -H "X-Auth-Email: $CF_AUTH_EMAIL" \
+#          -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
+#          -H "Content-Type: application/json" \
+#          --data '{"purge_everything":true}'
