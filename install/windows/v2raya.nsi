@@ -53,7 +53,7 @@ Section "Install Section" SecInst
   File "v2rayA\v2raya.exe"                    
   File "v2rayA\v2raya.ico"
   File "v2rayA\v2raya.xml"
-  File "v2rayA\v2raya_windows_ARCH_VERSION.exe"
+  File "v2rayA\v2raya_windows_@ARCH@_@VERSION@.exe"
   
   CreateDirectory "$INSTDIR\v2ray-core"
   SetOutPath "$INSTDIR\v2ray-core"
@@ -77,7 +77,7 @@ Section "Install Section" SecInst
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "URLInfoAbout" "https://github.com/v2rayA/v2rayA"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "NoRepair" 1
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "DisplayVersion" "VERSION"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "DisplayVersion" "@VERSION@"
 
   ;Create shortcuts
   !macro CreateInternetShortcutWithIcon FILEPATH URL ICONPATH ICONINDEX
@@ -108,7 +108,7 @@ Section "un.Uninstall"
   Delete "$INSTDIR\v2raya.exe"
   Delete "$INSTDIR\v2raya.ico"
   Delete "$INSTDIR\v2raya.xml"
-  Delete "$INSTDIR\v2raya_windows_ARCH_VERSION.exe"
+  Delete "$INSTDIR\v2raya_windows_@ARCH@_@VERSION@.exe"
   
   Delete "$INSTDIR\v2ray-core\*"
   RMDir "$INSTDIR\v2ray-core"
