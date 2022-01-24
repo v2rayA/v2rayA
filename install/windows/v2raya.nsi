@@ -24,6 +24,12 @@
 
   !define MUI_ABORTWARNING
 
+  !define MUI_ICON "v2rayA\v2raya.ico"
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_BITMAP "v2rayA\v2raya.bmp"
+  !define MUI_HEADERIMAGE_RIGHT
+  !define MUI_HEADERIMAGE_BITMAP_STRETCH "AspectFitHeight"
+
 ;--------------------------------
 ;Pages
 

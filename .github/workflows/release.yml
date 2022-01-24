@@ -194,6 +194,7 @@ jobs:
         mkdir -p /tmp/NSIS/v2rayA && cd /tmp/NSIS
         cp $GITHUB_WORKSPACE/LICENSE $PWD/License.txt
         cp $GITHUB_WORKSPACE/gui/public/img/icons/windows-icon-255x255.ico v2rayA/v2raya.ico
+        cp $GITHUB_WORKSPACE/gui/public/img/icons/windows-bitmap-255x255.bmp v2rayA/v2raya.bmp
         cp $GITHUB_WORKSPACE/install/windows/v2raya.xml v2rayA/
         cp $GITHUB_WORKSPACE/install/windows/v2raya.nsi $PWD
         cp $P_DIR/v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe v2rayA/
