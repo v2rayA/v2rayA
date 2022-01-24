@@ -11,7 +11,7 @@
   SetCompressor /solid lzma
   ;SetCompress off ;Uncomment for development
 
-  InstallDir "$PROGRAMFILES\v2rayA"
+  InstallDir "$PROGRAMFILES64\v2rayA"
   
   ;Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\v2rayA" ""
