@@ -221,6 +221,8 @@ github.com/v2rayA/shadowsocksR v1.0.4 h1:65Ltdy+I/DnlkQTJj+R+X85zhZ63ORE1Roy+agA
 github.com/v2rayA/shadowsocksR v1.0.4/go.mod h1:CyOhDLy8/AKedsi16xRYAMmkxSCH1ukJPaacaTdRfQg=
 github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8 h1:awvgHyZyQnrz25ibNcJoCF2+UWUzgDOVXUc593iQO34=
 github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8/go.mod h1:58r5UEMOLW9jmayL39nq4yyURyLb2bT06+vvWRaa8gI=
+github.com/vearutop/statigz v1.1.7 h1:/36vj7srdvhJUwV2tR4rXWhNyO7O6hRyNtpPWnH5fN0=
+github.com/vearutop/statigz v1.1.7/go.mod h1:Shq1bNLzz9IRa6KykXy/1ubPrHehv0oP27cKyiHuj4o=
 github.com/xtaci/smux v1.5.15 h1:6hMiXswcleXj5oNfcJc+DXS8Vj36XX2LaX98udog6Kc=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yusufpapurcu/wmi v1.2.2 h1:KBNDSne4vP5mbSWnJbO+51IMOXJB67QiYCSBrubbPRg=
