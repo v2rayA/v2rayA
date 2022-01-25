@@ -15,18 +15,26 @@ const watcherInterval = 3 * time.Second
 var watcher *LocalIPWatcher
 var mutex sync.Mutex
 
-type SetupCommands string
-type CleanCommands string
+type Setter struct {
+	Cmds string
+	Func func() error
+}
 
-type iptablesSetter interface {
-	GetSetupCommands() SetupCommands
-	GetCleanCommands() CleanCommands
+func NewErrorSetter(err error) Setter {
+	return Setter{Func: func() error {
+		return err
+	}}
+}
+
+type proxySetter interface {
+	GetSetupCommands() Setter
+	GetCleanCommands() Setter
 	AddIPWhitelist(cidr string)
 	RemoveIPWhitelist(cidr string)
 }
 
 // watch interface changes and add specific IPs to whitelist on iptables
-func SetWatcher(setter iptablesSetter) {
+func SetWatcher(setter proxySetter) {
 	if watcher != nil {
 		watcher.Close()
 	}
@@ -40,31 +48,35 @@ func CloseWatcher() {
 	}
 }
 
-func (c SetupCommands) Setup(preprocess func(c *SetupCommands)) (err error) {
+func (c Setter) Run(stopAtError bool) error {
 	mutex.Lock()
 	defer mutex.Unlock()
-	if preprocess != nil {
-		preprocess(&c)
-	}
-	commands := string(c)
+	commands := c.Cmds
 	if common.IsDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
 	}
-	err = cmds.ExecCommands(commands, true)
-	if err != nil {
-		return
+	var errs []error
+	if len(commands) > 0 {
+		e := cmds.ExecCommands(commands, true)
+		if e != nil {
+			errs = append(errs, e)
+			if stopAtError && len(errs) > 0 {
+				return errs[0]
+			}
+		}
 	}
-	return
-}
-
-func (c CleanCommands) Clean() {
-	mutex.Lock()
-	defer mutex.Unlock()
-	commands := string(c)
-	if common.IsDocker() {
-		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
-		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
+	if c.Func != nil {
+		e := c.Func()
+		if e != nil {
+			errs = append(errs, e)
+			if stopAtError && len(errs) > 0 {
+				return errs[0]
+			}
+		}
 	}
-	_ = cmds.ExecCommands(commands, false)
+	if len(errs) > 0 {
+		return errs[0]
+	}
+	return nil
 }
