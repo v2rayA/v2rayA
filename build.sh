@@ -11,4 +11,10 @@ else
   version="unstable"
 fi
 cd "$SHELL_FOLDER"/gui && yarn && OUTPUT_DIR="$SHELL_FOLDER"/service/server/router/web yarn build
+for file in $(find  "$SHELL_FOLDER"/service/server/router/web |grep -v png |grep -v index.html|grep -v .gz)
+do
+  if [ ! -d $file ];then
+    gzip -9 $file
+  fi
+done
 cd "$SHELL_FOLDER"/service && CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CWD"/v2raya

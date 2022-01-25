@@ -48,7 +48,7 @@ module.exports = {
     port: 8081
   },
 
-  publicPath: "./",
+  publicPath: "./static/",
   // publicPath:process.env.NODE_ENV === 'production'
   // ? '/v2rayA/'
   // : '/',
