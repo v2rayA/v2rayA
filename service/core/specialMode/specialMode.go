@@ -26,7 +26,7 @@ func ShouldLocalDnsListen() bool {
 	if setting.Transparent == configure.TransparentClose {
 		return false
 	}
-	if setting.TransparentType == configure.TransparentTproxy {
+	if setting.TransparentType != configure.TransparentRedirect {
 		return false
 	}
 	if conf.GetEnvironmentConfig().Lite {

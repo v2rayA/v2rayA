@@ -61,7 +61,7 @@ func GetHttpClientWithv2rayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client, err error) {
-	if s := configure.GetSettingNotNil(); !v2ray.ProcessManager.Running() || configure.GetConnectedServers() == nil || s.Transparent != configure.TransparentClose {
+	if !v2ray.ProcessManager.Running() || configure.GetConnectedServers() == nil || v2ray.IsTransparentOn() {
 		return http.DefaultClient, nil
 	}
 	setting := configure.GetSettingNotNil()

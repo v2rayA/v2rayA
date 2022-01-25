@@ -464,7 +464,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
 	if !supportUDP[firstOutboundTag] {
-		// find a outbound that supports UDP and redirect all leaky UDP traffic to it
+		// find an outbound that supports UDP and redirect all leaky UDP traffic to it
 		var found bool
 		for outbound, support := range supportUDP {
 			if support {
@@ -490,7 +490,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 			)
 		}
 	} else {
-		if setting.Transparent != configure.TransparentClose {
+		if IsTransparentOn() {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -825,7 +825,7 @@ func (t *Template) setTransparentRouting() (err error) {
 	}
 	return nil
 }
-func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
+func (t *Template) AppendDokodemoTProxy(tproxy string, port int, tag string) {
 	dokodemo := coreObj.Inbound{
 		Listen:   "0.0.0.0",
 		Port:     port,
@@ -837,11 +837,8 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 		Settings: &coreObj.InboundSettings{Network: "tcp,udp"},
 		Tag:      tag,
 	}
-	if tproxy != nil {
-		dokodemo.StreamSettings = &coreObj.StreamSettings{Sockopt: &coreObj.Sockopt{Tproxy: tproxy}}
-		dokodemo.Settings.FollowRedirect = true
-
-	}
+	dokodemo.StreamSettings = &coreObj.StreamSettings{Sockopt: &coreObj.Sockopt{Tproxy: &tproxy}}
+	dokodemo.Settings.FollowRedirect = true
 	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
@@ -1031,13 +1028,19 @@ func (t *Template) setInbound() error {
 			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
-	if t.Setting.Transparent != configure.TransparentClose {
-		var tproxy string
+	if IsTransparentOn() {
 		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
-			tproxy = string(t.Setting.TransparentType)
+			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
+		case configure.TransparentSystemProxy:
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     32345,
+				Protocol: "http",
+				Listen:   "127.0.0.1",
+				Tag:      "transparent",
+			})
 		}
-		t.AppendDokodemo(&tproxy, 32345, "transparent")
+
 	}
 	if specialMode.ShouldLocalDnsListen() {
 		if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
@@ -1516,7 +1519,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		return nil, err
 	}
 	//transparent routing
-	if t.Setting.Transparent != configure.TransparentClose {
+	if IsTransparentOn() {
 		if err = t.setTransparentRouting(); err != nil {
 			return nil, err
 		}
@@ -1702,7 +1705,7 @@ func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 }
 
 func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
-	if t.Setting.Transparent == configure.TransparentClose {
+	if !IsTransparentOn() {
 		return
 	}
 	if o.StreamSettings == nil {
