@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
@@ -14,6 +13,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/server/reqCache"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
+	"github.com/vearutop/statigz"
 	"io"
 	"io/fs"
 	"net"
@@ -57,31 +57,17 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 	}
 }
 
-func ServeGUI(engine *gin.Engine) {
-	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
+func ServeGUI(r *gin.Engine) {
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
-		webFS := relativeFS{
-			root:        webRoot,
-			relativeDir: "web",
+		webFS, err := fs.Sub(webRoot, "web")
+		if err != nil {
+			log.Fatal("%v", err)
 		}
-		fs.WalkDir(webFS, "/", func(path string, info fs.DirEntry, err error) error {
-			if path == "/" {
-				return nil
-			}
-			if info.IsDir() {
-				r.StaticFS("/"+info.Name(), http.FS(relativeFS{
-					root:        webFS,
-					relativeDir: path,
-				}))
-				return filepath.SkipDir
-			}
-			r.GET("/"+info.Name(), func(ctx *gin.Context) {
-				ctx.FileFromFS(path, http.FS(webFS))
-			})
-			return nil
+		ss := http.StripPrefix("/static", statigz.FileServer(webFS.(fs.ReadDirFS)))
+		r.GET("/static/*w", func(c *gin.Context) {
+			ss.ServeHTTP(c.Writer, c.Request)
 		})
-
 		f, err := webFS.Open("index.html")
 		if err != nil {
 			log.Fatal("%v", err)
@@ -101,10 +87,10 @@ func ServeGUI(engine *gin.Engine) {
 					return nil
 				}
 				if info.IsDir() {
-					r.Static("/"+info.Name(), path)
+					r.Static("/static/"+info.Name(), path)
 					return filepath.SkipDir
 				}
-				r.StaticFile("/"+info.Name(), path)
+				r.StaticFile("/static/"+info.Name(), path)
 				return nil
 			})
 
