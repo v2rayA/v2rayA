@@ -104,6 +104,7 @@
         <b-select v-model="transparentType" expanded class="left-border">
           <option value="redirect">redirect</option>
           <option value="tproxy">tproxy</option>
+          <option value="system_proxy">system proxy</option>
         </b-select>
       </b-field>
       <b-field label-position="on-border">
