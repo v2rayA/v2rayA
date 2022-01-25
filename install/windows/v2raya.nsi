@@ -54,6 +54,8 @@
 Section "Install Section" SecInst
 
   SetOutPath "$INSTDIR"
+
+  ExecWait "$INSTDIR\Uninstall.exe /S _?=$INSTDIR"
   
   File "v2rayA\v2raya.exe"                    
   File "v2rayA\v2raya.ico"
