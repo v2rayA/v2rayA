@@ -53,7 +53,11 @@ func initFunc() {
 	}
 	if params.Config == "" {
 		if params.Lite {
-			params.Config = "$HOME/.config/v2raya"
+			if userConfigDir, e := os.UserConfigDir(); e == nil {
+				params.Config = filepath.Join(userConfigDir, "v2raya")
+			} else {
+				params.Config = "$HOME/.config/v2raya"
+			}
 		} else {
 			params.Config = "/etc/v2raya"
 		}
