@@ -8,7 +8,6 @@ require (
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-gonic/gin v1.7.1
 	github.com/golang/protobuf v1.5.2
 	github.com/google/gopacket v1.1.19
@@ -24,10 +23,11 @@ require (
 	github.com/tidwall/gjson v1.9.1
 	github.com/tidwall/sjson v1.2.2
 	github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa
-	github.com/v2rayA/RoutingA v1.0.0
+	github.com/v2rayA/RoutingA v1.0.1
 	github.com/v2rayA/beego/v2 v2.0.4
 	github.com/v2rayA/shadowsocksR v1.0.4
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
+	github.com/vearutop/statigz v1.1.7
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
 	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c
 	google.golang.org/grpc v1.40.0
@@ -57,7 +57,6 @@ require (
 	github.com/tidwall/match v1.0.3 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
-	github.com/vearutop/statigz v1.1.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	gitlab.com/yawning/chacha20.git v0.0.0-20190903091407-6d1cb28dc72c // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
