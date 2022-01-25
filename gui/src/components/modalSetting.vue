@@ -57,16 +57,16 @@
         </template>
         <b-select v-model="transparent" expanded>
           <option value="close">{{ $t("setting.options.off") }}</option>
-          <option v-show="!lite" value="proxy">{{
+          <option value="proxy">{{
             $t("setting.options.global")
           }}</option>
-          <option v-show="!lite" value="whitelist">{{
+          <option value="whitelist">{{
             $t("setting.options.whitelistCn")
           }}</option>
-          <option v-show="!lite" value="gfwlist">{{
+          <option value="gfwlist">{{
             $t("setting.options.gfwlist")
           }}</option>
-          <option v-show="!lite" value="pac">{{
+          <option value="pac">{{
             $t("setting.options.sameAsPacMode")
           }}</option>
         </b-select>
@@ -102,8 +102,8 @@
           </b-tooltip>
         </template>
         <b-select v-model="transparentType" expanded class="left-border">
-          <option value="redirect">redirect</option>
-          <option value="tproxy">tproxy</option>
+          <option v-show="!lite" value="redirect">redirect</option>
+          <option v-show="!lite" value="tproxy">tproxy</option>
           <option value="system_proxy">system proxy</option>
         </b-select>
       </b-field>
@@ -441,7 +441,7 @@ export default {
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
         this.showDoh = localStorage["dohValid"] === "yes";
         if (this.lite) {
-          this.transparent = "close";
+          this.transparentType = "system_proxy"
           this.showSpecialMode = false;
         }
       });

@@ -5,8 +5,8 @@ package iptables
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -24,7 +24,8 @@ func GetNetworkServices() ([]string, error) {
 	lines := strings.Split(string(stdoutStderr), "\n")
 	var services []string
 	for i := 1; i < len(lines); i++ {
-		if strings.Contains(lines[i], "*") {
+		lines[i] = strings.TrimSpace(lines[i])
+		if len(lines[i]) == 0 || strings.Contains(lines[i], "*") {
 			continue
 		}
 		services = append(services, lines[i])
@@ -36,35 +37,35 @@ func (p *systemProxy) AddIPWhitelist(cidr string) {}
 
 func (p *systemProxy) RemoveIPWhitelist(cidr string) {}
 
-func (p *systemProxy) GetSetupCommands() SetupCommands {
+func (p *systemProxy) GetSetupCommands() Setter {
 	networkServices, err := GetNetworkServices()
 	if err != nil {
-		log.Error("%v", err)
-		return ""
+		return NewErrorSetter(err)
 	}
-	var commands []string
+	var commands string
 	for _, service := range networkServices {
-		commands = append(commands, fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v on", service))
-		commands = append(commands, fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v on", service))
-		commands = append(commands, fmt.Sprintf("/usr/sbin/networksetup -setwebproxy %v 127.0.0.1 32345", service))
-		commands = append(commands, fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxy %v 127.0.0.1 32345", service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v on\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v on\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setwebproxy %v 127.0.0.1 32345\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxy %v 127.0.0.1 32345\n", strconv.Quote(service))
 	}
-	return SetupCommands(strings.Join(commands, "\n"))
+	return Setter{
+		Cmds: commands,
+	}
 }
 
-func (p *systemProxy) GetCleanCommands() CleanCommands {
+func (p *systemProxy) GetCleanCommands() Setter {
 	networkServices, err := GetNetworkServices()
 	if err != nil {
-		log.Error("%v", err)
-		return ""
+		return NewErrorSetter(err)
 	}
 
 	commands := ""
 	for _, service := range networkServices {
-		commands += "/usr/sbin/networksetup" + "-setautoproxystate" + service + "off\n"
-		commands += "/usr/sbin/networksetup" + "-setwebproxystate" + service + "off\n"
-		commands += "/usr/sbin/networksetup" + "-setsecurewebproxystate" + service + "off\n"
-		commands += "/usr/sbin/networksetup" + "-setsocksfirewallproxystate" + service + "off\n"
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setautoproxystate %v off\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v off\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v off\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setsocksfirewallproxystate %v off\n", strconv.Quote(service))
 	}
-	return CleanCommands(commands)
+	return Setter{Cmds: commands}
 }

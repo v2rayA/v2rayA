@@ -464,7 +464,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
 	if !supportUDP[firstOutboundTag] {
-		// find a outbound that supports UDP and redirect all leaky UDP traffic to it
+		// find an outbound that supports UDP and redirect all leaky UDP traffic to it
 		var found bool
 		for outbound, support := range supportUDP {
 			if support {
@@ -490,7 +490,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 			)
 		}
 	} else {
-		if setting.Transparent != configure.TransparentClose {
+		if IsTransparentOn() {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -1028,7 +1028,7 @@ func (t *Template) setInbound() error {
 			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
-	if t.Setting.Transparent != configure.TransparentClose {
+	if IsTransparentOn() {
 		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
 			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
@@ -1037,7 +1037,7 @@ func (t *Template) setInbound() error {
 				Port:     32345,
 				Protocol: "http",
 				Listen:   "127.0.0.1",
-				Tag: "transparent",
+				Tag:      "transparent",
 			})
 		}
 
@@ -1519,7 +1519,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		return nil, err
 	}
 	//transparent routing
-	if t.Setting.Transparent != configure.TransparentClose {
+	if IsTransparentOn() {
 		if err = t.setTransparentRouting(); err != nil {
 			return nil, err
 		}
@@ -1705,7 +1705,7 @@ func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 }
 
 func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
-	if t.Setting.Transparent == configure.TransparentClose {
+	if !IsTransparentOn() {
 		return
 	}
 	if o.StreamSettings == nil {

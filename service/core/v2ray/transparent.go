@@ -14,13 +14,14 @@ import (
 func DeleteTransparentProxyRules() {
 	removeResolvHijacker()
 	iptables.CloseWatcher()
-	iptables.Tproxy.GetCleanCommands().Clean()
-	iptables.Redirect.GetCleanCommands().Clean()
-	iptables.DropSpoofing.GetCleanCommands().Clean()
+	iptables.Tproxy.GetCleanCommands().Run(false)
+	iptables.Redirect.GetCleanCommands().Run(false)
+	iptables.SystemProxy.GetCleanCommands().Run(false)
+	iptables.DropSpoofing.GetCleanCommands().Run(false)
 	time.Sleep(100 * time.Millisecond)
 }
 
-func WriteTransparentProxyRules(preprocess func(c *iptables.SetupCommands)) (err error) {
+func WriteTransparentProxyRules() (err error) {
 	defer func() {
 		if err != nil {
 			log.Warn("WriteTransparentProxyRules: %v", err)
@@ -28,26 +29,34 @@ func WriteTransparentProxyRules(preprocess func(c *iptables.SetupCommands)) (err
 		}
 	}()
 	if specialMode.ShouldUseSupervisor() {
-		if err = iptables.DropSpoofing.GetSetupCommands().Setup(preprocess); err != nil {
+		if err = iptables.DropSpoofing.GetSetupCommands().Run(true); err != nil {
 			log.Warn("DropSpoofing can't be enable: %v", err)
 			return err
 		}
 	}
 	setting := configure.GetSettingNotNil()
-	if setting.TransparentType == configure.TransparentTproxy {
-		if err = iptables.Tproxy.GetSetupCommands().Setup(preprocess); err != nil {
+	switch setting.TransparentType {
+	case configure.TransparentTproxy:
+		if err = iptables.Tproxy.GetSetupCommands().Run(true); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
 				err = fmt.Errorf("you does not compile xt_TPROXY in kernel")
 			}
 			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(&iptables.Tproxy)
-	} else if setting.TransparentType == configure.TransparentRedirect {
-		if err = iptables.Redirect.GetSetupCommands().Setup(preprocess); err != nil {
+	case configure.TransparentRedirect:
+		if err = iptables.Redirect.GetSetupCommands().Run(true); err != nil {
 			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(&iptables.Redirect)
+	case configure.TransparentSystemProxy:
+		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
+			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)
+		}
+	default:
+		return fmt.Errorf("undefined \"%v\" mode of transparent proxy", setting.TransparentType)
 	}
+
 	if specialMode.ShouldLocalDnsListen() {
 		if couldListenLocalhost, e := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
@@ -64,9 +73,6 @@ func WriteTransparentProxyRules(preprocess func(c *iptables.SetupCommands)) (err
 }
 
 func CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting) (err error) {
-	if conf.GetEnvironmentConfig().Lite {
-		return nil
-	}
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
@@ -74,16 +80,30 @@ func CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting
 	}
 	if (!checkRunning || ProcessManager.Running()) && setting.Transparent != configure.TransparentClose {
 		DeleteTransparentProxyRules()
-		err = WriteTransparentProxyRules(func(c *iptables.SetupCommands) {
-
-		})
+		if setting.TransparentType != configure.TransparentSystemProxy {
+			return nil
+		}
+		err = WriteTransparentProxyRules()
 	}
 	return
 }
 
 func CheckAndStopTransparentProxy() {
-	if conf.GetEnvironmentConfig().Lite {
+	if !IsTransparentOn() {
 		return
 	}
 	DeleteTransparentProxyRules()
+}
+
+func IsTransparentOn() bool {
+	setting := configure.GetSettingNotNil()
+	if setting.Transparent == configure.TransparentClose {
+		return false
+	}
+	if conf.GetEnvironmentConfig().Lite &&
+		setting.TransparentType == configure.TransparentTproxy ||
+		setting.TransparentType == configure.TransparentRedirect {
+		return false
+	}
+	return true
 }
