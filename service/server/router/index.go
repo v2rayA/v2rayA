@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
@@ -58,8 +57,7 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 	}
 }
 
-func ServeGUI(engine *gin.Engine) {
-	r := engine.Use(gzip.Gzip(gzip.DefaultCompression))
+func ServeGUI(r *gin.Engine) {
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
 		webFS, err := fs.Sub(webRoot, "web")

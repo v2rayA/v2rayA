@@ -113,7 +113,7 @@
             <img
               v-for="lang of langs"
               :key="lang.flag"
-              :src="`/img/flags/flag_${lang.flag}.svg`"
+              :src="`/static/img/flags/flag_${lang.flag}.svg`"
               :alt="lang.alt"
               style="height:100%;flex-shrink: 0;cursor: pointer"
               @click="handleClickLang(lang.flag)"
