@@ -3,6 +3,7 @@ package report
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"io"
 	"net"
@@ -46,7 +47,7 @@ func (r *CurlReporter) TransparentReport() (ok bool, report string) {
 	defer func() {
 		report = fmt.Sprintf("Transparent Proxy(%v): %v", setting.TransparentType, report)
 	}()
-	if setting.Transparent == configure.TransparentClose {
+	if !v2ray.IsTransparentOn() {
 		return true, "Transparent Proxy is not enabled"
 	}
 	cli := http.Client{
