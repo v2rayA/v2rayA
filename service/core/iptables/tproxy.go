@@ -150,8 +150,7 @@ ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 `
 	}
 	return Setter{
-		Cmds: commands,
-		Func: nil,
+		Cmds:      commands,
 	}
 }
 
@@ -189,7 +188,6 @@ ip6tables -w 2 -t mangle -X TP_MARK
 `
 	}
 	return Setter{
-		Cmds: commands,
-		Func: nil,
+		Cmds:      commands,
 	}
 }
