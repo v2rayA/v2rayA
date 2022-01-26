@@ -9,13 +9,15 @@
 
   Name "v2rayA"
   OutFile "installer_windows_@ARCH@_@VERSION@.exe"
+
   SetCompressor /solid lzma
   ;SetCompress off ;Uncomment for development
 
   InstallDir "$PROGRAMFILES64\v2rayA"
+  !define UninstId "v2rayA"
   
   ;Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\v2rayA" ""
+  InstallDirRegKey HKCU "Software\${UninstId}" ""
 
   ;Request application privileges for Windows Vista
   RequestExecutionLevel admin
@@ -78,14 +80,14 @@ Section "Install Section" SecInst
   ExecWait '"$INSTDIR\v2raya.exe" "start"'
 
   ;Create entry in Control Panel
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "DisplayName" "v2rayA"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "DisplayIcon" "$\"$INSTDIR\v2raya.ico$\""
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "Publisher" "The v2rayA developer community"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "URLInfoAbout" "https://github.com/v2rayA/v2rayA"
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "NoModify" 1
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "NoRepair" 1
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "DisplayVersion" "@VERSION@"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "DisplayName" "v2rayA"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "DisplayIcon" "$\"$INSTDIR\v2raya.ico$\""
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "Publisher" "The v2rayA developer community"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "URLInfoAbout" "https://github.com/v2rayA/v2rayA"
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "NoRepair" 1
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "DisplayVersion" "@VERSION@"
 
   ;Create shortcuts
   !macro CreateInternetShortcutWithIcon FILEPATH URL ICONPATH ICONINDEX
@@ -102,7 +104,7 @@ Section "Install Section" SecInst
   ;Calculate size
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "EstimatedSize" "$0"
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "EstimatedSize" "$0"
 
 SectionEnd
 
@@ -130,7 +132,7 @@ Section "un.Uninstall"
   RMDir "$INSTDIR"
   RMDir "$SMPROGRAMS\v2rayA"
 
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}"
   DeleteRegKey /ifempty HKCU "Software\v2rayA"
 
 SectionEnd
