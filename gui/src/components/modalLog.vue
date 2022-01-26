@@ -43,13 +43,14 @@ export default {
   },
   created() {
     this.$axios({
-      url: apiRoot + "/log"
+      url: apiRoot + "/logger"
     }).then(this.updateLog);
   },
   mounted() {
     this.intervalId = setInterval(() => {
       this.$axios({
-        url: apiRoot + `/log?skip=${this.currentSkip}`
+        url: apiRoot + `/logger`,
+        params: {skip: this.currentSkip}
       }).then(this.updateLog);
     }, this.intervalTime * 1000);
   },
@@ -69,7 +70,8 @@ export default {
       clearInterval(this.intervalId);
       this.intervalId = setInterval(() => {
         this.$axios({
-          url: apiRoot + `/log?skip=${this.currentSkip}`
+          url: apiRoot + `/logger`,
+          params: {skip: this.currentSkip}
         }).then(this.updateLog);
       }, this.intervalTime * 1000);
     }
