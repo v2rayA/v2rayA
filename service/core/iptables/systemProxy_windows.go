@@ -193,12 +193,12 @@ type todo struct {
 }
 
 func (p *systemProxy) GetSetupCommands() Setter {
-	return Setter{
-		Func: func() error {
-			hasAdminRights, err := HasAdminRights()
-			if err != nil {
-				return err
-			}
+	hasAdminRights, err := HasAdminRights()
+	if err != nil {
+		return NewErrorSetter(err)
+	}
+	setter := Setter{
+		PreFunc: func() error {
 			var todolist []todo
 			if hasAdminRights {
 				// https://docs.microsoft.com/en-us/windows/win32/services/services-and-the-registry
@@ -237,15 +237,22 @@ func (p *systemProxy) GetSetupCommands() Setter {
 			return nil
 		},
 	}
+	if hasAdminRights {
+		// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
+		// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
+		// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
+		setter.Cmds = "netsh winhttp import proxy source=ie"
+	}
+	return setter
 }
 
 func (p *systemProxy) GetCleanCommands() Setter {
-	return Setter{
-		Func: func() error {
-			hasAdminRights, err := HasAdminRights()
-			if err != nil {
-				return err
-			}
+	hasAdminRights, err := HasAdminRights()
+	if err != nil {
+		return NewErrorSetter(err)
+	}
+	setter := Setter{
+		PreFunc: func() error {
 			var todolist []todo
 			if hasAdminRights {
 				// https://docs.microsoft.com/en-us/windows/win32/services/services-and-the-registry
@@ -287,4 +294,11 @@ func (p *systemProxy) GetCleanCommands() Setter {
 			return nil
 		},
 	}
+	if hasAdminRights {
+		// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
+		// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
+		// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
+		setter.Cmds = "netsh winhttp import proxy source=ie"
+	}
+	return setter
 }

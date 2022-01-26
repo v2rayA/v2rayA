@@ -16,12 +16,13 @@ var watcher *LocalIPWatcher
 var mutex sync.Mutex
 
 type Setter struct {
-	Cmds string
-	Func func() error
+	Cmds      string
+	AfterFunc func() error
+	PreFunc   func() error
 }
 
 func NewErrorSetter(err error) Setter {
-	return Setter{Func: func() error {
+	return Setter{PreFunc: func() error {
 		return err
 	}}
 }
@@ -57,6 +58,15 @@ func (c Setter) Run(stopAtError bool) error {
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
 	}
 	var errs []error
+	if c.PreFunc != nil {
+		e := c.PreFunc()
+		if e != nil {
+			errs = append(errs, e)
+			if stopAtError && len(errs) > 0 {
+				return errs[0]
+			}
+		}
+	}
 	if len(commands) > 0 {
 		e := cmds.ExecCommands(commands, true)
 		if e != nil {
@@ -66,8 +76,8 @@ func (c Setter) Run(stopAtError bool) error {
 			}
 		}
 	}
-	if c.Func != nil {
-		e := c.Func()
+	if c.AfterFunc != nil {
+		e := c.AfterFunc()
 		if e != nil {
 			errs = append(errs, e)
 			if stopAtError && len(errs) > 0 {

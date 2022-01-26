@@ -76,8 +76,7 @@ ip6tables -w 2 -t nat -I OUTPUT -p tcp -j V2RAY
 `
 	}
 	return Setter{
-		Cmds: commands,
-		Func: nil,
+		Cmds:      commands,
 	}
 }
 
@@ -97,7 +96,6 @@ ip6tables -w 2 -t nat -X V2RAY
 `
 	}
 	return Setter{
-		Cmds: commands,
-		Func: nil,
+		Cmds:      commands,
 	}
 }
