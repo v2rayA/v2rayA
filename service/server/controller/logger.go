@@ -17,7 +17,7 @@ type getLogQuery struct {
 	Skip int64 `json:"skip" form:"skip"`
 }
 
-func GetLog(ctx *gin.Context) {
+func GetLogger(ctx *gin.Context) {
 	config := conf.GetEnvironmentConfig()
 	query := getLogQuery{}
 	if ctx.ShouldBindQuery(&query) != nil {

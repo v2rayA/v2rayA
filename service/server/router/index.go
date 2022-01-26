@@ -192,7 +192,7 @@ func Run() error {
 		auth.POST("outbound", controller.PostOutbound)
 		auth.DELETE("outbound", controller.DeleteOutbound)
 		auth.GET("message", controller.WsMessage)
-		auth.GET("log", controller.GetLog)
+		auth.GET("logger", controller.GetLogger)
 	}
 
 	ServeGUI(engine)
