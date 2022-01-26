@@ -80,7 +80,7 @@ func CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting
 	}
 	if (!checkRunning || ProcessManager.Running()) && setting.Transparent != configure.TransparentClose {
 		DeleteTransparentProxyRules()
-		if setting.TransparentType != configure.TransparentSystemProxy {
+		if !IsTransparentOn() {
 			return nil
 		}
 		err = WriteTransparentProxyRules()
