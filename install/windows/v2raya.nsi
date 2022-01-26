@@ -96,6 +96,7 @@ Section "Install Section" SecInst
   !insertmacro CreateInternetShortcutWithIcon "$DESKTOP\v2rayA.url" "http://localhost:2017" "$INSTDIR/v2raya.ico" 0
   CreateDirectory "$SMPROGRAMS\v2rayA"
   !insertmacro CreateInternetShortcutWithIcon "$SMPROGRAMS\v2rayA\v2rayA.url" "http://localhost:2017" "$INSTDIR/v2raya.ico" 0
+  createShortCut "$SMPROGRAMS\v2rayA\Uninstall.lnk" "$INSTDIR\Uninstall.exe" "" ""
 
 SectionEnd
 
