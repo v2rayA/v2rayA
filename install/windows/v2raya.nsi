@@ -1,7 +1,8 @@
 ;--------------------------------
-;Include Modern UI
+;Include Dependencies
 
   !include "MUI2.nsh"
+  !include "FileFunc.nsh"
 
 ;--------------------------------
 ;General
@@ -97,6 +98,11 @@ Section "Install Section" SecInst
   CreateDirectory "$SMPROGRAMS\v2rayA"
   !insertmacro CreateInternetShortcutWithIcon "$SMPROGRAMS\v2rayA\v2rayA.url" "http://localhost:2017" "$INSTDIR/v2raya.ico" 0
   createShortCut "$SMPROGRAMS\v2rayA\Uninstall.lnk" "$INSTDIR\Uninstall.exe" "" ""
+
+  ;Calculate size
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  IntFmt $0 "0x%08X" $0
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\v2rayA" "EstimatedSize" "$0"
 
 SectionEnd
 
