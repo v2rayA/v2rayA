@@ -12,17 +12,25 @@ import (
 	"time"
 )
 
+type Variant int64
+
+const (
+	Unknown Variant = iota
+	V2ray
+	Xray
+)
+
 var NotFoundErr = fmt.Errorf("not found")
 var ServiceNameList = []string{"v2ray", "xray"}
 var v2rayVersion struct {
-	variant    string
+	variant    Variant
 	version    string
 	lastUpdate time.Time
 	mu         sync.Mutex
 }
 
 /* get the version of v2ray-core without 'v' like 4.23.1 */
-func GetV2rayServiceVersion() (variant string, ver string, err error) {
+func GetV2rayServiceVersion() (variant Variant, ver string, err error) {
 	// cache for 10 seconds
 	v2rayVersion.mu.Lock()
 	defer v2rayVersion.mu.Unlock()
@@ -31,21 +39,21 @@ func GetV2rayServiceVersion() (variant string, ver string, err error) {
 	}
 	v2rayPath, err := GetV2rayBinPath()
 	if err != nil || len(v2rayPath) <= 0 {
-		return "", "", fmt.Errorf("cannot find v2ray executable binary")
+		return Unknown, "", fmt.Errorf("cannot find v2ray executable binary")
 	}
 	out, err := exec.Command(v2rayPath, "-version").Output()
 	var fields []string
 	if fields = strings.Fields(strings.TrimSpace(string(out))); len(fields) < 2 {
-		return "", "", fmt.Errorf("cannot parse version of v2ray")
+		return Unknown, "", fmt.Errorf("cannot parse version of v2ray")
 	}
 	ver = fields[1]
 	switch strings.ToUpper(fields[0]) {
 		case "V2RAY":
-			variant = "v2ray"
+			variant = V2ray
 		case "XRAY":
-			variant = "xray"
+			variant = Xray
 		default:
-			variant = "unknown"
+			variant = Unknown
 	}
 	v2rayVersion.variant = variant
 	v2rayVersion.version = ver

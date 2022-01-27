@@ -1,11 +1,15 @@
 package asset
 
 import (
+	"io/fs"
+	"errors"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
+	"runtime"
 	"path"
 	"path/filepath"
 	"time"
@@ -13,16 +17,62 @@ import (
 )
 
 func GetV2rayLocationAsset(filename string) string {
-	relpath := filepath.Join("v2ray", filename)
-	fullpath, err := xdg.SearchDataFile(relpath)
+	variant, _, err := where.GetV2rayServiceVersion();
 	if err != nil {
-		fullpath, err = xdg.DataFile(relpath)
+		variant = where.Unknown
+	}
+	var location string
+	var folder string
+	switch variant {
+		case where.V2ray:
+		default:
+			location = "V2RAY_LOCATION_ASSET"
+			folder = "v2ray"
+		case where.Xray:
+			location = "XRAY_LOCATION_ASSET"
+			folder = "xray"
+	}
+	location = os.Getenv(location)
+	searchPaths := make([]string, 0)
+	if location != ""{
+		searchPaths = append(
+			searchPaths,
+			filepath.Join(location, filename),
+		)
+	}
+	if runtime.GOOS != "windows" {
+		searchPaths = append(
+			searchPaths,
+			filepath.Join("/usr/local/share", folder, filename),
+			filepath.Join("/usr/share", folder, filename),
+		)
+	}
+	if location != "" {
+		for _, searchPath := range searchPaths {
+            if _, err = os.Stat(searchPath); err != nil && errors.Is(err, fs.ErrNotExist) {
+                continue
+            }
+            return searchPath
+		}
+		return searchPaths[0]
+	} else {
+		relpath := filepath.Join(folder, filename)
+		fullpath, err := xdg.SearchDataFile(relpath)
 		if err != nil {
-			// unlikely, none of the xdg data dirs are writable
+			fullpath, err = xdg.DataFile(relpath)
+			if err != nil {
+				// unlikely, none of the xdg data dirs are writable
+				panic(err)
+			}
+		}
+		runtimepath, err := xdg.RuntimeFile(filepath.Join("v2raya", filename))
+		if err != nil {
+			// unlikely, runtime dir is not writable
 			panic(err)
 		}
+		os.Symlink(fullpath, runtimepath)
+		return fullpath
 	}
-	return fullpath
 }
 
 func IsV2rayAssetExists(filename string) bool {
