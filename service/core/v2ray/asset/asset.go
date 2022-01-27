@@ -16,6 +16,10 @@ import (
 	"github.com/adrg/xdg"
 )
 
+func GetV2rayLocationAssetOverride() string {
+	return filepath.Join(xdg.RuntimeDir, "v2raya")
+}
+
 func GetV2rayLocationAsset(filename string) (string, error) {
 	variant, _, err := where.GetV2rayServiceVersion();
 	if err != nil {
