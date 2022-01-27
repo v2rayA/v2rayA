@@ -198,11 +198,7 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 		arguments = append(arguments, "--confdir="+confdir)
 	}
 	log.Debug(strings.Join(arguments, " "))
-	assetDir := asset.GetV2rayLocationAsset()
-	env := append(os.Environ(),
-		"V2RAY_LOCATION_ASSET="+assetDir,
-		"XRAY_LOCATION_ASSET="+assetDir,
-	)
+	env := make([]string, 0)
 	if service.CheckMemconservativeSupported() == nil {
 		memstat, err := mem.VirtualMemory()
 		if err != nil {

@@ -255,7 +255,6 @@ func initConfigure() {
 }
 
 func hello() {
-	log.Alert("V2RayLocationAsset is %v", asset.GetV2rayLocationAsset())
 	v2rayPath, _ := where.GetV2rayBinPath()
 	log.Alert("V2Ray binary is %v", v2rayPath)
 	wd, _ := os.Getwd()

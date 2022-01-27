@@ -6,13 +6,11 @@ import (
 	gopeed2 "github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
 func UpdateLocalGeoIP() (err error) {
-	assetDir := asset.GetV2rayLocationAsset()
-	pathSiteDat := filepath.Join(assetDir, "geoip.dat")
+	pathSiteDat := asset.GetV2rayLocationAsset("geoip.dat")
 	if err = gopeed2.Down(&gopeed2.Request{
 		Method: "GET",
 		URL:    "https://hubmirror.v2raya.org/v2fly/geoip/releases/latest/download/geoip.dat",
