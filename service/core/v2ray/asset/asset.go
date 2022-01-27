@@ -1,19 +1,19 @@
 package asset
 
 import (
-	"io/fs"
 	"errors"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/adrg/xdg"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"io/fs"
 	"os"
-	"runtime"
 	"path"
 	"path/filepath"
+	"runtime"
 	"time"
-	"github.com/adrg/xdg"
 )
 
 func GetV2rayLocationAssetOverride() string {
@@ -21,26 +21,26 @@ func GetV2rayLocationAssetOverride() string {
 }
 
 func GetV2rayLocationAsset(filename string) (string, error) {
-	variant, _, err := where.GetV2rayServiceVersion();
+	variant, _, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		variant = where.Unknown
 	}
 	var location string
 	var folder string
 	switch variant {
-		case where.V2ray:
-			location = "V2RAY_LOCATION_ASSET"
-			folder = "v2ray"
-		case where.Xray:
-			location = "XRAY_LOCATION_ASSET"
-			folder = "xray"
-		default:
-			location = "V2RAY_LOCATION_ASSET"
-			folder = "v2ray"
+	case where.V2ray:
+		location = "V2RAY_LOCATION_ASSET"
+		folder = "v2ray"
+	case where.Xray:
+		location = "XRAY_LOCATION_ASSET"
+		folder = "xray"
+	default:
+		location = "V2RAY_LOCATION_ASSET"
+		folder = "v2ray"
 	}
 	location = os.Getenv(location)
 	searchPaths := make([]string, 0)
-	if location != ""{
+	if location != "" {
 		searchPaths = append(
 			searchPaths,
 			filepath.Join(location, filename),
@@ -55,10 +55,10 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 	}
 	if location != "" {
 		for _, searchPath := range searchPaths {
-            if _, err = os.Stat(searchPath); err != nil && errors.Is(err, fs.ErrNotExist) {
-                continue
-            }
-            return searchPath, nil
+			if _, err = os.Stat(searchPath); err != nil && errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return searchPath, nil
 		}
 		return searchPaths[0], nil
 	} else {
