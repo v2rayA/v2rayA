@@ -22,7 +22,10 @@ func GetWhitelistCn(externDomains []*routercommon.Domain) (wlDomains *strmatcher
 	if whitelistCn.domainMatcher != nil {
 		return whitelistCn.domainMatcher, nil
 	}
-	datpath := asset.GetV2rayLocationAsset("geosite.dat")
+	datpath, err := asset.GetV2rayLocationAsset("geosite.dat")
+	if err != nil {
+		return nil, err
+	}
 	var siteList routercommon.GeoSiteList
 	b, err := os.ReadFile(datpath)
 	if err != nil {

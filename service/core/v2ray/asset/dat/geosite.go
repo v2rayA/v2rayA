@@ -10,7 +10,10 @@ import (
 )
 
 func UpdateLocalGeoSite() (err error) {
-	pathSiteDat := asset.GetV2rayLocationAsset("geosite.dat")
+	pathSiteDat, err := asset.GetV2rayLocationAsset("geosite.dat")
+	if err != nil {
+		return err
+	}
 	if err = gopeed2.Down(&gopeed2.Request{
 		Method: "GET",
 		URL:    "https://hubmirror.v2raya.org/v2fly/domain-list-community/releases/latest/download/dlc.dat",

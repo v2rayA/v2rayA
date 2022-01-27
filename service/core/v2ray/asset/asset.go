@@ -16,7 +16,7 @@ import (
 	"github.com/adrg/xdg"
 )
 
-func GetV2rayLocationAsset(filename string) string {
+func GetV2rayLocationAsset(filename string) (string, error) {
 	variant, _, err := where.GetV2rayServiceVersion();
 	if err != nil {
 		variant = where.Unknown
@@ -25,12 +25,14 @@ func GetV2rayLocationAsset(filename string) string {
 	var folder string
 	switch variant {
 		case where.V2ray:
-		default:
 			location = "V2RAY_LOCATION_ASSET"
 			folder = "v2ray"
 		case where.Xray:
 			location = "XRAY_LOCATION_ASSET"
 			folder = "xray"
+		default:
+			location = "V2RAY_LOCATION_ASSET"
+			folder = "v2ray"
 	}
 	location = os.Getenv(location)
 	searchPaths := make([]string, 0)
@@ -52,31 +54,37 @@ func GetV2rayLocationAsset(filename string) string {
             if _, err = os.Stat(searchPath); err != nil && errors.Is(err, fs.ErrNotExist) {
                 continue
             }
-            return searchPath
+            return searchPath, nil
 		}
-		return searchPaths[0]
+		return searchPaths[0], nil
 	} else {
 		relpath := filepath.Join(folder, filename)
 		fullpath, err := xdg.SearchDataFile(relpath)
 		if err != nil {
 			fullpath, err = xdg.DataFile(relpath)
 			if err != nil {
-				// unlikely, none of the xdg data dirs are writable
-				panic(err)
+				return "", err
 			}
 		}
 		runtimepath, err := xdg.RuntimeFile(filepath.Join("v2raya", filename))
 		if err != nil {
-			// unlikely, runtime dir is not writable
-			panic(err)
+			return "", err
 		}
-		os.Symlink(fullpath, runtimepath)
-		return fullpath
+		os.Remove(runtimepath)
+		err = os.Symlink(fullpath, runtimepath)
+		if err != nil {
+			return "", err
+		}
+		return fullpath, err
 	}
 }
 
 func IsV2rayAssetExists(filename string) bool {
-	_, err := os.Stat(GetV2rayLocationAsset(filename))
+	fullpath, err := GetV2rayLocationAsset(filename)
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(fullpath)
 	if err != nil {
 		return false
 	}
@@ -96,7 +104,11 @@ func IsGeositeExists() bool {
 	return IsV2rayAssetExists("geosite.dat")
 }
 func GetGFWListModTime() (time.Time, error) {
-	return files.GetFileModTime(GetV2rayLocationAsset("LoyalsoldierSite.dat"))
+	fullpath, err := GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return time.Now(), err
+	}
+	return files.GetFileModTime(fullpath)
 }
 func IsCustomExists() bool {
 	return IsV2rayAssetExists("custom.dat")

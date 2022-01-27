@@ -116,7 +116,10 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	pathSiteDat := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return "", err
+	}
 	u := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat`, gfwlist.Tag)
 	if err = gopeed2.Down(&gopeed2.Request{
 		Method: "GET",
