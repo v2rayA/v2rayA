@@ -14,7 +14,7 @@ func IsV2rayServiceValid() bool {
 	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
 		return false
 	}
-	ver, err := where.GetV2rayServiceVersion()
+	_, ver, err := where.GetV2rayServiceVersion()
 	return err == nil && ver != ""
 }
 
@@ -39,7 +39,7 @@ func CheckAndProbeTProxy() (err error) {
 }
 
 func isVersionSatisfied(version string, mustV2rayCore bool) error {
-	ver, err := where.GetV2rayServiceVersion()
+	_, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		return fmt.Errorf("failed to get the version of v2ray-core")
 	}

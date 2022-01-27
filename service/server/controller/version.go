@@ -15,7 +15,7 @@ func GetVersion(ctx *gin.Context) {
 	var vlessValid int
 	var lite int
 
-	ver, err := where.GetV2rayServiceVersion()
+	_, ver, err := where.GetV2rayServiceVersion()
 	if err == nil {
 		if ok, _ := common.VersionGreaterEqual(ver, "4.27.0"); ok {
 			// 1: vless
