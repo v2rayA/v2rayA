@@ -96,7 +96,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
         gem install fpm -v 1.13.1
-        sudo apt-get update -y && sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar
+        sudo apt-get update -y && sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
@@ -185,6 +185,28 @@ jobs:
         chmod 0600 ./key
         ./install/tool/ssh-add_expect ./key
         bash install/aur/deploy.sh
+    - name: Windows Installer
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        P_DIR: ${{ steps.prep.outputs.P_DIR }}
+        ARCH: x64
+      run: |
+        mkdir -p /tmp/NSIS/v2rayA && cd /tmp/NSIS
+        cp $GITHUB_WORKSPACE/LICENSE $PWD/License.txt
+        cp $GITHUB_WORKSPACE/gui/public/img/icons/windows-icon-255x255.ico v2rayA/v2raya.ico
+        cp $GITHUB_WORKSPACE/gui/public/img/icons/windows-bitmap-150x57.bmp v2rayA/v2raya.bmp
+        cp $GITHUB_WORKSPACE/install/windows/v2raya.xml v2rayA/
+        cp $GITHUB_WORKSPACE/install/windows/v2raya.nsi $PWD
+        cp $P_DIR/v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe v2rayA/
+        wget https://github.com/v2fly/v2ray-core/releases/download/v4.44.0/v2ray-windows-64.zip
+        unzip -d v2ray-core v2ray-windows-64.zip
+        wget https://github.com/winsw/winsw/releases/download/v2.11.0/WinSW-x64.exe -O v2rayA/v2raya.exe
+        sed -i "s/@ARCH@/${ARCH}/g"       v2raya.nsi v2rayA/v2raya.xml
+        sed -i "s/@VERSION@/${VERSION}/g" v2raya.nsi v2rayA/v2raya.xml
+        makensis v2raya.nsi
+        mv installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe $P_DIR
+        cd $P_DIR
+        
     - name: Github Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
@@ -222,6 +244,7 @@ jobs:
           installer_freebsd_armv6_${{ steps.prep.outputs.VERSION }}.txz
           installer_freebsd_armv7_${{ steps.prep.outputs.VERSION }}.txz
           installer_freebsd_aarch64_${{ steps.prep.outputs.VERSION }}.txz
+          installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
     - name: Refresh Cloudflare Cache
       if: startsWith(github.ref, 'refs/tags/v')
       env:
