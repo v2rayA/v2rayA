@@ -17,7 +17,11 @@ import (
 )
 
 func GetV2rayLocationAssetOverride() string {
-	return filepath.Join(xdg.RuntimeDir, "v2raya")
+	if runtime.GOOS != "windows" {
+		return filepath.Join(xdg.RuntimeDir, "v2raya")
+	} else {
+		return conf.GetEnvironmentConfig().Config
+	}
 }
 
 func GetV2rayLocationAsset(filename string) (string, error) {
@@ -38,48 +42,57 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 		location = "V2RAY_LOCATION_ASSET"
 		folder = "v2ray"
 	}
+
 	location = os.Getenv(location)
-	searchPaths := make([]string, 0)
+	// check if V2RAY_LOCATION_ASSET is set
 	if location != "" {
-		searchPaths = append(
-			searchPaths,
+		// add V2RAY_LOCATION_ASSET to search path
+		searchPaths := []string{
 			filepath.Join(location, filename),
-		)
-	}
-	if runtime.GOOS != "windows" {
-		searchPaths = append(
-			searchPaths,
-			filepath.Join("/usr/local/share", folder, filename),
-			filepath.Join("/usr/share", folder, filename),
-		)
-	}
-	if location != "" {
+		}
+		// additional paths for non windows platforms
+		if runtime.GOOS != "windows" {
+			searchPaths = append(
+				searchPaths,
+				filepath.Join("/usr/local/share", folder, filename),
+				filepath.Join("/usr/share", folder, filename),
+			)
+		}
 		for _, searchPath := range searchPaths {
 			if _, err = os.Stat(searchPath); err != nil && errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
+			// return the first path that exists
 			return searchPath, nil
 		}
+		// or download asset into V2RAY_LOCATION_ASSET
 		return searchPaths[0], nil
 	} else {
-		relpath := filepath.Join(folder, filename)
-		fullpath, err := xdg.SearchDataFile(relpath)
-		if err != nil {
-			fullpath, err = xdg.DataFile(relpath)
+		if runtime.GOOS != "windows" {
+			// search XDG data directories on non windows platform
+			// symlink all assets into XDG_RUNTIME_DIR
+			relpath := filepath.Join(folder, filename)
+			fullpath, err := xdg.SearchDataFile(relpath)
+			if err != nil {
+				fullpath, err = xdg.DataFile(relpath)
+				if err != nil {
+					return "", err
+				}
+			}
+			runtimepath, err := xdg.RuntimeFile(filepath.Join("v2raya", filename))
 			if err != nil {
 				return "", err
 			}
+			os.Remove(runtimepath)
+			err = os.Symlink(fullpath, runtimepath)
+			if err != nil {
+				return "", err
+			}
+			return fullpath, err
+		} else {
+			// fallback to the old behavior of using only config dir on windows
+			return filepath.Join(conf.GetEnvironmentConfig().Config, filename), nil
 		}
-		runtimepath, err := xdg.RuntimeFile(filepath.Join("v2raya", filename))
-		if err != nil {
-			return "", err
-		}
-		os.Remove(runtimepath)
-		err = os.Symlink(fullpath, runtimepath)
-		if err != nil {
-			return "", err
-		}
-		return fullpath, err
 	}
 }
 
