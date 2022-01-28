@@ -83,7 +83,7 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 	}
 }
 
-func IsV2rayAssetExists(filename string) bool {
+func DoesV2rayAssetExist(filename string) bool {
 	fullpath, err := GetV2rayLocationAsset(filename)
 	if err != nil {
 		return false
@@ -95,18 +95,6 @@ func IsV2rayAssetExists(filename string) bool {
 	return true
 }
 
-func IsGFWListExists() bool {
-	return IsV2rayAssetExists("LoyalsoldierSite.dat")
-}
-func IsGeoipExists() bool {
-	return IsV2rayAssetExists("geoip.dat")
-}
-func IsGeoipOnlyCnPrivateExists() bool {
-	return IsV2rayAssetExists("geoip-only-cn-private.dat")
-}
-func IsGeositeExists() bool {
-	return IsV2rayAssetExists("geosite.dat")
-}
 func GetGFWListModTime() (time.Time, error) {
 	fullpath, err := GetV2rayLocationAsset("LoyalsoldierSite.dat")
 	if err != nil {
@@ -115,7 +103,7 @@ func GetGFWListModTime() (time.Time, error) {
 	return files.GetFileModTime(fullpath)
 }
 func IsCustomExists() bool {
-	return IsV2rayAssetExists("custom.dat")
+	return DoesV2rayAssetExist("custom.dat")
 }
 
 func GetConfigBytes() (b []byte, err error) {
@@ -134,8 +122,4 @@ func GetV2rayConfigPath() (p string) {
 
 func GetV2rayConfigDirPath() (p string) {
 	return conf.GetEnvironmentConfig().V2rayConfigDirectory
-}
-
-func LoyalsoldierSiteDatExists() bool {
-	return IsV2rayAssetExists("LoyalsoldierSite.dat")
 }

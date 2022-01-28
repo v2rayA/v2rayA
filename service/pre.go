@@ -239,13 +239,13 @@ func initConfigure() {
 	//首先确定v2ray是否存在
 	if _, err := where.GetV2rayBinPath(); err == nil {
 		//检查geoip、geosite是否存在
-		if !asset.IsGeoipExists() {
+		if !asset.DoesV2rayAssetExist("geoip.dat") {
 			err := dat.UpdateLocalGeoIP()
 			if err != nil {
 				log.Fatal("%v", err)
 			}
 		}
-		if !asset.IsGeositeExists() {
+		if !asset.DoesV2rayAssetExist("geosite.dat") {
 			err = dat.UpdateLocalGeoSite()
 			if err != nil {
 				log.Fatal("%v", err)

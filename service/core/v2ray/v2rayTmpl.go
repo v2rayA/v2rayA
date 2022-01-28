@@ -511,7 +511,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 	switch mode {
 	case configure.WhitelistMode:
 		// foreign domains with intranet IP should be proxied first rather than directly connected
-		if asset.LoyalsoldierSiteDatExists() {
+		if asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -549,7 +549,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			},
 		)
 	case configure.GfwlistMode:
-		if asset.LoyalsoldierSiteDatExists() {
+		if asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -1088,7 +1088,7 @@ func (t *Template) updatePrivateRouting() {
 }
 
 func (t *Template) optimizeGeoipMemoryOccupation() {
-	if asset.IsGeoipOnlyCnPrivateExists() {
+	if asset.DoesV2rayAssetExist("geoip-only-cn-private.dat") {
 		for i := range t.Routing.Rules {
 			for j := range t.Routing.Rules[i].IP {
 				switch t.Routing.Rules[i].IP[j] {

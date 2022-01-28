@@ -68,7 +68,7 @@ func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {
 		return
 	}
 	remoteTime = gfwlist.UpdateTime
-	if !asset.IsGFWListExists() {
+	if !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		//本地文件不存在，那远端必定比本地新
 		return false, remoteTime, nil
 	}

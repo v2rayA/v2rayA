@@ -11,7 +11,7 @@ import (
 )
 
 func IsV2rayServiceValid() bool {
-	if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
+	if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
 		return false
 	}
 	_, ver, err := where.GetV2rayServiceVersion()
