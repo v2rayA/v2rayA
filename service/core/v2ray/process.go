@@ -199,8 +199,9 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 		arguments = append(arguments, "--confdir="+confdir)
 	}
 	log.Debug(strings.Join(arguments, " "))
-	assetDir := asset.GetV2rayLocationAsset()
-	env := append(os.Environ(),
+	assetDir := asset.GetV2rayLocationAssetOverride()
+	env := append(
+		os.Environ(),
 		"V2RAY_LOCATION_ASSET="+assetDir,
 	)
 	memstat, err := mem.VirtualMemory()
