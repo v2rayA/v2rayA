@@ -5,6 +5,9 @@ on:
     branches: [ master ]
     tags:
       - v*
+  pull_request:
+    types: [opened, synchronize, reopened]
+
 
 jobs:
 
@@ -52,7 +55,9 @@ jobs:
       with:
         ruby-version: 2.7
         bundler-cache: true
-
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update -y && sudo apt-get install -y gzip
     - name: Build GUI
       run: |
         yarn --cwd gui --check-files
@@ -60,6 +65,13 @@ jobs:
     - name: Build v2rayA Binaries
       run: |
         cp -r web service/server/router/
+        for file in $(find service/server/router/web |grep -v png |grep -v index.html|grep -v .gz)
+        do
+          if [ ! -d $file ];then
+            gzip -9 $file
+          fi
+        done
+
         cd service
         for osarch in linux/386 linux/amd64 linux/arm linux/ppc64le linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64; do
           export GOOS=$(echo $osarch | cut -d/ -f1)
@@ -96,7 +108,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
         gem install fpm -v 1.13.1
-        sudo apt-get update -y && sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
+        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
