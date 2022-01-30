@@ -7,7 +7,6 @@ import (
 	"github.com/v2rayA/v2ray-lib/router/routercommon"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sync"
 )
@@ -23,9 +22,12 @@ func GetWhitelistCn(externDomains []*routercommon.Domain) (wlDomains *strmatcher
 	if whitelistCn.domainMatcher != nil {
 		return whitelistCn.domainMatcher, nil
 	}
-	dir := asset.GetV2rayLocationAsset()
+	datpath, err := asset.GetV2rayLocationAsset("geosite.dat")
+	if err != nil {
+		return nil, err
+	}
 	var siteList routercommon.GeoSiteList
-	b, err := os.ReadFile(filepath.Join(dir, "geosite.dat"))
+	b, err := os.ReadFile(datpath)
 	if err != nil {
 		return nil, fmt.Errorf("GetWhitelistCn: %w", err)
 	}

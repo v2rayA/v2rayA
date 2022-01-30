@@ -491,7 +491,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 	switch mode {
 	case configure.WhitelistMode:
 		// foreign domains with intranet IP should be proxied first rather than directly connected
-		if asset.LoyalsoldierSiteDatExists() {
+		if asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -529,7 +529,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			},
 		)
 	case configure.GfwlistMode:
-		if asset.LoyalsoldierSiteDatExists() {
+		if asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -1058,7 +1058,7 @@ func (t *Template) updatePrivateRouting() {
 }
 
 func (t *Template) optimizeGeoipMemoryOccupation() {
-	if asset.IsGeoipOnlyCnPrivateExists() {
+	if asset.DoesV2rayAssetExist("geoip-only-cn-private.dat") {
 		for i := range t.Routing.Rules {
 			for j := range t.Routing.Rules[i].IP {
 				switch t.Routing.Rules[i].IP[j] {
@@ -1453,7 +1453,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	if err != nil {
 		return nil, fmt.Errorf("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
-	tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
+	_, tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
 	t = &tmplJson
 	t.Setting = setting
 	// log
@@ -1670,7 +1670,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 
 func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 	t = new(Template)
-	t.CoreVersion, _ = where.GetV2rayServiceVersion()
+	_, t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
@@ -1695,7 +1695,7 @@ func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
 
 func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
 	if t.CoreVersion == "" {
-		t.CoreVersion, _ = where.GetV2rayServiceVersion()
+		_, t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	}
 	c, err := o.Configuration(serverObj.PriorInfo{
 		CoreVersion: t.CoreVersion,

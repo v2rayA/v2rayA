@@ -3,6 +3,7 @@ module github.com/v2rayA/v2rayA
 go 1.17
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/beevik/ntp v0.3.0
 	github.com/boltdb/bolt v1.3.1
 	github.com/devfeel/mapper v0.7.5
@@ -29,7 +30,7 @@ require (
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
 	github.com/vearutop/statigz v1.1.7
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
-	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359
 	google.golang.org/grpc v1.40.0
 )
 
