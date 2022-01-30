@@ -39,12 +39,15 @@ func CheckAndProbeTProxy() (err error) {
 }
 
 func isVersionSatisfied(version string, mustV2rayCore bool) error {
-	_, ver, err := where.GetV2rayServiceVersion()
+	variant, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		return fmt.Errorf("failed to get the version of v2ray-core")
 	}
-	if ver == "UnknownClient" && mustV2rayCore {
-		return fmt.Errorf("v2fly/v2ray-core only feature")
+	if variant != "V2RAY" {
+		if mustV2rayCore {
+			return fmt.Errorf("v2fly/v2ray-core only feature")
+		}
+		return nil
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
 		return fmt.Errorf("the version of v2ray-core is lower than %v", version)
