@@ -43,7 +43,7 @@ func isVersionSatisfied(version string, mustV2rayCore bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to get the version of v2ray-core")
 	}
-	if variant != "V2RAY" {
+	if variant != where.V2ray {
 		if mustV2rayCore {
 			return fmt.Errorf("v2fly/v2ray-core only feature")
 		}
