@@ -34,7 +34,7 @@ func ConnectionReport(arg []string) (report string) {
 	)
 
 	// get version of v2ray-core
-	ver, err := where.GetV2rayServiceVersion()
+	_, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		lines = append(lines, fmt.Sprintf("failed to get version of v2ray-core: %v", err))
 		return

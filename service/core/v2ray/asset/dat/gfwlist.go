@@ -15,7 +15,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -69,7 +68,7 @@ func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {
 		return
 	}
 	remoteTime = gfwlist.UpdateTime
-	if !asset.IsGFWListExists() {
+	if !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		//本地文件不存在，那远端必定比本地新
 		return false, remoteTime, nil
 	}
@@ -117,8 +116,10 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	assetDir := asset.GetV2rayLocationAsset()
-	pathSiteDat := filepath.Join(assetDir, "LoyalsoldierSite.dat")
+	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return "", err
+	}
 	u := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat`, gfwlist.Tag)
 	if err = gopeed2.Down(&gopeed2.Request{
 		Method: "GET",
