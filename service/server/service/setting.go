@@ -21,7 +21,7 @@ func GetSetting() *configure.Setting {
 }
 
 func UpdateSetting(setting *configure.Setting) (err error) {
-	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.IsGFWListExists() {
+	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
 	}
 	if setting.IpForward != ipforward.IsIpForwardOn() {

@@ -7,7 +7,7 @@ import (
 )
 
 func CouldUseFakeDns() bool {
-	ver, err := where.GetV2rayServiceVersion()
+	_, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		ver = "0.0.0"
 	}
