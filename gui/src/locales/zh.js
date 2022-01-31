@@ -93,8 +93,8 @@ export default {
     password: "密码"
   },
   setting: {
-    transparentProxy: "透明代理",
-    transparentType: "透明代理实现方式",
+    transparentProxy: "透明代理/系统代理",
+    transparentType: "透明代理/系统代理实现方式",
     pacMode: "规则端口的分流模式",
     preventDnsSpoofing: "防止DNS污染",
     specialMode: "特殊模式",
@@ -123,7 +123,7 @@ export default {
       updateSubAtIntervals: "每隔一段时间更新订阅（单位：小时）",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
       updateGfwlistAtIntervals: "每隔一段时间更新GFWList（单位：小时）",
-      dependTransparentMode: "跟随透明代理",
+      dependTransparentMode: "跟随透明代理/系统代理",
       closed: "关闭",
       advanced: "自定义高级设置",
       leastPing: "最小时延优先"
