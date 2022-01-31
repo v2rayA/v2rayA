@@ -3,6 +3,7 @@ package serverObj
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/coreObj"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net/url"
 )
 
@@ -28,6 +29,7 @@ type Configuration struct {
 }
 
 type PriorInfo struct {
+	Variant     where.Variant
 	CoreVersion string
 	Tag         string
 	PluginPort  int
