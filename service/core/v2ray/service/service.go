@@ -46,8 +46,10 @@ func isVersionSatisfied(version string, mustV2rayCore bool) error {
 	if variant != where.V2ray {
 		if mustV2rayCore {
 			return fmt.Errorf("v2fly/v2ray-core only feature")
+		} else {
+			// do not check the version for non-v2ray core
+			return nil
 		}
-		return nil
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
 		return fmt.Errorf("the version of v2ray-core is lower than %v", version)
