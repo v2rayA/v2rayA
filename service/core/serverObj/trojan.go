@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/coreObj"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net"
 	"net/url"
 	"strconv"
@@ -126,13 +127,14 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 					}},
 				},
 			},
-			PluginChain:  strings.Join(chain, ","),
-			UDPSupport:   true,
+			PluginChain: strings.Join(chain, ","),
+			UDPSupport:  true,
 		}, nil
 	}
-
-	if ok, err := common.VersionGreaterEqual(info.CoreVersion, "4.31.0"); err != nil || !ok {
-		return c, fmt.Errorf("not support Trojan: %w", err)
+	if info.Variant == where.V2ray {
+		if ok, err := common.VersionGreaterEqual(info.CoreVersion, "4.31.0"); err != nil || !ok {
+			return c, fmt.Errorf("not support Trojan: %w", err)
+		}
 	}
 	core := coreObj.OutboundObject{
 		Tag:      info.Tag,

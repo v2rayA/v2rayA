@@ -50,6 +50,7 @@ type Template struct {
 	Observatory *coreObj.Observatory `json:"observatory,omitempty"`
 	API         *coreObj.APIObject   `json:"api,omitempty"`
 
+	Variant      where.Variant      `json:"-"`
 	CoreVersion  string             `json:"-"`
 	Plugins      []plugin.Server    `json:"-"`
 	OutboundTags []string           `json:"-"`
@@ -1301,6 +1302,7 @@ func (t *Template) resolveOutbounds(
 				// pure outbound
 				outboundTag := sInfo.OutboundName
 				c, err := obj.Configuration(serverObj.PriorInfo{
+					Variant:     t.Variant,
 					CoreVersion: t.CoreVersion,
 					Tag:         outboundTag,
 					PluginPort:  sInfo.PluginPort,
@@ -1330,6 +1332,7 @@ func (t *Template) resolveOutbounds(
 			// the v2ray outbound is shared by balancers
 			outboundTag := Ps2OutboundTag(obj.GetName())
 			c, err := obj.Configuration(serverObj.PriorInfo{
+				Variant:     t.Variant,
 				CoreVersion: t.CoreVersion,
 				Tag:         outboundTag,
 				PluginPort:  balancerPluginPort,
@@ -1470,7 +1473,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	if err != nil {
 		return nil, fmt.Errorf("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
-	_, tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
+	tmplJson.Variant, tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
 	t = &tmplJson
 	t.Setting = setting
 	// log
@@ -1694,7 +1697,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 
 func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 	t = new(Template)
-	_, t.CoreVersion, _ = where.GetV2rayServiceVersion()
+	t.Variant, t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
@@ -1719,9 +1722,10 @@ func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
 
 func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
 	if t.CoreVersion == "" {
-		_, t.CoreVersion, _ = where.GetV2rayServiceVersion()
+		t.Variant, t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	}
 	c, err := o.Configuration(serverObj.PriorInfo{
+		Variant:     t.Variant,
 		CoreVersion: t.CoreVersion,
 		Tag:         "outbound" + inboundPort,
 		PluginPort:  pluginPort,
