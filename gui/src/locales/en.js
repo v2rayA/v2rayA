@@ -92,8 +92,8 @@ export default {
     password: "Password"
   },
   setting: {
-    transparentProxy: "Transparent Proxy",
-    transparentType: "Transparent Proxy Implementation",
+    transparentProxy: "Transparent Proxy/System Proxy",
+    transparentType: "Transparent Proxy/System Proxy Implementation",
     pacMode: "Traffic Splitting Mode of Rule Port",
     preventDnsSpoofing: "Prevent DNS Spoofing",
     specialMode: "Special Mode",
@@ -122,7 +122,7 @@ export default {
       updateSubAtIntervals: "Update Subscriptions Regularly (Unit: hour)",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
       updateGfwlistAtIntervals: "Update GFWList Regularly (Unit: hour)",
-      dependTransparentMode: "Depend on Transparent Proxy",
+      dependTransparentMode: "Follows Transparent Proxy/System Proxy",
       closed: "Off",
       advanced: "Advanced Setting"
     },
