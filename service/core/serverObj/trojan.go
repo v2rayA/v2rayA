@@ -126,8 +126,8 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 					}},
 				},
 			},
-			PluginChain:  strings.Join(chain, ","),
-			UDPSupport:   true,
+			PluginChain: strings.Join(chain, ","),
+			UDPSupport:  true,
 		}, nil
 	}
 	core := coreObj.OutboundObject{
