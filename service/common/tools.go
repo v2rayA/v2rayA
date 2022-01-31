@@ -83,12 +83,6 @@ func PrefixListSatisfyString(prefixList []string, str string) int {
 
 /* return if v1 is after v2 */
 func VersionGreaterEqual(v1, v2 string) (is bool, err error) {
-	if v1 == "UnknownClient" {
-		return true, nil
-	}
-	if v2 == "UnknownClient" {
-		return false, nil
-	}
 	var HighPriority = []string{"debug", "unstable"}
 	if PrefixListSatisfyString(HighPriority, v1) != -1 {
 		return true, nil
