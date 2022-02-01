@@ -59,6 +59,7 @@ func (p *Params) Report() {
 				fmt.Sprintf("ARCH: %v", runtime.GOARCH),
 				fmt.Sprintf("Go: %v", runtime.Version()),
 				fmt.Sprintf("Version: %v", Version),
+				fmt.Sprintf("Lite: %v", GetEnvironmentConfig().Lite),
 				"",
 				typ.Func(fields[1:]),
 			), "\n")
