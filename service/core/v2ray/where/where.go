@@ -12,12 +12,12 @@ import (
 	"time"
 )
 
-type Variant int64
+type Variant string
 
 const (
-	Unknown Variant = iota
-	V2ray
-	Xray
+	Unknown Variant = "Unknown"
+	V2ray   Variant = "V2Ray"
+	Xray    Variant = "Xray"
 )
 
 var NotFoundErr = fmt.Errorf("not found")
