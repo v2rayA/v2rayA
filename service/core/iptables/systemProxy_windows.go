@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
+	"os/exec"
 	"syscall"
 	"unsafe"
 )
@@ -234,14 +235,15 @@ func (p *systemProxy) GetSetupCommands() Setter {
 				}
 			}
 			_, _ = InternetOptionSettingsChanged()
-			return nil
+			if hasAdminRights {
+				// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
+				// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
+				// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
+				return exec.Command("netsh", "winhttp", "import", "proxy", "source=ie").Run()
+			} else {
+				return nil
+			}
 		},
-	}
-	if hasAdminRights {
-		// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
-		// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
-		// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
-		setter.Cmds = "netsh winhttp import proxy source=ie"
 	}
 	return setter
 }
@@ -288,17 +290,20 @@ func (p *systemProxy) GetCleanCommands() Setter {
 				}
 			}
 			_, _ = InternetOptionSettingsChanged()
+			if hasAdminRights {
+				// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
+				// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
+				// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
+				e := exec.Command("netsh", "winhttp", "import", "proxy", "source=ie").Run()
+				if e != nil {
+					errs = append(errs, e)
+				}
+			}
 			if len(errs) > 0 {
 				return errs[0]
 			}
 			return nil
 		},
-	}
-	if hasAdminRights {
-		// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
-		// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
-		// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
-		setter.Cmds = "netsh winhttp import proxy source=ie"
 	}
 	return setter
 }
