@@ -12,12 +12,12 @@ import (
 	"time"
 )
 
-type Variant int64
+type Variant string
 
 const (
-	Unknown Variant = iota
-	V2ray
-	Xray
+	Unknown Variant = "Unknown"
+	V2ray   Variant = "V2Ray"
+	Xray    Variant = "Xray"
 )
 
 var NotFoundErr = fmt.Errorf("not found")
@@ -48,12 +48,12 @@ func GetV2rayServiceVersion() (variant Variant, ver string, err error) {
 	}
 	ver = fields[1]
 	switch strings.ToUpper(fields[0]) {
-		case "V2RAY":
-			variant = V2ray
-		case "XRAY":
-			variant = Xray
-		default:
-			variant = Unknown
+	case "V2RAY":
+		variant = V2ray
+	case "XRAY":
+		variant = Xray
+	default:
+		variant = Unknown
 	}
 	v2rayVersion.variant = variant
 	v2rayVersion.version = ver
