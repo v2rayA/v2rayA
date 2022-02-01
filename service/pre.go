@@ -151,6 +151,7 @@ func initConfigure() {
 func hello() {
 	v2rayPath, _ := where.GetV2rayBinPath()
 	log.Alert("V2Ray binary is %v", v2rayPath)
+	log.Alert("V2Ray asset directory is %v", asset.GetV2rayLocationAssetOverride())
 	wd, _ := os.Getwd()
 	log.Alert("v2rayA working directory is %v", wd)
 	log.Alert("v2rayA configuration directory is %v", conf.GetEnvironmentConfig().Config)

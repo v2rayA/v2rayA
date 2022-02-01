@@ -110,6 +110,9 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 		}
 		if unexpectedExiting {
 			cancel()
+			if log.Log.GetLevel() > log.ParseLevel("info") {
+				log.Error("some critical information may lost due to your log level")
+			}
 			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
 		}
 		if time.Since(startTime) > 15*time.Second {
