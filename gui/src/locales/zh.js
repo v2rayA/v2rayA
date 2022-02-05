@@ -156,6 +156,7 @@ export default {
     serviceAddress: "服务端地址",
     portSocks5: "socks5端口",
     portHttp: "http端口",
+    portSocks5WithPac: "socks5端口(带分流规则)",
     portHttpWithPac: "http端口(带分流规则)",
     portVlessGrpc: "VLESS-GRPC端口(带分流规则)",
     portVlessGrpcLink: "VLESS-GRPC端口链接",

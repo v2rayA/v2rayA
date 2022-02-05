@@ -589,7 +589,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 }
 
 func (t *Template) setRulePortRouting() error {
-	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule"})
+	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule-http", "rule-socks"})
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	lines := strings.Split(configure.GetRoutingA(), "\n")
@@ -1011,8 +1011,9 @@ func (t *Template) setInbound() error {
 	if p != nil {
 		t.Inbounds[0].Port = p.Socks5
 		t.Inbounds[1].Port = p.Http
-		t.Inbounds[2].Port = p.HttpWithPac
-		vlessGrpc := &t.Inbounds[3]
+		t.Inbounds[2].Port = p.Socks5WithPac
+		t.Inbounds[3].Port = p.HttpWithPac
+		vlessGrpc := &t.Inbounds[4]
 		vlessGrpc.Port = p.VlessGrpc
 		if p.VlessGrpc > 0 {
 			if err := service.CheckGrpcSupported(); err != nil {

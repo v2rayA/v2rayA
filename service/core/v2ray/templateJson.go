@@ -37,6 +37,26 @@ const TemplateJson = `
             "tag": "http"
         },
         {
+            "port": 20173,
+            "listen": "0.0.0.0",
+            "protocol": "socks",
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
+            },
+            "settings": {
+                "auth": "noauth",
+                "udp": true,
+                "ip": null,
+                "clients": null
+            },
+            "streamSettings": null,
+            "tag": "rule-socks"
+        },
+        {
             "port": 20172,
             "listen": "0.0.0.0",
             "protocol": "http",
@@ -47,7 +67,7 @@ const TemplateJson = `
                     "tls"
                 ]
             },
-            "tag": "rule"
+            "tag": "rule-http"
         },
         {
             "listen": "0.0.0.0",
