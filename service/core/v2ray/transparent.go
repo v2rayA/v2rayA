@@ -12,12 +12,14 @@ import (
 )
 
 func DeleteTransparentProxyRules() {
-	removeResolvHijacker()
 	iptables.CloseWatcher()
-	iptables.Tproxy.GetCleanCommands().Run(false)
-	iptables.Redirect.GetCleanCommands().Run(false)
+	if !conf.GetEnvironmentConfig().Lite {
+		removeResolvHijacker()
+		iptables.Tproxy.GetCleanCommands().Run(false)
+		iptables.Redirect.GetCleanCommands().Run(false)
+		iptables.DropSpoofing.GetCleanCommands().Run(false)
+	}
 	iptables.SystemProxy.GetCleanCommands().Run(false)
-	iptables.DropSpoofing.GetCleanCommands().Run(false)
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -89,9 +91,6 @@ func CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting
 }
 
 func CheckAndStopTransparentProxy() {
-	if !IsTransparentOn() {
-		return
-	}
 	DeleteTransparentProxyRules()
 }
 
