@@ -48,10 +48,10 @@ module.exports = {
     port: 8081
   },
 
-  publicPath: "./static/",
-  // publicPath:process.env.NODE_ENV === 'production'
-  // ? '/v2rayA/'
-  // : '/',
+  // publicPath: "./static/",
+  publicPath:
+    process.env.publicPath ||
+    (process.env.NODE_ENV === "production" ? "./static/" : "/"),
   outputDir: process.env.OUTPUT_DIR || "../web",
 
   // pwa: {

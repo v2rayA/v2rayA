@@ -19,13 +19,11 @@
         </b-select>
       </b-field>
       <b-field label="Logs" style="margin-bottom:2em">
-        <b-input
-          ref="logBox"
-          readonly="readonly"
-          type="textarea"
-          rows="20"
-          :value="logText"
-        ></b-input>
+        <RecycleScroller class="log-scroller" :items="items" :item-size="28">
+          <template v-slot="{ item }">
+            <p class="text">{{ item.text }}</p>
+          </template>
+        </RecycleScroller>
       </b-field>
     </section>
   </div>
@@ -34,7 +32,8 @@
 export default {
   data() {
     return {
-      logText: "",
+      items: [],
+      endOfLine: true,
       currentSkip: 0,
       intervalId: 0,
       intervalTime: 5,
@@ -50,7 +49,7 @@ export default {
     this.intervalId = setInterval(() => {
       this.$axios({
         url: apiRoot + `/logger`,
-        params: {skip: this.currentSkip}
+        params: { skip: this.currentSkip }
       }).then(this.updateLog);
     }, this.intervalTime * 1000);
   },
@@ -59,10 +58,19 @@ export default {
   },
   methods: {
     updateLog(logs) {
-      if (logs.data.length !== 0) {
-        this.logText += logs.data;
+      if (logs.data.length && logs.data.length !== 0) {
+        const baseIndex = this.items.length;
+        const items = logs.data
+          .split("\n")
+          .map((x, i) => ({ text: x, id: baseIndex + i }));
+        if (this.endOfLine) {
+          this.items = this.items.concat(items);
+        } else {
+          this.items[this.items.length - 1].text += items[0].text;
+          this.items = this.items.concat(items.slice(1));
+        }
+        this.endOfLine = items[items.length - 1].text.endsWith("\n");
         this.currentSkip += new Blob([logs.data]).size;
-        this.$refs.logBox.$refs.textarea.scrollTop = this.$refs.logBox.$refs.textarea.scrollHeight;
       }
     },
     changeInterval(val) {
@@ -71,10 +79,25 @@ export default {
       this.intervalId = setInterval(() => {
         this.$axios({
           url: apiRoot + `/logger`,
-          params: {skip: this.currentSkip}
+          params: { skip: this.currentSkip }
         }).then(this.updateLog);
       }, this.intervalTime * 1000);
     }
   }
 };
 </script>
+<style scoped>
+.text {
+  font-size: 18px;
+  line-height: 28px;
+  white-space: nowrap;
+}
+</style>
+<style lang="scss">
+.log-scroller {
+  height: 50vh;
+  .vue-recycle-scroller__item-wrapper {
+    overflow-x: auto;
+  }
+}
+</style>
