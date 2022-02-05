@@ -84,11 +84,9 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 				return "", err
 			}
 			os.Remove(runtimepath)
-			if _, e := os.Stat(fullpath); !os.IsNotExist(e) {
-				err = os.Symlink(fullpath, runtimepath)
-				if err != nil {
-					return "", err
-				}
+			err = os.Symlink(fullpath, runtimepath)
+			if err != nil {
+				return "", err
 			}
 			return fullpath, err
 		} else {
