@@ -37,7 +37,7 @@ const TemplateJson = `
             "tag": "http"
         },
         {
-            "port": 20173,
+            "port": 0,
             "listen": "0.0.0.0",
             "protocol": "socks",
             "sniffing": {
