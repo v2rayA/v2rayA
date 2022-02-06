@@ -9,6 +9,7 @@ on:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "gui/**"
       - ".github/workflows/*.yml"
   pull_request:
     types: [opened, synchronize, reopened]
@@ -16,6 +17,7 @@ on:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "gui/**"
       - ".github/workflows/*.yml"
 
 
