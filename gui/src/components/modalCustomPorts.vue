@@ -126,7 +126,7 @@
 </template>
 
 <script>
-import { handleResponse } from "../assets/js/utils";
+import { handleResponse } from "@/assets/js/utils";
 import i18n from "@/plugins/i18n";
 import ModalSharing from "@/components/modalSharing";
 import CONST from "@/assets/js/const";
