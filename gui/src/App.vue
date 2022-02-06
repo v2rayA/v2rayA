@@ -3,7 +3,7 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="./assets/logo2.png" alt="v2rayA" class="logo no-select" />
+          <img src="assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
         <b-navbar-item tag="div">
           <b-tag
@@ -110,7 +110,7 @@
             <img
               v-for="lang of langs"
               :key="lang.flag"
-              :src="`/static/img/flags/flag_${lang.flag}.svg`"
+              :src="require(`@/assets/img/flags/flag_${lang.flag}.svg`)"
               :alt="lang.alt"
               style="height:100%;flex-shrink: 0;cursor: pointer"
               @click="handleClickLang(lang.flag)"
@@ -158,7 +158,7 @@ import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
 import ModalOutboundSetting from "./components/modalOutboundSetting";
 import { parseURL } from "./assets/js/utils";
-import { waitingConnected } from "./assets/js/networkInspect";
+import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "./plugins/axios";
 import ModalLog from "@/components/modalLog";
 
