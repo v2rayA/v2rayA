@@ -8,7 +8,7 @@
       @mouseenter.native="showSidebar = true"
       @click.native="showSidebar = true"
     >
-      <img src="/static/img/icons/switch-menu.svg" width="36px" />
+      <img src="@/assets/img/switch-menu.svg" width="36px" />
     </b-sidebar>
     <b-sidebar
       :open="showSidebar"
@@ -692,7 +692,7 @@
 import { locateServer, handleResponse } from "@/assets/js/utils";
 import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
-import jsqrcode from "./assets/js/jsqrcode";
+import jsqrcode from "@/assets/js/jsqrcode";
 import ClipboardJS from "clipboard";
 import { Base64 } from "js-base64";
 import ModalServer from "@/components/modalServer";

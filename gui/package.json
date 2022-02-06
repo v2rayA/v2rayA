@@ -45,7 +45,6 @@
     "prettier": "^1.18.2",
     "sass": "^1.19.0",
     "sass-loader": "^8.0.0",
-    "vue-highlight.js": "^3.1.0",
     "vue-template-compiler": "^2.6.10"
   }
 }

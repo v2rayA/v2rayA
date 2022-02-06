@@ -716,7 +716,7 @@
 <script>
 import { handleResponse } from "@/assets/js/utils";
 import { Base64 } from "js-base64";
-import { parseURL, generateURL } from "../assets/js/utils";
+import { parseURL, generateURL } from "@/assets/js/utils";
 
 export default {
   name: "ModalServer",
