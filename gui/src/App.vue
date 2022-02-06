@@ -3,7 +3,7 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
+          <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
         <b-navbar-item tag="div">
           <b-tag
@@ -155,11 +155,11 @@
 import ModalSetting from "@/components/modalSetting";
 import node from "@/node";
 import { Base64 } from "js-base64";
-import ModalCustomAddress from "./components/modalCustomPorts";
-import ModalOutboundSetting from "./components/modalOutboundSetting";
-import { parseURL } from "./assets/js/utils";
+import ModalCustomAddress from "@/components/modalCustomPorts";
+import ModalOutboundSetting from "@/components/modalOutboundSetting";
+import { parseURL } from "@/assets/js/utils";
 import { waitingConnected } from "@/assets/js/networkInspect";
-import axios from "./plugins/axios";
+import axios from "@/plugins/axios";
 import ModalLog from "@/components/modalLog";
 
 export default {
