@@ -18,18 +18,24 @@
           </option>
         </b-select>
       </b-field>
-      <b-field label="Logs" style="margin-bottom:2em">
-        <RecycleScroller class="log-scroller" :items="items" :item-size="28">
-          <template v-slot="{ item }">
-            <p class="text">{{ item.text }}</p>
-          </template>
+      <b-field label="Logs" style="margin-bottom: 2rem">
+        <RecycleScroller
+          v-slot="{ item }"
+          class="log-scroller"
+          :items="items"
+          :item-size="28"
+          :buffer="1000"
+        >
+          <hightlight-log class="text" :text="item.text"></hightlight-log>
         </RecycleScroller>
       </b-field>
     </section>
   </div>
 </template>
 <script>
+import HightlightLog from "@/components/highlightLog";
 export default {
+  components: { HightlightLog },
   data() {
     return {
       items: [],
@@ -88,8 +94,8 @@ export default {
 </script>
 <style scoped>
 .text {
-  font-size: 18px;
-  line-height: 28px;
+  font-size: 16px;
+  line-height: 30px;
   white-space: nowrap;
 }
 </style>

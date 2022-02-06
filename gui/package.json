@@ -41,9 +41,11 @@
     "eslint": "^5.16.0",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-vue": "^5.0.0",
+    "highlight.js": "^11.4.0",
     "prettier": "^1.18.2",
     "sass": "^1.19.0",
     "sass-loader": "^8.0.0",
+    "vue-highlight.js": "^3.1.0",
     "vue-template-compiler": "^2.6.10"
   }
 }
