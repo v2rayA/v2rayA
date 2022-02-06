@@ -9,7 +9,7 @@ import {
   ModalProgrammatic
 } from "buefy";
 import ModalLogin from "@/components/modalLogin";
-import { parseURL } from "../assets/js/utils";
+import { parseURL } from "@/assets/js/utils";
 import browser from "@/assets/js/browser";
 import modalCustomPorts from "../components/modalCustomPorts";
 import i18n from "../plugins/i18n";
