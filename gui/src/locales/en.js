@@ -158,6 +158,7 @@ export default {
     serviceAddress: "Address of Service",
     portSocks5: "Port of SOCKS5",
     portHttp: "Port of HTTP",
+    portSocks5WithPac: "Port of SOCKS5(with Rule)",
     portHttpWithPac: "Port of HTTP(with Rule)",
     portVmess: "Port of VMess(with Rule)",
     portVmessLink: "Link of VMess port",

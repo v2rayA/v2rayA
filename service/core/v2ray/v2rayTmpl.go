@@ -569,7 +569,9 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 }
 
 func (t *Template) setRulePortRouting() error {
-	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule"})
+	// append rule-http and rule-socks no mather if they are enabled
+	// because "The Same as the Rule Port" may need them
+	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule-http", "rule-socks"})
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	lines := strings.Split(configure.GetRoutingA(), "\n")
@@ -777,7 +779,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
 		Type:        "field",
 		OutboundTag: defaultOutbound,
-		InboundTag:  []string{"rule"},
+		InboundTag:  []string{"rule-http", "rule-socks"},
 	})
 	return nil
 }
@@ -794,7 +796,7 @@ func (t *Template) setTransparentRouting() (err error) {
 		for i := range t.Routing.Rules {
 			ok := false
 			for _, in := range t.Routing.Rules[i].InboundTag {
-				if in == "rule" {
+				if in == "rule-http" {
 					ok = true
 					break
 				}
@@ -984,8 +986,9 @@ func (t *Template) setInbound() error {
 	if p != nil {
 		t.Inbounds[0].Port = p.Socks5
 		t.Inbounds[1].Port = p.Http
-		t.Inbounds[2].Port = p.HttpWithPac
-		vmess := &t.Inbounds[3]
+		t.Inbounds[2].Port = p.Socks5WithPac
+		t.Inbounds[3].Port = p.HttpWithPac
+		vmess := &t.Inbounds[4]
 		vmess.Port = p.Vmess
 		if p.Vmess > 0 {
 			if err := SetVmessInbound(vmess); err != nil {
@@ -1431,7 +1434,7 @@ func (t *Template) setVmessInboundRouting() {
 	for i := range t.Routing.Rules {
 		var bHasRule bool
 		for _, tag := range t.Routing.Rules[i].InboundTag {
-			if tag == "rule" {
+			if tag == "rule-http" {
 				bHasRule = true
 			}
 		}
