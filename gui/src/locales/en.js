@@ -157,6 +157,7 @@ export default {
     serviceAddress: "Address of Service",
     portSocks5: "Port of SOCKS5",
     portHttp: "Port of HTTP",
+    portSocks5WithPac: "Port of SOCKS5(with Rule)",
     portHttpWithPac: "Port of HTTP(with Rule)",
     portVlessGrpc: "Port of VLESS-GRPC(with Rule)",
     portVlessGrpcPrompt: "Link of VLESS-GRPC port",

@@ -45,6 +45,18 @@
           ></b-input>
         </b-field>
         <b-field
+            :label="$t('customAddressPort.portSocks5WithPac')"
+            label-position="on-border"
+        >
+          <b-input
+              v-model="table.socks5WithPac"
+              placeholder="0"
+              type="number"
+              min="0"
+              required
+          ></b-input>
+        </b-field>
+        <b-field
           :label="$t('customAddressPort.portHttpWithPac')"
           label-position="on-border"
         >
@@ -123,6 +135,7 @@ export default {
       backendAddress: "http://localhost:2017",
       socks5: "20170",
       http: "20171",
+      socks5WithPac: "0",
       httpWithPac: "20172",
       vlessGrpc: "0",
       vlessGrpcLink: ""
@@ -170,6 +183,7 @@ export default {
           data: {
             socks5: parseInt(this.table.socks5),
             http: parseInt(this.table.http),
+            socks5WithPac: parseInt(this.table.socks5WithPac),
             httpWithPac: parseInt(this.table.httpWithPac),
             vlessGrpc: parseInt(this.table.vlessGrpc)
           }
