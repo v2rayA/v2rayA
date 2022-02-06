@@ -8,7 +8,7 @@
       @mouseenter.native="showSidebar = true"
       @click.native="showSidebar = true"
     >
-      <img src="/static/img/icons/switch-menu.svg" width="36px" />
+      <img src="@/assets/img/switch-menu.svg" width="36px" />
     </b-sidebar>
     <b-sidebar
       :open="showSidebar"
