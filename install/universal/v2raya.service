@@ -9,7 +9,7 @@ Type=simple
 User=root
 LimitNPROC=500
 LimitNOFILE=1000000
-ExecStart=/usr/bin/v2raya --log-disable-timestamp
+ExecStart=/usr/bin/v2raya --log-file /tmp/v2raya.log
 Restart=on-failure
 
 [Install]
