@@ -17,7 +17,7 @@ export default {
       domProps: {
         innerHTML: hljs.highlight(this.text, {
           language: "accesslog",
-          ignoreIllegals: false
+          ignoreIllegals: true
         }).value
       }
     });
