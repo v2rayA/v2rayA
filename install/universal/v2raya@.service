@@ -7,7 +7,8 @@ Wants=network.target
 [Service]
 Type=simple
 User=%i
-ExecStart=/usr/bin/v2raya --lite --log-file /tmp/v2raya.%i.log
+ExecStart=/usr/bin/v2raya --lite --log-disable-timestamp
+Environment=V2RAYA_LOG_FILE=/tmp/v2raya.%i.log
 Restart=on-failure
 
 [Install]
