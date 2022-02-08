@@ -47,8 +47,8 @@ func Base64StdDecode(s string) (string, error) {
 // 封装base64.URLEncoding进行解码，加入了长度补全，换行删除。当error时，返回输入和err
 func Base64URLDecode(s string) (string, error) {
 	s = strings.TrimSpace(s)
-	s = strings.ReplaceAll(strings.ReplaceAll(s, "\n", ""), "\r", "")
 	saver := s
+	s = strings.ReplaceAll(strings.ReplaceAll(s, "\n", ""), "\r", "")
 	if len(s)%4 > 0 {
 		s += strings.Repeat("=", 4-len(s)%4)
 	}
