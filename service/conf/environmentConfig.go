@@ -26,7 +26,7 @@ type Params struct {
 	LogFile                 string   `id:"log-file" desc:"The path of log file"`
 	LogMaxDays              int64    `id:"log-max-days" default:"3" desc:"Maximum number of days to keep log files"`
 	LogDisableColor         bool     `id:"log-disable-color"`
-	LogDisableTimestamp     bool     `id:"log-disable-timestamp"`
+	LogDisableTimestamp     bool     `id:"log-disable-timestamp" desc:"This flag is intended for use with systemd/journald to avoid duplicate timestamps in logs"`
 	Lite                    bool     `id:"lite" desc:"Lite mode for non-root and non-linux users"`
 	ShowVersion             bool     `id:"version"`
 	PrintReport             string   `id:"report" desc:"Print report"`
