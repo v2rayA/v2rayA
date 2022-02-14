@@ -15,7 +15,8 @@ export default {
     message: "提示",
     none: "无",
     optional: "可选",
-    loadBalance: "负载均衡"
+    loadBalance: "负载均衡",
+    log: "日志"
   },
   welcome: {
     title: "初来乍到，请多关照",
@@ -40,8 +41,17 @@ export default {
     lastTryTime: "上次测试时间",
     messages: {
       notAllowInsecure:
-        "根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure"
+        "根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure",
+      notRecommend:
+        "根据 {name} 的官方文档，如果你使用 {name}，不推荐开启 AllowInsecure"
     }
+  },
+  InSecureConfirm: {
+    title: "检测到不安全的配置",
+    message:
+      "即将保存的配置中<b>AllowInsecure</b>被设置为true，除非你知道你在做什么，否则贸然开启可能导致数据泄漏！是否继续？",
+    confirm: "我知道我在做什么",
+    cancel: "取消"
   },
   subscription: {
     host: "域名",
@@ -91,8 +101,8 @@ export default {
     password: "密码"
   },
   setting: {
-    transparentProxy: "透明代理",
-    transparentType: "透明代理实现方式",
+    transparentProxy: "透明代理/系统代理",
+    transparentType: "透明代理/系统代理实现方式",
     pacMode: "规则端口的分流模式",
     preventDnsSpoofing: "防止DNS污染",
     specialMode: "特殊模式",
@@ -121,7 +131,7 @@ export default {
       updateSubAtIntervals: "每隔一段时间更新订阅（单位：小时）",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
       updateGfwlistAtIntervals: "每隔一段时间更新GFWList（单位：小时）",
-      dependTransparentMode: "跟随透明代理",
+      dependTransparentMode: "跟随透明代理/系统代理",
       closed: "关闭",
       advanced: "自定义高级设置"
     },
@@ -155,6 +165,7 @@ export default {
     serviceAddress: "服务端地址",
     portSocks5: "socks5端口",
     portHttp: "http端口",
+    portSocks5WithPac: "socks5端口(带分流规则)",
     portHttpWithPac: "http端口(带分流规则)",
     portVlessGrpc: "VLESS-GRPC端口(带分流规则)",
     portVlessGrpcLink: "VLESS-GRPC端口链接",
@@ -253,8 +264,9 @@ export default {
     message: "时延测试往往需要花费较长时间，请耐心等待"
   },
   version: {
-    higherVersionNeeded: "该操作需要v2rayA的版本高于{version}",
-    v2rayInvalid: "检测到v2ray-core可能未正确安装，请检查"
+    higherVersionNeeded: "该操作需要 v2rayA 的版本高于{version}",
+    v2rayInvalid:
+      "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查"
   },
   about: `<p>v2rayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
           <p class="about-small">默认端口：</p>
@@ -297,5 +309,10 @@ export default {
       "订阅与节点服务器",
       "导入订阅、节点服务器后，在这里切换和管理你的订阅、普通节点以及订阅节点。"
     ]
+  },
+  log: {
+    logModalTitle: "查看日志",
+    refreshInterval: "刷新间隔",
+    seconds: "秒"
   }
 };

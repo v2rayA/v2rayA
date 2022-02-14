@@ -15,7 +15,8 @@ export default {
     message: "Message",
     none: "none",
     optional: "optional",
-    loadBalance: "Load Balance"
+    loadBalance: "Load Balance",
+    log: "Logs"
   },
   welcome: {
     title: "Welcome",
@@ -40,8 +41,17 @@ export default {
     lastTryTime: "Last try time",
     messages: {
       notAllowInsecure:
-        "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden."
+        "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden.",
+      notRecommend:
+        "According to the docs of {name}, if you use {name}, AllowInsecure is not recommend."
     }
+  },
+  InSecureConfirm: {
+    title: "Dangerous configuration detected",
+    message:
+      "The configuration has set the <b>AllowInsecure</b> to true. This may cause security risks. Are you sure to continue?",
+    confirm: "I know what I'm doing",
+    cancel: "cancel"
   },
   subscription: {
     host: "Host",
@@ -91,8 +101,8 @@ export default {
     password: "Password"
   },
   setting: {
-    transparentProxy: "Transparent Proxy",
-    transparentType: "Transparent Proxy Implementation",
+    transparentProxy: "Transparent Proxy/System Proxy",
+    transparentType: "Transparent Proxy/System Proxy Implementation",
     pacMode: "Traffic Splitting Mode of Rule Port",
     preventDnsSpoofing: "Prevent DNS Spoofing",
     specialMode: "Special Mode",
@@ -121,7 +131,7 @@ export default {
       updateSubAtIntervals: "Update Subscriptions Regularly (Unit: hour)",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
       updateGfwlistAtIntervals: "Update GFWList Regularly (Unit: hour)",
-      dependTransparentMode: "Depend on Transparent Proxy",
+      dependTransparentMode: "Follows Transparent Proxy/System Proxy",
       closed: "Off",
       advanced: "Advanced Setting"
     },
@@ -156,6 +166,7 @@ export default {
     serviceAddress: "Address of Service",
     portSocks5: "Port of SOCKS5",
     portHttp: "Port of HTTP",
+    portSocks5WithPac: "Port of SOCKS5(with Rule)",
     portHttpWithPac: "Port of HTTP(with Rule)",
     portVlessGrpc: "Port of VLESS-GRPC(with Rule)",
     portVlessGrpcPrompt: "Link of VLESS-GRPC port",
@@ -258,7 +269,8 @@ export default {
   version: {
     higherVersionNeeded:
       "This operation need higher version of v2rayA than {version}",
-    v2rayInvalid: "v2ray-core may not be installed correctly"
+    v2rayInvalid:
+      "geosite.dat, geoip.dat or v2ray-core may not be installed correctly"
   },
   about: `<p>v2rayA is a web GUI client of V2Ray. Frontend is built with Vue.js and backend is built with golang.</p>
           <p class="about-small">Default ports:</p>
@@ -292,5 +304,10 @@ export default {
     addMessage: "Please input the outbound name you want to add:",
     deleteMessage:
       'Be sure to <b>DELETE</b> the outbound "{outboundName}"? It is not reversible.'
+  },
+  log: {
+    logModalTitle: "View logs",
+    refreshInterval: "Refresh Interval",
+    seconds: "seconds"
   }
 };
