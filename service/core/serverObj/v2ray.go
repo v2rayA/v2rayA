@@ -330,6 +330,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if v.Host != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.Host
 			}
+			if v.AllowInsecure {
+				core.StreamSettings.XTLSSettings.AllowInsecure = true
+			}
 			if v.Flow == "" {
 				v.Flow = "xtls-rprx-origin"
 			}
