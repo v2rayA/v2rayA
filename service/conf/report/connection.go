@@ -34,12 +34,12 @@ func ConnectionReport(arg []string) (report string) {
 	)
 
 	// get version of v2ray-core
-	ver, err := where.GetV2rayServiceVersion()
+	variant, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		lines = append(lines, fmt.Sprintf("failed to get version of v2ray-core: %v", err))
 		return
 	} else {
-		lines = append(lines, fmt.Sprintf("Core Version: %v", ver))
+		lines = append(lines, fmt.Sprintf("%v version: %v", variant, ver))
 	}
 	// check if v2ray-core is running
 	ok, report := DefaultCoreStatusReporter.FromDatabase()

@@ -24,6 +24,10 @@ func SetPorts(ports *configure.Ports) (err error) {
 		set[ports.Http] = struct{}{}
 		cnt++
 	}
+	if ports.Socks5WithPac != 0 {
+		set[ports.Socks5WithPac] = struct{}{}
+		cnt++
+	}
 	if ports.HttpWithPac != 0 {
 		set[ports.HttpWithPac] = struct{}{}
 		cnt++
@@ -46,6 +50,12 @@ func SetPorts(ports *configure.Ports) (err error) {
 		origin.Http = ports.Http
 		if origin.Http != 0 {
 			detectSyntax = append(detectSyntax, strconv.Itoa(origin.Http)+":tcp")
+		}
+	}
+	if ports.Socks5WithPac != origin.Socks5WithPac {
+		origin.Socks5WithPac = ports.Socks5WithPac
+		if origin.Socks5WithPac != 0 {
+			detectSyntax = append(detectSyntax, strconv.Itoa(origin.Socks5WithPac)+":tcp,udp")
 		}
 	}
 	if ports.HttpWithPac != origin.HttpWithPac {

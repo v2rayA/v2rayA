@@ -7,12 +7,14 @@ import (
 )
 
 func CouldUseFakeDns() bool {
-	ver, err := where.GetV2rayServiceVersion()
+	variant, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		ver = "0.0.0"
 	}
-	if fakeDnsValid, _ := common.VersionGreaterEqual(ver, "4.35.0"); !fakeDnsValid {
-		return false
+	if variant == where.V2ray {
+		if fakeDnsValid, _ := common.VersionGreaterEqual(ver, "4.35.0"); !fakeDnsValid {
+			return false
+		}
 	}
 	return configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed
 }

@@ -3,7 +3,7 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="./assets/logo2.png" alt="v2rayA" class="logo no-select" />
+          <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
         <b-navbar-item tag="div">
           <b-tag
@@ -81,6 +81,10 @@
           <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
         </b-navbar-item>
+        <b-navbar-item tag="a" @click.native="handleClickLogs">
+          <i class="iconfont icon-info" style="font-size: 1.25em"></i>
+          {{ $t("common.log") }}
+        </b-navbar-item>
         <b-dropdown
           position="is-bottom-left"
           aria-role="menu"
@@ -109,7 +113,7 @@
             <img
               v-for="lang of langs"
               :key="lang.flag"
-              :src="`/img/flags/flag_${lang.flag}.svg`"
+              :src="require(`@/assets/img/flags/flag_${lang.flag}.svg`)"
               :alt="lang.alt"
               style="height:100%;flex-shrink: 0;cursor: pointer"
               @click="handleClickLang(lang.flag)"
@@ -155,9 +159,10 @@ import ModalSetting from "@/components/modalSetting";
 import node from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "./components/modalCustomPorts";
-import { parseURL } from "./assets/js/utils";
-import { waitingConnected } from "./assets/js/networkInspect";
+import { parseURL } from "@/assets/js/utils";
+import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "./plugins/axios";
+import ModalLog from "@/components/modalLog";
 
 export default {
   components: { ModalCustomAddress, node },
@@ -538,6 +543,14 @@ export default {
     handleClickLogout() {
       localStorage.removeItem("token");
       this.$remount();
+    },
+    handleClickLogs() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: ModalLog,
+        hasModalCard: true,
+        canCancel: true
+      });
     }
   }
 };

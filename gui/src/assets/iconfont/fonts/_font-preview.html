@@ -22,7 +22,7 @@
             flex-flow: column;
             flex: 0 0 240px;
             align-items: center;
-            margin-bottom: 50px;
+            padding-bottom: 50px;
         }
 
         .flex-tb > section > header {
@@ -40,6 +40,7 @@
             position: absolute;
             background: #fff;
             border: 1px solid #ddd;
+            top: 20px;
         }
 
         .flex-tb div:hover > i {
@@ -48,167 +49,188 @@
         body{
             background: #ddd;
         }
+        td { padding: 5px 10px; }
+        input { border: 0; outline: 0; width: 150px; text-align: center; background: transparent; }
+        section { position: relative; }
     </style>
+    <script>
+        function copyCls(el){
+            el = el.querySelector('input')
+            el.focus();
+            el.select()
+            document.execCommand('copy', false, null);            
+        }
+    </script>
 <body>
+    <h3 align="center"><a href="https://segmentfault.com/a/1190000017480480">webpack-iconfont-plugin-nodejs</a></h3>
+    <h4>
+    Modify or add a svg file in dir [src/iconfont/svgs], they will be parsed to iconfonts with css, and hot-loaded. <br/>
+    修改或者添加svg文件到[src/iconfont/svgs]目录，将自动生成为iconfonts以及配套的css，支持热重载。</h4>
+    <hr/>
     <div class="info">
-        <h3>iconfont (31)</h3>
-        <div>Class name prefix: icon-</div>
+        <h3>iconfont (32 icons, click to copy)</h3>
+        Class name prefix: <b>icon-</b> &emsp; You can use it like: &lt;i class="my-icon-success"&gt;&lt;/i&gt;
     </div>
     <hr/>
     <div class="flex-tb">
       
-        <section>
-            <header contenteditable>icon-Link_disconnect</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-Link_disconnect" />
             <div><i class="icon-Link_disconnect"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-alert</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-alert" />
             <div><i class="icon-alert"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-camera</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-camera" />
             <div><i class="icon-camera"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-caret-down</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-caret-down" />
             <div><i class="icon-caret-down"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-caret-up</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-caret-up" />
             <div><i class="icon-caret-up"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-chakandaorujilu</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-chakandaorujilu" />
             <div><i class="icon-chakandaorujilu"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-check-circle-fill</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-check-circle-fill" />
             <div><i class="icon-check-circle-fill"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-chuangjiangongdan1</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-chuangjiangongdan1" />
             <div><i class="icon-chuangjiangongdan1"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-clock2</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-clock2" />
             <div><i class="icon-clock2"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-close-circle-fill</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-close-circle-fill" />
             <div><i class="icon-close-circle-fill"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-cloud-sync</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-cloud-sync" />
             <div><i class="icon-cloud-sync"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-cloud</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-cloud" />
             <div><i class="icon-cloud"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-coding_alert_circle</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-coding_alert_circle" />
             <div><i class="icon-coding_alert_circle"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-daoru</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-daoru" />
             <div><i class="icon-daoru"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-daoruzupu-xianxing</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-daoruzupu-xianxing" />
             <div><i class="icon-daoruzupu-xianxing"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-delete</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-delete" />
             <div><i class="icon-delete"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-dian</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-dian" />
             <div><i class="icon-dian"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-earth</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-earth" />
             <div><i class="icon-earth"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-heart</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-heart" />
             <div><i class="icon-heart"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-help-circle-outline</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-help-circle-outline" />
             <div><i class="icon-help-circle-outline"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-label</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-info" />
+            <div><i class="icon-info"></i></div>
+        </section>
+      
+        <section onclick="copyCls(this)">
+            <input value="icon-label" />
             <div><i class="icon-label"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-lianjie</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-lianjie" />
             <div><i class="icon-lianjie"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-loading_ico</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-loading_ico" />
             <div><i class="icon-loading_ico"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-logout</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-logout" />
             <div><i class="icon-logout"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-setting</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-setting" />
             <div><i class="icon-setting"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-share</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-share" />
             <div><i class="icon-share"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-switch-menu</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-switch-menu" />
             <div><i class="icon-switch-menu"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-sync</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-sync" />
             <div><i class="icon-sync"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-wave</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-wave" />
             <div><i class="icon-wave"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-wendangxiugai</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-wendangxiugai" />
             <div><i class="icon-wendangxiugai"></i></div>
         </section>
       
-        <section>
-            <header contenteditable>icon-winfo-icon-chakanbaogao</header>
+        <section onclick="copyCls(this)">
+            <input value="icon-winfo-icon-chakanbaogao" />
             <div><i class="icon-winfo-icon-chakanbaogao"></i></div>
         </section>
       

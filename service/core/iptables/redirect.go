@@ -28,7 +28,7 @@ func (r *redirect) RemoveIPWhitelist(cidr string) {
 	cmds.ExecCommands(commands, false)
 }
 
-func (r *redirect) GetSetupCommands() SetupCommands {
+func (r *redirect) GetSetupCommands() Setter {
 	commands := `
 iptables -w 2 -t nat -N V2RAY
 iptables -w 2 -t nat -A V2RAY -d 0.0.0.0/32 -j RETURN
@@ -75,10 +75,12 @@ ip6tables -w 2 -t nat -I PREROUTING -p tcp -j V2RAY
 ip6tables -w 2 -t nat -I OUTPUT -p tcp -j V2RAY
 `
 	}
-	return SetupCommands(commands)
+	return Setter{
+		Cmds:      commands,
+	}
 }
 
-func (r *redirect) GetCleanCommands() CleanCommands {
+func (r *redirect) GetCleanCommands() Setter {
 	commands := `
 iptables -w 2 -t nat -F V2RAY
 iptables -w 2 -t nat -D PREROUTING -p tcp -j V2RAY
@@ -93,5 +95,7 @@ ip6tables -w 2 -t nat -D OUTPUT -p tcp -j V2RAY
 ip6tables -w 2 -t nat -X V2RAY
 `
 	}
-	return CleanCommands(commands)
+	return Setter{
+		Cmds:      commands,
+	}
 }

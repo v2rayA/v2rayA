@@ -73,6 +73,7 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 	var unexpectedExiting bool
 	go func() {
 		p, e := proc.Wait()
+		defer ProcessManager.Stop(false)
 		if process.procCancel == nil {
 			// canceled by v2rayA
 			return
@@ -110,6 +111,9 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 		}
 		if unexpectedExiting {
 			cancel()
+			if log.Log.GetLevel() > log.ParseLevel("info") {
+				log.Error("some critical information may lost due to your log level")
+			}
 			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
 		}
 		if time.Since(startTime) > 15*time.Second {
@@ -197,10 +201,13 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 		arguments = append(arguments, "--confdir="+confdir)
 	}
 	log.Debug(strings.Join(arguments, " "))
-	assetDir := asset.GetV2rayLocationAsset()
-	env := append(os.Environ(),
-		"V2RAY_LOCATION_ASSET="+assetDir,
-		"XRAY_LOCATION_ASSET="+assetDir,
+	assetDir := asset.GetV2rayLocationAssetOverride()
+	env := append(
+		[]string{
+			"V2RAY_LOCATION_ASSET="+assetDir,
+			"XRAY_LOCATION_ASSET="+assetDir,
+		},
+		os.Environ()...,
 	)
 	if service.CheckMemconservativeSupported() == nil {
 		memstat, err := mem.VirtualMemory()

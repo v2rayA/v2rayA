@@ -1,4 +1,4 @@
-package gfwlist
+package dat
 
 import (
 	libSha256 "crypto/sha256"
@@ -15,7 +15,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -35,7 +34,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	if !g.UpdateTime.IsZero() {
 		return g, nil
 	}
-	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/v2rayA/dist-v2ray-rules-dat/tags")
+	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://hubmirror.v2raya.org/api/v2rayA/dist-v2ray-rules-dat/tags")
 	if err != nil {
 		err = fmt.Errorf("failed to get latest version of GFWList: %w", err)
 		return
@@ -63,13 +62,13 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	g.UpdateTime = t
 	return g, nil
 }
-func IsUpdate() (update bool, remoteTime time.Time, err error) {
+func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {
 	gfwlist, err := GetRemoteGFWListUpdateTime(http.DefaultClient)
 	if err != nil {
 		return
 	}
 	remoteTime = gfwlist.UpdateTime
-	if !asset.IsGFWListExists() {
+	if !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		//本地文件不存在，那远端必定比本地新
 		return false, remoteTime, nil
 	}
@@ -117,9 +116,11 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return
 	}
-	assetDir := asset.GetV2rayLocationAsset()
-	pathSiteDat := filepath.Join(assetDir, "LoyalsoldierSite.dat")
-	u := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat`, gfwlist.Tag)
+	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return "", err
+	}
+	u := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat`, gfwlist.Tag)
 	if err = gopeed2.Down(&gopeed2.Request{
 		Method: "GET",
 		URL:    u,
@@ -127,7 +128,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		log.Warn("UpdateLocalGFWList: %v", err)
 		return
 	}
-	u2 := fmt.Sprintf(`https://cdn.jsdelivr.net/gh/v2rayA/dist-v2ray-rules-dat@%v/geosite.dat.sha256sum`, gfwlist.Tag)
+	u2 := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat.sha256sum`, gfwlist.Tag)
 	siteDatSha256, err := httpGet(u2)
 	if err != nil {
 		err = fmt.Errorf("%w: %v", FailCheckSha, err)
@@ -151,7 +152,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 }
 
 func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) {
-	update, tRemote, err := IsUpdate()
+	update, tRemote, err := IsGFWListUpdate()
 	if err != nil {
 		return
 	}
@@ -169,7 +170,7 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 	setting := configure.GetSettingNotNil()
 	if v2ray.ProcessManager.Running() && //正在使用GFWList模式再重启
 		(setting.Transparent == configure.TransparentGfwlist ||
-			setting.Transparent == configure.TransparentClose && setting.RulePortMode == configure.GfwlistMode) {
+			!v2ray.IsTransparentOn() && setting.RulePortMode == configure.GfwlistMode) {
 		err = v2ray.UpdateV2RayConfig()
 	}
 	return

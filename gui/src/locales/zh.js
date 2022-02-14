@@ -265,8 +265,7 @@ export default {
   },
   version: {
     higherVersionNeeded: "该操作需要 v2rayA 的版本高于{version}",
-    v2rayInvalid:
-      "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查"
+    v2rayInvalid: "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查"
   },
   about: `<p>v2rayA是V2Ray的一个Web客户端，前端使用Vue.js构建，后端使用Golang构建。</p>
           <p class="about-small">默认端口：</p>

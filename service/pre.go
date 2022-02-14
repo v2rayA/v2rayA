@@ -1,29 +1,25 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
-	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset/gfwlist"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	service2 "github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/router"
 	"github.com/v2rayA/v2rayA/server/service"
-	"io"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -178,13 +174,30 @@ func migrateServerFormat() {
 func initConfigure() {
 	//等待网络连通
 	v2ray.CheckAndStopTransparentProxy()
+	var l net.Listener
 	for {
 		addrs, err := resolv.LookupHost("www.apple.com")
 		if err == nil && len(addrs) > 0 {
 			break
 		}
-		log.Alert("waiting for network connected")
+		if l == nil {
+			if l, err = net.Listen("tcp", conf.GetEnvironmentConfig().Address); err != nil {
+				log.Fatal("%v", err)
+			}
+			e := gin.New()
+			e.GET("/", func(c *gin.Context) {
+				c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+				c.Header("Pragma", "no-cache")
+				c.Header("Expires", "0")
+				c.String(200, "Waiting for the network connected; refresh the page later.\n正在等待网络连接，请稍后刷新页面。")
+			})
+			go e.RunListener(l)
+		}
+		log.Alert("waiting for the network connected")
 		time.Sleep(5 * time.Second)
+	}
+	if l != nil {
+		l.Close()
 	}
 	log.Alert("network is connected")
 	//初始化配置
@@ -226,51 +239,25 @@ func initConfigure() {
 	//首先确定v2ray是否存在
 	if _, err := where.GetV2rayBinPath(); err == nil {
 		//检查geoip、geosite是否存在
-		if !asset.IsGeoipExists() || !asset.IsGeositeExists() {
-			dld := func(repo, filename, localname string) (err error) {
-				log.Warn("installing " + filename)
-				p := path.Join(asset.GetV2rayLocationAsset(), filename)
-				resp, err := http.Get("https://api.github.com/repos/" + repo + "/tags")
-				if err != nil {
-					return
-				}
-				defer resp.Body.Close()
-				b, err := io.ReadAll(resp.Body)
-				if err != nil {
-					return
-				}
-				tag := gjson.GetBytes(b, "0.name").String()
-				u := fmt.Sprintf("https://cdn.jsdelivr.net/gh/%v@%v/%v", repo, tag, filename)
-				err = gopeed.Down(&gopeed.Request{
-					Method: "GET",
-					URL:    u,
-				}, p)
-				if err != nil {
-					return errors.New("download<" + p + ">: " + err.Error())
-				}
-				err = os.Chmod(p, os.FileMode(0755))
-				if err != nil {
-					return errors.New("chmod: " + err.Error())
-				}
-				os.Rename(p, path.Join(asset.GetV2rayLocationAsset(), localname))
-				return
-			}
-			err := dld("v2rayA/dist-geoip", "geoip.dat", "geoip.dat")
+		if !asset.DoesV2rayAssetExist("geoip.dat") {
+			err := dat.UpdateLocalGeoIP()
 			if err != nil {
-				log.Warn("initConfigure: v2rayA/dist-geoip: %v", err)
+				log.Fatal("%v", err)
 			}
-			err = dld("v2rayA/dist-domain-list-community", "dlc.dat", "geosite.dat")
+		}
+		if !asset.DoesV2rayAssetExist("geosite.dat") {
+			err = dat.UpdateLocalGeoSite()
 			if err != nil {
-				log.Warn("initConfigure: v2rayA/dist-domain-list-community: %v", err)
+				log.Fatal("%v", err)
 			}
 		}
 	}
 }
 
 func hello() {
-	log.Alert("V2RayLocationAsset is %v", asset.GetV2rayLocationAsset())
 	v2rayPath, _ := where.GetV2rayBinPath()
 	log.Alert("V2Ray binary is %v", v2rayPath)
+	log.Alert("V2Ray asset directory is %v", asset.GetV2rayLocationAssetOverride())
 	wd, _ := os.Getwd()
 	log.Alert("v2rayA working directory is %v", wd)
 	log.Alert("v2rayA configuration directory is %v", conf.GetEnvironmentConfig().Config)
@@ -309,7 +296,7 @@ func initUpdatingTicker() {
 	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range conf.TickerUpdateGFWList.C {
-			_, err := gfwlist.CheckAndUpdateGFWList()
+			_, err := dat.CheckAndUpdateGFWList()
 			if err != nil {
 				log.Info("[AutoUpdate] GFWList: %v", err)
 			}
@@ -339,7 +326,7 @@ func checkUpdate() {
 		case configure.GfwlistMode:
 			go func() {
 				/* 更新LoyalsoldierSite.dat */
-				localGFWListVersion, err := gfwlist.CheckAndUpdateGFWList()
+				localGFWListVersion, err := dat.CheckAndUpdateGFWList()
 				if err != nil {
 					log.Warn("Failed to update PAC file: %v", err.Error())
 					return

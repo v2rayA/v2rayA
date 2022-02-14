@@ -40,7 +40,7 @@ func (t *tproxy) RemoveIPWhitelist(cidr string) {
 	cmds.ExecCommands(commands, false)
 }
 
-func (t *tproxy) GetSetupCommands() SetupCommands {
+func (t *tproxy) GetSetupCommands() Setter {
 	commands := `
 ip rule add fwmark 0x40/0xc0 table 100
 ip route add local 0.0.0.0/0 dev lo table 100
@@ -149,10 +149,12 @@ ip6tables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --
 ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 `
 	}
-	return SetupCommands(commands)
+	return Setter{
+		Cmds:      commands,
+	}
 }
 
-func (t *tproxy) GetCleanCommands() CleanCommands {
+func (t *tproxy) GetCleanCommands() Setter {
 	commands := `
 ip rule del fwmark 0x40/0xc0 table 100 
 ip route del local 0.0.0.0/0 dev lo table 100
@@ -185,5 +187,7 @@ ip6tables -w 2 -t mangle -F TP_MARK
 ip6tables -w 2 -t mangle -X TP_MARK
 `
 	}
-	return CleanCommands(commands)
+	return Setter{
+		Cmds:      commands,
+	}
 }

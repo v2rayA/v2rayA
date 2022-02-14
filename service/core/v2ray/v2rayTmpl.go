@@ -50,6 +50,7 @@ type Template struct {
 	Observatory *coreObj.Observatory `json:"observatory,omitempty"`
 	API         *coreObj.APIObject   `json:"api,omitempty"`
 
+	Variant      where.Variant      `json:"-"`
 	CoreVersion  string             `json:"-"`
 	Plugins      []plugin.Server    `json:"-"`
 	OutboundTags []string           `json:"-"`
@@ -464,7 +465,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
 	if !supportUDP[firstOutboundTag] {
-		// find a outbound that supports UDP and redirect all leaky UDP traffic to it
+		// find an outbound that supports UDP and redirect all leaky UDP traffic to it
 		var found bool
 		for outbound, support := range supportUDP {
 			if support {
@@ -490,7 +491,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 			)
 		}
 	} else {
-		if setting.Transparent != configure.TransparentClose {
+		if IsTransparentOn() {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -511,7 +512,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 	switch mode {
 	case configure.WhitelistMode:
 		// foreign domains with intranet IP should be proxied first rather than directly connected
-		if asset.LoyalsoldierSiteDatExists() {
+		if asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -549,7 +550,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 			},
 		)
 	case configure.GfwlistMode:
-		if asset.LoyalsoldierSiteDatExists() {
+		if asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -588,7 +589,9 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 }
 
 func (t *Template) setRulePortRouting() error {
-	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule"})
+	// append rule-http and rule-socks no mather if they are enabled
+	// because "The Same as the Rule Port" may need them
+	return t.AppendRoutingRuleByMode(t.Setting.RulePortMode, []string{"rule-http", "rule-socks"})
 }
 func parseRoutingA(t *Template, routingInboundTags []string) error {
 	lines := strings.Split(configure.GetRoutingA(), "\n")
@@ -796,7 +799,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
 		Type:        "field",
 		OutboundTag: defaultOutbound,
-		InboundTag:  []string{"rule"},
+		InboundTag:  []string{"rule-http", "rule-socks"},
 	})
 	return nil
 }
@@ -813,7 +816,7 @@ func (t *Template) setTransparentRouting() (err error) {
 		for i := range t.Routing.Rules {
 			ok := false
 			for _, in := range t.Routing.Rules[i].InboundTag {
-				if in == "rule" {
+				if in == "rule-http" {
 					ok = true
 					break
 				}
@@ -825,7 +828,7 @@ func (t *Template) setTransparentRouting() (err error) {
 	}
 	return nil
 }
-func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
+func (t *Template) AppendDokodemoTProxy(tproxy string, port int, tag string) {
 	dokodemo := coreObj.Inbound{
 		Listen:   "0.0.0.0",
 		Port:     port,
@@ -837,11 +840,8 @@ func (t *Template) AppendDokodemo(tproxy *string, port int, tag string) {
 		Settings: &coreObj.InboundSettings{Network: "tcp,udp"},
 		Tag:      tag,
 	}
-	if tproxy != nil {
-		dokodemo.StreamSettings = &coreObj.StreamSettings{Sockopt: &coreObj.Sockopt{Tproxy: tproxy}}
-		dokodemo.Settings.FollowRedirect = true
-
-	}
+	dokodemo.StreamSettings = &coreObj.StreamSettings{Sockopt: &coreObj.Sockopt{Tproxy: &tproxy}}
+	dokodemo.Settings.FollowRedirect = true
 	t.Inbounds = append(t.Inbounds, dokodemo)
 }
 
@@ -1013,8 +1013,9 @@ func (t *Template) setInbound() error {
 	if p != nil {
 		t.Inbounds[0].Port = p.Socks5
 		t.Inbounds[1].Port = p.Http
-		t.Inbounds[2].Port = p.HttpWithPac
-		vlessGrpc := &t.Inbounds[3]
+		t.Inbounds[2].Port = p.Socks5WithPac
+		t.Inbounds[3].Port = p.HttpWithPac
+		vlessGrpc := &t.Inbounds[4]
 		vlessGrpc.Port = p.VlessGrpc
 		if p.VlessGrpc > 0 {
 			if err := service.CheckGrpcSupported(); err != nil {
@@ -1031,13 +1032,19 @@ func (t *Template) setInbound() error {
 			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
-	if t.Setting.Transparent != configure.TransparentClose {
-		var tproxy string
+	if IsTransparentOn() {
 		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
-			tproxy = string(t.Setting.TransparentType)
+			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
+		case configure.TransparentSystemProxy:
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     32345,
+				Protocol: "http",
+				Listen:   "127.0.0.1",
+				Tag:      "transparent",
+			})
 		}
-		t.AppendDokodemo(&tproxy, 32345, "transparent")
+
 	}
 	if specialMode.ShouldLocalDnsListen() {
 		if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
@@ -1085,7 +1092,7 @@ func (t *Template) updatePrivateRouting() {
 }
 
 func (t *Template) optimizeGeoipMemoryOccupation() {
-	if asset.IsGeoipOnlyCnPrivateExists() {
+	if asset.DoesV2rayAssetExist("geoip-only-cn-private.dat") {
 		for i := range t.Routing.Rules {
 			for j := range t.Routing.Rules[i].IP {
 				switch t.Routing.Rules[i].IP[j] {
@@ -1298,6 +1305,7 @@ func (t *Template) resolveOutbounds(
 				// pure outbound
 				outboundTag := sInfo.OutboundName
 				c, err := obj.Configuration(serverObj.PriorInfo{
+					Variant:     t.Variant,
 					CoreVersion: t.CoreVersion,
 					Tag:         outboundTag,
 					PluginPort:  sInfo.PluginPort,
@@ -1327,6 +1335,7 @@ func (t *Template) resolveOutbounds(
 			// the v2ray outbound is shared by balancers
 			outboundTag := Ps2OutboundTag(obj.GetName())
 			c, err := obj.Configuration(serverObj.PriorInfo{
+				Variant:     t.Variant,
 				CoreVersion: t.CoreVersion,
 				Tag:         outboundTag,
 				PluginPort:  balancerPluginPort,
@@ -1442,7 +1451,7 @@ func (t *Template) setVlessGrpcRouting() {
 	for i := range t.Routing.Rules {
 		var bHasRule bool
 		for _, tag := range t.Routing.Rules[i].InboundTag {
-			if tag == "rule" {
+			if tag == "rule-http" {
 				bHasRule = true
 			}
 		}
@@ -1467,7 +1476,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	if err != nil {
 		return nil, fmt.Errorf("error occurs while reading template json, please check whether templateJson variable is correct json format")
 	}
-	tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
+	tmplJson.Variant, tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
 	t = &tmplJson
 	t.Setting = setting
 	// log
@@ -1516,7 +1525,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		return nil, err
 	}
 	//transparent routing
-	if t.Setting.Transparent != configure.TransparentClose {
+	if IsTransparentOn() {
 		if err = t.setTransparentRouting(); err != nil {
 			return nil, err
 		}
@@ -1691,7 +1700,7 @@ func WriteV2rayConfig(content []byte) (err error) {
 
 func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 	t = new(Template)
-	t.CoreVersion, _ = where.GetV2rayServiceVersion()
+	t.Variant, t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
@@ -1702,7 +1711,7 @@ func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 }
 
 func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
-	if t.Setting.Transparent == configure.TransparentClose {
+	if !IsTransparentOn() {
 		return
 	}
 	if o.StreamSettings == nil {
@@ -1716,9 +1725,10 @@ func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
 
 func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {
 	if t.CoreVersion == "" {
-		t.CoreVersion, _ = where.GetV2rayServiceVersion()
+		t.Variant, t.CoreVersion, _ = where.GetV2rayServiceVersion()
 	}
 	c, err := o.Configuration(serverObj.PriorInfo{
+		Variant:     t.Variant,
 		CoreVersion: t.CoreVersion,
 		Tag:         "outbound" + inboundPort,
 		PluginPort:  pluginPort,

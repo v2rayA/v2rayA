@@ -3,12 +3,12 @@ module github.com/v2rayA/v2rayA
 go 1.17
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/beevik/ntp v0.3.0
 	github.com/boltdb/bolt v1.3.1
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-gonic/gin v1.7.1
 	github.com/golang/protobuf v1.5.2
 	github.com/google/gopacket v1.1.19
@@ -25,12 +25,13 @@ require (
 	github.com/tidwall/gjson v1.10.2
 	github.com/tidwall/sjson v1.2.3
 	github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa
-	github.com/v2rayA/RoutingA v1.0.0
+	github.com/v2rayA/RoutingA v1.0.1
 	github.com/v2rayA/beego/v2 v2.0.4
 	github.com/v2rayA/shadowsocksR v1.0.4
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
+	github.com/vearutop/statigz v1.1.7
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
-	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359
 	google.golang.org/grpc v1.40.0
 )
 
