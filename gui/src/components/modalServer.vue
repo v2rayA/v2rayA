@@ -1338,7 +1338,10 @@ export default {
       }
       let coded = "";
       if (this.tabChoice === 0) {
-        if (this.v2ray.allowInsecure) {
+        if (
+          this.v2ray.allowInsecure === true || // sometimes bool, sometimes string
+          this.v2ray.allowInsecure === "true"
+        ) {
           const { result } = await this.$buefy.dialog.confirm({
             title: this.$t("InSecureConfirm.title"),
             message: this.$t("InSecureConfirm.message"),
