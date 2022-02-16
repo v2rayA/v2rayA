@@ -22,13 +22,6 @@ on:
 
 
 jobs:
-  call_copr:
-    runs-on: ubuntu-latest
-    steps:
-    - name: curl
-      run: |
-        curl -X POST ${{ secrets.COPR_HOOK_URL }}
-      
   build:
     runs-on: ubuntu-latest
     env:
