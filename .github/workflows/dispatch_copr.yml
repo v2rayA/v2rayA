@@ -1,0 +1,20 @@
+name: dispatch_copr
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "gui/**"
+      - ".github/workflows/*.yml"
+
+
+jobs:
+  call_copr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: curl
+      run: |
+        curl -X POST ${{ secrets.COPR_HOOK_URL }}
