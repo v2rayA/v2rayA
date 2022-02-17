@@ -42,8 +42,17 @@ export default {
     lastTryTime: "Last try time",
     messages: {
       notAllowInsecure:
-        "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden."
+        "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden.",
+      notRecommend:
+        "According to the docs of {name}, if you use {name}, AllowInsecure is not recommend."
     }
+  },
+  InSecureConfirm: {
+    title: "Dangerous configuration detected",
+    message:
+      "The configuration has set the <b>AllowInsecure</b> to true. This may cause security risks. Are you sure to continue?",
+    confirm: "I know what I'm doing",
+    cancel: "cancel"
   },
   subscription: {
     host: "Host",

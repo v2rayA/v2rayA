@@ -58,18 +58,19 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		return nil, err
 	}
 	data = &V2Ray{
-		Ps:       u.Fragment,
-		Add:      u.Hostname(),
-		Port:     u.Port(),
-		ID:       u.User.String(),
-		Net:      u.Query().Get("type"),
-		Type:     u.Query().Get("headerType"),
-		Host:     u.Query().Get("sni"),
-		Path:     u.Query().Get("path"),
-		TLS:      u.Query().Get("security"),
-		Flow:     u.Query().Get("flow"),
-		Alpn:     u.Query().Get("alpn"),
-		Protocol: "vless",
+		Ps:            u.Fragment,
+		Add:           u.Hostname(),
+		Port:          u.Port(),
+		ID:            u.User.String(),
+		Net:           u.Query().Get("type"),
+		Type:          u.Query().Get("headerType"),
+		Host:          u.Query().Get("sni"),
+		Path:          u.Query().Get("path"),
+		TLS:           u.Query().Get("security"),
+		Flow:          u.Query().Get("flow"),
+		Alpn:          u.Query().Get("alpn"),
+		AllowInsecure: u.Query().Get("allowInsecure") == "true",
+		Protocol:      "vless",
 	}
 	if data.Net == "" {
 		data.Net = "tcp"
@@ -224,7 +225,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: v.Path}
 		case "ws":
 			core.StreamSettings.WsSettings = &coreObj.WsSettings{
-				Path:            v.Path,
+				Path: v.Path,
 				Headers: coreObj.Headers{
 					Host: v.Host,
 				},
@@ -325,6 +326,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if v.Host != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.Host
 			}
+			if v.AllowInsecure {
+				core.StreamSettings.XTLSSettings.AllowInsecure = true
+			}
 			if v.Flow == "" {
 				v.Flow = "xtls-rprx-origin"
 			}
@@ -372,6 +376,7 @@ func (v *V2Ray) ExportToURL() string {
 		if v.TLS != "none" {
 			setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
 			setValue(&query, "alpn", v.Alpn)
+			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 		}
 		if v.TLS == "xtls" {
 			setValue(&query, "flow", v.Flow)

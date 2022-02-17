@@ -91,9 +91,7 @@
               <b-tooltip
                 v-show="v2ray.protocol === 'vless'"
                 type="is-dark"
-                :label="
-                  $t('server.messages.notAllowInsecure', { name: 'VLESS' })
-                "
+                :label="$t('server.messages.notRecommend', { name: 'VLESS' })"
                 multilined
                 position="is-right"
               >
@@ -111,9 +109,7 @@
               required
             >
               <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true" :disabled="v2ray.protocol === 'vless'">{{
-                $t("operations.yes")
-              }}</option>
+              <option :value="true">{{ $t("operations.yes") }}</option>
             </b-select>
           </b-field>
           <b-field label="Network" label-position="on-border">
@@ -840,7 +836,7 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           tls: u.params.security || "none",
-          allowInsecure: false,
+          allowInsecure: u.params.allowInsecure || false,
           protocol: "vless"
         };
         if (o.alpn !== "") {
@@ -1008,7 +1004,9 @@ export default {
             path: srcObj.path,
             host: srcObj.host,
             headerType: srcObj.type,
-            sni: srcObj.host
+            sni: srcObj.host,
+            flow: srcObj.flow,
+            allowInsecure: srcObj.allowInsecure
           };
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
@@ -1164,7 +1162,7 @@ export default {
         });
       }
     },
-    handleClickSubmit() {
+    async handleClickSubmit() {
       let valid = true;
       for (let k in this.$refs) {
         if (!this.$refs.hasOwnProperty(k)) {
@@ -1204,6 +1202,24 @@ export default {
       }
       let coded = "";
       if (this.tabChoice === 0) {
+        if (
+          this.v2ray.allowInsecure === true || // sometimes bool, sometimes string
+          this.v2ray.allowInsecure === "true"
+        ) {
+          const { result } = await this.$buefy.dialog.confirm({
+            title: this.$t("InSecureConfirm.title"),
+            message: this.$t("InSecureConfirm.message"),
+            confirmText: this.$t("InSecureConfirm.confirm"),
+            cancelText: this.$t("InSecureConfirm.cancel"),
+            type: "is-danger",
+            hasIcon: true,
+            onConfirm: () => true,
+            onCancel: () => false
+          });
+          if (!result) {
+            return;
+          }
+        }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
         coded = this.generateURL(this.ss);
