@@ -41,8 +41,17 @@ export default {
     lastTryTime: "上次测试时间",
     messages: {
       notAllowInsecure:
-        "根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure"
+        "根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure",
+      notRecommend:
+        "根据 {name} 的官方文档，如果你使用 {name}，不推荐开启 AllowInsecure"
     }
+  },
+  InSecureConfirm: {
+    title: "检测到不安全的配置",
+    message:
+      "即将保存的配置中<b>AllowInsecure</b>被设置为true，除非你知道你在做什么，否则贸然开启可能导致数据泄漏！是否继续？",
+    confirm: "我知道我在做什么",
+    cancel: "取消"
   },
   subscription: {
     host: "域名",
