@@ -213,8 +213,8 @@ github.com/v2fly/VSign v0.0.0-20201108000810-e2adc24bf848 h1:p1UzXK6VAutXFFQMnre
 github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e h1:5QefA066A1tF8gHIiADmOVOV5LS43gt3ONnlEl3xkwI=
 github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa h1:MyrHPDN4JhKoOvBOK8UUVoXd4Pd9AoIfbLClTPEbKt4=
 github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa/go.mod h1:6wk/2dqqbvcRFSLcSRR5GNfjMrcJcephXmA1HjZs0Pg=
-github.com/v2rayA/RoutingA v1.0.1 h1:vAU6Xz3aK8R2NvpKxnD/c54UouLlpGxMDhriCh6hBGU=
-github.com/v2rayA/RoutingA v1.0.1/go.mod h1:f5pkOS7f5YsjdSNWLTOTzv0/DaldMP0OeVY8Fi/G12g=
+github.com/v2rayA/RoutingA v1.0.2 h1:UHBIdrflQ0zj+PXnEDLj9D2aTk2gYreIsvtfPKNdpu4=
+github.com/v2rayA/RoutingA v1.0.2/go.mod h1:M9kQE+WtKChg48TABm9jdVBPjvm1bNDjm1zFPNfyU/c=
 github.com/v2rayA/beego/v2 v2.0.4 h1:rnlnGhip6akWhl7gUw0lYiW0x+9Q9q4eba+bBQgSCnY=
 github.com/v2rayA/beego/v2 v2.0.4/go.mod h1:PlQvo/G/eyvrJ1OaZ8rdgp/m0kh9CPIV3X1gSHS9UlE=
 github.com/v2rayA/shadowsocksR v1.0.4 h1:65Ltdy+I/DnlkQTJj+R+X85zhZ63ORE1Roy+agAcF/s=

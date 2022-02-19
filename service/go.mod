@@ -25,7 +25,7 @@ require (
 	github.com/tidwall/gjson v1.10.2
 	github.com/tidwall/sjson v1.2.3
 	github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa
-	github.com/v2rayA/RoutingA v1.0.1
+	github.com/v2rayA/RoutingA v1.0.2
 	github.com/v2rayA/beego/v2 v2.0.4
 	github.com/v2rayA/shadowsocksR v1.0.4
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
