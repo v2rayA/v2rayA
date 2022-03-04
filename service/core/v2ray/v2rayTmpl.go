@@ -1105,17 +1105,18 @@ func (t *Template) optimizeGeoipMemoryOccupation() {
 }
 
 func (t *Template) setWhitelistRouting(whitelist []Addr) {
-	var rules []coreObj.RoutingRule
+	var ipRules []coreObj.RoutingRule
+	var domainRules []coreObj.RoutingRule
 	for _, addr := range whitelist {
 		if net.ParseIP(addr.host) != nil {
-			rules = append(rules, coreObj.RoutingRule{
+			ipRules = append(ipRules, coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
 				IP:          []string{addr.host},
 				Port:        addr.port,
 			})
 		} else {
-			rules = append(rules, coreObj.RoutingRule{
+			domainRules = append(domainRules, coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
 				Domain:      []string{addr.host},
@@ -1123,8 +1124,20 @@ func (t *Template) setWhitelistRouting(whitelist []Addr) {
 			})
 		}
 	}
-	if len(rules) > 0 {
-		t.Routing.Rules = append(rules, t.Routing.Rules...)
+	if len(ipRules) > 0 || len(domainRules) > 0 {
+		var headDomainRules = t.Routing.Rules
+		var restRules []coreObj.RoutingRule
+		for i, r := range headDomainRules {
+			if len(r.IP) > 0 {
+				restRules = headDomainRules[i:]
+				headDomainRules = headDomainRules[:i]
+				break
+			}
+		}
+		resultRules := append(domainRules, headDomainRules...)
+		resultRules = append(resultRules, ipRules...)
+		resultRules = append(resultRules, restRules...)
+		t.Routing.Rules = resultRules
 	}
 }
 
