@@ -5,10 +5,12 @@ package iptables
 
 import (
 	"fmt"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 	"os/exec"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -206,6 +208,7 @@ func (p *systemProxy) GetSetupCommands() Setter {
 				// A service should not access HKEY_CURRENT_USER or HKEY_CLASSES_ROOT, especially when impersonating a user.
 				sids, err := getProfileListSubKeyNames()
 				if err != nil {
+					log.Debug("GetSetupCommands: getProfileListSubKeyNames: %v", err)
 					return err
 				}
 				for _, sid := range sids {
@@ -221,16 +224,19 @@ func (p *systemProxy) GetSetupCommands() Setter {
 				})
 			}
 			for _, todo := range todolist {
-				key, _, err := registry.CreateKey(todo.Key, todo.Prefix+`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
+				key, err := registry.OpenKey(todo.Key, todo.Prefix+`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
 				if err != nil {
-					return err
+					log.Debug("GetSetupCommands: OpenKey %v, %v: %v", todo.Key, todo.Prefix+`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, err)
+					continue
 				}
 				defer key.Close()
 				_ = key.DeleteValue("AutoConfigURL")
 				if err = key.SetDWordValue("ProxyEnable", 1); err != nil {
+					log.Debug("GetSetupCommands: key: %v: SetDWordValue ProxyEnable: %v", todo.Key, err)
 					return err
 				}
 				if err = key.SetStringValue("ProxyServer", "127.0.0.1:32345"); err != nil {
+					log.Debug("GetSetupCommands: key: %v: SetStringValue ProxyServer: %v", todo.Key, err)
 					return err
 				}
 			}
@@ -239,6 +245,7 @@ func (p *systemProxy) GetSetupCommands() Setter {
 				// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
 				// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
 				// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
+				time.Sleep(time.Second)
 				return exec.Command("netsh", "winhttp", "import", "proxy", "source=ie").Run()
 			} else {
 				return nil
