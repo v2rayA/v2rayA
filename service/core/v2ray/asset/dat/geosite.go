@@ -3,7 +3,6 @@ package dat
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	gopeed2 "github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"strings"
@@ -14,10 +13,8 @@ func UpdateLocalGeoSite() (err error) {
 	if err != nil {
 		return err
 	}
-	if err = gopeed2.Down(&gopeed2.Request{
-		Method: "GET",
-		URL:    "https://hubmirror.v2raya.org/v2fly/domain-list-community/releases/latest/download/dlc.dat",
-	}, pathSiteDat+".new"); err != nil {
+
+	if err = asset.Download("https://hubmirror.v2raya.org/v2fly/domain-list-community/releases/latest/download/dlc.dat", pathSiteDat+".new"); err != nil {
 		log.Warn("UpdateLocalGeoSite: %v", err)
 		return
 	}

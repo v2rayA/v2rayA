@@ -10,7 +10,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
-	gopeed2 "github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"net/http"
@@ -100,7 +99,7 @@ var (
 )
 
 func httpGet(url string) (data string, err error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.GetHttpClientAutomatically().Get(url)
 	if err != nil {
 		return
 	}
@@ -121,10 +120,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		return "", err
 	}
 	u := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat`, gfwlist.Tag)
-	if err = gopeed2.Down(&gopeed2.Request{
-		Method: "GET",
-		URL:    u,
-	}, pathSiteDat+".new"); err != nil {
+	if err = asset.Download(u, pathSiteDat+".new"); err != nil {
 		log.Warn("UpdateLocalGFWList: %v", err)
 		return
 	}

@@ -254,11 +254,7 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptionsV2()
 	addr := subscriptions[index].Address
-	c, err := httpClient.GetHttpClientAutomatically()
-	if err != nil {
-		reason := "failed to get proxy"
-		return fmt.Errorf("UpdateSubscription: %v", reason)
-	}
+	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {

@@ -91,10 +91,7 @@ func Import(url string, which *configure.Which) (err error) {
 		} else {
 			// maybe it is a OOCv1 token
 		}
-		c, err := httpClient.GetHttpClientAutomatically()
-		if err != nil {
-			return err
-		}
+		c := httpClient.GetHttpClientAutomatically()
 		c.Timeout = 90 * time.Second
 		infos, status, err := ResolveSubscriptionWithClient(source, c)
 		if err != nil {
