@@ -3,7 +3,6 @@ package dat
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	gopeed2 "github.com/v2rayA/v2rayA/pkg/util/gopeed"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"strings"
@@ -14,10 +13,7 @@ func UpdateLocalGeoIP() (err error) {
 	if err != nil {
 		return err
 	}
-	if err = gopeed2.Down(&gopeed2.Request{
-		Method: "GET",
-		URL:    "https://hubmirror.v2raya.org/v2fly/geoip/releases/latest/download/geoip.dat",
-	}, pathSiteDat+".new"); err != nil {
+	if err = asset.Download("https://hubmirror.v2raya.org/v2fly/geoip/releases/latest/download/geoip.dat", pathSiteDat+".new"); err != nil {
 		log.Warn("UpdateLocalGeoIP: %v", err)
 		return
 	}
