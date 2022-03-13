@@ -6,12 +6,12 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/muhammadmuzzammil1998/jsonc"
 	"github.com/v2rayA/v2rayA/common/files"
-	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -138,7 +138,7 @@ func GetV2rayConfigDirPath() (p string) {
 }
 
 func Download(url string, to string) (err error) {
-	resp, err := httpClient.GetHttpClientAutomatically().Get(url)
+	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode != 200 {
 		if err == nil {
 			defer resp.Body.Close()
