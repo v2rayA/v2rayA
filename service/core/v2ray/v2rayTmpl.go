@@ -1520,10 +1520,6 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	//DNS routing
 	t.Routing.DomainMatcher = "mph"
 	t.setDNSRouting(dnsRouting, supportUDP)
-	//rule port routing
-	if err = t.setRulePortRouting(); err != nil {
-		return nil, err
-	}
 	//transparent routing
 	if IsTransparentOn() {
 		if err = t.setTransparentRouting(); err != nil {
@@ -1567,6 +1563,11 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 
 	//set inbound listening address and routing
 	t.setDualStack()
+
+	//rule port routing
+	if err = t.setRulePortRouting(); err != nil {
+		return nil, err
+	}
 
 	//check if there are any duplicated tags
 	if err = t.checkDuplicatedTags(); err != nil {
