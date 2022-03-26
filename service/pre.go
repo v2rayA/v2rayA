@@ -370,6 +370,8 @@ func run() (err error) {
 		if err != nil {
 			log.Error("failed to start v2ray-core: %v", err)
 		}
+	} else {
+		log.Info("the core was not running the last time v2rayA exited")
 	}
 	//w := configure.GetConnectedServers()
 	//log.Println(err, ", which:", w)
