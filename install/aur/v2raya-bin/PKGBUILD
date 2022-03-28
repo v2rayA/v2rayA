@@ -15,13 +15,13 @@ provides=('v2raya')
 conflicts=('v2raya')
 
 sha_service={{sha_service}}
-sha_service_at={{sha_service_at}}
+sha_service_lite={{sha_service_lite}}
 sha_png={{sha_png}}
 sha_desktop={{sha_desktop}}
 
 source=(
     "v2raya.service"
-    "v2raya@.service"
+    "v2raya-lite.service"
     "v2raya.png"
     "v2raya.desktop"
 )
@@ -44,7 +44,7 @@ source_armv7h=(
 
 sha1sums=(
     "$sha_service"
-    "$sha_service_at"
+    "$sha_service_lite"
     "$sha_png"
     "$sha_desktop"
 )
@@ -70,6 +70,6 @@ package() {
     install -Dm 755 v2raya_"${pkgver}" "${pkgdir}"/usr/bin/v2raya
     install -Dm 644 v2raya.desktop -t "${pkgdir}"/usr/share/applications/
     install -Dm 644 v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
-    install -Dm 644 v2raya@.service -t "${pkgdir}"/usr/lib/systemd/system/
+    install -Dm 644 v2raya-lite.service -t "${pkgdir}"/usr/lib/systemd/user/
     install -Dm 644 v2raya.png "${pkgdir}"/usr/share/icons/hicolor/512x512/apps/v2raya.png
 }
