@@ -82,8 +82,7 @@ func initFunc() {
 	logWay := "console"
 	if params.LogFile != "" {
 		logWay = "file"
-		e := os.MkdirAll(filepath.Dir(params.LogFile), os.ModeDir|0755)
-		log.Info("%v", e)
+		_ = os.MkdirAll(filepath.Dir(params.LogFile), os.ModeDir|0755)
 	}
 	log.InitLog(logWay, params.LogFile, params.LogLevel, params.LogMaxDays, params.LogDisableColor, params.LogDisableTimestamp)
 }
