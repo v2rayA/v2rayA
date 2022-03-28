@@ -141,7 +141,9 @@ func GetV2rayConfigDirPath() (p string) {
 }
 
 func Download(url string, to string) (err error) {
-	resp, err := http.Get(url)
+	log.Info("Downloading %v to %v", url, to)
+	c := http.Client{Timeout: 90 * time.Second}
+	resp, err := c.Get(url)
 	if err != nil || resp.StatusCode != 200 {
 		if err == nil {
 			defer resp.Body.Close()
