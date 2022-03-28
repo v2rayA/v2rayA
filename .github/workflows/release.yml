@@ -123,7 +123,7 @@ jobs:
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
-        export FILES="install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service install/universal/v2raya-lite.service=/usr/lib/systemd/system/v2raya-lite.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+        export FILES="install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
         export PARAMS="--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
         tar -zcvf web.tar.gz web/
 
