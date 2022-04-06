@@ -658,7 +658,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 									UDP: false,
 								},
 								Sniffing: coreObj.Sniffing{
-									Enabled:      true,
+									Enabled:      false,
 									DestOverride: []string{"http", "tls"},
 								},
 							}
