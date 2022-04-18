@@ -3,16 +3,18 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/coreObj"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/coreObj"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 func init() {
@@ -160,6 +162,12 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
 			return
+		}
+		if info.Host == "" {
+			sni := gjson.Get(raw, "sni")
+			if sni.Exists() {
+				info.Host = sni.String()
+			}
 		}
 	}
 	// correct the wrong vmess as much as possible
