@@ -160,14 +160,14 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		}
 	} else {
 		err = jsoniter.Unmarshal([]byte(raw), &info)
+		if err != nil {
+			return
+		}
 		if info.Host == "" {
 			sni := gjson.Get(raw, "sni")
 			if sni.Exists() {
 				info.Host = sni.String()
 			}
-		}
-		if err != nil {
-			return
 		}
 	}
 	// correct the wrong vmess as much as possible
