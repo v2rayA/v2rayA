@@ -172,6 +172,7 @@ jobs:
         cp $P_DIR/v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe v2rayA/
         wget https://github.com/v2fly/v2ray-core/releases/download/v4.44.0/v2ray-windows-64.zip
         unzip -d v2ray-core v2ray-windows-64.zip
+        mv v2ray-core/*.dat v2rayA/
         wget https://github.com/winsw/winsw/releases/download/v2.11.0/WinSW-x64.exe -O v2rayA/v2raya.exe
         sed -i "s/@ARCH@/${ARCH}/g"       v2raya.nsi v2rayA/v2raya.xml
         sed -i "s/@VERSION@/${VERSION}/g" v2raya.nsi v2rayA/v2raya.xml
