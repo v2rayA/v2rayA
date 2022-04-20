@@ -1516,6 +1516,8 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	if t.API == nil {
 		t.SetAPI()
 	}
+	// set spare tire outbound. Fix: https://github.com/v2rayA/v2rayA/issues/447
+	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{Type: "field", OutboundTag: "proxy"})
 
 	// set routing whitelist
 	var whitelist []Addr
