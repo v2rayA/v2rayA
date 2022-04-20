@@ -118,7 +118,8 @@ Section "Install Section" SecInst
   File "v2rayA\v2raya.ico"
   File "v2rayA\v2raya.xml"
   File "v2rayA\v2raya_windows_@ARCH@_@VERSION@.exe"
-  
+  File "v2rayA\*.dat"
+
   CreateDirectory "$INSTDIR\v2ray-core"
   SetOutPath "$INSTDIR\v2ray-core"
   File "v2ray-core\*"
@@ -179,7 +180,8 @@ Section "un.Uninstall"
   Delete "$INSTDIR\v2raya.ico"
   Delete "$INSTDIR\v2raya.xml"
   Delete "$INSTDIR\v2raya_windows_@ARCH@_@VERSION@.exe"
-  
+  Delete "$INSTDIR\*.dat"
+
   Delete "$INSTDIR\v2ray-core\*"
   RMDir "$INSTDIR\v2ray-core"
 
