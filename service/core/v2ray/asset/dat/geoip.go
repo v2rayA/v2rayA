@@ -23,7 +23,11 @@ func UpdateLocalGeoIP() (err error) {
 		log.Warn("UpdateLocalGeoIP: %v", err)
 		return err
 	}
-	if !checkSha256(pathSiteDat+".new", strings.Fields(siteDatSha256)[0]) {
+	var sha256 string
+	if fields := strings.Fields(siteDatSha256); len(fields) != 0 {
+		sha256 = fields[0]
+	}
+	if !checkSha256(pathSiteDat+".new", sha256) {
 		err = fmt.Errorf("UpdateLocalGeoIP: %v", DamagedFile)
 		return
 	}
