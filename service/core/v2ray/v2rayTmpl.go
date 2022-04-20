@@ -1759,7 +1759,7 @@ func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort stri
 		Protocol: protocol,
 		Listen:   "0.0.0.0",
 		Sniffing: coreObj.Sniffing{
-			Enabled:      true,
+			Enabled:      false,
 			DestOverride: []string{"http", "tls"},
 		},
 		Settings: &coreObj.InboundSettings{
