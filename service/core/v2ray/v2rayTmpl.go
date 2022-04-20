@@ -512,6 +512,13 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 		t.Routing.Rules = append(t.Routing.Rules,
 			coreObj.RoutingRule{
 				Type:        "field",
+				OutboundTag: "proxy",
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
+				// https://github.com/v2rayA/v2rayA/issues/285
+				Domain: []string{"geosite:google"},
+			},
+			coreObj.RoutingRule{
+				Type:        "field",
 				OutboundTag: "direct",
 				InboundTag:  deepcopy.Copy(inbounds).([]string),
 				Domain:      []string{"geosite:cn"},
