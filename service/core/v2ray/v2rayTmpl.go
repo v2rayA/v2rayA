@@ -1063,8 +1063,9 @@ func (t *Template) setInbound() error {
 				Listen:   "0.0.0.0",
 				Settings: &coreObj.InboundSettings{
 					Network: "udp",
-					Address: "2.0.1.7",
-					Port:    53,
+					// Fallback DNS for non-A/AAAA/CNAME requests. https://github.com/v2rayA/v2rayA/issues/188
+					Address: "208.67.220.220",
+					Port:    5353,
 				},
 				Tag: "dns-in",
 			})
