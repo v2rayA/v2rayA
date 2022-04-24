@@ -956,6 +956,8 @@ func (t *Template) appendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, coreObj.OutboundObject{
 		Tag:      "dns-out",
 		Protocol: "dns",
+		// Fallback DNS for non-A/AAAA/CNAME requests. https://github.com/v2rayA/v2rayA/issues/188
+		Settings: coreObj.Settings{Address: "119.29.29.29", Port: 53, Network: "udp"},
 	})
 }
 
@@ -1033,8 +1035,7 @@ func (t *Template) setInbound() error {
 				Listen:   "0.0.0.0",
 				Settings: &coreObj.InboundSettings{
 					Network: "udp",
-					// Fallback DNS for non-A/AAAA/CNAME requests. https://github.com/v2rayA/v2rayA/issues/188
-					Address: "119.29.29.29",
+					Address: "2.0.1.7",
 					Port:    53,
 				},
 				Tag: "dns-in",
