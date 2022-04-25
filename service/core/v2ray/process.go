@@ -59,7 +59,7 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 		}
 	}()
 	if tmpl.API == nil {
-		tmpl.SetAPI()
+		log.Fatal("unexpected tmpl.API == nil")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	process.procCancel = cancel
