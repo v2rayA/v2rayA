@@ -1137,60 +1137,14 @@ func (t *Template) setWhitelistRouting(whitelist []Addr) {
 	}
 }
 
-func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
+func (t *Template) setGroupRouting() {
 	outbounds := t.outNames()
-	mSubjectSelector := make(map[string]struct{})
-	for outbound, isGroup := range outbounds {
-		if !isGroup {
-			continue
-		}
-
-		strategy := "leastPing"
-		interval := 10 * time.Second
-		var selector []string
-
-		for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
-			selector = append(selector, Ps2OutboundTag(vi.GetName()))
-		}
-
-		t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
-			Tag:      outbound,
-			Selector: selector,
-			Strategy: coreObj.BalancerStrategy{
-				//TODO: configure.GetOutboundSetting
-				Type: strategy,
-			},
-		})
-
-		if strategy == "leastPing" {
-			if err = service.CheckObservatorySupported(); err != nil {
-				return fmt.Errorf("not support observatory based load balance: %w", err)
-			}
-			if t.Observatory == nil {
-				t.Observatory = &coreObj.Observatory{
-					ProbeURL:      "https://gstatic.com/generate_204",
-					ProbeInterval: interval.String(),
-				}
-			}
-			for _, s := range selector {
-				mSubjectSelector[s] = struct{}{}
-			}
-		}
-	}
-	if t.Observatory != nil {
-		var subjectSelector []string
-		for s := range mSubjectSelector {
-			subjectSelector = append(subjectSelector, s)
-		}
-		t.Observatory.SubjectSelector = subjectSelector
-	}
 	for i := range t.Routing.Rules {
 		if t.Routing.Rules[i].OutboundTag != "" &&
 			outbounds[t.Routing.Rules[i].OutboundTag] == true {
 			t.Routing.Rules[i].BalancerTag, t.Routing.Rules[i].OutboundTag = t.Routing.Rules[i].OutboundTag, ""
 		}
 	}
-	return nil
 }
 
 type ServerData struct {
@@ -1413,7 +1367,7 @@ func (t *Template) resolveOutbounds(
 	return supportUDP, outboundTags, nil
 }
 
-func (t *Template) SetAPI() (port int) {
+func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 	services := []string{
 		"LoggerService",
 	}
@@ -1426,7 +1380,52 @@ func (t *Template) SetAPI() (port int) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+	outbounds := t.outNames()
+	mSubjectSelector := make(map[string]struct{})
+	for outbound, isGroup := range outbounds {
+		if !isGroup {
+			continue
+		}
+
+		strategy := "leastPing"
+		interval := 10 * time.Second
+		var selector []string
+
+		for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
+			selector = append(selector, Ps2OutboundTag(vi.GetName()))
+		}
+
+		t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
+			Tag:      outbound,
+			Selector: selector,
+			Strategy: coreObj.BalancerStrategy{
+				//TODO: configure.GetOutboundSetting
+				Type: strategy,
+			},
+		})
+
+		if strategy == "leastPing" {
+			if err = service.CheckObservatorySupported(); err != nil {
+				return port, fmt.Errorf("not support observatory based load balance: %w", err)
+			}
+			if t.Observatory == nil {
+				t.Observatory = &coreObj.Observatory{
+					ProbeURL:      "https://gstatic.com/generate_204",
+					ProbeInterval: interval.String(),
+				}
+			}
+			for _, s := range selector {
+				mSubjectSelector[s] = struct{}{}
+			}
+		}
+	}
 	if t.Observatory != nil {
+		var subjectSelector []string
+		for s := range mSubjectSelector {
+			subjectSelector = append(subjectSelector, s)
+		}
+		t.Observatory.SubjectSelector = subjectSelector
+
 		services = append(services, "ObservatoryService")
 		t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port))
 	}
@@ -1450,7 +1449,7 @@ func (t *Template) SetAPI() (port int) {
 		OutboundTag: "api-out",
 	})
 	t.ApiPort = port
-	return port
+	return port, nil
 }
 
 func (t *Template) setVlessGrpcRouting() {
@@ -1543,7 +1542,9 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.setVlessGrpcRouting()
 	// set api
 	if t.API == nil {
-		t.SetAPI()
+		if _, err = t.SetAPI(serverData); err != nil {
+			return nil, err
+		}
 	}
 	// set routing whitelist
 	var whitelist []Addr
@@ -1565,9 +1566,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{Type: "field", Network: "tcp,udp", OutboundTag: "proxy"})
 
 	// Set group routing. This should be put in the end of routing setters.
-	if err = t.setGroupRouting(serverData); err != nil {
-		return nil, err
-	}
+	t.setGroupRouting()
 
 	t.optimizeGeoipMemoryOccupation()
 
