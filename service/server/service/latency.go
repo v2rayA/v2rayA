@@ -140,7 +140,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			SpecialMode:   configure.SpecialModeNone,
 			AntiPollution: configure.AntipollutionClosed,
 		})
-		tmpl.SetAPI()
+		tmpl.SetAPI(nil)
 	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)

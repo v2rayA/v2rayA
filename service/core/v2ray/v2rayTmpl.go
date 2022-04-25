@@ -1380,54 +1380,56 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	outbounds := t.outNames()
-	mSubjectSelector := make(map[string]struct{})
-	for outbound, isGroup := range outbounds {
-		if !isGroup {
-			continue
-		}
-
-		strategy := "leastPing"
-		interval := 10 * time.Second
-		var selector []string
-
-		for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
-			selector = append(selector, Ps2OutboundTag(vi.GetName()))
-		}
-
-		t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
-			Tag:      outbound,
-			Selector: selector,
-			Strategy: coreObj.BalancerStrategy{
-				//TODO: configure.GetOutboundSetting
-				Type: strategy,
-			},
-		})
-
-		if strategy == "leastPing" {
-			if err = service.CheckObservatorySupported(); err != nil {
-				return port, fmt.Errorf("not support observatory based load balance: %w", err)
+	if serverData != nil {
+		outbounds := t.outNames()
+		mSubjectSelector := make(map[string]struct{})
+		for outbound, isGroup := range outbounds {
+			if !isGroup {
+				continue
 			}
-			if t.Observatory == nil {
-				t.Observatory = &coreObj.Observatory{
-					ProbeURL:      "https://gstatic.com/generate_204",
-					ProbeInterval: interval.String(),
+
+			strategy := "leastPing"
+			interval := 10 * time.Second
+			var selector []string
+
+			for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
+				selector = append(selector, Ps2OutboundTag(vi.GetName()))
+			}
+
+			t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
+				Tag:      outbound,
+				Selector: selector,
+				Strategy: coreObj.BalancerStrategy{
+					//TODO: configure.GetOutboundSetting
+					Type: strategy,
+				},
+			})
+
+			if strategy == "leastPing" {
+				if err = service.CheckObservatorySupported(); err != nil {
+					return port, fmt.Errorf("not support observatory based load balance: %w", err)
+				}
+				if t.Observatory == nil {
+					t.Observatory = &coreObj.Observatory{
+						ProbeURL:      "https://gstatic.com/generate_204",
+						ProbeInterval: interval.String(),
+					}
+				}
+				for _, s := range selector {
+					mSubjectSelector[s] = struct{}{}
 				}
 			}
-			for _, s := range selector {
-				mSubjectSelector[s] = struct{}{}
+		}
+		if t.Observatory != nil {
+			var subjectSelector []string
+			for s := range mSubjectSelector {
+				subjectSelector = append(subjectSelector, s)
 			}
-		}
-	}
-	if t.Observatory != nil {
-		var subjectSelector []string
-		for s := range mSubjectSelector {
-			subjectSelector = append(subjectSelector, s)
-		}
-		t.Observatory.SubjectSelector = subjectSelector
+			t.Observatory.SubjectSelector = subjectSelector
 
-		services = append(services, "ObservatoryService")
-		t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port))
+			services = append(services, "ObservatoryService")
+			t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port))
+		}
 	}
 	t.API = &coreObj.APIObject{
 		Tag:      "api-out",
