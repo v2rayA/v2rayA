@@ -1107,62 +1107,13 @@ func (t *Template) setWhitelistRouting(whitelist []Addr) {
 	}
 }
 
-func (t *Template) setGroupRouting(serverData *ServerData) (err error) {
+func (t *Template) setGroupRouting() {
 	outbounds := t.outNames()
-	for outbound, isGroup := range outbounds {
-		if !isGroup {
-			continue
-		}
-
-		//TODO: random, leastload
-		strategy := serverData.OutboundName2Setting[outbound].Type
-		interval, err := time.ParseDuration(serverData.OutboundName2Setting[outbound].ProbeInterval)
-		if err != nil {
-			log.Warn("observatory: %v", err)
-			interval = 10 * time.Second
-		}
-		var selector []string
-
-		for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
-			selector = append(selector, GroupWrapper(vi.GetName()))
-		}
-
-		t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
-			Tag:      outbound,
-			Selector: selector,
-			Strategy: coreObj.BalancerStrategy{
-				Type: strategy.String(),
-				Settings: &coreObj.StrategySettings{
-					ObserverTag: outbound,
-				},
-			},
-		})
-
-		if strings.ToLower(strategy.String()) == "leastping" {
-			if t.MultiObservatory == nil {
-				t.MultiObservatory = &coreObj.MultiObservatory{}
-			}
-			probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
-			if _, err := url.Parse(probeUrl); err != nil {
-				log.Warn("observatory: %v", err)
-				probeUrl = "https://gstatic.com/generate_204"
-			}
-			t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
-				Tag: outbound,
-				Settings: coreObj.Observatory{
-					SubjectSelector: selector,
-					ProbeURL:        probeUrl,
-					ProbeInterval:   interval.String(),
-				},
-			})
-		}
-	}
 	for i := range t.Routing.Rules {
 		if t.Routing.Rules[i].OutboundTag != "" && outbounds[t.Routing.Rules[i].OutboundTag] == true {
 			t.Routing.Rules[i].BalancerTag, t.Routing.Rules[i].OutboundTag = t.Routing.Rules[i].OutboundTag, ""
 		}
 	}
-	return nil
 }
 
 type ServerData struct {
@@ -1389,7 +1340,7 @@ func (t *Template) resolveOutbounds(
 	return supportUDP, outboundTags, nil
 }
 
-func (t *Template) SetAPI() (port int) {
+func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 	services := []string{
 		"LoggerService",
 	}
@@ -1402,16 +1353,68 @@ func (t *Template) SetAPI() (port int) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	if t.MultiObservatory != nil {
-		services = append(services, "ObservatoryService")
+	// observatory
+	if serverData != nil {
+		outbounds := t.outNames()
+		for outbound, isGroup := range outbounds {
+			if !isGroup {
+				continue
+			}
 
-		var observatoryTags []string
-		for name, isGroup := range t.outNames() {
-			if isGroup {
-				observatoryTags = append(observatoryTags, name)
+			//TODO: random, leastload
+			strategy := serverData.OutboundName2Setting[outbound].Type
+			interval, err := time.ParseDuration(serverData.OutboundName2Setting[outbound].ProbeInterval)
+			if err != nil {
+				log.Warn("observatory: %v", err)
+				interval = 10 * time.Second
+			}
+			var selector []string
+
+			for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
+				selector = append(selector, GroupWrapper(vi.GetName()))
+			}
+
+			t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
+				Tag:      outbound,
+				Selector: selector,
+				Strategy: coreObj.BalancerStrategy{
+					Type: strategy.String(),
+					Settings: &coreObj.StrategySettings{
+						ObserverTag: outbound,
+					},
+				},
+			})
+
+			if strings.ToLower(strategy.String()) == "leastping" {
+				if t.MultiObservatory == nil {
+					t.MultiObservatory = &coreObj.MultiObservatory{}
+				}
+				probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
+				if _, err := url.Parse(probeUrl); err != nil {
+					log.Warn("observatory: %v", err)
+					probeUrl = "https://gstatic.com/generate_204"
+				}
+				t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
+					Tag: outbound,
+					Settings: coreObj.Observatory{
+						SubjectSelector: selector,
+						ProbeURL:        probeUrl,
+						ProbeInterval:   interval.String(),
+					},
+				})
 			}
 		}
-		t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port, observatoryTags))
+		if t.MultiObservatory != nil {
+			services = append(services, "ObservatoryService")
+
+			var observatoryTags []string
+			for name, isGroup := range t.outNames() {
+				if isGroup {
+					observatoryTags = append(observatoryTags, name)
+				}
+			}
+			t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port, observatoryTags))
+		}
 	}
 	t.API = &coreObj.APIObject{
 		Tag:      "api-out",
@@ -1433,7 +1436,7 @@ func (t *Template) SetAPI() (port int) {
 		OutboundTag: "api-out",
 	})
 	t.ApiPort = port
-	return port
+	return port, nil
 }
 
 func (t *Template) setVmessInboundRouting() {
@@ -1519,7 +1522,9 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.setVmessInboundRouting()
 	// set api
 	if t.API == nil {
-		t.SetAPI()
+		if _, err = t.SetAPI(serverData); err != nil {
+			return nil, err
+		}
 	}
 	// set routing whitelist
 	var whitelist []Addr
@@ -1541,9 +1546,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{Type: "field", Network: "tcp,udp", OutboundTag: "proxy"})
 
 	// Set group routing. This should be put in the end of routing setters.
-	if err = t.setGroupRouting(serverData); err != nil {
-		return nil, err
-	}
+	t.setGroupRouting()
 
 	t.optimizeGeoipMemoryOccupation()
 
