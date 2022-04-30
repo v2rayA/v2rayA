@@ -184,6 +184,9 @@ func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname strin
 	if m == nil {
 		return
 	}
+	if len(m.Questions) == 0 {
+		return
+	}
 	// dns请求一般只有一个question
 	dm := m.Questions[0].Name.String()
 	if !m.Response {
