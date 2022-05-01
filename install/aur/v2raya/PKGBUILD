@@ -21,7 +21,7 @@ build() {
 
     cd "$srcdir/v2rayA-$pkgver/service"
     export GO111MODULE=on
-    export GOPROXY=https://mirrors.aliyun.com/goproxy/
+    export GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
     go build -ldflags '-X github.com/v2rayA/v2rayA/conf.Version='$pkgver' -s -w' -o v2raya
 }
 
