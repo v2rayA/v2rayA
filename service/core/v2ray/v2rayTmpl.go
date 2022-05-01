@@ -497,6 +497,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 					Type:        "field",
 					OutboundTag: "direct",
 					InboundTag: []string{
+						// do not worry the system proxy case.
 						"transparent",
 					},
 					Port: "53",
@@ -812,12 +813,16 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 }
 
 func (t *Template) setTransparentRouting() (err error) {
+	tproxyInbounds := []string{"transparent"}
+	if t.Setting.TransparentType == configure.TransparentSystemProxy {
+		tproxyInbounds = append(tproxyInbounds, "transparent2")
+	}
 	switch t.Setting.Transparent {
 	case configure.TransparentProxy:
 	case configure.TransparentWhitelist:
-		return t.AppendRoutingRuleByMode(configure.WhitelistMode, []string{"transparent"})
+		return t.AppendRoutingRuleByMode(configure.WhitelistMode, tproxyInbounds)
 	case configure.TransparentGfwlist:
-		return t.AppendRoutingRuleByMode(configure.GfwlistMode, []string{"transparent"})
+		return t.AppendRoutingRuleByMode(configure.GfwlistMode, tproxyInbounds)
 	case configure.TransparentFollowRule:
 		// transparent mode is the same as rule
 		for i := range t.Routing.Rules {
@@ -829,7 +834,7 @@ func (t *Template) setTransparentRouting() (err error) {
 				}
 			}
 			if ok {
-				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, "transparent")
+				t.Routing.Rules[i].InboundTag = append(t.Routing.Rules[i].InboundTag, tproxyInbounds...)
 			}
 		}
 	}
@@ -1051,6 +1056,12 @@ func (t *Template) setInbound() error {
 				Protocol: "http",
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
+			})
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     32346,
+				Protocol: "socks",
+				Listen:   "127.0.0.1",
+				Tag:      "transparent2",
 			})
 		}
 
