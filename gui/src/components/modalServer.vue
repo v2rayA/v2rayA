@@ -254,7 +254,6 @@
               v-model="v2ray.path"
               type="text"
               expanded
-              required
             />
           </b-field>
         </b-tab-item>
