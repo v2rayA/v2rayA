@@ -234,6 +234,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if err := service.CheckGrpcSupported(); err != nil {
 				return Configuration{}, err
 			}
+			if v.Path == "" {
+				v.Path = "GunService"
+			}
 			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: v.Path}
 		case "ws":
 			core.StreamSettings.WsSettings = &coreObj.WsSettings{
