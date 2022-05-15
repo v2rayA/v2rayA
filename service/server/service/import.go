@@ -39,6 +39,7 @@ func Import(url string, which *configure.Which) (err error) {
 		strings.HasPrefix(url, "trojan-go://") ||
 		strings.HasPrefix(url, "http-proxy://") ||
 		strings.HasPrefix(url, "https-proxy://") ||
+		strings.HasPrefix(url, "socks5://") ||
 		strings.HasPrefix(url, "http2://") {
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)

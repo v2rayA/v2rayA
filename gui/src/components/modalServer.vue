@@ -695,6 +695,52 @@
             />
           </b-field>
         </b-tab-item>
+
+        <b-tab-item label="SOCKS5">
+          <b-field label="Name" label-position="on-border">
+            <b-input
+              ref="socks5_name"
+              v-model="socks5.name"
+              :placeholder="$t('configureServer.servername')"
+              expanded
+            />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input
+              ref="socks5_host"
+              v-model="socks5.host"
+              required
+              placeholder="IP / HOST"
+              expanded
+            />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input
+              ref="socks5_port"
+              v-model="socks5.port"
+              required
+              :placeholder="$t('configureServer.port')"
+              type="number"
+              expanded
+            />
+          </b-field>
+          <b-field label="Username" label-position="on-border">
+            <b-input
+              ref="socks5_username"
+              v-model="socks5.username"
+              :placeholder="$t('configureServer.username')"
+              expanded
+            />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input
+              ref="socks5_password"
+              v-model="socks5.password"
+              :placeholder="$t('configureServer.password')"
+              expanded
+            />
+          </b-field>
+        </b-tab-item>
       </b-tabs>
     </section>
     <footer v-if="!readonly" class="modal-card-foot flex-end">
@@ -801,6 +847,14 @@ export default {
       protocol: "http",
       name: ""
     },
+    socks5: {
+      username: "",
+      password: "",
+      host: "",
+      port: "",
+      protocol: "socks5",
+      name: ""
+    },
     tabChoice: 0,
     presetFlows: [
       "xtls-rprx-direct",
@@ -879,6 +933,11 @@ export default {
           ) {
             this.http = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 5;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("socks5://")
+          ) {
+            this.socks5 = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 6;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -1100,6 +1159,16 @@ export default {
           protocol: u.protocol,
           name: decodeURIComponent(u.hash)
         };
+      } else if (url.toLowerCase().startsWith("socks5://")) {
+        let u = parseURL(url);
+        return {
+          username: decodeURIComponent(u.username),
+          password: decodeURIComponent(u.password),
+          host: u.host,
+          port: u.port,
+          protocol: u.protocol,
+          name: decodeURIComponent(u.hash)
+        };
       }
       return null;
     },
@@ -1263,6 +1332,20 @@ export default {
             });
           }
           return generateURL(tmp);
+        case "socks5":
+          tmp = {
+            protocol: "socks5",
+            host: srcObj.host,
+            port: srcObj.port,
+            hash: srcObj.name
+          };
+          if (srcObj.username && srcObj.password) {
+            Object.assign(tmp, {
+              username: srcObj.username,
+              password: srcObj.password
+            });
+          }
+          return generateURL(tmp);
       }
       return null;
     },
@@ -1318,6 +1401,9 @@ export default {
         if (this.tabChoice === 5 && !k.startsWith("http_")) {
           continue;
         }
+        if (this.tabChoice === 6 && !k.startsWith("socks5_")) {
+          continue;
+        }
         let x = this.$refs[k];
         if (!x) {
           continue;
@@ -1366,6 +1452,8 @@ export default {
         coded = this.generateURL(this.trojan);
       } else if (this.tabChoice === 5) {
         coded = this.generateURL(this.http);
+      } else if (this.tabChoice === 6) {
+        coded = this.generateURL(this.socks5);
       }
       this.$emit("submit", coded);
     }
