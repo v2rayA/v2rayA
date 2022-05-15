@@ -1035,6 +1035,9 @@ func (t *Template) setInbound() error {
 				Listen:   "0.0.0.0",
 				Settings: &coreObj.InboundSettings{
 					Network: "udp",
+					// the non-A/AAAA/CNAME problem has been fixed by the setting in DNS outbound.
+					// so the Address here is innocuous.
+					// related commit: https://github.com/v2rayA/v2rayA/commit/ecbf915d4be8b9066955a21059519266bcca6b92
 					Address: "2.0.1.7",
 					Port:    53,
 				},
