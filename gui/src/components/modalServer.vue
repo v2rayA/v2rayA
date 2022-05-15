@@ -696,19 +696,19 @@
           </b-field>
         </b-tab-item>
 
-        <b-tab-item label="SOCKS">
+        <b-tab-item label="SOCKS5">
           <b-field label="Name" label-position="on-border">
             <b-input
-              ref="socks_name"
-              v-model="socks.name"
+              ref="socks5_name"
+              v-model="socks5.name"
               :placeholder="$t('configureServer.servername')"
               expanded
             />
           </b-field>
           <b-field label="Host" label-position="on-border">
             <b-input
-              ref="socks_host"
-              v-model="socks.host"
+              ref="socks5_host"
+              v-model="socks5.host"
               required
               placeholder="IP / HOST"
               expanded
@@ -716,8 +716,8 @@
           </b-field>
           <b-field label="Port" label-position="on-border">
             <b-input
-              ref="socks_port"
-              v-model="socks.port"
+              ref="socks5_port"
+              v-model="socks5.port"
               required
               :placeholder="$t('configureServer.port')"
               type="number"
@@ -726,16 +726,16 @@
           </b-field>
           <b-field label="Username" label-position="on-border">
             <b-input
-              ref="socks_username"
-              v-model="socks.username"
+              ref="socks5_username"
+              v-model="socks5.username"
               :placeholder="$t('configureServer.username')"
               expanded
             />
           </b-field>
           <b-field label="Password" label-position="on-border">
             <b-input
-              ref="socks_password"
-              v-model="socks.password"
+              ref="socks5_password"
+              v-model="socks5.password"
               :placeholder="$t('configureServer.password')"
               expanded
             />
@@ -847,12 +847,12 @@ export default {
       protocol: "http",
       name: ""
     },
-    socks: {
+    socks5: {
       username: "",
       password: "",
       host: "",
       port: "",
-      protocol: "socks",
+      protocol: "socks5",
       name: ""
     },
     tabChoice: 0,
@@ -934,9 +934,9 @@ export default {
             this.http = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 5;
           } else if (
-            res.data.data.sharingAddress.toLowerCase().startsWith("socks://")
+            res.data.data.sharingAddress.toLowerCase().startsWith("socks5://")
           ) {
-            this.socks = this.resolveURL(res.data.data.sharingAddress);
+            this.socks5 = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 6;
           }
           this.$nextTick(() => {
@@ -1159,7 +1159,7 @@ export default {
           protocol: u.protocol,
           name: decodeURIComponent(u.hash)
         };
-      } else if (url.toLowerCase().startsWith("socks://")) {
+      } else if (url.toLowerCase().startsWith("socks5://")) {
         let u = parseURL(url);
         return {
           username: decodeURIComponent(u.username),
@@ -1332,9 +1332,9 @@ export default {
             });
           }
           return generateURL(tmp);
-        case "socks":
+        case "socks5":
           tmp = {
-            protocol: srcObj.protocol + "-proxy",
+            protocol: "socks5",
             host: srcObj.host,
             port: srcObj.port,
             hash: srcObj.name
@@ -1401,7 +1401,7 @@ export default {
         if (this.tabChoice === 5 && !k.startsWith("http_")) {
           continue;
         }
-        if (this.tabChoice === 6 && !k.startsWith("socks_")) {
+        if (this.tabChoice === 6 && !k.startsWith("socks5_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1453,7 +1453,7 @@ export default {
       } else if (this.tabChoice === 5) {
         coded = this.generateURL(this.http);
       } else if (this.tabChoice === 6) {
-        coded = this.generateURL(this.socks);
+        coded = this.generateURL(this.socks5);
       }
       this.$emit("submit", coded);
     }

@@ -9,12 +9,8 @@ import (
 )
 
 func init() {
-	FromLinkRegister("socks-proxy", NewSOCKS)
-	FromLinkRegister("socks", NewSOCKS)
-	EmptyRegister("socks-proxy", func() (ServerObj, error) {
-		return new(SOCKS), nil
-	})
-	EmptyRegister("socks", func() (ServerObj, error) {
+	FromLinkRegister("socks5", NewSOCKS)
+	EmptyRegister("socks5", func() (ServerObj, error) {
 		return new(SOCKS), nil
 	})
 }
@@ -51,8 +47,8 @@ func ParseSocksURL(u string) (data *SOCKS, err error) {
 		data.Password, _ = t.User.Password()
 	}
 	switch t.Scheme {
-	case "socks", "socks-proxy":
-		data.Protocol = "socks"
+	case "socks5":
+		data.Protocol = "socks5"
 		if data.Port == 0 {
 			data.Port = 1080
 		}
