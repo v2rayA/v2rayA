@@ -198,7 +198,7 @@ jobs:
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
         cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/pool/main/v/v2raya/
         cp web.tar.gz apt/pool/main/v/v2raya/web_$VERSION.tar.gz
-        echo "apt.v2raya.mzz.pub" > apt/CNAME
+        echo "apt.v2raya.org" > apt/CNAME
 
     - name: Deploy APT repository
       if: startsWith(github.ref, 'refs/tags/v')
