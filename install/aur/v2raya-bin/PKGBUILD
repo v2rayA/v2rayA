@@ -1,4 +1,4 @@
-# Maintainer: mzz2017 <m@mzz.pub>
+# Maintainer: mzz2017 <mzz@tuta.io>
 
 pkgname=v2raya-bin
 _pkgname=v2raya
@@ -27,19 +27,19 @@ source=(
 )
 
 source_i686=(
-    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_x86_${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.org/pool/main/v/v2raya/v2raya_linux_x86_${pkgver}"
 )
 source_x86_64=(
-    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_x64_${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.org/pool/main/v/v2raya/v2raya_linux_x64_${pkgver}"
 )
 source_aarch64=(
-    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm64_${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.org/pool/main/v/v2raya/v2raya_linux_arm64_${pkgver}"
 )
 source_armv6h=(
-    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.org/pool/main/v/v2raya/v2raya_linux_arm_${pkgver}"
 )
 source_armv7h=(
-    "v2raya_${pkgver}::https://apt.v2raya.mzz.pub/pool/main/v/v2raya/v2raya_linux_arm_${pkgver}"
+    "v2raya_${pkgver}::https://apt.v2raya.org/pool/main/v/v2raya/v2raya_linux_arm_${pkgver}"
 )
 
 sha1sums=(

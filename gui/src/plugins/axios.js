@@ -148,7 +148,7 @@ axios.interceptors.response.use(
         duration: 10000,
         actionText: i18n.t("operations.switchSite"),
         onAction: () => {
-          window.open("http://v.mzz.pub", "_self");
+          window.open("http://v.v2raya.org", "_self");
         }
       });
       SnackbarProgrammatic.open({
