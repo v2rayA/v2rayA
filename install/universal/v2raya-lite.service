@@ -11,4 +11,4 @@ Environment=V2RAYA_LOG_FILE=%L/v2raya/v2raya.log
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
