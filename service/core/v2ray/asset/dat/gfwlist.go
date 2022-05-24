@@ -41,20 +41,9 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	b, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	tag := gjson.GetBytes(b, "0.name").Str
-	u := gjson.GetBytes(b, "0.commit.url").Str
-	if tag == "" || u == "" {
-		err = fmt.Errorf("failed to get latest version of GFWList: fail in getting latest tag")
-		return
-	}
-	resp, err = httpClient.HttpGetUsingSpecificClient(c, u)
+	t, err := time.Parse("200601021504", tag)
 	if err != nil {
-		err = fmt.Errorf("failed to get latest version of GFWList: %w", err)
-		return
-	}
-	b, _ = io.ReadAll(resp.Body)
-	t := gjson.GetBytes(b, "commit.committer.date").Time()
-	if t.IsZero() {
-		err = fmt.Errorf("failed to get latest version of GFWList: fail in getting commit date of latest tag")
+		err = fmt.Errorf("failed to get latest version of GFWList: fail in getting commit date of latest tag: %w", err)
 		return
 	}
 	g.Tag = tag
