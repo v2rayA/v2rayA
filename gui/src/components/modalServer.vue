@@ -304,7 +304,7 @@
             label="Mode"
             label-position="on-border"
           >
-            <b-select ref="ss_mode" value="websocket" expanded>
+            <b-select ref="ss_mode" v-model="ss.mode" expanded>
               <option value="websocket">websocket</option>
             </b-select>
           </b-field>
@@ -744,6 +744,7 @@ export default {
       obfs: "http",
       tls: "",
       path: "/",
+      mode: "websocket",
       host: "",
       password: "",
       server: "",
@@ -794,7 +795,7 @@ export default {
       protocol: "socks5",
       name: ""
     },
-    tabChoice: 0,
+    tabChoice: 0
   }),
   computed: {
     filteredDataArray() {
@@ -945,6 +946,7 @@ export default {
               break;
             case "v2ray-plugin":
               obj.tls = "";
+              obj.mode = "websocket";
               break;
           }
           for (let i = 1; i < arr.length; i++) {
@@ -954,11 +956,19 @@ export default {
               case "obfs":
                 obj.obfs = a[1];
                 break;
+              case "host":
               case "obfs-host":
                 obj.host = a[1];
                 break;
+              case "path":
               case "obfs-path":
                 obj.path = a[1];
+                break;
+              case "mode":
+                obj.mode = a[1];
+                break;
+              case "tls":
+                obj.tls = "tls";
             }
           }
         }
