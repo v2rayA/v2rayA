@@ -315,14 +315,30 @@ func ParseSip003(plugin string) Sip003 {
 
 func (s *Sip003) String() string {
 	list := []string{s.Name}
-	if s.Opts.Obfs != "" {
-		list = append(list, "obfs="+s.Opts.Obfs)
-	}
-	if s.Opts.Host != "" {
-		list = append(list, "obfs-host="+s.Opts.Host)
-	}
-	if s.Opts.Path != "" {
-		list = append(list, "obfs-uri="+s.Opts.Path)
+	switch s.Name {
+	case "simple-obfs":
+		if s.Opts.Obfs != "" {
+			list = append(list, "obfs="+s.Opts.Obfs)
+		}
+		if s.Opts.Host != "" {
+			list = append(list, "obfs-host="+s.Opts.Host)
+		}
+		if s.Opts.Path != "" {
+			list = append(list, "obfs-uri="+s.Opts.Path)
+		}
+	case "v2ray-plugin":
+		if s.Opts.Tls != "" {
+			list = append(list, "tls")
+		}
+		if s.Opts.Obfs != "" {
+			list = append(list, "mode="+s.Opts.Obfs)
+		}
+		if s.Opts.Host != "" {
+			list = append(list, "host="+s.Opts.Host)
+		}
+		if s.Opts.Path != "" {
+			list = append(list, "path="+s.Opts.Path)
+		}
 	}
 	return strings.Join(list, ";")
 }
