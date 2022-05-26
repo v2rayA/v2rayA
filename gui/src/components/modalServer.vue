@@ -856,7 +856,14 @@ export default {
       protocol: "socks5",
       name: ""
     },
-    tabChoice: 0
+    tabChoice: 0,
+    presetFlows: [
+      "xtls-rprx-direct",
+      "xtls-rprx-direct-udp443",
+      "xtls-rprx-splice",
+      "xtls-rprx-splice-udp443"
+    ],
+    flowSelected: null
   }),
   computed: {
     filteredDataArray() {
