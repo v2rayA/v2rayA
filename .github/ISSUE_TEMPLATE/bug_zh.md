@@ -27,10 +27,13 @@ labels: bug
  ```bash
  # daemon mode
  journalctl -u v2raya | tail -n 50
+ sudo tail -n 50 /var/log/v2raya/v2raya.log
  
  # docker mode
  docker logs v2raya
  ```
+ 或者粘贴来自 Web 页面的日志
+
 ```shell
 # 此处贴入运行日志
 

@@ -24,10 +24,13 @@ labels: help wanted
  ```bash
  # daemon mode
  journalctl -u v2raya | tail -n 50
- 
+ sudo tail -n 50 /var/log/v2raya/v2raya.log
+
  # docker mode
  docker logs v2raya
  ```
+ You can also paste the log that comes from web administration page
+
 ```shell
 # Paste running logs here
 
