@@ -1,11 +1,6 @@
 package service
 
 import (
-	"bytes"
-	"crypto"
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +11,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -23,95 +19,6 @@ import (
 	"strings"
 	"time"
 )
-
-//func ResolveSubscription(source string) (infos []*nodeData.NodeData, err error) {
-//	return ResolveSubscriptionWithClient(source, http.DefaultClient)
-//}
-
-// OOCv1ApiToken is used to exchange API access info for OOCv1.
-type OOCv1ApiToken struct {
-	Version    int    `json:"version"`
-	BaseUrl    string `json:"baseUrl"`
-	Secret     string `json:"secret"`
-	UserId     string `json:"userId"`
-	CertSha256 string `json:"certSha256"`
-}
-
-// OOCv1 contains fields for all supported protocols
-// for easy serialization and deserialization.
-type OOCv1 struct {
-	Username       string   `json:"username"`
-	BytesUsed      uint64   `json:"bytesUsed"`
-	BytesRemaining uint64   `json:"bytesRemaining"`
-	ExpiryDate     int64    `json:"expiryDate"`
-	Protocols      []string `json:"protocols"`
-
-	Shadowsocks []OOCv1Shadowsocks `json:"shadowsocks"`
-}
-
-// OOCv1Shadowsocks represents a Shadowsocks server
-// in the `shadowsocks` array of an OOCv1 JSON document.
-type OOCv1Shadowsocks struct {
-	Id              string `json:"id"`
-	Name            string `json:"name"`
-	Address         string `json:"address"`
-	Port            int    `json:"port"`
-	Method          string `json:"method"`
-	Password        string `json:"password"`
-	PluginName      string `json:"pluginName"`
-	PluginVersion   string `json:"pluginVersion"`
-	PluginOptions   string `json:"pluginOptions"`
-	PluginArguments string `json:"pluginArguments"`
-}
-
-// resolveOOCv1 unmarshals a raw OOCv1 JSON document into an OOCv1 value.
-func resolveOOCv1(raw string) (infos []serverObj.ServerObj, oocv1 OOCv1, err error) {
-	err = json.Unmarshal([]byte(raw), &oocv1)
-	if err != nil {
-		return
-	}
-
-	// Detect protocols
-	// Emit a warning if unsupported protocols exist.
-	for _, protocol := range oocv1.Protocols {
-		if protocol != "shadowsocks" {
-			log.Warn("OOCv1: unsupported protocol: %v", protocol)
-		}
-	}
-
-	for _, server := range oocv1.Shadowsocks {
-		var sip003 *serverObj.Sip003
-		switch server.PluginName {
-		case "simple-obfs", "obfs-local":
-			sip003 = &serverObj.Sip003{
-				Name: server.PluginName,
-				Opts: serverObj.ParseSip003Opts(server.PluginOptions),
-			}
-		case "":
-			// no plugin
-		default:
-			log.Warn("failed to parse (OOCv1): %v: unsupported plugin: %v", server.Name, server.PluginName)
-			continue
-		}
-		u := url.URL{
-			Scheme:   "ss",
-			User:     url.UserPassword(server.Method, server.Password),
-			Host:     net.JoinHostPort(server.Address, strconv.Itoa(server.Port)),
-			Fragment: server.Name,
-		}
-		if sip003 != nil {
-			u.RawQuery = url.Values{"plugin": []string{sip003.String()}}.Encode()
-		}
-		obj, err := serverObj.NewFromLink(u.Scheme, u.String())
-		if err != nil {
-			log.Warn("failed to parse (OOCv1): %v: %v", server.Name, err)
-			continue
-		}
-		infos = append(infos, obj)
-	}
-
-	return
-}
 
 type SIP008 struct {
 	Version        int    `json:"version"`
@@ -177,63 +84,99 @@ func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err
 	return
 }
 
+type SubscriptionUserInfo struct {
+	Upload   int64
+	Download int64
+	Total    int64
+	Expire   time.Time
+}
+
+func (sui *SubscriptionUserInfo) String() string {
+	var outputs []string
+	if sui.Download != -1 {
+		outputs = append(outputs, fmt.Sprintf("download: %v GB", sui.Download/1e9))
+	}
+	if sui.Upload != -1 {
+		outputs = append(outputs, fmt.Sprintf("upload: %v GB", sui.Upload/1e9))
+	}
+	if sui.Total != -1 {
+		outputs = append(outputs, fmt.Sprintf("total: %v GB", sui.Total/1e9))
+	}
+	if !sui.Expire.IsZero() {
+		outputs = append(outputs, fmt.Sprintf("expire: %v UTC", sui.Expire.Format("2006-01-02 15:04")))
+	}
+	return strings.Join(outputs, "; ")
+}
+
+func parseSubscriptionUserInfo(str string) SubscriptionUserInfo {
+	fields := strings.Split(str, ";")
+	sui := SubscriptionUserInfo{
+		Upload:   -1,
+		Download: -1,
+		Total:    -1,
+		Expire:   time.Time{},
+	}
+	for _, field := range fields {
+		field = strings.TrimSpace(field)
+		kv := strings.SplitN(field, "=", 2)
+		if len(kv) < 2 {
+			continue
+		}
+		v, e := strconv.ParseInt(kv[1], 10, 64)
+		if e != nil {
+			continue
+		}
+		switch kv[0] {
+		case "upload":
+			sui.Upload = v
+		case "download":
+			sui.Download = v
+		case "total":
+			sui.Total = v
+		case "expire":
+			sui.Expire = time.Unix(v, 0).UTC()
+		}
+	}
+	return sui
+}
+
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
 	c := *client
 	if c.Timeout < 30*time.Second {
 		c.Timeout = 30 * time.Second
 	}
 
-	// Check if source is OOCv1 API token.
-	var u string
-	var token OOCv1ApiToken
-	if err = json.Unmarshal([]byte(source), &token); err == nil {
-		u = token.BaseUrl + "/" + token.Secret + "/ooc/v1/" + token.UserId
-		if token.CertSha256 != "" {
-			client = &http.Client{
-				Transport: &http.Transport{TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
-					VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-						h := crypto.SHA256.New()
-						for _, line := range rawCerts {
-							h.Write(line)
-						}
-						fingerprint := hex.EncodeToString(h.Sum(nil))
-						if fingerprint == token.CertSha256 {
-							return fmt.Errorf("server certificate fingerprint mismatch (actual: %s, expected: %s)", fingerprint, token.CertSha256)
-						}
-						return nil
-					},
-				}},
-			}
-		}
-	} else {
-		u = source
-	}
-
-	res, err := httpClient.HttpGetUsingSpecificClient(client, u)
-	client.Timeout = 30 * time.Second
+	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
 	if err != nil {
 		return
 	}
-
-	buf := new(bytes.Buffer)
-	_, _ = buf.ReadFrom(res.Body)
 	defer res.Body.Close()
-
-	// base64 decode
-	raw, err := common.Base64StdDecode(buf.String())
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		raw, _ = common.Base64URLDecode(buf.String())
+		return nil, "", err
 	}
-	return ResolveLines(raw)
+	// base64 decode
+	raw, err := common.Base64StdDecode(string(b))
+	if err != nil {
+		raw, _ = common.Base64URLDecode(string(b))
+	}
+	infos, status, err = ResolveLines(raw)
+	if err != nil {
+		return nil, "", err
+	}
+	subscriptionUserInfo := res.Header.Get("Subscription-Userinfo")
+	sui := parseSubscriptionUserInfo(subscriptionUserInfo)
+	if len(status) > 0 {
+		status = sui.String() + "|" + status
+	} else {
+		status = sui.String()
+	}
+	return infos, status, nil
 }
 
 func ResolveLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
-	var oocv1 OOCv1
 	var sip SIP008
-	if infos, oocv1, err = resolveOOCv1(raw); err == nil && len(oocv1.Protocols) > 0 {
-		status = "Username: " + oocv1.Username + " | " + getDataUsageStatus(oocv1.BytesUsed, oocv1.BytesRemaining)
-	} else if infos, sip, err = resolveSIP008(raw); err == nil {
+	if infos, sip, err = resolveSIP008(raw); err == nil {
 		status = getDataUsageStatus(sip.BytesUsed, sip.BytesRemaining)
 	} else {
 		infos, status, err = resolveByLines(raw)
