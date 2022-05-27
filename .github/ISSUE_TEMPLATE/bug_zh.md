@@ -26,7 +26,7 @@ labels: bug
 
  ```bash
  # daemon mode
- journalctl -u v2raya | tail -n 50 以及
+ journalctl -u v2raya | tail -n 50
  sudo tail -n 50 /var/log/v2raya/v2raya.log
  
  # docker mode
