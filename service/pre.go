@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray"
@@ -172,34 +170,6 @@ func migrateServerFormat() {
 }
 
 func initConfigure() {
-	//等待网络连通
-	v2ray.CheckAndStopTransparentProxy()
-	var l net.Listener
-	for {
-		addrs, err := resolv.LookupHost("www.apple.com")
-		if err == nil && len(addrs) > 0 {
-			break
-		}
-		if l == nil {
-			if l, err = net.Listen("tcp", conf.GetEnvironmentConfig().Address); err != nil {
-				log.Fatal("%v", err)
-			}
-			e := gin.New()
-			e.GET("/", func(c *gin.Context) {
-				c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-				c.Header("Pragma", "no-cache")
-				c.Header("Expires", "0")
-				c.String(200, "Waiting for the network connected; refresh the page later.\n正在等待网络连接，请稍后刷新页面。")
-			})
-			go e.RunListener(l)
-		}
-		log.Alert("waiting for the network connected")
-		time.Sleep(5 * time.Second)
-	}
-	if l != nil {
-		l.Close()
-	}
-	log.Alert("network is connected")
 	//初始化配置
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 
