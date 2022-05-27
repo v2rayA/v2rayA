@@ -7,7 +7,8 @@ import (
 	"time"
 )
 
-var DefaultResolver *net.Resolver
+var defaultResolver *net.Resolver
+var systemResolver *net.Resolver
 
 var dnsServers = []struct {
 	addr    string
@@ -25,7 +26,7 @@ var dnsServers = []struct {
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	dialer := net.Dialer{Timeout: 1000 * time.Millisecond}
-	DefaultResolver = &net.Resolver{
+	defaultResolver = &net.Resolver{
 		PreferGo:     true,
 		StrictErrors: false,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
@@ -35,10 +36,19 @@ func init() {
 			return dialer.DialContext(ctx, network, address)
 		},
 	}
+	systemResolver = &net.Resolver{
+		PreferGo:     true,
+		StrictErrors: false,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			return dialer.DialContext(ctx, network, address)
+		},
+	}
 }
 
 func LookupHost(host string) (addrs []string, err error) {
-	addrs, err = net.LookupHost(host)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	addrs, err = systemResolver.LookupHost(ctx, host)
 	lookupAgain := len(addrs) == 0 || err != nil
 	if !lookupAgain {
 		for _, addr := range addrs {
@@ -49,7 +59,9 @@ func LookupHost(host string) (addrs []string, err error) {
 		}
 	}
 	if lookupAgain {
-		return DefaultResolver.LookupHost(context.Background(), host)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		return defaultResolver.LookupHost(ctx, host)
 	}
 	return addrs, err
 }
