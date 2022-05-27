@@ -12,7 +12,6 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/core/iptables"
@@ -353,7 +352,6 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 		}
 	}
 	domainsToLookup = common.Deduplicate(domainsToLookup)
-	var domainsToHosts []string
 	if len(domainsToLookup) > 0 {
 		var dnsList []string
 		if service.CheckTcpDnsSupported() == nil {
@@ -371,57 +369,25 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 		t.DNS.Servers = append(t.DNS.Servers, d...)
 		routing = append(routing, r...)
 	}
-	// set hosts
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	ech := make(chan error, len(domainsToHosts))
-	for _, domain := range domainsToHosts {
-		wg.Add(1)
-		go func(domain string) {
-			defer wg.Done()
-			ips, err := resolv.LookupHost(domain)
-			if err != nil {
-				ech <- fmt.Errorf("%w: please make sure you're connected to the Internet", err)
-				return
-			}
-			ips = FilterIPs(ips)
-			mu.Lock()
-			if t.DNS.Hosts == nil {
-				t.DNS.Hosts = make(coreObj.Hosts)
-			}
-			if service.CheckHostsListSupported() == nil {
-				t.DNS.Hosts[domain] = ips
-			} else {
-				t.DNS.Hosts[domain] = ips[0]
-			}
-			mu.Unlock()
-		}(domain)
-	}
-	wg.Wait()
-	select {
-	case err = <-ech:
-		return nil, err
-	default:
-		// deduplicate
-		strRouting := make([]string, 0, len(routing))
-		for _, r := range routing {
-			b, err := jsoniter.Marshal(r)
-			if err != nil {
-				log.Fatal("%v", err)
-			}
-			strRouting = append(strRouting, string(b))
+	// deduplicate
+	strRouting := make([]string, 0, len(routing))
+	for _, r := range routing {
+		b, err := jsoniter.Marshal(r)
+		if err != nil {
+			log.Fatal("%v", err)
 		}
-		strRouting = common.Deduplicate(strRouting)
-		routing = routing[:0]
-		for _, sr := range strRouting {
-			var r coreObj.RoutingRule
-			if err := jsoniter.Unmarshal([]byte(sr), &r); err != nil {
-				log.Fatal("%v: %v", err, sr)
-			}
-			routing = append(routing, r)
-		}
-		return routing, nil
+		strRouting = append(strRouting, string(b))
 	}
+	strRouting = common.Deduplicate(strRouting)
+	routing = routing[:0]
+	for _, sr := range strRouting {
+		var r coreObj.RoutingRule
+		if err := jsoniter.Unmarshal([]byte(sr), &r); err != nil {
+			log.Fatal("%v: %v", err, sr)
+		}
+		routing = append(routing, r)
+	}
+	return routing, nil
 }
 
 // FilterIPs returns filtered IP list.
