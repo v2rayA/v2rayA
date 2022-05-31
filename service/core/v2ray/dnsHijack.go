@@ -9,6 +9,7 @@ import (
 
 const (
 	resolverFile  = "/etc/resolv.conf"
+	resolverBack  = "/etc/resolv.conf.old"
 	checkInterval = 3 * time.Second
 )
 
@@ -35,13 +36,25 @@ func (h *ResolvHijacker) Close() error {
 	return nil
 }
 
-const HijackFlag = "# v2rayA DNS hijack"
+const HijackFlag = "# v2rayA DNS hijack\n"
 
 var hijacker *ResolvHijacker
 
 func (h *ResolvHijacker) HijackResolv() error {
-	err := os.WriteFile(resolverFile,
-		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 119.29.29.29\n"),
+	data, err := os.ReadFile(resolverFile)
+	if err != nil {
+		err = fmt.Errorf("failed to hijackDNS: [read] %v", err)
+		return err
+	}
+	err = os.WriteFile(resolverBack,
+		data,
+		os.FileMode(0644),
+	)
+	if err != nil {
+		err = fmt.Errorf("failed to hijackDNS: [write] %v", err)
+	}
+	err = os.WriteFile(resolverFile,
+		[]byte(HijackFlag+"nameserver 127.2.0.17\nnameserver 119.29.29.29\n"),
 		os.FileMode(0644),
 	)
 	if err != nil {
@@ -61,12 +74,12 @@ func removeResolvHijacker() {
 	if hijacker != nil {
 		hijacker.Close()
 		if hijacker.localDNS {
+			data, err := os.ReadFile(resolverBack)
 			os.WriteFile(resolverFile,
-				[]byte(HijackFlag+"\nnameserver 223.6.6.6\nnameserver 119.29.29.29\n"),
+				data,
 				os.FileMode(0644),
 			)
 		}
 		hijacker = nil
-
 	}
 }
