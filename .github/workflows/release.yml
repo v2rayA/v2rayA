@@ -150,13 +150,14 @@ jobs:
         fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
         
         # https://www.freebsd.org/platforms/
-        fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $PARAMS --description "$DESC" --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_armv6_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv6 v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_armv7_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv7 v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        # fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
+        # fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $PARAMS --description "$DESC" --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
+        # fpm -s dir -t freebsd -p installer_freebsd_armv6_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv6 v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        # fpm -s dir -t freebsd -p installer_freebsd_armv7_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv7 v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
+        # fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
 
         # MacOSX
+        # macOS users should go to https://github.com/v2rayA/homebrew-v2raya
     - name: Windows Installer
       if: startsWith(github.ref, 'refs/tags/v')
       env:
@@ -293,11 +294,6 @@ jobs:
           installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_freebsd_i386_${{ steps.prep.outputs.VERSION }}.txz
-          installer_freebsd_amd64_${{ steps.prep.outputs.VERSION }}.txz
-          installer_freebsd_armv6_${{ steps.prep.outputs.VERSION }}.txz
-          installer_freebsd_armv7_${{ steps.prep.outputs.VERSION }}.txz
-          installer_freebsd_aarch64_${{ steps.prep.outputs.VERSION }}.txz
           installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
     - name: Refresh Cloudflare Cache
       if: startsWith(github.ref, 'refs/tags/v')
