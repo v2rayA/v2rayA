@@ -26,7 +26,7 @@ require (
 	github.com/tidwall/sjson v1.2.3
 	github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa
 	github.com/v2rayA/RoutingA v1.0.2
-	github.com/v2rayA/beego/v2 v2.0.4
+	github.com/v2rayA/beego/v2 v2.0.6
 	github.com/v2rayA/shadowsocksR v1.0.4
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
 	github.com/vearutop/statigz v1.1.7
@@ -39,6 +39,7 @@ require (
 	github.com/dgryski/go-camellia v0.0.0-20191119043421-69a8a13fb23d // indirect
 	github.com/dgryski/go-idea v0.0.0-20170306091226-d2fb45a411fb // indirect
 	github.com/dgryski/go-rc2 v0.0.0-20150621095337-8a9021637152 // indirect
+	github.com/djherbis/times v1.5.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
