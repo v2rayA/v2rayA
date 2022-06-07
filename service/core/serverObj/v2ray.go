@@ -3,11 +3,13 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/v2rayA/v2rayA/common/ntp"
 	"net"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
@@ -196,6 +198,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		}
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
+			if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
+				return Configuration{}, fmt.Errorf("please sync datetime first. Your datetime is %v, and the correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
+			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
 					Address: v.Add,

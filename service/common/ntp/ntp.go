@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DisplayFormat = "2006/01/02 15:04"
+	DisplayFormat = "2006/01/02 15:04 MST"
 )
 
 func IsDatetimeSynced() (bool, time.Time, error) {
