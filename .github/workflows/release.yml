@@ -119,7 +119,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
         gem install fpm -v 1.13.1
-        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
+        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip snapcraft lxd
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
@@ -180,7 +180,16 @@ jobs:
         makensis v2raya.nsi
         mv installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe $P_DIR
         cd $P_DIR
-        
+    - name: Snap Package
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        P_DIR: ${{ steps.prep.outputs.P_DIR }}
+        SNAPCRAFT_BUILD_ENVIRONMENT: lxd # QEMU/KVM may malfunction in a VM
+      run: |
+        cd $P_DIR/install/
+        snapcraft snap
+        # Should publish snap here
+        #snapcraft upload v2raya_$VERSION_amd64.snap --release stable
 
     - name: Import GPG key
       if: startsWith(github.ref, 'refs/tags/v')
@@ -194,6 +203,7 @@ jobs:
       env:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
+        pwd
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
