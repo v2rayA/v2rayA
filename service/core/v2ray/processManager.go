@@ -2,13 +2,11 @@ package v2ray
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"time"
 )
 
 type CoreProcessManager struct {
@@ -45,9 +43,6 @@ func (m *CoreProcessManager) Stop(saveRunning bool) {
 
 func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 	resolv.CheckResolvConf()
-	if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
-		return fmt.Errorf("Please sync datetime first. Your datetime is %v, and the correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
-	}
 
 	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
