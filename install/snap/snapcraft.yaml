@@ -1,0 +1,79 @@
+name: v2raya
+base: core20
+version: '1.5.7'
+summary: V2Ray Linux client, compatible with SS, SSR, Trojan, PingTunnel protocols.
+description: |
+  v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.
+  We are committed to providing the simplest operation and meet most needs.
+  Thanks to the advantages of Web GUI, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
+  Project：https://github.com/v2rayA/v2rayA
+
+grade: devel
+confinement: strict
+
+parts:
+  v2ray-core:
+    source: https://github.com/v2fly/fhs-install-v2ray.git
+    source-type: git
+    plugin: nil
+    override-build: |
+      sudo bash install-release.sh --force
+      # This is a dirty hack to fix another dirty hack (v2ray-core being installed via a script instead of .deb package)
+      mkdir -p /root/parts/v2ray-core/install/usr/local/bin
+      mkdir -p /root/parts/v2ray-core/install/usr/local/{share,etc}/v2ray
+      cp /usr/local/bin/v2ray               /root/parts/v2ray-core/install/usr/local/bin/
+      cp /usr/local/bin/v2ctl               /root/parts/v2ray-core/install/usr/local/bin/
+      cp /usr/local/share/v2ray/geoip.dat   /root/parts/v2ray-core/install/usr/local/share/v2ray/
+      cp /usr/local/share/v2ray/geosite.dat /root/parts/v2ray-core/install/usr/local/share/v2ray/
+      cp /usr/local/etc/v2ray/config.json   /root/parts/v2ray-core/install/usr/local/etc/v2ray/
+    filesets:
+      v2ray-core-files: [
+      usr/local/bin/v2ray,
+      usr/local/bin/v2ctl,
+      usr/local/share/v2ray/geoip.dat,
+      usr/local/share/v2ray/geosite.dat,
+      usr/local/etc/v2ray/config.json
+      ]
+    stage:
+      - $v2ray-core-files
+    prime:
+      - $v2ray-core-files
+  v2raya: 
+    source: https://github.com/v2rayA/v2rayA/releases/download/v1.5.7/installer_debian_amd64_1.5.7.deb
+    source-type: deb
+    plugin: dump
+
+plugs:
+  v2raya-files:
+    interface: system-files
+    read:
+      - /var/log/v2raya.log
+      - /etc/v2raya
+      - /etc/v2raya/boltv4.db
+      - /etc/v2raya/config.json
+      - /etc/resolv.conf
+      - /run/user/0
+    write:
+      - /var/log/v2raya.log
+      - /etc/v2raya
+      - /etc/v2raya/boltv4.db
+      - /etc/v2raya/config.json
+      - /etc/resolv.conf
+      - /run/user/0
+
+apps:
+  v2raya:
+    daemon: simple
+    command: usr/bin/v2raya --v2ray-bin $SNAP/usr/local/bin/v2ray
+    environment:
+      V2RAYA_LOG_FILE: /var/log/v2raya.log
+    restart-condition: on-failure
+    install-mode: enable
+    plugs:
+      - network
+      - network-bind
+      - firewall-control
+      - v2raya-files
+      - kernel-module-control
+      - network-control
+      - network-observe
