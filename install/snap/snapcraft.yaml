@@ -1,6 +1,6 @@
 name: v2raya
 base: core20
-version: '1.5.7'
+version: '@VERSION@'
 summary: V2Ray Linux client, compatible with SS, SSR, Trojan, PingTunnel protocols.
 description: |
   v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.
@@ -39,7 +39,7 @@ parts:
     prime:
       - $v2ray-core-files
   v2raya: 
-    source: https://github.com/v2rayA/v2rayA/releases/download/v1.5.7/installer_debian_amd64_1.5.7.deb
+    source: https://github.com/v2rayA/v2rayA/releases/download/v@VERSION@/installer_debian_amd64_@VERSION@.deb
     source-type: deb
     plugin: dump
 

@@ -184,9 +184,11 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       env:
         P_DIR: ${{ steps.prep.outputs.P_DIR }}
+        VERSION: ${{ steps.prep.outputs.VERSION }}
         SNAPCRAFT_BUILD_ENVIRONMENT: lxd # QEMU/KVM may malfunction in a VM
       run: |
         cd $P_DIR/install/
+        sed -i "s/@VERSION@/${VERSION}/g" snap/snapcraft.yml
         snapcraft snap
         # Should publish snap here
         #snapcraft upload v2raya_$VERSION_amd64.snap --release stable
