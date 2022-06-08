@@ -39,7 +39,7 @@ parts:
     prime:
       - $v2ray-core-files
   v2raya: 
-    source: https://github.com/v2rayA/v2rayA/releases/download/v@VERSION@/installer_debian_amd64_@VERSION@.deb
+    source: installer_debian_amd64_@VERSION@.deb
     source-type: deb
     plugin: dump
 
