@@ -5,7 +5,7 @@ summary: V2Ray Linux client, compatible with SS, SSR, Trojan, PingTunnel protoco
 description: |
   v2rayA is a V2Ray Linux client supporting global transparent proxy, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.
   We are committed to providing the simplest operation and meet most needs.
-  Thanks to the advantages of Web GUI, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
+  Thanks to the advantages of Web GUI, you can not only use it on your local computer, but also easily deploy it on a home server or NAS.
   Project：https://github.com/v2rayA/v2rayA
 
 grade: stable
