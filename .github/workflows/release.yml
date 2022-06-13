@@ -194,6 +194,7 @@ jobs:
         snapcraft snap --output v2raya_${VERSION}_amd64.snap
         mv v2raya_${VERSION}_amd64.snap $P_DIR
         # Should publish snap here
+        #snapcraft login --with snapcraft-credfile
         #snapcraft upload v2raya_$VERSION_amd64.snap --release stable
         cd $P_DIR
 
