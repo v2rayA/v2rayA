@@ -8,7 +8,7 @@ description: |
   Thanks to the advantages of Web GUI, you can not only use it on your local computer, but also easily deploy it on a router or NAS.
   Project：https://github.com/v2rayA/v2rayA
 
-grade: devel
+grade: stable
 confinement: strict
 
 parts:
