@@ -19,6 +19,7 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
+  workflow_dispatch:
 
 
 jobs:
