@@ -25,7 +25,7 @@ require (
 	github.com/tidwall/sjson v1.2.2
 	github.com/v2fly/v2ray-core/v4 v4.42.2-0.20210928173456-a9979057dcaa
 	github.com/v2rayA/RoutingA v1.0.2
-	github.com/v2rayA/beego/v2 v2.0.6
+	github.com/v2rayA/beego/v2 v2.0.7
 	github.com/v2rayA/shadowsocksR v1.0.4
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
 	github.com/vearutop/statigz v1.1.7
@@ -75,6 +75,6 @@ require (
 // use `go list -m all` to confirm the final module used
 //replace github.com/v2rayA/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
-//replace github.com/v2rayA/beego/v2 => ../../beego
+//replace github.com/v2rayA/beego/v2 => D:\beego
 
 replace github.com/boltdb/bolt => github.com/go-gitea/bolt v0.0.0-20170420010917-ccd680d8c1a0
