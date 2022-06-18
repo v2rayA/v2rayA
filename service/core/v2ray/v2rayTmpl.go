@@ -369,6 +369,10 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 		t.DNS.Servers = append(t.DNS.Servers, d...)
 		routing = append(routing, r...)
 	}
+	// hard code for SNI problem like apple pushing
+	t.DNS.Hosts = make(coreObj.Hosts)
+	t.DNS.Hosts["courier.push.apple.com"] = []string{"1-courier.push.apple.com"}
+
 	// deduplicate
 	strRouting := make([]string, 0, len(routing))
 	for _, r := range routing {
@@ -476,6 +480,13 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 
 func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds []string) (err error) {
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
+	// apple pushing. #495 #479
+	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
+		Type:        "field",
+		OutboundTag: firstOutboundTag,
+		InboundTag:  deepcopy.Copy(inbounds).([]string),
+		Domain:      []string{"domain:push-apple.com.akadns.net", "domain:push.apple.com"},
+	})
 	switch mode {
 	case configure.WhitelistMode:
 		// foreign domains with intranet IP should be proxied first rather than directly connected
