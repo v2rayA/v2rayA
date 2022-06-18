@@ -483,7 +483,7 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 	// apple pushing. #495 #479
 	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
 		Type:        "field",
-		OutboundTag: firstOutboundTag,
+		OutboundTag: "direct",
 		InboundTag:  deepcopy.Copy(inbounds).([]string),
 		Domain:      []string{"domain:push-apple.com.akadns.net", "domain:push.apple.com"},
 	})
