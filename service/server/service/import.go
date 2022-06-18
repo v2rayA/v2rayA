@@ -89,8 +89,6 @@ func Import(url string, which *configure.Which) (err error) {
 				u.Scheme = "http"
 				source = u.String()
 			}
-		} else {
-			// maybe it is a OOCv1 token
 		}
 		c := httpClient.GetHttpClientAutomatically()
 		c.Timeout = 90 * time.Second
