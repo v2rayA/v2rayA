@@ -62,7 +62,7 @@ func ServeGUI(r *gin.Engine) {
 	if webDir == "" {
 		webFS, err := fs.Sub(webRoot, "web")
 		if err != nil {
-			log.Fatal("%v", err)
+			log.Fatal("fs.Sub: %v", err)
 		}
 		ss := http.StripPrefix("/static", statigz.FileServer(webFS.(fs.ReadDirFS)))
 		r.GET("/static/*w", func(c *gin.Context) {
@@ -70,12 +70,12 @@ func ServeGUI(r *gin.Engine) {
 		})
 		f, err := webFS.Open("index.html")
 		if err != nil {
-			log.Fatal("%v", err)
+			log.Fatal("webFS.Open index.html:", err)
 		}
 		defer f.Close()
 		html, err := io.ReadAll(f)
 		if err != nil {
-			log.Fatal("%v", err)
+			log.Fatal("ReadAll index.html: %v", err)
 		}
 		r.GET("/", cachedHTML(html))
 	} else {
@@ -96,12 +96,12 @@ func ServeGUI(r *gin.Engine) {
 
 			f, err := os.Open(path.Join(webDir, "index.html"))
 			if err != nil {
-				log.Fatal("%v", err)
+				log.Fatal("Open index.html: %v", err)
 			}
 			defer f.Close()
 			html, err := io.ReadAll(f)
 			if err != nil {
-				log.Fatal("%v", err)
+				log.Fatal("ReadAll index.html: %v", err)
 			}
 			r.GET("/", cachedHTML(html))
 		}

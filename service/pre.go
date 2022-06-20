@@ -60,7 +60,7 @@ func checkEnvironment() {
 	}
 	if occupied, sockets, err := ports.IsPortOccupied([]string{v2rayAListeningPort + ":tcp"}); occupied {
 		if err != nil {
-			log.Fatal("netstat:", err)
+			log.Fatal("netstat: %v", err)
 		}
 		for _, socket := range sockets {
 			process, err := socket.Process()
@@ -214,7 +214,7 @@ func initConfigure() {
 			log.Alert("downloading missing geoip.dat and geosite.dat")
 			var l net.Listener
 			if l, err = net.Listen("tcp", conf.GetEnvironmentConfig().Address); err != nil {
-				log.Fatal("%v", err)
+				log.Fatal("net.Listen: %v", err)
 			}
 			e := gin.New()
 			e.GET("/", func(c *gin.Context) {
@@ -227,13 +227,13 @@ func initConfigure() {
 			if !asset.DoesV2rayAssetExist("geoip.dat") {
 				err := dat.UpdateLocalGeoIP()
 				if err != nil {
-					log.Fatal("%v", err)
+					log.Fatal("UpdateLocalGeoIP: %v", err)
 				}
 			}
 			if !asset.DoesV2rayAssetExist("geosite.dat") {
 				err = dat.UpdateLocalGeoSite()
 				if err != nil {
-					log.Fatal("%v", err)
+					log.Fatal("UpdateLocalGeoSite: %v", err)
 				}
 			}
 			if l != nil {

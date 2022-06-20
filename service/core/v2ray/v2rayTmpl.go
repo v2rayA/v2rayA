@@ -378,7 +378,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 	for _, r := range routing {
 		b, err := jsoniter.Marshal(r)
 		if err != nil {
-			log.Fatal("%v", err)
+			return nil, fmt.Errorf("jsoniter.Marshal: %v", err)
 		}
 		strRouting = append(strRouting, string(b))
 	}
@@ -387,7 +387,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 	for _, sr := range strRouting {
 		var r coreObj.RoutingRule
 		if err := jsoniter.Unmarshal([]byte(sr), &r); err != nil {
-			log.Fatal("%v: %v", err, sr)
+			return nil, fmt.Errorf("jsoniter.Unmarshal: RoutingRule: %v", err)
 		}
 		routing = append(routing, r)
 	}
