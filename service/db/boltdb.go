@@ -4,7 +4,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
-	"log"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -38,7 +38,7 @@ func initDB() {
 	var err error
 	db, err = bolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("bolt.Open: %v", err)
 	}
 }
 

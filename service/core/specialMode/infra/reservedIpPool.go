@@ -33,7 +33,7 @@ func (u *ReservedIpPool) Lookup(domain string) [4]byte {
 		d := out.(string)
 		ip, ok := u.m[d]
 		if !ok {
-			log.Fatal("cannot find the ip of deleting domain:", d)
+			log.Fatal("cannot find the ip of deleting domain: %v", d)
 		}
 		u.m[domain] = ip
 		delete(u.m, d)
