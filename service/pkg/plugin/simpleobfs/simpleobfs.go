@@ -89,14 +89,11 @@ func (s *SimpleObfs) dial(network, addr string) (c net.Conn, err error) {
 	}
 	switch s.obfstype {
 	case HTTP:
-		rs := strings.Split(s.addr, ":")
-		var port string
-		if len(rs) == 1 {
+		_, port, _ := net.SplitHostPort(s.addr)
+		if port == "" {
 			port = "80"
-		} else {
-			port = rs[1]
 		}
-		c = NewHTTPObfs(rc, rs[0], port, s.path)
+		c = NewHTTPObfs(rc, s.host, port, s.path)
 	case TLS:
 		c = NewTLSObfs(rc, s.host)
 	}
