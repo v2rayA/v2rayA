@@ -558,7 +558,17 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 					Domain:      []string{"geosite:geolocation-!cn"},
 				})
 		}
+
 		t.Routing.Rules = append(t.Routing.Rules,
+			coreObj.RoutingRule{
+				Type:        "field",
+				OutboundTag: firstOutboundTag,
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
+				// From: https://github.com/Loyalsoldier/geoip/blob/release/text/telegram.txt
+				IP: []string{"91.105.192.0/23", "91.108.4.0/22", "91.108.8.0/21", "91.108.16.0/21", "91.108.56.0/22",
+					"95.161.64.0/20", "149.154.160.0/20", "185.76.151.0/24", "2001:67c:4e8::/48", "2001:b28:f23c::/47",
+					"2001:b28:f23f::/48", "2a0a:f280:203::/48"},
+			},
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
