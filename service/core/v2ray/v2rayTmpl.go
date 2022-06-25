@@ -355,7 +355,11 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 	}
 	// hard code for SNI problem like apple pushing
 	t.DNS.Hosts = make(coreObj.Hosts)
-	t.DNS.Hosts["courier.push.apple.com"] = []string{"1-courier.push.apple.com"}
+	if service.CheckHostsListSupported() == nil {
+		t.DNS.Hosts["courier.push.apple.com"] = []string{"1-courier.push.apple.com"}
+	} else {
+		t.DNS.Hosts["courier.push.apple.com"] = "1-courier.push.apple.com"
+	}
 
 	// deduplicate
 	strRouting := make([]string, 0, len(routing))
