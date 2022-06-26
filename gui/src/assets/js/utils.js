@@ -1,4 +1,5 @@
 import CONST from "./const.js";
+const URI = require("urijs");
 
 function _locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
@@ -136,54 +137,21 @@ function generateURL({
   hash,
   path
 }) {
-  const a = document.createElement("a");
-  if (protocol) {
-    if (protocol.indexOf("://") === -1) {
-      protocol = protocol + "://";
-    }
-  } else {
-    protocol = "http://";
-  }
-  let user = "";
-  if (username || password) {
-    console.log(username, password, protocol ? protocol : "http://");
-    if (username && password) {
-      user = `${username}:${password}@`;
-    } else {
-      user = `${username || password}@`;
-    }
-  }
-  let query = "";
-  console.log(params);
-  if (params) {
-    let first = true;
-    for (const k in params) {
-      if (!params.hasOwnProperty(k)) {
-        continue;
-      }
-      if (!first) {
-        query += "&";
-      } else {
-        first = false;
-      }
-      query += `${k}=${encodeURIComponent(params[k])}`;
-    }
-  }
-  console.log(query);
-  path = path || "";
-  if (path && path.length > 0 && path[0] !== "/") {
-    path = "/" + path;
-  }
-  a.href = `http://${user}${host}${port ? `:${port}` : ""}${path ? path : ""}`;
-  console.log(
-    `http://${user}${host}${port ? `:${port}` : ""}${path ? path : ""}`
-  );
-  a.search = query.length ? `?${query}` : "";
-  a.hash = hash;
-  const r = (protocol ? protocol : "http://") + a.href.substr(7);
-  a.remove();
-  console.log(r, a.href);
-  return r;
+  /**
+   * 所有参数设置默认值
+   * 避免方法检测到参数为null/undefine返回该值查询结果
+   * 查询结果当然不是URI类型，导致链式调用失败
+   */
+  const uri=URI().protocol(protocol||'http')
+    .username(username||'')
+    .password(password||'')
+    .host(host||'')
+    .port(port||80)
+    .path(path||'')
+    .query(params||{})
+    .hash(hash||'')
+  const res=uri.toString();
+  return res;
 }
 
 function toInt(s) {
