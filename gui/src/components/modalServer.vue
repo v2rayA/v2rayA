@@ -320,8 +320,8 @@
           </b-field>
           <b-field
             v-if="
-              ss.obfs === 'http' ||
-                ss.obfs === 'tls' ||
+              (ss.plugin === 'simple-obfs' &&
+                (ss.obfs === 'http' || ss.obfs === 'tls')) ||
                 ss.plugin === 'v2ray-plugin'
             "
             label="Host"
@@ -335,7 +335,10 @@
             />
           </b-field>
           <b-field
-            v-if="ss.obfs === 'http' || ss.plugin === 'v2ray-plugin'"
+            v-if="
+              (ss.plugin === 'simple-obfs' && ss.obfs === 'http') ||
+                ss.plugin === 'v2ray-plugin'
+            "
             label="Path"
             label-position="on-border"
           >
@@ -1124,6 +1127,9 @@ export default {
             case "mkcp":
               break;
             default:
+              if (obj.net === "tcp" && obj.type === "http") {
+                break;
+              }
               obj.path = "";
           }
           if (!(obj.protocol === "vless" && obj.tls === "xtls")) {
