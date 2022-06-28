@@ -20,8 +20,6 @@ type CoreProcessManager struct {
 var ProcessManager CoreProcessManager
 
 func (m *CoreProcessManager) beforeStop(p *Process) {
-	CheckAndStopTransparentProxy()
-	specialMode.StopDNSSupervisor()
 	if p.template.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentPreStopHook != "" {
 		log.Info("Execute the transparent pre stop hook: %v", conf.GetEnvironmentConfig().TransparentPreStopHook)
@@ -34,6 +32,8 @@ func (m *CoreProcessManager) beforeStop(p *Process) {
 			log.Info("Executing the transparent pre stop hook: %v", string(b))
 		}
 	}
+	CheckAndStopTransparentProxy()
+	specialMode.StopDNSSupervisor()
 }
 
 func (m *CoreProcessManager) afterStop(p *Process) {
@@ -77,16 +77,6 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 }
 
 func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
-	resolv.CheckResolvConf()
-
-	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
-	}
-
-	if err = t.CheckInboundPortsOccupied(); err != nil {
-		return err
-	}
-
 	if t.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentPreStartHook != "" {
 		log.Info("Execute the transparent pre start hook: %v", conf.GetEnvironmentConfig().TransparentPreStartHook)
@@ -98,6 +88,17 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 			log.Info("Executing the transparent pre start hook: %v", string(b))
 		}
 	}
+
+	resolv.CheckResolvConf()
+
+	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
+		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+	}
+
+	if err = t.CheckInboundPortsOccupied(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -107,6 +108,7 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 		return
 	}
 	specialMode.CheckAndSetupDNSSupervisor()
+
 	if t.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentAfterStartHook != "" {
 		log.Info("Execute the transparent after start hook: %v", conf.GetEnvironmentConfig().TransparentAfterStartHook)
