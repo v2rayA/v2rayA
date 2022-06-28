@@ -3,42 +3,77 @@ package v2ray
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"os/exec"
+	"sync"
 )
 
 type CoreProcessManager struct {
-	p *Process
+	p  *Process
+	mu sync.Mutex
 }
 
 var ProcessManager CoreProcessManager
 
-func (m *CoreProcessManager) beforeStop() {
+func (m *CoreProcessManager) beforeStop(p *Process) {
 	CheckAndStopTransparentProxy()
 	specialMode.StopDNSSupervisor()
+	if p.template.Setting.Transparent != configure.TransparentClose &&
+		conf.GetEnvironmentConfig().TransparentPreStopHook != "" {
+		log.Info("Execute the transparent pre stop hook: %v", conf.GetEnvironmentConfig().TransparentPreStopHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStopHook).CombinedOutput()
+		if err != nil {
+			log.Warn("Error when executing the transparent pre stop hook: %v", err)
+			return
+		}
+		if len(b) > 0 {
+			log.Info("Executing the transparent pre stop hook: %v", string(b))
+		}
+	}
 }
 
-func (m *CoreProcessManager) afterStop() {
+func (m *CoreProcessManager) afterStop(p *Process) {
+	if p.template.Setting.Transparent != configure.TransparentClose &&
+		conf.GetEnvironmentConfig().TransparentAfterStopHook != "" {
+		log.Info("Execute the transparent after stop hook: %v", conf.GetEnvironmentConfig().TransparentAfterStopHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentAfterStopHook).CombinedOutput()
+		if err != nil {
+			log.Warn("Error when executing the transparent after stop hook: %v", err)
+			return
+		}
+		if len(b) > 0 {
+			log.Info("Executing the transparent after stop hook: %v", string(b))
+		}
+	}
 }
 
 func (m *CoreProcessManager) Stop(saveRunning bool) {
-	m.beforeStop()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.stop(saveRunning)
+}
 
-	var err error
-	if m.p != nil {
-		err = m.p.Close()
-		if err != nil {
-			log.Warn("CoreProcessManager.Stop: %v", err)
-		}
+func (m *CoreProcessManager) stop(saveRunning bool) {
+	if m.p == nil {
+		return
 	}
-	m.p = nil
+
+	m.beforeStop(m.p)
+	err := m.p.Close()
+	if err != nil {
+		log.Warn("CoreProcessManager.Stop: %v", err)
+	}
 	if saveRunning {
 		configure.SetRunning(false)
 	}
 
-	m.afterStop()
+	m.afterStop(m.p)
+
+	m.p = nil
 }
 
 func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
@@ -51,20 +86,46 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 	if err = t.CheckInboundPortsOccupied(); err != nil {
 		return err
 	}
+
+	if t.Setting.Transparent != configure.TransparentClose &&
+		conf.GetEnvironmentConfig().TransparentPreStartHook != "" {
+		log.Info("Execute the transparent pre start hook: %v", conf.GetEnvironmentConfig().TransparentPreStartHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStartHook).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("executing the transparent pre start hook: %w", err)
+		}
+		if len(b) > 0 {
+			log.Info("Executing the transparent pre start hook: %v", string(b))
+		}
+	}
 	return nil
 }
 
 func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 	if err = CheckAndSetupTransparentProxy(true, t.Setting); err != nil {
-		m.Stop(true)
+		m.stop(true)
 		return
 	}
 	specialMode.CheckAndSetupDNSSupervisor()
+	if t.Setting.Transparent != configure.TransparentClose &&
+		conf.GetEnvironmentConfig().TransparentAfterStartHook != "" {
+		log.Info("Execute the transparent after start hook: %v", conf.GetEnvironmentConfig().TransparentAfterStartHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentAfterStartHook).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("executing the transparent after start hook: %w", err)
+		}
+		if len(b) > 0 {
+			log.Info("Executing the transparent after start hook: %v", string(b))
+		}
+	}
 	return nil
 }
 
 func (m *CoreProcessManager) Start(t *Template) (err error) {
-	m.Stop(true)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.stop(true)
 
 	if err := m.beforeStart(t); err != nil {
 		return err
