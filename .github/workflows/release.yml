@@ -120,7 +120,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
         gem install fpm -v 1.13.1
-        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip snapcraft lxd
+        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
@@ -180,22 +180,6 @@ jobs:
         sed -i "s/@VERSION@/${VERSION}/g" v2raya.nsi v2rayA/v2raya.xml
         makensis v2raya.nsi
         mv installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe $P_DIR
-        cd $P_DIR
-    - name: Snap Package
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        P_DIR: ${{ steps.prep.outputs.P_DIR }}
-        VERSION: ${{ steps.prep.outputs.VERSION }}
-        SNAPCRAFT_BUILD_ENVIRONMENT: lxd # QEMU/KVM may malfunction inside a VM
-      run: |
-        cd $P_DIR/install/
-        sed -i "s/@VERSION@/${VERSION}/g" snap/snapcraft.yaml
-        ln -t . ../installer_debian_amd64_$VERSION.deb # Snapcraft doesn't support symlinks, so we have to hardlink
-        snapcraft snap --output v2raya_${VERSION}_amd64.snap
-        mv v2raya_${VERSION}_amd64.snap $P_DIR
-        # Should publish snap here
-        #snapcraft login --with snapcraft-credfile
-        #snapcraft upload v2raya_$VERSION_amd64.snap --release stable
         cd $P_DIR
 
     - name: Import GPG key
