@@ -33,3 +33,6 @@ node_modules
 /PKGBUILD
 /go.mod
 /go.sum
+
+# Private data
+snapcraft-credfile
