@@ -19,7 +19,6 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
-  workflow_dispatch:
 
 
 jobs:
@@ -181,6 +180,7 @@ jobs:
         makensis v2raya.nsi
         mv installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe $P_DIR
         cd $P_DIR
+        
 
     - name: Import GPG key
       if: startsWith(github.ref, 'refs/tags/v')
@@ -194,7 +194,6 @@ jobs:
       env:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
-        pwd
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
