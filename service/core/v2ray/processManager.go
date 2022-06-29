@@ -23,7 +23,7 @@ func (m *CoreProcessManager) beforeStop(p *Process) {
 	if p.template.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentPreStopHook != "" {
 		log.Info("Execute the transparent pre stop hook: %v", conf.GetEnvironmentConfig().TransparentPreStopHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStopHook).CombinedOutput()
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStopHook, fmt.Sprintf("--transparent-type=%v", p.template.Setting.TransparentType)).CombinedOutput()
 		if err != nil {
 			log.Warn("Error when executing the transparent pre stop hook: %v", err)
 			return
@@ -40,7 +40,7 @@ func (m *CoreProcessManager) afterStop(p *Process) {
 	if p.template.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentAfterStopHook != "" {
 		log.Info("Execute the transparent after stop hook: %v", conf.GetEnvironmentConfig().TransparentAfterStopHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentAfterStopHook).CombinedOutput()
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentAfterStopHook, fmt.Sprintf("--transparent-type=%v", p.template.Setting.TransparentType)).CombinedOutput()
 		if err != nil {
 			log.Warn("Error when executing the transparent after stop hook: %v", err)
 			return
@@ -80,7 +80,7 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 	if t.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentPreStartHook != "" {
 		log.Info("Execute the transparent pre start hook: %v", conf.GetEnvironmentConfig().TransparentPreStartHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStartHook).CombinedOutput()
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStartHook, fmt.Sprintf("--transparent-type=%v", t.Setting.TransparentType)).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("executing the transparent pre start hook: %w", err)
 		}
@@ -112,7 +112,7 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 	if t.Setting.Transparent != configure.TransparentClose &&
 		conf.GetEnvironmentConfig().TransparentAfterStartHook != "" {
 		log.Info("Execute the transparent after start hook: %v", conf.GetEnvironmentConfig().TransparentAfterStartHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentAfterStartHook).CombinedOutput()
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentAfterStartHook, fmt.Sprintf("--transparent-type=%v", t.Setting.TransparentType)).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("executing the transparent after start hook: %w", err)
 		}
