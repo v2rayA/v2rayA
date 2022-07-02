@@ -369,12 +369,20 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 		t.DNS.Servers = append(t.DNS.Servers, d...)
 		routing = append(routing, r...)
 	}
+	// hard code for SNI problem like apple pushing
+	t.DNS.Hosts = make(coreObj.Hosts)
+	if service.CheckHostsListSupported() == nil {
+		t.DNS.Hosts["courier.push.apple.com"] = []string{"1-courier.push.apple.com"}
+	} else {
+		t.DNS.Hosts["courier.push.apple.com"] = "1-courier.push.apple.com"
+	}
+
 	// deduplicate
 	strRouting := make([]string, 0, len(routing))
 	for _, r := range routing {
 		b, err := jsoniter.Marshal(r)
 		if err != nil {
-			log.Fatal("%v", err)
+			return nil, fmt.Errorf("jsoniter.Marshal: %v", err)
 		}
 		strRouting = append(strRouting, string(b))
 	}
@@ -383,7 +391,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 	for _, sr := range strRouting {
 		var r coreObj.RoutingRule
 		if err := jsoniter.Unmarshal([]byte(sr), &r); err != nil {
-			log.Fatal("%v: %v", err, sr)
+			return nil, fmt.Errorf("jsoniter.Unmarshal: RoutingRule: %v", err)
 		}
 		routing = append(routing, r)
 	}
@@ -476,6 +484,13 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 
 func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds []string) (err error) {
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
+	// apple pushing. #495 #479
+	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
+		Type:        "field",
+		OutboundTag: "direct",
+		InboundTag:  deepcopy.Copy(inbounds).([]string),
+		Domain:      []string{"domain:push-apple.com.akadns.net", "domain:push.apple.com"},
+	})
 	switch mode {
 	case configure.WhitelistMode:
 		// foreign domains with intranet IP should be proxied first rather than directly connected
@@ -547,7 +562,17 @@ func (t *Template) AppendRoutingRuleByMode(mode configure.RulePortMode, inbounds
 					Domain:      []string{"geosite:geolocation-!cn"},
 				})
 		}
+
 		t.Routing.Rules = append(t.Routing.Rules,
+			coreObj.RoutingRule{
+				Type:        "field",
+				OutboundTag: firstOutboundTag,
+				InboundTag:  deepcopy.Copy(inbounds).([]string),
+				// From: https://github.com/Loyalsoldier/geoip/blob/release/text/telegram.txt
+				IP: []string{"91.105.192.0/23", "91.108.4.0/22", "91.108.8.0/21", "91.108.16.0/21", "91.108.56.0/22",
+					"95.161.64.0/20", "149.154.160.0/20", "185.76.151.0/24", "2001:67c:4e8::/48", "2001:b28:f23c::/47",
+					"2001:b28:f23f::/48", "2a0a:f280:203::/48"},
+			},
 			coreObj.RoutingRule{
 				Type:        "field",
 				OutboundTag: "direct",
