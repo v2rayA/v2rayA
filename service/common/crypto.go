@@ -30,10 +30,11 @@ func HMACSHA256(s string, secret []byte) []byte {
 	return h.Sum(nil)
 }
 
-// 封装base64.StdEncoding进行解码，加入了长度补全。当error时，返回输入和err
+// 封装base64.StdEncoding进行解码，加入了长度补全，换行删除。当error时，返回输入和err
 func Base64StdDecode(s string) (string, error) {
 	s = strings.TrimSpace(s)
 	saver := s
+	s = strings.ReplaceAll(strings.ReplaceAll(s, "\n", ""), "\r", "")
 	if len(s)%4 > 0 {
 		s += strings.Repeat("=", 4-len(s)%4)
 	}

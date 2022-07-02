@@ -57,18 +57,22 @@
         </template>
         <b-select v-model="transparent" expanded>
           <option value="close">{{ $t("setting.options.off") }}</option>
-          <option value="proxy">{{
-            $t("setting.options.global")
-          }}</option>
-          <option value="whitelist">{{
-            $t("setting.options.whitelistCn")
-          }}</option>
-          <option value="gfwlist">{{
-            $t("setting.options.gfwlist")
-          }}</option>
-          <option value="pac">{{
-            $t("setting.options.sameAsPacMode")
-          }}</option>
+          <option value="proxy"
+            >{{ $t("setting.options.on") }}:
+            {{ $t("setting.options.global") }}</option
+          >
+          <option value="whitelist"
+            >{{ $t("setting.options.on") }}:
+            {{ $t("setting.options.whitelistCn") }}</option
+          >
+          <option value="gfwlist"
+            >{{ $t("setting.options.on") }}:
+            {{ $t("setting.options.gfwlist") }}</option
+          >
+          <option value="pac"
+            >{{ $t("setting.options.on") }}:
+            {{ $t("setting.options.sameAsPacMode") }}</option
+          >
         </b-select>
         <b-checkbox-button
           v-show="!lite"
@@ -441,7 +445,7 @@ export default {
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
         this.showDoh = localStorage["dohValid"] === "yes";
         if (this.lite) {
-          this.transparentType = "system_proxy"
+          this.transparentType = "system_proxy";
           this.showSpecialMode = false;
         }
       });
