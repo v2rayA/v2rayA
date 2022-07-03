@@ -21,9 +21,9 @@ var ProcessManager CoreProcessManager
 
 func (m *CoreProcessManager) beforeStop(p *Process) {
 	if p.template.Setting.Transparent != configure.TransparentClose &&
-		conf.GetEnvironmentConfig().TransparentPreStopHook != "" {
-		log.Info("Execute the transparent pre stop hook: %v", conf.GetEnvironmentConfig().TransparentPreStopHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStopHook, fmt.Sprintf("--transparent-type=%v", p.template.Setting.TransparentType)).CombinedOutput()
+		conf.GetEnvironmentConfig().TransparentHook != "" {
+		log.Info("Execute the transparent pre stop hook: %v", conf.GetEnvironmentConfig().TransparentHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, fmt.Sprintf("--transparent-type=%v", p.template.Setting.TransparentType), "--stage=pre-stop").CombinedOutput()
 		if err != nil {
 			log.Warn("Error when executing the transparent pre stop hook: %v", err)
 			return
@@ -38,9 +38,9 @@ func (m *CoreProcessManager) beforeStop(p *Process) {
 
 func (m *CoreProcessManager) afterStop(p *Process) {
 	if p.template.Setting.Transparent != configure.TransparentClose &&
-		conf.GetEnvironmentConfig().TransparentPostStopHook != "" {
-		log.Info("Execute the transparent after stop hook: %v", conf.GetEnvironmentConfig().TransparentPostStopHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPostStopHook, fmt.Sprintf("--transparent-type=%v", p.template.Setting.TransparentType)).CombinedOutput()
+		conf.GetEnvironmentConfig().TransparentHook != "" {
+		log.Info("Execute the transparent after stop hook: %v", conf.GetEnvironmentConfig().TransparentHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, fmt.Sprintf("--transparent-type=%v", p.template.Setting.TransparentType), "--stage=post-stop").CombinedOutput()
 		if err != nil {
 			log.Warn("Error when executing the transparent after stop hook: %v", err)
 			return
@@ -78,9 +78,9 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 
 func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 	if t.Setting.Transparent != configure.TransparentClose &&
-		conf.GetEnvironmentConfig().TransparentPreStartHook != "" {
-		log.Info("Execute the transparent pre start hook: %v", conf.GetEnvironmentConfig().TransparentPreStartHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPreStartHook, fmt.Sprintf("--transparent-type=%v", t.Setting.TransparentType)).CombinedOutput()
+		conf.GetEnvironmentConfig().TransparentHook != "" {
+		log.Info("Execute the transparent pre start hook: %v", conf.GetEnvironmentConfig().TransparentHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, fmt.Sprintf("--transparent-type=%v", t.Setting.TransparentType), "--stage=pre-start").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("executing the transparent pre start hook: %w", err)
 		}
@@ -110,9 +110,9 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 	specialMode.CheckAndSetupDNSSupervisor()
 
 	if t.Setting.Transparent != configure.TransparentClose &&
-		conf.GetEnvironmentConfig().TransparentPostStartHook != "" {
-		log.Info("Execute the transparent after start hook: %v", conf.GetEnvironmentConfig().TransparentPostStartHook)
-		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentPostStartHook, fmt.Sprintf("--transparent-type=%v", t.Setting.TransparentType)).CombinedOutput()
+		conf.GetEnvironmentConfig().TransparentHook != "" {
+		log.Info("Execute the transparent after start hook: %v", conf.GetEnvironmentConfig().TransparentHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, fmt.Sprintf("--transparent-type=%v", t.Setting.TransparentType), "--stage=post-start").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("executing the transparent after start hook: %w", err)
 		}
