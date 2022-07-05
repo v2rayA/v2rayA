@@ -35,7 +35,7 @@ func checkEnvironment() {
 		config.Report()
 		os.Exit(0)
 	}
-	if !config.PassCheckRoot || config.ResetPassword {
+	if !config.PassCheckRoot {
 		if os.Getegid() != 0 {
 			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
 				"If you are sure you are root user, use the --passcheckroot parameter to skip the check.\n" +
@@ -46,6 +46,7 @@ func checkEnvironment() {
 		}
 	}
 	if config.ResetPassword {
+		fmt.Println("Config directory:", config.Config)
 		fmt.Println("Resetting password...\nIf no response for a long time, please stop other v2rayA instances and try again.")
 		err := configure.ResetAccounts()
 		if err != nil {
@@ -210,7 +211,7 @@ func initConfigure() {
 	//首先确定v2ray是否存在
 	if _, err := where.GetV2rayBinPath(); err == nil {
 		//检查geoip、geosite是否存在
-		if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat"){
+		if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
 			log.Alert("downloading missing geoip.dat and geosite.dat")
 			var l net.Listener
 			if l, err = net.Listen("tcp", conf.GetEnvironmentConfig().Address); err != nil {
