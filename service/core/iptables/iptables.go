@@ -68,7 +68,7 @@ func (c Setter) Run(stopAtError bool) error {
 		}
 	}
 	if len(commands) > 0 {
-		e := cmds.ExecCommands(commands, true)
+		e := cmds.ExecCommands(commands, stopAtError)
 		if e != nil {
 			errs = append(errs, e)
 			if stopAtError && len(errs) > 0 {
