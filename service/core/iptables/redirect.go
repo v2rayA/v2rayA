@@ -14,7 +14,7 @@ func (r *redirect) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	r.RemoveIPWhitelist(cidr)
 	var commands string
-	commands = fmt.Sprintf(`iptables -w 2 -t nat -I V2RAY -d %s -j RETURN`, cidr)
+	commands = fmt.Sprintf(`iptables -w 2 -t nat -I TP_RULE -d %s -j RETURN`, cidr)
 	if !strings.Contains(cidr, ".") {
 		//ipv6
 		commands = strings.Replace(commands, "iptables", "ip6tables", 1)
@@ -24,7 +24,7 @@ func (r *redirect) AddIPWhitelist(cidr string) {
 
 func (r *redirect) RemoveIPWhitelist(cidr string) {
 	var commands string
-	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D V2RAY -d %s -j RETURN`, cidr)
+	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D TP_RULE -d %s -j RETURN`, cidr)
 	cmds.ExecCommands(commands, false)
 }
 
