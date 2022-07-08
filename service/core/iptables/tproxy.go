@@ -32,7 +32,7 @@ func (t *tproxy) AddIPWhitelist(cidr string) {
 
 func (t *tproxy) RemoveIPWhitelist(cidr string) {
 	var commands string
-	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D SETMARK -d %s -j RETURN`, cidr)
+	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D TP_RULE -d %s -j RETURN`, cidr)
 	if !strings.Contains(cidr, ".") {
 		//ipv6
 		commands = strings.Replace(commands, "iptables", "ip6tables", 1)
