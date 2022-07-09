@@ -22,6 +22,18 @@ var ProcessManager CoreProcessManager
 func (m *CoreProcessManager) beforeStop(p *Process) {
 	m.CheckAndStopTransparentProxy(p.template.Setting)
 	specialMode.StopDNSSupervisor()
+
+	if conf.GetEnvironmentConfig().CoreHook != "" {
+		log.Info("Execute the core pre stop hook: %v", conf.GetEnvironmentConfig().CoreHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, "--stage=pre-stop").CombinedOutput()
+		if err != nil {
+			log.Warn("Error when executing the core pre stop hook: %v", err)
+			return
+		}
+		if len(b) > 0 {
+			log.Info("Executing the core pre stop hook: %v", string(b))
+		}
+	}
 }
 
 func (m *CoreProcessManager) GetRunningTemplate() *Template {
@@ -56,13 +68,13 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 		err = writeTransparentProxyRules()
 
 		if conf.GetEnvironmentConfig().TransparentHook != "" {
-			log.Info("Execute the transparent after start hook: %v", conf.GetEnvironmentConfig().TransparentHook)
+			log.Info("Execute the transparent post start hook: %v", conf.GetEnvironmentConfig().TransparentHook)
 			b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, fmt.Sprintf("--transparent-type=%v", setting.TransparentType), "--stage=post-start").CombinedOutput()
 			if err != nil {
-				return fmt.Errorf("executing the transparent after start hook: %w", err)
+				return fmt.Errorf("executing the transparent post start hook: %w", err)
 			}
 			if len(b) > 0 {
-				log.Info("Executing the transparent after start hook: %v", string(b))
+				log.Info("Executing the transparent post start hook: %v", string(b))
 			}
 		}
 	}
@@ -93,20 +105,31 @@ func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Set
 		deleteTransparentProxyRules()
 
 		if conf.GetEnvironmentConfig().TransparentHook != "" {
-			log.Info("Execute the transparent after stop hook: %v", conf.GetEnvironmentConfig().TransparentHook)
+			log.Info("Execute the transparent post stop hook: %v", conf.GetEnvironmentConfig().TransparentHook)
 			b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, fmt.Sprintf("--transparent-type=%v", setting.TransparentType), "--stage=post-stop").CombinedOutput()
 			if err != nil {
-				log.Warn("Error when executing the transparent after stop hook: %v", err)
+				log.Warn("Error when executing the transparent post stop hook: %v", err)
 				return
 			}
 			if len(b) > 0 {
-				log.Info("Executing the transparent after stop hook: %v", string(b))
+				log.Info("Executing the transparent post stop hook: %v", string(b))
 			}
 		}
 	}
 }
 
 func (m *CoreProcessManager) afterStop(p *Process) {
+	if conf.GetEnvironmentConfig().CoreHook != "" {
+		log.Info("Execute the core post stop hook: %v", conf.GetEnvironmentConfig().CoreHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, "--stage=post-stop").CombinedOutput()
+		if err != nil {
+			log.Warn("Error when executing the core post stop hook: %v", err)
+			return
+		}
+		if len(b) > 0 {
+			log.Info("Executing the core post stop hook: %v", string(b))
+		}
+	}
 }
 
 func (m *CoreProcessManager) Stop(saveRunning bool) {
@@ -146,6 +169,16 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 		return err
 	}
 
+	if conf.GetEnvironmentConfig().CoreHook != "" {
+		log.Info("Execute the core pre start hook: %v", conf.GetEnvironmentConfig().CoreHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, "--stage=pre-start").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("executing the core pre start hook: %w", err)
+		}
+		if len(b) > 0 {
+			log.Info("Executing the core pre start hook: %v", string(b))
+		}
+	}
 	return nil
 }
 
@@ -154,6 +187,17 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 		return err
 	}
 	specialMode.CheckAndSetupDNSSupervisor()
+
+	if conf.GetEnvironmentConfig().CoreHook != "" {
+		log.Info("Execute the core post start hook: %v", conf.GetEnvironmentConfig().CoreHook)
+		b, err := exec.Command(conf.GetEnvironmentConfig().TransparentHook, "--stage=post-start").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("executing the core post start hook: %w", err)
+		}
+		if len(b) > 0 {
+			log.Info("Executing the core post start hook: %v", string(b))
+		}
+	}
 	return nil
 }
 
