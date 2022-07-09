@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func DeleteTransparentProxyRules() {
+func deleteTransparentProxyRules() {
 	iptables.CloseWatcher()
 	if !conf.GetEnvironmentConfig().Lite {
 		removeResolvHijacker()
@@ -23,11 +23,11 @@ func DeleteTransparentProxyRules() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func WriteTransparentProxyRules() (err error) {
+func writeTransparentProxyRules() (err error) {
 	defer func() {
 		if err != nil {
-			log.Warn("WriteTransparentProxyRules: %v", err)
-			DeleteTransparentProxyRules()
+			log.Warn("writeTransparentProxyRules: %v", err)
+			deleteTransparentProxyRules()
 		}
 	}()
 	if specialMode.ShouldUseSupervisor() {
@@ -68,30 +68,10 @@ func WriteTransparentProxyRules() (err error) {
 		} else if specialMode.ShouldUseFakeDns() {
 			return fmt.Errorf("fakedns cannot be enabled: %w", e)
 		} else {
-			log.Warn("WriteTransparentProxyRules: %v", e)
+			log.Warn("writeTransparentProxyRules: %v", e)
 		}
 	}
 	return nil
-}
-
-func CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting) (err error) {
-	if setting != nil {
-		setting.FillEmpty()
-	} else {
-		setting = configure.GetSettingNotNil()
-	}
-	if (!checkRunning || ProcessManager.Running()) && setting.Transparent != configure.TransparentClose {
-		DeleteTransparentProxyRules()
-		if !IsTransparentOn() {
-			return nil
-		}
-		err = WriteTransparentProxyRules()
-	}
-	return
-}
-
-func CheckAndStopTransparentProxy() {
-	DeleteTransparentProxyRules()
 }
 
 func IsTransparentOn() bool {
