@@ -32,7 +32,7 @@ type Process struct {
 	tag2WhichIndex map[string]int
 }
 
-func NewProcess(tmpl *Template) (process *Process, err error) {
+func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (process *Process, err error) {
 	process = &Process{
 		template: tmpl,
 	}
@@ -63,8 +63,15 @@ func NewProcess(tmpl *Template) (process *Process, err error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	process.procCancel = cancel
+	if err = prestart(); err != nil {
+		return nil, err
+	}
 	proc, err := StartCoreProcess(ctx)
 	if err != nil {
+		cancel()
+		return nil, err
+	}
+	if err = poststart(); err != nil {
 		cancel()
 		return nil, err
 	}
