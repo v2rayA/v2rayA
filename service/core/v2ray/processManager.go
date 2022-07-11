@@ -208,7 +208,7 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 }
 
 func (m *CoreProcessManager) afterStart(t *Template) (err error) {
-	if err = m.CheckAndSetupTransparentProxy(true, t.Setting); err != nil {
+	if err = m.CheckAndSetupTransparentProxy(false, t.Setting); err != nil {
 		return err
 	}
 	specialMode.CheckAndSetupDNSSupervisor()
