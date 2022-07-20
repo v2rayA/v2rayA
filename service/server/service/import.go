@@ -19,8 +19,8 @@ func Import(url string, which *configure.Which) (err error) {
 	//log.Trace(url)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
-	if lines := strings.Split(url, "\n"); len(lines) >= 2 {
-		infos, _, err := ResolveLines(url)
+	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
+		infos, _, err := ResolveByLines(url)
 		if err != nil {
 			return fmt.Errorf("failed to resolve addresses: %w", err)
 		}
