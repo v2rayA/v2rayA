@@ -221,7 +221,7 @@ type KcpSettings struct {
 	ReadBufferSize   int       `json:"readBufferSize"`
 	WriteBufferSize  int       `json:"writeBufferSize"`
 	Header           KcpHeader `json:"header"`
-	Seed             string    `json:"seed"`
+	Seed             string    `json:"seed,omitempty"`
 }
 type KcpHeader struct {
 	Type     string      `json:"type"`
