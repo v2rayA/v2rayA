@@ -112,7 +112,7 @@ func (p *PingTunnel) ExportToURL() string {
 	return U.String()
 }
 
-func (p *PingTunnel) NeedPlugin() bool {
+func (p *PingTunnel) NeedPluginPort() bool {
 	return true
 }
 

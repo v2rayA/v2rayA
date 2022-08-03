@@ -2,6 +2,7 @@ package serverObj
 
 import (
 	"fmt"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net/url"
@@ -12,7 +13,7 @@ var InvalidParameterErr = fmt.Errorf("invalid parameters")
 type ServerObj interface {
 	Configuration(info PriorInfo) (c Configuration, err error)
 	ExportToURL() string
-	NeedPlugin() bool
+	NeedPluginPort() bool
 	ProtoToShow() string
 	GetProtocol() string
 	GetHostname() string
@@ -22,10 +23,11 @@ type ServerObj interface {
 }
 
 type Configuration struct {
-	CoreOutbound   coreObj.OutboundObject
-	ExtraOutbounds []coreObj.OutboundObject
-	PluginChain    string // The first is a server plugin, and the others are client plugins. Split by ",".
-	UDPSupport     bool
+	CoreOutbound            coreObj.OutboundObject
+	ExtraOutbounds          []coreObj.OutboundObject
+	PluginChain             string // The first is a server plugin, and the others are client plugins. Split by ",".
+	UDPSupport              bool
+	PluginManagerServerLink string
 }
 
 type PriorInfo struct {
@@ -64,12 +66,20 @@ func EmptyRegister(name string, creator EmptyCreator) {
 func New(name string) (ServerObj, error) {
 	if creator, ok := emptyCreators[name]; ok {
 		return creator()
+	} else if pm := conf.GetEnvironmentConfig().PluginManager; pm != "" {
+		// we do not support to override build-in protocols
+		creator := emptyCreators[PluginManagerScheme]
+		return creator()
 	} else {
 		return nil, fmt.Errorf("unsupported link type: %v", name)
 	}
 }
 func NewFromLink(name string, link string) (ServerObj, error) {
 	if creator, ok := fromLinkCreators[name]; ok {
+		return creator(link)
+	} else if pm := conf.GetEnvironmentConfig().PluginManager; pm != "" {
+		// we do not support to override build-in protocols
+		creator := fromLinkCreators[PluginManagerScheme]
 		return creator(link)
 	} else {
 		return nil, fmt.Errorf("unsupported link type: %v", name)
