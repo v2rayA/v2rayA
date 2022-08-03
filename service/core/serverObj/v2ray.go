@@ -414,7 +414,7 @@ func (v *V2Ray) ExportToURL() string {
 	return ""
 }
 
-func (v *V2Ray) NeedPlugin() bool {
+func (v *V2Ray) NeedPluginPort() bool {
 	return false
 }
 

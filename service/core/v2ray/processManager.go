@@ -158,6 +158,12 @@ func (m *CoreProcessManager) Stop(saveRunning bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.stop(saveRunning)
+	if m.p != nil {
+		for _, pm := range m.p.pluginManagers {
+			_ = pm.Kill()
+		}
+		m.p.pluginManagers = nil
+	}
 }
 
 func (m *CoreProcessManager) stop(saveRunning bool) {

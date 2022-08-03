@@ -126,7 +126,7 @@ func (h *HTTP) ExportToURL() string {
 	return u.String()
 }
 
-func (h *HTTP) NeedPlugin() bool {
+func (h *HTTP) NeedPluginPort() bool {
 	return false
 }
 
