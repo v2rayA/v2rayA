@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
@@ -27,7 +28,8 @@ type Process struct {
 	// mutex protect the proc
 	mutex          sync.Mutex
 	proc           *os.Process
-	procCancel     func()
+	procCancel     func() // cancel func for proc and pluginManagers
+	pluginManagers []*os.Process
 	template       *Template
 	tag2WhichIndex map[string]int
 }
@@ -53,6 +55,34 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 		return nil, fmt.Errorf("%v", err)
 	}
 	go tmpl.ServePlugins()
+	pCtx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		if err != nil {
+			cancel()
+		}
+	}()
+	// start PluginManagers
+	if pm := conf.GetEnvironmentConfig().PluginManager; pm != "" {
+		for _, v := range tmpl.PluginManagerInfoList {
+			arguments := []string{
+				pm,
+				"--stage=run",
+				fmt.Sprintf("--link=%v", v.Link),
+				fmt.Sprintf("--port=%v", v.Port),
+				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config),
+			}
+			proc, err := RunWithLog(pCtx, pm, arguments, "", os.Environ())
+			if err != nil {
+				// clean
+				for _, pm := range process.pluginManagers {
+					_ = pm.Kill()
+				}
+				process.pluginManagers = nil
+				return nil, fmt.Errorf("executing PluginManager [state: run, link: %v]: %w", v.Link, err)
+			}
+			process.pluginManagers = append(process.pluginManagers, proc)
+		}
+	}
 	defer func() {
 		if err != nil {
 			_ = tmpl.Close()
@@ -61,18 +91,15 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 	if tmpl.API == nil {
 		log.Fatal("unexpected tmpl.API == nil")
 	}
-	ctx, cancel := context.WithCancel(context.Background())
 	process.procCancel = cancel
 	if err = prestart(); err != nil {
 		return nil, err
 	}
-	proc, err := StartCoreProcess(ctx)
+	proc, err := StartCoreProcess(pCtx)
 	if err != nil {
-		cancel()
 		return nil, err
 	}
 	if err = poststart(); err != nil {
-		cancel()
 		return nil, err
 	}
 	process.proc = proc
@@ -102,7 +129,6 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 	for _, plu := range tmpl.Plugins {
 		_, port, err := net.SplitHostPort(plu.ListenAddr())
 		if err != nil {
-			cancel()
 			return nil, err
 		}
 		portList = append(portList, port)
@@ -116,14 +142,12 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 			continue
 		}
 		if unexpectedExiting {
-			cancel()
 			if log.Log.GetLevel() > log.ParseLevel("info") {
 				log.Error("some critical information may lost due to your log level")
 			}
 			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
 		}
 		if time.Since(startTime) > 15*time.Second {
-			cancel()
 			return nil, fmt.Errorf("timeout: check the log for more information")
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -233,7 +257,7 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 func findAvailablePluginPorts(vms []serverObj.ServerObj) (pluginPortMap map[int]int, err error) {
 	pluginPortMap = make(map[int]int)
 	for i, v := range vms {
-		if !v.NeedPlugin() {
+		if !v.NeedPluginPort() {
 			continue
 		}
 		//find a port that not be occupied

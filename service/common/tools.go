@@ -245,3 +245,12 @@ func HomeExpand(path string) (string, error) {
 	}
 	return filepath.Join(usr.HomeDir, path[1:]), nil
 }
+
+func HasAnyPrefix(s string, prefix []string) bool {
+	for _, p := range prefix {
+		if strings.HasPrefix(s, p) {
+			return true
+		}
+	}
+	return false
+}
