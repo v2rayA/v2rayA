@@ -100,7 +100,7 @@ func (h *SOCKS) ExportToURL() string {
 	return u.String()
 }
 
-func (h *SOCKS) NeedPlugin() bool {
+func (h *SOCKS) NeedPluginPort() bool {
 	return false
 }
 

@@ -149,7 +149,7 @@ func (s *ShadowsocksR) ExportToURL() string {
 	)), "="))
 }
 
-func (s *ShadowsocksR) NeedPlugin() bool {
+func (s *ShadowsocksR) NeedPluginPort() bool {
 	return true
 }
 

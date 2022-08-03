@@ -229,7 +229,7 @@ func (s *Shadowsocks) ExportToURL() string {
 	return u.String()
 }
 
-func (s *Shadowsocks) NeedPlugin() bool {
+func (s *Shadowsocks) NeedPluginPort() bool {
 	return len(s.Plugin.Name) > 0
 }
 

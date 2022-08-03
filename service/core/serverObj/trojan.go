@@ -186,7 +186,7 @@ func (t *Trojan) ExportToURL() string {
 	return u.String()
 }
 
-func (t *Trojan) NeedPlugin() bool {
+func (t *Trojan) NeedPluginPort() bool {
 	return t.Protocol == "trojan-go"
 }
 

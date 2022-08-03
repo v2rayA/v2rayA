@@ -158,7 +158,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
-		if v.NeedPlugin() {
+		if v.NeedPluginPort() {
 			// find a port for the plugin
 			for {
 				l, err := net.Listen("tcp", "127.0.0.1:0")

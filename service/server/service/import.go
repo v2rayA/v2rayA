@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/v2rayA/v2rayA/conf"
 	url2 "net/url"
 	"strings"
 	"time"
@@ -14,6 +15,15 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 )
+
+func PluginManagerValidateLink(url string) bool {
+	if pm := conf.GetEnvironmentConfig().PluginManager; pm != "" {
+		_, err := serverObj.NewFromLink(serverObj.PluginManagerScheme, url)
+		return err == nil
+	} else {
+		return false
+	}
+}
 
 func Import(url string, which *configure.Which) (err error) {
 	//log.Trace(url)
@@ -29,18 +39,9 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 		return err
 	}
-	if strings.HasPrefix(url, "vmess://") ||
-		strings.HasPrefix(url, "vless://") ||
-		strings.HasPrefix(url, "ss://") ||
-		strings.HasPrefix(url, "ssr://") ||
-		strings.HasPrefix(url, "pingtunnel://") ||
-		strings.HasPrefix(url, "ping-tunnel://") ||
-		strings.HasPrefix(url, "trojan://") ||
-		strings.HasPrefix(url, "trojan-go://") ||
-		strings.HasPrefix(url, "http-proxy://") ||
-		strings.HasPrefix(url, "https-proxy://") ||
-		strings.HasPrefix(url, "socks5://") ||
-		strings.HasPrefix(url, "http2://") {
+	supportedPrefix := []string{"vmess://", "vless://", "ss://", "ssr://", "pingtunnel://", "ping-tunnel://",
+		"trojan://", "trojan-go://", "http-proxy://", "https-proxy://", "socks5://", "http2://"}
+	if PluginManagerValidateLink(url) || common.HasAnyPrefix(url, supportedPrefix) {
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
 		if err != nil {
