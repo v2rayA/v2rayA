@@ -2,14 +2,14 @@ package db
 
 import (
 	"fmt"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 func Get(bucket string, key string, val interface{}) (err error) {
-	return DB().Update(func(tx *bolt.Tx) error {
+	return DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -23,7 +23,7 @@ func Get(bucket string, key string, val interface{}) (err error) {
 }
 
 func GetRaw(bucket string, key string) (b []byte, err error) {
-	err = DB().Update(func(tx *bolt.Tx) error {
+	err = DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -39,7 +39,7 @@ func GetRaw(bucket string, key string) (b []byte, err error) {
 }
 
 func Exists(bucket string, key string) (exists bool) {
-	if err := DB().Update(func(tx *bolt.Tx) error {
+	if err := DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -55,7 +55,7 @@ func Exists(bucket string, key string) (exists bool) {
 }
 
 func GetBucketLen(bucket string) (length int, err error) {
-	err = DB().Update(func(tx *bolt.Tx) error {
+	err = DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -67,7 +67,7 @@ func GetBucketLen(bucket string) (length int, err error) {
 }
 
 func GetBucketKeys(bucket string) (keys []string, err error) {
-	err = DB().Update(func(tx *bolt.Tx) error {
+	err = DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -85,7 +85,7 @@ func Set(bucket string, key string, val interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	return DB().Update(func(tx *bolt.Tx) error {
+	return DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -95,10 +95,10 @@ func Set(bucket string, key string, val interface{}) (err error) {
 }
 
 func BucketClear(bucket string) error {
-	err := DB().Update(func(tx *bolt.Tx) error {
+	err := DB().Update(func(tx *bbolt.Tx) error {
 		return tx.DeleteBucket([]byte(bucket))
 	})
-	if err == bolt.ErrBucketNotFound {
+	if err == bbolt.ErrBucketNotFound {
 		return nil
 	}
 	return err
