@@ -80,3 +80,5 @@ require (
 //replace github.com/v2rayA/beego/v2 => D:\beego
 
 replace github.com/boltdb/bolt => github.com/go-gitea/bolt v0.0.0-20170420010917-ccd680d8c1a0
+
+replace go4.org/unsafe/assume-no-moving-gc => go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760
