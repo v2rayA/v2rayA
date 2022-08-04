@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 	"github.com/v2rayA/v2rayA/common"
 )
 
@@ -28,7 +28,7 @@ func toSha256(val interface{}) (hash [32]byte, err error) {
 }
 
 func setOp(bucket string, key string, f func(m set) (readonly bool, err error)) (err error) {
-	return DB().Update(func(tx *bolt.Tx) error {
+	return DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
