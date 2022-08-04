@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/beevik/ntp v0.3.0
-	github.com/boltdb/bolt v1.3.1
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/gin-contrib/cors v1.3.1
@@ -30,6 +29,7 @@ require (
 	github.com/v2rayA/shadowsocksR v1.0.4
 	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
 	github.com/vearutop/statigz v1.1.7
+	go.etcd.io/bbolt v1.3.6
 	golang.org/x/net v0.0.0-20210903162142-ad29c8ab022f
 	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359
 	google.golang.org/grpc v1.40.0
@@ -78,7 +78,5 @@ require (
 //replace github.com/v2rayA/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
 //replace github.com/v2rayA/beego/v2 => D:\beego
-
-replace github.com/boltdb/bolt => github.com/go-gitea/bolt v0.0.0-20170420010917-ccd680d8c1a0
 
 replace go4.org/unsafe/assume-no-moving-gc => go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760

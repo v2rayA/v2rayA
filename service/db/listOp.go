@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -12,7 +12,7 @@ import (
 )
 
 func ListSet(bucket string, key string, index int, val interface{}) (err error) {
-	return DB().Update(func(tx *bolt.Tx) error {
+	return DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -31,7 +31,7 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 }
 
 func ListGet(bucket string, key string, index int) (b []byte, err error) {
-	err = DB().Update(func(tx *bolt.Tx) error {
+	err = DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -52,7 +52,7 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 }
 
 func ListAppend(bucket string, key string, val interface{}) (err error) {
-	return DB().Update(func(tx *bolt.Tx) error {
+	return DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -79,7 +79,7 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 }
 
 func ListGetAll(bucket string, key string) (list [][]byte, err error) {
-	err = DB().Update(func(tx *bolt.Tx) error {
+	err = DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -105,7 +105,7 @@ func ListRemove(bucket, key string, indexes []int) error {
 	if len(indexes) == 0 {
 		return fmt.Errorf("ListRemove: nothing to remove")
 	}
-	return DB().Update(func(tx *bolt.Tx) error {
+	return DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
@@ -143,7 +143,7 @@ func ListRemove(bucket, key string, indexes []int) error {
 }
 
 func ListLen(bucket string, key string) (length int, err error) {
-	err = DB().Update(func(tx *bolt.Tx) error {
+	err = DB().Update(func(tx *bbolt.Tx) error {
 		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
 			return err
 		} else {
