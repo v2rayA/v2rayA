@@ -124,7 +124,6 @@ ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --o
 
 ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
@@ -159,7 +158,7 @@ ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 
 func (t *tproxy) GetCleanCommands() Setter {
 	commands := `
-ip rule del fwmark 0x40/0xc0 table 100
+ip rule del fwmark 0x40/0xc0 table 100 
 ip route del local 0.0.0.0/0 dev lo table 100
 
 iptables -w 2 -t mangle -F TP_OUT
@@ -175,7 +174,7 @@ iptables -w 2 -t mangle -X TP_MARK
 `
 	if IsIPv6Supported() {
 		commands += `
-ip -6 rule del fwmark 0x40/0xc0 table 100
+ip -6 rule del fwmark 0x40/0xc0 table 100 
 ip -6 route del local ::/0 dev lo table 100
 
 ip6tables -w 2 -t mangle -F TP_OUT
