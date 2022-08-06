@@ -758,14 +758,32 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 								rr.Domain = append(rr.Domain, v)
 								continue
 							}
+							if k == "ext" {
+								datFilenameAndTag := strings.SplitN(v, ":", 2)
+								if len(datFilenameAndTag) < 2 {
+									return fmt.Errorf("%v: tag is not given", v)
+								}
+								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
+									return fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+								}
+							}
 							rr.Domain = append(rr.Domain, fmt.Sprintf("%v:%v", k, v))
 						}
 					}
-					//this is not recommended
+					// unnamed param is not recommended
 					rr.Domain = append(rr.Domain, f.Params...)
 				case "ip":
 					for k, vv := range f.NamedParams {
 						for _, v := range vv {
+							if k == "ext" {
+								datFilenameAndTag := strings.SplitN(v, ":", 2)
+								if len(datFilenameAndTag) < 2 {
+									return fmt.Errorf("%v: tag is not given", v)
+								}
+								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
+									return fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+								}
+							}
 							rr.IP = append(rr.IP, fmt.Sprintf("%v:%v", k, v))
 						}
 					}
