@@ -58,10 +58,12 @@ func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 }
 
 func checkAssetsExist(setting *configure.Setting) error {
-	//FIXME: non-fully check
+	if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
+		return fmt.Errorf("geoip.dat or geosite.dat file does not exists. Try updating GFWList please")
+	}
 	if setting.RulePortMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
 		if !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-			return fmt.Errorf("GFWList file not exists. Try updating GFWList please")
+			return fmt.Errorf("GFWList file does not exists. Try updating GFWList please")
 		}
 	}
 	return nil
