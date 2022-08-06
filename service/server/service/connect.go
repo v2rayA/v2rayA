@@ -5,6 +5,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -14,6 +15,9 @@ func StopV2ray() (err error) {
 	return nil
 }
 func StartV2ray() (err error) {
+	if err = checkSupport(); err != nil {
+		return err
+	}
 	if css := configure.GetConnectedServers(); css.Len() == 0 {
 		return fmt.Errorf("failed: no server is selected. please select at least one server")
 	}
@@ -62,6 +66,17 @@ func checkAssetsExist(setting *configure.Setting) error {
 	return nil
 }
 
+func checkSupport() (err error) {
+	setting := GetSetting()
+	if err = checkAssetsExist(setting); err != nil {
+		return err
+	}
+	if err = service.CheckV5(); err != nil {
+		return fmt.Errorf("current version of v2rayA only support v2ray-core v5: %v", err)
+	}
+	return nil
+}
+
 func Connect(which *configure.Which) (err error) {
 	log.Trace("Connect: begin")
 	defer log.Trace("Connect: done")
@@ -71,8 +86,8 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}()
 	setting := GetSetting()
-	if err = checkAssetsExist(setting); err != nil {
-		return
+	if err = checkSupport(); err != nil {
+		return err
 	}
 	if which == nil {
 		return fmt.Errorf("which can not be nil")
