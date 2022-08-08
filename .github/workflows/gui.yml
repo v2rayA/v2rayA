@@ -1,0 +1,48 @@
+name: gui-check
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  style:
+    name: prettier check
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./gui
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - run: yarn install
+
+      - run: npx prettier --check "src/**/*.js"
+
+  lint:
+    name: eslint check
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./gui
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - run: yarn install
+
+      - run: npx vue-cli-service lint --no-fix
