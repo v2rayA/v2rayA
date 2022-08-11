@@ -19,7 +19,7 @@ v2rayA mainly provides the following methods of installation:
 2. Docker
 3. Binary file and installation package
 
-See [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/Usage)
+See [**v2rayA - Docs**](https://v2raya.org/en/docs/prologue/introduction/)
 
 
 ## Screenshot

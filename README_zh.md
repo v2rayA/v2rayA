@@ -19,7 +19,7 @@ v2rayA主要提供了下述使用方法：
 2. docker
 3. 二进制文件、安装包
 
-详见 [**v2rayA - Wiki**](https://github.com/v2rayA/v2rayA/wiki/使用方法)
+详见 [**v2rayA - Docs**](https://v2raya.org/docs/prologue/introduction/)
 
 
 ## 界面截图
