@@ -33,6 +33,7 @@ type V2Ray struct {
 	Port          string `json:"port"`
 	ID            string `json:"id"`
 	Aid           string `json:"aid"`
+	Security      string `json:"scy"`
 	Net           string `json:"net"`
 	Type          string `json:"type"`
 	Host          string `json:"host"`
@@ -141,6 +142,10 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		if aid == "" {
 			aid = q.Get("aid")
 		}
+		security := q.Get("scy")
+		if security == "" {
+			security = q.Get("security")
+		}
 		sni := q.Get("sni")
 		info = V2Ray{
 			ID:            subMatch[1],
@@ -152,6 +157,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 			SNI:           sni,
 			Net:           obfs,
 			Aid:           aid,
+			Security:      security,
 			TLS:           map[string]string{"1": "tls"}[q.Get("tls")],
 			AllowInsecure: false,
 		}
@@ -191,7 +197,17 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
 			if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
-				return Configuration{}, fmt.Errorf("please sync datetime first. Your datetime is %v, and the correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
+				return Configuration{}, fmt.Errorf("please sync datetime first. Your datetime is %v, and the "+
+					"correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
+			}
+			if len(v.Aid) > 0 && v.Aid != "0" {
+				log.Error("We do not support alterID > 0 since v1.5.6 due to security; please contact your server provider or " +
+					"downgrade v2rayA to v1.5.5")
+				return Configuration{}, fmt.Errorf("unsupported alterID > 0: check the log for more information")
+			}
+			security := v.Security
+			if security == "" {
+				security = "auto"
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
@@ -201,7 +217,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 						{
 							ID:       id,
 							AlterID:  0,
-							Security: "auto",
+							Security: security,
 						},
 					},
 				},
