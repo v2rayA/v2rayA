@@ -3,6 +3,8 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"net"
 	"net/url"
@@ -167,6 +169,12 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 			info.Net = "ws"
 		}
 	} else {
+		// fuzzily parse allowInsecure
+		if allowInsecure := gjson.Get(raw, "allowInsecure"); allowInsecure.Exists() {
+			if newRaw, err := sjson.Set(raw, "allowInsecure", allowInsecure.Bool()); err == nil {
+				raw = newRaw
+			}
+		}
 		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
 			return
