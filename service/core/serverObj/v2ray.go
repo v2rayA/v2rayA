@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/core/coreObj"
@@ -165,6 +167,12 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 			info.Net = "ws"
 		}
 	} else {
+		// fuzzily parse allowInsecure
+		if allowInsecure := gjson.Get(raw, "allowInsecure"); allowInsecure.Exists() {
+			if newRaw, err := sjson.Set(raw, "allowInsecure", allowInsecure.Bool()); err == nil {
+				raw = newRaw
+			}
+		}
 		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
 			return
