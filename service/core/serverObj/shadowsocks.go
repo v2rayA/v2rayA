@@ -106,12 +106,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 	return v, nil
 }
 
-func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error) {
-	switch s.Cipher {
-	case "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "plain", "none":
-	default:
-		return c, fmt.Errorf("unsupported shadowsocks encryption method: %v", s.Cipher)
-	}
+func (s *Shadowsocks) ConfigurationMC(info PriorInfo) (c Configuration, err error) {
 	v2rayServer := coreObj.Server{
 		Address:  s.Server,
 		Port:     s.Port,
@@ -213,6 +208,148 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 	}, nil
 }
 
+func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err error) {
+	v2rayServer := coreObj.Server{
+		Address:  s.Server,
+		Port:     s.Port,
+		Method:   s.Cipher,
+		Password: s.Password,
+	}
+	udpSupport := true
+	var v2StreamSettings *coreObj.StreamSettings
+	var v2Mux *coreObj.Mux
+	switch s.Plugin.Name {
+	case "simple-obfs":
+		host := s.Plugin.Opts.Host
+		if host == "" {
+			host = "cloudflare.com"
+		}
+		path := s.Plugin.Opts.Path
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+		v2StreamSettings = &coreObj.StreamSettings{}
+		tcpSettings := coreObj.TCPSettings{
+			Header: coreObj.TCPHeader{
+				Type: "http",
+				Request: coreObj.HTTPRequest{
+					Version: "1.1",
+					Method: "GET",
+					Path: strings.Split(path, ","),
+					Headers: coreObj.HTTPReqHeader{
+						Host: strings.Split(host, ","),
+						UserAgent: []string{
+							"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/527.36 (KHTML, like Gecko) Chrome/55.2883.75 Safari/537.36",
+							"Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.46",
+						},
+						AcceptEncoding: []string{"gzip, deflate"},
+						Connection: []string{"keep-alive"},
+						Pragma: "no-cache",
+					},
+				},
+				Response: coreObj.HTTPResponse{
+					Version: "1.1",
+					Status: "200",
+					Reason: "OK",
+					Headers: coreObj.HTTPRespHeader {
+						ContentType: []string{"application/octet-stream", "video/mpeg"},
+						TransferEncoding: []string{"chunked"},
+						Connection: []string{"keep-alive"},
+						Pragma: "no-cache",
+					},
+				},
+			},
+		}
+		switch s.Plugin.Opts.Obfs {
+		case "http":
+			v2StreamSettings.Network = "tcp"
+			v2StreamSettings.TCPSettings = &tcpSettings
+		case "tls":
+			v2StreamSettings.Security = "tls"
+			v2StreamSettings.TLSSettings = &coreObj.TLSSettings{}
+			// SNI
+			v2StreamSettings.TLSSettings.ServerName = host
+		default:
+			return c, fmt.Errorf("unsupported obfs %v of plugin %v", s.Plugin.Opts.Obfs, s.Plugin.Name)
+		}
+	case "v2ray-plugin":
+		v2StreamSettings = &coreObj.StreamSettings{}
+		host := s.Plugin.Opts.Host
+		if host == "" {
+			host = "cloudflare.com"
+		}
+		path := s.Plugin.Opts.Path
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+		if s.Plugin.Opts.Tls == "tls" {
+			v2StreamSettings.Security = "tls"
+			v2StreamSettings.TLSSettings = &coreObj.TLSSettings{}
+			// SNI
+			v2StreamSettings.TLSSettings.ServerName = host
+		}
+		v2Mux = &coreObj.Mux{
+			Enabled: true,
+			Concurrency: 1,
+		}
+		switch s.Plugin.Opts.Obfs {
+		case "quic":
+			return c, fmt.Errorf("quic is not yet supported")
+		default:
+			// "websocket" or ""
+			v2StreamSettings.Network = "ws"
+			v2StreamSettings.WsSettings = &coreObj.WsSettings{
+				Path: path,
+				Headers: coreObj.Headers{
+					Host: host,
+				},
+			}
+		}
+	case "":
+		// no plugin
+	default:
+		return c, fmt.Errorf("unsupported plugin %v", s.Plugin.Name)
+	}
+	return Configuration{
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:      info.Tag,
+			Protocol: "shadowsocks",
+			Settings: coreObj.Settings{
+				Servers: []coreObj.Server{v2rayServer},
+			},
+			StreamSettings: v2StreamSettings,
+			Mux: v2Mux,
+		},
+		UDPSupport:     udpSupport,
+	}, nil
+}
+
+func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error) {
+	switch s.Cipher {
+	case "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "plain", "none":
+	default:
+		return c, fmt.Errorf("unsupported shadowsocks encryption method: %v", s.Cipher)
+	}
+	// check shadowsocks plugin implementation
+	ssPluginImpl := s.Plugin.Opts.Impl
+	if ssPluginImpl == "" {
+		switch s.Plugin.Name {
+		case "simple-obfs":
+			ssPluginImpl = "transport"
+		default:
+			ssPluginImpl = "chained"
+		}
+	}
+	switch ssPluginImpl {
+	case "chained":
+		return s.ConfigurationMC(info)
+	case "transport":
+		return s.ConfigurationMT(info)
+	default:
+		return c, fmt.Errorf("unsupported shadowsocks plugin implementation: %v", ssPluginImpl)
+	}
+}
+
 func (s *Shadowsocks) ExportToURL() string {
 	// sip002
 	u := &url.URL{
@@ -273,6 +410,7 @@ type Sip003Opts struct {
 	Obfs string `json:"obfs"`
 	Host string `json:"host"`
 	Path string `json:"uri"`
+	Impl string `json:"impl"`
 }
 
 func ParseSip003Opts(opts string) Sip003Opts {
@@ -296,6 +434,8 @@ func ParseSip003Opts(opts string) Sip003Opts {
 			sip003Opts.Path = a[1]
 		case "obfs-host", "host":
 			sip003Opts.Host = a[1]
+		case "impl":
+			sip003Opts.Impl = a[1]
 		}
 	}
 	return sip003Opts
@@ -326,6 +466,9 @@ func (s *Sip003) String() string {
 		if s.Opts.Path != "" {
 			list = append(list, "obfs-uri="+s.Opts.Path)
 		}
+		if s.Opts.Impl != "" {
+			list = append(list, "impl="+s.Opts.Impl)
+		}
 	case "v2ray-plugin":
 		if s.Opts.Tls != "" {
 			list = append(list, "tls")
@@ -338,6 +481,9 @@ func (s *Sip003) String() string {
 		}
 		if s.Opts.Path != "" {
 			list = append(list, "path="+s.Opts.Path)
+		}
+		if s.Opts.Impl != "" {
+			list = append(list, "impl="+s.Opts.Impl)
 		}
 	}
 	return strings.Join(list, ";")

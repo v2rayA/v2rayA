@@ -159,6 +159,10 @@ export default {
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
       grpcShouldWithTls: `gRPC必须启用TLS`
+      ssPluginImpl:
+        "★默认：使用 simple-obfs 时为等效传输层，v2ray-plugin 时为链式。" +
+        "★链式：shadowsocks 流量会被转发至独立的插件。" +
+        "★等效传输层：直接由 v2ray/xray 核心的传输层处理。"
     }
   },
   customAddressPort: {

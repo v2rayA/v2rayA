@@ -33,3 +33,6 @@ node_modules
 /PKGBUILD
 /go.mod
 /go.sum
+
+# Virtualenv
+.env

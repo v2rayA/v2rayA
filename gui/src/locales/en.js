@@ -160,6 +160,10 @@ export default {
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
       grpcShouldWithTls: `gRPC must be with TLS`
+      ssPluginImpl:
+        "★default: 'transport' for simple-obfs, 'chained' for v2ray-plugin." +
+        "★chained: shadowsocks traffic will be redirect to standalone plugin." +
+        "★transport: processed by the transport layer of v2ray/xray core directly."
     }
   },
   customAddressPort: {
