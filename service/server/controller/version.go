@@ -14,6 +14,7 @@ func GetVersion(ctx *gin.Context) {
 	var dohValid string
 	var vlessValid int
 	var lite int
+	var lowCoreVersion bool
 
 	variant, ver, err := where.GetV2rayServiceVersion()
 	if err == nil && variant == where.V2ray {
@@ -42,6 +43,10 @@ func GetVersion(ctx *gin.Context) {
 	if conf.GetEnvironmentConfig().Lite {
 		lite = 1
 	}
+	if variant == where.V2ray {
+		ok, _ := common.VersionGreaterEqual(ver, "4.40.0")
+		lowCoreVersion = !ok
+	}
 	common.ResponseSuccess(ctx, gin.H{
 		"version":          conf.Version,
 		"foundNew":         conf.FoundNew,
@@ -51,6 +56,7 @@ func GetVersion(ctx *gin.Context) {
 		"vlessValid":       vlessValid,
 		"lite":             lite,
 		"loadBalanceValid": service.CheckObservatorySupported() == nil,
+		"lowCoreVersion":   lowCoreVersion,
 	})
 }
 

@@ -252,6 +252,15 @@ export default {
           localStorage["vlessValid"] = res.data.data.vlessValid;
           localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
         }
+        if (res.data.data.lowCoreVersion === true) {
+          this.$buefy.toast.open({
+            message: this.$t("version.lowCoreVersion"),
+            type: "is-warning",
+            position: "is-top",
+            queue: false,
+            duration: 10000
+          });
+        }
       }
     });
     this.$axios({

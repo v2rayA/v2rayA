@@ -273,7 +273,9 @@ export default {
   version: {
     higherVersionNeeded:
       "This operation need higher version of v2rayA than {version}",
-    v2rayInvalid: "geosite.dat, geoip.dat or v2ray-core may not be installed correctly"
+    v2rayInvalid:
+      "geosite.dat, geoip.dat or v2ray-core may not be installed correctly",
+    lowCoreVersion: "the version of core is too low, unexpected behavior may occur"
   },
   about: `<p>v2rayA is a web GUI client of V2Ray. Frontend is built with Vue.js and backend is built with golang.</p>
           <p class="about-small">Default ports:</p>
