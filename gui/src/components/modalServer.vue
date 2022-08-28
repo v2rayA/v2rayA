@@ -60,7 +60,7 @@
             />
           </b-field>
           <b-field
-            v-if="v2ray.protocol !== 'vless'"
+            v-if="v2ray.protocol === 'vmess'"
             label="AlterID"
             label-position="on-border"
           >
@@ -74,6 +74,19 @@
               required
               expanded
             />
+          </b-field>
+          <b-field
+            v-if="v2ray.protocol === 'vmess'"
+            label="Security"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.scy" expanded>
+              <option value="auto">Auto</option>
+              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="chacha20-poly1305">chacha20-poly1305</option>
+              <option value="none">none</option>
+              <option value="zero">zero</option>
+            </b-select>
           </b-field>
           <b-field
             v-show="v2ray.type !== 'dtls'"
@@ -763,6 +776,7 @@ export default {
       path: "",
       tls: "none",
       alpn: "",
+      scy: "",
       v: "",
       allowInsecure: false,
       protocol: "vmess"
@@ -910,6 +924,7 @@ export default {
         obj.ps = decodeURIComponent(obj.ps);
         obj.tls = obj.tls || "none";
         obj.type = obj.type || "none";
+        obj.scy = obj.scy || "auto";
         obj.protocol = obj.protocol || "vmess";
         return obj;
       } else if (url.toLowerCase().startsWith("vless://")) {
@@ -1000,6 +1015,7 @@ export default {
                 break;
               case "tls":
                 obj.tls = "tls";
+                break;
               case "impl":
                 obj.impl = a[1];
             }
