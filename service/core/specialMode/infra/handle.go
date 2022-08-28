@@ -127,10 +127,13 @@ func (interfaceHandle *handle) handleReceiveMessage(m *dnsmessage.Message) (resu
 	return results, msg
 }
 
-func packetFilter(portCache *portCache, pPacket *gopacket.Packet, whitelistDnsServers *v2router.GeoIPMatcher) (m *dnsmessage.Message, pSAddr, pSPort, pDAddr, pDPort *gopacket.Endpoint) {
-	packet := *pPacket
-	trans := packet.TransportLayer()
+func packetFilter(portCache *portCache, packet gopacket.Packet, whitelistDnsServers *v2router.GeoIPMatcher) (m *dnsmessage.Message, pSAddr, pSPort, pDAddr, pDPort *gopacket.Endpoint) {
+	//跳过非网络层的包
+	if packet.NetworkLayer() == nil {
+		return
+	}
 	//跳过非传输层的包
+	trans := packet.TransportLayer()
 	if trans == nil {
 		return
 	}
@@ -180,7 +183,7 @@ func packetFilter(portCache *portCache, pPacket *gopacket.Packet, whitelistDnsSe
 }
 
 func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) {
-	m, sAddr, sPort, dAddr, dPort := packetFilter(interfaceHandle.portCache, &packet, whitelistDnsServers)
+	m, sAddr, sPort, dAddr, dPort := packetFilter(interfaceHandle.portCache, packet, whitelistDnsServers)
 	if m == nil {
 		return
 	}
