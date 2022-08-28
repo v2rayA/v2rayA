@@ -9,7 +9,6 @@ import (
 	v2router "github.com/v2rayA/v2ray-lib/router"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"sync"
-	"time"
 )
 
 type DnsSupervisor struct {
@@ -70,7 +69,7 @@ func (d *DnsSupervisor) DeleteHandles(ifname string) (err error) {
 	}
 	close(d.handles[ifname].done)
 	delete(d.handles, ifname)
-	log.Trace("DnsSupervisor:%v closed", ifname)
+	log.Trace("DnsSupervisor:%v deleted", ifname)
 	return
 }
 
@@ -81,28 +80,24 @@ func (d *DnsSupervisor) Run(ifname string, whitelistDnsServers *v2router.GeoIPMa
 	d.inner.Lock()
 	handle, ok := d.handles[ifname]
 	if !ok {
+		d.inner.Unlock()
 		return fmt.Errorf("Run: %v not exsits", ifname)
 	}
 	if handle.running {
+		d.inner.Unlock()
 		return fmt.Errorf("Run: %v is running", ifname)
 	}
 	handle.running = true
 	log.Trace("[DnsSupervisor] " + ifname + ": running")
-	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
+	// we only decode UDP packets
+	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeDNS)
 	pkgsrc.NoCopy = true
+	//pkgsrc.Lazy = true
 	d.inner.Unlock()
 	packets := pkgsrc.Packets()
 	go func() {
-		for {
-			//心跳包，防止内存泄漏
-			packets <- gopacket.NewPacket(nil, layers.LinkTypeEthernet, gopacket.DecodeOptions{})
-			select {
-			case <-handle.done:
-				return
-			default:
-				time.Sleep(2 * time.Second)
-			}
-		}
+		<-handle.done
+		packets <- gopacket.NewPacket(nil, layers.LinkTypeEthernet, pkgsrc.DecodeOptions)
 	}()
 out:
 	for packet := range packets {
@@ -113,5 +108,6 @@ out:
 		}
 		go handle.handlePacket(packet, ifname, whitelistDnsServers, whitelistDomains)
 	}
+	log.Trace("DnsSupervisor:%v closed", ifname)
 	return
 }
