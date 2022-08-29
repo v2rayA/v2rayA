@@ -158,7 +158,7 @@ export default {
                           <p>当前设置的端口白名单为：</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
-      grpcShouldWithTls: `gRPC必须启用TLS`
+      grpcShouldWithTls: `gRPC必须启用TLS`,
       ssPluginImpl:
         "★默认：使用 simple-obfs 时为等效传输层，v2ray-plugin 时为链式。" +
         "★链式：shadowsocks 流量会被转发至独立的插件。" +
