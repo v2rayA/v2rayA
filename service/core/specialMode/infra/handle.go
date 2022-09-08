@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcapgo"
-	"github.com/v2fly/v2ray-core/v4/common/strmatcher"
+	"github.com/v2fly/v2ray-core/v5/common/strmatcher"
 	v2router "github.com/v2rayA/v2ray-lib/router"
 	"github.com/v2rayA/v2rayA/common/netTools"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -50,7 +50,7 @@ type domainHandleResult struct {
 	result handleResult
 }
 
-func (interfaceHandle *handle) handleSendMessage(m *dnsmessage.Message, sAddr, sPort, dAddr, dPort *gopacket.Endpoint, whitelistDomains *strmatcher.MatcherGroup) (ip [4]byte) {
+func (interfaceHandle *handle) handleSendMessage(m *dnsmessage.Message, sAddr, sPort, dAddr, dPort *gopacket.Endpoint, whitelistDomains strmatcher.MatcherGroup) (ip [4]byte) {
 	// dns请求一般只有一个question
 	q := m.Questions[0]
 	if (q.Type != dnsmessage.TypeA && q.Type != dnsmessage.TypeAAAA) ||
@@ -182,7 +182,7 @@ func packetFilter(portCache *portCache, packet gopacket.Packet, whitelistDnsServ
 	return &dmessage, &sAddr, &sPort, &dAddr, &dPort
 }
 
-func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) {
+func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains strmatcher.MatcherGroup) {
 	m, sAddr, sPort, dAddr, dPort := packetFilter(interfaceHandle.portCache, packet, whitelistDnsServers)
 	if m == nil {
 		return
