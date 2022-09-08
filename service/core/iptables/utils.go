@@ -42,5 +42,5 @@ func IsIPv6Supported() bool {
 	if !nettest.SupportsIPv6() {
 		return false
 	}
-	return cmds.IsCommandValid("ip6tables")
+	return cmds.IsCommandValid("ip6tables") || cmds.IsCommandValid("ip6tables-nft")
 }
