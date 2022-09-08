@@ -1432,7 +1432,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			_ = l.Close()
 			break
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 	}
 	if serverData != nil {
 		outbounds := t.outNames()

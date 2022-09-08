@@ -154,7 +154,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 				port = l.Addr().(*net.TCPAddr).Port
 				break
 			}
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(30 * time.Millisecond)
 		}
 		v2rayInboundPort := strconv.Itoa(port)
 		pluginPort := 0
@@ -167,7 +167,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 					port = l.Addr().(*net.TCPAddr).Port
 					break
 				}
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(30 * time.Millisecond)
 			}
 			pluginPort = port
 			pluginPortMap[i] = port
@@ -185,7 +185,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	for _, l := range toClose {
 		_ = l.Close()
 	}
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(30 * time.Millisecond)
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
