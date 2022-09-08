@@ -20,7 +20,7 @@ require (
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
 	github.com/shirou/gopsutil/v3 v3.21.11
 	github.com/stevenroose/gonfig v0.1.5
-	github.com/tidwall/gjson v1.9.1
+	github.com/tidwall/gjson v1.9.3
 	github.com/tidwall/sjson v1.2.2
 	github.com/v2fly/v2ray-core/v5 v5.1.0
 	github.com/v2rayA/RoutingA v1.0.2
@@ -56,7 +56,7 @@ require (
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/tidwall/match v1.0.3 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
