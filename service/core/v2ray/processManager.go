@@ -68,7 +68,7 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 				log.Info("Executing the transparent pre start hook: %v", string(b))
 			}
 			if err != nil {
-				return fmt.Errorf("executing the transparent pre start hook: %w", err)
+				return fmt.Errorf("error when executing the transparent pre start hook: %w", err)
 			}
 		}
 
@@ -85,7 +85,7 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 				log.Info("Executing the transparent post start hook: %v", string(b))
 			}
 			if err != nil {
-				return fmt.Errorf("executing the transparent post start hook: %w", err)
+				return fmt.Errorf("error when executing the transparent post start hook: %w", err)
 			}
 		}
 	}
@@ -207,7 +207,7 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 			log.Info("Executing the core pre start hook: %v", string(b))
 		}
 		if err != nil {
-			return fmt.Errorf("executing the core pre start hook: %w", err)
+			return fmt.Errorf("error when executing the core pre start hook: %w", err)
 		}
 	}
 	return nil
@@ -229,7 +229,7 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 			log.Info("Executing the core post start hook: %v", string(b))
 		}
 		if err != nil {
-			return fmt.Errorf("executing the core post start hook: %w", err)
+			return fmt.Errorf("error when executing the core post start hook: %w", err)
 		}
 	}
 	return nil
