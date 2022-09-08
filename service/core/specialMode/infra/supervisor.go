@@ -90,7 +90,7 @@ func (d *DnsSupervisor) Run(ifname string, whitelistDnsServers *v2router.GeoIPMa
 	handle.running = true
 	log.Trace("[DnsSupervisor] " + ifname + ": running")
 	// we only decode UDP packets
-	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeDNS)
+	pkgsrc := gopacket.NewPacketSource(handle, layers.LinkTypeEthernet)
 	pkgsrc.NoCopy = true
 	//pkgsrc.Lazy = true
 	d.inner.Unlock()
