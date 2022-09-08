@@ -150,7 +150,7 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 		if time.Since(startTime) > 15*time.Second {
 			return nil, fmt.Errorf("timeout: check the log for more information")
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 	log.Trace("Cost of waiting for v2ray-core: %v", time.Since(startTime).String())
 	return process, nil
@@ -269,7 +269,7 @@ func findAvailablePluginPorts(vms []serverObj.ServerObj) (pluginPortMap map[int]
 				port = l.Addr().(*net.TCPAddr).Port
 				break
 			}
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(30 * time.Millisecond)
 		}
 		pluginPortMap[i] = port
 	}

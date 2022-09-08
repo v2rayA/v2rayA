@@ -20,7 +20,7 @@ func deleteTransparentProxyRules() {
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
 	}
 	iptables.SystemProxy.GetCleanCommands().Run(false)
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(30 * time.Millisecond)
 }
 
 func writeTransparentProxyRules() (err error) {
