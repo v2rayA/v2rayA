@@ -20,6 +20,12 @@ import (
 )
 
 func GetV2rayLocationAssetOverride() string {
+	if assetDir := conf.GetEnvironmentConfig().V2rayAssetsDirectory; assetDir != "" {
+		return assetDir
+	}
+	if assetDir := os.Getenv("V2RAY_LOCATION_ASSET"); assetDir != "" {
+		return assetDir
+	}
 	if runtime.GOOS != "windows" {
 		return filepath.Join(xdg.RuntimeDir, "v2raya")
 	} else {
