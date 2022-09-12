@@ -13,16 +13,25 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/router"
 	"github.com/v2rayA/v2rayA/server/service"
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"syscall"
 	"time"
+)
+
+import (
+	confv4 "github.com/v2rayA/v2rayA-lib4/conf"
+	touchv4 "github.com/v2rayA/v2rayA-lib4/core/touch"
+	configurev4 "github.com/v2rayA/v2rayA-lib4/db/configure"
+	servicev4 "github.com/v2rayA/v2rayA-lib4/server/service"
 )
 
 func checkEnvironment() {
@@ -92,8 +101,63 @@ func initConfigure() {
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 
 	//db
-	if configure.IsConfigureNotExists() {
-		initDBValue()
+	dbPath := filepath.Join(conf.GetEnvironmentConfig().Config, "bolt.db")
+	if _, e := os.Lstat(dbPath); os.IsNotExist(e) {
+		// need to migrate?
+		if !configurev4.IsConfigureNotExists() {
+			// There is different format in server and subscription.
+			// So we keep other content and reimport servers and subscriptions.
+			log.Warn("Migrating from v4 to feat_v5")
+			if err := copyfile.CopyFileContent(filepath.Join(
+				conf.GetEnvironmentConfig().Config,
+				"boltv4.db",
+			), filepath.Join(
+				conf.GetEnvironmentConfig().Config,
+				"bolt.db",
+			)); err != nil {
+				log.Fatal("Failed to copy boltv4.db to bolt.db: %v", err)
+			}
+
+			// clear connects of outbounds
+			for _, out := range configure.GetOutbounds() {
+				_ = configure.ClearConnects(out)
+			}
+			var indexes []int
+			for i := 0; i < configurev4.GetLenServers(); i++ {
+				indexes = append(indexes, i)
+			}
+			_ = configure.RemoveServers(indexes)
+
+			indexes = nil
+			for i := 0; i < configurev4.GetLenSubscriptions(); i++ {
+				indexes = append(indexes, i)
+			}
+			_ = configure.RemoveSubscriptions(indexes)
+
+			// migrate servers and subscriptions
+			confv4.SetConfig(confv4.Params{Config: conf.GetEnvironmentConfig().Config})
+			t := touchv4.GenerateTouch()
+			subs := configurev4.GetSubscriptionsV2()
+			for _, sub := range subs {
+				log.Info("Importing subscription: %v", sub.Address)
+				if e := service.Import(sub.Address, nil); e != nil {
+					log.Warn("Failed to migrate subscription: %v", sub.Address)
+				}
+			}
+			for iSvr := range t.Servers {
+				if addr, e := servicev4.GetSharingAddress(&configurev4.Which{
+					TYPE: configurev4.ServerType,
+					ID:   iSvr + 1,
+				}); e == nil {
+					if e := service.Import(addr, nil); e != nil {
+						log.Warn("Failed to migrate server: %v", addr)
+					}
+				}
+			}
+			log.Warn("Migration is done")
+		} else {
+			initDBValue()
+		}
 	}
 	//检查config.json是否存在
 	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {

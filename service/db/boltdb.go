@@ -1,10 +1,10 @@
 package db
 
 import (
-	"go.etcd.io/bbolt"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"go.etcd.io/bbolt"
 	"os"
 	"path/filepath"
 	"sync"
