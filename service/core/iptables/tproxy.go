@@ -16,7 +16,7 @@ var Tproxy tproxy
 func (t *tproxy) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	t.RemoveIPWhitelist(cidr)
-	pos := 6
+	pos := 8
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		pos += 3
 	}
@@ -68,6 +68,8 @@ iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i br-+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
+iptables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
+iptables -w 2 -t mangle -A TP_RULE -i dn42-+ -j RETURN
 `
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		commands += `
@@ -127,6 +129,8 @@ ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i br-+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
+ip6tables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
+ip6tables -w 2 -t mangle -A TP_RULE -i dn42-+ -j RETURN
 `
 		if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 			commands += `
