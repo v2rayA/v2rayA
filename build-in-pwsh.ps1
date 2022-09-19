@@ -57,6 +57,7 @@ Function Build-v2rayA(){
     #Get Paths
     $TerminalPath = Get-Item -LiteralPath ./ | ForEach-Object  -Process { $_.FullName }
     $CurrentPath = $PSScriptRoot
+    Set-Location -Path "$CurrentPath"
     #Get Informations
     $DateLong = git log -1 --format="%cd" --date=short
     $Date = $DateLong -replace "-"; ""
