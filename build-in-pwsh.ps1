@@ -67,9 +67,9 @@ Function Build-v2rayA(){
     #Disable CGO
     ${env:CGO_ENABLED} = "0"
     #Set yarn's output path
-    ${env:OUTPUT_DIR} = "$SHELL_FOLDER/service/server/router/web"
+    ${env:OUTPUT_DIR} = "$CurrentPath/service/server/router/web"
     #Build Web Panel
-    Set-Location -Path "$currentPath/gui"
+    Set-Location -Path "$CurrentPath/gui"
     yarn; yarn build
     #Compress Web Panel's files
     Get-ChildItem "$CurrentPath/service/server/router/web" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
