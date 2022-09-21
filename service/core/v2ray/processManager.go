@@ -245,16 +245,14 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 		return m.beforeStart(t)
 	}, func() error {
 		return m.afterStart(t)
+	}, func(p *Process) {
+		m.p = p
+		ProcessManager.Stop(false)
 	})
 	if err != nil {
 		return err
 	}
 	m.p = process
-	defer func() {
-		if err != nil {
-			m.stop(true)
-		}
-	}()
 
 	configure.SetRunning(true)
 	return nil
