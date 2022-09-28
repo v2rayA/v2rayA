@@ -8,8 +8,8 @@ pkgdesc="A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Tro
 arch=('i686' 'pentium4' 'x86_64' 'arm' 'armv7h' 'armv6h' 'aarch64')
 url="https://github.com/v2rayA/v2rayA"
 license=('AGPL3')
-depends=('glibc' 'v2ray>=5.0.0-1')
-makedepends=('go>=2:1.17.0-1' 'nodejs>=14' 'yarn' 'python2')
+depends=('glibc')
+makedepends=('git' 'go>=2:1.17.0-1' 'nodejs>=14' 'yarn')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/v2rayA/v2rayA/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 
@@ -25,6 +25,8 @@ build() {
 }
 
 package() {
+    depends+=('v2ray>=5.0.0')
+
     cd "${srcdir}"/"v2rayA-${pkgver}"/
     install -Dm 755 service/v2raya -t "${pkgdir}"/usr/bin/
     install -dm 750 "${pkgdir}"/etc/v2raya/

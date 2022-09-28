@@ -12,15 +12,14 @@ pkgbase = v2raya
 	arch = armv6h
 	arch = aarch64
 	license = AGPL3
+	makedepends = git
 	makedepends = go>=2:1.17.0-1
 	makedepends = nodejs>=14
 	makedepends = yarn
-	makedepends = python2
-	depends = glibc
-	optdepends = v2ray>=4.37.0-1
-	optdepends = xray>=1.4.2-1
+    depends = glibc
 	source = v2raya-{{pkgver}}.tar.gz::https://github.com/v2rayA/v2rayA/archive/v{{pkgver}}.tar.gz
 	sha512sums = SKIP
 
 pkgname = v2raya
-
+    depends = glibc
+    depends = v2ray>=5.0.0
