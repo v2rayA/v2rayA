@@ -197,8 +197,10 @@ jobs:
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
-        cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/pool/main/v/v2raya/
-        cp web.tar.gz apt/pool/main/v/v2raya/web_$VERSION.tar.gz
+        
+        mkdir apt/static/
+        cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/static/
+        cp web.tar.gz apt/static/web_$VERSION.tar.gz
         echo "apt.v2raya.org" > apt/CNAME
 
     - name: Deploy APT repository
