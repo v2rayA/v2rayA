@@ -116,4 +116,5 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/
 & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "./install/windows-inno/windows_x86_64.iss"
 & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "./install/windows-inno/windows_arm64.iss"
 
-Copy-Item D:\install*.exe .\
+Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64.exe"
+Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64.exe"
