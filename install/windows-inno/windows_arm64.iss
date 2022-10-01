@@ -27,7 +27,7 @@ LicenseFile=D:\LICENSE.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=D:\
-OutputBaseFilename=installer_windows_inno_arm64.exe
+OutputBaseFilename=installer_windows_inno_arm64
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
