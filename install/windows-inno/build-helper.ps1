@@ -37,9 +37,20 @@ Copy-Item -Path ./web ./service/server/router/ -Recurse
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
 
+if ($REF -eq "refs/tags/v*") {
+    Write-Host $REF
+    $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
+}else {
+    $DateLong = git log -1 --format="%cd" --date=short
+    $Date = $DateLong -replace "-"; ""
+    $count = git rev-list --count HEAD
+    $commit = git rev-parse --short HEAD
+    $VERSION = "unstable-$date.r$count.$commit"
+}
+
 Set-Location -Path ./service
 $env:CGO_ENABLED = "0"
-$build_flags = '-X github.com/v2rayA/v2rayA/conf.Version=' + $VERSION
+$build_flags = "-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w"
 $env:GOARCH = "amd64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o '../v2raya-x86_64-windows/bin/v2raya.exe'
 $env:GOARCH = "arm64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o '../v2raya-arm64-windows/bin/v2raya.exe'
 
@@ -113,8 +124,11 @@ Copy-Item -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml" -Destination "D:\v
 
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/LICENSE" -OutFile "D:\LICENSE.txt"
 
-& 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "./install/windows-inno/windows_x86_64.iss"
-& 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "./install/windows-inno/windows_arm64.iss"
+$(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_x86_64.iss"
+$(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_arm64.iss"
+
+& 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
+& 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
 
 Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64.exe"
 Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64.exe"

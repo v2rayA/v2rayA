@@ -27,7 +27,6 @@ jobs:
           fi
           echo ::set-output name=VERSION::"$version"
           echo "VERSION=$version" >> $GITHUB_ENV
-
       - name: Add PowerShell
         uses: Amadevus/pwsh-script@v2.0.1
       - name: Install Inno Setup

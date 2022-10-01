@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "v2rayA"
-#define MyAppVersion "1.5.9.1698.1"
+#define MyAppVersion "TheRealVersion"
 #define MyAppPublisher "v2rayA Organization"
 #define MyAppURL "https://v2raya.org/"
 #define MyAppExeName "v2rayA-service.exe"
@@ -13,7 +13,7 @@
 AppId={{B991C73A-599E-460D-A35A-D1ED414DADBF}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -30,6 +30,7 @@ OutputDir=D:\
 OutputBaseFilename=installer_windows_inno_x64
 Compression=lzma
 SolidCompression=yes
+UninstallDisplayName={#AppName} {#AppVersion}
 WizardStyle=modern
 
 [Languages]
@@ -65,3 +66,22 @@ Type: files; Name: "{app}\v2rayA-service.out.log.old"
 Type: files; Name: "{app}\v2rayA-service.wrapper.log.old"
 Type: files; Name: "{app}\v2rayA-service.err.log"
 Type: files; Name: "{app}\v2rayA-service.err.log.old"
+
+[code]
+function InitializeSetup(): boolean;
+var
+  ResultCode: integer;
+begin
+  if Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_SHOW,
+     ewWaitUntilTerminated, ResultCode) then
+  begin
+    // handle success if necessary; ResultCode contains the exit code
+  end
+  else begin
+    // handle failure if necessary; ResultCode contains the error code
+  end;
+
+  // Proceed Setup
+  Result := True;
+
+end;
