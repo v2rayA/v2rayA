@@ -9,6 +9,25 @@ jobs:
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v3
+      - name: Prepare
+        shell: bash
+        id: prep
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          echo ::set-output name=P_DIR::$(pwd)
+          if [[ "$REF" == "refs/tags/v"* ]]; then
+            tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+            version=${tag:1}
+          else
+            date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+            count=$(git rev-list --count HEAD)
+            commit=$(git rev-parse --short HEAD)
+            version="unstable-$date.r${count}.$commit"
+          fi
+          echo ::set-output name=VERSION::"$version"
+          echo "VERSION=$version" >> $GITHUB_ENV
+
       - name: Add PowerShell
         uses: Amadevus/pwsh-script@v2.0.1
       - name: Install Inno Setup
