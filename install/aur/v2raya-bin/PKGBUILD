@@ -11,6 +11,7 @@ url="https://github.com/v2rayA/v2rayA"
 license=('AGPL3')
 provides=('v2raya')
 conflicts=('v2raya')
+backup=("etc/default/v2raya")
 
 sha_service={{sha_service}}
 sha_service_lite={{sha_service_lite}}
@@ -63,6 +64,19 @@ sha1sums_armv7h=(
     '{{sha1sums_armv7h}}'
 )
 
+build() {
+    cd "$srcdir"
+
+    # generate default config
+    cat > "$srcdir/v2raya.conf" << EOF
+# v2raya config example
+# Everything has defaults so you only need to uncomment things you want to
+# change
+
+EOF
+    ./v2raya_"${pkgver}" --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/'  >> "$srcdir/v2raya.conf"
+}
+
 package() {
     depends+=('v2ray>=5.0.0')
 
@@ -72,4 +86,5 @@ package() {
     install -Dm 644 v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
     install -Dm 644 v2raya-lite.service -t "${pkgdir}"/usr/lib/systemd/user/
     install -Dm 644 v2raya.png "${pkgdir}"/usr/share/icons/hicolor/512x512/apps/v2raya.png
+    install -Dm 644 v2raya.conf "${pkgdir}"/etc/default/v2raya
 }
