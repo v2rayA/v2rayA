@@ -2,14 +2,15 @@ package conf
 
 import (
 	"fmt"
-	"github.com/stevenroose/gonfig"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	log2 "log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/stevenroose/gonfig"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type Params struct {
@@ -23,16 +24,16 @@ type Params struct {
 	PluginManager        string `id:"plugin-manager" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
 	WebDir               string `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
 	IPV6Support          string `id:"ipv6-support" default:"auto" desc:"Optional values: auto, on, off. Make sure your IPv6 network works fine before you turn it on."`
-	PassCheckRoot        bool   `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
-	ResetPassword        bool   `id:"reset-password"`
+	PassCheckRoot        bool   `id:"pass-check-root" desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
+	ResetPassword        bool   `id:"reset-password" ignore:"1"`
 	LogLevel             string `id:"log-level" default:"info" desc:"Optional values: trace, debug, info, warn or error"`
 	LogFile              string `id:"log-file" desc:"The path of log file"`
 	LogMaxDays           int64  `id:"log-max-days" default:"3" desc:"Maximum number of days to keep log files"`
-	LogDisableColor      bool   `id:"log-disable-color"`
-	LogDisableTimestamp  bool   `id:"log-disable-timestamp" desc:"Intended for use with systemd/journald to avoid duplicate timestamps in logs. This flag is ignored when using the --log-file flag or the V2RAYA_LOG_FILE environment variable."`
-	Lite                 bool   `id:"lite" desc:"Lite mode for non-root and non-linux users"`
-	ShowVersion          bool   `id:"version"`
-	PrintReport          string `id:"report" desc:"Print report"`
+	LogDisableColor      bool   `id:"log-disable-color" ignore:"1"`
+	LogDisableTimestamp  bool   `id:"log-disable-timestamp" desc:"Intended for use with systemd/journald to avoid duplicate timestamps in logs. This flag is ignored when using the --log-file flag or the V2RAYA_LOG_FILE environment variable." ignore:"1"`
+	Lite                 bool   `id:"lite" desc:"Lite mode for non-root and non-linux users" ignore:"1"`
+	ShowVersion          bool   `id:"version" ignore:"1"`
+	PrintReport          string `id:"report" desc:"Print report" ignore:"1"`
 }
 
 var params Params

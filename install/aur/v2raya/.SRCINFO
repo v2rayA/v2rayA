@@ -16,10 +16,11 @@ pkgbase = v2raya
 	makedepends = go>=2:1.17.0-1
 	makedepends = nodejs>=14
 	makedepends = yarn
-    depends = glibc
+	depends = glibc
+	backup = etc/default/v2raya
 	source = v2raya-{{pkgver}}.tar.gz::https://github.com/v2rayA/v2rayA/archive/v{{pkgver}}.tar.gz
 	sha512sums = SKIP
 
 pkgname = v2raya
-    depends = glibc
-    depends = v2ray>=5.0.0
+	depends = glibc
+	depends = v2ray>=5.0.0
