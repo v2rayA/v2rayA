@@ -2,13 +2,14 @@ package db
 
 import (
 	"fmt"
-	"go.etcd.io/bbolt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 	"reflect"
 	"sort"
 	"strconv"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
+	"go.etcd.io/bbolt"
 )
 
 func ListSet(bucket string, key string, index int, val interface{}) (err error) {
@@ -31,20 +32,21 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 }
 
 func ListGet(bucket string, key string, index int) (b []byte, err error) {
-	err = DB().Update(func(tx *bbolt.Tx) error {
-		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
-			return err
+	err = Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
+		dirty := false
+		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
+			return dirty, err
 		} else {
 			v := bkt.Get([]byte(key))
 			if v == nil {
-				return fmt.Errorf("ListGet: can't get element from an empty list")
+				return dirty, fmt.Errorf("ListGet: can't get element from an empty list")
 			}
 			r := gjson.GetBytes(v, strconv.Itoa(index))
 			if r.Exists() {
 				b = []byte(r.Raw)
-				return nil
+				return dirty, nil
 			} else {
-				return fmt.Errorf("ListGet: no such element")
+				return dirty, fmt.Errorf("ListGet: no such element")
 			}
 		}
 	})
@@ -79,24 +81,25 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 }
 
 func ListGetAll(bucket string, key string) (list [][]byte, err error) {
-	err = DB().Update(func(tx *bbolt.Tx) error {
-		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
-			return err
+	err = Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
+		dirty := false
+		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
+			return dirty, err
 		} else {
 			b := bkt.Get([]byte(key))
 			if b == nil {
-				return nil
+				return dirty, nil
 			}
 			parsed := gjson.ParseBytes(b)
 			if !parsed.IsArray() {
-				return fmt.Errorf("ListGetAll: is not array")
+				return dirty, fmt.Errorf("ListGetAll: is not array")
 			}
 			results := parsed.Array()
 			for _, r := range results {
 				list = append(list, []byte(r.Raw))
 			}
 		}
-		return nil
+		return dirty, nil
 	})
 	return list, err
 }
@@ -143,21 +146,22 @@ func ListRemove(bucket, key string, indexes []int) error {
 }
 
 func ListLen(bucket string, key string) (length int, err error) {
-	err = DB().Update(func(tx *bbolt.Tx) error {
-		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
-			return err
+	err = Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
+		dirty := false
+		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
+			return dirty, err
 		} else {
 			b := bkt.Get([]byte(key))
 			if b == nil {
-				return nil
+				return dirty, nil
 			}
 			parsed := gjson.ParseBytes(b)
 			if !parsed.IsArray() {
-				return fmt.Errorf("ListLen: is not array")
+				return dirty, fmt.Errorf("ListLen: is not array")
 			}
 			length = len(parsed.Array())
 		}
-		return nil
+		return dirty, nil
 	})
 	return length, err
 }
