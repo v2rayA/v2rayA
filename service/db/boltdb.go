@@ -56,14 +56,13 @@ func Transaction(db *bbolt.DB, fn func(*bbolt.Tx) (bool, error)) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
 	dirty, err := fn(tx)
 	if err != nil {
 		_ = tx.Rollback()
 		return err
 	}
 	if !dirty {
-		return nil
+		return tx.Rollback()
 	}
 	return tx.Commit()
 }
