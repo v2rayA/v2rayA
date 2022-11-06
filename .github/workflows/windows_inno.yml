@@ -37,11 +37,11 @@ jobs:
         with:
           go-version: ^1.17
       - name: Set up Node.js
-        uses: actions/setup-node@v2.4.0
-        with:
-          node-version: lts/*
-          cache: 'yarn'
-          cache-dependency-path: gui/yarn.lock
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm get.scoop.sh | iex
+          scoop install nodejs-lts
       - name: build v2rayA installer
         shell: pwsh
         run: |
