@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"go.etcd.io/bbolt"
+
 	"github.com/v2rayA/v2rayA/common"
+	"go.etcd.io/bbolt"
 )
 
 type set map[[32]byte]interface{}
@@ -28,26 +29,27 @@ func toSha256(val interface{}) (hash [32]byte, err error) {
 }
 
 func setOp(bucket string, key string, f func(m set) (readonly bool, err error)) (err error) {
-	return DB().Update(func(tx *bbolt.Tx) error {
-		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
-			return err
+	return Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
+		dirty := false
+		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
+			return dirty, err
 		} else {
 			var m set
 			v := bkt.Get([]byte(key))
 			if v == nil {
 				m = make(set)
 			} else if err := gob.NewDecoder(bytes.NewReader(v)).Decode(&m); err != nil {
-				return err
+				return dirty, err
 			}
 			if readonly, err := f(m); err != nil {
-				return err
+				return dirty, err
 			} else if readonly {
-				return nil
+				return dirty, nil
 			}
 			if b, err := common.ToBytes(m); err != nil {
-				return err
+				return dirty, err
 			} else {
-				return bkt.Put([]byte(key), b)
+				return true, bkt.Put([]byte(key), b)
 			}
 		}
 	})
