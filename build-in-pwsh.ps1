@@ -48,7 +48,7 @@ Function Get-build-tools(){
 
 Function Build-v2rayA(){
     #Get OS
-    if ([String]::IsNullOrEmpty($(Test-Path ${$env:windir} -ErrorAction Ignore))) { 
+    if ([String]::IsNullOrEmpty($(Test-Path ${env:windir} -ErrorAction Ignore))) { 
         $v2rayaBin = "v2raya"
     }
     else {
