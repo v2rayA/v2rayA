@@ -11,6 +11,7 @@ LimitNPROC=500
 LimitNOFILE=1000000
 ExecStart=/usr/bin/v2raya --log-disable-timestamp
 Environment=V2RAYA_LOG_FILE=/var/log/v2raya/v2raya.log
+EnvironmentFile=-/etc/default/v2raya
 Restart=on-failure
 
 [Install]

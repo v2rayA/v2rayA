@@ -12,6 +12,7 @@ depends=('glibc')
 makedepends=('git' 'go>=2:1.17.0-1' 'nodejs>=14' 'yarn')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/v2rayA/v2rayA/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
+backup=("etc/default/v2raya")
 
 build() {
     cd "$srcdir/v2rayA-$pkgver/gui"
@@ -24,6 +25,15 @@ build() {
     export GO111MODULE=on
     export GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
     go build -ldflags '-X github.com/v2rayA/v2rayA/conf.Version='$pkgver' -s -w' -o v2raya
+    
+    # generate default config
+    cat > "$srcdir/v2rayA-$pkgver/v2raya.conf" << EOF
+# v2raya config example
+# Everything has defaults so you only need to uncomment things you want to
+# change
+
+EOF
+    ./v2raya --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/'  >> "$srcdir/v2rayA-$pkgver/v2raya.conf"
 }
 
 package() {
@@ -36,4 +46,5 @@ package() {
     install -Dm 644 install/universal/v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
     install -Dm 644 install/universal/v2raya-lite.service -t "${pkgdir}"/usr/lib/systemd/user/
     install -Dm 644 gui/public/img/icons/android-chrome-512x512.png "${pkgdir}"/usr/share/icons/hicolor/512x512/apps/v2raya.png
+    install -Dm 644 v2raya.conf "${pkgdir}"/etc/default/v2raya
 }

@@ -10,11 +10,9 @@ pkgbase = v2raya-bin
 	arch = armv6h
 	arch = aarch64
 	license = AGPL3
-	depends = glibc
-	optdepends = v2ray>=4.37.0-1
-	optdepends = xray>=1.4.2-1
 	provides = v2raya
 	conflicts = v2raya
+	backup = etc/default/v2raya
 	source = v2raya.service
 	source = v2raya-lite.service
 	source = v2raya.png
@@ -23,16 +21,16 @@ pkgbase = v2raya-bin
 	sha1sums = {{sha_service_lite}}
 	sha1sums = {{sha_png}}
 	sha1sums = {{sha_desktop}}
-	source_i686 = v2raya::https://apt.v2raya.org/static/v2raya_linux_x86_{{pkgver}}
+	source_i686 = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_x86_{{pkgver}}
 	sha1sums_i686 = {{sha1sums_i686}}
-	source_x86_64 = v2raya::https://apt.v2raya.org/static/v2raya_linux_x64_{{pkgver}}
+	source_x86_64 = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_x64_{{pkgver}}
 	sha1sums_x86_64 = {{sha1sums_x86_64}}
-	source_armv7h = v2raya::https://apt.v2raya.org/static/v2raya_linux_arm_{{pkgver}}
+	source_armv7h = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_arm_{{pkgver}}
 	sha1sums_armv7h = {{sha1sums_armv7h}}
-	source_armv6h = v2raya::https://apt.v2raya.org/static/v2raya_linux_arm_{{pkgver}}
+	source_armv6h = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_arm_{{pkgver}}
 	sha1sums_armv6h = {{sha1sums_armv6h}}
-	source_aarch64 = v2raya::https://apt.v2raya.org/static/v2raya_linux_arm64_{{pkgver}}
+	source_aarch64 = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_arm64_{{pkgver}}
 	sha1sums_aarch64 = {{sha1sums_aarch64}}
 
 pkgname = v2raya-bin
-	depends = glibc
+	depends = v2ray>=5.0.0
