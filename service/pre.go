@@ -103,13 +103,14 @@ func initConfigure() {
 	//db
 	dbPath := filepath.Join(conf.GetEnvironmentConfig().Config, "bolt.db")
 	if _, e := os.Lstat(dbPath); os.IsNotExist(e) {
+		//confv4.SetConfig(confv4.Params{Config: conf.GetEnvironmentConfig().Config})
 		// need to migrate?
 		if !configurev4.IsConfigureNotExists() {
 			// There is different format in server and subscription.
 			// So we keep other content and reimport servers and subscriptions.
 			log.Warn("Migrating from v4 to feat_v5")
 			if err := copyfile.CopyFileContent(filepath.Join(
-				conf.GetEnvironmentConfig().Config,
+				confv4.GetEnvironmentConfig().Config,
 				"boltv4.db",
 			), filepath.Join(
 				conf.GetEnvironmentConfig().Config,
@@ -135,7 +136,6 @@ func initConfigure() {
 			_ = configure.RemoveSubscriptions(indexes)
 
 			// migrate servers and subscriptions
-			confv4.SetConfig(confv4.Params{Config: conf.GetEnvironmentConfig().Config})
 			t := touchv4.GenerateTouch()
 			subs := configurev4.GetSubscriptionsV2()
 			for _, sub := range subs {
