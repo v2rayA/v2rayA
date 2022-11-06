@@ -71,6 +71,8 @@ jobs:
         sudo apt-get update -y && sudo apt-get install -y gzip
     - name: Build GUI
       run: |
+        # https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
+        export NODE_OPTIONS=--openssl-legacy-provider
         yarn --cwd gui --check-files
         yarn --cwd gui build
     - name: Build v2rayA Binaries
