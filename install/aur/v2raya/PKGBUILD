@@ -15,6 +15,8 @@ sha512sums=('SKIP')
 
 build() {
     cd "$srcdir/v2rayA-$pkgver/gui"
+    # https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
+    export NODE_OPTIONS=--openssl-legacy-provider
     yarn --check-files
     OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn build
 
