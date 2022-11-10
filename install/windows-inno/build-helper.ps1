@@ -23,9 +23,10 @@ Function Compress-File([ValidateScript({Test-Path $_})][string]$File){
 }
 
 Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
-scoop bucket add versions
-scoop install nodejs16
-scoop install yarn go
+# scoop bucket add versions;scoop install nodejs16;
+scoop install yarn go nodejs
+
+${env:NODE_OPTIONS} = “--openssl-legacy-provider”
 
 yarn --cwd gui --check-files
 yarn --cwd gui build
