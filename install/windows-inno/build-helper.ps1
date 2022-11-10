@@ -43,16 +43,15 @@ Copy-Item -Path ./web ./service/server/router/ -Recurse
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
 
-# if ($REF -eq "refs/tags/v*") {
-#     Write-Host $REF
-#     $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
-# }else {
-#     $DateLong = git log -1 --format="%cd" --date=short
-#     $Date = $DateLong -replace "-"; ""
-#     $count = git rev-list --count HEAD
-#     $commit = git rev-parse --short HEAD
-#     $VERSION = "unstable-$date.r$count.$commit"
-# }
+if ($REF -eq "refs/tags/v*") {
+    Write-Host $REF
+    $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
+}else {
+    $Date = $((git log -1 --format="%cd" --date=short) -replace "-","")
+    $count = git rev-list --count HEAD
+    $commit = git rev-parse --short HEAD
+    $VERSION = "unstable-$date.r$count.$commit"
+}
 
 Set-Location -Path ./service
 $env:CGO_ENABLED = "0"
@@ -82,11 +81,13 @@ Invoke-WebRequest $Url_v2ray_x64 -OutFile "D:\v2ray-windows-x64.zip"
 Expand-Archive -Path "D:\v2ray-windows-x64.zip" -DestinationPath "D:\v2raya-x86_64-windows\bin\"
 Move-Item -Path "D:\v2raya-x86_64-windows\bin\*.dat" -Destination "D:\v2raya-x86_64-windows\data"
 Remove-Item -Path "D:\v2raya-x86_64-windows\bin\wv2ray.exe" -Force -Recurse -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\v2raya-x86_64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
 
 Invoke-WebRequest $Url_v2ray_A64 -OutFile "D:\v2ray-windows-A64.zip"
 Expand-Archive -Path "D:\v2ray-windows-A64.zip" -DestinationPath "D:\v2raya-arm64-windows\bin\"
 Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm64-windows\data"
-Remove-Item -Path "D:\v2raya-arm-windows\bin\wv2ray.exe" -Force -Recurse -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\v2raya-arm64-windows\bin\wv2ray.exe" -Force -Recurse -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\v2raya-arm64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
 
 $Url_WinSW = "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.10/WinSW-net461.exe"
 Invoke-WebRequest $Url_WinSW -OutFile "D:\WinSW.exe"

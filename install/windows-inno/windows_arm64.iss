@@ -30,7 +30,7 @@ OutputDir=D:\
 OutputBaseFilename=installer_windows_inno_arm64
 Compression=lzma
 SolidCompression=yes
-UninstallDisplayName={#MyAppName} {#MyAppVersion}
+UninstallDisplayName={#MyAppName}-{#MyAppVersion}
 WizardStyle=modern
 
 [Languages]
