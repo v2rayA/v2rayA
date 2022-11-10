@@ -42,16 +42,16 @@ Copy-Item -Path ./web ./service/server/router/ -Recurse
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
 
-if ($REF -eq "refs/tags/v*") {
-    Write-Host $REF
-    $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
-}else {
-    $DateLong = git log -1 --format="%cd" --date=short
-    $Date = $DateLong -replace "-"; ""
-    $count = git rev-list --count HEAD
-    $commit = git rev-parse --short HEAD
-    $VERSION = "unstable-$date.r$count.$commit"
-}
+# if ($REF -eq "refs/tags/v*") {
+#     Write-Host $REF
+#     $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
+# }else {
+#     $DateLong = git log -1 --format="%cd" --date=short
+#     $Date = $DateLong -replace "-"; ""
+#     $count = git rev-list --count HEAD
+#     $commit = git rev-parse --short HEAD
+#     $VERSION = "unstable-$date.r$count.$commit"
+# }
 
 Set-Location -Path ./service
 $env:CGO_ENABLED = "0"
