@@ -30,7 +30,7 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_OUTPUT
           echo "VERSION=$version" >> $GITHUB_ENV
       - name: Add PowerShell
-        uses: Amadevus/pwsh-script@v2.0.1
+        uses: Amadevus/pwsh-script@v2.0.3
       - name: Install Inno Setup
         run: |
           choco install innosetup -y

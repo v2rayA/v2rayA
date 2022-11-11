@@ -32,6 +32,7 @@ Compression=lzma
 SolidCompression=yes
 UninstallDisplayName={#MyAppName}-{#MyAppVersion}
 WizardStyle=modern
+SetupIconFile=D:\v2raya.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -44,8 +45,8 @@ Source: "D:\v2raya-arm64-windows\v2rayA-service.xml"; DestDir: "{app}"; Flags: i
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{commondesktop}\v2rayA Web Panel"; Filename: "http://localhost:2017"
-Name: "{group}\v2rayA Web Panel"; Filename: "http://localhost:2017"
+Name: "{commondesktop}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "D:\v2raya.ico"
+Name: "{group}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "D:\v2raya.ico"
 Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 

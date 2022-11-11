@@ -61,17 +61,15 @@ $env:GOARCH = "arm64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o 
 
 Set-Location ../
 
+Copy-Item "./install/windows-inno/v2raya.ico" "D:\v2raya.ico"
+
 Copy-Item "./v2raya-x86_64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
 
 Copy-Item "./v2raya-arm64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
 
-$NoticeInfo = "This folder contains the datas of v2rayA, remove the db file if you forget password."
-Set-Content -Path "D:\v2raya-x86_64-windows\config\help.txt" $NoticeInfo
-Set-Content -Path "D:\v2raya-arm64-windows\config\help.txt" $NoticeInfo
-
-$Version_v2ray = Invoke-WebRequest -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest' | ConvertFrom-Json | Select-Object tag_name | ForEach-Object { ([string]$_.tag_name).Split('v')[1] }
+$Version_v2ray = ((Invoke-WebRequest -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest' | ConvertFrom-Json).tag_name).Split("v")[1]
 $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-64.zip"
 $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-arm64-v8a.zip"
 
