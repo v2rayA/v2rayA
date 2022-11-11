@@ -43,17 +43,18 @@ Copy-Item -Path ./web ./service/server/router/ -Recurse
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
 
-if ($REF -eq "refs/tags/v*") {
-    Write-Host $REF
-    $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
-}else {
-    $Date = $((git log -1 --format="%cd" --date=short) -replace "-","")
-    $count = git rev-list --count HEAD
-    $commit = git rev-parse --short HEAD
-    $VERSION = "unstable-$date.r$count.$commit"
-}
+# if ($REF -eq "refs/tags/v*") {
+#     Write-Host $REF
+#     $VERSION = (git describe --tags $(git rev-list --tags --max-count=1)).replace("v","")
+# }else {
+#     $Date = $((git log -1 --format="%cd" --date=short) -replace "-","")
+#     $count = git rev-list --count HEAD
+#     $commit = git rev-parse --short HEAD
+#     $VERSION = "unstable-$date.r$count.$commit"
+# }
 
 Set-Location -Path ./service
+$VERSION = ${env:VERSION}
 $env:CGO_ENABLED = "0"
 $build_flags = "-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w"
 $env:GOARCH = "amd64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o '../v2raya-x86_64-windows/bin/v2raya.exe'
@@ -61,19 +62,15 @@ $env:GOARCH = "arm64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o 
 
 Set-Location ../
 
+Copy-Item "./install/windows-inno/v2raya.ico" "D:\v2raya.ico"
+
 Copy-Item "./v2raya-x86_64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
-New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\config"
 
 Copy-Item "./v2raya-arm64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
-New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\config"
 
-$NoticeInfo = "This folder contains the datas of v2rayA, remove the db file if you forget password."
-Set-Content -Path "D:\v2raya-x86_64-windows\config\help.txt" $NoticeInfo
-Set-Content -Path "D:\v2raya-arm64-windows\config\help.txt" $NoticeInfo
-
-$Version_v2ray = Invoke-WebRequest -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest' | ConvertFrom-Json | Select-Object tag_name | ForEach-Object { ([string]$_.tag_name).Split('v')[1] }
+$Version_v2ray = ((Invoke-WebRequest -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest' | ConvertFrom-Json).tag_name).Split("v")[1]
 $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-64.zip"
 $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-arm64-v8a.zip"
 
@@ -120,10 +117,9 @@ SOFTWARE.
 <name>v2rayA background service for Windows</name>
 <description>v2rayA is a V2Ray client, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.</description>
 <executable>%BASE%\bin\v2raya.exe</executable>
-<arguments>--lite --log-file "v2raya.log" --v2ray-bin "%BASE%\bin\v2ray.exe" --v2ray-assetsdir "%BASE%\data" --config "%BASE%\config"</arguments>
+<arguments>--lite --log-file "v2raya.log" --v2ray-bin "%BASE%\bin\v2ray.exe" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
 <workingdirectory>%TEMP%</workingdirectory>
 <log mode="roll"></log>
-<delayedAutoStart>true</delayedAutoStart>
 <onfailure action="restart" delay="10 sec"/>
 </service>
 ' -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml"
