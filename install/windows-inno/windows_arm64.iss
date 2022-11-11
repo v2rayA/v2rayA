@@ -32,6 +32,7 @@ Compression=lzma
 SolidCompression=yes
 UninstallDisplayName={#MyAppName}-{#MyAppVersion}
 WizardStyle=modern
+SetupIconFile=D:\v2raya.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -40,14 +41,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "D:\v2raya-arm64-windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\v2raya-arm64-windows\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "D:\v2raya-arm64-windows\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "D:\v2raya-arm64-windows\config\*"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "D:\v2raya-arm64-windows\v2rayA-service.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\v2raya.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\v2rayA Web Panel"; Filename: "http://localhost:2017"
-Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "{app}\v2raya.ico";
+Name: "{group}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "{app}\v2raya.ico";
+Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}";
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Parameters: "install";
