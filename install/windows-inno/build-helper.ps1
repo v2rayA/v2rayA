@@ -63,11 +63,9 @@ Set-Location ../
 
 Copy-Item "./v2raya-x86_64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
-New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\config"
 
 Copy-Item "./v2raya-arm64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
-New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\config"
 
 $NoticeInfo = "This folder contains the datas of v2rayA, remove the db file if you forget password."
 Set-Content -Path "D:\v2raya-x86_64-windows\config\help.txt" $NoticeInfo
@@ -120,7 +118,7 @@ SOFTWARE.
 <name>v2rayA background service for Windows</name>
 <description>v2rayA is a V2Ray client, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.</description>
 <executable>%BASE%\bin\v2raya.exe</executable>
-<arguments>--lite --log-file "v2raya.log" --v2ray-bin "%BASE%\bin\v2ray.exe" --v2ray-assetsdir "%BASE%\data" --config "%BASE%\config"</arguments>
+<arguments>--lite --log-file "v2raya.log" --v2ray-bin "%BASE%\bin\v2ray.exe" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
 <workingdirectory>%TEMP%</workingdirectory>
 <log mode="roll"></log>
 <delayedAutoStart>true</delayedAutoStart>
