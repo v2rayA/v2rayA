@@ -120,7 +120,6 @@ SOFTWARE.
 <arguments>--lite --log-file "v2raya.log" --v2ray-bin "%BASE%\bin\v2ray.exe" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
 <workingdirectory>%TEMP%</workingdirectory>
 <log mode="roll"></log>
-<delayedAutoStart>true</delayedAutoStart>
 <onfailure action="restart" delay="10 sec"/>
 </service>
 ' -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml"
