@@ -17,7 +17,7 @@ jobs:
         env:
           REF: ${{ github.ref }}
         run: |
-          echo ::set-output name=P_DIR::$(pwd)
+          echo "name=P_DIR::$(pwd)" >> $GITHUB_OUTPUT
           if [[ "$REF" == "refs/tags/v"* ]]; then
             tag=$(git describe --tags $(git rev-list --tags --max-count=1))
             version=${tag:1}
@@ -27,7 +27,7 @@ jobs:
             commit=$(git rev-parse --short HEAD)
             version="unstable-$date.r${count}.$commit"
           fi
-          echo ::set-output name=VERSION::"$version"
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
           echo "VERSION=$version" >> $GITHUB_ENV
       - name: Add PowerShell
         uses: Amadevus/pwsh-script@v2.0.1
