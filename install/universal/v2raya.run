@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# This is the runit script for v2raya. Check out runit, a UNIX init scheme with
+# service supervision here: http://smarden.org/runit/
+
+# Usage: move this script to the service directory as run, and make it
+# executable. Then you can run this service under runit service supervision.
+# For exmaple:
+
+# install -Dm755 v2raya.run /etc/sv/v2raya/run
+# ln -s /etc/sv/v2raya /var/service/
+
+# Note that the actual service directory and supervision directory may differ
+# from disto to disto.
+
+# For any problem, connect yuandi42 <realyuandi42@gmail.com>.
+
+exec 2>&1
+
+export V2RAYA_LOG_FILE="/var/log/v2raya/v2raya.log"
+
+exec /usr/bin/v2raya --log-disable-timestamp
