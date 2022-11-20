@@ -765,7 +765,6 @@ export default {
     tableData(x) {
       for (const sub of x.subscriptions) {
         sub.status = dayjs(sub.status)
-          .tz(dayjs.tz.guess())
           .format("YYYY-MM-DD HH:mm:ss");
       }
     },
