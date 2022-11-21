@@ -1,8 +1,8 @@
 package tls
 
 import (
-	"crypto/tls"
 	"fmt"
+	tls "github.com/refraction-networking/utls"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"net"
 	"net/url"
@@ -84,7 +84,7 @@ func (s *Tls) dial(network, addr string) (conn net.Conn, err error) {
 		return nil, fmt.Errorf("[Tls]: dial to %s: %w", s.addr, err)
 	}
 
-	tlsConn := tls.Client(rc, s.tlsConfig)
+	tlsConn := tls.UClient(rc, s.tlsConfig, tls.HelloChrome_106_Shuffle)
 	if err := tlsConn.Handshake(); err != nil {
 		return nil, err
 	}

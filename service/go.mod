@@ -17,6 +17,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20201229145248-615b0916ca38
 	github.com/pkg/errors v0.9.1
+	github.com/refraction-networking/utls v1.2.0
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5
 	github.com/shirou/gopsutil/v3 v3.21.11
 	github.com/stevenroose/gonfig v0.1.5
@@ -30,8 +31,8 @@ require (
 	github.com/v2rayA/v2rayA-lib4 v0.0.0-20220912152138-f38eb344419a
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
+	golang.org/x/net v0.1.0
+	golang.org/x/sys v0.1.0
 	google.golang.org/grpc v1.48.0
 )
 
