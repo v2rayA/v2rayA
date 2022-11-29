@@ -175,7 +175,7 @@ export default {
     portVmess: "VMess端口(带分流规则)",
     portVmessLink: "VMess端口链接",
     messages: [
-      "如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
+      "如需修改后端运行地址(默认127.0.0.1:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
       "docker模式下如果未使用<code>--privileged --network host</code>参数启动容器，可通过修改端口映射修改socks5、http端口。",
       "docker模式下不能正确判断端口占用，请确保输入的端口未被其他程序占用。",
       "如将端口设为0则表示关闭该端口。"

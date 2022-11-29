@@ -176,7 +176,7 @@ export default {
     portVmess: "Port of VMess(with Rule)",
     portVmessLink: "Link of VMess port",
     messages: [
-      "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
+      "Service address default as 127.0.0.1:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
       "We cannot judge port occupations in docker mode. Confirm it by yourself.",
       "Zero means to close this port."
