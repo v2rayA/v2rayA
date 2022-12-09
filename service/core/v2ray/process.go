@@ -133,6 +133,7 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 		}
 		portList = append(portList, port)
 	}
+	log.Trace("portList for connectivity test: %+v", portList)
 	startTime := time.Now()
 	for i := 0; i < len(portList); {
 		conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", portList[i]))
