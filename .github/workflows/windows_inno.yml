@@ -11,8 +11,8 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
 jobs:
   build:
     runs-on: "windows-latest"
