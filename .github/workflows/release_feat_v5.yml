@@ -38,7 +38,7 @@ jobs:
       env:
         REF: ${{ github.ref }}
       run: |
-        echo "name=P_DIR::$(pwd)" >> $GITHUB_OUTPUT
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         if [[ "$REF" == "refs/tags/v"* ]]; then
           tag=$(git describe --tags $(git rev-list --tags --max-count=1))
           version=${tag:1}
