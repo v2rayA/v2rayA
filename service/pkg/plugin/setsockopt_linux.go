@@ -1,5 +1,5 @@
-//go:build linux || openbsd || freebsd
-// +build linux openbsd freebsd
+//go:build linux
+// +build linux
 
 package plugin
 
@@ -52,7 +52,6 @@ func BindControl(c syscall.RawConn, laddr string, lport uint32) error {
 		}
 	})
 }
-
 
 func bindAddr(fd uintptr, ip []byte, port uint32) error {
 	if err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1); err != nil {
