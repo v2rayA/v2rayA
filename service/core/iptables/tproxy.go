@@ -16,7 +16,7 @@ var Tproxy tproxy
 func (t *tproxy) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	t.RemoveIPWhitelist(cidr)
-	pos := 8
+	pos := 7
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		pos += 3
 	}
@@ -69,7 +69,6 @@ iptables -w 2 -t mangle -A TP_RULE -i br-+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -i dn42-+ -j RETURN
 `
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		commands += `
@@ -130,7 +129,6 @@ ip6tables -w 2 -t mangle -A TP_RULE -i br-+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -i dn42-+ -j RETURN
 `
 		if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 			commands += `
@@ -156,7 +154,7 @@ ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 `
 	}
 	return Setter{
-		Cmds:      commands,
+		Cmds: commands,
 	}
 }
 
@@ -194,6 +192,6 @@ ip6tables -w 2 -t mangle -X TP_MARK
 `
 	}
 	return Setter{
-		Cmds:      commands,
+		Cmds: commands,
 	}
 }
