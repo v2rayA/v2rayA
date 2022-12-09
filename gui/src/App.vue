@@ -3,7 +3,11 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
+          <img
+            src="@/assets/img/logo2.png"
+            alt="v2rayA"
+            class="logo no-select"
+          />
         </b-navbar-item>
         <b-navbar-item tag="div">
           <b-tag
@@ -707,5 +711,10 @@ a {
   right: -1.5rem;
   top: 0;
   font-size: 1rem;
+}
+
+.navbar-item .dropdown-menu .dropdown-content {
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
 }
 </style>
