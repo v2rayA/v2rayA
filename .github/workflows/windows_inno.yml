@@ -3,7 +3,16 @@ name: Release v2rayA inno installer
 on:
   push:
     branches: [ feat_v5 ]
-
+    tags:
+      - v*
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "gui/**"
+      - ".github/workflows/*.yml"
+  release:
+    types: [published]
 jobs:
   build:
     runs-on: "windows-latest"
