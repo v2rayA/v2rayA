@@ -61,7 +61,7 @@ func GetHttpLatency(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
-	wt, err = service.TestHttpLatency(wt, 8*time.Second, 4, false)
+	wt, err = service.TestHttpLatency(wt, 8*time.Second, 128, false)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
