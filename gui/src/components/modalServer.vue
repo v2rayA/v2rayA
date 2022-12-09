@@ -80,7 +80,7 @@
             label="Security"
             label-position="on-border"
           >
-            <b-select v-model="v2ray.scy" expanded>
+            <b-select v-model="v2ray.scy" expanded required>
               <option value="auto">Auto</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
@@ -776,7 +776,7 @@ export default {
       path: "",
       tls: "none",
       alpn: "",
-      scy: "",
+      scy: "auto",
       v: "",
       allowInsecure: false,
       protocol: "vmess"
