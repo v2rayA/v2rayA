@@ -2,7 +2,7 @@ name: dispatch_copr
 
 on:
   push:
-    branches: [ master ]
+    branches: [ feat_v5 ]
     paths:
       - "**/*.go"
       - "go.mod"
