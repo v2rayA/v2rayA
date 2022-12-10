@@ -27,9 +27,11 @@ func IsDatetimeSynced() (ok bool, t time.Time, err error) {
 		return ntpSyncCache.value, ntpSyncCache.realTime, nil
 	}
 	defer func() {
-		ntpSyncCache.value = ok
-		ntpSyncCache.lastReq = time.Now()
-		ntpSyncCache.realTime = t
+		if err == nil {
+			ntpSyncCache.value = ok
+			ntpSyncCache.lastReq = time.Now()
+			ntpSyncCache.realTime = t
+		}
 	}()
 	t, err = ntp.Time("ntp.aliyun.com")
 	if err != nil {
