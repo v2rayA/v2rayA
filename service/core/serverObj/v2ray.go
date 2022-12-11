@@ -333,6 +333,8 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Path: v.Path,
 				}
 			}
+		default:
+			return Configuration{}, fmt.Errorf("unexpected transport type: %v", v.Net)
 		}
 		if strings.ToLower(v.TLS) == "tls" {
 			core.StreamSettings.Security = "tls"
