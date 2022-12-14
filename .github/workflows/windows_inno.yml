@@ -72,3 +72,14 @@ jobs:
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+      - name: Submit to Winget
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          Start-Sleep -Seconds 30 #Make sure GitHub releases are online
+          $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
+          $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
+          ./wingetcreate.exe update --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} v2rayA.v2rayA
+        env:
+          TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
