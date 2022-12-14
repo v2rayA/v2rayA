@@ -1,4 +1,4 @@
-name: Release v2rayA inno installer
+name: Release Windows build
 
 on:
   push:
@@ -59,6 +59,8 @@ jobs:
           path: |
             installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
       - name: Github Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
@@ -68,3 +70,5 @@ jobs:
           files: |
             installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
