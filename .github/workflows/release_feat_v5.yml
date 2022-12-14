@@ -1,4 +1,4 @@
-name: Release with feat_v5
+name: Release UNIX-likes builds
 
 on:
   push:
@@ -84,7 +84,7 @@ jobs:
         done
 
         cd service
-        for osarch in linux/386 linux/amd64 linux/arm linux/ppc64le linux/arm64 windows/amd64 windows/arm64 darwin/amd64 darwin/arm64; do
+        for osarch in linux/386 linux/amd64 linux/arm linux/ppc64le linux/arm64 darwin/amd64 darwin/arm64 freebsd/amd64 freebsd/arm64; do
           export GOOS=$(echo $osarch | cut -d/ -f1)
           export GOARCH=$(echo $osarch | cut -d/ -f2)
           SUFFIX=""
@@ -97,7 +97,7 @@ jobs:
       run: |
         mv v2raya_linux_386_$VERSION v2raya_linux_x86_$VERSION
         mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
-        mv v2raya_windows_amd64_$VERSION.exe v2raya_windows_x64_$VERSION.exe
+        mv v2raya_freebsd_amd64_$VERSION v2raya_freebsd_x64_$VERSION
         mv v2raya_darwin_amd64_$VERSION v2raya_darwin_x64_$VERSION
 
     - name: Upload Artifact
@@ -110,8 +110,8 @@ jobs:
           v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}
-          v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
-          v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}
+          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
 
