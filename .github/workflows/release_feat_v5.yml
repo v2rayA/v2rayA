@@ -57,7 +57,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2.4.0
       with:
-        node-version: 16
+        node-version: lts/*
         cache: 'yarn'
         cache-dependency-path: gui/yarn.lock
     - uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
