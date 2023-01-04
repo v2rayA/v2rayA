@@ -8,15 +8,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Prepare
         id: prep
         run: |
           TAG=$(git log --pretty=format:"%ad" --date=format:%Y%m%d $(git show -s --format=%H) -1)
           IMAGE="mzz2017/v2raya-nightly"
-          echo ::set-output name=image::${IMAGE}
-          echo ::set-output name=tag::${TAG}
+          echo image=${IMAGE} >> $GITHUB_OUTPUT
+          echo tag=${TAG} >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
