@@ -9,15 +9,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Prepare
         id: prep
         run: |
           TAG=$(echo $GITHUB_REF | cut -d / -f 3)
           IMAGE="mzz2017/v2raya"
-          echo ::set-output name=image::${IMAGE}
-          echo ::set-output name=tag::${TAG:1}
+          echo image=${IMAGE} >> $GITHUB_OUTPUT
+          echo tag=${TAG:1} >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
