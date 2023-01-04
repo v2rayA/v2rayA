@@ -29,7 +29,7 @@ jobs:
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols."
     steps:
     
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -51,16 +51,16 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ^1.17
     - name: Set up Node.js
-      uses: actions/setup-node@v2.4.0
+      uses: actions/setup-node@v3
       with:
         node-version: lts/*
         cache: 'yarn'
         cache-dependency-path: gui/yarn.lock
-    - uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
+    - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.7
         bundler-cache: true
