@@ -38,13 +38,17 @@
 
         .flex-tb div:hover {
             position: absolute;
+        }
+        .flex-tb div:hover {
             background: #fff;
             border: 1px solid #ddd;
             top: 20px;
+            z-index: 99;
         }
 
         .flex-tb div:hover > i {
             font-size: 200px;
+            transition: font-size 0.1s;
         }
         body{
             background: #ddd;
@@ -58,7 +62,7 @@
             el = el.querySelector('input')
             el.focus();
             el.select()
-            document.execCommand('copy', false, null);            
+            document.execCommand('copy', false, null);
         }
     </script>
 <body>

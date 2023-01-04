@@ -2,7 +2,7 @@ var webpack = require("webpack");
 var path = require("path");
 var WebpackIconfontPluginNodejs = require("webpack-iconfont-plugin-nodejs");
 var dir = "src/assets/iconfont";
-var UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+var TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
   configureWebpack: config => {
@@ -10,17 +10,11 @@ module.exports = {
     return {
       optimization: {
         minimizer: [
-          new UglifyJsPlugin({
-            uglifyOptions: {
-              output: {
-                beautify: false
-              },
-              compress: {
-                warnings: false,
-                drop_console: true
-              },
-              sourceMap: false
-            }
+          new TerserPlugin({
+            minify: TerserPlugin.swcMinify,
+            terserOptions: {
+              compress: true,
+            },
           })
         ]
       },
