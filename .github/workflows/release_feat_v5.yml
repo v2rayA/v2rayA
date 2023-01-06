@@ -1,7 +1,6 @@
 name: Release UNIX-likes builds
 
 on:
-  workflow_dispatch:
   push:
     branches: [ feat_v5 ]
     tags:
