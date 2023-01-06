@@ -705,7 +705,8 @@ export default {
         now = now.locale("zh-cn");
       } else if (localStorage["_lang"] === "en") {
         now = now.locale("en");
-      }
+      } else if (localStorage["_lang"] === "fa") {
+        now = now.locale("fa-ir");
       return now.to(x);
     }
   },
