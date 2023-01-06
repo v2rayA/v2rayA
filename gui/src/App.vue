@@ -187,7 +187,7 @@ export default {
       showCustomPorts: false,
       langs: [
         { flag: "zh", alt: "简体中文" },
-        { flag: "en", alt: "English" }
+        { flag: "en", alt: "English" },
         { flag: "fa", alt: "فارسی" }
       ],
       outboundName: "proxy",
