@@ -10,6 +10,7 @@ type LocalIPWatcher struct {
 	cidrPool    map[string]struct{}
 	AddedFunc   func(cidr string)
 	RemovedFunc func(cidr string)
+	UpdateFunc  func(cidrs []string)
 }
 
 func NewLocalIPWatcher(interval time.Duration, AddedFunc func(cidr string), RemovedFunc func(cidr string)) *LocalIPWatcher {

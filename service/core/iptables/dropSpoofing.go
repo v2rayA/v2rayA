@@ -34,7 +34,7 @@ ip6tables -w 2 -I FORWARD -j DROP_SPOOFING
 `
 	}
 	return Setter{
-		Cmds:      commands,
+		Cmds: commands,
 	}
 }
 
@@ -54,6 +54,6 @@ ip6tables -w 2 -X DROP_SPOOFING
 `
 	}
 	return Setter{
-		Cmds:      commands,
+		Cmds: commands,
 	}
 }

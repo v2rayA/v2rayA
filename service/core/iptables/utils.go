@@ -1,12 +1,13 @@
 package iptables
 
 import (
+	"net"
+	"strconv"
+
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/conf"
 	"golang.org/x/net/nettest"
-	"net"
-	"strconv"
 )
 
 func IPNet2CIDR(ipnet *net.IPNet) string {
@@ -43,4 +44,22 @@ func IsIPv6Supported() bool {
 		return false
 	}
 	return cmds.IsCommandValid("ip6tables") || cmds.IsCommandValid("ip6tables-nft")
+}
+
+func IsNFTablesSupported() bool {
+
+	switch conf.GetEnvironmentConfig().NFTablesSupport {
+	// Warning:
+	// This is an experimental feature for nftables support.
+	// The default value is "off" for now but may be changed to "auto" in the future
+	case "on":
+		return true
+	case "off":
+		return false
+	default:
+	}
+	if common.IsDocker() {
+		return false
+	}
+	return cmds.IsCommandValid("nft")
 }
