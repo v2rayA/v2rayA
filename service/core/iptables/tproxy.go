@@ -336,7 +336,7 @@ table inet v2raya {
     }
 
     chain tp_mark {
-        tcp flags syn / fin,syn,rst,ack meta mark set mark | 0x40 
+        tcp flags & (fin | syn | rst | ack) == syn meta mark set mark | 0x40 
         meta l4proto udp ct state new meta mark set mark | 0x40
         ct mark set mark     
     }
