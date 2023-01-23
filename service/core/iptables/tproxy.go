@@ -246,6 +246,7 @@ func (t *nftTproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *nftTproxy) GetSetupCommands() Setter {
+	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
 	table := `
 table inet v2raya {
     set whitelist {
@@ -263,7 +264,6 @@ table inet v2raya {
             192.0.2.0/24,
             192.88.99.0/24,
             192.168.0.0/16,
-            # 198.18.0.0/15,
             198.51.100.0/24,
             203.0.113.0/24,
             224.0.0.0/4
@@ -282,7 +282,6 @@ table inet v2raya {
             2001::/32,
             2001:20::/28,
             fe80::/10,
-            # fc00::/7,
             ff00::/8
         }
     }
