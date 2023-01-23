@@ -306,7 +306,8 @@ table inet v2raya {
     chain tp_pre {
         iifname "lo" mark & 0xc0 != 0x40 return
         meta l4proto { tcp, udp } fib saddr type != local fib daddr type != local jump tp_rule
-        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy to :32345
+        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip to 127.0.0.1:32345
+        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip6 to [::1]:32345
     }
 
     chain output {
