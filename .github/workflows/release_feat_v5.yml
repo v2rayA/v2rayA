@@ -99,7 +99,12 @@ jobs:
         mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
         mv v2raya_freebsd_amd64_$VERSION v2raya_freebsd_x64_$VERSION
         mv v2raya_darwin_amd64_$VERSION v2raya_darwin_x64_$VERSION
-
+    - name: Check Sha256
+      run: |
+        for v2raya_bin in $(ls | grep v2raya)
+        do
+          echo $(sha256sum $v2raya_bin | awk -F ' ' '{print $1}') > $v2raya_bin.sha256.txt
+        done
     - name: Upload Artifact
       if: "!startsWith(github.ref, 'refs/tags/v')"
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
@@ -114,7 +119,15 @@ jobs:
           v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
-
+          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
     - name: Install Package Dependencies
       if: startsWith(github.ref, 'refs/tags/v')
       run: |

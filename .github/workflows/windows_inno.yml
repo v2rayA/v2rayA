@@ -59,8 +59,12 @@ jobs:
           path: |
             installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
-            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+            installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
       - name: Github Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
@@ -72,6 +76,10 @@ jobs:
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+            installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
       - name: Submit to Winget
         if: startsWith(github.ref, 'refs/tags/v')
         shell: pwsh
