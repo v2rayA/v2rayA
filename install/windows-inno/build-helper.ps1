@@ -129,5 +129,5 @@ Copy-Item "./v2raya-x86_64-windows/bin/v2raya.exe" "./v2raya_windows_x64_$VERSIO
 Copy-Item "./v2raya-arm64-windows/bin/v2raya.exe" "./v2raya_windows_arm64_$VERSION.exe"
 
 foreach ($file in Get-ChildItem -Path .\ -Filter "*.exe" -Recurse) {
-    (Get-FileHash $file).Hash | Out-File .\"$file"'.sha256.txt'
+    (Get-FileHash $file).Hash | Out-File "$file"'.sha256.txt'
 }
