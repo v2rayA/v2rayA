@@ -99,7 +99,7 @@ jobs:
         mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
         mv v2raya_freebsd_amd64_$VERSION v2raya_freebsd_x64_$VERSION
         mv v2raya_darwin_amd64_$VERSION v2raya_darwin_x64_$VERSION
-    - name: Check Sha256
+    - name: Check Sha256SUM of Artifacts
       run: |
         for v2raya_bin in $(ls | grep v2raya)
         do
@@ -277,6 +277,13 @@ jobs:
         chmod 0600 ./key
         ./install/tool/ssh-add_expect ./key
         bash install/aur/deploy.sh
+    - name: Check Sha256SUM of installers
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        for v2raya_installer in $(ls | grep installer)
+        do
+          echo $(sha256sum $v2raya_installer | awk -F ' ' '{print $1}') > $v2raya_installer.sha256.txt
+        done
     - name: Github Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
@@ -289,10 +296,19 @@ jobs:
           v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
           v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}
-          v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
-          v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}
+          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
           v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
+          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
+          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
           installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb
           installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb
           installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb
@@ -309,7 +325,22 @@ jobs:
           installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
           installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+          installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
+          installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
+          installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
+          installer_debian_arm64_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
+          installer_debian_ppc64le_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
+          installer_redhat_x86_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
+          installer_redhat_x64_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
+          installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
+          installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
+          installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
+          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
     - name: Refresh Cloudflare Cache
       if: startsWith(github.ref, 'refs/tags/v')
       env:
