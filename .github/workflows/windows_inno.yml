@@ -52,6 +52,13 @@ jobs:
         run: |
           mv installer_windows_inno_x64.exe installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
           mv installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+      - name: Check Sha256SUM
+        shell: bash
+        run: |
+          for v2raya in $(ls | grep .exe)
+            do
+            echo $(sha256sum $v2raya | awk -F ' ' '{print $1}') > $v2raya.sha256.txt
+          done
       - name: Upload Artifact
         if: "!startsWith(github.ref, 'refs/tags/v')"
         uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
