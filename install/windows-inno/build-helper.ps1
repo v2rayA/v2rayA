@@ -127,3 +127,7 @@ Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64.exe
 Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64.exe"
 Copy-Item "./v2raya-x86_64-windows/bin/v2raya.exe" "./v2raya_windows_x64_$VERSION.exe"
 Copy-Item "./v2raya-arm64-windows/bin/v2raya.exe" "./v2raya_windows_arm64_$VERSION.exe"
+
+foreach ($file in Get-ChildItem -Path .\ -Filter "*.exe" -Recurse) {
+    (Get-FileHash $file).Hash | Out-File $file.sha256.txt
+}
