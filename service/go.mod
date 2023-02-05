@@ -41,4 +41,4 @@ require (
 //replace github.com/mzz2017/go-engine => ../../go-engine
 //replace github.com/v2rayA/beego/v2 => D:\beego
 
-replace go4.org/unsafe/assume-no-moving-gc => go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760
+replace go4.org/unsafe/assume-no-moving-gc => go4.org/unsafe/assume-no-moving-gc v0.0.0-20230204201903-c31fa085b70e
