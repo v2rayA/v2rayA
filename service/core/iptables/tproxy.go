@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+var (
+	TproxyNotSkipBr bool
+)
+
 type tproxy struct {
 	watcher *LocalIPWatcher
 }
@@ -16,9 +20,12 @@ var Tproxy tproxy
 func (t *tproxy) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	t.RemoveIPWhitelist(cidr)
-	pos := 6
+	pos := 7
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		pos += 3
+	}
+	if TproxyNotSkipBr {
+		pos--
 	}
 
 	var commands string
@@ -66,6 +73,11 @@ iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on
 iptables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
+`
+	if !TproxyNotSkipBr {
+		commands += `iptables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN`
+	}
+	commands += `
 iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
 `
@@ -124,6 +136,11 @@ ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --o
 
 ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
+`
+		if !TproxyNotSkipBr {
+			commands += `ip6tables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN`
+		}
+		commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
