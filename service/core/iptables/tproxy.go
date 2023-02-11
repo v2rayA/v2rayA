@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"strconv"
 	"strings"
 )
 
 var (
-	TproxyNotSkipBr bool
+	TproxyNotSkipBr string
 )
 
 type tproxy struct {
@@ -24,7 +25,7 @@ func (t *tproxy) AddIPWhitelist(cidr string) {
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		pos += 3
 	}
-	if TproxyNotSkipBr {
+	if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); notSkip {
 		pos--
 	}
 
@@ -74,7 +75,7 @@ iptables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 `
-	if !TproxyNotSkipBr {
+	if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); !notSkip {
 		commands += `iptables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN`
 	}
 	commands += `
@@ -137,7 +138,7 @@ ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --o
 ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
-		if !TproxyNotSkipBr {
+		if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); !notSkip {
 			commands += `ip6tables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN`
 		}
 		commands += `
