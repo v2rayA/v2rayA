@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -26,6 +27,8 @@ type TLSObfs struct {
 	remain        int
 	firstRequest  bool
 	firstResponse bool
+	rMu           sync.Mutex
+	wMu           sync.Mutex
 }
 
 func (to *TLSObfs) read(b []byte, discardN int) (int, error) {
@@ -54,6 +57,8 @@ func (to *TLSObfs) read(b []byte, discardN int) (int, error) {
 }
 
 func (to *TLSObfs) Read(b []byte) (int, error) {
+	to.rMu.Lock()
+	defer to.rMu.Unlock()
 	if to.remain > 0 {
 		length := to.remain
 		if length > len(b) {
@@ -77,6 +82,8 @@ func (to *TLSObfs) Read(b []byte) (int, error) {
 	return to.read(b, 3)
 }
 func (to *TLSObfs) Write(b []byte) (int, error) {
+	to.wMu.Lock()
+	defer to.wMu.Unlock()
 	length := len(b)
 	for i := 0; i < length; i += chunkSize {
 		end := i + chunkSize
