@@ -30,8 +30,8 @@ require (
 	github.com/v2rayA/v2rayA-lib4 v0.0.0-20220912152138-f38eb344419a
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
+	golang.org/x/net v0.7.0
+	golang.org/x/sys v0.5.0
 	google.golang.org/grpc v1.48.0
 )
 
