@@ -39,7 +39,7 @@ type V2Ray struct {
 	Net           string `json:"net"`
 	Type          string `json:"type"`
 	Host          string `json:"host"`
-	SNI           string `json:"sni"`
+	SNI           string `json:"sni,omitempty"`
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
 	Flow          string `json:"flow,omitempty"`
