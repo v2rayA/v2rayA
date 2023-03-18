@@ -34,8 +34,8 @@ type Process struct {
 	tag2WhichIndex map[string]int
 }
 
-func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (process *Process, err error) {
-	process = &Process{
+func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (*Process, error) {
+	process := &Process{
 		template: tmpl,
 	}
 	if tmpl.MultiObservatory != nil {
@@ -47,7 +47,7 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 		}
 		process.tag2WhichIndex = tag2WhichIndex
 	}
-	err = WriteV2rayConfig(tmpl.ToConfigBytes())
+	err := WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
 	}
