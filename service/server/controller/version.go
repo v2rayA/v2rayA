@@ -14,13 +14,13 @@ func GetVersion(ctx *gin.Context) {
 	if conf.GetEnvironmentConfig().Lite {
 		lite = 1
 	}
-	v5 := service.CheckV5() == nil
+	_, versionErr := service.CheckV5()
 	common.ResponseSuccess(ctx, gin.H{
 		"version":       conf.Version,
 		"foundNew":      conf.FoundNew,
 		"remoteVersion": conf.RemoteVersion,
 		"serviceValid":  service.IsV2rayServiceValid(),
-		"v5":            v5,
+		"v5":            versionErr == nil, // FIXME: Compomise on compatibility.
 		"lite":          lite,
 	})
 }
