@@ -2,7 +2,10 @@ package iptables
 
 import (
 	"net"
+	"os/exec"
+	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/cmds"
@@ -57,7 +60,9 @@ func IsIPv6Supported() bool {
 }
 
 func IsNftablesSupported() bool {
-
+	if runtime.GOOS != "linux" {
+		return false
+	}
 	switch conf.GetEnvironmentConfig().NftablesSupport {
 	// Warning:
 	// This is an experimental feature for nftables support.
@@ -71,5 +76,14 @@ func IsNftablesSupported() bool {
 	if common.IsDocker() {
 		return false
 	}
-	return cmds.IsCommandValid("nft")
+	if !cmds.IsCommandValid("nft") {
+		// No nft.
+		return false
+	}
+	out, err := exec.Command("iptables", "--version").Output()
+	if err != nil {
+		// No iptables.
+		return true
+	}
+	return strings.Contains(string(out), "nf_tables")
 }
