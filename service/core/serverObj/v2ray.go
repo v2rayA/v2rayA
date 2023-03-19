@@ -212,6 +212,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if security == "" {
 				security = "auto"
 			}
+			var aid int
+			if _aid, err := strconv.Atoi(v.Aid); err == nil {
+				aid = _aid
+			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
 					Address: v.Add,
@@ -219,7 +223,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Users: []coreObj.User{
 						{
 							ID:       id,
-							AlterID:  0,
+							AlterID:  aid,
 							Security: security,
 						},
 					},
@@ -232,8 +236,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Port:    port,
 					Users: []coreObj.User{
 						{
-							ID: id,
-							//AlterID:    0, // keep AEAD on
+							ID:         id,
 							Encryption: "none",
 						},
 					},
