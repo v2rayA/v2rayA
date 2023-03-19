@@ -314,6 +314,7 @@ export default {
   log: {
     logModalTitle: "View logs",
     refreshInterval: "Refresh Interval",
-    seconds: "seconds"
+    seconds: "seconds",
+    autoScoll: "Auto Scroll",
   }
 };

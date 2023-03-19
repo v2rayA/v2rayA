@@ -318,6 +318,7 @@ export default {
   log: {
     logModalTitle: "查看日志",
     refreshInterval: "刷新间隔",
-    seconds: "秒"
+    seconds: "秒",
+    autoScoll: "自动滚动",
   }
 };
