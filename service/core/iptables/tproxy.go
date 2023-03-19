@@ -193,7 +193,7 @@ ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
 
 func (t *legacyTproxy) GetCleanCommands() Setter {
 	commands := `
-ip rule del fwmark 0x40/0xc0 table 100 
+ip rule del fwmark 0x40/0xc0 table 100
 ip route del local 0.0.0.0/0 dev lo table 100
 
 iptables -w 2 -t mangle -F TP_OUT
@@ -209,7 +209,7 @@ iptables -w 2 -t mangle -X TP_MARK
 `
 	if IsIPv6Supported() {
 		commands += `
-ip -6 rule del fwmark 0x40/0xc0 table 100 
+ip -6 rule del fwmark 0x40/0xc0 table 100
 ip -6 route del local ::/0 dev lo table 100
 
 ip6tables -w 2 -t mangle -F TP_OUT
@@ -329,9 +329,9 @@ table inet v2raya {
 		table += `        iifname "br-*" return`
 	}
 	table += `
-        iifname "docker*" return 
-        iifname "veth*" return 
-        iifname "wg*" return 
+        iifname "docker*" return
+        iifname "veth*" return
+        iifname "wg*" return
         iifname "ppp*" return
         # anti-pollution
         ip daddr @interface return
@@ -342,7 +342,7 @@ table inet v2raya {
     }
 
     chain tp_mark {
-        tcp flags & (fin | syn | rst | ack) == syn meta mark set mark | 0x40 
+        tcp flags & (fin | syn | rst | ack) == syn meta mark set mark | 0x40
         meta l4proto udp ct state new meta mark set mark | 0x40
         ct mark set mark
     }
@@ -380,12 +380,12 @@ ip -6 route add local ::/0 dev lo table 100
 
 func (t *nftTproxy) GetCleanCommands() Setter {
 	command := `
-ip rule del fwmark 0x40/0xc0 table 100 
+ip rule del fwmark 0x40/0xc0 table 100
 ip route del local 0.0.0.0/0 dev lo table 100
 `
 	if IsIPv6Supported() {
 		command += `
-ip -6 rule del fwmark 0x40/0xc0 table 100 
+ip -6 rule del fwmark 0x40/0xc0 table 100
 ip -6 route del local ::/0 dev lo table 100
 		`
 	}
