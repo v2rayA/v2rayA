@@ -1,11 +1,12 @@
 package iptables
 
 import (
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/cmds"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/cmds"
 )
 
 // http://briteming.hatenablog.com/entry/2019/06/18/175518
@@ -56,7 +57,7 @@ func (c Setter) Run(stopAtError bool) error {
 	if common.IsDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
-	} else if !cmds.IsCommandValid("iptables") &&
+	} else if (!cmds.IsCommandValid("iptables") || IsNftablesSupported()) &&
 		cmds.IsCommandValid("iptables-nft") {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-nft")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-nft")

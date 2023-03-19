@@ -2,13 +2,14 @@ package v2ray
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"strings"
-	"time"
 )
 
 func deleteTransparentProxyRules() {
@@ -45,12 +46,12 @@ func writeTransparentProxyRules() (err error) {
 			}
 			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
 		}
-		iptables.SetWatcher(&iptables.Tproxy)
+		iptables.SetWatcher(iptables.Tproxy)
 	case configure.TransparentRedirect:
 		if err = iptables.Redirect.GetSetupCommands().Run(true); err != nil {
 			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
 		}
-		iptables.SetWatcher(&iptables.Redirect)
+		iptables.SetWatcher(iptables.Redirect)
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
 			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)
