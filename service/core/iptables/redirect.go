@@ -192,7 +192,7 @@ table inet v2raya {
             ff00::/8
         }
     }
-    
+ 
     set interface {
         type ipv4_addr
         flags interval
