@@ -31,6 +31,11 @@
           <hightlight-log class="text" :text="item.text"></hightlight-log>
         </RecycleScroller>
       </b-field>
+      <b-field>
+        <b-switch v-model="autoScoll" @input="changeScoll">
+          {{ $tc("log.autoScoll") }}
+        </b-switch>
+      </b-field>
     </section>
   </div>
 </template>
@@ -47,14 +52,15 @@ export default {
       intervalTime: 5,
       intervalCandidate: [2, 5, 10, 15],
       itemSize: 28,
+      autoScoll: true,
     };
   },
   created() {
+    this.autoScoll = !(localStorage.getItem("log.autoScoll") === "false");
+
     this.$axios({
       url: apiRoot + "/logger",
-    })
-      .then(this.updateLog)
-      .then(() => this.$refs.logScroller.scrollToItem(this.items.length - 1));
+    }).then(this.updateLog);
   },
   mounted() {
     this.intervalId = setInterval(() => {
@@ -82,6 +88,9 @@ export default {
         }
         this.endOfLine = items[items.length - 1].text.endsWith("\n");
         this.currentSkip += new Blob([logs.data]).size;
+        if (this.autoScoll) {
+          this.$refs.logScroller.scrollToItem(this.items.length - 1);
+        }
       }
     },
     changeInterval(val) {
@@ -93,6 +102,9 @@ export default {
           params: { skip: this.currentSkip },
         }).then(this.updateLog);
       }, this.intervalTime * 1000);
+    },
+    changeScoll(val) {
+      localStorage.setItem("log.autoScoll", val);
     },
   },
 };
@@ -107,6 +119,7 @@ export default {
 <style lang="scss">
 .log-scroller {
   height: 50vh;
+
   .vue-recycle-scroller__item-wrapper {
     overflow-x: auto;
   }
