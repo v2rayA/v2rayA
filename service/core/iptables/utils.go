@@ -29,6 +29,13 @@ func GetLocalCIDR() ([]string, error) {
 	return cidrs, nil
 }
 
+func IsNft() bool {
+	if _, isNft := Redirect.(*nftRedirect); isNft {
+		return true
+	}
+	return false
+}
+
 func IsIPv6Supported() bool {
 	switch conf.GetEnvironmentConfig().IPV6Support {
 	case "on":
@@ -43,7 +50,7 @@ func IsIPv6Supported() bool {
 	if !nettest.SupportsIPv6() {
 		return false
 	}
-	if _, isNft := Redirect.(*nftRedirect); isNft {
+	if IsNft() {
 		return true
 	}
 	return cmds.IsCommandValid("ip6tables") || cmds.IsCommandValid("ip6tables-nft")

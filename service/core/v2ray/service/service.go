@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"os/exec"
@@ -27,7 +28,7 @@ func IfTProxyModLoaded() bool {
 }
 
 func CheckAndProbeTProxy() (err error) {
-	if !IfTProxyModLoaded() && !common.IsDocker() { //docker下无法判断
+	if !IfTProxyModLoaded() && !common.IsDocker() && !iptables.IsNft() { //docker下无法判断，nft不需要
 		var out []byte
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
