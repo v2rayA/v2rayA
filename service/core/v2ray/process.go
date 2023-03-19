@@ -241,6 +241,7 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 	env := append(
 		os.Environ(),
 		"V2RAY_LOCATION_ASSET="+assetDir,
+		"XRAY_LOCATION_ASSET="+assetDir,
 	)
 	memstat, err := mem.VirtualMemory()
 	if err != nil {
