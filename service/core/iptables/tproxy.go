@@ -324,7 +324,11 @@ table inet v2raya {
     chain tp_rule {
         meta mark set ct mark
         meta mark & 0xc0 == 0x40 return
-        iifname "br-*" return 
+`
+	if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); !notSkip {
+		table += `        iifname "br-*" return`
+	}
+	table += `
         iifname "docker*" return 
         iifname "veth*" return 
         iifname "wg*" return 
@@ -340,7 +344,7 @@ table inet v2raya {
     chain tp_mark {
         tcp flags & (fin | syn | rst | ack) == syn meta mark set mark | 0x40 
         meta l4proto udp ct state new meta mark set mark | 0x40
-        ct mark set mark     
+        ct mark set mark
     }
 }
 `
