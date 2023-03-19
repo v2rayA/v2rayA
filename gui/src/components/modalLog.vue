@@ -1,6 +1,6 @@
 <template>
   <!-- TODO: mobile device compatibility -->
-  <div class="modal-card" style="width:65rem">
+  <div class="modal-card" style="width: 65rem">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ $tc("log.logModalTitle") }}
@@ -20,10 +20,12 @@
       </b-field>
       <b-field label="Logs" style="margin-bottom: 2rem">
         <RecycleScroller
+          ref="logScroller"
           v-slot="{ item }"
           class="log-scroller"
           :items="items"
-          :item-size="28"
+          :item-size="itemSize"
+          :grid-items="1"
           :buffer="1000"
         >
           <hightlight-log class="text" :text="item.text"></hightlight-log>
@@ -43,19 +45,22 @@ export default {
       currentSkip: 0,
       intervalId: 0,
       intervalTime: 5,
-      intervalCandidate: [2, 5, 10, 15]
+      intervalCandidate: [2, 5, 10, 15],
+      itemSize: 28,
     };
   },
   created() {
     this.$axios({
-      url: apiRoot + "/logger"
-    }).then(this.updateLog);
+      url: apiRoot + "/logger",
+    })
+      .then(this.updateLog)
+      .then(() => this.$refs.logScroller.scrollToItem(this.items.length - 1));
   },
   mounted() {
     this.intervalId = setInterval(() => {
       this.$axios({
         url: apiRoot + `/logger`,
-        params: { skip: this.currentSkip }
+        params: { skip: this.currentSkip },
       }).then(this.updateLog);
     }, this.intervalTime * 1000);
   },
@@ -85,11 +90,11 @@ export default {
       this.intervalId = setInterval(() => {
         this.$axios({
           url: apiRoot + `/logger`,
-          params: { skip: this.currentSkip }
+          params: { skip: this.currentSkip },
         }).then(this.updateLog);
       }, this.intervalTime * 1000);
-    }
-  }
+    },
+  },
 };
 </script>
 <style scoped>
