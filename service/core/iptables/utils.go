@@ -43,6 +43,9 @@ func IsIPv6Supported() bool {
 	if !nettest.SupportsIPv6() {
 		return false
 	}
+	if _, isNft := Redirect.(*nftRedirect); isNft {
+		return true
+	}
 	return cmds.IsCommandValid("ip6tables") || cmds.IsCommandValid("ip6tables-nft")
 }
 
