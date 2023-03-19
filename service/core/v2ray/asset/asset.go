@@ -144,7 +144,7 @@ func GetV2rayConfigDirPath() (p string) {
 	return conf.GetEnvironmentConfig().V2rayConfigDirectory
 }
 
-func GetNFTablesConfigPath() (p string) {
+func GetNftablesConfigPath() (p string) {
 	return path.Join(conf.GetEnvironmentConfig().Config, "v2raya.nft")
 }
 

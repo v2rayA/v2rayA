@@ -57,7 +57,7 @@ func (c Setter) Run(stopAtError bool) error {
 	if common.IsDocker() {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
-	} else if (!cmds.IsCommandValid("iptables") || IsNFTablesSupported()) &&
+	} else if (!cmds.IsCommandValid("iptables") || IsNftablesSupported()) &&
 		cmds.IsCommandValid("iptables-nft") {
 		commands = strings.ReplaceAll(commands, "iptables", "iptables-nft")
 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-nft")
