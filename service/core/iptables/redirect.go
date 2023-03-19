@@ -22,7 +22,7 @@ type nftRedirect struct{}
 var Redirect redirect
 
 func init() {
-	if IsNFTablesSupported() {
+	if IsNftablesSupported() {
 		Redirect = &nftRedirect{}
 	} else {
 		Redirect = &legacyRedirect{}
@@ -229,7 +229,7 @@ table inet v2raya {
 		table = strings.ReplaceAll(table, "meta nfproto { ipv4, ipv6 }", "meta nfproto ipv4")
 	}
 
-	nftablesConf := asset.GetNFTablesConfigPath()
+	nftablesConf := asset.GetNftablesConfigPath()
 	os.WriteFile(nftablesConf, []byte(table), 0644)
 
 	command := `nft -f ` + nftablesConf

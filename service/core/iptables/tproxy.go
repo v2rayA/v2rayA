@@ -28,7 +28,7 @@ type nftTproxy struct{}
 var Tproxy tproxy
 
 func init() {
-	if IsNFTablesSupported() {
+	if IsNftablesSupported() {
 		Tproxy = &nftTproxy{}
 	} else {
 		Tproxy = &legacyTproxy{}
@@ -356,7 +356,7 @@ table inet v2raya {
 		table = strings.ReplaceAll(table, "meta nfproto { ipv4, ipv6 }", "meta nfproto ipv4")
 	}
 
-	nftablesConf := asset.GetNFTablesConfigPath()
+	nftablesConf := asset.GetNftablesConfigPath()
 	os.WriteFile(nftablesConf, []byte(table), 0644)
 
 	command := `

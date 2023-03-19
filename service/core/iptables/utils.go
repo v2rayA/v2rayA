@@ -49,9 +49,9 @@ func IsIPv6Supported() bool {
 	return cmds.IsCommandValid("ip6tables") || cmds.IsCommandValid("ip6tables-nft")
 }
 
-func IsNFTablesSupported() bool {
+func IsNftablesSupported() bool {
 
-	switch conf.GetEnvironmentConfig().NFTablesSupport {
+	switch conf.GetEnvironmentConfig().NftablesSupport {
 	// Warning:
 	// This is an experimental feature for nftables support.
 	// The default value is "off" for now but may be changed to "auto" in the future
