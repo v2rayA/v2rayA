@@ -34,7 +34,10 @@ type Process struct {
 	tag2WhichIndex map[string]int
 }
 
-func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (*Process, error) {
+func NewProcess(tmpl *Template,
+	prestart func() error, poststart func() error,
+	postUnexpectedStop func(p *Process),
+) (*Process, error) {
 	process := &Process{
 		template: tmpl,
 	}
@@ -110,7 +113,7 @@ func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (
 			// canceled by v2rayA
 			return
 		}
-		defer ProcessManager.Stop(false)
+		defer postUnexpectedStop(process)
 		var t []string
 		if p != nil {
 			if p.Success() {

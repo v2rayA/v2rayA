@@ -245,6 +245,9 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 		return m.beforeStart(t)
 	}, func() error {
 		return m.afterStart(t)
+	}, func(p *Process) {
+		m.beforeStop(p)
+		m.afterStop(p)
 	})
 	if err != nil {
 		return err
