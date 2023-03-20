@@ -11,8 +11,6 @@ if [ -d "$CurrentDir/.git" ]; then
 else
   version="unstable"
 fi
-# https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-export NODE_OPTIONS=--openssl-legacy-provider
 cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
 for file in $(find  "$CurrentDir"/service/server/router/web |grep -v png |grep -v index.html|grep -v .gz)
 do
