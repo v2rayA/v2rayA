@@ -59,6 +59,12 @@
               expanded
             />
           </b-field>
+          <b-field v-if="v2ray.protocol === 'vless'" label="Flow" label-position="on-border">
+            <b-select v-model="v2ray.flow" expanded>
+              <option value="none">none</option>
+              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+            </b-select>
+          </b-field>
           <b-field
             v-if="v2ray.protocol === 'vmess'"
             label="AlterID"
@@ -97,6 +103,18 @@
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
             </b-select>
+          </b-field>
+          <b-field
+            v-show="v2ray.tls === 'tls'"
+            label="uTLS fingerprint"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_utls_fingerprint"
+              v-model="v2ray.utls_fingerprint"
+              placeholder="A uTLS compatable fingerprint name"
+              expanded
+            />
           </b-field>
           <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
             <template slot="label">
@@ -769,12 +787,14 @@ export default {
       add: "",
       port: "",
       id: "",
+      flow: "",
       aid: "",
       net: "tcp",
       type: "none",
       host: "",
       path: "",
       tls: "none",
+      utls_fingerprint: "",
       alpn: "",
       scy: "auto",
       v: "",
@@ -841,13 +861,6 @@ export default {
     },
     tabChoice: 0
   }),
-  computed: {
-    filteredDataArray() {
-      return this.presetFlows.filter(option => {
-        return option.toString().indexOf(this.v2ray.flow) >= 0;
-      });
-    }
-  },
   mounted() {
     if (this.which !== null) {
       this.$axios({
@@ -934,12 +947,14 @@ export default {
           add: u.host,
           port: u.port,
           id: decodeURIComponent(u.username),
+          flow: u.params.flow || "",
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
           host: u.params.sni || u.params.host || "",
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           tls: u.params.security || "none",
+          utls_fingerprint: u.params.fp || "",
           allowInsecure: u.params.allowInsecure || false,
           protocol: "vless"
         };
@@ -1127,14 +1142,18 @@ export default {
           // https://github.com/XTLS/Xray-core/discussions/716
           query = {
             type: srcObj.net,
+            flow: srcObj.flow,
             security: srcObj.tls,
+            fp: srcObj.utls_fingerprint,
             path: srcObj.path,
             host: srcObj.host,
             headerType: srcObj.type,
             sni: srcObj.host,
-            flow: srcObj.flow,
-            allowInsecure: srcObj.allowInsecure
+            allowInsecure: srcObj.allowInsecure,
           };
+          if (srcObj.flow !== "none"){
+            query.flow = srcObj.flow;
+          }
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
           }
@@ -1177,9 +1196,6 @@ export default {
                 break;
               }
               obj.path = "";
-          }
-          if (!(obj.protocol === "vless" && obj.tls === "xtls")) {
-            delete obj.flow;
           }
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":

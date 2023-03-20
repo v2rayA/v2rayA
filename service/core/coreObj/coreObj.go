@@ -124,6 +124,7 @@ type TLSSettings struct {
 	Alpn                             []string      `json:"alpn,omitempty"`
 	PinnedPeerCertificateChainSha256 string        `json:"pinnedPeerCertificateChainSha256,omitempty"`
 	Certificates                     []Certificate `json:"certificates,omitempty"`
+	Fingerprint                      string        `json:"fingerprint,omitempty"`
 }
 type Certificate struct {
 	CertificateFile string `json:"certificateFile"`
