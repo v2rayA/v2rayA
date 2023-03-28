@@ -49,7 +49,10 @@ func GetV2rayServiceVersion() (variant Variant, ver string, err error) {
 	cmd.Stderr = output
 	go func() {
 		time.Sleep(5 * time.Second)
-		_ = cmd.Process.Kill()
+		p := cmd.Process
+		if p != nil {
+			_ = p.Kill()
+		}
 	}()
 	if err := cmd.Start(); err != nil {
 		return Unknown, "", err
