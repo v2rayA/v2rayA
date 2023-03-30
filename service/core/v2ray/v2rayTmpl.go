@@ -1043,10 +1043,10 @@ func (t *Template) setInbound() error {
 	if IsTransparentOn(t.Setting) {
 		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
-			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
+			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 52345, "transparent")
 		case configure.TransparentSystemProxy:
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
-				Port:     32345,
+				Port:     52345,
 				Protocol: "http",
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
