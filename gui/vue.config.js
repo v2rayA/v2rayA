@@ -5,7 +5,7 @@ var dir = "src/assets/iconfont";
 var TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = {
-  configureWebpack: config => {
+  configureWebpack: (config) => {
     config.resolve.alias["vue$"] = "vue/dist/vue.esm.js";
     return {
       optimization: {
@@ -15,12 +15,12 @@ module.exports = {
             terserOptions: {
               compress: true,
             },
-          })
-        ]
+          }),
+        ],
       },
       plugins: [
         new webpack.DefinePlugin({
-          apiRoot: '`${localStorage["backendAddress"]}/api`'
+          apiRoot: '`${localStorage["backendAddress"]}/api`',
         }),
         new WebpackIconfontPluginNodejs({
           cssPrefix: "icon",
@@ -29,17 +29,17 @@ module.exports = {
           fontsOutput: path.join(dir, "fonts/"),
           cssOutput: path.join(dir, "fonts/font.css"),
           // htmlOutput: path.join(dir, "fonts/_font-preview.html"),
-          jsOutput: path.join(dir, "fonts/fonts.js")
+          jsOutput: path.join(dir, "fonts/fonts.js"),
           // formats: ['ttf', 'woff', 'svg'],
-        })
-      ]
+        }),
+      ],
     };
   },
 
   productionSourceMap: false,
 
   devServer: {
-    port: 8081
+    port: 8081,
   },
 
   // publicPath: "./static/",
@@ -61,5 +61,5 @@ module.exports = {
 
   lintOnSave: false,
 
-  transpileDependencies: ["buefy"]
+  transpileDependencies: ["buefy"],
 };

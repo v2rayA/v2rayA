@@ -7,9 +7,9 @@ function waitingConnected(promise, interval, cancel, timeout) {
   let timer = setInterval(() => {
     axios({
       url: apiRoot + "/touch",
-      timeout: interval
+      timeout: interval,
     })
-      .then(res => {
+      .then((res) => {
         handleResponse(
           res,
           null,
@@ -27,13 +27,13 @@ function waitingConnected(promise, interval, cancel, timeout) {
                 type: "is-warning",
                 position: "is-top",
                 queue: false,
-                duration: 5000
+                duration: 5000,
               });
             }
           }
         );
       })
-      .catch(err => {
+      .catch((err) => {
         if (err.response.status === 401) {
           clearInterval(timer);
           cancel && cancel();
@@ -44,9 +44,9 @@ function waitingConnected(promise, interval, cancel, timeout) {
   promise.then(() => {
     Promise.race([
       promise,
-      new Promise(resolve => {
+      new Promise((resolve) => {
         setTimeout(resolve, timeout ? timeout : 30 * 1000);
-      })
+      }),
     ]).finally(() => {
       clearInterval(timer);
     });

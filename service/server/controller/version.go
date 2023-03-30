@@ -6,6 +6,7 @@ import (
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	"github.com/v2rayA/v2rayA/core/v2ray/service"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"net/http"
 )
 
@@ -14,14 +15,15 @@ func GetVersion(ctx *gin.Context) {
 	if conf.GetEnvironmentConfig().Lite {
 		lite = 1
 	}
-	_, versionErr := service.CheckV5()
+	variant, versionErr := service.CheckV5()
 	common.ResponseSuccess(ctx, gin.H{
-		"version":       conf.Version,
-		"foundNew":      conf.FoundNew,
-		"remoteVersion": conf.RemoteVersion,
-		"serviceValid":  service.IsV2rayServiceValid(),
-		"v5":            versionErr == nil, // FIXME: Compomise on compatibility.
-		"lite":          lite,
+		"version":          conf.Version,
+		"foundNew":         conf.FoundNew,
+		"remoteVersion":    conf.RemoteVersion,
+		"serviceValid":     service.IsV2rayServiceValid(),
+		"v5":               versionErr == nil, // FIXME: Compomise on compatibility.
+		"lite":             lite,
+		"loadBalanceValid": variant == where.V2ray && versionErr == nil,
 	})
 }
 

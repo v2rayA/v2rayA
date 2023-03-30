@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
@@ -10,6 +11,8 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
+
+var V2OnlyFeatureError = fmt.Errorf("v2fly/v2ray-core only feature")
 
 func StopV2ray() (err error) {
 	v2ray.ProcessManager.Stop(true)
@@ -89,7 +92,7 @@ func checkSupport(toAppend []*configure.Which) (err error) {
 		for _, wt := range append(toAppend, configure.GetConnectedServers().Get()...) {
 			outbound2cnt[wt.Outbound]++
 			if outbound2cnt[wt.Outbound] > 1 {
-				return fmt.Errorf("cannot connect to multiple servers: v2fly/v2ray-core only feature")
+				return V2OnlyFeatureError
 			}
 		}
 	}
@@ -104,12 +107,17 @@ func Connect(which *configure.Which) (err error) {
 			err = fmt.Errorf("failed to connect: %w", err)
 		}
 	}()
-	setting := GetSetting()
-	if err = checkSupport([]*configure.Which{which}); err != nil {
-		return err
-	}
 	if which == nil {
 		return fmt.Errorf("which can not be nil")
+	}
+	setting := GetSetting()
+	if err = checkSupport([]*configure.Which{which}); err != nil {
+		if !errors.Is(err, V2OnlyFeatureError) {
+			return err
+		}
+		if err = configure.ClearConnects(which.Outbound); err != nil {
+			return err
+		}
 	}
 	//configure the ip forward
 	if setting.IpForward != ipforward.IsIpForwardOn() {

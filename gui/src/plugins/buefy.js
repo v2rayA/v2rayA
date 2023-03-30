@@ -6,5 +6,5 @@ import "@mdi/font/css/materialdesignicons.css";
 
 Vue.use(Buefy);
 ConfigProgrammatic.setOptions({
-  defaultProgrammaticPromise: true
+  defaultProgrammaticPromise: true,
 });
