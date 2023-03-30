@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 450px;margin:auto">
+  <div class="modal-card" style="max-width: 450px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ $t("dns.title") }}
@@ -49,12 +49,12 @@ export default {
   name: "ModalDnsSetting",
   data: () => ({
     internal: "",
-    external: ""
+    external: "",
   }),
   created() {
     this.$axios({
-      url: apiRoot + "/dnsList"
-    }).then(res => {
+      url: apiRoot + "/dnsList",
+    }).then((res) => {
       handleResponse(res, this, () => {
         if (res.data.data.internal) {
           let internal = res.data.data.internal;
@@ -77,9 +77,9 @@ export default {
         method: "put",
         data: {
           internal: this.internal,
-          external: this.external
-        }
-      }).then(res => {
+          external: this.external,
+        },
+      }).then((res) => {
         handleResponse(res, this, () => {
           this.$emit("close");
         });
@@ -87,8 +87,8 @@ export default {
     },
     beforeAdding(tag) {
       return /^\d+$/.test(tag) || /^\d+:\d+$/.test(tag);
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 500px;margin:auto">
+  <div class="modal-card" style="max-width: 500px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title has-text-centered">{{ title }}</p>
     </header>
@@ -11,8 +11,8 @@
           style="position: relative"
           :data-clipboard-text="sharingAddress"
         >
-          <div class="tag-cover tag is-rounded" style="display: none;"></div>
-          <span class="has-ellipsis" style="max-width:10em">
+          <div class="tag-cover tag is-rounded" style="display: none"></div>
+          <span class="has-ellipsis" style="max-width: 10em">
             {{ shortDesc }}
           </span>
         </span>
@@ -22,10 +22,10 @@
           style="position: relative"
           :data-clipboard-text="sharingAddress"
         >
-          <span class="has-ellipsis" style="max-width:25em">
+          <span class="has-ellipsis" style="max-width: 25em">
             {{ sharingAddress }}
           </span>
-          <div class="tag-cover tag is-rounded" style="display: none;"></div>
+          <div class="tag-cover tag is-rounded" style="display: none"></div>
         </span>
       </div>
     </section>
@@ -69,20 +69,20 @@ export default {
   props: {
     title: {
       type: String,
-      required: true
+      required: true,
     },
     sharingAddress: {
       type: String,
-      required: true
+      required: true,
     },
     shortDesc: {
       type: String,
-      required: true
+      required: true,
     },
     type: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   beforeDestroy() {
     this.clipboard.destroy();
@@ -92,21 +92,21 @@ export default {
       .querySelector("#QRCodeImport")
       .addEventListener("change", this.handleFileChange, false);
     this.clipboard = new ClipboardJS(".sharingAddressTag");
-    this.clipboard.on("success", e => {
+    this.clipboard.on("success", (e) => {
       this.$buefy.toast.open({
         message: this.$t("common.success"),
         type: "is-primary",
         position: "is-top",
-        queue: false
+        queue: false,
       });
       e.clearSelection();
     });
-    this.clipboard.on("error", e => {
+    this.clipboard.on("error", (e) => {
       this.$buefy.toast.open({
         message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
         type: "is-warning",
         position: "is-top",
-        queue: false
+        queue: false,
       });
     });
 
@@ -115,25 +115,28 @@ export default {
       add = "sub://" + Base64.encode(add);
     }
     let canvas = document.getElementById("canvas");
-    QRCode.toCanvas(canvas, add, { errorCorrectionLevel: "H" }, function(
-      error
-    ) {
-      if (error) console.error(error);
-      // console.log("QRCode has been generated successfully!");
-    });
+    QRCode.toCanvas(
+      canvas,
+      add,
+      { errorCorrectionLevel: "H" },
+      function (error) {
+        if (error) console.error(error);
+        // console.log("QRCode has been generated successfully!");
+      }
+    );
     let targets = document.querySelectorAll(".sharingAddressTag");
     let covers = document.querySelectorAll(".tag-cover");
     let coverText = document.querySelector("#tag-cover-text");
     let enter = () => {
-      covers.forEach(x => (x.style.display = "unset"));
+      covers.forEach((x) => (x.style.display = "unset"));
       coverText.style.display = "flex";
     };
     let leave = () => {
-      covers.forEach(x => (x.style.display = "none"));
+      covers.forEach((x) => (x.style.display = "none"));
       coverText.style.display = "none";
     };
-    targets.forEach(x => x.addEventListener("mouseenter", enter));
-    targets.forEach(x => x.addEventListener("mouseleave", leave));
+    targets.forEach((x) => x.addEventListener("mouseenter", enter));
+    targets.forEach((x) => x.addEventListener("mouseleave", leave));
   },
   methods: {
     handleFileChange(e) {
@@ -153,35 +156,35 @@ export default {
           message: this.$t("import.qrcodeError"),
           type: "is-warning",
           position: "is-top",
-          queue: false
+          queue: false,
         });
         return;
       }
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         // target.result 该属性表示目标对象的DataURL
         // console.log(e.target.result);
         const file = e.target.result;
         const qrcode = new Decoder();
         qrcode
           .scan(file)
-          .then(result => {
+          .then((result) => {
             console.log(result);
             that.handleClickImportConfirm(result.data);
           })
-          .catch(error => {
+          .catch((error) => {
             console.error(error);
             that.$buefy.toast.open({
               message: that.$t("import.qrcodeError"),
               type: "is-warning",
               position: "is-top",
-              queue: false
+              queue: false,
             });
           });
       };
       reader.readAsDataURL(file);
-    }
-  }
+    },
+  },
 };
 </script>
 

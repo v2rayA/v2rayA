@@ -47,7 +47,7 @@ function handleResponse(res, that, suc, err, fail) {
           type: "is-warning",
           position: "is-top",
           queue: false,
-          duration: 5000
+          duration: 5000,
         });
       }
     }
@@ -102,7 +102,7 @@ function parseURL(u) {
       ? 443
       : 80,
     query: a.search,
-    params: (function() {
+    params: (function () {
       var ret = {},
         seg = a.search.replace(/^\?/, "").split("&"),
         len = seg.length,
@@ -121,7 +121,7 @@ function parseURL(u) {
     hash: a.hash.replace("#", ""),
     path: a.pathname.replace(/^([^/])/, "/$1"),
     relative: (a.href.match(/tps?:\/\/[^/]+(.+)/) || [null, ""])[1],
-    segments: a.pathname.replace(/^\//, "").split("/")
+    segments: a.pathname.replace(/^\//, "").split("/"),
   };
   a.remove();
   return r;
@@ -135,22 +135,23 @@ function generateURL({
   port,
   params,
   hash,
-  path
+  path,
 }) {
   /**
    * 所有参数设置默认值
    * 避免方法检测到参数为null/undefine返回该值查询结果
    * 查询结果当然不是URI类型，导致链式调用失败
    */
-  const uri=URI().protocol(protocol||'http')
-    .username(username||'')
-    .password(password||'')
-    .host(host||'')
-    .port(port||80)
-    .path(path||'')
-    .query(params||{})
-    .hash(hash||'')
-  const res=uri.toString();
+  const uri = URI()
+    .protocol(protocol || "http")
+    .username(username || "")
+    .password(password || "")
+    .host(host || "")
+    .port(port || 80)
+    .path(path || "")
+    .query(params || {})
+    .hash(hash || "");
+  const res = uri.toString();
   return res;
 }
 
@@ -165,10 +166,4 @@ function toInt(s) {
   return s;
 }
 
-export {
-  locateServer,
-  handleResponse,
-  parseURL,
-  generateURL,
-  toInt
-};
+export { locateServer, handleResponse, parseURL, generateURL, toInt };

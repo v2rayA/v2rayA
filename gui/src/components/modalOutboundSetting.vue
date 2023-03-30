@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 450px;margin:auto">
+  <div class="modal-card" style="max-width: 450px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ outbound }} - {{ $t("common.outboundSetting") }}
@@ -29,7 +29,9 @@
       <button class="button is-danger" type="button" @click="handleClickDelete">
         {{ $t("operations.delete") }}
       </button>
-      <div style="display:flex;justify-content:flex-end;width: -moz-available;">
+      <div
+        style="display: flex; justify-content: flex-end; width: -moz-available"
+      >
         <button class="button" @click="$emit('close')">
           {{ $t("operations.cancel") }}
         </button>
@@ -51,24 +53,24 @@ export default {
   props: {
     outbound: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   data: () => ({
     setting: {
       probeURL: "",
       probeInterval: "",
-      type: ""
+      type: "",
     },
-    backendReady: false
+    backendReady: false,
   }),
   created() {
     this.$axios({
       url: apiRoot + "/outbound",
       params: {
-        outbound: this.outbound
-      }
-    }).then(res => {
+        outbound: this.outbound,
+      },
+    }).then((res) => {
       handleResponse(res, this, () => {
         Object.assign(this.setting, res.data.data.setting);
       });
@@ -80,7 +82,7 @@ export default {
       this.$buefy.dialog.confirm({
         title: that.$t("delete.title"),
         message: that.$t("outbound.deleteMessage", {
-          outboundName: that.outbound
+          outboundName: that.outbound,
         }),
         confirmText: that.$t("operations.delete"),
         cancelText: that.$t("operations.cancel"),
@@ -90,7 +92,7 @@ export default {
         onConfirm: () => {
           that.$emit("delete");
           that.$parent.close();
-        }
+        },
       });
     },
     handleClickSubmit() {
@@ -122,15 +124,15 @@ export default {
         method: "put",
         data: {
           outbound: this.outbound,
-          setting: this.setting
-        }
-      }).then(res => {
+          setting: this.setting,
+        },
+      }).then((res) => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({
             message: res.data.code,
             type: "is-primary",
             position: "is-top",
-            queue: false
+            queue: false,
           });
           this.$parent.close();
         });
@@ -139,13 +141,12 @@ export default {
           res.data.message.indexOf("invalid config") >= 0
         ) {
           // FIXME: tricky
-          this.$parent.$parent.runningState.running = this.$t(
-            "common.notRunning"
-          );
+          this.$parent.$parent.runningState.running =
+            this.$t("common.notRunning");
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
