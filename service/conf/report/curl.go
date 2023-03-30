@@ -47,7 +47,7 @@ func (r *CurlReporter) TransparentReport() (ok bool, report string) {
 	defer func() {
 		report = fmt.Sprintf("Transparent Proxy(%v): %v", setting.TransparentType, report)
 	}()
-	if !v2ray.IsTransparentOn() {
+	if !v2ray.IsTransparentOn(nil) {
 		return true, "Transparent Proxy is not enabled"
 	}
 	cli := http.Client{
