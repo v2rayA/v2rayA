@@ -54,7 +54,7 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 	} else {
 		setting = configure.GetSettingNotNil()
 	}
-	if (!checkRunning || ProcessManager.Running()) && IsTransparentOn() {
+	if (!checkRunning || ProcessManager.Running()) && IsTransparentOn(setting) {
 		deleteTransparentProxyRules()
 
 		if conf.GetEnvironmentConfig().TransparentHook != "" {

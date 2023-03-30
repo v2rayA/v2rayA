@@ -75,8 +75,10 @@ func writeTransparentProxyRules() (err error) {
 	return nil
 }
 
-func IsTransparentOn() bool {
-	setting := configure.GetSettingNotNil()
+func IsTransparentOn(setting *configure.Setting) bool {
+	if setting == nil {
+		setting = configure.GetSettingNotNil()
+	}
 	if setting.Transparent == configure.TransparentClose {
 		return false
 	}
