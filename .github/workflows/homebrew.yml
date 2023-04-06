@@ -1,10 +1,8 @@
 name: Trigger v2rayA's brew tap
 
 on:
-  push:
-    branches: [ feat_v5 ]
-    tags:
-      - v*
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -38,6 +36,8 @@ jobs:
       - name: Update build.sh
         shell: bash
         run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           cd ./homebrew-v2raya/
           old_version=$(cat build.sh | grep 'v2rayA_build_tag=' | cut -d '=' -f2 | cut -d "'" -f2)
           new_version="${{ steps.prep.outputs.VERSION }}"
