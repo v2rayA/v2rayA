@@ -36,9 +36,9 @@ jobs:
       - name: Update build.sh
         shell: bash
         run: |
+          cd ./homebrew-v2raya/
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          cd ./homebrew-v2raya/
           old_version=$(cat build.sh | grep 'v2rayA_build_tag=' | cut -d '=' -f2 | cut -d "'" -f2)
           new_version="${{ steps.prep.outputs.VERSION }}"
           sed -i "s|$old_version|$new_version|g" ./build.sh
