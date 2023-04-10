@@ -1,7 +1,7 @@
 <template>
   <div
     class="modal-card modal-configure-pac"
-    style="max-width: 550px;height:700px;margin:auto"
+    style="max-width: 550px; height: 700px; margin: auto"
   >
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("customRouting.title") }}</p>
@@ -11,14 +11,14 @@
         <p
           v-html="
             $t('customRouting.messages.0', {
-              V2RayLocationAsset
+              V2RayLocationAsset,
             })
           "
         />
         <p
           v-html="
             $t('customRouting.messages.1', {
-              V2RayLocationAsset
+              V2RayLocationAsset,
             })
           "
         ></p>
@@ -64,12 +64,12 @@
           class="card-header"
           role="button"
         >
-          <p class="card-header-title" style="position: relative;">
+          <p class="card-header-title" style="position: relative">
             <span>{{ `${$t("customRouting.rule")}${index + 1}` }}</span>
             <b-button
               type="is-text"
               size="is-small"
-              style="position: absolute;right:0"
+              style="position: absolute; right: 0"
               @click="handleClickDeleteRule(...arguments, index)"
               >{{ $t("operations.delete") }}</b-button
             >
@@ -95,8 +95,9 @@
                 v-for="file of siteDatFiles"
                 :key="file.filename"
                 :value="file.filename"
-                >{{ file.filename }}</option
               >
+                {{ file.filename }}
+              </option>
             </b-select>
           </b-field>
           <b-field label="Tags" label-position="on-border">
@@ -115,11 +116,12 @@
                 v-for="tag of siteDatFiles[rule.filename].tags"
                 :key="tag"
                 :value="tag"
-                >{{ tag }}</option
               >
+                {{ tag }}
+              </option>
             </b-select>
           </b-field>
-          <p class="content" style="font-size:0.8em;margin-left:0.5em">
+          <p class="content" style="font-size: 0.8em; margin-left: 0.5em">
             tags: {{ rule.tags }}
           </p>
           <b-field
@@ -127,24 +129,30 @@
             label-position="on-border"
           >
             <b-select v-model="rule.ruleType" expanded>
-              <option value="direct">{{
-                $t("customRouting.direct") +
+              <option value="direct">
+                {{
+                  $t("customRouting.direct") +
                   (customPac.defaultProxyMode === "direct"
                     ? `(${$t("customRouting.sameAsDefaultRule")})`
                     : "")
-              }}</option>
-              <option value="proxy">{{
-                $t("customRouting.proxy") +
+                }}
+              </option>
+              <option value="proxy">
+                {{
+                  $t("customRouting.proxy") +
                   (customPac.defaultProxyMode === "proxy"
                     ? `(${$t("customRouting.sameAsDefaultRule")})`
                     : "")
-              }}</option>
-              <option value="block">{{
-                $t("customRouting.block") +
+                }}
+              </option>
+              <option value="block">
+                {{
+                  $t("customRouting.block") +
                   (customPac.defaultProxyMode === "block"
                     ? `(${$t("customRouting.sameAsDefaultRule")})`
                     : "")
-              }}</option>
+                }}
+              </option>
             </b-select>
           </b-field>
         </div>
@@ -152,7 +160,12 @@
     </section>
     <footer class="modal-card-foot">
       <div
-        style="position:relative;display:flex;justify-content:flex-end;width:100%"
+        style="
+          position: relative;
+          display: flex;
+          justify-content: flex-end;
+          width: 100%;
+        "
       >
         <button class="button btn-new" type="button" @click="handleNew">
           {{ $t("customRouting.appendRule") }}
@@ -175,18 +188,18 @@ export default {
   data: () => ({
     customPac: {
       defaultProxyMode: "",
-      routingRules: []
+      routingRules: [],
     },
     siteDatFiles: [],
     firstSiteDatFilename: "",
-    V2RayLocationAsset: ""
+    V2RayLocationAsset: "",
   }),
   mounted() {
     (async () => {
       let customPac = this.customPac;
       await this.$axios({
-        url: apiRoot + "/customPac"
-      }).then(res => {
+        url: apiRoot + "/customPac",
+      }).then((res) => {
         handleResponse(res, this, () => {
           customPac = res.data.data.customPac;
           this.V2RayLocationAsset = res.data.data.V2RayLocationAsset;
@@ -194,8 +207,8 @@ export default {
       });
       let closing = false;
       await this.$axios({
-        url: apiRoot + "/siteDatFiles"
-      }).then(res => {
+        url: apiRoot + "/siteDatFiles",
+      }).then((res) => {
         handleResponse(res, this, () => {
           if (
             res.data.data.siteDatFiles &&
@@ -203,7 +216,7 @@ export default {
           ) {
             //将数组转换为map
             this.siteDatFiles = {};
-            res.data.data.siteDatFiles.forEach(x => {
+            res.data.data.siteDatFiles.forEach((x) => {
               this.siteDatFiles[x.filename] = x;
               x.tags.sort(); //对tags进行排序，方便查找
             });
@@ -211,12 +224,12 @@ export default {
           } else {
             this.$buefy.toast.open({
               message: this.$t("customRouting.messages.noSiteDatFileFound", {
-                V2RayLocationAsset: this.V2RayLocationAsset
+                V2RayLocationAsset: this.V2RayLocationAsset,
               }),
               type: "is-warning",
               position: "is-top",
               queue: false,
-              duration: 5000
+              duration: 5000,
             });
             closing = true;
           }
@@ -235,7 +248,7 @@ export default {
         tags: [],
         matchType: "domain",
         ruleType:
-          this.customPac.defaultProxyMode === "direct" ? "proxy" : "direct"
+          this.customPac.defaultProxyMode === "direct" ? "proxy" : "direct",
       });
       let target = document.querySelector(".modal-configure-pac .rules");
       this.$nextTick(() => {
@@ -247,13 +260,13 @@ export default {
       delete this.customPac.routingRules.splice(index, 1);
     },
     handleClickSubmit() {
-      if (this.customPac.routingRules.some(x => x.tags.length <= 0)) {
+      if (this.customPac.routingRules.some((x) => x.tags.length <= 0)) {
         this.$buefy.toast.open({
           message: this.$t("customRouting.messages.emptyRuleNotPermitted"),
           type: "is-warning",
           position: "is-top",
           queue: false,
-          duration: 3000
+          duration: 3000,
         });
         return;
       }
@@ -261,15 +274,15 @@ export default {
         url: apiRoot + "/customPac",
         method: "put",
         data: {
-          customPac: this.customPac
-        }
-      }).then(res => {
+          customPac: this.customPac,
+        },
+      }).then((res) => {
         handleResponse(res, this, () => {
           this.$parent.close();
         });
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

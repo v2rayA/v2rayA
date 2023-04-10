@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 520px;margin:auto">
+  <div class="modal-card" style="max-width: 520px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ $tc("configureServer.title", readonly ? 2 : 1) }}
@@ -129,7 +129,12 @@
                 <b-icon
                   size="is-small"
                   icon=" iconfont icon-help-circle-outline"
-                  style="position:relative;top:2px;right:3px;font-weight:normal"
+                  style="
+                    position: relative;
+                    top: 2px;
+                    right: 3px;
+                    font-weight: normal;
+                  "
                 />
               </b-tooltip>
             </template>
@@ -164,11 +169,11 @@
             label-position="on-border"
           >
             <b-select v-model="v2ray.type" expanded>
-              <option value="none"
-                >{{ $t("configureServer.noObfuscation") }}
+              <option value="none">
+                {{ $t("configureServer.noObfuscation") }}
               </option>
-              <option value="http"
-                >{{ $t("configureServer.httpObfuscation") }}
+              <option value="http">
+                {{ $t("configureServer.httpObfuscation") }}
               </option>
             </b-select>
           </b-field>
@@ -178,36 +183,36 @@
             label-position="on-border"
           >
             <b-select v-model="v2ray.type" expanded>
-              <option value="none"
-                >{{ $t("configureServer.noObfuscation") }}
+              <option value="none">
+                {{ $t("configureServer.noObfuscation") }}
               </option>
-              <option value="srtp"
-                >{{ $t("configureServer.srtpObfuscation") }}
+              <option value="srtp">
+                {{ $t("configureServer.srtpObfuscation") }}
               </option>
-              <option value="utp"
-                >{{ $t("configureServer.utpObfuscation") }}
+              <option value="utp">
+                {{ $t("configureServer.utpObfuscation") }}
               </option>
-              <option value="wechat-video"
-                >{{ $t("configureServer.wechatVideoObfuscation") }}
+              <option value="wechat-video">
+                {{ $t("configureServer.wechatVideoObfuscation") }}
               </option>
-              <option value="dtls"
-                >{{
+              <option value="dtls">
+                {{
                   `${$t("configureServer.dtlsObfuscation")}(${$t(
                     "configureServer.forceTLS"
                   )})`
                 }}
               </option>
-              <option value="wireguard"
-                >{{ $t("configureServer.wireguardObfuscation") }}
+              <option value="wireguard">
+                {{ $t("configureServer.wireguardObfuscation") }}
               </option>
             </b-select>
           </b-field>
           <b-field
             v-show="
               v2ray.net === 'ws' ||
-                v2ray.net === 'h2' ||
-                v2ray.tls === 'tls' ||
-                (v2ray.net === 'tcp' && v2ray.type === 'http')
+              v2ray.net === 'h2' ||
+              v2ray.tls === 'tls' ||
+              (v2ray.net === 'tcp' && v2ray.type === 'http')
             "
             label="Host"
             label-position="on-border"
@@ -228,8 +233,8 @@
           <b-field
             v-show="
               v2ray.net === 'ws' ||
-                v2ray.net === 'h2' ||
-                (v2ray.net === 'tcp' && v2ray.type === 'http')
+              v2ray.net === 'h2' ||
+              (v2ray.net === 'tcp' && v2ray.type === 'http')
             "
             label="Path"
             label-position="on-border"
@@ -306,9 +311,9 @@
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
-              <option value="chacha20-ietf-poly1305"
-                >chacha20-ietf-poly1305</option
-              >
+              <option value="chacha20-ietf-poly1305">
+                chacha20-ietf-poly1305
+              </option>
               <option value="plain">plain</option>
               <option value="none">none</option>
             </b-select>
@@ -336,7 +341,12 @@
                 <b-icon
                   size="is-samll"
                   icon=" iconfont icon-help-circle-outline"
-                  style="position:relative;top:2px;right:3px;font-weight:normal"
+                  style="
+                    position: relative;
+                    top: 2px;
+                    right: 3px;
+                    font-weight: normal;
+                  "
                 />
               </b-tooltip>
             </template>
@@ -379,7 +389,7 @@
             v-if="
               (ss.plugin === 'simple-obfs' &&
                 (ss.obfs === 'http' || ss.obfs === 'tls')) ||
-                ss.plugin === 'v2ray-plugin'
+              ss.plugin === 'v2ray-plugin'
             "
             label="Host"
             label-position="on-border"
@@ -394,7 +404,7 @@
           <b-field
             v-if="
               (ss.plugin === 'simple-obfs' && ss.obfs === 'http') ||
-                ss.plugin === 'v2ray-plugin'
+              ss.plugin === 'v2ray-plugin'
             "
             label="Path"
             label-position="on-border"
@@ -573,9 +583,9 @@
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
-              <option value="chacha20-ietf-poly1305"
-                >chacha20-ietf-poly1305</option
-              >
+              <option value="chacha20-ietf-poly1305">
+                chacha20-ietf-poly1305
+              </option>
             </b-select>
           </b-field>
           <b-field
@@ -606,7 +616,12 @@
                 <b-icon
                   size="is-small"
                   icon=" iconfont icon-help-circle-outline"
-                  style="position:relative;top:2px;right:3px;font-weight:normal"
+                  style="
+                    position: relative;
+                    top: 2px;
+                    right: 3px;
+                    font-weight: normal;
+                  "
                 />
               </b-tooltip>
             </template>
@@ -620,8 +635,9 @@
               <option
                 :value="true"
                 :disabled="trojan.method !== 'origin' || trojan.obfs !== 'none'"
-                >{{ $t("operations.yes") }}</option
               >
+                {{ $t("operations.yes") }}
+              </option>
             </b-select>
           </b-field>
           <b-field label="SNI(Peer)" label-position="on-border">
@@ -629,9 +645,9 @@
           </b-field>
           <b-field label="Obfs" label-position="on-border">
             <b-select ref="trojan_obfs" v-model="trojan.obfs" expanded required>
-              <option value="none">{{
-                $t("configureServer.noObfuscation")
-              }}</option>
+              <option value="none">
+                {{ $t("configureServer.noObfuscation") }}
+              </option>
               <option value="websocket">websocket</option>
             </b-select>
           </b-field>
@@ -773,12 +789,12 @@ export default {
       type: Object,
       default() {
         return null;
-      }
+      },
     },
     readonly: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   data: () => ({
     vlessVersion: 0,
@@ -799,7 +815,7 @@ export default {
       scy: "auto",
       v: "",
       allowInsecure: false,
-      protocol: "vmess"
+      protocol: "vmess",
     },
     ss: {
       method: "aes-128-gcm",
@@ -814,7 +830,7 @@ export default {
       port: "",
       name: "",
       protocol: "ss",
-      impl: ""
+      impl: "",
     },
     ssr: {
       method: "aes-128-cfb",
@@ -826,7 +842,7 @@ export default {
       protoParam: "",
       obfs: "plain",
       obfsParam: "",
-      protocol: "ssr"
+      protocol: "ssr",
     },
     trojan: {
       name: "",
@@ -841,7 +857,7 @@ export default {
       ssCipher: "aes-128-gcm",
       ssPassword: "",
       obfs: "none" /* websocket */,
-      protocol: "trojan"
+      protocol: "trojan",
     },
     http: {
       username: "",
@@ -849,7 +865,7 @@ export default {
       host: "",
       port: "",
       protocol: "http",
-      name: ""
+      name: "",
     },
     socks5: {
       username: "",
@@ -857,9 +873,9 @@ export default {
       host: "",
       port: "",
       protocol: "socks5",
-      name: ""
+      name: "",
     },
-    tabChoice: 0
+    tabChoice: 0,
   }),
   mounted() {
     if (this.which !== null) {
@@ -867,9 +883,9 @@ export default {
         url: apiRoot + "/sharingAddress",
         method: "get",
         params: {
-          touch: this.which
-        }
-      }).then(res => {
+          touch: this.which,
+        },
+      }).then((res) => {
         handleResponse(res, this, () => {
           if (
             res.data.data.sharingAddress.toLowerCase().startsWith("vmess://") ||
@@ -913,10 +929,11 @@ export default {
             if (this.readonly) {
               this.$refs.section
                 .querySelectorAll("input, textarea")
-                .forEach(x => (x.readOnly = "readOnly"));
-              this.$refs.section.querySelectorAll("select").forEach(x => {
-                const text = x.querySelector(`option[value="${x.value}"]`)
-                  .textContent;
+                .forEach((x) => (x.readOnly = "readOnly"));
+              this.$refs.section.querySelectorAll("select").forEach((x) => {
+                const text = x.querySelector(
+                  `option[value="${x.value}"]`
+                ).textContent;
                 console.log(x.value, text);
                 x.outerHTML = `<input type="text" class="input" readonly="readonly" value="${text}">`;
               });
@@ -956,7 +973,7 @@ export default {
           tls: u.params.security || "none",
           utls_fingerprint: u.params.fp || "",
           allowInsecure: u.params.allowInsecure || false,
-          protocol: "vless"
+          protocol: "vless",
         };
         if (o.alpn !== "") {
           o.alpn = decodeURIComponent(o.alpn);
@@ -994,7 +1011,7 @@ export default {
           obfs: "http",
           plugin: "",
           protocol: "ss",
-          impl: ""
+          impl: "",
         };
         if (u.params.plugin) {
           u.params.plugin = decodeURIComponent(u.params.plugin);
@@ -1064,7 +1081,7 @@ export default {
           protoParam: m["protoparam"],
           obfs: pre[4],
           obfsParam: m["obfsparam"],
-          protocol: "ssr"
+          protocol: "ssr",
         };
       } else if (
         url.toLowerCase().startsWith("trojan://") ||
@@ -1082,7 +1099,7 @@ export default {
           method: "origin",
           obfs: "none",
           ssCipher: "aes-128-gcm",
-          protocol: "trojan"
+          protocol: "trojan",
         };
         if (url.toLowerCase().startsWith("" + "")) {
           console.log(u.params.encryption);
@@ -1095,7 +1112,7 @@ export default {
           const obfsMap = {
             original: "none",
             "": "none",
-            ws: "websocket"
+            ws: "websocket",
           };
           o.obfs = obfsMap[u.params.type || ""];
           if (o.obfs === "ws") {
@@ -1118,7 +1135,7 @@ export default {
           host: u.host,
           port: u.port,
           protocol: u.protocol,
-          name: decodeURIComponent(u.hash)
+          name: decodeURIComponent(u.hash),
         };
       } else if (url.toLowerCase().startsWith("socks5://")) {
         let u = parseURL(url);
@@ -1128,7 +1145,7 @@ export default {
           host: u.host,
           port: u.port,
           protocol: u.protocol,
-          name: decodeURIComponent(u.hash)
+          name: decodeURIComponent(u.hash),
         };
       }
       return null;
@@ -1169,7 +1186,7 @@ export default {
             host: srcObj.add,
             port: srcObj.port,
             hash: srcObj.ps,
-            params: query
+            params: query,
           });
         case "vmess":
           //https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2)
@@ -1255,7 +1272,7 @@ export default {
         case "trojan":
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
-            allowInsecure: srcObj.allowInsecure
+            allowInsecure: srcObj.allowInsecure,
           };
           if (srcObj.peer !== "") {
             query.sni = srcObj.peer;
@@ -1279,7 +1296,7 @@ export default {
             host: srcObj.server,
             port: srcObj.port,
             hash: srcObj.name,
-            params: query
+            params: query,
           });
         case "http":
         case "https":
@@ -1287,12 +1304,12 @@ export default {
             protocol: srcObj.protocol + "-proxy",
             host: srcObj.host,
             port: srcObj.port,
-            hash: srcObj.name
+            hash: srcObj.name,
           };
           if (srcObj.username && srcObj.password) {
             Object.assign(tmp, {
               username: srcObj.username,
-              password: srcObj.password
+              password: srcObj.password,
             });
           }
           return generateURL(tmp);
@@ -1301,12 +1318,12 @@ export default {
             protocol: "socks5",
             host: srcObj.host,
             port: srcObj.port,
-            hash: srcObj.name
+            hash: srcObj.name,
           };
           if (srcObj.username && srcObj.password) {
             Object.assign(tmp, {
               username: srcObj.username,
-              password: srcObj.password
+              password: srcObj.password,
             });
           }
           return generateURL(tmp);
@@ -1321,7 +1338,7 @@ export default {
           type: "is-warning",
           position: "is-top",
           queue: false,
-          duration: 5000
+          duration: 5000,
         });
         this.$nextTick(() => {
           this.v2ray.tls = "tls";
@@ -1383,7 +1400,7 @@ export default {
             type: "is-danger",
             hasIcon: true,
             onConfirm: () => true,
-            onCancel: () => false
+            onCancel: () => false,
           });
           if (!result) {
             return;
@@ -1402,8 +1419,8 @@ export default {
         coded = this.generateURL(this.socks5);
       }
       this.$emit("submit", coded);
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -2,7 +2,7 @@
   <div
     ref="modal"
     class="modal-card modal-routinga"
-    style="width:100%;height:2000px;margin:auto"
+    style="width: 100%; height: 2000px; margin: auto"
   >
     <header class="modal-card-head">
       <p class="modal-card-title">RoutingA</p>
@@ -22,7 +22,12 @@
     </section>
     <footer class="modal-card-foot">
       <div
-        style="position:relative;display:flex;justify-content:flex-end;width:100%"
+        style="
+          position: relative;
+          display: flex;
+          justify-content: flex-end;
+          width: 100%;
+        "
       >
         <button class="button btn-left" @click="handleClickManual">
           {{ $t("operations.helpManual") }}
@@ -44,13 +49,13 @@ import { handleResponse } from "@/assets/js/utils";
 export default {
   name: "ModalCustomRoutingA",
   data: () => ({
-    routingA: ""
+    routingA: "",
   }),
   mounted() {
     this.$axios({
-      url: apiRoot + "/routingA"
+      url: apiRoot + "/routingA",
     })
-      .then(res => {
+      .then((res) => {
         handleResponse(
           res,
           this,
@@ -88,15 +93,15 @@ export default {
         url: apiRoot + "/routingA",
         method: "put",
         data: {
-          routingA: this.routingA
-        }
-      }).then(res => {
+          routingA: this.routingA,
+        },
+      }).then((res) => {
         handleResponse(res, this, () => {
           this.$parent.close();
         });
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

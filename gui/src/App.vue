@@ -89,14 +89,14 @@
         <b-dropdown
           position="is-bottom-left"
           aria-role="menu"
-          style="margin-right:10px"
+          style="margin-right: 10px"
           class="menudropdown"
         >
           <a slot="trigger" class="navbar-item" role="button">
             <span class="no-select">{{ username }}</span>
             <i
               class="iconfont icon-caret-down"
-              style="position: relative; top: 1px; left:2px"
+              style="position: relative; top: 1px; left: 2px"
             ></i>
           </a>
           <b-dropdown-item
@@ -109,14 +109,19 @@
             custom
             aria-role="menuitem"
             class="is-flex"
-            style="box-sizing: content-box;height: 16px;width: 60px;justify-content: space-between;"
+            style="
+              box-sizing: content-box;
+              height: 16px;
+              width: 60px;
+              justify-content: space-between;
+            "
           >
             <img
               v-for="lang of langs"
               :key="lang.flag"
               :src="require(`@/assets/img/flags/flag_${lang.flag}.svg`)"
               :alt="lang.alt"
-              style="height:100%;flex-shrink: 0;cursor: pointer"
+              style="height: 100%; flex-shrink: 0; cursor: pointer"
               @click="handleClickLang(lang.flag)"
             />
           </b-dropdown-item>
@@ -129,7 +134,7 @@
           >
             <i
               class="iconfont icon-logout"
-              style="position: relative;top:1px;"
+              style="position: relative; top: 1px"
             ></i>
             {{ $t("operations.logout") }}
           </b-dropdown-item>
@@ -176,23 +181,23 @@ export default {
       statusMap: {
         [this.$t("common.checkRunning")]: "is-light",
         [this.$t("common.notRunning")]: "is-danger",
-        [this.$t("common.isRunning")]: "is-success"
+        [this.$t("common.isRunning")]: "is-success",
       },
       coverStatusText: "",
       runningState: {
         running: this.$t("common.checkRunning"),
         connectedServer: null,
-        outboundToServerName: {}
+        outboundToServerName: {},
       },
       showCustomPorts: false,
       langs: [
         { flag: "zh", alt: "简体中文" },
-        { flag: "en", alt: "English" }
+        { flag: "en", alt: "English" },
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],
       outboundDropdownHover: {},
-      updateOutboundDropdown: true
+      updateOutboundDropdown: true,
     };
   },
   computed: {
@@ -206,7 +211,7 @@ export default {
     },
     isMobile() {
       return window.screen.width < 800;
-    }
+    },
   },
   mounted() {
     console.log("app created");
@@ -216,8 +221,8 @@ export default {
       document.title = `v2rayA - ${u.host}:${u.port}`;
     }
     this.$axios({
-      url: apiRoot + "/version"
-    }).then(res => {
+      url: apiRoot + "/version",
+    }).then((res) => {
       if (res.data.code === "SUCCESS") {
         let toastConf = {
           message: this.$t(
@@ -227,14 +232,14 @@ export default {
           type: "is-dark",
           position: "is-top",
           duration: 3000,
-          queue: false
+          queue: false,
         };
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
           toastConf.message +=
             ". " +
             this.$t("welcome.newVersion", {
-              version: res.data.data.remoteVersion
+              version: res.data.data.remoteVersion,
             });
           toastConf.type = "is-success";
         }
@@ -247,7 +252,7 @@ export default {
             type: "is-danger",
             position: "is-top",
             queue: false,
-            duration: 10000
+            duration: 10000,
           });
         } else if (!res.data.data.v5) {
           this.$buefy.toast.open({
@@ -255,15 +260,16 @@ export default {
             type: "is-danger",
             position: "is-top",
             queue: false,
-            duration: 10000
+            duration: 10000,
           });
         }
         localStorage["lite"] = res.data.data.lite;
+        localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
       }
     });
     this.$axios({
-      url: apiRoot + "/outbounds"
-    }).then(res => {
+      url: apiRoot + "/outbounds",
+    }).then((res) => {
       if (res.data.code === "SUCCESS") {
         this.outbounds = res.data.data.outbounds;
       }
@@ -299,7 +305,7 @@ export default {
         // console.log("ws opened");
         //
       };
-      ws.onmessage = msg => {
+      ws.onmessage = (msg) => {
         msg.data && that.handleMessage(JSON.parse(msg.data));
       };
       ws.onclose = () => {
@@ -346,29 +352,29 @@ export default {
       this.$buefy.dialog.prompt({
         message: this.$t("outbound.addMessage"),
         inputAttrs: {
-          maxlength: 10
+          maxlength: 10,
         },
         trapFocus: true,
-        onConfirm: outbound => {
+        onConfirm: (outbound) => {
           let cancel;
           waitingConnected(
             this.$axios({
               url: apiRoot + "/outbound",
               method: "post",
               data: {
-                outbound
+                outbound,
               },
               cancelToken: new axios.CancelToken(function executor(c) {
                 cancel = c;
-              })
-            }).then(res => {
+              }),
+            }).then((res) => {
               if (res.data.code === "SUCCESS") {
                 this.$buefy.toast.open({
                   message: this.$t("common.success"),
                   type: "is-success",
                   duration: 2000,
                   position: "is-top",
-                  queue: false
+                  queue: false,
                 });
                 this.outbounds = res.data.data.outbounds;
               } else {
@@ -377,14 +383,14 @@ export default {
                   type: "is-warning",
                   duration: 5000,
                   position: "is-top",
-                  queue: false
+                  queue: false,
                 });
               }
             }),
             3 * 1000,
             cancel
           );
-        }
+        },
       });
     },
     handleDeleteOutbound(outbound) {
@@ -394,28 +400,29 @@ export default {
           url: apiRoot + "/outbound",
           method: "delete",
           data: {
-            outbound
+            outbound,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
-          })
-        }).then(res => {
+          }),
+        }).then((res) => {
           if (res.data.code === "SUCCESS") {
             this.$buefy.toast.open({
               message: this.$t("common.success"),
               type: "is-success",
               duration: 2000,
               position: "is-top",
-              queue: false
+              queue: false,
             });
             this.outbounds = res.data.data.outbounds;
             if (this.outboundName === outbound) {
               this.outboundName = "proxy";
             }
             if (outbound in this.runningState.outboundToServerName) {
-              this.runningState.connectedServer = this.runningState.connectedServer.filter(
-                cs => cs.outbound !== outbound
-              );
+              this.runningState.connectedServer =
+                this.runningState.connectedServer.filter(
+                  (cs) => cs.outbound !== outbound
+                );
             }
           } else {
             this.$buefy.toast.open({
@@ -423,7 +430,7 @@ export default {
               type: "is-warning",
               duration: 5000,
               position: "is-top",
-              queue: false
+              queue: false,
             });
           }
         }),
@@ -440,13 +447,13 @@ export default {
         hasModalCard: true,
         canCancel: true,
         props: {
-          outbound: outbound
+          outbound: outbound,
         },
         events: {
           delete() {
             that.handleDeleteOutbound(outbound);
-          }
-        }
+          },
+        },
       });
     },
     handleClickLang(lang) {
@@ -479,8 +486,8 @@ export default {
         events: {
           clickPorts() {
             that.showCustomPorts = true;
-          }
-        }
+          },
+        },
       });
     },
     handleClickAbout() {
@@ -502,7 +509,7 @@ export default {
                         </a>
                     </footer>
                 </div>
-`
+`,
       });
     },
     handleClickStatus() {
@@ -514,12 +521,12 @@ export default {
             method: "post",
             cancelToken: new axios.CancelToken(function executor(c) {
               cancel = c;
-            })
-          }).then(res => {
+            }),
+          }).then((res) => {
             if (res.data.code === "SUCCESS") {
               Object.assign(this.runningState, {
                 running: this.$t("common.isRunning"),
-                connectedServer: res.data.data.touch.connectedServer
+                connectedServer: res.data.data.touch.connectedServer,
               });
             } else {
               this.$buefy.toast.open({
@@ -527,7 +534,7 @@ export default {
                 type: "is-warning",
                 duration: 5000,
                 position: "is-top",
-                queue: false
+                queue: false,
               });
             }
           }),
@@ -537,12 +544,12 @@ export default {
       } else if (this.runningState.running === this.$t("common.isRunning")) {
         this.$axios({
           url: apiRoot + "/v2ray",
-          method: "delete"
-        }).then(res => {
+          method: "delete",
+        }).then((res) => {
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
               running: this.$t("common.notRunning"),
-              connectedServer: res.data.data.touch.connectedServer
+              connectedServer: res.data.data.touch.connectedServer,
             });
           } else {
             this.$buefy.toast.open({
@@ -550,7 +557,7 @@ export default {
               type: "is-warning",
               duration: 5000,
               position: "is-top",
-              queue: false
+              queue: false,
             });
           }
         });
@@ -565,10 +572,10 @@ export default {
         parent: this,
         component: ModalLog,
         hasModalCard: true,
-        canCancel: true
+        canCancel: true,
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

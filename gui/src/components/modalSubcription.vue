@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 400px;margin:auto">
+  <div class="modal-card" style="max-width: 400px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("configureSubscription.title") }}</p>
     </header>
@@ -30,14 +30,14 @@ export default {
       type: Object,
       default() {
         return null;
-      }
-    }
+      },
+    },
   },
   methods: {
     handleClickSubmit() {
       this.$emit("submit", this.which);
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card modal-setting" style="max-width: 800px;margin:auto">
+  <div class="modal-card modal-setting" style="max-width: 800px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("common.setting") }}</p>
     </header>
@@ -33,7 +33,12 @@
         <b-button
           size="is-small"
           type="is-text"
-          style="position: relative;top:-2px;text-decoration:none;font-weight: bold"
+          style="
+            position: relative;
+            top: -2px;
+            text-decoration: none;
+            font-weight: bold;
+          "
           @click="handleClickUpdateGFWList"
           >{{ $t("operations.update") }}
         </b-button>
@@ -51,40 +56,43 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
         <b-select v-model="transparent" expanded>
           <option value="close">{{ $t("setting.options.off") }}</option>
-          <option value="proxy"
-            >{{ $t("setting.options.on") }}:
-            {{ $t("setting.options.global") }}</option
-          >
-          <option value="whitelist"
-            >{{ $t("setting.options.on") }}:
-            {{ $t("setting.options.whitelistCn") }}</option
-          >
-          <option value="gfwlist"
-            >{{ $t("setting.options.on") }}:
-            {{ $t("setting.options.gfwlist") }}</option
-          >
-          <option value="pac"
-            >{{ $t("setting.options.on") }}:
-            {{ $t("setting.options.sameAsPacMode") }}</option
-          >
+          <option value="proxy">
+            {{ $t("setting.options.on") }}: {{ $t("setting.options.global") }}
+          </option>
+          <option value="whitelist">
+            {{ $t("setting.options.on") }}:
+            {{ $t("setting.options.whitelistCn") }}
+          </option>
+          <option value="gfwlist">
+            {{ $t("setting.options.on") }}: {{ $t("setting.options.gfwlist") }}
+          </option>
+          <option value="pac">
+            {{ $t("setting.options.on") }}:
+            {{ $t("setting.options.sameAsPacMode") }}
+          </option>
         </b-select>
         <b-checkbox-button
           v-show="!lite"
           v-model="ipforward"
           :native-value="true"
-          style="position:relative;left:-1px;"
+          style="position: relative; left: -1px"
           >{{ $t("setting.ipForwardOn") }}
         </b-checkbox-button>
         <b-checkbox-button
           v-model="portSharing"
           :native-value="true"
-          style="position:relative;left:-1px;"
+          style="position: relative; left: -1px"
           >{{ $t("setting.portSharingOn") }}
         </b-checkbox-button>
       </b-field>
@@ -101,7 +109,12 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
@@ -123,14 +136,19 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
         <b-select v-model="pacMode" expanded style="flex-shrink: 0">
-          <option value="whitelist">{{
-            $t("setting.options.whitelistCn")
-          }}</option>
+          <option value="whitelist">
+            {{ $t("setting.options.whitelistCn") }}
+          </option>
           <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
           <!--          <option value="custom">{{-->
           <!--            $t("setting.options.customRouting")-->
@@ -140,7 +158,12 @@
         <template v-if="pacMode === 'custom'">
           <b-button
             type="is-primary"
-            style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
+            style="
+              margin-left: 0;
+              border-bottom-left-radius: 0;
+              border-top-left-radius: 0;
+              color: rgba(0, 0, 0, 0.75);
+            "
             outlined
             @click="handleClickConfigurePac"
             >{{ $t("operations.configure") }}
@@ -148,7 +171,12 @@
         </template>
         <template v-if="pacMode === 'routingA'">
           <b-button
-            style="margin-left:0;border-bottom-left-radius: 0;border-top-left-radius: 0;color:rgba(0,0,0,0.75)"
+            style="
+              margin-left: 0;
+              border-bottom-left-radius: 0;
+              border-top-left-radius: 0;
+              color: rgba(0, 0, 0, 0.75);
+            "
             outlined
             @click="handleClickConfigureRoutingA"
             >{{ $t("operations.configure") }}
@@ -168,18 +196,23 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
         <b-select v-model="antipollution" expanded class="left-border">
           <option value="closed">{{ $t("setting.options.closed") }}</option>
-          <option value="none">{{
-            $t("setting.options.antiDnsHijack")
-          }}</option>
-          <option value="dnsforward">{{
-            $t("setting.options.forwardDnsRequest")
-          }}</option>
+          <option value="none">
+            {{ $t("setting.options.antiDnsHijack") }}
+          </option>
+          <option value="dnsforward">
+            {{ $t("setting.options.forwardDnsRequest") }}
+          </option>
           <option value="doh">{{ $t("setting.options.doh") }}</option>
           <option value="advanced">{{ $t("setting.options.advanced") }}</option>
         </b-select>
@@ -187,7 +220,7 @@
           v-if="antipollution === 'advanced'"
           :class="{
             'right-extra-button': antipollution === 'closed',
-            'no-border-radius': antipollution !== 'closed'
+            'no-border-radius': antipollution !== 'closed',
           }"
           @click="handleClickDnsSetting"
         >
@@ -207,16 +240,21 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
         <b-select v-model="specialMode" expanded class="left-border">
           <option value="none">{{ $t("setting.options.closed") }}</option>
           <option value="supervisor">supervisor</option>
-          <option v-show="antipollution !== 'closed'" value="fakedns"
-            >fakedns</option
-          >
+          <option v-show="antipollution !== 'closed'" value="fakedns">
+            fakedns
+          </option>
         </b-select>
       </b-field>
       <b-field label-position="on-border">
@@ -231,7 +269,12 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
@@ -253,7 +296,12 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="position:relative;top:2px;right:3px;font-weight:normal"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
             />
           </b-tooltip>
         </template>
@@ -281,12 +329,12 @@
       >
         <b-select v-model="pacAutoUpdateMode" expanded>
           <option value="none">{{ $t("setting.options.off") }}</option>
-          <option value="auto_update">{{
-            $t("setting.options.updateGfwlistWhenStart")
-          }}</option>
-          <option value="auto_update_at_intervals">{{
-            $t("setting.options.updateGfwlistAtIntervals")
-          }}</option>
+          <option value="auto_update">
+            {{ $t("setting.options.updateGfwlistWhenStart") }}
+          </option>
+          <option value="auto_update_at_intervals">
+            {{ $t("setting.options.updateGfwlistAtIntervals") }}
+          </option>
         </b-select>
         <cus-b-input
           v-if="pacAutoUpdateMode === 'auto_update_at_intervals'"
@@ -302,12 +350,12 @@
       <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
           <option value="none">{{ $t("setting.options.off") }}</option>
-          <option value="auto_update">{{
-            $t("setting.options.updateSubWhenStart")
-          }}</option>
-          <option value="auto_update_at_intervals">{{
-            $t("setting.options.updateSubAtIntervals")
-          }}</option>
+          <option value="auto_update">
+            {{ $t("setting.options.updateSubWhenStart") }}
+          </option>
+          <option value="auto_update_at_intervals">
+            {{ $t("setting.options.updateSubAtIntervals") }}
+          </option>
         </b-select>
         <cus-b-input
           v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'"
@@ -325,11 +373,13 @@
         label-position="on-border"
       >
         <b-select v-model="proxyModeWhenSubscribe" expanded>
-          <option value="direct">{{
-            transparent === "close" || lite
-              ? $t("setting.options.direct")
-              : $t("setting.options.dependTransparentMode")
-          }}</option>
+          <option value="direct">
+            {{
+              transparent === "close" || lite
+                ? $t("setting.options.direct")
+                : $t("setting.options.dependTransparentMode")
+            }}
+          </option>
           <option value="proxy">{{ $t("setting.options.global") }}</option>
           <option value="pac">{{ $t("setting.options.pac") }}</option>
         </b-select>
@@ -393,7 +443,7 @@ export default {
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
-    showSpecialMode: true
+    showSpecialMode: true,
   }),
   computed: {
     lite() {
@@ -412,26 +462,26 @@ export default {
           U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return toInt(port);
-    }
+    },
   },
   watch: {
     antipollution(val) {
       if (val === "closed" && this.specialMode === "fakedns") {
         this.specialMode = "none";
       }
-    }
+    },
   },
   created() {
     this.$axios({
-      url: apiRoot + "/remoteGFWListVersion"
-    }).then(res => {
+      url: apiRoot + "/remoteGFWListVersion",
+    }).then((res) => {
       handleResponse(res, this, () => {
         this.remoteGFWListVersion = res.data.data.remoteGFWListVersion;
       });
     });
     this.$axios({
-      url: apiRoot + "/setting"
-    }).then(res => {
+      url: apiRoot + "/setting",
+    }).then((res) => {
       handleResponse(res, this, () => {
         Object.assign(this, res.data.data.setting);
         delete res.data.data["setting"];
@@ -455,8 +505,8 @@ export default {
       this.$axios({
         url: apiRoot + "/gfwList",
         method: "put",
-        timeout: 0
-      }).then(res => {
+        timeout: 0,
+      }).then((res) => {
         handleResponse(res, this, () => {
           this.localGFWListVersion = res.data.data.localGFWListVersion;
           this.$buefy.toast.open({
@@ -464,7 +514,7 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false
+            queue: false,
           });
         });
       });
@@ -493,18 +543,18 @@ export default {
             portSharing: this.portSharing,
             dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
             antipollution: this.antipollution,
-            specialMode: this.specialMode
+            specialMode: this.specialMode,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
-          })
-        }).then(res => {
+          }),
+        }).then((res) => {
           handleResponse(res, this, () => {
             this.$buefy.toast.open({
               message: res.data.code,
               type: "is-primary",
               position: "is-top",
-              queue: false
+              queue: false,
             });
             this.$parent.close();
           });
@@ -513,9 +563,8 @@ export default {
             res.data.message.indexOf("invalid config") >= 0
           ) {
             // FIXME: tricky
-            this.$parent.$parent.runningState.running = this.$t(
-              "common.notRunning"
-            );
+            this.$parent.$parent.runningState.running =
+              this.$t("common.notRunning");
           }
         }),
         3 * 1000,
@@ -546,7 +595,7 @@ export default {
         parent: this,
         component: ModalCustomRouting,
         hasModalCard: true,
-        canCancel: true
+        canCancel: true,
       });
     },
     handleClickConfigureRoutingA() {
@@ -554,7 +603,7 @@ export default {
         parent: this,
         component: ModalCustomRoutingA,
         hasModalCard: true,
-        canCancel: true
+        canCancel: true,
       });
     },
     handleClickDnsSetting() {
@@ -562,10 +611,10 @@ export default {
         parent: this,
         component: modalDnsSetting,
         hasModalCard: true,
-        canCancel: true
+        canCancel: true,
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -3,5 +3,5 @@ import en from "./en";
 
 export default {
   zh,
-  en
+  en,
 };
