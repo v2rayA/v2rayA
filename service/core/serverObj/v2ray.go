@@ -3,6 +3,13 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
+	"net"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -10,12 +17,6 @@ import (
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"net"
-	"net/url"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -90,9 +91,6 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	}
 	if data.TLS == "" {
 		data.TLS = "none"
-	}
-	if data.Flow == "" {
-		data.Flow = "xtls-rprx-direct"
 	}
 	if data.Net == "mkcp" || data.Net == "kcp" {
 		data.Path = u.Query().Get("seed")
@@ -354,27 +352,35 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.TLSSettings.Alpn = alpn
 			}
+			// Flow
+			if v.Flow != "" {
+				vnext := core.Settings.Vnext.([]coreObj.Vnext)
+				vnext[0].Users[0].Flow = v.Flow
+				core.Settings.Vnext = vnext
+			}
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
+			if v.AllowInsecure {
+				core.StreamSettings.XTLSSettings.AllowInsecure = true
+			}
 			// SNI
 			if v.Host != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.Host
 			} else if v.Host != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.Host
 			}
-			if v.AllowInsecure {
-				core.StreamSettings.XTLSSettings.AllowInsecure = true
-			}
-			if v.Flow == "" {
-				v.Flow = "xtls-rprx-origin"
-			}
+			// Alpn
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
 				for i := range alpn {
 					alpn[i] = strings.TrimSpace(alpn[i])
 				}
 				core.StreamSettings.XTLSSettings.Alpn = alpn
+			}
+			// Flow
+			if v.Flow == "" {
+				v.Flow = "xtls-rprx-origin"
 			}
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -415,7 +421,7 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 		}
-		if v.TLS == "xtls" {
+		if v.TLS == "tls" || v.TLS == "xtls" {
 			setValue(&query, "flow", v.Flow)
 		}
 
