@@ -62,15 +62,13 @@ jobs:
         cache-dependency-path: gui/yarn.lock
     - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.7
+        ruby-version: 3.2
         bundler-cache: true
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
     - name: Build GUI
       run: |
-        # https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-        export NODE_OPTIONS=--openssl-legacy-provider
         yarn --cwd gui --check-files
         yarn --cwd gui build
     - name: Build v2rayA Binaries
@@ -131,7 +129,7 @@ jobs:
     - name: Install Package Dependencies
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
-        gem install fpm -v 1.13.1
+        gem install fpm -v 1.15.1
         sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
