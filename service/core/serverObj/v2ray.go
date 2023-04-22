@@ -377,6 +377,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.XTLSSettings.Alpn = alpn
 			}
+			// Flow
+			if v.Flow == "" {
+				v.Flow = "xtls-rprx-origin"
+			}
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
 			core.Settings.Vnext = vnext
