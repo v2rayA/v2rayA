@@ -59,6 +59,15 @@
               expanded
             />
           </b-field>
+          <b-field label="SNI" label-position="on-border">
+            <b-input
+              ref="v2ray_sni"
+              v-model="v2ray.sni"
+              required
+              placeholder="SNI"
+              expanded
+            />
+          </b-field>
           <b-field
             v-if="v2ray.protocol === 'vmess'"
             label="AlterID"
@@ -98,14 +107,22 @@
               <option value="tls">tls</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'">
-            <b-input
-              ref="v2ray_flow"
-              v-model="v2ray.flow"
-              required
-              placeholder=""
-              expanded
-            />
+          <b-field
+            v-if="v2ray.tls !== 'none'"
+            ref="v2ray_flow"
+            label="Flow"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.flow" expanded>
+              <option value="xtls-rprx-direct" selected>
+                xtls-rprx-direct
+              </option>
+              <option value="xtls-rprx-direct-udp443">
+                xtls-rprx-direct-udp443
+              </option>
+              <option value="xtls-rprx-origin">xtls-rprx-origin</option>
+              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+            </b-select>
           </b-field>
           <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
             <template slot="label">
@@ -956,11 +973,12 @@ export default {
           id: decodeURIComponent(u.username),
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
-          host: u.params.sni || u.params.host || "",
+          host: u.params.host || "",
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
+          flow: u.params.flow || "xtls-rprx-direct",
+          sni: u.params.sni || "",
           tls: u.params.security || "none",
-          flow: u.params.flow || "",
           allowInsecure: u.params.allowInsecure || false,
           protocol: "vless",
         };
@@ -1152,7 +1170,7 @@ export default {
             path: srcObj.path,
             host: srcObj.host,
             headerType: srcObj.type,
-            sni: srcObj.host,
+            sni: srcObj.sni,
             flow: srcObj.flow,
             allowInsecure: srcObj.allowInsecure,
           };
@@ -1199,7 +1217,10 @@ export default {
               }
               obj.path = "";
           }
-          if (!(obj.protocol === "vless" && obj.tls === "xtls")) {
+          if (
+            !(obj.protocol === "vless" && obj.tls === "xtls") &&
+            !(obj.protocol === "vless" && obj.tls === "tls")
+          ) {
             delete obj.flow;
           }
           return "vmess://" + Base64.encode(JSON.stringify(obj));
@@ -1415,10 +1436,6 @@ export default {
 <style lang="scss">
 .is-twitter .is-active a {
   color: #4099ff !important;
-}
-
-.readonly {
-  pointer-events: none;
 }
 
 .same-width-5 li {

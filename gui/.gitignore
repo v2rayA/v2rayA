@@ -20,3 +20,5 @@ yarn-error.log*
 *.sln
 *.sw?
 .nuxt
+yarn.lock
+package-lock.json

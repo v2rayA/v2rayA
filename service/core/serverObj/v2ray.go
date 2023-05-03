@@ -89,6 +89,9 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	if data.Type == "" {
 		data.Type = "none"
 	}
+	if data.Host == "" {
+		data.Host = u.Query().Get("host")
+	}
 	if data.TLS == "" {
 		data.TLS = "none"
 	}
@@ -200,6 +203,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		if l := len([]byte(id)); l < 32 || l > 36 {
 			id = common.StringToUUID5(id)
 		}
+		core.StreamSettings = &coreObj.StreamSettings{
+			Network: v.Net,
+		}
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
 			if ok, t, err := ntp.IsDatetimeSynced(); err == nil && !ok {
@@ -228,21 +234,35 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				},
 			}
 		case "vless":
+			security := v.Security
+			if security == "" {
+				security = "auto"
+			}
+			flow := v.Flow
+			if flow == "" {
+				flow = "xtls-rprx-direct"
+			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
 					Address: v.Add,
 					Port:    port,
 					Users: []coreObj.User{
 						{
-							ID:         id,
 							Encryption: "none",
+							Flow:       flow,
+							ID:         id,
+							Level:      8,
+							Security:   security,
 						},
 					},
 				},
 			}
-		}
-		core.StreamSettings = &coreObj.StreamSettings{
-			Network: v.Net,
+			tcpSetting := coreObj.TCPSettings{
+				Header: coreObj.TCPHeader{
+					Type: "none",
+				},
+			}
+			core.StreamSettings.TCPSettings = &tcpSetting
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
@@ -415,9 +435,8 @@ func (v *V2Ray) ExportToURL() string {
 		case "grpc":
 			setValue(&query, "serviceName", v.Path)
 		}
-		//TODO: QUIC
 		if v.TLS != "none" {
-			setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
+			setValue(&query, "sni", v.SNI)
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 		}
