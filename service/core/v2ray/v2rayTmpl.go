@@ -9,6 +9,7 @@ import (
 	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/antiPollution"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
@@ -290,49 +291,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 			break
 		case configure.AntipollutionDnsForward:
 			if firstUDPSupportedOutboundTag != "" {
-				external = []string{
-					"8.8.8.8 -> " + firstUDPSupportedOutboundTag,
-					"4.2.2.4 -> " + firstUDPSupportedOutboundTag,
-					"94.140.14.14 -> " + firstUDPSupportedOutboundTag,
-					"176.103.130.130 -> " + firstUDPSupportedOutboundTag,
-					"156.154.70.5 -> " + firstUDPSupportedOutboundTag,
-					"8.26.56.26 -> " + firstUDPSupportedOutboundTag,
-					"91.239.100.100 -> " + firstUDPSupportedOutboundTag,
-					"89.233.43.71 -> " + firstUDPSupportedOutboundTag,
-					"1.1.1.1 -> " + firstUDPSupportedOutboundTag,
-					"208.67.222.222 -> " + firstUDPSupportedOutboundTag,
-					"38.132.106.139 -> " + firstUDPSupportedOutboundTag,
-					"9.9.9.9 -> " + firstUDPSupportedOutboundTag,
-					"192.71.245.208 -> " + firstUDPSupportedOutboundTag,
-					"84.200.69.80 -> " + firstUDPSupportedOutboundTag,
-					"77.88.8.88 -> " + firstUDPSupportedOutboundTag,
-					"156.154.70.5 -> " + firstUDPSupportedOutboundTag,
-					"185.228.168.9 -> " + firstUDPSupportedOutboundTag,
-					"8.26.56.26 -> " + firstUDPSupportedOutboundTag,
-					"91.239.100.100 -> " + firstUDPSupportedOutboundTag,
-					"45.33.97.5 -> " + firstUDPSupportedOutboundTag,
-					"64.6.64.6 -> " + firstUDPSupportedOutboundTag,
-					"198.54.117.10 -> " + firstUDPSupportedOutboundTag,
-					"195.46.39.39 -> " + firstUDPSupportedOutboundTag,
-					"176.103.130.130 -> " + firstUDPSupportedOutboundTag,
-					"8.8.4.4 -> " + firstUDPSupportedOutboundTag,
-					"1.0.0.1 -> " + firstUDPSupportedOutboundTag,
-					"208.67.220.220 -> " + firstUDPSupportedOutboundTag,
-					"194.187.251.67 -> " + firstUDPSupportedOutboundTag,
-					"149.112.112.112 -> " + firstUDPSupportedOutboundTag,
-					"94.247.43.254 -> " + firstUDPSupportedOutboundTag,
-					"84.200.70.40 -> " + firstUDPSupportedOutboundTag,
-					"77.88.8.2 -> " + firstUDPSupportedOutboundTag,
-					"156.154.71.5 -> " + firstUDPSupportedOutboundTag,
-					"185.228.169.9 -> " + firstUDPSupportedOutboundTag,
-					"8.20.247.20 -> " + firstUDPSupportedOutboundTag,
-					"89.233.43.71 -> " + firstUDPSupportedOutboundTag,
-					"37.235.1.177 -> " + firstUDPSupportedOutboundTag,
-					"64.6.65.6 -> " + firstUDPSupportedOutboundTag,
-					"198.54.117.11 -> " + firstUDPSupportedOutboundTag,
-					"195.46.39.40 -> " + firstUDPSupportedOutboundTag,
-					"176.103.130.131 -> " + firstUDPSupportedOutboundTag,
-				}
+				external = antiPollution.GetExternalDNS(firstUDPSupportedOutboundTag)
 			} else {
 				external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
 			}
