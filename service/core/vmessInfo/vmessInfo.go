@@ -61,7 +61,7 @@ func (v *VmessInfo) ExportToURL() string {
 			setValue(&query, "sni", v.SNI)
 			setValue(&query, "alpn", v.Alpn)
 		}
-		if v.TLS == "xtls" || v.Flow != "" {
+		if v.TLS == "xtls" || v.TLS == "tls" {
 			setValue(&query, "flow", v.Flow)
 		}
 
