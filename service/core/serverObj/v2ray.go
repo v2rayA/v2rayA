@@ -200,11 +200,12 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 	switch strings.ToLower(v.Protocol) {
 	case "vmess", "vless":
 		id := v.ID
+		network := v.Net
 		if l := len([]byte(id)); l < 32 || l > 36 {
 			id = common.StringToUUID5(id)
 		}
 		core.StreamSettings = &coreObj.StreamSettings{
-			Network: v.Net,
+			Network: network,
 		}
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
@@ -257,12 +258,14 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					},
 				},
 			}
-			tcpSetting := coreObj.TCPSettings{
-				Header: coreObj.TCPHeader{
-					Type: "none",
-				},
+			if network == "tcp" {
+				tcpSetting := coreObj.TCPSettings{
+					Header: coreObj.TCPHeader{
+						Type: "none",
+					},
+				}
+				core.StreamSettings.TCPSettings = &tcpSetting
 			}
-			core.StreamSettings.TCPSettings = &tcpSetting
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
