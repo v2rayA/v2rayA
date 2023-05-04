@@ -973,7 +973,7 @@ export default {
           id: decodeURIComponent(u.username),
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
-          host: u.params.host || "",
+          host: u.params.host || u.params.sni || "",
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           flow: u.params.flow || "xtls-rprx-direct",
