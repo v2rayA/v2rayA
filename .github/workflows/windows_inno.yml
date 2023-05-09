@@ -51,7 +51,7 @@ jobs:
         shell: bash
         run: |
           for v2raya in $(ls | grep .exe)
-            do
+          do
             echo $(sha256sum $v2raya | awk -F ' ' '{print $1}') > $v2raya.sha256.txt
           done
       - name: Upload Artifact
