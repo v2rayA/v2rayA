@@ -27,7 +27,7 @@ Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
 scoop install yarn go nodejs-lts
 
 ${env:NODE_OPTIONS} = "--openssl-legacy-provider"
-${env:OUTPUT_DIR} = "./service/server/router/web"
+${env:OUTPUT_DIR} = (Get-Location).Path + "\service\server\router\web"
 
 cd ./gui
 yarn; yarn build
