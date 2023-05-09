@@ -40,8 +40,6 @@ Get-ChildItem "${env:OUTPUT_DIR}" -recurse |Where-Object{$_.PSIsContainer -eq $F
     }
 }
 
-# Copy-Item -Path ./web ./service/server/router/ -Recurse
-
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
 
