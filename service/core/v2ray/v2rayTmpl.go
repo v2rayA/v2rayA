@@ -9,6 +9,7 @@ import (
 	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/antiPollution"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
@@ -290,7 +291,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 			break
 		case configure.AntipollutionDnsForward:
 			if firstUDPSupportedOutboundTag != "" {
-				external = []string{"8.8.8.8 -> " + firstUDPSupportedOutboundTag, "1.1.1.1 -> " + firstUDPSupportedOutboundTag}
+				external = antiPollution.GetExternalDNS(firstUDPSupportedOutboundTag)
 			} else {
 				external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
 			}

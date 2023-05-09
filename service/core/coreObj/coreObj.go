@@ -93,6 +93,7 @@ type User struct {
 	Encryption string `json:"encryption,omitempty"`
 	Flow       string `json:"flow,omitempty"`
 	Security   string `json:"security,omitempty"`
+	Level      int    `json:"level,omitempty"`
 }
 type Vnext struct {
 	Address string `json:"address"`
