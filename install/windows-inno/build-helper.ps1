@@ -29,8 +29,9 @@ scoop install yarn go nodejs-lts
 ${env:NODE_OPTIONS} = "--openssl-legacy-provider"
 ${env:OUTPUT_DIR} = "./service/server/router/web"
 
-yarn --cwd ./gui --check-files
-yarn --cwd ./gui build
+cd ./gui
+yarn; yarn build
+cd ..
 
 Get-ChildItem "${env:OUTPUT_DIR}" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
     if($_.Extension -ne ".png" -and $_.Extension -ne ".gz" -and $_.Name -ne "index.html"){
