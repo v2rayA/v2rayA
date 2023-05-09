@@ -24,21 +24,22 @@ Function Compress-File([ValidateScript({Test-Path $_})][string]$File){
 
 Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
 # scoop bucket add versions;scoop install nodejs16;
-scoop install yarn go nodejs
+scoop install yarn go nodejs-lts
 
 ${env:NODE_OPTIONS} = "--openssl-legacy-provider"
+${env:OUTPUT_DIR} = "./service/server/router/web"
 
-yarn --cwd gui --check-files
-yarn --cwd gui build
+yarn --cwd ./gui --check-files
+yarn --cwd ./gui build
 
-Get-ChildItem "./web" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
+Get-ChildItem "${env:OUTPUT_DIR}" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
     if($_.Extension -ne ".png" -and $_.Extension -ne ".gz" -and $_.Name -ne "index.html"){
         Compress-File($_.FullName)
         Remove-Item -Path $_.FullName
     }
 }
 
-Copy-Item -Path ./web ./service/server/router/ -Recurse
+# Copy-Item -Path ./web ./service/server/router/ -Recurse
 
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
