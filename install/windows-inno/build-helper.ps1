@@ -23,22 +23,21 @@ Function Compress-File([ValidateScript({Test-Path $_})][string]$File){
 }
 
 Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
-# scoop bucket add versions;scoop install nodejs16;
-scoop install yarn go nodejs
+scoop install yarn go nodejs-lts
 
 ${env:NODE_OPTIONS} = "--openssl-legacy-provider"
+${env:OUTPUT_DIR} = (Get-Location).Path + "\service\server\router\web"
 
-yarn --cwd gui --check-files
-yarn --cwd gui build
+cd ./gui
+yarn; yarn build
+cd ..
 
-Get-ChildItem "./web" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
+Get-ChildItem "${env:OUTPUT_DIR}" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
     if($_.Extension -ne ".png" -and $_.Extension -ne ".gz" -and $_.Name -ne "index.html"){
         Compress-File($_.FullName)
         Remove-Item -Path $_.FullName
     }
 }
-
-Copy-Item -Path ./web ./service/server/router/ -Recurse
 
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
@@ -116,7 +115,7 @@ SOFTWARE.
 ' -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml"
 Copy-Item -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml" -Destination "D:\v2raya-arm64-windows\v2rayA-service.xml"
 
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/LICENSE" -OutFile "D:\LICENSE.txt"
+Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/LICENSE' | Out-File "D:\LICENSE.txt"
 
 $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_x86_64.iss"
 $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_arm64.iss"
