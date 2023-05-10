@@ -59,15 +59,6 @@
               expanded
             />
           </b-field>
-          <b-field label="SNI" label-position="on-border">
-            <b-input
-              ref="v2ray_sni"
-              v-model="v2ray.sni"
-              required
-              placeholder="SNI"
-              expanded
-            />
-          </b-field>
           <b-field
             v-if="v2ray.protocol === 'vmess'"
             label="AlterID"
@@ -106,6 +97,19 @@
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
             </b-select>
+          </b-field>
+          <b-field
+            v-if="v2ray.tls !== 'none'"
+            label="SNI"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_sni"
+              v-model="v2ray.sni"
+              required
+              placeholder="SNI"
+              expanded
+            />
           </b-field>
           <b-field
             v-if="v2ray.tls !== 'none'"
@@ -817,7 +821,7 @@ export default {
       host: "",
       path: "",
       tls: "none",
-      flow: "",
+      flow: "xtls-rprx-direct",
       alpn: "",
       scy: "auto",
       v: "",
