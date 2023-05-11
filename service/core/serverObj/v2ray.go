@@ -239,10 +239,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if security == "" {
 				security = "auto"
 			}
-			flow := v.Flow
-			if flow == "" {
-				flow = "xtls-rprx-direct"
-			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
 					Address: v.Add,
@@ -250,7 +246,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Users: []coreObj.User{
 						{
 							Encryption: "none",
-							Flow:       flow,
 							ID:         id,
 							Level:      8,
 							Security:   security,
@@ -375,12 +370,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.TLSSettings.Alpn = alpn
 			}
-			// Flow
-			if v.Flow != "" {
-				vnext := core.Settings.Vnext.([]coreObj.Vnext)
-				vnext[0].Users[0].Flow = v.Flow
-				core.Settings.Vnext = vnext
-			}
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
@@ -403,7 +392,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 			// Flow
 			if v.Flow == "" {
-				v.Flow = "xtls-rprx-origin"
+				v.Flow = "none"
 			}
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -443,7 +432,7 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 		}
-		if v.TLS == "tls" || v.TLS == "xtls" {
+		if v.TLS == "xtls" {
 			setValue(&query, "flow", v.Flow)
 		}
 
