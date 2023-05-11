@@ -265,6 +265,7 @@ export default {
         }
         localStorage["lite"] = res.data.data.lite;
         localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
+        localStorage["variant"] = res.data.data.variant;
       }
     });
     this.$axios({

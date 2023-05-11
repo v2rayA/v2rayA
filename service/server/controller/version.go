@@ -24,6 +24,7 @@ func GetVersion(ctx *gin.Context) {
 		"v5":               versionErr == nil, // FIXME: Compomise on compatibility.
 		"lite":             lite,
 		"loadBalanceValid": variant == where.V2ray && versionErr == nil,
+		"variant":          variant,
 	})
 }
 
