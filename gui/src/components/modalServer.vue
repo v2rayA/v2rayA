@@ -119,7 +119,9 @@
             <b-select v-model="v2ray.flow" expanded>
               <option value="none" selected>none</option>
               <option value="xtls-rprx-origin">xtls-rprx-origin</option>
+              <option value="xtls-rprx-origin-udp443">xtls-rprx-origin-udp443</option>
               <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              <option value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</option>
             </b-select>
           </b-field>
           <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
