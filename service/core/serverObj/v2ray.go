@@ -91,6 +91,9 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	if data.Type == "" {
 		data.Type = "none"
 	}
+	if data.Host == "" {
+		data.Host = u.Query().Get("host")
+	}
 	if data.TLS == "" {
 		data.TLS = "none"
 	}
@@ -199,8 +202,12 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 	switch strings.ToLower(v.Protocol) {
 	case "vmess", "vless":
 		id := v.ID
+		network := v.Net
 		if l := len([]byte(id)); l < 32 || l > 36 {
 			id = common.StringToUUID5(id)
+		}
+		core.StreamSettings = &coreObj.StreamSettings{
+			Network: network,
 		}
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
@@ -230,22 +237,30 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				},
 			}
 		case "vless":
+			security := v.Security
+			if security == "" {
+				security = "auto"
+			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
 					Address: v.Add,
 					Port:    port,
 					Users: []coreObj.User{
 						{
-							ID:         id,
 							Encryption: "none",
 							Flow:       v.Flow,
 						},
 					},
 				},
 			}
-		}
-		core.StreamSettings = &coreObj.StreamSettings{
-			Network: v.Net,
+			if network == "tcp" {
+				tcpSetting := coreObj.TCPSettings{
+					Header: coreObj.TCPHeader{
+						Type: "none",
+					},
+				}
+				core.StreamSettings.TCPSettings = &tcpSetting
+			}
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
@@ -379,7 +394,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 			// Flow
 			if v.Flow == "" {
-				v.Flow = "xtls-rprx-origin"
+				v.Flow = "none"
 			}
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -414,10 +429,9 @@ func (v *V2Ray) ExportToURL() string {
 		case "grpc":
 			setValue(&query, "serviceName", v.Path)
 		}
-		//TODO: QUIC
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)
-			setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
+			setValue(&query, "sni", v.SNI)
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 			setValue(&query, "fp", v.Fingerprint)

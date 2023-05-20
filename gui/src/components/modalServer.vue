@@ -77,7 +77,6 @@
               type="number"
               min="0"
               max="65535"
-              required
               expanded
             />
           </b-field>
@@ -102,7 +101,20 @@
             <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
+              <option v-if="variant() === 'xray'" value="xtls">xtls</option>
             </b-select>
+          </b-field>
+          <b-field
+            v-if="v2ray.tls !== 'none'"
+            label="SNI"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_sni"
+              v-model="v2ray.sni"
+              placeholder="SNI"
+              expanded
+            />
           </b-field>
           <b-field
             v-show="v2ray.tls === 'tls'"
@@ -115,6 +127,20 @@
               placeholder="A uTLS compatable fingerprint name"
               expanded
             />
+          </b-field>
+          <b-field
+            v-if="v2ray.tls === 'xtls'"
+            ref="v2ray_flow"
+            label="Flow"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.flow" expanded>
+              <option value="none" selected>none</option>
+              <option value="xtls-rprx-origin">xtls-rprx-origin</option>
+              <option value="xtls-rprx-origin-udp443">xtls-rprx-origin-udp443</option>
+              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              <option value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</option>
+            </b-select>
           </b-field>
           <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
             <template slot="label">
@@ -778,9 +804,8 @@
 </template>
 
 <script>
-import { handleResponse } from "@/assets/js/utils";
+import { generateURL, handleResponse, parseURL } from "@/assets/js/utils";
 import { Base64 } from "js-base64";
-import { parseURL, generateURL } from "@/assets/js/utils";
 
 export default {
   name: "ModalServer",
@@ -944,6 +969,9 @@ export default {
     }
   },
   methods: {
+    variant() {
+      return localStorage["variant"]?.toLowerCase() || "v2ray";
+    },
     handleV2rayProtocolSwitch() {},
     resolveURL(url) {
       if (url.toLowerCase().startsWith("vmess://")) {
@@ -967,9 +995,11 @@ export default {
           flow: u.params.flow || "",
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
-          host: u.params.sni || u.params.host || "",
+          host: u.params.host || u.params.sni || "",
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
+          flow: u.params.flow || "none",
+          sni: u.params.sni || "",
           tls: u.params.security || "none",
           utls_fingerprint: u.params.fp || "",
           allowInsecure: u.params.allowInsecure || false,
@@ -1427,10 +1457,6 @@ export default {
 <style lang="scss">
 .is-twitter .is-active a {
   color: #4099ff !important;
-}
-
-.readonly {
-  pointer-events: none;
 }
 
 .same-width-5 li {
