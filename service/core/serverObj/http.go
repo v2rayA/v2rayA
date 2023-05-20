@@ -1,10 +1,11 @@
 package serverObj
 
 import (
-	"github.com/v2rayA/v2rayA/core/coreObj"
 	"net"
 	"net/url"
 	"strconv"
+
+	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
@@ -42,11 +43,11 @@ func NewHTTP(link string) (ServerObj, error) {
 func ParseHttpURL(u string) (data *HTTP, err error) {
 	t, err := url.Parse(u)
 	if err != nil {
-		return nil, InvalidParameterErr
+		return nil, ErrInvalidParameter
 	}
 	port, err := strconv.Atoi(t.Port())
 	if err != nil {
-		return nil, InvalidParameterErr
+		return nil, ErrInvalidParameter
 	}
 	data = &HTTP{
 		Name:   t.Fragment,

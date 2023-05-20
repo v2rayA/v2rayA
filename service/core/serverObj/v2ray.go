@@ -57,7 +57,7 @@ func NewV2Ray(link string) (ServerObj, error) {
 	} else if strings.HasPrefix(link, "vless://") {
 		return ParseVlessURL(link)
 	}
-	return nil, InvalidParameterErr
+	return nil, ErrInvalidParameter
 }
 
 func ParseVlessURL(vless string) (data *V2Ray, err error) {
@@ -121,7 +121,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		s := strings.Split(vmess[8:], "?")[0]
 		s, err = common.Base64StdDecode(s)
 		if err != nil {
-			s, err = common.Base64URLDecode(s)
+			s, _ = common.Base64URLDecode(s)
 		}
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
@@ -247,6 +247,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Port:    port,
 					Users: []coreObj.User{
 						{
+							ID:         id,
 							Encryption: "none",
 							Flow:       v.Flow,
 						},

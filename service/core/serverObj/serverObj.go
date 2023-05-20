@@ -2,13 +2,14 @@ package serverObj
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"net/url"
 )
 
-var InvalidParameterErr = fmt.Errorf("invalid parameters")
+var ErrInvalidParameter = fmt.Errorf("invalid parameters")
 
 type ServerObj interface {
 	Configuration(info PriorInfo) (c Configuration, err error)
