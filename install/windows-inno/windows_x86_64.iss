@@ -69,21 +69,23 @@ Type: files; Name: "{app}\v2rayA-service.wrapper.log.old"
 Type: files; Name: "{app}\v2rayA-service.err.log"
 Type: files; Name: "{app}\v2rayA-service.err.log.old"
 
-[code]
-function InitializeSetup(): boolean;
+[Code]
+function InitializeSetup(): Boolean;
 var
   ResultCode: integer;
 begin
-  if Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_SHOW,
-     ewWaitUntilTerminated, ResultCode) then
+  if FileExists('{dir}\v2rayA-service.exe') then
   begin
-    // handle success if necessary; ResultCode contains the exit code
-  end
-  else begin
-    // handle failure if necessary; ResultCode contains the error code
+    if Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_HIDE,
+      ewWaitUntilTerminated, resultcode) then
+    begin
+      if (resultcode <> 0) then
+      begin
+        MsgBox('Failed to stop current v2rayA service, installation cannot continue, please try again!', mbInformation, MB_OK);
+        Result := False;
+        Exit;
+      end;
+    end;
   end;
-
-  // Proceed Setup
   Result := True;
-
 end;
