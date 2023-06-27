@@ -70,22 +70,10 @@ Type: files; Name: "{app}\v2rayA-service.err.log"
 Type: files; Name: "{app}\v2rayA-service.err.log.old"
 
 [Code]
-function InitializeSetup(): Boolean;
-var
-  ResultCode: integer;
+function InitializeSetup() : Boolean;
+var 
+  ResultCode: Integer;
 begin
-  if FileExists('{dir}\v2rayA-service.exe') then
-  begin
-    if Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_HIDE,
-      ewWaitUntilTerminated, resultcode) then
-    begin
-      if (resultcode <> 0) then
-      begin
-        MsgBox('Failed to stop current v2rayA service, installation cannot continue, please try again!', mbInformation, MB_OK);
-        Result := False;
-        Exit;
-      end;
-    end;
-  end;
   Result := True;
-end;
+  Exec('cmd.exe', '/C sc.exe stop v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode); 
+end
