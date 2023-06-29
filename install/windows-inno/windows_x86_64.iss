@@ -76,4 +76,4 @@ var
 begin
   Result := True;
   Exec('cmd.exe', '/C sc.exe stop v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode); 
-end
+end;
