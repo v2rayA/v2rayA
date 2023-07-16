@@ -161,12 +161,12 @@ jobs:
         fpm -s dir -t rpm -p installer_redhat_ppc64le_$VERSION.rpm --description "$DESC" --architecture=ppc64le $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya ${FILES[@]}
         
         # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=yay
-        fpm -s dir -t pacman -p installer_archlinux_i686_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=i686 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_pentium4_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=pentium4 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_x86_64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_armv6h_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armv6h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_armv7h_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armv7h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_i686_$VERSION.pkg.tar.zst --description "$DESC" --architecture=i686 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_pentium4_$VERSION.pkg.tar.zst --description "$DESC" --architecture=pentium4 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_x86_64_$VERSION.pkg.tar.zst --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_armv6h_$VERSION.pkg.tar.zst --description "$DESC" --architecture=armv6h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_armv7h_$VERSION.pkg.tar.zst --description "$DESC" --architecture=armv7h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zst --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
         
         # https://www.freebsd.org/platforms/
         # fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
@@ -325,12 +325,12 @@ jobs:
           installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
           installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
           installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
           installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
@@ -341,12 +341,12 @@ jobs:
           installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
           installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
           installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
     - name: Refresh Cloudflare Cache
       if: startsWith(github.ref, 'refs/tags/v')
       env:
