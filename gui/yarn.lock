@@ -2,14 +2,27 @@
 # yarn lockfile v1
 
 
-"@achrinza/node-ipc@^9.2.5":
-  version "9.2.6"
-  resolved "https://registry.npmmirror.com/@achrinza/node-ipc/-/node-ipc-9.2.6.tgz#75c89e95fe38ff9e3dd33a0d2681dc28f1c31f33"
-  integrity sha512-ULSIYPy4ZPM301dfCxRz0l2GJjOwIo/PqmWonIu1bLml7UmnVQmH+juJcoyXp6E8gIRRNAjGYftJnNQlfy4vPg==
+"@achrinza/event-pubsub@5.0.9":
+  version "5.0.9"
+  resolved "https://registry.yarnpkg.com/@achrinza/event-pubsub/-/event-pubsub-5.0.9.tgz#ea6c4ee48bee9f50dac253ee08c1f65b144e1e84"
+  integrity sha512-49RyPP7w4abKMsLRHKgB9neAH085mdHQtv+0H5TnJeOq3oK57qQRd/JD9K5Z5D3vFODsvBODiBjYkRQZKdqiAA==
   dependencies:
+    "@achrinza/strong-type" "0.1.11"
+
+"@achrinza/node-ipc@^10.1.9", "@achrinza/node-ipc@^9.2.5":
+  version "10.1.9"
+  resolved "https://registry.yarnpkg.com/@achrinza/node-ipc/-/node-ipc-10.1.9.tgz#69c1312f503611dd9fade321aeac625a87e940f8"
+  integrity sha512-GZD3VwqVumV6qg5/3dS1H1hYp971IlMsRMmnR9joS3LplL4+Ou6t2mxKbC22Na40rjBa0za+AN969PJ0gxgW+A==
+  dependencies:
+    "@achrinza/event-pubsub" "5.0.9"
     "@node-ipc/js-queue" "2.0.3"
-    event-pubsub "4.3.0"
     js-message "1.0.7"
+    strong-type "1.0.1"
+
+"@achrinza/strong-type@0.1.11":
+  version "0.1.11"
+  resolved "https://registry.yarnpkg.com/@achrinza/strong-type/-/strong-type-0.1.11.tgz#4f8f22b19195c47edbd8411ba54f80452226a6a5"
+  integrity sha512-35Ou0jcGHGKQS8a6lgdan+u3BajmL315ZpDhH2/WSRNgG1jPpizhe87epgLaotN4uY3kXaEbfRU56sBPMdR5LA==
 
 "@ampproject/remapping@^2.1.0":
   version "2.2.0"
@@ -2311,9 +2324,9 @@ caniuse-api@^3.0.0:
     lodash.uniq "^4.5.0"
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30001400, caniuse-lite@^1.0.30001426:
-  version "1.0.30001441"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001441.tgz#987437b266260b640a23cd18fbddb509d7f69f3e"
-  integrity sha512-OyxRR4Vof59I3yGWXws6i908EtGbMzVUi3ganaZQHmydk1iwDhRnvaPG2WaR0KcqrDFKrxVZHULT396LEPhXfg==
+  version "1.0.30001518"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001518.tgz"
+  integrity sha512-rup09/e3I0BKjncL+FesTayKtPrdwKhUufQFd3riFw1hHg8JmIFoInYfB102cFcY/pPgGmdyl/iy+jgiDi2vdA==
 
 case-sensitive-paths-webpack-plugin@^2.3.0:
   version "2.4.0"
@@ -3374,11 +3387,6 @@ etag@~1.8.1:
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==
-
-event-pubsub@4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/event-pubsub/-/event-pubsub-4.3.0.tgz#f68d816bc29f1ec02c539dc58c8dd40ce72cb36e"
-  integrity sha512-z7IyloorXvKbFx9Bpie2+vMJKKx1fH1EN5yiTfp8CiLOTptSYy1g8H4yDpGlEdshL1PBiFtBHepF2cNsqeEeFQ==
 
 eventemitter3@^4.0.0:
   version "4.0.7"
@@ -6650,6 +6658,11 @@ strip-json-comments@^3.1.0, strip-json-comments@^3.1.1:
   version "3.1.1"
   resolved "https://registry.npmmirror.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
+
+strong-type@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/strong-type/-/strong-type-1.0.1.tgz#501d15117a0750472c39c09cad49b74a191daaca"
+  integrity sha512-K8KEzne00nA5HG3eSIPy44adqGTAMnNlpfvRWtiv8QvRsRm0/rMLHtSoppJ11iFtnmzzpgeYogzdY2YMgrUgOA==
 
 stylehacks@^5.1.1:
   version "5.1.1"
