@@ -12,7 +12,7 @@ else
   version="unstable"
 fi
 # https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-cd "$CurrentDir"/gui && yarn --ignore-engines && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
+cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
 for file in $(find "$CurrentDir"/service/server/router/web | grep -v png | grep -v index.html | grep -v .gz); do
   if [ ! -d $file ];then
     gzip -9 $file

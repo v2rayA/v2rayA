@@ -249,7 +249,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 						{
 							ID:         id,
 							Encryption: "none",
-							Flow:       v.Flow,
 						},
 					},
 				},
@@ -383,9 +382,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if v.AllowInsecure {
 				core.StreamSettings.XTLSSettings.AllowInsecure = true
 			}
-			if v.Flow == "" {
-				v.Flow = "xtls-rprx-origin"
-			}
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
 				for i := range alpn {
@@ -393,10 +389,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.XTLSSettings.Alpn = alpn
 			}
-			// Flow
-			if v.Flow == "" {
-				v.Flow = "none"
-			}
+		}
+		// Flow
+		if v.Flow != "" {
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
 			core.Settings.Vnext = vnext
