@@ -2,13 +2,14 @@ package serverObj
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 func init() {
@@ -35,7 +36,7 @@ func NewPingTunnel(link string) (ServerObj, error) {
 	} else if strings.HasPrefix(link, "ping-tunnel://") {
 		return ParsePingTunnelURL2(link)
 	}
-	return nil, InvalidParameterErr
+	return nil, ErrInvalidParameter
 }
 
 func ParsePingTunnelURL1(u string) (data *PingTunnel, err error) {
