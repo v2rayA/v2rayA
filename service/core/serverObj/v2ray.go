@@ -44,6 +44,9 @@ type V2Ray struct {
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
 	Fingerprint   string `json:"fingerprint,omitempty"`
+	PublicKey     string `json:"pbk,omitempty"`
+	ShortId       string `json:"sid,omitempty"`
+	SpiderX       string `json:"spx,omitempty"`
 	Flow          string `json:"flow,omitempty"`
 	Alpn          string `json:"alpn,omitempty"`
 	AllowInsecure bool   `json:"allowInsecure"`
@@ -70,7 +73,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Add:           u.Hostname(),
 		Port:          u.Port(),
 		ID:            u.User.String(),
-		Flow:          u.Query().Get("flow"),
+		Aid:           u.Query().Get("aid"),
 		Net:           u.Query().Get("type"),
 		Type:          u.Query().Get("headerType"),
 		Host:          u.Query().Get("host"),
@@ -78,8 +81,13 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Path:          u.Query().Get("path"),
 		TLS:           u.Query().Get("security"),
 		Fingerprint:   u.Query().Get("fp"),
+		PublicKey:     u.Query().Get("pbk"),
+		ShortId:       u.Query().Get("sid"),
+		SpiderX:       u.Query().Get("spx"),
+		Flow:          u.Query().Get("flow"),
 		Alpn:          u.Query().Get("alpn"),
 		AllowInsecure: u.Query().Get("allowInsecure") == "true",
+		V:             vless,
 		Protocol:      "vless",
 	}
 	if data.Net == "" {
@@ -253,14 +261,14 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					},
 				},
 			}
-			if network == "tcp" {
-				tcpSetting := coreObj.TCPSettings{
-					Header: coreObj.TCPHeader{
-						Type: "none",
-					},
-				}
-				core.StreamSettings.TCPSettings = &tcpSetting
-			}
+			// if network == "tcp" {
+			// 	tcpSetting := coreObj.TCPSettings{
+			// 		Header: coreObj.TCPHeader{
+			// 			Type: "none",
+			// 		},
+			// 	}
+			// 	core.StreamSettings.TCPSettings = &tcpSetting
+			// }
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
@@ -389,6 +397,16 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.XTLSSettings.Alpn = alpn
 			}
+		} else if strings.ToLower(v.TLS) == "reality" {
+			core.StreamSettings.Security = "reality"
+			core.StreamSettings.RealitySettings = &coreObj.RealitySettings{
+				ServerName:  v.SNI,
+				Fingerprint: v.Fingerprint,
+				Show:        false,
+				PublicKey:   v.PublicKey,
+				ShortID:     v.ShortId,
+				SpiderX:     v.SpiderX,
+			}
 		}
 		// Flow
 		if v.Flow != "" {
@@ -431,6 +449,11 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 			setValue(&query, "fp", v.Fingerprint)
+			if v.TLS == "reality" {
+				setValue(&query, "pbk", v.PublicKey)
+				setValue(&query, "sid", v.ShortId)
+				setValue(&query, "spx", v.SpiderX)
+			}
 		}
 
 		U := url.URL{

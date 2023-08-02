@@ -44,31 +44,29 @@
             <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
+              <option v-if="variant() === 'xray'" value="reality">reality</option>
               <option v-if="variant() === 'xray'" value="xtls">xtls</option>
             </b-select>
           </b-field>
           <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
             <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls'" label="uTLS fingerprint" label-position="on-border">
-            <b-input ref="v2ray_utls_fingerprint" v-model="v2ray.utls_fingerprint"
-              placeholder="A uTLS compatable fingerprint name" expanded />
-          </b-field>
-          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls === 'tls'" ref="v2ray_flow_new" label="Flow"
+          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
             label-position="on-border">
-            <b-select v-model="v2ray.flow" expanded>
-              <option value="none">none</option>
-              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
-            </b-select>
+            <b-input ref="v2ray_fp" v-model="v2ray.fp" placeholder="A uTLS compatable fingerprint name" expanded />
           </b-field>
-          <b-field v-if="v2ray.tls === 'xtls'" ref="v2ray_flow" label="Flow" label-position="on-border">
-            <b-select v-model="v2ray.flow" expanded>
-              <option value="none" selected>none</option>
-              <option value="xtls-rprx-origin">xtls-rprx-origin</option>
-              <option value="xtls-rprx-origin-udp443">xtls-rprx-origin-udp443</option>
-              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
-              <option value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</option>
-            </b-select>
+          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
+            label-position="on-border">
+            <b-input ref="v2ray_flow" v-model="v2ray.flow" placeholder="Flow" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'reality'" label="pbk" label-position="on-border">
+            <b-input v-model="v2ray.pbk" placeholder="pbk" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'reality'" label="sid" label-position="on-border">
+            <b-input v-model="v2ray.sid" placeholder="sid" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'reality'" label="spx" label-position="on-border">
+            <b-input v-model="v2ray.spx" placeholder="spx" expanded />
           </b-field>
           <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
             <template slot="label">
@@ -471,7 +469,10 @@ export default {
       host: "",
       path: "",
       tls: "none",
-      utls_fingerprint: "",
+      fp: "",
+      pbk: "",
+      sid: "",
+      spx: "",
       alpn: "",
       scy: "auto",
       v: "",
@@ -631,13 +632,15 @@ export default {
           flow: u.params.flow || "",
           net: u.params.type || "tcp",
           type: u.params.headerType || "none",
-          host: u.params.host || u.params.sni || "",
+          host: u.params.host || "",
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
-          flow: u.params.flow || "none",
           sni: u.params.sni || "",
           tls: u.params.security || "none",
-          utls_fingerprint: u.params.fp || "",
+          fp: u.params.fp || "",
+          pbk: u.params.pbk || "",
+          sid: u.params.sid || "",
+          spx: u.params.spx || "",
           allowInsecure: u.params.allowInsecure || false,
           protocol: "vless",
         };
@@ -827,16 +830,13 @@ export default {
             type: srcObj.net,
             flow: srcObj.flow,
             security: srcObj.tls,
-            fp: srcObj.utls_fingerprint,
+            fp: srcObj.fp,
             path: srcObj.path,
             host: srcObj.host,
             headerType: srcObj.type,
-            sni: srcObj.host,
+            sni: srcObj.sni,
             allowInsecure: srcObj.allowInsecure,
           };
-          if (srcObj.flow !== "none") {
-            query.flow = srcObj.flow;
-          }
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
           }
@@ -845,6 +845,11 @@ export default {
           }
           if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
             query.seed = srcObj.path;
+          }
+          if (query.security == "reality") {
+            query.pbk = srcObj.pbk;
+            query.sid = srcObj.sid;
+            query.spx = srcObj.spx;
           }
           return generateURL({
             protocol: "vless",
