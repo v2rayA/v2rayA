@@ -23,7 +23,7 @@ const (
 )
 
 var NotFoundErr = fmt.Errorf("not found")
-var ServiceNameList = []string{"v2ray"}
+var ServiceNameList = []string{"xray", "v2ray"}
 var v2rayVersion struct {
 	variant    Variant
 	version    string
@@ -43,23 +43,23 @@ func GetV2rayServiceVersion() (variant Variant, ver string, err error) {
 	if err != nil || len(v2rayPath) <= 0 {
 		return Unknown, "", fmt.Errorf("cannot find v2ray executable binary")
 	}
-	var done = make(chan struct{}, 2)
 	cmd := exec.Command(v2rayPath, "version")
 	output := bytes.NewBuffer(nil)
 	cmd.Stdout = output
-	cmd.Stderr = cmd.Stdout
+	cmd.Stderr = output
+	go func() {
+		time.Sleep(5 * time.Second)
+		p := cmd.Process
+		if p != nil {
+			_ = p.Kill()
+		}
+	}()
 	if err := cmd.Start(); err != nil {
 		return Unknown, "", err
 	}
-	go func() {
-		time.Sleep(3 * time.Second)
-		_ = cmd.Process.Kill()
-		_, _ = cmd.Process.Wait()
-		done <- struct{}{}
-	}()
-	<-done
+	cmd.Wait()
 	var fields []string
-	if fields = strings.Fields(output.String()); len(fields) < 2 {
+	if fields = strings.Fields(strings.TrimSpace(output.String())); len(fields) < 2 {
 		return Unknown, "", fmt.Errorf("cannot parse version of v2ray")
 	}
 	ver = fields[1]

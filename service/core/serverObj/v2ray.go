@@ -3,6 +3,13 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
+	"net"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -10,12 +17,6 @@ import (
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"net"
-	"net/url"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -39,7 +40,7 @@ type V2Ray struct {
 	Net           string `json:"net"`
 	Type          string `json:"type"`
 	Host          string `json:"host"`
-	SNI           string `json:"sni"`
+	SNI           string `json:"sni,omitempty"`
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
 	Flow          string `json:"flow,omitempty"`
@@ -88,11 +89,11 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	if data.Type == "" {
 		data.Type = "none"
 	}
+	if data.Host == "" {
+		data.Host = u.Query().Get("host")
+	}
 	if data.TLS == "" {
 		data.TLS = "none"
-	}
-	if data.Flow == "" {
-		data.Flow = "xtls-rprx-direct"
 	}
 	if data.Net == "mkcp" || data.Net == "kcp" {
 		data.Path = u.Query().Get("seed")
@@ -199,8 +200,12 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 	switch strings.ToLower(v.Protocol) {
 	case "vmess", "vless":
 		id := v.ID
+		network := v.Net
 		if l := len([]byte(id)); l < 32 || l > 36 {
 			id = common.StringToUUID5(id)
+		}
+		core.StreamSettings = &coreObj.StreamSettings{
+			Network: network,
 		}
 		switch strings.ToLower(v.Protocol) {
 		case "vmess":
@@ -208,11 +213,28 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				return Configuration{}, fmt.Errorf("please sync datetime first. Your datetime is %v, and the "+
 					"correct datetime is %v", time.Now().Local().Format(ntp.DisplayFormat), t.Local().Format(ntp.DisplayFormat))
 			}
-			if len(v.Aid) > 0 && v.Aid != "0" {
-				log.Error("We do not support alterID > 0 since v1.5.6 due to security; please contact your server provider or " +
-					"downgrade v2rayA to v1.5.5")
-				return Configuration{}, fmt.Errorf("unsupported alterID > 0: check the log for more information")
+			security := v.Security
+			if security == "" {
+				security = "auto"
 			}
+			var aid int
+			if _aid, err := strconv.Atoi(v.Aid); err == nil {
+				aid = _aid
+			}
+			core.Settings.Vnext = []coreObj.Vnext{
+				{
+					Address: v.Add,
+					Port:    port,
+					Users: []coreObj.User{
+						{
+							ID:       id,
+							AlterID:  aid,
+							Security: security,
+						},
+					},
+				},
+			}
+		case "vless":
 			security := v.Security
 			if security == "" {
 				security = "auto"
@@ -223,30 +245,22 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Port:    port,
 					Users: []coreObj.User{
 						{
-							ID:       id,
-							AlterID:  0,
-							Security: security,
-						},
-					},
-				},
-			}
-		case "vless":
-			core.Settings.Vnext = []coreObj.Vnext{
-				{
-					Address: v.Add,
-					Port:    port,
-					Users: []coreObj.User{
-						{
-							ID: id,
-							//AlterID:    0, // keep AEAD on
 							Encryption: "none",
+							ID:         id,
+							Level:      8,
+							Security:   security,
 						},
 					},
 				},
 			}
-		}
-		core.StreamSettings = &coreObj.StreamSettings{
-			Network: v.Net,
+			if network == "tcp" {
+				tcpSetting := coreObj.TCPSettings{
+					Header: coreObj.TCPHeader{
+						Type: "none",
+					},
+				}
+				core.StreamSettings.TCPSettings = &tcpSetting
+			}
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
@@ -359,24 +373,26 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
+			if v.AllowInsecure {
+				core.StreamSettings.XTLSSettings.AllowInsecure = true
+			}
 			// SNI
 			if v.Host != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.Host
 			} else if v.Host != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.Host
 			}
-			if v.AllowInsecure {
-				core.StreamSettings.XTLSSettings.AllowInsecure = true
-			}
-			if v.Flow == "" {
-				v.Flow = "xtls-rprx-origin"
-			}
+			// Alpn
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
 				for i := range alpn {
 					alpn[i] = strings.TrimSpace(alpn[i])
 				}
 				core.StreamSettings.XTLSSettings.Alpn = alpn
+			}
+			// Flow
+			if v.Flow == "" {
+				v.Flow = "none"
 			}
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -411,9 +427,8 @@ func (v *V2Ray) ExportToURL() string {
 		case "grpc":
 			setValue(&query, "serviceName", v.Path)
 		}
-		//TODO: QUIC
 		if v.TLS != "none" {
-			setValue(&query, "sni", v.Host) // FIXME: it may be different from ws's host
+			setValue(&query, "sni", v.SNI)
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 		}

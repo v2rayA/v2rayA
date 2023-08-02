@@ -7,7 +7,7 @@ export default new Vuex.Store({
   state: {
     nav: "",
     running: i18n.t("common.checkRunning"),
-    connectedServer: {}
+    connectedServer: {},
   },
   mutations: {
     NAV(state, val) {
@@ -18,8 +18,8 @@ export default new Vuex.Store({
     },
     CONNECTED_SERVER(state, val) {
       state.connectedServer = val;
-    }
+    },
   },
   actions: {},
-  modules: {}
+  modules: {},
 });

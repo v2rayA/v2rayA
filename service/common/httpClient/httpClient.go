@@ -61,10 +61,10 @@ func GetHttpClientWithv2rayAPac() (client *http.Client, err error) {
 }
 
 func GetHttpClientAutomatically() (c *http.Client) {
-	if !v2ray.ProcessManager.Running() || configure.GetConnectedServers() == nil || v2ray.IsTransparentOn() {
+	setting := configure.GetSettingNotNil()
+	if !v2ray.ProcessManager.Running() || configure.GetConnectedServers() == nil || v2ray.IsTransparentOn(setting) {
 		return http.DefaultClient
 	}
-	setting := configure.GetSettingNotNil()
 	var err error
 	switch setting.ProxyModeWhenSubscribe {
 	case configure.ProxyModePac:

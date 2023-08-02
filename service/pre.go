@@ -6,6 +6,7 @@ import (
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
@@ -315,6 +316,15 @@ func checkUpdate() {
 func run() (err error) {
 	//判别需要启动v2ray吗
 	if configure.GetRunning() {
+		//configure the ip forward
+		setting := service.GetSetting()
+		if setting.IpForward != ipforward.IsIpForwardOn() {
+			e := ipforward.WriteIpForward(setting.IpForward)
+			if e != nil {
+				log.Warn("Connect: %v", e)
+			}
+		}
+		// Start.
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
 			log.Error("failed to start v2ray-core: %v", err)

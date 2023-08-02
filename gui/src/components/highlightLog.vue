@@ -8,8 +8,8 @@ export default {
   props: {
     text: {
       type: String,
-      default: ""
-    }
+      default: "",
+    },
   },
   render(createElement) {
     return createElement("div", {
@@ -17,11 +17,11 @@ export default {
       domProps: {
         innerHTML: hljs.highlight(this.text, {
           language: "accesslog",
-          ignoreIllegals: true
-        }).value
-      }
+          ignoreIllegals: true,
+        }).value,
+      },
     });
-  }
+  },
 };
 </script>
 

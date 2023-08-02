@@ -1,4 +1,4 @@
-name: Release Windows build
+name: Release Windows builds
 
 on:
   push:
@@ -43,15 +43,17 @@ jobs:
       - name: Install Inno Setup
         run: |
           choco install innosetup -y
-      - name: build v2rayA installer
+      - name: Build v2rayA installer
         shell: pwsh
         run: |
           pwsh -c ./install/windows-inno/build-helper.ps1
-      - name: Rename to friendly name
+      - name: Check Sha256SUM
         shell: bash
         run: |
-          mv installer_windows_inno_x64.exe installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-          mv installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+          for v2raya in $(ls | grep .exe)
+          do
+            echo $(sha256sum $v2raya | awk -F ' ' '{print $1}') > $v2raya.sha256.txt
+          done
       - name: Upload Artifact
         if: "!startsWith(github.ref, 'refs/tags/v')"
         uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
@@ -59,8 +61,12 @@ jobs:
           path: |
             installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
-            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+            installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
       - name: Github Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
@@ -72,12 +78,16 @@ jobs:
             installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
             v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
-      - name: Submit to Winget
+            installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+            v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe.sha256.txt
+      - name: Submit to Microsoft winget
         if: startsWith(github.ref, 'refs/tags/v')
         shell: pwsh
         run: |
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
           Start-Sleep -Seconds 30 #Make sure GitHub releases are online
-          $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
-          $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
-          ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.GITHUB_TOKEN }} --submit
+          $Installer_x64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
+          $Installer_ARM64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
+          ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit

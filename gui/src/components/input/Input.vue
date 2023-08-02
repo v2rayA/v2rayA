@@ -66,7 +66,7 @@ import FormElementMixin from "buefy/src/utils/FormElementMixin";
 export default {
   name: "CusBInput",
   components: {
-    [Icon.name]: Icon
+    [Icon.name]: Icon,
   },
   mixins: [FormElementMixin],
   inheritAttrs: false,
@@ -75,17 +75,17 @@ export default {
     value: [Number, String],
     type: {
       type: String,
-      default: "text"
+      default: "text",
     },
     passwordReveal: Boolean,
     hasCounter: {
       type: Boolean,
-      default: () => config.defaultInputHasCounter
+      default: () => config.defaultInputHasCounter,
     },
     customClass: {
       type: String,
-      default: ""
-    }
+      default: "",
+    },
   },
   data() {
     return {
@@ -94,7 +94,7 @@ export default {
       newAutocomplete: this.autocomplete || config.defaultInputAutocomplete,
       isPasswordVisible: false,
       // eslint-disable-next-line vue/no-reserved-keys
-      _elementRef: this.type === "textarea" ? "textarea" : "input"
+      _elementRef: this.type === "textarea" ? "textarea" : "input",
     };
   },
   computed: {
@@ -106,7 +106,7 @@ export default {
         this.newValue = value;
         this.$emit("input", value);
         !this.isValid && this.checkHtml5Validity();
-      }
+      },
     },
     rootClasses() {
       return [
@@ -115,8 +115,8 @@ export default {
         {
           "is-expanded": this.expanded,
           "is-loading": this.loading,
-          "is-clearfix": !this.hasMessage
-        }
+          "is-clearfix": !this.hasMessage,
+        },
       ];
     },
     inputClasses() {
@@ -180,7 +180,7 @@ export default {
         return this.computedValue.toString().length;
       }
       return 0;
-    }
+    },
   },
   watch: {
     /**
@@ -189,7 +189,7 @@ export default {
      */
     value(value) {
       this.newValue = value;
-    }
+    },
   },
   methods: {
     /**
@@ -215,7 +215,7 @@ export default {
           this.computedValue = event.target.value;
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>

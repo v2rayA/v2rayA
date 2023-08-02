@@ -33,6 +33,7 @@ build() {
 # change
 
 EOF
+    chmod +x ./v2raya
     ./v2raya --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/'  >> "$srcdir/v2rayA-$pkgver/v2raya.conf"
 }
 

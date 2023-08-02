@@ -48,12 +48,12 @@ export default {
         showButtons: false, // Do not show control buttons in footer
         keyboardControl: false, // Allow controlling through keyboard (escape to close, arrow keys to move)
         scrollIntoViewOptions: {}, // We use `scrollIntoView()` when possible, pass here the options for it if you want any
-        onHighlightStarted: Element => {
+        onHighlightStarted: (Element) => {
           Element.getNode().classList.add("click-through");
         }, // Called when element is about to be highlighted
-        onDeselected: Element => {
+        onDeselected: (Element) => {
           Element.getNode().classList.remove("click-through");
-        }
+        },
       };
       let driver = new Driver(options);
       // Define the steps for introduction
@@ -63,7 +63,7 @@ export default {
           popover: {
             title: that.$t("driver.welcome.0"),
             description: that.$t("driver.welcome.1"),
-            position: "left"
+            position: "left",
           },
           onNext() {
             that.tableData.servers.push({
@@ -72,20 +72,20 @@ export default {
               name: "ExampleServer ️🇺🇸",
               address: "www.example.com:54321",
               net: "SS(chacha20-ietf-poly1305)",
-              pingLatency: ""
+              pingLatency: "",
             });
             nextStep(that, driver, options, {
               element: ".b-tabs .tabs",
               popover: {
                 title: that.$t("driver.tabs.0"),
                 description: that.$t("driver.tabs.1"),
-                position: "bottom"
-              }
+                position: "bottom",
+              },
             });
-          }
-        }
+          },
+        },
       ]);
       driver.start();
-    }
-  }
+    },
+  },
 };

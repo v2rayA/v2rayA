@@ -69,21 +69,11 @@ Type: files; Name: "{app}\v2rayA-service.wrapper.log.old"
 Type: files; Name: "{app}\v2rayA-service.err.log"
 Type: files; Name: "{app}\v2rayA-service.err.log.old"
 
-[code]
-function InitializeSetup(): boolean;
-var
-  ResultCode: integer;
+[Code]
+function InitializeSetup() : Boolean;
+var 
+  ResultCode: Integer;
 begin
-  if Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_SHOW,
-     ewWaitUntilTerminated, ResultCode) then
-  begin
-    // handle success if necessary; ResultCode contains the exit code
-  end
-  else begin
-    // handle failure if necessary; ResultCode contains the error code
-  end;
-
-  // Proceed Setup
   Result := True;
-
+  Exec('cmd.exe', '/C sc.exe stop v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode); 
 end;

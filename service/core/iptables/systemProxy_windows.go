@@ -235,7 +235,7 @@ func (p *systemProxy) GetSetupCommands() Setter {
 					log.Debug("GetSetupCommands: key: %v: SetDWordValue ProxyEnable: %v", todo.Key, err)
 					return err
 				}
-				if err = key.SetStringValue("ProxyServer", "127.0.0.1:32345"); err != nil {
+				if err = key.SetStringValue("ProxyServer", "127.0.0.1:52345"); err != nil {
 					log.Debug("GetSetupCommands: key: %v: SetStringValue ProxyServer: %v", todo.Key, err)
 					return err
 				}

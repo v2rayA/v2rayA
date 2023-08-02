@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 450px;margin:auto">
+  <div class="modal-card" style="max-width: 450px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ first ? $t("register.title") : `${$t("login.title")} - v2rayA` }}
@@ -51,12 +51,12 @@ export default {
   props: {
     first: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   data: () => ({
     username: "",
-    password: ""
+    password: "",
   }),
   mounted() {
     this.$refs.username.focus();
@@ -70,9 +70,9 @@ export default {
           method: "post",
           data: {
             username: this.username,
-            password: this.password
-          }
-        }).then(res => {
+            password: this.password,
+          },
+        }).then((res) => {
           handleResponse(res, this, () => {
             localStorage["token"] = res.data.data.token;
             this.$emit("close");
@@ -86,9 +86,9 @@ export default {
           method: "post",
           data: {
             username: this.username,
-            password: this.password
-          }
-        }).then(res => {
+            password: this.password,
+          },
+        }).then((res) => {
           handleResponse(res, this, () => {
             localStorage["token"] = res.data.data.token;
             this.$emit("close");
@@ -99,8 +99,8 @@ export default {
     },
     handleEnter() {
       this.handleClickSubmit();
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 450px;margin:auto">
+  <div class="modal-card" style="max-width: 450px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ $t("egressPortWhitelist.title") }}
@@ -51,7 +51,7 @@ export default {
   name: "ModalPortWhiteList",
   data: () => ({
     tcp: [],
-    udp: []
+    udp: [],
   }),
   computed: {
     v2rayaPort() {
@@ -62,12 +62,12 @@ export default {
           U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return port;
-    }
+    },
   },
   created() {
     this.$axios({
-      url: apiRoot + "/portWhiteList"
-    }).then(res => {
+      url: apiRoot + "/portWhiteList",
+    }).then((res) => {
       handleResponse(res, this, () => {
         if (res.data.data.tcp && res.data.data.tcp.length > 0) {
           this.tcp = res.data.data.tcp;
@@ -85,9 +85,9 @@ export default {
         method: "put",
         data: {
           tcp: this.tcp,
-          udp: this.udp
-        }
-      }).then(res => {
+          udp: this.udp,
+        },
+      }).then((res) => {
         handleResponse(res, this, () => {
           this.$emit("close");
         });
@@ -95,8 +95,8 @@ export default {
     },
     beforeAdding(tag) {
       return /^\d+$/.test(tag) || /^\d+:\d+$/.test(tag);
-    }
-  }
+    },
+  },
 };
 </script>
 

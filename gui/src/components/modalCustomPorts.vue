@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card" style="max-width: 450px;margin:auto">
+  <div class="modal-card" style="max-width: 450px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ $t("customAddressPort.title") }}
@@ -45,15 +45,15 @@
           ></b-input>
         </b-field>
         <b-field
-            :label="$t('customAddressPort.portSocks5WithPac')"
-            label-position="on-border"
+          :label="$t('customAddressPort.portSocks5WithPac')"
+          label-position="on-border"
         >
           <b-input
-              v-model="table.socks5WithPac"
-              placeholder="0"
-              type="number"
-              min="0"
-              required
+            v-model="table.socks5WithPac"
+            placeholder="0"
+            type="number"
+            min="0"
+            required
           ></b-input>
         </b-field>
         <b-field
@@ -83,7 +83,7 @@
         <b-message
           v-if="table.vmess > 0 && table.vmessLink"
           type="is-info"
-          style="font-size:13px"
+          style="font-size: 13px"
           class="after-line-dot5"
         >
           <b-button
@@ -95,7 +95,7 @@
         </b-message>
         <b-message
           type="is-info"
-          style="font-size:13px"
+          style="font-size: 13px"
           class="after-line-dot5"
         >
           <p
@@ -142,9 +142,9 @@ export default {
       socks5WithPac: "0",
       httpWithPac: "20172",
       vmess: "0",
-      vmessLink: ""
+      vmessLink: "",
     },
-    backendReady: false
+    backendReady: false,
   }),
   computed: {
     dockerMode() {
@@ -156,13 +156,13 @@ export default {
         backendAddress = backendAddress.substr(0, backendAddress.length - 1);
       }
       return backendAddress + "/api" !== apiRoot;
-    }
+    },
   },
   created() {
     this.table.backendAddress = localStorage["backendAddress"];
     this.$axios({
-      url: apiRoot + "/ports"
-    }).then(res => {
+      url: apiRoot + "/ports",
+    }).then((res) => {
       handleResponse(res, this, () => {
         this.backendReady = true;
         Object.assign(this.table, res.data.data);
@@ -180,8 +180,8 @@ export default {
             title: this.$t("customAddressPort.portVmessLink"),
             sharingAddress: this.table.vmessLink,
             shortDesc: "VMess | v2rayA",
-            type: CONST.ServerType
-          }
+            type: CONST.ServerType,
+          },
         });
       } else {
         this.$buefy.toast.open({
@@ -189,7 +189,7 @@ export default {
           type: "is-warning",
           position: "is-top",
           queue: false,
-          duration: 5000
+          duration: 5000,
         });
       }
     },
@@ -212,9 +212,9 @@ export default {
             http: parseInt(this.table.http),
             socks5WithPac: parseInt(this.table.socks5WithPac),
             httpWithPac: parseInt(this.table.httpWithPac),
-            vmess: parseInt(this.table.vmess)
-          }
-        }).then(res => {
+            vmess: parseInt(this.table.vmess),
+          },
+        }).then((res) => {
           handleResponse(res, this, () => {
             if (res.data.data?.vmessLink) {
               this.$buefy.modal.open({
@@ -224,8 +224,8 @@ export default {
                   title: this.$t("customAddressPort.portVmessLink"),
                   sharingAddress: res.data.data.vmessLink,
                   shortDesc: "VMess | v2rayA",
-                  type: CONST.ServerType
-                }
+                  type: CONST.ServerType,
+                },
               });
             }
             localStorage["backendAddress"] = backendAddress;
@@ -234,15 +234,15 @@ export default {
         });
       } else {
         this.$axios({
-          url: backendAddress + "/api/version"
+          url: backendAddress + "/api/version",
         }).then(() => {
           localStorage["backendAddress"] = backendAddress;
           this.$emit("close");
           this.$remount();
         });
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

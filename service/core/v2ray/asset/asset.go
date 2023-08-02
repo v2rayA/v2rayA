@@ -3,12 +3,6 @@ package asset
 import (
 	"errors"
 	"fmt"
-	"github.com/adrg/xdg"
-	"github.com/muhammadmuzzammil1998/jsonc"
-	"github.com/v2rayA/v2rayA/common/files"
-	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"io/fs"
 	"net/http"
@@ -17,6 +11,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/adrg/xdg"
+	"github.com/muhammadmuzzammil1998/jsonc"
+	"github.com/v2rayA/v2rayA/common/files"
+	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 func GetV2rayLocationAssetOverride() string {
@@ -141,6 +142,10 @@ func GetV2rayConfigPath() (p string) {
 
 func GetV2rayConfigDirPath() (p string) {
 	return conf.GetEnvironmentConfig().V2rayConfigDirectory
+}
+
+func GetNftablesConfigPath() (p string) {
+	return path.Join(conf.GetEnvironmentConfig().Config, "v2raya.nft")
 }
 
 func Download(url string, to string) (err error) {

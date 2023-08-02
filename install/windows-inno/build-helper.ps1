@@ -23,22 +23,21 @@ Function Compress-File([ValidateScript({Test-Path $_})][string]$File){
 }
 
 Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
-# scoop bucket add versions;scoop install nodejs16;
-scoop install yarn go nodejs
+scoop install yarn go nodejs-lts
 
 ${env:NODE_OPTIONS} = "--openssl-legacy-provider"
+${env:OUTPUT_DIR} = (Get-Location).Path + "\service\server\router\web"
 
-yarn --cwd gui --check-files
-yarn --cwd gui build
+Set-Location ./gui
+yarn; yarn build
+Set-Location ..
 
-Get-ChildItem "./web" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
+Get-ChildItem "${env:OUTPUT_DIR}" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
     if($_.Extension -ne ".png" -and $_.Extension -ne ".gz" -and $_.Name -ne "index.html"){
         Compress-File($_.FullName)
         Remove-Item -Path $_.FullName
     }
 }
-
-Copy-Item -Path ./web ./service/server/router/ -Recurse
 
 New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
 New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
@@ -60,7 +59,7 @@ New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
 Copy-Item "./v2raya-arm64-windows/" "D:\" -Recurse
 New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
 
-$Version_v2ray = ((Invoke-WebRequest -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest' | ConvertFrom-Json).tag_name).Split("v")[1]
+$Version_v2ray = ((Invoke-RestMethod -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest').tag_name).Split("v")[1]
 $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-64.zip"
 $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-arm64-v8a.zip"
 
@@ -76,7 +75,7 @@ Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm6
 Remove-Item -Path "D:\v2raya-arm64-windows\bin\wv2ray.exe" -Force -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "D:\v2raya-arm64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
 
-$Url_WinSW = "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.10/WinSW-net461.exe"
+$Url_WinSW = "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-net461.exe"
 Invoke-WebRequest $Url_WinSW -OutFile "D:\WinSW.exe"
 Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.exe"
 Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-arm64-windows\v2rayA-service.exe"
@@ -107,7 +106,8 @@ SOFTWARE.
 <name>v2rayA background service for Windows</name>
 <description>v2rayA is a V2Ray client, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.</description>
 <executable>%BASE%\bin\v2raya.exe</executable>
-<arguments>--lite --log-file "v2raya.log" --v2ray-bin "%BASE%\bin\v2ray.exe" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
+<env name="PATH" value="%BASE%\bin\;%windir%\system32\"/>
+<arguments>--lite --log-file "v2raya.log" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
 <workingdirectory>%TEMP%</workingdirectory>
 <log mode="roll"></log>
 <onfailure action="restart" delay="10 sec"/>
@@ -115,7 +115,7 @@ SOFTWARE.
 ' -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml"
 Copy-Item -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml" -Destination "D:\v2raya-arm64-windows\v2rayA-service.xml"
 
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/LICENSE" -OutFile "D:\LICENSE.txt"
+Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/LICENSE' | Out-File "D:\LICENSE.txt"
 
 $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_x86_64.iss"
 $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_arm64.iss"
@@ -123,7 +123,7 @@ $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVe
 & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
 & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
 
-Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64.exe"
-Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64.exe"
-Copy-Item "./v2raya-x86_64-windows/bin/v2raya.exe" "./v2raya_windows_x64_$VERSION.exe"
-Copy-Item "./v2raya-arm64-windows/bin/v2raya.exe" "./v2raya_windows_arm64_$VERSION.exe"
+Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64_$VERSION.exe"
+Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64_$VERSION.exe"
+Copy-Item ".\v2raya-x86_64-windows\bin\v2raya.exe" ".\v2raya_windows_x64_$VERSION.exe"
+Copy-Item ".\v2raya-arm64-windows\bin\v2raya.exe" ".\v2raya_windows_arm64_$VERSION.exe"
