@@ -43,6 +43,7 @@ type V2Ray struct {
 	SNI           string `json:"sni,omitempty"`
 	Path          string `json:"path"`
 	TLS           string `json:"tls"`
+	Fingerprint   string `json:"fingerprint,omitempty"`
 	Flow          string `json:"flow,omitempty"`
 	Alpn          string `json:"alpn,omitempty"`
 	AllowInsecure bool   `json:"allowInsecure"`
@@ -56,7 +57,7 @@ func NewV2Ray(link string) (ServerObj, error) {
 	} else if strings.HasPrefix(link, "vless://") {
 		return ParseVlessURL(link)
 	}
-	return nil, InvalidParameterErr
+	return nil, ErrInvalidParameter
 }
 
 func ParseVlessURL(vless string) (data *V2Ray, err error) {
@@ -69,13 +70,14 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Add:           u.Hostname(),
 		Port:          u.Port(),
 		ID:            u.User.String(),
+		Flow:          u.Query().Get("flow"),
 		Net:           u.Query().Get("type"),
 		Type:          u.Query().Get("headerType"),
 		Host:          u.Query().Get("host"),
 		SNI:           u.Query().Get("sni"),
 		Path:          u.Query().Get("path"),
 		TLS:           u.Query().Get("security"),
-		Flow:          u.Query().Get("flow"),
+		Fingerprint:   u.Query().Get("fp"),
 		Alpn:          u.Query().Get("alpn"),
 		AllowInsecure: u.Query().Get("allowInsecure") == "true",
 		Protocol:      "vless",
@@ -119,7 +121,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		s := strings.Split(vmess[8:], "?")[0]
 		s, err = common.Base64StdDecode(s)
 		if err != nil {
-			s, err = common.Base64URLDecode(s)
+			s, _ = common.Base64URLDecode(s)
 		}
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
@@ -245,10 +247,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Port:    port,
 					Users: []coreObj.User{
 						{
-							Encryption: "none",
 							ID:         id,
-							Level:      8,
-							Security:   security,
+							Encryption: "none",
+							Flow:       v.Flow,
 						},
 					},
 				},
@@ -370,19 +371,21 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.TLSSettings.Alpn = alpn
 			}
+			// uTLS fingerprint
+			core.StreamSettings.TLSSettings.Fingerprint = v.Fingerprint
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
+			// SNI
+			if v.Host != "" {
+				core.StreamSettings.TLSSettings.ServerName = v.Host
+			}
 			if v.AllowInsecure {
 				core.StreamSettings.XTLSSettings.AllowInsecure = true
 			}
-			// SNI
-			if v.Host != "" {
-				core.StreamSettings.XTLSSettings.ServerName = v.Host
-			} else if v.Host != "" {
-				core.StreamSettings.TLSSettings.ServerName = v.Host
+			if v.Flow == "" {
+				v.Flow = "xtls-rprx-origin"
 			}
-			// Alpn
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
 				for i := range alpn {
@@ -428,12 +431,11 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "serviceName", v.Path)
 		}
 		if v.TLS != "none" {
+			setValue(&query, "flow", v.Flow)
 			setValue(&query, "sni", v.SNI)
 			setValue(&query, "alpn", v.Alpn)
 			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
-		}
-		if v.TLS == "xtls" {
-			setValue(&query, "flow", v.Flow)
+			setValue(&query, "fp", v.Fingerprint)
 		}
 
 		U := url.URL{

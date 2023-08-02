@@ -69,8 +69,6 @@ Function Build-v2rayA(){
     ${env:CGO_ENABLED} = "0"
     #Set yarn's output path
     ${env:OUTPUT_DIR} = "$CurrentPath/service/server/router/web"
-    #Fix node build error: https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-    ${env:NODE_OPTIONS} = "--openssl-legacy-provider"
     #Build Web Panel
     Set-Location -Path "$CurrentPath/gui"
     yarn; yarn build
