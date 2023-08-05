@@ -4,14 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/httpClient"
-	"github.com/v2rayA/v2rayA/common/resolv"
-	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/touch"
-	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"net"
 	"net/http"
@@ -19,6 +11,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/core/serverObj"
+	"github.com/v2rayA/v2rayA/core/touch"
+	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type SIP008 struct {
@@ -213,56 +215,70 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	css := configure.GetConnectedServers()
 	cssAfter := css.Get()
 	// serverObj.ServerObj is a pointer(interface), and shouldn't be as a key
-	link2Raw := make(map[string]*configure.ServerRaw)
+	name2Link := make(map[string]string)
 	connectedVmessInfo2CssIndex := make(map[string][]int)
 	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
 			if sRaw, err := cs.LocateServerRaw(); err != nil {
 				return err
 			} else {
+				name := sRaw.ServerObj.GetName()
 				link := sRaw.ServerObj.ExportToURL()
-				link2Raw[link] = sRaw
-				connectedVmessInfo2CssIndex[link] = append(connectedVmessInfo2CssIndex[link], i)
+				name2Link[name] = link
+				connectedVmessInfo2CssIndex[name] = append(connectedVmessInfo2CssIndex[name], i)
 			}
 		}
 	}
+	refreshConfig := false
 	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
 	for i, info := range subscriptionInfos {
 		infoServerRaw := configure.ServerRaw{
 			ServerObj: info,
 		}
-		link := infoServerRaw.ServerObj.ExportToURL()
-		if cssIndexes, ok := connectedVmessInfo2CssIndex[link]; ok {
+		name := infoServerRaw.ServerObj.GetName()
+		newLink := infoServerRaw.ServerObj.ExportToURL()
+		if cssIndexes, ok := connectedVmessInfo2CssIndex[name]; ok {
 			for _, cssIndex := range cssIndexes {
 				cssAfter[cssIndex].ID = i + 1
+				if oldServerRaw, err := cssAfter[cssIndex].LocateServerRaw(); err != nil {
+					refreshConfig = true
+					continue
+				} else {
+					oldLink := oldServerRaw.ServerObj.ExportToURL()
+					if oldLink != newLink {
+						refreshConfig = true
+					}
+				}
 			}
-			delete(connectedVmessInfo2CssIndex, link)
+			delete(connectedVmessInfo2CssIndex, name)
 		}
 		infoServerRaws[i] = infoServerRaw
 	}
-	for link, cssIndexes := range connectedVmessInfo2CssIndex {
+	for name, cssIndexes := range connectedVmessInfo2CssIndex {
 		for _, cssIndex := range cssIndexes {
-			if disconnectIfNecessary {
-				err = Disconnect(*css.Get()[cssIndex], false)
-				if err != nil {
-					reason := "failed to disconnect previous server"
-					return fmt.Errorf("UpdateSubscription: %v", reason)
-				}
-			} else {
-				// 将之前连接的节点append进去
-				// TODO: 变更ServerRaw时可能需要考虑
-				infoServerRaws = append(infoServerRaws, *link2Raw[link])
-				cssAfter[cssIndex].ID = len(infoServerRaws)
+			err = Disconnect(*css.Get()[cssIndex], false)
+			if err != nil {
+				reason := "failed to disconnect previous server"
+				return fmt.Errorf("UpdateSubscription: %v", reason)
 			}
 		}
-	}
-	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
-		return err
 	}
 	subscriptions[index].Servers = infoServerRaws
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
 	subscriptions[index].Info = status
-	return configure.SetSubscription(index, &subscriptions[index])
+	if err := configure.SetSubscription(index, &subscriptions[index]); err != nil {
+		return err
+	}
+
+	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
+		return err
+	}
+
+	if refreshConfig {
+		return v2ray.UpdateV2RayConfig()
+	} else {
+		return nil
+	}
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
