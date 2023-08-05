@@ -254,7 +254,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		}
 		infoServerRaws[i] = infoServerRaw
 	}
-	for name, cssIndexes := range connectedVmessInfo2CssIndex {
+	for _, cssIndexes := range connectedVmessInfo2CssIndex {
 		for _, cssIndex := range cssIndexes {
 			err = Disconnect(*css.Get()[cssIndex], false)
 			if err != nil {
