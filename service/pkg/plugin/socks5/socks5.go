@@ -11,16 +11,17 @@ package socks5
 
 import (
 	"fmt"
-	"github.com/v2rayA/shadowsocksR/tools/leakybuf"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
-	"github.com/v2rayA/v2rayA/pkg/plugin/socks"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/v2rayA/shadowsocksR/tools/leakybuf"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/plugin/socks"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 // Version is socks5 version number.
@@ -122,10 +123,6 @@ func (s *Socks5) Close() error {
 // Serve serves a connection.
 func (s *Socks5) Serve(c net.Conn) {
 	defer c.Close()
-
-	if c, ok := c.(*net.TCPConn); ok {
-		c.SetKeepAlive(true)
-	}
 
 	tgt, err := s.handshake(c)
 	if err != nil {

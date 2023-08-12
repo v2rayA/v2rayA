@@ -253,6 +253,7 @@ export default {
     username: "Username",
     password: "Password",
     origin: "origin",
+    pinnedCertchainSha256: "pinned certificate chain sha256"
   },
   configureSubscription: {
     title: "Configure Subscription",

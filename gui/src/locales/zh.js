@@ -251,6 +251,7 @@ export default {
     username: "用户名",
     password: "密码",
     origin: "原版",
+    pinnedCertchainSha256: "固定证书链sha256"
   },
   configureSubscription: {
     title: "订阅配置",

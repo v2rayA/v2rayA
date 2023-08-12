@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/conf"
 	url2 "net/url"
 	"strings"
 	"time"
+
+	"github.com/v2rayA/v2rayA/conf"
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -40,7 +41,7 @@ func Import(url string, which *configure.Which) (err error) {
 		return err
 	}
 	supportedPrefix := []string{"vmess://", "vless://", "ss://", "ssr://", "trojan://", "trojan-go://", "http-proxy://",
-		"https-proxy://", "socks5://", "http2://"}
+		"https-proxy://", "socks5://", "http2://", "juicity://"}
 	if PluginManagerValidateLink(url) || common.HasAnyPrefix(url, supportedPrefix) {
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
