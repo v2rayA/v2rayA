@@ -22,16 +22,16 @@ require (
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.10.2
 	github.com/tidwall/sjson v1.2.3
-	github.com/v2fly/v2ray-core/v5 v5.1.0
+	github.com/v2fly/v2ray-core/v5 v5.7.0
 	github.com/v2rayA/RoutingA v1.0.2
 	github.com/v2rayA/beego/v2 v2.0.7
 	github.com/v2rayA/shadowsocksR v1.0.4
-	github.com/v2rayA/v2ray-lib v0.0.0-20211227083129-d4f59fbf62b8
-	github.com/v2rayA/v2rayA-lib4 v0.0.0-20220912152138-f38eb344419a
+	github.com/v2rayA/v2ray-lib v0.0.0-20230812093950-85439332d5ce
+	github.com/v2rayA/v2rayA-lib4 v0.0.0-20230812094818-595f87cb2a49
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/net v0.12.0
-	golang.org/x/sys v0.10.0
+	golang.org/x/sys v0.11.0
 	google.golang.org/grpc v1.56.2
 )
 
@@ -43,6 +43,7 @@ require (
 	github.com/mzz2017/quic-go v0.0.0-20230809140948-2ea096492e36 // indirect
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/quic-go/qtls-go1-20 v0.3.1 // indirect
+	go4.org/netipx v0.0.0-20230728184502-ec4c8b891b28 // indirect
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/tools v0.11.0 // indirect
@@ -56,9 +57,9 @@ require (
 	github.com/djherbis/times v1.5.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.0 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.11.2 // indirect
 	github.com/gocarina/gocsv v0.0.0-20210408192840-02d7211d929d // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -67,7 +68,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/pires/go-proxyproto v0.6.2 // indirect
+	github.com/pires/go-proxyproto v0.7.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
@@ -77,14 +78,11 @@ require (
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	gitlab.com/yawning/chacha20.git v0.0.0-20230427033715-7877545b1b37 // indirect
-	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6 // indirect
 )
 
 // Replace dependency modules with local developing copy
@@ -92,7 +90,5 @@ require (
 //replace github.com/v2rayA/shadowsocksR => ../../shadowsocksR
 //replace github.com/mzz2017/go-engine => ../../go-engine
 //replace github.com/v2rayA/beego/v2 => D:\beego
-
-replace go4.org/unsafe/assume-no-moving-gc => go4.org/unsafe/assume-no-moving-gc v0.0.0-20230204201903-c31fa085b70e
 
 // replace github.com/daeuniverse/softwind => ../../softwind
