@@ -30,13 +30,14 @@ require (
 	github.com/v2rayA/v2rayA-lib4 v0.0.0-20230812094818-595f87cb2a49
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/net v0.12.0
+	golang.org/x/net v0.14.0
 	golang.org/x/sys v0.11.0
-	google.golang.org/grpc v1.56.2
+	google.golang.org/grpc v1.57.0
 )
 
 require (
 	github.com/eknkc/basex v1.0.1 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230705174524-200ffdc848b8 // indirect
@@ -47,6 +48,7 @@ require (
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/tools v0.11.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230706204954-ccb25ca9f130 // indirect
 )
 
 require (
@@ -59,10 +61,10 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.11.2 // indirect
+	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/gocarina/gocsv v0.0.0-20210408192840-02d7211d929d // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -78,9 +80,8 @@ require (
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	gitlab.com/yawning/chacha20.git v0.0.0-20230427033715-7877545b1b37 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
@@ -92,3 +93,4 @@ require (
 //replace github.com/v2rayA/beego/v2 => D:\beego
 
 // replace github.com/daeuniverse/softwind => ../../softwind
+replace github.com/v2fly/v2ray-core/v5 => github.com/v2rayA/v2ray-core/v5 v5.0.0-20230812170925-960565fa0686
