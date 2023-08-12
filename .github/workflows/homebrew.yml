@@ -43,7 +43,7 @@ jobs:
           new_version="${{ steps.prep.outputs.VERSION }}"
           sed -i "s|$old_version|$new_version|g" ./build.sh
           git commit ./build.sh -m "build.sh: go to build v2rayA version $new_version"
-          git push 'https://'"$GH_TOKEN"'@github.com/v2rayA/homebrew-v2raya'
+          git push 'https://'"${{ secrets.HOMEBREW_V2RAYA_TOKEN }}"'@github.com/v2rayA/homebrew-v2raya'
           cd ..
       - name: Release new brew build
         shell: bash
