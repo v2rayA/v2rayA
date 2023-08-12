@@ -53,7 +53,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: ^1.17
+        go-version: ^1.21
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
@@ -62,15 +62,13 @@ jobs:
         cache-dependency-path: gui/yarn.lock
     - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.7
+        ruby-version: 3.2
         bundler-cache: true
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
     - name: Build GUI
       run: |
-        # https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-        export NODE_OPTIONS=--openssl-legacy-provider
         yarn --cwd gui --check-files
         yarn --cwd gui build
     - name: Build v2rayA Binaries
@@ -131,43 +129,51 @@ jobs:
     - name: Install Package Dependencies
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
-        gem install fpm -v 1.13.1
+        gem install fpm -v 1.15.1
         sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
     - name: Package
       if: startsWith(github.ref, 'refs/tags/v')
       run: |
-        export FILES="install/universal/v2raya.service=/etc/systemd/system/v2raya.service install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop"
+        ./v2raya_linux_x86_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+        export FILES=(
+          install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service
+          install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service
+          install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png
+          install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop
+          install/universal/v2raya.default=/etc/default/v2raya
+        )
+
         export PARAMS="--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
         tar -zcvf web.tar.gz web/
 
         # https://www.debian.org/releases/stretch/
-        fpm -s dir -t deb -p installer_debian_i386_$VERSION.deb --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t deb -p installer_debian_ppc64le_$VERSION.deb --description "$DESC" --architecture=ppc64el $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t deb -p installer_debian_i386_$VERSION.deb --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t deb -p installer_debian_ppc64le_$VERSION.deb --description "$DESC" --architecture=ppc64el $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya ${FILES[@]}
         
         # https://fedoraproject.org/wiki/Architectures
-        fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" --architecture=x86 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t rpm -p installer_redhat_x64_$VERSION.rpm --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t rpm -p installer_redhat_armv7_$VERSION.rpm --description "$DESC" --architecture=armv7 $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t rpm -p installer_redhat_ppc64le_$VERSION.rpm --description "$DESC" --architecture=ppc64le $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" --architecture=x86 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t rpm -p installer_redhat_x64_$VERSION.rpm --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t rpm -p installer_redhat_armv7_$VERSION.rpm --description "$DESC" --architecture=armv7 $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t rpm -p installer_redhat_ppc64le_$VERSION.rpm --description "$DESC" --architecture=ppc64le $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya ${FILES[@]}
         
         # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=yay
-        fpm -s dir -t pacman -p installer_archlinux_i686_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=i686 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t pacman -p installer_archlinux_pentium4_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=pentium4 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t pacman -p installer_archlinux_x86_64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t pacman -p installer_archlinux_armv6h_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armv6h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t pacman -p installer_archlinux_armv7h_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=armv7h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zstd --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        fpm -s dir -t pacman -p installer_archlinux_i686_$VERSION.pkg.tar.zst --description "$DESC" --architecture=i686 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_pentium4_$VERSION.pkg.tar.zst --description "$DESC" --architecture=pentium4 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_x86_64_$VERSION.pkg.tar.zst --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_armv6h_$VERSION.pkg.tar.zst --description "$DESC" --architecture=armv6h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_armv7h_$VERSION.pkg.tar.zst --description "$DESC" --architecture=armv7h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zst --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
         
         # https://www.freebsd.org/platforms/
-        # fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya $FILES
-        # fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $PARAMS --description "$DESC" --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya $FILES
-        # fpm -s dir -t freebsd -p installer_freebsd_armv6_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv6 v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        # fpm -s dir -t freebsd -p installer_freebsd_armv7_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv7 v2raya_linux_arm_$VERSION=/usr/bin/v2raya $FILES
-        # fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya $FILES
+        # fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        # fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $PARAMS --description "$DESC" --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        # fpm -s dir -t freebsd -p installer_freebsd_armv6_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv6 v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        # fpm -s dir -t freebsd -p installer_freebsd_armv7_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv7 v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
+        # fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
 
         # MacOSX
         # macOS users should go to https://github.com/v2rayA/homebrew-v2raya
@@ -319,12 +325,12 @@ jobs:
           installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm
           installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
-          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd
+          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
           installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
           installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
           installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
@@ -335,12 +341,12 @@ jobs:
           installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
           installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
           installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
-          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zstd.sha256.txt
+          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
+          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
     - name: Refresh Cloudflare Cache
       if: startsWith(github.ref, 'refs/tags/v')
       env:

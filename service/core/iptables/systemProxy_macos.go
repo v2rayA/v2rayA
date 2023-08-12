@@ -46,8 +46,8 @@ func (p *systemProxy) GetSetupCommands() Setter {
 	for _, service := range networkServices {
 		commands += fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v on\n", strconv.Quote(service))
 		commands += fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v on\n", strconv.Quote(service))
-		commands += fmt.Sprintf("/usr/sbin/networksetup -setwebproxy %v 127.0.0.1 32345\n", strconv.Quote(service))
-		commands += fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxy %v 127.0.0.1 32345\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setwebproxy %v 127.0.0.1 52345\n", strconv.Quote(service))
+		commands += fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxy %v 127.0.0.1 52345\n", strconv.Quote(service))
 	}
 	return Setter{
 		Cmds: commands,

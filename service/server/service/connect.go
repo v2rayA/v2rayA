@@ -1,22 +1,34 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/service"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
+
+var V2OnlyFeatureError = fmt.Errorf("v2fly/v2ray-core only feature")
 
 func StopV2ray() (err error) {
 	v2ray.ProcessManager.Stop(true)
 	return nil
 }
 func StartV2ray() (err error) {
-	if err = checkSupport(); err != nil {
+	if err = checkSupport(nil); err != nil {
 		return err
+	}
+	//configure the ip forward
+	setting := GetSetting()
+	if setting.IpForward != ipforward.IsIpForwardOn() {
+		e := ipforward.WriteIpForward(setting.IpForward)
+		if e != nil {
+			log.Warn("Connect: %v", e)
+		}
 	}
 	if css := configure.GetConnectedServers(); css.Len() == 0 {
 		return fmt.Errorf("failed: no server is selected. please select at least one server")
@@ -56,7 +68,7 @@ func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 
 func checkAssetsExist(setting *configure.Setting) error {
 	if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
-		return fmt.Errorf("geoip.dat or geosite.dat file does not exists. Try updating GFWList please")
+		return fmt.Errorf("geoip.dat or geosite.dat file does not exists")
 	}
 	if setting.RulePortMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
 		if !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
@@ -66,13 +78,23 @@ func checkAssetsExist(setting *configure.Setting) error {
 	return nil
 }
 
-func checkSupport() (err error) {
+func checkSupport(toAppend []*configure.Which) (err error) {
 	setting := GetSetting()
 	if err = checkAssetsExist(setting); err != nil {
 		return err
 	}
-	if err = service.CheckV5(); err != nil {
-		return fmt.Errorf("current version of v2rayA only support v2ray-core v5: %v", err)
+	variant, err := service.CheckV5()
+	if err != nil {
+		return err
+	}
+	if variant != where.V2ray {
+		outbound2cnt := map[string]int{}
+		for _, wt := range append(toAppend, configure.GetConnectedServers().Get()...) {
+			outbound2cnt[wt.Outbound]++
+			if outbound2cnt[wt.Outbound] > 1 {
+				return V2OnlyFeatureError
+			}
+		}
 	}
 	return nil
 }
@@ -85,12 +107,17 @@ func Connect(which *configure.Which) (err error) {
 			err = fmt.Errorf("failed to connect: %w", err)
 		}
 	}()
-	setting := GetSetting()
-	if err = checkSupport(); err != nil {
-		return err
-	}
 	if which == nil {
 		return fmt.Errorf("which can not be nil")
+	}
+	setting := GetSetting()
+	if err = checkSupport([]*configure.Which{which}); err != nil {
+		if !errors.Is(err, V2OnlyFeatureError) {
+			return err
+		}
+		if err = configure.ClearConnects(which.Outbound); err != nil {
+			return err
+		}
 	}
 	//configure the ip forward
 	if setting.IpForward != ipforward.IsIpForwardOn() {

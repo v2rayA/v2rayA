@@ -9,6 +9,7 @@ import (
 	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/antiPollution"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
@@ -290,7 +291,7 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 			break
 		case configure.AntipollutionDnsForward:
 			if firstUDPSupportedOutboundTag != "" {
-				external = []string{"8.8.8.8 -> " + firstUDPSupportedOutboundTag, "1.1.1.1 -> " + firstUDPSupportedOutboundTag}
+				external = antiPollution.GetExternalDNS(firstUDPSupportedOutboundTag)
 			} else {
 				external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
 			}
@@ -451,7 +452,7 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 			)
 		}
 	} else {
-		if IsTransparentOn() {
+		if IsTransparentOn(setting) {
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
@@ -1040,13 +1041,13 @@ func (t *Template) setInbound() error {
 			t.Inbounds = append(t.Inbounds[:i], t.Inbounds[i+1:]...)
 		}
 	}
-	if IsTransparentOn() {
+	if IsTransparentOn(t.Setting) {
 		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
-			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 32345, "transparent")
+			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 52345, "transparent")
 		case configure.TransparentSystemProxy:
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
-				Port:     32345,
+				Port:     52345,
 				Protocol: "http",
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
@@ -1556,7 +1557,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 		return nil, err
 	}
 	//transparent routing
-	if IsTransparentOn() {
+	if IsTransparentOn(setting) {
 		if err = t.setTransparentRouting(); err != nil {
 			return nil, err
 		}
@@ -1586,7 +1587,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.updatePrivateRouting()
 
 	// add spare tire outbound routing. Fix: https://github.com/v2rayA/v2rayA/issues/447
-	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{Type: "field", Network: "tcp,udp", OutboundTag: "proxy"})
+	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{Type: "field", Port: "0-65535", OutboundTag: "proxy"})
 
 	// Set group routing. This should be put in the end of routing setters.
 	t.setGroupRouting()
@@ -1745,7 +1746,7 @@ func NewEmptyTemplate(setting *configure.Setting) (t *Template) {
 }
 
 func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
-	if !IsTransparentOn() {
+	if !IsTransparentOn(t.Setting) {
 		return
 	}
 	if o.StreamSettings == nil {

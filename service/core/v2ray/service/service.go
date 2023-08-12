@@ -2,13 +2,17 @@ package service
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"os/exec"
 	"strings"
 )
+
+var LowVersionError = fmt.Errorf("core version too low")
 
 func IsV2rayServiceValid() bool {
 	if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
@@ -24,7 +28,7 @@ func IfTProxyModLoaded() bool {
 }
 
 func CheckAndProbeTProxy() (err error) {
-	if !IfTProxyModLoaded() && !common.IsDocker() { //docker下无法判断
+	if !IfTProxyModLoaded() && !common.IsDocker() && !iptables.IsNft() { //docker下无法判断，nft不需要
 		var out []byte
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
@@ -38,25 +42,24 @@ func CheckAndProbeTProxy() (err error) {
 	return
 }
 
-func isVersionSatisfied(version string, mustV2rayCore bool) error {
+func isVersionSatisfied(version string) (where.Variant, error) {
 	variant, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
-		return fmt.Errorf("failed to get the version of v2ray-core")
-	}
-	if variant != where.V2ray {
-		if mustV2rayCore {
-			return fmt.Errorf("v2fly/v2ray-core only feature")
-		} else {
-			// do not check the version for non-v2ray core
-			return nil
-		}
+		return where.Unknown, fmt.Errorf("failed to get the version of v2ray-core: %v", err)
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
-		return fmt.Errorf("the version of v2ray-core is lower than %v", version)
+		return variant, fmt.Errorf("%w: the version %v is lower than %v", LowVersionError, ver, version)
 	}
-	return nil
+	return variant, nil
 }
 
-func CheckV5() (err error) {
-	return isVersionSatisfied("5.0.0", true)
+func CheckV5() (variant where.Variant, err error) {
+	variant, err = isVersionSatisfied("5.0.0")
+	if err != nil {
+		if errors.Is(err, LowVersionError) && variant != where.V2ray {
+			return variant, nil
+		}
+		return variant, err
+	}
+	return variant, nil
 }

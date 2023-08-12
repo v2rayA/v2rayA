@@ -1,25 +1,22 @@
 module.exports = {
-    root: true,
+  root: true,
 
-    env: {
-        node: true
-    },
+  env: {
+    node: true,
+  },
 
-    rules: {
-        'no-console': 'off',
-        'no-debugger': 'off'
-    },
+  rules: {
+    "no-console": "off",
+    "no-debugger": "off",
+  },
 
-    parserOptions: {
-        parser: '@babel/eslint-parser'
-    },
+  parserOptions: {
+    parser: "@babel/eslint-parser",
+  },
 
-    'extends': [
-        'plugin:vue/recommended',
-        '@vue/prettier'
-    ],
+  extends: ["plugin:vue/recommended", "@vue/prettier"],
 
-    globals:{
-        apiRoot:true
-    }
+  globals: {
+    apiRoot: true,
+  },
 };

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/v2rayA/v2rayA/conf/report"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/juicity"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/simpleobfs"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/socks5"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ss"
@@ -12,7 +15,6 @@ import (
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/trojanc"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ws"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"runtime"
 )
 
 func main() {

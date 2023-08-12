@@ -3,11 +3,12 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/v2rayA/v2rayA/common"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/common"
 )
 
 func init() {
@@ -102,7 +103,7 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 		info, ok = parse(content)
 	}
 	if !ok {
-		err = fmt.Errorf("%w: unrecognized ssr address", InvalidParameterErr)
+		err = fmt.Errorf("%w: unrecognized ssr address", ErrInvalidParameter)
 		return
 	}
 	return &info, nil

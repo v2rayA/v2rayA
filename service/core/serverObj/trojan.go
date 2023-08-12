@@ -2,12 +2,13 @@ package serverObj
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/coreObj"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
@@ -56,7 +57,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 	}
 	port, err := strconv.Atoi(t.Port())
 	if err != nil {
-		return nil, InvalidParameterErr
+		return nil, ErrInvalidParameter
 	}
 	data = &Trojan{
 		Name:          t.Fragment,

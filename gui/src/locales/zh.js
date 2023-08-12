@@ -17,7 +17,7 @@ export default {
     none: "无",
     optional: "可选",
     loadBalance: "负载均衡",
-    log: "日志"
+    log: "日志",
   },
   welcome: {
     title: "初来乍到，请多关照",
@@ -26,12 +26,12 @@ export default {
     newVersion: "检测到新版本: {version}",
     messages: [
       "我们发现你还没有创建或导入任何节点、订阅。",
-      "我们支持以节点地址或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！"
-    ]
+      "我们支持以节点地址或者订阅地址的方式导入，也支持手动创建节点，快来试试吧！",
+    ],
   },
   v2ray: {
     start: "启动",
-    stop: "关闭"
+    stop: "关闭",
   },
   server: {
     name: "节点名",
@@ -44,21 +44,21 @@ export default {
       notAllowInsecure:
         "根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure",
       notRecommend:
-        "根据 {name} 的官方文档，如果你使用 {name}，不推荐开启 AllowInsecure"
-    }
+        "根据 {name} 的官方文档，如果你使用 {name}，不推荐开启 AllowInsecure",
+    },
   },
   InSecureConfirm: {
     title: "检测到不安全的配置",
     message:
       "即将保存的配置中<b>AllowInsecure</b>被设置为true，除非你知道你在做什么，否则贸然开启可能导致数据泄漏！是否继续？",
     confirm: "我知道我在做什么",
-    cancel: "取消"
+    cancel: "取消",
   },
   subscription: {
     host: "域名",
     remarks: "别名",
     timeLastUpdate: "上次更新时间",
-    numberServers: "节点数"
+    numberServers: "节点数",
   },
   operations: {
     name: "操作",
@@ -86,20 +86,20 @@ export default {
     yes: "是",
     no: "否",
     switchSite: "切换至备用站点",
-    addOutbound: "新增一个出站 (outbound)"
+    addOutbound: "新增一个出站 (outbound)",
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
     messages: [
       "请记住您创建的管理员账号，用于登录该管理页面。",
       "账号信息位于本地，我们不会上传任何信息到服务器。",
-      "如不慎忘记密码，使用 v2raya --reset-password 重置。"
-    ]
+      "如不慎忘记密码，使用 v2raya --reset-password 重置。",
+    ],
   },
   login: {
     title: "登录",
     username: "用户名",
-    password: "密码"
+    password: "密码",
   },
   setting: {
     transparentProxy: "透明代理/系统代理",
@@ -135,7 +135,7 @@ export default {
       dependTransparentMode: "跟随透明代理/系统代理",
       closed: "关闭",
       advanced: "自定义高级设置",
-      leastPing: "最小时延优先"
+      leastPing: "最小时延优先",
     },
     messages: {
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
@@ -152,8 +152,7 @@ export default {
         "★supervisor：监控dns污染，提前拦截，利用v2ray-core的sniffing解决污染。★fakedns：使用fakedns策略加速解析。",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。若系统不支持可能会导致无法正常连接。",
-      mux:
-        "复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。",
+      mux: "复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。",
       confirmEgressPorts: `<p>您正在对不同子网下的机器设置透明代理，请确认不走代理的出方向端口。</p>
                           <p>当前设置的端口白名单为：</p>
                           <p>TCP: {tcpPorts}</p>
@@ -162,8 +161,8 @@ export default {
       ssPluginImpl:
         "★默认：使用 simple-obfs 时为等效传输层，v2ray-plugin 时为链式。" +
         "★链式：shadowsocks 流量会被转发至独立的插件。" +
-        "★等效传输层：直接由 v2ray/xray 核心的传输层处理。"
-    }
+        "★等效传输层：直接由 v2ray/xray 核心的传输层处理。",
+    },
   },
   customAddressPort: {
     title: "地址与端口",
@@ -178,8 +177,8 @@ export default {
       "如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
       "docker模式下如果未使用<code>--privileged --network host</code>参数启动容器，可通过修改端口映射修改socks5、http端口。",
       "docker模式下不能正确判断端口占用，请确保输入的端口未被其他程序占用。",
-      "如将端口设为0则表示关闭该端口。"
-    ]
+      "如将端口设为0则表示关闭该端口。",
+    ],
   },
   customRouting: {
     title: "自定义路由规则",
@@ -197,8 +196,8 @@ export default {
       1: '制作SiteDat文件：<a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
       2: "在选择Tags时，可按Ctrl等多选键进行多选。",
       noSiteDatFileFound: "未在{V2RayLocationAsset}中发现siteDat文件",
-      emptyRuleNotPermitted: "不能存在tags为空的规则，请检查"
-    }
+      emptyRuleNotPermitted: "不能存在tags为空的规则，请检查",
+    },
   },
   doh: {
     title: "配置DoH服务器",
@@ -210,8 +209,8 @@ export default {
       "美国有cloudflare: 1.0.0.1等",
       '清单：<a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>',
       '另外，您可以在自己的国内服务器上自架DoH服务，以纵享丝滑 <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>。在这种情况下，建议同时运行服务端(doh-proxy/doh-httpproxy, 提供对外服务)和客户端(doh-stub, 连接至doh.opendns.com)并将他们串联，因为通常情况下在普遍受到污染的地区找到一个完全不受污染的服务器是很困难的。',
-      "建议上述列表1-2行即可，留空保存可恢复默认"
-    ]
+      "建议上述列表1-2行即可，留空保存可恢复默认",
+    ],
   },
   dns: {
     title: "配置DNS服务器",
@@ -219,8 +218,8 @@ export default {
     externalQueryServers: "国外域名查询服务器",
     messages: [
       "“@:(dns.internalQueryServers)” 用于查询国内域名，而 “@:(dns.externalQueryServers)” 用于查询国外域名。",
-      "如果将 “@:(dns.externalQueryServers)” 留空，“@:(dns.internalQueryServers)” 将会负责查询所有域名。"
-    ]
+      "如果将 “@:(dns.externalQueryServers)” 留空，“@:(dns.internalQueryServers)” 将会负责查询所有域名。",
+    ],
   },
   egressPortWhitelist: {
     title: "出方向端口白名单",
@@ -231,8 +230,8 @@ export default {
       "透明代理会使得所有TCP、UDP流量走代理，通过走代理的流量其源IP地址会被替换为代理服务器B的IP地址，那么如果有客户向你的服务器A发出请求，他却将得到从你代理服务器B发出的回答，该回答在客户看来无疑是不合法的，从而导致连接被拒绝。",
       "因此，需要将服务器提供的对外服务端口包含在白名单中，使其不走代理。如ssh(22)、v2raya({v2rayaPort})。",
       "如不对外提供服务或仅对局域网内主机提供服务，则可不设置白名单。",
-      "格式：22表示端口22，20170:20172表示20170到20172三个端口。"
-    ]
+      "格式：22表示端口22，20170:20172表示20170到20172三个端口。",
+    ],
   },
   configureServer: {
     title: "配置节点 | 节点",
@@ -251,28 +250,30 @@ export default {
     seedObfuscation: "混淆种子",
     username: "用户名",
     password: "密码",
-    origin: "原版"
+    origin: "原版",
+    pinnedCertchainSha256: "固定证书链sha256"
   },
   configureSubscription: {
-    title: "订阅配置"
+    title: "订阅配置",
   },
   import: {
     message: "填入节点链接或订阅地址：",
     batchMessage: "一行一个节点链接:",
-    qrcodeError: "找不到有效的二维码，请重新尝试"
+    qrcodeError: "找不到有效的二维码，请重新尝试",
   },
   delete: {
     title: "确认删除",
-    message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。"
+    message: "确定要<b>删除</b>这些节点/订阅吗？注意，该操作是不可逆的。",
   },
   latency: {
-    message: "时延测试往往需要花费较长时间，请耐心等待"
+    message: "时延测试往往需要花费较长时间，请耐心等待",
   },
   version: {
     higherVersionNeeded: "该操作需要 v2rayA 的版本高于{version}",
-    v2rayInvalid: "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查",
+    v2rayInvalid:
+      "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查",
     v2rayNotV5:
-      "检测到 v2ray-core 的版本并非 v5，请使用 v5 版本或将 v2rayA 降级至 v1.5"
+      "检测到 v2ray-core 的版本并非 v5，请使用 v5 版本或将 v2rayA 降级至 v1.5",
   },
   about: `<p>v2rayA 是 V2Ray 的一个 Web 客户端。</p>
           <p class="about-small">默认端口：</p>
@@ -290,34 +291,35 @@ export default {
       noBackendFound: "未在 {url} 检测到v2rayA服务端，请确定v2rayA正常运行",
       cannotCommunicate: [
         "无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。",
-        "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。"
-      ]
+        "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。",
+      ],
     },
     urls: {
-      usage: "https://v2raya.org/"
-    }
+      usage: "https://v2raya.org/",
+    },
   },
   routingA: {
-    messages: ["点击“查看帮助”按钮以获取帮助"]
+    messages: ["点击“查看帮助”按钮以获取帮助"],
   },
   outbound: {
     addMessage: "请输入你想要添加的出站(outbound)名称：",
     deleteMessage:
-      '确定要<b>删除</b>出站 "{outboundName}" 吗？注意，该操作是不可逆的。'
+      '确定要<b>删除</b>出站 "{outboundName}" 吗？注意，该操作是不可逆的。',
   },
   driver: {
     welcome: [
       "首先导入节点服务器",
-      "初次使用，还没有任何节点服务器，在这里导入或创建节点服务器。"
+      "初次使用，还没有任何节点服务器，在这里导入或创建节点服务器。",
     ],
     tabs: [
       "订阅与节点服务器",
-      "导入订阅、节点服务器后，在这里切换和管理你的订阅、普通节点以及订阅节点。"
-    ]
+      "导入订阅、节点服务器后，在这里切换和管理你的订阅、普通节点以及订阅节点。",
+    ],
   },
   log: {
     logModalTitle: "查看日志",
     refreshInterval: "刷新间隔",
-    seconds: "秒"
-  }
+    seconds: "秒",
+    autoScoll: "自动滚动",
+  },
 };

@@ -3,12 +3,13 @@ package serverObj
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/coreObj"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
@@ -101,7 +102,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		v, ok = parse(t)
 	}
 	if !ok {
-		return nil, fmt.Errorf("%w: unrecognized ss address", InvalidParameterErr)
+		return nil, fmt.Errorf("%w: unrecognized ss address", ErrInvalidParameter)
 	}
 	return v, nil
 }
@@ -234,8 +235,8 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 				Type: "http",
 				Request: coreObj.HTTPRequest{
 					Version: "1.1",
-					Method: "GET",
-					Path: strings.Split(path, ","),
+					Method:  "GET",
+					Path:    strings.Split(path, ","),
 					Headers: coreObj.HTTPReqHeader{
 						Host: strings.Split(host, ","),
 						UserAgent: []string{
@@ -243,19 +244,19 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 							"Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.46",
 						},
 						AcceptEncoding: []string{"gzip, deflate"},
-						Connection: []string{"keep-alive"},
-						Pragma: "no-cache",
+						Connection:     []string{"keep-alive"},
+						Pragma:         "no-cache",
 					},
 				},
 				Response: coreObj.HTTPResponse{
 					Version: "1.1",
-					Status: "200",
-					Reason: "OK",
-					Headers: coreObj.HTTPRespHeader {
-						ContentType: []string{"application/octet-stream", "video/mpeg"},
+					Status:  "200",
+					Reason:  "OK",
+					Headers: coreObj.HTTPRespHeader{
+						ContentType:      []string{"application/octet-stream", "video/mpeg"},
 						TransferEncoding: []string{"chunked"},
-						Connection: []string{"keep-alive"},
-						Pragma: "no-cache",
+						Connection:       []string{"keep-alive"},
+						Pragma:           "no-cache",
 					},
 				},
 			},
@@ -289,7 +290,7 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 			v2StreamSettings.TLSSettings.ServerName = host
 		}
 		v2Mux = &coreObj.Mux{
-			Enabled: true,
+			Enabled:     true,
 			Concurrency: 1,
 		}
 		switch s.Plugin.Opts.Obfs {
@@ -318,9 +319,9 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 				Servers: []coreObj.Server{v2rayServer},
 			},
 			StreamSettings: v2StreamSettings,
-			Mux: v2Mux,
+			Mux:            v2Mux,
 		},
-		UDPSupport:     udpSupport,
+		UDPSupport: udpSupport,
 	}, nil
 }
 

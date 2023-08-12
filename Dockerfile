@@ -10,7 +10,7 @@ WORKDIR /build/gui
 RUN echo "network-timeout 600000" >> .yarnrc
 #RUN yarn config set registry https://registry.npm.taobao.org
 #RUN yarn config set sass_binary_site https://cdn.npm.taobao.org/dist/node-sass -g
-RUN export NODE_OPTIONS=--openssl-legacy-provider && yarn cache clean && yarn && yarn build
+RUN yarn cache clean && yarn && yarn build
 
 FROM golang:alpine AS builder
 ADD service /build/service

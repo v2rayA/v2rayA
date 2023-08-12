@@ -6,7 +6,7 @@ import {
   Modal,
   SnackbarProgrammatic,
   ToastProgrammatic,
-  ModalProgrammatic
+  ModalProgrammatic,
 } from "buefy";
 import ModalLogin from "@/components/modalLogin";
 import { parseURL } from "@/assets/js/utils";
@@ -20,20 +20,20 @@ Vue.prototype.$axios = axios;
 axios.defaults.timeout = 60 * 1000; // timeout: 60秒
 
 axios.interceptors.request.use(
-  config => {
+  (config) => {
     if (localStorage.hasOwnProperty("token")) {
       config.headers.Authorization = `${localStorage["token"]}`;
       config.headers["X-V2raya-Request-Id"] = nanoid();
     }
     return config;
   },
-  err => {
+  (err) => {
     console.log("!", err.name, err.message);
     ToastProgrammatic.open({
       message: err.message,
       type: "is-warning",
       position: "is-top",
-      duration: 5000
+      duration: 5000,
     });
     return Promise.reject(err);
   }
@@ -58,9 +58,9 @@ function informNotRunning(url = localStorage["backendAddress"]) {
       ModalProgrammatic.open({
         component: modalCustomPorts,
         hasModalCard: true,
-        customClass: "modal-custom-ports"
+        customClass: "modal-custom-ports",
       });
-    }
+    },
   });
   SnackbarProgrammatic.open({
     message: i18n.t("axios.messages.noBackendFound", { url }),
@@ -71,15 +71,15 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     actionText: i18n.t("operations.helpManual"),
     onAction: () => {
       window.open(i18n.t("axios.urls.usage"), "_blank");
-    }
+    },
   });
 }
 
 axios.interceptors.response.use(
-  function(res) {
+  function (res) {
     return res;
   },
-  function(err) {
+  function (err) {
     console.log("!!", err.name, err.message);
     console.log(Object.assign({}, err));
     if (err.code === "ECONNABORTED" && err.isAxiosError) {
@@ -95,7 +95,7 @@ axios.interceptors.response.use(
       new Vue({
         components: { Modal, ModalLogin },
         data: () => ({
-          show: true
+          show: true,
         }),
         render() {
           let first =
@@ -122,7 +122,7 @@ axios.interceptors.response.use(
               />
             </b-modal>
           );
-        }
+        },
       }).$mount("#login");
     } else if (
       location.protocol.substr(0, 5) === "https" &&
@@ -149,7 +149,7 @@ axios.interceptors.response.use(
         actionText: i18n.t("operations.switchSite"),
         onAction: () => {
           window.open("http://v.v2raya.org", "_self");
-        }
+        },
       });
       SnackbarProgrammatic.open({
         message: i18n.t("axios.messages.optimizeBackend"),
@@ -163,9 +163,9 @@ axios.interceptors.response.use(
           ModalProgrammatic.open({
             component: modalCustomPorts,
             hasModalCard: true,
-            customClass: "modal-custom-ports"
+            customClass: "modal-custom-ports",
           });
-        }
+        },
       });
     } else if (
       (err.message && err.message === "Network Error") ||
@@ -188,7 +188,7 @@ axios.interceptors.response.use(
         type: "is-warning",
         position: "is-top",
         queue: false,
-        duration: 5000
+        duration: 5000,
       });
     }
     return Promise.reject(err);

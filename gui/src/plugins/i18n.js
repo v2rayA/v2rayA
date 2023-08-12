@@ -24,7 +24,7 @@ if (_lang) {
 const i18n = new VueI18n({
   locale,
   messages,
-  fallbackLocale: "en"
+  fallbackLocale: "en",
 });
 
 export default i18n;

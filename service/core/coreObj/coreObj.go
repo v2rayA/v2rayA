@@ -93,6 +93,7 @@ type User struct {
 	Encryption string `json:"encryption,omitempty"`
 	Flow       string `json:"flow,omitempty"`
 	Security   string `json:"security,omitempty"`
+	Level      int    `json:"level,omitempty"`
 }
 type Vnext struct {
 	Address string `json:"address"`
@@ -124,6 +125,7 @@ type TLSSettings struct {
 	Alpn                             []string      `json:"alpn,omitempty"`
 	PinnedPeerCertificateChainSha256 string        `json:"pinnedPeerCertificateChainSha256,omitempty"`
 	Certificates                     []Certificate `json:"certificates,omitempty"`
+	Fingerprint                      string        `json:"fingerprint,omitempty"`
 }
 type Certificate struct {
 	CertificateFile string `json:"certificateFile"`
@@ -137,16 +139,25 @@ type WsSettings struct {
 	Headers Headers `json:"headers"`
 }
 type StreamSettings struct {
-	Network      string        `json:"network,omitempty"`
-	Security     string        `json:"security,omitempty"`
-	TLSSettings  *TLSSettings  `json:"tlsSettings,omitempty"`
-	XTLSSettings *TLSSettings  `json:"xtlsSettings,omitempty"`
-	TCPSettings  *TCPSettings  `json:"tcpSettings,omitempty"`
-	KcpSettings  *KcpSettings  `json:"kcpSettings,omitempty"`
-	WsSettings   *WsSettings   `json:"wsSettings,omitempty"`
-	HTTPSettings *HttpSettings `json:"httpSettings,omitempty"`
-	GrpcSettings *GrpcSettings `json:"grpcSettings,omitempty"`
-	Sockopt      *Sockopt      `json:"sockopt,omitempty"`
+	Network         string           `json:"network,omitempty"`
+	Security        string           `json:"security,omitempty"`
+	TLSSettings     *TLSSettings     `json:"tlsSettings,omitempty"`
+	XTLSSettings    *TLSSettings     `json:"xtlsSettings,omitempty"`
+	RealitySettings *RealitySettings `json:"realitySettings,omitempty"`
+	TCPSettings     *TCPSettings     `json:"tcpSettings,omitempty"`
+	KcpSettings     *KcpSettings     `json:"kcpSettings,omitempty"`
+	WsSettings      *WsSettings      `json:"wsSettings,omitempty"`
+	HTTPSettings    *HttpSettings    `json:"httpSettings,omitempty"`
+	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
+	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
+}
+type RealitySettings struct {
+	ServerName  string `json:"serverName,omitempty"`
+	Fingerprint string `json:"fingerprint,omitempty"`
+	Show        bool   `json:"show,omitempty"`
+	PublicKey   string `json:"publicKey,omitempty"`
+	ShortID     string `json:"shortId,omitempty"`
+	SpiderX     string `json:"spiderX,omitempty"`
 }
 type GrpcSettings struct {
 	ServiceName string `json:"serviceName"`
