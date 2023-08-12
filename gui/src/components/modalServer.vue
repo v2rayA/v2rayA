@@ -417,7 +417,8 @@
             <b-input v-model="juicity.sni" placeholder="SNI" expanded />
           </b-field>
           <b-field label="Pinned Cert Chain Sha256" label-position="on-border">
-            <b-input v-model="juicity.pinnedCertchainSha256" :placeholder="$t('configureServer.password')" expanded />
+            <b-input v-model="juicity.pinnedCertchainSha256" :placeholder="$t('configureServer.pinnedCertchainSha256')"
+              expanded />
           </b-field>
         </b-tab-item>
 
@@ -572,7 +573,8 @@ export default {
       uuid: "",
       password: "",
       pinnedCertchainSha256: "",
-      allowInsecure: false
+      allowInsecure: false,
+      protocol: "juicity"
     },
     http: {
       username: "",
@@ -900,9 +902,9 @@ export default {
           // https://github.com/XTLS/Xray-core/discussions/716
           query = {
             type: srcObj.net,
-            flow: srcObj.flow,
+            flow: srcObj.flow || "",
             security: srcObj.tls,
-            fp: srcObj.fp,
+            fp: srcObj.fp || "",
             path: srcObj.path,
             host: srcObj.host,
             headerType: srcObj.type,
@@ -1124,10 +1126,13 @@ export default {
         if (this.tabChoice === 3 && !k.startsWith("trojan_")) {
           continue;
         }
-        if (this.tabChoice === 4 && !k.startsWith("http_")) {
+        if (this.tabChoice === 4 && !k.startsWith("juicity_")) {
           continue;
         }
-        if (this.tabChoice === 5 && !k.startsWith("socks5_")) {
+        if (this.tabChoice === 5 && !k.startsWith("http_")) {
+          continue;
+        }
+        if (this.tabChoice === 6 && !k.startsWith("socks5_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1175,8 +1180,10 @@ export default {
       } else if (this.tabChoice === 3) {
         coded = this.generateURL(this.trojan);
       } else if (this.tabChoice === 4) {
-        coded = this.generateURL(this.http);
+        coded = this.generateURL(this.juicity);
       } else if (this.tabChoice === 5) {
+        coded = this.generateURL(this.http);
+      } else if (this.tabChoice === 6) {
         coded = this.generateURL(this.socks5);
       }
       this.$emit("submit", coded);
