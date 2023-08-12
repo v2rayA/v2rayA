@@ -8,7 +8,7 @@ require (
 	github.com/devfeel/mapper v0.7.5
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.7
 	github.com/golang/protobuf v1.5.3
 	github.com/google/gopacket v1.1.19
 	github.com/gorilla/websocket v1.5.0
