@@ -3,10 +3,11 @@ package vmessInfo
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/json-iterator/go"
 	"net"
 	"net/url"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Deprecated: use serverObj instead.
@@ -157,6 +158,25 @@ func (v *VmessInfo) ExportToURL() string {
 			Fragment: v.Ps,
 		}
 		return u.String()
+	case "juicity":
+		// https://github.com/juicity/juicity
+		var query = make(url.Values)
+		setValue(&query, "type", v.Net)
+		setValue(&query, "security", v.TLS)
+		setValue(&query, "congestion_control", v.Net)
+		setValue(&query, "sni", v.SNI)
+		setValue(&query, "pinned_certchain_sha256", v.Path)
+		if v.AllowInsecure {
+			query.Set("allow_insecure", "1")
+		}
+		U := url.URL{
+			Scheme:   "juicity",
+			User:     url.User(v.ID),
+			Host:     net.JoinHostPort(v.Add, v.Port),
+			RawQuery: query.Encode(),
+			Fragment: v.Ps,
+		}
+		return U.String()
 	}
 	return ""
 }
