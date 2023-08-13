@@ -124,7 +124,15 @@ jobs:
       with:
         name: web
         path: service/server/router/web
-
+    
+    - name: Get Friendly File Name
+      shell: pwsh
+      id: get_filename
+      run: |
+        $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
+        echo "BUILD_NAME=$build_name" >> $GITHUB_OUTPUT
+        echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
+  
     - name: Check Version
       id: prep
       env:
@@ -170,12 +178,13 @@ jobs:
         cd service
         go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../v2raya_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF"
         cd ..
+        mv v2raya_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          v2raya_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
+          v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
   
   Build_Windows_Installers:
 
@@ -210,7 +219,7 @@ jobs:
     - name: Download Artifact Windows x64
       uses: actions/download-artifact@v3
       with:
-        name: v2raya_windows_amd64_${{ steps.prep.outputs.VERSION }}.exe
+        name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
 
     - name: Download Artifact Windows arm64
@@ -232,7 +241,7 @@ jobs:
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         Copy-Item D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item D:\Downloads\v2raya_windows_amd64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
         pwsh -c ./install/windows-inno/build-helper.ps1
         mv D:\installer_windows_inno_x64.exe installer_windows_inno_amd64_${{ steps.prep.outputs.VERSION }}.exe
         mv D:\installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
@@ -241,7 +250,7 @@ jobs:
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          installer_windows_inno_amd64_${{ steps.prep.outputs.VERSION }}.exe
+          installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
           installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
   Build_Linux_Packages:
@@ -273,6 +282,14 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
+
+    - name: Get Friendly File Name
+      shell: pwsh
+      id: get_filename
+      run: |
+        $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
+        echo "BUILD_NAME=$build_name" >> $GITHUB_OUTPUT
+        echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
     
     - name: Check Version
       id: prep
@@ -299,13 +316,13 @@ jobs:
     - name: Download Artifact
       uses: actions/download-artifact@v3
       with:
-        name: v2raya_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}
+        name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
         path: build/
 
     - name: Download x64 Linux Build
       uses: actions/download-artifact@v3
       with:
-        name: v2raya_linux_amd64_${{ steps.prep.outputs.VERSION }}
+        name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: test/
 
     - name: Show Artifacts
@@ -356,17 +373,17 @@ jobs:
             ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
             ./install/universal/v2raya.default=/etc/default/v2raya
         done
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}.rpm
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}.deb
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_archlinux_$${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_redhat_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.rpm
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_debian_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.deb
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          installer_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}.deb
+          installer_archlinux_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_redhat_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_debian_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.deb
 
   GitHub_Release:
     
@@ -574,13 +591,13 @@ jobs:
     - name: Download Artifacts Linux x64
       uses: actions/download-artifact@v3
       with:
-        name: v2raya_linux_amd64_${{ steps.prep.outputs.VERSION }}
+        name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
 
     - name: Download Artifacts macOS x64
       uses: actions/download-artifact@v3
       with:
-        name: v2raya_darwin_amd64_${{ steps.prep.outputs.VERSION }}
+        name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
 
     - name: Download Artifacts macOS arm64
