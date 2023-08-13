@@ -130,8 +130,8 @@ jobs:
       id: get_filename
       run: |
         $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
-        echo "BUILD_NAME=$build_name" >> $GITHUB_OUTPUT
-        echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
   
     - name: Check Version
       id: prep
@@ -156,13 +156,6 @@ jobs:
       with:
         go-version: ^1.21
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: lts/*
-        cache: 'yarn'
-        cache-dependency-path: gui/yarn.lock
-
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
@@ -176,9 +169,9 @@ jobs:
           fi
         done
         cd service
-        go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../v2raya_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF"
+        go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF"
         cd ..
-        mv v2raya_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
+        mv build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
@@ -243,7 +236,7 @@ jobs:
         Copy-Item D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-arm64-windows\bin\v2raya.exe
         Copy-Item D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
         pwsh -c ./install/windows-inno/build-helper.ps1
-        mv D:\installer_windows_inno_x64.exe installer_windows_inno_amd64_${{ steps.prep.outputs.VERSION }}.exe
+        mv D:\installer_windows_inno_x64.exe installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
         mv D:\installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
     - name: Upload Artifact
@@ -288,8 +281,11 @@ jobs:
       id: get_filename
       run: |
         $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
-        echo "BUILD_NAME=$build_name" >> $GITHUB_OUTPUT
-        echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
+        $friendly_arch = $((((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName).Split('_')[1])
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
+        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_OUTPUT}
+        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
     
     - name: Check Version
       id: prep
@@ -329,13 +325,13 @@ jobs:
       run: |
         ls -l build/
 
-    - name: Build packages
+    - name: Build Packages
       run: |
         sudo gem install fpm -v 1.15.1
         sudo apt-get install -y libarchive-tools rpm tar unzip
-        sudo chmod 755 ./test/v2raya_linux_amd64_$VERSION
-        ./test/v2raya_linux_amd64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
-        sudo chmod 755 ./build/v2raya_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}
+        sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
+        ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+        sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
         for package_manager in deb rpm pacman; do
           if [ "$package_manager" == 'pacman' ];then
             if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
@@ -366,24 +362,24 @@ jobs:
             --package installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.$package_manager \
             --after-install ./install/universal/after_install.sh \
             --after-upgrade ./install/universal/after_upgrade.sh \
-            ./build/v2raya_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}=/usr/bin/v2raya \
+            ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}=/usr/bin/v2raya \
             ./install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service \
             ./install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service \
             ./install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png \
             ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
             ./install/universal/v2raya.default=/etc/default/v2raya
         done
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_archlinux_$${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_redhat_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.rpm
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_debian_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.deb
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          installer_archlinux_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_redhat_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_debian_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}.deb
+          installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
 
   GitHub_Release:
     
