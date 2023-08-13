@@ -23,7 +23,7 @@ on:
 
 jobs:
   
-  build_v2rayA_web:
+  Build_v2rayA_Web:
 
     runs-on: ubuntu-22.04
     
@@ -56,7 +56,7 @@ jobs:
         name: web
 
 
-  build_v2rayA_binaries:
+  Build_v2rayA_Binaries:
     
     strategy:
       
@@ -75,20 +75,34 @@ jobs:
             goarch: arm
             goarm: 5
           # END Linux ARM 5 6 7
+          # BEGIN Windows
           - goos: windows
             goarch: amd64
             win_suf: .exe
           - goos: windows
             goarch: arm64
             win_suf: .exe
+          # END Windows
+          # BEGIN macOS
           - goos: darwin
             goarch: amd64
           - goos: darwin
             goarch: arm64
+          # END macOS
+          # BEGIN BSD
+          - goos: freebsd
+            goarch: amd64
+          - goos: freebsd
+            goarch: arm64
+          - goos: openbsd
+            goarch: amd64
+          - goos: openbsd
+            goarch: arm64
+          # END BSD
       fail-fast: false
   
     runs-on: ubuntu-22.04
-    needs: [build_v2rayA_web]
+    needs: [Build_v2rayA_Web]
     
     env:
       GOOS: ${{ matrix.goos }}
@@ -163,10 +177,10 @@ jobs:
         path: |
           v2raya_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.goarm }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
   
-  Build_Windows_installers:
+  Build_Windows_Installers:
 
     runs-on: windows-latest
-    needs: [build_v2rayA_binaries]
+    needs: [Build_v2rayA_Binaries]
 
     steps:
 
@@ -233,7 +247,7 @@ jobs:
   Build_Linux_Packages:
     
     runs-on: ubuntu-22.04
-    needs: [build_v2rayA_binaries]
+    needs: [Build_v2rayA_Binaries]
 
 
     strategy:
@@ -250,7 +264,6 @@ jobs:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
       GOARM: ${{ matrix.goarm }}
-      WIN_SUF: ${{ matrix.win_suf }}
       CGO_ENABLED: 0
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Juicity protocols."
@@ -359,7 +372,7 @@ jobs:
     
     if: github.ref == 'refs/tags/v*'
     runs-on: windows-latest
-    needs: [build_v2rayA_binaries, Build_Windows_installers, Build_Linux_Packages]
+    needs: [Build_v2rayA_Binaries, Build_Windows_installers, Build_Linux_Packages]
 
     steps:
     
@@ -428,7 +441,7 @@ jobs:
   Update_Debian_Repository_and_AUR:
 
     runs-on: ubuntu-22.04
-    needs: [build_v2rayA_binaries, Build_Linux_Packages]
+    needs: [Build_v2rayA_Binaries, Build_Linux_Packages]
     if: github.ref == 'refs/tags/v*'
 
     steps:
@@ -541,7 +554,7 @@ jobs:
   Release_to_Homebrew:
 
     runs-on: ubuntu-22.04
-    needs: [build_v2rayA_binaries]
+    needs: [Build_v2rayA_Binaries]
     if: github.ref == 'refs/tags/v*'
 
     steps:
