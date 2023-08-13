@@ -372,7 +372,7 @@ jobs:
     
     if: github.ref == 'refs/tags/v*'
     runs-on: windows-latest
-    needs: [Build_v2rayA_Binaries, Build_Windows_installers, Build_Linux_Packages]
+    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
 
     steps:
     
