@@ -383,7 +383,7 @@ jobs:
 
   GitHub_Release:
     
-    if: github.ref == 'refs/tags/v*'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
 
@@ -429,7 +429,6 @@ jobs:
           release/*
         
     - name: Refresh Cloudflare Cache
-      if: startsWith(github.ref, 'refs/tags/v')
       env:
         CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
         CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
@@ -455,7 +454,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages]
-    if: github.ref == 'refs/tags/v*'
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
     
