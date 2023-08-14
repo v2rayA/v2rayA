@@ -424,7 +424,7 @@ jobs:
     - name: Compress Web Files
       shell: pwsh
       run: |
-        Compress-Archive -Path ./builds/web/* -DestinationPath ./web.zip -Recurse
+        Compress-Archive -Path ./builds/web/* -DestinationPath ./web.zip
         ((Get-FileHash ./web.zip).hash).ToLower() > web.zip.sha256.txt
         Move-Item ./web.zip ./release/web.zip
         Move-Item ./web.zip.sha256.txt ./release/web.zip.sha256.txt
@@ -624,7 +624,7 @@ jobs:
     
     - name: Upload to Homebrew Tap
       env:
-        GITHUB_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
+        GH_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
       run: |
         tag_version=$(echo $VERSION | sed 's/v//g')
         gh release create $tag_version --repo v2rayA/homebrew-v2raya --title "Releases $VERSION" --generate-notes
