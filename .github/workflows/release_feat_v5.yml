@@ -413,9 +413,12 @@ jobs:
       shell: bash
       run: |
         mkdir -p release
-        for file in $(ls builds); do
+        for file in $(ls builds | grep -E "^installer|^v2raya"); do
           mv builds/$file/$file release/
         done
+        pushd builds/
+        zip -9vr ../web.zip web/*
+        popd 
         for file in $(ls release); do
           sha256sum release/$file | awk '{print $1}' > release/$file.sha256.txt
         done
