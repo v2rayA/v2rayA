@@ -415,15 +415,20 @@ jobs:
         mkdir -p release
         for file in $(ls builds | grep -E "^installer|^v2raya"); do
           mv builds/$file/$file release/
-        done
-        pushd builds/
-        zip -9vr ../web.zip web/*
-        popd 
+        done 
         for file in $(ls release); do
           sha256sum release/$file | awk '{print $1}' > release/$file.sha256.txt
         done
         ls -l release/
     
+    - name: Compress Web Files
+      shell: pwsh
+      run: |
+        Compress-Archive -Path ./builds/web/* -DestinationPath ./web.zip -Recurse
+        ((Get-FileHash ./web.zip).hash).ToLower() > web.zip.sha256.txt
+        Move-Item ./web.zip ./release/web.zip
+        Move-Item ./web.zip.sha256.txt ./release/web.zip.sha256.txt
+
     - name: Upload Release
       uses: softprops/action-gh-release@v1
       with:
@@ -585,6 +590,7 @@ jobs:
         tag=$(git describe --tags $(git rev-list --tags --max-count=1))
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
 
     - name: Download Artifacts Linux x64
       uses: actions/download-artifact@v3
@@ -606,9 +612,9 @@ jobs:
 
     - name: Compress to Zip Files
       run: |
-        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}v2raya-x86_64-linux/v2raya
-        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} v2raya-x86_64-macos/v2raya
-        mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} v2raya-aarch64-macos/v2raya
+        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-linux/v2raya
+        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-macos/v2raya
+        mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} ./v2raya-aarch64-macos/v2raya
         zip -r9 v2raya-x86_64-linux.zip ./v2raya-x86_64-linux/*
         zip -r9 v2raya-x86_64-macos.zip ./v2raya-x86_64-macos/*
         zip -r9 v2raya-aarch64-macos.zip ./v2raya-aarch64-macos/*
