@@ -1,63 +1,4 @@
-Function Compress-File([ValidateScript({Test-Path $_})][string]$File){
- 
-    $srcFile = Get-Item -Path $File
-    $newFileName = "$($srcFile.FullName).gz"
- 
-    try
-    {
-        $srcFileStream = New-Object System.IO.FileStream($srcFile.FullName,([IO.FileMode]::Open),([IO.FileAccess]::Read),([IO.FileShare]::Read))
-        $dstFileStream = New-Object System.IO.FileStream($newFileName,([IO.FileMode]::Create),([IO.FileAccess]::Write),([IO.FileShare]::None))
-        $gzip = New-Object System.IO.Compression.GZipStream($dstFileStream,[System.IO.Compression.CompressionMode]::Compress)
-        $srcFileStream.CopyTo($gzip)
-    } 
-    catch
-    {
-        Write-Host "$_.Exception.Message" -ForegroundColor Red
-    }
-    finally
-    {
-        $gzip.Dispose()
-        $srcFileStream.Dispose()
-        $dstFileStream.Dispose()
-    }
-}
-
-Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin"
-scoop install yarn go nodejs-lts
-
-${env:NODE_OPTIONS} = "--openssl-legacy-provider"
-${env:OUTPUT_DIR} = (Get-Location).Path + "\service\server\router\web"
-
-Set-Location ./gui
-yarn; yarn build
-Set-Location ..
-
-Get-ChildItem "${env:OUTPUT_DIR}" -recurse |Where-Object{$_.PSIsContainer -eq $False}|ForEach-Object -Process{
-    if($_.Extension -ne ".png" -and $_.Extension -ne ".gz" -and $_.Name -ne "index.html"){
-        Compress-File($_.FullName)
-        Remove-Item -Path $_.FullName
-    }
-}
-
-New-Item -ItemType Directory -Path ./ -Name "v2raya-x86_64-windows"; New-Item -ItemType Directory -Path ".\v2raya-x86_64-windows\bin"
-New-Item -ItemType Directory -Path ./ -Name "v2raya-arm64-windows"; New-Item -ItemType Directory -Path ".\v2raya-arm64-windows\bin"
-
-Set-Location -Path ./service
-$VERSION = ${env:VERSION}
-$env:CGO_ENABLED = "0"
-$build_flags = "-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w"
-$env:GOARCH = "amd64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o '../v2raya-x86_64-windows/bin/v2raya.exe'
-$env:GOARCH = "arm64"; $env:GOOS = "windows"; go build -ldflags $build_flags -o '../v2raya-arm64-windows/bin/v2raya.exe'
-
-Set-Location ../
-
 Copy-Item "./install/windows-inno/v2raya.ico" "D:\v2raya.ico"
-
-Copy-Item "./v2raya-x86_64-windows/" "D:\" -Recurse
-New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
-
-Copy-Item "./v2raya-arm64-windows/" "D:\" -Recurse
-New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
 
 $Version_v2ray = ((Invoke-RestMethod -Uri 'https://api.github.com/repos/v2fly/v2ray-core/releases/latest').tag_name).Split("v")[1]
 $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/download/v$Version_v2ray/v2ray-windows-64.zip"
@@ -125,5 +66,3 @@ $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVe
 
 Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64_$VERSION.exe"
 Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64_$VERSION.exe"
-Copy-Item ".\v2raya-x86_64-windows\bin\v2raya.exe" ".\v2raya_windows_x64_$VERSION.exe"
-Copy-Item ".\v2raya-arm64-windows\bin\v2raya.exe" ".\v2raya_windows_arm64_$VERSION.exe"
