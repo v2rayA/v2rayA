@@ -604,8 +604,8 @@ jobs:
 
     - name: Compress to Zip Files
       run: |
-        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_amd64_${{ steps.prep.outputs.VERSION }} v2raya-x86_64-linux/v2raya
-        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_amd64_${{ steps.prep.outputs.VERSION }} v2raya-x86_64-macos/v2raya
+        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}v2raya-x86_64-linux/v2raya
+        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} v2raya-x86_64-macos/v2raya
         mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} v2raya-aarch64-macos/v2raya
         zip -r9 v2raya-x86_64-linux.zip ./v2raya-x86_64-linux/*
         zip -r9 v2raya-x86_64-macos.zip ./v2raya-x86_64-macos/*
@@ -619,7 +619,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
       run: |
         tag_version=$(echo $VERSION | sed 's/v//g')
-        gh release create $tag_version --repo v2rayA/homebrew-v2raya --title "Releases $version" --generate-notes
-        gh upload v2rayA/homebrew-v2raya --clobber --repo v2rayA/homebrew-v2raya v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt
-        gh upload v2rayA/homebrew-v2raya --clobber --repo v2rayA/homebrew-v2raya v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt
-        gh upload v2rayA/homebrew-v2raya --clobber --repo v2rayA/homebrew-v2raya v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
+        gh release create $tag_version --repo v2rayA/homebrew-v2raya --title "Releases $VERSION" --generate-notes
+        gh release upload $tag_version --repo v2rayA/homebrew-v2raya v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
+                                                                     v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
+                                                                     v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
+
