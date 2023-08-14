@@ -567,7 +567,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries]
-    if: github.ref == 'refs/tags/v*'
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
     
