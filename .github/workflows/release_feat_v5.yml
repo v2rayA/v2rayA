@@ -1,4 +1,4 @@
-name: Release UNIX-likes builds
+name: Build & Release v2rayA
 
 on:
   push:
@@ -22,18 +22,118 @@ on:
 
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols."
+  
+  Build_v2rayA_Web:
+
+    runs-on: ubuntu-22.04
+    
     steps:
     
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    - name: Prepare
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: gui/yarn.lock
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update -y && sudo apt-get install -y gzip
+
+    - name: Build GUI
+      run: |
+        yarn --cwd gui --check-files
+        yarn --cwd gui build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        path: web/*
+        name: web
+
+
+  Build_v2rayA_Binaries:
+    
+    strategy:
+      
+      matrix:
+        goos: [ linux ]
+        goarch: [ amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips ]
+        include:
+          # BEGIN Linux ARM 5 6 7
+          - goos: linux
+            goarch: arm
+            goarm: 7
+          - goos: linux
+            goarch: arm
+            goarm: 6
+          - goos: linux
+            goarch: arm
+            goarm: 5
+          # END Linux ARM 5 6 7
+          # BEGIN Windows
+          - goos: windows
+            goarch: amd64
+            win_suf: .exe
+          - goos: windows
+            goarch: arm64
+            win_suf: .exe
+          # END Windows
+          # BEGIN macOS
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          # END macOS
+          # BEGIN BSD
+          - goos: freebsd
+            goarch: amd64
+          - goos: freebsd
+            goarch: arm64
+          - goos: openbsd
+            goarch: amd64
+          - goos: openbsd
+            goarch: arm64
+          # END BSD
+      fail-fast: false
+  
+    runs-on: ubuntu-22.04
+    needs: [Build_v2rayA_Web]
+    
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      WIN_SUF: ${{ matrix.win_suf }}
+      CGO_ENABLED: 0
+      NAME: v2raya
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Juicity protocols."
+    
+    steps:
+    
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: web
+        path: service/server/router/web
+    
+    - name: Get Friendly File Name
+      shell: pwsh
+      id: get_filename
+      run: |
+        $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
+  
+    - name: Check Version
       id: prep
       env:
         REF: ${{ github.ref }}
@@ -50,166 +150,347 @@ jobs:
         fi
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: ^1.21
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: lts/*
-        cache: 'yarn'
-        cache-dependency-path: gui/yarn.lock
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.2
-        bundler-cache: true
+
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
-    - name: Build GUI
-      run: |
-        yarn --cwd gui --check-files
-        yarn --cwd gui build
+
     - name: Build v2rayA Binaries
+      id: build
       run: |
-        cp -r web service/server/router/
-        for file in $(find service/server/router/web |grep -v png |grep -v index.html|grep -v .gz)
-        do
+        for file in $(find service/server/router/web |grep -v png |grep -v index.html|grep -v .gz); do
           if [ ! -d $file ];then
             gzip -9 $file
           fi
         done
-
         cd service
-        for osarch in linux/386 linux/amd64 linux/arm linux/ppc64le linux/arm64 darwin/amd64 darwin/arm64 freebsd/amd64 freebsd/arm64; do
-          export GOOS=$(echo $osarch | cut -d/ -f1)
-          export GOARCH=$(echo $osarch | cut -d/ -f2)
-          SUFFIX=""
-          if [ "$GOOS" == "windows" ]; then
-            SUFFIX=".exe"
-          fi
-          CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../v2raya_"$GOOS"_"$GOARCH"_"$VERSION""$SUFFIX"
-        done
-    - name: Rename Binaries to Friendly Filenames
-      run: |
-        mv v2raya_linux_386_$VERSION v2raya_linux_x86_$VERSION
-        mv v2raya_linux_amd64_$VERSION v2raya_linux_x64_$VERSION
-        mv v2raya_freebsd_amd64_$VERSION v2raya_freebsd_x64_$VERSION
-        mv v2raya_darwin_amd64_$VERSION v2raya_darwin_x64_$VERSION
-    - name: Check Sha256SUM of Artifacts
-      run: |
-        for v2raya_bin in $(ls | grep v2raya)
-        do
-          echo $(sha256sum $v2raya_bin | awk -F ' ' '{print $1}') > $v2raya_bin.sha256.txt
-        done
+        go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF"
+        cd ..
+        mv build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
+
     - name: Upload Artifact
-      if: "!startsWith(github.ref, 'refs/tags/v')"
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
       with:
         path: |
-          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}
-          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}
-          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
-          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-    - name: Install Package Dependencies
-      if: startsWith(github.ref, 'refs/tags/v')
+          v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
+  
+  Build_Windows_Installers:
+
+    runs-on: windows-latest
+    needs: [Build_v2rayA_Binaries]
+
+    steps:
+
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Check Version
+      id: prep
+      env:
+        REF: ${{ github.ref }}
+      shell: bash
       run: |
-        gem install fpm -v 1.15.1
-        sudo apt-get install -y libarchive-tools rpm lintian reprepro gnupg gnupg2 expect tar nsis unzip
-    - name: Package
-      if: startsWith(github.ref, 'refs/tags/v')
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        if [[ "$REF" == "refs/tags/v"* ]]; then
+          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          version=${tag:1}
+        else
+          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+        fi
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+
+    - name: Download Artifact Windows x64
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+        path: D:\Downloads
+
+    - name: Download Artifact Windows arm64
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        path: D:\Downloads
+
+    - name: Install Inno Setup
+      shell: pwsh
       run: |
-        ./v2raya_linux_x86_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
-        export FILES=(
-          install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service
-          install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service
-          install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png
-          install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop
-          install/universal/v2raya.default=/etc/default/v2raya
-        )
+        choco install innosetup -y
+    
+    - name: Build Windows Installer
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
+        New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\bin"
+        New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
+        New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
+        Copy-Item D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-arm64-windows\bin\v2raya.exe
+        Copy-Item D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
+        pwsh -c ./install/windows-inno/build-helper.ps1
+        mv D:\installer_windows_inno_x64.exe installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        mv D:\installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
-        export PARAMS="--maintainer v2rayA --after-install install/universal/after_install.sh --after-upgrade install/universal/after_upgrade.sh --verbose -f -n $NAME -v $VERSION --url https://github.com/v2rayA/v2raya"
-        tar -zcvf web.tar.gz web/
+    - name: Upload Artifact
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      with:
+        path: |
+          installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+          installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
-        # https://www.debian.org/releases/stretch/
-        fpm -s dir -t deb -p installer_debian_i386_$VERSION.deb --description "$DESC" --architecture=i386 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t deb -p installer_debian_amd64_$VERSION.deb --description "$DESC" --architecture=amd64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t deb -p installer_debian_armhf_$VERSION.deb --description "$DESC" --architecture=armhf $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t deb -p installer_debian_arm64_$VERSION.deb --description "$DESC" --architecture=arm64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t deb -p installer_debian_ppc64le_$VERSION.deb --description "$DESC" --architecture=ppc64el $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        
-        # https://fedoraproject.org/wiki/Architectures
-        fpm -s dir -t rpm -p installer_redhat_x86_$VERSION.rpm --description "$DESC" --architecture=x86 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t rpm -p installer_redhat_x64_$VERSION.rpm --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t rpm -p installer_redhat_armv7_$VERSION.rpm --description "$DESC" --architecture=armv7 $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t rpm -p installer_redhat_aarch64_$VERSION.rpm --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t rpm -p installer_redhat_ppc64le_$VERSION.rpm --description "$DESC" --architecture=ppc64le $PARAMS v2raya_linux_ppc64le_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        
-        # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=yay
-        fpm -s dir -t pacman -p installer_archlinux_i686_$VERSION.pkg.tar.zst --description "$DESC" --architecture=i686 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_pentium4_$VERSION.pkg.tar.zst --description "$DESC" --architecture=pentium4 $PARAMS v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_x86_64_$VERSION.pkg.tar.zst --description "$DESC" --architecture=x86_64 $PARAMS v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_armv6h_$VERSION.pkg.tar.zst --description "$DESC" --architecture=armv6h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_armv7h_$VERSION.pkg.tar.zst --description "$DESC" --architecture=armv7h $PARAMS v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        fpm -s dir -t pacman -p installer_archlinux_aarch64_$VERSION.pkg.tar.zst --description "$DESC" --architecture=aarch64 $PARAMS v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        
-        # https://www.freebsd.org/platforms/
-        # fpm -s dir -t freebsd -p installer_freebsd_i386_$VERSION.txz $PARAMS --description "$DESC" --architecture=i386 v2raya_linux_x86_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        # fpm -s dir -t freebsd -p installer_freebsd_amd64_$VERSION.txz $PARAMS --description "$DESC" --architecture=amd64 v2raya_linux_x64_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        # fpm -s dir -t freebsd -p installer_freebsd_armv6_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv6 v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        # fpm -s dir -t freebsd -p installer_freebsd_armv7_$VERSION.txz $PARAMS --description "$DESC" --architecture=armv7 v2raya_linux_arm_$VERSION=/usr/bin/v2raya ${FILES[@]}
-        # fpm -s dir -t freebsd -p installer_freebsd_aarch64_$VERSION.txz $PARAMS --description "$DESC" --architecture=aarch64 v2raya_linux_arm64_$VERSION=/usr/bin/v2raya ${FILES[@]}
+  Build_Linux_Packages:
+    
+    runs-on: ubuntu-22.04
+    needs: [Build_v2rayA_Binaries]
 
-        # MacOSX
-        # macOS users should go to https://github.com/v2rayA/homebrew-v2raya
-    # - name: Windows Installer
-    #   if: startsWith(github.ref, 'refs/tags/v')
-    #   env:
-    #     P_DIR: ${{ steps.prep.outputs.P_DIR }}
-    #     ARCH: x64
-    #   run: |
-    #     mkdir -p /tmp/NSIS/v2rayA && cd /tmp/NSIS
-    #     cp $GITHUB_WORKSPACE/LICENSE $PWD/License.txt
-    #     cp $GITHUB_WORKSPACE/gui/public/img/icons/windows-icon-255x255.ico v2rayA/v2raya.ico
-    #     cp $GITHUB_WORKSPACE/gui/public/img/icons/windows-bitmap-150x57.bmp v2rayA/v2raya.bmp
-    #     cp $GITHUB_WORKSPACE/install/windows/v2raya.xml v2rayA/
-    #     cp $GITHUB_WORKSPACE/install/windows/v2raya.nsi $PWD
-    #     cp $P_DIR/v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe v2rayA/
-    #     wget https://github.com/v2fly/v2ray-core/releases/download/v4.44.0/v2ray-windows-64.zip
-    #     unzip -d v2ray-core v2ray-windows-64.zip
-    #     mv v2ray-core/*.dat v2rayA/
-    #     wget https://github.com/winsw/winsw/releases/download/v2.11.0/WinSW-x64.exe -O v2rayA/v2raya.exe
-    #     sed -i "s/@ARCH@/${ARCH}/g"       v2raya.nsi v2rayA/v2raya.xml
-    #     sed -i "s/@VERSION@/${VERSION}/g" v2raya.nsi v2rayA/v2raya.xml
-    #     makensis v2raya.nsi
-    #     mv installer_windows_x64_${{ steps.prep.outputs.VERSION }}.exe $P_DIR
-    #     cd $P_DIR
+
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips]
+
+        include:
+          - goos: linux
+            goarch: arm
+            goarm: 7
+         
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      CGO_ENABLED: 0
+      NAME: v2raya
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Juicity protocols."
+
+    steps:
+    
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Get Friendly File Name
+      shell: pwsh
+      id: get_filename
+      run: |
+        $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
+        $friendly_arch = $((((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName).Split('_')[1])
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
+        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_OUTPUT}
+        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
+    
+    - name: Check Version
+      id: prep
+      env:
+        REF: ${{ github.ref }}
+      run: |
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        if [[ "$REF" == "refs/tags/v"* ]]; then
+          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          version=${tag:1}
+          package_version="$(echo "$version" | awk -F 'v' '{print $1}')"
+        else
+          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+          package_version="$date.r${count}.$commit"
+        fi
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+        echo "PACKAGE_VERSION=$package_version" >> $GITHUB_OUTPUT
+        echo "PACKAGE_VERSION=$package_version" >> $GITHUB_ENV
+    
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
+        path: build/
+
+    - name: Download x64 Linux Build
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
+        path: test/
+
+    - name: Show Artifacts
+      run: |
+        ls -l build/
+
+    - name: Build Packages
+      run: |
+        sudo gem install fpm -v 1.15.1
+        sudo apt-get install -y libarchive-tools rpm tar unzip
+        sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
+        ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+        sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
+        for package_manager in deb rpm pacman; do
+          if [ "$package_manager" == 'pacman' ];then
+            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
+              package_arch='arm7hf'
+            elif [ "$GOARCH" == 'arm64' ];then
+              package_arch='aarch64'
+            else
+              package_arch="$GOARCH"
+            fi
+          elif [ "$package_manager" == 'rpm' ];then
+            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
+              package_arch='armhfp'
+            elif [ "$GOARCH" == 'arm64' ];then
+              package_arch='aarch64'
+            else
+              package_arch="$GOARCH"
+            fi
+          elif [ "$package_manager" == 'deb' ];then
+            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
+              package_arch='armhf'
+            else
+              package_arch="$GOARCH"
+            fi
+          fi
+            fpm -s dir -t "$package_manager" -a $package_arch --version "${{ steps.prep.outputs.PACKAGE_VERSION }}" \
+            --url 'https://github.com/v2rayA/v2rayA' --description "$DESC" \
+            --maintainer "v2raya@v2raya.org" --name v2raya --license 'AGPL' \
+            --package installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.$package_manager \
+            --after-install ./install/universal/after_install.sh \
+            --after-upgrade ./install/universal/after_upgrade.sh \
+            ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}=/usr/bin/v2raya \
+            ./install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service \
+            ./install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service \
+            ./install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png \
+            ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
+            ./install/universal/v2raya.default=/etc/default/v2raya
+        done
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
+
+    - name: Upload Artifact
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      with:
+        path: |
+          installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+          installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
+          installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
+
+  GitHub_Release:
+    
+    if: github.ref == 'refs/tags/v*'
+    runs-on: windows-latest
+    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
+
+    steps:
+    
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Check Version
+      id: prep
+      env:
+        REF: ${{ github.ref }}
+      shell: bash
+      run: |
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        version=${tag:1}
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: builds/
+
+    - name: Move Files to Release Directory
+      shell: bash
+      run: |
+        mkdir -p release
+        for file in $(ls builds); do
+          mv builds/$file/$file release/
+        done
+        for file in $(ls release); do
+          sha256sum release/$file | awk '{print $1}' > release/$file.sha256.txt
+        done
+        ls -l release/
+    
+    - name: Upload Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.prep.outputs.VERSION }}
+        files: |
+          release/*
         
+    - name: Refresh Cloudflare Cache
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
+        CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
+        CF_ZONE: ${{ secrets.CF_ZONE }}
+      shell: bash
+      run: |
+        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+          -H "X-Auth-Email: $CF_AUTH_EMAIL" \
+          -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
+          -H "Content-Type: application/json" \
+          --data '{"purge_everything":true}'
+
+    - name: Submit to Microsoft winget
+      shell: pwsh
+      run: |
+        iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+        Start-Sleep -Seconds 30 #Make sure GitHub releases are online
+        $Installer_x64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
+        $Installer_ARM64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
+        ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
+
+  Update_Debian_Repository_and_AUR:
+
+    runs-on: ubuntu-22.04
+    needs: [Build_v2rayA_Binaries, Build_Linux_Packages]
+    if: github.ref == 'refs/tags/v*'
+
+    steps:
+    
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Check Version
+      id: prep
+      run: |
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        version=${tag:1}
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+    
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: builds/
+    
+    - name: Prepare to Build Debian Repository
+      run: |
+        sudo apt install -y lintian reprepro gnupg gnupg2 expect
+        mkdir -p install/debian
+        mv builds/installer_linux_*.deb ./
 
     - name: Import GPG key
-      if: startsWith(github.ref, 'refs/tags/v')
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v4
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
+
     - name: Generate APT repository
-      if: startsWith(github.ref, 'refs/tags/v')
       env:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
@@ -223,7 +504,6 @@ jobs:
         echo "apt.v2raya.org" > apt/CNAME
 
     - name: Deploy APT repository
-      if: startsWith(github.ref, 'refs/tags/v')
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-apt
@@ -231,8 +511,8 @@ jobs:
         build_dir: apt
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
     - name: Deploy Demo Site repository
-      if: startsWith(github.ref, 'refs/tags/v')
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-web
@@ -240,8 +520,8 @@ jobs:
         build_dir: web
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
     - name: Tag Demo Site repository
-      if: startsWith(github.ref, 'refs/tags/v')
       uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -271,8 +551,8 @@ jobs:
               });
             };
           };
+
     - name: AUR Release
-      if: startsWith(github.ref, 'refs/tags/v')
       env:
         P_DIR: ${{ steps.prep.outputs.P_DIR }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -283,79 +563,64 @@ jobs:
         chmod 0600 ./key
         ./install/tool/ssh-add_expect ./key
         bash install/aur/deploy.sh
-    - name: Check Sha256SUM of installers
-      if: startsWith(github.ref, 'refs/tags/v')
-      run: |
-        for v2raya_installer in $(ls | grep installer)
-        do
-          echo $(sha256sum $v2raya_installer | awk -F ' ' '{print $1}') > $v2raya_installer.sha256.txt
-        done
-    - name: Github Release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
+
+  Release_to_Homebrew:
+
+    runs-on: ubuntu-22.04
+    needs: [Build_v2rayA_Binaries]
+    if: github.ref == 'refs/tags/v*'
+
+    steps:
+    
+    - uses: actions/checkout@v3
       with:
-        draft: true
-        prerelease: true
-        files: |
-          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}
-          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}
-          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
-          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
-          v2raya_linux_x86_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_arm_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_linux_ppc64le_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_freebsd_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_freebsd_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}.sha256.txt
-          installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb
-          installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb
-          installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb
-          installer_debian_arm64_${{ steps.prep.outputs.VERSION }}.deb
-          installer_debian_ppc64le_${{ steps.prep.outputs.VERSION }}.deb
-          installer_redhat_x86_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_redhat_x64_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_debian_i386_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
-          installer_debian_amd64_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
-          installer_debian_armhf_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
-          installer_debian_arm64_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
-          installer_debian_ppc64le_${{ steps.prep.outputs.VERSION }}.deb.sha256.txt
-          installer_redhat_x86_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_redhat_x64_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_redhat_armv7_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_redhat_aarch64_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_redhat_ppc64le_${{ steps.prep.outputs.VERSION }}.rpm.sha256.txt
-          installer_archlinux_i686_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
-          installer_archlinux_pentium4_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
-          installer_archlinux_x86_64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
-          installer_archlinux_armv6h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
-          installer_archlinux_armv7h_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
-          installer_archlinux_aarch64_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst.sha256.txt
-    - name: Refresh Cloudflare Cache
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
-        CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
-        CF_ZONE: ${{ secrets.CF_ZONE }}
+        fetch-depth: 0
+
+    - name: Check Version
+      id: prep
       run: |
-        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
-          -H "X-Auth-Email: $CF_AUTH_EMAIL" \
-          -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
-          -H "Content-Type: application/json" \
-          --data '{"purge_everything":true}'
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        version=${tag:1}
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+
+    - name: Download Artifacts Linux x64
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
+        path: Downloads
+
+    - name: Download Artifacts macOS x64
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
+        path: Downloads
+
+    - name: Download Artifacts macOS arm64
+      uses: actions/download-artifact@v3
+      with:
+        name: v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
+        path: Downloads
+
+    - name: Compress to Zip Files
+      run: |
+        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}v2raya-x86_64-linux/v2raya
+        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} v2raya-x86_64-macos/v2raya
+        mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} v2raya-aarch64-macos/v2raya
+        zip -r9 v2raya-x86_64-linux.zip ./v2raya-x86_64-linux/*
+        zip -r9 v2raya-x86_64-macos.zip ./v2raya-x86_64-macos/*
+        zip -r9 v2raya-aarch64-macos.zip ./v2raya-aarch64-macos/*
+        for file in $(ls v2raya-*.zip); do
+          sha256sum $file > $file.sha256.txt
+        done
+    
+    - name: Upload to Homebrew Tap
+      env:
+        GITHUB_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
+      run: |
+        tag_version=$(echo $VERSION | sed 's/v//g')
+        gh release create $tag_version --repo v2rayA/homebrew-v2raya --title "Releases $VERSION" --generate-notes
+        gh release upload $tag_version --repo v2rayA/homebrew-v2raya v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
+                                                                     v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
+                                                                     v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
+

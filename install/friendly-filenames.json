@@ -1,0 +1,59 @@
+{
+    "linux-386": {
+        "friendlyName": "linux_x86"
+    },
+    "linux-amd64": {
+        "friendlyName": "linux_x64"
+    },
+    "linux-arm5": {
+        "friendlyName": "linux_armv5"
+    },
+    "linux-arm6": {
+        "friendlyName": "linux_armv6"
+    },
+    "linux-arm7": {
+        "friendlyName": "linux_armv7"
+    },
+    "linux-arm64": {
+        "friendlyName": "linux_arm64"
+    },
+    "linux-mips64le": {
+        "friendlyName": "linux_mips64le"
+    },
+    "linux-mips64": {
+        "friendlyName": "linux_mips64"
+    },
+    "linux-mipsle": {
+        "friendlyName": "linux_mips32le"
+    },
+    "linux-mips": {
+        "friendlyName": "linux_mips32"
+    },
+    "linux-riscv64": {
+        "friendlyName": "linux_riscv64"
+    },
+    "windows-amd64": {
+        "friendlyName": "windows_x64"
+    },
+    "windows-arm64": {
+        "friendlyName": "windows_arm64"
+    },
+    "freebsd-amd64": {
+        "friendlyName": "freebsd_x64"
+    },
+    "freebsd-arm64": {
+        "friendlyName": "freebsd_arm64"
+    },
+    "openbsd-amd64": {
+        "friendlyName": "openbsd_x64"
+    },
+    "openbsd-arm64": {
+        "friendlyName": "openbsd_arm64"
+    },
+    "darwin-amd64": {
+        "friendlyName": "darwin_x64"
+    },
+    "darwin-arm64": {
+        "friendlyName": "darwin_arm64"
+    }
+}
