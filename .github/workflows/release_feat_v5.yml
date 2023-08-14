@@ -235,9 +235,9 @@ jobs:
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         Copy-Item D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-arm64-windows\bin\v2raya.exe
         Copy-Item D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
-        pwsh -c ./install/windows-inno/build-helper.ps1
-        mv D:\installer_windows_inno_x64.exe installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-        mv D:\installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        pwsh -c .\install\windows-inno\build-helper.ps1
+        mv D:\installer_windows_inno_x64.exe .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        mv D:\installer_windows_inno_arm64.exe .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
