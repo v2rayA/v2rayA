@@ -45,7 +45,7 @@ SOFTWARE.
 <service>
 <id>v2rayA</id>
 <name>v2rayA background service for Windows</name>
-<description>v2rayA is a V2Ray client, compatible with SS, SSR, Trojan(trojan-go), PingTunnel protocols.</description>
+<description>v2rayA is a V2Ray client, compatible with SS, SSR, Trojan(trojan-go), Juicity protocols.</description>
 <executable>%BASE%\bin\v2raya.exe</executable>
 <env name="PATH" value="%BASE%\bin\;%windir%\system32\"/>
 <arguments>--lite --log-file "v2raya.log" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
@@ -55,14 +55,10 @@ SOFTWARE.
 </service>
 ' -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml"
 Copy-Item -Path "D:\v2raya-x86_64-windows\v2rayA-service.xml" -Destination "D:\v2raya-arm64-windows\v2rayA-service.xml"
-
-Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/v2rayA/v2rayA/feat_v5/LICENSE' | Out-File "D:\LICENSE.txt"
+Copy-Item -Path ".\LICENSE" "D:\LICENSE.txt"
 
 $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_x86_64.iss"
 $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "$VERSION") | Out-File "D:\windows_arm64.iss"
 
 & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
 & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
-
-Copy-Item "D:\installer_windows_inno_x64.exe"  ".\installer_windows_inno_x64_$VERSION.exe"
-Copy-Item "D:\installer_windows_inno_arm64.exe"  ".\installer_windows_inno_arm64_$VERSION.exe"
