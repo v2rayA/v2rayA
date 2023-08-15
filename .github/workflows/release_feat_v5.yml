@@ -235,9 +235,9 @@ jobs:
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         Copy-Item D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-arm64-windows\bin\v2raya.exe
         Copy-Item D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
-        pwsh -c ./install/windows-inno/build-helper.ps1
-        mv D:\installer_windows_inno_x64.exe installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-        mv D:\installer_windows_inno_arm64.exe installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        pwsh -c .\install\windows-inno\build-helper.ps1
+        mv D:\installer_windows_inno_x64.exe .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        mv D:\installer_windows_inno_arm64.exe .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
@@ -383,7 +383,7 @@ jobs:
 
   GitHub_Release:
     
-    if: github.ref == 'refs/tags/v*'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
 
@@ -413,14 +413,22 @@ jobs:
       shell: bash
       run: |
         mkdir -p release
-        for file in $(ls builds); do
+        for file in $(ls builds | grep -E "^installer|^v2raya"); do
           mv builds/$file/$file release/
-        done
+        done 
         for file in $(ls release); do
           sha256sum release/$file | awk '{print $1}' > release/$file.sha256.txt
         done
         ls -l release/
     
+    - name: Compress Web Files
+      shell: pwsh
+      run: |
+        Compress-Archive -Path ./builds/web/* -DestinationPath ./web.zip
+        ((Get-FileHash ./web.zip).hash).ToLower() > web.zip.sha256.txt
+        Move-Item ./web.zip ./release/web.zip
+        Move-Item ./web.zip.sha256.txt ./release/web.zip.sha256.txt
+
     - name: Upload Release
       uses: softprops/action-gh-release@v1
       with:
@@ -429,7 +437,6 @@ jobs:
           release/*
         
     - name: Refresh Cloudflare Cache
-      if: startsWith(github.ref, 'refs/tags/v')
       env:
         CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
         CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
@@ -455,7 +462,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages]
-    if: github.ref == 'refs/tags/v*'
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
     
@@ -568,7 +575,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries]
-    if: github.ref == 'refs/tags/v*'
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
     
@@ -583,6 +590,7 @@ jobs:
         tag=$(git describe --tags $(git rev-list --tags --max-count=1))
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
 
     - name: Download Artifacts Linux x64
       uses: actions/download-artifact@v3
@@ -604,9 +612,9 @@ jobs:
 
     - name: Compress to Zip Files
       run: |
-        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}v2raya-x86_64-linux/v2raya
-        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} v2raya-x86_64-macos/v2raya
-        mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} v2raya-aarch64-macos/v2raya
+        mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-linux/v2raya
+        mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-macos/v2raya
+        mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} ./v2raya-aarch64-macos/v2raya
         zip -r9 v2raya-x86_64-linux.zip ./v2raya-x86_64-linux/*
         zip -r9 v2raya-x86_64-macos.zip ./v2raya-x86_64-macos/*
         zip -r9 v2raya-aarch64-macos.zip ./v2raya-aarch64-macos/*
@@ -616,7 +624,7 @@ jobs:
     
     - name: Upload to Homebrew Tap
       env:
-        GITHUB_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
+        GH_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
       run: |
         tag_version=$(echo $VERSION | sed 's/v//g')
         gh release create $tag_version --repo v2rayA/homebrew-v2raya --title "Releases $VERSION" --generate-notes
