@@ -488,7 +488,9 @@ jobs:
       run: |
         sudo apt install -y lintian reprepro gnupg gnupg2 expect
         mkdir -p install/debian
-        mv builds/installer*.deb ./
+        for deb_package in $(ls builds | grep installer | grep deb); do
+          mv builds/"$deb_package"/"$deb_package" ./"$deb_package"
+        done
 
     - name: Import GPG key
       id: import_gpg
