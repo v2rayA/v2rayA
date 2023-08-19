@@ -352,8 +352,10 @@ jobs:
           elif [ "$package_manager" == 'deb' ];then
             if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
               package_arch='armhf'
-              elif [ "$GOARCH" == '386' ];then
-                package_arch='i386'
+            elif [ "$GOARCH" == '386' ];then
+              package_arch='i386'
+            elif [ "$GOARCH" == 'mipsle' ];then
+              package_arch='mips32le'
             else
               package_arch="$GOARCH"
             fi
