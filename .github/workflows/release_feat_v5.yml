@@ -338,6 +338,8 @@ jobs:
               package_arch='arm7hf'
             elif [ "$GOARCH" == 'arm64' ];then
               package_arch='aarch64'
+            elif [ "$GOARCH" == '386' ];then
+              package_arch='i386'
             else
               package_arch="$GOARCH"
             fi
