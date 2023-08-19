@@ -422,6 +422,69 @@
           </b-field>
         </b-tab-item>
 
+        <b-tab-item label="Tuic">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="tuic_name" v-model="tuic.name" :placeholder="$t('configureServer.servername')" expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="tuic_server" v-model="tuic.server" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="tuic_port" v-model="tuic.port" required :placeholder="$t('configureServer.port')" type="number"
+              expanded />
+          </b-field>
+          <b-field label="UUID" label-position="on-border">
+            <b-input ref="tuic_uuid" v-model="tuic.uuid" required placeholder="UUID" expanded />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input ref="tuic_password" v-model="tuic.password" required :placeholder="$t('configureServer.password')"
+              expanded />
+          </b-field>
+          <b-field label="Congestion Control" label-position="on-border">
+            <b-select ref="tuic_cc" v-model="tuic.cc" expanded required>
+              <option value="bbr">bbr</option>
+            </b-select>
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label">
+              AllowInsecure
+            </template>
+            <b-select ref="tuic_allow_insecure" v-if="tuic.disableSni === false" v-model="tuic.allowInsecure" expanded
+              required>
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">
+                {{ $t("operations.yes") }}
+              </option>
+            </b-select>
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label">
+              DisableSni
+            </template>
+            <b-select ref="tuic_disable_sni" v-model="tuic.disableSni" expanded required>
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">
+                {{ $t("operations.yes") }}
+              </option>
+            </b-select>
+          </b-field>
+          <b-field label="SNI" label-position="on-border" v-if="tuic.disableSni === false">
+            <b-input v-model="tuic.sni" placeholder="SNI" expanded />
+          </b-field>
+          <b-field label="ALPN" label-position="on-border">
+            <b-input v-model="tuic.alpn" placeholder="h3" expanded />
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label">
+              UDP relay mode
+            </template>
+            <b-select ref="tuic_udp_relay_mode" v-model="tuic.udpRelayMode" expanded required>
+              <option value="native">native</option>
+              <option value="quic">quic</option>
+            </b-select>
+          </b-field>
+        </b-tab-item>
+
         <b-tab-item label="HTTP">
           <b-field label="Protocol" label-position="on-border">
             <b-select v-model="http.protocol" expanded>
@@ -576,6 +639,20 @@ export default {
       allowInsecure: false,
       protocol: "juicity"
     },
+    tuic: {
+      name: "",
+      server: "",
+      port: "",
+      sni: "",
+      cc: "bbr",
+      uuid: "",
+      password: "",
+      allowInsecure: false,
+      disableSni: false,
+      alpn: "h3",
+      udpRelayMode: "native",
+      protocol: "tuic"
+    },
     http: {
       username: "",
       password: "",
@@ -636,16 +713,21 @@ export default {
             this.juicity = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 4;
           } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("tuic://")
+          ) {
+            this.tuic = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 5;
+          } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("http://") ||
             res.data.data.sharingAddress.toLowerCase().startsWith("https://")
           ) {
             this.http = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 5;
+            this.tabChoice = 6;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("socks5://")
           ) {
             this.socks5 = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 6;
+            this.tabChoice = 7;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -866,6 +948,25 @@ export default {
             u.params.allow_insecure === true || u.params.allow_insecure === "1",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           cc: u.params.congestion_control || "bbr",
+          protocol: "juicity",
+        };
+      } else if (url.toLowerCase().startsWith("tuic://")) {
+        let u = parseURL(url);
+        return {
+          name: decodeURIComponent(u.hash),
+          uuid: decodeURIComponent(u.username),
+          password: decodeURIComponent(u.password),
+          server: u.host,
+          port: u.port,
+          sni: u.params.sni || "",
+          allowInsecure:
+            u.params.allow_insecure === true || u.params.allow_insecure === "1",
+          disableSni:
+            u.params.disable_sni === true || u.params.disable_sni === "1",
+          alpn: u.params.alpn,
+          cc: u.params.congestion_control || "bbr",
+          udpRelayMode: u.params.udp_relay_mode || "native",
+          protocol: "tuic",
         };
       } else if (
         url.toLowerCase().startsWith("http://") ||
@@ -1061,6 +1162,26 @@ export default {
             hash: srcObj.name,
             params: query,
           });
+        case "tuic":
+          query = {
+            allow_insecure: srcObj.allowInsecure,
+            congestion_control: srcObj.cc,
+            disable_sni: srcObj.disableSni,
+            alpn: srcObj.alpn,
+            udp_relay_mode: srcObj.udpRelayMode,
+          };
+          if (srcObj.sni !== "") {
+            query.sni = srcObj.sni;
+          }
+          return generateURL({
+            protocol: "tuic",
+            username: srcObj.uuid,
+            password: srcObj.password,
+            host: srcObj.server,
+            port: srcObj.port,
+            hash: srcObj.name,
+            params: query,
+          });
         case "http":
         case "https":
           tmp = {
@@ -1129,10 +1250,13 @@ export default {
         if (this.tabChoice === 4 && !k.startsWith("juicity_")) {
           continue;
         }
-        if (this.tabChoice === 5 && !k.startsWith("http_")) {
+        if (this.tabChoice === 5 && !k.startsWith("tuic_")) {
           continue;
         }
-        if (this.tabChoice === 6 && !k.startsWith("socks5_")) {
+        if (this.tabChoice === 6 && !k.startsWith("http_")) {
+          continue;
+        }
+        if (this.tabChoice === 7 && !k.startsWith("socks5_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1182,8 +1306,10 @@ export default {
       } else if (this.tabChoice === 4) {
         coded = this.generateURL(this.juicity);
       } else if (this.tabChoice === 5) {
-        coded = this.generateURL(this.http);
+        coded = this.generateURL(this.tuic);
       } else if (this.tabChoice === 6) {
+        coded = this.generateURL(this.http);
+      } else if (this.tabChoice === 7) {
         coded = this.generateURL(this.socks5);
       }
       this.$emit("submit", coded);
