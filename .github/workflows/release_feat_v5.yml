@@ -338,8 +338,6 @@ jobs:
               package_arch='arm7hf'
             elif [ "$GOARCH" == 'arm64' ];then
               package_arch='aarch64'
-            elif [ "$GOARCH" == '386' ];then
-              package_arch='i386'
             else
               package_arch="$GOARCH"
             fi
@@ -354,6 +352,8 @@ jobs:
           elif [ "$package_manager" == 'deb' ];then
             if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
               package_arch='armhf'
+              elif [ "$GOARCH" == '386' ];then
+                package_arch='i386'
             else
               package_arch="$GOARCH"
             fi
