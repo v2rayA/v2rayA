@@ -40,8 +40,11 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 		return err
 	}
-	supportedPrefix := []string{"vmess://", "vless://", "ss://", "ssr://", "trojan://", "trojan-go://", "http-proxy://",
-		"https-proxy://", "socks5://", "http2://", "juicity://"}
+	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
+		"https-proxy", "socks5", "http2", "juicity", "tuic"}
+	for i := range supportedPrefix {
+		supportedPrefix[i] += "://"
+	}
 	if PluginManagerValidateLink(url) || common.HasAnyPrefix(url, supportedPrefix) {
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
