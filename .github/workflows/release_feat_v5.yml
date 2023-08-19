@@ -478,19 +478,17 @@ jobs:
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-    
+
     - name: Download Artifacts
       uses: actions/download-artifact@v3
       with:
         path: builds/
-    
+
     - name: Prepare to Build Debian Repository
       run: |
         sudo apt install -y lintian reprepro gnupg gnupg2 expect
         mkdir -p install/debian
-        for deb_package in $(ls builds | grep installer | grep deb); do
-          mv builds/"$deb_package"/"$deb_package" ./"$deb_package"
-        done
+        mv builds/installer*.deb ./
 
     - name: Import GPG key
       id: import_gpg
@@ -504,6 +502,7 @@ jobs:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
+        ls -lh installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
         
@@ -633,4 +632,3 @@ jobs:
         gh release upload $tag_version --repo v2rayA/homebrew-v2raya v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
                                                                      v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
                                                                      v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
-
