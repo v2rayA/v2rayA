@@ -506,7 +506,7 @@ jobs:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
-        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya "installer_debian_*_$VERSION.deb"
+        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
         install/tool/reprepro_expect --ask-passphrase -Vb apt export
         
         mkdir apt/static/
