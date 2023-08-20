@@ -384,8 +384,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
 			// SNI
-			if v.Host != "" {
-				core.StreamSettings.TLSSettings.ServerName = v.Host
+			if v.SNI != "" {
+				core.StreamSettings.XTLSSettings.ServerName = v.SNI
+			} else if v.Host != "" {
+				core.StreamSettings.XTLSSettings.ServerName = v.Host
 			}
 			if v.AllowInsecure {
 				core.StreamSettings.XTLSSettings.AllowInsecure = true
