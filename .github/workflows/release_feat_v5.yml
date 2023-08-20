@@ -495,7 +495,7 @@ jobs:
         for deb_package in $(ls builds | grep installer | grep deb); do
           mv builds/"$deb_package"/"$deb_package" ./"$deb_package"
         done
-        for v2raya_bin in $(ls builds | grep -E "^v2raya"); do
+        for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
 
