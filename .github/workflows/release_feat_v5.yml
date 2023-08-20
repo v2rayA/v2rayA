@@ -506,7 +506,7 @@ jobs:
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
         mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
-        
+
     - name: Import GPG key
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v4
@@ -535,46 +535,6 @@ jobs:
         build_dir: apt
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-    - name: Deploy Demo Site Repository
-      uses: crazy-max/ghaction-github-pages@v2.5.0
-      with:
-        repo: v2rayA/v2raya-web
-        target_branch: master
-        build_dir: web
-      env:
-          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-    - name: Tag Demo Site Repository
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        script: |
-          const commit = await github.rest.repos.getCommit({
-            owner: context.repo.owner,
-            repo: 'v2raya-web',
-            ref: 'master'
-          });
-
-          try {
-            await github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: 'v2raya-web',
-              ref: context.ref,
-              sha: commit.data.sha.toString()
-            });
-          } catch(e) {
-            if ( e instanceof Error && e.status === 422 ) {
-              // the tag already exists, force update it
-              await github.rest.git.updateRef({
-                owner: context.repo.owner,
-                repo: 'v2raya-web',
-                ref: context.ref.replace(/^refs\//, ''),
-                sha: commit.data.sha.toString(),
-                force: true
-              });
-            };
-          };
 
     - name: AUR Release
       env:
