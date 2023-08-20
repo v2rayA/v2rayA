@@ -82,10 +82,8 @@ func IsTransparentOn(setting *configure.Setting) bool {
 	if setting.Transparent == configure.TransparentClose {
 		return false
 	}
-	if conf.GetEnvironmentConfig().Lite &&
+	return ! (
+	   conf.GetEnvironmentConfig().Lite &&
 		(setting.TransparentType == configure.TransparentTproxy ||
-			setting.TransparentType == configure.TransparentRedirect) {
-		return false
-	}
-	return true
+			setting.TransparentType == configure.TransparentRedirect) )
 }
