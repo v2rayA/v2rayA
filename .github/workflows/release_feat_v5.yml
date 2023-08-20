@@ -48,13 +48,20 @@ jobs:
       run: |
         yarn --cwd gui --check-files
         yarn --cwd gui build
+        echo "Use tar to generate web.tar.gz..."
+        tar -zcvf web.tar.gz web/
 
-    - name: Upload Artifact
+    - name: Upload Zip File to Artifacts
       uses: actions/upload-artifact@v3
       with:
         path: web/*
         name: web
 
+    - name: Upload the tar archive to Artifacts
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      with:
+        path: |
+          web.tar.gz
 
   Build_v2rayA_Binaries:
     
@@ -498,7 +505,8 @@ jobs:
         for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
-
+        mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
+        
     - name: Import GPG key
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v4
