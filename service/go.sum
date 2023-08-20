@@ -21,10 +21,10 @@ github.com/bytedance/sonic v1.9.1/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZX
 github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06/go.mod h1:DH46F32mSOjUmXrMHnKwZdA8wcEefY7UVqBKYGjpdQY=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 h1:qSGYFH7+jGhDF8vLC+iwCD4WpbV1EBDSzWkJODFLams=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
-github.com/daeuniverse/outbound v0.0.0-20230819131200-c3537109acd9 h1:SPPAQ6JZR0KnGG153pFGjPw5+hvTzn5/71K/ER32/uc=
-github.com/daeuniverse/outbound v0.0.0-20230819131200-c3537109acd9/go.mod h1:0MOSc+twby808YzJjBA2VOSd928vLQFhUzHLSdL7aKM=
-github.com/daeuniverse/softwind v0.0.0-20230814143152-387d19f00f24 h1:dS/EZvvq1BUoFWWNtM+T5GHjky0UbwIvGyA0pkkBIh4=
-github.com/daeuniverse/softwind v0.0.0-20230814143152-387d19f00f24/go.mod h1:fL1IT5Qi5oZsrZwq38b4HYQH5AFe8XofpuukHQByTbM=
+github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337 h1:UqN7tCRLkegKakaqvp5IVLkSDkTPejDDQx6DV4rqQyk=
+github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337/go.mod h1:TudG3v2+op0/guGF0mR4+KwE0q6SAoIqYMHztMZV66I=
+github.com/daeuniverse/softwind v0.0.0-20230819114735-f9ac67136333 h1:GMafiJkPDt7dN+0lSolVJn1Ic+OW4kf2gS6kQHoeq2M=
+github.com/daeuniverse/softwind v0.0.0-20230819114735-f9ac67136333/go.mod h1:CI7dM8EJdSqnKFu2BAcztIHPqDZSDMNeIQljw5gtGmA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -145,8 +145,8 @@ github.com/mustafaturan/bus v1.0.2 h1:2x3ErwZ0uUPwwZ5ZZoknEQprdaxr68Yl3mY8jDye1W
 github.com/mustafaturan/bus v1.0.2/go.mod h1:h7gfehm8TThv4Dcaa+wDQG7r7j6p74v+7ftr0Rq9i1Q=
 github.com/mustafaturan/monoton v1.0.0 h1:8SCej+JiNn0lyps7V+Jzc1CRAkDR4EZPWrTupQ61YCQ=
 github.com/mustafaturan/monoton v1.0.0/go.mod h1:FOnE7NV3s3EWPXb8/7+/OSdiMBbdlkV0Lz8p1dc+vy8=
-github.com/mzz2017/quic-go v0.0.0-20230809140948-2ea096492e36 h1:ikWpUK6uyLmECHFDL/ZU3KA86l7eqIpDf3L46GA42jI=
-github.com/mzz2017/quic-go v0.0.0-20230809140948-2ea096492e36/go.mod h1:DBA25b2LoPhrfSzOPE8KcDOicysx00qvvnqe0BpA8DQ=
+github.com/mzz2017/quic-go v0.0.0-20230819114412-3a32ba300654 h1:ppxERU3/+TuQ4w9u7gGuV4xpDxsocnxFIcnHZdJlmwA=
+github.com/mzz2017/quic-go v0.0.0-20230819114412-3a32ba300654/go.mod h1:DBA25b2LoPhrfSzOPE8KcDOicysx00qvvnqe0BpA8DQ=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/onsi/ginkgo/v2 v2.11.0 h1:WgqUCUt/lT6yXoQ8Wef0fsNn5cAuMK7+KT9UFRz2tcU=
