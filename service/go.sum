@@ -23,8 +23,8 @@ github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 h1:qSGYFH7+jGhD
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
 github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337 h1:UqN7tCRLkegKakaqvp5IVLkSDkTPejDDQx6DV4rqQyk=
 github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337/go.mod h1:TudG3v2+op0/guGF0mR4+KwE0q6SAoIqYMHztMZV66I=
-github.com/daeuniverse/softwind v0.0.0-20230819114735-f9ac67136333 h1:GMafiJkPDt7dN+0lSolVJn1Ic+OW4kf2gS6kQHoeq2M=
-github.com/daeuniverse/softwind v0.0.0-20230819114735-f9ac67136333/go.mod h1:CI7dM8EJdSqnKFu2BAcztIHPqDZSDMNeIQljw5gtGmA=
+github.com/daeuniverse/softwind v0.0.0-20230821142121-f4d871b5a8c9 h1:88k/mjYFuA5294C50M3rXMqRYaqSNAnuk9hnjY/xGMM=
+github.com/daeuniverse/softwind v0.0.0-20230821142121-f4d871b5a8c9/go.mod h1:K9Au9LY2ttqfAhZXxPPnyqt4Bue1dd/Xi8WPsZEgxOk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -145,8 +145,8 @@ github.com/mustafaturan/bus v1.0.2 h1:2x3ErwZ0uUPwwZ5ZZoknEQprdaxr68Yl3mY8jDye1W
 github.com/mustafaturan/bus v1.0.2/go.mod h1:h7gfehm8TThv4Dcaa+wDQG7r7j6p74v+7ftr0Rq9i1Q=
 github.com/mustafaturan/monoton v1.0.0 h1:8SCej+JiNn0lyps7V+Jzc1CRAkDR4EZPWrTupQ61YCQ=
 github.com/mustafaturan/monoton v1.0.0/go.mod h1:FOnE7NV3s3EWPXb8/7+/OSdiMBbdlkV0Lz8p1dc+vy8=
-github.com/mzz2017/quic-go v0.0.0-20230819114412-3a32ba300654 h1:ppxERU3/+TuQ4w9u7gGuV4xpDxsocnxFIcnHZdJlmwA=
-github.com/mzz2017/quic-go v0.0.0-20230819114412-3a32ba300654/go.mod h1:DBA25b2LoPhrfSzOPE8KcDOicysx00qvvnqe0BpA8DQ=
+github.com/mzz2017/quic-go v0.0.0-20230821141654-3dd2575ee6bc h1:2gjLlS2yBxXUGICgHSWGLS5LyRa0Lr6+w5GFiqOco/o=
+github.com/mzz2017/quic-go v0.0.0-20230821141654-3dd2575ee6bc/go.mod h1:j4yzgjc6nLseaxzQT/As8D7VRQMKASjVWXBunJGTF8Y=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/onsi/ginkgo/v2 v2.11.0 h1:WgqUCUt/lT6yXoQ8Wef0fsNn5cAuMK7+KT9UFRz2tcU=
@@ -178,8 +178,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c h1:ncq/mPwQF4JjgDlrVEn3C11VoGHZN7m8qihwgMEtzYw=
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=
-github.com/quic-go/qtls-go1-20 v0.3.1 h1:O4BLOM3hwfVF3AcktIylQXyl7Yi2iBNVy5QsV+ySxbg=
-github.com/quic-go/qtls-go1-20 v0.3.1/go.mod h1:X9Nh97ZL80Z+bX/gUXMbipO6OxdiDi58b/fMC9mAL+k=
+github.com/quic-go/qtls-go1-20 v0.3.2 h1:rRgN3WfnKbyik4dBV8A6girlJVxGand/d+jVKbQq5GI=
+github.com/quic-go/qtls-go1-20 v0.3.2/go.mod h1:X9Nh97ZL80Z+bX/gUXMbipO6OxdiDi58b/fMC9mAL+k=
 github.com/quic-go/quic-go v0.37.4 h1:ke8B73yMCWGq9MfrCCAw0Uzdm7GaViC3i39dsIdDlH4=
 github.com/quic-go/quic-go v0.37.4/go.mod h1:YsbH1r4mSHPJcLF4k4zruUkLBqctEMBDR6VPvcYjIsU=
 github.com/refraction-networking/utls v1.4.3 h1:BdWS3BSzCwWCFfMIXP3mjLAyQkdmog7diaD/OqFbAzM=

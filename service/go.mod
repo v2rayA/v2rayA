@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337
-	github.com/daeuniverse/softwind v0.0.0-20230819114735-f9ac67136333
+	github.com/daeuniverse/softwind v0.0.0-20230821142121-f4d871b5a8c9
 )
 
 require (
@@ -66,13 +66,13 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mzz2017/quic-go v0.0.0-20230819114412-3a32ba300654 // indirect
+	github.com/mzz2017/quic-go v0.0.0-20230821141654-3dd2575ee6bc // indirect
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pires/go-proxyproto v0.7.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/quic-go/qtls-go1-20 v0.3.1 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.2 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
