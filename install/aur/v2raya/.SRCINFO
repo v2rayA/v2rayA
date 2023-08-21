@@ -1,5 +1,5 @@
 pkgbase = v2raya
-	pkgdesc = A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Pingtunnel protocols
+	pkgdesc = A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols
 	pkgver = {{pkgver}}
 	pkgrel = 1
 	url = https://github.com/v2rayA/v2rayA
