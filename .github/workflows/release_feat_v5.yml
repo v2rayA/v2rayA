@@ -48,13 +48,20 @@ jobs:
       run: |
         yarn --cwd gui --check-files
         yarn --cwd gui build
+        echo "Use tar to generate web.tar.gz..."
+        tar -zcvf web.tar.gz web/
 
-    - name: Upload Artifact
+    - name: Upload Zip File to Artifacts
       uses: actions/upload-artifact@v3
       with:
         path: web/*
         name: web
 
+    - name: Upload the tar archive to Artifacts
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      with:
+        path: |
+          web.tar.gz
 
   Build_v2rayA_Binaries:
     
@@ -352,6 +359,10 @@ jobs:
           elif [ "$package_manager" == 'deb' ];then
             if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
               package_arch='armhf'
+            elif [ "$GOARCH" == '386' ];then
+              package_arch='i386'
+            elif [ "$GOARCH" == 'mipsle' ];then
+              package_arch='mips32le'
             else
               package_arch="$GOARCH"
             fi
@@ -458,7 +469,7 @@ jobs:
         $Installer_ARM64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
         ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
 
-  Update_Debian_Repository_and_AUR:
+  Build_APT_Repository_and_AUR:
 
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages]
@@ -478,17 +489,23 @@ jobs:
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-    
+
     - name: Download Artifacts
       uses: actions/download-artifact@v3
       with:
         path: builds/
-    
-    - name: Prepare to Build Debian Repository
+
+    - name: Prepare Builds
       run: |
-        sudo apt install -y lintian reprepro gnupg gnupg2 expect
+        sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
         mkdir -p install/debian
-        mv builds/installer*.deb ./
+        for deb_package in $(ls builds | grep installer | grep deb); do
+          mv builds/"$deb_package"/"$deb_package" ./"$deb_package"
+        done
+        for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
+          mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
+        done
+        mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
 
     - name: Import GPG key
       id: import_gpg
@@ -497,7 +514,7 @@ jobs:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
 
-    - name: Generate APT repository
+    - name: Generate APT Repository
       env:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
@@ -510,7 +527,7 @@ jobs:
         cp web.tar.gz apt/static/web_$VERSION.tar.gz
         echo "apt.v2raya.org" > apt/CNAME
 
-    - name: Deploy APT repository
+    - name: Deploy APT Repository
       uses: crazy-max/ghaction-github-pages@v2.5.0
       with:
         repo: v2rayA/v2raya-apt
@@ -518,46 +535,6 @@ jobs:
         build_dir: apt
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-    - name: Deploy Demo Site repository
-      uses: crazy-max/ghaction-github-pages@v2.5.0
-      with:
-        repo: v2rayA/v2raya-web
-        target_branch: master
-        build_dir: web
-      env:
-          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-    - name: Tag Demo Site repository
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        script: |
-          const commit = await github.rest.repos.getCommit({
-            owner: context.repo.owner,
-            repo: 'v2raya-web',
-            ref: 'master'
-          });
-
-          try {
-            await github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: 'v2raya-web',
-              ref: context.ref,
-              sha: commit.data.sha.toString()
-            });
-          } catch(e) {
-            if ( e instanceof Error && e.status === 422 ) {
-              // the tag already exists, force update it
-              await github.rest.git.updateRef({
-                owner: context.repo.owner,
-                repo: 'v2raya-web',
-                ref: context.ref.replace(/^refs\//, ''),
-                sha: commit.data.sha.toString(),
-                force: true
-              });
-            };
-          };
 
     - name: AUR Release
       env:
@@ -631,4 +608,3 @@ jobs:
         gh release upload $tag_version --repo v2rayA/homebrew-v2raya v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
                                                                      v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
                                                                      v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
-
