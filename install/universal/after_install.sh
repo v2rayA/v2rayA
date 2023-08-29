@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 systemctl daemon-reload
 
 ECHOLEN=$(echo -e|awk '{print length($0)}')
-if [ ${ECHOLEN} = '0' ]
+if [ "${ECHOLEN}" = '0' ]
 then
     ECHO='echo -e'
 else
