@@ -3,6 +3,13 @@ package service
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/coreObj"
@@ -10,12 +17,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"net"
-	"net/http"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 const HttpTestURL = "https://gstatic.com/generate_204"
@@ -145,9 +146,13 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		for {
 			l, err := net.Listen("tcp", "0.0.0.0:0")
 			if err == nil {
-				toClose = append(toClose, l)
 				port = l.Addr().(*net.TCPAddr).Port
-				break
+				toClose = append(toClose, l)
+				l2, err2 := net.Listen("udp", "0.0.0.0:"+strconv.Itoa(port))
+				if err2 == nil {
+					toClose = append(toClose, l2)
+					break
+				}
 			}
 		}
 		v2rayInboundPort := strconv.Itoa(port)
@@ -159,7 +164,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 				if err == nil {
 					toClose = append(toClose, l)
 					port = l.Addr().(*net.TCPAddr).Port
-					break
+					l2, err2 := net.Listen("udp", "0.0.0.0:"+strconv.Itoa(port))
+					if err2 == nil {
+						toClose = append(toClose, l2)
+						break
+					}
 				}
 			}
 			pluginPort = port
