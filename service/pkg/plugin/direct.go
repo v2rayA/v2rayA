@@ -18,7 +18,11 @@ func (d *Direct) Addr() string {
 
 // Dial implements Dialer.
 func (d *Direct) Dial(network string, addr string) (c net.Conn, err error) {
-	conn, err := direct.FullconeDirect.Dial("tcp", addr)
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "tcp",
+		Mark:    0x80,
+	}
+	conn, err := direct.FullconeDirect.Dial(magicNetwork.Encode(), addr)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +35,11 @@ func (d *Direct) Dial(network string, addr string) (c net.Conn, err error) {
 
 // DialUDP implements Dialer.
 func (d *Direct) DialUDP(network string, addr string) (pc net.PacketConn, writeTo net.Addr, err error) {
-	conn, err := direct.FullconeDirect.Dial("udp", addr)
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "udp",
+		Mark:    0x80,
+	}
+	conn, err := direct.FullconeDirect.Dial(magicNetwork.Encode(), addr)
 	if err != nil {
 		return nil, nil, err
 	}
