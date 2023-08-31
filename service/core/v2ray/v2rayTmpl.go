@@ -5,6 +5,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
+	"os"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
@@ -22,15 +32,6 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"net"
-	"net/url"
-	"os"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 type Template struct {

@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/server/service"
-	"time"
 )
 
 func GetPingLatency(ctx *gin.Context) {
@@ -61,7 +62,7 @@ func GetHttpLatency(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
-	wt, err = service.TestHttpLatency(wt, 8*time.Second, 128, false)
+	wt, err = service.TestHttpLatency(wt, 8*time.Second, 32, false)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
