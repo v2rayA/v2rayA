@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -136,23 +137,32 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
-	var toClose []net.Listener
+	var toClose []io.Closer
+	defer func() {
+		for _, l := range toClose {
+			_ = l.Close()
+		}
+	}()
 	for i, v := range vms {
 		if which[i].Latency != "" {
 			continue
 		}
 		//find a port for the inbound
+		t := time.Now()
 		var port int
 		for {
 			l, err := net.Listen("tcp", "0.0.0.0:0")
 			if err == nil {
 				port = l.Addr().(*net.TCPAddr).Port
 				toClose = append(toClose, l)
-				l2, err2 := net.Listen("udp", "0.0.0.0:"+strconv.Itoa(port))
+				l2, err2 := net.ListenPacket("udp", "0.0.0.0:"+strconv.Itoa(port))
 				if err2 == nil {
 					toClose = append(toClose, l2)
 					break
 				}
+			}
+			if time.Since(t) > 3*time.Second {
+				return nil, fmt.Errorf("timeout: failed to find availble ports")
 			}
 		}
 		v2rayInboundPort := strconv.Itoa(port)
@@ -164,11 +174,14 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 				if err == nil {
 					toClose = append(toClose, l)
 					port = l.Addr().(*net.TCPAddr).Port
-					l2, err2 := net.Listen("udp", "0.0.0.0:"+strconv.Itoa(port))
+					l2, err2 := net.ListenPacket("udp", "127.0.0.1:"+strconv.Itoa(port))
 					if err2 == nil {
 						toClose = append(toClose, l2)
 						break
 					}
+				}
+				if time.Since(t) > 3*time.Second {
+					return nil, fmt.Errorf("timeout: failed to find availble ports")
 				}
 			}
 			pluginPort = port
@@ -187,11 +200,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	for _, l := range toClose {
 		_ = l.Close()
 	}
+	toClose = nil
 	time.Sleep(30 * time.Millisecond)
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
-
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		return nil, err
 	}
