@@ -2,9 +2,10 @@ package ntp
 
 import (
 	"fmt"
-	"github.com/beevik/ntp"
 	"sync"
 	"time"
+
+	"github.com/beevik/ntp"
 )
 
 const (
@@ -27,11 +28,10 @@ func IsDatetimeSynced() (ok bool, t time.Time, err error) {
 		return ntpSyncCache.value, ntpSyncCache.realTime, nil
 	}
 	defer func() {
-		if err == nil {
-			ntpSyncCache.value = ok
-			ntpSyncCache.lastReq = time.Now()
-			ntpSyncCache.realTime = t
-		}
+		// Do not care about the success.
+		ntpSyncCache.value = ok
+		ntpSyncCache.lastReq = time.Now()
+		ntpSyncCache.realTime = t
 	}()
 	t, err = ntp.Time("ntp.aliyun.com")
 	if err != nil {
