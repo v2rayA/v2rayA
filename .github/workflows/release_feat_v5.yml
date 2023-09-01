@@ -118,7 +118,7 @@ jobs:
       WIN_SUF: ${{ matrix.win_suf }}
       CGO_ENABLED: 0
       NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Juicity protocols."
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
     
     steps:
     
@@ -275,7 +275,7 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       CGO_ENABLED: 0
       NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan and Juicity protocols."
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
 
     steps:
     
@@ -426,7 +426,8 @@ jobs:
         mkdir -p release
         for file in $(ls builds | grep -E "^installer|^v2raya"); do
           mv builds/$file/$file release/
-        done 
+        done
+        mv builds/web.tar.gz/web.tar.gz release/
         for file in $(ls release); do
           sha256sum release/$file | awk '{print $1}' > release/$file.sha256.txt
         done
@@ -604,7 +605,9 @@ jobs:
         GH_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}
       run: |
         tag_version=$(echo $VERSION | sed 's/v//g')
-        gh release create $tag_version --repo v2rayA/homebrew-v2raya --title "Releases $VERSION" --generate-notes
-        gh release upload $tag_version --repo v2rayA/homebrew-v2raya v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
-                                                                     v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
-                                                                     v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
+        gh release create $tag_version --repo v2rayA/homebrew-v2raya \
+          --title "Releases $VERSION" --generate-notes
+        gh release upload $tag_version --repo v2rayA/homebrew-v2raya \
+          v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
+          v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
+          v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
