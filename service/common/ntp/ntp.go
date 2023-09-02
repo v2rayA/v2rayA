@@ -1,11 +1,11 @@
 package ntp
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/beevik/ntp"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 const (
@@ -35,7 +35,9 @@ func IsDatetimeSynced() (ok bool, t time.Time, err error) {
 	}()
 	t, err = ntp.Time("ntp.aliyun.com")
 	if err != nil {
-		return false, time.Time{}, fmt.Errorf("IsDatetimeSynced: %w", err)
+		// Network error. Assume OK.
+		log.Warn("IsDatetimeSynced: %v", err)
+		return true, time.Now(), nil
 	}
 	if seconds := t.Sub(time.Now().UTC()).Seconds(); seconds >= 90 || seconds <= -90 {
 		return false, t, nil
