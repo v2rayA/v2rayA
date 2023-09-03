@@ -1,6 +1,7 @@
 name: Build & Release v2rayA
 
 on:
+  workflow_dispatch:
   push:
     branches: [ feat_v5 ]
     tags:
