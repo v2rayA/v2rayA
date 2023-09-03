@@ -906,7 +906,7 @@ export default {
           name: decodeURIComponent(u.hash),
           peer: u.params.peer || u.params.sni || "",
           allowInsecure:
-            u.params.allowInsecure === true || u.params.allowInsecure === "1",
+            u.params.allowInsecure === 'true' || u.params.allowInsecure === "1",
           method: "origin",
           obfs: "none",
           ssCipher: "aes-128-gcm",
@@ -945,7 +945,7 @@ export default {
           port: u.port,
           sni: u.params.sni || "",
           allowInsecure:
-            u.params.allow_insecure === true || u.params.allow_insecure === "1",
+            u.params.allow_insecure === 'true' || u.params.allow_insecure === "1",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           cc: u.params.congestion_control || "bbr",
           protocol: "juicity",
@@ -960,9 +960,9 @@ export default {
           port: u.port,
           sni: u.params.sni || "",
           allowInsecure:
-            u.params.allow_insecure === true || u.params.allow_insecure === "1",
+            u.params.allow_insecure === 'true' || u.params.allow_insecure === "1",
           disableSni:
-            u.params.disable_sni === true || u.params.disable_sni === "1",
+            u.params.disable_sni === 'true' || u.params.disable_sni === "1",
           alpn: u.params.alpn,
           cc: u.params.congestion_control || "bbr",
           udpRelayMode: u.params.udp_relay_mode || "native",
