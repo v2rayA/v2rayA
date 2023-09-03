@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337
-	github.com/daeuniverse/softwind v0.0.0-20230903055555-7f4d86119806
+	github.com/daeuniverse/softwind v0.0.0-20230903121035-afc8c5d27a4c
 )
 
 require (
@@ -101,6 +101,6 @@ require (
 //replace github.com/mzz2017/go-engine => ../../go-engine
 //replace github.com/v2rayA/beego/v2 => D:\beego
 
-// replace github.com/daeuniverse/softwind => ../../softwind
+replace github.com/daeuniverse/softwind => ../../softwind
 
 replace github.com/v2fly/v2ray-core/v5 => github.com/v2rayA/v2ray-core/v5 v5.0.0-20230812170925-960565fa0686
