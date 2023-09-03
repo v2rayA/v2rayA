@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
@@ -92,7 +93,7 @@ func checkSupport(toAppend []*configure.Which) (err error) {
 		for _, wt := range append(toAppend, configure.GetConnectedServers().Get()...) {
 			outbound2cnt[wt.Outbound]++
 			if outbound2cnt[wt.Outbound] > 1 {
-				return V2OnlyFeatureError
+				return fmt.Errorf("cannot select multiple servers: %w", V2OnlyFeatureError)
 			}
 		}
 	}
