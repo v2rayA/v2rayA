@@ -23,8 +23,8 @@ github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 h1:qSGYFH7+jGhD
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
 github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337 h1:UqN7tCRLkegKakaqvp5IVLkSDkTPejDDQx6DV4rqQyk=
 github.com/daeuniverse/outbound v0.0.0-20230819151251-3ce60883d337/go.mod h1:TudG3v2+op0/guGF0mR4+KwE0q6SAoIqYMHztMZV66I=
-github.com/daeuniverse/softwind v0.0.0-20230902065137-dcc321666f9a h1:Eb16FC5oAAM4jdPobNPgJqEiZGBkyjpzGVLWRtAVuis=
-github.com/daeuniverse/softwind v0.0.0-20230902065137-dcc321666f9a/go.mod h1:oUzDGY0PDAiXCEIm5DNMewP4KpCAOEXOzZJ7JEP1080=
+github.com/daeuniverse/softwind v0.0.0-20230903055555-7f4d86119806 h1:55CqGvDEDRbCUM4yv9BQuzlJ6nu+kdTF4492JvNyo04=
+github.com/daeuniverse/softwind v0.0.0-20230903055555-7f4d86119806/go.mod h1:oUzDGY0PDAiXCEIm5DNMewP4KpCAOEXOzZJ7JEP1080=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
