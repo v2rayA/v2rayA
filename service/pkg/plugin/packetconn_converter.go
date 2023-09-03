@@ -54,7 +54,7 @@ func (pc *PacketConnConverter) WriteTo(p []byte, _addr string) (n int, err error
 func (pc *PacketConnConverter) SetWriteBuffer(size int) error {
 	c, ok := pc.PacketConn.(interface{ SetWriteBuffer(int) error })
 	if !ok {
-		return fmt.Errorf("connection doesn't allow setting of send buffer size. Not a *net.UDPConn?")
+		return fmt.Errorf("connection doesn't allow setting of send buffer size. Not a *net.UDPConn?: %T", pc.PacketConn)
 	}
 	return c.SetWriteBuffer(size)
 }
@@ -62,7 +62,7 @@ func (pc *PacketConnConverter) SetWriteBuffer(size int) error {
 func (pc *PacketConnConverter) SetReadBuffer(size int) error {
 	c, ok := pc.PacketConn.(interface{ SetReadBuffer(int) error })
 	if !ok {
-		return fmt.Errorf("connection doesn't allow setting of send buffer size. Not a *net.UDPConn?")
+		return fmt.Errorf("connection doesn't allow setting of send buffer size. Not a *net.UDPConn?: %T", pc.PacketConn)
 	}
 	return c.SetReadBuffer(size)
 }
@@ -77,4 +77,32 @@ func (pc *PacketConnConverter) SyscallConn() (syscall.RawConn, error) {
 	return c.SyscallConn()
 }
 
+// ReadMsgUDP implements quic.OOBCapablePacketConn.
+func (conn *PacketConnConverter) ReadMsgUDP(b []byte, oob []byte) (n int, oobn int, flags int, addr *net.UDPAddr, err error) {
+	c, ok := conn.PacketConn.(interface {
+		ReadMsgUDP(b []byte, oob []byte) (n int, oobn int, flags int, addr *net.UDPAddr, err error)
+	})
+	if !ok {
+		return 0, 0, 0, nil, fmt.Errorf("connection doesn't allow to get ReadMsgUDP. Not a *net.UDPConn? : %T", conn.PacketConn)
+	}
+	return c.ReadMsgUDP(b, oob)
+}
+
+// WriteMsgUDP implements quic.OOBCapablePacketConn.
+func (conn *PacketConnConverter) WriteMsgUDP(b []byte, oob []byte, addr *net.UDPAddr) (n int, oobn int, err error) {
+	c, ok := conn.PacketConn.(interface {
+		WriteMsgUDP(b []byte, oob []byte, addr *net.UDPAddr) (n int, oobn int, err error)
+	})
+	if !ok {
+		return 0, 0, fmt.Errorf("connection doesn't allow to get WriteMsgUDP. Not a *net.UDPConn? : %T", conn.PacketConn)
+	}
+	return c.WriteMsgUDP(b, oob, addr)
+}
+
 var _ netproxy.PacketConn = &PacketConnConverter{}
+var _ interface {
+	SyscallConn() (syscall.RawConn, error)
+	SetReadBuffer(int) error
+	ReadMsgUDP(b, oob []byte) (n, oobn, flags int, addr *net.UDPAddr, err error)
+	WriteMsgUDP(b, oob []byte, addr *net.UDPAddr) (n, oobn int, err error)
+} = &PacketConnConverter{}
