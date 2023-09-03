@@ -1,7 +1,7 @@
 [Unit]
 Description=v2rayA Service
 Documentation=https://github.com/v2rayA/v2rayA/wiki
-After=network.target nss-lookup.target iptables.service ip6tables.service nftables.service
+After=network.target network-online.target nss-lookup.target iptables.service ip6tables.service nftables.service
 Wants=network.target
 
 [Service]
