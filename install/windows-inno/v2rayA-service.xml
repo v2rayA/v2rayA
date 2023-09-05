@@ -22,7 +22,7 @@ SOFTWARE.
 <service>
     <id>v2rayA</id>
     <name>v2rayA background service for Windows</name>
-    <description>v2rayA is a V2Ray client, compatible with SS, SSR, Trojan(trojan-go), Juicity protocols.</description>
+    <description>A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols.</description>
     <executable>%BASE%\bin\v2raya.exe</executable>
     <env name="PATH" value="%BASE%\bin\;%windir%\system32\"/>
     <arguments>--lite --log-file "v2raya.log" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
