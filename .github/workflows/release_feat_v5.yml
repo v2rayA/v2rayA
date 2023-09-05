@@ -237,15 +237,46 @@ jobs:
     - name: Build Windows Installer
       shell: pwsh
       run: |
+        ## Create Destination Directory
         New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\bin"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
-        Copy-Item D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe D:\v2raya-x86_64-windows\bin\v2raya.exe
-        pwsh -c .\install\windows-inno\build-helper.ps1
-        mv D:\installer_windows_inno_x64.exe .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-        mv D:\installer_windows_inno_arm64.exe .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        ## Copy v2rayA to Destination Directory
+        Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
+        ## Download and extract v2ray
+        $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
+        $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-arm64-v8a.zip"
+        Invoke-WebRequest $Url_v2ray_x64 -OutFile "D:\v2ray-windows-x64.zip"
+        Expand-Archive -Path "D:\v2ray-windows-x64.zip" -DestinationPath "D:\v2raya-x86_64-windows\bin\"
+        Move-Item -Path "D:\v2raya-x86_64-windows\bin\*.dat" -Destination "D:\v2raya-x86_64-windows\data\"
+        Remove-Item -Path "D:\v2raya-x86_64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
+        Invoke-WebRequest $Url_v2ray_A64 -OutFile "D:\v2ray-windows-A64.zip"
+        Expand-Archive -Path "D:\v2ray-windows-A64.zip" -DestinationPath "D:\v2raya-arm64-windows\bin\"
+        Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm64-windows\data\"
+        Remove-Item -Path "D:\v2raya-arm64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
+        ## Download WinSW
+        ## WinSW said they have a native ARM64 version, but I cannot find it, so use net4 version instead on ARM-based Windows.
+        ## See more in "https://visualstudiomagazine.com/articles/2022/08/12/net-framework-4-8-1.aspx"
+        $Url_WinSW = "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-net461.exe"
+        Invoke-WebRequest $Url_WinSW -OutFile "D:\WinSW.exe"
+        Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.exe"
+        Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-arm64-windows\v2rayA-service.exe"
+        ## Copy License and Service Config
+        Copy-Item -Path ".\LICENSE" -Destination "D:\LICENSE.txt"
+        Copy-Item -Path ".\install\windows-inno\v2rayA-service.xml" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.xml"
+        Copy-Item -Path ".\install\windows-inno\v2rayA-service.xml" -Destination "D:\v2raya-arm64-windows\v2rayA-service.xml"
+        ## Set Version
+        $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_x86_64.iss"
+        $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_arm64.iss"
+        ## Build Installer
+        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
+        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
+        ## Rename to Friendly Name
+        Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
