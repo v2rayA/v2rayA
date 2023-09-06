@@ -59,7 +59,7 @@ jobs:
         name: web
 
     - name: Upload the tar archive to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           web.tar.gz
@@ -182,7 +182,7 @@ jobs:
         mv build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
 
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
@@ -279,7 +279,7 @@ jobs:
         Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
 
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
@@ -370,8 +370,13 @@ jobs:
         sudo apt-get install -y libarchive-tools rpm tar unzip
         sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
         ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+        if [ -n "$(echo $GOARCH | grep mips)" ]; then
+          packages="deb rpm"
+        else
+          packages="deb rpm pacman"
+        fi
         sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
-        for package_manager in deb rpm pacman; do
+        for package_manager in $packages; do
           if [ "$package_manager" == 'pacman' ];then
             if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
               package_arch='arm7hf'
@@ -412,17 +417,20 @@ jobs:
             ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
             ./install/universal/v2raya.default=/etc/default/v2raya
         done
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
+        mkdir fpm_packages
+        [ -f installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman ] && \
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman \
+           fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm \
+           fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb \
+           fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
 
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.5
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
-          installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-          installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
-          installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
+          fpm_packages/*
 
   GitHub_Release:
     
@@ -501,11 +509,162 @@ jobs:
         $Installer_x64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
         $Installer_ARM64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
         ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
+  
+  Build_v2ray_Debian_Packages:
+
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    
+    - name: Install Tools
+      run: |
+        sudo apt-get update -y && sudo apt-get install -y wget curl unzip
+        sudo gem install fpm -v 1.15.1
+
+    - name: Check Version
+      run: |
+        v2ray_temp_file="./v2ray.version.temp"
+        if ! curl -s -I "https://github.com/v2fly/v2ray-core/releases/latest" > "$v2ray_temp_file"; then
+            echo "${RED}Error: Cannot get latest version of v2ray!${RESET}"
+            exit 1
+        fi
+        v2ray_version=$(grep -i ^location: "$v2ray_temp_file" | awk '{print $2}' | tr -d '\r' | awk -F 'tag/' '{print $2}')
+        rm -f "$v2ray_temp_file"
+        xray_temp_file="./xray.version.temp"
+        if ! curl -s -I "https://github.com/XTLS/Xray-core/releases/latest" > "$xray_temp_file"; then
+            echo "${RED}Error: Cannot get latest version of xray!${RESET}"
+            exit 1
+        fi
+        xray_version=$(grep -i ^location: "$xray_temp_file" | awk '{print $2}' | tr -d '\r' | awk -F 'tag/' '{print $2}')
+        rm -f "$xray_temp_file"
+        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
+        echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
+        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV
+        echo "XRAY_VERSION=$xray_version" >> $GITHUB_ENV
+
+    - name: Download v2ray and Xray
+      run: |
+        mkdir xray_unzipped
+        mkdir v2ray_unzipped
+        for arch in 64 32 arm64-v8a arm32-v7a mips32 mips32le mips64 mips64le riscv64; do
+          wget -q https://github.com/v2fly/v2ray-core/releases/download/$V2RAY_VERSION/v2ray-linux-$arch.zip
+          unzip -q v2ray-linux-$arch.zip -d v2ray_unzipped/v2ray-linux-$arch
+          wget -q https://github.com/XTLS/xray-core/releases/download/$XRAY_VERSION/Xray-linux-$arch.zip
+          unzip -q Xray-linux-$arch.zip -d xray_unzipped/xray-linux-$arch
+        done
+      
+    - name: Build v2ray Packages
+      run: |
+        mkdir v2ray_packages
+        package_version="$(echo "$V2RAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
+        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64; do
+        case $arch in
+          amd64)
+            source_dir="v2ray_unzipped/v2ray-linux-64"
+            ;;
+          i386)
+            source_dir="v2ray_unzipped/v2ray-linux-32"
+            ;;
+          arm64)
+            source_dir="v2ray_unzipped/v2ray-linux-arm64-v8a"
+            ;;
+          armhf)
+            source_dir="v2ray_unzipped/v2ray-linux-arm32-v7a"
+            ;;
+          mips)
+            source_dir="v2ray_unzipped/v2ray-linux-mips32"
+            ;;
+          mips32le)
+            source_dir="v2ray_unzipped/v2ray-linux-mips32le"
+            ;;
+          mips64)
+            source_dir="v2ray_unzipped/v2ray-linux-mips64"
+            ;;
+          mips64le)
+            source_dir="v2ray_unzipped/v2ray-linux-mips64le"
+            ;;
+          riscv64)
+            source_dir="v2ray_unzipped/v2ray-linux-riscv64"
+            ;;
+        esac
+        echo 'systemctl daemon-reload
+        if [ "$(systemctl is-active v2ray)" = "active" ]; then
+            systemctl restart v2ray
+        fi' > $source_dir/postinst
+        echo "systemctl daemon-reload" >> $source_dir/post-remove
+        sed -i 's|usr/local/bin/v2ray|usr/bin/v2ray|g' $source_dir/systemd/system/v2ray.service
+        sed -i 's|usr/local/bin/v2ray|usr/bin/v2ray|g' $source_dir/systemd/system/v2ray@.service
+        sed -i 's|usr/local/etc/v2ray|etc/v2ray|g' $source_dir/systemd/system/v2ray.service
+        sed -i 's|usr/local/etc/v2ray|etc/v2ray|g' $source_dir/systemd/system/v2ray@.service
+        fpm -s dir -t deb -a $arch --version $package_version \
+          --url 'https://v2fly.org/' --description 'A platform for building proxies to bypass network restrictions' \
+          --maintainer "v2raya@v2raya.org" --name v2ray --license 'MIT' \
+          --package ./v2ray_packages/v2ray_"$arch"_"$package_version".deb \
+          --after-install $source_dir/postinst \
+          --after-remove $source_dir/post-remove \
+          $source_dir/v2ray=/usr/bin/v2ray \
+          $source_dir/systemd/system/v2ray.service=/usr/lib/systemd/system/v2ray.service \
+          $source_dir/systemd/system/v2ray@.service=/usr/lib/systemd/system/v2ray@.service \
+          $source_dir/geoip.dat=/usr/share/v2ray/geoip.dat \
+          $source_dir/geoip-only-cn-private.dat=/usr/share/v2ray/geoip-only-cn-private.dat \
+          $source_dir/geosite.dat=/usr/share/v2ray/geosite.dat
+        done
+  
+    - name: Build Xray Packages
+      run: |
+        mkdir xray_packages
+        package_version="$(echo "$XRAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
+        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64; do
+        case $arch in
+          amd64)
+            source_dir="xray_unzipped/xray-linux-64"
+            ;;
+          i386)
+            source_dir="xray_unzipped/xray-linux-32"
+            ;;
+          arm64)
+            source_dir="xray_unzipped/xray-linux-arm64-v8a"
+            ;;
+          armhf)
+            source_dir="xray_unzipped/xray-linux-arm32-v7a"
+            ;;
+          mips)
+            source_dir="xray_unzipped/xray-linux-mips32"
+            ;;
+          mips32le)
+            source_dir="xray_unzipped/xray-linux-mips32le"
+            ;;
+          mips64)
+            source_dir="xray_unzipped/xray-linux-mips64"
+            ;;
+          mips64le)
+            source_dir="xray_unzipped/xray-linux-mips64le"
+            ;;
+          riscv64)
+            source_dir="xray_unzipped/xray-linux-riscv64"
+            ;;
+        esac
+        fpm -s dir -t deb -a $arch --version $package_version \
+          --url 'https://xtls.github.io/' --description 'Xray, Penetrates Everything. Also the best v2ray-core, with XTLS support. Fully compatible configuration' \
+          --maintainer "v2raya@v2raya.org" --name xray --license 'MPL-2.0' \
+          --package ./xray_packages/xray_"$arch"_"$package_version".deb \
+          $source_dir/xray=/usr/bin/xray \
+          $source_dir/geoip.dat=/usr/share/xray/geoip.dat \
+          $source_dir/geosite.dat=/usr/share/xray/geosite.dat
+        done
+
+    - name: Upload Artifact
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      with:
+        path: |
+          v2ray_packages/*
+          xray_packages/*
 
   Build_APT_Repository_and_AUR:
 
     runs-on: ubuntu-22.04
-    needs: [Build_v2rayA_Binaries, Build_Linux_Packages]
+    needs: [Build_v2rayA_Binaries, Build_Linux_Packages, Build_v2ray_Debian_Packages]
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
@@ -532,17 +691,23 @@ jobs:
       run: |
         sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
         mkdir -p install/debian
-        for deb_package in $(ls builds | grep installer | grep deb); do
+        for deb_package in $(ls builds | grep .deb); do
           mv builds/"$deb_package"/"$deb_package" ./"$deb_package"
         done
         for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
         mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
+        v2ray_version="$(ls | grep "^v2ray_" | grep amd64 | awk -F '_' '{print $3}' | sed 's/.deb//')"
+        xray_version="$(ls | grep "^xray_" | grep amd64 | awk -F '_' '{print $3}' | sed 's/.deb//')"
+        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
+        echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
+        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV
+        echo "XRAY_VERSION=$xray_version" >> $GITHUB_ENV
 
     - name: Import GPG key
       id: import_gpg
-      uses: crazy-max/ghaction-import-gpg@v4
+      uses: crazy-max/ghaction-import-gpg@v5.4.0
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
@@ -552,16 +717,15 @@ jobs:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
       run: |
         mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
-        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb
-        install/tool/reprepro_expect --ask-passphrase -Vb apt export
-        
+        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb xray_*_$XRAY_VERSION.deb v2ray_*_$V2RAY_VERSION.deb 
+        install/tool/reprepro_expect --ask-passphrase -Vb apt export       
         mkdir apt/static/
         cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/static/
         cp web.tar.gz apt/static/web_$VERSION.tar.gz
         echo "apt.v2raya.org" > apt/CNAME
 
     - name: Deploy APT Repository
-      uses: crazy-max/ghaction-github-pages@v2.5.0
+      uses: crazy-max/ghaction-github-pages@v3.2.0
       with:
         repo: v2rayA/v2raya-apt
         target_branch: master
