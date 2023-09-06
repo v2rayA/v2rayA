@@ -370,8 +370,13 @@ jobs:
         sudo apt-get install -y libarchive-tools rpm tar unzip
         sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
         ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+        if [ -n "$(echo $GOARCH | grep mips)" ]; then
+          packages="deb rpm"
+        else
+          packages="deb rpm pacman"
+        fi
         sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
-        for package_manager in deb rpm pacman; do
+        for package_manager in $packages; do
           if [ "$package_manager" == 'pacman' ];then
             if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
               package_arch='arm7hf'
@@ -412,9 +417,13 @@ jobs:
             ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
             ./install/universal/v2raya.default=/etc/default/v2raya
         done
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
+        [ -f installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman ] && \
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman \
+           installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm \
+           installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb \
+           installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
 
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
@@ -590,7 +599,7 @@ jobs:
         sed -i 's|usr/local/etc/v2ray|etc/v2ray|g' $source_dir/systemd/system/v2ray.service
         sed -i 's|usr/local/etc/v2ray|etc/v2ray|g' $source_dir/systemd/system/v2ray@.service
         fpm -s dir -t deb -a $arch --version $package_version \
-          --url 'https://v2fly.org/' --description 'A platform for building proxies to bypass network restrictions.' \
+          --url 'https://v2fly.org/' --description 'A platform for building proxies to bypass network restrictions' \
           --maintainer "v2raya@v2raya.org" --name v2ray --license 'MIT' \
           --package ./v2ray_packages/v2ray_"$arch"_"$package_version".deb \
           --after-install $source_dir/postinst \
@@ -638,7 +647,7 @@ jobs:
             ;;
         esac
         fpm -s dir -t deb -a $arch --version $package_version \
-          --url 'https://xtls.github.io/' --description 'A platform for building proxies to bypass network restrictions.' \
+          --url 'https://xtls.github.io/' --description 'Xray, Penetrates Everything. Also the best v2ray-core, with XTLS support. Fully compatible configuration' \
           --maintainer "v2raya@v2raya.org" --name xray --license 'MPL-2.0' \
           --package ./xray_packages/xray_"$arch"_"$package_version".deb \
           $source_dir/xray=/usr/bin/xray \
@@ -725,17 +734,17 @@ jobs:
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-    # - name: AUR Release
-    #   env:
-    #     P_DIR: ${{ steps.prep.outputs.P_DIR }}
-    #     SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-    #     SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-    #   run: |
-    #     eval $(ssh-agent)
-    #     echo "$SSH_PRIVATE_KEY" > ./key
-    #     chmod 0600 ./key
-    #     ./install/tool/ssh-add_expect ./key
-    #     bash install/aur/deploy.sh
+    - name: AUR Release
+      env:
+        P_DIR: ${{ steps.prep.outputs.P_DIR }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      run: |
+        eval $(ssh-agent)
+        echo "$SSH_PRIVATE_KEY" > ./key
+        chmod 0600 ./key
+        ./install/tool/ssh-add_expect ./key
+        bash install/aur/deploy.sh
 
   Release_to_Homebrew:
 
