@@ -727,7 +727,7 @@ jobs:
     - name: Deploy APT Repository
       uses: crazy-max/ghaction-github-pages@v3.2.0
       with:
-        repo: v2rayA/v2raya-apt-1
+        repo: v2rayA/v2raya-apt
         target_branch: master
         build_dir: apt
       env:
