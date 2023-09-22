@@ -336,7 +336,11 @@
                 :label="$t('server.address')"
                 sortable
               >
-                {{ props.row.address }}
+                <p 
+                  class="address-column" 
+                  :title="props.row.address">
+                  {{ props.row.address }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -354,7 +358,13 @@
                 sortable
                 :custom-sort="sortping"
               >
-                {{ props.row.pingLatency }}
+                <p 
+                  :class="{
+                      'latency-column': true,
+                    }" 
+                  :title="props.row.pingLatency">
+                  {{ props.row.pingLatency }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -466,7 +476,11 @@
                 :label="$t('server.address')"
                 sortable
               >
-                {{ props.row.address }}
+                <p 
+                  class="address-column" 
+                  :title="props.row.address">
+                  {{ props.row.address }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -485,7 +499,13 @@
                 sortable
                 :custom-sort="sortping"
               >
-                {{ props.row.pingLatency }}
+                <p 
+                   :class="{
+                      'latency-column': true,
+                    }" 
+                  :title="props.row.pingLatency">
+                  {{ props.row.pingLatency }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -1777,5 +1797,25 @@ tr.highlight-row-disconnected {
 
 .click-through {
   pointer-events: none;
+}
+.address-column {
+  max-width: 350px!important;
+  overflow: hidden!important;
+  text-overflow: ellipsis!important;
+}
+.latency-column {
+  max-width: 120px!important;
+  overflow: hidden!important;
+  text-overflow: ellipsis!important;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 1920px) {
+  .latency-column {
+    max-width: 70px!important;
+  }
+  .address-column {
+    max-width: 150px!important;
+  }
 }
 </style>
