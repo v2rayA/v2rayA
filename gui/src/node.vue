@@ -361,6 +361,7 @@
                 <p 
                   :class="{
                       'latency-column': true,
+                      'latency-valid': props.row.pingLatency.endsWith('ms')
                     }" 
                   :title="props.row.pingLatency">
                   {{ props.row.pingLatency }}
@@ -502,6 +503,7 @@
                 <p 
                    :class="{
                       'latency-column': true,
+                      'latency-valid': props.row.pingLatency.endsWith('ms')
                     }" 
                   :title="props.row.pingLatency">
                   {{ props.row.pingLatency }}
@@ -1808,6 +1810,9 @@ tr.highlight-row-disconnected {
   overflow: hidden!important;
   text-overflow: ellipsis!important;
   white-space: nowrap;
+}
+.latency-valid {
+  color: green;
 }
 
 @media screen and (max-width: 1920px) {
