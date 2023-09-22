@@ -4,6 +4,13 @@
       <p class="modal-card-title">{{ $t("configureSubscription.title") }}</p>
     </header>
     <section class="modal-card-body">
+      <b-field label="SUBSCRIPTION">
+        <b-input
+            v-model="which.address"
+            type="textarea"
+            :placeholder="$t('subscription.subscription')"
+        />
+      </b-field>
       <b-field label="REMARKS">
         <b-input
           v-model="which.remarks"

@@ -271,5 +271,6 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 		return fmt.Errorf("failed to find the corresponding subscription")
 	}
 	raw.Remarks = subscription.Remarks
+	raw.Address = subscription.Address
 	return configure.SetSubscription(subscription.ID-1, raw)
 }

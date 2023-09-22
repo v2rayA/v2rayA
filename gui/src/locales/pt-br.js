@@ -316,6 +316,6 @@ dns: {
     logModalTitle: "Visualizar logs",
     refreshInterval: "Intervalo de atualização",
     seconds: "segundos",
-    autoScoll: "Rolagem Automática
+    autoScoll: "Rolagem Automática"
   },
 };

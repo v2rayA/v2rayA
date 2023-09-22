@@ -59,6 +59,7 @@ export default {
     remarks: "Remarks",
     timeLastUpdate: "Datetime of Last Update",
     numberServers: "Number of Servers",
+    subscription: "Subscription",
   },
   operations: {
     name: "Operations",
