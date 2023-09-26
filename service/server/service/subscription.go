@@ -67,8 +67,8 @@ func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err
 	// 解析
 	infos = make([]serverObj.ServerObj, 0)
 	for _, row := range rows {
-		if strings.HasPrefix(row, "STATUS=") {
-			status = strings.TrimPrefix(row, "STATUS=")
+		if text, found := strings.CutPrefix(row, "STATUS="); found {
+			status = text
 			continue
 		}
 		var data serverObj.ServerObj
