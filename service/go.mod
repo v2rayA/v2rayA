@@ -35,8 +35,8 @@ require (
 	github.com/v2rayA/v2rayA-lib4 v0.0.0-20230812094818-595f87cb2a49
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.3.6
-	golang.org/x/net v0.14.0
-	golang.org/x/sys v0.11.0
+	golang.org/x/net v0.17.0
+	golang.org/x/sys v0.13.0
 	google.golang.org/grpc v1.57.0
 )
 
@@ -84,10 +84,10 @@ require (
 	gitlab.com/yawning/chacha20.git v0.0.0-20230427033715-7877545b1b37 // indirect
 	go4.org/netipx v0.0.0-20230728184502-ec4c8b891b28 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
