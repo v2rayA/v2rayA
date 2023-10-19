@@ -2,7 +2,7 @@
   <div
     ref="modal"
     class="modal-card modal-routinga"
-    style="width: 100%; height: 2000px; margin: auto"
+    style="width: 100%; height: 100%; margin: auto"
   >
     <header class="modal-card-head">
       <p class="modal-card-title">RoutingA</p>
