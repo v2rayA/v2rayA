@@ -878,6 +878,12 @@ export default {
         that.overHeight = e.target.scrollingElement.scrollTop > 50;
       }, 100);
     });
+
+    // if lastNodeTab in the local storage, set it as the current tab.
+    const { lastNodeTab } = localStorage;
+    if (lastNodeTab !== undefined) {
+      this.tab = parseInt(lastNodeTab);
+    }
   },
   methods: {
     refreshTableData(touch, running) {
@@ -1421,6 +1427,8 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     handleTabsChange(index) {
+      // store the index in local storage to remember the tab.
+      localStorage.lastNodeTab = index;
       this.checkedRows = [];
     },
     isCheckedRowsDeletable() {
