@@ -59,6 +59,7 @@ export default {
     remarks: "别名",
     timeLastUpdate: "上次更新时间",
     numberServers: "节点数",
+    subscription: "订阅",
   },
   operations: {
     name: "操作",

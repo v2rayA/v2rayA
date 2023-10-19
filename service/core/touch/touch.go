@@ -32,6 +32,7 @@ type Subscription struct {
 	ID      int                 `json:"id"`
 	TYPE    configure.TouchType `json:"_type"`
 	Host    string              `json:"host"`
+	Address string              `json:"address"`
 	Status  SubscriptionStatus  `json:"status"`
 	Info    string              `json:"info"`
 	Servers []Server            `json:"servers"`
@@ -88,6 +89,7 @@ func GenerateTouch() (t Touch) {
 			Remarks: v.Remarks,
 			ID:      i + 1,
 			Host:    u.Host,
+			Address: v.Address,
 			Status:  SubscriptionStatus(v.Status),
 			Servers: serverRawsToServers(v.Servers),
 			Info:    v.Info,
