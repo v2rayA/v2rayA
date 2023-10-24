@@ -1,9 +1,8 @@
 name: Build & Release v2rayA
-
 on:
   workflow_dispatch:
   push:
-    branches: [ feat_v5 ]
+    branches: [ main ]
     tags:
       - v*
     paths:
@@ -12,62 +11,40 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - "**/*.go"
-      - "go.mod"
-      - "go.sum"
-      - "gui/**"
-      - ".github/workflows/*.yml"
-
-
 jobs:
-  
   Build_v2rayA_Web:
-
     runs-on: ubuntu-22.04
-    
     steps:
-    
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: lts/*
         cache: 'yarn'
         cache-dependency-path: gui/yarn.lock
-
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
-
     - name: Build GUI
       run: |
         yarn --cwd gui --check-files
         yarn --cwd gui build
         echo "Use tar to generate web.tar.gz..."
         tar -zcvf web.tar.gz web/
-
     - name: Upload Zip File to Artifacts
       uses: actions/upload-artifact@v3
       with:
         path: web/*
         name: web
-
     - name: Upload the tar archive to Artifacts
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           web.tar.gz
-
   Build_v2rayA_Binaries:
-    
     strategy:
-      
       matrix:
         goos: [ linux ]
         goarch: [ amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips ]
@@ -108,10 +85,8 @@ jobs:
             goarch: arm64
           # END BSD
       fail-fast: false
-  
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Web]
-    
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
@@ -120,19 +95,15 @@ jobs:
       CGO_ENABLED: 0
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
-    
     steps:
-    
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
     - name: Download Artifact
       uses: actions/download-artifact@v3
       with:
         name: web
         path: service/server/router/web
-    
     - name: Get Friendly File Name
       shell: pwsh
       id: get_filename
@@ -140,7 +111,6 @@ jobs:
         $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
         Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
         Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
-  
     - name: Check Version
       id: prep
       env:
@@ -158,16 +128,13 @@ jobs:
         fi
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: ^1.21
-
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
-
     - name: Build v2rayA Binaries
       id: build
       run: |
@@ -180,24 +147,18 @@ jobs:
         go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$VERSION -s -w" -o ../build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF"
         cd ..
         mv build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
-  
   Build_Windows_Installers:
-
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries]
-
     steps:
-
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
     - name: Check Version
       id: prep
       env:
@@ -216,24 +177,20 @@ jobs:
         fi
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-
     - name: Download Artifact Windows x64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
-
     - name: Download Artifact Windows arm64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
-
     - name: Install Inno Setup
       shell: pwsh
       run: |
         choco install innosetup -y
-    
     - name: Build Windows Installer
       shell: pwsh
       run: |
@@ -277,30 +234,23 @@ jobs:
         ## Rename to Friendly Name
         Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
         Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
           installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
-
   Build_Linux_Packages:
-    
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries]
-
-
     strategy:
       matrix:
         goos: [linux]
         goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips]
-
         include:
           - goos: linux
             goarch: arm
             goarm: 7
-         
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
@@ -308,13 +258,10 @@ jobs:
       CGO_ENABLED: 0
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
-
     steps:
-    
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
     - name: Get Friendly File Name
       shell: pwsh
       id: get_filename
@@ -325,7 +272,6 @@ jobs:
         Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
         Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_OUTPUT}
         Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
-    
     - name: Check Version
       id: prep
       env:
@@ -347,23 +293,19 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_ENV
         echo "PACKAGE_VERSION=$package_version" >> $GITHUB_OUTPUT
         echo "PACKAGE_VERSION=$package_version" >> $GITHUB_ENV
-    
     - name: Download Artifact
       uses: actions/download-artifact@v3
       with:
         name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
         path: build/
-
     - name: Download x64 Linux Build
       uses: actions/download-artifact@v3
       with:
         name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: test/
-
     - name: Show Artifacts
       run: |
         ls -l build/
-
     - name: Build Packages
       run: |
         sudo gem install fpm -v 1.15.1
@@ -425,21 +367,16 @@ jobs:
            fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
         mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb \
            fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           fpm_packages/*
-
   GitHub_Release:
-    
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
-
     steps:
-    
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
@@ -454,12 +391,10 @@ jobs:
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-
     - name: Download Artifacts
       uses: actions/download-artifact@v3
       with:
         path: builds/
-
     - name: Move Files to Release Directory
       shell: bash
       run: |
@@ -472,7 +407,6 @@ jobs:
           sha256sum release/$file | awk '{print $1}' > release/$file.sha256.txt
         done
         ls -l release/
-    
     - name: Compress Web Files
       shell: pwsh
       run: |
@@ -480,14 +414,12 @@ jobs:
         ((Get-FileHash ./web.zip).hash).ToLower() > web.zip.sha256.txt
         Move-Item ./web.zip ./release/web.zip
         Move-Item ./web.zip.sha256.txt ./release/web.zip.sha256.txt
-
     - name: Upload Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.prep.outputs.VERSION }}
         files: |
           release/*
-        
     - name: Refresh Cloudflare Cache
       env:
         CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
@@ -500,7 +432,6 @@ jobs:
           -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
           -H "Content-Type: application/json" \
           --data '{"purge_everything":true}'
-
     - name: Submit to Microsoft winget
       shell: pwsh
       run: |
@@ -509,19 +440,14 @@ jobs:
         $Installer_x64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
         $Installer_ARM64_url = "https://hubmirror.v2raya.org/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
         ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
-  
   Build_v2ray_Debian_Packages:
-
     runs-on: ubuntu-22.04
     if: startsWith(github.ref, 'refs/tags/v')
-
     steps:
-    
     - name: Install Tools
       run: |
         sudo apt-get update -y && sudo apt-get install -y wget curl unzip
         sudo gem install fpm -v 1.15.1
-
     - name: Check Version
       run: |
         v2ray_temp_file="./v2ray.version.temp"
@@ -542,7 +468,6 @@ jobs:
         echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
         echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV
         echo "XRAY_VERSION=$xray_version" >> $GITHUB_ENV
-
     - name: Download v2ray and Xray
       run: |
         mkdir xray_unzipped
@@ -553,7 +478,6 @@ jobs:
           wget -q https://github.com/XTLS/xray-core/releases/download/$XRAY_VERSION/Xray-linux-$arch.zip
           unzip -q Xray-linux-$arch.zip -d xray_unzipped/xray-linux-$arch
         done
-      
     - name: Build v2ray Packages
       run: |
         mkdir v2ray_packages
@@ -610,7 +534,6 @@ jobs:
           $source_dir/geoip-only-cn-private.dat=/usr/share/v2ray/geoip-only-cn-private.dat \
           $source_dir/geosite.dat=/usr/share/v2ray/geosite.dat
         done
-  
     - name: Build Xray Packages
       run: |
         mkdir xray_packages
@@ -653,26 +576,20 @@ jobs:
           $source_dir/geoip.dat=/usr/share/xray/geoip.dat \
           $source_dir/geosite.dat=/usr/share/xray/geosite.dat
         done
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           v2ray_packages/*
           xray_packages/*
-
   Build_APT_Repository_and_AUR:
-
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages, Build_v2ray_Debian_Packages]
     if: startsWith(github.ref, 'refs/tags/v')
-
     steps:
-    
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
     - name: Check Version
       id: prep
       run: |
@@ -681,12 +598,10 @@ jobs:
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-
     - name: Download Artifacts
       uses: actions/download-artifact@v3
       with:
         path: builds/
-
     - name: Prepare Builds
       run: |
         sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
@@ -704,14 +619,12 @@ jobs:
         echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
         echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV
         echo "XRAY_VERSION=$xray_version" >> $GITHUB_ENV
-
     - name: Import GPG key
       id: import_gpg
       uses: crazy-max/ghaction-import-gpg@v5.4.0
       with:
         gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.SIGNING_PASSWORD }}
-
     - name: Generate APT Repository
       env:
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
@@ -723,7 +636,6 @@ jobs:
         cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/static/
         cp web.tar.gz apt/static/web_$VERSION.tar.gz
         echo "apt.v2raya.org" > apt/CNAME
-
     - name: Deploy APT Repository
       uses: crazy-max/ghaction-github-pages@v3.2.0
       with:
@@ -732,7 +644,6 @@ jobs:
         build_dir: apt
       env:
           GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
     - name: AUR Release
       env:
         P_DIR: ${{ steps.prep.outputs.P_DIR }}
@@ -744,19 +655,14 @@ jobs:
         chmod 0600 ./key
         ./install/tool/ssh-add_expect ./key
         bash install/aur/deploy.sh
-
   Release_to_Homebrew:
-
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries]
     if: startsWith(github.ref, 'refs/tags/v')
-
     steps:
-    
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
     - name: Check Version
       id: prep
       run: |
@@ -765,25 +671,21 @@ jobs:
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-
     - name: Download Artifacts Linux x64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
-
     - name: Download Artifacts macOS x64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
-
     - name: Download Artifacts macOS arm64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
-
     - name: Compress to Zip Files
       run: |
         mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-linux/v2raya
@@ -795,7 +697,6 @@ jobs:
         for file in $(ls v2raya-*.zip); do
           sha256sum $file > $file.sha256.txt
         done
-    
     - name: Upload to Homebrew Tap
       env:
         GH_TOKEN: ${{ secrets.HOMEBREW_V2RAYA_TOKEN }}

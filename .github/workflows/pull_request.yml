@@ -1,0 +1,31 @@
+name: Pull Request Check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "gui/**"
+      - ".github/workflows/*.yml"
+jobs:
+  Build_v2rayA:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: gui/yarn.lock
+    - name: Build GUI
+      run: |
+        bash -c ./build.sh
+    - name: Upload Zip File to Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        path: ./v2raya
+        name: v2raya_test

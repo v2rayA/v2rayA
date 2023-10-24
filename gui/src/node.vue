@@ -336,7 +336,11 @@
                 :label="$t('server.address')"
                 sortable
               >
-                {{ props.row.address }}
+                <p 
+                  class="address-column" 
+                  :title="props.row.address">
+                  {{ props.row.address }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -354,7 +358,14 @@
                 sortable
                 :custom-sort="sortping"
               >
-                {{ props.row.pingLatency }}
+                <p 
+                  :class="{
+                      'latency-column': true,
+                      'latency-valid': props.row.pingLatency.endsWith('ms')
+                    }" 
+                  :title="props.row.pingLatency">
+                  {{ props.row.pingLatency }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -466,7 +477,11 @@
                 :label="$t('server.address')"
                 sortable
               >
-                {{ props.row.address }}
+                <p 
+                  class="address-column" 
+                  :title="props.row.address">
+                  {{ props.row.address }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -485,7 +500,14 @@
                 sortable
                 :custom-sort="sortping"
               >
-                {{ props.row.pingLatency }}
+                <p 
+                   :class="{
+                      'latency-column': true,
+                      'latency-valid': props.row.pingLatency.endsWith('ms')
+                    }" 
+                  :title="props.row.pingLatency">
+                  {{ props.row.pingLatency }}
+                </p>
               </b-table-column>
               <b-table-column
                 v-slot="props"
@@ -856,6 +878,12 @@ export default {
         that.overHeight = e.target.scrollingElement.scrollTop > 50;
       }, 100);
     });
+
+    // if lastNodeTab in the local storage, set it as the current tab.
+    const { lastNodeTab } = localStorage;
+    if (lastNodeTab !== undefined) {
+      this.tab = parseInt(lastNodeTab);
+    }
   },
   methods: {
     refreshTableData(touch, running) {
@@ -1399,6 +1427,8 @@ export default {
     },
     // eslint-disable-next-line no-unused-vars
     handleTabsChange(index) {
+      // store the index in local storage to remember the tab.
+      localStorage.lastNodeTab = index;
       this.checkedRows = [];
     },
     isCheckedRowsDeletable() {
@@ -1777,5 +1807,28 @@ tr.highlight-row-disconnected {
 
 .click-through {
   pointer-events: none;
+}
+.address-column {
+  max-width: 350px!important;
+  overflow: hidden!important;
+  text-overflow: ellipsis!important;
+}
+.latency-column {
+  max-width: 120px!important;
+  overflow: hidden!important;
+  text-overflow: ellipsis!important;
+  white-space: nowrap;
+}
+.latency-valid {
+  color: green;
+}
+
+@media screen and (max-width: 1920px) {
+  .latency-column {
+    max-width: 70px!important;
+  }
+  .address-column {
+    max-width: 150px!important;
+  }
 }
 </style>
