@@ -11,6 +11,11 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/release_feat_v5.yml
+
 jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-22.04

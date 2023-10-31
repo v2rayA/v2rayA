@@ -4,8 +4,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "**/*.go"
-      - "go.mod"
-      - "go.sum"
+      - "service/go.mod"
+      - "service/go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
 jobs:
@@ -21,11 +21,31 @@ jobs:
         node-version: lts/*
         cache: 'yarn'
         cache-dependency-path: gui/yarn.lock
-    - name: Build GUI
+    - name: Build v2rayA
       run: |
-        bash -c ./build.sh
+        mkdir v2raya_bin
+        CurrentDir="$(pwd)"
+        if [ -d "$CurrentDir/.git" ]; then
+          date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git -C "$CurrentDir" rev-list --count HEAD)
+          commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+        else
+          version="unstable"
+        fi
+        cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
+        find "$CurrentDir"/service/server/router/web \! -name \*.png -a \! -name \*.gz -a \! -name index.html -a ! -type d -exec gzip -9 {} +
+        cd service
+        For GOOS in linux windows darwin; do
+          For GOARCH in amd64 arm64; do
+            if [ "$GOOS" = "windows" ]; then
+              GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o ../v2raya_bin/v2raya_pr_build_$GOOS_$GOARCH.exe
+            else
+              GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o ../v2raya_bin/v2raya_pr_build_$GOOS_$GOARCH
+            fi
+          done
+        done
     - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v3
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
-        path: ./v2raya
-        name: v2raya_test
+        path: v2raya_bin/*
