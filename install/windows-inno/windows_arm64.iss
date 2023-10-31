@@ -18,6 +18,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+ArchitecturesAllowed=arm64
 ArchitecturesInstallIn64BitMode=arm64
 DefaultDirName={autopf}\{#MyAppName}
 ; DisableDirPage=yes
