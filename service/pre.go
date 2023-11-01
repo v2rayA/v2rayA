@@ -2,6 +2,15 @@ package main
 
 import (
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"runtime"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
@@ -18,20 +27,13 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/router"
 	"github.com/v2rayA/v2rayA/server/service"
-	"net"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"runtime"
-	"sync"
-	"syscall"
-	"time"
-)
 
-import (
 	confv4 "github.com/v2rayA/v2rayA-lib4/conf"
+
 	touchv4 "github.com/v2rayA/v2rayA-lib4/core/touch"
+
 	configurev4 "github.com/v2rayA/v2rayA-lib4/db/configure"
+
 	servicev4 "github.com/v2rayA/v2rayA-lib4/server/service"
 )
 
@@ -109,7 +111,7 @@ func initConfigure() {
 		if !configurev4.IsConfigureNotExists() {
 			// There is different format in server and subscription.
 			// So we keep other content and reimport servers and subscriptions.
-			log.Warn("Migrating from v4 to feat_v5")
+			log.Warn("Migrating from v4 to main")
 			if err := copyfile.CopyFileContent(filepath.Join(
 				confv4.GetEnvironmentConfig().Config,
 				"boltv4.db",

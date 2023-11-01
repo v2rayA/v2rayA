@@ -14,7 +14,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - .github/workflows/release_feat_v5.yml
+      - .github/workflows/release_main.yml
 
 jobs:
   Build_v2rayA_Web:
