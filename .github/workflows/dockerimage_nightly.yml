@@ -2,7 +2,7 @@ name: v2raya-nightly-docker
 
 on:
   push:
-    branches: [ feat_v5 ]
+    branches: [ main ]
 
 jobs:
   build:

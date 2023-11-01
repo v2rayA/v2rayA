@@ -1,6 +1,6 @@
 # v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/v2rayA/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/v2rayA/v2rayA?label=travis-ci%20build)](https://travis-ci.org/v2rayA/v2rayA)
 
-[**English**](https://github.com/v2rayA/v2rayA/blob/feat_v5/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/feat_v5/README_zh.md)
+[**English**](https://github.com/v2rayA/v2rayA/blob/main/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/main/README_zh.md)
 
 v2rayA 是一个支持全局透明代理的 V2Ray 客户端，同时兼容 SS、SSR、Trojan(trojan-go)、Tuic 与 [Juicity](https://github.com/juicity)协议。 [[SSR支持清单]](https://github.com/v2rayA/dist/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
