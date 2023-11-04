@@ -33,7 +33,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	if !g.UpdateTime.IsZero() {
 		return g, nil
 	}
-	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://github.com/api/v2rayA/dist-v2ray-rules-dat/tags")
+	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/v2rayA/dist-v2ray-rules-dat/tags")
 	if err != nil {
 		err = fmt.Errorf("failed to get latest version of GFWList: %w", err)
 		return
