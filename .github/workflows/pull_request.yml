@@ -21,6 +21,10 @@ jobs:
         node-version: lts/*
         cache: 'yarn'
         cache-dependency-path: gui/yarn.lock
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.21
     - name: Build v2rayA
       run: |
         mkdir v2raya_bin
@@ -35,13 +39,13 @@ jobs:
         fi
         cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
         find "$CurrentDir"/service/server/router/web \! -name \*.png -a \! -name \*.gz -a \! -name index.html -a ! -type d -exec gzip -9 {} +
-        cd service
-        For GOOS in linux windows darwin; do
-          For GOARCH in amd64 arm64; do
-            if [ "$GOOS" = "windows" ]; then
-              GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o ../v2raya_bin/v2raya_pr_build_$GOOS_$GOARCH.exe
+        cd "$CurrentDir"/service
+        for os in linux windows darwin; do
+          for arch in amd64 arm64; do
+            if [ "$os" = "windows" ]; then
+              GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version".exe
             else
-              GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o ../v2raya_bin/v2raya_pr_build_$GOOS_$GOARCH
+              GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
             fi
           done
         done
