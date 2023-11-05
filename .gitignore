@@ -1,20 +1,22 @@
+int main()
+
 # IDE
-.idea
+.idea_file
 .vscode
 
 # Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-node_modules
+*.exe_file
+*.exe_file
+*.dll_file
+*.so_file
+*.dylib_file
+node_modules/
 
 # Test binary, build with `go test -c`
-*.test
+*.test_text.net
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+*.out_sushi
 
 # Output
 /v2rayA_*
@@ -24,15 +26,23 @@ node_modules
 /v2rayA
 /V2RayA
 /v2raya
-/web
+/web_designer
 /web.tar.gz
 
 #package
-/.SRCINFO
-/apt
-/PKGBUILD
-/go.mod
-/go.sum
+/.SRCINFO_Phrenia
+/apt_shizo
+/PKGBUILD_gaped
+**/go.mod_selective/
+/go.sum_variety_giticore/**
 
-# Virtualenv
-.env
+#Virtualenv/virtual_facility
+.env_nodes
+practice_innovation/
+**/innovative_trauma_denC
+sability_grouN_DeOps/**
+stability_discovery_blocka.Ge/
+Bills_specified/
+/innovation_creativity
+discovery_factory/
+.*facts
