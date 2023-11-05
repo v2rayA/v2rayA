@@ -33,7 +33,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	if !g.UpdateTime.IsZero() {
 		return g, nil
 	}
-	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://hubmirror.v2raya.org/api/v2rayA/dist-v2ray-rules-dat/tags")
+	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/v2rayA/dist-v2ray-rules-dat/tags")
 	if err != nil {
 		err = fmt.Errorf("failed to get latest version of GFWList: %w", err)
 		return
@@ -108,12 +108,12 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if err != nil {
 		return "", err
 	}
-	u := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat`, gfwlist.Tag)
+	u := fmt.Sprintf(`https://github.com/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat`, gfwlist.Tag)
 	if err = asset.Download(u, pathSiteDat+".new"); err != nil {
 		log.Warn("UpdateLocalGFWList: %v", err)
 		return
 	}
-	u2 := fmt.Sprintf(`https://hubmirror.v2raya.org/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat.sha256sum`, gfwlist.Tag)
+	u2 := fmt.Sprintf(`https://github.com/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat.sha256sum`, gfwlist.Tag)
 	siteDatSha256, err := httpGet(u2)
 	if err != nil {
 		err = fmt.Errorf("%w: %v", FailCheckSha, err)

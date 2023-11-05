@@ -14,11 +14,11 @@ func UpdateLocalGeoSite() (err error) {
 		return err
 	}
 
-	if err = asset.Download("https://hubmirror.v2raya.org/v2fly/domain-list-community/releases/latest/download/dlc.dat", pathSiteDat+".new"); err != nil {
+	if err = asset.Download("https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat", pathSiteDat+".new"); err != nil {
 		log.Warn("UpdateLocalGeoSite: %v", err)
 		return
 	}
-	siteDatSha256, err := httpGet("https://hubmirror.v2raya.org/v2fly/domain-list-community/releases/latest/download/dlc.dat.sha256sum")
+	siteDatSha256, err := httpGet("https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat.sha256sum")
 	if err != nil {
 		err = fmt.Errorf("%w: %v", FailCheckSha, err)
 		log.Warn("UpdateLocalGeoSite: %v", err)
