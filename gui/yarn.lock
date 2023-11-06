@@ -9,20 +9,25 @@
   dependencies:
     "@achrinza/strong-type" "0.1.11"
 
-"@achrinza/node-ipc@^10.1.9", "@achrinza/node-ipc@^9.2.5":
-  version "10.1.9"
-  resolved "https://registry.yarnpkg.com/@achrinza/node-ipc/-/node-ipc-10.1.9.tgz#69c1312f503611dd9fade321aeac625a87e940f8"
-  integrity sha512-GZD3VwqVumV6qg5/3dS1H1hYp971IlMsRMmnR9joS3LplL4+Ou6t2mxKbC22Na40rjBa0za+AN969PJ0gxgW+A==
+"@achrinza/node-ipc@^10.1.10", "@achrinza/node-ipc@^9.2.5":
+  version "10.1.10"
+  resolved "https://registry.yarnpkg.com/@achrinza/node-ipc/-/node-ipc-10.1.10.tgz#104bdc668f792841058e4b1a56ee02335ec7e216"
+  integrity sha512-eBP/YMdiaxFHQ5OlKfYpnarMtuMmdtv+iI21UeXL1yATZEGEvRm2gqPsnio6SRlarLt9/IxTQJl0b/6S5yX+1g==
   dependencies:
     "@achrinza/event-pubsub" "5.0.9"
+    "@achrinza/strong-type" "1.1.8"
     "@node-ipc/js-queue" "2.0.3"
     js-message "1.0.7"
-    strong-type "1.0.1"
 
 "@achrinza/strong-type@0.1.11":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@achrinza/strong-type/-/strong-type-0.1.11.tgz#4f8f22b19195c47edbd8411ba54f80452226a6a5"
   integrity sha512-35Ou0jcGHGKQS8a6lgdan+u3BajmL315ZpDhH2/WSRNgG1jPpizhe87epgLaotN4uY3kXaEbfRU56sBPMdR5LA==
+
+"@achrinza/strong-type@1.1.8":
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/@achrinza/strong-type/-/strong-type-1.1.8.tgz#17dbb04d330c90841f0fa8215a701800150db7eb"
+  integrity sha512-ub/mgPRjbqZmwhU3rGya745IMn9znh3cm4g2iGepzvzhZUlKhLRfdkVoUD+H1NLaHE30pRp/FQHEoHTAVcleBQ==
 
 "@ampproject/remapping@^2.1.0":
   version "2.2.0"
@@ -6792,11 +6797,6 @@ strip-json-comments@^3.1.0, strip-json-comments@^3.1.1:
   version "3.1.1"
   resolved "https://registry.npmmirror.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
-
-strong-type@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/strong-type/-/strong-type-1.0.1.tgz#501d15117a0750472c39c09cad49b74a191daaca"
-  integrity sha512-K8KEzne00nA5HG3eSIPy44adqGTAMnNlpfvRWtiv8QvRsRm0/rMLHtSoppJ11iFtnmzzpgeYogzdY2YMgrUgOA==
 
 stylehacks@^5.1.1:
   version "5.1.1"
