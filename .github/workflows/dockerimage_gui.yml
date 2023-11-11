@@ -11,6 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Build gui
+        working-directory: gui
+        run: |
+          yarn install
+          yarn build
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx

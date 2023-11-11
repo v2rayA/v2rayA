@@ -1,8 +1,3 @@
-FROM node:lts-alpine AS builder
-ADD gui /gui
-WORKDIR /gui
-RUN yarn install --immutable && yarn build
-
 FROM nginx:stable-alpine
-COPY --from=builder /web /usr/share/nginx/html
+ADD web /usr/share/nginx/html
 EXPOSE 80
