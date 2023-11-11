@@ -4,13 +4,13 @@ ADD .git ./.git
 RUN git describe --abbrev=0 --tags | tee ./version
 
 
-FROM node:lts-alpine AS builder-web
-ADD gui /build/gui
-WORKDIR /build/gui
-RUN echo "network-timeout 600000" >> .yarnrc
+# FROM node:lts-alpine AS builder-web
+# ADD gui /build/gui
+# WORKDIR /build/gui
+# RUN echo "network-timeout 600000" >> .yarnrc
 #RUN yarn config set registry https://registry.npm.taobao.org
 #RUN yarn config set sass_binary_site https://cdn.npm.taobao.org/dist/node-sass -g
-RUN yarn cache clean && yarn install --immutable && yarn build
+# RUN yarn cache clean && yarn && yarn build
 
 FROM golang:alpine AS builder
 ADD service /build/service
