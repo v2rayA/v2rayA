@@ -14,7 +14,7 @@ RUN git describe --abbrev=0 --tags | tee ./version
 
 FROM golang:alpine AS builder
 ADD service /build/service
-ADD web server/router/web
+ADD web /build/service/server/router/web
 WORKDIR /build/service
 COPY --from=version /build/version ./
 # COPY --from=builder-web /build/web server/router/web
