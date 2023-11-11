@@ -14,9 +14,10 @@ RUN yarn cache clean && yarn install --immutable && yarn build
 
 FROM golang:alpine AS builder
 ADD service /build/service
+ADD web server/router/web
 WORKDIR /build/service
 COPY --from=version /build/version ./
-COPY --from=builder-web /build/web server/router/web
+# COPY --from=builder-web /build/web server/router/web
 RUN export VERSION=$(cat ./version) && CGO_ENABLED=0 go build -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${VERSION:1} -s -w" -o v2raya .
 
 FROM v2fly/v2fly-core
