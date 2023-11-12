@@ -380,7 +380,7 @@ jobs:
           fpm_packages/*
   GitHub_Release:
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
+    runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
     steps:
     - uses: actions/checkout@v3
@@ -426,26 +426,18 @@ jobs:
         tag_name: v${{ steps.prep.outputs.VERSION }}
         files: |
           release/*
-    # - name: Refresh Cloudflare Cache
-    #   env:
-    #     CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
-    #     CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
-    #     CF_ZONE: ${{ secrets.CF_ZONE }}
-    #   shell: bash
-    #   run: |
-    #     curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
-    #       -H "X-Auth-Email: $CF_AUTH_EMAIL" \
-    #       -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
-    #       -H "Content-Type: application/json" \
-    #       --data '{"purge_everything":true}'
-    # - name: Submit to Microsoft winget
-    #   shell: pwsh
-    #   run: |
-    #     iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-    #     Start-Sleep -Seconds 30 #Make sure GitHub releases are online
-    #     $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
-    #     $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
-    #     ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
+    - name: Refresh Cloudflare Cache
+      env:
+        CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
+        CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
+        CF_ZONE: ${{ secrets.CF_ZONE }}
+      shell: bash
+      run: |
+        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+          -H "X-Auth-Email: $CF_AUTH_EMAIL" \
+          -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
+          -H "Content-Type: application/json" \
+          --data '{"purge_everything":true}'
   Build_v2ray_Debian_Packages:
     runs-on: ubuntu-22.04
     if: startsWith(github.ref, 'refs/tags/v')
@@ -758,7 +750,7 @@ jobs:
         cache-to: type=gha,mode=max
   Release_v2rayA_GUI_to_Docker:
     runs-on: ubuntu-22.04
-    needs: [GitHub_Release]
+    needs: [Build_v2rayA_Web]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v3
@@ -799,3 +791,33 @@ jobs:
         tags: mzz2017/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
+  Submit_to_Microsoft_winget:
+    runs-on: windows-latest
+    needs: [GitHub_Release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - name: Check Version
+      id: prep
+      env:
+        REF: ${{ github.ref }}
+      shell: bash
+      run: |
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        if [[ "$REF" == "refs/tags/v"* ]]; then
+          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          version=${tag:1}
+        else
+          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+        fi
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+    - name: Submit to Microsoft winget
+      shell: pwsh
+      run: |
+        iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+        $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
+        $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
+        ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
