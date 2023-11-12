@@ -1,0 +1,7 @@
+FROM alpine:latest
+RUN apk add --no-cache iptables ip6tables nftables
+COPY Real_v2rayA_PATH /usr/bin/v2raya
+CMD [“/usr/bin/v2raya”]
+EXPOSE 2017
+VOLUME /etc/v2raya
+ENTRYPOINT ["v2raya"]
