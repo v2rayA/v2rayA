@@ -1,0 +1,4 @@
+FROM nginx:stable-alpine
+WORKDIR /build
+COPY ./web /usr/share/nginx/html
+EXPOSE 80

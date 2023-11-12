@@ -1,4 +1,5 @@
 name: Build & Release v2rayA
+
 on:
   workflow_dispatch:
   push:
@@ -379,7 +380,7 @@ jobs:
           fpm_packages/*
   GitHub_Release:
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
+    runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
     steps:
     - uses: actions/checkout@v3
@@ -437,14 +438,6 @@ jobs:
           -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
           -H "Content-Type: application/json" \
           --data '{"purge_everything":true}'
-    - name: Submit to Microsoft winget
-      shell: pwsh
-      run: |
-        iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-        Start-Sleep -Seconds 30 #Make sure GitHub releases are online
-        $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
-        $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
-        ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
   Build_v2ray_Debian_Packages:
     runs-on: ubuntu-22.04
     if: startsWith(github.ref, 'refs/tags/v')
@@ -676,17 +669,17 @@ jobs:
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-    - name: Download Artifacts Linux x64
+    - name: Download Artifact Linux x64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
-    - name: Download Artifacts macOS x64
+    - name: Download Artifact macOS x64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
-    - name: Download Artifacts macOS arm64
+    - name: Download Artifact macOS arm64
       uses: actions/download-artifact@v3
       with:
         name: v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
@@ -713,3 +706,118 @@ jobs:
           v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
           v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
           v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
+  Release_v2rayA_to_Docker:
+    runs-on: ubuntu-22.04
+    needs: [GitHub_Release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Check Version
+      id: prep
+      run: |
+        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        version=${tag:1}
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+        TAG=$(echo $GITHUB_REF | cut -d / -f 3)
+        IMAGE="mzz2017/v2raya"
+        echo image=${IMAGE} >> $GITHUB_OUTPUT
+        echo tag=${TAG} >> $GITHUB_OUTPUT
+        sed -i "s|Realv2rayAVersion|$version|g" install/docker/docker_helper.sh
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3.0.0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to DockerHub
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build and push
+      uses: docker/build-push-action@v5.0.0
+      with:
+        context: .
+        builder: ${{ steps.buildx.outputs.name }}
+        file: install/docker/Dockerfile.Action
+        platforms: linux/arm,linux/arm64,linux/amd64
+        push: true
+        tags: |
+          ${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
+          ${{ steps.prep.outputs.image }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+  Release_v2rayA_GUI_to_Docker:
+    runs-on: ubuntu-22.04
+    needs: [Build_v2rayA_Web]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Check Version
+      id: prep
+      run: |
+        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        version=${tag:1}
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+        TAG=$(echo $GITHUB_REF | cut -d / -f 3)
+        IMAGE="mzz2017/v2raya-gui"
+        echo image=${IMAGE} >> $GITHUB_OUTPUT
+    - name: Download Web Files
+      uses: actions/download-artifact@v3
+      with:
+        name: web
+        path: web
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3.0.0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to DockerHub
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build and push
+      uses: docker/build-push-action@v5.0.0
+      with:
+        context: .
+        builder: ${{ steps.buildx.outputs.name }}
+        file: install/docker/Dockerfile.GUI.Action
+        platforms: linux/arm,linux/arm64,linux/amd64
+        push: true
+        tags: mzz2017/v2raya-gui:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+  Submit_to_Microsoft_winget:
+    runs-on: windows-latest
+    needs: [GitHub_Release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - name: Check Version
+      id: prep
+      env:
+        REF: ${{ github.ref }}
+      shell: bash
+      run: |
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        if [[ "$REF" == "refs/tags/v"* ]]; then
+          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          version=${tag:1}
+        else
+          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+        fi
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+    - name: Submit to Microsoft winget
+      shell: pwsh
+      run: |
+        iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+        $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
+        $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
+        ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
