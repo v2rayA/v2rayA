@@ -2,14 +2,14 @@
 # yarn lockfile v1
 
 
-"@achrinza/event-pubsub@5.0.9":
-  version "5.0.9"
-  resolved "https://registry.yarnpkg.com/@achrinza/event-pubsub/-/event-pubsub-5.0.9.tgz#ea6c4ee48bee9f50dac253ee08c1f65b144e1e84"
-  integrity sha512-49RyPP7w4abKMsLRHKgB9neAH085mdHQtv+0H5TnJeOq3oK57qQRd/JD9K5Z5D3vFODsvBODiBjYkRQZKdqiAA==
+"@achrinza/event-pubsub@5.0.9", "@achrinza/event-pubsub@^5":
+  version "5.0.10"
+  resolved "https://registry.yarnpkg.com/@achrinza/event-pubsub/-/event-pubsub-5.0.10.tgz#325983d714bb422854a5dae26fa5b5f1ffe98265"
+  integrity sha512-UZl6Ake58eS0mPMC9xc9445ZVxpmLxsLrMLIpcFgtmbEuFTT/PlW3x4omstmRreGwk09VQvnn5ojGccf8DA1CA==
   dependencies:
-    "@achrinza/strong-type" "0.1.11"
+    "@achrinza/strong-type" "0.1.13"
 
-"@achrinza/node-ipc@^10.1.10", "@achrinza/node-ipc@^9.2.5":
+"@achrinza/node-ipc@^10", "@achrinza/node-ipc@^10.1.10", "@achrinza/node-ipc@^9.2.5":
   version "10.1.10"
   resolved "https://registry.yarnpkg.com/@achrinza/node-ipc/-/node-ipc-10.1.10.tgz#104bdc668f792841058e4b1a56ee02335ec7e216"
   integrity sha512-eBP/YMdiaxFHQ5OlKfYpnarMtuMmdtv+iI21UeXL1yATZEGEvRm2gqPsnio6SRlarLt9/IxTQJl0b/6S5yX+1g==
@@ -19,10 +19,10 @@
     "@node-ipc/js-queue" "2.0.3"
     js-message "1.0.7"
 
-"@achrinza/strong-type@0.1.11":
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/@achrinza/strong-type/-/strong-type-0.1.11.tgz#4f8f22b19195c47edbd8411ba54f80452226a6a5"
-  integrity sha512-35Ou0jcGHGKQS8a6lgdan+u3BajmL315ZpDhH2/WSRNgG1jPpizhe87epgLaotN4uY3kXaEbfRU56sBPMdR5LA==
+"@achrinza/strong-type@0.1.13":
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/@achrinza/strong-type/-/strong-type-0.1.13.tgz#b1ac628eb049d0b632a5112ca02b08077c228ea3"
+  integrity sha512-I/m3inAuY2ptJ4RMe0ZKHZrlIXvTIUJHpOCkKCr4qvPpmKoYvOK5ty+mPIGllJJQ9lm78Oo5b4CY9Y77jAlVMQ==
 
 "@achrinza/strong-type@1.1.8":
   version "1.1.8"
