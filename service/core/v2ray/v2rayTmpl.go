@@ -993,14 +993,29 @@ func (t *Template) appendDNSOutbound() {
 }
 
 func (t *Template) setSendThrough() {
-	conn, err := net.DialTimeout("udp", "www.microsoft.com:80", 5*time.Second)
+	ip, err := GetLanIP4()
 	if err != nil {
 		return
 	}
-	sendThrough := conn.LocalAddr().(*net.UDPAddr).IP.String()
+	sendThrough := ip.String()
 	for i := 0; i < len(t.Outbounds); i++ {
 		t.Outbounds[i].SendThrough = sendThrough
 	}
+}
+
+func GetLanIP4() (net.IP, error) {
+	addresses, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
+	}
+	for _, addr := range addresses {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP, nil
+			}
+		}
+	}
+	return net.IPv4zero, errors.New("lan not found")
 }
 
 func GenerateIdFromAccounts() (id string, err error) {

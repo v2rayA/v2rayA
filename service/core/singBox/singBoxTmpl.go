@@ -131,7 +131,8 @@ func NewTunTemplate(setting *configure.Setting) (t *Template) {
 			StrictRoute: false,
 			Stack:       stack,
 			Listen: net.Listen{
-				Sniff: true,
+				Sniff:                    true,
+				SniffOverrideDestination: true,
 			},
 		},
 	})
