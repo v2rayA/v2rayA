@@ -7,6 +7,7 @@ import (
 
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
+	"github.com/v2rayA/v2rayA/core/singBox"
 	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -21,6 +22,7 @@ func deleteTransparentProxyRules() {
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
 	}
 	iptables.SystemProxy.GetCleanCommands().Run(false)
+	singBox.CleanTunnel()
 	time.Sleep(30 * time.Millisecond)
 }
 
@@ -55,6 +57,10 @@ func writeTransparentProxyRules() (err error) {
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
 			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)
+		}
+	case configure.TransparentGvisorTun, configure.TransparentSystemTun:
+		if err = singBox.SetupTunnel(setting); err != nil {
+			return fmt.Errorf("not support \"tun\" mode of transparent proxy: %w", err)
 		}
 	default:
 		return fmt.Errorf("undefined \"%v\" mode of transparent proxy", setting.TransparentType)

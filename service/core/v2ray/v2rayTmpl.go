@@ -992,6 +992,17 @@ func (t *Template) appendDNSOutbound() {
 	})
 }
 
+func (t *Template) setSendThrough() {
+	conn, err := net.DialTimeout("udp", "www.microsoft.com:80", 5*time.Second)
+	if err != nil {
+		return
+	}
+	sendThrough := conn.LocalAddr().(*net.UDPAddr).IP.String()
+	for i := 0; i < len(t.Outbounds); i++ {
+		t.Outbounds[i].SendThrough = sendThrough
+	}
+}
+
 func GenerateIdFromAccounts() (id string, err error) {
 	accounts, err := configure.GetAccounts()
 	if err != nil {
@@ -1052,6 +1063,16 @@ func (t *Template) setInbound() error {
 				Protocol: "http",
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
+			})
+		case configure.TransparentGvisorTun, configure.TransparentSystemTun:
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     52345,
+				Protocol: "socks",
+				Listen:   "127.0.0.1",
+				Settings: &coreObj.InboundSettings{
+					UDP: true,
+				},
+				Tag: "transparent",
 			})
 		}
 
@@ -1603,6 +1624,9 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 
 	//set inbound listening address and routing
 	t.setDualStack()
+
+	//set outbound sendThrough address
+	t.setSendThrough()
 
 	//check if there are any duplicated tags
 	if err = t.checkDuplicatedTags(); err != nil {
