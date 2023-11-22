@@ -13,5 +13,4 @@ else
 fi
 # https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
 cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
-find "$CurrentDir"/service/server/router/web \! -name \*.png -a \! -name \*.gz -a \! -name index.html -a ! -type d -exec gzip -9 {} +
 cd "$CurrentDir"/service && CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya
