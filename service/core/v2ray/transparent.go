@@ -8,6 +8,7 @@ import (
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/specialMode"
+	"github.com/v2rayA/v2rayA/core/tun"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -19,6 +20,7 @@ func deleteTransparentProxyRules() {
 		iptables.Tproxy.GetCleanCommands().Run(false)
 		iptables.Redirect.GetCleanCommands().Run(false)
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
+		tun.Default.Close()
 	}
 	iptables.SystemProxy.GetCleanCommands().Run(false)
 	time.Sleep(30 * time.Millisecond)
@@ -52,6 +54,14 @@ func writeTransparentProxyRules() (err error) {
 			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(iptables.Redirect)
+	case configure.TransparentGvisorTun:
+		if err = tun.Default.Start(tun.StackGvisor); err != nil {
+			return fmt.Errorf("not support \"gvisor tun\" mode of transparent proxy: %w", err)
+		}
+	case configure.TransparentSystemTun:
+		if err = tun.Default.Start(tun.StackSystem); err != nil {
+			return fmt.Errorf("not support \"system tun\" mode of transparent proxy: %w", err)
+		}
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
 			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)

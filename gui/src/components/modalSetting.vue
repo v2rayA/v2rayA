@@ -121,6 +121,8 @@
         <b-select v-model="transparentType" expanded class="left-border">
           <option v-show="!lite" value="redirect">redirect</option>
           <option v-show="!lite" value="tproxy">tproxy</option>
+          <option v-show="!lite" value="gvisor_tun">gvisor tun</option>
+          <option v-show="!lite" value="system_tun">system tun</option>
           <option value="system_proxy">system proxy</option>
         </b-select>
       </b-field>
