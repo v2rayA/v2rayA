@@ -1,7 +1,7 @@
 package lru
 
 import (
-	"github.com/v2rayA/v2rayA/infra/dataStructure/linklist"
+	"container/list"
 	"sync"
 	"time"
 )
@@ -14,9 +14,9 @@ const (
 )
 
 type LRU struct {
-	list         *linklist.Linklist
-	index        map[interface{}]*linklist.Node
-	reverseIndex map[*linklist.Node]interface{}
+	list         *list.List
+	index        map[interface{}]*list.Element
+	reverseIndex map[*list.Element]interface{}
 	mutex        sync.Mutex
 	strategy     LimitStrategy
 	limit        int64
@@ -29,9 +29,9 @@ type EncapsulatedValue struct {
 
 func New(strategy LimitStrategy, limit int64) *LRU {
 	return &LRU{
-		index:        make(map[interface{}]*linklist.Node),
-		reverseIndex: make(map[*linklist.Node]interface{}),
-		list:         linklist.NewLinklist(),
+		index:        make(map[interface{}]*list.Element),
+		reverseIndex: make(map[*list.Element]interface{}),
+		list:         list.New(),
 		strategy:     strategy,
 		limit:        limit,
 	}
@@ -59,8 +59,8 @@ func (l *LRU) get(key interface{}) (value interface{}) {
 	if !ok {
 		return nil
 	}
-	l.list.Promote(v)
-	ev := v.Val.(*EncapsulatedValue)
+	l.list.PushFront(v)
+	ev := v.Value.(*EncapsulatedValue)
 	ev.LastUseTime = time.Now()
 	return ev.Value
 }
@@ -83,7 +83,7 @@ func (l *LRU) insert(key interface{}, val interface{}) (removed []*EncapsulatedV
 	case FixedLength:
 		if int64(len(l.index)) > l.limit {
 			back := l.list.Back()
-			removed = []*EncapsulatedValue{back.Val.(*EncapsulatedValue)}
+			removed = []*EncapsulatedValue{back.Value.(*EncapsulatedValue)}
 			key := l.reverseIndex[back]
 			l.list.Remove(back)
 			delete(l.index, key)
@@ -97,7 +97,7 @@ func (l *LRU) insert(key interface{}, val interface{}) (removed []*EncapsulatedV
 			if back == nil {
 				break
 			}
-			ev := back.Val.(*EncapsulatedValue)
+			ev := back.Value.(*EncapsulatedValue)
 			if int64(now.Sub(ev.LastUseTime)) < l.limit {
 				break
 			}

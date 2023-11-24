@@ -3,10 +3,29 @@ var path = require("path");
 var WebpackIconfontPluginNodejs = require("webpack-iconfont-plugin-nodejs");
 var dir = "src/assets/iconfont";
 var TerserPlugin = require("terser-webpack-plugin");
+// Compression
+const CompressionPlugin = require("compression-webpack-plugin");
+const isProd = process.env.NODE_ENV === 'production'
 
 module.exports = {
   configureWebpack: (config) => {
     config.resolve.alias["vue$"] = "vue/dist/vue.esm.js";
+    // Enable compression only in production mode
+    if (isProd) {
+      config.plugins.push(
+        new CompressionPlugin({
+          test: /.*/i,
+          exclude: [
+            /\.(png|gz)/i,
+            'index.html',
+          ],
+          deleteOriginalAssets: true,
+          algorithm: 'gzip', // 使用gzip压缩
+          compressionOptions: { level: 9 },
+          threshold: 0,
+          minRatio: Infinity,
+        }))
+    }
     return {
       optimization: {
         minimizer: [
