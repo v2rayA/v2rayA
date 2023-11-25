@@ -9,7 +9,7 @@ on:
       - "gui/**"
       - ".github/workflows/*.yml"
 jobs:
-  Build_v2rayA:
+  Build_v2rayA_Web:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -21,33 +21,124 @@ jobs:
         node-version: lts/*
         cache: 'yarn'
         cache-dependency-path: gui/yarn.lock
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update -y && sudo apt-get install -y gzip
+    - name: Build GUI
+      run: |
+        yarn --cwd gui --check-files
+        yarn --cwd gui build
+        echo "Use tar to generate web.tar.gz..."
+        tar -zcvf web.tar.gz web/
+    - name: Upload Zip File to Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        path: web/*
+        name: web
+
+  Build_on_Linux:
+    runs-on: ubuntu-22.04
+    needs: Build_v2rayA_Web
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: web
+        path: service/server/router/web
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: ^1.21
     - name: Build v2rayA
+      shell: bash
       run: |
         mkdir v2raya_bin
         CurrentDir="$(pwd)"
-        if [ -d "$CurrentDir/.git" ]; then
-          date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
-          count=$(git -C "$CurrentDir" rev-list --count HEAD)
-          commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
-          version="unstable-$date.r${count}.$commit"
-        else
-          version="unstable"
-        fi
+        date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
+        count=$(git -C "$CurrentDir" rev-list --count HEAD)
+        commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
+        version="unstable-$date.r${count}.$commit"
+        os="linux"
         cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
         find "$CurrentDir"/service/server/router/web \! -name \*.png -a \! -name \*.gz -a \! -name index.html -a ! -type d -exec gzip -9 {} +
         cd "$CurrentDir"/service
-        for os in linux windows darwin; do
-          for arch in amd64 arm64; do
-            if [ "$os" = "windows" ]; then
-              GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version".exe
-            else
-              GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
-            fi
-          done
+        for arch in amd64 arm64; do
+          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
+        done
+    - name: Upload Zip File to Artifacts
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      with:
+        path: v2raya_bin/*
+
+  Build_on_Windows:
+    runs-on: windows-latest
+    needs: Build_v2rayA_Web
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: web
+        path: service/server/router/web
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.21
+    - name: Build v2rayA
+      shell: pwsh
+      run: |
+        New-Item -Path ./v2raya_bin -ItemType Directory v2raya_bin
+        $CurrentDir = (Get-Location).Path
+        $dateLong = git log -1 --format="%cd" --date=short
+        $date = $DateLong -replace "-"; ""
+        $count = git rev-list --count HEAD
+        $commit = git rev-parse --short HEAD
+        $version = "unstable-$date.r$count.$commit"
+        $os = "windows"
+        ${env:CGO_ENABLED} = "0"
+        Set-Location "$CurrentDir"/service
+        ${env:GOARCH} = amd64; go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"${env:GOARCH}"_"$version".exe
+        ${env:GOARCH} = arm64; go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"${env:GOARCH}"_"$version".exe
+    - name: Upload Zip File to Artifacts
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      with:
+        path: v2raya_bin/*
+
+  Build_on_macOS:
+    runs-on: macos-latest
+    needs: Build_v2rayA_Web
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: web
+        path: service/server/router/web
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.21
+    - name: Build v2rayA
+      shell: bash
+      run: |
+        mkdir v2raya_bin
+        CurrentDir="$(pwd)"
+        date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
+        count=$(git -C "$CurrentDir" rev-list --count HEAD)
+        commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
+        version="unstable-$date.r${count}.$commit"
+        os="darwin"
+        cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
+        cd "$CurrentDir"/service
+        for arch in amd64 arm64; do
+          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
         done
     - name: Upload Zip File to Artifacts
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
