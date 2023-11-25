@@ -90,20 +90,20 @@ jobs:
       with:
         go-version: ^1.21
     - name: Build v2rayA
-      shell: pwsh
+      shell: bash
       run: |
-        New-Item -Path ./v2raya_bin -ItemType Directory -Force
-        $CurrentDir = (Get-Location).Path
-        $dateLong = git log -1 --format="%cd" --date=short
-        $date = $DateLong -replace "-"; ""
-        $count = git rev-list --count HEAD
-        $commit = git rev-parse --short HEAD
-        $version = "unstable-$date.r$count.$commit"
-        $os = "windows"
-        ${env:CGO_ENABLED} = "0"
-        Set-Location "$CurrentDir"/service
-        ${env:GOARCH} = amd64; go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_amd64_"$version".exe
-        ${env:GOARCH} = arm64; go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_arm64_"$version".exe
+        mkdir v2raya_bin
+        CurrentDir="$(pwd)"
+        date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
+        count=$(git -C "$CurrentDir" rev-list --count HEAD)
+        commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
+        version="unstable-$date.r${count}.$commit"
+        os="darwin"
+        cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
+        cd "$CurrentDir"/service
+        for arch in amd64 arm64; do
+          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
+        done
     - name: Upload Zip File to Artifacts
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
