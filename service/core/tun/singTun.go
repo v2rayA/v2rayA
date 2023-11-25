@@ -40,6 +40,7 @@ var (
 )
 
 type singTun struct {
+	dialer    N.Dialer
 	client    *socks.Client
 	cancel    context.CancelFunc
 	closer    io.Closer
@@ -49,8 +50,10 @@ type singTun struct {
 }
 
 func NewSingTun() Tun {
+	dialer := N.SystemDialer
 	return &singTun{
-		client: socks.NewClient(N.SystemDialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", ""),
+		dialer: dialer,
+		client: socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", ""),
 	}
 }
 
@@ -166,7 +169,7 @@ func (t *singTun) fakeDNS(ctx context.Context, conn N.PacketConn) error {
 	buffer := buf.NewPacket()
 	defer buffer.Release()
 	buffer.FullReset()
-	destination, err := conn.ReadPacket(buffer)
+	_, err := conn.ReadPacket(buffer)
 	if err != nil {
 		return err
 	}
@@ -183,37 +186,27 @@ func (t *singTun) fakeDNS(ctx context.Context, conn N.PacketConn) error {
 			break
 		}
 	}
+	var dialer N.Dialer
 	if bypass {
-		serverConn, err := t.client.ListenPacket(ctx, destination)
-		if err != nil {
-			return err
-		}
-		conn = bufio.NewCachedPacketConn(conn, buffer, destination)
-		return bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
+		dialer = t.client
 	} else {
-		serverConn, err := net.ListenUDP("udp", new(net.UDPAddr))
-		if err != nil {
-			return err
-		}
-		packetConn := bufio.NewPacketConn(serverConn)
-		defer packetConn.Close()
-		_, err = packetConn.WriteTo(buffer.Bytes(), net.UDPAddrFromAddrPort(t.getSystemDNS()))
-		if err != nil {
-			return err
-		}
-		buffer.FullReset()
-		destination, err = packetConn.ReadPacket(buffer)
-		if err != nil {
-			return err
-		}
-		return conn.WritePacket(buffer, destination)
+		dialer = t.dialer
 	}
+	destination := M.SocksaddrFromNetIP(t.getSystemDNS())
+	serverConn, err := dialer.ListenPacket(ctx, destination)
+	if err != nil {
+		return err
+	}
+	conn = bufio.NewCachedPacketConn(conn, buffer, destination)
+	return bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
 }
 
 func (t *singTun) getSystemDNS() netip.AddrPort {
-	n, err := rand.Int(rand.Reader, big.NewInt(int64(len(t.systemDNS))))
-	if err == nil {
-		return t.systemDNS[n.Uint64()]
+	if len(t.systemDNS) != 1 {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(t.systemDNS))))
+		if err == nil {
+			return t.systemDNS[n.Uint64()]
+		}
 	}
 	return t.systemDNS[0]
 }
