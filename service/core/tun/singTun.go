@@ -107,7 +107,11 @@ func (t *singTun) Start(stack Stack) error {
 		cancel()
 		return err
 	}
-	failedCloser = append(failedCloser, tunStack)
+	if stack == StackGvisor {
+		failedCloser = append(failedCloser, gvisorCloser{tunStack})
+	} else {
+		failedCloser = append(failedCloser, tunStack)
+	}
 	err = tunStack.Start()
 	if err != nil {
 		cancel()
