@@ -186,13 +186,14 @@ func (t *singTun) fakeDNS(ctx context.Context, conn N.PacketConn) error {
 			break
 		}
 	}
+	addr := t.getSystemDNS()
 	var dialer N.Dialer
-	if bypass {
+	if bypass || addr == dnsServer { //prevent recursion
 		dialer = t.client
 	} else {
 		dialer = t.dialer
 	}
-	destination := M.SocksaddrFromNetIP(t.getSystemDNS())
+	destination := M.SocksaddrFromNetIP(addr)
 	serverConn, err := dialer.ListenPacket(ctx, destination)
 	if err != nil {
 		return err
