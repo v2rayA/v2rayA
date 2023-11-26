@@ -6,10 +6,9 @@ import (
 	tun "github.com/sagernet/sing-tun"
 )
 
-type gvisorCloser struct {
+type gvisorWaiter struct {
 	stack tun.Stack
 }
 
-func (gc gvisorCloser) Close() error {
-	return gc.stack.Close()
+func (gc gvisorWaiter) Wait() {
 }
