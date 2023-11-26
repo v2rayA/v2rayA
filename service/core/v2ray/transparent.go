@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"fmt"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -54,13 +55,19 @@ func writeTransparentProxyRules() (err error) {
 			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
 		}
 		iptables.SetWatcher(iptables.Redirect)
-	case configure.TransparentGvisorTun:
-		if err = tun.Default.Start(tun.StackGvisor); err != nil {
-			return fmt.Errorf("not support \"gvisor tun\" mode of transparent proxy: %w", err)
+	case configure.TransparentGvisorTun, configure.TransparentSystemTun:
+		mode, _, _ := strings.Cut(string(setting.TransparentType), "_")
+		if err = tun.Default.Start(tun.Stack(mode)); err != nil {
+			return fmt.Errorf("not support \"%s tun\" mode of transparent proxy: %w", mode, err)
 		}
-	case configure.TransparentSystemTun:
-		if err = tun.Default.Start(tun.StackSystem); err != nil {
-			return fmt.Errorf("not support \"system tun\" mode of transparent proxy: %w", err)
+		_, serverInfos, _ := getConnectedServerObjs()
+		for _, info := range serverInfos {
+			host := info.Info.GetHostname()
+			if addr, err := netip.ParseAddr(host); err == nil {
+				tun.Default.AddIPWhitelist(addr)
+			} else {
+				tun.Default.AddDomainWhitelist(host)
+			}
 		}
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
