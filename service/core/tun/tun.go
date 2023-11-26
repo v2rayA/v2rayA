@@ -1,5 +1,7 @@
 package tun
 
+import "net/netip"
+
 type Stack string
 
 const (
@@ -10,6 +12,8 @@ const (
 type Tun interface {
 	Start(stack Stack) error
 	Close() error
+	AddDomainWhitelist(domain string)
+	AddIPWhitelist(addr netip.Addr)
 }
 
 var Default = NewSingTun()

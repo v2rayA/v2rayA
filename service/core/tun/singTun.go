@@ -2,18 +2,16 @@ package tun
 
 import (
 	"context"
-	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
-	"math/big"
 	"net"
 	"net/netip"
 	"os"
-	"strings"
+	"slices"
+	"sync"
 
-	D "github.com/miekg/dns"
 	tun "github.com/sagernet/sing-tun"
-	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
 	"github.com/sagernet/sing/common/control"
 	"github.com/sagernet/sing/common/logger"
@@ -32,28 +30,32 @@ const (
 )
 
 var (
-	prefix4   = netip.MustParsePrefix("172.19.0.1/30")
-	prefix6   = netip.MustParsePrefix("fdfe:dcba:9876::1/126")
-	dnsServer = netip.MustParseAddrPort(dnsAddr + ":53")
+	prefix4 = netip.MustParsePrefix("172.19.0.1/30")
+	prefix6 = netip.MustParsePrefix("fdfe:dcba:9876::1/126")
 
 	defaultLogger = logger.NOP()
+
+	continueHandler = errors.New("continue handler")
 )
 
 type singTun struct {
+	mu        sync.Mutex
 	dialer    N.Dialer
-	client    *socks.Client
+	forward   N.Dialer
 	cancel    context.CancelFunc
 	closer    io.Closer
-	whitelist Matcher
-	systemDNS []netip.AddrPort
+	dns       *DNS
 	backupDNS map[string][]string
+	whitelist []netip.Addr
 }
 
 func NewSingTun() Tun {
 	dialer := N.SystemDialer
+	client := socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", "")
 	return &singTun{
-		dialer: dialer,
-		client: socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", ""),
+		dialer:  dialer,
+		forward: client,
+		dns:     NewDNS(dialer, client, M.ParseSocksaddrHostPort(dnsAddr, 53)),
 	}
 }
 
@@ -89,7 +91,7 @@ func (t *singTun) Start(stack Stack) error {
 		return err
 	}
 	failedCloser = append(failedCloser, tunInterface)
-	ctx, cancel := context.WithCancel(context.TODO())
+	ctx, cancel := context.WithCancel(context.Background())
 	tunStack, err := tun.NewStack(string(stack), tun.StackOptions{
 		Context:                ctx,
 		Tun:                    tunInterface,
@@ -120,100 +122,93 @@ func (t *singTun) Start(stack Stack) error {
 	t.cancel = cancel
 	t.closer = failedCloser
 	failedCloser = nil
-	t.whitelist, _ = GetWhitelistCN()
-	t.systemDNS = dns.GetSystemDNS()
+	t.dns.whitelist, _ = GetWhitelistCN()
+	servers := dns.GetSystemDNS()
+	t.dns.servers = make([]M.Socksaddr, len(servers))
+	for i, addr := range servers {
+		t.dns.servers[i] = M.SocksaddrFromNetIP(addr)
+	}
 	backupDNS := make(map[string][]string)
 	interfaces, _ := dns.GetValidNetworkInterfaces()
 	for _, ifi := range interfaces {
 		backupDNS[ifi], _ = dns.ReplaceDNSServer(ifi, dnsAddr)
 	}
 	t.backupDNS = backupDNS
+	t.whitelist = nil
 	return nil
 }
 
 func (t *singTun) Close() error {
+	t.mu.Lock()
 	if t.cancel != nil {
+		for ifi, server := range t.backupDNS {
+			dns.SetDNSServer(ifi, server...)
+		}
+		t.backupDNS = nil
 		t.cancel()
 		t.closer.Close()
 		t.cancel = nil
 		t.closer = nil
-		for ifi, server := range t.backupDNS {
-			dns.SetDNSServer(ifi, server...)
-		}
 	}
+	t.mu.Unlock()
 	return nil
 }
 
+func (t *singTun) AddDomainWhitelist(domain string) {
+	t.dns.whitelist = append(t.dns.whitelist, strmatcher.FullMatcher(domain))
+}
+
+func (t *singTun) AddIPWhitelist(addr netip.Addr) {
+	t.whitelist = append(t.whitelist, addr)
+}
+
 func (t *singTun) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) error {
-	serverConn, err := t.client.DialContext(ctx, N.NetworkTCP, metadata.Destination)
-	if err != nil {
-		conn.Close()
-		return err
+	err := t.dns.NewConnection(ctx, conn, metadata)
+	if err == continueHandler {
+		var dialer N.Dialer
+		if slices.Contains(t.whitelist, metadata.Destination.Addr) {
+			dialer = t.dialer
+		} else {
+			dialer = t.forward
+		}
+		if domain, ok := t.dns.fakeCache.Load(metadata.Destination.Addr); ok {
+			metadata.Destination.Addr = netip.Addr{}
+			metadata.Destination.Fqdn = domain
+		}
+		serverConn, err := dialer.DialContext(ctx, N.NetworkTCP, metadata.Destination)
+		if err != nil {
+			conn.Close()
+			return err
+		}
+		return bufio.CopyConn(ctx, conn, serverConn)
 	}
-	return bufio.CopyConn(ctx, conn, serverConn)
+	return err
 }
 
 func (t *singTun) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata M.Metadata) error {
-	if len(t.whitelist) != 0 && len(t.systemDNS) != 0 && metadata.Destination.AddrPort() == dnsServer {
-		return t.fakeDNS(ctx, conn)
+	err := t.dns.NewPacketConnection(ctx, conn, metadata)
+	if err == continueHandler {
+		var dialer N.Dialer
+		if slices.Contains(t.whitelist, metadata.Destination.Addr) {
+			dialer = t.dialer
+		} else {
+			dialer = t.forward
+		}
+		if domain, ok := t.dns.fakeCache.Load(metadata.Destination.Addr); ok {
+			metadata.Destination.Addr = netip.Addr{}
+			metadata.Destination.Fqdn = domain
+		}
+		serverConn, err := dialer.ListenPacket(ctx, metadata.Destination)
+		if err != nil {
+			conn.Close()
+			return err
+		}
+		return bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
 	}
-	serverConn, err := t.client.ListenPacket(ctx, metadata.Destination)
-	if err != nil {
-		conn.Close()
-		return err
-	}
-	return bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
+	return err
 }
 
 func (t *singTun) NewError(ctx context.Context, err error) {
-}
-
-func (t *singTun) fakeDNS(ctx context.Context, conn N.PacketConn) error {
-	defer conn.Close()
-	buffer := buf.NewPacket()
-	defer buffer.Release()
-	buffer.FullReset()
-	_, err := conn.ReadPacket(buffer)
-	if err != nil {
-		return err
-	}
-	var msg D.Msg
-	err = msg.Unpack(buffer.Bytes())
-	if err != nil {
-		return err
-	}
-	bypass := false
-	for _, q := range msg.Question {
-		domain := strings.TrimSuffix(q.Name, ".")
-		if !t.whitelist.Match(domain) {
-			bypass = true
-			break
-		}
-	}
-	addr := t.getSystemDNS()
-	var dialer N.Dialer
-	if bypass || addr == dnsServer { //prevent recursion
-		dialer = t.client
-	} else {
-		dialer = t.dialer
-	}
-	destination := M.SocksaddrFromNetIP(addr)
-	serverConn, err := dialer.ListenPacket(ctx, destination)
-	if err != nil {
-		return err
-	}
-	conn = bufio.NewCachedPacketConn(conn, buffer, destination)
-	return bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
-}
-
-func (t *singTun) getSystemDNS() netip.AddrPort {
-	if len(t.systemDNS) != 1 {
-		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(t.systemDNS))))
-		if err == nil {
-			return t.systemDNS[n.Uint64()]
-		}
-	}
-	return t.systemDNS[0]
 }
 
 func GetWhitelistCN() (Matcher, error) {
