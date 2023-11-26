@@ -78,10 +78,10 @@ func (t *singTun) Start(stack Stack) error {
 	}
 	failedCloser = append(failedCloser, interfaceMonitor)
 	tunOptions := tun.Options{
-		Name:             tun.CalculateInterfaceName(""),
-		MTU:              9000,
-		Inet4Address:     []netip.Prefix{prefix4},
-		Inet6Address:     []netip.Prefix{prefix6},
+		Name:         tun.CalculateInterfaceName(""),
+		MTU:          9000,
+		Inet4Address: []netip.Prefix{prefix4},
+		// Inet6Address:     []netip.Prefix{prefix6},
 		AutoRoute:        true,
 		StrictRoute:      false,
 		InterfaceMonitor: interfaceMonitor,
