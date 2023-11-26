@@ -44,6 +44,7 @@ type singTun struct {
 	forward   N.Dialer
 	cancel    context.CancelFunc
 	closer    io.Closer
+	waiter    *gvisorWaiter
 	dns       *DNS
 	backupDNS map[string][]string
 	whitelist []netip.Addr
@@ -77,10 +78,10 @@ func (t *singTun) Start(stack Stack) error {
 	}
 	failedCloser = append(failedCloser, interfaceMonitor)
 	tunOptions := tun.Options{
-		Name:         tun.CalculateInterfaceName(""),
-		MTU:          9000,
-		Inet4Address: []netip.Prefix{prefix4},
-		// Inet6Address:     []netip.Prefix{prefix6},
+		Name:             tun.CalculateInterfaceName(""),
+		MTU:              9000,
+		Inet4Address:     []netip.Prefix{prefix4},
+		Inet6Address:     []netip.Prefix{prefix6},
 		AutoRoute:        true,
 		StrictRoute:      false,
 		InterfaceMonitor: interfaceMonitor,
@@ -109,11 +110,7 @@ func (t *singTun) Start(stack Stack) error {
 		cancel()
 		return err
 	}
-	if stack == StackGvisor {
-		failedCloser = append(failedCloser, gvisorCloser{tunStack})
-	} else {
-		failedCloser = append(failedCloser, tunStack)
-	}
+	failedCloser = append(failedCloser, tunStack)
 	err = tunStack.Start()
 	if err != nil {
 		cancel()
@@ -122,6 +119,7 @@ func (t *singTun) Start(stack Stack) error {
 	t.cancel = cancel
 	t.closer = failedCloser
 	failedCloser = nil
+	t.waiter = &gvisorWaiter{tunStack}
 	t.dns.whitelist, _ = GetWhitelistCN()
 	servers := dns.GetSystemDNS()
 	t.dns.servers = make([]M.Socksaddr, len(servers))
@@ -149,6 +147,10 @@ func (t *singTun) Close() error {
 		t.closer.Close()
 		t.cancel = nil
 		t.closer = nil
+		if t.waiter != nil {
+			t.waiter.Wait()
+			t.waiter = nil
+		}
 	}
 	t.mu.Unlock()
 	return nil

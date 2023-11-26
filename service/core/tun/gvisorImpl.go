@@ -8,12 +8,11 @@ import (
 	tun "github.com/sagernet/sing-tun"
 )
 
-type gvisorCloser struct {
+type gvisorWaiter struct {
 	stack tun.Stack
 }
 
-func (gc gvisorCloser) Close() error {
-	err := gc.stack.Close()
+func (gc gvisorWaiter) Wait() {
 	if _, ok := gc.stack.(*tun.GVisor); ok {
 		typ := reflect2.TypeOfPtr(gc.stack).Elem().(*reflect2.UnsafeStructType)
 		if field, ok := typ.FieldByName("stack").(*reflect2.UnsafeStructField); ok {
@@ -22,5 +21,4 @@ func (gc gvisorCloser) Close() error {
 			stack.Wait()
 		}
 	}
-	return err
 }
