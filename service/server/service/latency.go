@@ -90,7 +90,7 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 	wg.Wait()
 }
 
-func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool) ([]*configure.Which, error) {
+func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
 	var whiches = configure.NewWhiches(which)
 	for i := len(which) - 1; i >= 0; i-- {
 		if which[i].TYPE == configure.SubscriptionType { //去掉subscriptionType
@@ -222,7 +222,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		go func(i int) {
 			cc <- nil
 			defer func() { <-cc; wg.Done() }()
-			httpLatency(which[i], inboundPortMap[i], timeout)
+			httpLatency(which[i], inboundPortMap[i], timeout, customTestUrl)
 			if showLog {
 				log.Info("Test done[%v]%v: %v", i+1, which[i].Latency, which[i].Link)
 			}
@@ -242,7 +242,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	return which, nil
 }
-func httpLatency(which *configure.Which, port string, timeout time.Duration) {
+func httpLatency(which *configure.Which, port string, timeout time.Duration, customTestUrl string) {
 	c, err := httpClient.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
 	if err != nil {
 		which.Latency = "SYSTEM ERROR"
@@ -255,7 +255,11 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration) {
 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	req, _ := http.NewRequest("GET", HttpTestURL, nil)
+	testUrl := HttpTestURL
+	if len(customTestUrl) != 0 {
+		testUrl = customTestUrl
+	}
+	req, _ := http.NewRequest("GET", testUrl, nil)
 	//req, _ := http.NewRequest("GET", "http://www.gstatic.com/generate_204", nil)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
