@@ -17,7 +17,7 @@
     "@mdi/font": "^5.8.55",
     "@nuintun/qrcode": "^3.3.0",
     "@vue/babel-preset-app": "^4.2.2",
-    "axios": "^1.6.0",
+    "axios": "^0.21.1",
     "buefy": "^0.9.22",
     "clipboard": "^2.0.4",
     "dayjs": "^1.10.6",
