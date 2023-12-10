@@ -612,9 +612,9 @@ jobs:
         sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
         mv builds/v2raya_linux* ./
         mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
-        v2ray_version="$(cat builds/v2ray_packages_version.txt)"
+        v2ray_version="$(cat builds/v2ray_packages_version.txt/v2ray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "v2ray core version: $v2ray_version"
-        xray_version="$(cat builds/xray_packages_version.txt)"
+        xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "xray core version: $xray_version"
         mv builds/v2ray_*_$v2ray_version.deb ./
         mv builds/xray_*_$xray_version.deb ./
