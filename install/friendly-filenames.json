@@ -32,6 +32,9 @@
     "linux-riscv64": {
         "friendlyName": "linux_riscv64"
     },
+    "linux-loong64": {
+        "friendlyName": "linux_loongarch64"
+    },
     "windows-amd64": {
         "friendlyName": "windows_x64"
     },
