@@ -53,7 +53,7 @@ jobs:
     strategy:
       matrix:
         goos: [ linux ]
-        goarch: [ amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips ]
+        goarch: [ amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips, loong64 ]
         include:
           # BEGIN Linux ARM 5 6 7
           - goos: linux
@@ -252,7 +252,7 @@ jobs:
     strategy:
       matrix:
         goos: [linux]
-        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips]
+        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips, loong64]
         include:
           - goos: linux
             goarch: arm
@@ -338,6 +338,8 @@ jobs:
               package_arch='armhfp'
             elif [ "$GOARCH" == 'arm64' ];then
               package_arch='aarch64'
+            elif [ "$GOARCH" == 'loong64' ];then
+              package_arch='loongson64'
             else
               package_arch="$GOARCH"
             fi
@@ -470,7 +472,7 @@ jobs:
       run: |
         mkdir xray_unzipped
         mkdir v2ray_unzipped
-        for arch in 64 32 arm64-v8a arm32-v7a mips32 mips32le mips64 mips64le riscv64; do
+        for arch in 64 32 arm64-v8a arm32-v7a mips32 mips32le mips64 mips64le riscv64 loong64; do
           wget -q https://github.com/v2fly/v2ray-core/releases/download/$V2RAY_VERSION/v2ray-linux-$arch.zip
           unzip -q v2ray-linux-$arch.zip -d v2ray_unzipped/v2ray-linux-$arch
           wget -q https://github.com/XTLS/xray-core/releases/download/$XRAY_VERSION/Xray-linux-$arch.zip
@@ -480,7 +482,7 @@ jobs:
       run: |
         mkdir v2ray_packages
         package_version="$(echo "$V2RAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
-        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64; do
+        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64 loong64; do
         case $arch in
           amd64)
             source_dir="v2ray_unzipped/v2ray-linux-64"
@@ -509,6 +511,9 @@ jobs:
           riscv64)
             source_dir="v2ray_unzipped/v2ray-linux-riscv64"
             ;;
+          loong64)
+            source_dir="v2ray_unzipped/v2ray-linux-loong64"
+            ;;
         esac
         echo 'systemctl daemon-reload
         if [ "$(systemctl is-active v2ray)" = "active" ]; then
@@ -536,7 +541,7 @@ jobs:
       run: |
         mkdir xray_packages
         package_version="$(echo "$XRAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
-        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64; do
+        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64 loong64; do
         case $arch in
           amd64)
             source_dir="xray_unzipped/xray-linux-64"
@@ -564,6 +569,9 @@ jobs:
             ;;
           riscv64)
             source_dir="xray_unzipped/xray-linux-riscv64"
+            ;;
+          loong64)
+            source_dir="xray_unzipped/xray-linux-loong64"
             ;;
         esac
         fpm -s dir -t deb -a $arch --version $package_version \
@@ -616,6 +624,7 @@ jobs:
         echo "v2ray core version: $v2ray_version"
         xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "xray core version: $xray_version"
+        mv builds/installer*.deb ./
         mv builds/v2ray_*_$v2ray_version.deb ./
         mv builds/xray_*_$xray_version.deb ./
         ls -lh ./
