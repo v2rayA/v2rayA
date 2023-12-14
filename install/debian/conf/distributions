@@ -2,7 +2,7 @@ Origin: v2rayA
 Label: v2raya
 Suite: stable
 Codename: v2raya
-Architectures: i386 amd64 armel armhf arm64 armv7 armv8 ppc64el mips64 mips64le mips32 mips32le mips riscv64
+Architectures: i386 amd64 armel armhf arm64 mips64 mips64le mips32 mips32le mips riscv64 loong64
 Components: main
 Description: https://github.com/v2rayA/v2rayA
 SignWith: yes
