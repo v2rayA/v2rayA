@@ -1,7 +1,6 @@
 #!/bin/sh
 set -x
 current_dir=$(pwd)
-mkdir "$current_dir"/cache && cd "$current_dir"/cache || exit
 case "$(arch)" in
     x86_64)
         v2ray_arch="64"
@@ -33,14 +32,12 @@ ln -s /usr/local/share/v2raya /usr/local/share/xray
 wget -O /usr/local/share/v2raya/LoyalsoldierSite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
 wget -O /usr/local/share/v2raya/geosite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
 wget -O /usr/local/share/v2raya/geoip.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geoip.dat
-cd "$current_dir" && rm -rf "$current_dir"/cache
-apk add --no-cache tzdata iptables-legacy nftables
-cd ..
+cd "$current_dir" || exit
 rm -rf build
-[ -d /usr/local/sbin ] || mkdir -p /usr/local/sbin
-install ./iptables.sh /usr/local/sbin/iptables
-install ./ip6tables.sh /usr/local/sbin/ip6tables
-install ./iptables.sh /usr/local/sbin/iptables-nft
-install ./ip6tables.sh /usr/local/sbin/ip6tables-nft
-install ./iptables.sh /usr/local/sbin/iptables-legacy
-install ./ip6tables.sh /usr/local/sbin/ip6tables-legacy
+apk add --no-cache iptables iptables-legacy nftables tzdata
+install ./iptables.sh /usr/local/bin/iptables
+install ./ip6tables.sh /usr/local/bin/ip6tables
+install ./iptables.sh /usr/local/bin/iptables-nft
+install ./ip6tables.sh /usr/local/bin/ip6tables-nft
+install ./iptables.sh /usr/local/bin/iptables-legacy
+install ./ip6tables.sh /usr/local/bin/ip6tables-legacy
