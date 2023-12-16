@@ -623,8 +623,11 @@ jobs:
         echo "v2ray core version: $v2ray_version"
         xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "xray core version: $xray_version"
-        for deb_File in $(ls builds/*.deb); do
-          mv builds/$deb_File/$deb_File ./
+        for deb_File in $(ls builds | grep -E "^v2ray_"); do
+          mv builds/$deb_File/$deb_File ./$deb_File
+        done
+        for deb_File in $(ls builds | grep -E "^xray_"); do
+          mv builds/$deb_File/$deb_File ./$deb_File
         done
         for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
