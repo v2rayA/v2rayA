@@ -629,6 +629,9 @@ jobs:
         for deb_File in $(ls builds | grep -E "^xray_"); do
           mv builds/$deb_File/$deb_File ./$deb_File
         done
+        for deb_File in $(ls builds | grep -E "^installer_"); do
+          mv builds/$deb_File/$deb_File ./$deb_File
+        done
         for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
