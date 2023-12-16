@@ -618,14 +618,16 @@ jobs:
     - name: Prepare Builds
       run: |
         sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
-        mv builds/v2raya_linux* ./
         mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
         v2ray_version="$(cat builds/v2ray_packages_version.txt/v2ray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "v2ray core version: $v2ray_version"
         xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "xray core version: $xray_version"
         for deb_File in $(ls builds/*.deb); do
-          mv $deb_File/$deb_File ./
+          mv builds/$deb_File/$deb_File ./
+        done
+        for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
+          mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
         ls -lh ./
         echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
