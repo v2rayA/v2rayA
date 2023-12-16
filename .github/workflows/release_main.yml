@@ -624,9 +624,9 @@ jobs:
         echo "v2ray core version: $v2ray_version"
         xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
         echo "xray core version: $xray_version"
-        mv builds/installer*.deb ./
-        mv builds/v2ray_*_$v2ray_version.deb ./
-        mv builds/xray_*_$xray_version.deb ./
+        for deb_File in $(ls builds/*.deb); do
+          mv $deb_File/$deb_File ./
+        done
         ls -lh ./
         echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
         echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
