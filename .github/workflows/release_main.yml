@@ -53,7 +53,7 @@ jobs:
     strategy:
       matrix:
         goos: [ linux ]
-        goarch: [ amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips ]
+        goarch: [ amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips, loong64 ]
         include:
           # BEGIN Linux ARM 5 6 7
           - goos: linux
@@ -252,7 +252,7 @@ jobs:
     strategy:
       matrix:
         goos: [linux]
-        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips]
+        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips, loong64]
         include:
           - goos: linux
             goarch: arm
@@ -338,6 +338,8 @@ jobs:
               package_arch='armhfp'
             elif [ "$GOARCH" == 'arm64' ];then
               package_arch='aarch64'
+            elif [ "$GOARCH" == 'loong64' ];then
+              package_arch='loongson64'
             else
               package_arch="$GOARCH"
             fi
@@ -470,7 +472,7 @@ jobs:
       run: |
         mkdir xray_unzipped
         mkdir v2ray_unzipped
-        for arch in 64 32 arm64-v8a arm32-v7a mips32 mips32le mips64 mips64le riscv64; do
+        for arch in 64 32 arm64-v8a arm32-v7a mips32 mips32le mips64 mips64le riscv64 loong64; do
           wget -q https://github.com/v2fly/v2ray-core/releases/download/$V2RAY_VERSION/v2ray-linux-$arch.zip
           unzip -q v2ray-linux-$arch.zip -d v2ray_unzipped/v2ray-linux-$arch
           wget -q https://github.com/XTLS/xray-core/releases/download/$XRAY_VERSION/Xray-linux-$arch.zip
@@ -480,7 +482,7 @@ jobs:
       run: |
         mkdir v2ray_packages
         package_version="$(echo "$V2RAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
-        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64; do
+        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64 loong64; do
         case $arch in
           amd64)
             source_dir="v2ray_unzipped/v2ray-linux-64"
@@ -509,6 +511,9 @@ jobs:
           riscv64)
             source_dir="v2ray_unzipped/v2ray-linux-riscv64"
             ;;
+          loong64)
+            source_dir="v2ray_unzipped/v2ray-linux-loong64"
+            ;;
         esac
         echo 'systemctl daemon-reload
         if [ "$(systemctl is-active v2ray)" = "active" ]; then
@@ -536,7 +541,7 @@ jobs:
       run: |
         mkdir xray_packages
         package_version="$(echo "$XRAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
-        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64; do
+        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64 loong64; do
         case $arch in
           amd64)
             source_dir="xray_unzipped/xray-linux-64"
@@ -565,6 +570,9 @@ jobs:
           riscv64)
             source_dir="xray_unzipped/xray-linux-riscv64"
             ;;
+          loong64)
+            source_dir="xray_unzipped/xray-linux-loong64"
+            ;;
         esac
         fpm -s dir -t deb -a $arch --version $package_version \
           --url 'https://xtls.github.io/' --description 'Xray, Penetrates Everything. Also the best v2ray-core, with XTLS support. Fully compatible configuration' \
@@ -574,12 +582,19 @@ jobs:
           $source_dir/geoip.dat=/usr/share/xray/geoip.dat \
           $source_dir/geosite.dat=/usr/share/xray/geosite.dat
         done
+    - name: Note Version Number
+      run: |
+        echo "V2RAY_VERSION=$V2RAY_VERSION" >> ./v2ray_packages_version.txt
+        echo "XRAY_VERSION=$XRAY_VERSION" >> ./xray_packages_version.txt
+
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
       with:
         path: |
           v2ray_packages/*
           xray_packages/*
+          v2ray_packages_version.txt
+          xray_packages_version.txt
   Build_APT_Repository_and_AUR:
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages, Build_v2ray_Debian_Packages]
@@ -603,16 +618,24 @@ jobs:
     - name: Prepare Builds
       run: |
         sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
-        mkdir -p install/debian
-        for deb_package in $(ls builds | grep .deb); do
-          mv builds/"$deb_package"/"$deb_package" ./"$deb_package"
+        mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
+        v2ray_version="$(cat builds/v2ray_packages_version.txt/v2ray_packages_version.txt | awk -F 'v' '{print $2}')"
+        echo "v2ray core version: $v2ray_version"
+        xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
+        echo "xray core version: $xray_version"
+        for deb_File in $(ls builds | grep -E "^v2ray_"); do
+          mv builds/$deb_File/$deb_File ./$deb_File
+        done
+        for deb_File in $(ls builds | grep -E "^xray_"); do
+          mv builds/$deb_File/$deb_File ./$deb_File
+        done
+        for deb_File in $(ls builds | grep -E "^installer_"); do
+          mv builds/$deb_File/$deb_File ./$deb_File
         done
         for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
           mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
         done
-        mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
-        v2ray_version="$(ls | grep "^v2ray_" | grep amd64 | awk -F '_' '{print $3}' | sed 's/.deb//')"
-        xray_version="$(ls | grep "^xray_" | grep amd64 | awk -F '_' '{print $3}' | sed 's/.deb//')"
+        ls -lh ./
         echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
         echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
         echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV

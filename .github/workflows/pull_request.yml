@@ -4,8 +4,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "**/*.go"
-      - "service/go.mod"
-      - "service/go.sum"
+      - "service/**"
       - "gui/**"
       - ".github/workflows/*.yml"
 jobs:
@@ -62,8 +61,6 @@ jobs:
         commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
         version="unstable-$date.r${count}.$commit"
         os="linux"
-        cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
-        find "$CurrentDir"/service/server/router/web \! -name \*.png -a \! -name \*.gz -a \! -name index.html -a ! -type d -exec gzip -9 {} +
         cd "$CurrentDir"/service
         for arch in amd64 arm64; do
           GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
@@ -98,11 +95,10 @@ jobs:
         count=$(git -C "$CurrentDir" rev-list --count HEAD)
         commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
         version="unstable-$date.r${count}.$commit"
-        os="darwin"
-        cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
+        os="windows"
         cd "$CurrentDir"/service
         for arch in amd64 arm64; do
-          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
+          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version".exe
         done
     - name: Upload Zip File to Artifacts
       uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
@@ -135,7 +131,6 @@ jobs:
         commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
         version="unstable-$date.r${count}.$commit"
         os="darwin"
-        cd "$CurrentDir"/gui && yarn && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn build
         cd "$CurrentDir"/service
         for arch in amd64 arm64; do
           GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"

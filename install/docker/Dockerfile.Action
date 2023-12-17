@@ -1,8 +1,9 @@
 FROM alpine:latest AS builder
-WORKDIR /build
+WORKDIR /
 COPY ./install/docker/docker_helper.sh ./docker_helper.sh
+COPY ./install/docker/iptables.sh ./iptables.sh
+COPY ./install/docker/ip6tables.sh ./ip6tables.sh
 RUN sh -c "$(cat ./docker_helper.sh)"
-RUN apk add --no-cache iptables ip6tables nftables tzdata
 RUN rm ./docker_helper.sh
 EXPOSE 2017
 VOLUME /etc/v2raya
