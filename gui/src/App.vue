@@ -193,7 +193,8 @@ export default {
       langs: [
         { flag: "zh", alt: "简体中文" },
         { flag: "en", alt: "English" },
-        { flag: "fa", alt: "فارسی" }
+        { flag: "fa", alt: "فارسی" },
+        { flag: "ru", alt: "Русский"}
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],
