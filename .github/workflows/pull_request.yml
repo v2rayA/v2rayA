@@ -11,11 +11,11 @@ jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4.0.2
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: Build_v2rayA_Web
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Download Artifact
@@ -74,7 +74,7 @@ jobs:
     runs-on: windows-latest
     needs: Build_v2rayA_Web
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Download Artifact
@@ -109,7 +109,7 @@ jobs:
     runs-on: macos-latest
     needs: Build_v2rayA_Web
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Download Artifact

@@ -21,11 +21,11 @@ jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4.0.2
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -102,7 +102,7 @@ jobs:
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Download Artifact
@@ -162,7 +162,7 @@ jobs:
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
@@ -265,7 +265,7 @@ jobs:
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Get Friendly File Name
@@ -385,7 +385,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
@@ -600,7 +600,7 @@ jobs:
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages, Build_v2ray_Debian_Packages]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
@@ -681,7 +681,7 @@ jobs:
     needs: [Build_v2rayA_Binaries]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
@@ -734,7 +734,7 @@ jobs:
     needs: [GitHub_Release]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
@@ -776,7 +776,7 @@ jobs:
     needs: [Build_v2rayA_Web]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
@@ -819,7 +819,7 @@ jobs:
     needs: [GitHub_Release]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
       with:
         fetch-depth: 0
     - name: Check Version
