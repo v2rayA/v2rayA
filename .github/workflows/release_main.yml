@@ -423,12 +423,13 @@ jobs:
         Move-Item ./web.zip ./release/web.zip
         Move-Item ./web.zip.sha256.txt ./release/web.zip.sha256.txt
     - name: Upload Release
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/v2rayA/v2rayA/releases/latest | jq -r '.tag_name')
         Latest_tag=v${{ steps.prep.outputs.VERSION }}
         if [ "$Latest_Releases" != "$Latest_tag" ]; then
-          gh release create "v${{ steps.prep.outputs.VERSION }}" -t "v${{ steps.prep.outputs.VERSION }}" \
-            --notes "Release v${{ steps.prep.outputs.VERSION }}"
+          gh release create "v${{ steps.prep.outputs.VERSION }}" -t "v${{ steps.prep.outputs.VERSION }}" --generate-notes
         fi
         gh release upload "v${{ steps.prep.outputs.VERSION }}" release/*
     - name: Refresh Cloudflare Cache
