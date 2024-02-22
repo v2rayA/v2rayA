@@ -30,7 +30,7 @@ jobs:
         echo "Use tar to generate web.tar.gz..."
         tar -zcvf web.tar.gz web/
     - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         path: web/*
         name: web
@@ -43,12 +43,12 @@ jobs:
       with:
         fetch-depth: 0
     - name: Download Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: web
         path: service/server/router/web
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.21
     - name: Build v2rayA
@@ -66,7 +66,7 @@ jobs:
           GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
         done
     - name: Upload Zip File to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: v2raya_bin/*
 
@@ -78,12 +78,12 @@ jobs:
       with:
         fetch-depth: 0
     - name: Download Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: web
         path: service/server/router/web
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.21
     - name: Build v2rayA
@@ -101,7 +101,7 @@ jobs:
           GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version".exe
         done
     - name: Upload Zip File to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: v2raya_bin/*
 
@@ -113,12 +113,12 @@ jobs:
       with:
         fetch-depth: 0
     - name: Download Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: web
         path: service/server/router/web
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.21
     - name: Build v2rayA
@@ -136,6 +136,6 @@ jobs:
           GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version"
         done
     - name: Upload Zip File to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: v2raya_bin/*
