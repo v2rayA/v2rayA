@@ -40,12 +40,12 @@ jobs:
         echo "Use tar to generate web.tar.gz..."
         tar -zcvf web.tar.gz web/
     - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         path: web/*
         name: web
     - name: Upload the tar archive to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           web.tar.gz
@@ -106,7 +106,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Download Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: web
         path: service/server/router/web
@@ -135,7 +135,7 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.21
     - name: Install Dependencies
@@ -154,7 +154,7 @@ jobs:
         cd ..
         mv build_"$GOOS"_"$GOARCH""$GOARM"_"$VERSION""$WIN_SUF" v2raya_"${{ steps.get_filename.outputs.BUILD_NAME }}"_"$VERSION""$WIN_SUF"
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}${{ matrix.win_suf }}
@@ -184,12 +184,12 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Windows x64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
     - name: Download Artifact Windows arm64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
@@ -241,7 +241,7 @@ jobs:
         Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
         Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
@@ -300,12 +300,12 @@ jobs:
         echo "PACKAGE_VERSION=$package_version" >> $GITHUB_OUTPUT
         echo "PACKAGE_VERSION=$package_version" >> $GITHUB_ENV
     - name: Download Artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
         path: build/
     - name: Download x64 Linux Build
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: test/
@@ -376,7 +376,7 @@ jobs:
         mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb \
            fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           fpm_packages/*
@@ -400,7 +400,7 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         path: builds/
     - name: Move Files to Release Directory
@@ -588,7 +588,7 @@ jobs:
         echo "XRAY_VERSION=$XRAY_VERSION" >> ./xray_packages_version.txt
 
     - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v1.8
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           v2ray_packages/*
@@ -612,7 +612,7 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         path: builds/
     - name: Prepare Builds
@@ -693,17 +693,17 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Linux x64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
     - name: Download Artifact macOS x64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
     - name: Download Artifact macOS arm64
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
@@ -790,7 +790,7 @@ jobs:
         IMAGE="mzz2017/v2raya-gui"
         echo image=${IMAGE} >> $GITHUB_OUTPUT
     - name: Download Web Files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: web
         path: web
