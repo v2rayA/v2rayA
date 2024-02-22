@@ -40,7 +40,7 @@ jobs:
         echo "Use tar to generate web.tar.gz..."
         tar -zcvf web.tar.gz web/
     - name: Upload Zip File to Artifacts
-      uses: actions/download-artifact@v4.1.2
+      uses: actions/upload-artifact@v4.3.1
       with:
         path: web/*
         name: web
@@ -423,11 +423,14 @@ jobs:
         Move-Item ./web.zip ./release/web.zip
         Move-Item ./web.zip.sha256.txt ./release/web.zip.sha256.txt
     - name: Upload Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ steps.prep.outputs.VERSION }}
-        files: |
-          release/*
+      run: |
+        Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/v2rayA/v2rayA/releases/latest | jq -r '.tag_name')
+        Latest_tag=v${{ steps.prep.outputs.VERSION }}
+        if [ "$Latest_Releases" != "$Latest_tag" ]; then
+          gh release create "v${{ steps.prep.outputs.VERSION }}" -t "v${{ steps.prep.outputs.VERSION }}" \
+            --notes "Release v${{ steps.prep.outputs.VERSION }}"
+        fi
+        gh release upload "v${{ steps.prep.outputs.VERSION }}" release/*
     - name: Refresh Cloudflare Cache
       env:
         CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
