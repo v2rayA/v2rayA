@@ -52,6 +52,8 @@ func IsIPv6Supported() bool {
 	}
 	if !nettest.SupportsIPv6() {
 		return false
+	} else if runtime.GOOS != "linux" {
+		return true
 	}
 	if IsNft() {
 		return true
