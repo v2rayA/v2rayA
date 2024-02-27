@@ -33,6 +33,7 @@ type Trojan struct {
 	Host          string `json:"host"`
 	Path          string `json:"path"`
 	AllowInsecure bool   `json:"allowInsecure"`
+	Alpn          string `json:"alpn,omitempty"`
 	Protocol      string `json:"protocol"`
 }
 
@@ -55,6 +56,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 	if sni == "" {
 		sni = t.Hostname()
 	}
+
 	port, err := strconv.Atoi(t.Port())
 	if err != nil {
 		return nil, ErrInvalidParameter
@@ -65,6 +67,9 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		Port:          port,
 		Password:      t.User.Username(),
 		Sni:           sni,
+		Alpn:          t.Query().Get("alpn"),
+		Type:          t.Query().Get("type"),
+		Path:          t.Query().Get("serviceName"),
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
@@ -131,6 +136,8 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 			UDPSupport:  true,
 		}, nil
 	}
+
+	net := strings.ToLower(t.Type)
 	core := coreObj.OutboundObject{
 		Tag:      info.Tag,
 		Protocol: "trojan",
@@ -142,13 +149,53 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 			}},
 		},
 		StreamSettings: &coreObj.StreamSettings{
-			Network:  "tcp",
+			Network:  net,
 			Security: "tls",
 			TLSSettings: &coreObj.TLSSettings{
 				ServerName:    t.Sni,
 				AllowInsecure: t.AllowInsecure,
 			},
 		},
+	}
+	
+	switch net {
+		case "grpc":
+			if t.Path == "" {
+				t.Path = "GunService"
+			}
+			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: t.Path}
+		case "ws":
+			core.StreamSettings.WsSettings = &coreObj.WsSettings{
+				Path: t.Path,
+				Headers: coreObj.Headers{
+					Host: t.Host,
+				},
+			}
+		case "mkcp", "kcp":
+			core.StreamSettings.KcpSettings = &coreObj.KcpSettings{
+				Mtu:              1350,
+				Tti:              50,
+				UplinkCapacity:   12,
+				DownlinkCapacity: 100,
+				Congestion:       false,
+				ReadBufferSize:   2,
+				WriteBufferSize:  2,
+				Header: coreObj.KcpHeader{
+					Type: t.Type,
+				},
+				Seed: t.Path,
+			}
+		case "h2", "http":
+			if t.Host != "" {
+				core.StreamSettings.HTTPSettings = &coreObj.HttpSettings{
+					Path: t.Path,
+					Host: strings.Split(t.Host, ","),
+				}
+			} else {
+				core.StreamSettings.HTTPSettings = &coreObj.HttpSettings{
+					Path: t.Path,
+				}
+			}
 	}
 	return Configuration{
 		CoreOutbound: core,
@@ -158,26 +205,47 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 }
 
 func (t *Trojan) ExportToURL() string {
+
 	u := &url.URL{
 		Scheme:   "trojan",
 		User:     url.User(t.Password),
 		Host:     net.JoinHostPort(t.Server, strconv.Itoa(t.Port)),
 		Fragment: t.Name,
 	}
-	q := u.Query()
-	if t.AllowInsecure {
-		q.Set("allowInsecure", "1")
+
+	query := u.Query()
+	setValue(&query, "type", t.Type)
+	
+	net := strings.ToLower(t.Type)
+
+	switch net {
+		case "websocket", "ws", "http", "h2":
+			setValue(&query, "path", t.Path)
+			setValue(&query, "host", t.Host)
+		case "mkcp", "kcp":
+			setValue(&query, "headerType", t.Type)
+			setValue(&query, "seed", t.Path)
+		case "tcp":
+			setValue(&query, "headerType", t.Type)
+			setValue(&query, "host", t.Host)
+			setValue(&query, "path", t.Path)
+		case "grpc":
+			setValue(&query, "serviceName", t.Path)
 	}
-	setValue(&q, "sni", t.Sni)
+	
+	if t.AllowInsecure {
+		query.Set("allowInsecure", "1")
+	}
+	setValue(&query, "sni", t.Sni)
 
 	if t.Protocol == "trojan-go" {
 		u.Scheme = "trojan-go"
-		setValue(&q, "host", t.Host)
-		setValue(&q, "encryption", t.Encryption)
-		setValue(&q, "type", t.Type)
-		setValue(&q, "path", t.Path)
+		setValue(&query, "host", t.Host)
+		setValue(&query, "encryption", t.Encryption)
+		setValue(&query, "type", t.Type)
+		setValue(&query, "path", t.Path)
 	}
-	u.RawQuery = q.Encode()
+	u.RawQuery = query.Encode()
 	return u.String()
 }
 
