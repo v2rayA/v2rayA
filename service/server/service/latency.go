@@ -80,6 +80,9 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 				}
 				if len(ips) > 0 {
 					ips = v2ray.FilterIPs(ips)
+					if len(ips) == 0 {
+						return
+					}
 					mu.Lock()
 					tmpl.DNS.Hosts[addr] = ips
 					mu.Unlock()
