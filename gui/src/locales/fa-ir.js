@@ -3,7 +3,7 @@ export default {
     outboundSetting: "تنظیمات خروجی",
     setting: "تنظیمات",
     about: "درباره",
-    loggedAs: "Logged as <b>{username}</b>",
+    loggedAs: "خوش آمدید <b>{username}</b>",
     v2rayCoreStatus: "وضعیت v2ray-core",
     checkRunning: "بررسی",
     isRunning: "درحال اجرا",
@@ -16,17 +16,17 @@ export default {
     message: "پیام",
     none: "هیچ یک",
     optional: "اختیاری",
-    loadBalance: "تعادل بار",
-    log: "لاگ ها"
+    loadBalance: "متعادل کردن",
+    log: "گزارش ها"
   },
   welcome: {
     title: "خوش آمدی",
-    docker: "v2rayA service is running in Docker. Version: {version}",
-    default: "v2rayA service is running. Version: {version}",
-    newVersion: "Detected new version: {version}",
+    docker: "v2rayA بر روی Docker درحال اجرا است. نسخه: {version}",
+    default: "v2rayA درحال اجرا است. نسخه: {version}",
+    newVersion: "ورژن جدید موجود است: {version}",
     messages: [
-      "There is no server.",
-      "You can create/import a server or import a subscription."
+      "سروری وجود ندارد.",
+      "با گزینه وارد کردن (import) یا subscription یک سرور اضافه کنید."
     ]
   },
   v2ray: {
@@ -50,13 +50,13 @@ export default {
   InSecureConfirm: {
     title: "پیکربندی خطرناک شناسایی شد",
     message:
-      "The configuration has set the <b>AllowInsecure</b> to true. This may cause security risks. Are you sure to continue?",
+      "تنظیمات به <b>AllowInsecure</b> تغییر کرد. ممکن از خطراتی داشته باشد. آیا از ادامه مطمعن هستید?",
     confirm: "من میدانم چه کار دارم میکنم",
     cancel: "لغو"
   },
   subscription: {
     host: "هاست",
-    remarks: "Remarks",
+    remarks: "Remarks (لینک اشتراک)",
     timeLastUpdate: "تاریخ آخرین به روز رسانی",
     numberServers: "تعداد سرورها"
   },
@@ -64,8 +64,8 @@ export default {
     name: "عملیات",
     update: "بروزرسانی",
     modify: "تغییر",
-    share: "اشتراک",
-    view: "View",
+    share: "اشتراک گذاری",
+    view: "دیدن",
     delete: "حذف",
     create: "ایجاد",
     import: "وارد کردن",
@@ -81,19 +81,19 @@ export default {
     confirm: "تایید",
     confirm2: "با دقت تایید شود",
     save: "ذخیره",
-    copyLink: "COPY LINK",
-    helpManual: "Help & Manual",
+    copyLink: "کپی لینک",
+    helpManual: "راهنما",
     yes: "بله",
     no: "خیر",
     switchSite: "به سایت جایگزین بروید",
     addOutbound: "یک خروجی اضافه کنید"
   },
   register: {
-    title: "Create an admin account first",
+    title: "ابتدا یک اکانت ایجاد کنید",
     messages: [
-      "Remember your admin account which is importantly used to login.",
-      "Account information is stored in local. We never send information to any server.",
-      "Once password was forgot, you could use v2raya --reset-password to reset."
+      "به یاد داشته باشید که این اکانت برای وارد شدن استفاده خواهد شد.",
+      "اکانت بر روی سیستم شما ذخیره می شود و به سرور ارسال نمی شود.",
+      "درصورت فراموشی رمز از دستور --reset-password برای بازیابی رمز استفاده کنید."
     ]
   },
   login: {
@@ -105,37 +105,37 @@ export default {
     transparentProxy: "Transparent Proxy/System Proxy",
     transparentType: "Transparent Proxy/System Proxy Implementation",
     pacMode: "Traffic Splitting Mode of Rule Port",
-    preventDnsSpoofing: "Prevent DNS Spoofing",
+    preventDnsSpoofing: "جلوگیری از هک DNS",
     specialMode: "حالت ویژه",
     mux: "Multiplex",
-    autoUpdateSub: "Automatically Update Subscriptions",
-    autoUpdateGfwlist: "Automatically Update GFWList",
+    autoUpdateSub: "بروزرسانی خودکار اشتراک ها",
+    autoUpdateGfwlist: "بروزرسانی خودکار GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
     ipForwardOn: "IP Forward",
     portSharingOn: "به اشتراک گذاری پورت",
     concurrency: "همزمانی",
     options: {
-      global: "Do not Split Traffic",
+      global: "عدم تقسیم ترافیک",
       direct: "Direct",
-      pac: "Depend on Rule Port",
+      pac: "بسته به پورت تصمیم گیری شود.",
       whitelistCn: "Proxy except CN Sites",
-      gfwlist: "Proxy only GFWList",
+      gfwlist: "فقط GFWList را پروکسی کن.",
       sameAsPacMode: "Traffic Splitting Mode is the Same as the Rule Port",
       customRouting: "Customized Routing",
       antiDnsHijack: "Prevent DNS Hijack Only (fast)",
       forwardDnsRequest: "Forward DNS Request",
       doh: "DoH(dns-over-https)",
-      default: "Keep Default",
-      on: "On",
-      off: "Off",
-      updateSubWhenStart: "Update Subscriptions When Service Starts",
-      updateSubAtIntervals: "Update Subscriptions Regularly (Unit: hour)",
-      updateGfwlistWhenStart: "Update GFWList When Service Starts",
-      updateGfwlistAtIntervals: "Update GFWList Regularly (Unit: hour)",
+      default: "پیشفرض",
+      on: "روشن",
+      off: "خاموش",
+      updateSubWhenStart: "آپدیت اشتراک ها موقع اجرای نرم افزار",
+      updateSubAtIntervals: "آپدیت اشتراک ها هر چند وقت یکبار (واحد: ساعت)",
+      updateGfwlistWhenStart: "وقتی نرم افزار اجرا شد GFWList را آپدیت کن",
+      updateGfwlistAtIntervals: "هر چند وقت یکبار GFWList را آپدیت کن (واحد: ساعت(",
       dependTransparentMode: "Follows Transparent Proxy/System Proxy",
-      closed: "Off",
+      closed: "خاموش",
       advanced: "تنظیمات پیشرفته",
-      leastPing: "Least Latency First"
+      leastPing: "اول سرور با پینگ کمتر"
     },
     messages: {
       gfwlist:
@@ -169,40 +169,40 @@ export default {
   customAddressPort: {
     title: "آدرس و پورت ها",
     serviceAddress: "آدرس سرویس",
-    portSocks5: "Port of SOCKS5",
+    portSocks5: "پورت SOCKS5",
     portHttp: "پورت HTTP",
-    portSocks5WithPac: "Port of SOCKS5(with Rule)",
-    portHttpWithPac: "Port of HTTP(with Rule)",
-    portVmess: "Port of VMess(with Rule)",
+    portSocks5WithPac: "پورت SOCKS5(with Rule)",
+    portHttpWithPac: "پورت HTTP(with Rule)",
+    portVmess: "پورت VMess(with Rule)",
     portVmessLink: "لینک پورت VMess",
     messages: [
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
       "We cannot judge port occupations in docker mode. Confirm it by yourself.",
-      "Zero means to close this port."
+      "صفر به معنای بستن پورت است."
     ]
   },
   customRouting: {
     title: "Customize Routing Rule",
-    defaultRoutingRule: "Default Routing Rule",
+    defaultRoutingRule: "پیشفرض Routing Rule",
     sameAsDefaultRule: "the same as default rule",
-    appendRule: "Append Rule",
-    direct: "Direct",
+    appendRule: "اضافه کردن Rule",
+    direct: "مستقیم",
     proxy: "پروکسی",
-    block: "Block",
-    rule: "Rule",
-    domainFile: "Domain File",
-    typeRule: "Type of Rule",
+    block: "مسدود کردن",
+    rule: "شرط",
+    domainFile: "فایل دامنه ها",
+    typeRule: "انواع شرط",
     messages: {
-      0: "v2rayA will recognize all SiteDat file in <b>{V2RayLocationAsset}</b>",
+      0: "v2rayA تمام اطلاعات درون <b>{V2RayLocationAsset}</b> را بررسی خواهد کرد.",
       1: 'To make a SiteDat file by yourself: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
-      2: "Multi-select is supported.",
-      noSiteDatFileFound: "No siteDat file found in {V2RayLocationAsset}",
-      emptyRuleNotPermitted: "Empty rule is not permitted"
+      2: "می توانید چند گزینه را انتخاب کنید.",
+      noSiteDatFileFound: "siteDat در فایل یافت نشد. {V2RayLocationAsset}",
+      emptyRuleNotPermitted: "شرط ها نمی تواند خالی باشد."
     }
   },
   doh: {
-    title: "Configure DoH Server",
+    title: "پیکربندی سرور DoH",
     dohPriorityList: "Priority list of DoH Servers",
     messages: [
       "DoH (DNS over HTTPS) can effectively avoid DNS pollution. But some native DoH providers may themselves be contaminated sometimes. In addition, some DoH services may be blocked by local network providers. Please choose the fastest and stablest DoH server.",
@@ -215,7 +215,7 @@ export default {
     ]
   },
   dns: {
-    title: "Configure DNS Server",
+    title: "پیکربندی سرور DNS",
     internalQueryServers: "Domain Query Servers",
     externalQueryServers: "External Domain Query Servers",
     messages: [
@@ -225,8 +225,8 @@ export default {
   },
   egressPortWhitelist: {
     title: "Egress Port Whitelist",
-    tcpPortWhitelist: "TCP Port Whitelist",
-    udpPortWhitelist: "UDP Port Whitelist",
+    tcpPortWhitelist: "TCP پورت های مجاز",
+    udpPortWhitelist: "UDP پورت های مجاز",
     messages: [
       "If v2rayA is setup on a server A which connected with a proxy server B, pay attention:",
       "Transparent proxy will force all TCP and UDP traffic to pass through proxy server B, where source IP address will be replaced with proxy B's. Moreover, if some clients send requests to server A that provides service, they will received responses from your proxy B's IP address weirdly, which is illegal.",
@@ -236,9 +236,9 @@ export default {
     ]
   },
   configureServer: {
-    title: "Configure Server | Server",
-    servername: "Servername",
-    port: "Port",
+    title: "پیکربندی سرور | سرور",
+    servername: "نام سرور",
+    port: "پورت",
     forceTLS: "forcibly TLS on",
     noObfuscation: "No obfuscation",
     httpObfuscation: "Obfuscated as HTTP",
@@ -255,7 +255,7 @@ export default {
     origin: "origin"
   },
   configureSubscription: {
-    title: "Configure Subscription"
+    title: "پیکربندی اشتراک"
   },
   import: {
     message: "Input a server link or subscription address:",
@@ -263,37 +263,37 @@ export default {
     qrcodeError: "Failed to find a valid QRCode, please try again"
   },
   delete: {
-    title: "Confirm to DELETE",
+    title: "تایید و پاک کردن",
     message:
-      "Be sure to <b>DELETE</b> those servers/subscriptions? It is not reversible."
+      "آیا از پاک کردن <b>DELETE</b> اطمینان دارید؟ این عمل غیرقابل بازگشت است."
   },
   latency: {
     message:
-      "Latency tests used to cost one or several minutes. Wait patiently please."
+      "تست latency ممکن است چند دقیقه طول بکشد. لطفا صبور باشید."
   },
   version: {
     higherVersionNeeded:
-      "This operation need higher version of v2rayA than {version}",
-    v2rayInvalid: "geosite.dat, geoip.dat or v2ray-core may not be installed correctly",
+      "این عملیات به نسخه بالاتر از {version} نیاز دارد.",
+    v2rayInvalid: "geosite.dat, geoip.dat یا v2ray-core ممکن است به درستی نصب نشده باشد.",
     v2rayNotV5:
-      "The version of v2ray-core is not v5. Use v5 or downgrade v2rayA to v1.5"
+      "ورژن v2ray-core برار v5 نیست. از v5 استفاده کنید یا به v2rayA نسخه v1.5 بازگردانی کنید."
   },
-  about: `<p>v2rayA is a web GUI client of V2Ray.</p>
-          <p class="about-small">Default ports:</p>
+  about: `<p>v2rayA یک رابطه کاربری برای V2Ray است.</p>
+          <p class="about-small">پورت های پیشفرض:</p>
           <p class="about-small">2017: v2rayA service port</p>
-          <p class="about-small">20170: SOCKS protocol</p>
-          <p class="about-small">20171: HTTP protocol</p>
+          <p class="about-small">20170: SOCKS پروتکل</p>
+          <p class="about-small">20171: HTTP پروتکل</p>
           <p class="about-small">20172: HTTP protocol with "Rule of Splitting Traffic"</p>
-          <p class="about-small">Other ports：</p>
+          <p class="about-small">دیگر پورت ها：</p>
           <p class="about-small">32345: tproxy, needed by transparent proxy </p>
-          <p>All data is stored in local instead of in the cloud. </p>
-          <p>Problems found during use can be reported at <a href="https://github.com/v2rayA/v2rayA/issues">issues</a>.</p>
-          <p>Documentation: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
+          <p>تمام اطلاعات به صورت محلی ذخیره میشود نه فضای ابری</p>
+          <p>می توانید مشکلات را به لینک روبرو گزارش دهید : <a href="https://github.com/v2rayA/v2rayA/issues">issues</a>.</p>
+          <p>داکیومنت ها : <a href="https://v2raya.org">https://v2raya.org</a></p>`,
   axios: {
     messages: {
       optimizeBackend: "Adjust v2rayA service address？",
       noBackendFound:
-        "Cannot find v2rayA at {url}. Make sure v2rayA is running at this address.",
+        "نمی توان v2rayA را در آدرس {url} پیدا کرد. اطمینان حاصل کنید که v2rayA روی این آدرس درحال اجرا است.",
       cannotCommunicate: [
         "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
         "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http sites."
@@ -304,16 +304,16 @@ export default {
     }
   },
   routingA: {
-    messages: ["click the button 'Help&Manual' for help"]
+    messages: ["برای کمک برو روی گزینه 'Help&Manual' کلیک کنید."]
   },
   outbound: {
     addMessage: "لطفاً نام خروجی را که می خواهید اضافه کنید وارد کنید:",
     deleteMessage:
-      'Be sure to <b>DELETE</b> the outbound "{outboundName}"? It is not reversible.'
+      'از حذف <b>DELETE</b> اطمینان دارید "{outboundName}"? این عمل غیرقابل بازگشت است'
   },
   log: {
     logModalTitle: "دیدن لاگ ها",
     refreshInterval: "Refresh Interval",
-    seconds: "seconds"
+    seconds: "ثانیه"
   }
 };
