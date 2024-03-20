@@ -353,8 +353,6 @@ jobs:
               package_arch='i386'
             elif [ "$GOARCH" == 'mipsle' ];then
               package_arch='mips32le'
-            elif [ "$GOARCH" == 'loong64' ];then
-              package_arch='loongarch64'
             else
               package_arch="$GOARCH"
             fi
@@ -520,7 +518,7 @@ jobs:
           riscv64)
             source_dir="v2ray_unzipped/v2ray-linux-riscv64"
             ;;
-          loongarch64)
+          loong64)
             source_dir="v2ray_unzipped/v2ray-linux-loong64"
             ;;
         esac
@@ -579,7 +577,7 @@ jobs:
           riscv64)
             source_dir="xray_unzipped/xray-linux-riscv64"
             ;;
-          loongarch64)
+          loong64)
             source_dir="xray_unzipped/xray-linux-loong64"
             ;;
         esac
