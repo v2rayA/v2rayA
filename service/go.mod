@@ -19,6 +19,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/json-iterator/go v1.1.12
 	github.com/matoous/go-nanoid v1.5.0
+	github.com/modern-go/reflect2 v1.0.2
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20201229145248-615b0916ca38
 	github.com/pkg/errors v0.9.1
@@ -65,7 +66,6 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mzz2017/disk-bloom v1.0.1 // indirect
 	github.com/mzz2017/quic-go v0.0.0-20230902042923-a727c1c479d4 // indirect
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect

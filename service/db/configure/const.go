@@ -22,9 +22,11 @@ const (
 	TransparentGfwlist    = TransparentMode("gfwlist")
 	TransparentFollowRule = TransparentMode("pac")
 
-	TransparentTproxy   = TransparentType("tproxy")
-	TransparentRedirect = TransparentType("redirect")
+	TransparentTproxy      = TransparentType("tproxy")
+	TransparentRedirect    = TransparentType("redirect")
 	TransparentSystemProxy = TransparentType("system_proxy")
+	TransparentGvisorTun   = TransparentType("gvisor_tun")
+	TransparentSystemTun   = TransparentType("system_tun")
 
 	Default = DefaultYesNo("default")
 	Yes     = DefaultYesNo("yes")
