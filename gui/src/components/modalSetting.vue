@@ -122,6 +122,8 @@
           <option v-show="!lite" value="redirect">redirect</option>
           <option v-show="!lite" value="tproxy">tproxy</option>
           <option value="system_proxy">system proxy</option>
+          <option value="gvisor_tun">gvisor tun</option>
+          <option value="system_tun">system tun</option>
         </b-select>
       </b-field>
       <b-field label-position="on-border">
@@ -491,7 +493,9 @@ export default {
         );
         this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
         if (this.lite) {
-          this.transparentType = "system_proxy";
+          if (this.transparentType == "redirect" || this.transparentType == "tproxy") {
+            this.transparentType = "system_proxy";
+          }
           this.showSpecialMode = false;
         }
       });
