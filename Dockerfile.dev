@@ -5,9 +5,9 @@ FROM golang:alpine
 RUN apk --no-cache add iptables ip6tables git
 ENV GO111MODULE=on
 ENV GOPROXY=https://goproxy.cn
-RUN go get github.com/codegangsta/gin
+RUN go install github.com/codegangsta/gin@latest
 WORKDIR /service
-COPY --from=v2ray /usr/bin/v2ray /usr/bin/v2ctl /usr/share/v2ray/
+COPY --from=v2ray /usr/bin/v2ray /usr/share/v2ray/
 COPY --from=v2ray /usr/local/share/v2ray/* /usr/local/share/v2ray/
 ENV PATH=$PATH:/usr/share/v2ray
 ENV CONFIG=../config.json

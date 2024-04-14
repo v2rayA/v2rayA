@@ -150,7 +150,7 @@
           <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="ServiceName" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
             <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
           </b-field>
         </b-tab-item>
@@ -363,6 +363,15 @@
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
           </b-field>
+          <b-field label="Network" label-position="on-border">
+            <b-select ref="trojan_net" v-model="trojan.net" expanded required @input="handleNetworkChange">
+              <option value="tcp">TCP</option>
+              <option value="kcp">mKCP</option>
+              <option value="ws">WebSocket</option>
+              <option value="h2">HTTP/2</option>
+              <option value="grpc">gRPC</option>
+            </b-select>
+          </b-field>
           <b-field label="Obfs" label-position="on-border">
             <b-select ref="trojan_obfs" v-model="trojan.obfs" expanded required>
               <option value="none">
@@ -376,6 +385,25 @@
           </b-field>
           <b-field v-show="trojan.obfs === 'websocket'" label="Websocket Path" label-position="on-border">
             <b-input v-model="trojan.path" placeholder="/" expanded />
+          </b-field>
+          <b-field v-show="trojan.net === 'ws' ||
+            trojan.net === 'h2'
+            " label="Host" label-position="on-border">
+            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="trojan.tls === 'tls'" label="Alpn" label-position="on-border">
+            <b-input v-model="trojan.alpn" placeholder="h2,http/1.1" expanded />
+          </b-field>
+          <b-field v-show="trojan.net === 'ws' ||
+            trojan.net === 'h2'
+            " label="Path" label-position="on-border">
+            <b-input v-model="trojan.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="trojan.net === 'mkcp' || trojan.net === 'kcp'" label="Seed" label-position="on-border">
+            <b-input v-model="trojan.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="trojan.net === 'grpc'" label="Service Name" label-position="on-border">
+            <b-input ref="trojan_service_name" v-model="trojan.path" type="text" expanded />
           </b-field>
         </b-tab-item>
 
@@ -624,6 +652,7 @@ export default {
       method: "origin" /* shadowsocks */,
       ssCipher: "aes-128-gcm",
       ssPassword: "",
+      net: "tcp",
       obfs: "none" /* websocket */,
       protocol: "trojan",
     },
@@ -908,8 +937,10 @@ export default {
           allowInsecure:
             u.params.allowInsecure === 'true' || u.params.allowInsecure === "1",
           method: "origin",
+          net: u.params.type || "tcp",
           obfs: "none",
           ssCipher: "aes-128-gcm",
+          path: u.params.path || u.params.serviceName || "",
           protocol: "trojan",
         };
         if (url.toLowerCase().startsWith("" + "")) {
@@ -1116,6 +1147,7 @@ export default {
         case "trojan":
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
+            type: srcObj.net,
             allowInsecure: srcObj.allowInsecure,
           };
           if (srcObj.peer !== "") {
@@ -1133,6 +1165,16 @@ export default {
               query.path = srcObj.path || "/";
             }
             delete query.allowInsecure;
+          }
+
+          if (srcObj.alpn !== "") {
+            query.alpn = srcObj.alpn;
+          }
+          if (srcObj.net === "grpc") {
+            query.serviceName = srcObj.path;
+          }
+          if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
+            query.seed = srcObj.path;
           }
           return generateURL({
             protocol: tmp,
