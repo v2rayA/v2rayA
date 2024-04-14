@@ -175,6 +175,7 @@ type Mux struct {
 type OutboundObject struct {
 	Tag            string          `json:"tag"`
 	Protocol       string          `json:"protocol"`
+	SendThrough    string          `json:"sendThrough,omitempty"`
 	Settings       Settings        `json:"settings,omitempty"`
 	StreamSettings *StreamSettings `json:"streamSettings,omitempty"`
 	ProxySettings  *ProxySettings  `json:"proxySettings,omitempty"`
