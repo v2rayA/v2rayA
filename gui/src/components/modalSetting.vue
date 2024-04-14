@@ -32,7 +32,6 @@
         }}</span>
         <b-button
           size="is-small"
-          type="is-text"
           style="
             position: relative;
             top: -2px;

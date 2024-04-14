@@ -2,7 +2,7 @@
 Version=1.0
 Terminal=false
 Type=Application
-Name=v2rayA
+Name=v2rayA Web Panel
 Categories=Network;
 Keywords=Internet;VPN;Proxy;v2ray;v2raya
 Exec=xdg-open "http://127.0.0.1:2017"
