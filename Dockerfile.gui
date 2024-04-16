@@ -5,4 +5,5 @@ RUN yarn && yarn build
 
 FROM nginx:stable-alpine
 COPY --from=builder /web /usr/share/nginx/html
+LABEL org.opencontainers.image.source=https://github.com/v2rayA/v2rayA
 EXPOSE 80

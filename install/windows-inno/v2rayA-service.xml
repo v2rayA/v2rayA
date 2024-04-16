@@ -25,7 +25,7 @@ SOFTWARE.
     <description>A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols.</description>
     <executable>%BASE%\bin\v2raya.exe</executable>
     <env name="PATH" value="%BASE%\bin\;%windir%\system32\"/>
-    <arguments>--lite --log-file "v2raya.log" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
+    <arguments>--passcheckroot --log-file "v2raya.log" --v2ray-assetsdir "%BASE%\data" --config "%BASE%"</arguments>
     <workingdirectory>%TEMP%</workingdirectory>
     <log mode="roll"></log>
     <onfailure action="restart" delay="10 sec"/>
