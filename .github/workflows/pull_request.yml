@@ -11,7 +11,7 @@ jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4.1.1
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Set up Node.js
@@ -42,7 +42,7 @@ jobs:
           os: [ubuntu-latest, windows-latest, macos-latest]
     needs: Build_v2rayA_Web
     steps:
-    - uses: actions/checkout@v4.1.1
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Download Artifact
@@ -51,7 +51,7 @@ jobs:
         name: web
         path: service/server/router/web
     - name: Set up Go
-      uses: actions/setup-go@v5.0.0
+      uses: actions/setup-go@v5
       with:
         cache-dependency-path: |
           service/go.mod
