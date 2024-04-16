@@ -95,44 +95,52 @@ jobs:
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Path v2raya_binaries
-        foreach ($arch in @('amd64', 'arm64', 'arm', '386', 'riscv64', 'mips64', 'mips64le', 'mipsle', 'mips', 'loong64')) {
-          Set-Location -Path service
+        foreach ($arch in @('amd64', 'arm64', '386', 'riscv64', 'mips64', 'mips64le', 'mipsle', 'mips', 'loong64')) {
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
-          go build -o ../v2raya_binaries/v2raya_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arm in @('7')) {
-          Set-Location -Path service
           $env:GOARCH = 'arm'
           $env:GOARM = $arm
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-arm$arm")."friendlyName"
-          go build -o ../v2raya_binaries/v2raya_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'windows'
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
-          go build -o ../v2raya_binaries/v2raya_$filename.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'darwin'
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
-          go build -o ../v2raya_binaries/v2raya_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'freebsd'
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."freebsd-$arch")."friendlyName"
-          go build -o ../v2raya_binaries/v2raya_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'openbsd'
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."openbsd-$arch")."friendlyName"
-          go build -o ../v2raya_binaries/v2raya_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
         }
 
     - name: Upload Artifact
@@ -186,23 +194,27 @@ jobs:
       run: |
         New-Item -ItemType Directory -Path v2raya_binaries
         foreach ($arch in @('amd64', 'arm64')) {
-          Set-Location -Path service
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'windows'
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_$filename.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'darwin'
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_$filename -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path service
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
         }
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
@@ -808,11 +820,20 @@ jobs:
       uses: docker/setup-qemu-action@v3.0.0
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to GitHub container registry
+      uses: docker/login-action@v3.0.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Login to DockerHub
       uses: docker/login-action@v3.0.0
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Convert repository owner to lowercase
+      run: |
+          echo "LOWERCASE_REPOSITORY_OWNER=${GITHUB_REPOSITORY_OWNER@L}" >>${GITHUB_ENV}
     - name: Build and push
       uses: docker/build-push-action@v5.0.0
       with:
@@ -824,6 +845,8 @@ jobs:
         tags: |
           ${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
           ${{ steps.prep.outputs.image }}:latest
+          ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/v2raya:${{ steps.prep.outputs.tag }}
+          ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/v2raya:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Release_v2rayA_GUI_to_Docker:
@@ -853,11 +876,20 @@ jobs:
       uses: docker/setup-qemu-action@v3.0.0
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to GitHub container registry
+      uses: docker/login-action@v3.0.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Login to DockerHub
       uses: docker/login-action@v3.0.0
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Convert repository owner to lowercase
+      run: |
+          echo "LOWERCASE_REPOSITORY_OWNER=${GITHUB_REPOSITORY_OWNER@L}" >>${GITHUB_ENV}
     - name: Build and push
       uses: docker/build-push-action@v5.0.0
       with:
@@ -866,7 +898,9 @@ jobs:
         file: install/docker/Dockerfile.GUI.Action
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
-        tags: mzz2017/v2raya-gui:latest
+        tags: |
+          mzz2017/v2raya-gui:latest
+          ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Submit_to_Microsoft_winget:
