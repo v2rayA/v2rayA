@@ -783,6 +783,8 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
+          ${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
+          ${{ steps.prep.outputs.image }}:latest
           ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/v2raya:${{ steps.prep.outputs.tag }}
           ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/v2raya:latest
         cache-from: type=gha
@@ -837,6 +839,7 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
+          mzz2017/v2raya-gui:latest
           ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
