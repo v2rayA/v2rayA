@@ -827,8 +827,8 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
-	  mzz2017/v2raya-gui:latest
-	  ghrcr.io/${{ github.repository_owner }}/v2raya-gui:latest
+          mzz2017/v2raya-gui:latest
+          ghrcr.io/invisiblerain/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Submit_to_Microsoft_winget:
