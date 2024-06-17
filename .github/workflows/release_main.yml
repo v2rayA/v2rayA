@@ -776,6 +776,8 @@ jobs:
         tags: |
           ${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
           ${{ steps.prep.outputs.image }}:latest
+          ghcr.io/${{ github.repository_owner }}/{{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
+          ghcr.io/${{ github.repository_owner }}/{{ steps.prep.outputs.image }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Release_v2rayA_GUI_to_Docker:
@@ -810,6 +812,12 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Login to GitHub container registry
+      uses: docker/login-action@v3.0.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push
       uses: docker/build-push-action@v5.0.0
       with:
@@ -818,7 +826,9 @@ jobs:
         file: install/docker/Dockerfile.GUI.Action
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
-        tags: mzz2017/v2raya-gui:latest
+        tags: |
+	  mzz2017/v2raya-gui:latest
+	  ghrcr.io/${{ github.repository_owner }}/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Submit_to_Microsoft_winget:
