@@ -831,7 +831,9 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
-          ghrcr.io/${{ github.repository_owner }}/v2raya-gui:latest
+          echo "REPOSITORY_OWNER=${{ github.repository_owner }}" >>${GITHUB_ENV}
+          echo "LOWERCASE_REPOSITORY_OWNER=${REPOSITORY_OWNER@L}" >>${GITHUB_ENV}
+          ghrcr.io/${LOWERCASE_REPOSITORY_OWNER}/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Submit_to_Microsoft_winget:
