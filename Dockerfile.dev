@@ -13,5 +13,6 @@ ENV PATH=$PATH:/usr/share/v2ray
 ENV CONFIG=../config.json
 ENV GIN_BIN=../v2rayA
 ENV GIN_GUILD_ARGS="-o ${GIN_BIN}"
+LABEL org.opencontainers.image.source=https://github.com/InvisibleRain/v2rayA
 EXPOSE 2017
 ENTRYPOINT gin -a 2017 -i run
