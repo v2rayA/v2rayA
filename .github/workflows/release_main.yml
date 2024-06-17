@@ -783,8 +783,8 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/{{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
-          ghcr.io/${{ github.repository_owner }}/{{ steps.prep.outputs.image }}:latest
+          ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/{{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
+          ghcr.io/${{ env.LOWERCASE_REPOSITORY_OWNER }}/{{ steps.prep.outputs.image }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Release_v2rayA_GUI_to_Docker:
