@@ -780,8 +780,6 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
-          #${{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
-          #${{ steps.prep.outputs.image }}:latest
           ghcr.io/${{ github.repository_owner }}/{{ steps.prep.outputs.image }}:${{ steps.prep.outputs.tag }}
           ghcr.io/${{ github.repository_owner }}/{{ steps.prep.outputs.image }}:latest
         cache-from: type=gha
@@ -833,7 +831,6 @@ jobs:
         platforms: linux/arm,linux/arm64,linux/amd64
         push: true
         tags: |
-          #mzz2017/v2raya-gui:latest
           ghrcr.io/${{ github.repository_owner }}/v2raya-gui:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
