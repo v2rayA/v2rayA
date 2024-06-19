@@ -1,4 +1,4 @@
-name: Build & Release v2rayA
+name: Build & Release v2rayA beta
 
 on:
   workflow_dispatch:
