@@ -1,7 +1,6 @@
 name: Test Source of v2rayA
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
@@ -11,8 +10,6 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
-   pull_request:
-     types: [opened, synchronize, reopened]
 
 jobs:
   Build_v2rayA_Web:
@@ -41,13 +38,8 @@ jobs:
       with:
         path: web/*
         name: web
-    - name: Upload the tar archive to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          web.tar.gz
 
-Build_v2rayA_Binaries:
+  Build_v2rayA_Binaries:
     runs-on: ubuntu-latest
     needs: [Build_v2rayA_Web]
     env:
@@ -65,10 +57,12 @@ Build_v2rayA_Binaries:
         path: service/server/router/web
     - name: Check Version
       id: prep
-      env:
-        REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+        count=$(git rev-list --count HEAD)
+        commit=$(git rev-parse --short HEAD)
+        version="unstable-$date.r${count}.$commit"
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -130,13 +124,12 @@ Build_v2rayA_Binaries:
           go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           v2raya_binaries/*
-         
+
   Build_v2rayA_SingTun_Binaries:
     runs-on: ubuntu-latest
     needs: [Build_v2rayA_Web]
@@ -155,10 +148,12 @@ Build_v2rayA_Binaries:
         path: service/server/router/web
     - name: Check Version
       id: prep
-      env:
-        REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+        date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+        count=$(git rev-list --count HEAD)
+        commit=$(git rev-parse --short HEAD)
+        version="unstable-$date.r${count}.$commit"
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
