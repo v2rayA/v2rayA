@@ -60,7 +60,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${{ inputs.tag }}
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -148,7 +149,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${{ inputs.tag }}
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -203,7 +205,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${{ inputs.tag }}
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Windows x64
@@ -310,8 +313,8 @@ jobs:
         version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-        echo "PACKAGE_VERSION=$package_version" >> $GITHUB_OUTPUT
-        echo "PACKAGE_VERSION=$package_version" >> $GITHUB_ENV
+        echo "PACKAGE_VERSION=$version" >> $GITHUB_OUTPUT
+        echo "PACKAGE_VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact
       uses: actions/download-artifact@v4
       with:

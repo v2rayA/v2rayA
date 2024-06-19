@@ -206,7 +206,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${{ inputs.tag }}
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Windows x64
@@ -233,7 +234,7 @@ jobs:
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         ## Copy v2rayA to Destination Directory
         Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item -Path D:\Downloads\v2raya_singtun_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
         Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
         ## Download and extract v2ray
         $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
@@ -313,8 +314,8 @@ jobs:
         version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-        echo "PACKAGE_VERSION=$package_version" >> $GITHUB_OUTPUT
-        echo "PACKAGE_VERSION=$package_version" >> $GITHUB_ENV
+        echo "PACKAGE_VERSION=$version" >> $GITHUB_OUTPUT
+        echo "PACKAGE_VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact
       uses: actions/download-artifact@v4
       with:
