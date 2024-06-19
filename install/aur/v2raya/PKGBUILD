@@ -16,8 +16,8 @@ backup=("etc/default/v2raya")
 
 build() {
     cd "$srcdir/v2rayA-$pkgver/gui"
-    yarn --check-files
-    OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn build
+    yarn --check-files --ignore-engines
+    OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn --ignore-engines build
 
     cd "$srcdir/v2rayA-$pkgver/service"
     export GO111MODULE=on
