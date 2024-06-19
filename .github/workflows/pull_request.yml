@@ -15,7 +15,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Set up Node.js
-      uses: actions/setup-node@v4.0.2
+      uses: actions/setup-node@v4
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -30,7 +30,7 @@ jobs:
         echo "Use tar to generate web.tar.gz..."
         tar -zcvf web.tar.gz web/
     - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v4.3.1
+      uses: actions/upload-artifact@v4
       with:
         path: web/*
         name: web
@@ -46,7 +46,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Download Artifact
-      uses: actions/download-artifact@v4.1.2
+      uses: actions/download-artifact@v4
       with:
         name: web
         path: service/server/router/web
