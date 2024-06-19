@@ -397,7 +397,6 @@ jobs:
         path: |
           fpm_packages/*
   GitHub_Release:
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages, Build_v2rayA_SingTun_Binaries] 
     steps:
