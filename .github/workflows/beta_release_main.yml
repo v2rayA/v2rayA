@@ -60,7 +60,7 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        version=${{ inputs.tag }}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -149,7 +149,7 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        version=${{ inputs.tag }}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -204,7 +204,7 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        version=${{ inputs.tag }}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Windows x64
@@ -310,7 +310,7 @@ jobs:
         echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         if [[ "$REF" == "refs/tags/v"* ]]; then
           tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-          version=${tag:1}
+          version=$(echo $tag | sed 's/v//g')
           package_version="$(echo "$version" | awk -F 'v' '{print $1}')"
         else
           date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
@@ -418,7 +418,7 @@ jobs:
         REF: ${{ inputs.tag }}
       run: |
         tag=${{ inputs.tag }}
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts

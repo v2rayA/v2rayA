@@ -61,7 +61,7 @@ jobs:
         REF: ${{ inputs.tag }}
       run: |
         tag=${{ inputs.tag }}
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -151,7 +151,7 @@ jobs:
         REF: ${{ inputs.tag }}
       run: |
         tag=${{ inputs.tag }}
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -312,7 +312,7 @@ jobs:
         echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         if [[ "$REF" == "refs/tags/v"* ]]; then
           tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-          version=${tag:1}
+          version=$(echo $tag | sed 's/v//g')
           package_version="$(echo "$version" | awk -F 'v' '{print $1}')"
         else
           date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
@@ -420,7 +420,7 @@ jobs:
         REF: ${{ inputs.tag }}
       run: |
         tag=${{ inputs.tag }}
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
@@ -450,6 +450,8 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
+        echo "Don't upload SingTun binaries to GitHub Release for they are not stable."
+        rm -f release/v2raya_with_singtun_*
         Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/v2rayA/v2rayA/releases/latest | jq -r '.tag_name')
         Latest_tag=v${{ steps.prep.outputs.VERSION }}
         if [ "$Latest_Releases" != "$Latest_tag" ]; then
@@ -636,7 +638,7 @@ jobs:
       run: |
         echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
@@ -714,10 +716,11 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
+      env:
+        REF: ${{ inputs.tag }}
       run: |
-        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
-        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-        version=${tag:1}
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Linux x64
@@ -769,7 +772,7 @@ jobs:
       id: prep
       run: |
         tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
         TAG=$(echo $GITHUB_REF | cut -d / -f 3)
@@ -824,7 +827,7 @@ jobs:
         REF: ${{ inputs.tag }}
       run: |
         tag=${{ inputs.tag }}
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Web Files
@@ -877,7 +880,7 @@ jobs:
         REF: ${{ inputs.tag }}
       run: |
         tag=${{ inputs.tag }}
-        version=${tag:1}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Submit to Microsoft winget
