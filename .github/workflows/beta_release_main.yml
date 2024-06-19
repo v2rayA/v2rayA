@@ -210,12 +210,12 @@ jobs:
     - name: Download Artifact Windows x64
       uses: actions/download-artifact@v4
       with:
-        name: v2raya_with_singtun_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+        name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
     - name: Download Artifact Windows arm64
       uses: actions/download-artifact@v4
       with:
-        name: v2raya_with_singtun_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
     - name: Install Inno Setup
       shell: pwsh
@@ -230,8 +230,8 @@ jobs:
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         ## Copy v2rayA to Destination Directory
-        Copy-Item -Path D:\Downloads\v2raya_with_singtun_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item -Path D:\Downloads\v2raya_with_singtun_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
         Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
         ## Download and extract v2ray
         $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
@@ -415,11 +415,9 @@ jobs:
     - name: Check Version
       id: prep
       env:
-        REF: ${{ github.ref }}
-      shell: bash
+        REF: ${{ inputs.tag }}
       run: |
-        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
-        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        tag=${{ inputs.tag }}
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
@@ -450,6 +448,8 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
+        echo "Don't upload SingTun binaries to GitHub Release for they are not stable."
+        rm -f release/v2raya_with_singtun_*
         Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/v2rayA/v2rayA/releases/latest | jq -r '.tag_name')
         Latest_tag=v${{ steps.prep.outputs.VERSION }}
         if [ "$Latest_Releases" != "$Latest_tag" ]; then

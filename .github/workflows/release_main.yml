@@ -60,7 +60,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        tag=${{ inputs.tag }}
+        version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -149,7 +150,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        tag=${{ inputs.tag }}
+        version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -193,7 +195,7 @@ jobs:
           v2raya_binaries/*
   Build_Windows_Installers:
     runs-on: windows-latest
-    needs: [Build_v2rayA_SingTun_Binaries]
+    needs: [Build_v2rayA_Binaries]
     steps:
     - uses: actions/checkout@v4
       with:
@@ -204,18 +206,18 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        version=${{ inputs.tag }}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Windows x64
       uses: actions/download-artifact@v4
       with:
-        name: v2raya_with_singtun_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+        name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
     - name: Download Artifact Windows arm64
       uses: actions/download-artifact@v4
       with:
-        name: v2raya_with_singtun_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
         path: D:\Downloads
     - name: Install Inno Setup
       shell: pwsh
@@ -230,8 +232,8 @@ jobs:
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         ## Copy v2rayA to Destination Directory
-        Copy-Item -Path D:\Downloads\v2raya_with_singtun_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item -Path D:\Downloads\v2raya_with_singtun_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_singtun_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
         Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
         ## Download and extract v2ray
         $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
@@ -415,11 +417,9 @@ jobs:
     - name: Check Version
       id: prep
       env:
-        REF: ${{ github.ref }}
-      shell: bash
+        REF: ${{ inputs.tag }}
       run: |
-        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
-        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        tag=${{ inputs.tag }}
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
@@ -820,14 +820,13 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
+      env:
+        REF: ${{ inputs.tag }}
       run: |
-        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        tag=${{ inputs.tag }}
         version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-        TAG=$(echo $GITHUB_REF | cut -d / -f 3)
-        IMAGE="mzz2017/v2raya-gui"
-        echo image=${IMAGE} >> $GITHUB_OUTPUT
     - name: Download Web Files
       uses: actions/download-artifact@v4
       with:
@@ -877,7 +876,8 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
-        version=${REF}
+        tag=${{ inputs.tag }}
+        version=${tag:1}
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Submit to Microsoft winget
