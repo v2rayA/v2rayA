@@ -307,20 +307,10 @@ jobs:
     - name: Check Version
       id: prep
       env:
-        REF: ${{ github.ref }}
+        REF: ${{ inputs.tag }}
       run: |
-        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
-        if [[ "$REF" == "refs/tags/v"* ]]; then
-          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
-          version=$(echo $tag | sed 's/v//g')
-          package_version="$(echo "$version" | awk -F 'v' '{print $1}')"
-        else
-          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
-          count=$(git rev-list --count HEAD)
-          commit=$(git rev-parse --short HEAD)
-          version="unstable-$date.r${count}.$commit"
-          package_version="$date.r${count}.$commit"
-        fi
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
         echo "PACKAGE_VERSION=$package_version" >> $GITHUB_OUTPUT
