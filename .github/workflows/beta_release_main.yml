@@ -122,7 +122,6 @@ jobs:
           go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
@@ -193,7 +192,7 @@ jobs:
           v2raya_binaries/*
   Build_Windows_Installers:
     runs-on: windows-latest
-    needs: [Build_v2rayA_SingTun_Binaries]
+    needs: [Build_v2rayA_Binaries]
     steps:
     - uses: actions/checkout@v4
       with:
