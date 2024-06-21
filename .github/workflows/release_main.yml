@@ -625,9 +625,10 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
+      env:
+        REF: ${{ inputs.tag }}
       run: |
-        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
-        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        tag=${{ inputs.tag }}
         version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
@@ -706,6 +707,7 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
+      shell: bash
       env:
         REF: ${{ inputs.tag }}
       run: |
