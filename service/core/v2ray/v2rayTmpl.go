@@ -1640,8 +1640,13 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	//set inbound listening address and routing
 	t.setDualStack()
 
-	//set outbound sendThrough address
-	t.setSendThrough()
+	if IsTransparentOn(t.Setting) {
+		switch t.Setting.TransparentType {
+		case configure.TransparentGvisorTun, configure.TransparentSystemTun:
+			//set outbound sendThrough address
+			t.setSendThrough()
+		}
+	}
 
 	//check if there are any duplicated tags
 	if err = t.checkDuplicatedTags(); err != nil {
