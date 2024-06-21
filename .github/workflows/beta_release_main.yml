@@ -120,7 +120,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."openbsd-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
     - name: Upload Artifact
