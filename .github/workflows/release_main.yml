@@ -628,6 +628,7 @@ jobs:
       env:
         REF: ${{ inputs.tag }}
       run: |
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         tag=${{ inputs.tag }}
         version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
