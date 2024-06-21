@@ -869,6 +869,7 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
+      shell: bash
       env:
         REF: ${{ inputs.tag }}
       run: |
