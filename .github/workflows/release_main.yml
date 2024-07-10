@@ -336,7 +336,7 @@ jobs:
           fpm_packages/*
   GitHub_Release:
     runs-on: ubuntu-22.04
-    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages, Build_v2rayA_SingTun_Binaries] 
+    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages] 
     steps:
     - uses: actions/checkout@v4
       with:
