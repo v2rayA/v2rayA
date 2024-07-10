@@ -764,14 +764,13 @@ jobs:
     - name: Check Version
       id: prep
       run: |
-        tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+        tag=${{ inputs.tag }}
         version=$(echo $tag | sed 's/v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-        TAG=$(echo $GITHUB_REF | cut -d / -f 3)
         IMAGE="mzz2017/v2raya"
         echo image=${IMAGE} >> $GITHUB_OUTPUT
-        echo tag=${TAG} >> $GITHUB_OUTPUT
+        echo tag=${{ inputs.tag }} >> $GITHUB_OUTPUT
         sed -i "s|Realv2rayAVersion|$version|g" install/docker/docker_helper.sh
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3.0.0
