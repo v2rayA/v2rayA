@@ -81,7 +81,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arm in @('7')) {
@@ -89,7 +89,7 @@ jobs:
           $env:GOARM = $arm
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-arm$arm")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -97,7 +97,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -105,7 +105,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -113,7 +113,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."freebsd-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -121,7 +121,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."openbsd-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
     - name: Upload Artifact
@@ -130,9 +130,9 @@ jobs:
         path: |
           v2raya_binaries/*
 
-  Build_v2rayA_SingTun_Binaries:
-    runs-on: ubuntu-latest
-    needs: [Build_v2rayA_Web]
+  Build_Windows_installer:
+    runs-on: windows-latest
+    needs: [Build_v2rayA_Binaries]
     env:
       CGO_ENABLED: 0
       NAME: v2raya
@@ -141,13 +141,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Download Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: web
-        path: service/server/router/web
     - name: Check Version
       id: prep
+      shell: bash
       run: |
         echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
@@ -156,42 +152,66 @@ jobs:
         version="unstable-$date.r${count}.$commit"
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - name: Download Artifact Windows x64
+      uses: actions/download-artifact@v4
       with:
-        cache-dependency-path: |
-          service/go.mod
-          service/go.sum
-        go-version: ^1.21
-    - name: Build v2rayA SingTun Binaries
+        name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
+        path: D:\Downloads
+    - name: Download Artifact Windows arm64
+      uses: actions/download-artifact@v4
+      with:
+        name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        path: D:\Downloads
+    - name: Install Inno Setup
       shell: pwsh
       run: |
-        New-Item -ItemType Directory -Path v2raya_binaries
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'windows'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'darwin'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
+        choco install innosetup -y
+    - name: Build Windows Installer
+      shell: pwsh
+      run: |
+        ## Create Destination Directory
+        New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
+        New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\bin"
+        New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
+        New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
+        ## Copy v2rayA to Destination Directory
+        Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
+        ## Download and extract v2ray
+        $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
+        $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-arm64-v8a.zip"
+        Invoke-WebRequest $Url_v2ray_x64 -OutFile "D:\v2ray-windows-x64.zip"
+        Expand-Archive -Path "D:\v2ray-windows-x64.zip" -DestinationPath "D:\v2raya-x86_64-windows\bin\"
+        Move-Item -Path "D:\v2raya-x86_64-windows\bin\*.dat" -Destination "D:\v2raya-x86_64-windows\data\"
+        Remove-Item -Path "D:\v2raya-x86_64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
+        Invoke-WebRequest $Url_v2ray_A64 -OutFile "D:\v2ray-windows-A64.zip"
+        Expand-Archive -Path "D:\v2ray-windows-A64.zip" -DestinationPath "D:\v2raya-arm64-windows\bin\"
+        Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm64-windows\data\"
+        Remove-Item -Path "D:\v2raya-arm64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
+        ## Download WinSW
+        ## WinSW said they have a native ARM64 version, but I cannot find it, so use net4 version instead on ARM-based Windows.
+        ## See more in "https://visualstudiomagazine.com/articles/2022/08/12/net-framework-4-8-1.aspx"
+        $Url_WinSW = "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-net461.exe"
+        Invoke-WebRequest $Url_WinSW -OutFile "D:\WinSW.exe"
+        Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.exe"
+        Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-arm64-windows\v2rayA-service.exe"
+        ## Copy License and Service Config
+        Copy-Item -Path ".\LICENSE" -Destination "D:\LICENSE.txt"
+        Copy-Item -Path ".\install\windows-inno\v2rayA-service.xml" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.xml"
+        Copy-Item -Path ".\install\windows-inno\v2rayA-service.xml" -Destination "D:\v2raya-arm64-windows\v2rayA-service.xml"
+        ## Set Version
+        $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_x86_64.iss"
+        $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_arm64.iss"
+        ## Build Installer
+        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
+        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
+        ## Rename to Friendly Name
+        Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
-          v2raya_binaries/*
+          installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+          installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
