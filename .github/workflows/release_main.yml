@@ -80,7 +80,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arm in @('7')) {
@@ -88,7 +88,7 @@ jobs:
           $env:GOARM = $arm
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-arm$arm")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -96,7 +96,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -104,7 +104,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -112,7 +112,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."freebsd-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
         foreach ($arch in @('amd64', 'arm64')) {
@@ -120,7 +120,7 @@ jobs:
           $env:GOARCH = $arch
           $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."openbsd-$arch")."friendlyName"
           Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
 
@@ -129,70 +129,7 @@ jobs:
       with:
         path: |
           v2raya_binaries/*
-  Build_v2rayA_SingTun_Binaries:
-    runs-on: ubuntu-latest
-    needs: [Build_v2rayA_Web]
-    env:
-      CGO_ENABLED: 0
-      NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Download Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: web
-        path: service/server/router/web
-    - name: Check Version
-      id: prep
-      env:
-        REF: ${{ inputs.tag }}
-      run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
-        echo "VERSION=$version" >> $GITHUB_OUTPUT
-        echo "VERSION=$version" >> $GITHUB_ENV
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        cache-dependency-path: |
-          service/go.mod
-          service/go.sum
-        go-version: ^1.21
-    - name: Build v2rayA SingTun Binaries
-      shell: pwsh
-      run: |
-        New-Item -ItemType Directory -Path v2raya_binaries
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'windows'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'darwin'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_with_singtun_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          v2raya_binaries/*
+  
   Build_Windows_Installers:
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries]
@@ -399,7 +336,7 @@ jobs:
           fpm_packages/*
   GitHub_Release:
     runs-on: ubuntu-22.04
-    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages, Build_v2rayA_SingTun_Binaries] 
+    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages] 
     steps:
     - uses: actions/checkout@v4
       with:
