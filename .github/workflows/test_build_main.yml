@@ -143,6 +143,7 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
+      shell: bash
       run: |
         echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
         date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
