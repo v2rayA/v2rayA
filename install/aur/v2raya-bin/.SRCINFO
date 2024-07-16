@@ -28,7 +28,7 @@ pkgbase = v2raya-bin
 	source_armv7h = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_armv7_{{pkgver}}
 	sha1sums_armv7h = {{sha1sums_armv7h}}
 	source_loong64 = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_loongarch64_{{pkgver}}
-	sha1sums_armv6h = {{sha1sums_armv6h}}
+	sha1sums_loong64 = {{sha1sums_armv6h}}
 	source_aarch64 = v2raya_{{pkgver}}::https://apt.v2raya.org/static/v2raya_linux_arm64_{{pkgver}}
 	sha1sums_aarch64 = {{sha1sums_aarch64}}
 
