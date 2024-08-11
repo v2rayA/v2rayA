@@ -50,6 +50,7 @@ type V2Ray struct {
 	Flow          string `json:"flow,omitempty"`
 	Alpn          string `json:"alpn,omitempty"`
 	AllowInsecure bool   `json:"allowInsecure"`
+	Key           string `json:"key,omitempty"`
 	V             string `json:"v"`
 	Protocol      string `json:"protocol"`
 }
@@ -87,6 +88,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Flow:          u.Query().Get("flow"),
 		Alpn:          u.Query().Get("alpn"),
 		AllowInsecure: u.Query().Get("allowInsecure") == "true",
+		Key:           u.Query().Get("key"),
 		V:             vless,
 		Protocol:      "vless",
 	}
@@ -355,6 +357,13 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Path: v.Path,
 				}
 			}
+		case "quic":
+			core.StreamSettings.QuicSettings = &coreObj.QuicSettings{
+				Header: coreObj.KcpHeader{
+					Type: v.Type,
+				},
+				Key: v.Key,
+			}
 		default:
 			return Configuration{}, fmt.Errorf("unexpected transport type: %v", v.Net)
 		}
@@ -444,6 +453,9 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "path", v.Path)
 		case "grpc":
 			setValue(&query, "serviceName", v.Path)
+		case "quic":
+			setValue(&query, "headerType", v.Type)
+			setValue(&query, "key", v.Key)
 		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)

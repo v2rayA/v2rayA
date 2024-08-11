@@ -93,6 +93,7 @@
               <option value="ws">WebSocket</option>
               <option value="h2">HTTP/2</option>
               <option value="grpc">gRPC</option>
+              <option value="quic">QUIC</option>
             </b-select>
           </b-field>
           <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
@@ -105,7 +106,7 @@
               </option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'kcp'" label="Type" label-position="on-border">
+          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Type" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
               <option value="none">
                 {{ $t("configureServer.noObfuscation") }}
@@ -152,6 +153,10 @@
           </b-field>
           <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
             <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
+            <b-input ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')"
+              expanded />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
@@ -612,6 +617,7 @@ export default {
       v: "",
       allowInsecure: false,
       protocol: "vmess",
+      key: "none",
     },
     ss: {
       method: "aes-128-gcm",
@@ -813,6 +819,7 @@ export default {
           sid: u.params.sid || "",
           spx: u.params.spx || "",
           allowInsecure: u.params.allowInsecure || false,
+          key: u.params.key,
           protocol: "vless",
         };
         if (o.alpn !== "") {
@@ -1051,6 +1058,9 @@ export default {
           }
           if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
             query.seed = srcObj.path;
+          }
+          if (srcObj.net === "quic") {
+            query.key = srcObj.key;
           }
           if (query.security == "reality") {
             query.pbk = srcObj.pbk;
