@@ -51,6 +51,7 @@ type V2Ray struct {
 	Alpn          string `json:"alpn,omitempty"`
 	AllowInsecure bool   `json:"allowInsecure"`
 	Key           string `json:"key,omitempty"`
+	QuicSecurity  string `json:"quicSecurity"`
 	V             string `json:"v"`
 	Protocol      string `json:"protocol"`
 }
@@ -109,6 +110,9 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	}
 	if data.Net == "mkcp" || data.Net == "kcp" {
 		data.Path = u.Query().Get("seed")
+	}
+	if data.Net == "quic" {
+		data.QuicSecurity = u.Query().Get("quicSecurity")
 	}
 	return data, nil
 }
@@ -362,7 +366,8 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				Header: coreObj.KcpHeader{
 					Type: v.Type,
 				},
-				Key: v.Key,
+				Key:      v.Key,
+				Security: v.QuicSecurity,
 			}
 		default:
 			return Configuration{}, fmt.Errorf("unexpected transport type: %v", v.Net)
@@ -456,6 +461,7 @@ func (v *V2Ray) ExportToURL() string {
 		case "quic":
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "key", v.Key)
+			setValue(&query, "quicSecurity", v.QuicSecurity)
 		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)

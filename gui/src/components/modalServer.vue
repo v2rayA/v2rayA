@@ -106,6 +106,13 @@
               </option>
             </b-select>
           </b-field>
+          <b-field v-show="v2ray.protocol === 'vless' && v2ray.net == 'quic'" label="QUIC Security" label-position="on-border">
+            <b-select v-model="v2ray.quicSecurity" expanded>
+              <option value="none">none</option>
+              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="chacha20-poly1305">chacha20-poly1305</option>
+            </b-select>
+          </b-field>
           <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Type" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
               <option value="none">
@@ -608,6 +615,7 @@ export default {
       host: "",
       path: "",
       tls: "none",
+      quicSecurity: "none",
       fp: "",
       pbk: "",
       sid: "",
@@ -814,6 +822,7 @@ export default {
           alpn: u.params.alpn || "",
           sni: u.params.sni || "",
           tls: u.params.security || "none",
+          quicSecurity: u.params.quicSecurity || "none",
           fp: u.params.fp || "",
           pbk: u.params.pbk || "",
           sid: u.params.sid || "",
@@ -1061,6 +1070,7 @@ export default {
           }
           if (srcObj.net === "quic") {
             query.key = srcObj.key;
+            query.quicSecurity = srcObj.quicSecurity;
           }
           if (query.security == "reality") {
             query.pbk = srcObj.pbk;

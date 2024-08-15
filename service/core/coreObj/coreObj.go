@@ -247,8 +247,9 @@ type HttpSettings struct {
 	Method string   `json:"method,omitempty"`
 }
 type QuicSettings struct {
-	Header KcpHeader `json:"header"`
-	Key    string    `json:"key,omitempty"`
+	Header   KcpHeader `json:"header"`
+	Key      string    `json:"key,omitempty"`
+	Security string    `json:"security"`
 }
 type Hosts map[string][]string
 
