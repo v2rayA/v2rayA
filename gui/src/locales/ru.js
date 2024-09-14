@@ -8,14 +8,14 @@ export default {
     checkRunning: "Проверка",
     isRunning: "Работает",
     notRunning: "Готово",
-    notLogin: "Пожалуйста войдите",
+    notLogin: "Пожалуйста, войдите",
     latest: "Последняя",
     local: "Текущая",
     success: "УСПЕХ",
     fail: "ПРОВАЛ",
     message: "Сообщение",
     none: "нет",
-    optional: "не обязательно",
+    optional: "необязательно",
     loadBalance: "Load Balance",
     log: "Журнал",
   },
@@ -25,8 +25,8 @@ export default {
     default: "v2rayA сервис запущен. Версия: {version}",
     newVersion: "Обнаружена новая версия: {version}",
     messages: [
-      "Здесь нет сервера.",
-      "Вы можете создать/добавить сервер или добавить подписку",
+      "Здесь нет ни одного сервера.",
+      "Вы можете создать или добавить сервер, а также подписку.",
     ],
   },
   v2ray: {
@@ -42,16 +42,16 @@ export default {
     lastTryTime: "Last try time",
     messages: {
       notAllowInsecure:
-        "Согласно документации {name}, если вы используйте {name}, опция AllowInsecure будет запрещена.",
+        "Согласно документации {name}, если вы используйте {name}, опция AllowInsecure запрещена.",
       notRecommend:
-        "Согласно документации {name}, если вы используйте {name}, опция AllowInsecure не рекомендуется.",
+        "Согласно документации {name}, если вы используете {name}, опция AllowInsecure не рекомендуется.",
     },
   },
   InSecureConfirm: {
-    title: "Обнаружена опасная настройка",
+    title: "Найдена небезопасная настройка",
     message:
       "В конфигурации установлена опция <b>AllowInsecure</b> в значении true. Это может вызвать риски безопасности. Вы уверены, что хотите продолжить?",
-    confirm: "Я знаю, что делаю",
+    confirm: "Понимаю, что делаю",
     cancel: "отмена",
   },
   subscription: {
@@ -103,8 +103,8 @@ export default {
     password: "Пароль",
   },
   setting: {
-    transparentProxy: "Прозрачный прокси/Системный Прокси",
-    transparentType: "Реализация Прозрачного прокси/Системного Прокси",
+    transparentProxy: "Прозрачный прокси/Системный прокси",
+    transparentType: "Реализация прозрачного прокси/Системного прокси",
     pacMode: "Режим разделения трафика на порте с правилами",
     preventDnsSpoofing: "Предотвратить DNS-спуфинг",
     specialMode: "Специальный режим",
@@ -195,7 +195,7 @@ export default {
     domainFile: "Файл с доменами",
     typeRule: "Тип правила",
     messages: {
-      0: "v2rayA будет распознавать все SiteDat файлы в <b>{V2RayLocationAsset}</b>",
+      0: "v2rayA будет распознавать все файлы SiteDat в <b>{V2RayLocationAsset}</b>",
       1: 'Чтобы создать SiteDat файл самому: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
       2: "Поддерживается Multi-select",
       noSiteDatFileFound: "SiteDat файл не найден в {V2RayLocationAsset}",
@@ -265,7 +265,7 @@ export default {
     qrcodeError: "Не удалось найти верный QRCode, пожалуйста попробуйте снова",
   },
   delete: {
-    title: "Потвердеть УДАЛЕНИЕ",
+    title: "Подтвердить УДАЛЕНИЕ",
     message:
       "Вы уверены что хотите <b>УДАЛИТЬ</b> эти сервера/подписки? Это нельзя отменить.",
   },
@@ -315,7 +315,7 @@ export default {
       'Вы уверены, что хотите <b>УДАЛИТЬ</b> выходной узел "{outboundName}"? Это нельзя отменить.',
   },
   log: {
-    logModalTitle: "Посмотреть журнал",
+    logModalTitle: "Просмотр журнала",
     refreshInterval: "Интервал обновления",
     seconds: "секунд",
     autoScoll: "Авто-пролистывание",
