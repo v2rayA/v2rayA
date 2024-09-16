@@ -26,5 +26,6 @@ docker run -d \
   -v /etc/resolv.conf:/etc/resolv.conf \
   -v /etc/v2raya:/etc/v2raya \
   -v /storage/v2rayA/logs:/tmp/logs \
-  -v /storage/geodata:/usr/local/share/v2ray \
+  -v /storage/geodata:/root/.local/share/v2ray \
+  -v /etc/localtime:/etc/localtime \
   registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8
