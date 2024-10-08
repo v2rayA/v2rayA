@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"reflect"
 	"strconv"
 )
 
@@ -68,6 +69,12 @@ func SetPorts(ports *configure.Ports) (err error) {
 		origin.Vmess = ports.Vmess
 		if origin.Vmess != 0 {
 			detectSyntax = append(detectSyntax, strconv.Itoa(origin.Vmess)+":tcp")
+		}
+	}
+	if ports.Api.Port != origin.Api.Port || !reflect.DeepEqual(ports.Api.Services, origin.Api.Services) {
+		origin.Api = ports.Api
+		if origin.Api.Port != 0 {
+			detectSyntax = append(detectSyntax, strconv.Itoa(origin.Api.Port)+":tcp")
 		}
 	}
 	if err = v2ray.PortOccupied(detectSyntax); err != nil {

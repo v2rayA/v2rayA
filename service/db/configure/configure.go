@@ -224,6 +224,7 @@ func GetPortsNotNil() *Ports {
 		p.Socks5WithPac = 0
 		p.HttpWithPac = 20172
 		p.Vmess = 0
+		p.Api = ApiPort{Port: 0}
 	}
 	return p
 }
