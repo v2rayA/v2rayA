@@ -121,7 +121,8 @@ export default {
       pac: "Зависит от порта правил",
       whitelistCn: "Использовать прокси кроме CN сайтов",
       gfwlist: "Использовать прокси только для сайтов GFWList",
-      sameAsPacMode: "Режим разделения трафика такой же, как у порта с правилами",
+      sameAsPacMode:
+        "Режим разделения трафика такой же, как у порта с правилами",
       customRouting: "Настраиваемая адресация",
       antiDnsHijack: "Только защита от перехвата DNS (быстро)",
       forwardDnsRequest: "Перенаправлять DNS запросы",
@@ -254,7 +255,7 @@ export default {
     username: "Имя пользователя",
     password: "Пароль",
     origin: "origin",
-    pinnedCertchainSha256: "pinned certificate chain sha256"
+    pinnedCertchainSha256: "pinned certificate chain sha256",
   },
   configureSubscription: {
     title: "Настройка подписки",

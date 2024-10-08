@@ -5,7 +5,7 @@ var dir = "src/assets/iconfont";
 var TerserPlugin = require("terser-webpack-plugin");
 // Compression
 const CompressionPlugin = require("compression-webpack-plugin");
-const isProd = process.env.NODE_ENV === 'production'
+const isProd = process.env.NODE_ENV === "production";
 
 module.exports = {
   configureWebpack: (config) => {
@@ -15,16 +15,14 @@ module.exports = {
       config.plugins.push(
         new CompressionPlugin({
           test: /.*/i,
-          exclude: [
-            /\.(png|gz)/i,
-            'index.html',
-          ],
+          exclude: [/\.(png|gz)/i, "index.html"],
           deleteOriginalAssets: true,
-          algorithm: 'gzip', // 使用gzip压缩
+          algorithm: "gzip", // 使用gzip压缩
           compressionOptions: { level: 9 },
           threshold: 0,
           minRatio: Infinity,
-        }))
+        })
+      );
     }
     return {
       optimization: {
