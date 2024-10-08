@@ -174,6 +174,8 @@ export default {
     portHttpWithPac: "http端口(带分流规则)",
     portVmess: "VMess端口(带分流规则)",
     portVmessLink: "VMess端口链接",
+    portApi: "Api 端口（0 表示随机）",
+    apiServices: "API 启用服务",
     messages: [
       "如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。",
       "docker模式下如果未使用<code>--privileged --network host</code>参数启动容器，可通过修改端口映射修改socks5、http端口。",
@@ -252,7 +254,7 @@ export default {
     username: "用户名",
     password: "密码",
     origin: "原版",
-    pinnedCertchainSha256: "固定证书链sha256"
+    pinnedCertchainSha256: "固定证书链sha256",
   },
   configureSubscription: {
     title: "订阅配置",

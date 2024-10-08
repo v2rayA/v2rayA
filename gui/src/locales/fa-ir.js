@@ -17,7 +17,7 @@ export default {
     none: "هیچ یک",
     optional: "اختیاری",
     loadBalance: "متعادل کردن",
-    log: "گزارش ها"
+    log: "گزارش ها",
   },
   welcome: {
     title: "خوش آمدی",
@@ -26,12 +26,12 @@ export default {
     newVersion: "ورژن جدید موجود است: {version}",
     messages: [
       "سروری وجود ندارد.",
-      "با گزینه وارد کردن (import) یا subscription یک سرور اضافه کنید."
-    ]
+      "با گزینه وارد کردن (import) یا subscription یک سرور اضافه کنید.",
+    ],
   },
   v2ray: {
     start: "شروع",
-    stop: "خاتمه"
+    stop: "خاتمه",
   },
   server: {
     name: "نام سرور",
@@ -44,21 +44,21 @@ export default {
       notAllowInsecure:
         "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden.",
       notRecommend:
-        "According to the docs of {name}, if you use {name}, AllowInsecure is not recommend."
-    }
+        "According to the docs of {name}, if you use {name}, AllowInsecure is not recommend.",
+    },
   },
   InSecureConfirm: {
     title: "پیکربندی خطرناک شناسایی شد",
     message:
       "تنظیمات به <b>AllowInsecure</b> تغییر کرد. ممکن از خطراتی داشته باشد. آیا از ادامه مطمعن هستید?",
     confirm: "من میدانم چه کار دارم میکنم",
-    cancel: "لغو"
+    cancel: "لغو",
   },
   subscription: {
     host: "هاست",
     remarks: "Remarks (لینک اشتراک)",
     timeLastUpdate: "تاریخ آخرین به روز رسانی",
-    numberServers: "تعداد سرورها"
+    numberServers: "تعداد سرورها",
   },
   operations: {
     name: "عملیات",
@@ -86,20 +86,20 @@ export default {
     yes: "بله",
     no: "خیر",
     switchSite: "به سایت جایگزین بروید",
-    addOutbound: "یک خروجی اضافه کنید"
+    addOutbound: "یک خروجی اضافه کنید",
   },
   register: {
     title: "ابتدا یک اکانت ایجاد کنید",
     messages: [
       "به یاد داشته باشید که این اکانت برای وارد شدن استفاده خواهد شد.",
       "اکانت بر روی سیستم شما ذخیره می شود و به سرور ارسال نمی شود.",
-      "درصورت فراموشی رمز از دستور --reset-password برای بازیابی رمز استفاده کنید."
-    ]
+      "درصورت فراموشی رمز از دستور --reset-password برای بازیابی رمز استفاده کنید.",
+    ],
   },
   login: {
     title: "وارد شدن",
     username: "نام کاربری",
-    password: "رمز عبور"
+    password: "رمز عبور",
   },
   setting: {
     transparentProxy: "Transparent Proxy/System Proxy",
@@ -131,11 +131,12 @@ export default {
       updateSubWhenStart: "آپدیت اشتراک ها موقع اجرای نرم افزار",
       updateSubAtIntervals: "آپدیت اشتراک ها هر چند وقت یکبار (واحد: ساعت)",
       updateGfwlistWhenStart: "وقتی نرم افزار اجرا شد GFWList را آپدیت کن",
-      updateGfwlistAtIntervals: "هر چند وقت یکبار GFWList را آپدیت کن (واحد: ساعت(",
+      updateGfwlistAtIntervals:
+        "هر چند وقت یکبار GFWList را آپدیت کن (واحد: ساعت(",
       dependTransparentMode: "Follows Transparent Proxy/System Proxy",
       closed: "خاموش",
       advanced: "تنظیمات پیشرفته",
-      leastPing: "اول سرور با پینگ کمتر"
+      leastPing: "اول سرور با پینگ کمتر",
     },
     messages: {
       gfwlist:
@@ -163,8 +164,8 @@ export default {
       ssPluginImpl:
         "★default: 'transport' for simple-obfs, 'chained' for v2ray-plugin." +
         "★chained: shadowsocks traffic will be redirect to standalone plugin." +
-        "★transport: processed by the transport layer of v2ray/xray core directly."
-    }
+        "★transport: processed by the transport layer of v2ray/xray core directly.",
+    },
   },
   customAddressPort: {
     title: "آدرس و پورت ها",
@@ -179,8 +180,8 @@ export default {
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
       "We cannot judge port occupations in docker mode. Confirm it by yourself.",
-      "صفر به معنای بستن پورت است."
-    ]
+      "صفر به معنای بستن پورت است.",
+    ],
   },
   customRouting: {
     title: "Customize Routing Rule",
@@ -198,8 +199,8 @@ export default {
       1: 'To make a SiteDat file by yourself: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
       2: "می توانید چند گزینه را انتخاب کنید.",
       noSiteDatFileFound: "siteDat در فایل یافت نشد. {V2RayLocationAsset}",
-      emptyRuleNotPermitted: "شرط ها نمی تواند خالی باشد."
-    }
+      emptyRuleNotPermitted: "شرط ها نمی تواند خالی باشد.",
+    },
   },
   doh: {
     title: "پیکربندی سرور DoH",
@@ -211,8 +212,8 @@ export default {
       "USA: cloudflare, dns.google, etc",
       'Checklist：<a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>',
       'Besides, setting up DoH service at your own native server is suggested and well-behaved in most cases <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>. In this case, it is recommended to run the server(doh-proxy/doh-httpproxy) providing service and client(doh-stub) connecting to doh.opendns.com at the same time and connect them in series, because you can hardly find a server that is not polluted in a generally contaminated region.',
-      "Optimally, place one or two lines above. The list will restore to default after saving with empty content."
-    ]
+      "Optimally, place one or two lines above. The list will restore to default after saving with empty content.",
+    ],
   },
   dns: {
     title: "پیکربندی سرور DNS",
@@ -220,8 +221,8 @@ export default {
     externalQueryServers: "External Domain Query Servers",
     messages: [
       '"@:(dns.internalQueryServers)" are designed to be used to look up domain names in China, while "@:(dns.externalQueryServers)" be used to look up others.',
-      '"@:(dns.internalQueryServers)" will be used to look up all domain names if "@:(dns.externalQueryServers)" is empty.'
-    ]
+      '"@:(dns.internalQueryServers)" will be used to look up all domain names if "@:(dns.externalQueryServers)" is empty.',
+    ],
   },
   egressPortWhitelist: {
     title: "Egress Port Whitelist",
@@ -232,8 +233,8 @@ export default {
       "Transparent proxy will force all TCP and UDP traffic to pass through proxy server B, where source IP address will be replaced with proxy B's. Moreover, if some clients send requests to server A that provides service, they will received responses from your proxy B's IP address weirdly, which is illegal.",
       "To resolve it, we need to add those service ports to whitelist so that not pass through proxy.For examples, ssh(22)、v2raya({v2rayaPort}).",
       "Obviously, if the server does not provide any service, you can skip configuring.",
-      "Formatting：22 means port 22，20170:20172 means three ports 20170 to 20172."
-    ]
+      "Formatting：22 means port 22，20170:20172 means three ports 20170 to 20172.",
+    ],
   },
   configureServer: {
     title: "پیکربندی سرور | سرور",
@@ -252,31 +253,30 @@ export default {
     seedObfuscation: "Seed",
     username: "نام کاربری",
     password: "رمز عبور",
-    origin: "origin"
+    origin: "origin",
   },
   configureSubscription: {
-    title: "پیکربندی اشتراک"
+    title: "پیکربندی اشتراک",
   },
   import: {
     message: "Input a server link or subscription address:",
     batchMessage: "One server link per line:",
-    qrcodeError: "Failed to find a valid QRCode, please try again"
+    qrcodeError: "Failed to find a valid QRCode, please try again",
   },
   delete: {
     title: "تایید و پاک کردن",
     message:
-      "آیا از پاک کردن <b>DELETE</b> اطمینان دارید؟ این عمل غیرقابل بازگشت است."
+      "آیا از پاک کردن <b>DELETE</b> اطمینان دارید؟ این عمل غیرقابل بازگشت است.",
   },
   latency: {
-    message:
-      "تست latency ممکن است چند دقیقه طول بکشد. لطفا صبور باشید."
+    message: "تست latency ممکن است چند دقیقه طول بکشد. لطفا صبور باشید.",
   },
   version: {
-    higherVersionNeeded:
-      "این عملیات به نسخه بالاتر از {version} نیاز دارد.",
-    v2rayInvalid: "geosite.dat, geoip.dat یا v2ray-core ممکن است به درستی نصب نشده باشد.",
+    higherVersionNeeded: "این عملیات به نسخه بالاتر از {version} نیاز دارد.",
+    v2rayInvalid:
+      "geosite.dat, geoip.dat یا v2ray-core ممکن است به درستی نصب نشده باشد.",
     v2rayNotV5:
-      "ورژن v2ray-core برار v5 نیست. از v5 استفاده کنید یا به v2rayA نسخه v1.5 بازگردانی کنید."
+      "ورژن v2ray-core برار v5 نیست. از v5 استفاده کنید یا به v2rayA نسخه v1.5 بازگردانی کنید.",
   },
   about: `<p>v2rayA یک رابطه کاربری برای V2Ray است.</p>
           <p class="about-small">پورت های پیشفرض:</p>
@@ -296,24 +296,24 @@ export default {
         "نمی توان v2rayA را در آدرس {url} پیدا کرد. اطمینان حاصل کنید که v2rayA روی این آدرس درحال اجرا است.",
       cannotCommunicate: [
         "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
-        "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http sites."
-      ]
+        "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http sites.",
+      ],
     },
     urls: {
-      usage: "https://github.com/v2rayA/v2rayA/wiki/Usage"
-    }
+      usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
+    },
   },
   routingA: {
-    messages: ["برای کمک برو روی گزینه 'Help&Manual' کلیک کنید."]
+    messages: ["برای کمک برو روی گزینه 'Help&Manual' کلیک کنید."],
   },
   outbound: {
     addMessage: "لطفاً نام خروجی را که می خواهید اضافه کنید وارد کنید:",
     deleteMessage:
-      'از حذف <b>DELETE</b> اطمینان دارید "{outboundName}"? این عمل غیرقابل بازگشت است'
+      'از حذف <b>DELETE</b> اطمینان دارید "{outboundName}"? این عمل غیرقابل بازگشت است',
   },
   log: {
     logModalTitle: "دیدن لاگ ها",
     refreshInterval: "Refresh Interval",
-    seconds: "ثانیه"
-  }
+    seconds: "ثانیه",
+  },
 };

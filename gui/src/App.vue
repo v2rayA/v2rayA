@@ -194,8 +194,8 @@ export default {
         { flag: "zh", alt: "简体中文" },
         { flag: "en", alt: "English" },
         { flag: "fa", alt: "فارسی" },
-        { flag: "ru", alt: "Русский"},
-        { flag: "pt", alt: "Português (Brasil)" }
+        { flag: "ru", alt: "Русский" },
+        { flag: "pt", alt: "Português (Brasil)" },
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],

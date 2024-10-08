@@ -176,6 +176,8 @@ export default {
     portHttpWithPac: "Port of HTTP(with Rule)",
     portVmess: "Port of VMess(with Rule)",
     portVmessLink: "Link of VMess port",
+    portApi: "Port of api (0 for random)",
+    apiServices: "Enabled api service",
     messages: [
       "Service address default as 0.0.0.0:2017 can be changed by setting environment variable <code>V2RAYA_ADDRESS</code> and command argument<code>--address</code>.",
       "If you start v2raya docker container with port mapping instead of <code>--network host</code>, you can remapping ports in this way.",
@@ -254,7 +256,7 @@ export default {
     username: "Username",
     password: "Password",
     origin: "origin",
-    pinnedCertchainSha256: "pinned certificate chain sha256"
+    pinnedCertchainSha256: "pinned certificate chain sha256",
   },
   configureSubscription: {
     title: "Configure Subscription",
