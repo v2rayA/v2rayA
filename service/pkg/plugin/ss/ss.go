@@ -34,6 +34,9 @@ func NewShadowsocks(s string, d plugin.Dialer) (*Shadowsocks, error) {
 	if method == "chacha20-poly1305" {
 		method = "chacha20-ietf-poly1305"
 	}
+	if method == "xchacha20-poly1305" {
+		method = "xchacha20-ietf-poly1305"
+	}
 	cipher, err := ss.PickCipher(method, nil, pass)
 	if err != nil {
 		return nil, fmt.Errorf("NewShadowsocks: %w", err)
