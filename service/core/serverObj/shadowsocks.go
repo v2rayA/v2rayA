@@ -327,7 +327,7 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 
 func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error) {
 	switch s.Cipher {
-	case "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "plain", "none":
+	case "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305", "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "xchacha20-poly1305", "xchacha20-ietf-poly1305", "plain", "none":
 	default:
 		return c, fmt.Errorf("unsupported shadowsocks encryption method: %v", s.Cipher)
 	}
@@ -379,6 +379,9 @@ func (s *Shadowsocks) ProtoToShow() string {
 	ciph := s.Cipher
 	if ciph == "chacha20-ietf-poly1305" || ciph == "chacha20-poly1305" {
 		ciph = "c20p1305"
+	}
+	if ciph == "xchacha20-ietf-poly1305" || ciph == "xchacha20-poly1305" {
+		ciph = "xc20p1305"
 	}
 	if s.Plugin.Name != "" {
 		return fmt.Sprintf("SS(%v+%v)", ciph, s.Plugin.Name)

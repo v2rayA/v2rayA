@@ -34,8 +34,13 @@
           <b-field v-if="v2ray.protocol === 'vmess'" label="Security" label-position="on-border">
             <b-select v-model="v2ray.scy" expanded required>
               <option value="auto">Auto</option>
+              <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
+              <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
+              <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
+              <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
+              <option value="xchacha20-poly1305">xchacha20-poly1305</option>
               <option value="none">none</option>
               <option value="zero">zero</option>
             </b-select>
@@ -183,6 +188,9 @@
           </b-field>
           <b-field label="Method" label-position="on-border">
             <b-select ref="ss_method" v-model="ss.method" expanded required>
+              <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
+              <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
+              <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
@@ -628,7 +636,7 @@ export default {
       key: "none",
     },
     ss: {
-      method: "aes-128-gcm",
+      method: "2022-blake3-aes-128-gcm",
       plugin: "",
       obfs: "http",
       tls: "",
@@ -955,7 +963,7 @@ export default {
           method: "origin",
           net: u.params.type || "tcp",
           obfs: "none",
-          ssCipher: "aes-128-gcm",
+          ssCipher: "2022-blake3-aes-128-gcm",
           path: u.params.path || u.params.serviceName || "",
           protocol: "trojan",
         };
