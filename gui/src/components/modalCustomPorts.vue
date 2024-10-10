@@ -190,7 +190,7 @@ export default {
     },
     supportedService() {
       const origin = ["HandlerService", "LoggerService", "StatsService"];
-      return origin.filter((it) => !this.table.api.services.includes(it));
+      return origin.filter((it) => !this.table?.api?.services?.includes(it));
     },
   },
   created() {
