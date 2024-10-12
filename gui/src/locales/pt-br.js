@@ -120,7 +120,8 @@ export default {
       pac: "Depende da Porta de Regra",
       whitelistCn: "Proxy exceto Sites CN",
       gfwlist: "Proxy apenas GFWList",
-      sameAsPacMode: "Modo de Divisão de Tráfego é o Mesmo que a Porta de Regra",
+      sameAsPacMode:
+        "Modo de Divisão de Tráfego é o Mesmo que a Porta de Regra",
       customRouting: "Roteamento Personalizado",
       antiDnsHijack: "Prevenir apenas sequestro de DNS (rápido)",
       forwardDnsRequest: "Encaminhar Solicitação de DNS",
@@ -129,9 +130,11 @@ export default {
       on: "Ligado",
       off: "Desligado",
       updateSubWhenStart: "Atualizar Assinaturas Quando o Serviço Inicia",
-      updateSubAtIntervals: "Atualizar Assinaturas Regularmente (Unidade: hora)",
+      updateSubAtIntervals:
+        "Atualizar Assinaturas Regularmente (Unidade: hora)",
       updateGfwlistWhenStart: "Atualizar GFWList Quando o Serviço Inicia",
-      updateGfwlistAtIntervals: "Atualizar GFWList Regularmente (Unidade: hora)",
+      updateGfwlistAtIntervals:
+        "Atualizar GFWList Regularmente (Unidade: hora)",
       dependTransparentMode: "Segue Proxy Transparente/Proxy do Sistema",
       closed: "Desligado",
       advanced: "Configuração Avançada",
@@ -197,7 +200,8 @@ export default {
       0: "v2rayA reconhecerá todos os arquivos SiteDat em <b>{V2RayLocationAsset}</b>",
       1: 'Para fazer um arquivo SiteDat por si mesmo: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
       2: "A seleção múltipla é suportada.",
-      noSiteDatFileFound: "Nenhum arquivo siteDat encontrado em {V2RayLocationAsset}",
+      noSiteDatFileFound:
+        "Nenhum arquivo siteDat encontrado em {V2RayLocationAsset}",
       emptyRuleNotPermitted: "Regra vazia não é permitida",
     },
   },
@@ -214,7 +218,7 @@ export default {
       "Idealmente, coloque uma ou duas linhas acima. A lista será restaurada para o padrão após salvar com conteúdo vazio.",
     ],
   },
-dns: {
+  dns: {
     title: "Configurar Servidor DNS",
     internalQueryServers: "Servidores de Consulta de Domínio Internos",
     externalQueryServers: "Servidores de Consulta de Domínio Externos",
@@ -260,7 +264,8 @@ dns: {
   import: {
     message: "Digite um link de servidor ou endereço de assinatura:",
     batchMessage: "Um link de servidor por linha:",
-    qrcodeError: "Não foi possível encontrar um código QR válido, tente novamente",
+    qrcodeError:
+      "Não foi possível encontrar um código QR válido, tente novamente",
   },
   delete: {
     title: "Confirmar EXCLUSÃO",
@@ -316,6 +321,6 @@ dns: {
     logModalTitle: "Visualizar logs",
     refreshInterval: "Intervalo de atualização",
     seconds: "segundos",
-    autoScoll: "Rolagem Automática"
+    autoScoll: "Rolagem Automática",
   },
 };

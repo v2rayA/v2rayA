@@ -80,6 +80,33 @@
             required
           ></b-input>
         </b-field>
+        <b-field
+          :label="$t('customAddressPort.portApi')"
+          label-position="on-border"
+        >
+          <b-input
+            v-model="table.api.port"
+            placeholder="0"
+            type="number"
+            min="0"
+            required
+          ></b-input>
+        </b-field>
+        <b-field
+          :label="$t('customAddressPort.apiServices')"
+          label-position="on-border"
+        >
+          <b-taginput
+            v-model="table.api.services"
+            :allow-new="false"
+            maxlength="3"
+            autocomplete
+            open-on-focus
+            :data="supportedService"
+            ellipsis
+          >
+          </b-taginput>
+        </b-field>
         <b-message
           v-if="table.vmess > 0 && table.vmessLink"
           type="is-info"
@@ -126,10 +153,10 @@
 </template>
 
 <script>
-import { handleResponse } from "@/assets/js/utils";
-import i18n from "@/plugins/i18n";
-import ModalSharing from "@/components/modalSharing";
 import CONST from "@/assets/js/const";
+import { handleResponse } from "@/assets/js/utils";
+import ModalSharing from "@/components/modalSharing";
+import i18n from "@/plugins/i18n";
 
 export default {
   name: "ModalCustomPorts",
@@ -143,6 +170,10 @@ export default {
       httpWithPac: "20172",
       vmess: "0",
       vmessLink: "",
+      api: {
+        port: "0",
+        services: ["LoggerService"],
+      },
     },
     backendReady: false,
   }),
@@ -156,6 +187,10 @@ export default {
         backendAddress = backendAddress.substr(0, backendAddress.length - 1);
       }
       return backendAddress + "/api" !== apiRoot;
+    },
+    supportedService() {
+      const origin = ["HandlerService", "LoggerService", "StatsService"];
+      return origin.filter((it) => !this.table?.api?.services?.includes(it));
     },
   },
   created() {
@@ -213,6 +248,10 @@ export default {
             socks5WithPac: parseInt(this.table.socks5WithPac),
             httpWithPac: parseInt(this.table.httpWithPac),
             vmess: parseInt(this.table.vmess),
+            api: {
+              port: parseInt(this.table.api.port),
+              services: this.table.api.services,
+            },
           },
         }).then((res) => {
           handleResponse(res, this, () => {
