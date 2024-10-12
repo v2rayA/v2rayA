@@ -336,9 +336,7 @@
                 :label="$t('server.address')"
                 sortable
               >
-                <p 
-                  class="address-column" 
-                  :title="props.row.address">
+                <p class="address-column" :title="props.row.address">
                   {{ props.row.address }}
                 </p>
               </b-table-column>
@@ -358,12 +356,13 @@
                 sortable
                 :custom-sort="sortping"
               >
-                <p 
+                <p
                   :class="{
-                      'latency-column': true,
-                      'latency-valid': props.row.pingLatency.endsWith('ms')
-                    }" 
-                  :title="props.row.pingLatency">
+                    'latency-column': true,
+                    'latency-valid': props.row.pingLatency.endsWith('ms'),
+                  }"
+                  :title="props.row.pingLatency"
+                >
                   {{ props.row.pingLatency }}
                 </p>
               </b-table-column>
@@ -477,9 +476,7 @@
                 :label="$t('server.address')"
                 sortable
               >
-                <p 
-                  class="address-column" 
-                  :title="props.row.address">
+                <p class="address-column" :title="props.row.address">
                   {{ props.row.address }}
                 </p>
               </b-table-column>
@@ -500,12 +497,13 @@
                 sortable
                 :custom-sort="sortping"
               >
-                <p 
-                   :class="{
-                      'latency-column': true,
-                      'latency-valid': props.row.pingLatency.endsWith('ms')
-                    }" 
-                  :title="props.row.pingLatency">
+                <p
+                  :class="{
+                    'latency-column': true,
+                    'latency-valid': props.row.pingLatency.endsWith('ms'),
+                  }"
+                  :title="props.row.pingLatency"
+                >
                   {{ props.row.pingLatency }}
                 </p>
               </b-table-column>
@@ -1809,14 +1807,14 @@ tr.highlight-row-disconnected {
   pointer-events: none;
 }
 .address-column {
-  max-width: 350px!important;
-  overflow: hidden!important;
-  text-overflow: ellipsis!important;
+  max-width: 350px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 .latency-column {
-  max-width: 120px!important;
-  overflow: hidden!important;
-  text-overflow: ellipsis!important;
+  max-width: 120px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   white-space: nowrap;
 }
 .latency-valid {
@@ -1825,10 +1823,10 @@ tr.highlight-row-disconnected {
 
 @media screen and (max-width: 1920px) {
   .latency-column {
-    max-width: 70px!important;
+    max-width: 70px !important;
   }
   .address-column {
-    max-width: 150px!important;
+    max-width: 150px !important;
   }
 }
 </style>

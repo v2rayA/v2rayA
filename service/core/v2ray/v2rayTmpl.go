@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/go-leo/slicex"
 	"net"
 	"net/url"
 	"os"
@@ -1422,18 +1423,24 @@ func (t *Template) resolveOutbounds(
 }
 
 func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
+	// find a valid port
+	config := configure.GetPortsNotNil()
+	if config.Api.Port != 0 {
+		port = config.Api.Port
+	} else {
+		for {
+			if l, err := net.Listen("tcp4", "127.0.0.1:0"); err == nil {
+				port = l.Addr().(*net.TCPAddr).Port
+				_ = l.Close()
+				break
+			}
+			time.Sleep(30 * time.Millisecond)
+		}
+	}
 	services := []string{
 		"LoggerService",
 	}
-	// find a valid port
-	for {
-		if l, err := net.Listen("tcp4", "127.0.0.1:0"); err == nil {
-			port = l.Addr().(*net.TCPAddr).Port
-			_ = l.Close()
-			break
-		}
-		time.Sleep(30 * time.Millisecond)
-	}
+	services = slicex.Uniq(append(services, config.Api.Services...))
 	// observatory
 	if serverData != nil {
 		outbounds := t.outNames()

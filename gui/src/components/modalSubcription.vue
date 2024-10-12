@@ -6,9 +6,9 @@
     <section class="modal-card-body">
       <b-field label="SUBSCRIPTION">
         <b-input
-            v-model="which.address"
-            type="textarea"
-            :placeholder="$t('subscription.subscription')"
+          v-model="which.address"
+          type="textarea"
+          :placeholder="$t('subscription.subscription')"
         />
       </b-field>
       <b-field label="REMARKS">
