@@ -12,7 +12,6 @@ fi
 echo 启动容器$l_container_name
 
 # 启动V2rayA
-# /etc/v2raya 目录存放有服务器列表
 
 docker run -d \
   --restart=always \
@@ -25,9 +24,8 @@ docker run -d \
   -e IPTABLES_MODE=nftables \
   -v /lib/modules:/lib/modules:ro \
   -v /etc/resolv.conf:/etc/resolv.conf \
-  -v /storage/v2rayA/config/v2rayA:/etc/v2raya \
+  -v /storage/v2rayA/etc/v2raya:/etc/v2raya \
   -v /storage/v2rayA/logs:/tmp/logs \
-  -v /storage/v2rayA/geodata:/root/.local/share/v2ray \
-  -v /storage/v2rayA/config/v2ray:/etc/v2ray \
+  -v /storage/geodata:/root/.local/share/v2ray \
   -v /etc/localtime:/etc/localtime \
-  registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8
+  registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.6

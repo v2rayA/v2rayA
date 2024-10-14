@@ -81,3 +81,20 @@ cd /storage
 tar -zcvf v2raya-$(date +%Y%m%d).tar.gz \
 --exclude=logs/* \
 v2rayA
+
+附 : v2rayA的目录结构 :
+/storage/v2rayA
+├── etc
+│   └── v2raya
+│       ├── bolt.db
+│       ├── boltv4.db
+│       ├── config.json
+│       └── v2raya.nft
+├── geodata
+│   ├── geoip.dat
+│   ├── geosite.dat
+│   └── LoyalsoldierSite.dat -> geosite.dat
+├── logs
+│   └── v2raya.log
+└── start-v2raya.sh
+
