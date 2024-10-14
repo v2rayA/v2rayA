@@ -35,8 +35,8 @@ COPY --from=version /build/version /build/version
 COPY --from=builder /build/service/v2raya /usr/bin/
 RUN wget -O /usr/local/share/v2ray/LoyalsoldierSite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
 # 新增2个包 : iptables-legacy nftables
-sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-RUN apk add --no-cache iptables ip6tables tzdata iptables-legacy nftables
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+	&& apk add --no-cache iptables ip6tables tzdata iptables-legacy nftables
 LABEL org.opencontainers.image.source=https://github.com/v2rayA/v2rayA
 EXPOSE 2017
 VOLUME /etc/v2raya
