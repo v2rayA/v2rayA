@@ -1,0 +1,83 @@
+
+
+参考文档 :
+配置代理->透明代理 :
+https://v2raya.org/docs/prologue/quick-start/
+透明代理 : 大陆白名单
+透明代理实现方式 : redirect
+规则端口的分流模式 : 大陆白名单
+防止DNS污染 : 仅防止DNS劫持(快速)/关闭（ 设置为关闭，则需要修改/etc/resolv.conf为8.8.8.8）
+特殊模式 : supervisor
+
+基础镜像为 : alpine 3.20
+
+1.拉取或加载镜像
+docker login --username=mosaicdev registry.cn-hangzhou.aliyuncs.com
+docker pull registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8
+或
+docker load -i mosaicwang-v2raya-2.2.5.8.tar.gz
+
+2.解压v2raya.tar.gz到/storage目录下,得到V2rayA目录
+cd /storage
+tar -zvxf v2raya.tar.gz
+
+2.1 设置DNS为8.8.8.8和1.1.1.1 ,即修改/etc/resolve.conf
+
+3.启动v2rayA
+cd /storage/v2rayA
+./start-v2raya.sh
+
+4.登陆WEB页面,选择合适的服务器(不超过5个)
+
+http://ip:2017
+wht/wht12345
+
+注意 : 设置DNS为8.8.8.8和1.1.1.1 ,即修改/etc/resolve.conf
+
+4.1 在windows的v2ray客户端选择当前可用的服务器，然后右键选择“分享服务器”，然后复制vmess开头的字符串
+4.2 在linux的WEB界面点击“导入”，粘贴步骤4.1的字符串
+4.3 点击新增服务器后面的“选择”，然后点击启动
+4.4 在linux终端测试ping www.wenxuecity.com 或 www.baidu.com，如果通的话，则用页面访问 wxc
+4.1 先用PING看哪些服务器能连接(最好是VMESS协议)
+
+验证 : 执行如下命令 :
+docker login --username=mosaicwang --password=略
+
+附 : 保存镜像为本地文件
+docker save -o mosaicwang-v2raya-2.2.5.8.tar.gz registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8
+
+
+附 : 原镜像需要安装如下包 :
+sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+apk add iptables-legacy nftables
+输出如下 :
+(1/3) Installing libip4tc (1.8.10-r3)
+(2/3) Installing libip6tc (1.8.10-r3)
+(3/3) Installing iptables-legacy (1.8.10-r3)
+(1/6) Installing gmp (6.3.0-r1)
+(2/6) Installing jansson (2.14-r4)
+(3/6) Installing ncurses-terminfo-base (6.4_p20240420-r1)
+(4/6) Installing libncursesw (6.4_p20240420-r1)
+(5/6) Installing readline (8.2.10-r0)
+(6/6) Installing nftables (1.0.9-r2)
+
+保存容器为新的镜像 :
+docker commit v2raya registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8-v2
+输出如下 :
+sha256:4546f3cae2b3fe8c39ea2f307d27dfdaa1c0f85d3b0a54cf98fe4d98ae3ef8a8
+
+镜像信息如下 :
+REPOSITORY                                                TAG                             IMAGE ID       CREATED          SIZE
+registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya       2.2.5.8-v2                      4546f3cae2b3   51 seconds ago   95.4MB
+
+将新的镜像保存为本地文件 : 
+docker save registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8-v2 -o v2raya-2.2.5.8-v2.tar.gz
+
+# 验证v2rayA版本 :
+docker run --rm registry.cn-hangzhou.aliyuncs.com/mosaicwang/v2raya:2.2.5.8-v2 --version
+
+附：打包
+cd /storage
+tar -zcvf v2raya-$(date +%Y%m%d).tar.gz \
+--exclude=logs/* \
+v2rayA
