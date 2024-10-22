@@ -1410,16 +1410,8 @@ export default {
             o.ssCipher = fields[1];
             o.ssPassword = fields[2];
           }
-          const obfsMap = {
-            original: "none",
-            "": "none",
-            ws: "websocket",
-          };
-          o.obfs = obfsMap[u.params.type || ""];
-          if (o.obfs === "ws") {
+          if (u.params.type === "ws") {
             o.obfs = "websocket";
-          }
-          if (o.obfs === "websocket") {
             o.host = u.params.host || "";
             o.path = u.params.path || "/";
           }
