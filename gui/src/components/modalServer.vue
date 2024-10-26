@@ -726,8 +726,7 @@ v-show="trojan.net === 'ws' ||
             <b-input v-model="trojan.alpn" placeholder="h2,http/1.1" expanded />
           </b-field>
           <b-field
-v-show="trojan.net === 'ws' ||
-            trojan.net === 'h2'
+            v-show="trojan.net === 'ws' || trojan.net === 'h2'"
             label="Path"
             label-position="on-border"
           >
