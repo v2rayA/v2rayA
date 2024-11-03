@@ -69,7 +69,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		Sni:           sni,
 		Alpn:          t.Query().Get("alpn"),
 		Type:          t.Query().Get("type"),
-		Path:          t.Query().Get("serviceName"),
+		Path:          t.Query().Get("path"),
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
