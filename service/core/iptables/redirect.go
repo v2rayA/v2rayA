@@ -65,6 +65,8 @@ iptables -w 2 -t nat -A TP_RULE -d 192.168.0.0/16 -j RETURN
 # fakedns
 # iptables -w 2 -t nat -A TP_RULE -d 198.18.0.0/15 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 198.51.100.0/24 -j RETURN
+iptables -w 2 -t nat -A TP_RULE -d 199.36.153.8/30 -j RETURN # private.googleapis.com
+iptables -w 2 -t nat -A TP_RULE -d 199.36.153.4/30 -j RETURN # restricted.googleapis.com
 iptables -w 2 -t nat -A TP_RULE -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 224.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 240.0.0.0/4 -j RETURN
@@ -89,6 +91,8 @@ ip6tables -w 2 -t nat -A TP_RULE -d 2001::/32 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 2001:20::/28 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 2001:db8::/32 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 2002::/16 -j RETURN
+ip6tables -w 2 -t nat -A TP_RULE -d 2600:2d00:0002:2000::/64 -j RETURN # private.googleapis.com
+ip6tables -w 2 -t nat -A TP_RULE -d 2600:2d00:0002:1000::/64 -j RETURN # restricted.googleapis.com
 # fakedns
 # ip6tables -w 2 -t nat -A TP_RULE -d fc00::/7 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d fe80::/10 -j RETURN
@@ -171,6 +175,8 @@ table inet v2raya {
             192.88.99.0/24,
             192.168.0.0/16,
             198.51.100.0/24,
+            199.36.153.8/30, # private.googleapis.com
+            199.36.153.4/30, # restricted.googleapis.com
             203.0.113.0/24,
             224.0.0.0/4,
             240.0.0.0/4
@@ -188,6 +194,8 @@ table inet v2raya {
             100::/64,
             2001::/32,
             2001:20::/28,
+            2600:2d00:0002:2000::/64, # private.googleapis.com
+            2600:2d00:0002:1000::/64, # restricted.googleapis.com
             fe80::/10,
             ff00::/8
         }
