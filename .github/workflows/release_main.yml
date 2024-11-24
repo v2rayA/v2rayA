@@ -1,12 +1,10 @@
 name: Build & Release v2rayA
-
 on:
   workflow_dispatch:
     inputs:
       tag:
         type: string
         required: true
-
 jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-22.04
@@ -124,13 +122,11 @@ jobs:
           go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
         path: |
           v2raya_binaries/*
-  
   Build_Windows_Installers:
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries]
@@ -400,7 +396,6 @@ jobs:
           --data '{"purge_everything":true}'
   Build_v2ray_Debian_Packages:
     runs-on: ubuntu-22.04
-
     steps:
     - name: Install Tools
       run: |
@@ -544,7 +539,6 @@ jobs:
       run: |
         echo "V2RAY_VERSION=$V2RAY_VERSION" >> ./v2ray_packages_version.txt
         echo "XRAY_VERSION=$XRAY_VERSION" >> ./xray_packages_version.txt
-
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:
@@ -556,7 +550,6 @@ jobs:
   Build_APT_Repository_and_AUR:
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Linux_Packages, Build_v2ray_Debian_Packages]
-
     steps:
     - uses: actions/checkout@v4
       with:
@@ -639,7 +632,6 @@ jobs:
   Release_to_Homebrew:
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries]
-
     steps:
     - uses: actions/checkout@v4
       with:
@@ -694,7 +686,6 @@ jobs:
   Release_v2rayA_to_Docker:
     runs-on: ubuntu-22.04
     needs: [GitHub_Release]
-
     steps:
     - uses: actions/checkout@v4
       with:
@@ -746,7 +737,6 @@ jobs:
   Release_v2rayA_GUI_to_Docker:
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Web]
-
     steps:
     - uses: actions/checkout@v4
       with:
@@ -789,7 +779,7 @@ jobs:
         context: .
         builder: ${{ steps.buildx.outputs.name }}
         file: install/docker/Dockerfile.GUI.Action
-        platforms: linux/arm,linux/arm64,linux/amd64
+        platforms: linux/arm,linux/arm64,linux/amd64,linux/risv64
         push: true
         tags: |
           mzz2017/v2raya-gui:latest
@@ -799,7 +789,6 @@ jobs:
   Submit_to_Microsoft_winget:
     runs-on: windows-latest
     needs: [GitHub_Release]
-
     steps:
     - uses: actions/checkout@v4
       with:
