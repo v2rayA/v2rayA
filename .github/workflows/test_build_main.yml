@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dependabot/*
     paths:
       - "**/*.go"
       - "go.mod"
