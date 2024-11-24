@@ -779,7 +779,7 @@ jobs:
         context: .
         builder: ${{ steps.buildx.outputs.name }}
         file: install/docker/Dockerfile.GUI.Action
-        platforms: linux/arm,linux/arm64,linux/amd64,linux/risv64
+        platforms: linux/arm,linux/arm64,linux/amd64,linux/riscv64
         push: true
         tags: |
           mzz2017/v2raya-gui:latest
