@@ -17,6 +17,7 @@ jobs:
     - name: Set up Node.js
       shell: bash
       run: |
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         brew install node@20
         echo "PATH=\"$(brew --prefix)/opt/node@20/bin:$PATH\"" >> $GITHUB_ENV
         echo "PATH=\"$(brew --prefix)/opt/node@20/bin:$PATH\"" >> ~/.bash_profile         
