@@ -1,4 +1,6 @@
-FROM nginx:stable-alpine
-WORKDIR /build
-COPY ./web /usr/share/nginx/html
+FROM alpine:stable
+WORKDIR /
+RUN apk add --no-cache mini_httpd
+COPY ./web /usr/share/v2raya-web
+ENTRYPOINT ["/usr/sbin/mini_httpd", "-d", "/usr/share/v2raya-web", "-p", "80"]
 EXPOSE 80
