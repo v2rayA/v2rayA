@@ -1,6 +1,5 @@
-FROM alpine:stable
+FROM busybox:latest AS builder
 WORKDIR /
-RUN apk add --no-cache mini_httpd
 COPY ./web /usr/share/v2raya-web
-ENTRYPOINT ["/usr/sbin/mini_httpd", "-d", "/usr/share/v2raya-web", "-p", "80"]
+ENTRYPOINT ["/bin/httpd", "-f", "-h", "/usr/share/v2raya-web", "-p", "80"]
 EXPOSE 80
