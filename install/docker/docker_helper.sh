@@ -14,6 +14,10 @@ case "$(arch)" in
         v2ray_arch="arm64-v8a"
         v2raya_arch="arm64"
         ;;
+    riscv64)
+        v2ray_arch="riscv64"
+        v2raya_arch="riscv64"
+        ;;
     *)
         ;;
 esac
