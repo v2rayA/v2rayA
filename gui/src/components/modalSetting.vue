@@ -285,6 +285,33 @@
           <option value="no">{{ $t("setting.options.off") }}</option>
         </b-select>
       </b-field>
+      <b-field label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.inboundSniffing") }}
+          <b-tooltip
+            type="is-dark"
+            :label="$t('setting.messages.inboundSniffing')"
+            multilined
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="
+                position: relative;
+                top: 2px;
+                right: 3px;
+                font-weight: normal;
+              "
+            />
+          </b-tooltip>
+        </template>
+        <b-select v-model="inboundSniffing" expanded>
+          <option value="disable">{{ $t("setting.options.off") }}</option>
+          <option value="http,tls">Http + TLS</option>
+          <option value="http,tls,quic">Http + TLS + Quic</option>
+        </b-select>
+      </b-field>
       <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
           {{ $t("setting.mux") }}
@@ -438,6 +465,7 @@ export default {
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
+    inboundSniffing: "no",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -536,6 +564,7 @@ export default {
             ),
             pacMode: this.pacMode,
             tcpFastOpen: this.tcpFastOpen,
+            inboundSniffing: this.inboundSniffing,
             muxOn: this.muxOn,
             mux: parseInt(this.mux),
             transparent: this.transparent,
