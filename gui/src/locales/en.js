@@ -115,6 +115,7 @@ export default {
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
+    inboundSniffing: "Sniffing",
     options: {
       global: "Do not Split Traffic",
       direct: "Direct",
@@ -139,6 +140,7 @@ export default {
       leastPing: "Least Latency First",
     },
     messages: {
+      inboundSniffing: "Sniff inbound traffic. If it is not turned on, some traffic may not be diverted correctly.",
       gfwlist:
         "Based on modified time of file which sometimes is after latest version online.",
       transparentProxy:
