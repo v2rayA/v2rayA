@@ -451,6 +451,7 @@ import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
 import modalDomainsExcluded from "@/components/modalDomainsExcluded";
+import modalUpdateGfwList from "@/components/modalUpdateGfwList";
 import CusBInput from "./input/Input.vue";
 import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -545,24 +546,6 @@ export default {
     dayjs() {
       return dayjs.apply(this, arguments);
     },
-    handleClickUpdateGFWList() {
-      this.$axios({
-        url: apiRoot + "/gfwList",
-        method: "put",
-        timeout: 0,
-      }).then((res) => {
-        handleResponse(res, this, () => {
-          this.localGFWListVersion = res.data.data.localGFWListVersion;
-          this.$buefy.toast.open({
-            message: this.$t("common.success"),
-            type: "is-warning",
-            position: "is-top",
-            duration: 5000,
-            queue: false,
-          });
-        });
-      });
-    },
     requestUpdateSetting() {
       let cancel;
       waitingConnected(
@@ -647,6 +630,14 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: ModalCustomRoutingA,
+        hasModalCard: true,
+        canCancel: true,
+      });
+    },
+    handleClickUpdateGFWList() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalUpdateGfwList,
         hasModalCard: true,
         canCancel: true,
       });
