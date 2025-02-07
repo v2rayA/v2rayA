@@ -1117,12 +1117,14 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 
 	// 设置域名嗅探
 	if setting.InboundSniffing != configure.InboundSniffingDisable && setting.InboundSniffing != "" {
+		domainsExcludedText := configure.GetDomainsExcluded()
 		for i := len(t.Inbounds) - 1; i >= 0; i-- {
 			if setting.InboundSniffing == configure.InboundSniffingHttpTLS {
 				t.Inbounds[i].Sniffing.DestOverride = []string{"http", "tls"}
 			} else {
 				t.Inbounds[i].Sniffing.DestOverride = []string{"http", "tls", "quic"}
 			}
+			t.Inbounds[i].Sniffing.DomainsExcluded = strings.Split(domainsExcludedText, "\n")
 			t.Inbounds[i].Sniffing.Enabled = true
 		}
 	}
