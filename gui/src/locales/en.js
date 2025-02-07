@@ -64,6 +64,8 @@ export default {
   operations: {
     name: "Operations",
     update: "Update",
+    autoUpdate: "Auto Update",
+    manualUpdate: "Manual Update",
     modify: "Modify",
     share: "Share",
     view: "View",
@@ -332,5 +334,14 @@ export default {
     ],
     formName: "Domains Excluded List",
     formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+  },
+  gfwList: {
+    title: "Update GFWList",
+    messages: [
+      "If accessing GitHub is difficult in your current environment, you can download the latest GFWList（https://github.com/v2rayA/dist-v2ray-rules-dat） from GitHub, upload it to your server, and then enter your server address here to download it.",
+      "If the input form is empty it will automatically download from Github, otherwise it will download using the custom link",
+      "Please note: Wrong file may cause service startup failure. If the service cannot be started after downloading, you can click the Delete GFWList button"
+    ],
+    formName: "Custom Download Link"
   }
 };
