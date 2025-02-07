@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sort"
+	"strings"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"sort"
-	"strings"
-	"time"
 )
 
 type Configure struct {
@@ -24,6 +25,7 @@ type Configure struct {
 	InternalDnsList  *string            `json:"internalDnsList"`
 	ExternalDnsList  *string            `json:"externalDnsList"`
 	RoutingA         *string            `json:"routingA"`
+	DomainsExcluded  *string            `json:"domainsExcluded"`
 }
 
 func New() *Configure {
@@ -43,6 +45,7 @@ func New() *Configure {
 		InternalDnsList: nil,
 		ExternalDnsList: nil,
 		RoutingA:        nil,
+		DomainsExcluded: nil,
 	}
 }
 func decode(b []byte) (result []byte) {
@@ -268,6 +271,13 @@ func GetRoutingA() (r string) {
 		return RoutingATemplate
 	}
 	return
+}
+func SetDomainsExcluded(domains string) (err error) {
+	return db.Set("system", "domainsExcluded", domains)
+}
+func GetDomainsExcluded() (r string) {
+	db.Get("system", "domainsExcluded", &r)
+	return r
 }
 func GetConnectedServers() (wts *Whiches) {
 	outbounds := GetOutbounds()
