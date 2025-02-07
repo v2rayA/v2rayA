@@ -311,6 +311,20 @@
           <option value="http,tls">Http + TLS</option>
           <option value="http,tls,quic">Http + TLS + Quic</option>
         </b-select>
+        <template v-if="inboundSniffing != 'disable'">
+          <b-button
+            type="is-primary"
+            style="
+              margin-left: 0;
+              border-bottom-left-radius: 0;
+              border-top-left-radius: 0;
+              color: rgba(0, 0, 0, 0.75);
+            "
+            outlined
+            @click="handleClickDomainsExcluded"
+            >{{ $t("operations.domainsExcluded") }}
+          </b-button>
+        </template>
       </b-field>
       <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
@@ -436,6 +450,7 @@ import { handleResponse } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
+import modalDomainsExcluded from "@/components/modalDomainsExcluded";
 import CusBInput from "./input/Input.vue";
 import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -632,6 +647,14 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: ModalCustomRoutingA,
+        hasModalCard: true,
+        canCancel: true,
+      });
+    },
+    handleClickDomainsExcluded(){
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalDomainsExcluded,
         hasModalCard: true,
         canCancel: true,
       });
