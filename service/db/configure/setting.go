@@ -16,6 +16,7 @@ type Setting struct {
 	TcpFastOpen                        DefaultYesNo    `json:"tcpFastOpen"`
 	MuxOn                              DefaultYesNo    `json:"muxOn"`
 	Mux                                int             `json:"mux"`
+	InboundSniffing                    InboundSniffing `json:"inboundSniffing"`
 	Transparent                        TransparentMode `json:"transparent"`
 	IpForward                          bool            `json:"ipforward"`
 	PortSharing                        bool            `json:"portSharing"`
@@ -35,6 +36,7 @@ func NewSetting() (setting *Setting) {
 		TcpFastOpen:                        Default,
 		MuxOn:                              No,
 		Mux:                                8,
+		InboundSniffing:                    "http,tls,quic",
 		Transparent:                        TransparentClose,
 		IpForward:                          ipforward.IsIpForwardOn(),
 		PortSharing:                        false,
@@ -55,7 +57,7 @@ type CustomPac struct {
 	RoutingRules     []RoutingRule           `json:"routingRules"`
 }
 
-//v2rayTmpl.RoutingRule的前端友好版本
+// v2rayTmpl.RoutingRule的前端友好版本
 type RoutingRule struct {
 	Filename  string       `json:"filename"`  //SiteDAT文件名
 	Tags      []string     `json:"tags"`      //SiteDAT文件的标签

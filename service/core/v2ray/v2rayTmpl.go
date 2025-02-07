@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/go-leo/slicex"
 	"net"
 	"net/url"
 	"os"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-leo/slicex"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/mohae/deepcopy"
@@ -1048,7 +1049,7 @@ func SetVmessInbound(vmess *coreObj.Inbound) (err error) {
 	return nil
 }
 
-func (t *Template) setInbound() error {
+func (t *Template) setInbound(setting *configure.Setting) error {
 	p := configure.GetPortsNotNil()
 	if p != nil {
 		t.Inbounds[0].Port = p.Socks5
@@ -1111,6 +1112,18 @@ func (t *Template) setInbound() error {
 				},
 				Tag: "dns-in",
 			})
+		}
+	}
+
+	// 设置域名嗅探
+	if setting.InboundSniffing != configure.InboundSniffingDisable && setting.InboundSniffing != "" {
+		for i := len(t.Inbounds) - 1; i >= 0; i-- {
+			if setting.InboundSniffing == configure.InboundSniffingHttpTLS {
+				t.Inbounds[i].Sniffing.DestOverride = []string{"http", "tls"}
+			} else {
+				t.Inbounds[i].Sniffing.DestOverride = []string{"http", "tls", "quic"}
+			}
+			t.Inbounds[i].Sniffing.Enabled = true
 		}
 	}
 	return nil
@@ -1583,7 +1596,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t.OutboundTags = outboundTags
 
 	//set inbound ports according to the setting
-	if err = t.setInbound(); err != nil {
+	if err = t.setInbound(setting); err != nil {
 		return nil, err
 	}
 	//set DNS
