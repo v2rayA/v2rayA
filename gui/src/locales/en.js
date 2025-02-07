@@ -88,6 +88,7 @@ export default {
     no: "No",
     switchSite: "Switch to alternate site",
     addOutbound: "Add an outbound",
+    domainsExcluded:"Domains Excluded"
   },
   register: {
     title: "Create an admin account first",
@@ -324,4 +325,12 @@ export default {
     seconds: "seconds",
     autoScoll: "Auto Scroll",
   },
+  domainsExcluded: {
+    title: "Domains Excluded",
+    messages: [
+      "A list of domain names. If the traffic sniffing result matches a domain name in this list, the target address will not be reset."
+    ],
+    formName: "Domains Excluded List",
+    formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+  }
 };

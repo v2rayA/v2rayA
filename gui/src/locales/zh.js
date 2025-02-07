@@ -88,6 +88,7 @@ export default {
     no: "否",
     switchSite: "切换至备用站点",
     addOutbound: "新增一个出站 (outbound)",
+    domainsExcluded: "排除域名"
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -325,4 +326,12 @@ export default {
     seconds: "秒",
     autoScoll: "自动滚动",
   },
+  domainsExcluded: {
+    title: "排除域名",
+    messages: [
+      "一个域名列表，如果流量探测结果在这个列表中时，将 不会 重置目标地址。"
+    ],
+    formName: "排除域名列表",
+    formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+  }
 };
