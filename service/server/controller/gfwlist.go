@@ -7,7 +7,15 @@ import (
 )
 
 func PutGFWList(ctx *gin.Context) {
-	localGFWListVersion, err := dat.CheckAndUpdateGFWList()
+	var data struct {
+		DownloadLink string `json:"downloadLink"`
+	}
+	err := ctx.ShouldBindJSON(&data)
+	if err != nil {
+		common.ResponseError(ctx, logError("bad request"))
+		return
+	}
+	localGFWListVersion, err := dat.CheckAndUpdateGFWList(data.DownloadLink)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

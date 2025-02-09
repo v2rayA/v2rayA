@@ -248,7 +248,7 @@ func initUpdatingTicker() {
 	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range conf.TickerUpdateGFWList.C {
-			_, err := dat.CheckAndUpdateGFWList()
+			_, err := dat.CheckAndUpdateGFWList("")
 			if err != nil {
 				log.Info("[AutoUpdate] GFWList: %v", err)
 			}
@@ -278,7 +278,7 @@ func checkUpdate() {
 		case configure.GfwlistMode:
 			go func() {
 				/* 更新LoyalsoldierSite.dat */
-				localGFWListVersion, err := dat.CheckAndUpdateGFWList()
+				localGFWListVersion, err := dat.CheckAndUpdateGFWList("")
 				if err != nil {
 					log.Warn("Failed to update PAC file: %v", err.Error())
 					return
