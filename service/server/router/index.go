@@ -179,6 +179,7 @@ func Run() error {
 		auth.GET("setting", controller.GetSetting)
 		auth.PUT("setting", controller.PutSetting)
 		auth.PUT("gfwList", controller.PutGFWList)
+		auth.DELETE("gfwList", controller.DeleteGFWList)
 		auth.PUT("subscription", controller.PutSubscription)
 		auth.PATCH("subscription", controller.PatchSubscription)
 		auth.GET("ports", controller.GetPorts)
