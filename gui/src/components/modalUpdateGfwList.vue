@@ -82,14 +82,16 @@ export default {
         });
         return;
       }
+      let loading = this.$buefy.loading.open();
       this.$axios({
         url: apiRoot + "/gfwList",
         method: "put",
         timeout: 0,
         data: {
-          downloadList: this.downloadLink,
+          downloadLink: this.downloadLink,
         },
       }).then((res) => {
+        loading.close();
         handleResponse(res, this, () => {
           this.$emit("close");
           this.$buefy.toast.open({
