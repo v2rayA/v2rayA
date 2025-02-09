@@ -13,6 +13,7 @@ type (
 	TransparentType         string
 	Antipollution           string
 	SpecialMode             string
+	InboundSniffing         string
 )
 
 const (
@@ -59,6 +60,10 @@ const (
 	SubscriptionType       = TouchType("subscription")
 	ServerType             = TouchType("server")
 	SubscriptionServerType = TouchType("subscriptionServer")
+
+	InboundSniffingDisable     = InboundSniffing("disable")
+	InboundSniffingHttpTLS     = InboundSniffing("http,tls")
+	InboundSniffingHttpTlsQuic = InboundSniffing("http,tls,quic")
 
 	AntipollutionDnsForward = Antipollution("dnsforward")
 	AntipollutionDoH        = Antipollution("doh")

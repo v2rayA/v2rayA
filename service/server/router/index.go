@@ -4,6 +4,14 @@ import (
 	"crypto/md5"
 	"embed"
 	"fmt"
+	"io"
+	"io/fs"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
@@ -14,13 +22,6 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
 	"github.com/vearutop/statigz"
-	"io"
-	"io/fs"
-	"net"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 //go:embed web
@@ -178,6 +179,7 @@ func Run() error {
 		auth.GET("setting", controller.GetSetting)
 		auth.PUT("setting", controller.PutSetting)
 		auth.PUT("gfwList", controller.PutGFWList)
+		auth.DELETE("gfwList", controller.DeleteGFWList)
 		auth.PUT("subscription", controller.PutSubscription)
 		auth.PATCH("subscription", controller.PatchSubscription)
 		auth.GET("ports", controller.GetPorts)
@@ -194,6 +196,8 @@ func Run() error {
 		auth.DELETE("outbound", controller.DeleteOutbound)
 		auth.GET("message", controller.WsMessage)
 		auth.GET("logger", controller.GetLogger)
+		auth.GET("domainsExcluded", controller.GetDomainsExcluded)
+		auth.PUT("domainsExcluded", controller.PutDomainsExcluded)
 	}
 
 	ServeGUI(engine)

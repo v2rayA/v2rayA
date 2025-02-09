@@ -64,6 +64,8 @@ export default {
   operations: {
     name: "操作",
     update: "更新",
+    autoUpdate: "自动更新",
+    manualUpdate: "手动更新",
     modify: "修改",
     share: "分享",
     view: "查看",
@@ -88,6 +90,7 @@ export default {
     no: "否",
     switchSite: "切换至备用站点",
     addOutbound: "新增一个出站 (outbound)",
+    domainsExcluded: "排除域名"
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -103,6 +106,7 @@ export default {
     password: "密码",
   },
   setting: {
+    inboundSniffing: "嗅探",
     transparentProxy: "透明代理/系统代理",
     transparentType: "透明代理/系统代理实现方式",
     pacMode: "规则端口的分流模式",
@@ -139,6 +143,7 @@ export default {
       leastPing: "最小时延优先",
     },
     messages: {
+      inboundSniffing: "嗅探入站域名，如不开启，可能导致部分域名分流错误",
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
       transparentProxy:
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
@@ -325,4 +330,22 @@ export default {
     seconds: "秒",
     autoScoll: "自动滚动",
   },
+  domainsExcluded: {
+    title: "排除域名",
+    messages: [
+      "一个域名列表，如果流量探测结果在这个列表中时，将 不会 重置目标地址。"
+    ],
+    formName: "排除域名列表",
+    formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+  },
+  gfwList: {
+    title: "更新GFWList",
+    messages: [
+      "如果当前环境访问Github困难，你可以从此处（https://github.com/v2rayA/dist-v2ray-rules-dat）手动下载最新GFWList（geosite.dat），上传到你的服务器，然后填写你的服务器链接进行下载",
+      "如果不填写自定义下载链接输入框则自动从Github进行下载",
+      "注意：错误的文件可能导致服务启动失败，如果更新后服务器启动失败，你可以点击删除按钮删除下载的GFWList"
+    ],
+    formName: "自定义下载链接",
+    wrongCustomLink: "错误的自定义下载链接"
+  }
 };

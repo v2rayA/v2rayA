@@ -52,9 +52,10 @@ type Log struct {
 	Loglevel string `json:"loglevel"`
 }
 type Sniffing struct {
-	Enabled      bool     `json:"enabled"`
-	DestOverride []string `json:"destOverride,omitempty"`
-	MetadataOnly bool     `json:"metadataOnly"`
+	Enabled         bool     `json:"enabled"`
+	DestOverride    []string `json:"destOverride,omitempty"`
+	MetadataOnly    bool     `json:"metadataOnly"`
+	DomainsExcluded []string `json:"domainsExcluded"`
 }
 type Inbound struct {
 	Port           int              `json:"port"`
