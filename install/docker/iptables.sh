@@ -1,9 +1,9 @@
 #!/bin/sh
 
 if [ "$IPTABLES_MODE" = "nftables" ]; then
-    /sbin/iptables-nft "$@"
+    /usr/sbin/sbin/iptables-nft "$@"
 elif [ "$IPTABLES_MODE" = "legacy" ]; then
-    /sbin/iptables-legacy "$@"
+    /usr/sbin/iptables-legacy "$@"
 else
-    /sbin/iptables "$@"
+    /usr/sbin/iptables "$@"
 fi
