@@ -25,9 +25,9 @@
           multilined
           animated
         >
-          {{ localGFWListVersion ? localGFWListVersion : $t("none") }}
+          {{ localGFWListVersion ? localGFWListVersion : $t("common.none") }}
         </b-tooltip>
-        <span v-else>{{ localGFWListVersion ? localGFWListVersion : $t("none") }}</span>
+        <span v-else>{{ localGFWListVersion ? localGFWListVersion : $t("common.none") }}</span>
         <b-button
           size="is-small"
           style="position: relative; top: -2px; text-decoration: none; font-weight: bold"
