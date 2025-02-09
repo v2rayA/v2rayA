@@ -5,5 +5,5 @@ if [ "$IPTABLES_MODE" = "nftables" ]; then
 elif [ "$IPTABLES_MODE" = "legacy" ]; then
     /usr/sbin/ip6tables-legacy "$@"
 else
-    /usr/sbin/sbin/ip6tables "$@"
+    /usr/sbin/ip6tables "$@"
 fi
