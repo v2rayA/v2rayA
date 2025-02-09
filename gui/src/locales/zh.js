@@ -341,10 +341,11 @@ export default {
   gfwList: {
     title: "更新GFWList",
     messages: [
-      "如果当前环境访问Github困难，你可以从此处（https://github.com/v2rayA/dist-v2ray-rules-dat）手动下载最新GFWList，上传到你的服务器，然后填写你的服务器链接进行下载",
+      "如果当前环境访问Github困难，你可以从此处（https://github.com/v2rayA/dist-v2ray-rules-dat）手动下载最新GFWList（geosite.dat），上传到你的服务器，然后填写你的服务器链接进行下载",
       "如果不填写自定义下载链接输入框则自动从Github进行下载",
       "注意：错误的文件可能导致服务启动失败，如果更新后服务器启动失败，你可以点击删除按钮删除下载的GFWList"
     ],
-    formName: "自定义下载链接"
+    formName: "自定义下载链接",
+    wrongCustomLink: "错误的自定义下载链接"
   }
 };
