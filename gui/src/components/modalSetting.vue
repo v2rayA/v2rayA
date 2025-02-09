@@ -27,17 +27,10 @@
         >
           {{ localGFWListVersion ? localGFWListVersion : $t("none") }}
         </b-tooltip>
-        <span v-else>{{
-          localGFWListVersion ? localGFWListVersion : $t("none")
-        }}</span>
+        <span v-else>{{ localGFWListVersion ? localGFWListVersion : $t("none") }}</span>
         <b-button
           size="is-small"
-          style="
-            position: relative;
-            top: -2px;
-            text-decoration: none;
-            font-weight: bold;
-          "
+          style="position: relative; top: -2px; text-decoration: none; font-weight: bold"
           @click="handleClickUpdateGFWList"
           >{{ $t("operations.update") }}
         </b-button>
@@ -55,12 +48,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -108,12 +96,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -137,12 +120,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -197,12 +175,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -241,21 +214,14 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
         <b-select v-model="specialMode" expanded class="left-border">
           <option value="none">{{ $t("setting.options.closed") }}</option>
           <option value="supervisor">supervisor</option>
-          <option v-show="antipollution !== 'closed'" value="fakedns">
-            fakedns
-          </option>
+          <option v-show="antipollution !== 'closed'" value="fakedns">fakedns</option>
         </b-select>
       </b-field>
       <b-field label-position="on-border">
@@ -270,12 +236,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -297,12 +258,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -338,12 +294,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -410,10 +361,7 @@
           style="flex: 1"
         />
       </b-field>
-      <b-field
-        :label="$t('setting.preferModeWhenUpdate')"
-        label-position="on-border"
-      >
+      <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">
             {{
@@ -492,9 +440,7 @@ export default {
   }),
   computed: {
     lite() {
-      return (
-        window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0
-      );
+      return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
     },
     dockerMode() {
       return window.localStorage["docker"] === "true";
@@ -503,8 +449,7 @@ export default {
       let U = parseURL(apiRoot);
       let port = U.port;
       if (!port) {
-        port =
-          U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+        port = U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return toInt(port);
     },
@@ -517,34 +462,35 @@ export default {
     },
   },
   created() {
-    this.$axios({
-      url: apiRoot + "/remoteGFWListVersion",
-    }).then((res) => {
-      handleResponse(res, this, () => {
-        this.remoteGFWListVersion = res.data.data.remoteGFWListVersion;
-      });
-    });
-    this.$axios({
-      url: apiRoot + "/setting",
-    }).then((res) => {
-      handleResponse(res, this, () => {
-        Object.assign(this, res.data.data.setting);
-        delete res.data.data["setting"];
-        Object.assign(this, res.data.data);
-        this.subscriptionAutoUpdateTime = new Date(
-          this.subscriptionAutoUpdateTime
-        );
-        this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
-        if (this.lite) {
-          this.transparentType = "system_proxy";
-          this.showSpecialMode = false;
-        }
-      });
-    });
+    this.getSettingData();
   },
   methods: {
     dayjs() {
       return dayjs.apply(this, arguments);
+    },
+    getSettingData() {
+      this.$axios({
+        url: apiRoot + "/remoteGFWListVersion",
+      }).then((res) => {
+        handleResponse(res, this, () => {
+          this.remoteGFWListVersion = res.data.data.remoteGFWListVersion;
+        });
+      });
+      this.$axios({
+        url: apiRoot + "/setting",
+      }).then((res) => {
+        handleResponse(res, this, () => {
+          Object.assign(this, res.data.data.setting);
+          delete res.data.data["setting"];
+          Object.assign(this, res.data.data);
+          this.subscriptionAutoUpdateTime = new Date(this.subscriptionAutoUpdateTime);
+          this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+          if (this.lite) {
+            this.transparentType = "system_proxy";
+            this.showSpecialMode = false;
+          }
+        });
+      });
     },
     requestUpdateSetting() {
       let cancel;
@@ -591,8 +537,7 @@ export default {
             res.data.message.indexOf("invalid config") >= 0
           ) {
             // FIXME: tricky
-            this.$parent.$parent.runningState.running =
-              this.$t("common.notRunning");
+            this.$parent.$parent.runningState.running = this.$t("common.notRunning");
           }
         }),
         3 * 1000,
@@ -636,13 +581,18 @@ export default {
     },
     handleClickUpdateGFWList() {
       this.$buefy.modal.open({
+        events: {
+          close: () => {
+            this.getSettingData();
+          },
+        },
         parent: this,
         component: modalUpdateGfwList,
         hasModalCard: true,
         canCancel: true,
       });
     },
-    handleClickDomainsExcluded(){
+    handleClickDomainsExcluded() {
       this.$buefy.modal.open({
         parent: this,
         component: modalDomainsExcluded,
