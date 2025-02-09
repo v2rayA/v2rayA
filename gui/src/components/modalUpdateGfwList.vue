@@ -27,7 +27,11 @@
       <button class="button" @click="$emit('close')">
         {{ $t("operations.cancel") }}
       </button>
-      <button class="button is-danger" @click="handleClickDelete">
+      <button
+        :disabled="disableDeleteBtn"
+        class="button is-danger"
+        @click="handleClickDelete"
+      >
         {{ $t("operations.delete") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
@@ -44,16 +48,23 @@ import { handleResponse } from "@/assets/js/utils";
 export default {
   name: "modalUpdateGfwList",
   data: () => ({
+    disableDeleteBtn: false,
     downloadLink: "",
   }),
+  created() {
+    this.$axios({
+      url: apiRoot + "/setting",
+    }).then((res) => {
+      handleResponse(res, this, () => {
+        this.disableDeleteBtn = res.data.data.localGFWListVersion == "";
+      });
+    });
+  },
   methods: {
     handleClickDelete() {
       this.$axios({
         url: apiRoot + "/gfwList",
         method: "delete",
-        data: {
-          domains: this.domains,
-        },
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$emit("close");
@@ -61,10 +72,23 @@ export default {
       });
     },
     handleClickSubmit() {
+      if (!this.downloadLink.startsWith("http") && this.downloadLink != "") {
+        this.$buefy.toast.open({
+          message: this.$t("gfwList.wrongCustomLink"),
+          type: "is-warning",
+          position: "is-top",
+          duration: 5000,
+          queue: false,
+        });
+        return;
+      }
       this.$axios({
         url: apiRoot + "/gfwList",
         method: "put",
         timeout: 0,
+        data: {
+          downloadList: this.downloadLink,
+        },
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$emit("close");
