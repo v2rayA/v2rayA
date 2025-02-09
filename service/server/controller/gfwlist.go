@@ -16,3 +16,12 @@ func PutGFWList(ctx *gin.Context) {
 		"localGFWListVersion": localGFWListVersion,
 	})
 }
+
+func DeleteGFWList(ctx *gin.Context) {
+	err := dat.DeleteGFWList()
+	if err != nil {
+		common.ResponseError(ctx, logError(err))
+		return
+	}
+	common.ResponseSuccess(ctx, gin.H{})
+}

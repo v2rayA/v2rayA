@@ -4,6 +4,13 @@ import (
 	libSha256 "crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -11,12 +18,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
-	"time"
 )
 
 type GFWList struct {
@@ -163,4 +164,12 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 		err = v2ray.UpdateV2RayConfig()
 	}
 	return
+}
+
+func DeleteGFWList() error {
+	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return err
+	}
+	return os.Remove(pathSiteDat)
 }
