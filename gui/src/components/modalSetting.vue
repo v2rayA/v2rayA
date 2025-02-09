@@ -25,19 +25,12 @@
           multilined
           animated
         >
-          {{ localGFWListVersion ? localGFWListVersion : $t("none") }}
+          {{ localGFWListVersion ? localGFWListVersion : $t("common.none") }}
         </b-tooltip>
-        <span v-else>{{
-          localGFWListVersion ? localGFWListVersion : $t("none")
-        }}</span>
+        <span v-else>{{ localGFWListVersion ? localGFWListVersion : $t("common.none") }}</span>
         <b-button
           size="is-small"
-          style="
-            position: relative;
-            top: -2px;
-            text-decoration: none;
-            font-weight: bold;
-          "
+          style="position: relative; top: -2px; text-decoration: none; font-weight: bold"
           @click="handleClickUpdateGFWList"
           >{{ $t("operations.update") }}
         </b-button>
@@ -55,12 +48,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -108,12 +96,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -137,12 +120,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -197,12 +175,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -241,21 +214,14 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
         <b-select v-model="specialMode" expanded class="left-border">
           <option value="none">{{ $t("setting.options.closed") }}</option>
           <option value="supervisor">supervisor</option>
-          <option v-show="antipollution !== 'closed'" value="fakedns">
-            fakedns
-          </option>
+          <option v-show="antipollution !== 'closed'" value="fakedns">fakedns</option>
         </b-select>
       </b-field>
       <b-field label-position="on-border">
@@ -270,12 +236,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -284,6 +245,42 @@
           <option value="yes">{{ $t("setting.options.on") }}</option>
           <option value="no">{{ $t("setting.options.off") }}</option>
         </b-select>
+      </b-field>
+      <b-field label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.inboundSniffing") }}
+          <b-tooltip
+            type="is-dark"
+            :label="$t('setting.messages.inboundSniffing')"
+            multilined
+            position="is-right"
+          >
+            <b-icon
+              size="is-small"
+              icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
+            />
+          </b-tooltip>
+        </template>
+        <b-select v-model="inboundSniffing" expanded>
+          <option value="disable">{{ $t("setting.options.off") }}</option>
+          <option value="http,tls">Http + TLS</option>
+          <option value="http,tls,quic">Http + TLS + Quic</option>
+        </b-select>
+        <template v-if="inboundSniffing != 'disable'">
+          <b-button
+            type="is-primary"
+            style="
+              margin-left: 0;
+              border-bottom-left-radius: 0;
+              border-top-left-radius: 0;
+              color: rgba(0, 0, 0, 0.75);
+            "
+            outlined
+            @click="handleClickDomainsExcluded"
+            >{{ $t("operations.domainsExcluded") }}
+          </b-button>
+        </template>
       </b-field>
       <b-field label-position="on-border" class="with-icon-alert">
         <template slot="label">
@@ -297,12 +294,7 @@
             <b-icon
               size="is-small"
               icon=" iconfont icon-help-circle-outline"
-              style="
-                position: relative;
-                top: 2px;
-                right: 3px;
-                font-weight: normal;
-              "
+              style="position: relative; top: 2px; right: 3px; font-weight: normal"
             />
           </b-tooltip>
         </template>
@@ -369,10 +361,7 @@
           style="flex: 1"
         />
       </b-field>
-      <b-field
-        :label="$t('setting.preferModeWhenUpdate')"
-        label-position="on-border"
-      >
+      <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">
             {{
@@ -409,6 +398,8 @@ import { handleResponse } from "@/assets/js/utils";
 import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
+import modalDomainsExcluded from "@/components/modalDomainsExcluded";
+import modalUpdateGfwList from "@/components/modalUpdateGfwList";
 import CusBInput from "./input/Input.vue";
 import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -438,6 +429,7 @@ export default {
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
+    inboundSniffing: "no",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -448,9 +440,7 @@ export default {
   }),
   computed: {
     lite() {
-      return (
-        window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0
-      );
+      return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
     },
     dockerMode() {
       return window.localStorage["docker"] === "true";
@@ -459,8 +449,7 @@ export default {
       let U = parseURL(apiRoot);
       let port = U.port;
       if (!port) {
-        port =
-          U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+        port = U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return toInt(port);
     },
@@ -473,50 +462,33 @@ export default {
     },
   },
   created() {
-    this.$axios({
-      url: apiRoot + "/remoteGFWListVersion",
-    }).then((res) => {
-      handleResponse(res, this, () => {
-        this.remoteGFWListVersion = res.data.data.remoteGFWListVersion;
-      });
-    });
-    this.$axios({
-      url: apiRoot + "/setting",
-    }).then((res) => {
-      handleResponse(res, this, () => {
-        Object.assign(this, res.data.data.setting);
-        delete res.data.data["setting"];
-        Object.assign(this, res.data.data);
-        this.subscriptionAutoUpdateTime = new Date(
-          this.subscriptionAutoUpdateTime
-        );
-        this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
-        if (this.lite) {
-          this.transparentType = "system_proxy";
-          this.showSpecialMode = false;
-        }
-      });
-    });
+    this.getSettingData();
   },
   methods: {
     dayjs() {
       return dayjs.apply(this, arguments);
     },
-    handleClickUpdateGFWList() {
+    getSettingData() {
       this.$axios({
-        url: apiRoot + "/gfwList",
-        method: "put",
-        timeout: 0,
+        url: apiRoot + "/remoteGFWListVersion",
       }).then((res) => {
         handleResponse(res, this, () => {
-          this.localGFWListVersion = res.data.data.localGFWListVersion;
-          this.$buefy.toast.open({
-            message: this.$t("common.success"),
-            type: "is-warning",
-            position: "is-top",
-            duration: 5000,
-            queue: false,
-          });
+          this.remoteGFWListVersion = res.data.data.remoteGFWListVersion;
+        });
+      });
+      this.$axios({
+        url: apiRoot + "/setting",
+      }).then((res) => {
+        handleResponse(res, this, () => {
+          Object.assign(this, res.data.data.setting);
+          delete res.data.data["setting"];
+          Object.assign(this, res.data.data);
+          this.subscriptionAutoUpdateTime = new Date(this.subscriptionAutoUpdateTime);
+          this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+          if (this.lite) {
+            this.transparentType = "system_proxy";
+            this.showSpecialMode = false;
+          }
         });
       });
     },
@@ -536,6 +508,7 @@ export default {
             ),
             pacMode: this.pacMode,
             tcpFastOpen: this.tcpFastOpen,
+            inboundSniffing: this.inboundSniffing,
             muxOn: this.muxOn,
             mux: parseInt(this.mux),
             transparent: this.transparent,
@@ -564,8 +537,7 @@ export default {
             res.data.message.indexOf("invalid config") >= 0
           ) {
             // FIXME: tricky
-            this.$parent.$parent.runningState.running =
-              this.$t("common.notRunning");
+            this.$parent.$parent.runningState.running = this.$t("common.notRunning");
           }
         }),
         3 * 1000,
@@ -603,6 +575,27 @@ export default {
       this.$buefy.modal.open({
         parent: this,
         component: ModalCustomRoutingA,
+        hasModalCard: true,
+        canCancel: true,
+      });
+    },
+    handleClickUpdateGFWList() {
+      this.$buefy.modal.open({
+        events: {
+          close: () => {
+            this.getSettingData();
+          },
+        },
+        parent: this,
+        component: modalUpdateGfwList,
+        hasModalCard: true,
+        canCancel: true,
+      });
+    },
+    handleClickDomainsExcluded() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalDomainsExcluded,
         hasModalCard: true,
         canCancel: true,
       });

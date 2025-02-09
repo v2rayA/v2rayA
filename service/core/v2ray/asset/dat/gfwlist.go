@@ -4,6 +4,13 @@ import (
 	libSha256 "crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -11,12 +18,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
-	"time"
 )
 
 type GFWList struct {
@@ -98,6 +99,32 @@ func httpGet(url string) (data string, err error) {
 	}
 	return string(b), nil
 }
+
+func UpdateLocalGFWListByCustomLink(downloadLink string) (localGFWListVersionAfterUpdate string, err error) {
+	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return "", err
+	}
+	if err = asset.Download(downloadLink, pathSiteDat+".new"); err != nil {
+		log.Warn("UpdateLocalGFWList: %v", err)
+		return "", err
+	}
+	gfwlist, err := GetRemoteGFWListUpdateTime(http.DefaultClient)
+	if err == nil {
+		_ = os.Chtimes(pathSiteDat+".new", gfwlist.UpdateTime, gfwlist.UpdateTime)
+	}
+	t, err := files.GetFileModTime(pathSiteDat + ".new")
+	if err != nil {
+		return "", err
+	}
+	localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
+	if err := os.Rename(pathSiteDat+".new", pathSiteDat); err != nil {
+		return "", err
+	}
+	log.Info("download: %v -> SUCCESS\n", downloadLink)
+	return localGFWListVersionAfterUpdate, nil
+}
+
 func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	i := 0
 	gfwlist, err := GetRemoteGFWListUpdateTime(http.DefaultClient)
@@ -140,22 +167,31 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	return
 }
 
-func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) {
-	update, tRemote, err := IsGFWListUpdate()
-	if err != nil {
-		return
-	}
-	if update {
-		return "", fmt.Errorf(
-			"latest version is " + tRemote.Local().Format("2006-01-02") + ". GFWList is up to date",
-		)
+func CheckAndUpdateGFWList(downloadLink string) (localGFWListVersionAfterUpdate string, err error) {
+	if downloadLink == "" {
+		update, tRemote, err := IsGFWListUpdate()
+		if err != nil {
+			return "", err
+		}
+		if update {
+			return "", fmt.Errorf(
+				"latest version is " + tRemote.Local().Format("2006-01-02") + ". GFWList is up to date",
+			)
+		}
+
+		/* 更新LoyalsoldierSite.dat */
+		localGFWListVersionAfterUpdate, err = UpdateLocalGFWList()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		/* 手动更新LoyalsoldierSite.dat */
+		localGFWListVersionAfterUpdate, err = UpdateLocalGFWListByCustomLink(downloadLink)
+		if err != nil {
+			return "", err
+		}
 	}
 
-	/* 更新LoyalsoldierSite.dat */
-	localGFWListVersionAfterUpdate, err = UpdateLocalGFWList()
-	if err != nil {
-		return
-	}
 	setting := configure.GetSettingNotNil()
 	if v2ray.ProcessManager.Running() && //正在使用GFWList模式再重启
 		(setting.Transparent == configure.TransparentGfwlist ||
@@ -163,4 +199,12 @@ func CheckAndUpdateGFWList() (localGFWListVersionAfterUpdate string, err error) 
 		err = v2ray.UpdateV2RayConfig()
 	}
 	return
+}
+
+func DeleteGFWList() error {
+	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
+	if err != nil {
+		return err
+	}
+	return os.Remove(pathSiteDat)
 }
