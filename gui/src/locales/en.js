@@ -278,7 +278,7 @@ export default {
   },
   latency: {
     message:
-      "Latency tests used to cost one or several minutes. Wait patiently please.",
+      "Latency tests can take several minutes. Wait patiently please.",
   },
   version: {
     higherVersionNeeded:
