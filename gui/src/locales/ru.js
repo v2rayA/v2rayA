@@ -60,6 +60,7 @@ export default {
     timeLastUpdate: "Время последнего обновления",
     numberServers: "Число серверов",
     subscription: "Подписка",
+    autoSelect: "Автоматически подключаться к новым серверам после автоматичкского обновления подписки",
   },
   operations: {
     name: "Операции",
