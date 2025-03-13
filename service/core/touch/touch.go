@@ -94,6 +94,7 @@ func GenerateTouch() (t Touch) {
 			Status:  SubscriptionStatus(v.Status),
 			Servers: serverRawsToServers(v.Servers),
 			Info:    v.Info,
+			AutoSelect:  v.AutoSelect,
 		}
 	}
 	t.ConnectedServers = configure.GetConnectedServers().Get()
