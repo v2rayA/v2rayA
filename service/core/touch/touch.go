@@ -36,6 +36,7 @@ type Subscription struct {
 	Status  SubscriptionStatus  `json:"status"`
 	Info    string              `json:"info"`
 	Servers []Server            `json:"servers"`
+	AutoSelect bool             `json:"autoSelect"`
 }
 
 func NewUpdateStatus() SubscriptionStatus {
