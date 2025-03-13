@@ -272,5 +272,6 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
+	raw.AutoSelect = subscription.AutoSelect
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
