@@ -19,7 +19,7 @@
       </b-field>
       <b-field label="AUTO-SELECT">
         <b-checkbox
-	  v-model="autoSelect"
+	  v-model="which.autoSelect"
 	  >{{ $t("subscription.autoSelect") }}
 	</b-checkbox>
       </b-field>
