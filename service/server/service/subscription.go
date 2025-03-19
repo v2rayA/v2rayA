@@ -275,3 +275,15 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw.AutoSelect = subscription.AutoSelect
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
+
+func SelectServersFromSubscription(index int) {
+	var subscriptionServer configure.Which
+	subscriptionServer.TYPE = "subscriptionServer"
+	subscriptionServer.Sub = index // Subscription IDs start with 0
+	subscriptionServer.Outbound = "proxy"
+	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
+		subscriptionServer.ID = i // Server IDs start with 1
+		Connect(&subscriptionServer)
+		log.Info("Automatically connected to subscriptionServer: %v", i)
+	}
+}
