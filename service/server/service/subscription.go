@@ -287,3 +287,14 @@ func SelectServersFromSubscription(index int) {
 		log.Info("Automatically connected to subscriptionServer: %v", i)
 	}
 }
+
+func AutoSelectServersFromSubscriptions() {
+	for i := 0; i < configure.GetLenSubscriptions(); i++ {
+		subscription := configure.GetSubscription(i)
+		log.Debug("Got subscription: %v", subscription.Address)
+		if subscription.AutoSelect == true {
+			log.Debug("Selected subscription: %v", subscription.Address)
+			SelectServersFromSubscription(i)
+		}
+	}
+}
