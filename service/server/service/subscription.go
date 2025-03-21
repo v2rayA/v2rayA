@@ -284,16 +284,16 @@ func SelectServersFromSubscription(index int) {
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
 		subscriptionServer.ID = i // Server IDs start with 1
 		Connect(&subscriptionServer)
-		log.Info("Automatically connected to subscriptionServer: %v", i)
+		serverName := configure.GetSubscription(index).Servers[i-1].ServerObj.GetName()
+		log.Info("[AutoSelect] Automatically selected server: %v", serverName)
 	}
 }
 
 func AutoSelectServersFromSubscriptions() {
 	for i := 0; i < configure.GetLenSubscriptions(); i++ {
 		subscription := configure.GetSubscription(i)
-		log.Debug("Got subscription: %v", subscription.Address)
 		if subscription.AutoSelect == true {
-			log.Debug("Selected subscription: %v", subscription.Address)
+			log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
 			SelectServersFromSubscription(i)
 		}
 	}
