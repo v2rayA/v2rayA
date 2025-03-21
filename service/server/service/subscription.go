@@ -276,25 +276,36 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 
-func SelectServersFromSubscription(index int) {
+func SelectServersFromSubscription(index int) (err error) {
 	var subscriptionServer configure.Which
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
 		subscriptionServer.ID = i // Server IDs start with 1
-		Connect(&subscriptionServer)
-		serverName := configure.GetSubscription(index).Servers[i-1].ServerObj.GetName()
-		log.Info("[AutoSelect] Automatically selected server: %v", serverName)
+		serverName := configure.GetSubscription(index).Servers[i-1].ServerObj.GetName() // ServerRaw IDs start with 0
+		err := Connect(&subscriptionServer)
+		if err == nil {
+			log.Info("[AutoSelect] Automatically selected server: %v", serverName)
+		} else {
+			log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
+			return err
+		}
 	}
+	return nil
 }
 
-func AutoSelectServersFromSubscriptions() {
+func AutoSelectServersFromSubscriptions() (err error) {
 	for i := 0; i < configure.GetLenSubscriptions(); i++ {
 		subscription := configure.GetSubscription(i)
 		if subscription.AutoSelect == true {
 			log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
-			SelectServersFromSubscription(i)
+			err := SelectServersFromSubscription(i)
+			if err != nil {
+				log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
+				return err
+			}
 		}
 	}
+	return nil
 }
