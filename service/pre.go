@@ -236,6 +236,7 @@ func updateSubscriptions() {
 			} else {
 				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d，Address: %s", i, subs[i].Address)
 			}
+			service.AutoSelectServersFromSubscriptions()
 			wg.Done()
 			<-control
 		}(i)
