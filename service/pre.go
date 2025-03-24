@@ -236,15 +236,16 @@ func updateSubscriptions() {
 			} else {
 				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d，Address: %s", i, subs[i].Address)
 			}
-			err = service.AutoSelectServersFromSubscriptions()
-			if err != nil {
-				log.Error("[AutoSelect] Failed to auto-select servers from subscriptions: -- err: %v", err)
-			}
 			wg.Done()
 			<-control
 		}(i)
 	}
 	wg.Wait()
+	err := service.AutoSelectServersFromSubscriptions()
+	if err != nil {
+		log.Error("[AutoSelect] Failed to auto-select servers from subscriptions -- err: %v", err)
+	}
+
 }
 
 func initUpdatingTicker() {
