@@ -4,6 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -12,13 +20,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"io"
-	"net"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type SIP008 struct {
@@ -281,9 +282,19 @@ func SelectServersFromSubscription(index int) (err error) {
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
+
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
-		subscriptionServer.ID = i // Server IDs start with 1
-		serverName := configure.GetSubscription(index).Servers[i-1].ServerObj.GetName() // ServerRaw IDs start with 0
+		subscriptionServer.ID = i                                            // Server IDs start with 1
+		serverObj := configure.GetSubscription(index).Servers[i-1].ServerObj // ServerObj IDs start with 0
+		serverName := serverObj.GetName()
+
+		// Workaround for partial SS support in v2fly and xray
+		isSupported, _ := IsSupported(&subscriptionServer)
+		if !isSupported {
+			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
+			continue
+		}
+
 		err := Connect(&subscriptionServer)
 		if err == nil {
 			log.Info("[AutoSelect] Automatically selected server: %v", serverName)
