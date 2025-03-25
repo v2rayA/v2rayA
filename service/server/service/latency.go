@@ -291,3 +291,90 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	_ = resp.Body.Close()
 	which.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 }
+
+func IsSupported(which *configure.Which) (bool, error) {
+	v2rayRunning := v2ray.ProcessManager.Running()
+	sr, _ := which.LocateServerRaw()
+	vm := sr.ServerObj
+	//modify the template based on current configuration
+	var (
+		tmpl *v2ray.Template
+		err  error
+	)
+	if v2rayRunning {
+		tmpl, err = v2ray.NewTemplateFromConnectedServers(nil)
+		if err != nil {
+			if !errors.Is(err, v2ray.NoConnectedServerErr) {
+				log.Warn("NewTemplateFromConnectedServers: %v", err)
+			}
+		}
+	}
+	if tmpl == nil {
+		tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
+			RulePortMode:  configure.WhitelistMode,
+			TcpFastOpen:   configure.Default,
+			MuxOn:         configure.No,
+			Transparent:   configure.TransparentClose,
+			SpecialMode:   configure.SpecialModeNone,
+			AntiPollution: configure.AntipollutionClosed,
+		})
+		tmpl.SetAPI(nil)
+	}
+	var toClose []io.Closer
+	defer func() {
+		for _, l := range toClose {
+			_ = l.Close()
+		}
+	}()
+	//find a port for the inbound
+	t := time.Now()
+	var port int
+	for {
+		l, err := net.Listen("tcp", "0.0.0.0:0")
+		if err == nil {
+			port = l.Addr().(*net.TCPAddr).Port
+			toClose = append(toClose, l)
+			l2, err2 := net.ListenPacket("udp", "0.0.0.0:"+strconv.Itoa(port))
+			if err2 == nil {
+				toClose = append(toClose, l2)
+				break
+			}
+		}
+		if time.Since(t) > 3*time.Second {
+			return false, fmt.Errorf("timeout: failed to find availble ports")
+		}
+	}
+	v2rayInboundPort := strconv.Itoa(port)
+	pluginPort := 0
+	if vm.NeedPluginPort() {
+		// find a port for the plugin
+		for {
+			l, err := net.Listen("tcp", "127.0.0.1:0")
+			if err == nil {
+				toClose = append(toClose, l)
+				port = l.Addr().(*net.TCPAddr).Port
+				l2, err2 := net.ListenPacket("udp", "127.0.0.1:"+strconv.Itoa(port))
+				if err2 == nil {
+					toClose = append(toClose, l2)
+					break
+				}
+			}
+			if time.Since(t) > 3*time.Second {
+				return false, fmt.Errorf("timeout: failed to find availble ports")
+			}
+		}
+		pluginPort = port
+	}
+	err = tmpl.InsertMappingOutbound(vm, v2rayInboundPort, false, pluginPort, "socks")
+	if err != nil {
+		if strings.Contains(err.Error(), "unsupported") {
+			return false, err
+		}
+	}
+
+	for _, l := range toClose {
+		_ = l.Close()
+	}
+
+	return true, err
+}
