@@ -289,7 +289,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		serverName := serverObj.GetName()
 
 		// Workaround for partial SS support in v2fly and xray
-		isSupported, _ := IsSupported(&subscriptionServer)
+		isSupported, _ := IsSupported(subscriptionServer)
 		if !isSupported {
 			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
 			continue
