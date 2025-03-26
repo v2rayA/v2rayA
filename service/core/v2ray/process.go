@@ -151,7 +151,7 @@ func NewProcess(tmpl *Template,
 			}
 			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
 		}
-		if time.Since(startTime) > 15*time.Second {
+		if time.Since(startTime) > 30*time.Second {
 			return nil, fmt.Errorf("timeout: check the log for more information")
 		}
 		time.Sleep(100 * time.Millisecond)
