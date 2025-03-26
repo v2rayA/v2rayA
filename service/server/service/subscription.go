@@ -277,7 +277,7 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 
-func SelectServersFromSubscription(index int) (err error) {
+func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
 	var subscriptionServer configure.Which
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
@@ -295,26 +295,45 @@ func SelectServersFromSubscription(index int) (err error) {
 			continue
 		}
 
-		err := Connect(&subscriptionServer)
-		if err == nil {
-			log.Info("[AutoSelect] Automatically selected server: %v", serverName)
+		if shouldDisconnect {
+			err := Disconnect(subscriptionServer, true)
+			if err == nil {
+				log.Info("[AutoSelect] Disconnected from server: %v", serverName)
+			} else {
+				log.Error("[AutoSelect] Failed to disconnect from server: %v", serverName)
+				return err
+			}
 		} else {
-			log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
-			return err
+			err := Connect(&subscriptionServer)
+			if err == nil {
+				log.Info("[AutoSelect] Automatically selected server: %v", serverName)
+			} else {
+				log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func AutoSelectServersFromSubscriptions() (err error) {
+func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
 	for i := 0; i < configure.GetLenSubscriptions(); i++ {
 		subscription := configure.GetSubscription(i)
-		if subscription.AutoSelect == true {
-			log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
-			err := SelectServersFromSubscription(i)
-			if err != nil {
-				log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
-				return err
+		if subscription.AutoSelect {
+			if shouldDisconnect {
+				log.Info("[AutoSelect] Automatically disconnecting servers from subscription: %v", subscription.Address)
+				err := SelectServersFromSubscription(i, true)
+				if err != nil {
+					log.Error("[AutoSelect] Failed to disconnect servers from subscription: %v", subscription.Address)
+					return err
+				}
+			} else {
+				log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
+				err := SelectServersFromSubscription(i, false)
+				if err != nil {
+					log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
+					return err
+				}
 			}
 		}
 	}
