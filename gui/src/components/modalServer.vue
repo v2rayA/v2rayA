@@ -114,12 +114,21 @@ ref="v2ray_aid" v-model="v2ray.aid" placeholder="AlterID" type="number" min="0" 
 v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
             label-position="on-border"
           >
-            <b-input
+            <b-select
               ref="v2ray_fp"
               v-model="v2ray.fp"
-              placeholder="A uTLS compatable fingerprint name"
               expanded
-            />
+            >
+              <option value="">empty</option>
+              <option value="chrome">chrome</option>
+              <option value="firefox">firefox</option>
+              <option value="safari">safari</option>
+              <option value="ios">ios</option>
+              <option value="android">android</option>
+              <option value="edge">edge</option>
+              <option value="random">random</option>
+              <option value="randomized">randomized</option>
+            </b-select>
           </b-field>
           <b-field
 v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
@@ -196,6 +205,7 @@ size="is-small" icon=" iconfont icon-help-circle-outline" style="
               <option value="h2">HTTP/2</option>
               <option value="grpc">gRPC</option>
               <option value="quic">QUIC</option>
+              <option value="xhttp">XHTTP</option>
             </b-select>
           </b-field>
           <b-field
@@ -273,7 +283,7 @@ v-show="v2ray.net === 'ws' ||
             label="Alpn"
             label-position="on-border"
           >
-            <b-input v-model="v2ray.alpn" placeholder="h2,http/1.1" expanded />
+            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
           <b-field
 v-show="v2ray.net === 'ws' ||
@@ -309,6 +319,51 @@ v-show="v2ray.net === 'ws' ||
               ref="v2ray_service_name"
               v-model="v2ray.path"
               type="text"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Mode"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.xhttpMode" expanded>
+              <option value="auto">auto</option>
+              <option value="packet-up">packet-up</option>
+              <option value="stream-up">stream-up</option>
+              <option value="stream-one">stream-one</option>
+            </b-select>
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.pathObfuscation')"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Host"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.host"
+              :placeholder="$t('configureServer.hostObfuscation')"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Extra Raw JSON"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.xhttpRawJson"
+              placeholder="{XHTTPObject}"
               expanded
             />
           </b-field>
@@ -1067,6 +1122,8 @@ export default {
       allowInsecure: false,
       protocol: "vmess",
       key: "none",
+      xhttpMode: "auto",
+      xhttpRawJson: "",
     },
     ss: {
       method: "2022-blake3-aes-128-gcm",
@@ -1270,6 +1327,8 @@ export default {
           spx: u.params.spx || "",
           allowInsecure: u.params.allowInsecure || false,
           key: u.params.key,
+          xhttpMode: u.params.xhttpMode || "auto",
+          xhttpRawJson: u.params.xhttpRawJson || "",
           protocol: "vless",
         };
         if (o.alpn !== "") {
@@ -1506,6 +1565,12 @@ export default {
           if (srcObj.net === "quic") {
             query.key = srcObj.key;
             query.quicSecurity = srcObj.quicSecurity;
+          }
+          if (srcObj.net === "xhttp") {
+            query.xhttpMode = srcObj.xhttpMode;
+            if (srcObj.xhttpRawJson) {
+              query.xhttpRawJson = srcObj.xhttpRawJson;
+            }
           }
           if (query.security == "reality") {
             query.pbk = srcObj.pbk;

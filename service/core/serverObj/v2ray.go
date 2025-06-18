@@ -52,6 +52,7 @@ type V2Ray struct {
 	AllowInsecure bool   `json:"allowInsecure"`
 	Key           string `json:"key,omitempty"`
 	QuicSecurity  string `json:"quicSecurity"`
+	XHTTPMode     string `json:"xhttpMode,omitempty"`
 	V             string `json:"v"`
 	Protocol      string `json:"protocol"`
 }
@@ -113,6 +114,12 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	}
 	if data.Net == "quic" {
 		data.QuicSecurity = u.Query().Get("quicSecurity")
+	}
+	if data.Net == "xhttp" {
+		data.XHTTPMode = u.Query().Get("xhttpMode")
+		if data.XHTTPMode == "" {
+			data.XHTTPMode = "auto"
+		}
 	}
 	return data, nil
 }
@@ -369,6 +376,19 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				Key:      v.Key,
 				Security: v.QuicSecurity,
 			}
+		case "xhttp":
+			if v.Host != "" {
+				core.StreamSettings.XHTTPSettings = &coreObj.XHTTPSettings{
+					Path: v.Path,
+					Host: v.Host,
+					Mode: v.XHTTPMode,
+				}
+			} else {
+				core.StreamSettings.XHTTPSettings = &coreObj.XHTTPSettings{
+					Path: v.Path,
+					Mode: v.XHTTPMode,
+				}
+			}
 		default:
 			return Configuration{}, fmt.Errorf("unexpected transport type: %v", v.Net)
 		}
@@ -462,6 +482,10 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "key", v.Key)
 			setValue(&query, "quicSecurity", v.QuicSecurity)
+		case "xhttp":
+			setValue(&query, "path", v.Path)
+			setValue(&query, "host", v.Host)
+			setValue(&query, "xhttpMode", v.XHTTPMode)
 		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)
