@@ -144,6 +144,7 @@ type StreamSettings struct {
 	Security        string           `json:"security,omitempty"`
 	TLSSettings     *TLSSettings     `json:"tlsSettings,omitempty"`
 	XTLSSettings    *TLSSettings     `json:"xtlsSettings,omitempty"`
+	XHTTPSettings   *XHTTPSettings   `json:"xhttpSettings,omitempty"`
 	RealitySettings *RealitySettings `json:"realitySettings,omitempty"`
 	TCPSettings     *TCPSettings     `json:"tcpSettings,omitempty"`
 	KcpSettings     *KcpSettings     `json:"kcpSettings,omitempty"`
@@ -152,6 +153,9 @@ type StreamSettings struct {
 	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
 	QuicSettings    *QuicSettings    `json:"quicSettings,omitempty"`
 	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
+}
+type XHTTPSettings struct {
+	Path string `json:"path,omitempty"`
 }
 type RealitySettings struct {
 	ServerName  string `json:"serverName,omitempty"`
