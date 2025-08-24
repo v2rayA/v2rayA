@@ -267,14 +267,14 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					},
 				},
 			}
-			// if network == "tcp" {
-			// 	tcpSetting := coreObj.TCPSettings{
-			// 		Header: coreObj.TCPHeader{
-			// 			Type: "none",
-			// 		},
-			// 	}
-			// 	core.StreamSettings.TCPSettings = &tcpSetting
-			// }
+		// if network == "tcp" {
+		// 	tcpSetting := coreObj.TCPSettings{
+		// 		Header: coreObj.TCPHeader{
+		// 			Type: "none",
+		// 		},
+		// 	}
+		// 	core.StreamSettings.TCPSettings = &tcpSetting
+		// }
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
@@ -369,6 +369,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				Key:      v.Key,
 				Security: v.QuicSecurity,
 			}
+		case "xhttp":
+			core.StreamSettings.XHTTPSettings = &coreObj.XHTTPSettings{
+				Path: v.Path,
+			}
 		default:
 			return Configuration{}, fmt.Errorf("unexpected transport type: %v", v.Net)
 		}
@@ -462,6 +466,8 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "key", v.Key)
 			setValue(&query, "quicSecurity", v.QuicSecurity)
+		case "xhttp":
+			setValue(&query, "path", v.Path)
 		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)
