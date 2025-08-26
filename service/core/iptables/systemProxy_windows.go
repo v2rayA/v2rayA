@@ -51,7 +51,7 @@ var (
 )
 
 func GetCurrentThread() (pseudoHandle windows.Handle, err error) {
-	r0, _, e1 := syscall.SyscallN(procGetCurrentThread.Addr(), 0, 0, 0, 0)
+	r0, _, e1 := syscall.SyscallN(procGetCurrentThread.Addr())
 	pseudoHandle = windows.Handle(r0)
 	if pseudoHandle == 0 {
 		if e1 != 0 {
@@ -70,7 +70,7 @@ func OpenThreadToken(h windows.Handle, access uint32, self bool, token *windows.
 	} else {
 		_p0 = 0
 	}
-	r1, _, e1 := syscall.SyscallN(procOpenThreadToken.Addr(), 4, uintptr(h), uintptr(access), uintptr(_p0), uintptr(unsafe.Pointer(token)), 0, 0)
+	r1, _, e1 := syscall.SyscallN(procOpenThreadToken.Addr(), uintptr(h), uintptr(access), uintptr(_p0), uintptr(unsafe.Pointer(token)))
 	if r1 == 0 {
 		if e1 != 0 {
 			err = errnoErr(e1)
@@ -82,7 +82,7 @@ func OpenThreadToken(h windows.Handle, access uint32, self bool, token *windows.
 }
 
 func ImpersonateSelf() (err error) {
-	r0, _, e1 := syscall.SyscallN(procImpersonateSelf.Addr(), 1, uintptr(2), 0, 0)
+	r0, _, e1 := syscall.SyscallN(procImpersonateSelf.Addr(), uintptr(2))
 	if r0 == 0 {
 		if e1 != 0 {
 			err = errnoErr(e1)
@@ -94,7 +94,7 @@ func ImpersonateSelf() (err error) {
 }
 
 func RevertToSelf() (err error) {
-	r0, _, e1 := syscall.SyscallN(procRevertToSelf.Addr(), 0, 0, 0, 0)
+	r0, _, e1 := syscall.SyscallN(procRevertToSelf.Addr())
 	if r0 == 0 {
 		if e1 != 0 {
 			err = errnoErr(e1)
@@ -152,13 +152,10 @@ func InternetOptionSettingsChanged() (syscall.Handle, error) {
 	p4 := uint64(0)
 	r1, _, e1 := syscall.SyscallN(
 		procInternetSetOptionW.Addr(),
-		4,
 		uintptr(p1),
 		uintptr(p2),
 		uintptr(p3),
 		uintptr(p4),
-		0,
-		0,
 	)
 	if r1 == 0 {
 		if e1 != 0 {
