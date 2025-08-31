@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -138,6 +139,7 @@ func NewProcess(tmpl *Template,
 	}
 	log.Trace("portList for connectivity test: %+v", portList)
 	startTime := time.Now()
+	startTimeOut := time.Duration(conf.GetEnvironmentConfig().CoreStartupTimeout) * time.Second
 	for i := 0; i < len(portList); {
 		conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", portList[i]))
 		if err == nil {
@@ -151,7 +153,9 @@ func NewProcess(tmpl *Template,
 			}
 			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
 		}
-		if time.Since(startTime) > 30*time.Second {
+		if time.Since(startTime) > startTimeOut {
+			log.Info("Attempting to terminate timed-out process with SIGTERM")
+			_ = proc.Signal(syscall.SIGTERM)
 			return nil, fmt.Errorf("timeout: check the log for more information")
 		}
 		time.Sleep(100 * time.Millisecond)
