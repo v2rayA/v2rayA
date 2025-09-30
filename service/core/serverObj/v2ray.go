@@ -274,14 +274,14 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					},
 				},
 			}
-			// if network == "tcp" {
-			// 	tcpSetting := coreObj.TCPSettings{
-			// 		Header: coreObj.TCPHeader{
-			// 			Type: "none",
-			// 		},
-			// 	}
-			// 	core.StreamSettings.TCPSettings = &tcpSetting
-			// }
+		// if network == "tcp" {
+		// 	tcpSetting := coreObj.TCPSettings{
+		// 		Header: coreObj.TCPHeader{
+		// 			Type: "none",
+		// 		},
+		// 	}
+		// 	core.StreamSettings.TCPSettings = &tcpSetting
+		// }
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
