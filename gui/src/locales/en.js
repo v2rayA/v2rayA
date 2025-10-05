@@ -60,6 +60,7 @@ export default {
     timeLastUpdate: "Datetime of Last Update",
     numberServers: "Number of Servers",
     subscription: "Subscription",
+    autoSelect: "Automatically connect to new servers from the subscription after an automatic update of the subscription",
   },
   operations: {
     name: "Operations",

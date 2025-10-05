@@ -17,6 +17,12 @@
           :placeholder="$t('subscription.remarks')"
         />
       </b-field>
+      <b-field label="AUTO-SELECT">
+        <b-checkbox
+	  v-model="which.autoSelect"
+	  >{{ $t("subscription.autoSelect") }}
+	</b-checkbox>
+      </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
       <button class="button" type="button" @click="$parent.close()">

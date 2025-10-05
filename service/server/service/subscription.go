@@ -4,14 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/httpClient"
-	"github.com/v2rayA/v2rayA/common/resolv"
-	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/touch"
-	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"net"
 	"net/http"
@@ -19,6 +11,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/core/serverObj"
+	"github.com/v2rayA/v2rayA/core/touch"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type SIP008 struct {
@@ -272,5 +274,86 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
+	raw.AutoSelect = subscription.AutoSelect
 	return configure.SetSubscription(subscription.ID-1, raw)
+}
+
+func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
+	var subscriptionServer configure.Which
+	subscriptionServer.TYPE = "subscriptionServer"
+	subscriptionServer.Sub = index // Subscription IDs start with 0
+	subscriptionServer.Outbound = "proxy"
+	variant, _, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
+	}
+
+	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
+		subscriptionServer.ID = i                                            // Server IDs start with 1
+		serverObj := configure.GetSubscription(index).Servers[i-1].ServerObj // ServerObj IDs start with 0
+		serverName := serverObj.GetName()
+
+		// Workaround for partial SS support in v2fly and xray
+		isSupported, _ := IsSupported(subscriptionServer)
+		if !isSupported {
+			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
+			continue
+		}
+
+		if shouldDisconnect && variant != where.Xray {
+			err := Disconnect(subscriptionServer, true)
+			if err == nil {
+				log.Info("[AutoSelect] Disconnected from server: %v", serverName)
+			} else {
+				log.Error("[AutoSelect] Failed to disconnect from server: %v", serverName)
+				return err
+			}
+		} else {
+			err := Connect(&subscriptionServer)
+			if err == nil {
+				log.Info("[AutoSelect] Automatically selected server: %v", serverName)
+				//Xray only supports connecting to one server at a time
+				if variant == where.Xray {
+					break
+				}
+			} else {
+				log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
+	variant, _, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
+	}
+	for i := 0; i < configure.GetLenSubscriptions(); i++ {
+		subscription := configure.GetSubscription(i)
+		if subscription.AutoSelect {
+			if shouldDisconnect && variant != where.Xray {
+				log.Info("[AutoSelect] Automatically disconnecting servers from subscription: %v", subscription.Address)
+				err := SelectServersFromSubscription(i, true)
+				if err != nil {
+					log.Error("[AutoSelect] Failed to disconnect servers from subscription: %v", subscription.Address)
+					return err
+				}
+			} else {
+				log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
+				err := SelectServersFromSubscription(i, false)
+				//Xray only supports connecting to one server at a time,
+				//there's no point in selecting servers from multiple subscriptions
+				if variant == where.Xray {
+					break
+				}
+				if err != nil {
+					log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
