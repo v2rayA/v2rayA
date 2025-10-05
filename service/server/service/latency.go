@@ -291,3 +291,28 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	_ = resp.Body.Close()
 	which.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 }
+
+func IsSupported(which configure.Which) (bool, error) {
+	var (
+		tmpl *v2ray.Template
+		err  error
+	)
+
+	tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
+		RulePortMode:  configure.WhitelistMode,
+		TcpFastOpen:   configure.Default,
+		MuxOn:         configure.No,
+		Transparent:   configure.TransparentClose,
+		SpecialMode:   configure.SpecialModeNone,
+		AntiPollution: configure.AntipollutionClosed,
+	})
+	tmpl.SetAPI(nil)
+	serverRaw, _ := which.LocateServerRaw()
+	err = tmpl.InsertMappingOutbound(serverRaw.ServerObj, "0", false, 0, "socks")
+	if err != nil {
+		if strings.Contains(err.Error(), "unsupported") {
+			return false, err
+		}
+	}
+	return true, nil
+}

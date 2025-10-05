@@ -36,6 +36,7 @@ type Subscription struct {
 	Status  SubscriptionStatus  `json:"status"`
 	Info    string              `json:"info"`
 	Servers []Server            `json:"servers"`
+	AutoSelect bool             `json:"autoSelect"`
 }
 
 func NewUpdateStatus() SubscriptionStatus {
@@ -93,6 +94,7 @@ func GenerateTouch() (t Touch) {
 			Status:  SubscriptionStatus(v.Status),
 			Servers: serverRawsToServers(v.Servers),
 			Info:    v.Info,
+			AutoSelect:  v.AutoSelect,
 		}
 	}
 	t.ConnectedServers = configure.GetConnectedServers().Get()
