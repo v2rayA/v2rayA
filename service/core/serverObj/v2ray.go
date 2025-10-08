@@ -280,9 +280,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		//TODO: QUIC
 		switch strings.ToLower(v.Net) {
 		case "grpc":
-			if v.Path == "" {
-				v.Path = "GunService"
-			}
 			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: v.Path}
 		case "ws":
 			core.StreamSettings.WsSettings = &coreObj.WsSettings{
