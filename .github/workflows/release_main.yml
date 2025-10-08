@@ -594,8 +594,10 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download v2rayA binary for checksum
       run: |
+        mkdir v2raya_linux
         for arch in x86 x64 longarch64 armv7 arm64; do
-          wget https://github.com/v2rayA/v2rayA/releases/download/v${VERSION}/v2raya_linux_${arch}_${VERSION}
+          curl -L https://github.com/v2rayA/v2rayA/releases/download/v${VERSION}/v2raya_linux_${arch}_${VERSION} -o v2raya_linux/v2raya_linux_${arch}_${VERSION}
+          chmod +x v2raya_linux/v2raya_linux_${arch}_${VERSION}
         done
     - name: Set Path
       run: |
