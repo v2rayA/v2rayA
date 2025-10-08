@@ -26,19 +26,19 @@ source=(
 )
 
 source_i686=(
-    "v2raya_${pkgver}::https://apt.v2raya.org/static/v2raya_linux_x86_${pkgver}"
+    "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_x86_${pkgver}"
 )
 source_x86_64=(
-    "v2raya_${pkgver}::https://apt.v2raya.org/static/v2raya_linux_x64_${pkgver}"
+    "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_x64_${pkgver}"
 )
 source_aarch64=(
-    "v2raya_${pkgver}::https://apt.v2raya.org/static/v2raya_linux_arm64_${pkgver}"
+    "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_arm64_${pkgver}"
 )
 source_armv7h=(
-    "v2raya_${pkgver}::https://apt.v2raya.org/static/v2raya_linux_armv7_${pkgver}"
+    "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_armv7_${pkgver}"
 )
 source_loong64=(
-    "v2raya_${pkgver}::https://apt.v2raya.org/static/v2raya_linux_loongarch64_${pkgver}"
+    "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_loongarch64_${pkgver}"
 )
 
 sha1sums=(
