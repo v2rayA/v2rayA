@@ -27,7 +27,7 @@
     "pace-js": "^1.2.4",
     "qrcode": "^1.4.2",
     "register-service-worker": "^1.6.2",
-    "vue": "^2.7.14",
+    "vue": "^3.0.0",
     "vue-i18n": "^8.15.3",
     "vue-router": "^3.0.6",
     "vue-virtual-scroller": "^1.0.10",
