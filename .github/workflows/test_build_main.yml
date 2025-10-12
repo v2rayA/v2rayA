@@ -94,6 +94,14 @@ jobs:
           go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
           Set-Location -Path ..
         }
+        foreach ($arch in @('mips', 'mipsle', 'mips64', 'mips64le')) {
+          $env:GOARCH = $arch
+          $env:GOMIPS = 'softfloat'
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-${arch}sf")."friendlyName"
+          Set-Location -Path service
+          go build -tags "with_gvisor" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
         foreach ($arch in @('amd64', 'arm64')) {
           $env:GOOS = 'windows'
           $env:GOARCH = $arch
