@@ -9,6 +9,7 @@ var (
 	FoundNew                 = false
 	RemoteVersion            = ""
 	TickerUpdateGFWList      *time.Ticker
+	TickerUpdateServers      *time.Ticker
 	TickerUpdateSubscription *time.Ticker
 )
 
