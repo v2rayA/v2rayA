@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "./service/common/parseGeoIP";
+
+message CIDR {
+  // IP address, should be either 4 or 16 bytes.
+  bytes ip = 1;
+
+  // Number of leading ones in the network mask.
+  uint32 prefix = 2;
+}
+
+message GeoIP {
+  string country_code = 1;
+  repeated CIDR cidr = 2;
+}
+
+message GeoIPList {
+  repeated GeoIP entry = 1;
+}
