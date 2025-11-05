@@ -157,11 +157,17 @@ func initConfigure() {
 					}
 				}
 			}
+
 			log.Warn("Migration is done")
 		} else {
 			initDBValue()
 		}
 	}
+
+	if len(configure.GetTproxyWhiteIpGroups()) == 0 {
+		configure.SetTproxyWhiteIpGroups([]string{"PRIVATE"})
+	}
+
 	//检查config.json是否存在
 	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {
 		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray

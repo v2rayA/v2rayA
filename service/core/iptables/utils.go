@@ -104,3 +104,13 @@ func GetWhiteListIPs() ([]string, []string) {
 	}
 	return ipv4List, ipv6List
 }
+
+func IsEnabledTproxyWhiteIpGroups() bool {
+	if len(configure.GetTproxyWhiteIpGroups()) == 0 {
+		return false
+	}
+	if configure.GetTproxyWhiteIpGroups()[0] == "NONE" {
+		return false
+	}
+	return true
+}
