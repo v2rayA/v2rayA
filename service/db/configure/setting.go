@@ -19,6 +19,7 @@ type Setting struct {
 	InboundSniffing                    InboundSniffing `json:"inboundSniffing"`
 	Transparent                        TransparentMode `json:"transparent"`
 	IpForward                          bool            `json:"ipforward"`
+	RouteOnly                          bool            `json:"routeOnly"`
 	PortSharing                        bool            `json:"portSharing"`
 	SpecialMode                        SpecialMode     `json:"specialMode"`
 	TransparentType                    TransparentType `json:"transparentType"`
