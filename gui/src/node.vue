@@ -1294,6 +1294,7 @@ export default {
       let cancel;
       if (!row.connected) {
         //该节点并未处于连接状态，因此进行连接
+        let loading = this.$buefy.loading.open();
         waitingConnected(
           this.$axios({
             url: apiRoot + "/connection",
@@ -1308,6 +1309,7 @@ export default {
               cancel = c;
             }),
           }).then((res) => {
+            loading.close();
             if (res.data.code === "SUCCESS") {
               Object.assign(this.runningState, {
                 running: res.data.data.running

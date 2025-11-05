@@ -3,66 +3,37 @@
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
         <b-navbar-item href="/">
-          <img
-            src="@/assets/img/logo2.png"
-            alt="v2rayA"
-            class="logo no-select"
-          />
+          <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
         <b-navbar-item tag="div">
-          <b-tag
-            id="statusTag"
-            class="pointerTag"
-            :type="statusMap[runningState.running]"
-            @mouseenter.native="handleOnStatusMouseEnter"
-            @mouseleave.native="handleOnStatusMouseLeave"
-            @click.native="handleClickStatus"
-            >{{ coverStatusText ? coverStatusText : runningState.running }}
+          <b-tag id="statusTag" class="pointerTag" :type="statusMap[runningState.running]"
+            @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
+            @click.native="handleClickStatus">{{ coverStatusText ? coverStatusText : runningState.running }}
           </b-tag>
         </b-navbar-item>
         <b-navbar-item tag="div">
-          <b-dropdown
-            v-if="updateOutboundDropdown"
-            :triggers="isMobile ? ['click'] : ['click', 'hover']"
-            aria-role="list"
-            :close-on-click="false"
-            @mouseenter.native="handleOutboundDropdownActiveChange"
-            @active-change="handleOutboundDropdownActiveChange"
-          >
+          <b-dropdown v-if="updateOutboundDropdown" :triggers="isMobile ? ['click'] : ['click', 'hover']"
+            aria-role="list" :close-on-click="false" @mouseenter.native="handleOutboundDropdownActiveChange"
+            @active-change="handleOutboundDropdownActiveChange">
             <template #trigger>
-              <b-tag class="pointerTag" type="is-info" icon-right="menu-down"
-                >{{ outboundName.toUpperCase() }}
+              <b-tag class="pointerTag" type="is-info" icon-right="menu-down">{{ outboundName.toUpperCase() }}
               </b-tag>
             </template>
 
-            <b-dropdown-item
-              v-for="outbound in outbounds"
-              :key="outbound"
-              aria-role="listitem"
+            <b-dropdown-item v-for="outbound in outbounds" :key="outbound" aria-role="listitem"
               class="is-flex padding-right-1rem justify-content-space-between outbound-dropdown"
-              @mouseenter.native="handleOnOutboundMouseEnter(outbound)"
-              @mouseleave.native="handleOnOutboundMouseLeave"
-              @click="outboundName = outbound"
-              ><p class="is-relative is-fullwidth">
+              @mouseenter.native="handleOnOutboundMouseEnter(outbound)" @mouseleave.native="handleOnOutboundMouseLeave"
+              @click="outboundName = outbound">
+              <p class="is-relative is-fullwidth">
                 <span>{{ outboundNameDecorator(outbound) }}</span>
                 <span>
-                  <i
-                    v-show="isMobile || outboundDropdownHover[outbound]"
-                    class="iconfont icon-setting outbound-setting"
-                    @click="handleClickOutboundSetting($event, outbound)"
-                  ></i
-                ></span></p
-            ></b-dropdown-item>
-            <b-dropdown-item
-              aria-role="listitem"
-              class="is-flex padding-right-1rem"
-              separator
-            ></b-dropdown-item>
-            <b-dropdown-item
-              aria-role="listitem"
-              class="is-flex padding-right-1rem"
-              @click="handleAddOutbound"
-              >{{ $t("operations.addOutbound") }}
+                  <i v-show="isMobile || outboundDropdownHover[outbound]" class="iconfont icon-setting outbound-setting"
+                    @click="handleClickOutboundSetting($event, outbound)"></i></span>
+              </p>
+            </b-dropdown-item>
+            <b-dropdown-item aria-role="listitem" class="is-flex padding-right-1rem" separator></b-dropdown-item>
+            <b-dropdown-item aria-role="listitem" class="is-flex padding-right-1rem" @click="handleAddOutbound">{{
+              $t("operations.addOutbound") }}
             </b-dropdown-item>
           </b-dropdown>
         </b-navbar-item>
@@ -86,74 +57,34 @@
           <i class="iconfont icon-info" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
-        <b-dropdown
-          position="is-bottom-left"
-          aria-role="menu"
-          style="margin-right: 10px"
-          class="menudropdown"
-        >
+        <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
           <a slot="trigger" class="navbar-item" role="button">
             <span class="no-select">{{ username }}</span>
-            <i
-              class="iconfont icon-caret-down"
-              style="position: relative; top: 1px; left: 2px"
-            ></i>
+            <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
-          <b-dropdown-item
-            custom
-            aria-role="menuitem"
-            v-html="$t('common.loggedAs', { username })"
-          >
+          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username })">
           </b-dropdown-item>
-          <b-dropdown-item
-            custom
-            aria-role="menuitem"
-            class="is-flex"
-            style="
+          <b-dropdown-item custom aria-role="menuitem" class="is-flex" style="
               box-sizing: content-box;
               height: 16px;
               width: 60px;
               justify-content: space-between;
-            "
-          >
-            <img
-              v-for="lang of langs"
-              :key="lang.flag"
-              :src="require(`@/assets/img/flags/flag_${lang.flag}.svg`)"
-              :alt="lang.alt"
-              style="height: 100%; flex-shrink: 0; cursor: pointer"
-              @click="handleClickLang(lang.flag)"
-            />
+            ">
+            <img v-for="lang of langs" :key="lang.flag" :src="require(`@/assets/img/flags/flag_${lang.flag}.svg`)"
+              :alt="lang.alt" style="height: 100%; flex-shrink: 0; cursor: pointer"
+              @click="handleClickLang(lang.flag)" />
           </b-dropdown-item>
           <hr class="dropdown-divider" />
-          <b-dropdown-item
-            value="logout"
-            aria-role="menuitem"
-            class="no-select"
-            @click="handleClickLogout"
-          >
-            <i
-              class="iconfont icon-logout"
-              style="position: relative; top: 1px"
-            ></i>
+          <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
+            <i class="iconfont icon-logout" style="position: relative; top: 1px"></i>
             {{ $t("operations.logout") }}
           </b-dropdown-item>
         </b-dropdown>
       </template>
     </b-navbar>
-    <node
-      v-model="runningState"
-      :outbound="outboundName"
-      :observatory="observatory"
-    />
-    <b-modal
-      :active.sync="showCustomPorts"
-      has-modal-card
-      trap-focus
-      aria-role="dialog"
-      aria-modal
-      class="modal-custom-ports"
-    >
+    <node v-model="runningState" :outbound="outboundName" :observatory="observatory" />
+    <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
+      class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
     </b-modal>
     <div id="login"></div>
@@ -297,9 +228,8 @@ export default {
       if (u.protocol === "https") {
         protocol = "wss";
       }
-      url = `${protocol}://${u.host}:${
-        u.port
-      }/api/message?Authorization=${encodeURIComponent(localStorage["token"])}`;
+      url = `${protocol}://${u.host}:${u.port
+        }/api/message?Authorization=${encodeURIComponent(localStorage["token"])}`;
       if (this.ws) {
         // console.log("ws close");
         this.ws.close();
@@ -343,9 +273,8 @@ export default {
         if (
           typeof this.runningState.outboundToServerName[outbound] === "number"
         ) {
-          return `${outbound} - ${this.$t("common.loadBalance")} (${
-            this.runningState.outboundToServerName[outbound]
-          })`;
+          return `${outbound} - ${this.$t("common.loadBalance")} (${this.runningState.outboundToServerName[outbound]
+            })`;
         } else {
           return `${outbound} - ${this.runningState.outboundToServerName[outbound]}`;
         }
@@ -519,6 +448,7 @@ export default {
     handleClickStatus() {
       if (this.runningState.running === this.$t("common.notRunning")) {
         let cancel;
+        let loading = this.$buefy.loading.open();
         waitingConnected(
           this.$axios({
             url: apiRoot + "/v2ray",
@@ -541,6 +471,8 @@ export default {
                 queue: false,
               });
             }
+          }).finally(() => {
+            loading.close();
           }),
           3 * 1000,
           cancel
