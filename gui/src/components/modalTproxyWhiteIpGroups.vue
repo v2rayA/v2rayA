@@ -57,7 +57,7 @@ export default {
                 url: apiRoot + "/tproxyWhiteIpGroups",
                 method: "put",
                 data: {
-                    list: this.list,
+                    list: this.list.length ? this.list : ['NONE'],
                 },
             }).then((res) => {
                 handleResponse(res, this, () => {

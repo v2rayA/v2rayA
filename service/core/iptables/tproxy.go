@@ -108,7 +108,7 @@ iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 	}
 
-	if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+	if IsEnabledTproxyWhiteIpGroups() {
 		whiteIpv4List, _ := GetWhiteListIPs()
 		for _, v := range whiteIpv4List {
 			commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
@@ -162,7 +162,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 		}
-		if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+		if IsEnabledTproxyWhiteIpGroups() {
 			_, whiteIpv6List := GetWhiteListIPs()
 			for _, v := range whiteIpv6List {
 				commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
@@ -239,7 +239,7 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 	table := `
 	table inet v2raya {
 `
-	if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+	if IsEnabledTproxyWhiteIpGroups() {
 		whiteIpv4List, whiteIpv6List := GetWhiteListIPs()
 		table += `
     set whitelist {
@@ -318,7 +318,7 @@ func (t *nftTproxy) GetSetupCommands() Setter {
         # anti-pollution
         ip daddr @interface return
 	`
-	if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+	if IsEnabledTproxyWhiteIpGroups() {
 		table += `
         ip daddr @whitelist return
         ip6 daddr @whitelist6 return
