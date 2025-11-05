@@ -374,6 +374,7 @@ export default {
       });
     },
     requestUpdateSetting() {
+      let loading = this.$buefy.loading.open();
       let cancel;
       waitingConnected(
         this.$axios({
@@ -421,6 +422,7 @@ export default {
             // FIXME: tricky
             this.$parent.$parent.runningState.running = this.$t("common.notRunning");
           }
+          loading.close();
         }),
         3 * 1000,
         cancel
