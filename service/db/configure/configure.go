@@ -16,16 +16,17 @@ import (
 )
 
 type Configure struct {
-	Servers          []*ServerRaw       `json:"servers"`
-	Subscriptions    []*SubscriptionRaw `json:"subscriptions"`
-	ConnectedServers []*Which           `json:"connectedServers"`
-	Setting          *Setting           `json:"setting"`
-	Accounts         map[string]string  `json:"accounts"`
-	Ports            Ports              `json:"ports"`
-	InternalDnsList  *string            `json:"internalDnsList"`
-	ExternalDnsList  *string            `json:"externalDnsList"`
-	RoutingA         *string            `json:"routingA"`
-	DomainsExcluded  *string            `json:"domainsExcluded"`
+	Servers             []*ServerRaw       `json:"servers"`
+	Subscriptions       []*SubscriptionRaw `json:"subscriptions"`
+	ConnectedServers    []*Which           `json:"connectedServers"`
+	Setting             *Setting           `json:"setting"`
+	Accounts            map[string]string  `json:"accounts"`
+	Ports               Ports              `json:"ports"`
+	InternalDnsList     *string            `json:"internalDnsList"`
+	ExternalDnsList     *string            `json:"externalDnsList"`
+	RoutingA            *string            `json:"routingA"`
+	DomainsExcluded     *string            `json:"domainsExcluded"`
+	TproxyWhiteIpGroups []string           `json:"tproxyWhiteIpGroups"`
 }
 
 func New() *Configure {
@@ -275,8 +276,15 @@ func GetRoutingA() (r string) {
 func SetDomainsExcluded(domains string) (err error) {
 	return db.Set("system", "domainsExcluded", domains)
 }
+func SetTproxyWhiteIpGroups(list []string) (err error) {
+	return db.Set("system", "tproxyWhiteIpGroups", list)
+}
 func GetDomainsExcluded() (r string) {
 	db.Get("system", "domainsExcluded", &r)
+	return r
+}
+func GetTproxyWhiteIpGroups() (r []string) {
+	db.Get("system", "tproxyWhiteIpGroups", &r)
 	return r
 }
 func GetConnectedServers() (wts *Whiches) {

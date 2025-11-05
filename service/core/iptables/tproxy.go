@@ -2,12 +2,13 @@ package iptables
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/common/cmds"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 var (
@@ -106,23 +107,14 @@ iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 	}
+
+	if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+		whiteIpv4List, _ := GetWhiteListIPs()
+		for _, v := range whiteIpv4List {
+			commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
+		}
+	}
 	commands += `
-iptables -w 2 -t mangle -A TP_RULE -d 0.0.0.0/32 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 10.0.0.0/8 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 100.64.0.0/10 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 127.0.0.0/8 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 169.254.0.0/16 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 172.16.0.0/12 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 192.0.0.0/24 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 192.0.2.0/24 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 192.88.99.0/24 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 192.168.0.0/16 -j RETURN
-# fakedns
-# iptables -w 2 -t mangle -A TP_RULE -d 198.18.0.0/15 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 198.51.100.0/24 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 203.0.113.0/24 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 224.0.0.0/4 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t mangle -A TP_RULE -j TP_MARK
 
 iptables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-xmark 0x40/0x40
@@ -170,15 +162,13 @@ ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 		}
+		if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+			_, whiteIpv6List := GetWhiteListIPs()
+			for _, v := range whiteIpv6List {
+				commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
+			}
+		}
 		commands += `
-ip6tables -w 2 -t mangle -A TP_RULE -d ::/128 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d ::1/128 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d 64:ff9b::/96 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d 100::/64 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d 2001::/32 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d 2001:20::/28 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d fe80::/10 -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t mangle -A TP_RULE -j TP_MARK
 
 ip6tables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-xmark 0x40/0x40
@@ -246,28 +236,20 @@ func (t *nftTproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *nftTproxy) GetSetupCommands() Setter {
-	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
 	table := `
-table inet v2raya {
+	table inet v2raya {
+`
+	if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+		whiteIpv4List, whiteIpv6List := GetWhiteListIPs()
+		table += `
     set whitelist {
         type ipv4_addr
         flags interval
         auto-merge
         elements = {
-            0.0.0.0/32,
-            10.0.0.0/8,
-            100.64.0.0/10,
-            127.0.0.0/8,
-            169.254.0.0/16,
-            172.16.0.0/12,
-            192.0.0.0/24,
-            192.0.2.0/24,
-            192.88.99.0/24,
-            192.168.0.0/16,
-            198.51.100.0/24,
-            203.0.113.0/24,
-            224.0.0.0/4,
-            240.0.0.0/4
+`
+		table += strings.Join(whiteIpv4List, ",")
+		table += `
         }
     }
 
@@ -276,17 +258,17 @@ table inet v2raya {
         flags interval
         auto-merge
         elements = {
-            ::/128,
-            ::1/128,
-            64:ff9b::/96,
-            100::/64,
-            2001::/32,
-            2001:20::/28,
-            fe80::/10,
-            ff00::/8
+`
+		table += strings.Join(whiteIpv6List, ",")
+		table += `
         }
     }
+`
+	}
 
+	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
+
+	table += `
     set interface {
         type ipv4_addr
         flags interval
@@ -335,9 +317,15 @@ table inet v2raya {
         iifname "ppp*" return
         # anti-pollution
         ip daddr @interface return
+	`
+	if len(configure.GetTproxyWhiteIpGroups()) != 0 {
+		table += `
         ip daddr @whitelist return
-        ip6 daddr @interface6 return
         ip6 daddr @whitelist6 return
+	`
+	}
+	table += `
+        ip6 daddr @interface6 return
         jump tp_mark
     }
 
