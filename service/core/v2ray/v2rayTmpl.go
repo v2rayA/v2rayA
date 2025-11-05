@@ -668,6 +668,7 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 								Sniffing: coreObj.Sniffing{
 									Enabled:      false,
 									DestOverride: []string{"http", "tls"},
+									RouteOnly:    false,
 								},
 							}
 							if sniffing := proto.NamedParams["sniffing"]; len(sniffing) > 0 {
@@ -1117,6 +1118,7 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 
 	// 设置域名嗅探
 	if setting.InboundSniffing != configure.InboundSniffingDisable && setting.InboundSniffing != "" {
+		enableSniffingRouteOnly := configure.GetSettingNotNil().RouteOnly
 		domainsExcludedText := configure.GetDomainsExcluded()
 		for i := len(t.Inbounds) - 1; i >= 0; i-- {
 			if setting.InboundSniffing == configure.InboundSniffingHttpTLS {
@@ -1126,7 +1128,9 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 			}
 			t.Inbounds[i].Sniffing.DomainsExcluded = strings.Split(domainsExcludedText, "\n")
 			t.Inbounds[i].Sniffing.Enabled = true
+			t.Inbounds[i].Sniffing.RouteOnly = enableSniffingRouteOnly
 		}
+
 	}
 	return nil
 }

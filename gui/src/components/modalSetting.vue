@@ -69,7 +69,7 @@
         </b-select>
 
         <template v-if="transparentType == 'tproxy'">
-          <b-button type="is-primary" style="
+          <b-button style="
               margin-left: 0;
               border-bottom-left-radius: 0;
               border-top-left-radius: 0;
@@ -187,13 +187,15 @@
           <option value="http,tls,quic">Http + TLS + Quic</option>
         </b-select>
         <template v-if="inboundSniffing != 'disable'">
-          <b-button type="is-primary" style="
+          <b-button style="
               margin-left: 0;
-              border-bottom-left-radius: 0;
-              border-top-left-radius: 0;
+              border-radius: 0px;
               color: rgba(0, 0, 0, 0.75);
             " outlined @click="handleClickDomainsExcluded">{{ $t("operations.domainsExcluded") }}
           </b-button>
+          <b-checkbox-button v-model="routeOnly" :native-value="true" style="position: relative; left: -1px;">
+            RouteOnly
+          </b-checkbox-button>
         </template>
       </b-field>
 
@@ -302,6 +304,7 @@ export default {
     dnsForceMode: false,
     dnsforward: "no",
     antipollution: "none",
+    routeOnly: false,
     specialMode: "none",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
@@ -393,6 +396,7 @@ export default {
             transparentType: this.transparentType,
             ipforward: this.ipforward,
             portSharing: this.portSharing,
+            routeOnly: this.routeOnly,
             dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
             antipollution: this.antipollution,
             specialMode: this.specialMode,
@@ -470,7 +474,7 @@ export default {
         canCancel: true,
       });
     },
-    handleClickTproxyWhiteIpGroups(){
+    handleClickTproxyWhiteIpGroups() {
       this.$buefy.modal.open({
         parent: this,
         component: modalTproxyWhiteIpGroups,
