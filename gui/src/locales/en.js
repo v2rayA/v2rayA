@@ -64,6 +64,7 @@ export default {
   },
   operations: {
     name: "Operations",
+    tproxyWhiteIpGroups: "Direct Whitelist IP Groups",
     update: "Update",
     autoUpdate: "Auto Update",
     manualUpdate: "Manual Update",
@@ -91,7 +92,7 @@ export default {
     no: "No",
     switchSite: "Switch to alternate site",
     addOutbound: "Add an outbound",
-    domainsExcluded:"Domains Excluded"
+    domainsExcluded: "Domains Excluded"
   },
   register: {
     title: "Create an admin account first",
@@ -327,6 +328,15 @@ export default {
     refreshInterval: "Refresh Interval",
     seconds: "seconds",
     autoScoll: "Auto Scroll",
+  },
+  tproxyWhiteIpGroups: {
+    title: "White IP Groups",
+    messages: [
+      "The selected IP group will bypass the XRay/V2Ray core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
+    ],
+    formName: "Hold down Ctrl to select multiple items.",
+    CN: 'China Mainland',
+    PRIVATE: 'Private',
   },
   domainsExcluded: {
     title: "Domains Excluded",

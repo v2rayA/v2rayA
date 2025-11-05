@@ -62,6 +62,7 @@ export default {
     subscription: "订阅",
   },
   operations: {
+    tproxyWhiteIpGroups: "直通白名单IP组",
     name: "操作",
     update: "更新",
     autoUpdate: "自动更新",
@@ -329,6 +330,16 @@ export default {
     refreshInterval: "刷新间隔",
     seconds: "秒",
     autoScoll: "自动滚动",
+  },
+  
+  tproxyWhiteIpGroups: {
+    title: "直通白名单IP组",
+    messages: [
+      "选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP"
+    ],
+    formName: "按住Ctrl可以多选",
+    CN: '中国大陆',
+    PRIVATE: '内网私有地址段',
   },
   domainsExcluded: {
     title: "排除域名",
