@@ -11,10 +11,15 @@
             </b-message>
             <b-field :label="$t('tproxyWhiteIpGroups.formName')">
                 <b-select multiple v-model="list" expanded>
-                    <option value="CN">{{ $t("tproxyWhiteIpGroups.CN") }}</option>
-                    <option value="PRIVATE">{{ $t("tproxyWhiteIpGroups.PRIVATE") }}</option>
+                    <option value="CN">{{ $t("tproxyWhiteIpGroups.cn") }}</option>
+                    <option value="PRIVATE">{{ $t("tproxyWhiteIpGroups.private") }}</option>
+                    <option value="US">{{ $t("tproxyWhiteIpGroups.us") }}</option>
+                    <option value="CLOUDFLARE">{{ $t("tproxyWhiteIpGroups.cloudflare") }}</option>
                 </b-select>
             </b-field>
+            <b-message type="is-warning" class="after-line-dot5">
+                <p>{{ $t("tproxyWhiteIpGroups.messages.1") }}</p>
+            </b-message>
         </section>
         <footer class="modal-card-foot flex-end">
             <button class="button" @click="$emit('close')">

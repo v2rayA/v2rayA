@@ -335,11 +335,14 @@ export default {
   tproxyWhiteIpGroups: {
     title: "直通白名单IP组",
     messages: [
-      "选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP"
+      "选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP",
+      "最好系统使用Nftables时使用此功能，Iptables可能在添加大量IP时存在性能问题"
     ],
     formName: "按住Ctrl可以多选",
-    CN: '中国大陆',
-    PRIVATE: '内网私有地址段',
+    cn: '中国大陆',
+    private: '私网网段',
+    us: '美国',
+    cloudflare: 'Cloudflare',
   },
   domainsExcluded: {
     title: "排除域名",

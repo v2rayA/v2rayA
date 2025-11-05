@@ -333,10 +333,13 @@ export default {
     title: "White IP Groups",
     messages: [
       "The selected IP group will bypass the XRay/V2Ray core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
+      "It's best to use this feature when your system is using Nftables, as iptables may experience performance issues when adding a large number of IPs."
     ],
     formName: "Hold down Ctrl to select multiple items.",
-    CN: 'China Mainland',
-    PRIVATE: 'Private',
+    cn: 'China Mainland',
+    private: 'Private',
+    us: 'United States',
+    cloudflare: 'Cloudflare',
   },
   domainsExcluded: {
     title: "Domains Excluded",
