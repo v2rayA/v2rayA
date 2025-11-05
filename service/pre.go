@@ -164,8 +164,8 @@ func initConfigure() {
 		}
 	}
 
-	if len(configure.GetTproxyWhiteIpGroups()) == 0 {
-		configure.SetTproxyWhiteIpGroups([]string{"PRIVATE"})
+	if len(configure.GetTproxyWhiteIpGroups().CountryCodes) == 0 {
+		configure.SetTproxyWhiteIpGroups([]string{"PRIVATE"}, []string{})
 	}
 
 	//检查config.json是否存在

@@ -7,20 +7,23 @@ import (
 )
 
 func GetTproxyWhiteIpGroups(ctx *gin.Context) {
+	resp := configure.GetTproxyWhiteIpGroups()
 	common.ResponseSuccess(ctx, gin.H{
-		"list": configure.GetTproxyWhiteIpGroups(),
+		"countryCodes": resp.CountryCodes,
+		"customIps":    resp.CustomIps,
 	})
 }
 
 func PutTproxyWhiteIpGroups(ctx *gin.Context) {
 	var data struct {
-		List []string `json:"list"`
+		CountryCodes []string `json:"countryCodes"`
+		CustomIps    []string `json:"customIps"`
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		common.ResponseError(ctx, logError("bad request"))
 		return
 	}
-	configure.SetTproxyWhiteIpGroups(data.List)
+	configure.SetTproxyWhiteIpGroups(data.CountryCodes, data.CustomIps)
 	common.ResponseSuccess(ctx, nil)
 }
