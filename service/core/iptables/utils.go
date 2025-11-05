@@ -93,24 +93,26 @@ func IsNftablesSupported() bool {
 }
 
 func GetWhiteListIPs() ([]string, []string) {
-	countryCodes := configure.GetTproxyWhiteIpGroups()
+	dataModal := configure.GetTproxyWhiteIpGroups()
 
 	var ipv4List []string
 	var ipv6List []string
-	for _, cc := range countryCodes {
+	for _, cc := range dataModal.CountryCodes {
 		ipv4s, ipv6s, _ := parseGeoIP.Parser("geoip.dat", cc)
 		ipv4List = append(ipv4List, ipv4s...)
 		ipv6List = append(ipv6List, ipv6s...)
+	}
+	for _, v := range dataModal.CustomIps {
+		if strings.Contains(v, ":") {
+			ipv6List = append(ipv6List, v)
+		} else {
+			ipv4List = append(ipv4List, v)
+		}
 	}
 	return ipv4List, ipv6List
 }
 
 func IsEnabledTproxyWhiteIpGroups() bool {
-	if len(configure.GetTproxyWhiteIpGroups()) == 0 {
-		return false
-	}
-	if configure.GetTproxyWhiteIpGroups()[0] == "NONE" {
-		return false
-	}
-	return true
+	ipv4List, ipv6List := GetWhiteListIPs()
+	return len(ipv4List) > 0 && len(ipv6List) > 0
 }

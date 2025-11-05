@@ -335,7 +335,10 @@ export default {
       "The selected IP group will bypass the XRay/V2Ray core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
       "It's best to use this feature when your system is using Nftables, as iptables may experience performance issues when adding a large number of IPs."
     ],
-    formName: "Hold down Ctrl to select multiple items.",
+    formName1: "Hold down Ctrl to select multiple items.",
+    formName2: "Custom IPs (one per line, standard CIDR format)",
+    formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48",
+    invalidCustomIps:"Invalid Custom IPs",
     cn: 'China Mainland',
     private: 'Private',
     us: 'United States',
