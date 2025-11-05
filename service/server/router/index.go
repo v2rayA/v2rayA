@@ -197,7 +197,9 @@ func Run() error {
 		auth.GET("message", controller.WsMessage)
 		auth.GET("logger", controller.GetLogger)
 		auth.GET("domainsExcluded", controller.GetDomainsExcluded)
+		auth.GET("tproxyWhiteIpGroups", controller.GetTproxyWhiteIpGroups)
 		auth.PUT("domainsExcluded", controller.PutDomainsExcluded)
+		auth.PUT("tproxyWhiteIpGroups", controller.PutTproxyWhiteIpGroups)
 	}
 
 	ServeGUI(engine)
