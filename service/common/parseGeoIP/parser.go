@@ -35,6 +35,10 @@ func Parser(filename string, countryCode string) ([]string, []string, error) {
 				if strings.Contains(ip.String(), ":") {
 					ipv6List = append(ipv6List, fmt.Sprintf("%s/%d", ip.String(), c.Prefix))
 				} else {
+					if strings.Contains(ip.String(), "198.18.0.0") {
+						// 跳过fakeip
+						continue
+					}
 					ipv4List = append(ipv4List, fmt.Sprintf("%s/%d", ip.String(), c.Prefix))
 				}
 			}
