@@ -4,6 +4,7 @@ on:
     inputs:
       tag:
         type: string
+        description: 'The tag to release'
         required: true
 jobs:
   Build_v2rayA_Web:
@@ -602,8 +603,8 @@ jobs:
     - name: Set Path
       run: |
         ls -l v2raya_linux
-        echo "P_DIR=$(pwd)/v2raya_linux" >> $GITHUB_ENV
-        echo "P_DIR=$(pwd)/v2raya_linux" >> $GITHUB_OUTPUT
+        echo "P_DIR=$(pwd)" >> $GITHUB_ENV
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
       id: set_path
     - name: Release to AUR
       env:
