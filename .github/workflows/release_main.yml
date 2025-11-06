@@ -596,12 +596,13 @@ jobs:
     - name: Download v2rayA binary for checksum
       run: |
         mkdir v2raya_linux
-        for arch in x86 x64 longarch64 armv7 arm64; do
+        for arch in x86 x64 loongarch64 armv7 arm64; do
           curl -L https://github.com/v2rayA/v2rayA/releases/download/v${VERSION}/v2raya_linux_${arch}_${VERSION} -o v2raya_linux/v2raya_linux_${arch}_${VERSION}
           chmod +x v2raya_linux/v2raya_linux_${arch}_${VERSION}
         done
-    - name: Set Path
+    - name: List Files and Install expect
       run: |
+        sudo apt update -y && sudo apt install -y expect >/dev/null
         ls -l v2raya_linux
         echo "P_DIR=$(pwd)" >> $GITHUB_ENV
         echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
