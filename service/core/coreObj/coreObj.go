@@ -260,9 +260,9 @@ type QuicSettings struct {
 }
 
 type XHTTPSettings struct {
-	Path string   `json:"path"`
+	Path string `json:"path"`
 	Host string `json:"host,omitempty"`
-	Mode string   `json:"mode,omitempty"`
+	Mode string `json:"mode,omitempty"`
 }
 type Hosts map[string][]string
 
