@@ -9,5 +9,5 @@ docker run -d \
   -e V2RAYA_ADDRESS=0.0.0.0:2017 \
   -v /lib/modules:/lib/modules:ro \
   -v /etc/resolv.conf:/etc/resolv.conf \
-  # -v /etc/v2raya:/etc/v2raya \
+  -v /etc/v2raya:/etc/v2raya \
   v2raya

@@ -153,11 +153,7 @@ type StreamSettings struct {
 	HTTPSettings    *HttpSettings    `json:"httpSettings,omitempty"`
 	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
 	QuicSettings    *QuicSettings    `json:"quicSettings,omitempty"`
-	XHTTPSettings   *XHTTPSettings   `json:"xhttpSettings,omitempty"`
 	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
-}
-type XHTTPSettings struct {
-	Path string `json:"path,omitempty"`
 }
 type RealitySettings struct {
 	ServerName  string `json:"serverName,omitempty"`
@@ -258,7 +254,6 @@ type QuicSettings struct {
 	Key      string    `json:"key,omitempty"`
 	Security string    `json:"security"`
 }
-
 type XHTTPSettings struct {
 	Path string `json:"path"`
 	Host string `json:"host,omitempty"`

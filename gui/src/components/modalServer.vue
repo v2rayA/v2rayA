@@ -88,6 +88,13 @@ v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
             </b-select>
           </b-field>
           <b-field
+            v-show="v2ray.tls === 'tls'"
+            label="Alpn"
+            label-position="on-border"
+          >
+            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
+          </b-field>
+          <b-field
 v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
             label-position="on-border"
           >
@@ -187,6 +194,7 @@ v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label
           <b-field
 v-show="v2ray.net === 'ws' ||
               v2ray.net === 'h2' ||
+              v2ray.net === 'xhttp' ||
               v2ray.tls === 'tls' ||
               (v2ray.net === 'tcp' && v2ray.type === 'http')
             "
@@ -198,13 +206,6 @@ v-show="v2ray.net === 'ws' ||
               :placeholder="$t('configureServer.hostObfuscation')"
               expanded
             />
-          </b-field>
-          <b-field
-            v-show="v2ray.tls === 'tls'"
-            label="Alpn"
-            label-position="on-border"
-          >
-            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
           <b-field
 v-show="v2ray.net === 'ws' ||
@@ -245,18 +246,6 @@ v-show="v2ray.net === 'ws' ||
           </b-field>
           <b-field
             v-show="v2ray.net === 'xhttp'"
-            label="Mode"
-            label-position="on-border"
-          >
-            <b-select v-model="v2ray.xhttpMode" expanded>
-              <option value="auto">auto</option>
-              <option value="packet-up">packet-up</option>
-              <option value="stream-up">stream-up</option>
-              <option value="stream-one">stream-one</option>
-            </b-select>
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'xhttp'"
             label="Path"
             label-position="on-border"
           >
@@ -268,14 +257,15 @@ v-show="v2ray.net === 'ws' ||
           </b-field>
           <b-field
             v-show="v2ray.net === 'xhttp'"
-            label="Host"
+            label="Mode"
             label-position="on-border"
           >
-            <b-input
-              v-model="v2ray.host"
-              :placeholder="$t('configureServer.hostObfuscation')"
-              expanded
-            />
+            <b-select v-model="v2ray.xhttpMode" expanded>
+              <option value="auto">auto</option>
+              <option value="packet-up">packet-up</option>
+              <option value="stream-up">stream-up</option>
+              <option value="stream-one">stream-one</option>
+            </b-select>
           </b-field>
           <b-field
             v-show="v2ray.net === 'xhttp'"
