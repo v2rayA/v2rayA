@@ -55,18 +55,61 @@
               <option v-if="variant() === 'xray'" value="xtls">xtls</option>
             </b-select>
           </b-field>
-          <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
-            <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
+          <b-field
+            v-if="v2ray.tls !== 'none'"
+            label="SNI"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_sni"
+              v-model="v2ray.sni"
+              placeholder="SNI"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
-            label-position="on-border">
-            <b-input ref="v2ray_fp" v-model="v2ray.fp" placeholder="A uTLS compatable fingerprint name" expanded />
+          <b-field
+v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
+            label-position="on-border"
+          >
+            <b-select
+              ref="v2ray_fp"
+              v-model="v2ray.fp"
+              expanded
+            >
+              <option value="">empty</option>
+              <option value="chrome">chrome</option>
+              <option value="firefox">firefox</option>
+              <option value="safari">safari</option>
+              <option value="ios">ios</option>
+              <option value="android">android</option>
+              <option value="edge">edge</option>
+              <option value="random">random</option>
+              <option value="randomized">randomized</option>
+            </b-select>
           </b-field>
-          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
-            label-position="on-border">
-            <b-input ref="v2ray_flow" v-model="v2ray.flow" placeholder="Flow" expanded />
+          <b-field
+            v-show="v2ray.tls === 'tls'"
+            label="Alpn"
+            label-position="on-border"
+          >
+            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="pbk" label-position="on-border">
+          <b-field
+v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_flow"
+              v-model="v2ray.flow"
+              placeholder="Flow"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.tls === 'reality'"
+            label="pbk"
+            label-position="on-border"
+          >
             <b-input v-model="v2ray.pbk" placeholder="pbk" expanded />
           </b-field>
           <b-field v-show="v2ray.tls === 'reality'" label="sid" label-position="on-border">
@@ -101,7 +144,7 @@
               <option value="h2">HTTP/2</option>
               <option value="grpc">gRPC</option>
               <option value="quic">QUIC</option>
-              <option v-if="variant() === 'xray'" value="xhttp">XHTTP</option>
+              <option value="xhttp">XHTTP</option>
             </b-select>
           </b-field>
           <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
@@ -148,33 +191,102 @@
               </option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' ||
-            v2ray.net === 'h2' ||
-            v2ray.tls === 'tls' ||
-            (v2ray.net === 'tcp' && v2ray.type === 'http')
-            " label="Host" label-position="on-border">
-            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+          <b-field
+v-show="v2ray.net === 'ws' ||
+              v2ray.net === 'h2' ||
+              v2ray.net === 'xhttp' ||
+              v2ray.tls === 'tls' ||
+              (v2ray.net === 'tcp' && v2ray.type === 'http')
+            "
+            label="Host"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.host"
+              :placeholder="$t('configureServer.hostObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
-            <b-input v-model="v2ray.alpn" placeholder="h2,http/1.1" expanded />
+          <b-field
+v-show="v2ray.net === 'ws' ||
+              v2ray.net === 'h2' ||
+              (v2ray.net === 'tcp' && v2ray.type === 'http')
+            "
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.pathObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' ||
-            v2ray.net === 'h2' ||
-            (v2ray.net === 'tcp' && v2ray.type === 'http')
-            " label="Path" label-position="on-border">
-            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          <b-field
+            v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'"
+            label="Seed"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.seedObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
-            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
+          <b-field
+            v-show="v2ray.net === 'grpc'"
+            label="Service Name"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_service_name"
+              v-model="v2ray.path"
+              type="text"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
-            <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.pathObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
-            <b-input ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')" expanded />
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Mode"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.xhttpMode" expanded>
+              <option value="auto">auto</option>
+              <option value="packet-up">packet-up</option>
+              <option value="stream-up">stream-up</option>
+              <option value="stream-one">stream-one</option>
+            </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="path" label-position="on-border">
-            <b-input v-model="v2ray.path" placeholder="XHTTP Path" expanded />
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Extra Raw JSON"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.xhttpRawJson"
+              placeholder="{XHTTPObject}"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'quic'"
+            label="Key"
+            label-position="on-border"
+          >
+            <b-input
+ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')"
+              expanded
+            />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
@@ -631,6 +743,8 @@ export default {
       allowInsecure: false,
       protocol: "vmess",
       key: "none",
+      xhttpMode: "auto",
+      xhttpRawJson: "",
     },
     ss: {
       method: "2022-blake3-aes-128-gcm",
@@ -834,6 +948,8 @@ export default {
           spx: u.params.spx || "",
           allowInsecure: u.params.allowInsecure || false,
           key: u.params.key,
+          xhttpMode: u.params.xhttpMode || "auto",
+          xhttpRawJson: u.params.xhttpRawJson || "",
           protocol: "vless",
         };
         if (o.alpn !== "") {
@@ -1071,6 +1187,12 @@ export default {
           if (srcObj.net === "quic") {
             query.key = srcObj.key;
             query.quicSecurity = srcObj.quicSecurity;
+          }
+          if (srcObj.net === "xhttp") {
+            query.xhttpMode = srcObj.xhttpMode;
+            if (srcObj.xhttpRawJson) {
+              query.xhttpRawJson = srcObj.xhttpRawJson;
+            }
           }
           if (query.security == "reality") {
             query.pbk = srcObj.pbk;
