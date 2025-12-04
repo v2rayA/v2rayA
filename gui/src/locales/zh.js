@@ -62,6 +62,7 @@ export default {
     subscription: "订阅",
   },
   operations: {
+    tproxyWhiteIpGroups: "直通白名单IP组",
     name: "操作",
     update: "更新",
     autoUpdate: "自动更新",
@@ -329,6 +330,22 @@ export default {
     refreshInterval: "刷新间隔",
     seconds: "秒",
     autoScoll: "自动滚动",
+  },
+  
+  tproxyWhiteIpGroups: {
+    title: "直通白名单IP组",
+    messages: [
+      "选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP",
+      "最好系统使用Nftables时使用此功能，Iptables可能在添加大量IP时存在性能问题"
+    ],
+    formName1: "按住Ctrl可以多选",
+    formName2: "自定义IP（一行一个，标准CIDR格式）",
+    formPlaceholder2: "172.30.0.0/16\nfd00:dead:beef::/48",
+    invalidCustomIps:"自定义IP格式错误",
+    cn: '中国大陆',
+    private: '私网网段',
+    us: '美国',
+    cloudflare: 'Cloudflare',
   },
   domainsExcluded: {
     title: "排除域名",

@@ -56,6 +56,7 @@ type Sniffing struct {
 	DestOverride    []string `json:"destOverride,omitempty"`
 	MetadataOnly    bool     `json:"metadataOnly"`
 	DomainsExcluded []string `json:"domainsExcluded"`
+	RouteOnly       bool     `json:"routeOnly"`
 }
 type Inbound struct {
 	Port           int              `json:"port"`

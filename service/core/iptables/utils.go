@@ -9,7 +9,9 @@ import (
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/v2rayA/v2rayA/common/parseGeoIP"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"golang.org/x/net/nettest"
 )
 
@@ -88,4 +90,29 @@ func IsNftablesSupported() bool {
 		return true
 	}
 	return strings.Contains(string(out), "nf_tables")
+}
+
+func GetWhiteListIPs() ([]string, []string) {
+	dataModal := configure.GetTproxyWhiteIpGroups()
+
+	var ipv4List []string
+	var ipv6List []string
+	for _, cc := range dataModal.CountryCodes {
+		ipv4s, ipv6s, _ := parseGeoIP.Parser("geoip.dat", cc)
+		ipv4List = append(ipv4List, ipv4s...)
+		ipv6List = append(ipv6List, ipv6s...)
+	}
+	for _, v := range dataModal.CustomIps {
+		if strings.Contains(v, ":") {
+			ipv6List = append(ipv6List, v)
+		} else {
+			ipv4List = append(ipv4List, v)
+		}
+	}
+	return ipv4List, ipv6List
+}
+
+func IsEnabledTproxyWhiteIpGroups() bool {
+	ipv4List, ipv6List := GetWhiteListIPs()
+	return len(ipv4List) > 0 && len(ipv6List) > 0
 }

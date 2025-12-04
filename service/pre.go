@@ -157,11 +157,17 @@ func initConfigure() {
 					}
 				}
 			}
+
 			log.Warn("Migration is done")
 		} else {
 			initDBValue()
 		}
 	}
+
+	if len(configure.GetTproxyWhiteIpGroups().CountryCodes) == 0 {
+		configure.SetTproxyWhiteIpGroups([]string{"PRIVATE"}, []string{})
+	}
+
 	//检查config.json是否存在
 	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {
 		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
@@ -225,6 +231,13 @@ func updateSubscriptions() {
 	subs := configure.GetSubscriptions()
 	lenSubs := len(subs)
 	control := make(chan struct{}, 2) //并发限制同时更新2个订阅
+	// Disconnect from subscriptions before auto-selecting servers from them
+	// to limit the number of connected servers and avoid hitting the limit
+	shouldDisconnect := true
+	err := service.AutoSelectServersFromSubscriptions(shouldDisconnect)
+	if err != nil {
+		log.Error("[AutoSelect] Failed to disconnect servers from subscriptions -- err: %v", err)
+	}
 	wg := new(sync.WaitGroup)
 	for i := 0; i < lenSubs; i++ {
 		wg.Add(1)
@@ -241,6 +254,12 @@ func updateSubscriptions() {
 		}(i)
 	}
 	wg.Wait()
+	shouldDisconnect = false
+	err2 := service.AutoSelectServersFromSubscriptions(shouldDisconnect)
+	if err2 != nil {
+		log.Error("[AutoSelect] Failed to auto-select servers from subscriptions -- err: %v", err2)
+	}
+
 }
 
 func initUpdatingTicker() {

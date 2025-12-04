@@ -60,9 +60,11 @@ export default {
     timeLastUpdate: "Datetime of Last Update",
     numberServers: "Number of Servers",
     subscription: "Subscription",
+    autoSelect: "Automatically connect to new servers from the subscription after an automatic update of the subscription",
   },
   operations: {
     name: "Operations",
+    tproxyWhiteIpGroups: "Direct Whitelist IP Groups",
     update: "Update",
     autoUpdate: "Auto Update",
     manualUpdate: "Manual Update",
@@ -90,7 +92,7 @@ export default {
     no: "No",
     switchSite: "Switch to alternate site",
     addOutbound: "Add an outbound",
-    domainsExcluded:"Domains Excluded"
+    domainsExcluded: "Domains Excluded"
   },
   register: {
     title: "Create an admin account first",
@@ -326,6 +328,21 @@ export default {
     refreshInterval: "Refresh Interval",
     seconds: "seconds",
     autoScoll: "Auto Scroll",
+  },
+  tproxyWhiteIpGroups: {
+    title: "White IP Groups",
+    messages: [
+      "The selected IP group will bypass the XRay/V2Ray core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
+      "It's best to use this feature when your system is using Nftables, as iptables may experience performance issues when adding a large number of IPs."
+    ],
+    formName1: "Hold down Ctrl to select multiple items.",
+    formName2: "Custom IPs (one per line, standard CIDR format)",
+    formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48",
+    invalidCustomIps:"Invalid Custom IPs",
+    cn: 'China Mainland',
+    private: 'Private',
+    us: 'United States',
+    cloudflare: 'Cloudflare',
   },
   domainsExcluded: {
     title: "Domains Excluded",

@@ -4,10 +4,11 @@ on:
     inputs:
       tag:
         type: string
+        description: 'The tag to release'
         required: true
 jobs:
   Build_v2rayA_Web:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -208,7 +209,7 @@ jobs:
           installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
           installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
   Build_Linux_Packages:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [Build_v2rayA_Binaries]
     strategy:
       matrix:
@@ -332,7 +333,7 @@ jobs:
         path: |
           fpm_packages/*
   GitHub_Release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages] 
     steps:
     - uses: actions/checkout@v4
@@ -394,243 +395,8 @@ jobs:
           -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
           -H "Content-Type: application/json" \
           --data '{"purge_everything":true}'
-  Build_v2ray_Debian_Packages:
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Install Tools
-      run: |
-        sudo apt-get update -y && sudo apt-get install -y wget curl unzip
-        sudo gem install fpm -v 1.15.1
-    - name: Check Version
-      run: |
-        v2ray_temp_file="./v2ray.version.temp"
-        if ! curl -s -I "https://github.com/v2fly/v2ray-core/releases/latest" > "$v2ray_temp_file"; then
-            echo "${RED}Error: Cannot get latest version of v2ray!${RESET}"
-            exit 1
-        fi
-        v2ray_version=$(grep -i ^location: "$v2ray_temp_file" | awk '{print $2}' | tr -d '\r' | awk -F 'tag/' '{print $2}')
-        rm -f "$v2ray_temp_file"
-        xray_temp_file="./xray.version.temp"
-        if ! curl -s -I "https://github.com/XTLS/Xray-core/releases/latest" > "$xray_temp_file"; then
-            echo "${RED}Error: Cannot get latest version of xray!${RESET}"
-            exit 1
-        fi
-        xray_version=$(grep -i ^location: "$xray_temp_file" | awk '{print $2}' | tr -d '\r' | awk -F 'tag/' '{print $2}')
-        rm -f "$xray_temp_file"
-        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
-        echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
-        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV
-        echo "XRAY_VERSION=$xray_version" >> $GITHUB_ENV
-    - name: Download v2ray and Xray
-      run: |
-        mkdir xray_unzipped
-        mkdir v2ray_unzipped
-        for arch in 64 32 arm64-v8a arm32-v7a mips32 mips32le mips64 mips64le riscv64 loong64; do
-          wget -q https://github.com/v2fly/v2ray-core/releases/download/$V2RAY_VERSION/v2ray-linux-$arch.zip
-          unzip -q v2ray-linux-$arch.zip -d v2ray_unzipped/v2ray-linux-$arch
-          wget -q https://github.com/XTLS/xray-core/releases/download/$XRAY_VERSION/Xray-linux-$arch.zip
-          unzip -q Xray-linux-$arch.zip -d xray_unzipped/xray-linux-$arch
-        done
-    - name: Build v2ray Packages
-      run: |
-        mkdir v2ray_packages
-        package_version="$(echo "$V2RAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
-        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64 loong64; do
-        case $arch in
-          amd64)
-            source_dir="v2ray_unzipped/v2ray-linux-64"
-            ;;
-          i386)
-            source_dir="v2ray_unzipped/v2ray-linux-32"
-            ;;
-          arm64)
-            source_dir="v2ray_unzipped/v2ray-linux-arm64-v8a"
-            ;;
-          armhf)
-            source_dir="v2ray_unzipped/v2ray-linux-arm32-v7a"
-            ;;
-          mips)
-            source_dir="v2ray_unzipped/v2ray-linux-mips32"
-            ;;
-          mips32le)
-            source_dir="v2ray_unzipped/v2ray-linux-mips32le"
-            ;;
-          mips64)
-            source_dir="v2ray_unzipped/v2ray-linux-mips64"
-            ;;
-          mips64le)
-            source_dir="v2ray_unzipped/v2ray-linux-mips64le"
-            ;;
-          riscv64)
-            source_dir="v2ray_unzipped/v2ray-linux-riscv64"
-            ;;
-          loong64)
-            source_dir="v2ray_unzipped/v2ray-linux-loong64"
-            ;;
-        esac
-        echo 'systemctl daemon-reload
-        if [ "$(systemctl is-active v2ray)" = "active" ]; then
-            systemctl restart v2ray
-        fi' > $source_dir/postinst
-        echo "systemctl daemon-reload" >> $source_dir/post-remove
-        sed -i 's|usr/local/bin/v2ray|usr/bin/v2ray|g' $source_dir/systemd/system/v2ray.service
-        sed -i 's|usr/local/bin/v2ray|usr/bin/v2ray|g' $source_dir/systemd/system/v2ray@.service
-        sed -i 's|usr/local/etc/v2ray|etc/v2ray|g' $source_dir/systemd/system/v2ray.service
-        sed -i 's|usr/local/etc/v2ray|etc/v2ray|g' $source_dir/systemd/system/v2ray@.service
-        fpm -s dir -t deb -a $arch --version $package_version \
-          --url 'https://v2fly.org/' --description 'A platform for building proxies to bypass network restrictions' \
-          --maintainer "v2raya@v2raya.org" --name v2ray --license 'MIT' \
-          --package ./v2ray_packages/v2ray_"$arch"_"$package_version".deb \
-          --after-install $source_dir/postinst \
-          --after-remove $source_dir/post-remove \
-          $source_dir/v2ray=/usr/bin/v2ray \
-          $source_dir/systemd/system/v2ray.service=/usr/lib/systemd/system/v2ray.service \
-          $source_dir/systemd/system/v2ray@.service=/usr/lib/systemd/system/v2ray@.service \
-          $source_dir/geoip.dat=/usr/share/v2ray/geoip.dat \
-          $source_dir/geoip-only-cn-private.dat=/usr/share/v2ray/geoip-only-cn-private.dat \
-          $source_dir/geosite.dat=/usr/share/v2ray/geosite.dat
-        done
-    - name: Build Xray Packages
-      run: |
-        mkdir xray_packages
-        package_version="$(echo "$XRAY_VERSION" | sed 's/v//g')" # Remove the leading 'v' in version number
-        for arch in amd64 i386 arm64 armhf mips mips32le mips64 mips64le riscv64 loong64; do
-        case $arch in
-          amd64)
-            source_dir="xray_unzipped/xray-linux-64"
-            ;;
-          i386)
-            source_dir="xray_unzipped/xray-linux-32"
-            ;;
-          arm64)
-            source_dir="xray_unzipped/xray-linux-arm64-v8a"
-            ;;
-          armhf)
-            source_dir="xray_unzipped/xray-linux-arm32-v7a"
-            ;;
-          mips)
-            source_dir="xray_unzipped/xray-linux-mips32"
-            ;;
-          mips32le)
-            source_dir="xray_unzipped/xray-linux-mips32le"
-            ;;
-          mips64)
-            source_dir="xray_unzipped/xray-linux-mips64"
-            ;;
-          mips64le)
-            source_dir="xray_unzipped/xray-linux-mips64le"
-            ;;
-          riscv64)
-            source_dir="xray_unzipped/xray-linux-riscv64"
-            ;;
-          loong64)
-            source_dir="xray_unzipped/xray-linux-loong64"
-            ;;
-        esac
-        fpm -s dir -t deb -a $arch --version $package_version \
-          --url 'https://xtls.github.io/' --description 'Xray, Penetrates Everything. Also the best v2ray-core, with XTLS support. Fully compatible configuration' \
-          --maintainer "v2raya@v2raya.org" --name xray --license 'MPL-2.0' \
-          --package ./xray_packages/xray_"$arch"_"$package_version".deb \
-          $source_dir/xray=/usr/bin/xray \
-          $source_dir/geoip.dat=/usr/share/xray/geoip.dat \
-          $source_dir/geosite.dat=/usr/share/xray/geosite.dat
-        done
-    - name: Note Version Number
-      run: |
-        echo "V2RAY_VERSION=$V2RAY_VERSION" >> ./v2ray_packages_version.txt
-        echo "XRAY_VERSION=$XRAY_VERSION" >> ./xray_packages_version.txt
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          v2ray_packages/*
-          xray_packages/*
-          v2ray_packages_version.txt
-          xray_packages_version.txt
-  Build_APT_Repository_and_AUR:
-    runs-on: ubuntu-22.04
-    needs: [Build_v2rayA_Binaries, Build_Linux_Packages, Build_v2ray_Debian_Packages]
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Check Version
-      id: prep
-      env:
-        REF: ${{ inputs.tag }}
-      run: |
-        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
-        echo "VERSION=$version" >> $GITHUB_OUTPUT
-        echo "VERSION=$version" >> $GITHUB_ENV
-    - name: Download Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: builds/
-    - name: Prepare Builds
-      run: |
-        sudo apt install -y lintian reprepro gnupg gnupg2 expect >> /dev/null
-        mv builds/web.tar.gz/web.tar.gz ./web.tar.gz
-        v2ray_version="$(cat builds/v2ray_packages_version.txt/v2ray_packages_version.txt | awk -F 'v' '{print $2}')"
-        echo "v2ray core version: $v2ray_version"
-        xray_version="$(cat builds/xray_packages_version.txt/xray_packages_version.txt | awk -F 'v' '{print $2}')"
-        echo "xray core version: $xray_version"
-        for deb_File in $(ls builds | grep -E "^v2ray_"); do
-          mv builds/$deb_File/$deb_File ./$deb_File
-        done
-        for deb_File in $(ls builds | grep -E "^xray_"); do
-          mv builds/$deb_File/$deb_File ./$deb_File
-        done
-        for deb_File in $(ls builds | grep -E "^installer_"); do
-          mv builds/$deb_File/$deb_File ./$deb_File
-        done
-        for v2raya_bin in $(ls builds | grep -E "^v2raya_linux"); do
-          mv builds/"$v2raya_bin"/"$v2raya_bin" ./"$v2raya_bin"
-        done
-        ls -lh ./
-        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_OUTPUT
-        echo "XRAY_VERSION=$xray_version" >> $GITHUB_OUTPUT
-        echo "V2RAY_VERSION=$v2ray_version" >> $GITHUB_ENV
-        echo "XRAY_VERSION=$xray_version" >> $GITHUB_ENV
-    - name: Import GPG key
-      id: import_gpg
-      uses: crazy-max/ghaction-import-gpg@v5.4.0
-      with:
-        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-        passphrase: ${{ secrets.SIGNING_PASSWORD }}
-    - name: Generate APT Repository
-      env:
-        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      run: |
-        mkdir -p apt/incoming && cp -r install/debian/key install/debian/conf apt/
-        install/tool/reprepro_expect --ask-passphrase -Vb apt includedeb v2raya installer_debian_*_$VERSION.deb xray_*_$XRAY_VERSION.deb v2ray_*_$V2RAY_VERSION.deb 
-        install/tool/reprepro_expect --ask-passphrase -Vb apt export       
-        mkdir apt/static/
-        cp v2raya_*_*_${{ steps.prep.outputs.VERSION }}* apt/static/
-        cp web.tar.gz apt/static/web_$VERSION.tar.gz
-        echo "apt.v2raya.org" > apt/CNAME
-    - name: Deploy APT Repository
-      uses: crazy-max/ghaction-github-pages@v3.2.0
-      with:
-        repo: v2rayA/v2raya-apt
-        target_branch: master
-        build_dir: apt
-      env:
-          GH_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-    - name: AUR Release
-      env:
-        P_DIR: ${{ steps.prep.outputs.P_DIR }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      run: |
-        eval $(ssh-agent)
-        echo "$SSH_PRIVATE_KEY" > ./key
-        chmod 0600 ./key
-        ./install/tool/ssh-add_expect ./key
-        bash install/aur/deploy.sh
   Release_to_Homebrew:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [Build_v2rayA_Binaries]
     steps:
     - uses: actions/checkout@v4
@@ -684,7 +450,7 @@ jobs:
           v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
           v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
   Release_v2rayA_to_Docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [GitHub_Release]
     steps:
     - uses: actions/checkout@v4
@@ -735,7 +501,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
   Release_v2rayA_GUI_to_Docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [Build_v2rayA_Web]
     steps:
     - uses: actions/checkout@v4
@@ -810,3 +576,44 @@ jobs:
         $Installer_x64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe"
         $Installer_ARM64_url = "https://github.com/v2rayA/v2rayA/releases/download/v${{ steps.prep.outputs.VERSION }}/installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe"
         ./wingetcreate.exe update v2rayA.v2rayA --urls $Installer_x64_url $Installer_ARM64_url --version ${{ steps.prep.outputs.VERSION }} --token ${{ secrets.HOMEBREW_V2RAYA_TOKEN }} --submit
+  Release_to_AUR:
+    runs-on: ubuntu-latest
+    needs: [GitHub_Release]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Check Version
+      id: prep
+      shell: bash
+      env:
+        REF: ${{ inputs.tag }}
+      run: |
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+        echo "VERSION=$version" >> $GITHUB_ENV
+    - name: Download v2rayA binary for checksum
+      run: |
+        mkdir v2raya_linux
+        for arch in x86 x64 loongarch64 armv7 arm64; do
+          curl -L https://github.com/v2rayA/v2rayA/releases/download/v${VERSION}/v2raya_linux_${arch}_${VERSION} -o v2raya_linux/v2raya_linux_${arch}_${VERSION}
+          chmod +x v2raya_linux/v2raya_linux_${arch}_${VERSION}
+        done
+    - name: List Files and Install expect
+      run: |
+        sudo apt update -y && sudo apt install -y expect >/dev/null
+        ls -l v2raya_linux
+        echo "P_DIR=$(pwd)" >> $GITHUB_ENV
+        echo "P_DIR=$(pwd)" >> $GITHUB_OUTPUT
+      id: set_path
+    - name: Release to AUR
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      run: |
+        eval $(ssh-agent)
+        echo "$SSH_PRIVATE_KEY" > ./key
+        chmod 0600 ./key
+        ./install/tool/ssh-add_expect ./key
+        bash install/aur/deploy.sh        
