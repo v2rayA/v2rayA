@@ -313,7 +313,6 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 	table += `
         iifname "docker*" return
         iifname "veth*" return
-        iifname "wg*" return
         iifname "ppp*" return
         # anti-pollution
         ip daddr @interface return
