@@ -32,6 +32,7 @@ type Trojan struct {
 	Encryption    string `json:"encryption"`
 	Host          string `json:"host"`
 	Path          string `json:"path"`
+    ServiceName   string `json:"serviceName"`
 	AllowInsecure bool   `json:"allowInsecure"`
 	Alpn          string `json:"alpn,omitempty"`
 	Protocol      string `json:"protocol"`
@@ -70,6 +71,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		Alpn:          t.Query().Get("alpn"),
 		Type:          t.Query().Get("type"),
 		Path:          t.Query().Get("path"),
+	    ServiceName:   t.Query().Get("serviceName"),
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
@@ -78,6 +80,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		data.Encryption = t.Query().Get("encryption")
 		data.Host = t.Query().Get("host")
 		data.Path = t.Query().Get("path")
+		data.ServiceName = t.Query().Get("serviceName")
 		data.Type = t.Query().Get("type")
 		data.AllowInsecure = false
 	}
@@ -160,8 +163,8 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 	
 	switch net {
 		case "grpc":
-			if t.Path == "" {
-				t.Path = "GunService"
+			if t.ServiceName == "" {
+				t.ServiceName = "GunService"
 			}
 			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: t.Path}
 		case "ws":
@@ -230,7 +233,7 @@ func (t *Trojan) ExportToURL() string {
 			setValue(&query, "host", t.Host)
 			setValue(&query, "path", t.Path)
 		case "grpc":
-			setValue(&query, "serviceName", t.Path)
+			setValue(&query, "serviceName", t.ServiceName)
 	}
 	
 	if t.AllowInsecure {
@@ -244,6 +247,7 @@ func (t *Trojan) ExportToURL() string {
 		setValue(&query, "encryption", t.Encryption)
 		setValue(&query, "type", t.Type)
 		setValue(&query, "path", t.Path)
+		setValue(&query, "serviceName", t.ServiceName)
 	}
 	u.RawQuery = query.Encode()
 	return u.String()
