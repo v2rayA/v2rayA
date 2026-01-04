@@ -141,22 +141,28 @@ type WsSettings struct {
 	Headers Headers `json:"headers"`
 }
 type StreamSettings struct {
-	Network         string           `json:"network,omitempty"`
-	Security        string           `json:"security,omitempty"`
-	TLSSettings     *TLSSettings     `json:"tlsSettings,omitempty"`
-	XTLSSettings    *TLSSettings     `json:"xtlsSettings,omitempty"`
-	XHTTPSettings   *XHTTPSettings   `json:"xhttpSettings,omitempty"`
-	RealitySettings *RealitySettings `json:"realitySettings,omitempty"`
-	TCPSettings     *TCPSettings     `json:"tcpSettings,omitempty"`
-	KcpSettings     *KcpSettings     `json:"kcpSettings,omitempty"`
-	WsSettings      *WsSettings      `json:"wsSettings,omitempty"`
-	HTTPSettings    *HttpSettings    `json:"httpSettings,omitempty"`
-	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
-	QuicSettings    *QuicSettings    `json:"quicSettings,omitempty"`
-	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
+	Network             string               `json:"network,omitempty"`
+	Security            string               `json:"security,omitempty"`
+	TLSSettings         *TLSSettings         `json:"tlsSettings,omitempty"`
+	XTLSSettings        *TLSSettings         `json:"xtlsSettings,omitempty"`
+	XHTTPSettings       *XHTTPSettings       `json:"xhttpSettings,omitempty"`
+	RealitySettings     *RealitySettings     `json:"realitySettings,omitempty"`
+	TCPSettings         *TCPSettings         `json:"tcpSettings,omitempty"`
+	KcpSettings         *KcpSettings         `json:"kcpSettings,omitempty"`
+	WsSettings          *WsSettings          `json:"wsSettings,omitempty"`
+	HTTPSettings        *HttpSettings        `json:"httpSettings,omitempty"`
+	HTTPUpgradeSettings *HTTPUpgradeSettings `json:"httpupgradeSettings,omitempty"`
+	GrpcSettings        *GrpcSettings        `json:"grpcSettings,omitempty"`
+	QuicSettings        *QuicSettings        `json:"quicSettings,omitempty"`
+	Sockopt             *Sockopt             `json:"sockopt,omitempty"`
 }
 type XHTTPSettings struct {
 	Path string `json:"path,omitempty"`
+}
+
+type HTTPUpgradeSettings struct {
+	Path string `json:"path,omitempty"`
+	Host string `json:"host,omitempty"`
 }
 type RealitySettings struct {
 	ServerName  string `json:"serverName,omitempty"`
