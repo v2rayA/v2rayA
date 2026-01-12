@@ -1,18 +1,16 @@
 name: Build & Release v2rayA beta
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        type: string
-        required: true
+  push:
+    tags:
+      - 'v*-beta*'
 
 permissions:
   contents: write
 
 jobs:
   Build_v2rayA_Web:
-    if: github.ref == 'refs/heads/feature/custom'
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-beta')
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
@@ -45,7 +43,7 @@ jobs:
         path: |
           web.tar.gz
   Build_v2rayA_Binaries:
-    if: github.ref == 'refs/heads/feature/custom'
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-beta')
     runs-on: ubuntu-latest
     needs: [Build_v2rayA_Web]
     env:
@@ -63,11 +61,9 @@ jobs:
         path: service/server/router/web
     - name: Check Version
       id: prep
-      env:
-        REF: ${{ inputs.tag }}
       run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
+        tag="${GITHUB_REF_NAME}"
+        version=$(echo "$tag" | sed 's/^v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Set up Go
@@ -135,7 +131,7 @@ jobs:
         path: |
           v2raya_binaries/*
   Build_Windows_Installers:
-    if: github.ref == 'refs/heads/feature/custom'
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-beta')
     runs-on: windows-latest
     needs: [Build_v2rayA_Binaries]
     steps:
@@ -145,11 +141,9 @@ jobs:
     - name: Check Version
       id: prep
       shell: bash
-      env:
-        REF: ${{ inputs.tag }}
       run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
+        tag="${GITHUB_REF_NAME}"
+        version=$(echo "$tag" | sed 's/^v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Windows x64
@@ -216,7 +210,7 @@ jobs:
           installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
           installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
   Build_Linux_Packages:
-    if: github.ref == 'refs/heads/feature/custom'
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-beta')
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries]
     strategy:
@@ -250,11 +244,9 @@ jobs:
         Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
     - name: Check Version
       id: prep
-      env:
-        REF: ${{ inputs.tag }}
       run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
+        tag="${GITHUB_REF_NAME}"
+        version=$(echo "$tag" | sed 's/^v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
         echo "PACKAGE_VERSION=$version" >> $GITHUB_OUTPUT
@@ -341,7 +333,7 @@ jobs:
         path: |
           fpm_packages/*
   GitHub_Release:
-    if: github.ref == 'refs/heads/feature/custom'
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-beta')
     runs-on: ubuntu-22.04
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
     steps:
@@ -350,11 +342,9 @@ jobs:
         fetch-depth: 0
     - name: Check Version
       id: prep
-      env:
-        REF: ${{ inputs.tag }}
       run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
+        tag="${GITHUB_REF_NAME}"
+        version=$(echo "$tag" | sed 's/^v//g')
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
@@ -386,12 +376,13 @@ jobs:
       run: |
         echo "Don't upload SingTun binaries to GitHub Release for they are not stable."
         rm -f release/v2raya_with_singtun_*
+        tag="${GITHUB_REF_NAME}"
         Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" \
           "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" | jq -r '.tag_name // empty')
-        Latest_tag=v${{ steps.prep.outputs.VERSION }}
+        Latest_tag="$tag"
         if [ "$Latest_Releases" != "$Latest_tag" ]; then
-          gh release create "v${{ steps.prep.outputs.VERSION }}" \
-            -t "v${{ steps.prep.outputs.VERSION }}" --generate-notes --prerelease \
+          gh release create "$tag" \
+            -t "$tag" --generate-notes --prerelease \
             --repo "$GITHUB_REPOSITORY"
         fi
-        gh release upload "v${{ steps.prep.outputs.VERSION }}" release/* --repo "$GITHUB_REPOSITORY"
+        gh release upload "$tag" release/* --repo "$GITHUB_REPOSITORY"
