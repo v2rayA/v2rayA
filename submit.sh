@@ -83,6 +83,11 @@ log_error() {
     echo -e "${RED}[ERROR] $1${NC}"
 }
 
+STATUS_ORDER=("modified" "added" "deleted" "renamed" "copied" "unmerged" "untracked" "clean")
+declare -A FILE_STATUS_LABELS
+declare -A SELECTED_DIRS
+declare -A DIR_SIZE_CACHE
+
 # --- Git Root Validation ---
 
 # Description: Ensure script is running from the git repository root.
@@ -129,6 +134,8 @@ show_help() {
     echo "Options:"
     echo "  --print-private-patterns  Print the list of regex patterns for private files."
     echo "  --print-public-patterns   Print the list of regex patterns for public files (inverse of private)."
+    echo "  --print-private-files     Print all private files (aggregated by folder)."
+    echo "  --print-public-files      Print all public files (aggregated by folder)."
     echo "  --print-private-status    Show status of private modified/untracked files."
     echo "  --print-public-status     Show status of public modified/untracked files."
     echo "  --print-private-diff      Show git diff of private modified files."
@@ -480,6 +487,345 @@ get_public_changes() {
     echo "$public_files"
 }
 
+# Description: Get directory size with caching
+# Usage: get_dir_size "path"
+get_dir_size() {
+    local dir="$1"
+
+    if [ -n "${DIR_SIZE_CACHE["$dir"]}" ]; then
+        echo "${DIR_SIZE_CACHE["$dir"]}"
+        return
+    fi
+
+    if [ -d "$dir" ]; then
+        local size
+        size=$(du -hs "$dir" 2>/dev/null | awk '{print $1}')
+        DIR_SIZE_CACHE["$dir"]="${size:-0B}"
+    else
+        DIR_SIZE_CACHE["$dir"]="0B"
+    fi
+
+    echo "${DIR_SIZE_CACHE["$dir"]}"
+}
+
+# Description: Add a status label to a file
+# Usage: add_status_label "path" "label"
+add_status_label() {
+    local file="$1"
+    local label="$2"
+    FILE_STATUS_LABELS["$file|$label"]=1
+}
+
+# Description: Build status label map from git status
+# Usage: build_status_map
+build_status_map() {
+    FILE_STATUS_LABELS=()
+
+    while IFS= read -r -d '' entry; do
+        local status="${entry:0:2}"
+        local path="${entry:3}"
+
+        if [[ "$status" == R* || "$status" == C* ]]; then
+            path="${entry#* -> }"
+        fi
+
+        if [[ "$status" == "??" ]]; then
+            add_status_label "$path" "untracked"
+            continue
+        fi
+
+        if [[ "$status" == "!!" ]]; then
+            add_status_label "$path" "ignored"
+            continue
+        fi
+
+        local x="${status:0:1}"
+        local y="${status:1:1}"
+
+        if [[ "$x" == "M" || "$y" == "M" || "$x" == "T" || "$y" == "T" ]]; then
+            add_status_label "$path" "modified"
+        fi
+        if [[ "$x" == "A" || "$y" == "A" ]]; then
+            add_status_label "$path" "added"
+        fi
+        if [[ "$x" == "D" || "$y" == "D" ]]; then
+            add_status_label "$path" "deleted"
+        fi
+        if [[ "$x" == "R" || "$y" == "R" ]]; then
+            add_status_label "$path" "renamed"
+        fi
+        if [[ "$x" == "C" || "$y" == "C" ]]; then
+            add_status_label "$path" "copied"
+        fi
+        if [[ "$x" == "U" || "$y" == "U" ]]; then
+            add_status_label "$path" "unmerged"
+        fi
+    done < <(git status --porcelain=v1 -z --ignored=matching -uall)
+}
+
+
+# Description: Check if a directory has a selected ancestor
+# Usage: has_selected_ancestor "path"
+has_selected_ancestor() {
+    local dir="$1"
+
+    while [[ "$dir" != "." && "$dir" != "/" ]]; do
+        if [[ -n "${SELECTED_DIRS["$dir"]}" ]]; then
+            return 0
+        fi
+        dir=$(dirname "$dir")
+    done
+
+    return 1
+}
+
+# Description: Print all private/public files with folder aggregation and status labels
+# Usage: print_classified_files "private"|"public"
+print_classified_files() {
+    local target_class="$1"
+    local order_csv
+    local priv_re_escaped
+    local awk_output=()
+    local dir_entries=()
+    local file_entries=()
+    local dirs_to_print=()
+
+    SELECTED_DIRS=()
+    DIR_SIZE_CACHE=()
+
+    order_csv=$(IFS=,; echo "${STATUS_ORDER[*]}")
+    priv_re_escaped="${PRIVATE_REGEX//\\/\\\\}"
+
+    mapfile -t awk_output < <(
+        gawk -v priv_re="$priv_re_escaped" -v order="$order_csv" '
+            BEGIN {
+                RS = "\0"
+                ORS = "\n"
+                OFS = "\t"
+                split(order, order_arr, ",")
+                order_len = length(order_arr)
+            }
+
+            function dirname(path,    n, a) {
+                n = split(path, a, "/")
+                if (n <= 1) {
+                    return "."
+                }
+                return substr(path, 1, length(path) - length(a[n]) - 1)
+            }
+
+            function has_pure_ancestor(path, cls,    dir) {
+                dir = dirname(path)
+                while (dir != "." && dir != "/") {
+                    if (dir_class_map[dir] == cls) {
+                        return 1
+                    }
+                    dir = dirname(dir)
+                }
+                return 0
+            }
+
+            FNR == NR {
+                entry = $0
+                if (entry == "") {
+                    next
+                }
+                status = substr(entry, 1, 2)
+                path = substr(entry, 4)
+
+                if (status ~ /^R/ || status ~ /^C/) {
+                    split(entry, moved, " -> ")
+                    path = moved[2]
+                }
+
+                if (status == "??") {
+                    file_labels[path, "untracked"] = 1
+                    next
+                }
+
+                if (status == "!!") {
+                    file_labels[path, "ignored"] = 1
+                    next
+                }
+
+                x = substr(status, 1, 1)
+                y = substr(status, 2, 1)
+
+                if (x == "M" || y == "M" || x == "T" || y == "T") {
+                    file_labels[path, "modified"] = 1
+                }
+                if (x == "A" || y == "A") {
+                    file_labels[path, "added"] = 1
+                }
+                if (x == "D" || y == "D") {
+                    file_labels[path, "deleted"] = 1
+                }
+                if (x == "R" || y == "R") {
+                    file_labels[path, "renamed"] = 1
+                }
+                if (x == "C" || y == "C") {
+                    file_labels[path, "copied"] = 1
+                }
+                if (x == "U" || y == "U") {
+                    file_labels[path, "unmerged"] = 1
+                }
+
+                next
+            }
+
+            {
+                file = $0
+                if (file == "") {
+                    next
+                }
+
+                class = (file ~ priv_re) ? "private" : "public"
+                file_class[file] = class
+
+                if (!file_seen[file]++) {
+                    files[++file_count] = file
+                }
+
+                label_str = ""
+                label_count = 0
+                for (i = 1; i <= order_len; i++) {
+                    lab = order_arr[i]
+                    if (file_labels[file, lab]) {
+                        label_str = label_str ? label_str ", " lab : lab
+                        label_count++
+                    }
+                }
+                if (label_count == 0) {
+                    label_str = "clean"
+                }
+
+                file_label_str[file] = label_str
+
+                dir = dirname(file)
+                while (dir != "." && dir != "/") {
+                    dir_files[dir]++
+                    if (class == "private") {
+                        dir_private[dir]++
+                    } else {
+                        dir_public[dir]++
+                    }
+
+                    for (i = 1; i <= order_len; i++) {
+                        lab = order_arr[i]
+                        if (file_labels[file, lab]) {
+                            dir_labels[dir, lab] = 1
+                            if (lab != "clean") {
+                                dir_has_nonclean[dir] = 1
+                            }
+                        }
+                    }
+                    if (label_count == 0) {
+                        dir_labels[dir, "clean"] = 1
+                    }
+                    dir = dirname(dir)
+                }
+            }
+
+            END {
+                for (i = 1; i <= file_count; i++) {
+                    file = files[i]
+                    cls = file_class[file]
+                    if (!has_pure_ancestor(file, cls)) {
+                        print "FILE", cls, file, file_label_str[file]
+                    }
+                }
+
+                for (dir in dir_files) {
+                    priv = dir_private[dir] + 0
+                    pub = dir_public[dir] + 0
+                    if (priv > 0 && pub == 0) {
+                        dir_class = "private"
+                    } else if (pub > 0 && priv == 0) {
+                        dir_class = "public"
+                    } else {
+                        dir_class = "mixed"
+                    }
+                    dir_class_map[dir] = dir_class
+
+                    label_str = ""
+                    for (i = 1; i <= order_len; i++) {
+                        lab = order_arr[i]
+                        if (lab == "clean" && dir_has_nonclean[dir]) {
+                            continue
+                        }
+                        if (dir_labels[dir, lab]) {
+                            label_str = label_str ? label_str ", " lab : lab
+                        }
+                    }
+                    if (label_str == "") {
+                        label_str = "clean"
+                    }
+
+                    print "DIR", dir_class, dir, dir_files[dir], label_str
+                }
+            }
+        ' <(git status --porcelain=v1 -z -uall) <(
+            {
+                git ls-files -z
+                git ls-files -z --others --exclude-standard
+            }
+        )
+    )
+
+    for entry in "${awk_output[@]}"; do
+        IFS=$'\t' read -r type class path count labels <<< "$entry"
+        if [ "$type" = "DIR" ]; then
+            dir_entries+=("$entry")
+        elif [ "$type" = "FILE" ]; then
+            file_entries+=("$entry")
+        fi
+    done
+
+    mapfile -t dir_entries < <(
+        printf '%s\n' "${dir_entries[@]}" | awk -F'\t' '{print length($3) "\t" $0}' | sort -n | cut -f2-
+    )
+
+    # Pass 1: Collect directories that will be printed
+    for entry in "${dir_entries[@]}"; do
+        IFS=$'\t' read -r type class path count labels <<< "$entry"
+        if [ "$class" = "$target_class" ]; then
+            if ! has_selected_ancestor "$path"; then
+                dirs_to_print+=("$path")
+                SELECTED_DIRS["$path"]=1
+            fi
+        fi
+    done
+
+    # Batch du for all directories at once
+    if [ ${#dirs_to_print[@]} -gt 0 ]; then
+        while IFS=$'\t' read -r size dir; do
+            DIR_SIZE_CACHE["$dir"]="$size"
+        done < <(du -hs "${dirs_to_print[@]}" 2>/dev/null)
+    fi
+
+    # Pass 2: Print directories with cached sizes
+    for entry in "${dir_entries[@]}"; do
+        IFS=$'\t' read -r type class path count labels <<< "$entry"
+        if [ "$class" = "$target_class" ]; then
+            if [ -n "${SELECTED_DIRS["$path"]}" ]; then
+                local size="${DIR_SIZE_CACHE["$path"]:-0B}"
+                echo "${path}/ (${count} files, ${size}) [${labels}]"
+            fi
+        fi
+    done
+
+    for entry in "${file_entries[@]}"; do
+        IFS=$'\t' read -r type class path labels <<< "$entry"
+        if [ "$class" = "$target_class" ]; then
+            local parent
+            parent=$(dirname "$path")
+            if ! has_selected_ancestor "$parent"; then
+                echo "${path} [${labels}]"
+            fi
+        fi
+    done
+}
+
 # Description: Print git diff, writing to file if too large
 # Usage: print_diff_safe "file_list" "output_file"
 # Params:
@@ -700,6 +1046,14 @@ case "$cmd" in
         for pattern in "${PRIVATE_PATTERNS[@]}"; do
             echo "  ! $pattern"
         done
+        ;;
+        
+    --print-private-files)
+        print_classified_files "private"
+        ;;
+        
+    --print-public-files)
+        print_classified_files "public"
         ;;
         
     --print-private-status)

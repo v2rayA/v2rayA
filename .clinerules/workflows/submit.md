@@ -21,8 +21,8 @@
 
 ## 2. 分类文件
 将文件分为两组：
-*   **Private Group**: 只能存在于私有开发分支（`develop` 或 `dev/xxx`），禁止推送到公共发布分支。可通过命令 `./submit.sh --print-private-patterns` 获取的文件列表。
-*   **Public Group**:  可以推送到公共发布分支（`main` 或 `master` 或 `feature/xxx`）。可通过命令 `./submit.sh --print-public-patterns` 获取的文件列表。
+*   **Private Group**: 只能存在于私有开发分支（`develop` 或 `dev/xxx`），禁止推送到公共发布分支。匹配模式由 `./submit.sh --print-private-patterns` 输出；对应的文件列表由 `./submit.sh --print-private-files` 输出（目录以“文件数+大小+状态”汇总显示）。
+*   **Public Group**:  可以推送到公共发布分支（`main` 或 `master` 或 `feature/xxx`）。匹配模式由 `./submit.sh --print-public-patterns` 输出；对应的文件列表由 `./submit.sh --print-public-files` 输出（目录以“文件数+大小+状态”汇总显示）。
 
 ## 3. 分析变更
 分别获取私有文件的变更 和 公共文件的变更。
