@@ -1,28 +1,28 @@
 # Submit Workflow
 
-当用户要求提交代码或执行 `/submit.md` 时，请遵循以下流程。本工作流支持标准的 `dev` 分支开发，也支持 `dev/xxx` 特性分支开发。
+当用户要求提交代码或执行 `/submit.md` 时，请遵循以下流程。本工作流支持标准的 `develop` 分支开发，也支持 `dev/xxx` 特性分支开发。
 
 ## 1. 前置检查 (Prerequisites)
 
-在执行提交脚本之前，脚本会自动进行一系列**严格检查**：
+在执行提交脚本之前，脚本会自动进行一系列**严格检查**。也可以手动执行 `./submit.sh --check-prerequisites` 来仅检查分支命名与父分支纯净度：
 
 1.  **分支命名检查**：
-    *   **标准开发**：应处于 `dev` 分支。
+    *   **标准开发**：应处于 `develop` 分支。
     *   **特性开发**：应处于 `dev/xxx` 分支（例如 `dev/motor-control`）。
-    *   脚本 `./submit.sh` 会自动识别并映射：`dev` $\rightarrow$ `main` (或 `master`)，`dev/xxx` $\rightarrow$ `feature/xxx`。
+    *   脚本 `./submit.sh` 会自动识别并映射：`develop` $\rightarrow$ `main` (或 `master`)，`dev/xxx` $\rightarrow$ `feature/xxx`。
 
 2.  **父分支纯净度检查 (Sanity Check)**：
     *   脚本会检查当前分支的**父提交 (Parent Commit)**。
     *   **通过标准**：父提交属于任何**公共分支**（`main`, `master`, `feature/*` 等）。
-    *   **失败标准**：父提交**不属于**任何公共分支，但属于其他**私有分支** (`dev/*`)。这通常意味着您错误地基于另一个私有分支创建了当前分支。
-    *   **处理办法**：如果报错，请参考 `.clinerules/workflows/new-dev-branch.md`，重新基于公共分支创建分支，并使用 `--restore-private` 找回私有文件。
+    *   **失败标准**：父提交**不属于**任何公共分支，但属于其他**私有分支**（`develop` 或 `dev/*`）。这通常意味着您错误地基于另一个私有分支创建了当前分支。
+    *   **处理办法**：如果报错，请参考 `.clinerules/workflows/newdev.md`，重新基于公共分支创建分支，并使用 `--restore-private` 找回私有文件。
 
 如果检查不通过，脚本将拒绝执行。
 
 ## 2. 分类文件
 将文件分为两组：
-*   **Private Group**: 只能存在于私有开发分支（`dev` 或 `dev/xxx`），禁止推送到公共发布分支。可通过命令 `./submit.sh --print-private-patterns` 获取的文件列表。
-*   **Public Group**:  可以推送到公共发布分支（`main` 或 `feature/xxx`）。可通过命令 `./submit.sh --print-public-patterns` 获取的文件列表。
+*   **Private Group**: 只能存在于私有开发分支（`develop` 或 `dev/xxx`），禁止推送到公共发布分支。可通过命令 `./submit.sh --print-private-patterns` 获取的文件列表。
+*   **Public Group**:  可以推送到公共发布分支（`main` 或 `master` 或 `feature/xxx`）。可通过命令 `./submit.sh --print-public-patterns` 获取的文件列表。
 
 ## 3. 分析变更
 分别获取私有文件的变更 和 公共文件的变更。
@@ -44,7 +44,7 @@
 脚本会自动检测远程仓库的 **可见性 (Visibility)**，即该仓库在托管平台（如 GitHub）上是 **私有 (Private)** 还是 **公开 (Public)**。
 
 *   **Private Push**: 执行 `./submit.sh --push-private`。
-    *   **只负责私有分支**：仅推送当前的私有开发分支（`dev` 或 `dev/xxx`）。
+    *   **只负责私有分支**：仅推送当前的私有开发分支（`develop` 或 `dev/xxx`）。
     *   **只推送到私有仓库**：脚本会遍历所有远程仓库，**仅**对检测为 **Private** 的仓库执行推送。
     *   **安全保护**：会自动跳过所有 Public 仓库，防止私有分支泄露。
     *   **跳过不可达仓库**：如果检测到远程仓库不可达（如内网仓库），将输出警告并自动跳过，不阻断流程。

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # submit.sh
-# Handles Git operations for both 'dev' and 'dev/xxx' feature branches.
+# Handles Git operations for both 'develop' and 'dev/xxx' feature branches.
 # Supports separating Private and Public commits/pushes.
 # Implements anchor-based incremental sync for Public commits.
 # Smartly handles multiple remotes and visibility detection.
@@ -18,7 +18,7 @@ PRIVATE_DIFF_FILE="private_diff.txt"
 PUBLIC_DIFF_FILE="public_diff.txt"
 
 # Define Private Patterns List
-# Add any file or directory path that should stay PRIVATE on dev branch
+# Add any file or directory path that should stay PRIVATE on develop branch
 # These are regex patterns anchored to the root
 PRIVATE_PATTERNS=(
     "^memory-bank/"
@@ -135,9 +135,11 @@ show_help() {
     echo "  --print-public-diff       Show git diff of public modified files."
     echo "  --print-private-show      Show status and git diff of private modified files."
     echo "  --print-public-show       Show status and git diff of public modified files."
+    echo "  --check-prerequisites     Check branch naming and base purity."
+    echo "  --new-dev-branch          Create a new dev branch. Usage: --new-dev-branch <new-feature> <base>"
     echo "  --commit-private          Commit private changes. Requires 'COMMIT_MSG_PRIVATE' env var."
     echo "  --commit-public           Commit public changes. Requires 'COMMIT_MSG_PUBLIC' env var."
-    echo "  --push-private            Push current private branch (dev/...) to PRIVATE remotes only."
+    echo "  --push-private            Push current private branch (develop or dev/xxx) to PRIVATE remotes only."
     echo "  --push-public             Sync public commits to public branch (main/feature...), then push to ALL remotes."
     echo "  --restore-private [ref]   Restore private files. Auto-detects source if ref is omitted."
     echo "  --help                    Show this help message."
@@ -192,8 +194,8 @@ get_main_branch_name() {
 
 # --- Sanity Checks ---
 
-# Description: Check if current branch is based on a private branch (dev/*).
-#              Fails if parent commit belongs ONLY to other dev branches.
+# Description: Check if current branch is based on a private branch (develop or dev/*).
+#              Fails if parent commit belongs ONLY to other private branches.
 # Usage: check_private_base
 # Params: None
 # Return: None
@@ -208,12 +210,12 @@ check_private_base() {
     fi
 
     # 1. Immunity Check: Is parent part of ANY public branch?
-    # grep -v "dev/" filters out private branches. If output is non-empty, it's public.
+    # grep -vE "dev/|develop" filters out private branches. If output is non-empty, it's public.
     # Check both local and remote public branches.
-    if git branch --contains "$parent_commit" | grep -v "dev/" >/dev/null 2>&1; then
+    if git branch --contains "$parent_commit" | grep -vE "dev/|develop" >/dev/null 2>&1; then
         return 0
     fi
-    if git branch -r --contains "$parent_commit" | grep -v "dev/" >/dev/null 2>&1; then
+    if git branch -r --contains "$parent_commit" | grep -vE "dev/|develop" >/dev/null 2>&1; then
         return 0
     fi
 
@@ -222,7 +224,7 @@ check_private_base() {
     local current_branch
     current_branch=$(git branch --show-current)
     local private_refs
-    private_refs=$(git branch --contains "$parent_commit" | grep "dev/" | grep -v "$current_branch" || true)
+    private_refs=$(git branch --contains "$parent_commit" | grep -E "dev/|develop" | grep -v "$current_branch" || true)
 
     if [ -n "$private_refs" ]; then
         log_error "Sanity Check Failed: Current branch seems to be based on private history."
@@ -232,6 +234,137 @@ check_private_base() {
         log_error "Use './scripts/submit.sh --restore-private' to recover private files if needed."
         exit 1
     fi
+}
+
+# --- Prerequisites Check ---
+
+# Description: Run branch naming and base purity checks explicitly.
+# Usage: check_prerequisites
+# Params: None
+# Return: None
+# Exit: 1 if checks fail
+check_prerequisites() {
+    ensure_git_root
+
+    local current_branch
+    current_branch=$(git branch --show-current)
+
+    if [ "$current_branch" = "develop" ]; then
+        log_info "Branch check passed: develop"
+    elif [[ "$current_branch" == dev/* ]]; then
+        log_info "Branch check passed: $current_branch"
+    else
+        log_error "Current branch '$current_branch' is not a valid development branch."
+        log_error "Must be 'develop' or start with 'dev/'."
+        exit 1
+    fi
+
+    check_private_base
+    log_info "Prerequisites check passed."
+}
+
+# --- New Dev Branch Creation Helpers ---
+
+# Description: List remote public branches (exclude develop/dev/*)
+# Usage: list_remote_public_branches
+# Params: None
+# Return: List of remote public branches
+list_remote_public_branches() {
+    local branches
+    branches=$(git branch -r --list | sed 's/^ *//' | grep -vE '/dev/|/develop|/HEAD' || true)
+
+    if [ -z "$branches" ]; then
+        log_warn "No remote public branches found."
+        return
+    fi
+
+    echo "$branches"
+}
+
+# Description: Create a new dev branch from a public base branch
+# Usage: create_new_dev_branch <new-feature> <base>
+# Params:
+#   $1 - New feature name
+#   $2 - Base branch (main/master/feature/* or origin/*)
+# Exit: 1 on failure
+create_new_dev_branch() {
+    local feature_name="$1"
+    local base_input="$2"
+
+    if [ -z "$feature_name" ]; then
+        log_error "Missing new feature name."
+        echo "Usage: ./submit.sh --new-dev-branch <new-feature> <base>"
+        exit 1
+    fi
+
+    if [ -z "$base_input" ]; then
+        log_error "Missing base branch."
+        log_info "Available remote public branches:"
+        git fetch --all --prune >/dev/null 2>&1 || log_warn "Fetch failed. Listing cached remotes..."
+        list_remote_public_branches
+        echo ""
+        echo "Usage: ./submit.sh --new-dev-branch <new-feature> <base>"
+        exit 1
+    fi
+
+    log_info "Fetching remotes..."
+    git fetch --all --prune || log_warn "Fetch failed. Proceeding with cached remotes..."
+
+    local base_branch="$base_input"
+    local base_remote=""
+    local local_base=""
+
+    if [[ "$base_input" == */* ]]; then
+        base_branch="${base_input#*/}"
+        base_remote="$base_input"
+        local_base="$base_branch"
+    else
+        base_branch="$base_input"
+        base_remote="origin/$base_input"
+        local_base="$base_input"
+    fi
+
+    if [[ "$base_branch" == "develop" || "$base_branch" == dev/* ]]; then
+        log_error "Base branch '$base_branch' is private. Use a public branch (main/master/feature/*)."
+        exit 1
+    fi
+
+    if [[ "$base_branch" != "main" && "$base_branch" != "master" && "$base_branch" != feature/* ]]; then
+        log_error "Base branch '$base_branch' is not a supported public branch."
+        log_error "Allowed: main, master, feature/*"
+        exit 1
+    fi
+
+    if ! git show-ref --verify --quiet "refs/remotes/$base_remote"; then
+        log_error "Remote base branch '$base_remote' not found."
+        exit 1
+    fi
+
+    if git show-ref --verify --quiet "refs/heads/$local_base"; then
+        local counts
+        counts=$(git rev-list --left-right --count "$local_base...$base_remote")
+        local ahead
+        local behind
+        ahead=$(echo "$counts" | awk '{print $1}')
+        behind=$(echo "$counts" | awk '{print $2}')
+
+        if [ "$ahead" -ne 0 ] || [ "$behind" -ne 0 ]; then
+            log_error "Local branch '$local_base' is not in sync with '$base_remote'."
+            log_error "Ahead: $ahead, Behind: $behind. Please sync before creating a new dev branch."
+            exit 1
+        fi
+    fi
+
+    local new_branch="dev/$feature_name"
+    if git show-ref --verify --quiet "refs/heads/$new_branch"; then
+        log_error "Branch '$new_branch' already exists."
+        exit 1
+    fi
+
+    log_info "Creating $new_branch from $base_remote..."
+    git checkout -b "$new_branch" "$base_remote"
+    log_info "New dev branch created: $new_branch"
+    log_info "Next steps: ./submit.sh --restore-private && initialize private commit."
 }
 
 # --- Smart Parent Detection ---
@@ -528,8 +661,8 @@ CURRENT_BRANCH=$(git branch --show-current)
 BRANCH_PRIVATE=""
 BRANCH_PUBLIC=""
 
-if [ "$CURRENT_BRANCH" = "dev" ]; then
-    BRANCH_PRIVATE="dev"
+if [ "$CURRENT_BRANCH" = "develop" ]; then
+    BRANCH_PRIVATE="develop"
     # Dynamic detection of main branch name (main or master)
     BRANCH_PUBLIC=$(get_main_branch_name)
 elif [[ "$CURRENT_BRANCH" == dev/* ]]; then
@@ -538,17 +671,17 @@ elif [[ "$CURRENT_BRANCH" == dev/* ]]; then
     BRANCH_PUBLIC="feature/$SUFFIX"
 else
     # Fail early for action commands if on invalid branch
-    if [[ "$1" != "--print"* && "$1" != "--restore-private" ]]; then
+    if [[ "$1" != "--print"* && "$1" != "--restore-private" && "$1" != "--new-dev-branch" ]]; then
         log_error "Current branch '$CURRENT_BRANCH' is not a valid development branch."
-        log_error "Must be 'dev' or start with 'dev/'."
+        log_error "Must be 'develop' or start with 'dev/'."
         exit 1
     fi
 fi
 
 # 3.4 Sanity Check (Private Base Detection)
-# Only verify base for dev/* branches (excluding main 'dev' if it's based on main)
+# Only verify base for private branches (develop or dev/*)
 # Skip check for read-only commands
-if [[ "$1" != "--print"* && "$1" != "--help" && "$CURRENT_BRANCH" != "dev" ]]; then
+if [[ "$1" != "--print"* && "$1" != "--help" && -n "$BRANCH_PRIVATE" ]]; then
     check_private_base
 fi
 
@@ -611,6 +744,14 @@ case "$cmd" in
         if [ -n "$changes" ]; then
              print_diff_safe "$changes" "$PUBLIC_DIFF_FILE"
         fi
+        ;;
+        
+    --check-prerequisites)
+        check_prerequisites
+        ;;
+        
+    --new-dev-branch)
+        create_new_dev_branch "$2" "$3"
         ;;
     
     --restore-private)
