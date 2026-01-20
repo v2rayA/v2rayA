@@ -14,8 +14,8 @@ set -e
 # ==========================================
 
 DIFF_LINE_LIMIT=500
-PRIVATE_DIFF_FILE="private_diff.txt"
-PUBLIC_DIFF_FILE="public_diff.txt"
+PRIVATE_DIFF_FILE="private.diff"
+PUBLIC_DIFF_FILE="public.diff"
 
 # Define Private Patterns List
 # Add any file or directory path that should stay PRIVATE on develop branch
@@ -23,14 +23,16 @@ PUBLIC_DIFF_FILE="public_diff.txt"
 PRIVATE_PATTERNS=(
     "^memory-bank/"
     "^doc/"
-    "^\.clinerules"
-    "^\.claude"
-    "^\.vscode"
+    "^\.clinerules/"
+    "^\.claude/"
+    "^\.vscode/"
     "^\.clineignore"
     "^AGENTS\.md"
-    "^openspec"
-    "^submit\.sh"
-    "^\.continue"
+    "^openspec/"
+    "^scripts/"
+    "^images/"
+    "^test\.sh"
+    "^\.continue/"
 )
 
 # Construct Regex from list
@@ -42,6 +44,32 @@ for pattern in "${PRIVATE_PATTERNS[@]}"; do
         PRIVATE_REGEX="$PRIVATE_REGEX|$pattern"
     fi
 done
+
+# Get script's own path relative to git root (for self-restoration logic)
+# This is computed lazily when needed, but the function is defined here
+get_script_rel_path() {
+    local script_abs
+    local git_root
+    local script_dir
+    
+    # Get script directory without using cd (avoid failure when directory doesn't exist)
+    script_dir="$(dirname "${BASH_SOURCE[0]}")"
+    if [ -d "$script_dir" ]; then
+        script_abs="$(cd "$script_dir" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+    else
+        # Directory doesn't exist, use realpath or original path as fallback
+        script_abs="$(realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+    fi
+    
+    git_root="$(git rev-parse --show-toplevel 2>/dev/null || echo "")"
+    if [ -n "$git_root" ]; then
+        # Convert to relative path from git root
+        echo "${script_abs#$git_root/}"
+    else
+        # Fallback: use the path as invoked
+        echo "${BASH_SOURCE[0]}"
+    fi
+}
 
 # ==========================================
 # 2. Helper Functions
@@ -104,7 +132,9 @@ ensure_git_root() {
     git_root=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
 
     if [ -z "$git_root" ]; then
-        log_error "Not a git repository. Please run this script inside a git repository."
+        log_error "Not a git repository."
+        log_info "To initialize this directory as a git repository, run:"
+        echo "    $0 --init"
         exit 1
     fi
 
@@ -121,6 +151,182 @@ ensure_git_root() {
     fi
 }
 
+# --- Repository Initialization ---
+
+# Description: Initialize a non-git directory as a git repository with proper branch structure.
+#              Creates main/master with public files, then develop with all files.
+#              Automatically detects nested git repositories and adds them as submodules.
+# Usage: init_repository
+# Params: None
+# Return: None
+# Exit: 0 on success, 1 on failure
+init_repository() {
+    # 1. Check if already a git repository
+    if git rev-parse --show-toplevel &>/dev/null; then
+        log_error "This directory is already a git repository."
+        log_info "Use other commands to manage existing repository."
+        exit 1
+    fi
+
+    # 2. Scan for nested git repositories BEFORE initializing
+    log_info "Scanning for nested git repositories..."
+    local nested_repos=""
+    local public_submodules=""
+    local private_submodules=""
+    
+    # Find all .git directories (excluding future top-level .git)
+    # mindepth 2 ensures we skip ./.git (which doesn't exist yet anyway)
+    while IFS= read -r git_dir; do
+        [ -z "$git_dir" ] && continue
+        local repo_path="${git_dir%/.git}"
+        repo_path="${repo_path#./}"
+        
+        # Check if this nested repo has a remote configured
+        local remote_url
+        remote_url=$(git -C "$repo_path" remote get-url origin 2>/dev/null || echo "")
+        
+        if [ -z "$remote_url" ]; then
+            log_error "Nested git repository '$repo_path' has no remote configured."
+            log_error "Please configure a remote for it before running --init:"
+            echo ""
+            echo "    cd $repo_path && git remote add origin <your-repo-url>"
+            echo ""
+            exit 1
+        fi
+        
+        nested_repos+="$repo_path"$'\n'
+        
+        # Classify as public or private based on PRIVATE_PATTERNS
+        if is_private_file "$repo_path/"; then
+            private_submodules+="$repo_path|$remote_url"$'\n'
+            log_info "  Found private submodule: $repo_path"
+        else
+            public_submodules+="$repo_path|$remote_url"$'\n'
+            log_info "  Found public submodule: $repo_path"
+        fi
+    done < <(find . -mindepth 2 -name ".git" -type d 2>/dev/null)
+    
+    # Remove trailing newlines
+    nested_repos="${nested_repos%$'\n'}"
+    public_submodules="${public_submodules%$'\n'}"
+    private_submodules="${private_submodules%$'\n'}"
+    
+    if [ -z "$nested_repos" ]; then
+        log_info "No nested git repositories found."
+    fi
+
+    # 3. Initialize the repository
+    log_info "Initializing git repository..."
+    git init
+
+    # 4. Get default branch name from git config (main or master)
+    local default_branch
+    default_branch=$(git config --get init.defaultBranch 2>/dev/null || echo "main")
+    
+    log_info "Default branch will be: $default_branch"
+
+    # 5. Collect public files (exclude private patterns, .git directories, and nested .git contents)
+    log_info "Scanning for public files..."
+    local public_files
+    public_files=$(find . -type f -not -path './.git/*' -not -path '*/.git/*' 2>/dev/null | sed 's|^\./||' | grep -vE "$PRIVATE_REGEX" || true)
+
+    if [ -z "$public_files" ] && [ -z "$public_submodules" ]; then
+        log_warn "No public files found. Creating empty initial commit on $default_branch."
+        git commit --allow-empty -m "Initial empty commit"
+    else
+        if [ -n "$public_files" ]; then
+            log_info "Adding public files to initial commit..."
+            # Use xargs instead of while loop to avoid subshell issues with set -e
+            # Use --ignore-errors to suppress warnings about .gitignore'd files
+            echo "$public_files" | xargs -d '\n' git add --ignore-errors 2>/dev/null || true
+        fi
+        
+        # Add public submodules
+        if [ -n "$public_submodules" ]; then
+            log_info "Adding public submodules..."
+            while IFS='|' read -r repo_path remote_url; do
+                [ -z "$repo_path" ] && continue
+                log_info "  Adding submodule: $repo_path -> $remote_url"
+                git submodule add "$remote_url" "$repo_path"
+            done <<< "$public_submodules"
+        fi
+        
+        git commit -m "Initial public commit"
+    fi
+
+    log_info "Branch '$default_branch' created with public files."
+
+    # 6. Create develop branch (based on main/master)
+    log_info "Creating develop branch based on $default_branch..."
+    git checkout -b develop
+
+    # 7. Add private submodules and private files
+    local has_private_changes=0
+    
+    # Add private submodules first
+    if [ -n "$private_submodules" ]; then
+        log_info "Adding private submodules..."
+        while IFS='|' read -r repo_path remote_url; do
+            [ -z "$repo_path" ] && continue
+            log_info "  Adding submodule: $repo_path -> $remote_url"
+            git submodule add "$remote_url" "$repo_path"
+            has_private_changes=1
+        done <<< "$private_submodules"
+    fi
+    
+    # Add private files
+    log_info "Scanning for private files..."
+    local private_files
+    private_files=$(find . -type f -not -path './.git/*' -not -path '*/.git/*' 2>/dev/null | sed 's|^\./||' | grep -E "$PRIVATE_REGEX" || true)
+
+    if [ -n "$private_files" ]; then
+        log_info "Adding private files..."
+        # Use xargs instead of while loop to avoid subshell issues with set -e
+        # Use --ignore-errors to suppress warnings about .gitignore'd files
+        echo "$private_files" | xargs -d '\n' git add --ignore-errors 2>/dev/null || true
+        has_private_changes=1
+    fi
+    
+    if [ "$has_private_changes" -eq 1 ]; then
+        git commit -m "Add private development files"
+    else
+        log_info "No private files or submodules found."
+    fi
+
+    echo ""
+    log_info "Repository initialized successfully!"
+    echo ""
+    echo "Branch structure:"
+    # Calculate max branch name length for alignment (develop=7 chars)
+    local max_len=${#default_branch}
+    [ 7 -gt $max_len ] && max_len=7
+    printf "  %-${max_len}s  <- Public files only (for open source)\n" "$default_branch"
+    printf "  %-${max_len}s  <- All files (public + private, current branch)\n" "develop"
+    
+    if [ -n "$public_submodules" ] || [ -n "$private_submodules" ]; then
+        echo ""
+        echo "Submodules:"
+        if [ -n "$public_submodules" ]; then
+            while IFS='|' read -r repo_path remote_url; do
+                [ -z "$repo_path" ] && continue
+                echo "  $repo_path (public)"
+            done <<< "$public_submodules"
+        fi
+        if [ -n "$private_submodules" ]; then
+            while IFS='|' read -r repo_path remote_url; do
+                [ -z "$repo_path" ] && continue
+                echo "  $repo_path (private)"
+            done <<< "$private_submodules"
+        fi
+    fi
+    
+    echo ""
+    echo "Next steps:"
+    echo "  1. Add remote:  git remote add origin <your-repo-url>"
+    echo "  2. Push develop: $0 --push-private"
+    echo "  3. Push public:  $0 --push-public"
+}
+
 # --- Help Message ---
 
 # Description: Display script usage and options
@@ -132,6 +338,8 @@ show_help() {
     echo "Usage: $0 [OPTION]"
     echo ""
     echo "Options:"
+    echo "  --init                    Initialize a non-git directory with proper branch structure."
+    echo "                            Creates main/master with public files, develop with all files."
     echo "  --print-private-patterns  Print the list of regex patterns for private files."
     echo "  --print-public-patterns   Print the list of regex patterns for public files (inverse of private)."
     echo "  --print-private-files     Print all private files (aggregated by folder)."
@@ -209,12 +417,16 @@ get_main_branch_name() {
 # Exit: 1 if invalid base detected
 check_private_base() {
     local parent_commit
-    parent_commit=$(git rev-parse HEAD^ 2>/dev/null || echo "")
     
-    if [ -z "$parent_commit" ]; then
+    # First verify HEAD^ is a valid commit reference
+    # --verify: requires the input to be a valid object name
+    # --quiet: do not output anything, just return exit code
+    if ! git rev-parse --verify --quiet HEAD^ >/dev/null 2>&1; then
         # Initial commit or orphan branch, skip check
         return 0
     fi
+    
+    parent_commit=$(git rev-parse HEAD^)
 
     # 1. Immunity Check: Is parent part of ANY public branch?
     # grep -vE "dev/|develop" filters out private branches. If output is non-empty, it's public.
@@ -238,7 +450,7 @@ check_private_base() {
         log_error "Parent commit $parent_commit belongs to private branch(es):"
         echo "$private_refs"
         log_error "Please rebase your branch onto a public branch (main, master, or feature/*)."
-        log_error "Use './scripts/submit.sh --restore-private' to recover private files if needed."
+        log_error "Use '$0 --restore-private' to recover private files if needed."
         exit 1
     fi
 }
@@ -251,8 +463,6 @@ check_private_base() {
 # Return: None
 # Exit: 1 if checks fail
 check_prerequisites() {
-    ensure_git_root
-
     local current_branch
     current_branch=$(git branch --show-current)
 
@@ -272,13 +482,13 @@ check_prerequisites() {
 
 # --- New Dev Branch Creation Helpers ---
 
-# Description: List remote public branches (exclude develop/dev/*)
+# Description: List remote public branches (exclude develop/dev/*/dev and HEAD)
 # Usage: list_remote_public_branches
 # Params: None
 # Return: List of remote public branches
 list_remote_public_branches() {
     local branches
-    branches=$(git branch -r --list | sed 's/^ *//' | grep -vE '/dev/|/develop|/HEAD' || true)
+    branches=$(git branch -r --list | sed 's/^ *//' | grep -vE '/dev/|/develop$|/dev$|/HEAD' || true)
 
     if [ -z "$branches" ]; then
         log_warn "No remote public branches found."
@@ -300,7 +510,7 @@ create_new_dev_branch() {
 
     if [ -z "$feature_name" ]; then
         log_error "Missing new feature name."
-        echo "Usage: ./submit.sh --new-dev-branch <new-feature> <base>"
+        echo "Usage: $0 --new-dev-branch <new-feature> <base>"
         exit 1
     fi
 
@@ -310,7 +520,7 @@ create_new_dev_branch() {
         git fetch --all --prune >/dev/null 2>&1 || log_warn "Fetch failed. Listing cached remotes..."
         list_remote_public_branches
         echo ""
-        echo "Usage: ./submit.sh --new-dev-branch <new-feature> <base>"
+        echo "Usage: $0 --new-dev-branch <new-feature> <base>"
         exit 1
     fi
 
@@ -368,10 +578,31 @@ create_new_dev_branch() {
         exit 1
     fi
 
+    # Remember current branch to copy script from
+    local original_branch="$CURRENT_BRANCH"
+    
     log_info "Creating $new_branch from $base_remote..."
     git checkout -b "$new_branch" "$base_remote"
     log_info "New dev branch created: $new_branch"
-    log_info "Next steps: ./submit.sh --restore-private && initialize private commit."
+    
+    # Copy this script from original branch to enable --restore-private
+    local script_path
+    script_path=$(get_script_rel_path)
+    if [ -n "$original_branch" ] && git show "$original_branch:$script_path" &>/dev/null; then
+        log_info "Copying $script_path from $original_branch..."
+        local script_dir
+        script_dir=$(dirname "$script_path")
+        if [ "$script_dir" != "." ]; then
+            mkdir -p "$script_dir"
+        fi
+        git show "$original_branch:$script_path" > "$script_path"
+        chmod +x "$script_path"
+    fi
+    
+    echo ""
+    echo "Next steps:"
+    echo "  1. Restore private files:  $0 --restore-private"
+    echo "  2. Initialize private commit:  COMMIT_MSG_PRIVATE='chore: initialize private context' $0 --commit-private"
 }
 
 # --- Smart Parent Detection ---
@@ -387,9 +618,9 @@ find_best_parent() {
     local remote="$1"
     local private_branch="$2"
     
-    # Candidates: ALL remote branches EXCEPT dev/* and HEAD
-    # This ensures we can detect parents like 'joint_module_display' or 'master'
-    local candidates=$(git branch -r --list "$remote/*" | grep -vE "$remote/dev/|$remote/HEAD")
+    # Candidates: ALL remote branches EXCEPT private branches (dev/*, develop, dev) and HEAD
+    # This ensures we only consider public branches like 'main', 'master', 'feature/*'
+    local candidates=$(git branch -r --list "$remote/*" | grep -vE "$remote/dev/|$remote/develop$|$remote/dev$|$remote/HEAD")
     
     local best_base=""
     local best_candidate=""
@@ -431,10 +662,11 @@ find_best_parent() {
 # Description: Get list of changed (modified/untracked) files
 # Usage: get_changed_files
 # Params: None
-# Return: List of filenames (Stdout)
+# Return: List of filenames (Stdout), with directories expanded to individual files
 # Exit: 0
 get_changed_files() {
-    git status --porcelain | sed 's/^...//'
+    # Use git status with -uall to expand directories automatically
+    git status --porcelain -uall | sed 's/^...//'
 }
 
 # Description: Check if a file matches private patterns
@@ -453,18 +685,8 @@ is_private_file() {
 # Return: List of private filenames (Stdout)
 # Exit: 0
 get_private_changes() {
-    local files=$(get_changed_files)
-    local private_files=""
-    
-    OLD_IFS="$IFS"
-    IFS=$'\n'
-    for file in $files; do
-        if is_private_file "$file"; then
-            private_files+="$file"$'\n'
-        fi
-    done
-    IFS="$OLD_IFS"
-    echo "$private_files"
+    # Use grep to batch filter private files (much faster than per-file shell loop)
+    get_changed_files | grep -E "$PRIVATE_REGEX" || true
 }
 
 # Description: Get list of changed public files
@@ -473,18 +695,8 @@ get_private_changes() {
 # Return: List of public filenames (Stdout)
 # Exit: 0
 get_public_changes() {
-    local files=$(get_changed_files)
-    local public_files=""
-    
-    OLD_IFS="$IFS"
-    IFS=$'\n'
-    for file in $files; do
-        if ! is_private_file "$file"; then
-            public_files+="$file"$'\n'
-        fi
-    done
-    IFS="$OLD_IFS"
-    echo "$public_files"
+    # Use grep -v to batch filter public files (much faster than per-file shell loop)
+    get_changed_files | grep -vE "$PRIVATE_REGEX" || true
 }
 
 # Description: Get directory size with caching
@@ -569,11 +781,14 @@ build_status_map() {
 has_selected_ancestor() {
     local dir="$1"
 
-    while [[ "$dir" != "." && "$dir" != "/" ]]; do
+    while [[ "$dir" == */* ]]; do
+        dir="${dir%/*}"  # Bash built-in: remove last path component (faster than dirname)
+        if [[ -z "$dir" ]]; then
+            break
+        fi
         if [[ -n "${SELECTED_DIRS["$dir"]}" ]]; then
             return 0
         fi
-        dir=$(dirname "$dir")
     done
 
     return 1
@@ -814,16 +1029,578 @@ print_classified_files() {
         fi
     done
 
+    # Build a complete set of all directories to skip (including all ancestors)
+    local -A SKIP_DIRS
+    for dir in "${!SELECTED_DIRS[@]}"; do
+        SKIP_DIRS["$dir"]=1
+    done
+
     for entry in "${file_entries[@]}"; do
         IFS=$'\t' read -r type class path labels <<< "$entry"
         if [ "$class" = "$target_class" ]; then
-            local parent
-            parent=$(dirname "$path")
-            if ! has_selected_ancestor "$parent"; then
-                echo "${path} [${labels}]"
+            # Fast path: check if any selected directory is a prefix of this file path
+            local should_skip=0
+            for dir in "${!SELECTED_DIRS[@]}"; do
+                if [[ "$path" == "$dir/"* ]]; then
+                    should_skip=1
+                    break
+                fi
+            done
+            if [ "$should_skip" -eq 1 ]; then
+                continue
+            fi
+            echo "${path} [${labels}]"
+        fi
+    done
+}
+
+# Description: Check if a file is binary using hybrid detection strategy
+# Usage: is_binary_file "filepath"
+# Params:
+#   $1 - File path to check
+# Return: None
+# Exit: 0 if binary, 1 if text
+is_binary_file() {
+    local file="$1"
+    
+    [ ! -f "$file" ] && return 1
+    
+    local ext="${file##*.}"
+    local base="${file##*/}"
+    
+    # Strategy 1: Fast check by common binary extensions
+    if [ "$ext" != "$base" ]; then
+        ext="${ext,,}"  # lowercase
+        case "$ext" in
+            pdf|png|jpg|jpeg|gif|bmp|ico|svg|webp|tiff|psd|ai|eps|raw|cr2|nef|arw|\
+            mp3|mp4|avi|mkv|mov|wmv|flv|wav|ogg|flac|aac|m4a|wma|\
+            zip|tar|gz|bz2|xz|7z|rar|cab|iso|dmg|deb|rpm|\
+            exe|dll|so|dylib|a|o|lib|obj|bin|elf|\
+            dat|db|sqlite|sqlite3|mdb|accdb|\
+            woff|woff2|ttf|otf|eot|\
+            class|jar|pyc|pyo|elc|\
+            doc|docx|xls|xlsx|ppt|pptx|odt|ods|odp)
+                return 0
+                ;;
+        esac
+    fi
+    
+    # Strategy 2: For truly extensionless files, check for NUL bytes in first 8KB
+    if [ "$ext" = "$base" ]; then
+        # No dot at all in filename (e.g., "Makefile", "README")
+        if head -c 8192 "$file" 2>/dev/null | LC_ALL=C grep -q $'\x00'; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Description: Print git diff --stat style output for changed files
+# Usage: print_stat_for_files "file_list" "output_file"
+# Params:
+#   $1 - List of files (newline separated)
+#   $2 - Filename to write to if output is too large
+# Return: Stat output (Stdout) or info message
+# Exit: 0
+print_stat_for_files() {
+    local changes="$1"
+    local diff_file="$2"
+    
+    if [ -z "$changes" ]; then
+        return
+    fi
+    
+    local stat_output=""
+    local total_files=0
+    local total_insertions=0
+    local total_deletions=0
+    local max_name_len=0
+    local max_changes=0
+    
+    # Get terminal width for adaptive bar length (like git diff --stat)
+    local term_width="${COLUMNS:-80}"
+    if command -v tput &>/dev/null; then
+        term_width=$(tput cols 2>/dev/null || echo 80)
+    fi
+    
+    # Build a set of tracked files (single git call)
+    declare -A tracked_files_set
+    while IFS= read -r -d '' tracked_file; do
+        tracked_files_set["$tracked_file"]=1
+    done < <(git ls-files -z 2>/dev/null)
+    
+    # First pass: collect all file info and find max name length
+    declare -a file_info_list=()
+    
+    # Separate tracked and untracked files for batch processing
+    local tracked_files=""
+    local untracked_files=""
+    
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $changes; do
+        [ -z "$file" ] && continue
+        
+        local name_len=${#file}
+        if [ "$name_len" -gt "$max_name_len" ]; then
+            max_name_len=$name_len
+        fi
+        
+        if [ -n "${tracked_files_set["$file"]}" ]; then
+            tracked_files+="$file"$'\n'
+        else
+            untracked_files+="$file"$'\n'
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    # Process tracked files with batch git diff --numstat
+    if [ -n "$tracked_files" ]; then
+        while IFS=$'\t' read -r insertions deletions file; do
+            [ -z "$file" ] && continue
+            # Handle binary files (shows - instead of numbers)
+            [ "$insertions" = "-" ] && insertions=0
+            [ "$deletions" = "-" ] && deletions=0
+            file_info_list+=("tracked|$file|$insertions|$deletions")
+            total_insertions=$((total_insertions + insertions))
+            total_deletions=$((total_deletions + deletions))
+            total_files=$((total_files + 1))
+        done < <(echo "$tracked_files" | xargs -d '\n' git diff --numstat -- 2>/dev/null)
+    fi
+    
+    # Process untracked files: use extension-based binary detection (fast)
+    # Then batch wc -l for text files
+    local text_files=""
+    local binary_files=""
+    
+    # Build list of known binary extensions for fast grep-based detection
+    local binary_ext_pattern='\.(pdf|png|jpg|jpeg|gif|bmp|ico|svg|webp|tiff|psd|ai|eps|raw|cr2|nef|arw|mp3|mp4|avi|mkv|mov|wmv|flv|wav|ogg|flac|aac|m4a|wma|zip|tar|gz|bz2|xz|7z|rar|cab|iso|dmg|deb|rpm|exe|dll|so|dylib|a|o|lib|obj|bin|elf|dat|db|sqlite|sqlite3|mdb|accdb|woff|woff2|ttf|otf|eot|class|jar|pyc|pyo|elc|doc|docx|xls|xlsx|ppt|pptx|odt|ods|odp)$'
+    
+    # Fast extension-based classification
+    binary_files=$(echo "$untracked_files" | grep -iE "$binary_ext_pattern" || true)
+    text_files=$(echo "$untracked_files" | grep -ivE "$binary_ext_pattern" || true)
+    
+    # Process binary files with batch stat
+    if [ -n "$binary_files" ]; then
+        while IFS=$'\t' read -r size file; do
+            [ -z "$file" ] && continue
+            file_info_list+=("binary|$file|$size|0")
+            total_files=$((total_files + 1))
+        done < <(echo "$binary_files" | xargs -d '\n' stat -c '%s	%n' 2>/dev/null || true)
+    fi
+    
+    # Process text files with batch wc -l (using awk for fast parsing)
+    if [ -n "$text_files" ]; then
+        # Use a temporary file to avoid subshell variable scope issues
+        local wc_tmp=$(mktemp)
+        echo "$text_files" | xargs -d '\n' wc -l 2>/dev/null > "$wc_tmp" || true
+        
+        # Parse wc output with awk (much faster than shell while-read loop)
+        # wc -l output format: "  123 filename" or "123 filename"
+        # Last line is "total" when multiple files - skip it
+        while IFS='|' read -r lines file; do
+            [ -z "$file" ] && continue
+            file_info_list+=("untracked|$file|$lines|0")
+            total_insertions=$((total_insertions + lines))
+            total_files=$((total_files + 1))
+        done < <(awk '!/^ *[0-9]+ +total$/ && NF >= 2 {
+            lines = $1
+            # Reconstruct filename (handles spaces in names)
+            $1 = ""
+            file = $0
+            sub(/^ +/, "", file)
+            print lines "|" file
+        }' "$wc_tmp")
+        
+        rm -f "$wc_tmp"
+    fi
+    
+    # Second pass: format output with awk (much faster than shell loop)
+    # Write file_info_list to temp file for awk processing
+    local format_tmp=$(mktemp)
+    printf '%s\n' "${file_info_list[@]}" > "$format_tmp"
+    
+    stat_output=$(awk -F'|' -v max_len="$max_name_len" '
+    BEGIN {
+        # Pre-generate + and - characters for bar construction
+        for (i = 1; i <= 50; i++) {
+            plus_chars = plus_chars "+"
+            minus_chars = minus_chars "-"
+        }
+    }
+    {
+        status = $1
+        file = $2
+        value1 = $3 + 0
+        value2 = $4 + 0
+        
+        if (status == "binary") {
+            # Binary file: show size in human-readable format
+            size_bytes = value1
+            if (size_bytes >= 1048576) {
+                size_human = int(size_bytes / 1048576) "M"
+            } else if (size_bytes >= 1024) {
+                size_human = int(size_bytes / 1024) "K"
+            } else {
+                size_human = size_bytes "B"
+            }
+            printf " %-" max_len "s | Bin 0 -> %s (untracked)\n", file, size_human
+        } else {
+            insertions = value1
+            deletions = value2
+            total_changes = insertions + deletions
+            bar_len = (total_changes > 50) ? 50 : total_changes
+            plus_len = (total_changes > 0) ? int(bar_len * insertions / total_changes) : 0
+            minus_len = bar_len - plus_len
+            
+            bar = substr(plus_chars, 1, plus_len) substr(minus_chars, 1, minus_len)
+            
+            suffix = ""
+            if (status == "untracked") {
+                suffix = " (untracked)"
+            }
+            
+            printf " %-" max_len "s | %4d %s%s\n", file, total_changes, bar, suffix
+        }
+    }
+    ' "$format_tmp")
+    
+    rm -f "$format_tmp"
+    
+    # Add summary line
+    if [ "$total_files" -gt 0 ]; then
+        local summary=""
+        summary=$(printf " %d file%s changed" "$total_files" "$([ $total_files -gt 1 ] && echo 's')")
+        if [ "$total_insertions" -gt 0 ]; then
+            summary+=", $total_insertions insertion"
+            [ "$total_insertions" -gt 1 ] && summary+="s"
+            summary+="(+)"
+        fi
+        if [ "$total_deletions" -gt 0 ]; then
+            summary+=", $total_deletions deletion"
+            [ "$total_deletions" -gt 1 ] && summary+="s"
+            summary+="(-)"
+        fi
+        stat_output+="$summary"$'\n'
+    fi
+    
+    # Line limit check
+    local line_count
+    line_count=$(echo "$stat_output" | wc -l)
+    
+    if [ "$line_count" -gt "$DIFF_LINE_LIMIT" ]; then
+        echo "$stat_output" > "$diff_file"
+        log_warn "Status output is too large ($line_count lines)."
+        log_info "Status content has been written to: $diff_file"
+    else
+        echo "$stat_output"
+    fi
+}
+
+# Description: Generate stat output string (without line limit check)
+# Usage: generate_stat_output "file_list"
+# Params:
+#   $1 - List of files (newline separated)
+# Return: Stat output string (Stdout)
+# Exit: 0
+generate_stat_output() {
+    local changes="$1"
+    
+    if [ -z "$changes" ]; then
+        return
+    fi
+    
+    local stat_output=""
+    local total_files=0
+    local total_insertions=0
+    local total_deletions=0
+    local max_name_len=0
+    
+    # Build a set of tracked files (single git call)
+    declare -A tracked_files_set
+    while IFS= read -r -d '' tracked_file; do
+        tracked_files_set["$tracked_file"]=1
+    done < <(git ls-files -z 2>/dev/null)
+    
+    # First pass: collect all file info and find max name length
+    declare -a file_info_list=()
+    
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $changes; do
+        [ -z "$file" ] && continue
+        
+        local name_len=${#file}
+        if [ "$name_len" -gt "$max_name_len" ]; then
+            max_name_len=$name_len
+        fi
+        
+        if [ -n "${tracked_files_set["$file"]}" ]; then
+            # Tracked file: get diff stats
+            local numstat
+            numstat=$(git diff --numstat -- "$file" 2>/dev/null | head -1)
+            if [ -n "$numstat" ]; then
+                local insertions deletions
+                insertions=$(echo "$numstat" | awk '{print $1}')
+                deletions=$(echo "$numstat" | awk '{print $2}')
+                [ "$insertions" = "-" ] && insertions=0
+                [ "$deletions" = "-" ] && deletions=0
+                file_info_list+=("tracked|$file|$insertions|$deletions")
+                total_insertions=$((total_insertions + insertions))
+                total_deletions=$((total_deletions + deletions))
+                total_files=$((total_files + 1))
+            fi
+        else
+            # Untracked file: detect binary using is_binary_file()
+            if [ -f "$file" ]; then
+                if is_binary_file "$file"; then
+                    local size
+                    size=$(stat -c%s "$file" 2>/dev/null || echo "0")
+                    file_info_list+=("binary|$file|$size|0")
+                    total_files=$((total_files + 1))
+                else
+                    local lines
+                    lines=$(wc -l < "$file" 2>/dev/null || echo "0")
+                    lines=$(echo "$lines" | tr -d ' ')
+                    file_info_list+=("untracked|$file|$lines|0")
+                    total_insertions=$((total_insertions + lines))
+                    total_files=$((total_files + 1))
+                fi
             fi
         fi
     done
+    IFS="$OLD_IFS"
+    
+    # Second pass: format output with aligned columns
+    for info in "${file_info_list[@]}"; do
+        IFS='|' read -r status file value1 value2 <<< "$info"
+        
+        if [ "$status" = "binary" ]; then
+            local size_bytes=$value1
+            local size_human
+            if [ "$size_bytes" -ge 1048576 ]; then
+                size_human="$((size_bytes / 1048576))M"
+            elif [ "$size_bytes" -ge 1024 ]; then
+                size_human="$((size_bytes / 1024))K"
+            else
+                size_human="${size_bytes}B"
+            fi
+            stat_output+=" $(printf "%-${max_name_len}s" "$file") | Bin 0 -> $size_human (untracked)"$'\n'
+        else
+            local insertions=$value1
+            local deletions=$value2
+            local total_changes=$((insertions + deletions))
+            local bar_len=$((total_changes > 50 ? 50 : total_changes))
+            local plus_len=$((bar_len * insertions / (total_changes > 0 ? total_changes : 1)))
+            local minus_len=$((bar_len - plus_len))
+            
+            local bar=""
+            for ((i=0; i<plus_len; i++)); do bar+="+"; done
+            for ((i=0; i<minus_len; i++)); do bar+="-"; done
+            
+            local suffix=""
+            if [ "$status" = "untracked" ]; then
+                suffix=" (untracked)"
+            fi
+            
+            stat_output+=" $(printf "%-${max_name_len}s" "$file") | $(printf "%4d" "$total_changes") ${bar}${suffix}"$'\n'
+        fi
+    done
+    
+    # Add summary line
+    if [ "$total_files" -gt 0 ]; then
+        local summary=""
+        summary=$(printf " %d file%s changed" "$total_files" "$([ $total_files -gt 1 ] && echo 's')")
+        if [ "$total_insertions" -gt 0 ]; then
+            summary+=", $total_insertions insertion"
+            [ "$total_insertions" -gt 1 ] && summary+="s"
+            summary+="(+)"
+        fi
+        if [ "$total_deletions" -gt 0 ]; then
+            summary+=", $total_deletions deletion"
+            [ "$total_deletions" -gt 1 ] && summary+="s"
+            summary+="(-)"
+        fi
+        stat_output+="$summary"$'\n'
+    fi
+    
+    echo "$stat_output"
+}
+
+# Description: Generate diff output string (without line limit check)
+# Usage: generate_diff_output "file_list"
+# Params:
+#   $1 - List of files to diff
+# Return: Diff content string (Stdout)
+# Exit: 0
+generate_diff_output() {
+    local changes="$1"
+    
+    if [ -z "$changes" ]; then
+        return
+    fi
+    
+    local raw_diff=""
+    local tracked_files=""
+    local untracked_text_files=""
+    local untracked_binary_files=""
+    
+    # Classify files into tracked and untracked (text vs binary)
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $changes; do
+        [ -z "$file" ] && continue
+        if git ls-files --error-unmatch "$file" &>/dev/null; then
+            tracked_files+="$file"$'\n'
+        else
+            if is_binary_file "$file"; then
+                untracked_binary_files+="$file"$'\n'
+            else
+                untracked_text_files+="$file"$'\n'
+            fi
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    # Tracked files diff
+    if [ -n "$tracked_files" ]; then
+        local tracked_diff
+        tracked_diff=$(echo "$tracked_files" | xargs git diff --color=never -- 2>/dev/null)
+        if [ -n "$tracked_diff" ]; then
+            raw_diff+="$tracked_diff"$'\n'
+        fi
+    fi
+    
+    # Untracked text files: use git diff --no-index
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $untracked_text_files; do
+        [ -z "$file" ] && continue
+        if [ -f "$file" ]; then
+            local file_diff
+            file_diff=$(git diff --no-index --color=never /dev/null "$file" 2>/dev/null || true)
+            if [ -n "$file_diff" ]; then
+                raw_diff+="$file_diff"$'\n'
+            fi
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    # Untracked binary files: show Git-style message
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $untracked_binary_files; do
+        [ -z "$file" ] && continue
+        if [ -f "$file" ]; then
+            raw_diff+="diff --git a/dev/null b/$file"$'\n'
+            raw_diff+="new file mode 100644"$'\n'
+            raw_diff+="Binary files /dev/null and $file differ"$'\n'
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    echo "$raw_diff"
+}
+
+# Description: Print combined stat + diff output (like git show)
+# Usage: print_show_for_files "file_list" "output_file"
+# Params:
+#   $1 - List of files (newline separated)
+#   $2 - Filename to write to if output is too large
+# Return: Combined output (Stdout) or info message
+# Exit: 0
+print_show_for_files() {
+    local changes="$1"
+    local diff_file="$2"
+    
+    if [ -z "$changes" ]; then
+        return
+    fi
+    
+    # Generate both parts
+    local stat_output
+    local diff_output
+    stat_output=$(generate_stat_output "$changes")
+    diff_output=$(generate_diff_output "$changes")
+    
+    # Combine: stat + separator + diff
+    local combined_output=""
+    if [ -n "$stat_output" ]; then
+        combined_output+="$stat_output"
+        combined_output+=$'\n'
+    fi
+    if [ -n "$diff_output" ]; then
+        if [ -n "$stat_output" ]; then
+            combined_output+=$'\n'$'\n'
+        fi
+        combined_output+="$diff_output"
+    fi
+    
+    # Check total line count
+    local line_count
+    line_count=$(echo "$combined_output" | wc -l)
+    
+    if [ "$line_count" -gt "$DIFF_LINE_LIMIT" ]; then
+        echo "$combined_output" > "$diff_file"
+        log_warn "Output is too large ($line_count lines)."
+        log_info "Content has been written to: $diff_file"
+    else
+        # Re-output with colors for diff part
+        if [ -n "$stat_output" ]; then
+            echo "$stat_output"
+        fi
+        
+        if [ -n "$diff_output" ] && [ -n "$stat_output" ]; then
+            echo ""
+            echo ""
+        fi
+
+        # Re-generate diff with color
+        if [ -n "$changes" ]; then
+            local tracked_files=""
+            local untracked_text_files=""
+            local untracked_binary_files=""
+            
+            OLD_IFS="$IFS"
+            IFS=$'\n'
+            for file in $changes; do
+                [ -z "$file" ] && continue
+                if git ls-files --error-unmatch "$file" &>/dev/null; then
+                    tracked_files+="$file"$'\n'
+                else
+                    if is_binary_file "$file"; then
+                        untracked_binary_files+="$file"$'\n'
+                    else
+                        untracked_text_files+="$file"$'\n'
+                    fi
+                fi
+            done
+            IFS="$OLD_IFS"
+            
+            if [ -n "$tracked_files" ]; then
+                echo "$tracked_files" | xargs git diff --color=always -- 2>/dev/null
+            fi
+            
+            OLD_IFS="$IFS"
+            IFS=$'\n'
+            for file in $untracked_text_files; do
+                [ -z "$file" ] && continue
+                if [ -f "$file" ]; then
+                    git diff --no-index --color=always /dev/null "$file" 2>/dev/null || true
+                fi
+            done
+            for file in $untracked_binary_files; do
+                [ -z "$file" ] && continue
+                if [ -f "$file" ]; then
+                    echo "diff --git a/dev/null b/$file"
+                    echo "new file mode 100644"
+                    echo "Binary files /dev/null and $file differ"
+                fi
+            done
+            IFS="$OLD_IFS"
+        fi
+    fi
 }
 
 # Description: Print git diff, writing to file if too large
@@ -841,21 +1618,106 @@ print_diff_safe() {
         return
     fi
     
-    local raw_diff=$(echo "$changes" | xargs git diff --color=never --)
-    local line_count=$(echo "$raw_diff" | wc -l)
+    local raw_diff=""
+    local tracked_files=""
+    local untracked_text_files=""
+    local untracked_binary_files=""
+    
+    # Classify files into tracked and untracked (text vs binary)
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $changes; do
+        [ -z "$file" ] && continue
+        if git ls-files --error-unmatch "$file" &>/dev/null; then
+            tracked_files+="$file"$'\n'
+        else
+            # Check if untracked file is binary
+            if is_binary_file "$file"; then
+                untracked_binary_files+="$file"$'\n'
+            else
+                untracked_text_files+="$file"$'\n'
+            fi
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    # Tracked files diff (git handles binary files automatically)
+    if [ -n "$tracked_files" ]; then
+        local tracked_diff
+        tracked_diff=$(echo "$tracked_files" | xargs git diff --color=never -- 2>/dev/null)
+        if [ -n "$tracked_diff" ]; then
+            raw_diff+="$tracked_diff"$'\n'
+        fi
+    fi
+    
+    # Untracked text files: use git diff --no-index
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $untracked_text_files; do
+        [ -z "$file" ] && continue
+        if [ -f "$file" ]; then
+            # git diff --no-index returns non-zero exit code which is normal
+            local file_diff
+            file_diff=$(git diff --no-index --color=never /dev/null "$file" 2>/dev/null || true)
+            if [ -n "$file_diff" ]; then
+                raw_diff+="$file_diff"$'\n'
+            fi
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    # Untracked binary files: show Git-style "Binary files differ" message
+    OLD_IFS="$IFS"
+    IFS=$'\n'
+    for file in $untracked_binary_files; do
+        [ -z "$file" ] && continue
+        if [ -f "$file" ]; then
+            raw_diff+="diff --git a/dev/null b/$file"$'\n'
+            raw_diff+="new file mode 100644"$'\n'
+            raw_diff+="Binary files /dev/null and $file differ"$'\n'
+        fi
+    done
+    IFS="$OLD_IFS"
+    
+    local line_count
+    line_count=$(echo "$raw_diff" | wc -l)
     
     if [ "$line_count" -gt "$DIFF_LINE_LIMIT" ]; then
         echo "$raw_diff" > "$diff_file"
         log_warn "Diff output is too large ($line_count lines)."
         log_info "Diff content has been written to: $diff_file"
     else
-        echo "$changes" | xargs git diff --color=always --
+        # Re-generate with color output
+        if [ -n "$tracked_files" ]; then
+            echo "$tracked_files" | xargs git diff --color=always -- 2>/dev/null
+        fi
+        OLD_IFS="$IFS"
+        IFS=$'\n'
+        for file in $untracked_text_files; do
+            [ -z "$file" ] && continue
+            if [ -f "$file" ]; then
+                git diff --no-index --color=always /dev/null "$file" 2>/dev/null || true
+            fi
+        done
+        # Binary files: print message (no color needed)
+        for file in $untracked_binary_files; do
+            [ -z "$file" ] && continue
+            if [ -f "$file" ]; then
+                echo "diff --git a/dev/null b/$file"
+                echo "new file mode 100644"
+                echo "Binary files /dev/null and $file differ"
+            fi
+        done
+        IFS="$OLD_IFS"
     fi
 }
 
 # --- Restore Private Files ---
 
 # Description: Restore private files from a specified source or auto-detect from parent history.
+#              Uses git ls-tree + grep to find matching files, then restores them individually.
+#              Excludes this script itself during restore (to avoid overwriting while running),
+#              then restores the script at the end.
 # Usage: restore_private_files [source_ref]
 # Params:
 #   $1 - (Optional) Source ref (branch name or commit hash). If empty, tries auto-detection.
@@ -863,7 +1725,10 @@ print_diff_safe() {
 # Exit: 0 on success, 1 on failure
 restore_private_files() {
     local source_ref="$1"
-    local pathspecs=""
+    
+    # Get this script's path relative to git root
+    local script_path
+    script_path=$(get_script_rel_path)
     
     # 1. Auto-detection if source_ref is missing
     if [ -z "$source_ref" ]; then
@@ -902,22 +1767,62 @@ restore_private_files() {
         fi
     fi
 
-    # 2. Restore
-    # Convert regex patterns to pathspecs (remove anchors)
-    for pattern in "${PRIVATE_PATTERNS[@]}"; do
-        clean_path="${pattern#^}"
-        pathspecs="$pathspecs $clean_path"
-    done
+    # 2. Get list of ALL files in source commit, then filter by PRIVATE_PATTERNS
+    log_info "Scanning private files in '$source_ref'..."
+    local private_files
+    private_files=$(git ls-tree -r --name-only "$source_ref" 2>/dev/null | grep -E "$PRIVATE_REGEX" || true)
     
-    log_info "Restoring private files from '$source_ref'..."
-    log_info "Targets: $pathspecs"
-    
-    if git checkout "$source_ref" -- $pathspecs; then
-        log_info "Successfully restored private files."
-    else
-        log_error "Failed to restore private files. Check if source '$source_ref' exists."
-        exit 1
+    if [ -z "$private_files" ]; then
+        log_warn "No private files found in source '$source_ref'."
+        return 0
     fi
+    
+    local file_count
+    file_count=$(echo "$private_files" | wc -l)
+    log_info "Found $file_count private files to restore."
+    
+    # 3. Restore each matched file (excluding this script during restore)
+    local restored_count=0
+    local script_found=0
+    
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        
+        # Skip this script, restore it last
+        if [ "$file" = "$script_path" ]; then
+            script_found=1
+            continue
+        fi
+        
+        # Create parent directory if needed
+        local file_dir
+        file_dir=$(dirname "$file")
+        if [ "$file_dir" != "." ] && [ ! -d "$file_dir" ]; then
+            mkdir -p "$file_dir"
+        fi
+        
+        # Restore the file
+        if git checkout "$source_ref" -- "$file" 2>/dev/null; then
+            restored_count=$((restored_count + 1))
+        else
+            log_warn "Failed to restore: $file"
+        fi
+    done <<< "$private_files"
+    
+    # 4. Finally restore this script itself (if it was found in source)
+    if [ "$script_found" -eq 1 ]; then
+        local script_dir
+        script_dir=$(dirname "$script_path")
+        if [ "$script_dir" != "." ] && [ ! -d "$script_dir" ]; then
+            mkdir -p "$script_dir"
+        fi
+        if git checkout "$source_ref" -- "$script_path" 2>/dev/null; then
+            restored_count=$((restored_count + 1))
+            log_info "Restored $script_path (self)."
+        fi
+    fi
+    
+    log_info "Successfully restored $restored_count private files."
 }
 
 # --- Visibility Detection ---
@@ -993,9 +1898,15 @@ detect_repo_visibility() {
 # 3. Main Logic
 # ==========================================
 
-# 3.1 Early Exit for Help (Bypass Git Root Check)
+# 3.1 Early Exit for Help and Init (Bypass Git Root Check)
 if [[ "$1" == "--help" ]]; then
     show_help
+    exit 0
+fi
+
+# 3.1.1 Handle --init (Bypass Git Root Check - creates new repo)
+if [[ "$1" == "--init" ]]; then
+    init_repository
     exit 0
 fi
 
@@ -1057,11 +1968,17 @@ case "$cmd" in
         ;;
         
     --print-private-status)
-        get_private_changes
+        changes=$(get_private_changes)
+        if [ -n "$changes" ]; then
+            print_stat_for_files "$changes" "$PRIVATE_DIFF_FILE"
+        fi
         ;;
         
     --print-public-status)
-        get_public_changes
+        changes=$(get_public_changes)
+        if [ -n "$changes" ]; then
+            print_stat_for_files "$changes" "$PUBLIC_DIFF_FILE"
+        fi
         ;;
 
     --print-private-diff)
@@ -1079,24 +1996,16 @@ case "$cmd" in
         ;;
 
     --print-private-show)
-        echo "=== Private Files List ==="
-        get_private_changes
-        echo ""
-        echo "=== Private Files Diff ==="
         changes=$(get_private_changes)
         if [ -n "$changes" ]; then
-             print_diff_safe "$changes" "$PRIVATE_DIFF_FILE"
+            print_show_for_files "$changes" "$PRIVATE_DIFF_FILE"
         fi
         ;;
 
     --print-public-show)
-        echo "=== Public Files List ==="
-        get_public_changes
-        echo ""
-        echo "=== Public Files Diff ==="
         changes=$(get_public_changes)
         if [ -n "$changes" ]; then
-             print_diff_safe "$changes" "$PUBLIC_DIFF_FILE"
+            print_show_for_files "$changes" "$PUBLIC_DIFF_FILE"
         fi
         ;;
         
@@ -1113,20 +2022,20 @@ case "$cmd" in
         ;;
         
     --commit-private)
+        # Check for changes FIRST - if no changes, exit cleanly without requiring env var
         changes=$(get_private_changes)
         if [ -z "$changes" ]; then
             log_info "No private changes to commit."
             exit 0
         fi
         
+        # Only require commit message if there are actual changes
         msg="${COMMIT_MSG_PRIVATE}"
         if [ -z "$msg" ]; then
             log_error "Missing commit message for Private changes."
             echo ""
-            echo "The following Private files have changes waiting to be committed:"
-            echo "$changes" | sed 's/^/- /'
-            echo ""
             echo "Please set the 'COMMIT_MSG_PRIVATE' environment variable with a descriptive message before running this command."
+            echo "Example: COMMIT_MSG_PRIVATE='Your message' $0 --commit-private"
             exit 1
         fi
         
@@ -1136,20 +2045,20 @@ case "$cmd" in
         ;;
         
     --commit-public)
+        # Check for changes FIRST - if no changes, exit cleanly without requiring env var
         changes=$(get_public_changes)
         if [ -z "$changes" ]; then
             log_info "No public changes to commit."
             exit 0
         fi
         
+        # Only require commit message if there are actual changes
         msg="${COMMIT_MSG_PUBLIC}"
         if [ -z "$msg" ]; then
             log_error "Missing commit message for Public changes."
             echo ""
-            echo "The following Public files have changes waiting to be committed:"
-            echo "$changes" | sed 's/^/- /'
-            echo ""
             echo "Please set the 'COMMIT_MSG_PUBLIC' environment variable with a descriptive message before running this command."
+            echo "Example: COMMIT_MSG_PUBLIC='Your message' $0 --commit-public"
             exit 1
         fi
         
@@ -1212,43 +2121,69 @@ case "$cmd" in
         log_info "Fetching $primary_remote..."
         git fetch "$primary_remote" || log_warn "Fetch failed. Proceeding with local cache..."
 
-        # Setup Public Branch Locally
-        # 1. Check if local public branch exists
-        if git show-ref --verify --quiet "refs/heads/$BRANCH_PUBLIC"; then
-            log_info "Public branch '$BRANCH_PUBLIC' exists locally."
-        else
-            log_info "Public branch '$BRANCH_PUBLIC' does not exist locally."
+        # Check if there are no remote PUBLIC branches (only private branches like develop/dev/* exist)
+        # This handles the case of a new repository where only 'develop' has been pushed
+        remote_public_branch_count=$(git branch -r --list "$primary_remote/*" | grep -vE "$primary_remote/dev/|$primary_remote/develop$|$primary_remote/dev$|$primary_remote/HEAD" | wc -l)
+        if [ "$remote_public_branch_count" -eq 0 ]; then
+            log_info "No remote public branches detected (only private branches exist on remote)."
             
-            # 2. Check if remote public branch exists
-            if git show-ref --verify --quiet "refs/remotes/$primary_remote/$BRANCH_PUBLIC"; then
-                log_info "Tracking remote branch '$primary_remote/$BRANCH_PUBLIC'..."
-                git branch --track "$BRANCH_PUBLIC" "$primary_remote/$BRANCH_PUBLIC"
+            # Check if local public branch already exists (e.g., created by --init)
+            if git show-ref --verify --quiet "refs/heads/$BRANCH_PUBLIC"; then
+                log_info "Local public branch '$BRANCH_PUBLIC' already exists. Switching to it..."
+                git checkout "$BRANCH_PUBLIC"
             else
-                log_info "Remote public branch not found. Detecting best parent..."
+                log_info "Creating orphan branch '$BRANCH_PUBLIC' for public-only content..."
                 
-                # 3. Smart Parent Detection
-                best_base_hash=$(find_best_parent "$primary_remote" "$BRANCH_PRIVATE")
+                # Create orphan branch (no parent commit)
+                git checkout --orphan "$BRANCH_PUBLIC"
+                # Remove all files from index (orphan branch starts with staged files from previous HEAD)
+                git rm -rf --cached . >/dev/null 2>&1 || true
+                # Clean untracked files that might conflict
+                git clean -fd >/dev/null 2>&1 || true
+                # Create initial empty commit
+                git commit --allow-empty -m "Initial empty commit for public branch"
                 
-                if [ -n "$best_base_hash" ]; then
-                    log_info "Creating '$BRANCH_PUBLIC' based on detected parent hash: $best_base_hash..."
-                    git branch "$BRANCH_PUBLIC" "$best_base_hash"
+                log_info "Orphan branch '$BRANCH_PUBLIC' created with empty initial commit."
+            fi
+        else
+            # Setup Public Branch Locally (normal case: remote has public branches)
+            # 1. Check if local public branch exists
+            if git show-ref --verify --quiet "refs/heads/$BRANCH_PUBLIC"; then
+                log_info "Public branch '$BRANCH_PUBLIC' exists locally."
+            else
+                log_info "Public branch '$BRANCH_PUBLIC' does not exist locally."
+                
+                # 2. Check if remote public branch exists
+                if git show-ref --verify --quiet "refs/remotes/$primary_remote/$BRANCH_PUBLIC"; then
+                    log_info "Tracking remote branch '$primary_remote/$BRANCH_PUBLIC'..."
+                    git branch --track "$BRANCH_PUBLIC" "$primary_remote/$BRANCH_PUBLIC"
                 else
-                    # Fallback to main/master if detection fails
-                    fallback_branch=$(get_main_branch_name "$primary_remote")
-                    log_warn "No suitable parent detected. Fallback to '$primary_remote/$fallback_branch'..."
+                    log_info "Remote public branch not found. Detecting best parent..."
                     
-                    if git show-ref --verify --quiet "refs/remotes/$primary_remote/$fallback_branch"; then
-                         git branch "$BRANCH_PUBLIC" "$primary_remote/$fallback_branch"
+                    # 3. Smart Parent Detection
+                    best_base_hash=$(find_best_parent "$primary_remote" "$BRANCH_PRIVATE")
+                    
+                    if [ -n "$best_base_hash" ]; then
+                        log_info "Creating '$BRANCH_PUBLIC' based on detected parent hash: $best_base_hash..."
+                        git branch "$BRANCH_PUBLIC" "$best_base_hash"
                     else
-                         log_error "Cannot find '$primary_remote/$fallback_branch' to base new feature branch on."
-                         exit 1
+                        # Fallback to main/master if detection fails
+                        fallback_branch=$(get_main_branch_name "$primary_remote")
+                        log_warn "No suitable parent detected. Fallback to '$primary_remote/$fallback_branch'..."
+                        
+                        if git show-ref --verify --quiet "refs/remotes/$primary_remote/$fallback_branch"; then
+                             git branch "$BRANCH_PUBLIC" "$primary_remote/$fallback_branch"
+                        else
+                             log_error "Cannot find '$primary_remote/$fallback_branch' to base new feature branch on."
+                             exit 1
+                        fi
                     fi
                 fi
             fi
-        fi
 
-        # Switch to Public Branch
-        git checkout "$BRANCH_PUBLIC"
+            # Switch to Public Branch
+            git checkout "$BRANCH_PUBLIC"
+        fi
 
         # Pull latest changes if tracked
         if git rev-parse --verify @{u} >/dev/null 2>&1; then
