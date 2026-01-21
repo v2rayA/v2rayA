@@ -19,7 +19,7 @@
 - [x] 理解构建和配置系统
 
 ### httpupgrade 传输类型支持修复 (2026-01-04)
-- [x] 识别问题：v2rayA 不支持 httpupgrade 传输类型，报错 "unexpected transport type: httpupgrade"
+- [x] 识别问题：v2rayA 不支持 httpupgrade 传输类型
 - [x] 添加 HTTPUpgradeSettings 结构体到 coreObj.go
 - [x] 在 StreamSettings 中添加 HTTPUpgradeSettings 字段
 - [x] 在 v2ray.go Configuration() 方法中添加 httpupgrade case
@@ -29,38 +29,25 @@
 - [x] 部署到系统 (/usr/bin/v2raya)
 - [x] 验证节点导入功能正常
 
+### URL 查询参数空格问题全面修复 (2026-01-22)
+- [x] 修复 VLESS 链接 `type=ws+` 解析问题
+- [x] 修复 Trojan 链接 `type=tcp+` 解析问题
+- [x] 修复 VLESS 链接 `fp=chrome+` 解析问题
+- [x] 修复 VMess 链接 `net=none` 解析问题
+- [x] 修复 VLESS 链接 `type=raw` 解析问题
+- [x] 修复 VLESS 链接 `type=splithttp` 解析问题
+- [x] 修复 REALITY 配置 `invalid "shortId": 2404` 问题
+- [x] 预防性修复：对所有 URL 查询参数应用 TrimSpace
+- [x] 验证代码编译成功
+
 **修改的文件：**
-1. `service/core/coreObj/coreObj.go`
-   - 添加 HTTPUpgradeSettings 结构体
-   - 在 StreamSettings 中添加对应字段
+1. `service/core/serverObj/v2ray.go`
+   - ParseVlessURL：所有 Query().Get() 参数应用 TrimSpace
+   - ParseVmessURL：添加 none→tcp 转换
+   - 添加传输协议别名转换：raw→tcp, splithttp→xhttp
 
-2. `service/core/serverObj/v2ray.go`
-   - Configuration() 方法添加 httpupgrade case
-   - ExportToURL() 方法添加 httpupgrade case
-
-**代码片段：**
-```go
-// coreObj.go
-type HTTPUpgradeSettings struct {
-    Path string `json:"path,omitempty"`
-    Host string `json:"host,omitempty"`
-}
-
-// StreamSettings 中
-HTTPUpgradeSettings *HTTPUpgradeSettings `json:"httpupgradeSettings,omitempty"`
-
-// v2ray.go Configuration()
-case "httpupgrade":
-    core.StreamSettings.HTTPUpgradeSettings = &coreObj.HTTPUpgradeSettings{
-        Path: v.Path,
-        Host: v.Host,
-    }
-
-// v2ray.go ExportToURL()
-case "httpupgrade":
-    setValue(&query, "path", v.Path)
-    setValue(&query, "host", v.Host)
-```
+2. `service/core/serverObj/trojan.go`
+   - ParseTrojanURL：所有 Query().Get() 参数应用 TrimSpace
 
 ## 当前进行中
 - 无活跃开发任务
@@ -102,26 +89,28 @@ case "httpupgrade":
 | h2/http | ✓ 完整支持 |
 | quic | ✓ 完整支持 |
 | xhttp | ✓ 完整支持 |
-| **httpupgrade** | ✓ **新增支持 (2026-01-04)** |
+| httpupgrade | ✓ 支持 (2026-01-04) |
+
+### 传输协议别名映射
+| 别名 | 映射到 |
+|------|--------|
+| raw | tcp |
+| none | tcp |
+| splithttp | xhttp |
+| websocket | ws |
 
 ## 已知问题
 1. ngui 新前端功能尚未完全对等 gui
 2. 部分文档需要更新
 
-## 里程碑
-
-### v2.0 (已发布)
-- Web GUI 界面
-- 多协议支持
-- 透明代理
-- 订阅管理
-
-### 后续版本规划
-- 新前端完成并替换旧版
-- nftables 默认支持
-- 更多协议扩展
-
 ## 变更日志
+
+### 2026-01-22
+- **URL 查询参数空格问题全面修复**
+  - 对 ParseVlessURL 和 ParseTrojanURL 中所有 Query().Get() 参数应用 TrimSpace
+  - 添加传输协议别名转换：raw→tcp, none→tcp, splithttp→xhttp
+  - 修复 7 个具体的解析错误场景
+  - 代码编译验证通过
 
 ### 2026-01-04
 - 初始化项目记忆库

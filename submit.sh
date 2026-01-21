@@ -32,6 +32,7 @@ PRIVATE_PATTERNS=(
     "^scripts/"
     "^images/"
     "^test\.sh"
+    "^submit\.sh"
     "^\.continue/"
 )
 
@@ -1156,17 +1157,42 @@ print_stat_for_files() {
     IFS="$OLD_IFS"
     
     # Process tracked files with batch git diff --numstat
+    # Need to handle both staged (--cached) and unstaged changes
     if [ -n "$tracked_files" ]; then
+        # Use associative array to merge staged and unstaged stats per file
+        declare -A file_insertions
+        declare -A file_deletions
+        declare -A file_seen_in_diff
+        
+        # Get unstaged changes (working tree vs index)
         while IFS=$'\t' read -r insertions deletions file; do
             [ -z "$file" ] && continue
-            # Handle binary files (shows - instead of numbers)
             [ "$insertions" = "-" ] && insertions=0
             [ "$deletions" = "-" ] && deletions=0
-            file_info_list+=("tracked|$file|$insertions|$deletions")
-            total_insertions=$((total_insertions + insertions))
-            total_deletions=$((total_deletions + deletions))
+            file_insertions["$file"]=$((${file_insertions["$file"]:-0} + insertions))
+            file_deletions["$file"]=$((${file_deletions["$file"]:-0} + deletions))
+            file_seen_in_diff["$file"]=1
+        done < <(printf "%s" "$tracked_files" | xargs -d '\n' git diff --numstat -- 2>/dev/null)
+        
+        # Get staged changes (index vs HEAD)
+        while IFS=$'\t' read -r insertions deletions file; do
+            [ -z "$file" ] && continue
+            [ "$insertions" = "-" ] && insertions=0
+            [ "$deletions" = "-" ] && deletions=0
+            file_insertions["$file"]=$((${file_insertions["$file"]:-0} + insertions))
+            file_deletions["$file"]=$((${file_deletions["$file"]:-0} + deletions))
+            file_seen_in_diff["$file"]=1
+        done < <(printf "%s" "$tracked_files" | xargs -d '\n' git diff --cached --numstat -- 2>/dev/null)
+        
+        # Build file_info_list from merged results
+        for file in "${!file_seen_in_diff[@]}"; do
+            local ins=${file_insertions["$file"]:-0}
+            local del=${file_deletions["$file"]:-0}
+            file_info_list+=("tracked|$file|$ins|$del")
+            total_insertions=$((total_insertions + ins))
+            total_deletions=$((total_deletions + del))
             total_files=$((total_files + 1))
-        done < <(echo "$tracked_files" | xargs -d '\n' git diff --numstat -- 2>/dev/null)
+        done
     fi
     
     # Process untracked files: use extension-based binary detection (fast)
@@ -1281,6 +1307,10 @@ print_stat_for_files() {
             summary+=", $total_deletions deletion"
             [ "$total_deletions" -gt 1 ] && summary+="s"
             summary+="(-)"
+        fi
+        # Ensure stat_output ends with newline before appending summary
+        if [ -n "$stat_output" ] && [[ "$stat_output" != *$'\n' ]]; then
+            stat_output+=$'\n'
         fi
         stat_output+="$summary"$'\n'
     fi
