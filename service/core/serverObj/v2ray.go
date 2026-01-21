@@ -75,44 +75,47 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Add:           u.Hostname(),
 		Port:          u.Port(),
 		ID:            u.User.String(),
-		Aid:           u.Query().Get("aid"),
-		Net:           u.Query().Get("type"),
-		Type:          u.Query().Get("headerType"),
-		Host:          u.Query().Get("host"),
-		SNI:           u.Query().Get("sni"),
-		Path:          u.Query().Get("path"),
-		TLS:           u.Query().Get("security"),
-		Fingerprint:   u.Query().Get("fp"),
-		PublicKey:     u.Query().Get("pbk"),
-		ShortId:       u.Query().Get("sid"),
-		SpiderX:       u.Query().Get("spx"),
-		Flow:          u.Query().Get("flow"),
-		Alpn:          u.Query().Get("alpn"),
-		AllowInsecure: u.Query().Get("allowInsecure") == "true",
-		Key:           u.Query().Get("key"),
+		Aid:           strings.TrimSpace(u.Query().Get("aid")),
+		Net:           strings.TrimSpace(u.Query().Get("type")),
+		Type:          strings.TrimSpace(u.Query().Get("headerType")),
+		Host:          strings.TrimSpace(u.Query().Get("host")),
+		SNI:           strings.TrimSpace(u.Query().Get("sni")),
+		Path:          strings.TrimSpace(u.Query().Get("path")),
+		TLS:           strings.TrimSpace(u.Query().Get("security")),
+		Fingerprint:   strings.TrimSpace(u.Query().Get("fp")),
+		PublicKey:     strings.TrimSpace(u.Query().Get("pbk")),
+		ShortId:       strings.TrimSpace(u.Query().Get("sid")),
+		SpiderX:       strings.TrimSpace(u.Query().Get("spx")),
+		Flow:          strings.TrimSpace(u.Query().Get("flow")),
+		Alpn:          strings.TrimSpace(u.Query().Get("alpn")),
+		AllowInsecure: strings.TrimSpace(u.Query().Get("allowInsecure")) == "true",
+		Key:           strings.TrimSpace(u.Query().Get("key")),
 		V:             vless,
 		Protocol:      "vless",
 	}
-	if data.Net == "" {
+	if data.Net == "" || data.Net == "raw" {
 		data.Net = "tcp"
 	}
 	if data.Net == "grpc" {
-		data.Path = u.Query().Get("serviceName")
+		data.Path = strings.TrimSpace(u.Query().Get("serviceName"))
 	}
 	if data.Type == "" {
 		data.Type = "none"
 	}
 	if data.Host == "" {
-		data.Host = u.Query().Get("host")
+		data.Host = strings.TrimSpace(u.Query().Get("host"))
 	}
 	if data.TLS == "" {
 		data.TLS = "none"
 	}
 	if data.Net == "mkcp" || data.Net == "kcp" {
-		data.Path = u.Query().Get("seed")
+		data.Path = strings.TrimSpace(u.Query().Get("seed"))
 	}
 	if data.Net == "quic" {
-		data.QuicSecurity = u.Query().Get("quicSecurity")
+		data.QuicSecurity = strings.TrimSpace(u.Query().Get("quicSecurity"))
+	}
+	if data.Net == "splithttp" {
+		data.Net = "xhttp"
 	}
 	return data, nil
 }
@@ -202,6 +205,9 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 	}
 	if info.Aid == "" {
 		info.Aid = "0"
+	}
+	if info.Net == "" || info.Net == "none" {
+		info.Net = "tcp"
 	}
 	info.Protocol = "vmess"
 	return &info, nil

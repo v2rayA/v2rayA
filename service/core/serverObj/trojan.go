@@ -49,10 +49,10 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		err = fmt.Errorf("invalid trojan format")
 		return
 	}
-	allowInsecure := t.Query().Get("allowInsecure")
-	sni := t.Query().Get("peer")
+	allowInsecure := strings.TrimSpace(t.Query().Get("allowInsecure"))
+	sni := strings.TrimSpace(t.Query().Get("peer"))
 	if sni == "" {
-		sni = t.Query().Get("sni")
+		sni = strings.TrimSpace(t.Query().Get("sni"))
 	}
 	if sni == "" {
 		sni = t.Hostname()
@@ -68,20 +68,20 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		Port:          port,
 		Password:      t.User.Username(),
 		Sni:           sni,
-		Alpn:          t.Query().Get("alpn"),
-		Type:          t.Query().Get("type"),
-		Path:          t.Query().Get("path"),
-	    ServiceName:   t.Query().Get("serviceName"),
+		Alpn:          strings.TrimSpace(t.Query().Get("alpn")),
+		Type:          strings.TrimSpace(t.Query().Get("type")),
+		Path:          strings.TrimSpace(t.Query().Get("path")),
+		ServiceName:   strings.TrimSpace(t.Query().Get("serviceName")),
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 	}
 	if t.Scheme == "trojan-go" {
 		data.Protocol = "trojan-go"
-		data.Encryption = t.Query().Get("encryption")
-		data.Host = t.Query().Get("host")
-		data.Path = t.Query().Get("path")
-		data.ServiceName = t.Query().Get("serviceName")
-		data.Type = t.Query().Get("type")
+		data.Encryption = strings.TrimSpace(t.Query().Get("encryption"))
+		data.Host = strings.TrimSpace(t.Query().Get("host"))
+		data.Path = strings.TrimSpace(t.Query().Get("path"))
+		data.ServiceName = strings.TrimSpace(t.Query().Get("serviceName"))
+		data.Type = strings.TrimSpace(t.Query().Get("type"))
 		data.AllowInsecure = false
 	}
 	return data, nil
