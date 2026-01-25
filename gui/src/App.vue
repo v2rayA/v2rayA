@@ -6,7 +6,7 @@
           <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
         </b-navbar-item>
         <b-navbar-item tag="div">
-          <b-tag id="statusTag" class="pointerTag" :type="statusMap[runningState.running]"
+          <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusMap[runningState.running]"
             @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
             @click.native="handleClickStatus">{{ coverStatusText ? coverStatusText : runningState.running }}
           </b-tag>
