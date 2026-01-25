@@ -166,7 +166,7 @@ func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
 			if t.ServiceName == "" {
 				t.ServiceName = "GunService"
 			}
-			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: t.Path}
+			core.StreamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: t.ServiceName}
 		case "ws":
 			core.StreamSettings.WsSettings = &coreObj.WsSettings{
 				Path: t.Path,
