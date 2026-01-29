@@ -244,6 +244,10 @@
           v-model="subscriptionAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
           validation-icon=" iconfont icon-alert" style="flex: 1" />
       </b-field>
+      <b-field :label="$t('setting.subscriptionUpdateIntervalSecond')" label-position="on-border">
+        <cus-b-input v-model="subscriptionUpdateIntervalSecond" custom-class="no-shadow" type="number" min="0"
+          validation-icon=" iconfont icon-alert" style="flex: 1" />
+      </b-field>
       <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">
@@ -310,6 +314,7 @@ export default {
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
+    subscriptionUpdateIntervalSecond: 0,
     inboundSniffing: "no",
     customSiteDAT: {},
     pacMode: "whitelist",
@@ -387,6 +392,9 @@ export default {
             subscriptionAutoUpdateMode: this.subscriptionAutoUpdateMode,
             subscriptionAutoUpdateIntervalHour: parseInt(
               this.subscriptionAutoUpdateIntervalHour
+            ),
+            subscriptionUpdateIntervalSecond: parseInt(
+              this.subscriptionUpdateIntervalSecond
             ),
             pacMode: this.pacMode,
             tcpFastOpen: this.tcpFastOpen,

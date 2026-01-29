@@ -58,3 +58,45 @@ func PutSubscription(ctx *gin.Context) {
 	}
 	getTouch(ctx)
 }
+
+/*批量更新订阅*/
+func PutSubscriptions(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
+	var data struct {
+		IDs []int `json:"ids"`
+	}
+	err := ctx.ShouldBindJSON(&data)
+	if err != nil || len(data.IDs) == 0 {
+		common.ResponseError(ctx, logError("bad request"))
+		return
+	}
+	indexes := make([]int, 0, len(data.IDs))
+	limit := configure.GetLenSubscriptions()
+	for _, id := range data.IDs {
+		index := id - 1
+		if id <= 0 || index < 0 || index >= limit {
+			common.ResponseError(ctx, logError("bad request: ID exceed range"))
+			return
+		}
+		indexes = append(indexes, index)
+	}
+	err = service.UpdateSubscriptionsInOrder(indexes)
+	if err != nil {
+		common.ResponseError(ctx, logError(err))
+		return
+	}
+	getTouch(ctx)
+}

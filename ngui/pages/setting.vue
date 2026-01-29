@@ -164,6 +164,11 @@ const updateSetting = async() => {
     </div>
 
     <div>
+      <div>{{ $t('setting.subscriptionUpdateIntervalSecond') }}</div>
+      <ElInput v-model="setting.subscriptionUpdateIntervalSecond" type="number" min="0" />
+    </div>
+
+    <div>
       <div>{{ $t('setting.preferModeWhenUpdate') }}</div>
       <ElSelect v-model="setting.proxyModeWhenSubscribe" size="small">
         <ElOption
