@@ -113,7 +113,17 @@ function parseURL(u) {
           continue;
         }
         s = seg[i].split("=");
-        ret[s[0]] = decodeURIComponent(s[1]);
+        let key = s[0];
+        let val = decodeURIComponent(s[1]);
+        if (ret[key]) {
+          if (Array.isArray(ret[key])) {
+            ret[key].push(val);
+          } else {
+            ret[key] = [ret[key], val];
+          }
+        } else {
+          ret[key] = val;
+        }
       }
       return ret;
     })(),
@@ -166,4 +176,9 @@ function toInt(s) {
   return s;
 }
 
-export { locateServer, handleResponse, parseURL, generateURL, toInt };
+function sanitizeALPN(alpn) {
+  if (!alpn) return "h3"; // Default to "h3" if no ALPN is provided
+  return alpn; // Retain the original input
+}
+
+export { locateServer, handleResponse, parseURL, generateURL, toInt, sanitizeALPN };
