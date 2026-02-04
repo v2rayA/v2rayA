@@ -73,7 +73,7 @@ jobs:
         cache-dependency-path: |
           service/go.mod
           service/go.sum
-        go-version: ^1.21
+        go-version: '1.24'
     - name: Build v2rayA Binaries
       id: build
       shell: pwsh
