@@ -1053,76 +1053,19 @@ export default {
         console.log(o);
         return o;
       } else if (url.toLowerCase().startsWith("ss://")) {
-        let u = parseURL(url);
-        let mp;
-        if (!u.password) {
-          try {
-            u.username = Base64.decode(decodeURIComponent(u.username));
-            mp = u.username.split(":");
-            if (mp.length > 2) {
-              mp[1] = mp.slice(1).join(":");
-              mp = mp.slice(0, 2);
-            }
-          } catch (e) {
-            //pass
-          }
-        } else {
-          mp = [u.username, u.password];
-        }
-        console.log(mp);
-        u.hash = decodeURIComponent(u.hash);
-        let obj = {
-          method: mp[0],
-          password: mp[1],
-          server: u.host,
-          port: u.port,
-          name: u.hash,
-          obfs: "http",
-          plugin: "",
+        let decoded = Base64.decode(url.substring(url.indexOf("://") + 3));
+        let parts = decoded.split("@");
+        let methodAndPassword = parts[0].split(":");
+        let serverAndPort = parts[1].split(":");
+
+        return {
+          method: methodAndPassword[0],
+          password: methodAndPassword[1],
+          server: serverAndPort[0],
+          port: serverAndPort[1],
+          plugin: "", // Default empty, can be extended if plugin info is included
           protocol: "ss",
-          impl: "",
         };
-        if (u.params.plugin) {
-          u.params.plugin = decodeURIComponent(u.params.plugin);
-          const arr = u.params.plugin.split(";");
-          obj.plugin = arr[0];
-          switch (obj.plugin) {
-            case "obfs-local":
-            case "simpleobfs":
-              obj.plugin = "simple-obfs";
-              break;
-            case "v2ray-plugin":
-              obj.tls = "";
-              obj.mode = "websocket";
-              break;
-          }
-          for (let i = 1; i < arr.length; i++) {
-            //"obfs-local;obfs=tls;obfs-host=4cb6a43103.wns.windows.com"
-            const a = arr[i].split("=");
-            switch (a[0]) {
-              case "obfs":
-                obj.obfs = a[1];
-                break;
-              case "host":
-              case "obfs-host":
-                obj.host = a[1];
-                break;
-              case "path":
-              case "obfs-path":
-                obj.path = a[1];
-                break;
-              case "mode":
-                obj.mode = a[1];
-                break;
-              case "tls":
-                obj.tls = "tls";
-                break;
-              case "impl":
-                obj.impl = a[1];
-            }
-          }
-        }
-        return obj;
       } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
@@ -1624,9 +1567,10 @@ export default {
         return;
       }
       let coded = "";
+      // 0: v2ray, 1: ss, 2: ssr, 3: trojan, 4: juicity, 5: tuic, 6: hysteria2, 7: http, 8: socks5, 9: anytls
       if (this.tabChoice === 0) {
         if (
-          this.v2ray.allowInsecure === true || // sometimes bool, sometimes string
+          this.v2ray.allowInsecure === true ||
           this.v2ray.allowInsecure === "true"
         ) {
           const { result } = await this.$buefy.dialog.confirm({
@@ -1645,23 +1589,94 @@ export default {
         }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
-        coded = this.generateURL(this.ss);
+        // ss://BASE64(method:password)@server:port#name
+        const { method, password, server, port, name, plugin, plugin_opts } = this.ss;
+        let userinfo = btoa(`${method}:${password}`);
+        let url = `ss://${userinfo}@${server}:${port}`;
+        if (plugin) {
+          url += `?plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`;
+        }
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 2) {
-        coded = this.generateURL(this.ssr);
+        // ssr://server:port:proto:method:obfs:base64(password)/?remarks=base64(remarks)
+        const { server, port, proto, method, obfs, password, name, protoParam, obfsParam } = this.ssr;
+        let pwdB64 = btoa(password);
+        let remarksB64 = name ? btoa(name) : "";
+        let protoParamB64 = protoParam ? btoa(protoParam) : "";
+        let obfsParamB64 = obfsParam ? btoa(obfsParam) : "";
+        let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
+        coded = url;
       } else if (this.tabChoice === 3) {
-        coded = this.generateURL(this.trojan);
+        // trojan://password@server:port?allowInsecure=1&sni=sni#name
+        const { password, server, port, allowInsecure, peer, name } = this.trojan;
+        let params = [];
+        if (allowInsecure) params.push("allowInsecure=1");
+        if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
+        let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 4) {
-        coded = this.generateURL(this.juicity);
+        // juicity://uuid:password@server:port?allow_insecure=1&cc=xxx#name
+        const { uuid, password, server, port, allowInsecure, cc, sni, name } = this.juicity;
+        let params = [];
+        if (allowInsecure) params.push("allow_insecure=1");
+        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `juicity://${uuid}:${password}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 5) {
-        coded = this.generateURL(this.tuic);
+        // tuic://uuid:password@server:port?allow_insecure=1&cc=xxx#name
+        const { uuid, password, server, port, allowInsecure, cc, sni, name } = this.tuic;
+        let params = [];
+        if (allowInsecure) params.push("allow_insecure=1");
+        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `tuic://${uuid}:${password}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 6) {
-        coded = this.generateURL(this.hysteria2);
+        // hysteria2://password@server:port?insecure=1&obfs=xxx#name
+        const { password, server, port, allowInsecure, obfs, obfsPassword, sni, name } = this.hysteria2;
+        let params = [];
+        if (allowInsecure) params.push("insecure=1");
+        if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
+        if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `hysteria2://${encodeURIComponent(password)}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 7) {
-        coded = this.generateURL(this.http);
+        // http(s)://username:password@server:port#name
+        const { protocol, username, password, host, port, name } = this.http;
+        let url = `${protocol}://`;
+        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
+        url += `${host}:${port}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 8) {
-        coded = this.generateURL(this.socks5);
+        // socks5://username:password@server:port#name
+        const { username, password, host, port, name } = this.socks5;
+        let url = `socks5://`;
+        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
+        url += `${host}:${port}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 9) {
-        coded = this.generateURL(this.anytls);
+        // anytls://auth@host:port?peer=sni&insecure=1#name
+        const { auth, host, port, sni, allowInsecure, name } = this.anytls;
+        let params = [];
+        if (sni) params.push(`peer=${encodeURIComponent(sni)}`);
+        if (allowInsecure) params.push("insecure=1");
+        let url = `anytls://${encodeURIComponent(auth)}@${host}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       }
       this.$emit("submit", coded);
     },

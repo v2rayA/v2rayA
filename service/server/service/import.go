@@ -28,7 +28,7 @@ func PluginManagerValidateLink(url string) bool {
 }
 
 func Import(url string, which *configure.Which) (err error) {
-	log.Trace("Import: %v, which: %+v", url, which)
+	log.Trace("Import: received url=%v, which=%+v", url, which)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -49,6 +49,7 @@ func Import(url string, which *configure.Which) (err error) {
 	}
 	urlLower := strings.ToLower(url)
 	if PluginManagerValidateLink(url) || common.HasAnyPrefix(urlLower, supportedPrefix) {
+		log.Trace("Import: url matches supported prefixes or is valid for PluginManager")
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
 		if err != nil {
