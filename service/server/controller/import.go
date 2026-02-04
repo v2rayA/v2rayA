@@ -9,8 +9,8 @@ import (
 
 func PostImport(ctx *gin.Context) {
 	var data struct {
-		URL   string `json:"url"`
-		Which *configure.Which
+		URL   string           `json:"url"`
+		Which *configure.Which `json:"which"`
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {

@@ -84,13 +84,18 @@ func (t *Template) ServePlugins() error {
 	var err error
 	for _, p := range t.Plugins {
 		wg.Add(1)
+		log.Trace("[v2ray] starting plugin on %s", p.ListenAddr())
 		go func(p plugin.Server) {
 			if e := p.ListenAndServe(); e != nil {
+				log.Warn("[v2ray] plugin on %s exited with error: %v", p.ListenAddr(), e)
 				err = e
+			} else {
+				log.Trace("[v2ray] plugin on %s stopped", p.ListenAddr())
 			}
 			wg.Done()
 		}(p)
 	}
+	log.Trace("[v2ray] all plugins are starting...")
 	return err
 }
 

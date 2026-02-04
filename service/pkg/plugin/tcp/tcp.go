@@ -1,14 +1,16 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"net"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 // Tcp is a base tcp struct.
@@ -157,13 +159,18 @@ func (s *Tcp) Addr() string {
 
 // Dial connects to the address addr on the network net via the TCP proxy.
 func (s *Tcp) Dial(network, addr string) (net.Conn, error) {
+	return s.DialContext(context.Background(), network, addr)
+}
+
+func (s *Tcp) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[tcp] dialing %s via %s", addr, s.listenAddr)
 	switch network {
 	case "tcp", "tcp6", "tcp4":
 	default:
 		return nil, fmt.Errorf("[tcp]: no support for connection type " + network)
 	}
 
-	c, err := s.dialer.Dial(network, s.listenAddr)
+	c, err := s.dialer.DialContext(ctx, network, s.listenAddr)
 	if err != nil {
 		log.Debug("[tcp]: dial to %s error: %s", s.listenAddr, err)
 		return nil, err
@@ -173,7 +180,7 @@ func (s *Tcp) Dial(network, addr string) (net.Conn, error) {
 }
 
 // DialUDP connects to the given address via the proxy.
-func (s *Tcp) DialUDP(network, addr string) (pc net.PacketConn, writeTo net.Addr, err error) {
+func (s *Tcp) DialUDP(network string) (pc plugin.FakeNetPacketConn, err error) {
 	//Not support
-	return nil, nil, nil
+	return nil, nil
 }

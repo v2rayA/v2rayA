@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -27,7 +28,7 @@ func PluginManagerValidateLink(url string) bool {
 }
 
 func Import(url string, which *configure.Which) (err error) {
-	//log.Trace(url)
+	log.Trace("Import: %v, which: %v", url, which)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -41,36 +42,46 @@ func Import(url string, which *configure.Which) (err error) {
 		return err
 	}
 	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
-		"https-proxy", "socks5", "http2", "juicity", "tuic"}
+		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
+		"shadowsocks", "shadowsocksr", "hy1", "hy2", "mcore", "mcp", "pingtunnel", "plugin"}
 	for i := range supportedPrefix {
 		supportedPrefix[i] += "://"
 	}
-	if PluginManagerValidateLink(url) || common.HasAnyPrefix(url, supportedPrefix) {
+	urlLower := strings.ToLower(url)
+	if PluginManagerValidateLink(url) || common.HasAnyPrefix(urlLower, supportedPrefix) {
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
 		if err != nil {
+			log.Warn("ResolveURL failed: %v", err)
 			return
 		}
 		if which != nil {
 			// the request is to modify a server
 			ind := which.ID - 1
+			println(fmt.Sprintf("[DEBUG] Import: modifying server. ind=%v, which.ID=%v, which.TYPE=%v", ind, which.ID, which.TYPE))
 			if which.TYPE != configure.ServerType || ind < 0 || ind >= configure.GetLenServers() {
+				println("[DEBUG] Import: bad request (invalid index or type)")
 				return fmt.Errorf("bad request")
 			}
 			var sr *configure.ServerRaw
 			sr, err = which.LocateServerRaw()
 			if err != nil {
+				println(fmt.Sprintf("[DEBUG] Import: LocateServerRaw failed: %v", err))
 				return
 			}
 			sr.ServerObj = obj
 			if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
+				println(fmt.Sprintf("[DEBUG] Import: SetServer failed: %v", err))
 				return
 			}
+			println("[DEBUG] Import: SetServer success")
 			css := configure.GetConnectedServers()
 			if css.Len() > 0 {
 				for _, cs := range css.Get() {
 					if which.TYPE == cs.TYPE && which.ID == cs.ID {
+						println("[DEBUG] Import: updating connected v2ray config")
 						if err = v2ray.UpdateV2RayConfig(); err != nil {
+							println(fmt.Sprintf("[DEBUG] Import: UpdateV2RayConfig failed: %v", err))
 							return
 						}
 					}

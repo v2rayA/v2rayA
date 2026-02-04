@@ -1,13 +1,16 @@
 package controller
 
 import (
+	"net/http"
+	"os"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"net/http"
 )
 
 func GetVersion(ctx *gin.Context) {
@@ -15,6 +18,13 @@ func GetVersion(ctx *gin.Context) {
 	if conf.GetEnvironmentConfig().Lite {
 		lite = 1
 	}
+
+	// Detect if running as root (Linux/macOS only)
+	isRoot := false
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		isRoot = os.Geteuid() == 0
+	}
+
 	variant, versionErr := service.CheckV5()
 	common.ResponseSuccess(ctx, gin.H{
 		"version":          conf.Version,
@@ -25,6 +35,8 @@ func GetVersion(ctx *gin.Context) {
 		"lite":             lite,
 		"loadBalanceValid": variant == where.V2ray && versionErr == nil,
 		"variant":          variant,
+		"os":               runtime.GOOS,
+		"isRoot":           isRoot,
 	})
 }
 

@@ -28,6 +28,15 @@ func RegisterServer(name string, c ServerCreator) {
 	serverCreators[name] = c
 }
 
+// getAvailableServerSchemes returns a list of registered server schemes
+func getAvailableServerSchemes() []string {
+	schemes := make([]string, 0, len(serverCreators))
+	for k := range serverCreators {
+		schemes = append(schemes, k)
+	}
+	return schemes
+}
+
 // ServerFromURL calls the registered creator to create proxy servers
 // dialer is the default upstream dialer so cannot be nil, we can use Default when calling this function
 func ServerFromURL(s string, p Proxy) (Server, error) {
@@ -37,18 +46,29 @@ func ServerFromURL(s string, p Proxy) (Server, error) {
 
 	if !strings.Contains(s, "://") {
 		s = "socks5://" + s
+		log.Trace("[plugin] URL scheme missing, defaulting to socks5: %s", s)
 	}
 
 	u, err := url.Parse(s)
 	if err != nil {
-		log.Warn("parse err: %s\n", err)
-		return nil, err
+		log.Warn("[plugin] parse server URL '%s' failed: %v", s, err)
+		return nil, fmt.Errorf("parse URL: %w", err)
 	}
 
-	c, ok := serverCreators[strings.ToLower(u.Scheme)]
-	if ok {
-		return c(s, p)
+	scheme := strings.ToLower(u.Scheme)
+	c, ok := serverCreators[scheme]
+	if !ok {
+		log.Warn("[plugin] unknown server scheme '%s' in URL: %s. Available schemes: %v", u.Scheme, s, getAvailableServerSchemes())
+		return nil, fmt.Errorf("unknown server scheme '%s'", u.Scheme)
 	}
 
-	return nil, fmt.Errorf("unknown scheme '" + u.Scheme + "'")
+	log.Trace("[plugin] creating server for scheme '%s' from URL: %s", scheme, s)
+	result, err := c(s, p)
+	if err != nil {
+		log.Warn("[plugin] failed to create server for scheme '%s': %v", scheme, err)
+		return nil, fmt.Errorf("create %s server: %w", scheme, err)
+	}
+
+	log.Info("[plugin] successfully created server for scheme '%s' at %s", scheme, result.ListenAddr())
+	return result, nil
 }

@@ -1,88 +1,80 @@
 package ss
 
 import (
+	"context"
 	"fmt"
-	ss "github.com/shadowsocks/go-shadowsocks2/core"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"net"
-	"net/url"
+
+	"github.com/daeuniverse/outbound/dialer"
+	"github.com/daeuniverse/outbound/dialer/shadowsocks"
+	"github.com/daeuniverse/outbound/netproxy"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
+
+	_ "github.com/daeuniverse/outbound/protocol/shadowsocks"
 )
 
 // Shadowsocks is a base shadowsocks struct
 type Shadowsocks struct {
-	dialer plugin.Dialer
-	addr   string
-	pass   string
-	method string
-	cipher ss.Cipher
+	dialer netproxy.Dialer
 }
 
 func init() {
+	log.Trace("[shadowsocks] registering dialer")
 	plugin.RegisterDialer("ss", NewShadowsocksDialer)
 }
 
-// NewShadowsocks returns a shadowsocks infra.
-func NewShadowsocks(s string, d plugin.Dialer) (*Shadowsocks, error) {
-	u, err := url.Parse(s)
-	if err != nil {
-		return nil, fmt.Errorf("NewShadowsocks: %w", err)
-	}
-
-	method := u.User.Username()
-	pass, _ := u.User.Password()
-
-	if method == "chacha20-poly1305" {
-		method = "chacha20-ietf-poly1305"
-	}
-	if method == "xchacha20-poly1305" {
-		method = "xchacha20-ietf-poly1305"
-	}
-	cipher, err := ss.PickCipher(method, nil, pass)
-	if err != nil {
-		return nil, fmt.Errorf("NewShadowsocks: %w", err)
-	}
-
-	t := &Shadowsocks{
-		dialer: d,
-		addr:   u.Host,
-		pass:   pass,
-		method: method,
-		cipher: cipher,
-	}
-
-	return t, nil
-}
 func NewShadowsocksDialer(s string, d plugin.Dialer) (plugin.Dialer, error) {
-	return NewShadowsocks(s, d)
+	dialer, _, err := shadowsocks.NewShadowsocksFromLink(
+		&dialer.ExtraOption{},
+		&plugin.Converter{
+			Dialer: d,
+		},
+		s,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &Shadowsocks{
+		dialer: dialer,
+	}, nil
 }
 
 // Addr returns forwarder's address.
 func (s *Shadowsocks) Addr() string {
-	if s.addr == "" {
-		return s.dialer.Addr()
-	}
-	return s.addr
+	return ""
 }
 
 // Dial connects to the address addr on the network net via the infra.
 func (s *Shadowsocks) Dial(network, addr string) (net.Conn, error) {
-	return s.dial(network, addr)
+	return s.DialContext(context.Background(), network, addr)
 }
 
-func (s *Shadowsocks) dial(network, addr string) (net.Conn, error) {
-	rc, err := s.dialer.Dial("tcp", s.addr)
-	if err != nil {
-		return nil, fmt.Errorf("[shadowsocks]: dial to %s: %w", s.addr, err)
+func (s *Shadowsocks) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[%s] dialing %s", "shadowsocks", addr)
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "tcp",
+		Mark:    plugin.ShouldSetMark(),
 	}
-
-	return s.cipher.StreamConn(rc), nil
+	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
+	if err != nil {
+		log.Info("[%s] dial %s failed: %v", "shadowsocks", addr, err)
+		return nil, fmt.Errorf("[shadowsocks]: dial to %s: %w", addr, err)
+	}
+	log.Info("[%s] dial %s success", "shadowsocks", addr)
+	return plugin.NewFakeNetConn(rc), nil
 }
 
 // DialUDP connects to the given address via the infra.
-func (s *Shadowsocks) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
-	rc, raddr, err := s.dialer.DialUDP("udp", addr)
-	if err != nil {
-		return nil, nil, fmt.Errorf("[shadowsocks]: dial to %s: %w", s.addr, err)
+func (s *Shadowsocks) DialUDP(network string) (plugin.FakeNetPacketConn, error) {
+	log.Info("[%s] dialing udp", "shadowsocks")
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "udp",
+		Mark:    plugin.ShouldSetMark(),
 	}
-	return s.cipher.PacketConn(rc), raddr, nil
+	rc, err := s.dialer.DialContext(context.TODO(), magicNetwork.Encode(), "")
+	if err != nil {
+		return nil, fmt.Errorf("[shadowsocks]: dial udp %w", err)
+	}
+	return plugin.NewFakeNetPacketConn(rc.(netproxy.PacketConn)), nil
 }

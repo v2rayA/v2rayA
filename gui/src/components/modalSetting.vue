@@ -61,11 +61,11 @@
           </b-tooltip>
         </template>
         <b-select v-model="transparentType" expanded>
-          <option v-show="!lite" value="redirect">redirect</option>
-          <option v-show="!lite" value="tproxy">tproxy</option>
+          <option v-show="!lite && os === 'linux'" value="redirect">redirect</option>
+          <option v-show="!lite && os === 'linux'" value="tproxy">tproxy</option>
           <option v-show="!lite" value="gvisor_tun">gvisor tun</option>
           <option v-show="!lite" value="system_tun">system tun</option>
-          <option value="system_proxy">system proxy</option>
+          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>
         </b-select>
 
         <template v-if="transparentType == 'tproxy'">
@@ -318,6 +318,8 @@ export default {
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
     showSpecialMode: true,
+    os: "",
+    isRoot: false,
   }),
   computed: {
     lite() {
@@ -366,6 +368,15 @@ export default {
           Object.assign(this, res.data.data);
           this.subscriptionAutoUpdateTime = new Date(this.subscriptionAutoUpdateTime);
           this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+          // Get OS and isRoot info from version API
+          this.$axios({
+            url: apiRoot + "/version",
+          }).then((versionRes) => {
+            if (versionRes.data && versionRes.data.data) {
+              this.os = versionRes.data.data.os || "";
+              this.isRoot = versionRes.data.data.isRoot || false;
+            }
+          });
           if (this.lite) {
             this.transparentType = "system_proxy";
             this.showSpecialMode = false;

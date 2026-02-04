@@ -1,15 +1,17 @@
 package juicity
 
 import (
+	"context"
 	"fmt"
 	"net"
 
 	"github.com/daeuniverse/outbound/dialer"
 	"github.com/daeuniverse/outbound/dialer/juicity"
-	"github.com/daeuniverse/softwind/netproxy"
+	"github.com/daeuniverse/outbound/netproxy"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 
-	_ "github.com/daeuniverse/softwind/protocol/juicity"
+	_ "github.com/daeuniverse/outbound/protocol/juicity"
 )
 
 // Juicity is a base juicity struct
@@ -18,6 +20,7 @@ type Juicity struct {
 }
 
 func init() {
+	log.Trace("[juicity] registering dialer")
 	plugin.RegisterDialer("juicity", NewJuicityDialer)
 }
 
@@ -45,30 +48,34 @@ func (s *Juicity) Addr() string {
 
 // Dial connects to the address addr on the network net via the infra.
 func (s *Juicity) Dial(network, addr string) (net.Conn, error) {
-	return s.dial(network, addr)
+	return s.DialContext(context.Background(), network, addr)
 }
 
-func (s *Juicity) dial(network, addr string) (net.Conn, error) {
-	rc, err := s.dialer.Dial("tcp", addr)
+func (s *Juicity) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[%s] dialing %s", "juicity", addr)
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "tcp",
+		Mark:    plugin.ShouldSetMark(),
+	}
+	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
+		log.Info("[%s] dial %s failed: %v", "juicity", addr, err)
 		return nil, fmt.Errorf("[juicity]: dial to %s: %w", addr, err)
 	}
-	return &netproxy.FakeNetConn{
-		Conn:  rc,
-		LAddr: nil,
-		RAddr: nil,
-	}, err
+	log.Info("[%s] dial %s success", "juicity", addr)
+	return plugin.NewFakeNetConn(rc), nil
 }
 
 // DialUDP connects to the given address via the infra.
-func (s *Juicity) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
-	rc, err := s.dialer.Dial("udp", addr)
-	if err != nil {
-		return nil, nil, fmt.Errorf("[juicity]: dial to %s: %w", addr, err)
+func (s *Juicity) DialUDP(network string) (plugin.FakeNetPacketConn, error) {
+	log.Info("[%s] dialing udp", "juicity")
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "udp",
+		Mark:    plugin.ShouldSetMark(),
 	}
-	return &netproxy.FakeNetPacketConn{
-		PacketConn: rc.(netproxy.PacketConn),
-		LAddr:      nil,
-		RAddr:      nil,
-	}, nil, err
+	rc, err := s.dialer.DialContext(context.TODO(), magicNetwork.Encode(), "")
+	if err != nil {
+		return nil, fmt.Errorf("[juicity]: dial udp %w", err)
+	}
+	return plugin.NewFakeNetPacketConn(rc.(netproxy.PacketConn)), nil
 }

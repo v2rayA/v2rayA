@@ -34,9 +34,6 @@
           <b-field v-if="v2ray.protocol === 'vmess'" label="Security" label-position="on-border">
             <b-select v-model="v2ray.scy" expanded required>
               <option value="auto">Auto</option>
-              <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
-              <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
-              <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
@@ -525,7 +522,7 @@ ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')
             <b-input v-model="trojan.path" placeholder="/" expanded />
           </b-field>
           <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" label="Host" label-position="on-border">
-            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+            <b-input v-model="trojan.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
           <b-field v-show="trojan.tls === 'tls'" label="Alpn" label-position="on-border">
             <b-input v-model="trojan.alpn" placeholder="h2,http/1.1" expanded />
@@ -640,6 +637,45 @@ ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')
           </b-field>
         </b-tab-item>
 
+        <b-tab-item label="Hysteria2">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="hysteria2_name" v-model="hysteria2.name" :placeholder="$t('configureServer.servername')"
+              expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="hysteria2_server" v-model="hysteria2.server" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="hysteria2_port" v-model="hysteria2.port" required :placeholder="$t('configureServer.port')"
+              type="number" expanded />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input ref="hysteria2_password" v-model="hysteria2.password" required
+              :placeholder="$t('configureServer.password')" expanded />
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label"> AllowInsecure </template>
+            <b-select ref="hysteria2_allow_insecure" v-model="hysteria2.allowInsecure" expanded required>
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">
+                {{ $t("operations.yes") }}
+              </option>
+            </b-select>
+          </b-field>
+          <b-field label="SNI" label-position="on-border">
+            <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
+          </b-field>
+          <b-field label="Obfs" label-position="on-border">
+            <b-select v-model="hysteria2.obfs" expanded required>
+              <option value="none">none</option>
+              <option value="salamander">salamander</option>
+            </b-select>
+          </b-field>
+          <b-field v-if="hysteria2.obfs !== 'none'" label="Obfs Password" label-position="on-border">
+            <b-input v-model="hysteria2.obfsPassword" placeholder="Obfs Password" expanded />
+          </b-field>
+        </b-tab-item>
+
         <b-tab-item label="HTTP">
           <b-field label="Protocol" label-position="on-border">
             <b-select v-model="http.protocol" expanded>
@@ -685,6 +721,31 @@ ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')
           <b-field label="Password" label-position="on-border">
             <b-input ref="socks5_password" v-model="socks5.password" :placeholder="$t('configureServer.password')"
               expanded />
+          </b-field>
+        </b-tab-item>
+
+        <b-tab-item label="AnyTLS">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="anytls_name" v-model="anytls.name" :placeholder="$t('configureServer.servername')" expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="anytls_host" v-model="anytls.host" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="anytls_port" v-model="anytls.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
+          </b-field>
+          <b-field label="Auth" label-position="on-border">
+            <b-input ref="anytls_auth" v-model="anytls.auth" required placeholder="Authentication Key" expanded />
+          </b-field>
+          <b-field label="SNI(Peer)" label-position="on-border">
+            <b-input ref="anytls_sni" v-model="anytls.sni" placeholder="SNI / Peer (Optional)" expanded />
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label"> AllowInsecure </template>
+            <b-select ref="anytls_allow_insecure" v-model="anytls.allowInsecure" expanded required>
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">{{ $t("operations.yes") }}</option>
+            </b-select>
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -815,6 +876,17 @@ export default {
       udpRelayMode: "native",
       protocol: "tuic",
     },
+    hysteria2: {
+      name: "",
+      server: "",
+      port: "",
+      password: "",
+      sni: "",
+      obfs: "none",
+      obfsPassword: "",
+      allowInsecure: false,
+      protocol: "hysteria2",
+    },
     http: {
       username: "",
       password: "",
@@ -830,6 +902,15 @@ export default {
       port: "",
       protocol: "socks5",
       name: "",
+    },
+    anytls: {
+      name: "",
+      host: "",
+      port: "",
+      auth: "",
+      sni: "",
+      allowInsecure: false,
+      protocol: "anytls",
     },
     tabChoice: 0,
   }),
@@ -880,16 +961,27 @@ export default {
             this.tuic = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 5;
           } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("hysteria2://") ||
+            res.data.data.sharingAddress.toLowerCase().startsWith("hy2://")
+          ) {
+            this.hysteria2 = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 6;
+          } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("http://") ||
             res.data.data.sharingAddress.toLowerCase().startsWith("https://")
           ) {
             this.http = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 6;
+            this.tabChoice = 7;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("socks5://")
           ) {
             this.socks5 = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 7;
+            this.tabChoice = 8;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("anytls://")
+          ) {
+            this.anytls = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 9;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -1080,7 +1172,7 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           protocol: "trojan",
         };
-        if (url.toLowerCase().startsWith("" + "")) {
+        if (url.toLowerCase().startsWith("trojan-go://")) {
           console.log(u.params.encryption);
           if (u.params.encryption?.startsWith("ss;")) {
             o.method = "shadowsocks";
@@ -1131,6 +1223,22 @@ export default {
           protocol: "tuic",
         };
       } else if (
+        url.toLowerCase().startsWith("hysteria2://") ||
+        url.toLowerCase().startsWith("hy2://")
+      ) {
+        let u = parseURL(url);
+        return {
+          name: decodeURIComponent(u.hash),
+          password: decodeURIComponent(u.username),
+          server: u.host,
+          port: u.port,
+          sni: u.params.sni || "",
+          allowInsecure: u.params.insecure === "true" || u.params.insecure === "1",
+          obfs: u.params.obfs || "none",
+          obfsPassword: u.params["obfs-password"] || "",
+          protocol: "hysteria2",
+        };
+      } else if (
         url.toLowerCase().startsWith("http://") ||
         url.toLowerCase().startsWith("https://")
       ) {
@@ -1152,6 +1260,20 @@ export default {
           port: u.port,
           protocol: u.protocol,
           name: decodeURIComponent(u.hash),
+        };
+      } else if (url.toLowerCase().startsWith("anytls://")) {
+        let u = parseURL(url);
+        let auth = u.username ? decodeURIComponent(u.username) : "";
+        let sni = u.params.peer || u.params.sni || "";
+        let allowInsecure = u.params.insecure === "1";
+        return {
+          name: decodeURIComponent(u.hash),
+          host: u.host,
+          port: u.port,
+          auth: auth,
+          sni: sni,
+          allowInsecure: allowInsecure,
+          protocol: "anytls",
         };
       }
       return null;
@@ -1363,7 +1485,26 @@ export default {
             password: srcObj.password,
             host: srcObj.server,
             port: srcObj.port,
-            hash: srcObj.name,
+            hash: srcObj.ps || srcObj.name,
+            params: query,
+          });
+        case "hysteria2":
+          query = {
+            insecure: srcObj.allowInsecure ? "1" : "0",
+          };
+          if (srcObj.sni !== "") {
+            query.sni = srcObj.sni;
+          }
+          if (srcObj.obfs !== "none") {
+            query.obfs = srcObj.obfs;
+            query["obfs-password"] = srcObj.obfsPassword;
+          }
+          return generateURL({
+            protocol: "hysteria2",
+            username: srcObj.password,
+            host: srcObj.server,
+            port: srcObj.port,
+            hash: srcObj.ps || srcObj.name,
             params: query,
           });
         case "http":
@@ -1395,6 +1536,22 @@ export default {
             });
           }
           return generateURL(tmp);
+        case "anytls":
+          let query = {};
+          if (srcObj.sni) {
+            query.peer = srcObj.sni;
+          }
+          if (srcObj.allowInsecure) {
+            query.insecure = "1";
+          }
+          return generateURL({
+            protocol: "anytls",
+            username: srcObj.auth,
+            host: srcObj.host,
+            port: srcObj.port,
+            hash: srcObj.name,
+            params: query,
+          });
       }
       return null;
     },
@@ -1437,10 +1594,16 @@ export default {
         if (this.tabChoice === 5 && !k.startsWith("tuic_")) {
           continue;
         }
-        if (this.tabChoice === 6 && !k.startsWith("http_")) {
+        if (this.tabChoice === 6 && !k.startsWith("hysteria2_")) {
           continue;
         }
-        if (this.tabChoice === 7 && !k.startsWith("socks5_")) {
+        if (this.tabChoice === 7 && !k.startsWith("http_")) {
+          continue;
+        }
+        if (this.tabChoice === 8 && !k.startsWith("socks5_")) {
+          continue;
+        }
+        if (this.tabChoice === 9 && !k.startsWith("anytls_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1492,9 +1655,13 @@ export default {
       } else if (this.tabChoice === 5) {
         coded = this.generateURL(this.tuic);
       } else if (this.tabChoice === 6) {
-        coded = this.generateURL(this.http);
+        coded = this.generateURL(this.hysteria2);
       } else if (this.tabChoice === 7) {
+        coded = this.generateURL(this.http);
+      } else if (this.tabChoice === 8) {
         coded = this.generateURL(this.socks5);
+      } else if (this.tabChoice === 9) {
+        coded = this.generateURL(this.anytls);
       }
       this.$emit("submit", coded);
     },

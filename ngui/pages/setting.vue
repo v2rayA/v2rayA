@@ -65,9 +65,9 @@ const updateSetting = async() => {
     <div v-if="setting.transparent !== 'close'">
       <div>{{ $t('setting.transparentType') }}</div>
       <ElSelect v-model="setting.transparentType" size="small">
-        <ElOption v-show="!system.lite" value="redirect">redirect</ElOption>
-        <ElOption v-show="!system.lite" value="tproxy">tproxy</ElOption>
-        <ElOption value="system_proxy">system proxy</ElOption>
+        <ElOption v-show="!system.lite && system.os === 'linux'" value="redirect">redirect</ElOption>
+        <ElOption v-show="!system.lite && system.os === 'linux'" value="tproxy">tproxy</ElOption>
+        <ElOption v-show="!(system.isRoot && (system.os === 'linux' || system.os === 'darwin'))" value="system_proxy">system proxy</ElOption>
       </ElSelect>
     </div>
 

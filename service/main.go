@@ -5,6 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/v2rayA/v2rayA/conf/report"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/anytls"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/http"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/hysteria2"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/juicity"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/simpleobfs"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/socks5"
@@ -12,6 +15,7 @@ import (
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ssr"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/tcp"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/tls"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/trojan"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/trojanc"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/tuic"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ws"
@@ -19,6 +23,7 @@ import (
 )
 
 func main() {
+	println("[DEBUG] main.main started")
 	gin.SetMode(gin.ReleaseMode)
 	checkEnvironment()
 	if runtime.GOOS == "linux" {

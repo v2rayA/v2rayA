@@ -4,8 +4,7 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-
-	"github.com/v2rayA/v2rayA/core/coreObj"
+	"strings"
 )
 
 func init() {
@@ -59,29 +58,14 @@ func ParseSocksURL(u string) (data *SOCKS, err error) {
 }
 
 func (h *SOCKS) Configuration(info PriorInfo) (c Configuration, err error) {
-	var users []coreObj.OutboundUser
-	if h.Username != "" && h.Password != "" {
-		users = []coreObj.OutboundUser{
-			{
-				User: h.Username,
-				Pass: h.Password,
-			},
-		}
+	socks5 := url.URL{
+		Scheme: "socks5",
+		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
 	}
-	o := coreObj.OutboundObject{
-		Tag:      info.Tag,
-		Protocol: "socks",
-		Settings: coreObj.Settings{
-			Servers: []coreObj.Server{{
-				Address: h.Server,
-				Port:    h.Port,
-				Users:   users,
-			}},
-		},
-	}
+	chain := []string{socks5.String(), h.ExportToURL()}
 	return Configuration{
-		CoreOutbound: o,
-		PluginChain:  "",
+		CoreOutbound: info.PluginObj(),
+		PluginChain:  strings.Join(chain, ","),
 		UDPSupport:   true,
 	}, nil
 }
@@ -101,7 +85,7 @@ func (h *SOCKS) ExportToURL() string {
 }
 
 func (h *SOCKS) NeedPluginPort() bool {
-	return false
+	return true
 }
 
 func (h *SOCKS) ProtoToShow() string {
