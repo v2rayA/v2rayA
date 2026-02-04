@@ -28,7 +28,7 @@ func PluginManagerValidateLink(url string) bool {
 }
 
 func Import(url string, which *configure.Which) (err error) {
-	log.Trace("Import: %v, which: %v", url, which)
+	log.Trace("Import: %v, which: %+v", url, which)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -55,33 +55,36 @@ func Import(url string, which *configure.Which) (err error) {
 			log.Warn("ResolveURL failed: %v", err)
 			return
 		}
-		if which != nil {
+		if which != nil && which.ID > 0 {
 			// the request is to modify a server
 			ind := which.ID - 1
-			println(fmt.Sprintf("[DEBUG] Import: modifying server. ind=%v, which.ID=%v, which.TYPE=%v", ind, which.ID, which.TYPE))
-			if which.TYPE != configure.ServerType || ind < 0 || ind >= configure.GetLenServers() {
-				println("[DEBUG] Import: bad request (invalid index or type)")
-				return fmt.Errorf("bad request")
+			log.Info("Import: modifying server. ind=%v, which.ID=%v, which.TYPE=%v", ind, which.ID, which.TYPE)
+			if which.TYPE != configure.ServerType {
+				// Also support modifying subscription servers if the frontend allows it
+				// but for now, we primarily care about ServerType
+				if which.TYPE != configure.SubscriptionServerType {
+					log.Warn("Import: unsupported touch type for modification: %v", which.TYPE)
+					return fmt.Errorf("bad request: unsupported touch type")
+				}
 			}
-			var sr *configure.ServerRaw
-			sr, err = which.LocateServerRaw()
-			if err != nil {
-				println(fmt.Sprintf("[DEBUG] Import: LocateServerRaw failed: %v", err))
-				return
+
+			if which.TYPE == configure.ServerType && (ind < 0 || ind >= configure.GetLenServers()) {
+				log.Warn("Import: invalid server index: %v", ind)
+				return fmt.Errorf("bad request: invalid index")
 			}
-			sr.ServerObj = obj
+
 			if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
-				println(fmt.Sprintf("[DEBUG] Import: SetServer failed: %v", err))
+				log.Warn("Import: SetServer failed: %v", err)
 				return
 			}
-			println("[DEBUG] Import: SetServer success")
+			log.Info("Import: SetServer success for index %v", ind)
 			css := configure.GetConnectedServers()
 			if css.Len() > 0 {
 				for _, cs := range css.Get() {
 					if which.TYPE == cs.TYPE && which.ID == cs.ID {
-						println("[DEBUG] Import: updating connected v2ray config")
+						log.Info("Import: updating connected v2ray config")
 						if err = v2ray.UpdateV2RayConfig(); err != nil {
-							println(fmt.Sprintf("[DEBUG] Import: UpdateV2RayConfig failed: %v", err))
+							log.Warn("Import: UpdateV2RayConfig failed: %v", err)
 							return
 						}
 					}
@@ -89,6 +92,7 @@ func Import(url string, which *configure.Which) (err error) {
 			}
 		} else {
 			// append a server
+			log.Info("Import: appending a new server")
 			err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: obj}})
 		}
 	} else {

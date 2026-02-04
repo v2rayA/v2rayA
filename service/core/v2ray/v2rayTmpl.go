@@ -1096,6 +1096,14 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Protocol: "http",
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
+			}, coreObj.Inbound{
+				Port:     52306,
+				Protocol: "socks",
+				Listen:   "127.0.0.1",
+				Settings: &coreObj.InboundSettings{
+					UDP: true,
+				},
+				Tag: "transparent-socks",
 			})
 		}
 

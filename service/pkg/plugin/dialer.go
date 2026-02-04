@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"runtime"
 	"strings"
+	"syscall"
 
 	"github.com/daeuniverse/outbound/netproxy"
 	"github.com/v2rayA/v2rayA/conf"
@@ -49,6 +50,13 @@ func (f *fakeNetConn) Write(b []byte) (n int, err error) {
 	return
 }
 
+func (f *fakeNetConn) SyscallConn() (syscall.RawConn, error) {
+	if sc, ok := f.Conn.(syscall.Conn); ok {
+		return sc.SyscallConn()
+	}
+	return nil, fmt.Errorf("connection doesn't allow to get Syscall.RawConn")
+}
+
 func NewFakeNetConn(c netproxy.Conn) net.Conn {
 	if c == nil {
 		return nil
@@ -74,6 +82,22 @@ func (f *fakeNetPacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error)
 
 func (f *fakeNetPacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	return f.PacketConn.WriteTo(p, addr.String())
+}
+
+func (f *fakeNetPacketConn) WriteMsgUDP(b []byte, oob []byte, addr *net.UDPAddr) (n int, oobn int, err error) {
+	if pc, ok := f.PacketConn.(interface {
+		WriteMsgUDP(b []byte, oob []byte, addr *net.UDPAddr) (n int, oobn int, err error)
+	}); ok {
+		return pc.WriteMsgUDP(b, oob, addr)
+	}
+	return 0, 0, fmt.Errorf("WriteMsgUDP not supported by underlying PacketConn: %T", f.PacketConn)
+}
+
+func (f *fakeNetPacketConn) SyscallConn() (syscall.RawConn, error) {
+	if sc, ok := f.PacketConn.(syscall.Conn); ok {
+		return sc.SyscallConn()
+	}
+	return nil, fmt.Errorf("connection doesn't allow to get Syscall.RawConn")
 }
 
 func NewFakeNetPacketConn(pc netproxy.PacketConn) FakeNetPacketConn {
