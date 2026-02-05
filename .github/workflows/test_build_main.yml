@@ -191,17 +191,7 @@ jobs:
         Expand-Archive -Path "D:\v2ray-windows-A64.zip" -DestinationPath "D:\v2raya-arm64-windows\bin\"
         Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm64-windows\data\"
         Remove-Item -Path "D:\v2raya-arm64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
-        ## Download WinSW
-        ## WinSW said they have a native ARM64 version, but I cannot find it, so use net4 version instead on ARM-based Windows.
-        ## See more in "https://visualstudiomagazine.com/articles/2022/08/12/net-framework-4-8-1.aspx"
-        $Url_WinSW = "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-net461.exe"
-        Invoke-WebRequest $Url_WinSW -OutFile "D:\WinSW.exe"
-        Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.exe"
-        Copy-Item -Path "D:\WinSW.exe" -Destination "D:\v2raya-arm64-windows\v2rayA-service.exe"
-        ## Copy License and Service Config
         Copy-Item -Path ".\LICENSE" -Destination "D:\LICENSE.txt"
-        Copy-Item -Path ".\install\windows-inno\v2rayA-service.xml" -Destination "D:\v2raya-x86_64-windows\v2rayA-service.xml"
-        Copy-Item -Path ".\install\windows-inno\v2rayA-service.xml" -Destination "D:\v2raya-arm64-windows\v2rayA-service.xml"
         ## Set Version
         $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_x86_64.iss"
         $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_arm64.iss"
