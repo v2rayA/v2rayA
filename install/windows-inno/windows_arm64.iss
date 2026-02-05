@@ -38,6 +38,7 @@ MinVersion=10.0.14393
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Files]
 Source: "D:\v2raya-arm64-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion

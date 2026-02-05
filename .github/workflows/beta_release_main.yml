@@ -9,7 +9,7 @@ on:
 
 jobs:
   Build_v2rayA_Web:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -210,7 +210,7 @@ jobs:
           installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
           installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
   Build_Linux_Packages:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [Build_v2rayA_Binaries]
     strategy:
       matrix:
@@ -334,7 +334,7 @@ jobs:
         path: |
           fpm_packages/*
   GitHub_Release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages] 
     steps:
     - uses: actions/checkout@v4
