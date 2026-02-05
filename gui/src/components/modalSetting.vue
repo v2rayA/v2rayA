@@ -79,6 +79,34 @@
         </template>
       </b-field>
 
+      <b-field v-show="transparentType == 'gvisor_tun' || transparentType == 'system_tun'" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunMode") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunMode')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunFakeIP" expanded>
+          <option :value="true">FakeIP</option>
+          <option :value="false">RealIP</option>
+        </b-select>
+      </b-field>
+
+      <b-field v-show="transparentType == 'gvisor_tun' || transparentType == 'system_tun'" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunIPv6") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunIPv6')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunIPv6" expanded>
+          <option :value="true">{{ $t("setting.options.enabled") }}</option>
+          <option :value="false">{{ $t("setting.options.disabled") }}</option>
+        </b-select>
+      </b-field>
+
       <b-field label-position="on-border">
         <template slot="label">
           {{ $t("setting.pacMode") }}
@@ -299,6 +327,8 @@ export default {
     mux: "8",
     transparent: "close",
     transparentType: "tproxy",
+    tunFakeIP: true,
+    tunIPv6: false,
     ipforward: false,
     portSharing: false,
     dnsForceMode: false,
@@ -406,6 +436,8 @@ export default {
             mux: parseInt(this.mux),
             transparent: this.transparent,
             transparentType: this.transparentType,
+            tunFakeIP: this.tunFakeIP,
+            tunIPv6: this.tunIPv6,
             ipforward: this.ipforward,
             portSharing: this.portSharing,
             routeOnly: this.routeOnly,

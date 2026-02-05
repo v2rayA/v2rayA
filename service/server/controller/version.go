@@ -33,7 +33,7 @@ func GetVersion(ctx *gin.Context) {
 		"serviceValid":     service.IsV2rayServiceValid(),
 		"v5":               versionErr == nil, // FIXME: Compomise on compatibility.
 		"lite":             lite,
-		"loadBalanceValid": variant == where.V2ray && versionErr == nil,
+		"loadBalanceValid": (variant == where.V2ray || variant == where.Xray) && versionErr == nil,
 		"variant":          variant,
 		"os":               runtime.GOOS,
 		"isRoot":           isRoot,
