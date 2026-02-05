@@ -35,6 +35,7 @@ type Params struct {
 	LogDisableColor      bool   `id:"log-disable-color" ignore:"1"`
 	LogDisableTimestamp  bool   `id:"log-disable-timestamp" desc:"Intended for use with systemd/journald to avoid duplicate timestamps in logs. This flag is ignored when using the --log-file flag or the V2RAYA_LOG_FILE environment variable." ignore:"1"`
 	Lite                 bool   `id:"lite" desc:"Lite mode for non-root and non-linux users" ignore:"1"`
+	WinEnvFile           string `id:"win-envfile" desc:"[Windows Only] Path to environment variables file to load before service starts"`
 	ShowVersion          bool   `id:"version" ignore:"1"`
 	PrintReport          string `id:"report" desc:"Print report" ignore:"1"`
 }

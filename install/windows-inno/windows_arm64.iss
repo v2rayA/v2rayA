@@ -5,7 +5,7 @@
 #define MyAppVersion "TheRealVersion"
 #define MyAppPublisher "v2rayA Organization"
 #define MyAppURL "https://v2raya.org/"
-#define MyAppExeName "v2rayA-service.exe"
+#define MyAppExeName "v2raya.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -40,10 +40,9 @@ MinVersion=10.0.14393
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "D:\v2raya-arm64-windows\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\v2raya-arm64-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "D:\v2raya-arm64-windows\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "D:\v2raya-arm64-windows\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "D:\v2raya-arm64-windows\v2rayA-service.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\v2raya.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -54,22 +53,23 @@ Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}";
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "install";
-Filename: "{app}\{#MyAppExeName}"; Parameters: "start";
+Filename: "sc.exe"; Parameters: "create v2rayA binPath= """{app}\bin\v2raya.exe""" DisplayName= ""v2rayA Service"" start= auto"; Flags: runhidden waituntilterminated
+Filename: "sc.exe"; Parameters: "description v2rayA ""v2rayA - A web GUI client of Project V"""; Flags: runhidden waituntilterminated
+Filename: "cmd.exe"; Parameters: "/C setx V2RAYA_CONFIG ""{app}"" /M"; Flags: runhidden waituntilterminated
+Filename: "cmd.exe"; Parameters: "/C setx V2RAYA_V2RAY_ASSETSDIR ""{app}\data"" /M"; Flags: runhidden waituntilterminated
+Filename: "cmd.exe"; Parameters: "/C setx V2RAYA_PASSCHECKROOT ""true"" /M"; Flags: runhidden waituntilterminated
+Filename: "sc.exe"; Parameters: "start v2rayA"; Flags: runhidden waituntilterminated
 
 [UninstallRun]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "stop";
-Filename: "{app}\{#MyAppExeName}"; Parameters: "uninstall";
+Filename: "sc.exe"; Parameters: "stop v2rayA"; Flags: runhidden
+Filename: "sc.exe"; Parameters: "delete v2rayA"; Flags: runhidden
+Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAYA_CONFIG /f"; Flags: runhidden
+Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAYA_V2RAY_ASSETSDIR /f"; Flags: runhidden
+Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAYA_PASSCHECKROOT /f"; Flags: runhidden
 
 [UninstallDelete]
-Type: files; Name: "{app}\v2rayA-service.wrapper.log"
-Type: files; Name: "{app}\v2rayA-service.out.log"
-Type: files; Name: "{app}\v2rayA-service.wrapper.log"
-Type: files; Name: "{app}\v2rayA-service.wrapper.log.old"
-Type: files; Name: "{app}\v2rayA-service.out.log.old"
-Type: files; Name: "{app}\v2rayA-service.wrapper.log.old"
-Type: files; Name: "{app}\v2rayA-service.err.log"
-Type: files; Name: "{app}\v2rayA-service.err.log.old"
+Type: filesandordirs; Name: "{app}\bolt.db"
+Type: filesandordirs; Name: "{app}\bin\v2raya.log"
 
 [Code]
 function InitializeSetup() : Boolean;
