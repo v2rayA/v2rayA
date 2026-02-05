@@ -37,8 +37,8 @@ SetupIconFile=D:\v2raya.ico
 MinVersion=10.0.14393
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "D:\v2raya-arm64-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
@@ -54,19 +54,30 @@ Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}";
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
 
 [Run]
-Filename: "sc.exe"; Parameters: "create v2rayA binPath= """{app}\bin\v2raya.exe""" DisplayName= ""v2rayA Service"" start= auto"; Flags: runhidden waituntilterminated
-Filename: "sc.exe"; Parameters: "description v2rayA ""v2rayA - A web GUI client of Project V"""; Flags: runhidden waituntilterminated
+; 添加 bin 目录到系统 PATH
+Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); if ($path -notlike '*{app}\bin*') {{ [Environment]::SetEnvironmentVariable('Path', $path + ';{app}\bin', 'Machine') }}"""; Flags: runhidden waituntilterminated
+; 设置环境变量
 Filename: "cmd.exe"; Parameters: "/C setx V2RAYA_CONFIG ""{app}"" /M"; Flags: runhidden waituntilterminated
-Filename: "cmd.exe"; Parameters: "/C setx V2RAYA_V2RAY_ASSETSDIR ""{app}\data"" /M"; Flags: runhidden waituntilterminated
+Filename: "cmd.exe"; Parameters: "/C setx V2RAY_LOCATION_ASSET ""{app}\data"" /M"; Flags: runhidden waituntilterminated
 Filename: "cmd.exe"; Parameters: "/C setx V2RAYA_PASSCHECKROOT ""true"" /M"; Flags: runhidden waituntilterminated
+; 检查服务是否存在，如果不存在则创建
+Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""if (!(Get-Service -Name v2rayA -ErrorAction SilentlyContinue)) {{ sc.exe create v2rayA binPath= '{app}\bin\v2raya.exe' DisplayName= 'v2rayA Service' start= auto; sc.exe description v2rayA 'v2rayA - A web GUI client of Project V' }}"""; Flags: runhidden waituntilterminated
+; 启动服务
 Filename: "sc.exe"; Parameters: "start v2rayA"; Flags: runhidden waituntilterminated
 
 [UninstallRun]
+; 停止服务
 Filename: "sc.exe"; Parameters: "stop v2rayA"; Flags: runhidden
+; 等待服务完全停止
+Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Start-Sleep -Seconds 2"""; Flags: runhidden
+; 删除服务
 Filename: "sc.exe"; Parameters: "delete v2rayA"; Flags: runhidden
+; 删除环境变量
 Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAYA_CONFIG /f"; Flags: runhidden
-Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAYA_V2RAY_ASSETSDIR /f"; Flags: runhidden
+Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAY_LOCATION_ASSET /f"; Flags: runhidden
 Filename: "cmd.exe"; Parameters: "/C reg delete HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment /v V2RAYA_PASSCHECKROOT /f"; Flags: runhidden
+; 从系统 PATH 中移除 bin 目录
+Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); $newPath = ($path.Split(';') | Where-Object {{ $_ -ne '{app}\bin' }}) -join ';'; [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')"""; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\bolt.db"
@@ -78,5 +89,6 @@ var
   ResultCode: Integer;
 begin
   Result := True;
-  Exec('cmd.exe', '/C sc.exe stop v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode); 
+  // 如果服务存在则停止它
+  Exec('powershell.exe', '-NoProfile -Command "if (Get-Service -Name v2rayA -ErrorAction SilentlyContinue) { Stop-Service -Name v2rayA -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2 }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode); 
 end;

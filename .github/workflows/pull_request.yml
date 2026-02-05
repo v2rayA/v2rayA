@@ -11,7 +11,7 @@ jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Set up Node.js
@@ -43,7 +43,7 @@ jobs:
           os: [ubuntu-latest, windows-latest, macos-latest]
     needs: Build_v2rayA_Web
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Download Artifact
