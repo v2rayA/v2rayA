@@ -2,6 +2,10 @@ package v2ray
 
 import (
 	"context"
+	"net"
+	"strconv"
+	"time"
+
 	"github.com/devfeel/mapper"
 	"github.com/gin-gonic/gin"
 	"github.com/v2fly/v2ray-core/v5/app/observatory"
@@ -11,9 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net"
-	"strconv"
-	"time"
 )
 
 var (
@@ -72,6 +73,9 @@ func getObservatoryResponses(conn *grpc.ClientConn, observatoryTags []string) (r
 	return r, nil
 }
 
+// ObservatoryProducer monitors outbound status via gRPC API and publishes to ApiFeed.
+// This function is only compatible with v2ray-core v5+ API structure.
+// For xray-core, this function should not be called as it uses different gRPC services.
 func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func()) {
 	closed := make(chan struct{})
 	go func() {

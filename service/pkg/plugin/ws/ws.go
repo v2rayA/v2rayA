@@ -1,13 +1,16 @@
 package ws
 
 import (
+	"context"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/gorilla/websocket"
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 // Ws is a base Ws struct
@@ -22,6 +25,7 @@ type Ws struct {
 }
 
 func init() {
+	log.Trace("[ws] registering dialer")
 	plugin.RegisterDialer("ws", NewWsDialer)
 }
 
@@ -71,11 +75,13 @@ func (s *Ws) Addr() string {
 
 // Dial connects to the address addr on the network net via the infra.
 func (s *Ws) Dial(network, addr string) (net.Conn, error) {
-	return s.dial(network, addr)
+	return s.DialContext(context.Background(), network, addr)
 }
 
-func (s *Ws) dial(network, addr string) (net.Conn, error) {
-	rc, _, err := s.wsDialer.Dial(s.wsAddr, s.header)
+func (s *Ws) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[ws] dialing %s via %s (host=%s path=%s)", addr, s.wsAddr, s.host, s.path)
+	s.wsDialer.NetDialContext = s.dialer.DialContext
+	rc, _, err := s.wsDialer.DialContext(ctx, s.wsAddr, s.header)
 	if err != nil {
 		return nil, fmt.Errorf("[Ws]: dial to %s: %w", s.wsAddr, err)
 	}
@@ -83,7 +89,7 @@ func (s *Ws) dial(network, addr string) (net.Conn, error) {
 }
 
 // DialUDP connects to the given address via the infra.
-func (s *Ws) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
+func (s *Ws) DialUDP(network string) (pc plugin.FakeNetPacketConn, err error) {
 	//TODO
-	return nil, nil, nil
+	return nil, nil
 }

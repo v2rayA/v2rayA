@@ -7,8 +7,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -84,19 +82,8 @@ func checkSupport(toAppend []*configure.Which) (err error) {
 	if err = checkAssetsExist(setting); err != nil {
 		return err
 	}
-	variant, err := service.CheckV5()
-	if err != nil {
-		return err
-	}
-	if variant != where.V2ray {
-		outbound2cnt := map[string]int{}
-		for _, wt := range append(toAppend, configure.GetConnectedServers().Get()...) {
-			outbound2cnt[wt.Outbound]++
-			if outbound2cnt[wt.Outbound] > 1 {
-				return fmt.Errorf("cannot select multiple servers: %w", V2OnlyFeatureError)
-			}
-		}
-	}
+	// Both v2ray-core and xray-core support load balancing now
+	// No need to restrict multiple servers for any core type
 	return nil
 }
 

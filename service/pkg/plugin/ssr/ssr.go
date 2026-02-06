@@ -1,15 +1,17 @@
 package ssr
 
 import (
+	"context"
 	"fmt"
 	"net"
 
 	"github.com/daeuniverse/outbound/dialer"
 	"github.com/daeuniverse/outbound/dialer/shadowsocksr"
-	"github.com/daeuniverse/softwind/netproxy"
+	"github.com/daeuniverse/outbound/netproxy"
 	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 
-	_ "github.com/daeuniverse/softwind/protocol/shadowsocks_stream"
+	_ "github.com/daeuniverse/outbound/protocol/shadowsocks_stream"
 )
 
 // SSR struct.
@@ -23,6 +25,7 @@ func (*SSR) Addr() string {
 }
 
 func init() {
+	log.Trace("[shadowsocksr] registering dialer")
 	plugin.RegisterDialer("ssr", NewSSRDialer)
 }
 
@@ -45,18 +48,25 @@ func NewSSRDialer(s string, d plugin.Dialer) (plugin.Dialer, error) {
 
 // Dial connects to the address addr on the network net via the proxy.
 func (s *SSR) Dial(network, addr string) (net.Conn, error) {
-	rc, err := s.dialer.Dial("tcp", addr)
+	return s.DialContext(context.Background(), network, addr)
+}
+
+func (s *SSR) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[%s] dialing %s", "shadowsocksr", addr)
+	magicNetwork := netproxy.MagicNetwork{
+		Network: "tcp",
+		Mark:    plugin.ShouldSetMark(),
+	}
+	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
+		log.Info("[%s] dial %s failed: %v", "shadowsocksr", addr, err)
 		return nil, fmt.Errorf("[ssr]: dial to %s: %w", addr, err)
 	}
-	return &netproxy.FakeNetConn{
-		Conn:  rc,
-		LAddr: nil,
-		RAddr: nil,
-	}, err
+	log.Info("[%s] dial %s success", "shadowsocksr", addr)
+	return plugin.NewFakeNetConn(rc), nil
 }
 
 // DialUDP connects to the given address via the proxy.
-func (s *SSR) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
-	return nil, nil, fmt.Errorf("[ssr] udp not supported now")
+func (s *SSR) DialUDP(network string) (plugin.FakeNetPacketConn, error) {
+	return nil, fmt.Errorf("[ssr] udp not supported now")
 }

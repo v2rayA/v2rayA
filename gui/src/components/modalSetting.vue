@@ -61,11 +61,11 @@
           </b-tooltip>
         </template>
         <b-select v-model="transparentType" expanded>
-          <option v-show="!lite" value="redirect">redirect</option>
-          <option v-show="!lite" value="tproxy">tproxy</option>
+          <option v-show="!lite && os === 'linux'" value="redirect">redirect</option>
+          <option v-show="!lite && os === 'linux'" value="tproxy">tproxy</option>
           <option v-show="!lite" value="gvisor_tun">gvisor tun</option>
           <option v-show="!lite" value="system_tun">system tun</option>
-          <option value="system_proxy">system proxy</option>
+          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>
         </b-select>
 
         <template v-if="transparentType == 'tproxy'">
@@ -77,6 +77,34 @@
             " outlined @click="handleClickTproxyWhiteIpGroups">{{ $t("operations.tproxyWhiteIpGroups") }}
           </b-button>
         </template>
+      </b-field>
+
+      <b-field v-show="transparentType == 'gvisor_tun' || transparentType == 'system_tun'" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunMode") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunMode')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunFakeIP" expanded>
+          <option :value="true">FakeIP</option>
+          <option :value="false">RealIP</option>
+        </b-select>
+      </b-field>
+
+      <b-field v-show="transparentType == 'gvisor_tun' || transparentType == 'system_tun'" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunIPv6") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunIPv6')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunIPv6" expanded>
+          <option :value="true">{{ $t("setting.options.enabled") }}</option>
+          <option :value="false">{{ $t("setting.options.disabled") }}</option>
+        </b-select>
       </b-field>
 
       <b-field label-position="on-border">
@@ -299,6 +327,8 @@ export default {
     mux: "8",
     transparent: "close",
     transparentType: "tproxy",
+    tunFakeIP: true,
+    tunIPv6: false,
     ipforward: false,
     portSharing: false,
     dnsForceMode: false,
@@ -318,6 +348,8 @@ export default {
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
     showSpecialMode: true,
+    os: "",
+    isRoot: false,
   }),
   computed: {
     lite() {
@@ -366,6 +398,15 @@ export default {
           Object.assign(this, res.data.data);
           this.subscriptionAutoUpdateTime = new Date(this.subscriptionAutoUpdateTime);
           this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+          // Get OS and isRoot info from version API
+          this.$axios({
+            url: apiRoot + "/version",
+          }).then((versionRes) => {
+            if (versionRes.data && versionRes.data.data) {
+              this.os = versionRes.data.data.os || "";
+              this.isRoot = versionRes.data.data.isRoot || false;
+            }
+          });
           if (this.lite) {
             this.transparentType = "system_proxy";
             this.showSpecialMode = false;
@@ -395,6 +436,8 @@ export default {
             mux: parseInt(this.mux),
             transparent: this.transparent,
             transparentType: this.transparentType,
+            tunFakeIP: this.tunFakeIP,
+            tunIPv6: this.tunIPv6,
             ipforward: this.ipforward,
             portSharing: this.portSharing,
             routeOnly: this.routeOnly,

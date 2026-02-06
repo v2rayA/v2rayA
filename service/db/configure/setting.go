@@ -24,6 +24,8 @@ type Setting struct {
 	SpecialMode                        SpecialMode     `json:"specialMode"`
 	TransparentType                    TransparentType `json:"transparentType"`
 	AntiPollution                      Antipollution   `json:"antipollution"`
+	TunFakeIP                          bool            `json:"tunFakeIP"`
+	TunIPv6                            bool            `json:"tunIPv6"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -44,6 +46,8 @@ func NewSetting() (setting *Setting) {
 		SpecialMode:                        SpecialModeNone,
 		TransparentType:                    TransparentRedirect,
 		AntiPollution:                      AntipollutionClosed,
+		TunFakeIP:                          true,
+		TunIPv6:                            false,
 	}
 }
 

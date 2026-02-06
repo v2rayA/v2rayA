@@ -6,7 +6,7 @@ import (
 	"net/netip"
 	"syscall"
 
-	"github.com/daeuniverse/softwind/netproxy"
+	"github.com/daeuniverse/outbound/netproxy"
 )
 
 type PacketConnConverter struct {
@@ -94,7 +94,8 @@ func (conn *PacketConnConverter) WriteMsgUDP(b []byte, oob []byte, addr *net.UDP
 		WriteMsgUDP(b []byte, oob []byte, addr *net.UDPAddr) (n int, oobn int, err error)
 	})
 	if !ok {
-		return 0, 0, fmt.Errorf("connection doesn't allow to get WriteMsgUDP. Not a *net.UDPConn? : %T", conn.PacketConn)
+		// Log additional context for debugging
+		return 0, 0, fmt.Errorf("connection doesn't allow to get WriteMsgUDP. Not a *net.UDPConn? : %T, target: %v", conn.PacketConn, addr)
 	}
 	return c.WriteMsgUDP(b, oob, addr)
 }

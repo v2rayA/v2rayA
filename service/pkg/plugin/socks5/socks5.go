@@ -10,6 +10,7 @@
 package socks5
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -38,6 +39,8 @@ type Socks5 struct {
 }
 
 func init() {
+	println("[DEBUG] socks5.init called")
+	log.Trace("[socks5] registering server and dialer")
 	plugin.RegisterServer("socks5", NewSocks5Server)
 	plugin.RegisterServer("socks", NewSocks5Server)
 	plugin.RegisterDialer("socks5", NewSocks5Dialer)
@@ -54,8 +57,11 @@ func NewSocks5(s string, d plugin.Dialer, p plugin.Proxy) (*Socks5, error) {
 	}
 
 	addr := u.Host
-	user := u.User.Username()
-	pass, _ := u.User.Password()
+	var user, pass string
+	if u.User != nil {
+		user = u.User.Username()
+		pass, _ = u.User.Password()
+	}
 
 	h := &Socks5{
 		dialer:   d,
@@ -123,11 +129,13 @@ func (s *Socks5) Close() error {
 // Serve serves a connection.
 func (s *Socks5) Serve(c net.Conn) {
 	defer c.Close()
+	log.Trace("[socks5] accepted connection from %s", c.RemoteAddr())
 
 	tgt, err := s.handshake(c)
 	if err != nil {
 		// UDP: keep the connection until disconnect then free the UDP socket
 		if err == socks.Errors[9] {
+			log.Trace("[socks5] UDP associate with %s", c.RemoteAddr())
 			buf := leakybuf.GlobalLeakyBuf.Get()
 			defer leakybuf.GlobalLeakyBuf.Put(buf)
 			// block here
@@ -145,21 +153,31 @@ func (s *Socks5) Serve(c net.Conn) {
 		return
 	}
 
+	log.Trace("[socks5] %s requests to connect %v", c.RemoteAddr(), tgt)
+
+	// we should write the reply AFTER the dial to upstream is completed successfully,
+	// because the client (v2ray) may send data immediately after receiving the success reply.
 	rc, dialer, err := s.proxy.Dial("tcp", tgt.String())
 	if err != nil {
-		log.Debug("[socks5] %s <-> %s via %s, error in dial: %v", c.RemoteAddr(), tgt, dialer, err)
+		log.Trace("[socks5] %s <-> %s via %s, dial failed: %v", c.RemoteAddr(), tgt, dialer, err)
+		// send failure reply: 0x01 General SOCKS server failure
+		c.Write([]byte{5, 1, 0, 1, 0, 0, 0, 0, 0, 0})
 		return
 	}
 	defer rc.Close()
 
-	log.Trace("[socks5] %s <-> %s via %s", c.RemoteAddr(), tgt, dialer)
+	if _, err := c.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0}); err != nil {
+		log.Trace("[socks5] %s <-> %s, failed to write success reply: %v", c.RemoteAddr(), tgt, err)
+		return
+	}
 
-	_, _, err = Relay(c, rc)
+	log.Trace("[socks5] %s <-> %s via %s established", c.RemoteAddr(), tgt, dialer)
+
+	n1, n2, err := Relay(c, rc)
 	if err != nil {
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return // ignore i/o timeout
-		}
-		log.Debug("[socks5] relay error: %v", err)
+		log.Trace("[socks5] relay error between %s and %s: %v, bytes: %d/%d", c.RemoteAddr(), tgt, err, n1, n2)
+	} else {
+		log.Trace("[socks5] %s <-> %s relay finished successfully, bytes: %d/%d", c.RemoteAddr(), tgt, n1, n2)
 	}
 }
 
@@ -199,13 +217,17 @@ func (s *Socks5) Addr() string {
 
 // Dial connects to the address addr on the network net via the SOCKS5 proxy.
 func (s *Socks5) Dial(network, addr string) (net.Conn, error) {
+	return s.DialContext(context.Background(), network, addr)
+}
+
+func (s *Socks5) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
 	switch network {
 	case "tcp", "tcp6", "tcp4":
 	default:
 		return nil, fmt.Errorf("[socks5]: no support for connection type %v", network)
 	}
 
-	c, err := s.dialer.Dial(network, s.addr)
+	c, err := s.dialer.DialContext(ctx, network, s.addr)
 	if err != nil {
 		log.Debug("[socks5]: dial to %s error: %s", s.addr, err)
 		return nil, err
@@ -220,11 +242,11 @@ func (s *Socks5) Dial(network, addr string) (net.Conn, error) {
 }
 
 // DialUDP connects to the given address via the proxy.
-func (s *Socks5) DialUDP(network, addr string) (pc net.PacketConn, writeTo net.Addr, err error) {
-	c, err := s.dialer.Dial("tcp", s.addr)
+func (s *Socks5) DialUDP(network string) (plugin.FakeNetPacketConn, error) {
+	c, err := s.dialer.DialContext(context.TODO(), "tcp", s.addr)
 	if err != nil {
 		log.Debug("[socks5] dialudp dial tcp to %s error: %s", s.addr, err)
-		return nil, nil, err
+		return nil, err
 	}
 
 	// send VER, NMETHODS, METHODS
@@ -233,37 +255,37 @@ func (s *Socks5) DialUDP(network, addr string) (pc net.PacketConn, writeTo net.A
 	buf := make([]byte, socks.MaxAddrLen)
 	// read VER METHOD
 	if _, err := io.ReadFull(c, buf[:2]); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	dstAddr := socks.ParseAddr(addr)
+	dstAddr := socks.ParseAddr("0.0.0.0:0")
 	// write VER CMD RSV ATYP DST.ADDR DST.PORT
 	c.Write(append([]byte{Version, socks.CmdUDPAssociate, 0}, dstAddr...))
 
 	// read VER REP RSV ATYP BND.ADDR BND.PORT
 	if _, err := io.ReadFull(c, buf[:3]); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	rep := buf[1]
 	if rep != 0 {
 		log.Debug("[socks5] server reply: %d, not succeeded", rep)
-		return nil, nil, fmt.Errorf("server connect failed")
+		return nil, fmt.Errorf("server connect failed")
 	}
 
 	uAddr, err := socks.ReadAddrBuf(c, buf)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	pc, nextHop, err := s.dialer.DialUDP(network, uAddr.String())
+	pc, err := s.dialer.DialUDP(network)
 	if err != nil {
 		log.Debug("[socks5] dialudp to %s error: %s", uAddr.String(), err)
-		return nil, nil, err
+		return nil, err
 	}
 
-	pkc := NewPktConn(pc, nextHop, dstAddr, true, c)
-	return pkc, nextHop, err
+	wAddr, _ := net.ResolveUDPAddr("udp", uAddr.String())
+	return NewPktConn(pc, wAddr, dstAddr, true, c), nil
 }
 
 // connect takes an existing connection to a socks5 proxy server,
@@ -357,12 +379,11 @@ func (s *Socks5) connect(conn net.Conn, target string) error {
 		return fmt.Errorf("proxy: failed to read connect reply from SOCKS5 proxy at %v: %w", s.addr, err)
 	}
 
-	failure := "unknown error"
-	if int(buf[1]) < len(socks.Errors) {
-		failure = socks.Errors[buf[1]].Error()
-	}
-
-	if len(failure) > 0 {
+	if int(buf[1]) != 0 {
+		failure := "unknown error"
+		if int(buf[1]) < len(socks.Errors) {
+			failure = socks.Errors[buf[1]].Error()
+		}
 		return fmt.Errorf("proxy: SOCKS5 proxy at " + s.addr + " failed to connect: " + failure)
 	}
 
@@ -485,7 +506,7 @@ func (s *Socks5) handshake(rw io.ReadWriter) (socks.Addr, error) {
 	}
 	switch cmd {
 	case socks.CmdConnect:
-		_, err = rw.Write([]byte{5, 0, 0, 1, 0, 0, 0, 0, 0, 0}) // SOCKS v5, reply succeeded
+		// wait for dial success
 	case socks.CmdUDPAssociate:
 		listenAddr := socks.ParseAddr(rw.(net.Conn).LocalAddr().String())
 		_, err = rw.Write(append([]byte{5, 0, 0}, listenAddr...)) // SOCKS v5, reply succeeded

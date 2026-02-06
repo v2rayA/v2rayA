@@ -7,13 +7,16 @@ package trojanc
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
-	"github.com/v2rayA/v2rayA/pkg/plugin/socks"
 	"net"
 	"net/url"
+
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/plugin/socks"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 // Trojan is a base trojan struct
@@ -24,6 +27,7 @@ type Trojan struct {
 }
 
 func init() {
+	log.Trace("[trojanc] registering dialer")
 	plugin.RegisterDialer("trojanc", NewTrojancDialer)
 }
 
@@ -61,11 +65,12 @@ func (s *Trojan) Addr() string {
 
 // Dial connects to the address addr on the network net via the infra.
 func (s *Trojan) Dial(network, addr string) (net.Conn, error) {
-	return s.dial(network, addr)
+	return s.DialContext(context.Background(), network, addr)
 }
 
-func (s *Trojan) dial(network, addr string) (net.Conn, error) {
-	rc, err := s.dialer.Dial("tcp", s.addr)
+func (s *Trojan) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[trojanc] dialing %s via %s", addr, s.addr)
+	rc, err := s.dialer.DialContext(ctx, "tcp", s.addr)
 	if err != nil {
 		return nil, fmt.Errorf("[trojan]: dial to %s: %w", s.addr, err)
 	}
@@ -87,7 +92,7 @@ func (s *Trojan) dial(network, addr string) (net.Conn, error) {
 }
 
 // DialUDP connects to the given address via the infra.
-func (s *Trojan) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
+func (s *Trojan) DialUDP(network string) (pc plugin.FakeNetPacketConn, err error) {
 	//TODO
-	return nil, nil, nil
+	return nil, nil
 }

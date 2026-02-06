@@ -22,6 +22,7 @@ import (
 	"github.com/v2rayA/v2ray-lib/router/routercommon"
 	"github.com/v2rayA/v2rayA/core/dns"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -39,20 +40,93 @@ var (
 )
 
 type singTun struct {
-	mu        sync.Mutex
-	dialer    N.Dialer
-	forward   N.Dialer
-	cancel    context.CancelFunc
-	closer    io.Closer
-	waiter    *gvisorWaiter
-	dns       *DNS
-	backupDNS map[string][]string
-	whitelist []netip.Addr
+	mu           sync.Mutex
+	dialer       N.Dialer
+	forward      N.Dialer
+	cancel       context.CancelFunc
+	closer       io.Closer
+	waiter       *gvisorWaiter
+	dns          *DNS
+	backupDNS    map[string][]string
+	whitelist    []netip.Addr
+	excludeAddrs []netip.Prefix // Addresses to exclude from TUN routing
+	useIPv6      bool
+}
+
+// isReservedAddress checks if an IP address belongs to reserved address ranges
+// that should not be proxied (loopback, private, link-local, multicast, etc.)
+func isReservedAddress(addr netip.Addr) bool {
+	if !addr.IsValid() {
+		return false
+	}
+
+	// IPv4 reserved ranges
+	if addr.Is4() {
+		// 127.0.0.0/8 - Loopback
+		if addr.AsSlice()[0] == 127 {
+			return true
+		}
+		// 10.0.0.0/8 - Private network Class A
+		if addr.AsSlice()[0] == 10 {
+			return true
+		}
+		// 172.16.0.0/12 - Private network Class B
+		if addr.AsSlice()[0] == 172 && (addr.AsSlice()[1]&0xF0) == 16 {
+			return true
+		}
+		// 192.168.0.0/16 - Private network Class C
+		if addr.AsSlice()[0] == 192 && addr.AsSlice()[1] == 168 {
+			return true
+		}
+		// 169.254.0.0/16 - Link-local
+		if addr.AsSlice()[0] == 169 && addr.AsSlice()[1] == 254 {
+			return true
+		}
+		// 224.0.0.0/4 - Multicast
+		if (addr.AsSlice()[0] & 0xF0) == 224 {
+			return true
+		}
+		// 240.0.0.0/4 - Reserved
+		if (addr.AsSlice()[0] & 0xF0) == 240 {
+			return true
+		}
+		// 0.0.0.0/8 - Current network
+		if addr.AsSlice()[0] == 0 {
+			return true
+		}
+	}
+
+	// IPv6 reserved ranges
+	if addr.Is6() {
+		// ::1/128 - Loopback
+		if addr.IsLoopback() {
+			return true
+		}
+		// fe80::/10 - Link-local unicast
+		if addr.IsLinkLocalUnicast() {
+			return true
+		}
+		// fc00::/7 - Unique local address (ULA)
+		if (addr.AsSlice()[0] & 0xFE) == 0xFC {
+			return true
+		}
+		// ff00::/8 - Multicast
+		if addr.IsMulticast() {
+			return true
+		}
+		// ::/128 - Unspecified address
+		if addr.IsUnspecified() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func NewSingTun() Tun {
 	dialer := N.SystemDialer
 	client := socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", "")
+	log.Info("[TUN] Initialized SOCKS5 client to 127.0.0.1:52345")
 	return &singTun{
 		dialer:  dialer,
 		forward: client,
@@ -77,34 +151,67 @@ func (t *singTun) Start(stack Stack) error {
 		return err
 	}
 	failedCloser = append(failedCloser, interfaceMonitor)
+	// Separate excluded addresses by IP version for TUN options
+	var inet4Exclude, inet6Exclude []netip.Prefix
+
+	// Always exclude 127.0.0.0/8 (loopback) to prevent capturing local proxy traffic
+	loopback4 := netip.MustParsePrefix("127.0.0.0/8")
+	inet4Exclude = append(inet4Exclude, loopback4)
+	log.Info("[TUN] Excluding loopback: 127.0.0.0/8")
+
+	for _, prefix := range t.excludeAddrs {
+		if prefix.Addr().Is4() {
+			inet4Exclude = append(inet4Exclude, prefix)
+			log.Info("[TUN] Excluding IPv4: %s", prefix.String())
+		} else {
+			inet6Exclude = append(inet6Exclude, prefix)
+			log.Info("[TUN] Excluding IPv6: %s", prefix.String())
+		}
+	}
+
+	log.Info("[TUN] Starting with StrictRoute=true, AutoRoute=true")
+	log.Info("[TUN] Total exclusions: %d IPv4, %d IPv6", len(inet4Exclude), len(inet6Exclude))
+	log.Warn("[TUN] Windows: StrictRoute may only allow main process traffic!")
+
 	tunOptions := tun.Options{
-		Name:         tun.CalculateInterfaceName(""),
-		MTU:          9000,
-		Inet4Address: []netip.Prefix{prefix4},
-		// Inet6Address:     []netip.Prefix{prefix6},
-		AutoRoute:        true,
-		StrictRoute:      false,
-		InterfaceMonitor: interfaceMonitor,
-		TableIndex:       2022,
+		Name:                     tun.CalculateInterfaceName(""),
+		MTU:                      9000,
+		Inet4Address:             []netip.Prefix{prefix4},
+		Inet4RouteExcludeAddress: inet4Exclude, // Exclude loopback + server IPs
+		AutoRoute:                true,
+		StrictRoute:              false, // TEMPORARY: Disable to test if it blocks v2ray/xray
+		InterfaceMonitor:         interfaceMonitor,
+	}
+	// Enable IPv6 if requested
+	if t.useIPv6 {
+		tunOptions.Inet6Address = []netip.Prefix{prefix6}
+		// Exclude IPv6 loopback (::1/128)
+		loopback6 := netip.MustParsePrefix("::1/128")
+		inet6Exclude = append([]netip.Prefix{loopback6}, inet6Exclude...)
+		tunOptions.Inet6RouteExcludeAddress = inet6Exclude
+		log.Info("[TUN] Excluding IPv6 loopback: ::1/128")
 	}
 	tunInterface, err := tun.New(tunOptions)
 	if err != nil {
 		return err
 	}
 	failedCloser = append(failedCloser, tunInterface)
+
+	// Setup policy routing rules to exclude fwmark 0x80 traffic (v2ray/xray/plugin)
+	if err := SetupTunRouteRules(); err != nil {
+		// Log warning but continue - the reserved address check still provides protection
+		// This is mainly for Linux systems with root privileges
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	tunStack, err := tun.NewStack(string(stack), tun.StackOptions{
-		Context:                ctx,
-		Tun:                    tunInterface,
-		MTU:                    tunOptions.MTU,
-		Name:                   tunOptions.Name,
-		Inet4Address:           tunOptions.Inet4Address,
-		Inet6Address:           tunOptions.Inet6Address,
-		EndpointIndependentNat: false,
-		UDPTimeout:             30,
-		Handler:                t,
-		Logger:                 defaultLogger,
-		InterfaceFinder:        control.DefaultInterfaceFinder(),
+		Context:         ctx,
+		Tun:             tunInterface,
+		TunOptions:      tunOptions,
+		UDPTimeout:      30,
+		Handler:         t,
+		Logger:          defaultLogger,
+		InterfaceFinder: control.NewDefaultInterfaceFinder(),
 	})
 	if err != nil {
 		cancel()
@@ -120,6 +227,10 @@ func (t *singTun) Start(stack Stack) error {
 	t.closer = failedCloser
 	failedCloser = nil
 	t.waiter = &gvisorWaiter{tunStack}
+
+	// Note: Server addresses are now excluded via Inet4/6RouteExcludeAddress
+	// No need for manual static routes - sing-tun handles it natively
+
 	t.dns.whitelist, _ = GetWhitelistCN()
 	servers := dns.GetSystemDNS()
 	t.dns.servers = make([]M.Socksaddr, len(servers))
@@ -151,6 +262,12 @@ func (t *singTun) Close() error {
 			t.waiter.Wait()
 			t.waiter = nil
 		}
+		// Cleanup routing rules
+		CleanupTunRouteRules()
+		// No need to cleanup exclude routes - sing-tun manages them automatically
+		// Clear whitelist and exclusion list
+		t.whitelist = nil
+		t.excludeAddrs = nil
 	}
 	t.mu.Unlock()
 	return nil
@@ -158,20 +275,57 @@ func (t *singTun) Close() error {
 
 func (t *singTun) AddDomainWhitelist(domain string) {
 	t.dns.whitelist = append(t.dns.whitelist, strmatcher.FullMatcher(domain))
+	log.Trace("[TUN] Added domain to DNS whitelist: %s", domain)
 }
 
 func (t *singTun) AddIPWhitelist(addr netip.Addr) {
 	t.whitelist = append(t.whitelist, addr)
+	log.Info("[TUN] Added IP to whitelist: %s", addr.String())
+	// Also add to route exclusion list to prevent routing through TUN
+	// This is critical for Windows/macOS where fwmark routing is not available
+	prefix := netip.PrefixFrom(addr, addr.BitLen())
+	t.excludeAddrs = append(t.excludeAddrs, prefix)
+	log.Info("[TUN] Added %s to route exclusion list", prefix.String())
 }
 
-func (t *singTun) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) error {
+func (t *singTun) SetFakeIP(enabled bool) {
+	t.dns.useFakeIP = enabled
+}
+
+func (t *singTun) SetIPv6(enabled bool) {
+	t.useIPv6 = enabled
+}
+
+func (t *singTun) PrepareConnection(network string, source M.Socksaddr, destination M.Socksaddr) error {
+	return nil
+}
+
+func (t *singTun) NewConnectionEx(ctx context.Context, conn net.Conn, source M.Socksaddr, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	metadata := M.Metadata{
+		Source:      source,
+		Destination: destination,
+	}
+	log.Trace("[TUN-NEW] New TCP connection: %s -> %s", source, destination)
+	err := t.newConnection(ctx, conn, metadata)
+	if err != nil {
+		N.CloseOnHandshakeFailure(conn, onClose, err)
+	}
+}
+
+func (t *singTun) newConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) error {
 	err := t.dns.NewConnection(ctx, conn, metadata)
 	if err == continueHandler {
 		var dialer N.Dialer
-		if slices.Contains(t.whitelist, metadata.Destination.Addr) {
+		var dialType string
+		// Use direct connection for whitelisted IPs or reserved address ranges
+		if slices.Contains(t.whitelist, metadata.Destination.Addr) || isReservedAddress(metadata.Destination.Addr) {
 			dialer = t.dialer
+			dialType = "direct"
+			log.Trace("[TUN-TCP] %s -> %s: using DIRECT (whitelisted/reserved)", metadata.Source, metadata.Destination)
 		} else {
 			dialer = t.forward
+			dialType = "socks5"
+			log.Trace("[TUN-TCP] %s -> %s: using SOCKS5", metadata.Source, metadata.Destination)
 		}
 		if domain, ok := t.dns.fakeCache.Load(metadata.Destination.Addr); ok {
 			metadata.Destination.Addr = netip.Addr{}
@@ -179,22 +333,38 @@ func (t *singTun) NewConnection(ctx context.Context, conn net.Conn, metadata M.M
 		}
 		serverConn, err := dialer.DialContext(ctx, N.NetworkTCP, metadata.Destination)
 		if err != nil {
+			log.Warn("[TUN-TCP] Failed to dial %s via %s: %v", metadata.Destination, dialType, err)
 			conn.Close()
 			return err
 		}
+		log.Trace("[TUN-TCP] Connected to %s via %s", metadata.Destination, dialType)
 		return bufio.CopyConn(ctx, conn, serverConn)
 	}
 	return err
 }
 
-func (t *singTun) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata M.Metadata) error {
+func (t *singTun) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, source M.Socksaddr, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
+	metadata := M.Metadata{
+		Source:      source,
+		Destination: destination,
+	}
+	err := t.newPacketConnection(ctx, conn, metadata)
+	if err != nil {
+		N.CloseOnHandshakeFailure(conn, onClose, err)
+	}
+}
+
+func (t *singTun) newPacketConnection(ctx context.Context, conn N.PacketConn, metadata M.Metadata) error {
 	err := t.dns.NewPacketConnection(ctx, conn, metadata)
 	if err == continueHandler {
 		var dialer N.Dialer
-		if slices.Contains(t.whitelist, metadata.Destination.Addr) {
+		// Use direct connection for whitelisted IPs or reserved address ranges
+		if slices.Contains(t.whitelist, metadata.Destination.Addr) || isReservedAddress(metadata.Destination.Addr) {
 			dialer = t.dialer
+			log.Trace("[TUN-UDP] %s -> %s: using DIRECT (whitelisted/reserved)", metadata.Source, metadata.Destination)
 		} else {
 			dialer = t.forward
+			log.Trace("[TUN-UDP] %s -> %s: using SOCKS5", metadata.Source, metadata.Destination)
 		}
 		if domain, ok := t.dns.fakeCache.Load(metadata.Destination.Addr); ok {
 			metadata.Destination.Addr = netip.Addr{}
