@@ -164,6 +164,7 @@ jobs:
       shell: pwsh
       run: |
         ## Create Destination Directory
+        $CurrentDir = Get-Location
         New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\bin"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
@@ -186,15 +187,16 @@ jobs:
         Copy-Item -Path ".\LICENSE" -Destination "D:\LICENSE.txt"
         Copy-Item -Path ".\install\windows-inno\ChineseSimplified.isl" -Destination "D:\ChineseSimplified.isl"
         ## Set Version
-        $(Get-Content -Path .\install\windows-inno\windows_x86_64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_x86_64.iss"
-        $(Get-Content -Path .\install\windows-inno\windows_arm64.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}") | Out-File "D:\windows_arm64.iss"
+        $((Get-Content -Path .\install\windows-inno\windows.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}")).Replace("TheRealArch", "x64compatible") | Out-File "D:\windows_x86_64.iss"
+        $((Get-Content -Path .\install\windows-inno\windows.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}")).Replace("TheRealArch", "arm64") | Out-File "D:\windows_arm64.iss"
         ## Build Installer
         Set-Location -Path "D:\"
         & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
         & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
         ## Rename to Friendly Name
-        Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination .\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-        Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination .\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+        cd $CurrentDir
+        Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination $CurrentDir\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination $CurrentDir\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       with:

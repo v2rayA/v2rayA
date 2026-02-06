@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -80,6 +82,8 @@ loop:
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				elog.Info(1, "v2rayA service stopping")
+				// 优雅关闭：先停止 v2ray/xray 进程
+				cleanupResources()
 				break loop
 			default:
 				elog.Error(1, fmt.Sprintf("unexpected control request #%d", c))
@@ -214,6 +218,28 @@ func runAsService(isDebug bool) error {
 
 	elog.Info(1, "v2rayA service stopped")
 	return nil
+}
+
+// cleanupResources 清理资源，关闭 v2ray/xray 进程
+func cleanupResources() {
+	elog.Info(1, "Cleaning up resources...")
+
+	// 停止透明代理
+	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
+	elog.Info(1, "Transparent proxy stopped")
+
+	// 停止 v2ray/xray 进程
+	v2ray.ProcessManager.Stop(false)
+	elog.Info(1, "v2ray/xray process stopped")
+
+	// 关闭数据库连接
+	if err := db.DB().Close(); err != nil {
+		elog.Error(1, fmt.Sprintf("Failed to close database: %v", err))
+	} else {
+		elog.Info(1, "Database connection closed")
+	}
+
+	elog.Info(1, "Resource cleanup completed")
 }
 
 // runService 在服务环境中运行主程序

@@ -18,17 +18,17 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-ArchitecturesAllowed=arm64
-ArchitecturesInstallIn64BitMode=arm64
+ArchitecturesAllowed=TheRealArch
+ArchitecturesInstallIn64BitMode=TheRealArch
 DefaultDirName={autopf}\{#MyAppName}
-; DisableDirPage=yes
+DisableDirPage=false
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=D:\LICENSE.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=D:\
-OutputBaseFilename=installer_windows_inno_arm64
+OutputBaseFilename=installer_windows_inno_x64
 Compression=lzma
 SolidCompression=yes
 UninstallDisplayName={#MyAppName}-{#MyAppVersion}
@@ -41,9 +41,9 @@ Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "D:\v2raya-arm64-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "D:\v2raya-arm64-windows\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "D:\v2raya-arm64-windows\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\v2raya-x86_64-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "D:\v2raya-x86_64-windows\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\v2raya-x86_64-windows\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "D:\v2raya.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -56,9 +56,10 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
 [Run]
 ; 添加 bin 目录到系统 PATH
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); if ($path -notlike '*{app}\bin*') {{ [Environment]::SetEnvironmentVariable('Path', $path + ';{app}\bin', 'Machine') }"""; Flags: runhidden waituntilterminated
-; 设置环境变量
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_CONFIG', '{app}', 'Machine')"""; Flags: runhidden waituntilterminated
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_V2RAY_ASSETSDIR', '{app}\data', 'Machine')"""; Flags: runhidden waituntilterminated
+; 创建环境变量配置文件
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Test-Path '{app}\v2rayA_env.txt')) {{ Set-Content -Path '{app}\v2rayA_env.txt' -Value 'V2RAYA_CONFIG={app}','V2RAYA_V2RAY_ASSETSDIR=''{app}\data''','V2RAYA_LOG_FILE=""$env:windir\Temp\v2raya.log""' -Encoding UTF8 }"""; Flags: runhidden waituntilterminated
+; 设置环境变量指向配置文件
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_WIN_ENVFILE', '{app}\v2rayA_env.txt', 'Machine')"""; Flags: runhidden waituntilterminated
 ; 创建服务
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Get-Service -Name v2rayA -ErrorAction SilentlyContinue)) {{ New-Service -Name v2rayA -BinaryPathName '""{app}\bin\v2raya.exe"" --passcheckroot' -DisplayName 'v2rayA Service' -Description 'v2rayA - A web GUI client of Project V' -StartupType Automatic }"""; Flags: runhidden waituntilterminated
 ; 启动服务
@@ -66,12 +67,11 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Com
 
 [UninstallRun]
 ; 停止并删除服务
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (Get-Service -Name v2rayA -ErrorAction SilentlyContinue) {{ Stop-Service -Name v2rayA -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Remove-Service -Name v2rayA -ErrorAction SilentlyContinue }"""; Flags: runhidden
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (Get-Service -Name v2rayA -ErrorAction SilentlyContinue) {{ Stop-Service -Name v2rayA -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 5; sc.exe delete v2rayA }"""; Flags: runhidden
 ; 删除环境变量
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_CONFIG', $null, 'Machine')"""; Flags: runhidden
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_V2RAY_ASSETSDIR', $null, 'Machine')"""; Flags: runhidden
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_WIN_ENVFILE', $null, 'Machine')"""; Flags: runhidden
 ; 从系统 PATH 中移除 bin 目录
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); $newPath = ($path.Split(';') | Where-Object {{ $_ -ne '{app}\bin' }}) -join ';'; [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')"""; Flags: runhidden
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); $newPath = ($path.Split(';') | Where-Object {{ $_ -ne '{app}\bin' }) -join ';'; [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')"""; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\bolt.db"
