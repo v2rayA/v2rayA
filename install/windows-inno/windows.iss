@@ -28,7 +28,7 @@ LicenseFile=D:\LICENSE.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=D:\
-OutputBaseFilename=installer_windows_inno_x64
+OutputBaseFilename=installer_windows_inno_TheRealArch
 Compression=lzma
 SolidCompression=yes
 UninstallDisplayName={#MyAppName}-{#MyAppVersion}

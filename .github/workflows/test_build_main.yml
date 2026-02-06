@@ -203,7 +203,7 @@ jobs:
         & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
         ## Rename to Friendly Name
         cd $CurrentDir
-        Copy-Item -Path D:\installer_windows_inno_x64.exe -Destination $CurrentDir\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
+        Copy-Item -Path D:\installer_windows_inno_x64compatible.exe -Destination $CurrentDir\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
         Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination $CurrentDir\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
     - name: Upload Artifact
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
