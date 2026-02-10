@@ -25,6 +25,8 @@ type Setting struct {
 	TransparentType                    TransparentType `json:"transparentType"`
 	AntiPollution                      Antipollution   `json:"antipollution"`
 	SubscriptionHwidEnabled             bool            `json:"subscriptionHwidEnabled"` // when true, send HWID headers with subscription requests
+	TunFakeIP                          bool            `json:"tunFakeIP"`
+	TunIPv6                            bool            `json:"tunIPv6"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -46,6 +48,8 @@ func NewSetting() (setting *Setting) {
 		TransparentType:                    TransparentRedirect,
 		AntiPollution:                      AntipollutionClosed,
 		SubscriptionHwidEnabled:             true,
+		TunFakeIP:                          true,
+		TunIPv6:                            false,
 	}
 }
 
