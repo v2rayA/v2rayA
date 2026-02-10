@@ -114,6 +114,7 @@ export default {
     autoUpdateSub: "Автоматически обновлять подписки",
     autoUpdateGfwlist: "Автоматически обновлять GFWList",
     preferModeWhenUpdate: "Режим обновления подписок и GFWList",
+    subscriptionHwidEnabled: "Отправлять HWID при запросах подписки",
     ipForwardOn: "IP форвардинг",
     portSharingOn: "Port Sharing",
     concurrency: "Параллелизм",
@@ -165,6 +166,8 @@ export default {
                           <p>Белый список:</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
+      subscriptionHwidEnabled:
+        "При включении запросы подписки будут содержать заголовки идентификации устройства (x-hwid, x-device-os, x-ver-os, x-device-model) для провайдеров с поддержкой HWID.",
       grpcShouldWithTls: `gRPC должен быть с TLS`,
       ssPluginImpl:
         "★по-умолчанию: 'transport' для simple-obfs, 'chained' для v2ray-plugin." +
