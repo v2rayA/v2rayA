@@ -1,12 +1,15 @@
 package tls
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
 	"net"
 	"net/url"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 // Tls is a base Tls struct
@@ -19,6 +22,7 @@ type Tls struct {
 }
 
 func init() {
+	log.Trace("[tls] registering dialer")
 	plugin.RegisterDialer("tls", NewTlsDialer)
 }
 
@@ -75,24 +79,26 @@ func (s *Tls) Addr() string {
 
 // Dial connects to the address addr on the network net via the infra.
 func (s *Tls) Dial(network, addr string) (net.Conn, error) {
-	return s.dial(network, addr)
+	return s.DialContext(context.Background(), network, addr)
 }
 
-func (s *Tls) dial(network, addr string) (conn net.Conn, err error) {
-	rc, err := s.dialer.Dial("tcp", addr)
+func (s *Tls) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[tls] dialing %s (sni=%s)", addr, s.serverName)
+	rc, err := s.dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("[Tls]: dial to %s: %w", s.addr, err)
 	}
 
 	tlsConn := tls.Client(rc, s.tlsConfig)
-	if err := tlsConn.Handshake(); err != nil {
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		rc.Close()
 		return nil, err
 	}
 	return tlsConn, err
 }
 
 // DialUDP connects to the given address via the infra.
-func (s *Tls) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
+func (s *Tls) DialUDP(network string) (pc plugin.FakeNetPacketConn, err error) {
 	//TODO
-	return nil, nil, nil
+	return nil, nil
 }

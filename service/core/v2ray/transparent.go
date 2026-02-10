@@ -2,6 +2,7 @@ package v2ray
 
 import (
 	"fmt"
+	"net"
 	"net/netip"
 	"strings"
 	"time"
@@ -57,17 +58,39 @@ func writeTransparentProxyRules() (err error) {
 		iptables.SetWatcher(iptables.Redirect)
 	case configure.TransparentGvisorTun, configure.TransparentSystemTun:
 		mode, _, _ := strings.Cut(string(setting.TransparentType), "_")
-		if err = tun.Default.Start(tun.Stack(mode)); err != nil {
-			return fmt.Errorf("not support \"%s tun\" mode of transparent proxy: %w", mode, err)
-		}
+		tun.Default.SetFakeIP(setting.TunFakeIP)
+		tun.Default.SetIPv6(setting.TunIPv6)
+
+		// Add server addresses to exclusion list BEFORE starting TUN
+		// Resolve domain names to IPs to ensure proper routing exclusion
 		_, serverInfos, _ := getConnectedServerObjs()
 		for _, info := range serverInfos {
 			host := info.Info.GetHostname()
 			if addr, err := netip.ParseAddr(host); err == nil {
+				// Already an IP address
 				tun.Default.AddIPWhitelist(addr)
 			} else {
-				tun.Default.AddDomainWhitelist(host)
+				// Domain name - resolve to IPs first
+				log.Info("[TUN] Resolving server domain: %s", host)
+				if ips, err := net.LookupIP(host); err == nil {
+					log.Info("[TUN] Resolved %s to %d IP address(es)", host, len(ips))
+					for _, ip := range ips {
+						if addr, ok := netip.AddrFromSlice(ip); ok {
+							tun.Default.AddIPWhitelist(addr)
+						}
+					}
+					// Also add domain to whitelist for DNS queries
+					tun.Default.AddDomainWhitelist(host)
+				} else {
+					log.Warn("[TUN] Failed to resolve server domain %s: %v, adding as domain whitelist", host, err)
+					tun.Default.AddDomainWhitelist(host)
+				}
 			}
+		}
+
+		// Now start TUN with the exclusion list configured
+		if err = tun.Default.Start(tun.Stack(mode)); err != nil {
+			return fmt.Errorf("not support \"%s tun\" mode of transparent proxy: %w", mode, err)
 		}
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {

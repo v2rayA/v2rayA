@@ -4,13 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"os"
 	"os/exec"
@@ -20,6 +13,15 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/serverObj"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 var NoConnectedServerErr = fmt.Errorf("no selected servers")
@@ -240,13 +242,45 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 	if confdir := asset.GetV2rayConfigDirPath(); confdir != "" {
 		arguments = append(arguments, "--confdir="+confdir)
 	}
-	log.Debug(strings.Join(arguments, " "))
+
+	// Get core variant to determine which environment variable to use
+	variant, _, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		// Fallback to Unknown if detection fails
+		variant = where.Unknown
+	}
+
+	// Get asset directory
 	assetDir := asset.GetV2rayLocationAssetOverride()
-	env := append(
-		os.Environ(),
-		"V2RAY_LOCATION_ASSET="+assetDir,
-		"XRAY_LOCATION_ASSET="+assetDir,
-	)
+	log.Info("Asset directory for %s: %v", variant, assetDir)
+
+	// Prepare environment variables, filtering out duplicates
+	env := make([]string, 0, len(os.Environ())+4)
+	for _, e := range os.Environ() {
+		// Skip existing V2RAY_LOCATION_ASSET, XRAY_LOCATION_ASSET, V2RAY_CONF_GEOLOADER
+		if strings.HasPrefix(e, "V2RAY_LOCATION_ASSET=") ||
+			strings.HasPrefix(e, "XRAY_LOCATION_ASSET=") ||
+			strings.HasPrefix(e, "V2RAY_CONF_GEOLOADER=") {
+			continue
+		}
+		env = append(env, e)
+	}
+
+	// Add asset directory to environment based on core type
+	switch variant {
+	case where.V2ray:
+		env = append(env, "V2RAY_LOCATION_ASSET="+assetDir)
+	case where.Xray:
+		env = append(env, "XRAY_LOCATION_ASSET="+assetDir)
+	default:
+		// If unknown, set both for compatibility
+		env = append(env,
+			"V2RAY_LOCATION_ASSET="+assetDir,
+			"XRAY_LOCATION_ASSET="+assetDir,
+		)
+	}
+
+	// Check memory and set geoloader mode
 	memstat, err := mem.VirtualMemory()
 	if err != nil {
 		log.Warn("cannot get memory info: %v", err)
@@ -256,6 +290,8 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 			log.Info("low memory: %vMiB, set V2RAY_CONF_GEOLOADER=memconservative", memMiB)
 		}
 	}
+
+	log.Debug(strings.Join(arguments, " "))
 	proc, err := RunWithLog(ctx, v2rayBinPath, arguments, dir, env)
 	if err != nil {
 		return nil, err
@@ -272,7 +308,9 @@ func findAvailablePluginPorts(vms []serverObj.ServerObj) (pluginPortMap map[int]
 		//find a port that not be occupied
 		var port int
 		for {
-			l, err := net.Listen("tcp", "127.0.0.1:0")
+			// Find a port >= 30000
+			r := 30000 + common.RandInt(35535)
+			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%v", r))
 			if err == nil {
 				defer l.Close()
 				port = l.Addr().(*net.TCPAddr).Port

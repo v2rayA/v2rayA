@@ -51,6 +51,7 @@ type DNS struct {
 	fakeCache    *cache[netip.Addr, string]
 	domainCache4 *cache[string, netip.Addr]
 	domainCache6 *cache[string, netip.Addr]
+	useFakeIP    bool
 }
 
 func NewDNS(dialer, forward N.Dialer, addr M.Socksaddr) *DNS {
@@ -64,6 +65,7 @@ func NewDNS(dialer, forward N.Dialer, addr M.Socksaddr) *DNS {
 		fakeCache:    newCache[netip.Addr, string](),
 		domainCache4: newCache[string, netip.Addr](),
 		domainCache6: newCache[string, netip.Addr](),
+		useFakeIP:    true, // 默认启用 FakeIP
 	}
 }
 
@@ -145,7 +147,7 @@ func (d *DNS) NewPacketConnection(ctx context.Context, conn N.PacketConn, metada
 			}
 		}
 		if readWaiter, created := bufio.CreatePacketReadWaiter(reader); created {
-			return d.newPacketConnection(ctx, conn, readWaiter, counters, cachedPackets, metadata)
+			return d.newPacketConnection(ctx, conn, readWaiter, counters, cachedPackets, metadata.Destination)
 		}
 		break
 	}
@@ -227,7 +229,7 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 	}
 	question := msg.Question[0]
 	domain := strings.TrimSuffix(question.Name, ".")
-	if !d.whitelist.Match(domain) {
+	if d.useFakeIP && !d.whitelist.Match(domain) {
 		switch question.Qtype {
 		case D.TypeA:
 			mode = dnsFake4
@@ -294,16 +296,11 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 	return d.newResponse(msg, D.RcodeRefused), nil
 }
 
-func (d *DNS) newPacketConnection(ctx context.Context, conn N.PacketConn, readWaiter N.PacketReadWaiter, readCounters []N.CountFunc, cached []*N.PacketBuffer, metadata M.Metadata) error {
+func (d *DNS) newPacketConnection(ctx context.Context, conn N.PacketConn, readWaiter N.PacketReadWaiter, readCounters []N.CountFunc, cached []*N.PacketBuffer, metadata M.Socksaddr) error {
 	ctx, cancel := context.WithCancelCause(ctx)
 	go func() {
-		var buffer *buf.Buffer
-		readWaiter.InitializeReadWaiter(func() *buf.Buffer {
-			buffer = buf.NewSize(FixedPacketSize)
-			buffer.FullReset()
-			return buffer
-		})
-		defer readWaiter.InitializeReadWaiter(nil)
+		readWaiter.InitializeReadWaiter(N.ReadWaitOptions{})
+		defer readWaiter.InitializeReadWaiter(N.ReadWaitOptions{})
 		for {
 			var message D.Msg
 			var destination M.Socksaddr
@@ -325,12 +322,15 @@ func (d *DNS) newPacketConnection(ctx context.Context, conn N.PacketConn, readWa
 				timeout := time.AfterFunc(DNSTimeout, func() {
 					cancel(context.DeadlineExceeded)
 				})
-				destination, err = readWaiter.WaitReadPacket()
-				if err != nil {
-					buffer.Release()
-					cancel(err)
+				buffer, dest, rErr := readWaiter.WaitReadPacket()
+				if rErr != nil {
+					if buffer != nil {
+						buffer.Release()
+					}
+					cancel(rErr)
 					return
 				}
+				destination = dest
 				for _, counter := range readCounters {
 					counter(int64(buffer.Len()))
 				}
