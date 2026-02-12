@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	dnsAddr = "172.19.0.2"
+	dnsAddr  = "172.19.0.2"
+	dnsAddr6 = "fdfe:dcba:9876::2"
 )
 
 var (
@@ -123,6 +124,32 @@ func isReservedAddress(addr netip.Addr) bool {
 	return false
 }
 
+func filterTunDNSServers(servers []netip.AddrPort) []netip.AddrPort {
+	dnsAddrIP, _ := netip.ParseAddr(dnsAddr)
+	dnsAddrIPv6, _ := netip.ParseAddr(dnsAddr6)
+	filtered := make([]netip.AddrPort, 0, len(servers))
+	for _, server := range servers {
+		addr := server.Addr()
+		if !addr.IsValid() {
+			continue
+		}
+		if addr.IsLoopback() || addr.IsUnspecified() {
+			continue
+		}
+		if dnsAddrIP.IsValid() && addr == dnsAddrIP {
+			continue
+		}
+		if dnsAddrIPv6.IsValid() && addr == dnsAddrIPv6 {
+			continue
+		}
+		filtered = append(filtered, server)
+	}
+	if len(filtered) == 0 {
+		return nil
+	}
+	return filtered
+}
+
 func NewSingTun() Tun {
 	dialer := N.SystemDialer
 	client := socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", "")
@@ -130,7 +157,7 @@ func NewSingTun() Tun {
 	return &singTun{
 		dialer:  dialer,
 		forward: client,
-		dns:     NewDNS(dialer, client, M.ParseSocksaddrHostPort(dnsAddr, 53)),
+		dns:     NewDNS(dialer, client, true, M.ParseSocksaddrHostPort(dnsAddr, 53), M.ParseSocksaddrHostPort(dnsAddr6, 53)),
 	}
 }
 
@@ -172,6 +199,13 @@ func (t *singTun) Start(stack Stack) error {
 	log.Info("[TUN] Starting with StrictRoute=true, AutoRoute=true")
 	log.Info("[TUN] Total exclusions: %d IPv4, %d IPv6", len(inet4Exclude), len(inet6Exclude))
 	log.Warn("[TUN] Windows: StrictRoute may only allow main process traffic!")
+
+	// Pre-install exclusion routes on platforms without fwmark support (e.g. Windows/macOS)
+	if len(t.excludeAddrs) > 0 {
+		if err := SetupExcludeRoutes(t.excludeAddrs); err != nil {
+			log.Warn("[TUN] Failed to pre-install exclude routes: %v", err)
+		}
+	}
 
 	tunOptions := tun.Options{
 		Name:                     tun.CalculateInterfaceName(""),
@@ -232,7 +266,7 @@ func (t *singTun) Start(stack Stack) error {
 	// No need for manual static routes - sing-tun handles it natively
 
 	t.dns.whitelist, _ = GetWhitelistCN()
-	servers := dns.GetSystemDNS()
+	servers := filterTunDNSServers(dns.GetSystemDNS())
 	t.dns.servers = make([]M.Socksaddr, len(servers))
 	for i, addr := range servers {
 		t.dns.servers[i] = M.SocksaddrFromNetIP(addr)
@@ -264,7 +298,10 @@ func (t *singTun) Close() error {
 		}
 		// Cleanup routing rules
 		CleanupTunRouteRules()
-		// No need to cleanup exclude routes - sing-tun manages them automatically
+		// Cleanup exclude routes on non-Linux platforms
+		if err := CleanupExcludeRoutes(); err != nil {
+			log.Warn("[TUN] Failed to cleanup exclude routes: %v", err)
+		}
 		// Clear whitelist and exclusion list
 		t.whitelist = nil
 		t.excludeAddrs = nil

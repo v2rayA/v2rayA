@@ -25,6 +25,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"github.com/v2rayA/v2rayA/pkg/util/privilege"
 	"github.com/v2rayA/v2rayA/server/router"
 	"github.com/v2rayA/v2rayA/server/service"
 
@@ -45,13 +46,20 @@ func checkEnvironment() {
 		os.Exit(0)
 	}
 	if !config.PassCheckRoot {
-		if os.Getegid() != 0 {
-			log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
-				"If you are sure you are root user, use the --passcheckroot parameter to skip the check.\n" +
-				"If you don't want to run as root or you are a non-linux user, use --lite please.\n" +
-				"For example:\n" +
-				"$ v2raya --lite",
-			)
+		switch runtime.GOOS {
+		case "linux":
+			if !privilege.IsRootOrAdmin() && !config.Lite {
+				log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
+					"If you are sure you are root user, use the --passcheckroot parameter to skip the check.\n" +
+					"If you don't want to run as root or you are a non-linux user, use --lite please.\n" +
+					"For example:\n" +
+					"$ v2raya --lite",
+				)
+			}
+		case "windows":
+			if !privilege.IsRootOrAdmin() && !config.Lite {
+				log.Fatal("Please run v2rayA as Administrator (or SYSTEM) with elevation, or start with --lite to skip privilege checks.")
+			}
 		}
 	}
 	if config.ResetPassword {

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
+	"io"
 	"math/big"
 	"net"
 	"net/netip"
@@ -42,7 +43,8 @@ var (
 type DNS struct {
 	dialer       N.Dialer
 	forward      N.Dialer
-	addr         M.Socksaddr
+	addrs        []M.Socksaddr
+	forceProxy   bool
 	whitelist    Matcher
 	servers      []M.Socksaddr
 	cache        *cache[netip.Addr, string]
@@ -54,11 +56,12 @@ type DNS struct {
 	useFakeIP    bool
 }
 
-func NewDNS(dialer, forward N.Dialer, addr M.Socksaddr) *DNS {
+func NewDNS(dialer, forward N.Dialer, forceProxy bool, addrs ...M.Socksaddr) *DNS {
 	return &DNS{
 		dialer:       dialer,
 		forward:      forward,
-		addr:         addr,
+		addrs:        addrs,
+		forceProxy:   forceProxy,
 		cache:        newCache[netip.Addr, string](),
 		currentIP4:   fakePrefix4.Addr().Next(),
 		currentIP6:   fakePrefix6.Addr().Next(),
@@ -71,7 +74,7 @@ func NewDNS(dialer, forward N.Dialer, addr M.Socksaddr) *DNS {
 
 func (d *DNS) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metadata) error {
 	d.fakeCache.Check()
-	if metadata.Destination != d.addr {
+	if !d.matchAddr(metadata.Destination) {
 		return continueHandler
 	}
 	ctx, cancel := context.WithCancelCause(ctx)
@@ -131,7 +134,7 @@ func (d *DNS) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metad
 
 func (d *DNS) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata M.Metadata) error {
 	d.fakeCache.Check()
-	if metadata.Destination != d.addr {
+	if !d.matchAddr(metadata.Destination) {
 		return continueHandler
 	}
 	var reader N.PacketReader = conn
@@ -219,6 +222,18 @@ func (d *DNS) NewPacketConnection(ctx context.Context, conn N.PacketConn, metada
 	return ctx.Err()
 }
 
+func (d *DNS) matchAddr(addr M.Socksaddr) bool {
+	if addr.Port == 53 {
+		return true
+	}
+	for _, item := range d.addrs {
+		if addr == item {
+			return true
+		}
+	}
+	return false
+}
+
 func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 	if len(msg.Question) != 1 {
 		return d.newResponse(msg, D.RcodeFormatError), nil
@@ -235,7 +250,6 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 			mode = dnsFake4
 		case D.TypeAAAA:
 			return d.newResponse(msg, D.RcodeSuccess), nil
-			mode = dnsFake6
 		case D.TypeMX, D.TypeHTTPS:
 			return d.newResponse(msg, D.RcodeSuccess), nil
 		}
@@ -244,7 +258,11 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 	server := defaultDNSServer
 	switch mode {
 	case dnsDirect:
-		dialer = d.dialer
+		if d.forceProxy {
+			dialer = d.forward
+		} else {
+			dialer = d.dialer
+		}
 		server = d.getServer()
 	case dnsForward:
 		dialer = d.forward
@@ -261,12 +279,16 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 		dialer = d.forward
 	}
 	if dialer != nil {
-		buffer := make([]byte, 1024)
-		data, err := msg.PackBuffer(buffer)
-		if err != nil {
-			return d.newResponse(msg, D.RcodeFormatError), nil
-		}
+		useTCP := d.forceProxy && dialer == d.forward
 		resp, err := func() (*D.Msg, error) {
+			if useTCP {
+				return exchangeTCP(ctx, dialer, server, msg)
+			}
+			buffer := make([]byte, 1024)
+			data, err := msg.PackBuffer(buffer)
+			if err != nil {
+				return nil, err
+			}
 			serverConn, err := dialer.ListenPacket(ctx, server)
 			if err != nil {
 				return nil, err
@@ -294,6 +316,41 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 		return resp, nil
 	}
 	return d.newResponse(msg, D.RcodeRefused), nil
+}
+
+func exchangeTCP(ctx context.Context, dialer N.Dialer, server M.Socksaddr, msg *D.Msg) (*D.Msg, error) {
+	buffer := make([]byte, 4096)
+	data, err := msg.PackBuffer(buffer)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := dialer.DialContext(ctx, N.NetworkTCP, server)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	_ = conn.SetDeadline(time.Now().Add(DNSTimeout))
+	length := make([]byte, 2)
+	binary.BigEndian.PutUint16(length, uint16(len(data)))
+	if _, err = conn.Write(length); err != nil {
+		return nil, err
+	}
+	if _, err = conn.Write(data); err != nil {
+		return nil, err
+	}
+	if _, err = io.ReadFull(conn, length); err != nil {
+		return nil, err
+	}
+	respLen := int(binary.BigEndian.Uint16(length))
+	respBuf := make([]byte, respLen)
+	if _, err = io.ReadFull(conn, respBuf); err != nil {
+		return nil, err
+	}
+	var resp D.Msg
+	if err = resp.Unpack(respBuf); err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
 
 func (d *DNS) newPacketConnection(ctx context.Context, conn N.PacketConn, readWaiter N.PacketReadWaiter, readCounters []N.CountFunc, cached []*N.PacketBuffer, metadata M.Socksaddr) error {

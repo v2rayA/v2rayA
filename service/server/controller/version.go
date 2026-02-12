@@ -11,6 +11,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
+	"github.com/v2rayA/v2rayA/pkg/util/privilege"
 )
 
 func GetVersion(ctx *gin.Context) {
@@ -21,8 +22,11 @@ func GetVersion(ctx *gin.Context) {
 
 	// Detect if running as root (Linux/macOS only)
 	isRoot := false
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "linux", "darwin":
 		isRoot = os.Geteuid() == 0
+	case "windows":
+		isRoot = privilege.IsRootOrAdmin()
 	}
 
 	variant, versionErr := service.CheckV5()

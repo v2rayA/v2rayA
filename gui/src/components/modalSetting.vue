@@ -79,7 +79,7 @@
         </template>
       </b-field>
 
-      <b-field v-show="transparentType == 'gvisor_tun' || transparentType == 'system_tun'" label-position="on-border">
+      <b-field v-show="tunEnabled" label-position="on-border">
         <template slot="label">
           {{ $t("setting.tunMode") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunMode')" position="is-right">
@@ -93,7 +93,7 @@
         </b-select>
       </b-field>
 
-      <b-field v-show="transparentType == 'gvisor_tun' || transparentType == 'system_tun'" label-position="on-border">
+      <b-field v-show="tunEnabled" label-position="on-border">
         <template slot="label">
           {{ $t("setting.tunIPv6") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunIPv6')" position="is-right">
@@ -365,6 +365,11 @@ export default {
         port = U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return toInt(port);
+    },
+    tunEnabled() {
+      const isTunType =
+        this.transparentType === "gvisor_tun" || this.transparentType === "system_tun";
+      return this.transparent !== "close" && isTunType;
     },
   },
   watch: {
