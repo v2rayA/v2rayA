@@ -43,6 +43,9 @@ type Params struct {
 var params Params
 
 func initFunc() {
+	if err := loadPlatformEnv(); err != nil {
+		log.Warn("failed to load platform env: %v", err)
+	}
 	err := gonfig.Load(&params, gonfig.Conf{
 		FileDisable:       true,
 		FlagIgnoreUnknown: false,
@@ -61,15 +64,7 @@ func initFunc() {
 		params.PassCheckRoot = true
 	}
 	if params.Config == "" {
-		if params.Lite {
-			if userConfigDir, e := os.UserConfigDir(); e == nil {
-				params.Config = filepath.Join(userConfigDir, "v2raya")
-			} else {
-				params.Config = "$HOME/.config/v2raya"
-			}
-		} else {
-			params.Config = "/etc/v2raya"
-		}
+		params.Config = defaultConfigDir(params.Lite)
 	}
 	// replace all dots of the filename with underlines
 	params.Config = filepath.Join(

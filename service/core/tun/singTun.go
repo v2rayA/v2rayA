@@ -157,7 +157,8 @@ func NewSingTun() Tun {
 	return &singTun{
 		dialer:  dialer,
 		forward: client,
-		dns:     NewDNS(dialer, client, true, M.ParseSocksaddrHostPort(dnsAddr, 53), M.ParseSocksaddrHostPort(dnsAddr6, 53)),
+		// DNS is sent to local dokodemo-door listener instead of SOCKS
+		dns: NewDNS(dialer, nil, false, M.ParseSocksaddrHostPort(dnsAddr, 53), M.ParseSocksaddrHostPort(dnsAddr6, 53)),
 	}
 }
 
@@ -266,11 +267,8 @@ func (t *singTun) Start(stack Stack) error {
 	// No need for manual static routes - sing-tun handles it natively
 
 	t.dns.whitelist, _ = GetWhitelistCN()
-	servers := filterTunDNSServers(dns.GetSystemDNS())
-	t.dns.servers = make([]M.Socksaddr, len(servers))
-	for i, addr := range servers {
-		t.dns.servers[i] = M.SocksaddrFromNetIP(addr)
-	}
+	// Route DNS to local dokodemo-door listener to avoid SOCKS loop
+	t.dns.servers = []M.Socksaddr{M.ParseSocksaddrHostPort("127.0.0.1", TunDNSListenPort)}
 	backupDNS := make(map[string][]string)
 	interfaces, _ := dns.GetValidNetworkInterfaces()
 	for _, ifi := range interfaces {

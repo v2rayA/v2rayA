@@ -41,9 +41,9 @@ Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "D:\v2raya-x86_64-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "D:\v2raya-x86_64-windows\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "D:\v2raya-x86_64-windows\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\v2raya-TheRealArch-windows\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "D:\v2raya-TheRealArch-windows\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\v2raya-TheRealArch-windows\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "D:\v2raya.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -57,7 +57,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
 ; 添加 bin 目录到系统 PATH
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); if ($path -notlike '*{app}\bin*') {{ [Environment]::SetEnvironmentVariable('Path', $path + ';{app}\bin', 'Machine') }"""; Flags: runhidden waituntilterminated
 ; 创建环境变量配置文件
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Test-Path '{app}\v2rayA_env.txt')) {{ Set-Content -Path '{app}\v2rayA_env.txt' -Value 'V2RAYA_CONFIG={app}','V2RAYA_V2RAY_ASSETSDIR=''{app}\data''','V2RAYA_LOG_FILE=""${{env:windir}}\Temp\v2raya.log""' -Encoding UTF8 }"""; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Test-Path '{app}\v2rayA_env.txt')) {{ Set-Content -Path '{app}\v2rayA_env.txt' -Value 'V2RAYA_V2RAY_ASSETSDIR=''{app}\data''','V2RAYA_LOG_FILE=''""${{env:TEMP}}\v2raya.log""' -Encoding UTF8 }"""; Flags: runhidden waituntilterminated
 ; 设置环境变量指向配置文件
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_WIN_ENVFILE', '{app}\v2rayA_env.txt', 'Machine')"""; Flags: runhidden waituntilterminated
 ; 创建服务

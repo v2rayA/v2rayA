@@ -164,21 +164,21 @@ jobs:
       run: |
         ## Create Destination Directory
         $CurrentDir = Get-Location
-        New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\data"
-        New-Item -ItemType Directory -Path "D:\v2raya-x86_64-windows\bin"
+        New-Item -ItemType Directory -Path "D:\v2raya-x64compatible-windows\data"
+        New-Item -ItemType Directory -Path "D:\v2raya-x64compatible-windows\bin"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
         New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
         ## Copy v2rayA to Destination Directory
         Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x86_64-windows\bin\v2raya.exe
+        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x64compatible-windows\bin\v2raya.exe
         Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
         ## Download and extract v2ray
         $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
         $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-arm64-v8a.zip"
         Invoke-WebRequest $Url_v2ray_x64 -OutFile "D:\v2ray-windows-x64.zip"
-        Expand-Archive -Path "D:\v2ray-windows-x64.zip" -DestinationPath "D:\v2raya-x86_64-windows\bin\"
-        Move-Item -Path "D:\v2raya-x86_64-windows\bin\*.dat" -Destination "D:\v2raya-x86_64-windows\data\"
-        Remove-Item -Path "D:\v2raya-x86_64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
+        Expand-Archive -Path "D:\v2ray-windows-x64.zip" -DestinationPath "D:\v2raya-x64compatible-windows\bin\"
+        Move-Item -Path "D:\v2raya-x64compatible-windows\bin\*.dat" -Destination "D:\v2raya-x64compatible-windows\data\"
+        Remove-Item -Path "D:\v2raya-x64compatible-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
         Invoke-WebRequest $Url_v2ray_A64 -OutFile "D:\v2ray-windows-A64.zip"
         Expand-Archive -Path "D:\v2ray-windows-A64.zip" -DestinationPath "D:\v2raya-arm64-windows\bin\"
         Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm64-windows\data\"

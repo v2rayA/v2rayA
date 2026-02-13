@@ -74,13 +74,13 @@ func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {
 	return
 }
 
-func checkSha256(p string, sha256 string) bool {
+func checkSha256(p string, sha256 string) (bool, string) {
 	if b, err := os.ReadFile(p); err == nil {
 		hash := libSha256.Sum256(b)
-		return hex.EncodeToString(hash[:]) == sha256
-	} else {
-		return false
+		actual := hex.EncodeToString(hash[:])
+		return actual == sha256, actual
 	}
+	return false, ""
 }
 
 var (
@@ -151,8 +151,9 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	if fields := strings.Fields(siteDatSha256); len(fields) != 0 {
 		sha256 = fields[0]
 	}
-	if !checkSha256(pathSiteDat+".new", sha256) {
-		err = fmt.Errorf("UpdateLocalGFWList: %v", DamagedFile)
+	if ok, actual := checkSha256(pathSiteDat+".new", sha256); !ok {
+		err = fmt.Errorf("UpdateLocalGFWList: %v (expected %s, got %s)", DamagedFile, sha256, actual)
+		log.Warn("UpdateLocalGFWList: sha mismatch, expected %s, got %s", sha256, actual)
 		return
 	}
 	_ = os.Chtimes(pathSiteDat+".new", gfwlist.UpdateTime, gfwlist.UpdateTime)

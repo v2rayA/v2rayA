@@ -29,6 +29,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/specialMode"
+	"github.com/v2rayA/v2rayA/core/tun"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -421,6 +422,10 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 	t.Routing.Rules = append(t.Routing.Rules,
 		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
 	)
+	// Always route TUN dokodemo DNS inbound to dns-out
+	t.Routing.Rules = append(t.Routing.Rules,
+		coreObj.RoutingRule{Type: "field", InboundTag: []string{"tun-dns-in"}, OutboundTag: "dns-out"},
+	)
 	setting := t.Setting
 	if setting.AntiPollution != configure.AntipollutionClosed {
 		dnsOut := coreObj.RoutingRule{ // hijack traffic to port 53
@@ -428,11 +433,13 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 			Port:        "53",
 			OutboundTag: "dns-out",
 		}
+		inTags := []string{"tun-dns-in"}
 		if specialMode.ShouldLocalDnsListen() {
 			if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
-				dnsOut.InboundTag = []string{"dns-in"}
+				inTags = append(inTags, "dns-in")
 			}
 		}
+		dnsOut.InboundTag = inTags
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
 	if !supportUDP[firstOutboundTag] {
@@ -833,8 +840,15 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 }
 
 func (t *Template) setTransparentRouting() (err error) {
+	defaultOutbound, _ := t.FirstProxyOutboundName(nil)
 	switch t.Setting.Transparent {
 	case configure.TransparentProxy:
+		// Global transparent: route all transparent inbound to default outbound
+		t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
+			Type:        "field",
+			InboundTag:  []string{"transparent"},
+			OutboundTag: defaultOutbound,
+		})
 	case configure.TransparentWhitelist:
 		return t.AppendRoutingRuleByMode(configure.WhitelistMode, []string{"transparent"})
 	case configure.TransparentGfwlist:
@@ -1000,6 +1014,56 @@ func (t *Template) appendDNSOutbound() {
 		// Fallback DNS for non-A/AAAA/CNAME requests. https://github.com/v2rayA/v2rayA/issues/188
 		Settings: coreObj.Settings{Address: "119.29.29.29", Port: 53, Network: "udp"},
 	})
+}
+
+// getTunDNSUpstream derives the upstream host/port for the dokodemo-door listener used by TUN DNS.
+// It respects scheme/port in the first internal DNS entry, falling back to 119.29.29.29:53.
+func (t *Template) getTunDNSUpstream() (string, int) {
+	list := configure.GetInternalDnsListNotNil()
+	for _, raw := range list {
+		val := strings.TrimSpace(strings.Split(raw, "->")[0])
+		if val == "" {
+			continue
+		}
+
+		var host string
+		port := 53
+
+		if strings.Contains(val, "://") {
+			if u, err := url.Parse(val); err == nil {
+				host = u.Hostname()
+				if p := u.Port(); p != "" {
+					if pi, perr := strconv.Atoi(p); perr == nil {
+						port = pi
+					}
+				}
+			}
+		} else {
+			if h, p, err := net.SplitHostPort(val); err == nil {
+				host = h
+				if pi, perr := strconv.Atoi(p); perr == nil {
+					port = pi
+				}
+			} else {
+				host = val
+			}
+		}
+
+		if host != "" {
+			return host, port
+		}
+	}
+	return "119.29.29.29", 53
+}
+
+func (t *Template) getTunDNSUpstreamHost() string {
+	h, _ := t.getTunDNSUpstream()
+	return h
+}
+
+func (t *Template) getTunDNSUpstreamPort() int {
+	_, p := t.getTunDNSUpstream()
+	return p
 }
 
 func (t *Template) setSendThrough() {
@@ -1232,6 +1296,18 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 					UDP: true,
 				},
 				Tag: "transparent",
+			})
+			// Local dokodemo-door listener for DNS (used by TUN DNS forwarder)
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     tun.TunDNSListenPort,
+				Protocol: "dokodemo-door",
+				Listen:   "127.0.0.1",
+				Settings: &coreObj.InboundSettings{
+					Network: "tcp,udp",
+					Address: t.getTunDNSUpstreamHost(),
+					Port:    t.getTunDNSUpstreamPort(),
+				},
+				Tag: "tun-dns-in",
 			})
 		case configure.TransparentSystemProxy:
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{

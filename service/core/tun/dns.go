@@ -17,11 +17,14 @@ import (
 	"github.com/sagernet/sing/common/bufio"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 const (
 	DNSTimeout = 10 * time.Second
 	FakeTTL    = 5 * time.Minute
+
+	TunDNSListenPort = 6053
 
 	FixedPacketSize = 16384
 )
@@ -37,7 +40,7 @@ var (
 	fakePrefix4 = netip.MustParsePrefix("198.18.0.0/15")
 	fakePrefix6 = netip.MustParsePrefix("fc00::/18")
 
-	defaultDNSServer = M.ParseSocksaddrHostPort("1.1.1.1", 53)
+	defaultDNSServer = M.ParseSocksaddrHostPort("127.0.0.1", TunDNSListenPort)
 )
 
 type DNS struct {
@@ -279,40 +282,58 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 		dialer = d.forward
 	}
 	if dialer != nil {
-		useTCP := d.forceProxy && dialer == d.forward
+		useForward := false
+		preferTCP := false
+		var usedTCP bool
 		resp, err := func() (*D.Msg, error) {
-			if useTCP {
-				return exchangeTCP(ctx, dialer, server, msg)
-			}
-			buffer := make([]byte, 1024)
+			ctxDial, cancel := context.WithTimeout(ctx, DNSTimeout)
+			defer cancel()
+
+			buffer := make([]byte, 2048)
 			data, err := msg.PackBuffer(buffer)
 			if err != nil {
 				return nil, err
 			}
-			serverConn, err := dialer.ListenPacket(ctx, server)
+
+			// First try UDP (works with SOCKS5 UDP associate) to avoid blocking on TCP dial to 52345.
+			serverConn, err := dialer.ListenPacket(ctxDial, server)
+			if err == nil {
+				defer serverConn.Close()
+				serverConn.SetDeadline(time.Now().Add(DNSTimeout))
+				if _, err = serverConn.WriteTo(data, server.UDPAddr()); err == nil {
+					n, _, rErr := serverConn.ReadFrom(buffer)
+					if rErr == nil {
+						var resp D.Msg
+						unpackErr := resp.Unpack(buffer[:n])
+						if unpackErr == nil {
+							return &resp, nil
+						}
+						err = unpackErr
+					} else {
+						err = rErr
+					}
+				}
+			}
+
+			// Fallback to TCP when UDP fails or when SOCKS5 TCP is explicitly preferred.
+			if err != nil && preferTCP {
+				usedTCP = true
+				return exchangeTCP(ctxDial, dialer, server, msg)
+			}
+
+			// If UDP failed and we do not prefer TCP, return the UDP error.
 			if err != nil {
 				return nil, err
 			}
-			defer serverConn.Close()
-			serverConn.SetDeadline(time.Now().Add(DNSTimeout))
-			_, err = serverConn.WriteTo(data, server.UDPAddr())
-			if err != nil {
-				return nil, err
-			}
-			n, _, err := serverConn.ReadFrom(buffer)
-			if err != nil {
-				return nil, err
-			}
-			var resp D.Msg
-			err = resp.Unpack(buffer[:n])
-			if err != nil {
-				return nil, err
-			}
-			return &resp, nil
+
+			// Should not reach here; UDP success already returned.
+			return nil, nil
 		}()
 		if err != nil {
+			log.Warn("[TUN-DNS] query=%s qtype=%d via=%s server=%s err=%v", domain, question.Qtype, dialLabel(useForward, usedTCP), server.String(), err)
 			return d.newResponse(msg, D.RcodeServerFailure), nil
 		}
+		log.Trace("[TUN-DNS] query=%s qtype=%d via=%s server=%s rcode=%d", domain, question.Qtype, dialLabel(useForward, usedTCP), server.String(), resp.Rcode)
 		return resp, nil
 	}
 	return d.newResponse(msg, D.RcodeRefused), nil
@@ -529,4 +550,17 @@ func (t *DNS) getServer() M.Socksaddr {
 		}
 	}
 	return t.servers[0]
+}
+
+func dialLabel(useForward bool, useTCP bool) string {
+	switch {
+	case useForward && useTCP:
+		return "socks5-tcp"
+	case useForward:
+		return "socks5-udp"
+	case useTCP:
+		return "direct-tcp"
+	default:
+		return "direct-udp"
+	}
 }
