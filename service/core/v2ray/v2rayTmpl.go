@@ -1845,16 +1845,30 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t = &tmplJson
 	t.Setting = setting
 	// log
+	logLevel := setting.LogLevel
+	if logLevel == "" {
+		logLevel = conf.GetEnvironmentConfig().LogLevel
+	}
+	logLevel = strings.ToLower(logLevel)
 	t.Log = new(coreObj.Log)
-	if logLevel := log.ParseLevel(conf.GetEnvironmentConfig().LogLevel); logLevel >= log.ParseLevel("debug") {
-		t.Log.Loglevel = "info"
+	switch logLevel {
+	case "trace", "debug":
+		t.Log.Loglevel = "debug"
 		t.Log.Access = ""
 		t.Log.Error = ""
-	} else if logLevel >= log.ParseLevel("info") {
+	case "info":
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = "none"
-	} else {
+	case "warn", "warning":
+		t.Log.Loglevel = "warning"
+		t.Log.Access = "none"
+		t.Log.Error = ""
+	case "error":
+		t.Log.Loglevel = "error"
+		t.Log.Access = "none"
+		t.Log.Error = ""
+	default:
 		t.Log = nil
 	}
 	// resolve Outbounds

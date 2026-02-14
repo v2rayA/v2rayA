@@ -60,6 +60,7 @@ func writeTransparentProxyRules() (err error) {
 		mode, _, _ := strings.Cut(string(setting.TransparentType), "_")
 		tun.Default.SetFakeIP(setting.TunFakeIP)
 		tun.Default.SetIPv6(setting.TunIPv6)
+		tun.Default.SetStrictRoute(setting.TunStrictRoute)
 
 		// Add server addresses to exclusion list BEFORE starting TUN
 		// Resolve domain names to IPs to ensure proper routing exclusion

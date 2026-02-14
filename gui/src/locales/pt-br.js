@@ -104,6 +104,7 @@ export default {
   setting: {
     transparentProxy: "Proxy Transparente/Proxy do Sistema",
     transparentType: "Implementação do Proxy Transparente/Proxy do Sistema",
+    logLevel: "Nível de Log",
     pacMode: "Modo de Divisão de Tráfego da Porta de Regra",
     preventDnsSpoofing: "Prevenir Falsificação de DNS",
     specialMode: "Modo Especial",
@@ -115,6 +116,11 @@ export default {
     portSharingOn: "Compartilhamento de Porta",
     concurrency: "Concorrência",
     options: {
+      trace: "Trace",
+      debug: "Debug",
+      info: "Info",
+      warn: "Aviso",
+      error: "Erro",
       global: "Não Dividir Tráfego",
       direct: "Direto",
       pac: "Depende da Porta de Regra",
@@ -319,8 +325,19 @@ export default {
   },
   log: {
     logModalTitle: "Visualizar logs",
+    logsLabel: "Logs",
     refreshInterval: "Intervalo de atualização",
     seconds: "segundos",
     autoScoll: "Rolagem Automática",
+    category: "Categoria",
+    categories: {
+      all: "Todos",
+      error: "Erro",
+      warn: "Aviso",
+      info: "Info",
+      debug: "Debug",
+      trace: "Trace",
+      other: "Outros",
+    },
   },
 };

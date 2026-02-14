@@ -112,6 +112,7 @@ export default {
     transparentType: "透明代理/系统代理实现方式",
     tunMode: "TUN模式",
     tunIPv6: "TUN IPv6",
+    logLevel: "日志等级",
     pacMode: "规则端口的分流模式",
     preventDnsSpoofing: "防止DNS污染",
     specialMode: "特殊模式",
@@ -123,6 +124,11 @@ export default {
     portSharingOn: "开启端口分享",
     concurrency: "最大并发数",
     options: {
+      trace: "跟踪",
+      debug: "调试",
+      info: "信息",
+      warn: "警告",
+      error: "错误",
       global: "不进行分流",
       direct: "直连模式",
       pac: "跟随规则端口",
@@ -333,9 +339,20 @@ export default {
   },
   log: {
     logModalTitle: "查看日志",
+    logsLabel: "日志",
     refreshInterval: "刷新间隔",
     seconds: "秒",
     autoScoll: "自动滚动",
+    category: "分类",
+    categories: {
+      all: "全部",
+      error: "错误",
+      warn: "警告",
+      info: "信息",
+      debug: "调试",
+      trace: "跟踪",
+      other: "其他",
+    },
   },
   
   tproxyWhiteIpGroups: {

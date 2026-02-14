@@ -118,6 +118,17 @@ const updateSetting = async() => {
     </div>
 
     <div>
+      <div>{{ $t('setting.logLevel') }}</div>
+      <ElSelect v-model="setting.logLevel" size="small">
+        <ElOption value="trace" :label="$t('setting.options.trace')" />
+        <ElOption value="debug" :label="$t('setting.options.debug')" />
+        <ElOption value="info" :label="$t('setting.options.info')" />
+        <ElOption value="warn" :label="$t('setting.options.warn')" />
+        <ElOption value="error" :label="$t('setting.options.error')" />
+      </ElSelect>
+    </div>
+
+    <div>
       <div>{{ $t('setting.mux') }}</div>
       <ElSelect v-model="setting.muxOn" size="small">
         <ElOption value="no" :label="$t('setting.options.off')" />

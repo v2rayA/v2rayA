@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"runtime"
 	"slices"
 	"sync"
 
@@ -52,6 +53,7 @@ type singTun struct {
 	whitelist    []netip.Addr
 	excludeAddrs []netip.Prefix // Addresses to exclude from TUN routing
 	useIPv6      bool
+	strictRoute  bool
 }
 
 // isReservedAddress checks if an IP address belongs to reserved address ranges
@@ -155,8 +157,9 @@ func NewSingTun() Tun {
 	client := socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", "")
 	log.Info("[TUN] Initialized SOCKS5 client to 127.0.0.1:52345")
 	return &singTun{
-		dialer:  dialer,
-		forward: client,
+		dialer:      dialer,
+		forward:     client,
+		strictRoute: false,
 		// DNS is sent to local dokodemo-door listener instead of SOCKS
 		dns: NewDNS(dialer, nil, false, M.ParseSocksaddrHostPort(dnsAddr, 53), M.ParseSocksaddrHostPort(dnsAddr6, 53)),
 	}
@@ -197,9 +200,14 @@ func (t *singTun) Start(stack Stack) error {
 		}
 	}
 
-	log.Info("[TUN] Starting with StrictRoute=true, AutoRoute=true")
+	autoRoute := true
+	strictRoute := t.strictRoute
+
+	log.Info("[TUN] Starting with StrictRoute=%t, AutoRoute=%t", strictRoute, autoRoute)
 	log.Info("[TUN] Total exclusions: %d IPv4, %d IPv6", len(inet4Exclude), len(inet6Exclude))
-	log.Warn("[TUN] Windows: StrictRoute may only allow main process traffic!")
+	if runtime.GOOS == "windows" && strictRoute {
+		log.Warn("[TUN] Windows: StrictRoute may only allow main process traffic!")
+	}
 
 	// Pre-install exclusion routes on platforms without fwmark support (e.g. Windows/macOS)
 	if len(t.excludeAddrs) > 0 {
@@ -213,8 +221,8 @@ func (t *singTun) Start(stack Stack) error {
 		MTU:                      9000,
 		Inet4Address:             []netip.Prefix{prefix4},
 		Inet4RouteExcludeAddress: inet4Exclude, // Exclude loopback + server IPs
-		AutoRoute:                true,
-		StrictRoute:              false, // TEMPORARY: Disable to test if it blocks v2ray/xray
+		AutoRoute:                autoRoute,
+		StrictRoute:              strictRoute,
 		InterfaceMonitor:         interfaceMonitor,
 	}
 	// Enable IPv6 if requested
@@ -331,6 +339,10 @@ func (t *singTun) SetIPv6(enabled bool) {
 	t.useIPv6 = enabled
 }
 
+func (t *singTun) SetStrictRoute(enabled bool) {
+	t.strictRoute = enabled
+}
+
 func (t *singTun) PrepareConnection(network string, source M.Socksaddr, destination M.Socksaddr) error {
 	return nil
 }
@@ -373,7 +385,13 @@ func (t *singTun) newConnection(ctx context.Context, conn net.Conn, metadata M.M
 			return err
 		}
 		log.Trace("[TUN-TCP] Connected to %s via %s", metadata.Destination, dialType)
-		return bufio.CopyConn(ctx, conn, serverConn)
+		err = bufio.CopyConn(ctx, conn, serverConn)
+		if err != nil {
+			log.Warn("[TUN-TCP] Relay failed %s -> %s via %s: %v", metadata.Source, metadata.Destination, dialType, err)
+			return err
+		}
+		log.Trace("[TUN-TCP] Relay closed %s -> %s via %s", metadata.Source, metadata.Destination, dialType)
+		return nil
 	}
 	return err
 }
@@ -410,7 +428,12 @@ func (t *singTun) newPacketConnection(ctx context.Context, conn N.PacketConn, me
 			conn.Close()
 			return err
 		}
-		return bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
+		err = bufio.CopyPacketConn(ctx, conn, bufio.NewPacketConn(serverConn))
+		if err != nil {
+			log.Warn("[TUN-UDP] Relay failed %s -> %s: %v", metadata.Source, metadata.Destination, err)
+			return err
+		}
+		return nil
 	}
 	return err
 }

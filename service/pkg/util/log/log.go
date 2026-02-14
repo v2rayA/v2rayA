@@ -63,6 +63,8 @@ func ParseLevel(logLevel string) int {
 		level = 3
 	case "warn":
 		level = 4
+	case "warning":
+		level = 4
 	case "info":
 		level = 6
 	case "debug":

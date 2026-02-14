@@ -16,6 +16,7 @@ type Tun interface {
 	AddIPWhitelist(addr netip.Addr)
 	SetFakeIP(enabled bool)
 	SetIPv6(enabled bool)
+	SetStrictRoute(enabled bool)
 }
 
 var Default = NewSingTun()

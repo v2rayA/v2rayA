@@ -57,7 +57,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
 ; 添加 bin 目录到系统 PATH
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); if ($path -notlike '*{app}\bin*') {{ [Environment]::SetEnvironmentVariable('Path', $path + ';{app}\bin', 'Machine') }"""; Flags: runhidden waituntilterminated
 ; 创建环境变量配置文件
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Test-Path '{app}\v2rayA_env.txt')) {{ Set-Content -Path '{app}\v2rayA_env.txt' -Value 'V2RAYA_V2RAY_ASSETSDIR=''{app}\data''','V2RAYA_LOG_FILE=''""${{env:TEMP}}\v2raya.log""' -Encoding UTF8 }"""; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Test-Path '{app}\v2rayA_env.txt')) {{ Set-Content -Path '{app}\v2rayA_env.txt' -Value 'V2RAYA_V2RAY_ASSETSDIR=''{app}\data''','V2RAYA_LOG_FILE='""${env:TEMP}\v2raya.log"" -Encoding UTF8 }"""; Flags: runhidden waituntilterminated
 ; 设置环境变量指向配置文件
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_WIN_ENVFILE', '{app}\v2rayA_env.txt', 'Machine')"""; Flags: runhidden waituntilterminated
 ; 创建服务
@@ -74,7 +74,6 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Com
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); $newPath = ($path.Split(';') | Where-Object {{ $_ -ne '{app}\bin' }) -join ';'; [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')"""; Flags: runhidden
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}\bolt.db"
 Type: filesandordirs; Name: "{app}\bin\v2raya.log"
 
 [Code]

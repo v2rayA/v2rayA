@@ -7,6 +7,7 @@ import (
 )
 
 type Setting struct {
+	LogLevel                           string          `json:"logLevel"`
 	RulePortMode                       RulePortMode    `json:"pacMode"`
 	ProxyModeWhenSubscribe             ProxyMode       `json:"proxyModeWhenSubscribe"`
 	GFWListAutoUpdateMode              AutoUpdateMode  `json:"pacAutoUpdateMode"`
@@ -26,10 +27,12 @@ type Setting struct {
 	AntiPollution                      Antipollution   `json:"antipollution"`
 	TunFakeIP                          bool            `json:"tunFakeIP"`
 	TunIPv6                            bool            `json:"tunIPv6"`
+	TunStrictRoute                     bool            `json:"tunStrictRoute"`
 }
 
 func NewSetting() (setting *Setting) {
 	return &Setting{
+		LogLevel:                           "info",
 		RulePortMode:                       WhitelistMode,
 		ProxyModeWhenSubscribe:             ProxyModeDirect,
 		GFWListAutoUpdateMode:              NotAutoUpdate,
@@ -48,6 +51,7 @@ func NewSetting() (setting *Setting) {
 		AntiPollution:                      AntipollutionClosed,
 		TunFakeIP:                          true,
 		TunIPv6:                            false,
+		TunStrictRoute:                     false,
 	}
 }
 
