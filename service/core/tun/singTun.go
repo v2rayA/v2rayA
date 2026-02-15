@@ -35,6 +35,8 @@ const (
 var (
 	prefix4 = netip.MustParsePrefix("172.19.0.1/30")
 	prefix6 = netip.MustParsePrefix("fdfe:dcba:9876::1/126")
+	route4  = netip.MustParsePrefix("0.0.0.0/0")
+	route6  = netip.MustParsePrefix("::/0")
 
 	defaultLogger = logger.NOP()
 
@@ -203,6 +205,13 @@ func (t *singTun) Start(stack Stack) error {
 	autoRoute := true
 	strictRoute := t.strictRoute
 
+	// On Windows, disable sing-tun's AutoRoute as it adds metric=0 route
+	// We will add manual default route with proper metric instead
+	if runtime.GOOS == "windows" {
+		autoRoute = false
+		log.Info("[TUN] Windows: Disabling AutoRoute, will use manual routing")
+	}
+
 	log.Info("[TUN] Starting with StrictRoute=%t, AutoRoute=%t", strictRoute, autoRoute)
 	log.Info("[TUN] Total exclusions: %d IPv4, %d IPv6", len(inet4Exclude), len(inet6Exclude))
 	if runtime.GOOS == "windows" && strictRoute {
@@ -220,6 +229,7 @@ func (t *singTun) Start(stack Stack) error {
 		Name:                     tun.CalculateInterfaceName(""),
 		MTU:                      9000,
 		Inet4Address:             []netip.Prefix{prefix4},
+		Inet4RouteAddress:        []netip.Prefix{route4},
 		Inet4RouteExcludeAddress: inet4Exclude, // Exclude loopback + server IPs
 		AutoRoute:                autoRoute,
 		StrictRoute:              strictRoute,
@@ -228,6 +238,7 @@ func (t *singTun) Start(stack Stack) error {
 	// Enable IPv6 if requested
 	if t.useIPv6 {
 		tunOptions.Inet6Address = []netip.Prefix{prefix6}
+		tunOptions.Inet6RouteAddress = []netip.Prefix{route6}
 		// Exclude IPv6 loopback (::1/128)
 		loopback6 := netip.MustParsePrefix("::1/128")
 		inet6Exclude = append([]netip.Prefix{loopback6}, inet6Exclude...)

@@ -14,16 +14,44 @@ import (
 )
 
 var excludedRoutes []netip.Prefix
+var tunDefaultRouteAdded bool
 
-// SetupTunRouteRules is a no-op on non-Linux systems (fwmark not supported)
+// SetupTunRouteRules sets up TUN default route on Windows
+// This is needed because sing-tun's AutoRoute doesn't work properly on Windows
 func SetupTunRouteRules() error {
-	// Policy routing with fwmark is only supported on Linux
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+
+	// Add default route via TUN interface gateway with lower metric than physical interface
+	// TUN gateway is 172.19.0.2, metric should be lower than physical interface (typically 35)
+	cmd := exec.Command("route", "add", "0.0.0.0", "mask", "0.0.0.0", "172.19.0.2", "metric", "1")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Check if route already exists
+		if !strings.Contains(string(output), "对象已存在") && !strings.Contains(string(output), "already exists") {
+			log.Warn("SetupTunRouteRules: failed to add default route via TUN: %v, output: %s", err, string(output))
+			return err
+		}
+	}
+	tunDefaultRouteAdded = true
+	log.Info("[TUN] Added default route 0.0.0.0/0 via 172.19.0.2 metric 1")
 	return nil
 }
 
-// CleanupTunRouteRules is a no-op on non-Linux systems
+// CleanupTunRouteRules removes TUN default route on Windows
 func CleanupTunRouteRules() error {
-	// Policy routing with fwmark is only supported on Linux
+	if runtime.GOOS != "windows" || !tunDefaultRouteAdded {
+		return nil
+	}
+
+	cmd := exec.Command("route", "delete", "0.0.0.0")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		log.Warn("CleanupTunRouteRules: failed to delete TUN default route: %v, output: %s", err, string(output))
+	} else {
+		log.Info("[TUN] Removed default route via TUN")
+	}
+	tunDefaultRouteAdded = false
 	return nil
 }
 
@@ -124,9 +152,9 @@ func getDefaultGateway() (string, error) {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
-		// Windows: Use PowerShell to get gateway
+		// Windows: Use PowerShell to get gateway, excluding TUN interface by InterfaceMetric
 		cmd = exec.Command("powershell", "-Command",
-			"(Get-NetRoute -DestinationPrefix '0.0.0.0/0' | Select-Object -First 1).NextHop")
+			"(Get-NetRoute -DestinationPrefix '0.0.0.0/0' | Where-Object {$_.InterfaceMetric -gt 0} | Sort-Object InterfaceMetric | Select-Object -First 1).NextHop")
 	} else {
 		// macOS/BSD: route -n get default
 		cmd = exec.Command("sh", "-c", "route -n get default | grep gateway | awk '{print $2}'")
