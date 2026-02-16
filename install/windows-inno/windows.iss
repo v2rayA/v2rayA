@@ -51,7 +51,7 @@ Source: "D:\v2raya.ico"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{commondesktop}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "{app}\v2raya.ico";
 Name: "{group}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "{app}\v2raya.ico";
 Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}";
-Name: "{group}\{cm:UninstallProgram},{#MyAppName}"; Filename: "{uninstallexe}";
+Name: "{group}\{cm:UninstallProgram} {#MyAppName}"; Filename: "{uninstallexe}";
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "V2RAYA_WIN_ENVFILE"; ValueData: "{app}\v2rayA_env.txt"; Flags: uninsdeletevalue
