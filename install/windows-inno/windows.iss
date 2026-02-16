@@ -51,37 +51,146 @@ Source: "D:\v2raya.ico"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{commondesktop}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "{app}\v2raya.ico";
 Name: "{group}\v2rayA Web Panel"; Filename: "http://localhost:2017"; IconFilename: "{app}\v2raya.ico";
 Name: "{group}\v2rayA Wiki"; Filename: "{#MyAppURL}";
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}";
+Name: "{group}\{cm:UninstallProgram},{#MyAppName}"; Filename: "{uninstallexe}";
+
+[Registry]
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "V2RAYA_WIN_ENVFILE"; ValueData: "{app}\v2rayA_env.txt"; Flags: uninsdeletevalue
 
 [Run]
-; 添加 bin 目录到系统 PATH
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); if ($path -notlike '*{app}\bin*') {{ [Environment]::SetEnvironmentVariable('Path', $path + ';{app}\bin', 'Machine') }}"""; Flags: runhidden waituntilterminated
-; 创建环境变量配置文件
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Test-Path '{app}\v2rayA_env.txt')) {{ Set-Content -Path '{app}\v2rayA_env.txt' -Value ""V2RAYA_V2RAY_ASSETSDIR={app}\data`nV2RAYA_LOG_FILE=`""$env:TEMP\v2raya.log`"""" -Encoding UTF8 }}"""; Flags: runhidden waituntilterminated
-; 设置环境变量指向配置文件
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_WIN_ENVFILE', '{app}\v2rayA_env.txt', 'Machine')"""; Flags: runhidden waituntilterminated
 ; 创建服务
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (!(Get-Service -Name v2rayA -ErrorAction SilentlyContinue)) {{ New-Service -Name v2rayA -BinaryPathName '""{{app}}\bin\v2raya.exe""' -DisplayName 'v2rayA Service' -Description 'v2rayA - A web GUI client of Project V' -StartupType Automatic }}"""; Flags: runhidden waituntilterminated
+Filename: "{sys}\sc.exe"; Parameters: "create v2rayA binPath= ""{app}\bin\v2raya.exe"" DisplayName= ""v2rayA Service"" start= auto"; Flags: runhidden waituntilterminated
+Filename: "{sys}\sc.exe"; Parameters: "description v2rayA ""v2rayA - A web GUI client of Project V"""; Flags: runhidden waituntilterminated
 ; 启动服务
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Start-Service -Name v2rayA"""; Flags: runhidden waituntilterminated
+Filename: "{sys}\sc.exe"; Parameters: "start v2rayA"; Flags: runhidden waituntilterminated
 
 [UninstallRun]
 ; 停止并删除服务
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""if (Get-Service -Name v2rayA -ErrorAction SilentlyContinue) {{ Stop-Service -Name v2rayA -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 5; sc.exe delete v2rayA }}"""; Flags: runhidden
-; 删除环境变量
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""[Environment]::SetEnvironmentVariable('V2RAYA_WIN_ENVFILE', $null, 'Machine')"""; Flags: runhidden
-; 从系统 PATH 中移除 bin 目录
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$path = [Environment]::GetEnvironmentVariable('Path', 'Machine'); $newPath = ($path.Split(';') | Where-Object {{ $_ -ne '{app}\bin' }}) -join ';'; [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')"""; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "stop v2rayA"; Flags: runhidden
+Filename: "{sys}\timeout.exe"; Parameters: "/t 2 /nobreak"; Flags: runhidden waituntilterminated
+Filename: "{sys}\sc.exe"; Parameters: "delete v2rayA"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\bin\v2raya.log"
 
 [Code]
+const
+  EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+
+function NeedsAddPath(Param: string): boolean;
+var
+  OrigPath: string;
+  BinPath: string;
+begin
+  BinPath := ExpandConstant('{app}\bin');
+  if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', OrigPath) then
+  begin
+    Result := True;
+    exit;
+  end;
+  Result := Pos(';' + Uppercase(BinPath) + ';', ';' + Uppercase(OrigPath) + ';') = 0;  
+  if Result = True then
+    Result := Pos(';' + Uppercase(BinPath) + '\;', ';' + Uppercase(OrigPath) + ';') = 0; 
+end;
+
+procedure AddBinToPath();
+var
+  OrigPath: string;
+  BinPath: string;
+  NewPath: string;
+begin
+  BinPath := ExpandConstant('{app}\bin');
+  if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', OrigPath) then
+  begin
+    NewPath := BinPath;
+  end
+  else
+  begin
+    if NeedsAddPath('') then
+      NewPath := OrigPath + ';' + BinPath
+    else
+      NewPath := OrigPath;
+  end;
+  
+  if NewPath <> OrigPath then
+    RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', NewPath);
+end;
+
+procedure RemoveBinFromPath();
+var
+  OrigPath: string;
+  BinPath: string;
+  NewPath: string;
+  PathList: TStringList;
+  I: Integer;
+begin
+  BinPath := ExpandConstant('{app}\bin');
+  if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', OrigPath) then
+    exit;
+    
+  PathList := TStringList.Create;
+  try
+    PathList.Delimiter := ';';
+    PathList.StrictDelimiter := True;
+    PathList.DelimitedText := OrigPath;
+    
+    for I := PathList.Count - 1 downto 0 do
+    begin
+      if Uppercase(PathList[I]) = Uppercase(BinPath) then
+        PathList.Delete(I);
+    end;
+    
+    NewPath := PathList.DelimitedText;
+    if NewPath <> OrigPath then
+      RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', NewPath);
+  finally
+    PathList.Free;
+  end;
+end;
+
+procedure CreateEnvConfigFile();
+var
+  EnvFilePath: string;
+  EnvContent: TStringList;
+begin
+  EnvFilePath := ExpandConstant('{app}\v2rayA_env.txt');
+  
+  // 仅在文件不存在时创建
+  if not FileExists(EnvFilePath) then
+  begin
+    EnvContent := TStringList.Create;
+    try
+      EnvContent.Add('V2RAYA_V2RAY_ASSETSDIR=' + ExpandConstant('{app}\data'));
+      EnvContent.Add('V2RAYA_LOG_FILE=%TEMP%\v2raya.log');
+      EnvContent.SaveToFile(EnvFilePath);
+    finally
+      EnvContent.Free;
+    end;
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    CreateEnvConfigFile();
+    AddBinToPath();
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    RemoveBinFromPath();
+  end;
+end;
+
 function InitializeSetup() : Boolean;
 var 
   ResultCode: Integer;
 begin
   Result := True;
   // 如果服务存在则停止它
-  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "if (Get-Service -Name v2rayA -ErrorAction SilentlyContinue) { Stop-Service -Name v2rayA -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2 }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode); 
+  Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(2000);
 end;
