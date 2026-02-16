@@ -87,13 +87,17 @@ func (t *Template) ServePlugins() error {
 	var err error
 	for _, p := range t.Plugins {
 		wg.Add(1)
-		log.Trace("[v2ray] starting plugin on %s", p.ListenAddr())
+		nodeName := p.NodeName()
+		if nodeName == "" {
+			nodeName = "unknown"
+		}
+		log.Trace("[v2ray] starting plugin on %s (node: %s)", p.ListenAddr(), nodeName)
 		go func(p plugin.Server) {
 			if e := p.ListenAndServe(); e != nil {
-				log.Warn("[v2ray] plugin on %s exited with error: %v", p.ListenAddr(), e)
+				log.Warn("[v2ray] plugin on %s (node: %s) exited with error: %v", p.ListenAddr(), p.NodeName(), e)
 				err = e
 			} else {
-				log.Trace("[v2ray] plugin on %s stopped", p.ListenAddr())
+				log.Trace("[v2ray] plugin on %s (node: %s) stopped", p.ListenAddr(), p.NodeName())
 			}
 			wg.Done()
 		}(p)
@@ -1583,7 +1587,7 @@ func (t *Template) resolveOutbounds(
 				}
 				var s plugin.Server
 				if len(c.PluginChain) > 0 {
-					s, err = plugin.ServerFromChain(c.PluginChain)
+					s, err = plugin.ServerFromChain(c.PluginChain, sInfo.Info.GetName())
 					if err != nil {
 						return nil, nil, err
 					}
@@ -1636,7 +1640,7 @@ func (t *Template) resolveOutbounds(
 			}
 			var s plugin.Server
 			if len(c.PluginChain) > 0 {
-				s, err = plugin.ServerFromChain(c.PluginChain)
+				s, err = plugin.ServerFromChain(c.PluginChain, obj.GetName())
 				if err != nil {
 					return nil, nil, err
 				}
@@ -2120,7 +2124,7 @@ func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort stri
 		return err
 	}
 	if len(c.PluginChain) > 0 {
-		if server, err := plugin.ServerFromChain(c.PluginChain); err != nil {
+		if server, err := plugin.ServerFromChain(c.PluginChain, o.GetName()); err != nil {
 			return err
 		} else {
 			t.Plugins = append(t.Plugins, server)

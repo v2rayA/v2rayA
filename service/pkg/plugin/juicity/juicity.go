@@ -52,17 +52,14 @@ func (s *Juicity) Dial(network, addr string) (net.Conn, error) {
 }
 
 func (s *Juicity) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "juicity", addr)
 	magicNetwork := netproxy.MagicNetwork{
 		Network: "tcp",
 		Mark:    plugin.ShouldSetMark(),
 	}
 	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "juicity", addr, err)
 		return nil, fmt.Errorf("[juicity]: dial to %s: %w", addr, err)
 	}
-	log.Info("[%s] dial %s success", "juicity", addr)
 	return plugin.NewFakeNetConn(rc), nil
 }
 

@@ -33,6 +33,7 @@ type Socks5 struct {
 	dialer      plugin.Dialer
 	proxy       plugin.Proxy
 	addr        string
+	nodeName    string
 	user        string
 	password    string
 	TcpListener net.Listener
@@ -49,7 +50,7 @@ func init() {
 
 // NewSocks5 returns a Proxy that makes SOCKS v5 connections to the given address
 // with an optional username and password. (RFC 1928)
-func NewSocks5(s string, d plugin.Dialer, p plugin.Proxy) (*Socks5, error) {
+func NewSocks5(s string, nodeName string, d plugin.Dialer, p plugin.Proxy) (*Socks5, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		log.Warn("parse err: %s", err)
@@ -67,6 +68,7 @@ func NewSocks5(s string, d plugin.Dialer, p plugin.Proxy) (*Socks5, error) {
 		dialer:   d,
 		proxy:    p,
 		addr:     addr,
+		nodeName: nodeName,
 		user:     user,
 		password: pass,
 	}
@@ -76,12 +78,12 @@ func NewSocks5(s string, d plugin.Dialer, p plugin.Proxy) (*Socks5, error) {
 
 // NewSocks5Dialer returns a socks5 proxy dialer.
 func NewSocks5Dialer(s string, d plugin.Dialer) (plugin.Dialer, error) {
-	return NewSocks5(s, d, nil)
+	return NewSocks5(s, "", d, nil)
 }
 
 // NewSocks5Server returns a socks5 proxy server.
-func NewSocks5Server(s string, p plugin.Proxy) (plugin.Server, error) {
-	return NewSocks5(s, nil, p)
+func NewSocks5Server(s string, nodeName string, p plugin.Proxy) (plugin.Server, error) {
+	return NewSocks5(s, nodeName, nil, p)
 }
 
 // ListenAndServe serves socks5 requests.
@@ -92,6 +94,10 @@ func (s *Socks5) ListenAndServe() error {
 
 func (s *Socks5) ListenAddr() string {
 	return s.addr
+}
+
+func (s *Socks5) NodeName() string {
+	return s.nodeName
 }
 
 // ListenAndServeTCP listen and serve on tcp port.

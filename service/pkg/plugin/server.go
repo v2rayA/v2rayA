@@ -13,11 +13,12 @@ type Server interface {
 	// ListenAndServe sets up a listener and serve on it
 	ListenAndServe() error
 	ListenAddr() string
+	NodeName() string
 	Close() error
 }
 
 // ServerCreator is a function to create proxy servers
-type ServerCreator func(s string, proxy Proxy) (Server, error)
+type ServerCreator func(s string, nodeName string, proxy Proxy) (Server, error)
 
 var (
 	serverCreators = make(map[string]ServerCreator)
@@ -39,7 +40,7 @@ func getAvailableServerSchemes() []string {
 
 // ServerFromURL calls the registered creator to create proxy servers
 // dialer is the default upstream dialer so cannot be nil, we can use Default when calling this function
-func ServerFromURL(s string, p Proxy) (Server, error) {
+func ServerFromURL(s string, nodeName string, p Proxy) (Server, error) {
 	if p == nil {
 		return nil, fmt.Errorf("ServerFromURL: dialer cannot be nil")
 	}
@@ -62,13 +63,13 @@ func ServerFromURL(s string, p Proxy) (Server, error) {
 		return nil, fmt.Errorf("unknown server scheme '%s'", u.Scheme)
 	}
 
-	log.Trace("[plugin] creating server for scheme '%s' from URL: %s", scheme, s)
-	result, err := c(s, p)
+	log.Trace("[plugin] creating server for scheme '%s' from URL: %s (node: %s)", scheme, s, nodeName)
+	result, err := c(s, nodeName, p)
 	if err != nil {
-		log.Warn("[plugin] failed to create server for scheme '%s': %v", scheme, err)
+		log.Warn("[plugin] failed to create server for scheme '%s' (node: %s): %v", scheme, nodeName, err)
 		return nil, fmt.Errorf("create %s server: %w", scheme, err)
 	}
 
-	log.Info("[plugin] successfully created server for scheme '%s' at %s", scheme, result.ListenAddr())
+	log.Info("[plugin] successfully created server for scheme '%s' at %s (node: %s)", scheme, result.ListenAddr(), nodeName)
 	return result, nil
 }

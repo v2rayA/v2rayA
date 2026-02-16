@@ -50,18 +50,15 @@ func (s *Hysteria2) Dial(network, addr string) (net.Conn, error) {
 }
 
 func (s *Hysteria2) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "hysteria2", addr)
 	magicNetwork := netproxy.MagicNetwork{
-		Network: "tcp",
+		Network: network,
 		Mark:    plugin.ShouldSetMark(),
 	}
-	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
+	conn, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "hysteria2", addr, err)
 		return nil, err
 	}
-	log.Info("[%s] dial %s success", "hysteria2", addr)
-	return plugin.NewFakeNetConn(rc), nil
+	return plugin.NewFakeNetConn(conn), nil
 }
 
 // DialUDP connects to the given address via the infra.

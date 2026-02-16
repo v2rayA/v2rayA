@@ -18,6 +18,7 @@ type Tcp struct {
 	dialer      plugin.Dialer
 	proxy       plugin.Proxy
 	listenAddr  string
+	nodeName    string
 	target      string
 	TcpListener net.Listener
 }
@@ -26,7 +27,7 @@ func init() {
 	plugin.RegisterServer("tcp", NewTcpServer)
 }
 
-func NewTcp(s string, d plugin.Dialer, p plugin.Proxy) (*Tcp, error) {
+func NewTcp(s string, nodeName string, d plugin.Dialer, p plugin.Proxy) (*Tcp, error) {
 	u, err := url.Parse(s)
 	if err != nil {
 		log.Warn("parse err: %s", err)
@@ -39,6 +40,7 @@ func NewTcp(s string, d plugin.Dialer, p plugin.Proxy) (*Tcp, error) {
 		dialer:     d,
 		proxy:      p,
 		listenAddr: addr,
+		nodeName:   nodeName,
 		target:     u.Query().Get("target"),
 	}
 
@@ -47,12 +49,12 @@ func NewTcp(s string, d plugin.Dialer, p plugin.Proxy) (*Tcp, error) {
 
 // NewTcpDialer returns a tcp proxy dialer.
 func NewTcpDialer(s string, d plugin.Dialer) (plugin.Dialer, error) {
-	return NewTcp(s, d, nil)
+	return NewTcp(s, "", d, nil)
 }
 
 // NewTcpServer returns a tcp proxy server.
-func NewTcpServer(s string, p plugin.Proxy) (plugin.Server, error) {
-	return NewTcp(s, nil, p)
+func NewTcpServer(s string, nodeName string, p plugin.Proxy) (plugin.Server, error) {
+	return NewTcp(s, nodeName, nil, p)
 }
 
 // ListenAndServe serves tcp requests.
@@ -63,6 +65,10 @@ func (s *Tcp) ListenAndServe() error {
 
 func (s *Tcp) ListenAddr() string {
 	return s.listenAddr
+}
+
+func (s *Tcp) NodeName() string {
+	return s.nodeName
 }
 
 // ListenAndServeTCP listen and serve on tcp port.

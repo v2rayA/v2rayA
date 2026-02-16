@@ -52,17 +52,14 @@ func (s *Tuic) Dial(network, addr string) (net.Conn, error) {
 }
 
 func (s *Tuic) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "tuic", addr)
 	magicNetwork := netproxy.MagicNetwork{
 		Network: "tcp",
 		Mark:    plugin.ShouldSetMark(),
 	}
 	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "tuic", addr, err)
 		return nil, fmt.Errorf("[tuic]: dial to %s: %w", addr, err)
 	}
-	log.Info("[%s] dial %s success", "tuic", addr)
 	return plugin.NewFakeNetConn(rc), nil
 }
 

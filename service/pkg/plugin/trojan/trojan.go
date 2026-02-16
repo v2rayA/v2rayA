@@ -56,17 +56,14 @@ func (s *Trojan) Dial(network, addr string) (net.Conn, error) {
 }
 
 func (s *Trojan) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "trojan", addr)
 	magicNetwork := netproxy.MagicNetwork{
 		Network: "tcp",
 		Mark:    plugin.ShouldSetMark(),
 	}
 	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "trojan", addr, err)
 		return nil, fmt.Errorf("[trojan]: dial to %s: %w", addr, err)
 	}
-	log.Info("[%s] dial %s success", "trojan", addr)
 	return plugin.NewFakeNetConn(rc), nil
 }
 

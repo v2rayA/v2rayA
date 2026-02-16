@@ -55,13 +55,10 @@ func (s *HTTP) Dial(network, addr string) (net.Conn, error) {
 }
 
 func (s *HTTP) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "http", addr)
 	rc, err := s.dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "http", addr, err)
 		return nil, fmt.Errorf("[http]: dial to %s: %w", addr, err)
 	}
-	log.Info("[%s] dial %s success", "http", addr)
 	return plugin.NewFakeNetConn(rc), nil
 }
 

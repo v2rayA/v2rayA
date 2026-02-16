@@ -22,11 +22,17 @@ type Proxy interface {
 }
 
 type DirectProxy struct {
-	Dialer Dialer
+	Dialer   Dialer
+	NodeName string
+	Protocol string
 }
 
-func Dialer2Proxy(dialer Dialer) (p Proxy) {
-	return DirectProxy{Dialer: dialer}
+func Dialer2Proxy(dialer Dialer, nodeName string, protocol string) (p Proxy) {
+	return DirectProxy{
+		Dialer:   dialer,
+		NodeName: nodeName,
+		Protocol: protocol,
+	}
 }
 
 // Dial connects to the given address via the infra.
@@ -35,12 +41,24 @@ func (p DirectProxy) Dial(network, addr string) (net.Conn, string, error) {
 }
 
 func (p DirectProxy) DialContext(ctx context.Context, network, addr string) (net.Conn, string, error) {
-	log.Info("[proxy] dialing %s via %s", addr, p.Dialer.Addr())
+	nodeInfo := ""
+	if p.NodeName != "" {
+		nodeInfo = "[" + p.NodeName + "]"
+	}
+	protocolInfo := ""
+	if p.Protocol != "" {
+		protocolInfo = "[" + p.Protocol + "]"
+	}
+	prefix := nodeInfo + protocolInfo
+	if prefix == "" {
+		prefix = "[proxy]"
+	}
+
 	c, err := p.Dialer.DialContext(ctx, network, addr)
 	if err != nil {
-		log.Info("[proxy] dial %s via %s failed: %v", addr, p.Dialer.Addr(), err)
+		log.Info("%s dial %s failed: %v", prefix, addr, err)
 	} else {
-		log.Info("[proxy] dial %s via %s success", addr, p.Dialer.Addr())
+		log.Info("%s dial %s success", prefix, addr)
 	}
 	return c, p.Dialer.Addr(), err
 }

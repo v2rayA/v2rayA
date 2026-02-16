@@ -51,17 +51,14 @@ func (s *Shadowsocks) Dial(network, addr string) (net.Conn, error) {
 }
 
 func (s *Shadowsocks) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "shadowsocks", addr)
 	magicNetwork := netproxy.MagicNetwork{
 		Network: "tcp",
 		Mark:    plugin.ShouldSetMark(),
 	}
 	rc, err := s.dialer.DialContext(ctx, magicNetwork.Encode(), addr)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "shadowsocks", addr, err)
 		return nil, fmt.Errorf("[shadowsocks]: dial to %s: %w", addr, err)
 	}
-	log.Info("[%s] dial %s success", "shadowsocks", addr)
 	return plugin.NewFakeNetConn(rc), nil
 }
 

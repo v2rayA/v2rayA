@@ -48,18 +48,15 @@ func (a *AnyTLS) Dial(network, address string) (net.Conn, error) {
 }
 
 func (a *AnyTLS) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	log.Info("[%s] dialing %s", "anytls", address)
 	magicNetwork := netproxy.MagicNetwork{
-		Network: "tcp",
+		Network: network,
 		Mark:    plugin.ShouldSetMark(),
 	}
-	rc, err := a.dialer.DialContext(ctx, magicNetwork.Encode(), address)
+	conn, err := a.dialer.DialContext(ctx, magicNetwork.Encode(), address)
 	if err != nil {
-		log.Info("[%s] dial %s failed: %v", "anytls", address, err)
 		return nil, err
 	}
-	log.Info("[%s] dial %s success", "anytls", address)
-	return plugin.NewFakeNetConn(rc), nil
+	return plugin.NewFakeNetConn(conn), nil
 }
 
 func (a *AnyTLS) DialUDP(network string) (plugin.FakeNetPacketConn, error) {
