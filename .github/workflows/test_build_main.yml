@@ -11,6 +11,7 @@ on:
       - "go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
+      - "install/windows-inno/**"
 
 jobs:
   Build_v2rayA_Web:
