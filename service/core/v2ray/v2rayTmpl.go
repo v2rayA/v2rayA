@@ -1020,56 +1020,6 @@ func (t *Template) appendDNSOutbound() {
 	})
 }
 
-// getTunDNSUpstream derives the upstream host/port for the dokodemo-door listener used by TUN DNS.
-// It respects scheme/port in the first internal DNS entry, falling back to 119.29.29.29:53.
-func (t *Template) getTunDNSUpstream() (string, int) {
-	list := configure.GetInternalDnsListNotNil()
-	for _, raw := range list {
-		val := strings.TrimSpace(strings.Split(raw, "->")[0])
-		if val == "" {
-			continue
-		}
-
-		var host string
-		port := 53
-
-		if strings.Contains(val, "://") {
-			if u, err := url.Parse(val); err == nil {
-				host = u.Hostname()
-				if p := u.Port(); p != "" {
-					if pi, perr := strconv.Atoi(p); perr == nil {
-						port = pi
-					}
-				}
-			}
-		} else {
-			if h, p, err := net.SplitHostPort(val); err == nil {
-				host = h
-				if pi, perr := strconv.Atoi(p); perr == nil {
-					port = pi
-				}
-			} else {
-				host = val
-			}
-		}
-
-		if host != "" {
-			return host, port
-		}
-	}
-	return "119.29.29.29", 53
-}
-
-func (t *Template) getTunDNSUpstreamHost() string {
-	h, _ := t.getTunDNSUpstream()
-	return h
-}
-
-func (t *Template) getTunDNSUpstreamPort() int {
-	_, p := t.getTunDNSUpstream()
-	return p
-}
-
 func (t *Template) setSendThrough() {
 	for i := 0; i < len(t.Outbounds); i++ {
 		outbound := &t.Outbounds[i]
@@ -1302,14 +1252,16 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Tag: "transparent",
 			})
 			// Local dokodemo-door listener for DNS (used by TUN DNS forwarder)
+			// Note: Address and Port are not used when routed to dns-out.
+			// They are set to dummy values to indicate this is TUN-specific.
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 				Port:     tun.TunDNSListenPort,
 				Protocol: "dokodemo-door",
 				Listen:   "127.0.0.1",
 				Settings: &coreObj.InboundSettings{
 					Network: "tcp,udp",
-					Address: t.getTunDNSUpstreamHost(),
-					Port:    t.getTunDNSUpstreamPort(),
+					Address: "v2raya.tun", // Dummy address, not actually used
+					Port:    53,
 				},
 				Tag: "tun-dns-in",
 			})

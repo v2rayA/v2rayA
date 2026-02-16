@@ -45,11 +45,12 @@ func CleanupTunRouteRules() error {
 		return nil
 	}
 
-	cmd := exec.Command("route", "delete", "0.0.0.0")
+	// Specify the gateway to only delete the TUN route, not the physical interface route
+	cmd := exec.Command("route", "delete", "0.0.0.0", "mask", "0.0.0.0", "172.19.0.2")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		log.Warn("CleanupTunRouteRules: failed to delete TUN default route: %v, output: %s", err, string(output))
 	} else {
-		log.Info("[TUN] Removed default route via TUN")
+		log.Info("[TUN] Removed default route via TUN (172.19.0.2)")
 	}
 	tunDefaultRouteAdded = false
 	return nil
@@ -152,9 +153,10 @@ func getDefaultGateway() (string, error) {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
-		// Windows: Use PowerShell to get gateway, excluding TUN interface by InterfaceMetric
+		// Windows: Get the gateway, excluding TUN gateway (172.19.0.2)
+		// Sort by InterfaceMetric to prefer the physical interface
 		cmd = exec.Command("powershell", "-Command",
-			"(Get-NetRoute -DestinationPrefix '0.0.0.0/0' | Where-Object {$_.InterfaceMetric -gt 0} | Sort-Object InterfaceMetric | Select-Object -First 1).NextHop")
+			"(Get-NetRoute -DestinationPrefix '0.0.0.0/0' | Where-Object {$_.NextHop -ne '172.19.0.2' -and $_.NextHop -ne '0.0.0.0'} | Sort-Object InterfaceMetric | Select-Object -First 1).NextHop")
 	} else {
 		// macOS/BSD: route -n get default
 		cmd = exec.Command("sh", "-c", "route -n get default | grep gateway | awk '{print $2}'")

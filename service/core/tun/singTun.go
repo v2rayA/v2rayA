@@ -21,7 +21,6 @@ import (
 	"github.com/sagernet/sing/protocol/socks"
 	"github.com/v2fly/v2ray-core/v5/common/strmatcher"
 	"github.com/v2rayA/v2ray-lib/router/routercommon"
-	"github.com/v2rayA/v2rayA/core/dns"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"google.golang.org/protobuf/proto"
@@ -51,11 +50,11 @@ type singTun struct {
 	closer       io.Closer
 	waiter       *gvisorWaiter
 	dns          *DNS
-	backupDNS    map[string][]string
 	whitelist    []netip.Addr
 	excludeAddrs []netip.Prefix // Addresses to exclude from TUN routing
 	useIPv6      bool
 	strictRoute  bool
+	autoRoute    bool
 }
 
 // isReservedAddress checks if an IP address belongs to reserved address ranges
@@ -162,6 +161,7 @@ func NewSingTun() Tun {
 		dialer:      dialer,
 		forward:     client,
 		strictRoute: false,
+		autoRoute:   true, // Default to enabled
 		// DNS is sent to local dokodemo-door listener instead of SOCKS
 		dns: NewDNS(dialer, nil, false, M.ParseSocksaddrHostPort(dnsAddr, 53), M.ParseSocksaddrHostPort(dnsAddr6, 53)),
 	}
@@ -202,14 +202,16 @@ func (t *singTun) Start(stack Stack) error {
 		}
 	}
 
-	autoRoute := true
+	autoRoute := t.autoRoute
 	strictRoute := t.strictRoute
 
-	// On Windows, disable sing-tun's AutoRoute as it adds metric=0 route
-	// We will add manual default route with proper metric instead
-	if runtime.GOOS == "windows" {
+	// On Windows, disable sing-tun's AutoRoute if user has disabled it
+	// or if we need to add manual default route with proper metric
+	if runtime.GOOS == "windows" && autoRoute {
 		autoRoute = false
 		log.Info("[TUN] Windows: Disabling AutoRoute, will use manual routing")
+	} else if !t.autoRoute {
+		log.Info("[TUN] AutoRoute disabled by user configuration")
 	}
 
 	log.Info("[TUN] Starting with StrictRoute=%t, AutoRoute=%t", strictRoute, autoRoute)
@@ -225,8 +227,19 @@ func (t *singTun) Start(stack Stack) error {
 		}
 	}
 
+	// Choose interface name based on platform
+	// macOS requires "utun" prefix, so we use empty string to let the system auto-assign
+	// Windows and Linux support custom names
+	tunName := "v2raya-tun"
+	if runtime.GOOS == "darwin" {
+		tunName = "" // macOS will auto-assign utun0, utun1, etc.
+		log.Info("[TUN] macOS: Using auto-assigned utun interface name")
+	} else {
+		log.Info("[TUN] Using custom interface name: %s", tunName)
+	}
+
 	tunOptions := tun.Options{
-		Name:                     tun.CalculateInterfaceName(""),
+		Name:                     tun.CalculateInterfaceName(tunName),
 		MTU:                      9000,
 		Inet4Address:             []netip.Prefix{prefix4},
 		Inet4RouteAddress:        []netip.Prefix{route4},
@@ -235,6 +248,15 @@ func (t *singTun) Start(stack Stack) error {
 		StrictRoute:              strictRoute,
 		InterfaceMonitor:         interfaceMonitor,
 	}
+
+	// Set DNS server for TUN interface
+	var dnsServers []netip.Addr
+	dnsAddrIP, _ := netip.ParseAddr(dnsAddr)
+	if dnsAddrIP.IsValid() {
+		dnsServers = append(dnsServers, dnsAddrIP)
+		log.Info("[TUN] IPv4 DNS server: %s", dnsAddr)
+	}
+
 	// Enable IPv6 if requested
 	if t.useIPv6 {
 		tunOptions.Inet6Address = []netip.Prefix{prefix6}
@@ -244,6 +266,18 @@ func (t *singTun) Start(stack Stack) error {
 		inet6Exclude = append([]netip.Prefix{loopback6}, inet6Exclude...)
 		tunOptions.Inet6RouteExcludeAddress = inet6Exclude
 		log.Info("[TUN] Excluding IPv6 loopback: ::1/128")
+
+		// Add IPv6 DNS server
+		dnsAddrIPv6, _ := netip.ParseAddr(dnsAddr6)
+		if dnsAddrIPv6.IsValid() {
+			dnsServers = append(dnsServers, dnsAddrIPv6)
+			log.Info("[TUN] IPv6 DNS server: %s", dnsAddr6)
+		}
+	}
+
+	// Set DNS servers (if any)
+	if len(dnsServers) > 0 {
+		tunOptions.DNSServers = dnsServers
 	}
 	tunInterface, err := tun.New(tunOptions)
 	if err != nil {
@@ -288,12 +322,6 @@ func (t *singTun) Start(stack Stack) error {
 	t.dns.whitelist, _ = GetWhitelistCN()
 	// Route DNS to local dokodemo-door listener to avoid SOCKS loop
 	t.dns.servers = []M.Socksaddr{M.ParseSocksaddrHostPort("127.0.0.1", TunDNSListenPort)}
-	backupDNS := make(map[string][]string)
-	interfaces, _ := dns.GetValidNetworkInterfaces()
-	for _, ifi := range interfaces {
-		backupDNS[ifi], _ = dns.ReplaceDNSServer(ifi, dnsAddr)
-	}
-	t.backupDNS = backupDNS
 	t.whitelist = nil
 	return nil
 }
@@ -301,10 +329,6 @@ func (t *singTun) Start(stack Stack) error {
 func (t *singTun) Close() error {
 	t.mu.Lock()
 	if t.cancel != nil {
-		for ifi, server := range t.backupDNS {
-			dns.SetDNSServer(ifi, server...)
-		}
-		t.backupDNS = nil
 		t.cancel()
 		t.closer.Close()
 		t.cancel = nil
@@ -352,6 +376,10 @@ func (t *singTun) SetIPv6(enabled bool) {
 
 func (t *singTun) SetStrictRoute(enabled bool) {
 	t.strictRoute = enabled
+}
+
+func (t *singTun) SetAutoRoute(enabled bool) {
+	t.autoRoute = enabled
 }
 
 func (t *singTun) PrepareConnection(network string, source M.Socksaddr, destination M.Socksaddr) error {

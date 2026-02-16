@@ -28,6 +28,7 @@ type Setting struct {
 	TunFakeIP                          bool            `json:"tunFakeIP"`
 	TunIPv6                            bool            `json:"tunIPv6"`
 	TunStrictRoute                     bool            `json:"tunStrictRoute"`
+	TunAutoRoute                       bool            `json:"tunAutoRoute"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -52,6 +53,7 @@ func NewSetting() (setting *Setting) {
 		TunFakeIP:                          true,
 		TunIPv6:                            false,
 		TunStrictRoute:                     false,
+		TunAutoRoute:                       true,
 	}
 }
 

@@ -115,6 +115,14 @@
         </b-select>
       </b-field>
 
+      <b-field v-show="tunEnabled" label-position="on-border">
+        <template slot="label">AutoRoute</template>
+        <b-select v-model="tunAutoRoute" expanded>
+          <option :value="true">{{ $t("setting.options.enabled") }}</option>
+          <option :value="false">{{ $t("setting.options.disabled") }}</option>
+        </b-select>
+      </b-field>
+
       <b-field label-position="on-border">
         <template slot="label">
           {{ $t("setting.pacMode") }}
@@ -352,6 +360,7 @@ export default {
     tunFakeIP: true,
     tunIPv6: false,
     tunStrictRoute: false,
+    tunAutoRoute: true,
     ipforward: false,
     portSharing: false,
     dnsForceMode: false,
@@ -468,6 +477,7 @@ export default {
             tunFakeIP: this.tunFakeIP,
             tunIPv6: this.tunIPv6,
             tunStrictRoute: this.tunStrictRoute,
+            tunAutoRoute: this.tunAutoRoute,
             ipforward: this.ipforward,
             portSharing: this.portSharing,
             routeOnly: this.routeOnly,

@@ -268,21 +268,39 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 		}
 		server = d.getServer()
 	case dnsForward:
-		dialer = d.forward
+		// In TUN mode, d.forward is nil. Fall back to using dokodemo-door for DNS forwarding.
+		if d.forward != nil {
+			dialer = d.forward
+		} else {
+			dialer = d.dialer
+			server = defaultDNSServer // Use dokodemo-door at 127.0.0.1:6053
+		}
 	case dnsFake4:
 		addr, ok := d.getAvailableIP4(domain)
 		if ok {
 			return d.newResponse(msg, D.RcodeSuccess, addr), nil
 		}
-		dialer = d.forward
+		// FakeIP allocation failed (rare), fall back to querying DNS
+		if d.forward != nil {
+			dialer = d.forward
+		} else {
+			dialer = d.dialer
+			server = defaultDNSServer
+		}
 	case dnsFake6:
 		if addr, ok := d.getAvailableIP6(domain); ok {
 			return d.newResponse(msg, D.RcodeSuccess, addr), nil
 		}
-		dialer = d.forward
+		// FakeIP allocation failed (rare), fall back to querying DNS
+		if d.forward != nil {
+			dialer = d.forward
+		} else {
+			dialer = d.dialer
+			server = defaultDNSServer
+		}
 	}
 	if dialer != nil {
-		useForward := false
+		useForward := dialer == d.forward
 		preferTCP := false
 		var usedTCP bool
 		resp, err := func() (*D.Msg, error) {
@@ -295,7 +313,8 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 				return nil, err
 			}
 
-			// First try UDP (works with SOCKS5 UDP associate) to avoid blocking on TCP dial to 52345.
+			// First try UDP. For dokodemo-door (port 6053), this is a direct UDP connection.
+			// The dialer is SystemDialer in normal cases, connecting to the local dokodemo-door listener.
 			serverConn, err := dialer.ListenPacket(ctxDial, server)
 			if err == nil {
 				defer serverConn.Close()
@@ -315,7 +334,7 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 				}
 			}
 
-			// Fallback to TCP when UDP fails or when SOCKS5 TCP is explicitly preferred.
+			// Fallback to TCP when UDP fails (e.g., packet too large or server requires TCP).
 			if err != nil && preferTCP {
 				usedTCP = true
 				return exchangeTCP(ctxDial, dialer, server, msg)
@@ -559,8 +578,8 @@ func dialLabel(useForward bool, useTCP bool) string {
 	case useForward:
 		return "socks5-udp"
 	case useTCP:
-		return "direct-tcp"
+		return "dokodemo-tcp"
 	default:
-		return "direct-udp"
+		return "dokodemo-udp"
 	}
 }
