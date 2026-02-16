@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/svc"
 
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/pkg/util/privilege"
@@ -23,6 +24,18 @@ var platformEnvOnce sync.Once
 func loadPlatformEnv() error {
 	var loadErr error
 	platformEnvOnce.Do(func() {
+		// 检查是否作为 Windows 服务运行
+		isService, err := svc.IsWindowsService()
+		if err != nil {
+			log.Warn("Failed to check if running as Windows service: %v", err)
+			return
+		}
+
+		// 只在作为服务运行时才加载环境变量文件
+		if !isService {
+			return
+		}
+
 		envFilePath := os.Getenv("V2RAYA_WIN_ENVFILE")
 		if envFilePath == "" {
 			for i, arg := range os.Args {

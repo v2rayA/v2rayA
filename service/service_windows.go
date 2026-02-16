@@ -4,11 +4,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/v2rayA/v2rayA/core/v2ray"
@@ -96,78 +93,6 @@ loop:
 	return
 }
 
-// loadEnvFile 从指定路径加载环境变量配置文件
-func loadEnvFile(envFilePath string) error {
-	if envFilePath == "" {
-		return nil
-	}
-
-	// 展开相对路径为绝对路径
-	absPath, err := filepath.Abs(envFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to get absolute path: %w", err)
-	}
-
-	file, err := os.Open(absPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Warn("Windows env file not found: %s (skipping)", absPath)
-			return nil
-		}
-		return fmt.Errorf("failed to open env file: %w", err)
-	}
-	defer file.Close()
-
-	log.Info("Loading Windows env file: %s", absPath)
-
-	scanner := bufio.NewScanner(file)
-	lineNum := 0
-	loadedCount := 0
-
-	for scanner.Scan() {
-		lineNum++
-		line := strings.TrimSpace(scanner.Text())
-
-		// 跳过空行和注释行
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		// 解析 KEY=VALUE 格式
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			log.Warn("Invalid line %d in env file: %s", lineNum, line)
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		// 移除可能的引号
-		if len(value) >= 2 {
-			if (strings.HasPrefix(value, `"`) && strings.HasSuffix(value, `"`)) ||
-				(strings.HasPrefix(value, `'`) && strings.HasSuffix(value, `'`)) {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		// 设置环境变量
-		if err := os.Setenv(key, value); err != nil {
-			log.Warn("Failed to set env var %s: %v", key, err)
-		} else {
-			log.Debug("Loaded env: %s=%s", key, value)
-			loadedCount++
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("failed to read env file: %w", err)
-	}
-
-	log.Info("Loaded %d environment variables from %s", loadedCount, absPath)
-	return nil
-}
-
 // runAsService 作为 Windows 服务运行
 func runAsService(isDebug bool) error {
 	var err error
@@ -183,26 +108,6 @@ func runAsService(isDebug bool) error {
 	defer elog.Close()
 
 	elog.Info(1, "v2rayA service starting")
-
-	// 读取环境变量配置文件路径
-	// 优先使用环境变量 V2RAYA_WIN_ENVFILE
-	envFilePath := os.Getenv("V2RAYA_WIN_ENVFILE")
-	if envFilePath == "" {
-		// 如果环境变量未设置，尝试从命令行参数读取（仅在服务配置中可能有用）
-		for i, arg := range os.Args {
-			if arg == "--win-envfile" && i+1 < len(os.Args) {
-				envFilePath = os.Args[i+1]
-				break
-			}
-		}
-	}
-
-	// 加载环境变量文件
-	if err := loadEnvFile(envFilePath); err != nil {
-		elog.Error(1, fmt.Sprintf("Failed to load env file: %v", err))
-		// 不是致命错误，继续运行
-		log.Warn("Failed to load env file: %v", err)
-	}
 
 	// 运行服务
 	if isDebug {
