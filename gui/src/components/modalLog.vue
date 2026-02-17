@@ -1,6 +1,5 @@
 <template>
-  <!-- TODO: mobile device compatibility -->
-  <div class="modal-card" style="width: 65rem">
+  <div class="modal-card log-modal">
     <header class="modal-card-head">
       <p class="modal-card-title">
         {{ $tc("log.logModalTitle") }}
@@ -25,38 +24,56 @@
         </RecycleScroller>
       </div>
       <div class="log-footer">
-        <div class="log-footer-item">
-          <div class="log-footer-label">{{ $tc("log.refreshInterval") }}</div>
-          <div class="log-footer-control">
-            <b-select v-model="intervalTime" @input="changeInterval">
-              <option
-                v-for="candidate in intervalCandidate"
-                :key="candidate"
-                :value="candidate"
-              >
-                {{ `${candidate} ${$tc("log.seconds")}` }}
-              </option>
-            </b-select>
+        <div class="log-footer-left">
+          <div class="log-footer-item">
+            <div class="log-footer-label">{{ $tc("log.refreshInterval") }}</div>
+            <div class="log-footer-control">
+              <b-select v-model="intervalTime" @input="changeInterval">
+                <option
+                  v-for="candidate in intervalCandidate"
+                  :key="candidate"
+                  :value="candidate"
+                >
+                  {{ `${candidate} ${$tc("log.seconds")}` }}
+                </option>
+              </b-select>
+            </div>
+          </div>
+          <div class="log-footer-item">
+            <div class="log-footer-label">{{ $tc("log.category") }}</div>
+            <div class="log-footer-control">
+              <b-select v-model="levelFilter">
+                <option
+                  v-for="option in levelOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ $t(option.label) }}
+                </option>
+              </b-select>
+            </div>
+          </div>
+          <div class="log-footer-item">
+            <div class="log-footer-label">{{ $tc("log.source") }}</div>
+            <div class="log-footer-control">
+              <b-select v-model="sourceFilter">
+                <option
+                  v-for="option in sourceOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.value === 'all' ? $t(option.label) : option.label }}
+                </option>
+              </b-select>
+            </div>
           </div>
         </div>
-        <div class="log-footer-item">
-          <div class="log-footer-label">{{ $tc("log.category") }}</div>
-          <div class="log-footer-control">
-            <b-select v-model="levelFilter">
-              <option
-                v-for="option in levelOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ $t(option.label) }}
-              </option>
-            </b-select>
-          </div>
-        </div>
-        <div class="log-footer-item">
-          <div class="log-footer-label">{{ $tc("log.autoScoll") }}</div>
-          <div class="log-footer-control">
-            <b-switch v-model="autoScoll" @input="changeScoll" />
+        <div class="log-footer-right">
+          <div class="log-footer-item">
+            <div class="log-footer-label">{{ $tc("log.autoShowNew") }}</div>
+            <div class="log-footer-control">
+              <b-switch v-model="autoScoll" @input="changeScoll" />
+            </div>
           </div>
         </div>
       </div>
@@ -88,14 +105,25 @@ export default {
         { value: "trace", label: "log.categories.trace" },
         { value: "other", label: "log.categories.other" },
       ],
+      sourceFilter: "all",
+      sourceOptions: [
+        { value: "all", label: "log.sources.all" },
+      ],
     };
   },
   computed: {
     filteredItems() {
-      if (this.levelFilter === "all") {
-        return this.items;
+      let filtered = this.items;
+      
+      if (this.levelFilter !== "all") {
+        filtered = filtered.filter((item) => item.level === this.levelFilter);
       }
-      return this.items.filter((item) => item.level === this.levelFilter);
+      
+      if (this.sourceFilter !== "all") {
+        filtered = filtered.filter((item) => item.source === this.sourceFilter);
+      }
+      
+      return filtered;
     },
   },
   created() {
@@ -164,16 +192,37 @@ export default {
       }
       return "other";
     },
+    detectSource(text) {
+      // 匹配 [xxx.go:123] 或 [xxxService] 格式
+      const match = text.match(/\[([^\]]+\.go|[A-Za-z]+Service|[A-Za-z]+\.[A-Za-z]+)(?::\d+)?\]/);
+      if (match) {
+        return match[1];
+      }
+      return "other";
+    },
+    addSourceOption(source) {
+      if (source && !this.sourceOptions.find(opt => opt.value === source)) {
+        this.sourceOptions.push({
+          value: source,
+          label: source
+        });
+      }
+    },
     updateLog(logs) {
       if (logs.data.length && logs.data.length !== 0) {
         const baseIndex = this.items.length;
         const items = logs.data
           .split("\n")
-          .map((x, i) => ({
-            text: x,
-            id: baseIndex + i,
-            level: this.detectLevel(x),
-          }));
+          .map((x, i) => {
+            const source = this.detectSource(x);
+            this.addSourceOption(source);
+            return {
+              text: x,
+              id: baseIndex + i,
+              level: this.detectLevel(x),
+              source: source,
+            };
+          });
         if (this.endOfLine) {
           this.items = this.items.concat(items);
         } else {
@@ -183,7 +232,11 @@ export default {
         this.endOfLine = items[items.length - 1].text.endsWith("\n");
         this.currentSkip += new Blob([logs.data]).size;
         if (this.autoScoll && this.filteredItems.length > 0) {
-          this.$refs.logScroller.scrollToItem(this.filteredItems.length - 1);
+          this.$nextTick(() => {
+            if (this.$refs.logScroller && this.filteredItems.length > 0) {
+              this.$refs.logScroller.scrollToItem(this.filteredItems.length - 1);
+            }
+          });
         }
       }
     },
@@ -205,6 +258,11 @@ export default {
 </script>
 
 <style scoped>
+.log-modal {
+  width: 65rem;
+  max-width: 95vw;
+}
+
 .text {
   font-size: 16px;
   line-height: 30px;
@@ -237,8 +295,22 @@ export default {
 .log-footer {
   display: flex;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 1.5rem;
+}
+
+.log-footer-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.log-footer-right {
+  display: flex;
+  align-items: flex-start;
+  margin-left: auto;
 }
 
 .log-footer-item {
@@ -252,6 +324,7 @@ export default {
 .log-footer-label {
   font-weight: 600;
   min-height: 1.5rem;
+  font-size: 14px;
 }
 
 .log-footer-control ::v-deep .control,
@@ -265,14 +338,129 @@ export default {
   display: flex;
   align-items: center;
 }
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .log-modal {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .log-modal ::v-deep .modal-card-head {
+    padding: 1rem;
+  }
+
+  .log-modal ::v-deep .modal-card-body {
+    padding: 1rem;
+  }
+
+  .log-title {
+    font-size: 14px;
+    margin-bottom: 0.5rem;
+  }
+
+  .log-content {
+    margin-bottom: 1rem;
+  }
+
+  .text {
+    font-size: 12px;
+    line-height: 22px;
+  }
+
+  .log-line-number {
+    min-width: 2.5rem;
+    font-size: 11px;
+  }
+
+  .log-row {
+    gap: 8px;
+  }
+
+  .log-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .log-footer-left {
+    width: 100%;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .log-footer-right {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .log-footer-item {
+    width: 100%;
+    min-width: 100%;
+    gap: 0.4rem;
+  }
+
+  .log-footer-label {
+    font-size: 13px;
+    min-height: auto;
+  }
+
+  .log-footer-control ::v-deep .control {
+    min-height: 36px;
+  }
+
+  .log-footer-control ::v-deep select,
+  .log-footer-control ::v-deep .select select {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .log-modal ::v-deep .modal-card-head {
+    padding: 0.75rem;
+  }
+
+  .log-modal ::v-deep .modal-card-body {
+    padding: 0.75rem;
+  }
+
+  .log-modal ::v-deep .modal-card-title {
+    font-size: 16px;
+  }
+
+  .text {
+    font-size: 11px;
+    line-height: 20px;
+  }
+
+  .log-line-number {
+    min-width: 2rem;
+    font-size: 10px;
+  }
+}
 </style>
 
 <style lang="scss">
 .log-scroller {
   height: 50vh;
+  max-height: 600px;
 
   .vue-recycle-scroller__item-wrapper {
     overflow-x: auto;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .log-scroller {
+    height: 40vh;
+    max-height: 400px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .log-scroller {
+    height: 35vh;
+    max-height: 300px;
   }
 }
 </style>

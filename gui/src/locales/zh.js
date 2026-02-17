@@ -343,7 +343,9 @@ export default {
     refreshInterval: "刷新间隔",
     seconds: "秒",
     autoScoll: "自动滚动",
+    autoShowNew: "自动显示新日志",
     category: "分类",
+    source: "日志来源",
     categories: {
       all: "全部",
       error: "错误",
@@ -352,6 +354,9 @@ export default {
       debug: "调试",
       trace: "跟踪",
       other: "其他",
+    },
+    sources: {
+      all: "全部",
     },
   },
   

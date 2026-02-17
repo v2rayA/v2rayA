@@ -341,7 +341,9 @@ export default {
     refreshInterval: "Refresh Interval",
     seconds: "seconds",
     autoScoll: "Auto Scroll",
+    autoShowNew: "Auto Show New Logs",
     category: "Category",
+    source: "Log Source",
     categories: {
       all: "All",
       error: "Error",
@@ -350,6 +352,9 @@ export default {
       debug: "Debug",
       trace: "Trace",
       other: "Other",
+    },
+    sources: {
+      all: "All",
     },
   },
   tproxyWhiteIpGroups: {
