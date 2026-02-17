@@ -15,6 +15,8 @@ import (
 
 var excludedRoutes []netip.Prefix
 var tunDefaultRouteAdded bool
+var loopbackRouteAdded bool
+var loopback6RouteAdded bool
 
 // SetupTunRouteRules sets up TUN default route on Windows
 // This is needed because sing-tun's AutoRoute doesn't work properly on Windows
@@ -23,10 +25,38 @@ func SetupTunRouteRules() error {
 		return nil
 	}
 
+	// Add explicit IPv4 loopback route
+	cmd := exec.Command("route", "add", "127.0.0.0", "mask", "255.0.0.0", "127.0.0.1", "metric", "0")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if !strings.Contains(string(output), "对象已存在") && !strings.Contains(string(output), "already exists") {
+			log.Warn("SetupTunRouteRules: failed to add loopback route: %v, output: %s", err, string(output))
+		} else {
+			log.Info("[TUN] Loopback route already exists")
+		}
+	} else {
+		loopbackRouteAdded = true
+		log.Info("[TUN] Added loopback route 127.0.0.0/8 via 127.0.0.1 metric 0")
+	}
+
+	// Add explicit IPv6 loopback route (::1/128) using netsh
+	cmd6 := exec.Command("netsh", "interface", "ipv6", "add", "route", "::1/128", "interface=loopback", "nexthop=::1", "metric=0")
+	output6, err6 := cmd6.CombinedOutput()
+	if err6 != nil {
+		if !strings.Contains(string(output6), "对象已存在") && !strings.Contains(string(output6), "Element already exists") {
+			log.Warn("SetupTunRouteRules: failed to add IPv6 loopback route: %v, output: %s", err6, string(output6))
+		} else {
+			log.Info("[TUN] IPv6 loopback route already exists")
+		}
+	} else {
+		loopback6RouteAdded = true
+		log.Info("[TUN] Added IPv6 loopback route ::1/128 via ::1 metric 0")
+	}
+
 	// Add default route via TUN interface gateway with lower metric than physical interface
 	// TUN gateway is 172.19.0.2, metric should be lower than physical interface (typically 35)
-	cmd := exec.Command("route", "add", "0.0.0.0", "mask", "0.0.0.0", "172.19.0.2", "metric", "1")
-	output, err := cmd.CombinedOutput()
+	cmd = exec.Command("route", "add", "0.0.0.0", "mask", "0.0.0.0", "172.19.0.2", "metric", "1")
+	output, err = cmd.CombinedOutput()
 	if err != nil {
 		// Check if route already exists
 		if !strings.Contains(string(output), "对象已存在") && !strings.Contains(string(output), "already exists") {
@@ -41,7 +71,33 @@ func SetupTunRouteRules() error {
 
 // CleanupTunRouteRules removes TUN default route on Windows
 func CleanupTunRouteRules() error {
-	if runtime.GOOS != "windows" || !tunDefaultRouteAdded {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+
+	// Remove IPv4 loopback route if it was added
+	if loopbackRouteAdded {
+		cmd := exec.Command("route", "delete", "127.0.0.0", "mask", "255.0.0.0")
+		if output, err := cmd.CombinedOutput(); err != nil {
+			log.Warn("CleanupTunRouteRules: failed to delete loopback route: %v, output: %s", err, string(output))
+		} else {
+			log.Info("[TUN] Removed loopback route 127.0.0.0/8")
+		}
+		loopbackRouteAdded = false
+	}
+	// Remove IPv6 loopback route if it was added
+	if loopback6RouteAdded {
+		cmd6 := exec.Command("netsh", "interface", "ipv6", "delete", "route", "::1/128")
+		if output6, err6 := cmd6.CombinedOutput(); err6 != nil {
+			log.Warn("CleanupTunRouteRules: failed to delete IPv6 loopback route: %v, output: %s", err6, string(output6))
+		} else {
+			log.Info("[TUN] Removed IPv6 loopback route ::1/128")
+		}
+		loopback6RouteAdded = false
+	}
+
+	// Remove default route if it was added
+	if !tunDefaultRouteAdded {
 		return nil
 	}
 

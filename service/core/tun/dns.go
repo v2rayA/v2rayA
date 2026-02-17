@@ -321,8 +321,27 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 
 			// First try UDP. For dokodemo-door (port 6053), this is a direct UDP connection.
 			// The dialer is SystemDialer in normal cases, connecting to the local dokodemo-door listener.
-			serverConn, err := dialer.ListenPacket(ctxDial, server)
-			if err == nil {
+			var serverConn net.PacketConn
+			var dialErr error
+
+			// For loopback destinations, explicitly bind to the corresponding loopback IP family
+			// to avoid dual-stack socket binding [::] which might be captured by TUN interface incorrectly on Windows
+			if dialer == d.dialer && server.Addr.IsLoopback() {
+				// Use TCP for reliable local DNS communication if UDP is unstable due to TUN routing
+				preferTCP = true
+			}
+
+			if dialer == d.dialer && server.Addr.IsLoopback() {
+				if server.Addr.Is4() {
+					serverConn, dialErr = net.ListenPacket("udp4", "127.0.0.1:0")
+				} else {
+					serverConn, dialErr = net.ListenPacket("udp6", "[::1]:0")
+				}
+			} else {
+				serverConn, dialErr = dialer.ListenPacket(ctxDial, server)
+			}
+
+			if dialErr == nil {
 				defer serverConn.Close()
 				serverConn.SetDeadline(time.Now().Add(DNSTimeout))
 				if _, err = serverConn.WriteTo(data, server.UDPAddr()); err == nil {
@@ -338,6 +357,8 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 						err = rErr
 					}
 				}
+			} else {
+				err = dialErr
 			}
 
 			// Fallback to TCP when UDP fails (e.g., packet too large or server requires TCP).

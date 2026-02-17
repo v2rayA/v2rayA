@@ -233,6 +233,38 @@ func (t *singTun) Start(stack Stack) error {
 		failedCloser.Close()
 	}()
 
+	// On Windows, pre-exclude common public DNS servers to prevent routing loops
+	// when v2ray core uses them for direct outbound queries
+	if runtime.GOOS == "windows" {
+		commonDNS := []string{
+			"1.1.1.1/32", "1.0.0.1/32", // Cloudflare
+			"8.8.8.8/32", "8.8.4.4/32", // Google
+			"9.9.9.9/32", "149.112.112.112/32", // Quad9
+			"208.67.222.222/32", "208.67.220.220/32", // OpenDNS
+			"114.114.114.114/32",           // 114DNS
+			"223.5.5.5/32", "223.6.6.6/32", // AliDNS
+			// IPv6
+			"2001:4860:4860::8888/128", "2001:4860:4860::8844/128", // Google
+			"2606:4700:4700::1111/128", "2606:4700:4700::1001/128", // Cloudflare
+		}
+		for _, cidr := range commonDNS {
+			if prefix, err := netip.ParsePrefix(cidr); err == nil {
+				// Avoid duplicates if already added
+				exists := false
+				for _, ex := range t.excludeAddrs {
+					if ex == prefix {
+						exists = true
+						break
+					}
+				}
+				if !exists {
+					t.excludeAddrs = append(t.excludeAddrs, prefix)
+					log.Info("[TUN] Automatically excluded common DNS server: %s", cidr)
+				}
+			}
+		}
+	}
+
 	t.Close()
 	networkUpdateMonitor, err := tun.NewNetworkUpdateMonitor(defaultLogger)
 	if err != nil {

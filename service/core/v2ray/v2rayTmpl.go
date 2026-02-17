@@ -243,11 +243,11 @@ func parseAdvancedDnsServers(lines []string, domains []string) (domainNameServer
 
 		if net.ParseIP(addr.host) != nil {
 			routing = append(routing, coreObj.RoutingRule{
-				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
+				Type: "field", OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
 			})
 		} else {
 			routing = append(routing, coreObj.RoutingRule{
-				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
+				Type: "field", OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
 			})
 		}
 	}
@@ -398,22 +398,44 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 		t.DNS.Servers = []interface{}{"localhost"}
 	}
 	var domainsToLookup []string
+	// Collect domains from outbound servers
 	for _, v := range outbounds {
 		if net.ParseIP(v.Info.GetHostname()) == nil {
 			domainsToLookup = append(domainsToLookup, v.Info.GetHostname())
 		}
 	}
+	// Collect domains from routing rules
 	for _, r := range routing {
 		if len(r.Domain) > 0 {
 			domainsToLookup = append(domainsToLookup, r.Domain...)
 		}
 	}
+	// Collect domains from DNS servers themselves (for DoT/DoH)
+	for _, srv := range t.DNS.Servers {
+		var dnsAddr string
+		switch s := srv.(type) {
+		case string:
+			dnsAddr = s
+		case coreObj.DnsServer:
+			dnsAddr = s.Address
+		}
+		if dnsAddr == "" || dnsAddr == "localhost" || dnsAddr == "fakedns" {
+			continue
+		}
+		// Parse DNS address to extract hostname
+		addr := parseDnsAddr(dnsAddr)
+		if net.ParseIP(addr.host) == nil {
+			// DNS server address is a domain, need to resolve it
+			domainsToLookup = append(domainsToLookup, addr.host)
+		}
+	}
 	domainsToLookup = common.Deduplicate(domainsToLookup)
 	if len(domainsToLookup) > 0 {
+		// Use Google 8.8.8.8 and Tencent 119.29.29.29 to resolve these critical domains
 		var dnsList []string
 		dnsList = []string{
-			"tcp://208.67.220.220:5353 -> direct",
-			"tcp://119.29.29.29:53 -> direct",
+			"8.8.8.8 -> " + firstOutboundTag,
+			"119.29.29.29 -> direct",
 		}
 		d, r := parseAdvancedDnsServers(dnsList, domainsToLookup)
 		t.DNS.Servers = append(t.DNS.Servers, d...)
@@ -468,11 +490,13 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	t.Routing.Rules = append(t.Routing.Rules, routing...)
 	t.Routing.Rules = append(t.Routing.Rules,
-		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
+		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
 	)
 	// Always route TUN dokodemo DNS inbound to dns-out
 	t.Routing.Rules = append(t.Routing.Rules,
 		coreObj.RoutingRule{Type: "field", InboundTag: []string{"tun-dns-in"}, OutboundTag: "dns-out"},
+		// Explicitly route traffic coming from the TUN DNS listener (port 6053) into the DNS module.
+		coreObj.RoutingRule{Type: "field", Port: strconv.Itoa(tun.TunDNSListenPort), OutboundTag: "dns-out"},
 	)
 	setting := t.Setting
 	if setting.AntiPollution != configure.AntipollutionClosed {
@@ -939,7 +963,7 @@ func (t *Template) SetOutboundSockopt() {
 	mark := 0x80
 	//tos := 184
 	for i := range t.Outbounds {
-		if t.Outbounds[i].Protocol == "blackhole" {
+		if t.Outbounds[i].Protocol == "blackhole" || t.Outbounds[i].Protocol == "dns" {
 			continue
 		}
 		if t.Outbounds[i].StreamSettings == nil {
@@ -1059,8 +1083,10 @@ func (t *Template) appendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, coreObj.OutboundObject{
 		Tag:      "dns-out",
 		Protocol: "dns",
-		// Fallback DNS for non-A/AAAA/CNAME requests. https://github.com/v2rayA/v2rayA/issues/188
-		Settings: coreObj.Settings{Address: "119.29.29.29", Port: 53, Network: "udp"},
+		// DNS outbound without address setting will use the internal DNS module,
+		// which respects the DNS servers configured in the dns block (e.g., 8.8.4.4, 180.184.1.1)
+		// and applies DNS routing rules properly.
+		// See: https://www.v2fly.org/config/protocols/dns.html
 	})
 }
 
@@ -1303,7 +1329,7 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Listen:   "localhost",
 				Settings: &coreObj.InboundSettings{
 					Network: "tcp,udp",
-					Address: "v2raya.tun",
+					Address: "127.0.0.1",
 					Port:    53,
 				},
 				Tag: "tun-dns-in",
