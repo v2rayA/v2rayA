@@ -27,6 +27,8 @@ import (
 )
 
 const (
+	// DNS addresses should point to the TUN interface itself, not gateway
+	// sing-tun intercepts DNS traffic to port 53 and handles it internally
 	dnsAddr  = "172.19.0.2"
 	dnsAddr6 = "fdfe:dcba:9876::2"
 )
@@ -55,6 +57,7 @@ type singTun struct {
 	useIPv6      bool
 	strictRoute  bool
 	autoRoute    bool
+	tunName      string // TUN interface name for cleanup
 }
 
 // isReservedAddress checks if an IP address belongs to reserved address ranges
@@ -153,6 +156,61 @@ func filterTunDNSServers(servers []netip.AddrPort) []netip.AddrPort {
 	return filtered
 }
 
+// resolveDnsHost resolves a hostname to both A and AAAA records
+// Returns a list of IP addresses (both IPv4 and IPv6)
+func resolveDnsHost(host string) []netip.Addr {
+	var ips []netip.Addr
+
+	// Check if it's already an IP address
+	if addr, err := netip.ParseAddr(host); err == nil {
+		return []netip.Addr{addr}
+	}
+
+	// Resolve A records (IPv4)
+	if addrs, err := net.LookupIP(host); err == nil {
+		for _, addr := range addrs {
+			if ipAddr, ok := netip.AddrFromSlice(addr); ok {
+				ips = append(ips, ipAddr)
+			}
+		}
+	} else {
+		log.Warn("[TUN] Failed to resolve DNS host %s: %v", host, err)
+	}
+
+	return ips
+}
+
+// ResolveDnsServersToExcludes resolves DNS server hostnames to IP prefixes for TUN exclusion
+// This prevents DNS server traffic from being intercepted by TUN, avoiding routing loops
+func ResolveDnsServersToExcludes(dnsHosts []string) []netip.Prefix {
+	var excludes []netip.Prefix
+	seen := make(map[netip.Addr]bool)
+
+	log.Info("[TUN] Resolving DNS servers for exclusion: %v", dnsHosts)
+
+	for _, host := range dnsHosts {
+		ips := resolveDnsHost(host)
+		for _, ip := range ips {
+			if seen[ip] {
+				continue
+			}
+			seen[ip] = true
+
+			// Convert IP to /32 (IPv4) or /128 (IPv6) prefix
+			var prefix netip.Prefix
+			if ip.Is4() {
+				prefix = netip.PrefixFrom(ip, 32)
+			} else {
+				prefix = netip.PrefixFrom(ip, 128)
+			}
+			excludes = append(excludes, prefix)
+			log.Info("[TUN] Added DNS server %s (%s) to exclusion list", host, ip)
+		}
+	}
+
+	return excludes
+}
+
 func NewSingTun() Tun {
 	dialer := N.SystemDialer
 	client := socks.NewClient(dialer, M.ParseSocksaddrHostPort("127.0.0.1", 52345), socks.Version5, "", "")
@@ -162,8 +220,10 @@ func NewSingTun() Tun {
 		forward:     client,
 		strictRoute: false,
 		autoRoute:   true, // Default to enabled
-		// DNS is sent to local dokodemo-door listener instead of SOCKS
-		dns: NewDNS(dialer, nil, false, M.ParseSocksaddrHostPort(dnsAddr, 53), M.ParseSocksaddrHostPort(dnsAddr6, 53)),
+		// DNS: dialer is for forwarding to dokodemo-door (127.0.0.1:6053)
+		// forward is nil, so all DNS queries will use dnsForward mode
+		// No DNS server addresses - TUN only forwards to port 6053
+		dns: NewDNS(dialer, nil, false),
 	}
 }
 
@@ -315,13 +375,22 @@ func (t *singTun) Start(stack Stack) error {
 	t.closer = failedCloser
 	failedCloser = nil
 	t.waiter = &gvisorWaiter{tunStack}
+	t.tunName = tunName // Save for cleanup
+
+	// Setup DNS servers on Windows (sing-tun doesn't automatically apply DNS on Windows)
+	if len(dnsServers) > 0 {
+		if err := SetupTunDNS(dnsServers, tunName); err != nil {
+			log.Warn("[TUN] Failed to setup DNS servers: %v", err)
+		}
+	}
 
 	// Note: Server addresses are now excluded via Inet4/6RouteExcludeAddress
 	// No need for manual static routes - sing-tun handles it natively
 
 	t.dns.whitelist, _ = GetWhitelistCN()
-	// Route DNS to local dokodemo-door listener to avoid SOCKS loop
-	t.dns.servers = []M.Socksaddr{M.ParseSocksaddrHostPort("127.0.0.1", TunDNSListenPort)}
+	// In TUN mode, we don't set d.servers so that DNS queries go through dnsForward mode
+	// which will use dokodemo-door (defaultDNSServer = 127.0.0.1:6053)
+	// DO NOT set t.dns.servers here - keep it empty for dnsForward mode
 	t.whitelist = nil
 	return nil
 }
@@ -336,6 +405,11 @@ func (t *singTun) Close() error {
 		if t.waiter != nil {
 			t.waiter.Wait()
 			t.waiter = nil
+		}
+		// Cleanup DNS settings on Windows
+		if t.tunName != "" {
+			CleanupTunDNS(t.tunName)
+			t.tunName = ""
 		}
 		// Cleanup routing rules
 		CleanupTunRouteRules()
@@ -440,6 +514,7 @@ func (t *singTun) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 		Source:      source,
 		Destination: destination,
 	}
+	log.Trace("[TUN-NEW] New UDP connection: %s -> %s", source, destination)
 	err := t.newPacketConnection(ctx, conn, metadata)
 	if err != nil {
 		N.CloseOnHandshakeFailure(conn, onClose, err)

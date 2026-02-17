@@ -137,9 +137,12 @@ func (d *DNS) NewConnection(ctx context.Context, conn net.Conn, metadata M.Metad
 
 func (d *DNS) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata M.Metadata) error {
 	d.fakeCache.Check()
+	log.Trace("[TUN-DNS] NewPacketConnection: %s -> %s (port %d)", metadata.Source, metadata.Destination, metadata.Destination.Port)
 	if !d.matchAddr(metadata.Destination) {
+		log.Trace("[TUN-DNS] Not a DNS packet (addr not matched), continuing to handler")
 		return continueHandler
 	}
+	log.Info("[TUN-DNS] Handling DNS packet: %s -> %s", metadata.Source, metadata.Destination)
 	var reader N.PacketReader = conn
 	var counters []N.CountFunc
 	var cachedPackets []*N.PacketBuffer
@@ -241,12 +244,15 @@ func (d *DNS) Exchange(ctx context.Context, msg *D.Msg) (*D.Msg, error) {
 	if len(msg.Question) != 1 {
 		return d.newResponse(msg, D.RcodeFormatError), nil
 	}
+	question := msg.Question[0]
+	domain := strings.TrimSuffix(question.Name, ".")
+	log.Info("[TUN-DNS] Exchange: Query for %s (type %d)", domain, question.Qtype)
+
 	mode := dnsDirect
 	if len(d.servers) == 0 {
 		mode = dnsForward
 	}
-	question := msg.Question[0]
-	domain := strings.TrimSuffix(question.Name, ".")
+	log.Info("[TUN-DNS] Mode: %d, servers count: %d", mode, len(d.servers))
 	if d.useFakeIP && !d.whitelist.Match(domain) {
 		switch question.Qtype {
 		case D.TypeA:

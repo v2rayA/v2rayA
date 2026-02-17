@@ -112,6 +112,50 @@ type Addr struct {
 	udp  bool
 }
 
+// ExtractDnsServerHostsFromTemplate extracts all DNS server hostnames/IPs from v2ray Template's DNS configuration
+// This reads from the actual configured DNS servers, respecting user's settings (Advanced or preset modes)
+// Returns a list of hostnames that may need resolution (domains or IPs)
+func ExtractDnsServerHostsFromTemplate(tmpl *Template) []string {
+	if tmpl == nil || tmpl.DNS == nil || len(tmpl.DNS.Servers) == 0 {
+		return nil
+	}
+
+	var hosts []string
+	seen := make(map[string]bool)
+
+	for _, server := range tmpl.DNS.Servers {
+		var host string
+
+		switch s := server.(type) {
+		case string:
+			// Simple string like "8.8.8.8" or "https://dns.google/dns-query"
+			addr := parseDnsAddr(s)
+			host = addr.host
+		case coreObj.DnsServer:
+			// DnsServer object with Address field
+			if s.Address != "" {
+				addr := parseDnsAddr(s.Address)
+				host = addr.host
+			}
+		case map[string]interface{}:
+			// JSON object: {"address": "1.1.1.1", "port": 53, ...}
+			if addrVal, ok := s["address"]; ok {
+				if addrStr, ok := addrVal.(string); ok {
+					addr := parseDnsAddr(addrStr)
+					host = addr.host
+				}
+			}
+		}
+
+		if host != "" && host != "localhost" && host != "fakedns" && !seen[host] {
+			hosts = append(hosts, host)
+			seen[host] = true
+		}
+	}
+
+	return hosts
+}
+
 func parseDnsAddr(addr string) Addr {
 	// 223.5.5.5
 	if net.ParseIP(addr) != nil {
@@ -1252,15 +1296,14 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Tag: "transparent",
 			})
 			// Local dokodemo-door listener for DNS (used by TUN DNS forwarder)
-			// Note: Address and Port are not used when routed to dns-out.
-			// They are set to dummy values to indicate this is TUN-specific.
+			// Listen on localhost (dual-stack: IPv4 + IPv6)
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 				Port:     tun.TunDNSListenPort,
 				Protocol: "dokodemo-door",
-				Listen:   "127.0.0.1",
+				Listen:   "localhost",
 				Settings: &coreObj.InboundSettings{
 					Network: "tcp,udp",
-					Address: "v2raya.tun", // Dummy address, not actually used
+					Address: "v2raya.tun",
 					Port:    53,
 				},
 				Tag: "tun-dns-in",

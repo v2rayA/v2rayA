@@ -29,7 +29,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	//暂时关闭透明代理
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	defer func() {
-		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil); e != nil {
+		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
 			err = fmt.Errorf("Ping: %v: %v", e, err)
 		}
 	}()

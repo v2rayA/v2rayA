@@ -214,3 +214,98 @@ func netmaskFromPrefix(prefix netip.Prefix) string {
 func trimOutput(s string) string {
 	return strings.TrimSpace(s)
 }
+
+// SetupTunDNS sets DNS servers for TUN interface on Windows
+func SetupTunDNS(dnsServers []netip.Addr, tunName string) error {
+	if runtime.GOOS != "windows" || len(dnsServers) == 0 {
+		return nil
+	}
+
+	// Get the actual interface name (may have index suffix like v2raya-tun0)
+	interfaceName, err := getTunInterfaceName(tunName)
+	if err != nil {
+		log.Warn("SetupTunDNS: failed to get interface name: %v", err)
+		return err
+	}
+
+	// Build DNS server list
+	var dnsIPv4, dnsIPv6 []string
+	for _, dns := range dnsServers {
+		if dns.Is4() {
+			dnsIPv4 = append(dnsIPv4, dns.String())
+		} else if dns.Is6() {
+			dnsIPv6 = append(dnsIPv6, dns.String())
+		}
+	}
+
+	// Set IPv4 DNS servers
+	if len(dnsIPv4) > 0 {
+		dnsListIPv4 := strings.Join(dnsIPv4, ",")
+		cmd := exec.Command("powershell", "-Command",
+			fmt.Sprintf("Set-DnsClientServerAddress -InterfaceAlias '%s' -ServerAddresses %s", interfaceName, dnsListIPv4))
+		if output, err := cmd.CombinedOutput(); err != nil {
+			log.Warn("SetupTunDNS: failed to set IPv4 DNS: %v, output: %s", err, string(output))
+			return err
+		}
+		log.Info("[TUN] Set interface '%s' IPv4 DNS servers: %s", interfaceName, dnsListIPv4)
+	}
+
+	// Set IPv6 DNS servers
+	if len(dnsIPv6) > 0 {
+		dnsListIPv6 := strings.Join(dnsIPv6, ",")
+		cmd := exec.Command("powershell", "-Command",
+			fmt.Sprintf("Set-DnsClientServerAddress -InterfaceAlias '%s' -ServerAddresses %s", interfaceName, dnsListIPv6))
+		if output, err := cmd.CombinedOutput(); err != nil {
+			log.Warn("SetupTunDNS: failed to set IPv6 DNS: %v, output: %s", err, string(output))
+		}
+		log.Info("[TUN] Set interface '%s' IPv6 DNS servers: %s", interfaceName, dnsListIPv6)
+	}
+
+	return nil
+}
+
+// CleanupTunDNS resets DNS servers for TUN interface on Windows
+func CleanupTunDNS(tunName string) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+
+	// Get the actual interface name
+	interfaceName, err := getTunInterfaceName(tunName)
+	if err != nil {
+		// Interface may already be deleted, this is not an error
+		return nil
+	}
+
+	// Reset to automatic DNS (DHCP)
+	cmd := exec.Command("powershell", "-Command",
+		fmt.Sprintf("Set-DnsClientServerAddress -InterfaceAlias '%s' -ResetServerAddresses", interfaceName))
+	if output, err := cmd.CombinedOutput(); err != nil {
+		log.Warn("CleanupTunDNS: failed to reset DNS: %v, output: %s", err, string(output))
+	}
+	log.Info("[TUN] Reset interface '%s' DNS servers", interfaceName)
+	return nil
+}
+
+// getTunInterfaceName gets the actual TUN interface name on Windows
+// The interface name may have an index suffix (e.g., v2raya-tun0)
+func getTunInterfaceName(baseName string) (string, error) {
+	if runtime.GOOS != "windows" {
+		return baseName, nil
+	}
+
+	// Try to find interface by partial name match
+	cmd := exec.Command("powershell", "-Command",
+		fmt.Sprintf("(Get-NetAdapter | Where-Object {$_.Name -like '*%s*' -and $_.Status -eq 'Up'} | Select-Object -First 1).Name", baseName))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to get interface name: %w, output: %s", err, string(output))
+	}
+
+	interfaceName := trimOutput(string(output))
+	if interfaceName == "" {
+		return "", fmt.Errorf("interface not found for base name: %s", baseName)
+	}
+
+	return interfaceName, nil
+}

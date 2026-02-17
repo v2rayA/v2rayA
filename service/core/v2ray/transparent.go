@@ -28,7 +28,7 @@ func deleteTransparentProxyRules() {
 	time.Sleep(30 * time.Millisecond)
 }
 
-func writeTransparentProxyRules() (err error) {
+func writeTransparentProxyRules(tmpl *Template) (err error) {
 	defer func() {
 		if err != nil {
 			log.Warn("writeTransparentProxyRules: %v", err)
@@ -62,6 +62,21 @@ func writeTransparentProxyRules() (err error) {
 		tun.Default.SetIPv6(setting.TunIPv6)
 		tun.Default.SetStrictRoute(setting.TunStrictRoute)
 		tun.Default.SetAutoRoute(setting.TunAutoRoute)
+
+		// Extract and resolve DNS servers from v2ray configuration
+		// This prevents DNS server traffic from being intercepted by TUN, avoiding routing loops
+		log.Info("[TUN] Extracting DNS servers from configuration...")
+		var dnsHosts []string
+		if tmpl != nil {
+			dnsHosts = ExtractDnsServerHostsFromTemplate(tmpl)
+		}
+		if len(dnsHosts) > 0 {
+			dnsExcludes := tun.ResolveDnsServersToExcludes(dnsHosts)
+			for _, prefix := range dnsExcludes {
+				tun.Default.AddIPWhitelist(prefix.Addr())
+				log.Info("[TUN] Added DNS server IP to exclusion list: %s", prefix.Addr())
+			}
+		}
 
 		// Add server addresses to exclusion list BEFORE starting TUN
 		// Resolve domain names to IPs to ensure proper routing exclusion
