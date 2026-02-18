@@ -70,3 +70,13 @@ func CleanupExcludeRoutes() error {
 	// On Linux, we use fwmark policy routing instead of static routes
 	return nil
 }
+
+// SetupTunDNS is a no-op on Linux
+func SetupTunDNS(dnsServers []netip.Addr, tunName string) error {
+	return nil
+}
+
+// CleanupTunDNS is a no-op on Linux
+func CleanupTunDNS(tunName string) error {
+	return nil
+}

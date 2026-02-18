@@ -21,12 +21,15 @@ Function Get-build-tools(){
 
 Function Build-v2rayA(){
     #Get OS
-    if ([String]::IsNullOrEmpty($(Test-Path ${env:windir} -ErrorAction Ignore))) { 
+    if ($env:GOOS -eq "windows") {
+        $v2rayaBin = "v2raya.exe"
+    } elseif ($env:GOOS -ne "windows") {
+         $v2rayaBin = "v2raya"
+    } elseif ($env:WinDir) {
+        $v2rayaBin = "v2raya.exe"
+    } else {
         $v2rayaBin = "v2raya"
     }
-    else {
-        $v2rayaBin = "v2raya.exe"
-    } 
     #Get Paths
     $TerminalPath = Get-Item -LiteralPath ./ | ForEach-Object  -Process { $_.FullName }
     $CurrentPath = $PSScriptRoot
