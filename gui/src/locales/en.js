@@ -120,6 +120,7 @@ export default {
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
+    subscriptionHwidEnabled: "Send HWID with subscription requests",
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
@@ -179,6 +180,8 @@ export default {
                           <p>Whitelist:</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
+      subscriptionHwidEnabled:
+        "When enabled, subscription requests will include device identification headers (x-hwid, x-device-os, x-ver-os, x-device-model) for providers that support HWID.",
       grpcShouldWithTls: `gRPC must be with TLS`,
       ssPluginImpl:
         "★default: 'transport' for simple-obfs, 'chained' for v2ray-plugin." +

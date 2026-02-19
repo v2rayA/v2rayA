@@ -314,6 +314,13 @@
           <option value="pac">{{ $t("setting.options.pac") }}</option>
         </b-select>
       </b-field>
+      <b-field :label="$t('setting.subscriptionHwidEnabled')" label-position="on-border">
+        <b-tooltip type="is-dark" :label="$t('setting.messages.subscriptionHwidEnabled')" multilined position="is-right">
+          <b-checkbox-button v-model="subscriptionHwidEnabled" :native-value="true" style="position: relative; left: -1px">
+            {{ $t("setting.options.on") }}
+          </b-checkbox-button>
+        </b-tooltip>
+      </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
       <button class="button footer-absolute-left" type="button" @click="$emit('clickPorts')">
@@ -372,6 +379,7 @@ export default {
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
+    subscriptionHwidEnabled: true,
     inboundSniffing: "no",
     customSiteDAT: {},
     pacMode: "whitelist",
@@ -466,6 +474,7 @@ export default {
             subscriptionAutoUpdateIntervalHour: parseInt(
               this.subscriptionAutoUpdateIntervalHour
             ),
+            subscriptionHwidEnabled: this.subscriptionHwidEnabled,
             pacMode: this.pacMode,
             tcpFastOpen: this.tcpFastOpen,
             logLevel: this.logLevel,

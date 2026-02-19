@@ -120,6 +120,7 @@ export default {
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
+    subscriptionHwidEnabled: "订阅请求时发送HWID",
     ipForwardOn: "开启IP转发",
     portSharingOn: "开启端口分享",
     concurrency: "最大并发数",
@@ -176,6 +177,8 @@ export default {
                           <p>当前设置的端口白名单为：</p>
                           <p>TCP: {tcpPorts}</p>
                           <p>UDP: {udpPorts}</p>`,
+      subscriptionHwidEnabled:
+        "启用后，订阅请求将包含设备识别头（x-hwid、x-device-os、x-ver-os、x-device-model），供支持HWID的订阅服务使用。",
       grpcShouldWithTls: `gRPC必须启用TLS`,
       ssPluginImpl:
         "★默认：使用 simple-obfs 时为等效传输层，v2ray-plugin 时为链式。" +

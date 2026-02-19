@@ -25,6 +25,7 @@ type Setting struct {
 	SpecialMode                        SpecialMode     `json:"specialMode"`
 	TransparentType                    TransparentType `json:"transparentType"`
 	AntiPollution                      Antipollution   `json:"antipollution"`
+	SubscriptionHwidEnabled             bool            `json:"subscriptionHwidEnabled"` // when true, send HWID headers with subscription requests
 	TunFakeIP                          bool            `json:"tunFakeIP"`
 	TunIPv6                            bool            `json:"tunIPv6"`
 	TunStrictRoute                     bool            `json:"tunStrictRoute"`
@@ -50,6 +51,7 @@ func NewSetting() (setting *Setting) {
 		SpecialMode:                        SpecialModeNone,
 		TransparentType:                    TransparentRedirect,
 		AntiPollution:                      AntipollutionClosed,
+		SubscriptionHwidEnabled:             true,
 		TunFakeIP:                          true,
 		TunIPv6:                            false,
 		TunStrictRoute:                     false,
