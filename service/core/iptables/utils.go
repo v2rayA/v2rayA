@@ -116,3 +116,19 @@ func IsEnabledTproxyWhiteIpGroups() bool {
 	ipv4List, ipv6List := GetWhiteListIPs()
 	return len(ipv4List) > 0 && len(ipv6List) > 0
 }
+
+func GetExcludedInterfaces() []string {
+	setting := configure.GetSettingNotNil()
+	if setting.TproxyExcludedInterfaces == "" {
+		return []string{}
+	}
+	ifs := strings.Split(setting.TproxyExcludedInterfaces, ",")
+	var res []string
+	for _, v := range ifs {
+		v = strings.TrimSpace(v)
+		if v != "" {
+			res = append(res, v)
+		}
+	}
+	return res
+}
