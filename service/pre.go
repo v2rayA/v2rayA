@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
@@ -238,7 +237,12 @@ func hello() {
 func updateSubscriptions() {
 	subs := configure.GetSubscriptions()
 	lenSubs := len(subs)
-	control := make(chan struct{}, 2) //并发限制同时更新2个订阅
+	setting := service.GetSetting()
+	updateInterval := time.Duration(setting.SubscriptionUpdateIntervalSecond)
+	if updateInterval < 0 {
+		updateInterval = 0
+	}
+	updateInterval = updateInterval * time.Second
 	// Disconnect from subscriptions before auto-selecting servers from them
 	// to limit the number of connected servers and avoid hitting the limit
 	shouldDisconnect := true
@@ -246,22 +250,21 @@ func updateSubscriptions() {
 	if err != nil {
 		log.Error("[AutoSelect] Failed to disconnect servers from subscriptions -- err: %v", err)
 	}
-	wg := new(sync.WaitGroup)
 	for i := 0; i < lenSubs; i++ {
-		wg.Add(1)
-		go func(i int) {
-			control <- struct{}{}
-			err := service.UpdateSubscription(i, false)
-			if err != nil {
-				log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d，err: %v", i, err)
-			} else {
-				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d，Address: %s", i, subs[i].Address)
-			}
-			wg.Done()
-			<-control
-		}(i)
+		err := service.UpdateSubscription(i, false)
+		if err != nil {
+			log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d, err: %v", i, err)
+		} else {
+			log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d, Address: %s", i, subs[i].Address)
+		}
+		waitDuration := updateInterval
+		if retryAfter, ok := service.GetRetryAfterFromError(err); ok && retryAfter > waitDuration {
+			waitDuration = retryAfter
+		}
+		if waitDuration > 0 && i < lenSubs-1 {
+			time.Sleep(waitDuration)
+		}
 	}
-	wg.Wait()
 	shouldDisconnect = false
 	err2 := service.AutoSelectServersFromSubscriptions(shouldDisconnect)
 	if err2 != nil {

@@ -14,6 +14,7 @@ type Setting struct {
 	GFWListAutoUpdateIntervalHour      int             `json:"pacAutoUpdateIntervalHour"`
 	SubscriptionAutoUpdateMode         AutoUpdateMode  `json:"subscriptionAutoUpdateMode"`
 	SubscriptionAutoUpdateIntervalHour int             `json:"subscriptionAutoUpdateIntervalHour"`
+	SubscriptionUpdateIntervalSecond   int             `json:"subscriptionUpdateIntervalSecond"`
 	TcpFastOpen                        DefaultYesNo    `json:"tcpFastOpen"`
 	MuxOn                              DefaultYesNo    `json:"muxOn"`
 	Mux                                int             `json:"mux"`
@@ -41,6 +42,7 @@ func NewSetting() (setting *Setting) {
 		GFWListAutoUpdateIntervalHour:      0,
 		SubscriptionAutoUpdateMode:         NotAutoUpdate,
 		SubscriptionAutoUpdateIntervalHour: 0,
+		SubscriptionUpdateIntervalSecond:   0,
 		TcpFastOpen:                        Default,
 		MuxOn:                              No,
 		Mux:                                8,

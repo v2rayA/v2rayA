@@ -119,6 +119,7 @@ export default {
     specialMode: "Special Mode",
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
+    subscriptionUpdateIntervalSecond: "Subscription update interval (seconds)",
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
     tproxyExcludedInterfaces: "Excluded Interface Prefixes",

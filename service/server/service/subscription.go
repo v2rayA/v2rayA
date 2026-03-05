@@ -141,6 +141,49 @@ func parseSubscriptionUserInfo(str string) SubscriptionUserInfo {
 	}
 	return sui
 }
+
+type retryAfterError struct {
+	err        error
+	retryAfter time.Duration
+}
+
+func (e *retryAfterError) Error() string {
+	return e.err.Error()
+}
+
+func (e *retryAfterError) Unwrap() error {
+	return e.err
+}
+
+func GetRetryAfterFromError(err error) (time.Duration, bool) {
+	var rae *retryAfterError
+	if errors.As(err, &rae) {
+		return rae.retryAfter, true
+	}
+	return 0, false
+}
+
+func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
+	value := strings.TrimSpace(header)
+	if value == "" {
+		return 0, false
+	}
+	if secs, err := strconv.Atoi(value); err == nil {
+		if secs < 0 {
+			return 0, false
+		}
+		return time.Duration(secs) * time.Second, true
+	}
+	if t, err := http.ParseTime(value); err == nil {
+		d := t.Sub(now)
+		if d < 0 {
+			d = 0
+		}
+		return d, true
+	}
+	return 0, false
+}
+
 func trapBOM(fileBytes []byte) []byte {
 	trimmedBytes := bytes.Trim(fileBytes, "\xef\xbb\xbf")
 	return trimmedBytes
@@ -156,6 +199,14 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		return
 	}
 	defer res.Body.Close()
+	retryAfter, hasRetryAfter := parseRetryAfter(res.Header.Get("Retry-After"), time.Now())
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		statusErr := fmt.Errorf("unexpected status code: %s", res.Status)
+		if hasRetryAfter {
+			return nil, "", &retryAfterError{err: statusErr, retryAfter: retryAfter}
+		}
+		return nil, "", statusErr
+	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, "", err
@@ -206,9 +257,8 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
-		reason := "failed to resolve subscription address: " + err.Error()
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
-		return fmt.Errorf("UpdateSubscription: %v", reason)
+		return fmt.Errorf("UpdateSubscription: failed to resolve subscription address: %w", err)
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -264,6 +314,33 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
 	subscriptions[index].Info = status
 	return configure.SetSubscription(index, &subscriptions[index])
+}
+
+func UpdateSubscriptionsInOrder(indexes []int) error {
+	if len(indexes) == 0 {
+		return nil
+	}
+	setting := configure.GetSettingNotNil()
+	updateInterval := time.Duration(setting.SubscriptionUpdateIntervalSecond)
+	if updateInterval < 0 {
+		updateInterval = 0
+	}
+	updateInterval = updateInterval * time.Second
+	var firstErr error
+	for i, index := range indexes {
+		err := UpdateSubscription(index, false)
+		if err != nil && firstErr == nil {
+			firstErr = err
+		}
+		waitDuration := updateInterval
+		if retryAfter, ok := GetRetryAfterFromError(err); ok && retryAfter > waitDuration {
+			waitDuration = retryAfter
+		}
+		if waitDuration > 0 && i < len(indexes)-1 {
+			time.Sleep(waitDuration)
+		}
+	}
+	return firstErr
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
