@@ -91,15 +91,10 @@ iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on
 
 iptables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
 `
-	if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); !notSkip {
-		commands += `iptables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN`
+	for _, v := range GetExcludedInterfaces() {
+		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
-	commands += `
-iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
-iptables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
-`
 	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 		commands += `
 iptables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
@@ -147,14 +142,9 @@ ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --o
 ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
-		if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); !notSkip {
-			commands += `ip6tables -w 2 -t mangle -A TP_RULE -i br+ -j RETURN`
+		for _, v := range GetExcludedInterfaces() {
+			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
-		commands += `
-ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
-ip6tables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
-`
 		if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
 			commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
@@ -307,14 +297,10 @@ func (t *nftTproxy) GetSetupCommands() Setter {
         meta mark set ct mark
         meta mark & 0xc0 == 0x40 return
 `
-	if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); !notSkip {
-		table += `        iifname "br-*" return`
+	for _, v := range GetExcludedInterfaces() {
+		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
 	}
 	table += `
-        iifname "docker*" return
-        iifname "veth*" return
-        iifname "wg*" return
-        iifname "ppp*" return
         # anti-pollution
         ip daddr @interface return
 	`
