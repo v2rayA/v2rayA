@@ -18,7 +18,6 @@ import (
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/touch"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -283,10 +282,6 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
-	variant, _, err := where.GetV2rayServiceVersion()
-	if err != nil {
-		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
-	}
 
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
 		subscriptionServer.ID = i                                            // Server IDs start with 1
@@ -300,7 +295,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 			continue
 		}
 
-		if shouldDisconnect && variant != where.Xray {
+		if shouldDisconnect {
 			err := Disconnect(subscriptionServer, true)
 			if err == nil {
 				log.Info("[AutoSelect] Disconnected from server: %v", serverName)
@@ -312,10 +307,6 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 			err := Connect(&subscriptionServer)
 			if err == nil {
 				log.Info("[AutoSelect] Automatically selected server: %v", serverName)
-				//Xray only supports connecting to one server at a time
-				if variant == where.Xray {
-					break
-				}
 			} else {
 				log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
 				return err
@@ -326,14 +317,10 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 }
 
 func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
-	variant, _, err := where.GetV2rayServiceVersion()
-	if err != nil {
-		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
-	}
 	for i := 0; i < configure.GetLenSubscriptions(); i++ {
 		subscription := configure.GetSubscription(i)
 		if subscription.AutoSelect {
-			if shouldDisconnect && variant != where.Xray {
+			if shouldDisconnect {
 				log.Info("[AutoSelect] Automatically disconnecting servers from subscription: %v", subscription.Address)
 				err := SelectServersFromSubscription(i, true)
 				if err != nil {
@@ -343,11 +330,6 @@ func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
 			} else {
 				log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
 				err := SelectServersFromSubscription(i, false)
-				//Xray only supports connecting to one server at a time,
-				//there's no point in selecting servers from multiple subscriptions
-				if variant == where.Xray {
-					break
-				}
 				if err != nil {
 					log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
 					return err

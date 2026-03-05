@@ -155,9 +155,6 @@ type StreamSettings struct {
 	QuicSettings    *QuicSettings    `json:"quicSettings,omitempty"`
 	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
 }
-type XHTTPSettings struct {
-	Path string `json:"path,omitempty"`
-}
 type RealitySettings struct {
 	ServerName  string `json:"serverName,omitempty"`
 	Fingerprint string `json:"fingerprint,omitempty"`
@@ -256,6 +253,11 @@ type QuicSettings struct {
 	Header   KcpHeader `json:"header"`
 	Key      string    `json:"key,omitempty"`
 	Security string    `json:"security"`
+}
+type XHTTPSettings struct {
+	Path string `json:"path"`
+	Host string `json:"host,omitempty"`
+	Mode string `json:"mode,omitempty"`
 }
 type Hosts map[string][]string
 

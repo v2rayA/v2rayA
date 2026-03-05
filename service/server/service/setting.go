@@ -2,13 +2,14 @@ package service
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/ipforward"
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"time"
 )
 
 func GetSetting() *configure.Setting {
@@ -17,10 +18,16 @@ func GetSetting() *configure.Setting {
 		s = configure.NewSetting()
 		_ = configure.SetSetting(s)
 	}
+	if s.LogLevel == "" {
+		s.LogLevel = conf.GetEnvironmentConfig().LogLevel
+	}
 	return s
 }
 
 func UpdateSetting(setting *configure.Setting) (err error) {
+	if setting.LogLevel == "" {
+		setting.LogLevel = conf.GetEnvironmentConfig().LogLevel
+	}
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
 	}
@@ -34,6 +41,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if err != nil {
 		return
 	}
+	log.SetLogLevel(setting.LogLevel)
 	//如果v2ray正在运行且有连接，则重写配置并重启连接，使得对透明代理、TCPFastOpen等配置的修改立即生效
 	css := configure.GetConnectedServers()
 	if v2ray.ProcessManager.Running() && css.Len() > 0 {

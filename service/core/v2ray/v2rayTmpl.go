@@ -29,6 +29,7 @@ import (
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/specialMode"
+	"github.com/v2rayA/v2rayA/core/tun"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -49,16 +50,18 @@ type Template struct {
 	DNS              *coreObj.DNS              `json:"dns,omitempty"`
 	FakeDns          *coreObj.FakeDns          `json:"fakedns,omitempty"`
 	MultiObservatory *coreObj.MultiObservatory `json:"multiObservatory,omitempty"`
+	Observatory      *coreObj.ObservatoryItem  `json:"observatory,omitempty"`
 	API              *coreObj.APIObject        `json:"api,omitempty"`
 
-	Variant               where.Variant       `json:"-"`
-	CoreVersion           string              `json:"-"`
-	Plugins               []plugin.Server     `json:"-"`
-	OutboundTags          []string            `json:"-"`
-	ApiCloses             []func()            `json:"-"`
-	ApiPort               int                 `json:"-"`
-	Setting               *configure.Setting  `json:"-"`
-	PluginManagerInfoList []PluginManagerInfo `json:"-"`
+	Variant               where.Variant          `json:"-"`
+	CoreVersion           string                 `json:"-"`
+	Plugins               []plugin.Server        `json:"-"`
+	OutboundTags          []string               `json:"-"`
+	ApiCloses             []func()               `json:"-"`
+	ApiPort               int                    `json:"-"`
+	Setting               *configure.Setting     `json:"-"`
+	PluginManagerInfoList []PluginManagerInfo    `json:"-"`
+	serverInfoMap         map[string]*serverInfo `json:"-"` // outbound tag -> server info
 }
 
 type PluginManagerInfo struct {
@@ -84,13 +87,22 @@ func (t *Template) ServePlugins() error {
 	var err error
 	for _, p := range t.Plugins {
 		wg.Add(1)
+		nodeName := p.NodeName()
+		if nodeName == "" {
+			nodeName = "unknown"
+		}
+		log.Trace("[v2ray] starting plugin on %s (node: %s)", p.ListenAddr(), nodeName)
 		go func(p plugin.Server) {
 			if e := p.ListenAndServe(); e != nil {
+				log.Warn("[v2ray] plugin on %s (node: %s) exited with error: %v", p.ListenAddr(), p.NodeName(), e)
 				err = e
+			} else {
+				log.Trace("[v2ray] plugin on %s (node: %s) stopped", p.ListenAddr(), p.NodeName())
 			}
 			wg.Done()
 		}(p)
 	}
+	log.Trace("[v2ray] all plugins are starting...")
 	return err
 }
 
@@ -98,6 +110,50 @@ type Addr struct {
 	host string
 	port string
 	udp  bool
+}
+
+// ExtractDnsServerHostsFromTemplate extracts all DNS server hostnames/IPs from v2ray Template's DNS configuration
+// This reads from the actual configured DNS servers, respecting user's settings (Advanced or preset modes)
+// Returns a list of hostnames that may need resolution (domains or IPs)
+func ExtractDnsServerHostsFromTemplate(tmpl *Template) []string {
+	if tmpl == nil || tmpl.DNS == nil || len(tmpl.DNS.Servers) == 0 {
+		return nil
+	}
+
+	var hosts []string
+	seen := make(map[string]bool)
+
+	for _, server := range tmpl.DNS.Servers {
+		var host string
+
+		switch s := server.(type) {
+		case string:
+			// Simple string like "8.8.8.8" or "https://dns.google/dns-query"
+			addr := parseDnsAddr(s)
+			host = addr.host
+		case coreObj.DnsServer:
+			// DnsServer object with Address field
+			if s.Address != "" {
+				addr := parseDnsAddr(s.Address)
+				host = addr.host
+			}
+		case map[string]interface{}:
+			// JSON object: {"address": "1.1.1.1", "port": 53, ...}
+			if addrVal, ok := s["address"]; ok {
+				if addrStr, ok := addrVal.(string); ok {
+					addr := parseDnsAddr(addrStr)
+					host = addr.host
+				}
+			}
+		}
+
+		if host != "" && host != "localhost" && host != "fakedns" && !seen[host] {
+			hosts = append(hosts, host)
+			seen[host] = true
+		}
+	}
+
+	return hosts
 }
 
 func parseDnsAddr(addr string) Addr {
@@ -187,11 +243,11 @@ func parseAdvancedDnsServers(lines []string, domains []string) (domainNameServer
 
 		if net.ParseIP(addr.host) != nil {
 			routing = append(routing, coreObj.RoutingRule{
-				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
+				Type: "field", OutboundTag: dns.Out, IP: []string{addr.host}, Port: addr.port,
 			})
 		} else {
 			routing = append(routing, coreObj.RoutingRule{
-				Type: "field", InboundTag: []string{"dns"}, OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
+				Type: "field", OutboundTag: dns.Out, Domain: []string{addr.host}, Port: addr.port,
 			})
 		}
 	}
@@ -342,22 +398,44 @@ func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (r
 		t.DNS.Servers = []interface{}{"localhost"}
 	}
 	var domainsToLookup []string
+	// Collect domains from outbound servers
 	for _, v := range outbounds {
 		if net.ParseIP(v.Info.GetHostname()) == nil {
 			domainsToLookup = append(domainsToLookup, v.Info.GetHostname())
 		}
 	}
+	// Collect domains from routing rules
 	for _, r := range routing {
 		if len(r.Domain) > 0 {
 			domainsToLookup = append(domainsToLookup, r.Domain...)
 		}
 	}
+	// Collect domains from DNS servers themselves (for DoT/DoH)
+	for _, srv := range t.DNS.Servers {
+		var dnsAddr string
+		switch s := srv.(type) {
+		case string:
+			dnsAddr = s
+		case coreObj.DnsServer:
+			dnsAddr = s.Address
+		}
+		if dnsAddr == "" || dnsAddr == "localhost" || dnsAddr == "fakedns" {
+			continue
+		}
+		// Parse DNS address to extract hostname
+		addr := parseDnsAddr(dnsAddr)
+		if net.ParseIP(addr.host) == nil {
+			// DNS server address is a domain, need to resolve it
+			domainsToLookup = append(domainsToLookup, addr.host)
+		}
+	}
 	domainsToLookup = common.Deduplicate(domainsToLookup)
 	if len(domainsToLookup) > 0 {
+		// Use Google 8.8.8.8 and Tencent 119.29.29.29 to resolve these critical domains
 		var dnsList []string
 		dnsList = []string{
-			"tcp://208.67.220.220:5353 -> direct",
-			"tcp://119.29.29.29:53 -> direct",
+			"8.8.8.8 -> " + firstOutboundTag,
+			"119.29.29.29 -> direct",
 		}
 		d, r := parseAdvancedDnsServers(dnsList, domainsToLookup)
 		t.DNS.Servers = append(t.DNS.Servers, d...)
@@ -412,7 +490,13 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
 	t.Routing.Rules = append(t.Routing.Rules, routing...)
 	t.Routing.Rules = append(t.Routing.Rules,
-		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns"}, OutboundTag: "direct"},
+		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
+	)
+	// Always route TUN dokodemo DNS inbound to dns-out
+	t.Routing.Rules = append(t.Routing.Rules,
+		coreObj.RoutingRule{Type: "field", InboundTag: []string{"tun-dns-in"}, OutboundTag: "dns-out"},
+		// Explicitly route traffic coming from the TUN DNS listener (port 6053) into the DNS module.
+		coreObj.RoutingRule{Type: "field", Port: strconv.Itoa(tun.TunDNSListenPort), OutboundTag: "dns-out"},
 	)
 	setting := t.Setting
 	if setting.AntiPollution != configure.AntipollutionClosed {
@@ -421,11 +505,13 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 			Port:        "53",
 			OutboundTag: "dns-out",
 		}
+		inTags := []string{"tun-dns-in"}
 		if specialMode.ShouldLocalDnsListen() {
 			if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
-				dnsOut.InboundTag = []string{"dns-in"}
+				inTags = append(inTags, "dns-in")
 			}
 		}
+		dnsOut.InboundTag = inTags
 		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
 	if !supportUDP[firstOutboundTag] {
@@ -826,8 +912,15 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 }
 
 func (t *Template) setTransparentRouting() (err error) {
+	defaultOutbound, _ := t.FirstProxyOutboundName(nil)
 	switch t.Setting.Transparent {
 	case configure.TransparentProxy:
+		// Global transparent: route all transparent inbound to default outbound
+		t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
+			Type:        "field",
+			InboundTag:  []string{"transparent"},
+			OutboundTag: defaultOutbound,
+		})
 	case configure.TransparentWhitelist:
 		return t.AppendRoutingRuleByMode(configure.WhitelistMode, []string{"transparent"})
 	case configure.TransparentGfwlist:
@@ -870,7 +963,7 @@ func (t *Template) SetOutboundSockopt() {
 	mark := 0x80
 	//tos := 184
 	for i := range t.Outbounds {
-		if t.Outbounds[i].Protocol == "blackhole" {
+		if t.Outbounds[i].Protocol == "blackhole" || t.Outbounds[i].Protocol == "dns" {
 			continue
 		}
 		if t.Outbounds[i].StreamSettings == nil {
@@ -990,35 +1083,178 @@ func (t *Template) appendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, coreObj.OutboundObject{
 		Tag:      "dns-out",
 		Protocol: "dns",
-		// Fallback DNS for non-A/AAAA/CNAME requests. https://github.com/v2rayA/v2rayA/issues/188
-		Settings: coreObj.Settings{Address: "119.29.29.29", Port: 53, Network: "udp"},
+		// DNS outbound without address setting will use the internal DNS module,
+		// which respects the DNS servers configured in the dns block (e.g., 8.8.4.4, 180.184.1.1)
+		// and applies DNS routing rules properly.
+		// See: https://www.v2fly.org/config/protocols/dns.html
 	})
 }
 
 func (t *Template) setSendThrough() {
-	ip, err := GetLanIP4()
-	if err != nil {
-		return
-	}
-	sendThrough := ip.String()
 	for i := 0; i < len(t.Outbounds); i++ {
-		t.Outbounds[i].SendThrough = sendThrough
+		outbound := &t.Outbounds[i]
+
+		// Get server info for this outbound
+		sInfo, exists := t.serverInfoMap[outbound.Tag]
+		if !exists {
+			continue
+		}
+
+		// Determine the appropriate local address
+		sendThrough := t.getSendThroughForServer(sInfo)
+		if sendThrough != "" {
+			outbound.SendThrough = sendThrough
+			log.Trace("[v2ray] Set sendThrough for %s: %s", outbound.Tag, sendThrough)
+		}
 	}
 }
 
-func GetLanIP4() (net.IP, error) {
-	addresses, err := net.InterfaceAddrs()
+func (t *Template) getSendThroughForServer(sInfo *serverInfo) string {
+	serverHost := sInfo.Info.GetHostname()
+
+	// If connecting to plugin (localhost), use 127.0.0.1
+	if sInfo.PluginPort > 0 {
+		return "127.0.0.1"
+	}
+
+	// Check if server is IPv4 or IPv6
+	if serverIP := net.ParseIP(serverHost); serverIP != nil {
+		if serverIP.To4() != nil {
+			// IPv4 server - use IPv4 local address
+			if ip, err := GetBestLocalIP(false); err == nil {
+				return ip.String()
+			}
+		} else {
+			// IPv6 server - use IPv6 local address
+			if ip, err := GetBestLocalIP(true); err == nil {
+				return ip.String()
+			}
+			// Fallback to link-local IPv6 if no global address available
+			if ip, err := GetLinkLocalIPv6(); err == nil {
+				return ip.String()
+			}
+		}
+	} else {
+		// Domain name - prefer IPv4
+		if ip, err := GetBestLocalIP(false); err == nil {
+			return ip.String()
+		}
+	}
+
+	return ""
+}
+
+// GetBestLocalIP returns the best local IP address, skipping TUN, loopback, and APIPA addresses
+func GetBestLocalIP(preferIPv6 bool) (net.IP, error) {
+	interfaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
-	for _, addr := range addresses {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP, nil
+
+	var bestIP net.IP
+
+	for _, iface := range interfaces {
+		// Skip interfaces that are down
+		if iface.Flags&net.FlagUp == 0 {
+			continue
+		}
+
+		// Skip TUN interfaces (typically named tun0, utun0, sing-tun, etc.)
+		ifName := strings.ToLower(iface.Name)
+		if strings.Contains(ifName, "tun") || strings.Contains(ifName, "tap") {
+			continue
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				continue
+			}
+
+			ip := ipnet.IP
+
+			// Skip loopback
+			if ip.IsLoopback() {
+				continue
+			}
+
+			// Skip APIPA (169.254.x.x)
+			if ip.To4() != nil && ip.To4()[0] == 169 && ip.To4()[1] == 254 {
+				continue
+			}
+
+			if preferIPv6 {
+				if ip.To4() == nil && ip.To16() != nil {
+					// IPv6 address
+					// Skip link-local for now (fe80::), prefer global
+					if !ip.IsLinkLocalUnicast() {
+						return ip, nil
+					}
+					if bestIP == nil {
+						bestIP = ip
+					}
+				}
+			} else {
+				if ip.To4() != nil {
+					// IPv4 address
+					return ip, nil
+				}
 			}
 		}
 	}
-	return net.IPv4zero, errors.New("lan not found")
+
+	if bestIP != nil {
+		return bestIP, nil
+	}
+
+	if preferIPv6 {
+		return nil, errors.New("no suitable IPv6 address found")
+	}
+	return nil, errors.New("no suitable IPv4 address found")
+}
+
+// GetLinkLocalIPv6 returns a link-local IPv6 address as fallback
+func GetLinkLocalIPv6() (net.IP, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue
+		}
+
+		// Skip TUN interfaces
+		ifName := strings.ToLower(iface.Name)
+		if strings.Contains(ifName, "tun") || strings.Contains(ifName, "tap") {
+			continue
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				continue
+			}
+
+			ip := ipnet.IP
+			if ip.To4() == nil && ip.To16() != nil && ip.IsLinkLocalUnicast() {
+				return ip, nil
+			}
+		}
+	}
+
+	return nil, errors.New("no link-local IPv6 address found")
 }
 
 func GenerateIdFromAccounts() (id string, err error) {
@@ -1085,12 +1321,33 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				},
 				Tag: "transparent",
 			})
+			// Local dokodemo-door listener for DNS (used by TUN DNS forwarder)
+			// Listen on localhost (dual-stack: IPv4 + IPv6)
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     tun.TunDNSListenPort,
+				Protocol: "dokodemo-door",
+				Listen:   "localhost",
+				Settings: &coreObj.InboundSettings{
+					Network: "tcp,udp",
+					Address: "127.0.0.1",
+					Port:    53,
+				},
+				Tag: "tun-dns-in",
+			})
 		case configure.TransparentSystemProxy:
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 				Port:     52345,
 				Protocol: "http",
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
+			}, coreObj.Inbound{
+				Port:     52306,
+				Protocol: "socks",
+				Listen:   "127.0.0.1",
+				Settings: &coreObj.InboundSettings{
+					UDP: true,
+				},
+				Tag: "transparent-socks",
 			})
 		}
 
@@ -1289,6 +1546,7 @@ func (t *Template) resolveOutbounds(
 ) (supportUDP map[string]bool, outboundTags []string, err error) {
 
 	supportUDP = make(map[string]bool)
+	t.serverInfoMap = make(map[string]*serverInfo)
 	type _outbound struct {
 		weight   int
 		outbound coreObj.OutboundObject
@@ -1339,6 +1597,8 @@ func (t *Template) resolveOutbounds(
 				if err != nil {
 					return nil, nil, err
 				}
+				// Store server info for this outbound
+				t.serverInfoMap[outboundTag] = sInfo
 				extraOutbounds = append(extraOutbounds, c.ExtraOutbounds...)
 				if c.PluginManagerServerLink != "" {
 					t.PluginManagerInfoList = append(t.PluginManagerInfoList, PluginManagerInfo{
@@ -1348,7 +1608,7 @@ func (t *Template) resolveOutbounds(
 				}
 				var s plugin.Server
 				if len(c.PluginChain) > 0 {
-					s, err = plugin.ServerFromChain(c.PluginChain)
+					s, err = plugin.ServerFromChain(c.PluginChain, sInfo.Info.GetName())
 					if err != nil {
 						return nil, nil, err
 					}
@@ -1373,6 +1633,10 @@ func (t *Template) resolveOutbounds(
 				PluginPort:  balancerPluginPort,
 			})
 			if err != nil {
+				// Store server info for balancer outbound (use first balancer's info)
+				if len(balancers) > 0 {
+					t.serverInfoMap[outboundTag] = balancers[0].serverInfo
+				}
 				return nil, nil, err
 			}
 			extraOutbounds = append(extraOutbounds, c.ExtraOutbounds...)
@@ -1397,7 +1661,7 @@ func (t *Template) resolveOutbounds(
 			}
 			var s plugin.Server
 			if len(c.PluginChain) > 0 {
-				s, err = plugin.ServerFromChain(c.PluginChain)
+				s, err = plugin.ServerFromChain(c.PluginChain, obj.GetName())
 				if err != nil {
 					return nil, nil, err
 				}
@@ -1493,34 +1757,58 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			})
 
 			if strings.ToLower(strategy.String()) == "leastping" {
-				if t.MultiObservatory == nil {
-					t.MultiObservatory = &coreObj.MultiObservatory{}
-				}
 				probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
 				if _, err := url.Parse(probeUrl); err != nil {
 					log.Warn("observatory: %v", err)
 					probeUrl = "https://gstatic.com/generate_204"
 				}
-				t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
-					Tag: outbound,
-					Settings: coreObj.Observatory{
-						SubjectSelector: selector,
-						ProbeURL:        probeUrl,
-						ProbeInterval:   interval.String(),
-					},
-				})
-			}
-		}
-		if t.MultiObservatory != nil {
-			services = append(services, "ObservatoryService")
 
-			var observatoryTags []string
-			for name, isGroup := range t.outNames() {
-				if isGroup {
-					observatoryTags = append(observatoryTags, name)
+				// Use different observatory structure based on core type
+				if t.Variant == where.Xray {
+					// Xray uses a single observatory with all selectors combined
+					if t.Observatory == nil {
+						t.Observatory = &coreObj.ObservatoryItem{
+							Tag: "observatory",
+							Settings: coreObj.Observatory{
+								SubjectSelector: selector,
+								ProbeURL:        probeUrl,
+								ProbeInterval:   interval.String(),
+							},
+						}
+					} else {
+						// Merge selectors for existing observatory
+						t.Observatory.Settings.SubjectSelector = append(t.Observatory.Settings.SubjectSelector, selector...)
+					}
+				} else {
+					// V2ray uses multiObservatory with multiple observers
+					if t.MultiObservatory == nil {
+						t.MultiObservatory = &coreObj.MultiObservatory{}
+					}
+					t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
+						Tag: outbound,
+						Settings: coreObj.Observatory{
+							SubjectSelector: selector,
+							ProbeURL:        probeUrl,
+							ProbeInterval:   interval.String(),
+						},
+					})
 				}
 			}
-			t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port, observatoryTags))
+		}
+		if t.MultiObservatory != nil || t.Observatory != nil {
+			// Observatory API is only available in v2ray-core v5+
+			// xray-core has different API structure and doesn't support this gRPC service
+			if t.Variant == where.V2ray {
+				services = append(services, "ObservatoryService")
+
+				var observatoryTags []string
+				for name, isGroup := range t.outNames() {
+					if isGroup {
+						observatoryTags = append(observatoryTags, name)
+					}
+				}
+				t.ApiCloses = append(t.ApiCloses, ObservatoryProducer(port, observatoryTags))
+			}
 		}
 	}
 	t.API = &coreObj.APIObject{
@@ -1582,16 +1870,30 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	t = &tmplJson
 	t.Setting = setting
 	// log
+	logLevel := setting.LogLevel
+	if logLevel == "" {
+		logLevel = conf.GetEnvironmentConfig().LogLevel
+	}
+	logLevel = strings.ToLower(logLevel)
 	t.Log = new(coreObj.Log)
-	if logLevel := log.ParseLevel(conf.GetEnvironmentConfig().LogLevel); logLevel >= log.ParseLevel("debug") {
-		t.Log.Loglevel = "info"
+	switch logLevel {
+	case "trace", "debug":
+		t.Log.Loglevel = "debug"
 		t.Log.Access = ""
 		t.Log.Error = ""
-	} else if logLevel >= log.ParseLevel("info") {
+	case "info":
 		t.Log.Loglevel = "info"
 		t.Log.Access = ""
 		t.Log.Error = "none"
-	} else {
+	case "warn", "warning":
+		t.Log.Loglevel = "warning"
+		t.Log.Access = "none"
+		t.Log.Error = ""
+	case "error":
+		t.Log.Loglevel = "error"
+		t.Log.Access = "none"
+		t.Log.Error = ""
+	default:
 		t.Log = nil
 	}
 	// resolve Outbounds
@@ -1843,7 +2145,7 @@ func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort stri
 		return err
 	}
 	if len(c.PluginChain) > 0 {
-		if server, err := plugin.ServerFromChain(c.PluginChain); err != nil {
+		if server, err := plugin.ServerFromChain(c.PluginChain, o.GetName()); err != nil {
 			return err
 		} else {
 			t.Plugins = append(t.Plugins, server)

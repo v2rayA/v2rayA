@@ -104,6 +104,7 @@ export default {
   setting: {
     transparentProxy: "Transparent Proxy/System Proxy",
     transparentType: "Transparent Proxy/System Proxy Implementation",
+    logLevel: "Log Level",
     pacMode: "Traffic Splitting Mode of Rule Port",
     preventDnsSpoofing: "جلوگیری از هک DNS",
     specialMode: "حالت ویژه",
@@ -115,6 +116,11 @@ export default {
     portSharingOn: "به اشتراک گذاری پورت",
     concurrency: "همزمانی",
     options: {
+      trace: "Trace",
+      debug: "Debug",
+      info: "Info",
+      warn: "Warn",
+      error: "Error",
       global: "عدم تقسیم ترافیک",
       direct: "Direct",
       pac: "بسته به پورت تصمیم گیری شود.",
@@ -313,7 +319,19 @@ export default {
   },
   log: {
     logModalTitle: "دیدن لاگ ها",
+    logsLabel: "لاگ ها",
     refreshInterval: "Refresh Interval",
     seconds: "ثانیه",
+    autoScoll: "Auto Scroll",
+    category: "Category",
+    categories: {
+      all: "All",
+      error: "Error",
+      warn: "Warn",
+      info: "Info",
+      debug: "Debug",
+      trace: "Trace",
+      other: "Other",
+    },
   },
 };

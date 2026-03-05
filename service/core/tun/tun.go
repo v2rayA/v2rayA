@@ -14,6 +14,10 @@ type Tun interface {
 	Close() error
 	AddDomainWhitelist(domain string)
 	AddIPWhitelist(addr netip.Addr)
+	SetFakeIP(enabled bool)
+	SetIPv6(enabled bool)
+	SetStrictRoute(enabled bool)
+	SetAutoRoute(enabled bool)
 }
 
 var Default = NewSingTun()

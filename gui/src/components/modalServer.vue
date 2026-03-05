@@ -34,9 +34,6 @@
           <b-field v-if="v2ray.protocol === 'vmess'" label="Security" label-position="on-border">
             <b-select v-model="v2ray.scy" expanded required>
               <option value="auto">Auto</option>
-              <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
-              <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
-              <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
@@ -55,18 +52,61 @@
               <option v-if="variant() === 'xray'" value="xtls">xtls</option>
             </b-select>
           </b-field>
-          <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
-            <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
+          <b-field
+            v-if="v2ray.tls !== 'none'"
+            label="SNI"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_sni"
+              v-model="v2ray.sni"
+              placeholder="SNI"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
-            label-position="on-border">
-            <b-input ref="v2ray_fp" v-model="v2ray.fp" placeholder="A uTLS compatable fingerprint name" expanded />
+          <b-field
+v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
+            label-position="on-border"
+          >
+            <b-select
+              ref="v2ray_fp"
+              v-model="v2ray.fp"
+              expanded
+            >
+              <option value="">empty</option>
+              <option value="chrome">chrome</option>
+              <option value="firefox">firefox</option>
+              <option value="safari">safari</option>
+              <option value="ios">ios</option>
+              <option value="android">android</option>
+              <option value="edge">edge</option>
+              <option value="random">random</option>
+              <option value="randomized">randomized</option>
+            </b-select>
           </b-field>
-          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
-            label-position="on-border">
-            <b-input ref="v2ray_flow" v-model="v2ray.flow" placeholder="Flow" expanded />
+          <b-field
+            v-show="v2ray.tls === 'tls'"
+            label="Alpn"
+            label-position="on-border"
+          >
+            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="pbk" label-position="on-border">
+          <b-field
+v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_flow"
+              v-model="v2ray.flow"
+              placeholder="Flow"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.tls === 'reality'"
+            label="pbk"
+            label-position="on-border"
+          >
             <b-input v-model="v2ray.pbk" placeholder="pbk" expanded />
           </b-field>
           <b-field v-show="v2ray.tls === 'reality'" label="sid" label-position="on-border">
@@ -101,7 +141,7 @@
               <option value="h2">HTTP/2</option>
               <option value="grpc">gRPC</option>
               <option value="quic">QUIC</option>
-              <option v-if="variant() === 'xray'" value="xhttp">XHTTP</option>
+              <option value="xhttp">XHTTP</option>
             </b-select>
           </b-field>
           <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
@@ -148,33 +188,102 @@
               </option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' ||
-            v2ray.net === 'h2' ||
-            v2ray.tls === 'tls' ||
-            (v2ray.net === 'tcp' && v2ray.type === 'http')
-            " label="Host" label-position="on-border">
-            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+          <b-field
+v-show="v2ray.net === 'ws' ||
+              v2ray.net === 'h2' ||
+              v2ray.net === 'xhttp' ||
+              v2ray.tls === 'tls' ||
+              (v2ray.net === 'tcp' && v2ray.type === 'http')
+            "
+            label="Host"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.host"
+              :placeholder="$t('configureServer.hostObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
-            <b-input v-model="v2ray.alpn" placeholder="h2,http/1.1" expanded />
+          <b-field
+v-show="v2ray.net === 'ws' ||
+              v2ray.net === 'h2' ||
+              (v2ray.net === 'tcp' && v2ray.type === 'http')
+            "
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.pathObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' ||
-            v2ray.net === 'h2' ||
-            (v2ray.net === 'tcp' && v2ray.type === 'http')
-            " label="Path" label-position="on-border">
-            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          <b-field
+            v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'"
+            label="Seed"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.seedObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
-            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
+          <b-field
+            v-show="v2ray.net === 'grpc'"
+            label="Service Name"
+            label-position="on-border"
+          >
+            <b-input
+              ref="v2ray_service_name"
+              v-model="v2ray.path"
+              type="text"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
-            <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Path"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.path"
+              :placeholder="$t('configureServer.pathObfuscation')"
+              expanded
+            />
           </b-field>
-          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
-            <b-input ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')" expanded />
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Mode"
+            label-position="on-border"
+          >
+            <b-select v-model="v2ray.xhttpMode" expanded>
+              <option value="auto">auto</option>
+              <option value="packet-up">packet-up</option>
+              <option value="stream-up">stream-up</option>
+              <option value="stream-one">stream-one</option>
+            </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="path" label-position="on-border">
-            <b-input v-model="v2ray.path" placeholder="XHTTP Path" expanded />
+          <b-field
+            v-show="v2ray.net === 'xhttp'"
+            label="Extra Raw JSON"
+            label-position="on-border"
+          >
+            <b-input
+              v-model="v2ray.xhttpRawJson"
+              placeholder="{XHTTPObject}"
+              expanded
+            />
+          </b-field>
+          <b-field
+            v-show="v2ray.net === 'quic'"
+            label="Key"
+            label-position="on-border"
+          >
+            <b-input
+ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')"
+              expanded
+            />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
@@ -413,7 +522,7 @@
             <b-input v-model="trojan.path" placeholder="/" expanded />
           </b-field>
           <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" label="Host" label-position="on-border">
-            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+            <b-input v-model="trojan.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
           <b-field v-show="trojan.tls === 'tls'" label="Alpn" label-position="on-border">
             <b-input v-model="trojan.alpn" placeholder="h2,http/1.1" expanded />
@@ -528,6 +637,45 @@
           </b-field>
         </b-tab-item>
 
+        <b-tab-item label="Hysteria2">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="hysteria2_name" v-model="hysteria2.name" :placeholder="$t('configureServer.servername')"
+              expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="hysteria2_server" v-model="hysteria2.server" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="hysteria2_port" v-model="hysteria2.port" required :placeholder="$t('configureServer.port')"
+              type="number" expanded />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input ref="hysteria2_password" v-model="hysteria2.password" required
+              :placeholder="$t('configureServer.password')" expanded />
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label"> AllowInsecure </template>
+            <b-select ref="hysteria2_allow_insecure" v-model="hysteria2.allowInsecure" expanded required>
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">
+                {{ $t("operations.yes") }}
+              </option>
+            </b-select>
+          </b-field>
+          <b-field label="SNI" label-position="on-border">
+            <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
+          </b-field>
+          <b-field label="Obfs" label-position="on-border">
+            <b-select v-model="hysteria2.obfs" expanded required>
+              <option value="none">none</option>
+              <option value="salamander">salamander</option>
+            </b-select>
+          </b-field>
+          <b-field v-if="hysteria2.obfs !== 'none'" label="Obfs Password" label-position="on-border">
+            <b-input v-model="hysteria2.obfsPassword" placeholder="Obfs Password" expanded />
+          </b-field>
+        </b-tab-item>
+
         <b-tab-item label="HTTP">
           <b-field label="Protocol" label-position="on-border">
             <b-select v-model="http.protocol" expanded>
@@ -573,6 +721,31 @@
           <b-field label="Password" label-position="on-border">
             <b-input ref="socks5_password" v-model="socks5.password" :placeholder="$t('configureServer.password')"
               expanded />
+          </b-field>
+        </b-tab-item>
+
+        <b-tab-item label="AnyTLS">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="anytls_name" v-model="anytls.name" :placeholder="$t('configureServer.servername')" expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="anytls_host" v-model="anytls.host" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="anytls_port" v-model="anytls.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
+          </b-field>
+          <b-field label="Auth" label-position="on-border">
+            <b-input ref="anytls_auth" v-model="anytls.auth" required placeholder="Authentication Key" expanded />
+          </b-field>
+          <b-field label="SNI(Peer)" label-position="on-border">
+            <b-input ref="anytls_sni" v-model="anytls.sni" placeholder="SNI / Peer (Optional)" expanded />
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label"> AllowInsecure </template>
+            <b-select ref="anytls_allow_insecure" v-model="anytls.allowInsecure" expanded required>
+              <option :value="false">{{ $t("operations.no") }}</option>
+              <option :value="true">{{ $t("operations.yes") }}</option>
+            </b-select>
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -631,6 +804,8 @@ export default {
       allowInsecure: false,
       protocol: "vmess",
       key: "none",
+      xhttpMode: "auto",
+      xhttpRawJson: "",
     },
     ss: {
       method: "2022-blake3-aes-128-gcm",
@@ -701,6 +876,17 @@ export default {
       udpRelayMode: "native",
       protocol: "tuic",
     },
+    hysteria2: {
+      name: "",
+      server: "",
+      port: "",
+      password: "",
+      sni: "",
+      obfs: "none",
+      obfsPassword: "",
+      allowInsecure: false,
+      protocol: "hysteria2",
+    },
     http: {
       username: "",
       password: "",
@@ -716,6 +902,15 @@ export default {
       port: "",
       protocol: "socks5",
       name: "",
+    },
+    anytls: {
+      name: "",
+      host: "",
+      port: "",
+      auth: "",
+      sni: "",
+      allowInsecure: false,
+      protocol: "anytls",
     },
     tabChoice: 0,
   }),
@@ -766,16 +961,27 @@ export default {
             this.tuic = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 5;
           } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("hysteria2://") ||
+            res.data.data.sharingAddress.toLowerCase().startsWith("hy2://")
+          ) {
+            this.hysteria2 = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 6;
+          } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("http://") ||
             res.data.data.sharingAddress.toLowerCase().startsWith("https://")
           ) {
             this.http = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 6;
+            this.tabChoice = 7;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("socks5://")
           ) {
             this.socks5 = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 7;
+            this.tabChoice = 8;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("anytls://")
+          ) {
+            this.anytls = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 9;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -834,6 +1040,8 @@ export default {
           spx: u.params.spx || "",
           allowInsecure: u.params.allowInsecure || false,
           key: u.params.key,
+          xhttpMode: u.params.xhttpMode || "auto",
+          xhttpRawJson: u.params.xhttpRawJson || "",
           protocol: "vless",
         };
         if (o.alpn !== "") {
@@ -845,76 +1053,19 @@ export default {
         console.log(o);
         return o;
       } else if (url.toLowerCase().startsWith("ss://")) {
-        let u = parseURL(url);
-        let mp;
-        if (!u.password) {
-          try {
-            u.username = Base64.decode(decodeURIComponent(u.username));
-            mp = u.username.split(":");
-            if (mp.length > 2) {
-              mp[1] = mp.slice(1).join(":");
-              mp = mp.slice(0, 2);
-            }
-          } catch (e) {
-            //pass
-          }
-        } else {
-          mp = [u.username, u.password];
-        }
-        console.log(mp);
-        u.hash = decodeURIComponent(u.hash);
-        let obj = {
-          method: mp[0],
-          password: mp[1],
-          server: u.host,
-          port: u.port,
-          name: u.hash,
-          obfs: "http",
-          plugin: "",
+        let decoded = Base64.decode(url.substring(url.indexOf("://") + 3));
+        let parts = decoded.split("@");
+        let methodAndPassword = parts[0].split(":");
+        let serverAndPort = parts[1].split(":");
+
+        return {
+          method: methodAndPassword[0],
+          password: methodAndPassword[1],
+          server: serverAndPort[0],
+          port: serverAndPort[1],
+          plugin: "", // Default empty, can be extended if plugin info is included
           protocol: "ss",
-          impl: "",
         };
-        if (u.params.plugin) {
-          u.params.plugin = decodeURIComponent(u.params.plugin);
-          const arr = u.params.plugin.split(";");
-          obj.plugin = arr[0];
-          switch (obj.plugin) {
-            case "obfs-local":
-            case "simpleobfs":
-              obj.plugin = "simple-obfs";
-              break;
-            case "v2ray-plugin":
-              obj.tls = "";
-              obj.mode = "websocket";
-              break;
-          }
-          for (let i = 1; i < arr.length; i++) {
-            //"obfs-local;obfs=tls;obfs-host=4cb6a43103.wns.windows.com"
-            const a = arr[i].split("=");
-            switch (a[0]) {
-              case "obfs":
-                obj.obfs = a[1];
-                break;
-              case "host":
-              case "obfs-host":
-                obj.host = a[1];
-                break;
-              case "path":
-              case "obfs-path":
-                obj.path = a[1];
-                break;
-              case "mode":
-                obj.mode = a[1];
-                break;
-              case "tls":
-                obj.tls = "tls";
-                break;
-              case "impl":
-                obj.impl = a[1];
-            }
-          }
-        }
-        return obj;
       } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
@@ -964,7 +1115,7 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           protocol: "trojan",
         };
-        if (url.toLowerCase().startsWith("" + "")) {
+        if (url.toLowerCase().startsWith("trojan-go://")) {
           console.log(u.params.encryption);
           if (u.params.encryption?.startsWith("ss;")) {
             o.method = "shadowsocks";
@@ -1015,6 +1166,22 @@ export default {
           protocol: "tuic",
         };
       } else if (
+        url.toLowerCase().startsWith("hysteria2://") ||
+        url.toLowerCase().startsWith("hy2://")
+      ) {
+        let u = parseURL(url);
+        return {
+          name: decodeURIComponent(u.hash),
+          password: decodeURIComponent(u.username),
+          server: u.host,
+          port: u.port,
+          sni: u.params.sni || "",
+          allowInsecure: u.params.insecure === "true" || u.params.insecure === "1",
+          obfs: u.params.obfs || "none",
+          obfsPassword: u.params["obfs-password"] || "",
+          protocol: "hysteria2",
+        };
+      } else if (
         url.toLowerCase().startsWith("http://") ||
         url.toLowerCase().startsWith("https://")
       ) {
@@ -1036,6 +1203,20 @@ export default {
           port: u.port,
           protocol: u.protocol,
           name: decodeURIComponent(u.hash),
+        };
+      } else if (url.toLowerCase().startsWith("anytls://")) {
+        let u = parseURL(url);
+        let auth = u.username ? decodeURIComponent(u.username) : "";
+        let sni = u.params.peer || u.params.sni || "";
+        let allowInsecure = u.params.insecure === "1";
+        return {
+          name: decodeURIComponent(u.hash),
+          host: u.host,
+          port: u.port,
+          auth: auth,
+          sni: sni,
+          allowInsecure: allowInsecure,
+          protocol: "anytls",
         };
       }
       return null;
@@ -1071,6 +1252,12 @@ export default {
           if (srcObj.net === "quic") {
             query.key = srcObj.key;
             query.quicSecurity = srcObj.quicSecurity;
+          }
+          if (srcObj.net === "xhttp") {
+            query.xhttpMode = srcObj.xhttpMode;
+            if (srcObj.xhttpRawJson) {
+              query.xhttpRawJson = srcObj.xhttpRawJson;
+            }
           }
           if (query.security == "reality") {
             query.pbk = srcObj.pbk;
@@ -1241,7 +1428,26 @@ export default {
             password: srcObj.password,
             host: srcObj.server,
             port: srcObj.port,
-            hash: srcObj.name,
+            hash: srcObj.ps || srcObj.name,
+            params: query,
+          });
+        case "hysteria2":
+          query = {
+            insecure: srcObj.allowInsecure ? "1" : "0",
+          };
+          if (srcObj.sni !== "") {
+            query.sni = srcObj.sni;
+          }
+          if (srcObj.obfs !== "none") {
+            query.obfs = srcObj.obfs;
+            query["obfs-password"] = srcObj.obfsPassword;
+          }
+          return generateURL({
+            protocol: "hysteria2",
+            username: srcObj.password,
+            host: srcObj.server,
+            port: srcObj.port,
+            hash: srcObj.ps || srcObj.name,
             params: query,
           });
         case "http":
@@ -1273,6 +1479,22 @@ export default {
             });
           }
           return generateURL(tmp);
+        case "anytls":
+          let query = {};
+          if (srcObj.sni) {
+            query.peer = srcObj.sni;
+          }
+          if (srcObj.allowInsecure) {
+            query.insecure = "1";
+          }
+          return generateURL({
+            protocol: "anytls",
+            username: srcObj.auth,
+            host: srcObj.host,
+            port: srcObj.port,
+            hash: srcObj.name,
+            params: query,
+          });
       }
       return null;
     },
@@ -1315,10 +1537,16 @@ export default {
         if (this.tabChoice === 5 && !k.startsWith("tuic_")) {
           continue;
         }
-        if (this.tabChoice === 6 && !k.startsWith("http_")) {
+        if (this.tabChoice === 6 && !k.startsWith("hysteria2_")) {
           continue;
         }
-        if (this.tabChoice === 7 && !k.startsWith("socks5_")) {
+        if (this.tabChoice === 7 && !k.startsWith("http_")) {
+          continue;
+        }
+        if (this.tabChoice === 8 && !k.startsWith("socks5_")) {
+          continue;
+        }
+        if (this.tabChoice === 9 && !k.startsWith("anytls_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1339,9 +1567,10 @@ export default {
         return;
       }
       let coded = "";
+      // 0: v2ray, 1: ss, 2: ssr, 3: trojan, 4: juicity, 5: tuic, 6: hysteria2, 7: http, 8: socks5, 9: anytls
       if (this.tabChoice === 0) {
         if (
-          this.v2ray.allowInsecure === true || // sometimes bool, sometimes string
+          this.v2ray.allowInsecure === true ||
           this.v2ray.allowInsecure === "true"
         ) {
           const { result } = await this.$buefy.dialog.confirm({
@@ -1360,19 +1589,94 @@ export default {
         }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
-        coded = this.generateURL(this.ss);
+        // ss://BASE64(method:password)@server:port#name
+        const { method, password, server, port, name, plugin, plugin_opts } = this.ss;
+        let userinfo = btoa(`${method}:${password}`);
+        let url = `ss://${userinfo}@${server}:${port}`;
+        if (plugin) {
+          url += `?plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`;
+        }
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 2) {
-        coded = this.generateURL(this.ssr);
+        // ssr://server:port:proto:method:obfs:base64(password)/?remarks=base64(remarks)
+        const { server, port, proto, method, obfs, password, name, protoParam, obfsParam } = this.ssr;
+        let pwdB64 = btoa(password);
+        let remarksB64 = name ? btoa(name) : "";
+        let protoParamB64 = protoParam ? btoa(protoParam) : "";
+        let obfsParamB64 = obfsParam ? btoa(obfsParam) : "";
+        let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
+        coded = url;
       } else if (this.tabChoice === 3) {
-        coded = this.generateURL(this.trojan);
+        // trojan://password@server:port?allowInsecure=1&sni=sni#name
+        const { password, server, port, allowInsecure, peer, name } = this.trojan;
+        let params = [];
+        if (allowInsecure) params.push("allowInsecure=1");
+        if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
+        let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 4) {
-        coded = this.generateURL(this.juicity);
+        // juicity://uuid:password@server:port?allow_insecure=1&cc=xxx#name
+        const { uuid, password, server, port, allowInsecure, cc, sni, name } = this.juicity;
+        let params = [];
+        if (allowInsecure) params.push("allow_insecure=1");
+        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `juicity://${uuid}:${password}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 5) {
-        coded = this.generateURL(this.tuic);
+        // tuic://uuid:password@server:port?allow_insecure=1&cc=xxx#name
+        const { uuid, password, server, port, allowInsecure, cc, sni, name } = this.tuic;
+        let params = [];
+        if (allowInsecure) params.push("allow_insecure=1");
+        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `tuic://${uuid}:${password}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 6) {
-        coded = this.generateURL(this.http);
+        // hysteria2://password@server:port?insecure=1&obfs=xxx#name
+        const { password, server, port, allowInsecure, obfs, obfsPassword, sni, name } = this.hysteria2;
+        let params = [];
+        if (allowInsecure) params.push("insecure=1");
+        if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
+        if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `hysteria2://${encodeURIComponent(password)}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 7) {
-        coded = this.generateURL(this.socks5);
+        // http(s)://username:password@server:port#name
+        const { protocol, username, password, host, port, name } = this.http;
+        let url = `${protocol}://`;
+        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
+        url += `${host}:${port}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
+      } else if (this.tabChoice === 8) {
+        // socks5://username:password@server:port#name
+        const { username, password, host, port, name } = this.socks5;
+        let url = `socks5://`;
+        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
+        url += `${host}:${port}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
+      } else if (this.tabChoice === 9) {
+        // anytls://auth@host:port?peer=sni&insecure=1#name
+        const { auth, host, port, sni, allowInsecure, name } = this.anytls;
+        let params = [];
+        if (sni) params.push(`peer=${encodeURIComponent(sni)}`);
+        if (allowInsecure) params.push("insecure=1");
+        let url = `anytls://${encodeURIComponent(auth)}@${host}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       }
       this.$emit("submit", coded);
     },

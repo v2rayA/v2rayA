@@ -107,6 +107,7 @@ export default {
   setting: {
     transparentProxy: "Прозрачный прокси/Системный прокси",
     transparentType: "Реализация прозрачного прокси/Системного прокси",
+    logLevel: "Уровень журнала",
     pacMode: "Режим разделения трафика на порте с правилами",
     preventDnsSpoofing: "Предотвратить DNS-спуфинг",
     specialMode: "Специальный режим",
@@ -119,6 +120,11 @@ export default {
     concurrency: "Параллелизм",
     inboundSniffing: "Сниффер",
     options: {
+      trace: "Trace",
+      debug: "Debug",
+      info: "Info",
+      warn: "Warn",
+      error: "Error",
       global: "Не разделять трафик",
       direct: "Напрямую",
       pac: "Зависит от порта правил",
@@ -321,9 +327,20 @@ export default {
   },
   log: {
     logModalTitle: "Просмотр журнала",
+    logsLabel: "Журнал",
     refreshInterval: "Интервал обновления",
     seconds: "секунд",
     autoScoll: "Авто-пролистывание",
+    category: "Категория",
+    categories: {
+      all: "Все",
+      error: "Ошибка",
+      warn: "Предупреждение",
+      info: "Инфо",
+      debug: "Debug",
+      trace: "Trace",
+      other: "Другое",
+    },
   },
   domainsExcluded: {
     title: "Исключённые домены",

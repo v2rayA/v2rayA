@@ -3,33 +3,33 @@ Write-Host $PSScriptRoot
 Function Get-build-tools(){
     if ([String]::IsNullOrEmpty($(Get-Command git -ErrorAction ignore))) {
         Write-Output "You don't install git, please install it and add it to your path."
+        $We_Should_Exit_Now = $true
     }
     if ([String]::IsNullOrEmpty($(Get-Command yarn -ErrorAction ignore))) {
         Write-Output "You don't install yarn, please install it and add it to your path."
         Write-Output "You should also install Node.js to make yarn work fine."
+        $We_Should_Exit_Now = $true
     }
     if ([String]::IsNullOrEmpty($(Get-Command go -ErrorAction ignore))) {
         Write-Output "You don't install go, please install it and add it to your path."
+        $We_Should_Exit_Now = $true
     }
-    if ([String]::IsNullOrEmpty($(Get-Command git -ErrorAction ignore))) {
-        exit 1
-    }
-    if ([String]::IsNullOrEmpty($(Get-Command yarn -ErrorAction ignore))) {
-        exit 1
-    }
-    if ([String]::IsNullOrEmpty($(Get-Command go -ErrorAction ignore))) {
-        exit 1
+    if ($We_Should_Exit_Now) {
+        Exit 1
     }
 }
 
 Function Build-v2rayA(){
     #Get OS
-    if ([String]::IsNullOrEmpty($(Test-Path ${env:windir} -ErrorAction Ignore))) { 
+    if ($env:GOOS -eq "windows") {
+        $v2rayaBin = "v2raya.exe"
+    } elseif ($env:GOOS -ne "windows") {
+         $v2rayaBin = "v2raya"
+    } elseif ($env:WinDir) {
+        $v2rayaBin = "v2raya.exe"
+    } else {
         $v2rayaBin = "v2raya"
     }
-    else {
-        $v2rayaBin = "v2raya.exe"
-    } 
     #Get Paths
     $TerminalPath = Get-Item -LiteralPath ./ | ForEach-Object  -Process { $_.FullName }
     $CurrentPath = $PSScriptRoot
@@ -50,7 +50,7 @@ Function Build-v2rayA(){
     yarn; yarn build
     #Build v2rayA
     Set-Location -Path "$CurrentPath/service"
-    go build -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
+    go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
     Set-Location -Path "$TerminalPath"
 }
 

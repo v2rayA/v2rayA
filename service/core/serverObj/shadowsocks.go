@@ -326,29 +326,16 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 }
 
 func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error) {
-	switch s.Cipher {
-	case "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305", "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "xchacha20-poly1305", "xchacha20-ietf-poly1305", "plain", "none":
-	default:
-		return c, fmt.Errorf("unsupported shadowsocks encryption method: %v", s.Cipher)
+	socks5 := url.URL{
+		Scheme: "socks5",
+		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
 	}
-	// check shadowsocks plugin implementation
-	ssPluginImpl := s.Plugin.Opts.Impl
-	if ssPluginImpl == "" {
-		switch s.Plugin.Name {
-		case "simple-obfs":
-			ssPluginImpl = "transport"
-		default:
-			ssPluginImpl = "chained"
-		}
-	}
-	switch ssPluginImpl {
-	case "chained":
-		return s.ConfigurationMC(info)
-	case "transport":
-		return s.ConfigurationMT(info)
-	default:
-		return c, fmt.Errorf("unsupported shadowsocks plugin implementation: %v", ssPluginImpl)
-	}
+	chain := []string{socks5.String(), s.ExportToURL()}
+	return Configuration{
+		CoreOutbound: info.PluginObj(),
+		PluginChain:  strings.Join(chain, ","),
+		UDPSupport:   true,
+	}, nil
 }
 
 func (s *Shadowsocks) ExportToURL() string {
@@ -368,7 +355,7 @@ func (s *Shadowsocks) ExportToURL() string {
 }
 
 func (s *Shadowsocks) NeedPluginPort() bool {
-	return len(s.Plugin.Name) > 0
+	return true
 }
 
 func (s *Shadowsocks) GetProtocol() string {

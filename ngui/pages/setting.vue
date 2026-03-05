@@ -65,9 +65,9 @@ const updateSetting = async() => {
     <div v-if="setting.transparent !== 'close'">
       <div>{{ $t('setting.transparentType') }}</div>
       <ElSelect v-model="setting.transparentType" size="small">
-        <ElOption v-show="!system.lite" value="redirect">redirect</ElOption>
-        <ElOption v-show="!system.lite" value="tproxy">tproxy</ElOption>
-        <ElOption value="system_proxy">system proxy</ElOption>
+        <ElOption v-show="!system.lite && system.os === 'linux'" value="redirect">redirect</ElOption>
+        <ElOption v-show="!system.lite && system.os === 'linux'" value="tproxy">tproxy</ElOption>
+        <ElOption v-show="!(system.isRoot && (system.os === 'linux' || system.os === 'darwin'))" value="system_proxy">system proxy</ElOption>
       </ElSelect>
     </div>
 
@@ -114,6 +114,17 @@ const updateSetting = async() => {
         <ElOption value="default" :label="$t('setting.options.default')" />
         <ElOption value="yes" :label="$t('setting.options.on')" />
         <ElOption value="no" :label="$t('setting.options.off')" />
+      </ElSelect>
+    </div>
+
+    <div>
+      <div>{{ $t('setting.logLevel') }}</div>
+      <ElSelect v-model="setting.logLevel" size="small">
+        <ElOption value="trace" :label="$t('setting.options.trace')" />
+        <ElOption value="debug" :label="$t('setting.options.debug')" />
+        <ElOption value="info" :label="$t('setting.options.info')" />
+        <ElOption value="warn" :label="$t('setting.options.warn')" />
+        <ElOption value="error" :label="$t('setting.options.error')" />
       </ElSelect>
     </div>
 
