@@ -91,7 +91,8 @@ export default {
     no: "否",
     switchSite: "切换至备用站点",
     addOutbound: "新增一个出站 (outbound)",
-    domainsExcluded: "排除域名"
+    domainsExcluded: "排除域名",
+    tproxyExcludedInterfaces: "不走代理的网卡前缀"
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -120,6 +121,7 @@ export default {
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
+    tproxyExcludedInterfaces: "不走代理的网卡前缀",
     ipForwardOn: "开启IP转发",
     portSharingOn: "开启端口分享",
     concurrency: "最大并发数",
@@ -158,6 +160,8 @@ export default {
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
       transparentType:
         "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。",
+      tproxyExcludedInterfaces:
+        "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
       tunMode:
         "★FakeIP: 使用虚拟IP加速DNS解析，提高性能。★RealIP: 使用真实IP，更适合某些特殊应用。",
       tunIPv6:

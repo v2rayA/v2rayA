@@ -69,6 +69,11 @@ iptables -w 2 -t nat -A TP_RULE -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 224.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
+`
+	for _, v := range GetExcludedInterfaces() {
+		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+	}
+	commands += `
 iptables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345
 
 iptables -w 2 -t nat -I PREROUTING -p tcp -j TP_PRE
@@ -94,6 +99,11 @@ ip6tables -w 2 -t nat -A TP_RULE -d 2002::/16 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d fe80::/10 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
+`
+		for _, v := range GetExcludedInterfaces() {
+			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+		}
+		commands += `
 ip6tables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345
 
 ip6tables -w 2 -t nat -I PREROUTING -p tcp -j TP_PRE
@@ -211,6 +221,11 @@ table inet v2raya {
         ip6 daddr @whitelist6 return
         ip6 daddr @interface6 return
         meta mark & 0x80 == 0x80 return
+`
+	for _, v := range GetExcludedInterfaces() {
+		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
+	}
+	table += `
         meta l4proto tcp redirect to :52345
     }
 

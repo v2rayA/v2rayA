@@ -29,6 +29,7 @@ type Setting struct {
 	TunIPv6                            bool            `json:"tunIPv6"`
 	TunStrictRoute                     bool            `json:"tunStrictRoute"`
 	TunAutoRoute                       bool            `json:"tunAutoRoute"`
+	TproxyExcludedInterfaces           string          `json:"tproxyExcludedInterfaces"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -54,6 +55,7 @@ func NewSetting() (setting *Setting) {
 		TunIPv6:                            false,
 		TunStrictRoute:                     false,
 		TunAutoRoute:                       true,
+		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
 	}
 }
 
