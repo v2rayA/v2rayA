@@ -92,7 +92,8 @@ export default {
     no: "No",
     switchSite: "Switch to alternate site",
     addOutbound: "Add an outbound",
-    domainsExcluded: "Domains Excluded"
+    domainsExcluded: "Domains Excluded",
+    tproxyExcludedInterfaces: "Excluded Interface Prefixes"
   },
   register: {
     title: "Create an admin account first",
@@ -120,6 +121,7 @@ export default {
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
+    tproxyExcludedInterfaces: "Excluded Interface Prefixes",
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
@@ -160,6 +162,8 @@ export default {
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers and docker as the gateway should make option 'Share in LAN' on.",
       transparentType:
         "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution.",
+      tproxyExcludedInterfaces:
+        "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*, br-*. Use commas to separate multiple prefixes.",
       tunMode:
         "★FakeIP: Use fake IPs to accelerate DNS resolution and improve performance. ★RealIP: Use real IPs, more suitable for certain special applications.",
       tunIPv6:
