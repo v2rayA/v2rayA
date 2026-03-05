@@ -15,9 +15,9 @@
 package log
 
 import (
-	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"os"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/v2rayA/beego/v2/logs"
 )
@@ -48,7 +48,11 @@ func SetLogFile(logWay string, logFile string, maxdays int64, disableLogColor bo
 		params = string(b)
 		Log.SetLogger("console", params)
 	} else {
-		params := fmt.Sprintf(`{"filename": "%s", "maxdays": %d}`, logFile, maxdays)
+		b, _ := jsoniter.Marshal(map[string]interface{}{
+			"filename": logFile,
+			"maxdays":  maxdays,
+		})
+		params := string(b)
 		Log.SetLogger("file", params)
 	}
 }
@@ -58,6 +62,8 @@ func ParseLevel(logLevel string) int {
 	case "error":
 		level = 3
 	case "warn":
+		level = 4
+	case "warning":
 		level = 4
 	case "info":
 		level = 6

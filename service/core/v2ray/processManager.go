@@ -49,7 +49,7 @@ func (m *CoreProcessManager) GetRunningTemplate() *Template {
 	return m.p.template
 }
 
-func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting) (err error) {
+func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting, tmpl *Template) (err error) {
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
@@ -74,7 +74,7 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 			}
 		}
 
-		err = writeTransparentProxyRules()
+		err = writeTransparentProxyRules(tmpl)
 
 		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
 			hook := strings.Split(thook, " ")
@@ -217,7 +217,7 @@ func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
 }
 
 func (m *CoreProcessManager) afterStart(t *Template) (err error) {
-	if err = m.CheckAndSetupTransparentProxy(false, t.Setting); err != nil {
+	if err = m.CheckAndSetupTransparentProxy(false, t.Setting, t); err != nil {
 		return err
 	}
 	specialMode.CheckAndSetupDNSSupervisor()

@@ -17,6 +17,19 @@ common:
   optional: 可选
   loadBalance: 负载均衡
   log: 日志
+log:
+  category: 分类
+  categories:
+    all: 全部
+    error: 错误
+    warn: 警告
+    info: 信息
+    debug: 调试
+    trace: 跟踪
+    other: 其他
+  refreshInterval: 刷新间隔
+  seconds: 秒
+  autoScroll: 自动滚动
 welcome:
   title: 初来乍到，请多关照
   docker: 'v2rayA服务端正在运行于Docker环境中，Version: {version}'
@@ -88,6 +101,7 @@ login:
 setting:
   transparentProxy: 透明代理/系统代理
   transparentType: 透明代理/系统代理实现方式
+  logLevel: 日志等级
   pacMode: 规则端口的分流模式
   preventDnsSpoofing: 防止DNS污染
   specialMode: 特殊模式
@@ -99,6 +113,11 @@ setting:
   portSharingOn: 开启端口分享
   concurrency: 最大并发数
   options:
+    trace: 跟踪
+    debug: 调试
+    info: 信息
+    warn: 警告
+    error: 错误
     global: 不进行分流
     direct: 直连模式
     pac: 跟随规则端口

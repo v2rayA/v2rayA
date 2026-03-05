@@ -61,11 +61,11 @@
           </b-tooltip>
         </template>
         <b-select v-model="transparentType" expanded>
-          <option v-show="!lite" value="redirect">redirect</option>
-          <option v-show="!lite" value="tproxy">tproxy</option>
+          <option v-show="!lite && os === 'linux'" value="redirect">redirect</option>
+          <option v-show="!lite && os === 'linux'" value="tproxy">tproxy</option>
           <option v-show="!lite" value="gvisor_tun">gvisor tun</option>
           <option v-show="!lite" value="system_tun">system tun</option>
-          <option value="system_proxy">system proxy</option>
+          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>
         </b-select>
 
         <template v-if="transparentType == 'tproxy'">
@@ -77,6 +77,50 @@
             " outlined @click="handleClickTproxyWhiteIpGroups">{{ $t("operations.tproxyWhiteIpGroups") }}
           </b-button>
         </template>
+      </b-field>
+
+      <b-field v-show="tunEnabled" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunMode") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunMode')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunFakeIP" expanded>
+          <option :value="true">FakeIP</option>
+          <option :value="false">RealIP</option>
+        </b-select>
+      </b-field>
+
+      <b-field v-show="tunEnabled" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunIPv6") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunIPv6')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunIPv6" expanded>
+          <option :value="true">{{ $t("setting.options.enabled") }}</option>
+          <option :value="false">{{ $t("setting.options.disabled") }}</option>
+        </b-select>
+      </b-field>
+
+      <b-field v-show="tunEnabled" label-position="on-border">
+        <template slot="label">StrictRoute</template>
+        <b-select v-model="tunStrictRoute" expanded>
+          <option :value="true">{{ $t("setting.options.enabled") }}</option>
+          <option :value="false">{{ $t("setting.options.disabled") }}</option>
+        </b-select>
+      </b-field>
+
+      <b-field v-show="tunEnabled" label-position="on-border">
+        <template slot="label">AutoRoute</template>
+        <b-select v-model="tunAutoRoute" expanded>
+          <option :value="true">{{ $t("setting.options.enabled") }}</option>
+          <option :value="false">{{ $t("setting.options.disabled") }}</option>
+        </b-select>
       </b-field>
 
       <b-field label-position="on-border">
@@ -170,6 +214,19 @@
           <option value="default">{{ $t("setting.options.default") }}</option>
           <option value="yes">{{ $t("setting.options.on") }}</option>
           <option value="no">{{ $t("setting.options.off") }}</option>
+        </b-select>
+      </b-field>
+
+      <b-field label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.logLevel") }}
+        </template>
+        <b-select v-model="logLevel" expanded>
+          <option value="trace">{{ $t("setting.options.trace") }}</option>
+          <option value="debug">{{ $t("setting.options.debug") }}</option>
+          <option value="info">{{ $t("setting.options.info") }}</option>
+          <option value="warn">{{ $t("setting.options.warn") }}</option>
+          <option value="error">{{ $t("setting.options.error") }}</option>
         </b-select>
       </b-field>
 
@@ -295,10 +352,15 @@ export default {
   data: () => ({
     proxyModeWhenSubscribe: "direct",
     tcpFastOpen: "default",
+    logLevel: "info",
     muxOn: "no",
     mux: "8",
     transparent: "close",
     transparentType: "tproxy",
+    tunFakeIP: true,
+    tunIPv6: false,
+    tunStrictRoute: false,
+    tunAutoRoute: true,
     ipforward: false,
     portSharing: false,
     dnsForceMode: false,
@@ -318,6 +380,8 @@ export default {
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
     showSpecialMode: true,
+    os: "",
+    isRoot: false,
   }),
   computed: {
     lite() {
@@ -333,6 +397,11 @@ export default {
         port = U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
       }
       return toInt(port);
+    },
+    tunEnabled() {
+      const isTunType =
+        this.transparentType === "gvisor_tun" || this.transparentType === "system_tun";
+      return this.transparent !== "close" && isTunType;
     },
   },
   watch: {
@@ -366,6 +435,15 @@ export default {
           Object.assign(this, res.data.data);
           this.subscriptionAutoUpdateTime = new Date(this.subscriptionAutoUpdateTime);
           this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
+          // Get OS and isRoot info from version API
+          this.$axios({
+            url: apiRoot + "/version",
+          }).then((versionRes) => {
+            if (versionRes.data && versionRes.data.data) {
+              this.os = versionRes.data.data.os || "";
+              this.isRoot = versionRes.data.data.isRoot || false;
+            }
+          });
           if (this.lite) {
             this.transparentType = "system_proxy";
             this.showSpecialMode = false;
@@ -390,11 +468,16 @@ export default {
             ),
             pacMode: this.pacMode,
             tcpFastOpen: this.tcpFastOpen,
+            logLevel: this.logLevel,
             inboundSniffing: this.inboundSniffing,
             muxOn: this.muxOn,
             mux: parseInt(this.mux),
             transparent: this.transparent,
             transparentType: this.transparentType,
+            tunFakeIP: this.tunFakeIP,
+            tunIPv6: this.tunIPv6,
+            tunStrictRoute: this.tunStrictRoute,
+            tunAutoRoute: this.tunAutoRoute,
             ipforward: this.ipforward,
             portSharing: this.portSharing,
             routeOnly: this.routeOnly,

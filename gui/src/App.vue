@@ -57,22 +57,24 @@
           <i class="iconfont icon-info" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
+        <b-dropdown position="is-bottom-left" aria-role="menu" class="langdropdown">
+          <a slot="trigger" class="navbar-item" role="button">
+            <i class="iconfont icon-earth" style="font-size: 1.25em; margin-right: 4px"></i>
+            <span class="no-select">{{ currentLangLabel }}</span>
+            <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
+          </a>
+          <b-dropdown-item v-for="lang of langs" :key="lang.code" aria-role="menuitem" class="no-select"
+            @click="handleClickLang(lang.code)">
+            <span style="font-weight: 500; min-width: 60px; display: inline-block">{{ lang.code }}</span>
+            <span style="margin-left: 8px; color: #7a7a7a">{{ lang.label }}</span>
+          </b-dropdown-item>
+        </b-dropdown>
         <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
           <a slot="trigger" class="navbar-item" role="button">
             <span class="no-select">{{ username }}</span>
             <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
           <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username })">
-          </b-dropdown-item>
-          <b-dropdown-item custom aria-role="menuitem" class="is-flex" style="
-              box-sizing: content-box;
-              height: 16px;
-              width: 60px;
-              justify-content: space-between;
-            ">
-            <img v-for="lang of langs" :key="lang.flag" :src="require(`@/assets/img/flags/flag_${lang.flag}.svg`)"
-              :alt="lang.alt" style="height: 100%; flex-shrink: 0; cursor: pointer"
-              @click="handleClickLang(lang.flag)" />
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
@@ -122,11 +124,11 @@ export default {
       },
       showCustomPorts: false,
       langs: [
-        { flag: "zh", alt: "简体中文" },
-        { flag: "en", alt: "English" },
-        { flag: "fa", alt: "فارسی" },
-        { flag: "ru", alt: "Русский" },
-        { flag: "pt", alt: "Português (Brasil)" },
+        { code: "zh_CN", label: "中文-中国", flag: "zh" },
+        { code: "en_US", label: "English-US", flag: "en" },
+        { code: "fa_IR", label: "فارسی", flag: "fa" },
+        { code: "ru_RU", label: "Русский", flag: "ru" },
+        { code: "pt_BR", label: "Português-Brasil", flag: "pt" },
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],
@@ -145,6 +147,11 @@ export default {
     },
     isMobile() {
       return window.screen.width < 800;
+    },
+    currentLangLabel() {
+      const currentLang = localStorage["_lang"] || "zh";
+      const lang = this.langs.find(l => l.flag === currentLang);
+      return lang ? lang.code : "zh_CN";
     },
   },
   mounted() {
@@ -389,9 +396,12 @@ export default {
         },
       });
     },
-    handleClickLang(lang) {
-      localStorage["_lang"] = lang;
-      location.reload();
+    handleClickLang(langCode) {
+      const lang = this.langs.find(l => l.code === langCode);
+      if (lang) {
+        localStorage["_lang"] = lang.flag;
+        location.reload();
+      }
     },
     handleOnOutboundMouseEnter(outbound) {
       this.outboundDropdownHover = { [outbound]: true };

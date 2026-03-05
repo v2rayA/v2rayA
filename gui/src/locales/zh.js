@@ -110,6 +110,9 @@ export default {
     inboundSniffing: "嗅探",
     transparentProxy: "透明代理/系统代理",
     transparentType: "透明代理/系统代理实现方式",
+    tunMode: "TUN模式",
+    tunIPv6: "TUN IPv6",
+    logLevel: "日志等级",
     pacMode: "规则端口的分流模式",
     preventDnsSpoofing: "防止DNS污染",
     specialMode: "特殊模式",
@@ -121,6 +124,11 @@ export default {
     portSharingOn: "开启端口分享",
     concurrency: "最大并发数",
     options: {
+      trace: "跟踪",
+      debug: "调试",
+      info: "信息",
+      warn: "警告",
+      error: "错误",
       global: "不进行分流",
       direct: "直连模式",
       pac: "跟随规则端口",
@@ -150,6 +158,10 @@ export default {
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
       transparentType:
         "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。",
+      tunMode:
+        "★FakeIP: 使用虚拟IP加速DNS解析，提高性能。★RealIP: 使用真实IP，更适合某些特殊应用。",
+      tunIPv6:
+        "开启后TUN接口将支持IPv6流量。注意：需要系统支持IPv6网络。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       preventDnsSpoofing:
@@ -327,9 +339,25 @@ export default {
   },
   log: {
     logModalTitle: "查看日志",
+    logsLabel: "日志",
     refreshInterval: "刷新间隔",
     seconds: "秒",
     autoScoll: "自动滚动",
+    autoShowNew: "自动显示新日志",
+    category: "分类",
+    source: "日志来源",
+    categories: {
+      all: "全部",
+      error: "错误",
+      warn: "警告",
+      info: "信息",
+      debug: "调试",
+      trace: "跟踪",
+      other: "其他",
+    },
+    sources: {
+      all: "全部",
+    },
   },
   
   tproxyWhiteIpGroups: {

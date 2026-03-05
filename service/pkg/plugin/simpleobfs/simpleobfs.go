@@ -1,12 +1,14 @@
 package simpleobfs
 
 import (
+	"context"
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/plugin"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"net/url"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/pkg/plugin"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type ObfsType int
@@ -17,6 +19,7 @@ const (
 )
 
 func init() {
+	log.Trace("[simpleobfs] registering dialer")
 	plugin.RegisterDialer("simpleobfs", NewSimpleObfsDialer)
 	plugin.RegisterDialer("simple-obfs", NewSimpleObfsDialer)
 	plugin.RegisterDialer("obfs-local", NewSimpleObfsDialer)
@@ -78,15 +81,16 @@ func (s *SimpleObfs) Addr() string {
 
 // Dial connects to the address addr on the network net via the proxy.
 func (s *SimpleObfs) Dial(network, addr string) (net.Conn, error) {
-	return s.dial(network, addr)
+	return s.DialContext(context.Background(), network, addr)
 }
 
-func (s *SimpleObfs) dial(network, addr string) (c net.Conn, err error) {
-	rc, err := s.dialer.Dial("tcp", s.addr)
-	log.Trace("dial %v %v %v %v", s.addr, s.obfstype, s.host, s.path)
+func (s *SimpleObfs) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	log.Info("[simpleobfs] dialing %s via %s (type=%v host=%v path=%v)", addr, s.addr, s.obfstype, s.host, s.path)
+	rc, err := s.dialer.DialContext(ctx, "tcp", s.addr)
 	if err != nil {
 		return nil, fmt.Errorf("[simpleobfs]: dial to %s: %w", s.addr, err)
 	}
+	var c net.Conn
 	switch s.obfstype {
 	case HTTP:
 		_, port, _ := net.SplitHostPort(s.addr)
@@ -97,11 +101,11 @@ func (s *SimpleObfs) dial(network, addr string) (c net.Conn, err error) {
 	case TLS:
 		c = NewTLSObfs(rc, s.host)
 	}
-	return c, err
+	return c, nil
 }
 
 // DialUDP connects to the given address via the proxy.
-func (s *SimpleObfs) DialUDP(network, addr string) (net.PacketConn, net.Addr, error) {
+func (s *SimpleObfs) DialUDP(network string) (pc plugin.FakeNetPacketConn, err error) {
 	//TODO
-	return nil, nil, nil
+	return nil, nil
 }
