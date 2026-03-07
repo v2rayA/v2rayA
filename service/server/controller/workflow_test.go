@@ -39,8 +39,10 @@ func TestPostRefreshSubscriptionAndReselectSuccess(t *testing.T) {
 	updating = false
 
 	original := refreshSubscriptionAndReselect
+	originalTouch := respondWorkflowTouch
 	t.Cleanup(func() {
 		refreshSubscriptionAndReselect = original
+		respondWorkflowTouch = originalTouch
 		updating = false
 	})
 
@@ -48,6 +50,9 @@ func TestPostRefreshSubscriptionAndReselectSuccess(t *testing.T) {
 	refreshSubscriptionAndReselect = func(index int) error {
 		calledWith = index
 		return nil
+	}
+	respondWorkflowTouch = func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"code": "SUCCESS"})
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/api/workflow/refresh-subscription-and-reselect", bytes.NewBufferString(`{"subscriptionId":3}`))

@@ -7,6 +7,7 @@ import (
 )
 
 var refreshSubscriptionAndReselect = service.RefreshSubscriptionAndReselect
+var respondWorkflowTouch = getTouch
 
 type refreshSubscriptionAndReselectRequest struct {
 	SubscriptionID int `json:"subscriptionId"`
@@ -36,5 +37,5 @@ func PostRefreshSubscriptionAndReselect(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	getTouch(ctx)
+	respondWorkflowTouch(ctx)
 }
