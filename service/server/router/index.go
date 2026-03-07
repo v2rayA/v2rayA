@@ -128,19 +128,7 @@ func nocache(c *gin.Context) {
 	c.Header("Expires", "0")
 }
 
-func Run() error {
-	engine := gin.New()
-	//ginpprof.Wrap(engine)
-	engine.Use(gin.Recovery())
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	corsConfig.AllowMethods = []string{
-		"GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD",
-	}
-	corsConfig.AllowWebSockets = true
-	corsConfig.AllowCredentials = true
-	corsConfig.AddAllowHeaders("Authorization", common.RequestIdHeader)
-	engine.Use(cors.New(corsConfig))
+func RegisterRoutes(engine *gin.Engine) {
 	noAuth := engine.Group("api",
 		nocache,
 		reqCache.ReqCache,
@@ -182,6 +170,7 @@ func Run() error {
 		auth.DELETE("gfwList", controller.DeleteGFWList)
 		auth.PUT("subscription", controller.PutSubscription)
 		auth.PATCH("subscription", controller.PatchSubscription)
+		auth.POST("workflow/refresh-subscription-and-reselect", controller.PostRefreshSubscriptionAndReselect)
 		auth.GET("ports", controller.GetPorts)
 		auth.PUT("ports", controller.PutPorts)
 		//auth.PUT("account", controller.PutAccount)
@@ -201,6 +190,22 @@ func Run() error {
 		auth.PUT("domainsExcluded", controller.PutDomainsExcluded)
 		auth.PUT("tproxyWhiteIpGroups", controller.PutTproxyWhiteIpGroups)
 	}
+}
+
+func Run() error {
+	engine := gin.New()
+	//ginpprof.Wrap(engine)
+	engine.Use(gin.Recovery())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowMethods = []string{
+		"GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD",
+	}
+	corsConfig.AllowWebSockets = true
+	corsConfig.AllowCredentials = true
+	corsConfig.AddAllowHeaders("Authorization", common.RequestIdHeader)
+	engine.Use(cors.New(corsConfig))
+	RegisterRoutes(engine)
 
 	ServeGUI(engine)
 
