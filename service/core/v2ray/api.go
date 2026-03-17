@@ -105,6 +105,8 @@ func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func(
 				)
 				if err != nil {
 					log.Warn("ObservatoryProducer: did not connect: %v", err)
+					// cancel the context to avoid leaking resources
+					cancel()
 					continue nextLoop
 				}
 				defer c.Close()
