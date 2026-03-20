@@ -18,6 +18,7 @@ func TestFillEmpty(t *testing.T) {
 		GFWListAutoUpdateIntervalHour:      4,
 		SubscriptionAutoUpdateMode:         "5",
 		SubscriptionAutoUpdateIntervalHour: 6,
+		SubscriptionUpdateIntervalSecond:   7,
 		TcpFastOpen:                        "7",
 		MuxOn:                              "8",
 		Mux:                                9,

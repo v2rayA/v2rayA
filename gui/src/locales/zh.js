@@ -119,6 +119,7 @@ export default {
     specialMode: "特殊模式",
     mux: "多路复用",
     autoUpdateSub: "自动更新订阅",
+    subscriptionUpdateIntervalSecond: "订阅更新间隔(秒)",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     tproxyExcludedInterfaces: "不走代理的网卡前缀",

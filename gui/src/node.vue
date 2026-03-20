@@ -104,6 +104,20 @@
             :class="{
               button: true,
               field: true,
+              'is-warning': true,
+              'mobile-small': true,
+              'not-display': !overHeight && !isCheckedRowsSubUpdatable(),
+            }"
+            :disabled="!isCheckedRowsSubUpdatable()"
+            @click="handleClickUpdateSubscriptions"
+          >
+            <i class="iconfont icon-sync" />
+            <span>{{ $t("operations.update") }}</span>
+          </button>
+          <button
+            :class="{
+              button: true,
+              field: true,
               'is-delete': true,
               'mobile-small': true,
               'not-display': !overHeight && !isCheckedRowsDeletable(),
@@ -1438,6 +1452,12 @@ export default {
         this.checkedRows.every((x) => x._type !== CONST.SubscriptionServerType)
       );
     },
+    isCheckedRowsSubUpdatable() {
+      return (
+        this.checkedRows.length > 0 &&
+        this.checkedRows.every((x) => x._type === CONST.SubscriptionType)
+      );
+    },
     isCheckedRowsPingable() {
       // CONST.SubscriptionServerType is not deletable
       return (
@@ -1501,6 +1521,36 @@ export default {
           });
         });
       });
+    },
+    async handleClickUpdateSubscriptions() {
+      if (!this.isCheckedRowsSubUpdatable()) {
+        return;
+      }
+      let loading = this.$buefy.loading.open();
+      try {
+        const ids = this.checkedRows.map((x) => x.id);
+        const res = await this.$axios({
+          url: apiRoot + "/subscriptions",
+          method: "put",
+          data: {
+            ids,
+          },
+        });
+        handleResponse(res, this, () => {
+          this.refreshTableData(res.data.data.touch, res.data.data.running);
+          this.updateConnectView();
+          this.checkedRows = [];
+          this.$buefy.toast.open({
+            message: this.$t("common.success"),
+            type: "is-primary",
+            position: "is-top",
+            duration: 5000,
+            queue: false,
+          });
+        });
+      } finally {
+        loading.close();
+      }
     },
     handleClickCreate() {
       this.modalServerReadOnly = false;
