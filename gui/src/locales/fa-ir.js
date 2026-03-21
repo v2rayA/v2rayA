@@ -216,7 +216,6 @@ export default {
     title: "DNS تنظیمات",
     help: "راهنمای DNS",
     helpTooltip: "مشاهده مستندات v2fly DNS",
-    hint: "DNS پشتیبان (بدون دامنه) در بالا قرار میگیرد",
     colServer: "سرور DNS",
     colDomains: "لیست دامنه",
     colOutbound: "خروجی",

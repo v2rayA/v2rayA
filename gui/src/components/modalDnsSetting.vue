@@ -14,10 +14,6 @@
       </a>
     </header>
     <section class="modal-card-body">
-      <b-message type="is-info" size="is-small" class="dns-info-msg">
-        {{ $t("dns.hint") }}
-      </b-message>
-
       <!-- DNS rules table -->
       <div class="dns-table">
         <!-- Header row -->

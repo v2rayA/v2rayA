@@ -35,6 +35,7 @@ type Process struct {
 	pluginManagers []*os.Process
 	template       *Template
 	tag2WhichIndex map[string]int
+	done           chan struct{}
 }
 
 func NewProcess(tmpl *Template,
@@ -43,6 +44,7 @@ func NewProcess(tmpl *Template,
 ) (*Process, error) {
 	process := &Process{
 		template: tmpl,
+		done:     make(chan struct{}),
 	}
 	if tmpl.MultiObservatory != nil {
 		// NOTICE: tag2WhichIndex is reliable because once connected servers are changed when v2ray is running,
@@ -111,6 +113,7 @@ func NewProcess(tmpl *Template,
 	process.proc = proc
 	var unexpectedExiting bool
 	go func() {
+		defer close(process.done)
 		p, e := proc.Wait()
 		if process.procCancel == nil {
 			// canceled by v2rayA
@@ -211,6 +214,22 @@ func (p *Process) Close() error {
 	} else {
 		_, err := p.proc.Wait()
 		return err
+	}
+}
+
+func (p *Process) WaitUntilExit(ctx context.Context) error {
+	if p == nil {
+		return nil
+	}
+	if ctx == nil {
+		<-p.done
+		return nil
+	}
+	select {
+	case <-p.done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 

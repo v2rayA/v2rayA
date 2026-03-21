@@ -221,7 +221,6 @@ export default {
     title: "DNS настройки",
     help: "DNS справка",
     helpTooltip: "Просмотреть документацию v2fly DNS",
-    hint: "Резервный DNS (без доменов) размещается сверху",
     colServer: "DNS сервер",
     colDomains: "Список доменов",
     colOutbound: "Исходящий",

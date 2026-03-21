@@ -21,7 +21,7 @@ func platformDisableAutoRoute() bool {
 }
 
 // platformPostStart 在 BSD 等平台上无需额外操作。
-func platformPostStart(_ []netip.Addr, _ string) {}
+func platformPostStart(_ []netip.Addr, _ string, _ bool) {}
 
 // platformPreClose 在 BSD 等平台上无需额外操作。
-func platformPreClose(_ string) {}
+func platformPreClose(_ string, _ bool) {}

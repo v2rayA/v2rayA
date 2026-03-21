@@ -235,7 +235,6 @@ export default {
     title: "DNS Settings",
     help: "DNS Help",
     helpTooltip: "View v2fly DNS documentation",
-    hint: "Fallback DNS (empty domains) goes at the top",
     colServer: "DNS Server",
     colDomains: "Domain List",
     colOutbound: "Outbound",

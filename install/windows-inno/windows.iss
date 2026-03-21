@@ -60,8 +60,6 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 ; 创建服务
 Filename: "{sys}\sc.exe"; Parameters: "create v2rayA binPath= ""{app}\bin\v2raya.exe"" DisplayName= ""v2rayA Service"" start= auto"; Flags: runhidden waituntilterminated
 Filename: "{sys}\sc.exe"; Parameters: "description v2rayA ""v2rayA - A web GUI client of Project V"""; Flags: runhidden waituntilterminated
-; 启动服务
-Filename: "{sys}\sc.exe"; Parameters: "start v2rayA"; Flags: runhidden waituntilterminated
 
 [UninstallRun]
 ; 停止并删除服务
@@ -168,12 +166,21 @@ begin
   end;
 end;
 
+procedure StartService();
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{sys}\sc.exe'), 'start v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
     CreateEnvConfigFile();
     AddBinToPath();
+    // PATH 修改完成后再启动服务
+    StartService();
   end;
 end;
 

@@ -219,7 +219,6 @@ export default {
     title: "Configurações de DNS",
     help: "Ajuda DNS",
     helpTooltip: "Ver documentação v2fly DNS",
-    hint: "DNS de fallback (sem domínios) fica no topo",
     colServer: "Servidor DNS",
     colDomains: "Lista de Domínios",
     colOutbound: "Saída",

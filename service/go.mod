@@ -1,6 +1,6 @@
 module github.com/v2rayA/v2rayA
 
-go 1.22.0
+go 1.24.7
 
 require github.com/daeuniverse/outbound v0.0.0-20250722064253-00c4fbb38759
 
@@ -12,8 +12,6 @@ require (
 	github.com/gin-contrib/cors v1.6.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-leo/slicex v1.0.14
-	github.com/golang/protobuf v1.5.3
-	github.com/google/gopacket v1.1.19
 	github.com/gorilla/websocket v1.5.0
 	github.com/json-iterator/go v1.1.12
 	github.com/matoous/go-nanoid v1.5.0
@@ -22,9 +20,9 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20201229145248-615b0916ca38
 	github.com/pkg/errors v0.9.1
-	github.com/sagernet/gvisor v0.0.0-20241123041152-536d05261cff
-	github.com/sagernet/sing v0.7.18
-	github.com/sagernet/sing-tun v0.7.11
+	github.com/sagernet/gvisor v0.0.0-20250811.0-sing-box-mod.1
+	github.com/sagernet/sing v0.8.0-beta.2
+	github.com/sagernet/sing-tun v0.8.0-beta.18
 	github.com/shirou/gopsutil/v3 v3.21.11
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.10.2
@@ -37,8 +35,8 @@ require (
 	github.com/v2rayA/v2rayA-lib4 v0.0.0-20230812094818-595f87cb2a49
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.3.8
-	golang.org/x/net v0.34.0
-	golang.org/x/sys v0.30.0
+	golang.org/x/net v0.43.0
+	golang.org/x/sys v0.35.0
 	google.golang.org/grpc v1.57.1
 	google.golang.org/protobuf v1.36.1
 )
@@ -58,6 +56,7 @@ require (
 	github.com/dgryski/go-rc2 v0.0.0-20150621095337-8a9021637152 // indirect
 	github.com/djherbis/times v1.5.0 // indirect
 	github.com/eknkc/basex v1.0.1 // indirect
+	github.com/florianl/go-nfqueue/v2 v2.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -68,6 +67,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gocarina/gocsv v0.0.0-20210408192840-02d7211d929d // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20250208200701-d0013a598941 // indirect
@@ -104,13 +104,13 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/exp v0.0.0-20250207012021-f9890c6ad9f3 // indirect
-	golang.org/x/mod v0.23.0 // indirect
-	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/mod v0.26.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
-	golang.org/x/tools v0.29.0 // indirect
+	golang.org/x/tools v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230807174057-1744710a1577 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

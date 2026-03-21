@@ -52,12 +52,12 @@ jobs:
         name: web
         path: service/server/router/web
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         cache-dependency-path: |
           service/go.mod
           service/go.sum
-        go-version: '1.24'
+        go-version: '1.26'
     - name: Build v2rayA
       shell: bash
       run: |

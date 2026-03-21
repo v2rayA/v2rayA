@@ -63,9 +63,9 @@ func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err err
 }
 
 func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
-	// 切分raw
+	// Split raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
-	// 解析
+	// Parse
 	infos = make([]serverObj.ServerObj, 0)
 	for _, row := range rows {
 		if strings.HasPrefix(row, "STATUS=") {
@@ -227,7 +227,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			}
 		}
 	}
-	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
+	// Replace list with new one, and find one with the same server value as the current connection, set it as Connected; if none, disconnect
 	for i, info := range subscriptionInfos {
 		infoServerRaw := configure.ServerRaw{
 			ServerObj: info,
@@ -250,8 +250,8 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 					return fmt.Errorf("UpdateSubscription: %v", reason)
 				}
 			} else {
-				// 将之前连接的节点append进去
-				// TODO: 变更ServerRaw时可能需要考虑
+				// Append previously connected node
+				// TODO: may need consideration when ServerRaw changes
 				infoServerRaws = append(infoServerRaws, *link2Raw[link])
 				cssAfter[cssIndex].ID = len(infoServerRaws)
 			}

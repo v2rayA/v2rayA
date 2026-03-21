@@ -20,16 +20,6 @@ Function Get-build-tools(){
 }
 
 Function Build-v2rayA(){
-    #Get OS
-    if ($env:GOOS -eq "windows") {
-        $v2rayaBin = "v2raya.exe"
-    } elseif ($env:GOOS -ne "windows") {
-         $v2rayaBin = "v2raya"
-    } elseif ($env:WinDir) {
-        $v2rayaBin = "v2raya.exe"
-    } else {
-        $v2rayaBin = "v2raya"
-    }
     #Get Paths
     $TerminalPath = Get-Item -LiteralPath ./ | ForEach-Object  -Process { $_.FullName }
     $CurrentPath = $PSScriptRoot
@@ -50,6 +40,13 @@ Function Build-v2rayA(){
     yarn; yarn build
     #Build v2rayA
     Set-Location -Path "$CurrentPath/service"
+    if ($env:GOOS -eq "windows") {
+        $v2rayaBin = "v2raya.exe"
+    } elseif ($env:WinDir -and !$env:GOOS) {
+        $v2rayaBin = "v2raya.exe"
+    } else {
+        $v2rayaBin = "v2raya"
+    }
     go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
     Set-Location -Path "$TerminalPath"
 }

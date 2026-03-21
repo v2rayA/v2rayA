@@ -23,8 +23,8 @@ func platformDisableAutoRoute() bool {
 
 // platformPostStart 在 TUN 启动完成后执行平台特定操作。
 // Linux 无需额外处理。
-func platformPostStart(_ []netip.Addr, _ string) {}
+func platformPostStart(_ []netip.Addr, _ string, _ bool) {}
 
 // platformPreClose 在 TUN 关闭前执行平台特定清理。
 // Linux 无需额外处理。
-func platformPreClose(_ string) {}
+func platformPreClose(_ string, _ bool) {}

@@ -557,7 +557,7 @@ export default {
 <style lang="scss">
 html {
   //  &::-webkit-scrollbar {
-  //    // 去掉讨厌的滚动条
+  //    // remove annoying scrollbar
   //    display: none;
   //  }
 
@@ -571,7 +571,7 @@ html {
 
 @media screen and (max-width: 1023px) {
   .dropdown.is-mobile-modal .dropdown-menu {
-    // 修复modal模糊问题
+    // fix modal blur issues
     left: 0 !important;
     right: 0 !important;
     margin: auto;
@@ -580,7 +580,7 @@ html {
 }
 
 .dropdown-item:focus {
-  // 不要丑丑的outline
+  // remove ugly outline
   outline: none !important;
 }
 

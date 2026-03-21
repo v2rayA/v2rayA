@@ -342,7 +342,6 @@ export default {
     portSharing: false,
     dnsForceMode: false,
     routeOnly: false,
-    specialMode: "none",
     tproxyExcludedInterfaces: "",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
@@ -450,9 +449,6 @@ export default {
             ipforward: this.ipforward,
             portSharing: this.portSharing,
             routeOnly: this.routeOnly,
-            dnsforward: this.antipollution === "dnsforward" ? "yes" : "no", //版本兼容
-            antipollution: this.antipollution,
-            specialMode: this.specialMode,
             tproxyExcludedInterfaces: this.tproxyExcludedInterfaces,
           },
           cancelToken: new axios.CancelToken(function executor(c) {

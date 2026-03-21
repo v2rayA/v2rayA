@@ -28,7 +28,7 @@ func platformDisableAutoRoute() bool {
 }
 
 // platformPostStart 在 macOS 上通过 networksetup 配置系统 DNS。
-func platformPostStart(dnsServers []netip.Addr, tunName string) {
+func platformPostStart(dnsServers []netip.Addr, tunName string, autoRoute bool) {
 	if len(dnsServers) > 0 {
 		if err := SetupTunDNS(dnsServers, tunName); err != nil {
 			// 非致命，sing-tun 会在 TUN 层面拦截 DNS 查询
@@ -37,6 +37,6 @@ func platformPostStart(dnsServers []netip.Addr, tunName string) {
 }
 
 // platformPreClose 在 macOS 上恢复 DNS 配置。
-func platformPreClose(tunName string) {
+func platformPreClose(tunName string, autoRoute bool) {
 	CleanupTunDNS(tunName)
 }

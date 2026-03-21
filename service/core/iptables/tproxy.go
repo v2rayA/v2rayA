@@ -91,8 +91,7 @@ iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 	for _, v := range GetExcludedInterfaces() {
 		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
-	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
-		commands += `
+	commands += `
 iptables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
@@ -140,8 +139,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 		for _, v := range GetExcludedInterfaces() {
 			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
-		if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
-			commands += `
+		commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN

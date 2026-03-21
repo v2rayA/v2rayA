@@ -121,7 +121,7 @@ export default {
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     tproxyExcludedInterfaces: "不走代理的网卡前缀",
     ipForwardOn: "开启IP转发",
-    portSharingOn: "开启端口分享",
+    portSharingOn: "允许局域网的连接",
     concurrency: "最大并发数",
     options: {
       trace: "跟踪",
@@ -232,7 +232,6 @@ export default {
     title: "DNS 设置",
     help: "DNS 帮助",
     helpTooltip: "查看 v2fly DNS 文档",
-    hint: "兼底 DNS（域名列表留空）放在最上方",
     colServer: "DNS 服务器",
     colDomains: "域名列表",
     colOutbound: "出口",

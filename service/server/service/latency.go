@@ -24,19 +24,19 @@ const HttpTestURL = "https://gstatic.com/generate_204"
 
 func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
 	var whiches = configure.NewWhiches(which)
-	//对要Ping的which去重
+	// Deduplicate whiches to Ping
 	which = whiches.GetNonDuplicated()
-	//暂时关闭透明代理
+	// Temporarily disable transparent proxy
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	defer func() {
 		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
 			err = fmt.Errorf("Ping: %v: %v", e, err)
 		}
 	}()
-	//多线程异步ping
+	// Multi-threaded asynchronous ping
 	wg := new(sync.WaitGroup)
 	for i, v := range which {
-		if v.TYPE == configure.SubscriptionType { //subscription不能ping
+		if v.TYPE == configure.SubscriptionType { // subscriptions cannot be pinged
 			continue
 		}
 		wg.Add(1)
@@ -47,7 +47,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	}
 	wg.Wait()
 	for i := len(which) - 1; i >= 0; i-- {
-		if which[i].TYPE == configure.SubscriptionType { //不返回subscriptionType
+		if which[i].TYPE == configure.SubscriptionType { // do not return subscriptionType
 			which = append(which[:i], which[i+1:]...)
 		}
 	}
@@ -96,7 +96,7 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
 	var whiches = configure.NewWhiches(which)
 	for i := len(which) - 1; i >= 0; i-- {
-		if which[i].TYPE == configure.SubscriptionType { //去掉subscriptionType
+		if which[i].TYPE == configure.SubscriptionType { // remove subscriptionType
 			which = append(which[:i], which[i+1:]...)
 		}
 	}

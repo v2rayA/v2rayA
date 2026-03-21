@@ -66,6 +66,8 @@ func initFunc() {
 	if params.Config == "" {
 		params.Config = defaultConfigDir(params.Lite)
 	}
+	// Fix mis-detected Linux-style config path on Windows
+	params.Config = sanitizeConfigDirForPlatform(params.Config, params.Lite)
 	// replace all dots of the filename with underlines
 	params.Config = filepath.Join(
 		filepath.Dir(params.Config),
@@ -81,6 +83,8 @@ func initFunc() {
 			params.Config = strings.ReplaceAll(params.Config, "$HOME", h)
 		}
 	}
+	// 展开各路径参数中的平台相关环境变量（Windows 上处理 %VAR% 风格）
+	expandPlatformConfigPaths(&params)
 	if _, err := os.Stat(params.Config); os.IsNotExist(err) {
 		_ = os.MkdirAll(params.Config, os.ModeDir|0750)
 	} else if err != nil {

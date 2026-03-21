@@ -24,12 +24,12 @@ func main() {
 	println("[DEBUG] main.main started")
 	gin.SetMode(gin.ReleaseMode)
 
-	// 尝试作为服务运行（在 Windows 上有实现，其他平台返回 false）
+	// Try running as a service (implemented on Windows, returns false on other platforms)
 	if tryRunAsService() {
 		return
 	}
 
-	// 正常启动（非服务模式）
+	// Normal startup (non-service mode)
 	checkEnvironment()
 	if err := checkPlatformSpecific(); err != nil {
 		log.Fatal("Platform check failed: %v", err)

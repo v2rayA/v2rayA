@@ -1,7 +1,9 @@
 package v2ray
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -160,12 +162,6 @@ func (m *CoreProcessManager) Stop(saveRunning bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.stop(saveRunning)
-	if m.p != nil {
-		for _, pm := range m.p.pluginManagers {
-			_ = pm.Kill()
-		}
-		m.p.pluginManagers = nil
-	}
 }
 
 func (m *CoreProcessManager) stop(saveRunning bool) {
@@ -173,19 +169,46 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 		return
 	}
 
-	m.beforeStop(m.p)
+	p := m.p
 
-	err := m.p.Close()
+	m.beforeStop(p)
+
+	err := p.Close()
 	if err != nil {
 		log.Warn("CoreProcessManager.Stop: %v", err)
 	}
+	m.terminatePluginManagers(p)
 	if saveRunning {
 		configure.SetRunning(false)
 	}
 
-	m.afterStop(m.p)
+	m.afterStop(p)
 
 	m.p = nil
+}
+
+func (m *CoreProcessManager) terminatePluginManagers(p *Process) {
+	if p == nil {
+		return
+	}
+	for _, pm := range p.pluginManagers {
+		if pm == nil {
+			continue
+		}
+		if err := pm.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
+			log.Warn("failed to stop PluginManager (pid: %d): %v", pm.Pid, err)
+		}
+	}
+	p.pluginManagers = nil
+}
+
+func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.p != p {
+		return
+	}
+	m.stop(true)
 }
 
 func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
@@ -244,10 +267,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 		return m.beforeStart(t)
 	}, func() error {
 		return m.afterStart(t)
-	}, func(p *Process) {
-		m.beforeStop(p)
-		m.afterStop(p)
-	})
+	}, m.handleUnexpectedStop)
 	if err != nil {
 		return err
 	}
@@ -268,5 +288,7 @@ func (m *CoreProcessManager) Running() bool {
 }
 
 func (m *CoreProcessManager) Process() *Process {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.p
 }

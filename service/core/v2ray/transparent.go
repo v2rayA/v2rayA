@@ -86,7 +86,9 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 					log.Info("[TUN] Resolved %s to %d IP address(es)", host, len(ips))
 					for _, ip := range ips {
 						if addr, ok := netip.AddrFromSlice(ip); ok {
-							tun.Default.AddIPWhitelist(addr)
+							// net.LookupIP 返回的 IPv4 可能是 16 字节 IPv4-in-IPv6 形式；
+							// Unmap() 统一转换为 4 字节纯 IPv4，确保与 sing-tun 的规范形式匹配。
+							tun.Default.AddIPWhitelist(addr.Unmap())
 						}
 					}
 					// Also add domain to whitelist for DNS queries

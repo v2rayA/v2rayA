@@ -93,7 +93,7 @@ func checkTProxySupportability() {
 	if conf.GetEnvironmentConfig().Lite {
 		return
 	}
-	//检查tproxy是否可以启用
+	// check if tproxy can be enabled
 	if err := service2.CheckAndProbeTProxy(); err != nil {
 		log.Info("Cannot load TPROXY module: %v", err)
 	}
@@ -108,7 +108,7 @@ func initDBValue() {
 }
 
 func initConfigure() {
-	//初始化配置
+	// initialize configuration
 	jsonIteratorExtra.RegisterFuzzyDecoders()
 
 	//db
@@ -176,16 +176,16 @@ func initConfigure() {
 		configure.SetTproxyWhiteIpGroups([]string{"PRIVATE"}, []string{})
 	}
 
-	//检查config.json是否存在
+	// check if config.json exists
 	if _, err := os.Stat(asset.GetV2rayConfigPath()); err != nil {
-		//不存在就建一个。多数情况发生于docker模式挂载volume时覆盖了/etc/v2ray
+		// if not exists, create one. This mostly happens when mounting a volume in docker mode and it covers /etc/v2ray.
 		t := v2ray.Template{}
 		_ = v2ray.WriteV2rayConfig(t.ToConfigBytes())
 	}
 
-	//首先确定v2ray是否存在
+	// first determine if v2ray exists
 	if _, err := where.GetV2rayBinPath(); err == nil {
-		//检查geoip、geosite是否存在
+		// check if geoip, geosite exist
 		if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
 			log.Alert("downloading missing geoip.dat and geosite.dat")
 			var l net.Listener
@@ -197,7 +197,7 @@ func initConfigure() {
 				c.Header("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
 				c.Header("Pragma", "no-cache")
 				c.Header("Expires", "0")
-				c.String(200, "Downloading missing geoip.dat and geosite.dat; refresh the page later.\n正在下载缺失的 geoip.dat 和 geosite.dat，请稍后刷新页面。")
+				c.String(200, "Downloading missing geoip.dat and geosite.dat; refresh the page later.")
 			})
 			go e.RunListener(l)
 			if !asset.DoesV2rayAssetExist("geoip.dat") {
@@ -238,7 +238,7 @@ func hello() {
 func updateSubscriptions() {
 	subs := configure.GetSubscriptions()
 	lenSubs := len(subs)
-	control := make(chan struct{}, 2) //并发限制同时更新2个订阅
+	control := make(chan struct{}, 2) // concurrency limit: update 2 subscriptions at a time
 	// Disconnect from subscriptions before auto-selecting servers from them
 	// to limit the number of connected servers and avoid hitting the limit
 	shouldDisconnect := true
@@ -253,9 +253,9 @@ func updateSubscriptions() {
 			control <- struct{}{}
 			err := service.UpdateSubscription(i, false)
 			if err != nil {
-				log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d，err: %v", i, err)
+				log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d, err: %v", i, err)
 			} else {
-				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d，Address: %s", i, subs[i].Address)
+				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d, Address: %s", i, subs[i].Address)
 			}
 			wg.Done()
 			<-control
@@ -291,10 +291,10 @@ func initUpdatingTicker() {
 func checkUpdate() {
 	setting := service.GetSetting()
 
-	//初始化ticker
+	// initialize ticker
 	initUpdatingTicker()
 
-	//检查PAC文件更新
+	// check for PAC file updates
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdate ||
 		setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals ||
 		setting.Transparent == configure.TransparentGfwlist {
@@ -304,7 +304,7 @@ func checkUpdate() {
 		switch setting.RulePortMode {
 		case configure.GfwlistMode:
 			go func() {
-				/* 更新LoyalsoldierSite.dat */
+				/* Update LoyalsoldierSite.dat */
 				localGFWListVersion, err := dat.CheckAndUpdateGFWList("")
 				if err != nil {
 					log.Warn("Failed to update PAC file: %v", err.Error())
@@ -317,7 +317,7 @@ func checkUpdate() {
 		}
 	}
 
-	//检查订阅更新
+	// check for subscription updates
 	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate ||
 		setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
 
@@ -326,7 +326,7 @@ func checkUpdate() {
 		}
 		go updateSubscriptions()
 	}
-	// 检查服务端更新
+	// check for server updates
 	go func() {
 		f := func() {
 			if foundNew, remote, err := service.CheckUpdate(); err == nil {
@@ -343,7 +343,7 @@ func checkUpdate() {
 }
 
 func run() (err error) {
-	//判别需要启动v2ray吗
+	// check if v2ray should be started
 	if configure.GetRunning() {
 		//configure the ip forward
 		setting := service.GetSetting()
@@ -365,11 +365,11 @@ func run() (err error) {
 	//log.Println(err, ", which:", w)
 	//_ = configure.ClearConnected()
 	errch := make(chan error)
-	//启动服务端
+	// start server
 	go func() {
 		errch <- router.Run()
 	}()
-	//监听信号，处理透明代理的关闭
+	// listen for signals to handle transparent proxy shutdown
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGILL)
