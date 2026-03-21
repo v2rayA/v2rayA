@@ -92,7 +92,8 @@ export default {
     switchSite: "切换至备用站点",
     addOutbound: "新增一个出站 (outbound)",
     domainsExcluded: "排除域名",
-    tproxyExcludedInterfaces: "不走代理的网卡前缀"
+    tproxyExcludedInterfaces: "不走代理的网卡前缀",
+    configureTunRouteScript: "配置路由脚本"
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -111,8 +112,6 @@ export default {
     inboundSniffing: "嗅探",
     transparentProxy: "透明代理/系统代理",
     transparentType: "透明代理/系统代理实现方式",
-    tunMode: "TUN模式",
-    tunIPv6: "TUN IPv6",
     logLevel: "日志等级",
     pacMode: "规则端口的分流模式",
     mux: "多路复用",
@@ -120,6 +119,11 @@ export default {
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     tproxyExcludedInterfaces: "不走代理的网卡前缀",
+    tunAutoRoute: "自动路由",
+    tunBypassInterfaces: "TUN 不走代理的网卡",
+    tunBypassCustomPlaceholder: "自定义通配符，例如: docker*, vmnet*",
+    tunBypassSelectPlaceholder: "选择网卡...",
+    tunBypassSelected: "已选 {n} 个网卡",
     ipForwardOn: "开启IP转发",
     portSharingOn: "允许局域网的连接",
     concurrency: "最大并发数",
@@ -139,6 +143,7 @@ export default {
       default: "保持系统默认",
       on: "启用",
       off: "关闭",
+      notIntegrated: "未集成",
       updateSubWhenStart: "服务端启动时更新订阅",
       updateSubAtIntervals: "每隔一段时间更新订阅（单位：小时）",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
@@ -154,13 +159,12 @@ export default {
       transparentProxy:
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
       transparentType:
-        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。",
+        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun (TinyTun): 跨平台TUN透明代理，需要tinytun二进制文件。",
       tproxyExcludedInterfaces:
         "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
-      tunMode:
-        "★FakeIP: 使用虚拟IP加速DNS解析，提高性能。★RealIP: 使用真实IP，更适合某些特殊应用。",
-      tunIPv6:
-        "开启后TUN接口将支持IPv6流量。注意：需要系统支持IPv6网络。",
+      tunAutoRoute:
+        "开启时，TinyTun 自动配置系统路由。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
+      tunBypassInterfaces: "勾选不走 TUN 代理的网卡，或在下方输入自定义通配符。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       preventDnsSpoofing: "",
@@ -391,5 +395,19 @@ export default {
     ],
     formName: "自定义下载链接",
     wrongCustomLink: "错误的自定义下载链接"
+  },
+  tinytun: {
+    routeScript: {
+      title: "TinyTun 自定义路由脚本",
+      warning: "警告：错误的脚本可能会破坏您的网络或系统路由。请确保您清楚自己正在做什么再保存。",
+      shellType: "Shell 类型",
+      customShell: "自定义（在下方指定路径）",
+      shellPath: "Shell 路径",
+      shellPathPlaceholder: "/usr/bin/bash",
+      setupScript: "启动脚本（TinyTun 启动后执行）",
+      setupScriptPlaceholder: "# TinyTun 启动时配置路由的脚本\n# 例如: ip route add default dev tun0",
+      teardownScript: "停止脚本（TinyTun 停止前执行）",
+      teardownScriptPlaceholder: "# TinyTun 停止时移除路由的脚本\n# 例如: ip route del default dev tun0",
+    }
   }
 };

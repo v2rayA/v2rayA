@@ -63,8 +63,9 @@
         <b-select v-model="transparentType" expanded>
           <option v-show="!lite && os === 'linux'" value="redirect">redirect</option>
           <option v-show="!lite && os === 'linux'" value="tproxy">tproxy</option>
-          <option v-show="!lite" value="gvisor_tun">gvisor tun</option>
-          <option v-show="!lite" value="system_tun">system tun</option>
+          <option value="tun" :disabled="!tinytunSupported">
+            tun (TinyTun){{ !tinytunSupported ? ' — ' + $t("setting.options.notIntegrated") : '' }}
+          </option>
           <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>
         </b-select>
 
@@ -75,6 +76,21 @@
               border-top-left-radius: 0;
               color: rgba(0, 0, 0, 0.75);
             " outlined @click="handleClickTproxyWhiteIpGroups">{{ $t("operations.tproxyWhiteIpGroups") }}
+          </b-button>
+        </template>
+
+        <template v-if="transparentType === 'tun' && tinytunSupported">
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunAutoRoute')" position="is-top">
+            <b-checkbox-button v-model="tunAutoRoute" :native-value="true" style="position: relative; left: -1px">
+              {{ $t("setting.tunAutoRoute") }}
+            </b-checkbox-button>
+          </b-tooltip>
+          <b-button v-if="!tunAutoRoute" style="
+              margin-left: 0;
+              border-bottom-left-radius: 0;
+              border-top-left-radius: 0;
+              color: rgba(0, 0, 0, 0.75);
+            " outlined @click="handleClickTunRouteScript">{{ $t("operations.configureTunRouteScript") }}
           </b-button>
         </template>
       </b-field>
@@ -91,49 +107,52 @@
         <b-input v-model="tproxyExcludedInterfaces" expanded placeholder="docker*, veth*, wg*, ppp*, br-*" />
       </b-field>
 
-      <b-field v-show="tunEnabled" label-position="on-border">
+      <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported"
+        label-position="on-border">
         <template slot="label">
-          {{ $t("setting.tunMode") }}
-          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunMode')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-          </b-tooltip>
+          {{ $t("setting.tunBypassInterfaces") }}
         </template>
-        <b-select v-model="tunFakeIP" expanded>
-          <option :value="true">FakeIP</option>
-          <option :value="false">RealIP</option>
-        </b-select>
+        <div style="width: 100%; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap">
+          <b-dropdown
+            v-model="tunBypassInterfacesList"
+            multiple
+            scrollable
+            max-height="260"
+            :disabled="availableInterfaces.filter(i => !i.isLoopback).length === 0"
+            style="flex-shrink: 0"
+          >
+            <template #trigger>
+              <b-button icon-right="menu-down" style="min-width: 160px; justify-content: space-between">
+                <span v-if="tunBypassInterfacesList.length === 0" style="color: #aaa">
+                  {{ $t("setting.tunBypassSelectPlaceholder") }}
+                </span>
+                <span v-else>
+                  {{ $t("setting.tunBypassSelected", { n: tunBypassInterfacesList.length }) }}
+                </span>
+              </b-button>
+            </template>
+            <b-dropdown-item
+              v-for="iface in availableInterfaces.filter(i => !i.isLoopback)"
+              :key="iface.name"
+              :value="iface.name"
+            >
+              <div>
+                <span style="font-weight: 500">{{ iface.name }}</span>
+                <div v-if="iface.addrs && iface.addrs.length" style="font-size: 0.8em; color: #888; margin-top: 1px">
+                  {{ iface.addrs.join(', ') }}
+                </div>
+              </div>
+            </b-dropdown-item>
+          </b-dropdown>
+          <b-input
+            v-model="tunBypassCustom"
+            expanded
+            :placeholder="$t('setting.tunBypassCustomPlaceholder')"
+            style="flex: 1; min-width: 180px"
+          />
+        </div>
       </b-field>
 
-      <b-field v-show="tunEnabled" label-position="on-border">
-        <template slot="label">
-          {{ $t("setting.tunIPv6") }}
-          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunIPv6')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-          </b-tooltip>
-        </template>
-        <b-select v-model="tunIPv6" expanded>
-          <option :value="true">{{ $t("setting.options.enabled") }}</option>
-          <option :value="false">{{ $t("setting.options.disabled") }}</option>
-        </b-select>
-      </b-field>
-
-      <b-field v-show="tunEnabled" label-position="on-border">
-        <template slot="label">StrictRoute</template>
-        <b-select v-model="tunStrictRoute" expanded>
-          <option :value="true">{{ $t("setting.options.enabled") }}</option>
-          <option :value="false">{{ $t("setting.options.disabled") }}</option>
-        </b-select>
-      </b-field>
-
-      <b-field v-show="tunEnabled" label-position="on-border">
-        <template slot="label">AutoRoute</template>
-        <b-select v-model="tunAutoRoute" expanded>
-          <option :value="true">{{ $t("setting.options.enabled") }}</option>
-          <option :value="false">{{ $t("setting.options.disabled") }}</option>
-        </b-select>
-      </b-field>
 
       <b-field label-position="on-border">
         <template slot="label">
@@ -314,6 +333,7 @@ import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
 import modalDomainsExcluded from "@/components/modalDomainsExcluded";
 import modalTproxyWhiteIpGroups from "@/components/modalTproxyWhiteIpGroups";
 import modalUpdateGfwList from "@/components/modalUpdateGfwList";
+import modalTinyTunRouteScript from "@/components/modalTinyTunRouteScript";
 import CusBInput from "./input/Input.vue";
 import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -334,15 +354,20 @@ export default {
     mux: "8",
     transparent: "close",
     transparentType: "tproxy",
-    tunFakeIP: true,
-    tunIPv6: false,
-    tunStrictRoute: false,
-    tunAutoRoute: true,
     ipforward: false,
     portSharing: false,
     dnsForceMode: false,
     routeOnly: false,
     tproxyExcludedInterfaces: "",
+    tunAutoRoute: true,
+    tunBypassInterfaces: "",
+    tunBypassInterfacesList: [],
+    tunBypassCustom: "",
+    availableInterfaces: [],
+    tunRouteShellType: "",
+    tunRouteShellPath: "",
+    tunSetupScript: "",
+    tunTeardownScript: "",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
@@ -356,8 +381,34 @@ export default {
     localGFWListVersion: "checking...",
     os: "",
     isRoot: false,
+    tinytunSupported: false,
   }),
   computed: {
+    tunBypassInterfacesComputed: {
+      get() {
+        const parts = [];
+        if (this.tunBypassInterfacesList.length > 0) {
+          parts.push(...this.tunBypassInterfacesList);
+        }
+        if (this.tunBypassCustom.trim()) {
+          parts.push(
+            ...this.tunBypassCustom
+              .split(',')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          );
+        }
+        return [...new Set(parts)].join(',');
+      },
+      set(val) {
+        const parts = val
+          ? val.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
+          : [];
+        const known = (this.availableInterfaces || []).map((i) => i.name);
+        this.tunBypassInterfacesList = parts.filter((p) => known.includes(p));
+        this.tunBypassCustom = parts.filter((p) => !known.includes(p)).join(',');
+      },
+    },
     lite() {
       return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
     },
@@ -372,13 +423,18 @@ export default {
       }
       return toInt(port);
     },
-    tunEnabled() {
-      const isTunType =
-        this.transparentType === "gvisor_tun" || this.transparentType === "system_tun";
-      return this.transparent !== "close" && isTunType;
-    },
   },
   watch: {
+    transparentType(val) {
+      if (val === 'tun' && this.tinytunSupported) {
+        this.fetchNetworkInterfaces();
+      }
+    },
+    tinytunSupported(val) {
+      if (val && this.transparentType === 'tun') {
+        this.fetchNetworkInterfaces();
+      }
+    },
   },
   created() {
     this.getSettingData();
@@ -386,6 +442,17 @@ export default {
   methods: {
     dayjs() {
       return dayjs.apply(this, arguments);
+    },
+    fetchNetworkInterfaces() {
+      this.$axios({ url: apiRoot + '/networkInterfaces' }).then((res) => {
+        if (res.data && res.data.data && res.data.data.interfaces) {
+          this.availableInterfaces = res.data.data.interfaces;
+          // Re-apply the tunBypassInterfaces string now that we know available names
+          if (this.tunBypassInterfaces) {
+            this.tunBypassInterfacesComputed = this.tunBypassInterfaces;
+          }
+        }
+      });
     },
     getSettingData() {
       this.$axios({
@@ -411,6 +478,10 @@ export default {
             if (versionRes.data && versionRes.data.data) {
               this.os = versionRes.data.data.os || "";
               this.isRoot = versionRes.data.data.isRoot || false;
+              this.tinytunSupported = versionRes.data.data.tinytunSupported || false;
+            }
+            if (this.transparentType === 'tun' && this.tinytunSupported) {
+              this.fetchNetworkInterfaces();
             }
           });
           if (this.lite) {
@@ -442,14 +513,16 @@ export default {
             mux: parseInt(this.mux),
             transparent: this.transparent,
             transparentType: this.transparentType,
-            tunFakeIP: this.tunFakeIP,
-            tunIPv6: this.tunIPv6,
-            tunStrictRoute: this.tunStrictRoute,
-            tunAutoRoute: this.tunAutoRoute,
             ipforward: this.ipforward,
             portSharing: this.portSharing,
             routeOnly: this.routeOnly,
             tproxyExcludedInterfaces: this.tproxyExcludedInterfaces,
+            tunAutoRoute: this.tunAutoRoute,
+            tunBypassInterfaces: this.tunBypassInterfacesComputed,
+            tunRouteShellType: this.tunRouteShellType,
+            tunRouteShellPath: this.tunRouteShellPath,
+            tunSetupScript: this.tunSetupScript,
+            tunTeardownScript: this.tunTeardownScript,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
@@ -547,6 +620,29 @@ export default {
         component: modalDnsSetting,
         hasModalCard: true,
         canCancel: true,
+      });
+    },
+    handleClickTunRouteScript() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalTinyTunRouteScript,
+        hasModalCard: true,
+        canCancel: true,
+        props: {
+          os: this.os,
+          shellType: this.tunRouteShellType,
+          shellPath: this.tunRouteShellPath,
+          setupScript: this.tunSetupScript,
+          teardownScript: this.tunTeardownScript,
+        },
+        events: {
+          save: (data) => {
+            this.tunRouteShellType = data.shellType;
+            this.tunRouteShellPath = data.shellPath;
+            this.tunSetupScript = data.setupScript;
+            this.tunTeardownScript = data.teardownScript;
+          },
+        },
       });
     },
   },

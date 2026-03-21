@@ -27,7 +27,6 @@ import (
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/tun"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -107,50 +106,6 @@ type Addr struct {
 	host string
 	port string
 	udp  bool
-}
-
-// ExtractDnsServerHostsFromTemplate extracts all DNS server hostnames/IPs from v2ray Template's DNS configuration
-// This reads from the actual configured DNS servers, respecting user's settings (Advanced or preset modes)
-// Returns a list of hostnames that may need resolution (domains or IPs)
-func ExtractDnsServerHostsFromTemplate(tmpl *Template) []string {
-	if tmpl == nil || tmpl.DNS == nil || len(tmpl.DNS.Servers) == 0 {
-		return nil
-	}
-
-	var hosts []string
-	seen := make(map[string]bool)
-
-	for _, server := range tmpl.DNS.Servers {
-		var host string
-
-		switch s := server.(type) {
-		case string:
-			// Simple string like "8.8.8.8" or "https://dns.google/dns-query"
-			addr := parseDnsAddr(s)
-			host = addr.host
-		case coreObj.DnsServer:
-			// DnsServer object with Address field
-			if s.Address != "" {
-				addr := parseDnsAddr(s.Address)
-				host = addr.host
-			}
-		case map[string]interface{}:
-			// JSON object: {"address": "1.1.1.1", "port": 53, ...}
-			if addrVal, ok := s["address"]; ok {
-				if addrStr, ok := addrVal.(string); ok {
-					addr := parseDnsAddr(addrStr)
-					host = addr.host
-				}
-			}
-		}
-
-		if host != "" && host != "localhost" && host != "fakedns" && !seen[host] {
-			hosts = append(hosts, host)
-			seen[host] = true
-		}
-	}
-
-	return hosts
 }
 
 func parseDnsAddr(addr string) Addr {
@@ -497,28 +452,24 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 	t.Routing.Rules = append(t.Routing.Rules,
 		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
 	)
-	// Always route TUN dokodemo DNS inbound (IPv4/IPv6) to dns-out
-	t.Routing.Rules = append(t.Routing.Rules,
-		coreObj.RoutingRule{Type: "field", InboundTag: []string{"tun-dns-in", "tun-dns-in-v6"}, OutboundTag: "dns-out"},
-		// Explicitly route traffic coming from the TUN DNS listener (port 6053) into the DNS module.
-		coreObj.RoutingRule{Type: "field", Port: strconv.Itoa(tun.TunDNSListenPort), OutboundTag: "dns-out"},
-	)
+	// Route dns-in-tun (TinyTun DNS door on 127.0.0.1:6053) into the DNS outbound
+	// so that v2fly DNS routing rules are applied.
+	if t.Setting != nil && t.Setting.TransparentType == configure.TransparentTun {
+		t.Routing.Rules = append(t.Routing.Rules,
+			coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in-tun"}, OutboundTag: "dns-out"},
+		)
+	}
 	setting := t.Setting
 	// DNS is always active: hijack port-53 traffic into dns-out
-	{
-		dnsOut := coreObj.RoutingRule{
-			Type:        "field",
-			Port:        "53",
-			OutboundTag: "dns-out",
+	if ShouldLocalDnsListen() {
+		if couldListenLocalhost, _ := CouldLocalDnsListen(); couldListenLocalhost {
+			t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
+				Type:        "field",
+				InboundTag:  []string{"dns-in"},
+				Port:        "53",
+				OutboundTag: "dns-out",
+			})
 		}
-		inTags := []string{"tun-dns-in"}
-		if ShouldLocalDnsListen() {
-			if couldListenLocalhost, _ := CouldLocalDnsListen(); couldListenLocalhost {
-				inTags = append(inTags, "dns-in")
-			}
-		}
-		dnsOut.InboundTag = inTags
-		t.Routing.Rules = append(t.Routing.Rules, dnsOut)
 	}
 	if !supportUDP[firstOutboundTag] {
 		// find an outbound that supports UDP and redirect all leaky UDP traffic to it
@@ -1001,7 +952,6 @@ func (t *Template) setDualStack() {
 	// Special exclusions:
 	//   transparent+Redirect  – kernel REDIRECT requires 0.0.0.0
 	//   dns-in                – receives the 127.2.0.17 treatment below
-	//   tun-dns-in / tun-dns-in-v6 – already manually paired in setInbound
 	for i := range t.Inbounds {
 		tag := t.Inbounds[i].Tag
 		if tag == "transparent" && t.Setting.TransparentType == configure.TransparentRedirect {
@@ -1011,7 +961,7 @@ func (t *Template) setDualStack() {
 			inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
 			continue
 		}
-		if tag == "dns-in" || tag == "tun-dns-in" || tag == "tun-dns-in-v6" {
+		if tag == "dns-in" {
 			// Handled separately — skip generic duplication.
 			inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
 			continue
@@ -1167,7 +1117,7 @@ func GetBestLocalIP(preferIPv6 bool) (net.IP, error) {
 			continue
 		}
 
-		// Skip TUN interfaces (typically named tun0, utun0, sing-tun, etc.)
+		// Skip TUN interfaces (typically named tun0, utun0, etc.)
 		ifName := strings.ToLower(iface.Name)
 		if strings.Contains(ifName, "tun") || strings.Contains(ifName, "tap") {
 			continue
@@ -1326,42 +1276,6 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 		switch t.Setting.TransparentType {
 		case configure.TransparentTproxy, configure.TransparentRedirect:
 			t.AppendDokodemoTProxy(string(t.Setting.TransparentType), 52345, "transparent")
-		case configure.TransparentGvisorTun, configure.TransparentSystemTun:
-			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
-				Port:     52345,
-				Protocol: "socks",
-				Listen:   "127.0.0.1",
-				Settings: &coreObj.InboundSettings{
-					UDP: true,
-				},
-				Tag: "transparent",
-			})
-			// Local dokodemo-door listener for DNS (used by TUN DNS forwarder)
-			// Bind explicitly for IPv4 and IPv6 to cover both address families on Windows.
-			t.Inbounds = append(t.Inbounds,
-				coreObj.Inbound{
-					Port:     tun.TunDNSListenPort,
-					Protocol: "dokodemo-door",
-					Listen:   "127.0.0.1",
-					Settings: &coreObj.InboundSettings{
-						Network: "tcp,udp",
-						Address: "127.0.0.1",
-						Port:    53,
-					},
-					Tag: "tun-dns-in",
-				},
-				coreObj.Inbound{
-					Port:     tun.TunDNSListenPort,
-					Protocol: "dokodemo-door",
-					Listen:   "::1",
-					Settings: &coreObj.InboundSettings{
-						Network: "tcp,udp",
-						Address: "::1",
-						Port:    53,
-					},
-					Tag: "tun-dns-in-v6",
-				},
-			)
 		case configure.TransparentSystemProxy:
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 				Port:     52345,
@@ -1376,6 +1290,27 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 					UDP: true,
 				},
 				Tag: "transparent-socks",
+			})
+		case configure.TransparentTun:
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     tinytunSocksPort,
+				Protocol: "socks",
+				Listen:   "127.0.0.1",
+				Tag:      "transparent",
+			})
+			// A dedicated dokodemo-door on 127.0.0.1:6053 receives DNS queries forwarded
+			// by TinyTun (dns.servers entries in tinytun.json point here) and feeds them
+			// into the v2fly DNS module so routing rules apply properly.
+			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
+				Port:     6053,
+				Protocol: "dokodemo-door",
+				Listen:   "127.0.0.1",
+				Settings: &coreObj.InboundSettings{
+					Network: "udp",
+					Address: "8.8.8.8",
+					Port:    53,
+				},
+				Tag: "dns-in-tun",
 			})
 		}
 
@@ -1991,14 +1926,6 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 
 	//set inbound listening address and routing
 	t.setDualStack()
-
-	if IsTransparentOn(t.Setting) {
-		switch t.Setting.TransparentType {
-		case configure.TransparentGvisorTun, configure.TransparentSystemTun:
-			//set outbound sendThrough address
-			t.setSendThrough()
-		}
-	}
 
 	//check if there are any duplicated tags
 	if err = t.checkDuplicatedTags(); err != nil {

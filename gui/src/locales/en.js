@@ -93,7 +93,8 @@ export default {
     switchSite: "Switch to alternate site",
     addOutbound: "Add an outbound",
     domainsExcluded: "Domains Excluded",
-    tproxyExcludedInterfaces: "Excluded Interface Prefixes"
+    tproxyExcludedInterfaces: "Excluded Interface Prefixes",
+    configureTunRouteScript: "Configure Route Script"
   },
   register: {
     title: "Create an admin account first",
@@ -111,8 +112,6 @@ export default {
   setting: {
     transparentProxy: "Transparent Proxy/System Proxy",
     transparentType: "Transparent Proxy/System Proxy Implementation",
-    tunMode: "TUN Mode",
-    tunIPv6: "TUN IPv6",
     logLevel: "Log Level",
     pacMode: "Traffic Splitting Mode of Rule Port",
     mux: "Multiplex",
@@ -120,6 +119,11 @@ export default {
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
     tproxyExcludedInterfaces: "Excluded Interface Prefixes",
+    tunAutoRoute: "Auto Route",
+    tunBypassInterfaces: "TUN Bypassed Interfaces",
+    tunBypassCustomPlaceholder: "Custom glob patterns, e.g. docker*, vmnet*",
+    tunBypassSelectPlaceholder: "Select interfaces...",
+    tunBypassSelected: "{n} interface(s) selected",
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
@@ -140,6 +144,7 @@ export default {
       default: "Keep Default",
       on: "On",
       off: "Off",
+      notIntegrated: "not integrated",
       updateSubWhenStart: "Update Subscriptions When Service Starts",
       updateSubAtIntervals: "Update Subscriptions Regularly (Unit: hour)",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
@@ -156,13 +161,12 @@ export default {
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers and docker as the gateway should make option 'Share in LAN' on.",
       transparentType:
-        "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution.",
+        "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution. ★tun (TinyTun): cross-platform TUN-based proxy, requires tinytun binary.",
       tproxyExcludedInterfaces:
         "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*, br-*. Use commas to separate multiple prefixes.",
-      tunMode:
-        "★FakeIP: Use fake IPs to accelerate DNS resolution and improve performance. ★RealIP: Use real IPs, more suitable for certain special applications.",
-      tunIPv6:
-        "Enable IPv6 traffic support in TUN interface. Note: Requires IPv6 network support from your system.",
+      tunAutoRoute:
+        "When enabled, TinyTun automatically configures system routes. When disabled, you must provide custom setup/teardown scripts to configure routing yourself.",
+      tunBypassInterfaces: "Select interfaces to exclude from TUN proxying, or enter custom glob patterns below.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing: "",
       tcpFastOpen:
@@ -388,5 +392,19 @@ export default {
     ],
     formName: "Custom Download Link",
     wrongCustomLink: "wrong custom download link"
+  },
+  tinytun: {
+    routeScript: {
+      title: "TinyTun Custom Route Script",
+      warning: "Warning: Incorrect scripts may break your network or system routing. Make sure you know what you are doing before saving.",
+      shellType: "Shell Type",
+      customShell: "Custom (specify path below)",
+      shellPath: "Shell Path",
+      shellPathPlaceholder: "/usr/bin/bash",
+      setupScript: "Setup Script (runs after TinyTun starts)",
+      setupScriptPlaceholder: "# Script to configure routes when TinyTun starts\n# e.g. ip route add default dev tun0",
+      teardownScript: "Teardown Script (runs before TinyTun stops)",
+      teardownScriptPlaceholder: "# Script to remove routes when TinyTun stops\n# e.g. ip route del default dev tun0",
+    }
   }
 };

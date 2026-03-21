@@ -23,6 +23,7 @@ type Params struct {
 	CoreStartupTimeout   int64  `id:"core-startup-timeout" default:"15" desc:"Timeout duration in seconds for starting v2ray or xray core. On devices with lower performance, consider increasing this value."`
 	TransparentHook      string `id:"transparent-hook" desc:"the executable file to run in the transparent proxy life-cycle. v2rayA will pass in the --transparent-type (tproxy, redirect) and --stage (pre-start, post-start, pre-stop, post-stop) arguments."`
 	CoreHook             string `id:"core-hook" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
+	TinyTunBin           string `id:"tinytun-bin" desc:"Executable tinytun binary path for TUN transparent proxy mode. Auto-detect from PATH if empty."`
 	PluginManager        string `id:"plugin-manager" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
 	WebDir               string `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
 	IPV6Support          string `id:"ipv6-support" default:"auto" desc:"Optional values: auto, on, off. Make sure your IPv6 network works fine before you turn it on."`

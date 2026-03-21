@@ -200,6 +200,7 @@ func Run() error {
 		auth.GET("tproxyWhiteIpGroups", controller.GetTproxyWhiteIpGroups)
 		auth.PUT("domainsExcluded", controller.PutDomainsExcluded)
 		auth.PUT("tproxyWhiteIpGroups", controller.PutTproxyWhiteIpGroups)
+		auth.GET("networkInterfaces", controller.GetNetworkInterfaces)
 	}
 
 	ServeGUI(engine)
