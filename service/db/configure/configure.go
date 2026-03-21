@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -22,8 +21,7 @@ type Configure struct {
 	Setting             *Setting            `json:"setting"`
 	Accounts            map[string]string   `json:"accounts"`
 	Ports               Ports               `json:"ports"`
-	InternalDnsList     *string             `json:"internalDnsList"`
-	ExternalDnsList     *string             `json:"externalDnsList"`
+	DnsRules            []DnsRule           `json:"dnsRules"`
 	RoutingA            *string             `json:"routingA"`
 	DomainsExcluded     *string             `json:"domainsExcluded"`
 	TproxyWhiteIpGroups TproxyWhiteIpGroups `json:"tproxyWhiteIpGroups"`
@@ -43,8 +41,6 @@ func New() *Configure {
 			HttpWithPac:   20172,
 			Vmess:         0,
 		},
-		InternalDnsList: nil,
-		ExternalDnsList: nil,
 		RoutingA:        nil,
 		DomainsExcluded: nil,
 	}
@@ -94,11 +90,10 @@ func SetConfigure(cfg *Configure) error {
 	if err := SetRoutingA(cfg.RoutingA); err != nil {
 		return err
 	}
-	if err := SetInternalDnsList(cfg.InternalDnsList); err != nil {
-		return err
-	}
-	if err := SetExternalDnsList(cfg.ExternalDnsList); err != nil {
-		return err
+	if cfg.DnsRules != nil {
+		if err := SetDnsRules(cfg.DnsRules); err != nil {
+			return err
+		}
 	}
 	if err := OverwriteConnects(NewWhiches(cfg.ConnectedServers)); err != nil {
 		return err
@@ -130,18 +125,6 @@ func SetSetting(setting *Setting) (err error) {
 }
 func SetPorts(ports *Ports) (err error) {
 	return db.Set("system", "ports", ports)
-}
-func SetInternalDnsList(dnsList *string) (err error) {
-	if dnsList == nil {
-		return db.Set("system", "internalDnsList", nil)
-	}
-	return db.Set("system", "internalDnsList", strings.TrimSpace(*dnsList))
-}
-func SetExternalDnsList(dnsList *string) (err error) {
-	if dnsList == nil {
-		return db.Set("system", "externalDnsList", nil)
-	}
-	return db.Set("system", "externalDnsList", strings.TrimSpace(*dnsList))
 }
 func SetRoutingA(routingA *string) (err error) {
 	return db.Set("system", "routingA", routingA)
@@ -210,9 +193,6 @@ func GetSettingNotNil() *Setting {
 		_ = jsoniter.Unmarshal(b, r)
 	}
 	_ = common.FillEmpty(r, NewSetting())
-	if r.SpecialMode == "" {
-		r.SpecialMode = SpecialModeNone
-	}
 	if r.TransparentType == "" {
 		r.TransparentType = TransparentRedirect
 	}
@@ -231,29 +211,6 @@ func GetPortsNotNil() *Ports {
 		p.Api = ApiPort{Port: 0}
 	}
 	return p
-}
-func GetExternalDnsListNotNil() (list []string) {
-	r := new(string)
-	_ = db.Get("system", "externalDnsList", r)
-	list = strings.Split(strings.TrimSpace(*r), "\n")
-	if len(list) == 1 && list[0] == "" {
-		return []string{}
-	}
-	return
-}
-func GetInternalDnsListNotNil() (list []string) {
-	r := new(string)
-	_ = db.Get("system", "internalDnsList", r)
-	if len(strings.TrimSpace(*r)) == 0 {
-		*r = `https://dns.alidns.com/dns-query -> direct
-tcp://dns.opendns.com:5353 -> proxy
-119.29.29.29 -> direct`
-	}
-	list = strings.Split(strings.TrimSpace(*r), "\n")
-	if len(list) == 1 && list[0] == "" {
-		return []string{}
-	}
-	return
 }
 func GetCustomPacNotNil() *CustomPac {
 	r := new(CustomPac)

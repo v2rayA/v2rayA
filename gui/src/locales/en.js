@@ -115,8 +115,6 @@ export default {
     tunIPv6: "TUN IPv6",
     logLevel: "Log Level",
     pacMode: "Traffic Splitting Mode of Rule Port",
-    preventDnsSpoofing: "Prevent DNS Spoofing",
-    specialMode: "Special Mode",
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
@@ -139,9 +137,6 @@ export default {
       gfwlist: "Proxy only GFWList",
       sameAsPacMode: "Traffic Splitting Mode is the Same as the Rule Port",
       customRouting: "Customized Routing",
-      antiDnsHijack: "Prevent DNS Hijack Only (fast)",
-      forwardDnsRequest: "Forward DNS Request",
-      doh: "DoH(dns-over-https)",
       default: "Keep Default",
       on: "On",
       off: "Off",
@@ -169,11 +164,7 @@ export default {
       tunIPv6:
         "Enable IPv6 traffic support in TUN interface. Note: Requires IPv6 network support from your system.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
-      preventDnsSpoofing:
-        "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
-      specialMode:
-        "★supervisor：Monitor dns pollution, intercept in advance, use the sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving.",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
@@ -241,13 +232,18 @@ export default {
     ],
   },
   dns: {
-    title: "Configure DNS Server",
-    internalQueryServers: "Domain Query Servers",
-    externalQueryServers: "External Domain Query Servers",
-    messages: [
-      '"@:(dns.internalQueryServers)" are designed to be used to look up domain names in China, while "@:(dns.externalQueryServers)" be used to look up others.',
-      '"@:(dns.internalQueryServers)" will be used to look up all domain names if "@:(dns.externalQueryServers)" is empty.',
-    ],
+    title: "DNS Settings",
+    help: "DNS Help",
+    helpTooltip: "View v2fly DNS documentation",
+    hint: "Fallback DNS (empty domains) goes at the top",
+    colServer: "DNS Server",
+    colDomains: "Domain List",
+    colOutbound: "Outbound",
+    serverPlaceholder: "e.g. 8.8.8.8 or https://dns.google/dns-query",
+    domainsPlaceholder: "One per line, e.g. geosite:cn\nLeave empty for fallback DNS",
+    addRule: "Add Rule",
+    resetDefault: "Reset to Defaults",
+    errNoRules: "At least one DNS rule is required",
   },
   egressPortWhitelist: {
     title: "Egress Port Whitelist",

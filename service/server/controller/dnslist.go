@@ -2,50 +2,37 @@ package controller
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/server/service"
 )
 
-func PutDnsList(ctx *gin.Context) {
-	var data struct {
-		Internal string `json:"internal"`
-		External string `json:"external"`
-	}
-	err := ctx.ShouldBindJSON(&data)
-	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+func PutDnsRules(ctx *gin.Context) {
+	var rules []configure.DnsRule
+	if err := ctx.ShouldBindJSON(&rules); err != nil {
+		common.ResponseError(ctx, logError(fmt.Errorf("bad request: %w", err)))
 		return
 	}
-	if len(data.Internal) == 0 && len(data.External) != 0 {
-		common.ResponseError(ctx, logError("internal dns servers cannot be empty"))
-		return
+	for i, rule := range rules {
+		if rule.Server == "" {
+			common.ResponseError(ctx, logError(fmt.Errorf("rule[%d]: server cannot be empty", i)))
+			return
+		}
+		if rule.Outbound == "" {
+			common.ResponseError(ctx, logError(fmt.Errorf("rule[%d]: outbound cannot be empty", i)))
+			return
+		}
 	}
-	internal, err := service.RefineDnsList(data.Internal)
-	if err != nil {
-		common.ResponseError(ctx, logError(fmt.Errorf("internal dns servers: %w", err)))
-		return
-	}
-	external, err := service.RefineDnsList(data.External)
-	if err != nil {
-		common.ResponseError(ctx, logError(fmt.Errorf("external dns servers: %w", err)))
-		return
-	}
-	if err = configure.SetInternalDnsList(&internal); err != nil {
-		common.ResponseError(ctx, logError(err))
-		return
-	}
-	if err = configure.SetExternalDnsList(&external); err != nil {
+	if err := configure.SetDnsRules(rules); err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
 	common.ResponseSuccess(ctx, nil)
 }
 
-func GetDnsList(ctx *gin.Context) {
+func GetDnsRules(ctx *gin.Context) {
 	common.ResponseSuccess(ctx, gin.H{
-		"internal": configure.GetInternalDnsListNotNil(),
-		"external": configure.GetExternalDnsListNotNil(),
+		"rules": configure.GetDnsRulesNotNil(),
 	})
 }

@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/core/specialMode"
 	"os"
 	"time"
 )
@@ -20,7 +19,7 @@ type ResolvHijacker struct {
 func NewResolvHijacker() *ResolvHijacker {
 	hij := ResolvHijacker{
 		ticker:   time.NewTicker(checkInterval),
-		localDNS: specialMode.ShouldLocalDnsListen(),
+		localDNS: ShouldLocalDnsListen(),
 	}
 	hij.HijackResolv()
 	go func() {

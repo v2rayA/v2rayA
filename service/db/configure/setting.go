@@ -22,9 +22,7 @@ type Setting struct {
 	IpForward                          bool            `json:"ipforward"`
 	RouteOnly                          bool            `json:"routeOnly"`
 	PortSharing                        bool            `json:"portSharing"`
-	SpecialMode                        SpecialMode     `json:"specialMode"`
 	TransparentType                    TransparentType `json:"transparentType"`
-	AntiPollution                      Antipollution   `json:"antipollution"`
 	TunFakeIP                          bool            `json:"tunFakeIP"`
 	TunIPv6                            bool            `json:"tunIPv6"`
 	TunStrictRoute                     bool            `json:"tunStrictRoute"`
@@ -48,9 +46,7 @@ func NewSetting() (setting *Setting) {
 		Transparent:                        TransparentClose,
 		IpForward:                          ipforward.IsIpForwardOn(),
 		PortSharing:                        false,
-		SpecialMode:                        SpecialModeNone,
 		TransparentType:                    TransparentRedirect,
-		AntiPollution:                      AntipollutionClosed,
 		TunFakeIP:                          true,
 		TunIPv6:                            false,
 		TunStrictRoute:                     false,

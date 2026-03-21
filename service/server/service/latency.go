@@ -129,12 +129,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	if tmpl == nil {
 		tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
-			RulePortMode:  configure.WhitelistMode,
-			TcpFastOpen:   configure.Default,
-			MuxOn:         configure.No,
-			Transparent:   configure.TransparentClose,
-			SpecialMode:   configure.SpecialModeNone,
-			AntiPollution: configure.AntipollutionClosed,
+			RulePortMode: configure.WhitelistMode,
+			TcpFastOpen:  configure.Default,
+			MuxOn:        configure.No,
+			Transparent:  configure.TransparentClose,
 		})
 		tmpl.SetAPI(nil)
 	}
@@ -299,12 +297,10 @@ func IsSupported(which configure.Which) (bool, error) {
 	)
 
 	tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
-		RulePortMode:  configure.WhitelistMode,
-		TcpFastOpen:   configure.Default,
-		MuxOn:         configure.No,
-		Transparent:   configure.TransparentClose,
-		SpecialMode:   configure.SpecialModeNone,
-		AntiPollution: configure.AntipollutionClosed,
+		RulePortMode: configure.WhitelistMode,
+		TcpFastOpen:  configure.Default,
+		MuxOn:        configure.No,
+		Transparent:  configure.TransparentClose,
 	})
 	tmpl.SetAPI(nil)
 	serverRaw, _ := which.LocateServerRaw()

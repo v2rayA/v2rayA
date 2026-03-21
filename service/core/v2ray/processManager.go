@@ -8,7 +8,6 @@ import (
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -23,7 +22,6 @@ var ProcessManager CoreProcessManager
 
 func (m *CoreProcessManager) beforeStop(p *Process) {
 	m.CheckAndStopTransparentProxy(p.template.Setting)
-	specialMode.StopDNSSupervisor()
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
@@ -220,7 +218,6 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 	if err = m.CheckAndSetupTransparentProxy(false, t.Setting, t); err != nil {
 		return err
 	}
-	specialMode.CheckAndSetupDNSSupervisor()
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")

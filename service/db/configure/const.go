@@ -11,8 +11,6 @@ type (
 	DefaultYesNo            string
 	TransparentMode         string
 	TransparentType         string
-	Antipollution           string
-	SpecialMode             string
 	InboundSniffing         string
 )
 
@@ -64,16 +62,6 @@ const (
 	InboundSniffingDisable     = InboundSniffing("disable")
 	InboundSniffingHttpTLS     = InboundSniffing("http,tls")
 	InboundSniffingHttpTlsQuic = InboundSniffing("http,tls,quic")
-
-	AntipollutionDnsForward = Antipollution("dnsforward")
-	AntipollutionDoH        = Antipollution("doh")
-	AntipollutionAntiHijack = Antipollution("none") // 历史原因，none代表“仅防止dns劫持”，不代表关闭
-	AntipollutionClosed     = Antipollution("closed")
-	AntipollutionAdvanced   = Antipollution("advanced") // 自定义
-
-	SpecialModeNone       = SpecialMode("none")
-	SpecialModeSupervisor = SpecialMode("supervisor")
-	SpecialModeFakeDns    = SpecialMode("fakedns")
 )
 
 const (

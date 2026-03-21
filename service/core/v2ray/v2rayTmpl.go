@@ -21,14 +21,12 @@ import (
 	"github.com/mohae/deepcopy"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/antiPollution"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/coreObj"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/tun"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
@@ -48,7 +46,6 @@ type Template struct {
 		Balancers      []coreObj.Balancer    `json:"balancers,omitempty"`
 	} `json:"routing"`
 	DNS              *coreObj.DNS              `json:"dns,omitempty"`
-	FakeDns          *coreObj.FakeDns          `json:"fakedns,omitempty"`
 	MultiObservatory *coreObj.MultiObservatory `json:"multiObservatory,omitempty"`
 	Observatory      *coreObj.ObservatoryItem  `json:"observatory,omitempty"`
 	API              *coreObj.APIObject        `json:"api,omitempty"`
@@ -176,15 +173,17 @@ func parseDnsAddr(addr string) Addr {
 		}
 	}
 	// tcp://8.8.8.8:53, https://dns.google/dns-query, quic://dns.nextdns.io
-	if u, err := url.Parse(addr); err == nil {
-		udp := false
-		if u.Scheme == "quic" {
-			udp = true
-		}
-		return Addr{
-			host: u.Hostname(),
-			port: u.Port(),
-			udp:  udp,
+	if strings.Contains(addr, "://") {
+		if u, err := url.Parse(addr); err == nil {
+			udp := false
+			if u.Scheme == "quic" {
+				udp = true
+			}
+			return Addr{
+				host: u.Hostname(),
+				port: u.Port(),
+				udp:  udp,
+			}
 		}
 	}
 	// dns.google, dns.pub, etc.
@@ -301,97 +300,85 @@ func (t *Template) FirstProxyOutboundName(filter func(outboundName string, isGro
 	return
 }
 
-func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (routing []coreObj.RoutingRule, err error) {
-	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
-	firstUDPSupportedOutboundTag, _ := t.FirstProxyOutboundName(func(outboundName string, isGroup bool) bool {
-		return supportUDP[outboundName]
-	})
-	outboundTags := t.outNames()
-	var internal, external, all []string
-	var allThroughProxy = false
-	if t.Setting.AntiPollution == configure.AntipollutionAdvanced {
-		// advanced
-		internal = configure.GetInternalDnsListNotNil()
-		external = configure.GetExternalDnsListNotNil()
-		all = append(all, internal...)
-		all = append(all, external...)
-		if len(external) == 0 {
-			allThroughProxy = true
-			for _, line := range internal {
-				dns := ParseAdvancedDnsLine(line)
-				if dns.Out == "direct" {
-					allThroughProxy = false
-					break
-				}
+// dnsRuleToLines converts a configure.DnsRule to the "server -> outbound" line format
+// and the domain list used for the DNS server object.
+// Returns (serverLine, []domains). serverLine is empty if server is empty.
+func dnsRuleToLines(rule configure.DnsRule) (serverLine string, domains []string) {
+	if rule.Server == "" {
+		return "", nil
+	}
+	serverLine = rule.Server + " -> " + rule.Outbound
+	if rule.Domains != "" {
+		for _, d := range strings.Split(strings.TrimSpace(rule.Domains), "\n") {
+			d = strings.TrimSpace(d)
+			if d != "" {
+				domains = append(domains, d)
 			}
-		}
-		// check if outbounds exist
-		for _, line := range all {
-			dns := ParseAdvancedDnsLine(line)
-			if _, ok := outboundTags[dns.Out]; !ok {
-				return nil, fmt.Errorf(`your DNS rule "%v" depends on the outbound "%v", thus you should select at least one server in this outbound`, line, dns.Out)
-			}
-		}
-		// check UDP support
-		for _, line := range all {
-			dns := ParseAdvancedDnsLine(line)
-			if dns.Out == "direct" || dns.Out == "block" {
-				continue
-			}
-			if parseDnsAddr(dns.Val).udp && !supportUDP[dns.Out] {
-				return nil, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// and doh:// DNS rule instead, or change the connected server`, dns.Out)
-			}
-		}
-	} else if t.Setting.AntiPollution != configure.AntipollutionClosed {
-		// preset
-		internal = []string{"223.6.6.6 -> direct", "119.29.29.29 -> direct"}
-		switch t.Setting.AntiPollution {
-		case configure.AntipollutionAntiHijack:
-			break
-		case configure.AntipollutionDnsForward:
-			if firstUDPSupportedOutboundTag != "" {
-				external = antiPollution.GetExternalDNS(firstUDPSupportedOutboundTag)
-			} else {
-				external = []string{"tcp://dns.opendns.com:5353 -> " + firstOutboundTag, "tcp://dns.google -> " + firstOutboundTag}
-			}
-		case configure.AntipollutionDoH:
-			external = []string{"https://doh.pub/dns-query -> direct", "https://rubyfish.cn/dns-query -> direct"}
 		}
 	}
-	True := true
+	return serverLine, domains
+}
+
+func (t *Template) setDNS(outbounds []serverInfo, supportUDP map[string]bool) (routing []coreObj.RoutingRule, err error) {
+	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
+	outboundTags := t.outNames()
+
+	rules := configure.GetDnsRulesNotNil()
+
+	// Validate outbound tags existence and UDP constraints
+	for _, rule := range rules {
+		if rule.Server == "" || rule.Outbound == "" {
+			continue
+		}
+		if rule.Outbound == "direct" || rule.Outbound == "block" {
+			continue
+		}
+		if _, ok := outboundTags[rule.Outbound]; !ok {
+			return nil, fmt.Errorf(`your DNS rule "%v -> %v" depends on the outbound "%v", thus you should select at least one server in this outbound`, rule.Server, rule.Outbound, rule.Outbound)
+		}
+		if parseDnsAddr(rule.Server).udp && !supportUDP[rule.Outbound] {
+			return nil, fmt.Errorf(`due to the protocol of outbound "%v" with no UDP supported, please use tcp:// or https:// DNS instead, or change the connected server`, rule.Outbound)
+		}
+	}
+
 	t.DNS = &coreObj.DNS{
 		Tag: "dns",
 	}
-	if allThroughProxy {
-		// guess the user want to protect the privacy
-		t.DNS.DisableFallback = &True
-	}
-	if t.Setting.AntiPollution != configure.AntipollutionClosed {
-		if len(external) == 0 {
-			// not split traffic
-			d, r := parseAdvancedDnsServers(internal, nil)
-			t.DNS.Servers = append(t.DNS.Servers, d...)
-			routing = append(routing, r...)
-		} else {
-			// split traffic
-			d, r := parseAdvancedDnsServers(external, nil)
-			t.DNS.Servers = append(t.DNS.Servers, d...)
-			routing = append(routing, r...)
 
-			d, r = parseAdvancedDnsServers(internal, []string{"geosite:cn"})
-			t.DNS.Servers = append(t.DNS.Servers, d...)
-			routing = append(routing, r...)
+	// Separate fallback (no domain) from domain-specific rules.
+	// Per v2fly docs: fallback servers (no domains) should come FIRST in the list
+	// and are represented as plain strings, not wrapped in objects.
+	var fallbackLines []string
+	type domainGroup struct {
+		line    string
+		domains []string
+	}
+	var domainGroups []domainGroup
+
+	for _, rule := range rules {
+		line, domains := dnsRuleToLines(rule)
+		if line == "" {
+			continue
+		}
+		if len(domains) == 0 {
+			fallbackLines = append(fallbackLines, line)
+		} else {
+			domainGroups = append(domainGroups, domainGroup{line: line, domains: domains})
 		}
 	}
 
-	// fakedns
-	if specialMode.ShouldUseFakeDns() {
-		t.DNS.Servers = append([]interface{}{
-			"fakedns",
-			coreObj.DnsServer{
-				Address: "fakedns", Domains: []string{"geosite:cn"},
-			},
-		}, t.DNS.Servers...)
+	// Add fallback servers first (plain string form)
+	if len(fallbackLines) > 0 {
+		d, r := parseAdvancedDnsServers(fallbackLines, nil)
+		t.DNS.Servers = append(t.DNS.Servers, d...)
+		routing = append(routing, r...)
+	}
+
+	// Add domain-specific servers (ServerObject form)
+	for _, g := range domainGroups {
+		d, r := parseAdvancedDnsServers([]string{g.line}, g.domains)
+		t.DNS.Servers = append(t.DNS.Servers, d...)
+		routing = append(routing, r...)
 	}
 
 	if t.DNS.Servers == nil {
@@ -499,15 +486,16 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 		coreObj.RoutingRule{Type: "field", Port: strconv.Itoa(tun.TunDNSListenPort), OutboundTag: "dns-out"},
 	)
 	setting := t.Setting
-	if setting.AntiPollution != configure.AntipollutionClosed {
-		dnsOut := coreObj.RoutingRule{ // hijack traffic to port 53
+	// DNS is always active: hijack port-53 traffic into dns-out
+	{
+		dnsOut := coreObj.RoutingRule{
 			Type:        "field",
 			Port:        "53",
 			OutboundTag: "dns-out",
 		}
 		inTags := []string{"tun-dns-in"}
-		if specialMode.ShouldLocalDnsListen() {
-			if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
+		if ShouldLocalDnsListen() {
+			if couldListenLocalhost, _ := CouldLocalDnsListen(); couldListenLocalhost {
 				inTags = append(inTags, "dns-in")
 			}
 		}
@@ -1041,7 +1029,7 @@ func (t *Template) setDualStack() {
 		hasDnsIn := false
 		for i := range t.Inbounds {
 			if t.Inbounds[i].Tag == "dns-in" {
-				if couldListenLocalhost, e := specialMode.CouldLocalDnsListen(); couldListenLocalhost && e != nil {
+				if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost && e != nil {
 					// listen only 127.2.0.17
 					t.Inbounds[i].Listen = "127.2.0.17"
 				} else {
@@ -1067,18 +1055,6 @@ func (t *Template) setDualStack() {
 		}
 	}
 }
-func (t *Template) setInboundFakeDnsDestOverride() {
-	if !specialMode.ShouldUseFakeDns() {
-		return
-	}
-	for i := range t.Inbounds {
-		if t.Inbounds[i].Sniffing.Enabled == false {
-			continue
-		}
-		t.Inbounds[i].Sniffing.DestOverride = []string{"fakedns"}
-	}
-}
-
 func (t *Template) appendDNSOutbound() {
 	t.Outbounds = append(t.Outbounds, coreObj.OutboundObject{
 		Tag:      "dns-out",
@@ -1352,9 +1328,8 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 		}
 
 	}
-	if specialMode.ShouldLocalDnsListen() {
-		if couldListenLocalhost, _ := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
-			// FIXME: xray cannot use fakedns+others (2021-07-17)
+	if ShouldLocalDnsListen() {
+		if couldListenLocalhost, _ := CouldLocalDnsListen(); couldListenLocalhost {
 			// set up a solo dokodemo-door for dns
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 				Port:     53,
@@ -1961,9 +1936,6 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 
 	//set outboundSockopt
 	t.SetOutboundSockopt()
-
-	//set fakedns destOverride
-	t.setInboundFakeDnsDestOverride()
 
 	//set inbound listening address and routing
 	t.setDualStack()

@@ -9,7 +9,6 @@ import (
 
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
-	"github.com/v2rayA/v2rayA/core/specialMode"
 	"github.com/v2rayA/v2rayA/core/tun"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -35,12 +34,6 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			deleteTransparentProxyRules()
 		}
 	}()
-	if specialMode.ShouldUseSupervisor() {
-		if err = iptables.DropSpoofing.GetSetupCommands().Run(true); err != nil {
-			log.Warn("DropSpoofing can't be enable: %v", err)
-			return err
-		}
-	}
 	setting := configure.GetSettingNotNil()
 	switch setting.TransparentType {
 	case configure.TransparentTproxy:
@@ -117,14 +110,12 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		return fmt.Errorf("undefined \"%v\" mode of transparent proxy", setting.TransparentType)
 	}
 
-	if specialMode.ShouldLocalDnsListen() {
-		if couldListenLocalhost, e := specialMode.CouldLocalDnsListen(); couldListenLocalhost {
+	if ShouldLocalDnsListen() {
+		if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
 				log.Warn("only listen at 127.2.0.17: %v", e)
 			}
 			resetResolvHijacker()
-		} else if specialMode.ShouldUseFakeDns() {
-			return fmt.Errorf("fakedns cannot be enabled: %w", e)
 		} else {
 			log.Warn("writeTransparentProxyRules: %v", e)
 		}

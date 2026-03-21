@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/netip"
 	"os"
-	"runtime"
 	"slices"
 	"sync"
 
@@ -233,35 +232,18 @@ func (t *singTun) Start(stack Stack) error {
 		failedCloser.Close()
 	}()
 
-	// On Windows, pre-exclude common public DNS servers to prevent routing loops
-	// when v2ray core uses them for direct outbound queries
-	if runtime.GOOS == "windows" {
-		commonDNS := []string{
-			"1.1.1.1/32", "1.0.0.1/32", // Cloudflare
-			"8.8.8.8/32", "8.8.4.4/32", // Google
-			"9.9.9.9/32", "149.112.112.112/32", // Quad9
-			"208.67.222.222/32", "208.67.220.220/32", // OpenDNS
-			"114.114.114.114/32",           // 114DNS
-			"223.5.5.5/32", "223.6.6.6/32", // AliDNS
-			// IPv6
-			"2001:4860:4860::8888/128", "2001:4860:4860::8844/128", // Google
-			"2606:4700:4700::1111/128", "2606:4700:4700::1001/128", // Cloudflare
-		}
-		for _, cidr := range commonDNS {
-			if prefix, err := netip.ParsePrefix(cidr); err == nil {
-				// Avoid duplicates if already added
-				exists := false
-				for _, ex := range t.excludeAddrs {
-					if ex == prefix {
-						exists = true
-						break
-					}
-				}
-				if !exists {
-					t.excludeAddrs = append(t.excludeAddrs, prefix)
-					log.Info("[TUN] Automatically excluded common DNS server: %s", cidr)
-				}
+	// 根据平台预排除需要绕过 TUN 的地址（如 Windows 上的公共 DNS）
+	for _, prefix := range platformPreExcludeAddrs() {
+		exists := false
+		for _, ex := range t.excludeAddrs {
+			if ex == prefix {
+				exists = true
+				break
 			}
+		}
+		if !exists {
+			t.excludeAddrs = append(t.excludeAddrs, prefix)
+			log.Info("[TUN] 平台预排除地址: %s", prefix)
 		}
 	}
 
@@ -297,19 +279,18 @@ func (t *singTun) Start(stack Stack) error {
 	autoRoute := t.autoRoute
 	strictRoute := t.strictRoute
 
-	// On Windows, disable sing-tun's AutoRoute if user has disabled it
-	// or if we need to add manual default route with proper metric
-	if runtime.GOOS == "windows" && autoRoute {
+	// 某些平台（如 Windows）需要关闭 sing-tun 的 AutoRoute，改用手动路由
+	if platformDisableAutoRoute() && autoRoute {
 		autoRoute = false
-		log.Info("[TUN] Windows: Disabling AutoRoute, will use manual routing")
+		log.Info("[TUN] 平台要求关闭 AutoRoute，改由手动路由管理")
 	} else if !t.autoRoute {
-		log.Info("[TUN] AutoRoute disabled by user configuration")
+		log.Info("[TUN] AutoRoute 已由用户配置禁用")
 	}
 
 	log.Info("[TUN] Starting with StrictRoute=%t, AutoRoute=%t", strictRoute, autoRoute)
 	log.Info("[TUN] Total exclusions: %d IPv4, %d IPv6", len(inet4Exclude), len(inet6Exclude))
-	if runtime.GOOS == "windows" && strictRoute {
-		log.Warn("[TUN] Windows: StrictRoute may only allow main process traffic!")
+	if platformDisableAutoRoute() && strictRoute {
+		log.Warn("[TUN] 当前平台：StrictRoute 可能只允许主进程流量通过！")
 	}
 
 	// Pre-install exclusion routes on platforms without fwmark support (e.g. Windows/macOS)
@@ -319,15 +300,12 @@ func (t *singTun) Start(stack Stack) error {
 		}
 	}
 
-	// Choose interface name based on platform
-	// macOS requires "utun" prefix, so we use empty string to let the system auto-assign
-	// Windows and Linux support custom names
-	tunName := "v2raya-tun"
-	if runtime.GOOS == "darwin" {
-		tunName = "" // macOS will auto-assign utun0, utun1, etc.
-		log.Info("[TUN] macOS: Using auto-assigned utun interface name")
+	// 接口名由平台函数决定（macOS 需返回空字符串以自动分配 utun*）
+	tunName := platformTunName()
+	if tunName == "" {
+		log.Info("[TUN] 使用系统自动分配的接口名")
 	} else {
-		log.Info("[TUN] Using custom interface name: %s", tunName)
+		log.Info("[TUN] 使用接口名: %s", tunName)
 	}
 
 	tunOptions := tun.Options{
@@ -409,15 +387,8 @@ func (t *singTun) Start(stack Stack) error {
 	t.waiter = &gvisorWaiter{tunStack}
 	t.tunName = tunName // Save for cleanup
 
-	// Setup DNS servers on Windows (sing-tun doesn't automatically apply DNS on Windows)
-	if len(dnsServers) > 0 {
-		if err := SetupTunDNS(dnsServers, tunName); err != nil {
-			log.Warn("[TUN] Failed to setup DNS servers: %v", err)
-		}
-	}
-
-	// Note: Server addresses are now excluded via Inet4/6RouteExcludeAddress
-	// No need for manual static routes - sing-tun handles it natively
+	// 执行平台特有的启动后操作（如 Windows 设置 DNS、macOS 配置网络服务 DNS）
+	platformPostStart(dnsServers, t.tunName)
 
 	t.dns.whitelist, _ = GetWhitelistCN()
 	// In TUN mode, we don't set d.servers so that DNS queries go through dnsForward mode
@@ -449,7 +420,7 @@ func (t *singTun) Close() error {
 		if err := CleanupExcludeRoutes(); err != nil {
 			log.Warn("[TUN] Failed to cleanup exclude routes: %v", err)
 		}
-		// Clear whitelist and exclusion list
+		// 清空白名单与排除列表
 		t.whitelist = nil
 		t.excludeAddrs = nil
 	}

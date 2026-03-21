@@ -115,8 +115,6 @@ export default {
     tunIPv6: "TUN IPv6",
     logLevel: "日志等级",
     pacMode: "规则端口的分流模式",
-    preventDnsSpoofing: "防止DNS污染",
-    specialMode: "特殊模式",
     mux: "多路复用",
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
@@ -138,9 +136,6 @@ export default {
       gfwlist: "GFWList模式",
       sameAsPacMode: "分流规则与规则端口所选模式一致",
       customRouting: "自定义路由规则",
-      antiDnsHijack: "仅防止DNS劫持(快速)",
-      forwardDnsRequest: "转发DNS请求",
-      doh: "DoH(DNS-over-HTTPS)",
       default: "保持系统默认",
       on: "启用",
       off: "关闭",
@@ -168,11 +163,7 @@ export default {
         "开启后TUN接口将支持IPv6流量。注意：需要系统支持IPv6网络。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
-      preventDnsSpoofing:
-        "★转发DNS查询: 通过代理服务器转发DNS请求。" +
-        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS。",
-      specialMode:
-        "★supervisor：监控dns污染，提前拦截，利用v2ray-core的sniffing解决污染。★fakedns：使用fakedns策略加速解析。",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。若系统不支持可能会导致无法正常连接。",
       mux: "复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。",
@@ -238,13 +229,18 @@ export default {
     ],
   },
   dns: {
-    title: "配置DNS服务器",
-    internalQueryServers: "域名查询服务器",
-    externalQueryServers: "国外域名查询服务器",
-    messages: [
-      "“@:(dns.internalQueryServers)” 用于查询国内域名，而 “@:(dns.externalQueryServers)” 用于查询国外域名。",
-      "如果将 “@:(dns.externalQueryServers)” 留空，“@:(dns.internalQueryServers)” 将会负责查询所有域名。",
-    ],
+    title: "DNS 设置",
+    help: "DNS 帮助",
+    helpTooltip: "查看 v2fly DNS 文档",
+    hint: "兼底 DNS（域名列表留空）放在最上方",
+    colServer: "DNS 服务器",
+    colDomains: "域名列表",
+    colOutbound: "出口",
+    serverPlaceholder: "如 8.8.8.8 或 https://dns.google/dns-query",
+    domainsPlaceholder: "每行一个，如 geosite:cn\n留空表示兜底 DNS",
+    addRule: "添加规则",
+    resetDefault: "恢复默认",
+    errNoRules: "至少需要一条 DNS 规则",
   },
   egressPortWhitelist: {
     title: "出方向端口白名单",

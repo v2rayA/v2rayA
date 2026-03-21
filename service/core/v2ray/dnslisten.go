@@ -1,16 +1,20 @@
-package specialMode
+package v2ray
+
+// 本文件保存原 specialMode 包中与 redirect 透明代理相关的 DNS 监听辅助函数。
+// supervisor / fakedns 相关代码已随 specialMode 包一同移除。
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/common/netTools/netstat"
-	"github.com/v2rayA/v2rayA/common/netTools/ports"
-	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"net"
 	"os"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/v2rayA/v2rayA/common/netTools/netstat"
+	"github.com/v2rayA/v2rayA/common/netTools/ports"
+	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 var (
@@ -18,11 +22,11 @@ var (
 	DnsPortOccupied       = fmt.Errorf("dns port 53 is occupied")
 )
 
+// ShouldLocalDnsListen 在 redirect 透明代理启用时返回 true，
+// 表示需要在本机监听 53 端口，将 DNS 流量导入 v2ray 处理。
+// 新版 DNS 模块始终启用，只要 redirect 透明代理开启即需要本机监听。
 func ShouldLocalDnsListen() bool {
 	setting := configure.GetSettingNotNil()
-	if setting.AntiPollution == configure.AntipollutionClosed {
-		return false
-	}
 	if setting.Transparent == configure.TransparentClose {
 		return false
 	}
@@ -35,24 +39,24 @@ func ShouldLocalDnsListen() bool {
 	return true
 }
 
-var couldListen struct {
+var couldListenCache struct {
 	couldListenLocalhost bool
 	err                  error
 	lastUpdate           time.Time
 	mu                   sync.Mutex
 }
 
+// CouldLocalDnsListen 检查 53 端口是否可用，结果缓存 3 秒。
 func CouldLocalDnsListen() (couldListenLocalhost bool, err error) {
-	// cache for 3 seconds
-	couldListen.mu.Lock()
-	defer couldListen.mu.Unlock()
-	if time.Since(couldListen.lastUpdate) < 3*time.Second {
-		return couldListen.couldListenLocalhost, couldListen.err
+	couldListenCache.mu.Lock()
+	defer couldListenCache.mu.Unlock()
+	if time.Since(couldListenCache.lastUpdate) < 3*time.Second {
+		return couldListenCache.couldListenLocalhost, couldListenCache.err
 	}
 	defer func() {
-		couldListen.lastUpdate = time.Now()
-		couldListen.couldListenLocalhost = couldListenLocalhost
-		couldListen.err = err
+		couldListenCache.lastUpdate = time.Now()
+		couldListenCache.couldListenLocalhost = couldListenLocalhost
+		couldListenCache.err = err
 	}()
 	occupied, sockets, err := ports.IsPortOccupied([]string{"53:udp"})
 	if err != nil {
@@ -61,10 +65,8 @@ func CouldLocalDnsListen() (couldListenLocalhost bool, err error) {
 	if err = netstat.FillProcesses(sockets); err != nil {
 		return false, fmt.Errorf("%w: %v. please try again later", DnsPortCheckFailedErr, err)
 	}
-	//NOTICE: Special local address (127.2.0.17). Do not use v2ray.PortOccupied
 	var occupiedErr error
 	if occupied {
-		// with PortSharing on, v2ray will try listening at 0.0.0.0, which conflicts with all IPs
 		for _, socket := range sockets {
 			p := socket.Proc
 			if p == nil {
@@ -83,15 +85,4 @@ func CouldLocalDnsListen() (couldListenLocalhost bool, err error) {
 		}
 	}
 	return true, occupiedErr
-}
-
-func CouldUseSpecialMode() bool {
-	setting := configure.GetSettingNotNil()
-	switch setting.SpecialMode {
-	case configure.SpecialModeFakeDns:
-		return CouldUseFakeDns()
-	case configure.SpecialModeSupervisor:
-		return CouldUseSupervisor()
-	}
-	return true
 }

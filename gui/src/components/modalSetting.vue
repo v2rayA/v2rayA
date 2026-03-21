@@ -173,47 +173,7 @@
         </template>
         <p></p>
       </b-field>
-      <b-field label-position="on-border">
-        <template slot="label">
-          {{ $t("setting.preventDnsSpoofing") }}
-          <b-tooltip type="is-dark" :label="$t('setting.messages.preventDnsSpoofing')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-          </b-tooltip>
-        </template>
-        <b-select v-model="antipollution" expanded class="left-border">
-          <option value="closed">{{ $t("setting.options.closed") }}</option>
-          <option value="none">
-            {{ $t("setting.options.antiDnsHijack") }}
-          </option>
-          <option value="dnsforward">
-            {{ $t("setting.options.forwardDnsRequest") }}
-          </option>
-          <option value="doh">{{ $t("setting.options.doh") }}</option>
-          <option value="advanced">{{ $t("setting.options.advanced") }}</option>
-        </b-select>
-        <b-button v-if="antipollution === 'advanced'" :class="{
-          'right-extra-button': antipollution === 'closed',
-          'no-border-radius': antipollution !== 'closed',
-        }" @click="handleClickDnsSetting">
-          {{ $t("operations.configure") }}
-        </b-button>
-        <p></p>
-      </b-field>
-      <b-field v-show="showSpecialMode" label-position="on-border">
-        <template slot="label">
-          {{ $t("setting.specialMode") }}
-          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.specialMode')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-          </b-tooltip>
-        </template>
-        <b-select v-model="specialMode" expanded class="left-border">
-          <option value="none">{{ $t("setting.options.closed") }}</option>
-          <option value="supervisor">supervisor</option>
-          <option v-show="antipollution !== 'closed'" value="fakedns">fakedns</option>
-        </b-select>
-      </b-field>
+
       <b-field label-position="on-border">
         <template slot="label">
           TCPFastOpen
@@ -328,9 +288,14 @@
       </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
-      <button class="button footer-absolute-left" type="button" @click="$emit('clickPorts')">
-        {{ $t("customAddressPort.title") }}
-      </button>
+      <div class="footer-absolute-left" style="display: flex; gap: 8px;">
+        <button class="button" type="button" @click="$emit('clickPorts')">
+          {{ $t("customAddressPort.title") }}
+        </button>
+        <button class="button" type="button" @click="handleClickDnsSetting">
+          {{ $t("dns.title") }}
+        </button>
+      </div>
       <button class="button" type="button" @click="$parent.close()">
         {{ $t("operations.cancel") }}
       </button>
@@ -376,8 +341,6 @@ export default {
     ipforward: false,
     portSharing: false,
     dnsForceMode: false,
-    dnsforward: "no",
-    antipollution: "none",
     routeOnly: false,
     specialMode: "none",
     tproxyExcludedInterfaces: "",
@@ -392,7 +355,6 @@ export default {
     serverListMode: "noSubscription",
     remoteGFWListVersion: "checking...",
     localGFWListVersion: "checking...",
-    showSpecialMode: true,
     os: "",
     isRoot: false,
   }),
@@ -418,11 +380,6 @@ export default {
     },
   },
   watch: {
-    antipollution(val) {
-      if (val === "closed" && this.specialMode === "fakedns") {
-        this.specialMode = "none";
-      }
-    },
   },
   created() {
     this.getSettingData();
@@ -459,7 +416,6 @@ export default {
           });
           if (this.lite) {
             this.transparentType = "system_proxy";
-            this.showSpecialMode = false;
           }
         });
       });
