@@ -9,33 +9,8 @@ on:
       - ".github/workflows/*.yml"
 jobs:
   Build_v2rayA_Web:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Set up Node.js
-      shell: bash
-      run: |
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install node@24
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> $GITHUB_ENV
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> ~/.bash_profile
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update -y && sudo apt-get install -y gzip
-    - name: Build GUI
-      run: |
-        yarn --cwd gui --check-files
-        yarn --cwd gui build
-        echo "Use tar to generate web.tar.gz..."
-        tar -zcvf web.tar.gz web/
-    - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        path: web/*
-        name: web
-  
+    uses: ./.github/workflows/_build_web.yml
+
   Build_v2rayA:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -76,8 +51,9 @@ jobs:
           os="linux"
         fi
         cd "$CurrentDir"/service
+        # All PR builds target amd64/arm64 on linux/windows/darwin — all support TinyTun
         for arch in amd64 arm64; do
-          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version""$win_ex_name"
+          GOARCH="$arch" CGO_ENABLED=0 go build -tags "tinytun" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version""$win_ex_name"
         done
     - name: Upload Zip File to Artifacts
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2

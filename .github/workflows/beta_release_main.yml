@@ -9,327 +9,43 @@ on:
 
 jobs:
   Build_v2rayA_Web:
+    uses: ./.github/workflows/_build_web.yml
+    with:
+      upload_archive: true
+
+  Compute_Version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.prep.outputs.VERSION }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Set up Node.js
-      shell: bash
+    - name: Compute Version
+      id: prep
       run: |
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install node@24
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> $GITHUB_ENV
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> ~/.bash_profile         
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update -y && sudo apt-get install -y gzip
-    - name: Build GUI
-      run: |
-        yarn --cwd gui --check-files
-        yarn --cwd gui build
-        echo "Use tar to generate web.tar.gz..."
-        tar -zcvf web.tar.gz web/
-    - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        path: web/*
-        name: web
-    - name: Upload the tar archive to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          web.tar.gz
+        tag=${{ inputs.tag }}
+        version=$(echo $tag | sed 's/v//g')
+        echo "VERSION=$version" >> $GITHUB_OUTPUT
+
   Build_v2rayA_Binaries:
-    runs-on: ubuntu-latest
-    needs: [Build_v2rayA_Web]
-    env:
-      CGO_ENABLED: 0
-      NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Download Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: web
-        path: service/server/router/web
-    - name: Check Version
-      id: prep
-      env:
-        REF: ${{ inputs.tag }}
-      run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
-        echo "VERSION=$version" >> $GITHUB_OUTPUT
-        echo "VERSION=$version" >> $GITHUB_ENV
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        cache-dependency-path: |
-          service/go.mod
-          service/go.sum
-        go-version: '1.26'
-    - name: Build v2rayA Binaries
-      id: build
-      shell: pwsh
-      run: |
-        New-Item -ItemType Directory -Path v2raya_binaries
-        foreach ($arch in @('amd64', 'arm64', '386', 'riscv64', 'mips64', 'mips64le', 'mipsle', 'mips', 'loong64')) {
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arm in @('7')) {
-          $env:GOARCH = 'arm'
-          $env:GOARM = $arm
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-arm$arm")."friendlyName"
-          Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'windows'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'darwin'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'freebsd'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."freebsd-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-        foreach ($arch in @('amd64', 'arm64')) {
-          $env:GOOS = 'openbsd'
-          $env:GOARCH = $arch
-          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."openbsd-$arch")."friendlyName"
-          Set-Location -Path service
-          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
-          Set-Location -Path ..
-        }
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          v2raya_binaries/*
+    needs: [Build_v2rayA_Web, Compute_Version]
+    uses: ./.github/workflows/_build_binaries.yml
+    with:
+      version: ${{ needs.Compute_Version.outputs.version }}
+
   Build_Windows_Installers:
-    runs-on: windows-latest
-    needs: [Build_v2rayA_Binaries]
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Check Version
-      id: prep
-      shell: bash
-      env:
-        REF: ${{ inputs.tag }}
-      run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
-        echo "VERSION=$version" >> $GITHUB_OUTPUT
-        echo "VERSION=$version" >> $GITHUB_ENV
-    - name: Download Artifact Windows x64
-      uses: actions/download-artifact@v4
-      with:
-        name: v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe
-        path: D:\Downloads
-    - name: Download Artifact Windows arm64
-      uses: actions/download-artifact@v4
-      with:
-        name: v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe
-        path: D:\Downloads
-    - name: Install Inno Setup
-      shell: pwsh
-      run: |
-        choco install innosetup -y
-    - name: Build Windows Installer
-      shell: pwsh
-      run: |
-        ## Create Destination Directory
-        $CurrentDir = Get-Location
-        New-Item -ItemType Directory -Path "D:\v2raya-x64compatible-windows\data"
-        New-Item -ItemType Directory -Path "D:\v2raya-x64compatible-windows\bin"
-        New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\data"
-        New-Item -ItemType Directory -Path "D:\v2raya-arm64-windows\bin"
-        ## Copy v2rayA to Destination Directory
-        Copy-Item -Path D:\Downloads\v2raya_windows_arm64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya.exe
-        Copy-Item -Path D:\Downloads\v2raya_windows_x64_${{ steps.prep.outputs.VERSION }}.exe -Destination D:\v2raya-x64compatible-windows\bin\v2raya.exe
-        Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
-        ## Download and extract v2ray
-        $Url_v2ray_x64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-64.zip"
-        $Url_v2ray_A64 = "https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-windows-arm64-v8a.zip"
-        Invoke-WebRequest $Url_v2ray_x64 -OutFile "D:\v2ray-windows-x64.zip"
-        Expand-Archive -Path "D:\v2ray-windows-x64.zip" -DestinationPath "D:\v2raya-x64compatible-windows\bin\"
-        Move-Item -Path "D:\v2raya-x64compatible-windows\bin\*.dat" -Destination "D:\v2raya-x64compatible-windows\data\"
-        Remove-Item -Path "D:\v2raya-x64compatible-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
-        Invoke-WebRequest $Url_v2ray_A64 -OutFile "D:\v2ray-windows-A64.zip"
-        Expand-Archive -Path "D:\v2ray-windows-A64.zip" -DestinationPath "D:\v2raya-arm64-windows\bin\"
-        Move-Item -Path "D:\v2raya-arm64-windows\bin\*.dat" -Destination "D:\v2raya-arm64-windows\data\"
-        Remove-Item -Path "D:\v2raya-arm64-windows\bin\*.json" -Force -Recurse -ErrorAction SilentlyContinue
-        Copy-Item -Path ".\LICENSE" -Destination "D:\LICENSE.txt"
-        Copy-Item -Path ".\install\windows-inno\ChineseSimplified.isl" -Destination "D:\ChineseSimplified.isl"
-        ## Set Version
-        $((Get-Content -Path .\install\windows-inno\windows.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}")).Replace("TheRealArch", "x64compatible") | Out-File "D:\windows_x86_64.iss"
-        $((Get-Content -Path .\install\windows-inno\windows.iss).replace("TheRealVersion", "${{ steps.prep.outputs.VERSION }}")).Replace("TheRealArch", "arm64") | Out-File "D:\windows_arm64.iss"
-        ## Build Installer
-        Set-Location -Path "D:\"
-        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_x86_64.iss"
-        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' "D:\windows_arm64.iss"
-        ## Rename to Friendly Name
-        cd $CurrentDir
-        Copy-Item -Path D:\installer_windows_inno_x64compatible.exe -Destination $CurrentDir\installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-        Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination $CurrentDir\installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          installer_windows_inno_x64_${{ steps.prep.outputs.VERSION }}.exe
-          installer_windows_inno_arm64_${{ steps.prep.outputs.VERSION }}.exe
+    needs: [Build_v2rayA_Binaries, Compute_Version]
+    uses: ./.github/workflows/_build_windows_installer.yml
+    with:
+      version: ${{ needs.Compute_Version.outputs.version }}
+
   Build_Linux_Packages:
-    runs-on: ubuntu-latest
-    needs: [Build_v2rayA_Binaries]
-    strategy:
-      matrix:
-        goos: [linux]
-        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips, loong64]
-        include:
-          - goos: linux
-            goarch: arm
-            goarm: 7
-    env:
-      GOOS: ${{ matrix.goos }}
-      GOARCH: ${{ matrix.goarch }}
-      GOARM: ${{ matrix.goarm }}
-      CGO_ENABLED: 0
-      NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Get Friendly File Name
-      shell: pwsh
-      id: get_filename
-      run: |
-        $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
-        $friendly_arch = $((((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName).Split('_')[1])
-        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
-        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
-        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_OUTPUT}
-        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
-    - name: Check Version
-      id: prep
-      env:
-        REF: ${{ inputs.tag }}
-      run: |
-        tag=${{ inputs.tag }}
-        version=$(echo $tag | sed 's/v//g')
-        echo "VERSION=$version" >> $GITHUB_OUTPUT
-        echo "VERSION=$version" >> $GITHUB_ENV
-        echo "PACKAGE_VERSION=$version" >> $GITHUB_OUTPUT
-        echo "PACKAGE_VERSION=$version" >> $GITHUB_ENV
-    - name: Download Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
-        path: build/
-    - name: Download x64 Linux Build
-      uses: actions/download-artifact@v4
-      with:
-        name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
-        path: test/
-    - name: Show Artifacts
-      run: |
-        ls -l build/
-    - name: Build Packages
-      run: |
-        sudo gem install fpm -v 1.15.1
-        sudo apt-get install -y libarchive-tools rpm tar unzip
-        sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
-        ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
-        if [ -n "$(echo $GOARCH | grep mips)" ]; then
-          packages="deb rpm"
-        else
-          packages="deb rpm pacman"
-        fi
-        sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}
-        for package_manager in $packages; do
-          if [ "$package_manager" == 'pacman' ];then
-            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
-              package_arch='arm7hf'
-            elif [ "$GOARCH" == 'arm64' ];then
-              package_arch='aarch64'
-            else
-              package_arch="$GOARCH"
-            fi
-          elif [ "$package_manager" == 'rpm' ];then
-            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
-              package_arch='armhfp'
-            elif [ "$GOARCH" == 'arm64' ];then
-              package_arch='aarch64'
-            elif [ "$GOARCH" == 'loong64' ];then
-              package_arch='loongson64'
-            else
-              package_arch="$GOARCH"
-            fi
-          elif [ "$package_manager" == 'deb' ];then
-            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
-              package_arch='armhf'
-            elif [ "$GOARCH" == '386' ];then
-              package_arch='i386'
-            elif [ "$GOARCH" == 'mipsle' ];then
-              package_arch='mips32le'
-            else
-              package_arch="$GOARCH"
-            fi
-          fi
-            fpm -s dir -t "$package_manager" -a $package_arch --version "${{ steps.prep.outputs.PACKAGE_VERSION }}" \
-            --url 'https://github.com/v2rayA/v2rayA' --description "$DESC" \
-            --maintainer "v2raya@v2raya.org" --name v2raya --license 'AGPL' \
-            --package installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.$package_manager \
-            --after-install ./install/universal/after_install.sh \
-            --after-upgrade ./install/universal/after_upgrade.sh \
-            ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ steps.prep.outputs.VERSION }}=/usr/bin/v2raya \
-            ./install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service \
-            ./install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service \
-            ./install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png \
-            ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
-            ./install/universal/v2raya.default=/etc/default/v2raya
-        done
-        mkdir fpm_packages
-        [ -f installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman ] && \
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.pacman \
-           fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.pkg.tar.zst
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.rpm \
-           fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.rpm
-        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ steps.prep.outputs.VERSION }}.deb \
-           fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ steps.prep.outputs.VERSION }}.deb
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      with:
-        path: |
-          fpm_packages/*
+    needs: [Build_v2rayA_Binaries, Compute_Version]
+    uses: ./.github/workflows/_build_linux_packages.yml
+    with:
+      version: ${{ needs.Compute_Version.outputs.version }}
+
   GitHub_Release:
     runs-on: ubuntu-latest
-    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages] 
+    needs: [Build_v2rayA_Binaries, Build_Windows_Installers, Build_Linux_Packages]
     steps:
     - uses: actions/checkout@v6
       with:

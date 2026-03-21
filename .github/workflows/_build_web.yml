@@ -1,0 +1,41 @@
+name: Build v2rayA Web (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      upload_archive:
+        description: 'Whether to also upload the web.tar.gz archive as a release asset'
+        type: boolean
+        default: false
+
+jobs:
+  Build_v2rayA_Web:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Set up Node.js
+      shell: bash
+      run: |
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        brew install node@24 gzip
+        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> $GITHUB_ENV
+        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> ~/.bash_profile
+    - name: Build GUI
+      run: |
+        yarn --cwd gui --check-files
+        yarn --cwd gui build
+        echo "Use tar to generate web.tar.gz..."
+        tar -zcvf web.tar.gz web/
+    - name: Upload Web Files to Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: web/*
+        name: web
+    - name: Upload the tar archive to Artifacts
+      if: inputs.upload_archive
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+      with:
+        path: |
+          web.tar.gz

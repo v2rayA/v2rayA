@@ -1,0 +1,105 @@
+name: Build v2rayA Binaries (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version string for the build'
+        type: string
+        required: true
+
+jobs:
+  Build_v2rayA_Binaries:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: 0
+      VERSION: ${{ inputs.version }}
+      NAME: v2raya
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Download Web Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: web
+        path: service/server/router/web
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        cache-dependency-path: |
+          service/go.mod
+          service/go.sum
+        go-version: '1.24'
+    - name: Build v2rayA Binaries
+      id: build
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Path v2raya_binaries
+        # Linux amd64 and arm64: TinyTun supported
+        foreach ($arch in @('amd64', 'arm64')) {
+          $env:GOARCH = $arch
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
+          Set-Location -Path service
+          go build -tags "tinytun" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+        # Linux other architectures: no TinyTun
+        foreach ($arch in @('386', 'riscv64', 'mips64', 'mips64le', 'mipsle', 'mips', 'loong64')) {
+          $env:GOARCH = $arch
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-$arch")."friendlyName"
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+        # Linux armv7: no TinyTun
+        foreach ($arm in @('7')) {
+          $env:GOARCH = 'arm'
+          $env:GOARM = $arm
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."linux-arm$arm")."friendlyName"
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+        # Windows amd64 and arm64: TinyTun supported
+        foreach ($arch in @('amd64', 'arm64')) {
+          $env:GOOS = 'windows'
+          $env:GOARCH = $arch
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."windows-$arch")."friendlyName"
+          Set-Location -Path service
+          go build -tags "tinytun" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION}.exe -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+        # macOS amd64 and arm64: TinyTun supported
+        foreach ($arch in @('amd64', 'arm64')) {
+          $env:GOOS = 'darwin'
+          $env:GOARCH = $arch
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."darwin-$arch")."friendlyName"
+          Set-Location -Path service
+          go build -tags "tinytun" -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+        # FreeBSD: no TinyTun
+        foreach ($arch in @('amd64', 'arm64')) {
+          $env:GOOS = 'freebsd'
+          $env:GOARCH = $arch
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."freebsd-$arch")."friendlyName"
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+        # OpenBSD: no TinyTun
+        foreach ($arch in @('amd64', 'arm64')) {
+          $env:GOOS = 'openbsd'
+          $env:GOARCH = $arch
+          $filename = $((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."openbsd-$arch")."friendlyName"
+          Set-Location -Path service
+          go build -o ../v2raya_binaries/v2raya_${filename}_${env:VERSION} -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${env:VERSION} -s -w" -trimpath
+          Set-Location -Path ..
+        }
+    - name: Upload Artifact
+      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+      with:
+        path: |
+          v2raya_binaries/*
