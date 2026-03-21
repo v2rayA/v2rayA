@@ -113,6 +113,9 @@ export default {
     ipForwardOn: "IP Forward",
     portSharingOn: "به اشتراک گذاری پورت",
     concurrency: "همزمانی",
+    ssBackend: "Shadowsocks Backend",
+    trojanBackend: "Trojan Backend",
+    nodeBackend: "Backend",
     options: {
       trace: "Trace",
       debug: "Debug",
@@ -138,6 +141,9 @@ export default {
       closed: "خاموش",
       advanced: "تنظیمات پیشرفته",
       leastPing: "اول سرور با پینگ کمتر",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "System Default",
     },
     messages: {
       gfwlist:

@@ -36,6 +36,12 @@ type PriorInfo struct {
 	CoreVersion string
 	Tag         string
 	PluginPort  int
+	Backend     string // effective backend: "v2ray" or "" (daeuniverse/system default)
+}
+
+// BackendGetter is implemented by server types that support backend selection.
+type BackendGetter interface {
+	GetBackend() string
 }
 
 func (info *PriorInfo) PluginObj() coreObj.OutboundObject {

@@ -127,6 +127,9 @@ export default {
     ipForwardOn: "开启IP转发",
     portSharingOn: "允许局域网的连接",
     concurrency: "最大并发数",
+    ssBackend: "Shadowsocks 后端",
+    trojanBackend: "Trojan 后端",
+    nodeBackend: "后端",
     options: {
       trace: "跟踪",
       debug: "调试",
@@ -152,6 +155,9 @@ export default {
       closed: "关闭",
       advanced: "自定义高级设置",
       leastPing: "最小时延优先",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "跟随系统设置",
     },
     messages: {
       inboundSniffing: "嗅探入站域名，如不开启，可能导致部分域名分流错误",

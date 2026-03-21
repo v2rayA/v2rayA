@@ -221,6 +221,10 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			if sRaw, err := cs.LocateServerRaw(); err != nil {
 				return err
 			} else {
+				if sRaw.ServerObj == nil {
+					log.Warn("UpdateSubscription: skipping connected server with nil ServerObj (Sub=%d, ID=%d)", cs.Sub, cs.ID)
+					continue
+				}
 				link := sRaw.ServerObj.ExportToURL()
 				link2Raw[link] = sRaw
 				connectedVmessInfo2CssIndex[link] = append(connectedVmessInfo2CssIndex[link], i)
@@ -284,8 +288,16 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	subscriptionServer.Outbound = "proxy"
 
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
-		subscriptionServer.ID = i                                            // Server IDs start with 1
-		serverObj := configure.GetSubscription(index).Servers[i-1].ServerObj // ServerObj IDs start with 0
+		subscriptionServer.ID = i // Server IDs start with 1
+		sub := configure.GetSubscription(index)
+		if sub == nil {
+			return fmt.Errorf("SelectServersFromSubscription: subscription at index %d not found", index)
+		}
+		serverObj := sub.Servers[i-1].ServerObj // ServerObj IDs start with 0
+		if serverObj == nil {
+			log.Warn("[AutoSelect] Skipping server %d in subscription %d: nil ServerObj", i, index)
+			continue
+		}
 		serverName := serverObj.GetName()
 
 		// Workaround for partial SS support in v2fly and xray
@@ -319,6 +331,10 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
 	for i := 0; i < configure.GetLenSubscriptions(); i++ {
 		subscription := configure.GetSubscription(i)
+		if subscription == nil {
+			log.Warn("[AutoSelect] Failed to read subscription at index %d, skipping", i)
+			continue
+		}
 		if subscription.AutoSelect {
 			if shouldDisconnect {
 				log.Info("[AutoSelect] Automatically disconnecting servers from subscription: %v", subscription.Address)

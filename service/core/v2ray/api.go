@@ -20,6 +20,7 @@ import (
 var (
 	ApiProducts = []string{
 		"observatory",
+		"running_state",
 	}
 	ApiFeed *Feed
 )

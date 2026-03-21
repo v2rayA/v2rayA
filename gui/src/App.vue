@@ -84,7 +84,7 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node v-model="runningState" :outbound="outboundName" :observatory="observatory" />
+    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :observatory="observatory" />
     <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
@@ -267,6 +267,9 @@ export default {
         msg.body.outboundName === this.outboundName
       ) {
         this.observatory = msg;
+      }
+      if (msg.type === "running_state" && msg.body && msg.body.running === false) {
+        this.$refs.nodeRef && this.$refs.nodeRef.notifyStopped();
       }
     },
     handleOutboundDropdownActiveChange(active) {

@@ -1227,6 +1227,18 @@ export default {
       }
       this.$emit("input", this.runningState);
     },
+    // notifyStopped is called by the parent (App.vue) when a WebSocket
+    // running_state message with running=false is received (e.g. TinyTun
+    // crashed). It immediately updates the local running state so the UI
+    // reflects the correct status without waiting for the next /touch poll.
+    notifyStopped() {
+      if (this.runningState.running !== this.$t("common.notRunning")) {
+        Object.assign(this.runningState, {
+          running: this.$t("common.notRunning"),
+        });
+        this.$emit("input", this.runningState);
+      }
+    },
     locateTabToConnected(which) {
       let whichServer = which;
       if (!whichServer) {

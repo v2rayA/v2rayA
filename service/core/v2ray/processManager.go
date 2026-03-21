@@ -185,6 +185,9 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 	m.afterStop(p)
 
 	m.p = nil
+
+	// Notify connected frontend clients that the proxy is no longer running.
+	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false})
 }
 
 func (m *CoreProcessManager) terminatePluginManagers(p *Process) {

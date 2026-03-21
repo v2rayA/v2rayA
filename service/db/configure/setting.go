@@ -30,6 +30,8 @@ type Setting struct {
 	TunRouteShellPath                  string          `json:"tunRouteShellPath"`
 	TunSetupScript                     string          `json:"tunSetupScript"`
 	TunTeardownScript                  string          `json:"tunTeardownScript"`
+	SsBackend                          string          `json:"ssBackend"`
+	TrojanBackend                      string          `json:"trojanBackend"`
 }
 
 func NewSetting() (setting *Setting) {

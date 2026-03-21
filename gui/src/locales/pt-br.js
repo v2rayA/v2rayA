@@ -113,6 +113,9 @@ export default {
     ipForwardOn: "Encaminhamento de IP",
     portSharingOn: "Compartilhamento de Porta",
     concurrency: "Concorrência",
+    ssBackend: "Backend do Shadowsocks",
+    trojanBackend: "Backend do Trojan",
+    nodeBackend: "Backend",
     options: {
       trace: "Trace",
       debug: "Debug",
@@ -140,6 +143,9 @@ export default {
       closed: "Desligado",
       advanced: "Configuração Avançada",
       leastPing: "Menor Latência Primeiro",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "Padrão do Sistema",
     },
     messages: {
       gfwlist:

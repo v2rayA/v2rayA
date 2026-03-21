@@ -448,15 +448,12 @@ func FilterIPs(ips []string) []string {
 }
 func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[string]bool) {
 	firstOutboundTag, _ := t.FirstProxyOutboundName(nil)
-	t.Routing.Rules = append(t.Routing.Rules, routing...)
-	t.Routing.Rules = append(t.Routing.Rules,
-		coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
-	)
-	// Route dns-in-tun (TinyTun DNS door on 127.0.0.1:6053) into the DNS outbound
-	// so that v2fly DNS routing rules are applied.
-	if t.Setting != nil && t.Setting.TransparentType == configure.TransparentTun {
+	// In TinyTun mode DNS is handled by TinyTun itself; skip all v2ray DNS routing rules.
+	isTinyTunMode := t.Setting != nil && t.Setting.TransparentType == configure.TransparentTun && IsTransparentOn(t.Setting)
+	if !isTinyTunMode {
+		t.Routing.Rules = append(t.Routing.Rules, routing...)
 		t.Routing.Rules = append(t.Routing.Rules,
-			coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in-tun"}, OutboundTag: "dns-out"},
+			coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
 		)
 	}
 	setting := t.Setting
@@ -1298,20 +1295,9 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
 			})
-			// A dedicated dokodemo-door on 127.0.0.1:6053 receives DNS queries forwarded
-			// by TinyTun (dns.servers entries in tinytun.json point here) and feeds them
-			// into the v2fly DNS module so routing rules apply properly.
-			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
-				Port:     6053,
-				Protocol: "dokodemo-door",
-				Listen:   "127.0.0.1",
-				Settings: &coreObj.InboundSettings{
-					Network: "udp",
-					Address: "8.8.8.8",
-					Port:    53,
-				},
-				Tag: "dns-in-tun",
-			})
+			// TinyTun v0.0.1-beta.3+ handles DNS routing natively via its own DNS groups.
+			// The former dns-in-tun dokodemo-door (127.0.0.1:6053) is no longer needed;
+			// v2ray acts as a pure SOCKS5 forwarder for non-DNS traffic.
 		}
 
 	}
@@ -1503,6 +1489,27 @@ func (sd *ServerData) Ps2OutboundNames() map[string][]string {
 	return ps2OutboundNames
 }
 
+// resolveEffectiveBackend returns the effective backend ("v2ray" or "") for a ServerObj.
+// It checks the node's own backend setting first, then falls back to the system setting.
+func resolveEffectiveBackend(obj serverObj.ServerObj, setting *configure.Setting) string {
+	bg, ok := obj.(serverObj.BackendGetter)
+	if !ok {
+		return ""
+	}
+	nodeBackend := bg.GetBackend()
+	if nodeBackend != "" {
+		return nodeBackend
+	}
+	// Fall back to system setting
+	switch obj.GetProtocol() {
+	case "shadowsocks", "ss":
+		return setting.SsBackend
+	case "trojan", "trojan-go":
+		return setting.TrojanBackend
+	}
+	return ""
+}
+
 func (t *Template) resolveOutbounds(
 	serverData *ServerData,
 ) (supportUDP map[string]bool, outboundTags []string, err error) {
@@ -1523,6 +1530,7 @@ func (t *Template) resolveOutbounds(
 	outboundTags = make([]string, len(serverData.ServerInfos))
 	var extraOutbounds []coreObj.OutboundObject
 	var outbounds []_outbound
+	setting := configure.GetSettingNotNil()
 	for obj, sInfos := range serverData.ServerObj2ServerInfos() {
 		var (
 			usedByBalancer     bool
@@ -1555,6 +1563,7 @@ func (t *Template) resolveOutbounds(
 					CoreVersion: t.CoreVersion,
 					Tag:         outboundTag,
 					PluginPort:  sInfo.PluginPort,
+					Backend:     resolveEffectiveBackend(obj, setting),
 				})
 				if err != nil {
 					return nil, nil, err
@@ -1593,6 +1602,7 @@ func (t *Template) resolveOutbounds(
 				CoreVersion: t.CoreVersion,
 				Tag:         outboundTag,
 				PluginPort:  balancerPluginPort,
+				Backend:     resolveEffectiveBackend(obj, setting),
 			})
 			if err != nil {
 				// Store server info for balancer outbound (use first balancer's info)
@@ -1869,13 +1879,19 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	if err = t.setInbound(setting); err != nil {
 		return nil, err
 	}
-	//set DNS
-	dnsRouting, err := t.setDNS(serverInfos, supportUDP)
-	if err != nil {
-		return nil, err
+	// When TinyTun is active it handles DNS routing natively; v2ray only forwards traffic.
+	// Skip the DNS module, DNS inbound, and DNS outbound for that mode.
+	isTinyTunMode := setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting)
+	var dnsRouting []coreObj.RoutingRule
+	if !isTinyTunMode {
+		//set DNS
+		dnsRouting, err = t.setDNS(serverInfos, supportUDP)
+		if err != nil {
+			return nil, err
+		}
+		//append a DNS outbound
+		t.appendDNSOutbound()
 	}
-	//append a DNS outbound
-	t.appendDNSOutbound()
 	//DNS routing
 	t.Routing.DomainMatcher = "mph"
 	t.setDNSRouting(dnsRouting, supportUDP)
@@ -2091,6 +2107,7 @@ func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort stri
 		CoreVersion: t.CoreVersion,
 		Tag:         "outbound" + inboundPort,
 		PluginPort:  pluginPort,
+		Backend:     resolveEffectiveBackend(o, configure.GetSettingNotNil()),
 	})
 	if err != nil {
 		return err

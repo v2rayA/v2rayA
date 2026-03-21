@@ -117,6 +117,9 @@ export default {
     portSharingOn: "Port Sharing",
     concurrency: "Параллелизм",
     inboundSniffing: "Сниффер",
+    ssBackend: "Shadowsocks Backend",
+    trojanBackend: "Trojan Backend",
+    nodeBackend: "Backend",
     options: {
       trace: "Trace",
       debug: "Debug",
@@ -142,6 +145,9 @@ export default {
       closed: "Выключено",
       advanced: "Расширенная настройка",
       leastPing: "С наименьшей задержкой",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "По умолчанию",
     },
     messages: {
       inboundSniffing: "Анализировать входящий трафик. Если эта опция выключена, часть трафик может быть не перенаправлена корректно.",

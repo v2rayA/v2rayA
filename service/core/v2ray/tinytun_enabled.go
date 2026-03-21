@@ -13,8 +13,10 @@ import (
 	"strings"
 	"sync"
 
-	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v3"
+
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -22,68 +24,94 @@ import (
 
 // tinytunLogConf represents the log settings in TinyTun config.
 type tinytunLogConf struct {
-	Loglevel string `json:"loglevel"`
+	Loglevel string `yaml:"loglevel"`
 }
 
 // tinytunTunConf represents the TUN interface settings in TinyTun config.
 // Note: auto_route is intentionally omitted here; it is passed as --auto-route CLI flag instead.
 type tinytunTunConf struct {
-	Name     string `json:"name"`
-	IP       string `json:"ip"`
-	Netmask  string `json:"netmask"`
-	Ipv6Mode string `json:"ipv6_mode,omitempty"`
-	MTU      int    `json:"mtu,omitempty"`
+	Name     string `yaml:"name"`
+	IP       string `yaml:"ip"`
+	Netmask  string `yaml:"netmask"`
+	Ipv6Mode string `yaml:"ipv6_mode,omitempty"`
+	MTU      int    `yaml:"mtu,omitempty"`
 }
 
 // tinytunSocks5Conf represents the SOCKS5 proxy settings in TinyTun config.
 type tinytunSocks5Conf struct {
-	Address      string  `json:"address"`
-	Username     *string `json:"username"`
-	Password     *string `json:"password"`
-	DnsOverSocks bool    `json:"dns_over_socks5"`
+	Address      string  `yaml:"address"`
+	Username     *string `yaml:"username,omitempty"`
+	Password     *string `yaml:"password,omitempty"`
+	DnsOverSocks bool    `yaml:"dns_over_socks5"`
 }
 
-// tinytunDnsServerConf represents a single DNS server entry in TinyTun config.
-type tinytunDnsServerConf struct {
-	Address string `json:"address"`
-	Route   string `json:"route"`
+// tinytunDnsGroupConf is a named group of upstream DNS servers.
+// servers contains address strings:
+//   - For udp/tcp/dot/doq: "host:port" (e.g. "8.8.8.8:53" or "dns.google:853")
+//   - For doh: HTTPS endpoint URLs (e.g. "https://dns.google/dns-query")
+//
+// upstream is "direct" or "proxy" (DNS-over-TCP via SOCKS5).
+// strategy is "concurrent", "sequential", or "random".
+// protocol is "udp" (default), "tcp", "dot", "doh", or "doq" (TinyTun v0.0.1-beta.4+).
+// sni overrides the TLS server name for dot/doq; if omitted the hostname is used.
+type tinytunDnsGroupConf struct {
+	Name     string   `yaml:"name"`
+	Servers  []string `yaml:"servers"`
+	Strategy string   `yaml:"strategy,omitempty"`
+	Upstream string   `yaml:"upstream,omitempty"`
+	Protocol string   `yaml:"protocol,omitempty"`
+	Sni      *string  `yaml:"sni,omitempty"`
 }
 
-// tinytunDnsConf represents the DNS settings in TinyTun config.
+// tinytunDnsRoutingConf is the DNS routing configuration.
+// Rules use TinyTun's compact YAML syntax: "match(<condition>),<action>"
+// Supported conditions: geosite:<tag>, domain:<fqdn>, suffix:<domain>, keyword:<word>, regex:<pattern>, *
+// Supported actions: <group-name> (e.g. "direct", "proxy") | "reject"
+type tinytunDnsRoutingConf struct {
+	Rules         []string `yaml:"rules,omitempty"`
+	FallbackGroup string   `yaml:"fallback_group"`
+	GeositeFile   string   `yaml:"geosite_file,omitempty"`
+	EnableCache   bool     `yaml:"enable_cache"`
+	CacheCapacity int      `yaml:"cache_capacity"`
+}
+
+// tinytunDnsConf represents the DNS settings in TinyTun v0.0.1-beta.4 config.
+// TinyTun handles DNS routing natively; v2ray is used only for traffic forwarding.
 type tinytunDnsConf struct {
-	Servers    []tinytunDnsServerConf `json:"servers"`
-	ListenPort int                    `json:"listen_port"`
-	TimeoutMs  int                    `json:"timeout_ms"`
+	Groups     []tinytunDnsGroupConf `yaml:"groups"`
+	ListenPort int                   `yaml:"listen_port"`
+	TimeoutMs  int                   `yaml:"timeout_ms"`
+	Routing    tinytunDnsRoutingConf `yaml:"routing"`
 }
 
 // tinytunFilteringConf represents the filtering settings in TinyTun config.
 type tinytunFilteringConf struct {
-	SkipIPs          []string `json:"skip_ips"`
-	SkipNetworks     []string `json:"skip_networks"`
-	BlockPorts       []int    `json:"block_ports"`
-	AllowPorts       []int    `json:"allow_ports"`
-	ExcludeProcesses []string `json:"exclude_processes"`
+	SkipIPs          []string `yaml:"skip_ips,omitempty"`
+	SkipNetworks     []string `yaml:"skip_networks,omitempty"`
+	BlockPorts       []int    `yaml:"block_ports,omitempty"`
+	AllowPorts       []int    `yaml:"allow_ports,omitempty"`
+	ExcludeProcesses []string `yaml:"exclude_processes,omitempty"`
 }
 
 // tinytunRouteConf represents the route settings in TinyTun config.
 type tinytunRouteConf struct {
-	AutoDetectInterface bool    `json:"auto_detect_interface"`
-	DefaultInterface    *string `json:"default_interface"`
+	AutoDetectInterface bool    `yaml:"auto_detect_interface"`
+	DefaultInterface    *string `yaml:"default_interface,omitempty"`
 }
 
-// tinytunConfig is the top-level TinyTun JSON configuration.
+// tinytunConfig is the top-level TinyTun YAML configuration.
 type tinytunConfig struct {
-	Log       tinytunLogConf       `json:"log"`
-	Tun       tinytunTunConf       `json:"tun"`
-	Socks5    tinytunSocks5Conf    `json:"socks5"`
-	DNS       tinytunDnsConf       `json:"dns"`
-	Filtering tinytunFilteringConf `json:"filtering"`
-	Route     tinytunRouteConf     `json:"route"`
+	Log       tinytunLogConf       `yaml:"log"`
+	Tun       tinytunTunConf       `yaml:"tun"`
+	Socks5    tinytunSocks5Conf    `yaml:"socks5"`
+	DNS       tinytunDnsConf       `yaml:"dns"`
+	Filtering tinytunFilteringConf `yaml:"filtering"`
+	Route     tinytunRouteConf     `yaml:"route"`
 }
 
 const (
 	tinytunBinName        = "tinytun"
-	tinytunConfigFileName = "tinytun.json"
+	tinytunConfigFileName = "tinytun.yaml"
 	// tinytunSocksPort is the SOCKS5 port in v2ray dedicated for TinyTun traffic.
 	// This matches the "transparent" inbound added in setInbound for TransparentTun.
 	tinytunSocksPort = 52345
@@ -307,17 +335,194 @@ func collectExcludeProcesses() []string {
 	return dedupeStrings(processes)
 }
 
-// generateTinyTunConfig generates a TinyTun JSON config file and returns its path.
+// normalizeTinyTunServerAddr converts a v2rayA DNS server string to a plain "IP:port" address
+// for use in TinyTun's UDP protocol groups. Returns "" for servers with non-UDP schemes
+// (https://, tls://, tcp://), for "localhost", "fakedns", or for domain-based addresses.
+// Note: TinyTun v0.0.1-beta.4 supports DoT/DoH/DoQ, but v2rayA DNS config does not distinguish
+// protocol types, so we only emit plain UDP groups here.
+func normalizeTinyTunServerAddr(server string) string {
+	if strings.HasPrefix(server, "https://") ||
+		strings.HasPrefix(server, "tcp://") ||
+		strings.HasPrefix(server, "tls://") ||
+		server == "localhost" ||
+		server == "fakedns" {
+		return ""
+	}
+	host, port, err := net.SplitHostPort(server)
+	if err != nil {
+		// No port — must be a plain IP address.
+		if net.ParseIP(server) != nil {
+			return server + ":53"
+		}
+		// Domain-based address: not resolvable at config time for TinyTun direct mode.
+		return ""
+	}
+	if net.ParseIP(host) == nil {
+		return ""
+	}
+	return host + ":" + port
+}
+
+// domainPatternToYamlRule converts a v2rayA domain pattern and routing action into a TinyTun
+// YAML compact routing rule string: "match(<condition>),<action>".
+//
+// For geosite: patterns, geositePath is set at the routing level (geosite_file); this function
+// does NOT embed it inline. For ext:file:tag patterns, the explicit file path is embedded inline.
+// action should be a group name (e.g., "direct", "proxy") or "reject".
+// Returns ("", false) if the pattern is unsupported.
+func domainPatternToYamlRule(pattern, geositePath, action string) (string, bool) {
+	var condition string
+	switch {
+	case strings.HasPrefix(pattern, "geosite:"):
+		if geositePath == "" {
+			return "", false
+		}
+		condition = pattern // e.g. "geosite:cn" — geosite_file is set at routing level
+
+	case strings.HasPrefix(pattern, "ext:"):
+		// ext:filename.dat:tag — resolve to absolute path and embed inline
+		parts := strings.SplitN(strings.TrimPrefix(pattern, "ext:"), ":", 2)
+		if len(parts) != 2 {
+			return "", false
+		}
+		filePath, err := asset.GetV2rayLocationAsset(parts[0])
+		if err != nil || filePath == "" {
+			return "", false
+		}
+		condition = "geosite:" + parts[1] + ":" + filePath
+
+	case strings.HasPrefix(pattern, "full:"):
+		condition = "domain:" + strings.TrimPrefix(pattern, "full:")
+
+	case strings.HasPrefix(pattern, "domain:"):
+		// In v2rayA, "domain:" means suffix match (the domain itself and all sub-domains).
+		condition = "suffix:" + strings.TrimPrefix(pattern, "domain:")
+
+	case strings.HasPrefix(pattern, "suffix:"):
+		condition = "suffix:" + strings.TrimPrefix(pattern, "suffix:")
+
+	case strings.HasPrefix(pattern, "keyword:"):
+		condition = "keyword:" + strings.TrimPrefix(pattern, "keyword:")
+
+	case strings.HasPrefix(pattern, "regexp:"):
+		condition = "regex:" + strings.TrimPrefix(pattern, "regexp:")
+
+	default:
+		// Plain domain (no prefix) → suffix match, consistent with v2ray behaviour.
+		if net.ParseIP(pattern) == nil && pattern != "" && !strings.Contains(pattern, "/") {
+			condition = "suffix:" + pattern
+		} else {
+			return "", false
+		}
+	}
+	return fmt.Sprintf("match(%s),%s", condition, action), true
+}
+
+// buildTinyTunDNSConfig translates v2rayA DNS rules into a TinyTun DNS configuration.
+// TinyTun v0.0.1-beta.4 handles DNS routing natively using two upstream groups
+// ("direct" for plain UDP and "proxy" for DNS-over-TCP via SOCKS5); v2ray only forwards.
+func buildTinyTunDNSConfig() tinytunDnsConf {
+	rules := configure.GetDnsRulesNotNil()
+
+	// Resolve the geosite.dat path once; used for every geosite: pattern.
+	geositePath, _ := asset.GetV2rayLocationAsset("geosite.dat")
+
+	var (
+		directServers []string
+		proxyServers  []string
+		routingRules  []string
+		fallbackGroup = "proxy"
+	)
+
+	for _, rule := range rules {
+		if rule.Server == "" {
+			continue
+		}
+
+		// Map outbound to TinyTun upstream type.
+		upstream := "proxy" // non-direct, non-block → proxy
+		switch rule.Outbound {
+		case "direct":
+			upstream = "direct"
+		case "block":
+			upstream = "block"
+		}
+
+		// Collect server addresses per upstream group (skip unsupported formats).
+		if upstream != "block" {
+			if addr := normalizeTinyTunServerAddr(rule.Server); addr != "" {
+				if upstream == "direct" {
+					directServers = append(directServers, addr)
+				} else {
+					proxyServers = append(proxyServers, addr)
+				}
+			}
+		}
+
+		// Build routing rules from domain patterns.
+		action := upstream // "direct" or "proxy"; "block" becomes "reject"
+		if upstream == "block" {
+			action = "reject"
+		}
+		domains := strings.Split(strings.TrimSpace(rule.Domains), "\n")
+		hasValidDomains := false
+		for _, d := range domains {
+			d = strings.TrimSpace(d)
+			if d == "" {
+				continue
+			}
+			ruleStr, ok := domainPatternToYamlRule(d, geositePath, action)
+			if !ok {
+				continue
+			}
+			hasValidDomains = true
+			routingRules = append(routingRules, ruleStr)
+		}
+
+		// Rules without domains act as the fallback DNS server.
+		if !hasValidDomains && strings.TrimSpace(rule.Domains) == "" {
+			switch upstream {
+			case "direct":
+				fallbackGroup = "direct"
+			case "proxy":
+				fallbackGroup = "proxy"
+				// "block" as fallback is unusual; leave fallbackGroup unchanged.
+			}
+		}
+	}
+
+	// Fill in default servers if none were collected for a group.
+	// These defaults mirror TinyTun's own built-in defaults.
+	if len(directServers) == 0 {
+		directServers = []string{"223.5.5.5:53", "114.114.114.114:53"}
+	}
+	if len(proxyServers) == 0 {
+		proxyServers = []string{"8.8.8.8:53", "1.1.1.1:53"}
+	}
+
+	groups := []tinytunDnsGroupConf{
+		{Name: "direct", Servers: dedupeStrings(directServers), Strategy: "concurrent", Upstream: "direct", Protocol: "udp"},
+		{Name: "proxy", Servers: dedupeStrings(proxyServers), Strategy: "concurrent", Upstream: "proxy", Protocol: "udp"},
+	}
+
+	return tinytunDnsConf{
+		Groups:     groups,
+		ListenPort: 53,
+		TimeoutMs:  5000,
+		Routing: tinytunDnsRoutingConf{
+			Rules:         routingRules,
+			FallbackGroup: fallbackGroup,
+			GeositeFile:   geositePath,
+			EnableCache:   true,
+			CacheCapacity: 4096,
+		},
+	}
+}
+
+// generateTinyTunConfig generates a TinyTun YAML config file and returns its path.
 func generateTinyTunConfig(tmpl *Template) (string, error) {
 	setting := configure.GetSettingNotNil()
 	skipIPs := dedupeStrings(append([]string{"127.0.0.1", "198.18.0.1"}, collectNodeIPs(tmpl)...))
-	dnsServers := []tinytunDnsServerConf{
-		// Forward all DNS from TinyTun to the v2fly dns-in-tun dokodemo-door (127.0.0.1:6053).
-		// v2fly will apply its own DNS routing rules (direct / proxy) and return answers.
-		// Route is "direct" so TinyTun sends these packets straight to the local loopback
-		// without going through the SOCKS5 proxy.
-		{Address: "127.0.0.1:6053", Route: "direct"},
-	}
 	skipNetworks := dedupeStrings(collectBypassInterfaceNetworks(setting.TunBypassInterfaces))
 
 	cfg := tinytunConfig{
@@ -331,14 +536,12 @@ func generateTinyTunConfig(tmpl *Template) (string, error) {
 			MTU:     1500,
 		},
 		Socks5: tinytunSocks5Conf{
+			// DNS is handled by TinyTun's own DNS module (groups + routing rules);
+			// the SOCKS5 connection is used only for proxied traffic forwarding.
 			Address:      fmt.Sprintf("127.0.0.1:%d", tinytunSocksPort),
-			DnsOverSocks: true,
+			DnsOverSocks: false,
 		},
-		DNS: tinytunDnsConf{
-			Servers:    dnsServers,
-			ListenPort: 53,
-			TimeoutMs:  5000,
-		},
+		DNS: buildTinyTunDNSConfig(),
 		Filtering: tinytunFilteringConf{
 			SkipIPs:          skipIPs,
 			SkipNetworks:     skipNetworks,
@@ -351,7 +554,7 @@ func generateTinyTunConfig(tmpl *Template) (string, error) {
 		},
 	}
 
-	data, err := jsoniter.MarshalIndent(cfg, "", "  ")
+	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal tinytun config: %w", err)
 	}
@@ -478,6 +681,25 @@ func runTinyTunScript(stage, script string) error {
 	return nil
 }
 
+// tinytunLineWriter is an io.Writer that prefixes each output line from the TinyTun
+// process with "[tinytun] " and forwards it to the v2rayA log system.
+// This makes TinyTun log lines distinguishable from core (v2ray/xray) and v2rayA
+// log lines so the frontend can filter by source.
+type tinytunLineWriter struct{}
+
+func (w tinytunLineWriter) Write(p []byte) (n int, err error) {
+	s := string(p)
+	if len(s) > 0 && s[len(s)-1] == '\n' {
+		s = s[:len(s)-1]
+	}
+	for _, line := range strings.Split(s, "\n") {
+		if line != "" {
+			log.Info("[tinytun] %v", line)
+		}
+	}
+	return len(p), nil
+}
+
 // startTinyTun generates the TinyTun config and starts the TinyTun process.
 func startTinyTun(tmpl *Template) error {
 	binPath, err := GetTinyTunBinPath()
@@ -495,12 +717,14 @@ func startTinyTun(tmpl *Template) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	setting := configure.GetSettingNotNil()
-	args := []string{binPath, "run", "--config", configPath}
+	cmdArgs := []string{"run", "--config", configPath}
 	if setting.TunAutoRoute {
-		args = append(args, "--auto-route")
+		cmdArgs = append(cmdArgs, "--auto-route")
 	}
-	_, err = RunWithLog(ctx, binPath, args, "", os.Environ())
-	if err != nil {
+	cmd := exec.CommandContext(ctx, binPath, cmdArgs...)
+	cmd.Stdout = tinytunLineWriter{}
+	cmd.Stderr = tinytunLineWriter{}
+	if err = cmd.Start(); err != nil {
 		cancel()
 		return fmt.Errorf("failed to start tinytun: %w", err)
 	}
@@ -511,6 +735,20 @@ func startTinyTun(tmpl *Template) error {
 	}
 	tinyTunState.cancel = cancel
 	tinyTunState.mu.Unlock()
+
+	// Monitor for unexpected exits: if TinyTun dies without its context being cancelled,
+	// the proxy is in an inconsistent state and must be stopped.
+	go func() {
+		_ = cmd.Wait()
+		select {
+		case <-ctx.Done():
+			// Context was cancelled by stopTinyTun — intentional stop, nothing to do.
+			return
+		default:
+		}
+		log.Warn("tinytun: process exited unexpectedly, stopping proxy")
+		ProcessManager.Stop(true)
+	}()
 
 	// Run user-defined setup script when auto_route is disabled.
 	if !setting.TunAutoRoute {

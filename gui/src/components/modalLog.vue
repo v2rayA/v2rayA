@@ -193,6 +193,10 @@ export default {
       return "other";
     },
     detectSource(text) {
+      // TinyTun logs are prefixed with [tinytun] by the v2rayA log system.
+      if (text.includes("[tinytun]")) {
+        return "tinytun";
+      }
       // 匹配 [xxx.go:123] 或 [xxxService] 格式
       const match = text.match(/\[([^\]]+\.go|[A-Za-z]+Service|[A-Za-z]+\.[A-Za-z]+)(?::\d+)?\]/);
       if (match) {

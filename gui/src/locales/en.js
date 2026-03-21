@@ -128,6 +128,9 @@ export default {
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
     inboundSniffing: "Sniffing",
+    ssBackend: "Shadowsocks Backend",
+    trojanBackend: "Trojan Backend",
+    nodeBackend: "Backend",
     options: {
       trace: "Trace",
       debug: "Debug",
@@ -153,6 +156,9 @@ export default {
       closed: "Off",
       advanced: "Advanced Setting",
       leastPing: "Least Latency First",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "System Default",
     },
     messages: {
       inboundSniffing: "Sniff inbound traffic. If it is not turned on, some traffic may not be diverted correctly.",
