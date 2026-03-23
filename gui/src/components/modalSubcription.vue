@@ -23,6 +23,12 @@
 	  >{{ $t("subscription.autoSelect") }}
 	</b-checkbox>
       </b-field>
+      <b-field label="FILTER PATTERN" :message="$t('subscription.filterPatternHint')">
+        <b-input
+          v-model="which.filterPattern"
+          :placeholder="$t('subscription.filterPattern')"
+        />
+      </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
       <button class="button" type="button" @click="$parent.close()">

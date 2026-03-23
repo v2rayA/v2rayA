@@ -59,6 +59,8 @@ export default {
     remarks: "Observações",
     timeLastUpdate: "Data e Hora da Última Atualização",
     numberServers: "Número de Servidores",
+    filterPattern: "Padrão de Filtro",
+    filterPatternHint: "Manter apenas servidores cujo nome corresponda a esta regex. Deixe em branco para desativar o filtro.",
   },
   operations: {
     name: "Operações",

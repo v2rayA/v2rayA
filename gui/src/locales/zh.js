@@ -60,6 +60,9 @@ export default {
     timeLastUpdate: "上次更新时间",
     numberServers: "节点数",
     subscription: "订阅",
+    autoSelect: "订阅自动更新后自动连接到订阅中的新节点",
+    filterPattern: "过滤正则表达式",
+    filterPatternHint: "仅保留节点名称匹配该正则表达式的节点，留空则不过滤",
   },
   operations: {
     tproxyWhiteIpGroups: "直通白名单IP组",

@@ -19,6 +19,7 @@ type SubscriptionRaw struct {
 	Servers []ServerRaw `json:"servers"`
 	Info    string      `json:"info"` // maybe include some info from provider
 	AutoSelect bool     `json:"autoSelect"`
+	FilterPattern string      `json:"filterPattern,omitempty"`
 }
 
 func Bytes2SubscriptionRaw(b []byte) (*SubscriptionRaw, error) {

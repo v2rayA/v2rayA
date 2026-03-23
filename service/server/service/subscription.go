@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -199,6 +200,20 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 	return
 }
 
+// filterSubscriptionInfos filters subscriptionInfos with filter pattern, and returns the filtered subscriptionInfos
+func filterSubscriptionInfos(subscriptionInfos []serverObj.ServerObj, filterPattern string) (filtered []serverObj.ServerObj, err error) {
+	//regex
+	re, err := regexp.Compile(filterPattern)
+	if err != nil {
+		return nil, err
+	}
+	for _, info := range subscriptionInfos {
+		if re.MatchString(info.GetName()) {
+			filtered = append(filtered, info)
+		}
+	}
+	return filtered, nil
+}
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
@@ -209,6 +224,14 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		reason := "failed to resolve subscription address: " + err.Error()
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
 		return fmt.Errorf("UpdateSubscription: %v", reason)
+	}
+	// filter subscriptionInfos with filter pattern
+	if subscriptions[index].FilterPattern != "" {
+		var err error
+		subscriptionInfos, err = filterSubscriptionInfos(subscriptionInfos, subscriptions[index].FilterPattern)
+		if err != nil {
+			return fmt.Errorf("UpdateSubscription: %v", err)
+		}
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -274,6 +297,7 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
+	raw.FilterPattern = subscription.FilterPattern
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 

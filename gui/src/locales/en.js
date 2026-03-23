@@ -61,6 +61,8 @@ export default {
     numberServers: "Number of Servers",
     subscription: "Subscription",
     autoSelect: "Automatically connect to new servers from the subscription after an automatic update of the subscription",
+    filterPattern: "Filter Pattern",
+    filterPatternHint: "Only keep servers whose name matches this regex. Leave empty to disable filtering.",
   },
   operations: {
     name: "Operations",

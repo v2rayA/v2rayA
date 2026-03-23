@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+	"os"
+    _ "net/http/pprof"
 	"github.com/gin-gonic/gin"
 	_ "github.com/v2rayA/v2rayA/conf/report"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/anytls"
@@ -21,6 +25,16 @@ import (
 )
 
 func main() {
+	fmt.Println("start pprof", "addr", os.Getenv("PPROF"))
+	if os.Getenv("PPROF") != "" {
+		go func() {
+
+			fmt.Println("start pprof", "addr", os.Getenv("PPROF"))
+			if err := http.ListenAndServe(os.Getenv("PPROF"), nil); err != nil {
+				fmt.Println(err)
+			}
+		}()
+	}
 	println("[DEBUG] main.main started")
 	gin.SetMode(gin.ReleaseMode)
 

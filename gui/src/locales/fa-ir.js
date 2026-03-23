@@ -59,6 +59,8 @@ export default {
     remarks: "Remarks (لینک اشتراک)",
     timeLastUpdate: "تاریخ آخرین به روز رسانی",
     numberServers: "تعداد سرورها",
+    filterPattern: "Filter Pattern",
+    filterPatternHint: "Only keep servers whose name matches this regex. Leave empty to disable filtering.",
   },
   operations: {
     name: "عملیات",
