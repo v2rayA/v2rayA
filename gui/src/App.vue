@@ -57,6 +57,13 @@
           <i class="iconfont icon-info" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
+        <b-navbar-item tag="a" @click.native="toggleTheme">
+          <i
+            :class="isDarkTheme ? 'mdi mdi-weather-sunny' : 'mdi mdi-weather-night'"
+            style="font-size: 1.25em"
+          ></i>
+          {{ themeSwitchLabel }}
+        </b-navbar-item>
         <b-dropdown position="is-bottom-left" aria-role="menu" class="langdropdown">
           <a slot="trigger" class="navbar-item" role="button">
             <i class="iconfont icon-earth" style="font-size: 1.25em; margin-right: 4px"></i>
@@ -134,6 +141,7 @@ export default {
       outbounds: ["proxy"],
       outboundDropdownHover: {},
       updateOutboundDropdown: true,
+      isDarkTheme: false,
     };
   },
   computed: {
@@ -153,9 +161,15 @@ export default {
       const lang = this.langs.find(l => l.flag === currentLang);
       return lang ? lang.code : "zh_CN";
     },
+    themeSwitchLabel() {
+      return this.isDarkTheme
+        ? this.$t("common.lightTheme")
+        : this.$t("common.darkTheme");
+    },
   },
   mounted() {
     console.log("app created");
+    this.initTheme();
     let ba = localStorage.getItem("backendAddress");
     if (ba) {
       let u = parseURL(ba);
@@ -513,6 +527,18 @@ export default {
       localStorage.removeItem("token");
       this.$remount();
     },
+    initTheme() {
+      this.isDarkTheme = localStorage.getItem("theme") === "dark";
+      this.applyThemeClass();
+    },
+    applyThemeClass() {
+      document.body.classList.toggle("theme-dark", this.isDarkTheme);
+    },
+    toggleTheme() {
+      this.isDarkTheme = !this.isDarkTheme;
+      localStorage.setItem("theme", this.isDarkTheme ? "dark" : "light");
+      this.applyThemeClass();
+    },
     handleClickLogs() {
       this.$buefy.modal.open({
         parent: this,
@@ -528,6 +554,7 @@ export default {
 <style lang="scss">
 @import "assets/iconfont/fonts/font.css";
 @import "assets/scss/reset.scss";
+@import "assets/scss/dark-theme.scss";
 </style>
 
 <style lang="scss" scoped>

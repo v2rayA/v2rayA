@@ -18,6 +18,8 @@ export default {
     optional: "اختیاری",
     loadBalance: "متعادل کردن",
     log: "گزارش ها",
+    darkTheme: "تم تیره",
+    lightTheme: "تم روشن",
   },
   welcome: {
     title: "خوش آمدی",

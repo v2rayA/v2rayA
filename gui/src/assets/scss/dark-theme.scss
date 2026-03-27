@@ -1,0 +1,517 @@
+body.theme-dark {
+  /* Material 3 dark roles */
+  --md-bg: #1c1b1f;
+  --md-surface-container: #211f26;
+  --md-surface-variant: #49454f;
+  --md-outline: #938f99;
+  --md-on-bg: #e6e1e5;
+  --md-on-surface: #e6e1e5;
+  --md-on-surface-variant: #cac4d0;
+  --md-primary: #d0bcff;
+  --md-primary-container: #4f378b;
+  --md-on-primary-container: #eaddff;
+
+  background-color: var(--md-bg);
+  color: var(--md-on-bg);
+
+  #app,
+  .hero,
+  .hero-body,
+  .container,
+  .b-table,
+  .table-wrapper,
+  .b-table .table,
+  table.table {
+    background-color: var(--md-bg) !important;
+    color: var(--md-on-bg);
+  }
+
+  .navbar.is-light,
+  .navbar-dropdown,
+  .dropdown-content,
+  .navbar-menu {
+    background-color: var(--md-surface-container) !important;
+    color: var(--md-on-surface);
+  }
+
+  .navbar.is-fixed-top.has-shadow,
+  .navbar.is-fixed-top.has-shadow::after {
+    box-shadow: 0 2px 0 0 var(--md-surface-variant);
+  }
+
+  .navbar.is-light {
+    .navbar-brand > .navbar-item,
+    .navbar-brand .navbar-link,
+    .navbar-item,
+    .navbar-link {
+      color: var(--md-on-surface) !important;
+      background-color: transparent !important;
+    }
+
+    .navbar-item:hover,
+    .navbar-link:hover,
+    .navbar-item:focus,
+    .navbar-link:focus,
+    .navbar-item:focus-within,
+    .navbar-link:focus-within,
+    .navbar-item.is-active,
+    .navbar-link.is-active {
+      background-color: transparent !important;
+      color: var(--md-primary) !important;
+    }
+  }
+
+  .navbar-end > a.navbar-item:hover,
+  .navbar-end > a.navbar-item:focus,
+  .navbar-end > a.navbar-item:focus-within,
+  .langdropdown .navbar-item:hover,
+  .menudropdown .navbar-item:hover,
+  .langdropdown .navbar-item:focus,
+  .menudropdown .navbar-item:focus,
+  .langdropdown .navbar-item:focus-within,
+  .menudropdown .navbar-item:focus-within {
+    background-color: transparent !important;
+    color: var(--md-primary) !important;
+  }
+
+  .navbar-end > a.navbar-item,
+  .langdropdown .navbar-item,
+  .menudropdown .navbar-item {
+    color: var(--md-on-surface) !important;
+  }
+
+  .dropdown-item,
+  .dropdown-content .dropdown-item {
+    color: var(--md-on-surface);
+    background-color: transparent !important;
+  }
+
+  .dropdown .dropdown-menu .has-link a:hover,
+  a.dropdown-item:hover,
+  button.dropdown-item:hover {
+    background-color: #2b2930 !important;
+    color: var(--md-on-surface) !important;
+  }
+
+  .dropdown-divider,
+  hr.dropdown-divider {
+    background-color: var(--md-surface-variant);
+  }
+
+  .navbar-burger {
+    color: var(--md-on-surface);
+    span {
+      background-color: var(--md-on-surface) !important;
+    }
+    &:hover {
+      background-color: #2b2930;
+    }
+  }
+
+  .box,
+  .card,
+  .modal-card,
+  .modal-card-head,
+  .modal-card-body,
+  .modal-card-foot,
+  .sidebar-content,
+  .message,
+  .message-body,
+  .message-header {
+    background-color: var(--md-surface-container) !important;
+    color: var(--md-on-surface) !important;
+    border-color: var(--md-surface-variant);
+  }
+
+  .modal-card-title,
+  .message .title,
+  .message .subtitle,
+  .label,
+  .help,
+  .content,
+  .content p,
+  .title,
+  .subtitle,
+  .modal-card-body p {
+    color: var(--md-on-surface);
+  }
+
+  .modal-card-head .delete::before,
+  .modal-card-head .delete::after {
+    color: var(--md-on-surface);
+  }
+
+  .input,
+  .textarea,
+  .select select,
+  .taginput .taginput-container {
+    background-color: var(--md-surface-container);
+    border-color: var(--md-surface-variant);
+    color: var(--md-on-surface);
+  }
+
+  .input::placeholder,
+  .textarea::placeholder {
+    color: var(--md-on-surface-variant);
+  }
+
+  .select {
+    select option {
+      background-color: #2b2930;
+      color: var(--md-on-surface);
+    }
+    &:not(.is-multiple):not(.is-loading)::after {
+      border-color: var(--md-on-surface-variant) !important;
+    }
+    &:not(.is-multiple):not(.is-loading):hover::after,
+    &:not(.is-multiple):not(.is-loading).is-focused::after {
+      border-color: var(--md-primary) !important;
+    }
+  }
+
+  .field.is-floating-label {
+    .label {
+      color: var(--md-on-surface-variant);
+      &:before {
+        background-color: var(--md-surface-container);
+      }
+    }
+  }
+
+  .button {
+    &.is-primary,
+    &.is-primary:hover,
+    &.is-primary:focus,
+    &.is-primary.is-focused,
+    &.is-primary.is-hovered,
+    &.is-primary:active,
+    &.is-primary.is-active {
+      background-color: var(--md-primary-container) !important;
+      border-color: var(--md-primary-container) !important;
+      color: var(--md-on-primary-container) !important;
+      box-shadow: none !important;
+    }
+
+    &:hover,
+    &:focus,
+    &.is-hovered,
+    &.is-focused {
+      box-shadow: none !important;
+    }
+
+    &:focus:not(:active),
+    &.is-focused:not(:active) {
+      border-color: var(--md-outline) !important;
+    }
+
+    &:not(.is-primary):not(.is-link):not(.is-info):not(.is-success):not(.is-warning):not(.is-danger):not(.is-delete),
+    &.is-light,
+    &.is-white {
+      background-color: #2b2930;
+      border-color: var(--md-surface-variant);
+      color: var(--md-on-surface);
+    }
+
+    &:not(.is-primary):not(.is-link):not(.is-info):not(.is-success):not(.is-warning):not(.is-danger):not(.is-delete):hover,
+    &.is-light:hover,
+    &.is-white:hover {
+      background-color: #35333a;
+      border-color: var(--md-outline);
+    }
+
+    &.is-outlined {
+      background-color: transparent;
+      border-color: var(--md-outline);
+      color: var(--md-on-surface);
+
+      &:hover,
+      &:focus {
+        background-color: #35333a;
+        border-color: var(--md-on-surface-variant);
+        color: var(--md-on-surface);
+      }
+    }
+
+    &.is-warning {
+      background-color: #ffb300;
+      border-color: #ffb300;
+      color: #2a1900;
+
+      &.is-outlined {
+        background-color: transparent;
+        border-color: #ffb300;
+        color: #ffb300;
+
+        &:hover,
+        &:focus {
+          background-color: #ffb300;
+          color: #2a1900;
+        }
+      }
+    }
+
+    &.is-info:not(.is-outlined) {
+      background-color: #4fc3d9;
+      border-color: #4fc3d9;
+      color: #00363d;
+    }
+
+    &.is-success:not(.is-outlined) {
+      background-color: #7eaee6;
+      border-color: #7eaee6;
+      color: #0a305f;
+    }
+
+    &.is-danger:not(.is-outlined),
+    &.is-delete {
+      background-color: #ff8a80 !important;
+      border-color: #ff8a80 !important;
+      color: #690005 !important;
+    }
+
+    &.is-info.is-outlined {
+      border-color: #4fc3d9 !important;
+      color: #4fc3d9 !important;
+      &:hover,
+      &:focus {
+        background-color: #4fc3d9 !important;
+        border-color: #4fc3d9 !important;
+        color: #1c1b1f !important;
+      }
+    }
+
+    &.is-success.is-outlined {
+      border-color: #7eaee6 !important;
+      color: #7eaee6 !important;
+      &:hover,
+      &:focus {
+        background-color: #7eaee6 !important;
+        border-color: #7eaee6 !important;
+        color: #1c1b1f !important;
+      }
+    }
+
+    &.is-danger.is-outlined,
+    &.is-delete.is-outlined {
+      background-color: transparent !important;
+      border-color: #ff8a80 !important;
+      color: #ff8a80 !important;
+      &:hover,
+      &:focus {
+        background-color: #ff8a80 !important;
+        border-color: #ff8a80 !important;
+        color: #1c1b1f !important;
+      }
+    }
+  }
+
+  .button.is-outlined[style*="0, 0, 0, 0.75"] {
+    color: var(--md-on-surface) !important;
+    border-color: var(--md-surface-variant) !important;
+  }
+
+  .checkbox.is-primary input:checked + .check,
+  .b-checkbox.checkbox.is-primary input:checked + .check,
+  .checkbox.button.is-primary input:checked + .check,
+  .switch input[type="checkbox"]:checked + .check {
+    background: var(--md-primary-container) !important;
+    border-color: var(--md-primary-container) !important;
+    box-shadow: none !important;
+    color: var(--md-on-primary-container) !important;
+  }
+
+  .checkbox.is-primary input:checked + .check::before,
+  .b-checkbox.checkbox.is-primary input:checked + .check::before,
+  .checkbox.button.is-primary input:checked + .check::before {
+    color: var(--md-on-primary-container) !important;
+  }
+
+  .b-checkbox.checkbox input[type="checkbox"]:checked + .check.is-primary {
+    background:
+      var(--md-primary-container)
+      url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Cpath style='fill:%23eaddff' d='M.04.627.146.52.43.804.323.91zm.177.177L.854.167.96.273.323.91z'/%3E%3C/svg%3E")
+      no-repeat 50% !important;
+    border-color: var(--md-primary-container) !important;
+  }
+
+  .b-checkbox.checkbox input[type="checkbox"]:focus:checked + .check.is-primary {
+    box-shadow: 0 0 0.35em rgba(79, 55, 139, 0.65) !important;
+  }
+
+  .b-checkbox.checkbox:hover input[type="checkbox"]:not(:disabled) + .check.is-primary {
+    border-color: var(--md-primary-container) !important;
+  }
+
+  /* Keep primary checkbox border non-yellow in all checked/hover permutations */
+  .b-checkbox.checkbox input[type="checkbox"]:checked + .check.is-primary,
+  .b-checkbox.checkbox:hover input[type="checkbox"]:checked + .check.is-primary,
+  .b-checkbox.checkbox:hover input[type="checkbox"]:not(:disabled):checked + .check.is-primary {
+    border-color: var(--md-primary-container) !important;
+  }
+
+  .tabs {
+    li a {
+      border-color: var(--md-surface-variant);
+      color: var(--md-on-surface-variant);
+      background-color: transparent !important;
+    }
+
+    li:not(.is-active) a:hover {
+      background-color: #2b2930;
+      color: var(--md-on-surface);
+    }
+  }
+
+  .tabs.main-tabs li.is-active a,
+  .main-tabs .tabs li.is-active a,
+  .tabs.is-toggle li.is-active a,
+  .tabs.is-toggle-rounded li.is-active a,
+  .main-tabs.tabs.is-toggle-rounded li.is-active a {
+    background-color: var(--md-primary-container) !important;
+    border-color: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+  }
+
+  .b-tabs .tabs.is-toggle li:not(.is-active) a:focus,
+  .b-tabs .tabs.is-toggle-rounded li:not(.is-active) a:focus,
+  .tabs.is-toggle li:not(.is-active) a:focus,
+  .tabs.is-toggle-rounded li:not(.is-active) a:focus {
+    border-color: var(--md-primary-container) !important;
+  }
+
+  .tabs.is-boxed li a {
+    background-color: var(--md-surface-container) !important;
+    border-color: var(--md-surface-variant) !important;
+    color: var(--md-on-surface-variant) !important;
+  }
+
+  .tabs.is-boxed li.is-active a,
+  .tabs.is-boxed li a:hover {
+    background-color: #2b2930 !important;
+    border-color: var(--md-outline) !important;
+    color: var(--md-on-surface) !important;
+  }
+
+  .is-twitter .is-active a {
+    color: var(--md-primary) !important;
+  }
+
+  .b-table .table,
+  table.table {
+    th,
+    td {
+      background-color: var(--md-bg) !important;
+      color: var(--md-on-surface) !important;
+      border-color: var(--md-bg) !important;
+    }
+
+    thead th {
+      border-bottom-color: var(--md-surface-variant) !important;
+      color: var(--md-on-bg) !important;
+    }
+
+    thead td {
+      color: var(--md-on-bg) !important;
+    }
+
+    thead th.is-current-sort {
+      background-color: transparent !important;
+      color: var(--md-primary) !important;
+      border-bottom-color: var(--md-primary) !important;
+      box-shadow: inset 0 -2px 0 var(--md-primary);
+    }
+
+    tr.is-unselectable td {
+      background-color: inherit !important;
+      color: inherit !important;
+      border-bottom-color: var(--md-surface-variant) !important;
+    }
+  }
+
+  .b-sidebar.node-status-sidebar > .sidebar-content.is-fixed,
+  .b-sidebar.node-status-sidebar-reduced > .sidebar-content.is-fixed {
+    background-color: var(--md-surface-container) !important;
+    color: var(--md-on-surface);
+  }
+
+  .rules::-webkit-scrollbar,
+  .modal-card-body::-webkit-scrollbar {
+    width: 0.85em;
+    height: 0.85em;
+  }
+
+  .rules::-webkit-scrollbar-track,
+  .modal-card-body::-webkit-scrollbar-track,
+  &::-webkit-scrollbar-track,
+  nav::-webkit-scrollbar-track {
+    background-color: var(--md-surface-container);
+  }
+
+  .rules::-webkit-scrollbar-thumb,
+  .modal-card-body::-webkit-scrollbar-thumb,
+  &::-webkit-scrollbar-thumb,
+  nav::-webkit-scrollbar-thumb {
+    background-color: var(--md-surface-variant);
+    border-radius: 6px;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    background: transparent !important;
+    color: var(--md-on-surface) !important;
+    filter: invert(0.75);
+  }
+
+  a:not(.navbar-item):not(.dropdown-item):not(.button),
+  .is-link,
+  code {
+    color: var(--md-primary) !important;
+  }
+
+  .modal-background {
+    background-color: rgba(0, 0, 0, 0.62);
+  }
+
+  /* Final high-priority overrides for Buefy/Bulma defaults */
+  .button.is-primary,
+  .button.is-primary:hover,
+  .button.is-primary:focus,
+  .button.is-primary.is-focused,
+  .button.is-primary.is-hovered,
+  .button.is-primary:active,
+  .button.is-primary.is-active {
+    background-color: var(--md-primary-container) !important;
+    border-color: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    box-shadow: none !important;
+  }
+
+  .checkbox.is-primary input:checked + .check,
+  .b-checkbox.checkbox.is-primary input:checked + .check,
+  .checkbox.button.is-primary input:checked + .check,
+  .b-checkbox.checkbox.button.is-primary input:checked + .check,
+  .switch input[type="checkbox"]:checked + .check {
+    background: var(--md-primary-container) !important;
+    border-color: var(--md-primary-container) !important;
+    color: var(--md-on-primary-container) !important;
+    box-shadow: none !important;
+  }
+
+  .checkbox.is-primary input:checked + .check::before,
+  .b-checkbox.checkbox.is-primary input:checked + .check::before,
+  .checkbox.button.is-primary input:checked + .check::before,
+  .b-checkbox.checkbox.button.is-primary input:checked + .check::before {
+    color: var(--md-on-primary-container) !important;
+  }
+
+  .b-tabs .tabs.is-toggle li:not(.is-active) a:hover,
+  .b-tabs .tabs.is-toggle li:not(.is-active) a:focus,
+  .b-tabs .tabs.is-toggle-rounded li:not(.is-active) a:hover,
+  .b-tabs .tabs.is-toggle-rounded li:not(.is-active) a:focus,
+  .tabs.is-toggle li:not(.is-active) a:hover,
+  .tabs.is-toggle li:not(.is-active) a:focus,
+  .tabs.is-toggle-rounded li:not(.is-active) a:hover,
+  .tabs.is-toggle-rounded li:not(.is-active) a:focus {
+    border-color: var(--md-primary-container) !important;
+  }
+}
