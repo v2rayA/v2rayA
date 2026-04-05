@@ -24,15 +24,7 @@ type Setting struct {
 	PortSharing                        bool            `json:"portSharing"`
 	TransparentType                    TransparentType `json:"transparentType"`
 	TproxyExcludedInterfaces           string          `json:"tproxyExcludedInterfaces"`
-	TunBypassInterfaces                string          `json:"tunBypassInterfaces"`
-	TunAutoRoute                       bool            `json:"tunAutoRoute"`
-	TunRouteShellType                  string          `json:"tunRouteShellType"`
-	TunRouteShellPath                  string          `json:"tunRouteShellPath"`
-	TunSetupScript                     string          `json:"tunSetupScript"`
-	TunTeardownScript                  string          `json:"tunTeardownScript"`
-	TunProcessBackend                  string          `json:"tunProcessBackend"`
-	SsBackend                          string          `json:"ssBackend"`
-	TrojanBackend                      string          `json:"trojanBackend"`
+	Encryption                         string          `json:"encryption"`
 }
 
 func NewSetting() (setting *Setting) {
@@ -53,7 +45,7 @@ func NewSetting() (setting *Setting) {
 		PortSharing:                        false,
 		TransparentType:                    TransparentRedirect,
 		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
-		TunAutoRoute:                       true,
+		Encryption:                         "none",
 	}
 }
 
