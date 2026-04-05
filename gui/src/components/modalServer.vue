@@ -92,15 +92,26 @@ v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
             <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
           <b-field
+            v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'"
+            label="Encryption"
+            label-position="on-border"
+          >
+            <b-input v-model="v2ray.scy" placeholder="none" expanded />
+          </b-field>
+          <b-field
 v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
             label-position="on-border"
           >
-            <b-input
+            <b-select
               ref="v2ray_flow"
               v-model="v2ray.flow"
               placeholder="Flow"
               expanded
-            />
+            >
+              <option value="none">{{ $t("setting.options.off") }}</option>
+              <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              <option value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</option>
+            </b-select>
           </b-field>
           <b-field
             v-show="v2ray.tls === 'reality'"
@@ -1021,7 +1032,11 @@ export default {
     variant() {
       return localStorage["variant"]?.toLowerCase() || "v2ray";
     },
-    handleV2rayProtocolSwitch() { },
+    handleV2rayProtocolSwitch() {
+      if (this.v2ray.protocol === "vless" && this.v2ray.scy === "auto") {
+        this.v2ray.scy = "none";
+      }
+    },
     resolveURL(url) {
       if (url.toLowerCase().startsWith("vmess://")) {
         let obj = JSON.parse(
@@ -1048,13 +1063,14 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           sni: u.params.sni || "",
-          tls: u.params.security || "none",
+          tls: u.params.security || u.params.tls || "none",
           quicSecurity: u.params.quicSecurity || "none",
           fp: u.params.fp || "",
           pbk: u.params.pbk || "",
           sid: u.params.sid || "",
           spx: u.params.spx || "",
           allowInsecure: u.params.allowInsecure || false,
+          scy: u.params.encryption || "none",
           key: u.params.key,
           xhttpMode: u.params.xhttpMode || "auto",
           xhttpRawJson: u.params.xhttpRawJson || "",
@@ -1261,7 +1277,6 @@ export default {
           // https://github.com/XTLS/Xray-core/discussions/716
           query = {
             type: srcObj.net,
-            flow: srcObj.flow || "",
             security: srcObj.tls,
             fp: srcObj.fp || "",
             path: srcObj.path,
@@ -1270,6 +1285,12 @@ export default {
             sni: srcObj.sni,
             allowInsecure: srcObj.allowInsecure,
           };
+          if (srcObj.flow && srcObj.flow !== "none") {
+            query.flow = srcObj.flow;
+          }
+          if (srcObj.scy && srcObj.scy !== "none") {
+            query.encryption = srcObj.scy;
+          }
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
           }
@@ -1510,7 +1531,7 @@ export default {
           }
           return generateURL(tmp);
         case "anytls":
-          let query = {};
+          query = {};
           if (srcObj.sni) {
             query.peer = srcObj.sni;
           }
@@ -1603,15 +1624,17 @@ export default {
           this.v2ray.allowInsecure === true ||
           this.v2ray.allowInsecure === "true"
         ) {
-          const { result } = await this.$buefy.dialog.confirm({
-            title: this.$t("InSecureConfirm.title"),
-            message: this.$t("InSecureConfirm.message"),
-            confirmText: this.$t("InSecureConfirm.confirm"),
-            cancelText: this.$t("InSecureConfirm.cancel"),
-            type: "is-danger",
-            hasIcon: true,
-            onConfirm: () => true,
-            onCancel: () => false,
+          let result = await new Promise((resolve) => {
+            this.$buefy.dialog.confirm({
+              title: this.$t("InSecureConfirm.title"),
+              message: this.$t("InSecureConfirm.message"),
+              confirmText: this.$t("InSecureConfirm.confirm"),
+              cancelText: this.$t("InSecureConfirm.cancel"),
+              type: "is-danger",
+              hasIcon: true,
+              onConfirm: () => resolve(true),
+              onCancel: () => resolve(false),
+            });
           });
           if (!result) {
             return;
