@@ -231,6 +231,13 @@
 
       <b-field label-position="on-border">
         <template slot="label">
+          Encryption
+        </template>
+        <b-input v-model="encryption" expanded placeholder="none" />
+      </b-field>
+
+      <b-field label-position="on-border">
+        <template slot="label">
           {{ $t("setting.logLevel") }}
         </template>
         <b-select v-model="logLevel" expanded>
@@ -386,6 +393,7 @@ export default {
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
     inboundSniffing: "no",
+    encryption: "",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -498,6 +506,7 @@ export default {
             antipollution: this.antipollution,
             specialMode: this.specialMode,
             tproxyExcludedInterfaces: this.tproxyExcludedInterfaces,
+            encryption: this.encryption,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
