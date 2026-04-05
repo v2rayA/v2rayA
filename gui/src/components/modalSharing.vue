@@ -5,11 +5,15 @@
     </header>
     <section class="modal-card-body lazy" style="text-align: center">
       <div><canvas id="canvas" class="qrcode"></canvas></div>
-      <div class="tags has-addons is-centered" style="position: relative">
+      <div
+        id="copyLinkArea"
+        class="tags has-addons is-centered copy-trigger"
+        style="position: relative"
+        :data-clipboard-text="sharingAddress"
+      >
         <span
-          class="tag is-rounded is-dark sharingAddressTag"
+          class="tag is-rounded is-dark modalSharingAddressTag"
           style="position: relative"
-          :data-clipboard-text="sharingAddress"
         >
           <div class="tag-cover tag is-rounded" style="display: none"></div>
           <span class="has-ellipsis" style="max-width: 10em">
@@ -18,9 +22,8 @@
         </span>
         <div id="tag-cover-text">{{ $t("operations.copyLink") }}</div>
         <span
-          class="tag is-rounded is-primary sharingAddressTag"
+          class="tag is-rounded is-primary modalSharingAddressTag"
           style="position: relative"
-          :data-clipboard-text="sharingAddress"
         >
           <span class="has-ellipsis" style="max-width: 25em">
             {{ sharingAddress }}
@@ -91,7 +94,7 @@ export default {
     document
       .querySelector("#QRCodeImport")
       .addEventListener("change", this.handleFileChange, false);
-    this.clipboard = new ClipboardJS(".sharingAddressTag");
+    this.clipboard = new ClipboardJS("#copyLinkArea");
     this.clipboard.on("success", (e) => {
       this.$buefy.toast.open({
         message: this.$t("common.success"),
@@ -111,20 +114,20 @@ export default {
     });
 
     let add = this.sharingAddress;
-    if (this._type === CONST.SubscriptionType) {
+    if (this.type === CONST.SubscriptionType) {
       add = "sub://" + Base64.encode(add);
     }
     let canvas = document.getElementById("canvas");
     QRCode.toCanvas(
       canvas,
       add,
-      { errorCorrectionLevel: "H" },
+      { errorCorrectionLevel: "L", width: 350 },
       function (error) {
         if (error) console.error(error);
         // console.log("QRCode has been generated successfully!");
       }
     );
-    let targets = document.querySelectorAll(".sharingAddressTag");
+    let targets = document.querySelectorAll(".copy-trigger");
     let covers = document.querySelectorAll(".tag-cover");
     let coverText = document.querySelector("#tag-cover-text");
     let enter = () => {
@@ -188,4 +191,10 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.qrcode {
+  max-width: 100%;
+  height: auto !important;
+  margin: 0 auto;
+}
+</style>
