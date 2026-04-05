@@ -59,41 +59,15 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 
 func ServeGUI(r *gin.Engine) {
 	webDir := conf.GetEnvironmentConfig().WebDir
-	if webDir == "" {
-		webFS, err := fs.Sub(webRoot, "web")
-		if err != nil {
-			log.Fatal("fs.Sub: %v", err)
-		}
-		ss := http.StripPrefix("/static", statigz.FileServer(webFS.(fs.ReadDirFS)))
-		r.GET("/static/*w", func(c *gin.Context) {
-			ss.ServeHTTP(c.Writer, c.Request)
-		})
-		f, err := webFS.Open("index.html")
-		if err != nil {
-			log.Fatal("webFS.Open index.html:", err)
-		}
-		defer f.Close()
-		html, err := io.ReadAll(f)
-		if err != nil {
-			log.Fatal("ReadAll index.html: %v", err)
-		}
-		r.GET("/", cachedHTML(html))
-	} else {
+	fmt.Printf("DEBUG: webDir is '%v'\n", webDir)
+	if webDir != "" {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
 			log.Warn("web files cannot be found at %v. web UI cannot be served", webDir)
 		} else {
-			filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
-				if path == webDir {
-					return nil
-				}
-				if info.IsDir() {
-					r.Static("/static/"+info.Name(), path)
-					return filepath.SkipDir
-				}
-				r.StaticFile("/static/"+info.Name(), path)
-				return nil
-			})
-
+			r.Static("/static", filepath.Join(webDir, "static"))
+			// Also handle root files in webDir
+			r.StaticFile("/favicon.ico", filepath.Join(webDir, "favicon.ico"))
+			
 			f, err := os.Open(filepath.Join(webDir, "index.html"))
 			if err != nil {
 				log.Fatal("Open index.html: %v", err)
@@ -104,8 +78,28 @@ func ServeGUI(r *gin.Engine) {
 				log.Fatal("ReadAll index.html: %v", err)
 			}
 			r.GET("/", cachedHTML(html))
+			return
 		}
 	}
+	// Fallback to embedded
+	webFS, err := fs.Sub(webRoot, "web")
+	if err != nil {
+		log.Fatal("fs.Sub: %v", err)
+	}
+	ss := http.StripPrefix("/static", statigz.FileServer(webFS.(fs.ReadDirFS)))
+	r.GET("/static/*w", func(c *gin.Context) {
+		ss.ServeHTTP(c.Writer, c.Request)
+	})
+	f, err := webFS.Open("index.html")
+	if err != nil {
+		log.Fatal("webFS.Open index.html:", err)
+	}
+	defer f.Close()
+	html, err := io.ReadAll(f)
+	if err != nil {
+		log.Fatal("ReadAll index.html: %v", err)
+	}
+	r.GET("/", cachedHTML(html))
 
 	app := conf.GetEnvironmentConfig()
 
