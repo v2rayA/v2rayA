@@ -88,11 +88,18 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		ShortId:       u.Query().Get("sid"),
 		SpiderX:       u.Query().Get("spx"),
 		Flow:          u.Query().Get("flow"),
+		Security:      u.Query().Get("encryption"),
 		Alpn:          u.Query().Get("alpn"),
 		AllowInsecure: u.Query().Get("allowInsecure") == "true",
 		Key:           u.Query().Get("key"),
 		V:             vless,
 		Protocol:      "vless",
+	}
+	if data.Flow == "" {
+		data.Flow = u.Query().Get("flows")
+	}
+	if data.TLS == "" {
+		data.TLS = u.Query().Get("tls")
 	}
 	if data.Net == "" {
 		data.Net = "tcp"
@@ -260,7 +267,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		case "vless":
 			security := v.Security
 			if security == "" {
-				security = "auto"
+				security = "none"
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
@@ -269,7 +276,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Users: []coreObj.User{
 						{
 							ID:         id,
-							Encryption: "none",
+							Encryption: security,
 						},
 					},
 				},
@@ -486,6 +493,9 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "path", v.Path)
 			setValue(&query, "host", v.Host)
 			setValue(&query, "xhttpMode", v.XHTTPMode)
+		}
+		if v.Security != "" && v.Security != "none" {
+			setValue(&query, "encryption", v.Security)
 		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)
