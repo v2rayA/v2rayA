@@ -60,6 +60,7 @@ export default {
     timeLastUpdate: "Datetime of Last Update",
     numberServers: "Number of Servers",
     subscription: "Subscription",
+    userAgent: "User-Agent",
     autoSelect: "Automatically connect to new servers from the subscription after an automatic update of the subscription",
   },
   operations: {
@@ -286,6 +287,7 @@ export default {
   },
   import: {
     message: "Input a server link or subscription address:",
+    userAgent: "Input a User-Agent when subscription update (Optional)",
     batchMessage: "One server link per line:",
     qrcodeError: "Failed to find a valid QRCode, please try again",
   },

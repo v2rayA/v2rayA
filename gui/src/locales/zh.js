@@ -283,6 +283,7 @@ export default {
   },
   import: {
     message: "填入节点链接或订阅地址：",
+    userAgent: "更新订阅时的User-Agent（可选）",
     batchMessage: "一行一个节点链接:",
     qrcodeError: "找不到有效的二维码，请重新尝试",
   },

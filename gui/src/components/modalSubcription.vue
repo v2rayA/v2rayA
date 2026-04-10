@@ -11,6 +11,13 @@
           :placeholder="$t('subscription.subscription')"
         />
       </b-field>
+      <b-field label="User-Agent">
+        <b-input
+          v-model="which.userAgent"
+          type="input"
+          :placeholder="$t('subscription.userAgent')"
+        />
+      </b-field>
       <b-field label="REMARKS">
         <b-input
           v-model="which.remarks"

@@ -617,6 +617,12 @@
             @icon-right-click="handleClickImportQRCode"
             @keyup.native="handleImportEnter"
           ></b-input>
+          {{ $t("import.userAgent") }}
+          <b-input
+            ref="importUA"
+            v-model="importUserAgent"
+            @keyup.native="handleImportEnter"
+          ></b-input>
         </section>
         <footer class="modal-card-foot">
           <button
@@ -752,6 +758,7 @@ export default {
       enterReducedSidebar: false,
       showSidebar: false,
       importWhat: "",
+      importUserAgent: "",
       showModalImport: false,
       showModalImportInBatch: false,
       currentPage: { servers: 1, subscriptions: 1 },
@@ -1226,6 +1233,7 @@ export default {
         method: "post",
         data: {
           url: value || this.importWhat,
+          userAgent: this.importUserAgent,
         },
       }).then((res) => {
         if (res.data.code === "SUCCESS") {
