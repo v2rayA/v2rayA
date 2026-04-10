@@ -12,8 +12,9 @@ import (
 
 func PostImport(ctx *gin.Context) {
 	var body struct {
-		URL   string      `json:"url"`
-		Which interface{} `json:"which"`
+		URL       string      `json:"url"`
+		UserAgent string      `json:"userAgent"`
+		Which     interface{} `json:"which"`
 	}
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		common.ResponseError(ctx, logError(fmt.Sprintf("bad request: %v", err)))
@@ -30,7 +31,7 @@ func PostImport(ctx *gin.Context) {
 		}
 	}
 
-	err := service.Import(body.URL, which)
+	err := service.Import(body.URL, body.UserAgent, which)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

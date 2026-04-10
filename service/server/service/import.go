@@ -27,8 +27,8 @@ func PluginManagerValidateLink(url string) bool {
 	}
 }
 
-func Import(url string, which *configure.Which) (err error) {
-	log.Trace("Import: received url=%v, which=%+v", url, which)
+func Import(url string, ua string, which *configure.Which) (err error) {
+	log.Trace("Import: received url=%v, ua=%+v, which=%+v", url, ua, which)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -113,7 +113,7 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 		c := httpClient.GetHttpClientAutomatically()
 		c.Timeout = 90 * time.Second
-		infos, status, err := ResolveSubscriptionWithClient(source, c)
+		infos, status, err := ResolveSubscriptionWithClient(source, ua, c)
 		if err != nil {
 			return fmt.Errorf("failed to resolve subscription address: %w", err)
 		}
@@ -137,10 +137,11 @@ func Import(url string, which *configure.Which) (err error) {
 			}
 		}
 		err = configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
-			Address: source,
-			Status:  string(touch.NewUpdateStatus()),
-			Servers: uniqueServers,
-			Info:    status,
+			Address:   source,
+			Status:    string(touch.NewUpdateStatus()),
+			Servers:   uniqueServers,
+			Info:      status,
+			UserAgent: ua,
 		}})
 	}
 	return

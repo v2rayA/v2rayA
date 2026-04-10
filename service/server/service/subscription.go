@@ -145,13 +145,13 @@ func trapBOM(fileBytes []byte) []byte {
 	trimmedBytes := bytes.Trim(fileBytes, "\xef\xbb\xbf")
 	return trimmedBytes
 }
-func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+func ResolveSubscriptionWithClient(source string, ua string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
 	c := *client
 	if c.Timeout < 30*time.Second {
 		c.Timeout = 30 * time.Second
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
+	res, err := httpClient.HttpGetUsingSpecificClientUA(client, source, ua)
 	if err != nil {
 		return
 	}
@@ -202,9 +202,10 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptions()
 	addr := subscriptions[index].Address
+	ua := subscriptions[index].UserAgent
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
-	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
+	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, ua, c)
 	if err != nil {
 		reason := "failed to resolve subscription address: " + err.Error()
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
@@ -274,6 +275,7 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
+	raw.UserAgent = subscription.UserAgent
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 
