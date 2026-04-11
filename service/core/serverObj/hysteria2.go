@@ -41,7 +41,6 @@ func (h *Hysteria2) ExportToURL() string {
 	return h.Link
 }
 
-<<<<<<< HEAD
 func (h *Hysteria2) ProtoToShow() string {
 	return "Hysteria2"
 }
@@ -67,9 +66,6 @@ func (h *Hysteria2) SetName(name string) {
 }
 
 func (h *Hysteria2) Configuration(info PriorInfo) (Configuration, error) {
-=======
-func (h *Hysteria2) Configuration(reg coreObj.OutboundRegistry) (coreObj.OutboundObject, error) {
->>>>>>> b9b00afb (fix(gui): improve mobile responsiveness for vertical tabs and refine SS URL parsing)
 	// Re-parse the link to get the latest credentials and params
 	parsed, err := ParseHysteria2URL(h.Link)
 	if err == nil {
@@ -85,12 +81,8 @@ func (h *Hysteria2) Configuration(reg coreObj.OutboundRegistry) (coreObj.Outboun
 		h.Port = parsed.Port
 	}
 	
-<<<<<<< HEAD
 	coreOutbound := coreObj.OutboundObject{
 		Tag:      info.Tag,
-=======
-	out := coreObj.OutboundObject{
->>>>>>> b9b00afb (fix(gui): improve mobile responsiveness for vertical tabs and refine SS URL parsing)
 		Protocol: "hysteria2",
 		Settings: coreObj.Settings{
 			Address: h.Address,
