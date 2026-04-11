@@ -182,3 +182,10 @@ function sanitizeALPN(alpn) {
 }
 
 export { locateServer, handleResponse, parseURL, generateURL, toInt, sanitizeALPN };
+
+export function bracketIfIPv6(address) {
+  if (address.includes(":") && !address.startsWith("[") && !address.endsWith("]")) {
+    return "[" + address + "]";
+  }
+  return address;
+}
