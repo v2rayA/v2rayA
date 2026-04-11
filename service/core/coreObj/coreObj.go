@@ -108,13 +108,8 @@ type Server struct {
 	Method   string         `json:"method,omitempty"`
 	Ota      bool           `json:"ota,omitempty"`
 	Password string         `json:"password,omitempty"`
-	Auth     string         `json:"auth,omitempty"`
 	Port     int            `json:"port,omitempty"`
 	Users    []OutboundUser `json:"users,omitempty"`
-}
-type UDPHop struct {
-	Ports    string `json:"ports,omitempty"`
-	Interval string `json:"interval,omitempty"`
 }
 type Settings struct {
 	Vnext          interface{} `json:"vnext,omitempty"`
@@ -125,7 +120,6 @@ type Settings struct {
 	Network        string      `json:"network,omitempty"`
 	Redirect       string      `json:"redirect,omitempty"`
 	UserLevel      *int        `json:"userLevel,omitempty"`
-	Version        int         `json:"version,omitempty"`
 }
 type TLSSettings struct {
 	AllowInsecure                    bool          `json:"allowInsecure"`
@@ -146,43 +140,38 @@ type WsSettings struct {
 	Path    string  `json:"path"`
 	Headers Headers `json:"headers"`
 }
+
 type HysteriaSettings struct {
-	Version int    `json:"version,omitempty"`
-	Auth    string `json:"auth,omitempty"`
-}
-type MaskItem struct {
-	Type     string      `json:"type"`
-	Settings interface{} `json:"settings,omitempty"`
-}
-type QuicParams struct {
-	Up                      string  `json:"up,omitempty"`
-	Down                    string  `json:"down,omitempty"`
-	HopInterval             string  `json:"hopInterval,omitempty"`
-	InitStreamReceiveWindow int     `json:"initStreamReceiveWindow,omitempty"`
-	InitConnReceiveWindow   int     `json:"initConnReceiveWindow,omitempty"`
-	Congestion              string  `json:"congestion,omitempty"`
-	UDPHop                  *UDPHop `json:"udpHop,omitempty"`
-}
-type FinalMask struct {
-	TCP        []MaskItem  `json:"tcp,omitempty"`
-	UDP        []MaskItem  `json:"udp,omitempty"`
+	Auth       string      `json:"auth"`
+	Obfs       *MaskItem   `json:"obfs,omitempty"`
 	QuicParams *QuicParams `json:"quicParams,omitempty"`
 }
+
+type MaskItem struct {
+	Type     string `json:"type"`
+	Password string `json:"password"`
+}
+
+type QuicParams struct {
+	Up         int    `json:"up"`
+	Down       int    `json:"down"`
+	Congestion string `json:"congestion"`
+}
+
 type StreamSettings struct {
-	Network         string           `json:"network,omitempty"`
-	Security        string           `json:"security,omitempty"`
-	TLSSettings     *TLSSettings     `json:"tlsSettings,omitempty"`
-	XTLSSettings    *TLSSettings     `json:"xtlsSettings,omitempty"`
-	XHTTPSettings   *XHTTPSettings   `json:"xhttpSettings,omitempty"`
-	RealitySettings *RealitySettings `json:"realitySettings,omitempty"`
-	TCPSettings     *TCPSettings     `json:"tcpSettings,omitempty"`
-	KcpSettings     *KcpSettings     `json:"kcpSettings,omitempty"`
-	WsSettings      *WsSettings      `json:"wsSettings,omitempty"`
-	HTTPSettings    *HttpSettings    `json:"httpSettings,omitempty"`
-	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
+	Network          string            `json:"network,omitempty"`
+	Security         string            `json:"security,omitempty"`
+	TLSSettings      *TLSSettings      `json:"tlsSettings,omitempty"`
+	XTLSSettings     *TLSSettings      `json:"xtlsSettings,omitempty"`
+	XHTTPSettings    *XHTTPSettings    `json:"xhttpSettings,omitempty"`
+	RealitySettings  *RealitySettings  `json:"realitySettings,omitempty"`
+	TCPSettings      *TCPSettings      `json:"tcpSettings,omitempty"`
+	KcpSettings      *KcpSettings      `json:"kcpSettings,omitempty"`
+	WsSettings       *WsSettings       `json:"wsSettings,omitempty"`
+	HTTPSettings     *HttpSettings     `json:"httpSettings,omitempty"`
+	GrpcSettings     *GrpcSettings     `json:"grpcSettings,omitempty"`
 	QuicSettings     *QuicSettings     `json:"quicSettings,omitempty"`
 	HysteriaSettings *HysteriaSettings `json:"hysteriaSettings,omitempty"`
-	FinalMask        *FinalMask        `json:"finalmask,omitempty"`
 	Sockopt          *Sockopt          `json:"sockopt,omitempty"`
 }
 type RealitySettings struct {
@@ -289,6 +278,13 @@ type XHTTPSettings struct {
 	Host string `json:"host,omitempty"`
 	Mode string `json:"mode,omitempty"`
 }
+
+type ServerCommon struct {
+	Address  string `json:"address"`
+	Port     int    `json:"port"`
+	Hostname string `json:"hostname"`
+}
+
 type Hosts map[string][]string
 
 type DNS struct {
@@ -321,4 +317,24 @@ type Policy struct {
 		StatsInboundUplink   bool `json:"statsInboundUplink,omitempty"`
 		StatsInboundDownlink bool `json:"statsInboundDownlink,omitempty"`
 	} `json:"system"`
+}
+
+type Protocol string
+
+const (
+	ProtocolVmess     Protocol = "vmess"
+	ProtocolVless     Protocol = "vless"
+	ProtocolSS        Protocol = "ss"
+	ProtocolSSR       Protocol = "ssr"
+	ProtocolTrojan    Protocol = "trojan"
+	ProtocolJuicity   Protocol = "juicity"
+	ProtocolTuic      Protocol = "tuic"
+	ProtocolHysteria2 Protocol = "hysteria2"
+	ProtocolHTTP      Protocol = "http"
+	ProtocolSocks5    Protocol = "socks5"
+	ProtocolAnyTLS    Protocol = "anytls"
+)
+
+type OutboundRegistry interface {
+	GetOutbound(tag string) (OutboundObject, bool)
 }
