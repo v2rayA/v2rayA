@@ -1295,7 +1295,7 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Listen:   "127.0.0.1",
 				Tag:      "transparent",
 			})
-			// TinyTun v0.0.1-beta.3+ handles DNS routing natively via its own DNS groups.
+			// TinyTun v0.0.1-beta.8 handles DNS routing natively via its own DNS groups.
 			// The former dns-in-tun dokodemo-door (127.0.0.1:6053) is no longer needed;
 			// v2ray acts as a pure SOCKS5 forwarder for non-DNS traffic.
 		}

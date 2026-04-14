@@ -25,8 +25,8 @@ jobs:
     - name: Download TinyTun x64
       shell: pwsh
       run: |
-        $Url_TinyTun_x64 = "https://github.com/v2rayA/TinyTun/releases/download/v0.0.1-beta.6/tinytun-v0.0.1-beta.6-x86_64-pc-windows-msvc.zip"
-        $sha256_TinyTun_x64 = "47868b1db84b513176179f20fe993413f79e40f321b2d3e0f9d5068dd77841f2"
+        $Url_TinyTun_x64 = "https://github.com/v2rayA/TinyTun/releases/download/v0.0.1-beta.8/tinytun-v0.0.1-beta.8-x86_64-pc-windows-msvc.zip"
+        $sha256_TinyTun_x64 = "a355d4a38a0294ed9a9f26ca43c737f5b352b772cda44283fb99a09aec3a483e"
         Invoke-WebRequest $Url_TinyTun_x64 -OutFile "D:\tinytun-x64.zip"
         $hash_TinyTun_x64 = Get-FileHash -Path "D:\tinytun-x64.zip" -Algorithm SHA256
         if ($hash_TinyTun_x64.Hash -ne $sha256_TinyTun_x64) {
@@ -43,8 +43,8 @@ jobs:
     - name: Download TinyTun arm64
       shell: pwsh
       run: |
-        $Url_TinyTun_arm64 = "https://github.com/v2rayA/TinyTun/releases/download/v0.0.1-beta.6/tinytun-v0.0.1-beta.6-aarch64-pc-windows-msvc.zip"
-        $sha256_TinyTun_arm64 = "ce6c27a60a513fadabd07b01dd9ffebc2d3e500e29b2062e96e39dc13897b8c0"
+        $Url_TinyTun_arm64 = "https://github.com/v2rayA/TinyTun/releases/download/v0.0.1-beta.8/tinytun-v0.0.1-beta.8-aarch64-pc-windows-msvc.zip"
+        $sha256_TinyTun_arm64 = "35436077e1153d3769807c42189427a3aea1a918068bf865cfb161b3b9ea030c"
         Invoke-WebRequest $Url_TinyTun_arm64 -OutFile "D:\tinytun-arm64.zip"
         $hash_TinyTun_arm64 = Get-FileHash -Path "D:\tinytun-arm64.zip" -Algorithm SHA256
         if ($hash_TinyTun_arm64.Hash -ne $sha256_TinyTun_arm64) {

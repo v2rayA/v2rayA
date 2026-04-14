@@ -34,5 +34,6 @@ jobs:
       if: inputs.upload_archive
       uses: actions/upload-artifact@v7
       with:
+        name: web.tar.gz
         path: |
           web.tar.gz

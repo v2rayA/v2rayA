@@ -24,25 +24,28 @@ import (
 
 // tinytunLogConf represents the log settings in TinyTun config.
 type tinytunLogConf struct {
-	Loglevel string `yaml:"loglevel"`
+	Loglevel      string `yaml:"loglevel"`
+	HideTimestamp bool   `yaml:"hide_timestamp"`
 }
 
-// tinytunTunConf represents the TUN interface settings in TinyTun config.
-// Note: auto_route is intentionally omitted here; it is passed as --auto-route CLI flag instead.
+// tinytunTunConf represents the TUN interface settings in TinyTun v0.0.1-beta.8 config.
 type tinytunTunConf struct {
-	Name     string `yaml:"name"`
-	IP       string `yaml:"ip"`
-	Netmask  string `yaml:"netmask"`
-	Ipv6Mode string `yaml:"ipv6_mode,omitempty"`
-	MTU      int    `yaml:"mtu,omitempty"`
+	Name       string `yaml:"name"`
+	IP         string `yaml:"ip"`
+	Netmask    string `yaml:"netmask"`
+	Ipv6Mode   string `yaml:"ipv6_mode,omitempty"`
+	Ipv6       string `yaml:"ipv6,omitempty"`
+	Ipv6Prefix int    `yaml:"ipv6_prefix,omitempty"`
+	AutoRoute  bool   `yaml:"auto_route"`
+	MTU        int    `yaml:"mtu,omitempty"`
 }
 
 // tinytunSocks5Conf represents the SOCKS5 proxy settings in TinyTun config.
 type tinytunSocks5Conf struct {
-	Address      string  `yaml:"address"`
-	Username     *string `yaml:"username,omitempty"`
-	Password     *string `yaml:"password,omitempty"`
-	DnsOverSocks bool    `yaml:"dns_over_socks5"`
+	Name     string  `yaml:"name,omitempty"`
+	Address  string  `yaml:"address"`
+	Username *string `yaml:"username,omitempty"`
+	Password *string `yaml:"password,omitempty"`
 }
 
 // tinytunDnsGroupConf is a named group of upstream DNS servers.
@@ -75,12 +78,23 @@ type tinytunDnsRoutingConf struct {
 	CacheCapacity int      `yaml:"cache_capacity"`
 }
 
-// tinytunDnsConf represents the DNS settings in TinyTun v0.0.1-beta.4 config.
+// tinytunDnsHijackConf represents Linux-only DNS hijack settings in TinyTun.
+// The actual Linux data plane/backend selection, including eBPF internals,
+// is handled by TinyTun itself and does not require extra v2rayA YAML fields.
+type tinytunDnsHijackConf struct {
+	Enabled    bool `yaml:"enabled"`
+	Mark       int  `yaml:"mark"`
+	TableID    int  `yaml:"table_id"`
+	CaptureTCP bool `yaml:"capture_tcp"`
+}
+
+// tinytunDnsConf represents the DNS settings in TinyTun v0.0.1-beta.8 config.
 // TinyTun handles DNS routing natively; v2ray is used only for traffic forwarding.
 type tinytunDnsConf struct {
 	Groups     []tinytunDnsGroupConf `yaml:"groups"`
 	ListenPort int                   `yaml:"listen_port"`
 	TimeoutMs  int                   `yaml:"timeout_ms"`
+	Hijack     tinytunDnsHijackConf  `yaml:"hijack"`
 	Routing    tinytunDnsRoutingConf `yaml:"routing"`
 }
 
@@ -104,6 +118,7 @@ type tinytunConfig struct {
 	Log       tinytunLogConf       `yaml:"log"`
 	Tun       tinytunTunConf       `yaml:"tun"`
 	Socks5    tinytunSocks5Conf    `yaml:"socks5"`
+	Proxies   []tinytunSocks5Conf  `yaml:"proxies,omitempty"`
 	DNS       tinytunDnsConf       `yaml:"dns"`
 	Filtering tinytunFilteringConf `yaml:"filtering"`
 	Route     tinytunRouteConf     `yaml:"route"`
@@ -112,10 +127,24 @@ type tinytunConfig struct {
 const (
 	tinytunBinName        = "tinytun"
 	tinytunConfigFileName = "tinytun.yaml"
+	tinytunTunIPv4        = "198.18.0.1"
+	tinytunTunNetmask     = "255.255.255.255"
+	tinytunTunIPv6        = "fd00::1"
+	tinytunTunIPv6Prefix  = 128
+	tinytunDNSHijackMark  = 0x1
+	tinytunDNSHijackTable = 100
 	// tinytunSocksPort is the SOCKS5 port in v2ray dedicated for TinyTun traffic.
 	// This matches the "transparent" inbound added in setInbound for TransparentTun.
 	tinytunSocksPort = 52345
 )
+
+var tinytunDefaultSkipNetworks = []string{
+	"127.0.0.0/8",
+	"169.254.0.0/16",
+	"::1/128",
+	"fc00::/7",
+	"fe80::/10",
+}
 
 // tinyTunState tracks the running TinyTun process.
 var tinyTunState struct {
@@ -419,7 +448,7 @@ func domainPatternToYamlRule(pattern, geositePath, action string) (string, bool)
 }
 
 // buildTinyTunDNSConfig translates v2rayA DNS rules into a TinyTun DNS configuration.
-// TinyTun v0.0.1-beta.4 handles DNS routing natively using two upstream groups
+// TinyTun v0.0.1-beta.8 handles DNS routing natively using two upstream groups
 // ("direct" for plain UDP and "proxy" for DNS-over-TCP via SOCKS5); v2ray only forwards.
 func buildTinyTunDNSConfig() tinytunDnsConf {
 	rules := configure.GetDnsRulesNotNil()
@@ -509,6 +538,12 @@ func buildTinyTunDNSConfig() tinytunDnsConf {
 		Groups:     groups,
 		ListenPort: 53,
 		TimeoutMs:  5000,
+		Hijack: tinytunDnsHijackConf{
+			Enabled:    false,
+			Mark:       tinytunDNSHijackMark,
+			TableID:    tinytunDNSHijackTable,
+			CaptureTCP: true,
+		},
 		Routing: tinytunDnsRoutingConf{
 			Rules:         routingRules,
 			FallbackGroup: fallbackGroup,
@@ -522,26 +557,30 @@ func buildTinyTunDNSConfig() tinytunDnsConf {
 // generateTinyTunConfig generates a TinyTun YAML config file and returns its path.
 func generateTinyTunConfig(tmpl *Template) (string, error) {
 	setting := configure.GetSettingNotNil()
-	skipIPs := dedupeStrings(append([]string{"127.0.0.1", "198.18.0.1"}, collectNodeIPs(tmpl)...))
-	skipNetworks := dedupeStrings(collectBypassInterfaceNetworks(setting.TunBypassInterfaces))
+	skipIPs := dedupeStrings(append([]string{"127.0.0.1", "::1", tinytunTunIPv4}, collectNodeIPs(tmpl)...))
+	skipNetworks := dedupeStrings(append(append([]string{}, tinytunDefaultSkipNetworks...), collectBypassInterfaceNetworks(setting.TunBypassInterfaces)...))
 
 	cfg := tinytunConfig{
 		Log: tinytunLogConf{
-			Loglevel: setting.LogLevel,
+			Loglevel:      setting.LogLevel,
+			HideTimestamp: false,
 		},
 		Tun: tinytunTunConf{
-			Name:    "tun0",
-			IP:      "198.18.0.1",
-			Netmask: "255.255.255.255",
-			MTU:     1500,
+			Name:       "tun0",
+			IP:         tinytunTunIPv4,
+			Netmask:    tinytunTunNetmask,
+			Ipv6Mode:   "auto",
+			Ipv6:       tinytunTunIPv6,
+			Ipv6Prefix: tinytunTunIPv6Prefix,
+			AutoRoute:  setting.TunAutoRoute,
+			MTU:        1500,
 		},
 		Socks5: tinytunSocks5Conf{
-			// DNS is handled by TinyTun's own DNS module (groups + routing rules);
-			// the SOCKS5 connection is used only for proxied traffic forwarding.
-			Address:      fmt.Sprintf("127.0.0.1:%d", tinytunSocksPort),
-			DnsOverSocks: false,
+			Name:    "proxy",
+			Address: fmt.Sprintf("127.0.0.1:%d", tinytunSocksPort),
 		},
-		DNS: buildTinyTunDNSConfig(),
+		Proxies: nil,
+		DNS:     buildTinyTunDNSConfig(),
 		Filtering: tinytunFilteringConf{
 			SkipIPs:          skipIPs,
 			SkipNetworks:     skipNetworks,
@@ -715,12 +754,9 @@ func startTinyTun(tmpl *Template) error {
 	log.Info("Starting TinyTun from %v with config %v", binPath, configPath)
 
 	ctx, cancel := context.WithCancel(context.Background())
-
 	setting := configure.GetSettingNotNil()
+
 	cmdArgs := []string{"run", "--config", configPath}
-	if setting.TunAutoRoute {
-		cmdArgs = append(cmdArgs, "--auto-route")
-	}
 	cmd := exec.CommandContext(ctx, binPath, cmdArgs...)
 	cmd.Stdout = tinytunLineWriter{}
 	cmd.Stderr = tinytunLineWriter{}
