@@ -120,8 +120,13 @@ type Server struct {
 	Method   string         `json:"method,omitempty"`
 	Ota      bool           `json:"ota,omitempty"`
 	Password string         `json:"password,omitempty"`
+	Auth     string         `json:"auth,omitempty"`
 	Port     int            `json:"port,omitempty"`
 	Users    []OutboundUser `json:"users,omitempty"`
+}
+type UDPHop struct {
+	Ports    string `json:"ports,omitempty"`
+	Interval string `json:"interval,omitempty"`
 }
 type Settings struct {
 	Vnext          interface{} `json:"vnext,omitempty"`
@@ -132,6 +137,7 @@ type Settings struct {
 	Network        string      `json:"network,omitempty"`
 	Redirect       string      `json:"redirect,omitempty"`
 	UserLevel      *int        `json:"userLevel,omitempty"`
+	Version        int         `json:"version,omitempty"`
 	// Inlined, when non-nil, replaces the entire settings JSON during serialization.
 	// Used for non-standard protocols such as anytls/juicity whose settings do not
 	// fit the standard fields above.
@@ -169,6 +175,28 @@ type WsSettings struct {
 	MaxEarlyData        int     `json:"maxEarlyData,omitempty"`
 	EarlyDataHeaderName string  `json:"earlyDataHeaderName,omitempty"`
 }
+type HysteriaSettings struct {
+	Version int    `json:"version,omitempty"`
+	Auth    string `json:"auth,omitempty"`
+}
+type MaskItem struct {
+	Type     string      `json:"type"`
+	Settings interface{} `json:"settings,omitempty"`
+}
+type QuicParams struct {
+	Up                      string  `json:"up,omitempty"`
+	Down                    string  `json:"down,omitempty"`
+	HopInterval             string  `json:"hopInterval,omitempty"`
+	InitStreamReceiveWindow int     `json:"initStreamReceiveWindow,omitempty"`
+	InitConnReceiveWindow   int     `json:"initConnReceiveWindow,omitempty"`
+	Congestion              string  `json:"congestion,omitempty"`
+	UDPHop                  *UDPHop `json:"udpHop,omitempty"`
+}
+type FinalMask struct {
+	TCP        []MaskItem  `json:"tcp,omitempty"`
+	UDP        []MaskItem  `json:"udp,omitempty"`
+	QuicParams *QuicParams `json:"quicParams,omitempty"`
+}
 type StreamSettings struct {
 	Network         string           `json:"network,omitempty"`
 	Security        string           `json:"security,omitempty"`
@@ -181,8 +209,10 @@ type StreamSettings struct {
 	WsSettings      *WsSettings      `json:"wsSettings,omitempty"`
 	HTTPSettings    *HttpSettings    `json:"httpSettings,omitempty"`
 	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
-	QuicSettings    *QuicSettings    `json:"quicSettings,omitempty"`
-	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
+	QuicSettings     *QuicSettings     `json:"quicSettings,omitempty"`
+	HysteriaSettings *HysteriaSettings `json:"hysteriaSettings,omitempty"`
+	FinalMask        *FinalMask        `json:"finalmask,omitempty"`
+	Sockopt          *Sockopt          `json:"sockopt,omitempty"`
 }
 type RealitySettings struct {
 	ServerName  string `json:"serverName,omitempty"`
@@ -337,6 +367,8 @@ type Policy struct {
 			DownlinkOnly      int  `json:"downlinkOnly,omitempty"`
 			StatsUserUplink   bool `json:"statsUserUplink,omitempty"`
 			StatsUserDownlink bool `json:"statsUserDownlink,omitempty"`
+			StatusUserUplink   bool `json:"statusUserUplink,omitempty"`
+			StatusUserDownlink bool `json:"statusUserDownlink,omitempty"`
 			BufferSize        int  `json:"bufferSize,omitempty"`
 		} `json:"0"`
 	} `json:"levels"`
