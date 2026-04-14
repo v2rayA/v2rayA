@@ -1,5 +1,5 @@
 // Import Bulma's core
-@import "~bulma/sass/utilities/_all";
+@import "bulma/sass/utilities/_all.sass";
 
 // Set your colors
 $green: $success;
@@ -47,5 +47,5 @@ $link-invert: $primary-invert;
 $link-focus-border: $primary;
 
 // Import Bulma and Buefy styles
-@import "~bulma";
-@import "~buefy/src/scss/buefy";
+@import "bulma/bulma.sass";
+@import "buefy/src/scss/buefy.scss";

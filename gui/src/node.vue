@@ -734,7 +734,7 @@ import ModalSubscription from "@/components/modalSubcription";
 import ModalSharing from "@/components/modalSharing";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
 
 export default {
   name: "Node",
@@ -1662,7 +1662,7 @@ td {
 </style>
 
 <style lang="scss">
-@import "~bulma/sass/utilities/all";
+@import "bulma/sass/utilities/all.sass";
 
 #toolbar {
   @media screen and (max-width: 450px) {

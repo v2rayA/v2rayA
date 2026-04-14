@@ -1,5 +1,5 @@
 import CONST from "./const.js";
-const URI = require("urijs");
+import URI from "urijs";
 
 function _locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
