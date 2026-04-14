@@ -43,12 +43,12 @@ jobs:
         Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_OUTPUT}
         Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
     - name: Download Artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}
         path: build/
     - name: Download x64 Linux Build
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_linux_x64_${{ inputs.version }}
         path: test/
@@ -118,8 +118,22 @@ jobs:
            fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
         mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.deb \
            fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+    - name: Upload Arch Linux Package
+      uses: actions/upload-artifact@v7
       with:
+        if-no-files-found: ignore
+        name: installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
         path: |
-          fpm_packages/*
+          fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
+    - name: Upload Red Hat Package
+      uses: actions/upload-artifact@v7
+      with:
+        name: installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
+        path: |
+          fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
+    - name: Upload Debian Package
+      uses: actions/upload-artifact@v7
+      with:
+        name: installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
+        path: |
+          fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb

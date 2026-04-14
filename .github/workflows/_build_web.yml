@@ -16,12 +16,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Set up Node.js
-      shell: bash
-      run: |
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install node@24 gzip
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> $GITHUB_ENV
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> ~/.bash_profile
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
     - name: Build GUI
       run: |
         yarn --cwd gui --check-files
@@ -29,13 +26,13 @@ jobs:
         echo "Use tar to generate web.tar.gz..."
         tar -zcvf web.tar.gz web/
     - name: Upload Web Files to Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         path: web/*
         name: web
     - name: Upload the tar archive to Artifacts
       if: inputs.upload_archive
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+      uses: actions/upload-artifact@v7
       with:
         path: |
           web.tar.gz

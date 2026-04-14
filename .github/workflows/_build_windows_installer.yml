@@ -18,7 +18,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Download Artifact Windows x64
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_windows_x64_${{ inputs.version }}.exe
         path: D:\Downloads
@@ -36,7 +36,7 @@ jobs:
           Write-Host "SHA256 hash verified for TinyTun x64."
         }
     - name: Download Artifact Windows arm64
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_windows_arm64_${{ inputs.version }}.exe
         path: D:\Downloads
@@ -101,9 +101,15 @@ jobs:
         cd $CurrentDir
         Copy-Item -Path D:\installer_windows_inno_x64compatible.exe -Destination $CurrentDir\installer_windows_inno_x64_${{ inputs.version }}.exe
         Copy-Item -Path D:\installer_windows_inno_arm64.exe -Destination $CurrentDir\installer_windows_inno_arm64_${{ inputs.version }}.exe
-    - name: Upload Artifact
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+    - name: Upload x64 Build
+      uses: actions/upload-artifact@v7
       with:
+        name: installer_windows_inno_x64_${{ inputs.version }}.exe
         path: |
           installer_windows_inno_x64_${{ inputs.version }}.exe
+    - name: Upload arm64 Build
+      uses: actions/upload-artifact@v7
+      with:
+        name: installer_windows_inno_arm64_${{ inputs.version }}.exe  
+        path: |
           installer_windows_inno_arm64_${{ inputs.version }}.exe

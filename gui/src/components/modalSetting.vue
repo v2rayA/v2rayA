@@ -63,7 +63,7 @@
         <b-select v-model="transparentType" expanded>
           <option v-show="!lite && os === 'linux'" value="redirect">redirect</option>
           <option v-show="!lite && os === 'linux'" value="tproxy">tproxy</option>
-          <option value="tun" :disabled="!tinytunSupported">
+          <option v-show="!lite" value="tun" :disabled="!tinytunSupported">
             tun (TinyTun){{ !tinytunSupported ? ' — ' + $t("setting.options.notIntegrated") : '' }}
           </option>
           <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>

@@ -59,7 +59,7 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         path: builds/
     - name: Move Files to Release Directory
@@ -121,17 +121,17 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifact Linux x64
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
     - name: Download Artifact macOS x64
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
     - name: Download Artifact macOS arm64
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
@@ -225,7 +225,7 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Web Files
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: web
         path: web

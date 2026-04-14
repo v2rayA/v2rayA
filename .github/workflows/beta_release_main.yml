@@ -60,7 +60,7 @@ jobs:
         echo "VERSION=$version" >> $GITHUB_OUTPUT
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Download Artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         path: builds/
     - name: Move Files to Release Directory
