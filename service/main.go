@@ -10,6 +10,7 @@ import (
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/simpleobfs"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/socks5"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ss"
+	_ "github.com/v2rayA/v2rayA/pkg/plugin/ss2022"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/ssr"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/tcp"
 	_ "github.com/v2rayA/v2rayA/pkg/plugin/tls"

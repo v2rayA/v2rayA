@@ -325,10 +325,40 @@ func (s *Shadowsocks) ConfigurationMT(info PriorInfo) (c Configuration, err erro
 	}, nil
 }
 
+func isShadowsocks2022Cipher(cipher string) bool {
+	switch strings.ToLower(cipher) {
+	case "2022-blake3-aes-128-gcm",
+		"2022-blake3-aes-256-gcm",
+		"2022-blake3-chacha20-poly1305":
+		return true
+	}
+	return false
+}
+
 func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error) {
 	socks5 := url.URL{
 		Scheme: "socks5",
 		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+	}
+	// 2022-blake3-* ciphers are dispatched to the ss2022 plugin dialer
+	// (sing-shadowsocks) because neither v2ray-core's v4 loader nor the
+	// daeuniverse/outbound SS library understand them. Use a plain
+	// method:psk userinfo form (no base64, no fragment) so neither the
+	// chain splitter nor a server-name comma can mangle the URL.
+	if isShadowsocks2022Cipher(s.Cipher) {
+		if s.Plugin.Name != "" {
+			return c, fmt.Errorf("shadowsocks2022 does not support plugin %q", s.Plugin.Name)
+		}
+		upstream := url.URL{
+			Scheme: "ss2022",
+			User:   url.UserPassword(s.Cipher, s.Password),
+			Host:   net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
+		}
+		return Configuration{
+			CoreOutbound: info.PluginObj(),
+			PluginChain:  strings.Join([]string{socks5.String(), upstream.String()}, ","),
+			UDPSupport:   false,
+		}, nil
 	}
 	chain := []string{socks5.String(), s.ExportToURL()}
 	return Configuration{
