@@ -4,7 +4,8 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
+
+	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
@@ -58,15 +59,25 @@ func ParseSocksURL(u string) (data *SOCKS, err error) {
 }
 
 func (h *SOCKS) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+	// socks5 is natively supported by v2ray/xray core; use a direct outbound
+	// instead of routing through the daeuniverse/outbound plugin chain.
+	servers := []coreObj.Server{
+		{Address: h.Server, Port: h.Port},
 	}
-	chain := []string{socks5.String(), h.ExportToURL()}
+	if h.Username != "" {
+		servers[0].Users = []coreObj.OutboundUser{
+			{User: h.Username, Pass: h.Password},
+		}
+	}
 	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   true,
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:      info.Tag,
+			Protocol: "socks",
+			Settings: coreObj.Settings{
+				Servers: servers,
+			},
+		},
+		UDPSupport: true,
 	}, nil
 }
 
@@ -85,7 +96,7 @@ func (h *SOCKS) ExportToURL() string {
 }
 
 func (h *SOCKS) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (h *SOCKS) ProtoToShow() string {
