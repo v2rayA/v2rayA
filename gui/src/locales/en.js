@@ -128,6 +128,7 @@ export default {
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
     inboundSniffing: "Sniffing",
+    tunProcessBackend: "Process Exclusion Backend",
     ssBackend: "Shadowsocks Backend",
     trojanBackend: "Trojan Backend",
     nodeBackend: "Backend",
@@ -156,6 +157,8 @@ export default {
       closed: "Off",
       advanced: "Advanced Setting",
       leastPing: "Least Latency First",
+      tunBackendTun: "TUN (default, /proc process lookup)",
+      tunBackendEbpf: "eBPF (cgroupv2 process exclusion)",
       backendDaeuniverse: "daeuniverse/outbound",
       backendV2ray: "v2ray / xray",
       backendSystemDefault: "System Default",
@@ -173,6 +176,7 @@ export default {
       tunAutoRoute:
         "When enabled, TinyTun automatically configures system routes. When disabled, you must provide custom setup/teardown scripts to configure routing yourself.",
       tunBypassInterfaces: "Select interfaces to exclude from TUN proxying, or enter custom glob patterns below.",
+      tunProcessBackend: "Choose TinyTun's process exclusion method on Linux. TUN mode uses /proc scanning for broad compatibility; eBPF mode uses cgroupv2 hooks for more accurate process-level exclusion, requiring tinytun-ebpf.o at /usr/lib/tinytun/.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       preventDnsSpoofing: "",
       tcpFastOpen:

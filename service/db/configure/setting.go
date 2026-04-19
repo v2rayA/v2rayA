@@ -30,6 +30,7 @@ type Setting struct {
 	TunRouteShellPath                  string          `json:"tunRouteShellPath"`
 	TunSetupScript                     string          `json:"tunSetupScript"`
 	TunTeardownScript                  string          `json:"tunTeardownScript"`
+	TunProcessBackend                  string          `json:"tunProcessBackend"`
 	SsBackend                          string          `json:"ssBackend"`
 	TrojanBackend                      string          `json:"trojanBackend"`
 }

@@ -153,6 +153,20 @@
         </div>
       </b-field>
 
+      <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported && os === 'linux'"
+        :label="$t('setting.tunProcessBackend')" label-position="on-border">
+        <template slot="label">
+          {{ $t("setting.tunProcessBackend") }}
+          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunProcessBackend')" position="is-right">
+            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+          </b-tooltip>
+        </template>
+        <b-select v-model="tunProcessBackend" expanded>
+          <option value="">{{ $t("setting.options.tunBackendTun") }}</option>
+          <option value="ebpf">{{ $t("setting.options.tunBackendEbpf") }}</option>
+        </b-select>
+      </b-field>
 
       <b-field label-position="on-border">
         <template slot="label">
@@ -383,6 +397,7 @@ export default {
     tunRouteShellPath: "",
     tunSetupScript: "",
     tunTeardownScript: "",
+    tunProcessBackend: "",
     ssBackend: "",
     trojanBackend: "",
     pacAutoUpdateMode: "none",
@@ -540,6 +555,7 @@ export default {
             tunRouteShellPath: this.tunRouteShellPath,
             tunSetupScript: this.tunSetupScript,
             tunTeardownScript: this.tunTeardownScript,
+            tunProcessBackend: this.tunProcessBackend,
             ssBackend: this.ssBackend,
             trojanBackend: this.trojanBackend,
           },

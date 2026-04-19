@@ -127,6 +127,7 @@ export default {
     ipForwardOn: "开启IP转发",
     portSharingOn: "允许局域网的连接",
     concurrency: "最大并发数",
+    tunProcessBackend: "TinyTun 进程排除方式",
     ssBackend: "Shadowsocks 后端",
     trojanBackend: "Trojan 后端",
     nodeBackend: "后端",
@@ -155,6 +156,8 @@ export default {
       closed: "关闭",
       advanced: "自定义高级设置",
       leastPing: "最小时延优先",
+      tunBackendTun: "TUN（默认，/proc 进程查找）",
+      tunBackendEbpf: "eBPF（cgroupv2 进程排除）",
       backendDaeuniverse: "daeuniverse/outbound",
       backendV2ray: "v2ray / xray",
       backendSystemDefault: "跟随系统设置",
@@ -171,6 +174,7 @@ export default {
       tunAutoRoute:
         "开启时，TinyTun 自动配置系统路由。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
       tunBypassInterfaces: "勾选不走 TUN 代理的网卡，或在下方输入自定义通配符。",
+      tunProcessBackend: "Linux 下选择 TinyTun 的进程排除实现。TUN 模式使用 /proc 查找，兼容性强；eBPF 模式通过 cgroupv2 钉子实现更准确的进程级排除，需安装 tinytun-ebpf.o（/usr/lib/tinytun/）。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       preventDnsSpoofing: "",

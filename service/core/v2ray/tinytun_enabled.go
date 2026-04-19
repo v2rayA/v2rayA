@@ -22,13 +22,15 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
+// This file supports TinyTun v0.0.2-alpha.3.
+
 // tinytunLogConf represents the log settings in TinyTun config.
 type tinytunLogConf struct {
 	Loglevel      string `yaml:"loglevel"`
 	HideTimestamp bool   `yaml:"hide_timestamp"`
 }
 
-// tinytunTunConf represents the TUN interface settings in TinyTun v0.0.1-beta.8 config.
+// tinytunTunConf represents the TUN interface settings in TinyTun v0.0.2-alpha.3 config.
 type tinytunTunConf struct {
 	Name       string `yaml:"name"`
 	IP         string `yaml:"ip"`
@@ -88,7 +90,7 @@ type tinytunDnsHijackConf struct {
 	CaptureTCP bool `yaml:"capture_tcp"`
 }
 
-// tinytunDnsConf represents the DNS settings in TinyTun v0.0.1-beta.8 config.
+// tinytunDnsConf represents the DNS settings in TinyTun v0.0.2-alpha.3 config.
 // TinyTun handles DNS routing natively; v2ray is used only for traffic forwarding.
 type tinytunDnsConf struct {
 	Groups     []tinytunDnsGroupConf `yaml:"groups"`
@@ -760,6 +762,16 @@ func startTinyTun(tmpl *Template) error {
 	cmd := exec.CommandContext(ctx, binPath, cmdArgs...)
 	cmd.Stdout = tinytunLineWriter{}
 	cmd.Stderr = tinytunLineWriter{}
+
+	// On Linux, when the user selects the eBPF process-exclusion backend,
+	// set TINYTUN_EBPF_OBJECT so TinyTun loads the eBPF programs from the
+	// standard installation path (/usr/lib/tinytun/tinytun-ebpf.o).
+	if runtime.GOOS == "linux" && setting.TunProcessBackend == "ebpf" {
+		if os.Getenv("TINYTUN_EBPF_OBJECT") == "" {
+			cmd.Env = append(os.Environ(), "TINYTUN_EBPF_OBJECT=/usr/lib/tinytun/tinytun-ebpf.o")
+		}
+	}
+
 	if err = cmd.Start(); err != nil {
 		cancel()
 		return fmt.Errorf("failed to start tinytun: %w", err)
