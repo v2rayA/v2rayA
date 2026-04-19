@@ -18,6 +18,8 @@ export default {
     optional: "необязательно",
     loadBalance: "Load Balance",
     log: "Журнал",
+    darkTheme: "Темная тема",
+    lightTheme: "Светлая тема",
   },
   welcome: {
     title: "Добро пожаловать",

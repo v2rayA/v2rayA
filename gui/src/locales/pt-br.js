@@ -18,6 +18,8 @@ export default {
     optional: "opcional",
     loadBalance: "Balanceamento de Carga",
     log: "Logs",
+    darkTheme: "Tema Escuro",
+    lightTheme: "Tema Claro",
   },
   welcome: {
     title: "Bem-vindo",
