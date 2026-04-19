@@ -1,0 +1,85 @@
+name: Build v2rayA Binaries (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version string for the build'
+        type: string
+        required: true
+
+jobs:
+  Build_v2rayA_Binaries:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux amd64/arm64: TinyTun supported
+          - { goos: linux,   goarch: amd64,    tinytun: true  }
+          - { goos: linux,   goarch: arm64,    tinytun: true  }
+          # Linux other architectures: no TinyTun
+          - { goos: linux,   goarch: '386',    tinytun: false }
+          - { goos: linux,   goarch: riscv64,  tinytun: false }
+          - { goos: linux,   goarch: mips64,   tinytun: false }
+          - { goos: linux,   goarch: mips64le, tinytun: false }
+          - { goos: linux,   goarch: mipsle,   tinytun: false }
+          - { goos: linux,   goarch: mips,     tinytun: false }
+          - { goos: linux,   goarch: loong64,  tinytun: false }
+          # Linux armv7: no TinyTun
+          - { goos: linux,   goarch: arm,      goarm: '7', tinytun: false }
+          # Windows amd64/arm64: TinyTun supported
+          - { goos: windows, goarch: amd64,    tinytun: true  }
+          - { goos: windows, goarch: arm64,    tinytun: true  }
+          # macOS amd64/arm64: TinyTun supported
+          - { goos: darwin,  goarch: amd64,    tinytun: true  }
+          - { goos: darwin,  goarch: arm64,    tinytun: true  }
+          # FreeBSD: no TinyTun
+          - { goos: freebsd, goarch: amd64,    tinytun: false }
+          - { goos: freebsd, goarch: arm64,    tinytun: false }
+          # OpenBSD: no TinyTun
+          - { goos: openbsd, goarch: amd64,    tinytun: false }
+          - { goos: openbsd, goarch: arm64,    tinytun: false }
+    env:
+      CGO_ENABLED: 0
+      VERSION: ${{ inputs.version }}
+      NAME: v2raya
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Download Web Artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: web
+        path: service/server/router/web
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        cache-dependency-path: |
+          service/go.mod
+          service/go.sum
+        go-version: '1.24'
+    - name: Build v2rayA Binary
+      id: build_binary
+      shell: bash
+      run: |
+        mkdir -p v2raya_binaries
+        key="${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}"
+        filename=$(jq -r --arg key "$key" '.[$key].friendlyName' ./install/friendly-filenames.json)
+        ext=""
+        [ "${{ matrix.goos }}" = "windows" ] && ext=".exe"
+        build_tags=()
+        [ "${{ matrix.tinytun }}" = "true" ] && build_tags=(-tags tinytun)
+        cd service
+        GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" \
+          go build "${build_tags[@]}" \
+          -o ../v2raya_binaries/v2raya_${filename}_${{ inputs.version }}${ext} \
+          -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${{ inputs.version }} -s -w" \
+          -trimpath
+        echo "filename=v2raya_${filename}_${{ inputs.version }}${ext}" >> ${GITHUB_OUTPUT}
+    - name: Upload Binary
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.build_binary.outputs.filename }}
+        path: v2raya_binaries/${{ steps.build_binary.outputs.filename }}

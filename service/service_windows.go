@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -18,7 +19,9 @@ import (
 
 var elog debug.Log
 
-// tryRunAsService 尝试作为 Windows 服务运行，如果成功返回 true
+const coreShutdownTimeout = 30 * time.Second
+
+// tryRunAsService attempts to run as a Windows service, returns true if successful
 func tryRunAsService() bool {
 	isWindowsService, err := svc.IsWindowsService()
 	if err != nil {
@@ -26,14 +29,14 @@ func tryRunAsService() bool {
 	}
 
 	if isWindowsService {
-		// 作为 Windows 服务运行
+		// Running as Windows service
 		if err := runAsService(false); err != nil {
 			log.Fatal("Failed to run as Windows service: %v", err)
 		}
 		return true
 	}
 
-	// 检查是否以 debug 模式运行服务
+	// Check if running in debug mode
 	if len(os.Args) > 1 && os.Args[1] == "debug" {
 		if err := runAsService(true); err != nil {
 			log.Fatal("Failed to run in debug mode: %v", err)
@@ -46,27 +49,27 @@ func tryRunAsService() bool {
 
 type v2rayAService struct{}
 
-// Execute 实现 svc.Handler 接口
+// Execute implements svc.Handler interface
 func (m *v2rayAService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
 
-	// 通知服务管理器服务正在启动
+	// Notify service manager that service is starting
 	changes <- svc.Status{State: svc.StartPending}
 
-	// 启动主程序
+	// Start main program
 	errChan := make(chan error, 1)
 	go func() {
-		// 执行实际的 v2rayA 主函数
+		// Execute official v2rayA main function
 		if err := runService(); err != nil {
 			errChan <- err
 		}
 	}()
 
-	// 通知服务管理器服务已启动
+	// Notify service manager that service has started
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 	elog.Info(1, "v2rayA service started")
 
-	// 等待服务控制命令
+	// Wait for service control commands
 loop:
 	for {
 		select {
@@ -79,7 +82,7 @@ loop:
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				elog.Info(1, "v2rayA service stopping")
-				// 优雅关闭：先停止 v2ray/xray 进程
+				// Graceful shutdown: stop v2ray/xray process first
 				cleanupResources()
 				break loop
 			default:
@@ -88,12 +91,12 @@ loop:
 		}
 	}
 
-	// 通知服务管理器服务正在停止
+	// Notify service manager that service is stopping
 	changes <- svc.Status{State: svc.StopPending}
 	return
 }
 
-// runAsService 作为 Windows 服务运行
+// runAsService runs as a Windows service
 func runAsService(isDebug bool) error {
 	var err error
 
@@ -109,7 +112,7 @@ func runAsService(isDebug bool) error {
 
 	elog.Info(1, "v2rayA service starting")
 
-	// 运行服务
+	// Run service
 	if isDebug {
 		err = debug.Run("v2rayA", &v2rayAService{})
 	} else {
@@ -125,19 +128,30 @@ func runAsService(isDebug bool) error {
 	return nil
 }
 
-// cleanupResources 清理资源，关闭 v2ray/xray 进程
+// cleanupResources cleans up resources, stops v2ray/xray processes
 func cleanupResources() {
 	elog.Info(1, "Cleaning up resources...")
+	runningCore := v2ray.ProcessManager.Process()
 
-	// 停止透明代理
+	// Stop transparent proxy
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	elog.Info(1, "Transparent proxy stopped")
 
-	// 停止 v2ray/xray 进程
+	// Stop v2ray/xray process
 	v2ray.ProcessManager.Stop(false)
 	elog.Info(1, "v2ray/xray process stopped")
+	if runningCore != nil {
+		elog.Info(1, "Waiting for v2ray/xray core to exit...")
+		ctx, cancel := context.WithTimeout(context.Background(), coreShutdownTimeout)
+		defer cancel()
+		if err := runningCore.WaitUntilExit(ctx); err != nil {
+			elog.Error(1, fmt.Sprintf("Timeout while waiting for v2ray/xray core to exit: %v", err))
+		} else {
+			elog.Info(1, "v2ray/xray core exit confirmed")
+		}
+	}
 
-	// 关闭数据库连接
+	// Close database connection
 	if err := db.DB().Close(); err != nil {
 		elog.Error(1, fmt.Sprintf("Failed to close database: %v", err))
 	} else {
@@ -147,12 +161,12 @@ func cleanupResources() {
 	elog.Info(1, "Resource cleanup completed")
 }
 
-// runService 在服务环境中运行主程序
+// runService runs the main program in service context
 func runService() error {
-	// 添加短暂延迟确保服务状态已更新
+	// Add short delay to ensure service status updated
 	time.Sleep(100 * time.Millisecond)
 
-	// 执行原来的 main 函数逻辑
+	// Execute original main function logic
 	checkEnvironment()
 	if err := checkPlatformSpecific(); err != nil {
 		return err
@@ -163,8 +177,8 @@ func runService() error {
 	return run()
 }
 
-// checkPlatformSpecific Windows 平台特定检查
+// checkPlatformSpecific Windows specific checks
 func checkPlatformSpecific() error {
-	// Windows 不需要 TProxy 检查
+	// Windows doesn't need TProxy checks
 	return nil
 }

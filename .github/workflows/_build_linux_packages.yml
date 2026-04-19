@@ -1,0 +1,139 @@
+name: Build Linux Packages (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version string for the packages'
+        type: string
+        required: true
+
+jobs:
+  Build_Linux_Packages:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64, arm64, 386, riscv64, mips64, mips64le, mipsle, mips, loong64]
+        include:
+          - goos: linux
+            goarch: arm
+            goarm: 7
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      CGO_ENABLED: 0
+      VERSION: ${{ inputs.version }}
+      PACKAGE_VERSION: ${{ inputs.version }}
+      NAME: v2raya
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Get Friendly File Name
+      shell: pwsh
+      id: get_filename
+      run: |
+        $build_name = $(((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName)
+        $friendly_arch = $((((Get-Content ./install/friendly-filenames.json | ConvertFrom-Json)."${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}").friendlyName).Split('_')[1])
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_OUTPUT}
+        Write-Output "BUILD_NAME=$build_name" >> ${env:GITHUB_ENV}
+        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_OUTPUT}
+        Write-Output "FRIENDLY_ARCH=$friendly_arch" >> ${env:GITHUB_ENV}
+    - name: Download Artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}
+        path: build/
+    - name: Download x64 Linux Build
+      uses: actions/download-artifact@v8
+      with:
+        name: v2raya_linux_x64_${{ inputs.version }}
+        path: test/
+    - name: Show Artifacts
+      run: |
+        ls -l build/
+    - name: Build Packages
+      run: |
+        sudo gem install fpm -v 1.15.1
+        sudo apt-get install -y libarchive-tools rpm tar unzip
+        sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
+        ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+        if [ -n "$(echo $GOARCH | grep mips)" ]; then
+          packages="deb rpm"
+        else
+          packages="deb rpm pacman"
+        fi
+        sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}
+        for package_manager in $packages; do
+          if [ "$package_manager" == 'pacman' ];then
+            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
+              package_arch='arm7hf'
+            elif [ "$GOARCH" == 'arm64' ];then
+              package_arch='aarch64'
+            else
+              package_arch="$GOARCH"
+            fi
+          elif [ "$package_manager" == 'rpm' ];then
+            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
+              package_arch='armhfp'
+            elif [ "$GOARCH" == 'arm64' ];then
+              package_arch='aarch64'
+            elif [ "$GOARCH" == 'loong64' ];then
+              package_arch='loongson64'
+            else
+              package_arch="$GOARCH"
+            fi
+          elif [ "$package_manager" == 'deb' ];then
+            if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
+              package_arch='armhf'
+            elif [ "$GOARCH" == '386' ];then
+              package_arch='i386'
+            elif [ "$GOARCH" == 'mipsle' ];then
+              package_arch='mips32le'
+            else
+              package_arch="$GOARCH"
+            fi
+          fi
+            fpm -s dir -t "$package_manager" -a $package_arch --version "${{ inputs.version }}" \
+            --url 'https://github.com/v2rayA/v2rayA' --description "$DESC" \
+            --maintainer "v2raya@v2raya.org" --name v2raya --license 'AGPL' \
+            --package installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.$package_manager \
+            --after-install ./install/universal/after_install.sh \
+            --after-upgrade ./install/universal/after_upgrade.sh \
+            ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}=/usr/bin/v2raya \
+            ./install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service \
+            ./install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service \
+            ./install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png \
+            ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
+            ./install/universal/v2raya.default=/etc/default/v2raya
+        done
+        mkdir fpm_packages
+        [ -f installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.pacman ] && \
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.pacman \
+           fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.rpm \
+           fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
+        mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.deb \
+           fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
+    - name: Upload Arch Linux Package
+      uses: actions/upload-artifact@v7
+      with:
+        if-no-files-found: ignore
+        name: installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
+        path: |
+          fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
+    - name: Upload Red Hat Package
+      uses: actions/upload-artifact@v7
+      with:
+        name: installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
+        path: |
+          fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
+    - name: Upload Debian Package
+      uses: actions/upload-artifact@v7
+      with:
+        name: installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
+        path: |
+          fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb

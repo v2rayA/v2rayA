@@ -370,6 +370,13 @@ ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')
           " label="Path" label-position="on-border">
             <b-input ref="ss_path" v-model="ss.path" placeholder="/" expanded />
           </b-field>
+          <b-field :label="$t('setting.nodeBackend')" label-position="on-border">
+            <b-select v-model="ss.backend" expanded>
+              <option value="">{{ $t("setting.options.backendSystemDefault") }}</option>
+              <option value="daeuniverse">{{ $t("setting.options.backendDaeuniverse") }}</option>
+              <option value="v2ray">{{ $t("setting.options.backendV2ray") }}</option>
+            </b-select>
+          </b-field>
         </b-tab-item>
         <b-tab-item label="SSR">
           <b-field label="Name" label-position="on-border">
@@ -535,6 +542,13 @@ ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')
           </b-field>
           <b-field v-show="trojan.net === 'grpc'" label="Service Name" label-position="on-border">
             <b-input ref="trojan_service_name" v-model="trojan.path" type="text" expanded />
+          </b-field>
+          <b-field :label="$t('setting.nodeBackend')" label-position="on-border">
+            <b-select v-model="trojan.backend" expanded>
+              <option value="">{{ $t("setting.options.backendSystemDefault") }}</option>
+              <option value="daeuniverse">{{ $t("setting.options.backendDaeuniverse") }}</option>
+              <option value="v2ray">{{ $t("setting.options.backendV2ray") }}</option>
+            </b-select>
           </b-field>
         </b-tab-item>
 
@@ -821,6 +835,7 @@ export default {
       name: "",
       protocol: "ss",
       impl: "",
+      backend: "",
     },
     ssr: {
       method: "aes-128-cfb",
@@ -849,6 +864,7 @@ export default {
       net: "tcp",
       obfs: "none" /* websocket */,
       protocol: "trojan",
+      backend: "",
     },
     juicity: {
       name: "",
@@ -1053,18 +1069,31 @@ export default {
         console.log(o);
         return o;
       } else if (url.toLowerCase().startsWith("ss://")) {
-        let decoded = Base64.decode(url.substring(url.indexOf("://") + 3));
-        let parts = decoded.split("@");
-        let methodAndPassword = parts[0].split(":");
-        let serverAndPort = parts[1].split(":");
-
+        let u = parseURL(url);
+        let userinfo = u.username;
+        // Handle SIP002 format: ss://BASE64URL@host:port vs legacy ss://BASE64
+        let method = "", password = "";
+        try {
+          let decoded = Base64.decode(userinfo);
+          let idx = decoded.indexOf(":");
+          if (idx > -1) {
+            method = decoded.substring(0, idx);
+            password = decoded.substring(idx + 1);
+          }
+        } catch (e) {
+          method = userinfo;
+        }
+        const ssPlugin = u.params.plugin || "";
         return {
-          method: methodAndPassword[0],
-          password: methodAndPassword[1],
-          server: serverAndPort[0],
-          port: serverAndPort[1],
-          plugin: "", // Default empty, can be extended if plugin info is included
+          method: method,
+          password: password,
+          server: u.host,
+          port: u.port,
+          name: decodeURIComponent(u.hash || ""),
+          plugin: ssPlugin.split(";")[0] || "",
+          plugin_opts: ssPlugin.split(";").slice(1).join(";") || "",
           protocol: "ss",
+          backend: u.params["v2raya-backend"] || "",
         };
       } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
@@ -1114,6 +1143,7 @@ export default {
           ssCipher: "2022-blake3-aes-128-gcm",
           path: u.params.path || u.params.serviceName || "",
           protocol: "trojan",
+          backend: u.params["v2raya-backend"] || "",
         };
         if (url.toLowerCase().startsWith("trojan-go://")) {
           console.log(u.params.encryption);
@@ -1589,13 +1619,18 @@ export default {
         }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
-        // ss://BASE64(method:password)@server:port#name
-        const { method, password, server, port, name, plugin, plugin_opts } = this.ss;
+        // ss://BASE64(method:password)@server:port?plugin=...&v2raya-backend=...#name
+        const { method, password, server, port, name, plugin, plugin_opts, backend } = this.ss;
         let userinfo = btoa(`${method}:${password}`);
-        let url = `ss://${userinfo}@${server}:${port}`;
+        let params = [];
         if (plugin) {
-          url += `?plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`;
+          params.push(`plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`);
         }
+        if (backend) {
+          params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
+        }
+        let url = `ss://${userinfo}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
         if (name) url += `#${encodeURIComponent(name)}`;
         coded = url;
       } else if (this.tabChoice === 2) {
@@ -1608,11 +1643,12 @@ export default {
         let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
         coded = url;
       } else if (this.tabChoice === 3) {
-        // trojan://password@server:port?allowInsecure=1&sni=sni#name
-        const { password, server, port, allowInsecure, peer, name } = this.trojan;
+        // trojan://password@server:port?allowInsecure=1&sni=sni&v2raya-backend=...#name
+        const { password, server, port, allowInsecure, peer, name, backend } = this.trojan;
         let params = [];
         if (allowInsecure) params.push("allowInsecure=1");
         if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
+        if (backend) params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
         let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
         if (params.length) url += `?${params.join("&")}`;
         if (name) url += `#${encodeURIComponent(name)}`;

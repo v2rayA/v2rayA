@@ -106,8 +106,6 @@ export default {
     transparentType: "Transparent Proxy/System Proxy Implementation",
     logLevel: "Log Level",
     pacMode: "Traffic Splitting Mode of Rule Port",
-    preventDnsSpoofing: "جلوگیری از هک DNS",
-    specialMode: "حالت ویژه",
     mux: "Multiplex",
     autoUpdateSub: "بروزرسانی خودکار اشتراک ها",
     autoUpdateGfwlist: "بروزرسانی خودکار GFWList",
@@ -115,6 +113,9 @@ export default {
     ipForwardOn: "IP Forward",
     portSharingOn: "به اشتراک گذاری پورت",
     concurrency: "همزمانی",
+    ssBackend: "Shadowsocks Backend",
+    trojanBackend: "Trojan Backend",
+    nodeBackend: "Backend",
     options: {
       trace: "Trace",
       debug: "Debug",
@@ -128,9 +129,6 @@ export default {
       gfwlist: "فقط GFWList را پروکسی کن.",
       sameAsPacMode: "Traffic Splitting Mode is the Same as the Rule Port",
       customRouting: "Customized Routing",
-      antiDnsHijack: "Prevent DNS Hijack Only (fast)",
-      forwardDnsRequest: "Forward DNS Request",
-      doh: "DoH(dns-over-https)",
       default: "پیشفرض",
       on: "روشن",
       off: "خاموش",
@@ -143,6 +141,9 @@ export default {
       closed: "خاموش",
       advanced: "تنظیمات پیشرفته",
       leastPing: "اول سرور با پینگ کمتر",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "System Default",
     },
     messages: {
       gfwlist:
@@ -152,11 +153,7 @@ export default {
       transparentType:
         "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
-      preventDnsSpoofing:
-        "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
-      specialMode:
-        "★supervisor：Monitor dns pollution, intercept in advance, use the sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving.",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
@@ -222,13 +219,17 @@ export default {
     ],
   },
   dns: {
-    title: "پیکربندی سرور DNS",
-    internalQueryServers: "Domain Query Servers",
-    externalQueryServers: "External Domain Query Servers",
-    messages: [
-      '"@:(dns.internalQueryServers)" are designed to be used to look up domain names in China, while "@:(dns.externalQueryServers)" be used to look up others.',
-      '"@:(dns.internalQueryServers)" will be used to look up all domain names if "@:(dns.externalQueryServers)" is empty.',
-    ],
+    title: "DNS تنظیمات",
+    help: "راهنمای DNS",
+    helpTooltip: "مشاهده مستندات v2fly DNS",
+    colServer: "سرور DNS",
+    colDomains: "لیست دامنه",
+    colOutbound: "خروجی",
+    serverPlaceholder: "مثلاً 8.8.8.8 یا https://dns.google/dns-query",
+    domainsPlaceholder: "یک دامنه در هر خط, مثلاً geosite:cn\nبرای DNS پشتیبان خالی بگذارید",
+    addRule: "افزودن قانون",
+    resetDefault: "بازگشت به پیشفرض",
+    errNoRules: "حداقل یک قانون DNS لازم است",
   },
   egressPortWhitelist: {
     title: "Egress Port Whitelist",

@@ -7,12 +7,12 @@ import (
 	"runtime"
 )
 
-// tryRunAsService 非 Windows 平台始终返回 false
+// tryRunAsService always returns false on non-Windows platforms
 func tryRunAsService() bool {
 	return false
 }
 
-// checkPlatformSpecific 平台特定检查
+// checkPlatformSpecific performs platform-specific checks
 func checkPlatformSpecific() error {
 	if runtime.GOOS == "linux" {
 		checkTProxySupportability()
@@ -20,8 +20,8 @@ func checkPlatformSpecific() error {
 	return nil
 }
 
-// runAsService 非 Windows 平台不需要此函数，但为了编译一致性保留
+// runAsService is not needed on non-Windows platforms, but kept for compilation consistency
 func runAsService(isDebug bool) error {
-	// 在非 Windows 平台此函数不应被调用
+	// This function should not be called on non-Windows platforms
 	return nil
 }

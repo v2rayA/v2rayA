@@ -9,55 +9,36 @@ on:
       - ".github/workflows/*.yml"
 jobs:
   Build_v2rayA_Web:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Set up Node.js
-      shell: bash
-      run: |
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install node@24
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> $GITHUB_ENV
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> ~/.bash_profile
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update -y && sudo apt-get install -y gzip
-    - name: Build GUI
-      run: |
-        yarn --cwd gui --check-files
-        yarn --cwd gui build
-        echo "Use tar to generate web.tar.gz..."
-        tar -zcvf web.tar.gz web/
-    - name: Upload Zip File to Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        path: web/*
-        name: web
-  
+    uses: ./.github/workflows/_build_web.yml
+
   Build_v2rayA:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - { os: ubuntu-latest,  goarch: amd64 }
+          - { os: ubuntu-latest,  goarch: arm64 }
+          - { os: windows-latest, goarch: amd64 }
+          - { os: windows-latest, goarch: arm64 }
+          - { os: macos-latest,   goarch: amd64 }
+          - { os: macos-latest,   goarch: arm64 }
     needs: Build_v2rayA_Web
     steps:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Download Artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: web
         path: service/server/router/web
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         cache-dependency-path: |
           service/go.mod
           service/go.sum
-        go-version: '1.24'
+        go-version: '1.26'
     - name: Build v2rayA
       shell: bash
       run: |
@@ -67,19 +48,17 @@ jobs:
         count=$(git -C "$CurrentDir" rev-list --count HEAD)
         commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
         version="unstable-$date.r${count}.$commit"
-        if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          win_ex_name=".exe"
-          os="windows"
-        elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          os="darwin"
-        elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-          os="linux"
-        fi
+        case "${{ matrix.os }}" in
+          windows-latest) os="windows"; ext=".exe" ;;
+          macos-latest)   os="darwin";  ext="" ;;
+          ubuntu-latest)  os="linux";   ext="" ;;
+        esac
         cd "$CurrentDir"/service
-        for arch in amd64 arm64; do
-          GOARCH="$arch" CGO_ENABLED=0 go build -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya_bin/v2raya_pr_build_"$os"_"$arch"_"$version""$win_ex_name"
-        done
-    - name: Upload Zip File to Artifacts
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
+        # All PR builds target amd64/arm64 on linux/windows/darwin — all support TinyTun
+        GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -tags "tinytun" \
+          -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" \
+          -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
+    - name: Upload Binary
+      uses: actions/upload-artifact@v7
       with:
-        path: v2raya_bin/*
+        path: v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}

@@ -93,7 +93,8 @@ export default {
     switchSite: "Switch to alternate site",
     addOutbound: "Add an outbound",
     domainsExcluded: "Domains Excluded",
-    tproxyExcludedInterfaces: "Excluded Interface Prefixes"
+    tproxyExcludedInterfaces: "Excluded Interface Prefixes",
+    configureTunRouteScript: "Configure Route Script"
   },
   register: {
     title: "Create an admin account first",
@@ -111,21 +112,26 @@ export default {
   setting: {
     transparentProxy: "Transparent Proxy/System Proxy",
     transparentType: "Transparent Proxy/System Proxy Implementation",
-    tunMode: "TUN Mode",
-    tunIPv6: "TUN IPv6",
     logLevel: "Log Level",
     pacMode: "Traffic Splitting Mode of Rule Port",
-    preventDnsSpoofing: "Prevent DNS Spoofing",
-    specialMode: "Special Mode",
     mux: "Multiplex",
     autoUpdateSub: "Automatically Update Subscriptions",
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
     tproxyExcludedInterfaces: "Excluded Interface Prefixes",
+    tunAutoRoute: "Auto Route",
+    tunBypassInterfaces: "TUN Bypassed Interfaces",
+    tunBypassCustomPlaceholder: "Custom glob patterns, e.g. docker*, vmnet*",
+    tunBypassSelectPlaceholder: "Select interfaces...",
+    tunBypassSelected: "{n} interface(s) selected",
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
     concurrency: "Concurrency",
     inboundSniffing: "Sniffing",
+    tunProcessBackend: "Process Exclusion Backend",
+    ssBackend: "Shadowsocks Backend",
+    trojanBackend: "Trojan Backend",
+    nodeBackend: "Backend",
     options: {
       trace: "Trace",
       debug: "Debug",
@@ -139,12 +145,10 @@ export default {
       gfwlist: "Proxy only GFWList",
       sameAsPacMode: "Traffic Splitting Mode is the Same as the Rule Port",
       customRouting: "Customized Routing",
-      antiDnsHijack: "Prevent DNS Hijack Only (fast)",
-      forwardDnsRequest: "Forward DNS Request",
-      doh: "DoH(dns-over-https)",
       default: "Keep Default",
       on: "On",
       off: "Off",
+      notIntegrated: "not integrated",
       updateSubWhenStart: "Update Subscriptions When Service Starts",
       updateSubAtIntervals: "Update Subscriptions Regularly (Unit: hour)",
       updateGfwlistWhenStart: "Update GFWList When Service Starts",
@@ -153,6 +157,11 @@ export default {
       closed: "Off",
       advanced: "Advanced Setting",
       leastPing: "Least Latency First",
+      tunBackendTun: "TUN (default, /proc process lookup)",
+      tunBackendEbpf: "eBPF (cgroupv2 process exclusion)",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "System Default",
     },
     messages: {
       inboundSniffing: "Sniff inbound traffic. If it is not turned on, some traffic may not be diverted correctly.",
@@ -161,19 +170,15 @@ export default {
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers and docker as the gateway should make option 'Share in LAN' on.",
       transparentType:
-        "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution.",
+        "★tproxy: support UDP, but not support docker. ★redirect: friendly for docker, but does not support UDP and need to occupy local port 53 for dns anti-pollution. ★tun (TinyTun): cross-platform TUN-based proxy, requires tinytun binary; on Linux the data path is handled by TinyTun itself, so the generated YAML must match the TinyTun version.",
       tproxyExcludedInterfaces:
         "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*, br-*. Use commas to separate multiple prefixes.",
-      tunMode:
-        "★FakeIP: Use fake IPs to accelerate DNS resolution and improve performance. ★RealIP: Use real IPs, more suitable for certain special applications.",
-      tunIPv6:
-        "Enable IPv6 traffic support in TUN interface. Note: Requires IPv6 network support from your system.",
+      tunAutoRoute:
+        "When enabled, TinyTun automatically configures system routes. When disabled, you must provide custom setup/teardown scripts to configure routing yourself.",
+      tunBypassInterfaces: "Select interfaces to exclude from TUN proxying, or enter custom glob patterns below.",
+      tunProcessBackend: "Choose TinyTun's process exclusion method on Linux. TUN mode uses /proc scanning for broad compatibility; eBPF mode uses cgroupv2 hooks for more accurate process-level exclusion, requiring tinytun-ebpf.o at /usr/lib/tinytun/.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
-      preventDnsSpoofing:
-        "★Forward DNS Request: DNS requests will be forwarded by proxy server." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
-      specialMode:
-        "★supervisor：Monitor dns pollution, intercept in advance, use the sniffing mechanism of v2ray-core to prevent pollution. ★fakedns：Use the fakens strategy to speed up the resolving.",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
       mux:
@@ -241,13 +246,17 @@ export default {
     ],
   },
   dns: {
-    title: "Configure DNS Server",
-    internalQueryServers: "Domain Query Servers",
-    externalQueryServers: "External Domain Query Servers",
-    messages: [
-      '"@:(dns.internalQueryServers)" are designed to be used to look up domain names in China, while "@:(dns.externalQueryServers)" be used to look up others.',
-      '"@:(dns.internalQueryServers)" will be used to look up all domain names if "@:(dns.externalQueryServers)" is empty.',
-    ],
+    title: "DNS Settings",
+    help: "DNS Help",
+    helpTooltip: "View v2fly DNS documentation",
+    colServer: "DNS Server",
+    colDomains: "Domain List",
+    colOutbound: "Outbound",
+    serverPlaceholder: "e.g. 8.8.8.8 or https://dns.google/dns-query",
+    domainsPlaceholder: "One per line, e.g. geosite:cn\nLeave empty for fallback DNS",
+    addRule: "Add Rule",
+    resetDefault: "Reset to Defaults",
+    errNoRules: "At least one DNS rule is required",
   },
   egressPortWhitelist: {
     title: "Egress Port Whitelist",
@@ -393,5 +402,19 @@ export default {
     ],
     formName: "Custom Download Link",
     wrongCustomLink: "wrong custom download link"
+  },
+  tinytun: {
+    routeScript: {
+      title: "TinyTun Custom Route Script",
+      warning: "Warning: Incorrect scripts may break your network or system routing. Make sure you know what you are doing before saving.",
+      shellType: "Shell Type",
+      customShell: "Custom (specify path below)",
+      shellPath: "Shell Path",
+      shellPathPlaceholder: "/usr/bin/bash",
+      setupScript: "Setup Script (runs after TinyTun starts)",
+      setupScriptPlaceholder: "# Script to configure routes when TinyTun starts\n# e.g. ip route add default dev tun0",
+      teardownScript: "Teardown Script (runs before TinyTun stops)",
+      teardownScriptPlaceholder: "# Script to remove routes when TinyTun stops\n# e.g. ip route del default dev tun0",
+    }
   }
 };

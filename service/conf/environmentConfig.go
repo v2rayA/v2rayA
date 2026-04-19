@@ -23,6 +23,7 @@ type Params struct {
 	CoreStartupTimeout   int64  `id:"core-startup-timeout" default:"15" desc:"Timeout duration in seconds for starting v2ray or xray core. On devices with lower performance, consider increasing this value."`
 	TransparentHook      string `id:"transparent-hook" desc:"the executable file to run in the transparent proxy life-cycle. v2rayA will pass in the --transparent-type (tproxy, redirect) and --stage (pre-start, post-start, pre-stop, post-stop) arguments."`
 	CoreHook             string `id:"core-hook" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
+	TinyTunBin           string `id:"tinytun-bin" desc:"Executable tinytun binary path for TUN transparent proxy mode. Auto-detect from PATH if empty."`
 	PluginManager        string `id:"plugin-manager" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
 	WebDir               string `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
 	IPV6Support          string `id:"ipv6-support" default:"auto" desc:"Optional values: auto, on, off. Make sure your IPv6 network works fine before you turn it on."`
@@ -66,6 +67,8 @@ func initFunc() {
 	if params.Config == "" {
 		params.Config = defaultConfigDir(params.Lite)
 	}
+	// Fix mis-detected Linux-style config path on Windows
+	params.Config = sanitizeConfigDirForPlatform(params.Config, params.Lite)
 	// replace all dots of the filename with underlines
 	params.Config = filepath.Join(
 		filepath.Dir(params.Config),
@@ -81,6 +84,8 @@ func initFunc() {
 			params.Config = strings.ReplaceAll(params.Config, "$HOME", h)
 		}
 	}
+	// 展开各路径参数中的平台相关环境变量（Windows 上处理 %VAR% 风格）
+	expandPlatformConfigPaths(&params)
 	if _, err := os.Stat(params.Config); os.IsNotExist(err) {
 		_ = os.MkdirAll(params.Config, os.ModeDir|0750)
 	} else if err != nil {

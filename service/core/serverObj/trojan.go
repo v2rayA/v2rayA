@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/core/coreObj"
+	"github.com/v2rayA/v2rayA/core/v2ray/where"
 )
 
 func init() {
@@ -33,6 +36,7 @@ type Trojan struct {
 	AllowInsecure bool   `json:"allowInsecure"`
 	Alpn          string `json:"alpn,omitempty"`
 	Protocol      string `json:"protocol"`
+	Backend       string `json:"backend,omitempty"` // "" (follow system), "daeuniverse", "v2ray"
 }
 
 func NewTrojan(link string) (ServerObj, error) {
@@ -71,6 +75,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		ServiceName:   t.Query().Get("serviceName"),
 		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
+		Backend:       t.Query().Get("v2raya-backend"),
 	}
 	if t.Scheme == "trojan-go" {
 		data.Protocol = "trojan-go"
@@ -84,17 +89,119 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 	return data, nil
 }
 
+func (t *Trojan) GetBackend() string {
+	return t.Backend
+}
+
+func (t *Trojan) ConfigurationMC(info PriorInfo) (c Configuration, err error) {
+	trojanServer := coreObj.Server{
+		Address:  t.Server,
+		Port:     t.Port,
+		Password: t.Password,
+	}
+	tlsSettings := &coreObj.TLSSettings{
+		ServerName:    t.Sni,
+		AllowInsecure: t.AllowInsecure,
+	}
+	if t.Alpn != "" {
+		tlsSettings.Alpn = strings.Split(t.Alpn, ",")
+	}
+	streamSettings := &coreObj.StreamSettings{
+		Security:    "tls",
+		TLSSettings: tlsSettings,
+	}
+	switch strings.ToLower(t.Type) {
+	case "grpc":
+		streamSettings.Network = "grpc"
+		streamSettings.GrpcSettings = &coreObj.GrpcSettings{ServiceName: t.ServiceName}
+	case "ws", "websocket":
+		streamSettings.Network = "ws"
+		streamSettings.WsSettings = &coreObj.WsSettings{
+			Path:    t.Path,
+			Headers: coreObj.Headers{Host: t.Host},
+		}
+	default:
+		// tcp is default
+	}
+	return Configuration{
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:      info.Tag,
+			Protocol: "trojan",
+			Settings: coreObj.Settings{
+				Servers: []coreObj.Server{trojanServer},
+			},
+			StreamSettings: streamSettings,
+		},
+		UDPSupport: false,
+	}, nil
+}
+
+func (t *Trojan) ConfigurationMT(info PriorInfo) (c Configuration, err error) {
+	return t.ConfigurationMC(info)
+}
+
 func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
+	if info.Backend == "v2ray" {
+		if info.Variant == where.Xray {
+			return t.ConfigurationMT(info)
+		}
+		return t.ConfigurationMC(info)
+	}
+	// daeuniverse/outbound path
 	socks5 := url.URL{
 		Scheme: "socks5",
 		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
 	}
-	chain := []string{socks5.String(), t.ExportToURL()}
+	// Build chain URL without v2raya metadata
+	chainURL := t.exportToChainURL()
+	chain := []string{socks5.String(), chainURL}
 	return Configuration{
 		CoreOutbound: info.PluginObj(),
 		PluginChain:  strings.Join(chain, ","),
 		UDPSupport:   true,
 	}, nil
+}
+
+// exportToChainURL returns the URL for use in the daeuniverse plugin chain,
+// without v2rayA-specific metadata.
+func (t *Trojan) exportToChainURL() string {
+	u := &url.URL{
+		Scheme:   "trojan",
+		User:     url.User(t.Password),
+		Host:     net.JoinHostPort(t.Server, strconv.Itoa(t.Port)),
+		Fragment: t.Name,
+	}
+	query := u.Query()
+	setValue(&query, "type", t.Type)
+	net := strings.ToLower(t.Type)
+	switch net {
+	case "websocket", "ws", "http", "h2":
+		setValue(&query, "path", t.Path)
+		setValue(&query, "host", t.Host)
+	case "mkcp", "kcp":
+		setValue(&query, "headerType", t.Type)
+		setValue(&query, "seed", t.Path)
+	case "tcp":
+		setValue(&query, "headerType", t.Type)
+		setValue(&query, "host", t.Host)
+		setValue(&query, "path", t.Path)
+	case "grpc":
+		setValue(&query, "serviceName", t.ServiceName)
+	}
+	if t.AllowInsecure {
+		query.Set("allowInsecure", "1")
+	}
+	setValue(&query, "sni", t.Sni)
+	if t.Protocol == "trojan-go" {
+		u.Scheme = "trojan-go"
+		setValue(&query, "host", t.Host)
+		setValue(&query, "encryption", t.Encryption)
+		setValue(&query, "type", t.Type)
+		setValue(&query, "path", t.Path)
+		setValue(&query, "serviceName", t.ServiceName)
+	}
+	u.RawQuery = query.Encode()
+	return u.String()
 }
 
 func (t *Trojan) ExportToURL() string {
@@ -138,6 +245,9 @@ func (t *Trojan) ExportToURL() string {
 		setValue(&query, "type", t.Type)
 		setValue(&query, "path", t.Path)
 		setValue(&query, "serviceName", t.ServiceName)
+	}
+	if t.Backend != "" {
+		query.Set("v2raya-backend", t.Backend)
 	}
 	u.RawQuery = query.Encode()
 	return u.String()

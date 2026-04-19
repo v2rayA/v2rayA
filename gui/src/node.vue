@@ -24,10 +24,7 @@
     >
       <b-message
         v-for="v of connectedServerInfo"
-        :key="v.value"
-        :title="`${v.info.name}${
-          v.info.subscription_name ? ` [${v.info.subscription_name}]` : ''
-        }`"
+        :key="connectedServerKey(v.which)"
         :closable="false"
         size="is-small"
         :type="
@@ -41,7 +38,26 @@
         "
         @click.native="handleClickConnectedServer(v.which)"
       >
-        <div v-if="v.showContent">
+        <template #header>
+          <div class="node-status-card__header">
+            <span class="node-status-card__title">
+              {{ formatServerName(v.info) }}
+              <span
+                v-if="v.info.subscription_name"
+                class="node-status-card__subscription"
+              >
+                [{{ v.info.subscription_name }}]
+              </span>
+            </span>
+            <span
+              v-if="formatOutboundLabel(v.which)"
+              class="node-status-card__group"
+            >
+              {{ formatOutboundLabel(v.which) }}
+            </span>
+          </div>
+        </template>
+        <div v-if="v.showContent" class="node-status-card__body">
           <p>{{ $t("server.protocol") }}: {{ v.info.net }}</p>
           <p v-if="v.info.delay && v.info.delay < 99999">
             {{ $t("server.latency") }}: {{ v.info.delay }}ms
@@ -718,7 +734,7 @@ import ModalSubscription from "@/components/modalSubcription";
 import ModalSharing from "@/components/modalSharing";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
 
 export default {
   name: "Node",
@@ -884,6 +900,37 @@ export default {
     }
   },
   methods: {
+    connectedServerKey(which = {}) {
+      const parts = [
+        which._type || "unknown",
+        which.sub !== undefined ? which.sub : "na",
+        which.id || "0",
+        which.outbound || "default",
+      ];
+      return parts.join("-");
+    },
+    formatServerName(info = {}) {
+      if (info.name) {
+        return info.name;
+      }
+      if (info.address) {
+        return info.address;
+      }
+      return this.$t("server.name");
+    },
+    formatOutboundLabel(which = {}) {
+      if (!which.outbound) {
+        return null;
+      }
+      const outbound = which.outbound;
+      const mapping = this.runningState.outboundToServerName
+        ? this.runningState.outboundToServerName[outbound]
+        : null;
+      if (typeof mapping === "number") {
+        return `${outbound.toUpperCase()} - ${this.$t("common.loadBalance")} (${mapping})`;
+      }
+      return outbound.toUpperCase();
+    },
     refreshTableData(touch, running) {
       touch.servers.forEach((v) => {
         v.connected = false;
@@ -1004,7 +1051,7 @@ export default {
       }
       const reader = new FileReader();
       reader.onload = function (e) {
-        // target.result 该属性表示目标对象的DataURL
+        // target.result property represents the DataURL of the target object
         // console.log(e.target.result);
         const file = e.target.result;
         const qrcode = new Decoder();
@@ -1180,6 +1227,18 @@ export default {
       }
       this.$emit("input", this.runningState);
     },
+    // notifyStopped is called by the parent (App.vue) when a WebSocket
+    // running_state message with running=false is received (e.g. TinyTun
+    // crashed). It immediately updates the local running state so the UI
+    // reflects the correct status without waiting for the next /touch poll.
+    notifyStopped() {
+      if (this.runningState.running !== this.$t("common.notRunning")) {
+        Object.assign(this.runningState, {
+          running: this.$t("common.notRunning"),
+        });
+        this.$emit("input", this.runningState);
+      }
+    },
     locateTabToConnected(which) {
       let whichServer = which;
       if (!whichServer) {
@@ -1293,7 +1352,7 @@ export default {
     handleClickAboutConnection(row, sub) {
       let cancel;
       if (!row.connected) {
-        //该节点并未处于连接状态，因此进行连接
+        // The node is not connected, initiating connection
         let loading = this.$buefy.loading.open();
         waitingConnected(
           this.$axios({
@@ -1369,7 +1428,7 @@ export default {
     handleClickLatency(ping) {
       let touches = JSON.stringify(
         this.checkedRows.map((x) => {
-          //穷举sub
+          // iterate through subscriptions
           let sub = this.tableData.subscriptions.findIndex((subscription) =>
             subscription.servers.some((y) => x === y)
           );
@@ -1603,7 +1662,7 @@ td {
 </style>
 
 <style lang="scss">
-@import "~bulma/sass/utilities/all";
+@import "bulma/sass/utilities/all.sass";
 
 #toolbar {
   @media screen and (max-width: 450px) {
@@ -1793,6 +1852,56 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   .box:not(:last-child) {
     margin-bottom: 0.25rem;
   }
+}
+
+.node-status-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  gap: 0.5rem;
+}
+
+.node-status-card__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.node-status-card__subscription {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.node-status-card__group {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.15);
+  color: inherit;
+  white-space: nowrap;
+}
+
+.message.is-light .node-status-card__group {
+  border-color: rgba(0, 0, 0, 0.45);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.node-status-card__body {
+  font-size: 0.85rem;
+}
+
+.node-status-card__body p {
+  margin-bottom: 0.2rem;
+}
+
+.node-status-card__body p:last-child {
+  margin-bottom: 0;
 }
 
 tr.highlight-row-connected {

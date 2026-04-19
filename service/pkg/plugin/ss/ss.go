@@ -12,6 +12,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 
 	_ "github.com/daeuniverse/outbound/protocol/shadowsocks"
+	_ "github.com/daeuniverse/outbound/protocol/shadowsocks_2022"
 )
 
 // Shadowsocks is a base shadowsocks struct

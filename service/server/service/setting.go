@@ -42,7 +42,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		return
 	}
 	log.SetLogLevel(setting.LogLevel)
-	//如果v2ray正在运行且有连接，则重写配置并重启连接，使得对透明代理、TCPFastOpen等配置的修改立即生效
+	// If v2ray is running and has connections, rewrite config and restart connection to make changes to transparent proxy, TCPFastOpen, etc. take effect immediately.
 	css := configure.GetConnectedServers()
 	if v2ray.ProcessManager.Running() && css.Len() > 0 {
 		err = v2ray.UpdateV2RayConfig()

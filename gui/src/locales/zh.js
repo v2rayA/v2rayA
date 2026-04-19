@@ -92,7 +92,8 @@ export default {
     switchSite: "切换至备用站点",
     addOutbound: "新增一个出站 (outbound)",
     domainsExcluded: "排除域名",
-    tproxyExcludedInterfaces: "不走代理的网卡前缀"
+    tproxyExcludedInterfaces: "不走代理的网卡前缀",
+    configureTunRouteScript: "配置路由脚本"
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -111,20 +112,25 @@ export default {
     inboundSniffing: "嗅探",
     transparentProxy: "透明代理/系统代理",
     transparentType: "透明代理/系统代理实现方式",
-    tunMode: "TUN模式",
-    tunIPv6: "TUN IPv6",
     logLevel: "日志等级",
     pacMode: "规则端口的分流模式",
-    preventDnsSpoofing: "防止DNS污染",
-    specialMode: "特殊模式",
     mux: "多路复用",
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     tproxyExcludedInterfaces: "不走代理的网卡前缀",
+    tunAutoRoute: "自动路由",
+    tunBypassInterfaces: "TUN 不走代理的网卡",
+    tunBypassCustomPlaceholder: "自定义通配符，例如: docker*, vmnet*",
+    tunBypassSelectPlaceholder: "选择网卡...",
+    tunBypassSelected: "已选 {n} 个网卡",
     ipForwardOn: "开启IP转发",
-    portSharingOn: "开启端口分享",
+    portSharingOn: "允许局域网的连接",
     concurrency: "最大并发数",
+    tunProcessBackend: "TinyTun 进程排除方式",
+    ssBackend: "Shadowsocks 后端",
+    trojanBackend: "Trojan 后端",
+    nodeBackend: "后端",
     options: {
       trace: "跟踪",
       debug: "调试",
@@ -138,12 +144,10 @@ export default {
       gfwlist: "GFWList模式",
       sameAsPacMode: "分流规则与规则端口所选模式一致",
       customRouting: "自定义路由规则",
-      antiDnsHijack: "仅防止DNS劫持(快速)",
-      forwardDnsRequest: "转发DNS请求",
-      doh: "DoH(DNS-over-HTTPS)",
       default: "保持系统默认",
       on: "启用",
       off: "关闭",
+      notIntegrated: "未集成",
       updateSubWhenStart: "服务端启动时更新订阅",
       updateSubAtIntervals: "每隔一段时间更新订阅（单位：小时）",
       updateGfwlistWhenStart: "服务端启动时更新GFWList",
@@ -152,6 +156,11 @@ export default {
       closed: "关闭",
       advanced: "自定义高级设置",
       leastPing: "最小时延优先",
+      tunBackendTun: "TUN（默认，/proc 进程查找）",
+      tunBackendEbpf: "eBPF（cgroupv2 进程排除）",
+      backendDaeuniverse: "daeuniverse/outbound",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "跟随系统设置",
     },
     messages: {
       inboundSniffing: "嗅探入站域名，如不开启，可能导致部分域名分流错误",
@@ -159,20 +168,16 @@ export default {
       transparentProxy:
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
       transparentType:
-        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。",
+        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun (TinyTun): 跨平台TUN透明代理，需要tinytun二进制文件；Linux 下的数据面由 TinyTun 自身后端处理，生成的 YAML 配置需与 TinyTun 版本匹配。",
       tproxyExcludedInterfaces:
         "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
-      tunMode:
-        "★FakeIP: 使用虚拟IP加速DNS解析，提高性能。★RealIP: 使用真实IP，更适合某些特殊应用。",
-      tunIPv6:
-        "开启后TUN接口将支持IPv6流量。注意：需要系统支持IPv6网络。",
+      tunAutoRoute:
+        "开启时，TinyTun 自动配置系统路由。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
+      tunBypassInterfaces: "勾选不走 TUN 代理的网卡，或在下方输入自定义通配符。",
+      tunProcessBackend: "Linux 下选择 TinyTun 的进程排除实现。TUN 模式使用 /proc 查找，兼容性强；eBPF 模式通过 cgroupv2 钉子实现更准确的进程级排除，需安装 tinytun-ebpf.o（/usr/lib/tinytun/）。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
-      preventDnsSpoofing:
-        "★转发DNS查询: 通过代理服务器转发DNS请求。" +
-        "★DoH(v2ray-core: 4.22.0+): DNS over HTTPS。",
-      specialMode:
-        "★supervisor：监控dns污染，提前拦截，利用v2ray-core的sniffing解决污染。★fakedns：使用fakedns策略加速解析。",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "简化TCP握手流程以加速建立连接，可能会增加封包的特征。若系统不支持可能会导致无法正常连接。",
       mux: "复用TCP连接以减少握手次数，但会影响吞吐量大的使用场景，如观看视频、下载、测速。当前仅支持vmess节点。可能会增加特征造成断流。",
@@ -238,13 +243,17 @@ export default {
     ],
   },
   dns: {
-    title: "配置DNS服务器",
-    internalQueryServers: "域名查询服务器",
-    externalQueryServers: "国外域名查询服务器",
-    messages: [
-      "“@:(dns.internalQueryServers)” 用于查询国内域名，而 “@:(dns.externalQueryServers)” 用于查询国外域名。",
-      "如果将 “@:(dns.externalQueryServers)” 留空，“@:(dns.internalQueryServers)” 将会负责查询所有域名。",
-    ],
+    title: "DNS 设置",
+    help: "DNS 帮助",
+    helpTooltip: "查看 v2fly DNS 文档",
+    colServer: "DNS 服务器",
+    colDomains: "域名列表",
+    colOutbound: "出口",
+    serverPlaceholder: "如 8.8.8.8 或 https://dns.google/dns-query",
+    domainsPlaceholder: "每行一个，如 geosite:cn\n留空表示兜底 DNS",
+    addRule: "添加规则",
+    resetDefault: "恢复默认",
+    errNoRules: "至少需要一条 DNS 规则",
   },
   egressPortWhitelist: {
     title: "出方向端口白名单",
@@ -396,5 +405,19 @@ export default {
     ],
     formName: "自定义下载链接",
     wrongCustomLink: "错误的自定义下载链接"
+  },
+  tinytun: {
+    routeScript: {
+      title: "TinyTun 自定义路由脚本",
+      warning: "警告：错误的脚本可能会破坏您的网络或系统路由。请确保您清楚自己正在做什么再保存。",
+      shellType: "Shell 类型",
+      customShell: "自定义（在下方指定路径）",
+      shellPath: "Shell 路径",
+      shellPathPlaceholder: "/usr/bin/bash",
+      setupScript: "启动脚本（TinyTun 启动后执行）",
+      setupScriptPlaceholder: "# TinyTun 启动时配置路由的脚本\n# 例如: ip route add default dev tun0",
+      teardownScript: "停止脚本（TinyTun 停止前执行）",
+      teardownScriptPlaceholder: "# TinyTun 停止时移除路由的脚本\n# 例如: ip route del default dev tun0",
+    }
   }
 };

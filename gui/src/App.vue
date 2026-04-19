@@ -84,7 +84,7 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node v-model="runningState" :outbound="outboundName" :observatory="observatory" />
+    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :observatory="observatory" />
     <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
@@ -267,6 +267,9 @@ export default {
         msg.body.outboundName === this.outboundName
       ) {
         this.observatory = msg;
+      }
+      if (msg.type === "running_state" && msg.body && msg.body.running === false) {
+        this.$refs.nodeRef && this.$refs.nodeRef.notifyStopped();
       }
     },
     handleOutboundDropdownActiveChange(active) {
@@ -557,7 +560,7 @@ export default {
 <style lang="scss">
 html {
   //  &::-webkit-scrollbar {
-  //    // 去掉讨厌的滚动条
+  //    // remove annoying scrollbar
   //    display: none;
   //  }
 
@@ -571,7 +574,7 @@ html {
 
 @media screen and (max-width: 1023px) {
   .dropdown.is-mobile-modal .dropdown-menu {
-    // 修复modal模糊问题
+    // fix modal blur issues
     left: 0 !important;
     right: 0 !important;
     margin: auto;
@@ -580,7 +583,7 @@ html {
 }
 
 .dropdown-item:focus {
-  // 不要丑丑的outline
+  // remove ugly outline
   outline: none !important;
 }
 

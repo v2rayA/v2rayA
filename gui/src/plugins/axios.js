@@ -91,7 +91,7 @@ axios.interceptors.response.use(
       host = u.host;
     }
     if (err.response && err.response.status === 401) {
-      //401未授权
+      // 401 Unauthorized
       new Vue({
         components: { Modal, ModalLogin },
         data: () => ({
@@ -128,11 +128,12 @@ axios.interceptors.response.use(
       location.protocol.substr(0, 5) === "https" &&
       u.protocol === "http"
     ) {
-      //https前端通信http后端
+      // https frontend communicating with http backend
       let msg = i18n.t("axios.messages.cannotCommunicate.0");
       if (host === "localhost" || host === "local" || host === "127.0.0.1") {
         if (browser.versions.webKit) {
-          //Chrome等webkit内核浏览器允许访问http://localhost，只有可能是服务端未启动
+          // Chrome and other WebKit browsers allow access to http://localhost, 
+          // failures are likely due to backend service not being started.
           informNotRunning(u.source.replace(u.relative, ""));
           return;
         }
@@ -173,13 +174,13 @@ axios.interceptors.response.use(
     ) {
       informNotRunning(u.source.replace(u.relative, ""));
     } else {
-      //其他错误
+      // other errors
       if (
         !err.message ||
         (err.message && err.message.indexOf("404") >= 0) ||
         (err.response && err.response.status === 404)
       ) {
-        //接口不存在，或是正常错误（如取消），可能服务端是老旧版本，不管
+        // Interface doesn't exist, or expected error (e.g. cancellation), maybe legacy server version - ignore
         return Promise.reject(err);
       }
       console.log("!other");

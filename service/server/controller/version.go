@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
+	v2ray "github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset/dat"
 	"github.com/v2rayA/v2rayA/core/v2ray/service"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
@@ -41,6 +42,7 @@ func GetVersion(ctx *gin.Context) {
 		"variant":          variant,
 		"os":               runtime.GOOS,
 		"isRoot":           isRoot,
+		"tinytunSupported": v2ray.IsTinyTunEnabled(),
 	})
 }
 

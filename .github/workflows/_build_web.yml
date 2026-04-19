@@ -1,0 +1,39 @@
+name: Build v2rayA Web (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      upload_archive:
+        description: 'Whether to also upload the web.tar.gz archive as a release asset'
+        type: boolean
+        default: false
+
+jobs:
+  Build_v2rayA_Web:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+    - name: Build GUI
+      run: |
+        yarn --cwd gui --check-files
+        yarn --cwd gui build
+        echo "Use tar to generate web.tar.gz..."
+        tar -zcvf web.tar.gz web/
+    - name: Upload Web Files to Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        path: web/*
+        name: web
+    - name: Upload the tar archive to Artifacts
+      if: inputs.upload_archive
+      uses: actions/upload-artifact@v7
+      with:
+        name: web.tar.gz
+        path: |
+          web.tar.gz
