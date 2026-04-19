@@ -24,9 +24,9 @@ jobs:
       shell: bash
       run: |
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install node@24
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> $GITHUB_ENV
-        echo "PATH=\"$(brew --prefix)/opt/node@24/bin:$PATH\"" >> ~/.bash_profile
+        brew install node@22
+        echo "PATH=\"$(brew --prefix)/opt/node@22/bin:$PATH\"" >> $GITHUB_ENV
+        echo "PATH=\"$(brew --prefix)/opt/node@22/bin:$PATH\"" >> ~/.bash_profile
     - name: Install Dependencies
       run: |
         sudo apt-get update -y && sudo apt-get install -y gzip
