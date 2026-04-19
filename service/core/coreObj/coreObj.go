@@ -1,5 +1,9 @@
 package coreObj
 
+import (
+	jsoniter "github.com/json-iterator/go"
+)
+
 type APIObject struct {
 	Tag      string   `json:"tag"`
 	Services []string `json:"services"`
@@ -255,10 +259,32 @@ type QuicSettings struct {
 	Security string    `json:"security"`
 }
 type XHTTPSettings struct {
-	Path string `json:"path"`
-	Host string `json:"host,omitempty"`
-	Mode string `json:"mode,omitempty"`
+	Path        string                 `json:"path"`
+	Host        string                 `json:"host,omitempty"`
+	Mode        string                 `json:"mode,omitempty"`
+	Passthrough map[string]interface{} `json:"-"`
 }
+
+func (x XHTTPSettings) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{})
+	m["path"] = x.Path
+	if x.Host != "" {
+		m["host"] = x.Host
+	}
+	if x.Mode != "" {
+		m["mode"] = x.Mode
+	}
+	for k, v := range x.Passthrough {
+		switch k {
+		case "path", "host", "mode":
+			continue
+		default:
+			m[k] = v
+		}
+	}
+	return jsoniter.Marshal(m)
+}
+
 type Hosts map[string][]string
 
 type DNS struct {

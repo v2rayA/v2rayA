@@ -1,0 +1,8 @@
+{
+  "host": "",
+  "mode": "auto",
+  "path": "/",
+  "scMaxConcurrentPosts": 10,
+  "scMaxEachPostBytes": 1000000,
+  "scMinPostsIntervalMs": "30"
+}

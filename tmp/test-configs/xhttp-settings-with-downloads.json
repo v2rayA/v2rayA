@@ -1,0 +1,56 @@
+{
+  "extra": {
+    "downloadSettings": {
+      "address": "download.example.com",
+      "network": "xhttp",
+      "port": 443,
+      "realitySettings": {
+        "allowInsecure": false,
+        "fingerprint": "chrome",
+        "publicKey": "FAKE_PUBLIC_KEY",
+        "serverName": "download.example.com",
+        "shortId": "0123456789ab",
+        "show": false,
+        "spiderX": "/"
+      },
+      "security": "reality",
+      "xhttpSettings": {
+        "extra": {
+          "noGRPCHeader": true,
+          "scMaxEachPostBytes": "1000000-1000000",
+          "scMinPostsIntervalMs": "15-15",
+          "xPaddingBytes": "50-355",
+          "xmux": {
+            "cMaxReuseTimes": "0-0",
+            "hKeepAlivePeriod": 0,
+            "hMaxRequestTimes": "0-0",
+            "hMaxReusableSecs": "3180-3300",
+            "maxConcurrency": "0-0",
+            "maxConnections": "3-3"
+          }
+        },
+        "host": "download.example.com",
+        "mode": "packet-up",
+        "path": "/"
+      }
+    },
+    "noGRPCHeader": true,
+    "scMaxEachPostBytes": "150000-150000",
+    "scMinPostsIntervalMs": "15-15",
+    "xPaddingBytes": "50-355",
+    "xmux": {
+      "cMaxReuseTimes": "0-0",
+      "hKeepAlivePeriod": 0,
+      "hMaxRequestTimes": "0-0",
+      "hMaxReusableSecs": "3180-3300",
+      "maxConcurrency": "0-0",
+      "maxConnections": "1-1"
+    }
+  },
+  "host": "proxy.example.com",
+  "mode": "packet-up",
+  "path": "/",
+  "scMaxConcurrentPosts": 10,
+  "scMaxEachPostBytes": 1000000,
+  "scMinPostsIntervalMs": "30"
+}

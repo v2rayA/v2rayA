@@ -53,8 +53,26 @@ type V2Ray struct {
 	Key           string `json:"key,omitempty"`
 	QuicSecurity  string `json:"quicSecurity"`
 	XHTTPMode     string `json:"xhttpMode,omitempty"`
+	XHTTPRawJson  string `json:"xhttpRawJson,omitempty"`
 	V             string `json:"v"`
 	Protocol      string `json:"protocol"`
+}
+
+func parseXHTTPRawJson(raw string) (map[string]interface{}, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+	var m map[string]interface{}
+	if err := jsoniter.Unmarshal([]byte(raw), &m); err != nil {
+		return nil, err
+	}
+	if m == nil {
+		m = make(map[string]interface{})
+	}
+	delete(m, "path")
+	delete(m, "host")
+	delete(m, "mode")
+	return m, nil
 }
 
 func NewV2Ray(link string) (ServerObj, error) {
@@ -120,6 +138,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		if data.XHTTPMode == "" {
 			data.XHTTPMode = "auto"
 		}
+		data.XHTTPRawJson = u.Query().Get("xhttpRawJson")
 	}
 	return data, nil
 }
@@ -274,14 +293,14 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					},
 				},
 			}
-		// if network == "tcp" {
-		// 	tcpSetting := coreObj.TCPSettings{
-		// 		Header: coreObj.TCPHeader{
-		// 			Type: "none",
-		// 		},
-		// 	}
-		// 	core.StreamSettings.TCPSettings = &tcpSetting
-		// }
+			// if network == "tcp" {
+			// 	tcpSetting := coreObj.TCPSettings{
+			// 		Header: coreObj.TCPHeader{
+			// 			Type: "none",
+			// 		},
+			// 	}
+			// 	core.StreamSettings.TCPSettings = &tcpSetting
+			// }
 		}
 		// 根据传输协议(network)修改streamSettings
 		//TODO: QUIC
@@ -377,17 +396,15 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				Security: v.QuicSecurity,
 			}
 		case "xhttp":
-			if v.Host != "" {
-				core.StreamSettings.XHTTPSettings = &coreObj.XHTTPSettings{
-					Path: v.Path,
-					Host: v.Host,
-					Mode: v.XHTTPMode,
-				}
-			} else {
-				core.StreamSettings.XHTTPSettings = &coreObj.XHTTPSettings{
-					Path: v.Path,
-					Mode: v.XHTTPMode,
-				}
+			passthrough, err := parseXHTTPRawJson(v.XHTTPRawJson)
+			if err != nil {
+				return Configuration{}, fmt.Errorf("invalid xhttpRawJson: %w", err)
+			}
+			core.StreamSettings.XHTTPSettings = &coreObj.XHTTPSettings{
+				Path:        v.Path,
+				Host:        v.Host,
+				Mode:        v.XHTTPMode,
+				Passthrough: passthrough,
 			}
 		default:
 			return Configuration{}, fmt.Errorf("unexpected transport type: %v", v.Net)
@@ -486,6 +503,7 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "path", v.Path)
 			setValue(&query, "host", v.Host)
 			setValue(&query, "xhttpMode", v.XHTTPMode)
+			setValue(&query, "xhttpRawJson", v.XHTTPRawJson)
 		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)
