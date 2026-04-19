@@ -20,6 +20,7 @@ export default {
     log: "日志",
     darkTheme: "深色主题",
     lightTheme: "浅色主题",
+    autoTheme: "自动主题",
   },
   welcome: {
     title: "初来乍到，请多关照",

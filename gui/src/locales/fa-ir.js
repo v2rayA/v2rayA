@@ -20,6 +20,7 @@ export default {
     log: "گزارش ها",
     darkTheme: "تم تیره",
     lightTheme: "تم روشن",
+    autoTheme: "تم خودکار",
   },
   welcome: {
     title: "خوش آمدی",

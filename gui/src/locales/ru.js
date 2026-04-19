@@ -20,6 +20,7 @@ export default {
     log: "Журнал",
     darkTheme: "Темная тема",
     lightTheme: "Светлая тема",
+    autoTheme: "Авто тема",
   },
   welcome: {
     title: "Добро пожаловать",

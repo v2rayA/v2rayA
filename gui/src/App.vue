@@ -59,7 +59,7 @@
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="toggleTheme">
           <i
-            :class="isDarkTheme ? 'mdi mdi-weather-sunny' : 'mdi mdi-weather-night'"
+            :class="themePreference === 'auto' ? 'mdi mdi-theme-light-dark' : (isDarkTheme ? 'mdi mdi-weather-sunny' : 'mdi mdi-weather-night')"
             style="font-size: 1.25em"
           ></i>
           {{ themeSwitchLabel }}
@@ -141,7 +141,8 @@ export default {
       outbounds: ["proxy"],
       outboundDropdownHover: {},
       updateOutboundDropdown: true,
-      isDarkTheme: false,
+      themePreference: 'auto',
+      systemDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
     };
   },
   computed: {
@@ -161,10 +162,15 @@ export default {
       const lang = this.langs.find(l => l.flag === currentLang);
       return lang ? lang.code : "zh_CN";
     },
+    isDarkTheme() {
+      if (this.themePreference === 'dark') return true;
+      if (this.themePreference === 'light') return false;
+      return this.systemDark;
+    },
     themeSwitchLabel() {
-      return this.isDarkTheme
-        ? this.$t("common.lightTheme")
-        : this.$t("common.darkTheme");
+      if (this.themePreference === 'auto') return this.$t('common.autoTheme');
+      if (this.themePreference === 'dark') return this.$t('common.darkTheme');
+      return this.$t('common.lightTheme');
     },
   },
   mounted() {
@@ -235,6 +241,9 @@ export default {
   beforeDestroy() {
     if (this.ws) {
       this.ws.close();
+    }
+    if (this._darkMediaQuery && this._onSystemThemeChange) {
+      this._darkMediaQuery.removeEventListener('change', this._onSystemThemeChange);
     }
   },
   methods: {
@@ -531,15 +540,24 @@ export default {
       this.$remount();
     },
     initTheme() {
-      this.isDarkTheme = localStorage.getItem("theme") === "dark";
+      const stored = localStorage.getItem('theme');
+      this.themePreference = (stored === 'dark' || stored === 'light') ? stored : 'auto';
+      this._darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this._onSystemThemeChange = (e) => {
+        this.systemDark = e.matches;
+        this.applyThemeClass();
+      };
+      this._darkMediaQuery.addEventListener('change', this._onSystemThemeChange);
       this.applyThemeClass();
     },
     applyThemeClass() {
-      document.body.classList.toggle("theme-dark", this.isDarkTheme);
+      document.body.classList.toggle('theme-dark', this.isDarkTheme);
     },
     toggleTheme() {
-      this.isDarkTheme = !this.isDarkTheme;
-      localStorage.setItem("theme", this.isDarkTheme ? "dark" : "light");
+      const order = ['auto', 'light', 'dark'];
+      const idx = order.indexOf(this.themePreference);
+      this.themePreference = order[(idx + 1) % order.length];
+      localStorage.setItem('theme', this.themePreference);
       this.applyThemeClass();
     },
     handleClickLogs() {

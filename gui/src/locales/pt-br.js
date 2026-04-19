@@ -20,6 +20,7 @@ export default {
     log: "Logs",
     darkTheme: "Tema Escuro",
     lightTheme: "Tema Claro",
+    autoTheme: "Tema Automático",
   },
   welcome: {
     title: "Bem-vindo",
