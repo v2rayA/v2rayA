@@ -24,6 +24,10 @@
             <b-input ref="v2ray_port" v-model="v2ray.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
+          <b-field label="Ports" label-position="on-border">
+            <b-input ref="v2ray_port" v-model="v2ray.ports" required placeholder="exp. 2000-3000"
+              expanded />
+          </b-field>
           <b-field label="ID" label-position="on-border">
             <b-input ref="v2ray_id" v-model="v2ray.id" required placeholder="UserID" expanded />
           </b-field>
@@ -799,6 +803,7 @@ export default {
       ps: "",
       add: "",
       port: "",
+      ports: "",
       id: "",
       flow: "",
       aid: "",
