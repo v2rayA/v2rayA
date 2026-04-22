@@ -55,6 +55,7 @@ func NewSetting() (setting *Setting) {
 		PortSharing:                        false,
 		TransparentType:                    TransparentRedirect,
 		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
+		TunAutoRoute:                       true,
 		Encryption:                         "none",
 	}
 }

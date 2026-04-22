@@ -410,6 +410,8 @@ export default {
     tunTeardownScript: "",
     tunProcessBackend: "",
     tunExcludeProcesses: "",
+    ssBackend: "",
+    trojanBackend: "",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
@@ -540,6 +542,8 @@ export default {
             tunTeardownScript: this.tunTeardownScript,
             tunProcessBackend: this.tunProcessBackend,
             tunExcludeProcesses: this.tunExcludeProcesses,
+            ssBackend: this.ssBackend,
+            trojanBackend: this.trojanBackend,
             encryption: this.encryption,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
