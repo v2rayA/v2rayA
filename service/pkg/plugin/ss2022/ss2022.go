@@ -74,5 +74,14 @@ func (s *Shadowsocks2022) DialContext(ctx context.Context, network, addr string)
 }
 
 func (s *Shadowsocks2022) DialUDP(network string) (plugin.FakeNetPacketConn, error) {
-	return nil, fmt.Errorf("[ss2022]: UDP is not yet supported")
+	// Dial a UDP conn to the ss2022 server through the upstream (typically
+	// Direct). sing-shadowsocks' Method wraps that conn into an
+	// N.NetPacketConn which already satisfies net.PacketConn — each
+	// WriteTo/ReadFrom is one ss2022-framed UDP packet with its own
+	// destination/source address.
+	rc, err := s.upstream.DialContext(context.TODO(), "udp", s.server)
+	if err != nil {
+		return nil, fmt.Errorf("[ss2022]: dial udp server %s: %w", s.server, err)
+	}
+	return s.method.DialPacketConn(rc), nil
 }

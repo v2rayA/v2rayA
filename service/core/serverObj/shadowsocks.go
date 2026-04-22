@@ -357,7 +357,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 		return Configuration{
 			CoreOutbound: info.PluginObj(),
 			PluginChain:  strings.Join([]string{socks5.String(), upstream.String()}, ","),
-			UDPSupport:   false,
+			UDPSupport:   true,
 		}, nil
 	}
 	chain := []string{socks5.String(), s.ExportToURL()}
