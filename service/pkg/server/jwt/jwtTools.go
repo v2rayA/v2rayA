@@ -75,7 +75,9 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 			}
 		}
 		//将用户名丢入参数
-		if name, ok := mapClaims["name"]; ok && name != nil {
+		if uname, ok := mapClaims["uname"]; ok && uname != nil {
+			ctx.Set("Name", uname)
+		} else if name, ok := mapClaims["name"]; ok && name != nil {
 			ctx.Set("Name", name)
 		}
 	}

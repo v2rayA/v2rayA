@@ -3,6 +3,7 @@ package serverObj
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"strconv"
 
@@ -12,14 +13,14 @@ import (
 func init() {
 	FromLinkRegister("anytls", NewAnyTLS)
 	EmptyRegister("anytls", func() (ServerObj, error) {
-		return new(AnyTLS), nil
+		return &AnyTLS{Protocol: "anytls"}, nil
 	})
 }
 
 type AnyTLS struct {
-	Name     string `json:"name"`
-	Server   string `json:"server"`
+	Address  string `json:"address" server:"server" hostname:"hostname" add:"add"`
 	Port     int    `json:"port"`
+	Name     string `json:"name"`
 	Protocol string `json:"protocol"`
 	Link     string `json:"link"`
 }
@@ -28,21 +29,23 @@ func NewAnyTLS(link string) (ServerObj, error) {
 	return ParseAnyTLSURL(link)
 }
 
-func ParseAnyTLSURL(link string) (data *AnyTLS, err error) {
+func ParseAnyTLSURL(link string) (*AnyTLS, error) {
 	u, err := url.Parse(link)
 	if err != nil {
 		return nil, err
 	}
-	port, err := strconv.Atoi(u.Port())
+	host, portStr, err := net.SplitHostPort(u.Host)
 	if err != nil {
-		return nil, err
+		host = u.Host
+		portStr = "443"
 	}
+	port, _ := strconv.Atoi(portStr)
 	return &AnyTLS{
-		Name:     u.Fragment,
-		Server:   u.Hostname(),
+		Address:  host,
 		Port:     port,
-		Protocol: "anytls",
+		Name:     u.Fragment,
 		Link:     link,
+		Protocol: "anytls",
 	}, nil
 }
 
@@ -68,11 +71,11 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 	q := u.Query()
 	sni := q.Get("sni")
-	insecure := q.Get("insecure") == "1" || q.Get("allowInsecure") == "1"
+	insecure := q.Get("insecure") == "1" || q.Get("allowInsecure") == "true" || q.Get("allowInsecure") == "1"
 	minIdle, _ := strconv.Atoi(q.Get("minIdleSession"))
 
 	settingsJSON, err := json.Marshal(anytlsSettings{
-		Address:         s.Server,
+		Address:         s.Address,
 		Port:            s.Port,
 		Password:        password,
 		SNI:             sni,
@@ -102,15 +105,15 @@ func (s *AnyTLS) NeedPluginPort() bool {
 }
 
 func (s *AnyTLS) ProtoToShow() string {
-	return fmt.Sprintf("anytls")
+	return "anytls"
 }
 
 func (s *AnyTLS) GetProtocol() string {
-	return s.Protocol
+	return "anytls"
 }
 
 func (s *AnyTLS) GetHostname() string {
-	return s.Server
+	return s.Address
 }
 
 func (s *AnyTLS) GetPort() int {

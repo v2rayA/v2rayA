@@ -13,68 +13,28 @@ func init() {
 	FromLinkRegister("http-proxy", NewHTTP)
 	FromLinkRegister("https-proxy", NewHTTP)
 	EmptyRegister("http", func() (ServerObj, error) {
-		return new(HTTP), nil
+		return &HTTP{Protocol: "http"}, nil
 	})
 	EmptyRegister("https", func() (ServerObj, error) {
-		return new(HTTP), nil
-	})
-	EmptyRegister("http-proxy", func() (ServerObj, error) {
-		return new(HTTP), nil
-	})
-	EmptyRegister("https-proxy", func() (ServerObj, error) {
-		return new(HTTP), nil
+		return &HTTP{Protocol: "https"}, nil
 	})
 }
 
 type HTTP struct {
-	Name     string `json:"name"`
-	Server   string `json:"server"`
+	Address  string `json:"address" server:"server" hostname:"hostname" add:"add" host:"host"`
 	Port     int    `json:"port"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Name     string `json:"name"`
 	Protocol string `json:"protocol"`
+	Link     string `json:"link"`
 }
 
 func NewHTTP(link string) (ServerObj, error) {
 	return ParseHttpURL(link)
 }
 
-func ParseHttpURL(u string) (data *HTTP, err error) {
-	t, err := url.Parse(u)
-	if err != nil {
-		return nil, ErrInvalidParameter
-	}
-	port, err := strconv.Atoi(t.Port())
-	if err != nil {
-		return nil, ErrInvalidParameter
-	}
-	data = &HTTP{
-		Name:   t.Fragment,
-		Server: t.Hostname(),
-		Port:   port,
-	}
-	if t.User != nil && len(t.User.String()) > 0 {
-		data.Username = t.User.Username()
-		data.Password, _ = t.User.Password()
-	}
-	switch t.Scheme {
-	case "https-proxy", "https":
-		data.Protocol = "https"
-		if data.Port == 0 {
-			data.Port = 443
-		}
-	case "http-proxy", "http":
-		data.Protocol = "http"
-		if data.Port == 0 {
-			data.Port = 80
-		}
-	default:
-		data.Protocol = t.Scheme
-	}
-	return data, nil
-}
-
-func (h *HTTP) Configuration(info PriorInfo) (c Configuration, err error) {
+func (h *HTTP) Configuration(info PriorInfo) (Configuration, error) {
 	socks5 := url.URL{
 		Scheme: "socks5",
 		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
@@ -88,17 +48,7 @@ func (h *HTTP) Configuration(info PriorInfo) (c Configuration, err error) {
 }
 
 func (h *HTTP) ExportToURL() string {
-	var user *url.Userinfo
-	if h.Username != "" && h.Password != "" {
-		user = url.UserPassword(h.Username, h.Password)
-	}
-	u := &url.URL{
-		Scheme:   h.Protocol,
-		User:     user,
-		Host:     net.JoinHostPort(h.Server, strconv.Itoa(h.Port)),
-		Fragment: h.Name,
-	}
-	return u.String()
+	return h.Link
 }
 
 func (h *HTTP) NeedPluginPort() bool {
@@ -106,7 +56,7 @@ func (h *HTTP) NeedPluginPort() bool {
 }
 
 func (h *HTTP) ProtoToShow() string {
-	return h.Protocol
+	return strings.ToUpper(h.Protocol)
 }
 
 func (h *HTTP) GetProtocol() string {
@@ -114,7 +64,7 @@ func (h *HTTP) GetProtocol() string {
 }
 
 func (h *HTTP) GetHostname() string {
-	return h.Server
+	return h.Address
 }
 
 func (h *HTTP) GetPort() int {
@@ -127,4 +77,35 @@ func (h *HTTP) GetName() string {
 
 func (h *HTTP) SetName(name string) {
 	h.Name = name
+}
+
+func ParseHttpURL(link string) (*HTTP, error) {
+	u, err := url.Parse(link)
+	if err != nil {
+		return nil, err
+	}
+	host, portStr, _ := net.SplitHostPort(u.Host)
+	if portStr == "" {
+		if u.Scheme == "https" || u.Scheme == "https-proxy" {
+			portStr = "443"
+		} else {
+			portStr = "80"
+		}
+	}
+	port, _ := strconv.Atoi(portStr)
+	h := &HTTP{
+		Address:  host,
+		Port:     port,
+		Name:     u.Fragment,
+		Link:     link,
+		Protocol: "http",
+	}
+	if u.Scheme == "https" || u.Scheme == "https-proxy" {
+		h.Protocol = "https"
+	}
+	if u.User != nil {
+		h.Username = u.User.Username()
+		h.Password, _ = u.User.Password()
+	}
+	return h, nil
 }

@@ -8,242 +8,245 @@
     <section ref="section" :class="{ 'modal-card-body': true }">
       <b-tabs v-model="tabChoice" class="block" type="is-boxed is-twitter" vertical>
         <b-tab-item label="V2RAY">
-          <b-field label="Protocol" label-position="on-border">
-            <b-select v-model="v2ray.protocol" expanded @input="handleV2rayProtocolSwitch">
-              <option value="vmess">VMESS</option>
-              <option value="vless">VLESS</option>
-            </b-select>
-          </b-field>
-          <b-field label="Name" label-position="on-border">
-            <b-input ref="v2ray_name" v-model="v2ray.ps" :placeholder="$t('configureServer.servername')" expanded />
-          </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="v2ray_add" required placeholder="IP / HOST" v-model="v2ray.add" expanded />
-          </b-field>
-          <b-field label="Port" label-position="on-border">
-            <b-input ref="v2ray_port" required :placeholder="$t('configureServer.port')" type="number" v-model="v2ray.port"
-              expanded />
-          </b-field>
-          <b-field label="ID" label-position="on-border">
-            <b-input ref="v2ray_id" required placeholder="UserID" v-model="v2ray.id" expanded />
-          </b-field>
-          <b-field v-if="v2ray.protocol === 'vmess'" label="AlterID" label-position="on-border">
-            <b-input ref="v2ray_aid" placeholder="AlterID" type="number" min="0" max="65535" v-model="v2ray.aid"
-              expanded />
-          </b-field>
-          <b-field v-if="v2ray.protocol === 'vmess'" label="Security" label-position="on-border">
-            <b-select v-model="v2ray.scy" expanded required>
-              <option value="auto">Auto</option>
-              <option value="aes-256-gcm">aes-256-gcm</option>
-              <option value="aes-128-gcm">aes-128-gcm</option>
-              <option value="chacha20-poly1305">chacha20-poly1305</option>
-              <option value="xchacha20-poly1305">xchacha20-poly1305</option>
-              <option value="none">none</option>
-              <option value="zero">zero</option>
-            </b-select>
-          </b-field>
-          <b-field v-show="v2ray.type !== 'dtls'" label="TLS" label-position="on-border">
-            <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
-              <option value="none">{{ $t("setting.options.off") }}</option>
-              <option value="tls">tls</option>
-              <option v-if="variant() === 'xray'" value="reality"> reality </option>
-              <option v-if="variant() === 'xray'" value="xtls">xtls</option>
-            </b-select>
-          </b-field>
-          <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
-            <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
-            label-position="on-border">
-            <b-select ref="v2ray_fp" v-model="v2ray.fp" expanded>
-              <option value="">empty</option>
-              <option value="chrome">chrome</option>
-              <option value="firefox">firefox</option>
-              <option value="safari">safari</option>
-              <option value="ios">ios</option>
-              <option value="android">android</option>
-              <option value="edge">edge</option>
-              <option value="360">360</option>
-              <option value="qq">qq</option>
-              <option value="random">random</option>
-              <option value="randomized">randomized</option>
-            </b-select>
-          </b-field>
-          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" label="Encryption" label-position="on-border">
-            <b-input ref="v2ray_encryption" v-model="v2ray.scy" placeholder="none" expanded />
-          </b-field>
-          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" label="Flow" label-position="on-border">
-            <b-input ref="v2ray_flow" v-model="v2ray.flow" placeholder="Flow" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="pbk" label-position="on-border">
-            <b-input v-model="v2ray.pbk" placeholder="pbk" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="sid" label-position="on-border">
-            <b-input v-model="v2ray.sid" placeholder="sid" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="spx" label-position="on-border">
-            <b-input v-model="v2ray.spx" placeholder="spx" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label="Alpn" label-position="on-border">
-            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
-          </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-tooltip v-show="v2ray.protocol === 'vless'" type="is-dark"
-              :label="$t('server.messages.notRecommend', { name: 'VLESS' })" multilined position="is-right">
-              <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-                style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-            </b-tooltip>
-            <b-select v-model="v2ray.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
-            </b-select>
-          </b-field>
-          <b-field label="Network" label-position="on-border">
-            <b-select v-model="v2ray.net" expanded @input="handleNetworkChange">
-              <option value="tcp">TCP</option>
-              <option value="kcp">mKCP</option>
-              <option value="ws">WebSocket</option>
-              <option value="h2">HTTP/2</option>
-              <option value="quic">QUIC</option>
-              <option value="grpc">gRPC</option>
-              <option v-if="variant() === 'xray'" value="xhttp">xhttp</option>
-            </b-select>
-          </b-field>
-          <b-field v-show="v2ray.net === 'tcp'" label="Header Type" label-position="on-border">
-            <b-select v-model="v2ray.type" expanded>
-              <option value="none">None</option>
-              <option value="http">HTTP</option>
-            </b-select>
-          </b-field>
-          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Header Type" label-position="on-border">
-            <b-select v-model="v2ray.type" expanded>
-              <option value="none">None</option>
-              <option value="srtp">SRTP</option>
-              <option value="utp">UTP</option>
-              <option value="wechat-video">Wechat-Video</option>
-              <option value="dtls">DTLS</option>
-              <option value="wireguard">Wireguard</option>
-            </b-select>
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http') || v2ray.net === 'xhttp'"
-            label="Path" label-position="on-border">
-            <b-input v-model="v2ray.path" placeholder="/" expanded />
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http') || v2ray.net === 'xhttp'"
-            label="Host" label-position="on-border">
-            <b-input v-model="v2ray.host" placeholder="Host" expanded />
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'ws'"
-            label="Max Early Data"
-            label-position="on-border"
-          >
-            <b-input
-              v-model="v2ray.maxEarlyData"
-              type="number"
-              placeholder="Max Early Data"
-              expanded
-            />
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'ws'"
-            label="Early Data Header Name"
-            label-position="on-border"
-          >
-            <b-input
-              v-model="v2ray.earlyDataHeaderName"
-              placeholder="Early Data Header Name"
-              expanded
-            />
-          </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
-            <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'grpc'"
-            label="MultiMode"
-            label-position="on-border"
-          >
-            <b-switch v-model="v2ray.multiMode">
-              {{ v2ray.multiMode ? $t('operations.yes') : $t('operations.no') }}
-            </b-switch>
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'grpc'"
-            label="Idle Timeout"
-            label-position="on-border"
-          >
-            <b-input
-              v-model="v2ray.idleTimeout"
-              type="number"
-              placeholder="Idle Timeout (s)"
-              expanded
-            />
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'grpc'"
-            label="Health Check Timeout"
-            label-position="on-border"
-          >
-            <b-input
-              v-model="v2ray.healthCheckTimeout"
-              type="number"
-              placeholder="Health Check Timeout (s)"
-              expanded
-            />
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'grpc'"
-            label="Permit Without Stream"
-            label-position="on-border"
-          >
-            <b-switch v-model="v2ray.permitWithoutStream">
-              {{ v2ray.permitWithoutStream ? $t('operations.yes') : $t('operations.no') }}
-            </b-switch>
-          </b-field>
-          <b-field
-            v-show="v2ray.net === 'grpc'"
-            label="Initial Windows Size"
-            label-position="on-border"
-          >
-            <b-input
-              v-model="v2ray.initialWindowsSize"
-              type="number"
-              placeholder="Initial Windows Size"
-              expanded
-            />
-          </b-field>
-          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
-            <b-input v-model="v2ray.key" placeholder="key" expanded />
-          </b-field>
-          <b-field v-show="v2ray.net === 'quic'" label="Security" label-position="on-border">
-            <b-select v-model="v2ray.quicSecurity" expanded>
-              <option value="none">none</option>
-              <option value="aes-128-gcm">aes-128-gcm</option>
-              <option value="chacha20-poly1305">chacha20-poly1305</option>
-            </b-select>
-          </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="xhttp Mode" label-position="on-border">
-            <b-select v-model="v2ray.xhttpMode" expanded>
-              <option value="auto">auto</option>
-              <option value="download">download</option>
-              <option value="streaming">streaming</option>
-              <option value="packet">packet</option>
-              <option value="packet-up">packet-up</option>
-              <option value="stream-up">stream-up</option>
-              <option value="stream-one">stream-one</option>
-            </b-select>
-          </b-field>
-          <b-field v-show="v2ray.net === 'xhttp' && v2ray.xhttpMode === 'packet'" label="xhttp RawJson"
-            label-position="on-border">
-            <b-input v-model="v2ray.xhttpRawJson" type="textarea" placeholder='{"scy": "chacha20-poly1305"}' expanded />
-          </b-field>
+          <div v-if="tabChoice === 0">
+            <b-field label="Protocol" label-position="on-border">
+              <b-select v-model="v2ray.protocol" expanded @input="handleV2rayProtocolSwitch">
+                <option value="vmess">VMESS</option>
+                <option value="vless">VLESS</option>
+              </b-select>
+            </b-field>
+            <b-field label="Name" label-position="on-border">
+              <b-input ref="v2ray_name" v-model="v2ray.ps" :placeholder="$t('configureServer.servername')" expanded />
+            </b-field>
+            <b-field label="Host" label-position="on-border">
+              <b-input ref="v2ray_add" required placeholder="IP / HOST" v-model="v2ray.add" expanded />
+            </b-field>
+            <b-field label="Port" label-position="on-border">
+              <b-input ref="v2ray_port" required :placeholder="$t('configureServer.port')" type="number" v-model="v2ray.port"
+                expanded />
+            </b-field>
+            <b-field label="ID" label-position="on-border">
+              <b-input ref="v2ray_id" required placeholder="UserID" v-model="v2ray.id" expanded />
+            </b-field>
+            <b-field v-if="v2ray.protocol === 'vmess'" label="AlterID" label-position="on-border">
+              <b-input ref="v2ray_aid" placeholder="AlterID" type="number" min="0" max="65535" v-model="v2ray.aid"
+                expanded />
+            </b-field>
+            <b-field v-if="v2ray.protocol === 'vmess'" label="Security" label-position="on-border">
+              <b-select v-model="v2ray.scy" expanded required>
+                <option value="auto">Auto</option>
+                <option value="aes-256-gcm">aes-256-gcm</option>
+                <option value="aes-128-gcm">aes-128-gcm</option>
+                <option value="chacha20-poly1305">chacha20-poly1305</option>
+                <option value="xchacha20-poly1305">xchacha20-poly1305</option>
+                <option value="none">none</option>
+                <option value="zero">zero</option>
+              </b-select>
+            </b-field>
+            <b-field v-show="v2ray.type !== 'dtls'" label="TLS" label-position="on-border">
+              <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
+                <option value="none">{{ $t("setting.options.off") }}</option>
+                <option value="tls">tls</option>
+                <option v-if="variant() === 'xray'" value="reality"> reality </option>
+                <option v-if="variant() === 'xray'" value="xtls">xtls</option>
+              </b-select>
+            </b-field>
+            <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
+              <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
+            </b-field>
+            <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
+              label-position="on-border">
+              <b-select ref="v2ray_fp" v-model="v2ray.fp" expanded>
+                <option value="">empty</option>
+                <option value="chrome">chrome</option>
+                <option value="firefox">firefox</option>
+                <option value="safari">safari</option>
+                <option value="ios">ios</option>
+                <option value="android">android</option>
+                <option value="edge">edge</option>
+                <option value="360">360</option>
+                <option value="qq">qq</option>
+                <option value="random">random</option>
+                <option value="randomized">randomized</option>
+              </b-select>
+            </b-field>
+            <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" label="Encryption" label-position="on-border">
+              <b-input ref="v2ray_encryption" v-model="v2ray.scy" placeholder="none" expanded />
+            </b-field>
+            <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" label="Flow" label-position="on-border">
+              <b-input ref="v2ray_flow" v-model="v2ray.flow" placeholder="Flow" expanded />
+            </b-field>
+            <b-field v-show="v2ray.tls === 'reality'" label="pbk" label-position="on-border">
+              <b-input v-model="v2ray.pbk" placeholder="pbk" expanded />
+            </b-field>
+            <b-field v-show="v2ray.tls === 'reality'" label="sid" label-position="on-border">
+              <b-input v-model="v2ray.sid" placeholder="sid" expanded />
+            </b-field>
+            <b-field v-show="v2ray.tls === 'reality'" label="spx" label-position="on-border">
+              <b-input v-model="v2ray.spx" placeholder="spx" expanded />
+            </b-field>
+            <b-field v-show="v2ray.tls !== 'none'" label="Alpn" label-position="on-border">
+              <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
+            </b-field>
+            <b-field label-position="on-border">
+              <template slot="label"> AllowInsecure </template>
+              <b-tooltip v-show="v2ray.protocol === 'vless'" type="is-dark"
+                :label="$t('server.messages.notRecommend', { name: 'VLESS' })" multilined position="is-right">
+                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+                  style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+              </b-tooltip>
+              <b-select v-model="v2ray.allowInsecure" expanded required>
+                <option :value="false">{{ $t("operations.no") }}</option>
+                <option :value="true">{{ $t("operations.yes") }}</option>
+              </b-select>
+            </b-field>
+            <b-field label="Network" label-position="on-border">
+              <b-select v-model="v2ray.net" expanded @input="handleNetworkChange">
+                <option value="tcp">TCP</option>
+                <option value="kcp">mKCP</option>
+                <option value="ws">WebSocket</option>
+                <option value="h2">HTTP/2</option>
+                <option value="quic">QUIC</option>
+                <option value="grpc">gRPC</option>
+                <option v-if="variant() === 'xray'" value="xhttp">xhttp</option>
+              </b-select>
+            </b-field>
+            <b-field v-show="v2ray.net === 'tcp'" label="Header Type" label-position="on-border">
+              <b-select v-model="v2ray.type" expanded>
+                <option value="none">None</option>
+                <option value="http">HTTP</option>
+              </b-select>
+            </b-field>
+            <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Header Type" label-position="on-border">
+              <b-select v-model="v2ray.type" expanded>
+                <option value="none">None</option>
+                <option value="srtp">SRTP</option>
+                <option value="utp">UTP</option>
+                <option value="wechat-video">Wechat-Video</option>
+                <option value="dtls">DTLS</option>
+                <option value="wireguard">Wireguard</option>
+              </b-select>
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http') || v2ray.net === 'xhttp'"
+              label="Path" label-position="on-border">
+              <b-input v-model="v2ray.path" placeholder="/" expanded />
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http') || v2ray.net === 'xhttp'"
+              label="Host" label-position="on-border">
+              <b-input v-model="v2ray.host" placeholder="Host" expanded />
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'ws'"
+              label="Max Early Data"
+              label-position="on-border"
+            >
+              <b-input
+                v-model="v2ray.maxEarlyData"
+                type="number"
+                placeholder="Max Early Data"
+                expanded
+              />
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'ws'"
+              label="Early Data Header Name"
+              label-position="on-border"
+            >
+              <b-input
+                v-model="v2ray.earlyDataHeaderName"
+                placeholder="Early Data Header Name"
+                expanded
+              />
+            </b-field>
+            <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
+              <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'grpc'"
+              label="MultiMode"
+              label-position="on-border"
+            >
+              <b-switch v-model="v2ray.multiMode">
+                {{ v2ray.multiMode ? $t('operations.yes') : $t('operations.no') }}
+              </b-switch>
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'grpc'"
+              label="Idle Timeout"
+              label-position="on-border"
+            >
+              <b-input
+                v-model="v2ray.idleTimeout"
+                type="number"
+                placeholder="Idle Timeout (s)"
+                expanded
+              />
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'grpc'"
+              label="Health Check Timeout"
+              label-position="on-border"
+            >
+              <b-input
+                v-model="v2ray.healthCheckTimeout"
+                type="number"
+                placeholder="Health Check Timeout (s)"
+                expanded
+              />
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'grpc'"
+              label="Permit Without Stream"
+              label-position="on-border"
+            >
+              <b-switch v-model="v2ray.permitWithoutStream">
+                {{ v2ray.permitWithoutStream ? $t('operations.yes') : $t('operations.no') }}
+              </b-switch>
+            </b-field>
+            <b-field
+              v-show="v2ray.net === 'grpc'"
+              label="Initial Windows Size"
+              label-position="on-border"
+            >
+              <b-input
+                v-model="v2ray.initialWindowsSize"
+                type="number"
+                placeholder="Initial Windows Size"
+                expanded
+              />
+            </b-field>
+            <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
+              <b-input v-model="v2ray.key" placeholder="key" expanded />
+            </b-field>
+            <b-field v-show="v2ray.net === 'quic'" label="Security" label-position="on-border">
+              <b-select v-model="v2ray.quicSecurity" expanded>
+                <option value="none">none</option>
+                <option value="aes-128-gcm">aes-128-gcm</option>
+                <option value="chacha20-poly1305">chacha20-poly1305</option>
+              </b-select>
+            </b-field>
+            <b-field v-show="v2ray.net === 'xhttp'" label="xhttp Mode" label-position="on-border">
+              <b-select v-model="v2ray.xhttpMode" expanded>
+                <option value="auto">auto</option>
+                <option value="download">download</option>
+                <option value="streaming">streaming</option>
+                <option value="packet">packet</option>
+                <option value="packet-up">packet-up</option>
+                <option value="stream-up">stream-up</option>
+                <option value="stream-one">stream-one</option>
+              </b-select>
+            </b-field>
+            <b-field v-show="v2ray.net === 'xhttp' && v2ray.xhttpMode === 'packet'" label="xhttp RawJson"
+              label-position="on-border">
+              <b-input v-model="v2ray.xhttpRawJson" type="textarea" placeholder='{"scy": "chacha20-poly1305"}' expanded />
+            </b-field>
+          </div>
         </b-tab-item>
 
         <b-tab-item label="WireGuard">
+          <div v-if="tabChoice === 1">
           <b-field label="Name" label-position="on-border">
             <b-input ref="wireguard_name" v-model="wireguard.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -280,9 +283,11 @@
           <b-field label="Endpoint" label-position="on-border">
             <b-input ref="wireguard_endpoint" v-model="wireguard.endpoint" placeholder="Endpoint (optional, default same as Address:Port)" expanded />
           </b-field>
+          </div>
         </b-tab-item>
 
         <b-tab-item label="SS">
+          <div v-if="tabChoice === 2">
           <b-field label="Name" label-position="on-border">
             <b-input ref="ss_name" v-model="ss.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -337,6 +342,7 @@
         </b-tab-item>
 
         <b-tab-item label="SSR">
+          <div v-if="tabChoice === 3">
           <b-field label="Name" label-position="on-border">
             <b-input ref="ssr_name" v-model="ssr.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -393,6 +399,7 @@
         </b-tab-item>
 
         <b-tab-item label="Trojan">
+          <div v-if="tabChoice === 4">
           <b-field label="Name" label-position="on-border">
             <b-input ref="trojan_name" v-model="trojan.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -431,6 +438,7 @@
         </b-tab-item>
 
         <b-tab-item label="Juicity">
+          <div v-if="tabChoice === 5">
           <b-field label="Name" label-position="on-border">
             <b-input ref="juicity_name" v-model="juicity.name" :placeholder="$t('configureServer.servername')"
               expanded />
@@ -471,6 +479,7 @@
         </b-tab-item>
 
         <b-tab-item label="Tuic">
+          <div v-if="tabChoice === 6">
           <b-field label="Name" label-position="on-border">
             <b-input ref="tuic_name" v-model="tuic.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -518,12 +527,14 @@
             <template slot="label"> UDP relay mode </template>
             <b-select ref="tuic_udp_relay_mode" v-model="tuic.udpRelayMode" expanded required>
               <option value="native">native</option>
+          </div>
               <option value="quic">quic</option>
             </b-select>
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="Hysteria2">
+          <div v-if="tabChoice === 7">
           <b-field label="Name" label-position="on-border">
             <b-input ref="hysteria2_name" v-model="hysteria2.name" :placeholder="$t('configureServer.servername')"
               expanded />
@@ -581,11 +592,13 @@
             </template>
             <b-checkbox v-model="hysteria2.finalMask">
               Use native Xray implementation (requires Xray-core v26.1.23+)
+          </div>
             </b-checkbox>
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="HTTP">
+          <div v-if="tabChoice === 8">
           <b-field label="Protocol" label-position="on-border">
             <b-select v-model="http.protocol" expanded>
               <option value="http">HTTP</option>
@@ -609,9 +622,11 @@
           <b-field label="Password" label-position="on-border">
             <b-input ref="http_password" v-model="http.password" :placeholder="$t('configureServer.password')"
               expanded />
+          </div>
           </b-field>
         </b-tab-item>
         <b-tab-item label="SOCKS5">
+          <div v-if="tabChoice === 9">
           <b-field label="Name" label-position="on-border">
             <b-input ref="socks5_name" v-model="socks5.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -629,9 +644,11 @@
           <b-field label="Password" label-position="on-border">
             <b-input ref="socks5_password" v-model="socks5.password" :placeholder="$t('configureServer.password')"
               expanded />
+          </div>
           </b-field>
         </b-tab-item>
         <b-tab-item label="AnyTLS">
+          <div v-if="tabChoice === 10">
           <b-field label="Name" label-position="on-border">
             <b-input ref="anytls_name" v-model="anytls.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -652,6 +669,7 @@
             <template slot="label"> AllowInsecure </template>
             <b-select ref="anytls_allow_insecure" v-model="anytls.allowInsecure" expanded required>
               <option :value="false">{{ $t("operations.no") }}</option>
+          </div>
               <option :value="true">{{ $t("operations.yes") }}</option>
             </b-select>
           </b-field>
@@ -833,6 +851,7 @@ export default {
         persistentKeepalive: "",
         preSharedKey: "",
         endpoint: "",
+        protocol: "wireguard",
       },
     };
   },
@@ -1198,15 +1217,16 @@ export default {
           name: decodeURIComponent(u.hash),
           address: u.host,
           port: u.port,
-          publicKey: decodeURIComponent(u.username),
-          privateKey: u.params.privateKey || "",
-          localAddress: u.params.localAddress || "",
+          privateKey: decodeURIComponent(u.username),
+          publicKey: u.params.publicKey || "",
+          localAddress: u.params.address || u.params.localAddress || "",
           dns: u.params.dns || "",
           mtu: u.params.mtu || "",
           allowedIPs: u.params.allowedIPs || "",
           persistentKeepalive: u.params.persistentKeepalive || "",
           preSharedKey: u.params.preSharedKey || "",
           endpoint: u.params.endpoint || "",
+          protocol: "wireguard",
         };
       }
       return null;
@@ -1486,11 +1506,11 @@ export default {
           });
         case "wireguard":
           query = {};
-          if (srcObj.privateKey) {
-            query.privateKey = srcObj.privateKey;
+          if (srcObj.publicKey) {
+            query.publicKey = srcObj.publicKey;
           }
           if (srcObj.localAddress) {
-            query.localAddress = srcObj.localAddress;
+            query.address = srcObj.localAddress;
           }
           if (srcObj.dns) {
             query.dns = srcObj.dns;
@@ -1512,7 +1532,7 @@ export default {
           }
           return generateURL({
             protocol: "wireguard",
-            username: srcObj.publicKey,
+            username: srcObj.privateKey,
             host: srcObj.address,
             port: srcObj.port,
             hash: srcObj.name,
@@ -1567,28 +1587,34 @@ export default {
     },
     async handleClickSubmit() {
       let valid = true;
+      const prefixMap = {
+        0: "v2ray_",
+        1: "wireguard_",
+        2: "ss_",
+        3: "ssr_",
+        4: "trojan_",
+        5: "juicity_",
+        6: "tuic_",
+        7: "hysteria2_",
+        8: "http_",
+        9: "socks5_",
+        10: "anytls_",
+      };
+      const currentPrefix = prefixMap[this.tabChoice];
       for (let k in this.$refs) {
         if (!this.$refs.hasOwnProperty(k)) continue;
-        if (this.tabChoice === 0 && !k.startsWith("v2ray_")) continue;
-        if (this.tabChoice === 1 && !k.startsWith("wireguard_")) continue;
-        if (this.tabChoice === 2 && !k.startsWith("ss_")) continue;
-        if (this.tabChoice === 3 && !k.startsWith("ssr_")) continue;
-        if (this.tabChoice === 4 && !k.startsWith("trojan_")) continue;
-        if (this.tabChoice === 5 && !k.startsWith("juicity_")) continue;
-        if (this.tabChoice === 6 && !k.startsWith("tuic_")) continue;
-        if (this.tabChoice === 7 && !k.startsWith("hysteria2_")) continue;
-        if (this.tabChoice === 8 && !k.startsWith("http_")) continue;
-        if (this.tabChoice === 9 && !k.startsWith("socks5_")) continue;
-        if (this.tabChoice === 10 && !k.startsWith("anytls_")) continue;
+        if (!k.startsWith(currentPrefix)) continue;
+
         let x = this.$refs[k];
+        if (!x) continue;
+        let el = x.$el || x;
         if (
-          x &&
-          x.$el.offsetParent &&
+          el.offsetParent &&
           x.hasOwnProperty("checkHtml5Validity") &&
           typeof x.checkHtml5Validity === "function" &&
           !x.checkHtml5Validity()
         ) {
-          console.error("validate failed", x);
+          console.error("validate failed", k, x);
           valid = false;
         }
       }
