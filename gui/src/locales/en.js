@@ -48,6 +48,8 @@ export default {
         "According to the docs of {name}, if you use {name}, AllowInsecure will be forbidden.",
       notRecommend:
         "According to the docs of {name}, if you use {name}, AllowInsecure is not recommend.",
+      hysteria2FinalMaskInfo:
+        "When enabled, v2rayA will use native Xray Hysteria2 outbound with FinalMask support. This requires Xray-core v26.1.23 or later (v26.2.6+ recommended). Otherwise, v2rayA will use bridge architecture for compatibility.",
     },
   },
   InSecureConfirm: {

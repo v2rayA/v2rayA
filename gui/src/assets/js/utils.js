@@ -114,7 +114,7 @@ function parseURL(u) {
         }
         s = seg[i].split("=");
         let key = s[0];
-        let val = decodeURIComponent(s[1]);
+        let val = s[1] ? decodeURIComponent(s[1]) : "";
         if (ret[key]) {
           if (Array.isArray(ret[key])) {
             ret[key].push(val);
@@ -182,3 +182,10 @@ function sanitizeALPN(alpn) {
 }
 
 export { locateServer, handleResponse, parseURL, generateURL, toInt, sanitizeALPN };
+
+export function bracketIfIPv6(address) {
+  if (address.includes(":") && !address.startsWith("[") && !address.endsWith("]")) {
+    return "[" + address + "]";
+  }
+  return address;
+}

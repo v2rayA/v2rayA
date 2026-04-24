@@ -67,7 +67,7 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 			return
 		}
 		//将用户名丢入参数
-		ctx.Set("Name", mapClaims["name"])
+		ctx.Set("Name", mapClaims["uname"])
 	}
 }
 

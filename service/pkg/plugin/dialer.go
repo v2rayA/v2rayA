@@ -159,6 +159,10 @@ func DialerFromURL(s string, dialer Dialer) (Dialer, error) {
 		return nil, fmt.Errorf("unknown scheme '%s'", u.Scheme)
 	}
 
+	// Strip fragment
+	u.Fragment = ""
+	s = u.String()
+
 	log.Trace("[plugin] creating dialer for scheme '%s' from URL: %s", scheme, s)
 	result, err := c(s, dialer)
 	if err != nil {
