@@ -2,7 +2,6 @@ package service
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -64,10 +63,16 @@ func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err err
 
 func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
 	// Split raw
-	rows := strings.Split(strings.TrimSpace(raw), "\n")
+	raw = strings.ReplaceAll(raw, "\r\n", "\n")
+	raw = strings.ReplaceAll(raw, "\r", "\n")
+	rows := strings.Split(raw, "\n")
 	// Parse
 	infos = make([]serverObj.ServerObj, 0)
 	for _, row := range rows {
+		row = strings.TrimSpace(row)
+		if row == "" {
+			continue
+		}
 		if strings.HasPrefix(row, "STATUS=") {
 			status = strings.TrimPrefix(row, "STATUS=")
 			continue
@@ -75,10 +80,7 @@ func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err
 		var data serverObj.ServerObj
 		data, err = ResolveURL(row)
 		if err != nil {
-			if !errors.Is(err, EmptyAddressErr) {
-				log.Warn("resolveByLines: %v: %v", err, row)
-			}
-			err = nil
+			log.Warn("resolveByLines: %v: %v", err, row)
 			continue
 		}
 		infos = append(infos, data)

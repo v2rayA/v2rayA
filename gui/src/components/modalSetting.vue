@@ -95,8 +95,7 @@
         </template>
       </b-field>
 
-      <b-field v-show="transparent !== 'close' && (transparentType === 'tproxy' || transparentType === 'redirect')"
-        label-position="on-border">
+      <b-field v-show="transparent !== 'close'" label-position="on-border">
         <template slot="label">
           {{ $t("setting.tproxyExcludedInterfaces") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tproxyExcludedInterfaces')" position="is-right">
@@ -220,6 +219,13 @@
           <option value="yes">{{ $t("setting.options.on") }}</option>
           <option value="no">{{ $t("setting.options.off") }}</option>
         </b-select>
+      </b-field>
+
+      <b-field label-position="on-border">
+        <template slot="label">
+          Encryption
+        </template>
+        <b-input v-model="encryption" expanded placeholder="none" />
       </b-field>
 
       <b-field label-position="on-border">
@@ -405,6 +411,7 @@ export default {
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
     inboundSniffing: "no",
+    encryption: "",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -558,6 +565,7 @@ export default {
             tunProcessBackend: this.tunProcessBackend,
             ssBackend: this.ssBackend,
             trojanBackend: this.trojanBackend,
+            encryption: this.encryption,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
@@ -641,6 +649,28 @@ export default {
         canCancel: true,
       });
     },
+    handleClickTunRouteScript() {
+      this.$buefy.modal.open({
+        parent: this,
+        component: modalTinyTunRouteScript,
+        hasModalCard: true,
+        canCancel: true,
+        props: {
+          tunRouteShellType: this.tunRouteShellType,
+          tunRouteShellPath: this.tunRouteShellPath,
+          tunSetupScript: this.tunSetupScript,
+          tunTeardownScript: this.tunTeardownScript,
+        },
+        events: {
+          submit: (data) => {
+            this.tunRouteShellType = data.tunRouteShellType;
+            this.tunRouteShellPath = data.tunRouteShellPath;
+            this.tunSetupScript = data.tunSetupScript;
+            this.tunTeardownScript = data.tunTeardownScript;
+          },
+        },
+      });
+    },
     handleClickDomainsExcluded() {
       this.$buefy.modal.open({
         parent: this,
@@ -655,29 +685,6 @@ export default {
         component: modalDnsSetting,
         hasModalCard: true,
         canCancel: true,
-      });
-    },
-    handleClickTunRouteScript() {
-      this.$buefy.modal.open({
-        parent: this,
-        component: modalTinyTunRouteScript,
-        hasModalCard: true,
-        canCancel: true,
-        props: {
-          os: this.os,
-          shellType: this.tunRouteShellType,
-          shellPath: this.tunRouteShellPath,
-          setupScript: this.tunSetupScript,
-          teardownScript: this.tunTeardownScript,
-        },
-        events: {
-          save: (data) => {
-            this.tunRouteShellType = data.shellType;
-            this.tunRouteShellPath = data.shellPath;
-            this.tunSetupScript = data.setupScript;
-            this.tunTeardownScript = data.teardownScript;
-          },
-        },
       });
     },
   },

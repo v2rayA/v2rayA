@@ -4,95 +4,64 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-
 	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
 	FromLinkRegister("socks5", NewSOCKS)
+	FromLinkRegister("socks", NewSOCKS)
 	EmptyRegister("socks5", func() (ServerObj, error) {
-		return new(SOCKS), nil
+		return &SOCKS{Protocol: "socks"}, nil
+	})
+	EmptyRegister("socks", func() (ServerObj, error) {
+		return &SOCKS{Protocol: "socks"}, nil
 	})
 }
 
 type SOCKS struct {
-	Name     string `json:"name"`
-	Server   string `json:"server"`
+	Address  string `json:"address" server:"server" hostname:"hostname" add:"add"`
 	Port     int    `json:"port"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Protocol string `json:"protocol"`
+	Name     string `json:"name"`
+	Link     string `json:"link"`
 }
 
 func NewSOCKS(link string) (ServerObj, error) {
 	return ParseSocksURL(link)
 }
 
-func ParseSocksURL(u string) (data *SOCKS, err error) {
-	t, err := url.Parse(u)
-	if err != nil {
-		return nil, ErrInvalidParameter
-	}
-	port, err := strconv.Atoi(t.Port())
-	if err != nil {
-		return nil, ErrInvalidParameter
-	}
-	data = &SOCKS{
-		Name:   t.Fragment,
-		Server: t.Hostname(),
-		Port:   port,
-	}
-	if t.User != nil && len(t.User.String()) > 0 {
-		data.Username = t.User.Username()
-		data.Password, _ = t.User.Password()
-	}
-	switch t.Scheme {
-	case "socks5":
-		data.Protocol = "socks5"
-		if data.Port == 0 {
-			data.Port = 1080
-		}
-	default:
-		data.Protocol = t.Scheme
-	}
-	return data, nil
-}
-
-func (h *SOCKS) Configuration(info PriorInfo) (c Configuration, err error) {
-	// socks5 is natively supported by v2ray/xray core; use a direct outbound
-	// instead of routing through the daeuniverse/outbound plugin chain.
+func (h *SOCKS) Configuration(info PriorInfo) (Configuration, error) {
 	servers := []coreObj.Server{
-		{Address: h.Server, Port: h.Port},
+		{
+			Address: h.Address,
+			Port:    h.Port,
+		},
 	}
 	if h.Username != "" {
 		servers[0].Users = []coreObj.OutboundUser{
-			{User: h.Username, Pass: h.Password},
+			{
+				User: h.Username,
+				Pass: h.Password,
+			},
 		}
 	}
-	return Configuration{
-		CoreOutbound: coreObj.OutboundObject{
-			Tag:      info.Tag,
-			Protocol: "socks",
-			Settings: coreObj.Settings{
-				Servers: servers,
-			},
+	coreOutbound := coreObj.OutboundObject{
+		Tag:      info.Tag,
+		Protocol: "socks",
+		Settings: coreObj.Settings{
+			Servers: servers,
 		},
-		UDPSupport: true,
+	}
+	return Configuration{
+		CoreOutbound: coreOutbound,
+		UDPSupport:   true,
 	}, nil
 }
 
 func (h *SOCKS) ExportToURL() string {
-	var user *url.Userinfo
-	if h.Username != "" && h.Password != "" {
-		user = url.UserPassword(h.Username, h.Password)
-	}
-	u := &url.URL{
-		Scheme:   h.Protocol,
-		User:     user,
-		Host:     net.JoinHostPort(h.Server, strconv.Itoa(h.Port)),
-		Fragment: h.Name,
-	}
-	return u.String()
+	return h.Link
 }
 
 func (h *SOCKS) NeedPluginPort() bool {
@@ -100,15 +69,15 @@ func (h *SOCKS) NeedPluginPort() bool {
 }
 
 func (h *SOCKS) ProtoToShow() string {
-	return h.Protocol
+	return "SOCKS5"
 }
 
 func (h *SOCKS) GetProtocol() string {
-	return h.Protocol
+	return "socks"
 }
 
 func (h *SOCKS) GetHostname() string {
-	return h.Server
+	return h.Address
 }
 
 func (h *SOCKS) GetPort() int {
@@ -121,4 +90,25 @@ func (h *SOCKS) GetName() string {
 
 func (h *SOCKS) SetName(name string) {
 	h.Name = name
+}
+
+func ParseSocksURL(link string) (*SOCKS, error) {
+	u, err := url.Parse(link)
+	if err != nil {
+		return nil, err
+	}
+	host, portStr, _ := net.SplitHostPort(u.Host)
+	port, _ := strconv.Atoi(portStr)
+	s := &SOCKS{
+		Address:  host,
+		Port:     port,
+		Name:     u.Fragment,
+		Link:     link,
+		Protocol: "socks",
+	}
+	if u.User != nil {
+		s.Username = u.User.Username()
+		s.Password, _ = u.User.Password()
+	}
+	return s, nil
 }
