@@ -7,109 +7,103 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/v2rayA/v2rayA/common"
 )
 
 func init() {
 	FromLinkRegister("shadowsocksr", NewShadowsocksR)
 	FromLinkRegister("ssr", NewShadowsocksR)
 	EmptyRegister("shadowsocksr", func() (ServerObj, error) {
-		return new(ShadowsocksR), nil
+		return &ShadowsocksR{Protocol: "shadowsocksr"}, nil
 	})
 	EmptyRegister("ssr", func() (ServerObj, error) {
-		return new(ShadowsocksR), nil
+		return &ShadowsocksR{Protocol: "shadowsocksr"}, nil
 	})
 }
 
 type ShadowsocksR struct {
-	Name       string `json:"name"`
-	Server     string `json:"server"`
+	Address    string `json:"address" server:"server" hostname:"hostname" add:"add"`
 	Port       int    `json:"port"`
 	Password   string `json:"password"`
-	Cipher     string `json:"cipher"`
+	Cipher     string `json:"cipher" method:"method"`
 	Proto      string `json:"proto"`
 	ProtoParam string `json:"protoParam"`
 	Obfs       string `json:"obfs"`
 	ObfsParam  string `json:"obfsParam"`
+	Name       string `json:"name" remarks:"remarks"`
 	Protocol   string `json:"protocol"`
+	Link       string `json:"link"`
+}
+
+func decodeSSR(s string) (string, error) {
+	if s == "" {
+		return "", nil
+	}
+	s = strings.ReplaceAll(s, "-", "+")
+	s = strings.ReplaceAll(s, "_", "/")
+	if pad := len(s) % 4; pad != 0 {
+		s += strings.Repeat("=", 4-pad)
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return s, nil
+	}
+	return string(b), nil
 }
 
 func NewShadowsocksR(link string) (ServerObj, error) {
 	return ParseSSRURL(link)
 }
 
-func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
-	// parse attempts to parse ss:// links
-	parse := func(content string) (v ShadowsocksR, ok bool) {
-		arr := strings.Split(content, "/?")
-		if strings.Contains(content, ":") && len(arr) < 2 {
-			content += "/?remarks=&protoparam=&obfsparam="
-			arr = strings.Split(content, "/?")
-		} else if len(arr) != 2 {
-			return v, false
-		}
-		pre := strings.Split(arr[0], ":")
-		if len(pre) > 6 {
-			//if the length is more than 6, it means that the host contains the characters:,
-			//re-merge the first few groups into the host
-			pre[len(pre)-6] = strings.Join(pre[:len(pre)-5], ":")
-			pre = pre[len(pre)-6:]
-		} else if len(pre) < 6 {
-			return v, false
-		}
-		q, err := url.ParseQuery(arr[1])
-		if err != nil {
-			return v, false
-		}
-		pswd, _ := common.Base64URLDecode(pre[5])
-		add, _ := common.Base64URLDecode(pre[0])
-		remarks, _ := common.Base64URLDecode(q.Get("remarks"))
-		protoparam, _ := common.Base64URLDecode(q.Get("protoparam"))
-		obfsparam, _ := common.Base64URLDecode(q.Get("obfsparam"))
-		port, err := strconv.Atoi(pre[1])
-		if err != nil {
-			return v, false
-		}
-		v = ShadowsocksR{
-			Name:       remarks,
-			Server:     add,
-			Port:       port,
-			Password:   pswd,
-			Cipher:     pre[3],
-			Proto:      pre[2],
-			ProtoParam: protoparam,
-			Obfs:       pre[4],
-			ObfsParam:  obfsparam,
-			Protocol:   "shadowsocksr",
-		}
-		return v, true
+func ParseSSRURL(link string) (*ShadowsocksR, error) {
+	content := link
+	if strings.HasPrefix(link, "ssr://") {
+		content = link[6:]
 	}
-	content := u[6:]
-	var (
-		info ShadowsocksR
-		ok   bool
-	)
-	// try parsing the ssr:// link, if it fails, base64 decode first
-	if info, ok = parse(content); !ok {
-		// perform base64 decoding and parse again
-		content, err = common.Base64StdDecode(content)
-		if err != nil {
-			content, err = common.Base64URLDecode(content)
-			if err != nil {
-				return
-			}
+	if idx := strings.IndexAny(content, "#?"); idx != -1 {
+		content = content[:idx]
+	}
+	decodedContent, err := decodeSSR(content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode SSR content: %v", err)
+	}
+	arr := strings.Split(decodedContent, "/?")
+	pre := strings.Split(arr[0], ":")
+	if len(pre) < 6 {
+		return nil, fmt.Errorf("invalid ssr format")
+	}
+	passIdx := len(pre) - 1
+	obfsIdx := len(pre) - 2
+	methodIdx := len(pre) - 3
+	protoIdx := len(pre) - 4
+	portIdx := len(pre) - 5
+	server := strings.Join(pre[:portIdx], ":")
+	port, _ := strconv.Atoi(pre[portIdx])
+	password, _ := decodeSSR(pre[passIdx])
+	s := &ShadowsocksR{
+		Address:  server,
+		Port:     port,
+		Proto:    pre[protoIdx],
+		Cipher:   pre[methodIdx],
+		Obfs:     pre[obfsIdx],
+		Password: password,
+		Protocol: "shadowsocksr",
+		Link:     link,
+	}
+	if len(arr) > 1 {
+		q, _ := url.ParseQuery(arr[1])
+		s.Name, _ = decodeSSR(q.Get("remarks"))
+		s.ProtoParam, _ = decodeSSR(q.Get("protoparam"))
+		s.ObfsParam, _ = decodeSSR(q.Get("obfsparam"))
+	}
+	if s.Name == "" {
+		if u, err := url.Parse(link); err == nil {
+			s.Name = u.Fragment
 		}
-		info, ok = parse(content)
 	}
-	if !ok {
-		err = fmt.Errorf("%w: unrecognized ssr address", ErrInvalidParameter)
-		return
-	}
-	return &info, nil
+	return s, nil
 }
 
-func (s *ShadowsocksR) Configuration(info PriorInfo) (c Configuration, err error) {
+func (s *ShadowsocksR) Configuration(info PriorInfo) (Configuration, error) {
 	socks5 := url.URL{
 		Scheme: "socks5",
 		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
@@ -118,25 +112,12 @@ func (s *ShadowsocksR) Configuration(info PriorInfo) (c Configuration, err error
 	return Configuration{
 		CoreOutbound: info.PluginObj(),
 		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   false,
+		UDPSupport:   true,
 	}, nil
 }
 
 func (s *ShadowsocksR) ExportToURL() string {
-	/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
-	return fmt.Sprintf("ssr://%v", strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(
-		fmt.Sprintf(
-			"%v:%v:%v:%v:%v/?remarks=%v&protoparam=%v&obfsparam=%v",
-			net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
-			s.Proto,
-			s.Cipher,
-			s.Obfs,
-			base64.URLEncoding.EncodeToString([]byte(s.Password)),
-			base64.URLEncoding.EncodeToString([]byte(s.Name)),
-			base64.URLEncoding.EncodeToString([]byte(s.ProtoParam)),
-			base64.URLEncoding.EncodeToString([]byte(s.ObfsParam)),
-		),
-	)), "="))
+	return s.Link
 }
 
 func (s *ShadowsocksR) NeedPluginPort() bool {
@@ -144,19 +125,15 @@ func (s *ShadowsocksR) NeedPluginPort() bool {
 }
 
 func (s *ShadowsocksR) ProtoToShow() string {
-	obfs := s.Obfs
-	if obfs == "tls1.2_ticket_auth" {
-		obfs = "tls1.2"
-	}
-	return fmt.Sprintf("SSR(%v+%v)", s.Proto, obfs)
+	return fmt.Sprintf("SSR(%v+%v)", s.Proto, s.Obfs)
 }
 
 func (s *ShadowsocksR) GetProtocol() string {
-	return s.Protocol
+	return "shadowsocksr"
 }
 
 func (s *ShadowsocksR) GetHostname() string {
-	return s.Server
+	return s.Address
 }
 
 func (s *ShadowsocksR) GetPort() int {

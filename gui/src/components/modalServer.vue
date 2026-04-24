@@ -441,6 +441,31 @@
           <b-field v-if="hysteria2.obfs !== 'none'" label="Obfs Password" label-position="on-border">
             <b-input v-model="hysteria2.obfsPassword" placeholder="Obfs Password" expanded />
           </b-field>
+          <b-field label="Up Mbps" label-position="on-border">
+            <b-input v-model="hysteria2.up" placeholder="e.g. 100" expanded />
+          </b-field>
+          <b-field label="Down Mbps" label-position="on-border">
+            <b-input v-model="hysteria2.down" placeholder="e.g. 100" expanded />
+          </b-field>
+          <b-field label="Congestion" label-position="on-border">
+            <b-select v-model="hysteria2.congestion" expanded>
+              <option value="">default</option>
+              <option value="bbr">bbr</option>
+              <option value="cubic">cubic</option>
+            </b-select>
+          </b-field>
+          <b-field label-position="on-border">
+            <template slot="label">
+              FinalMask
+              <b-tooltip type="is-dark" :label="$t('server.messages.hysteria2FinalMaskInfo')" multilined position="is-right">
+                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+                  style="position: relative; top: 2px; right: 3px; font-weight: normal" />
+              </b-tooltip>
+            </template>
+            <b-checkbox v-model="hysteria2.finalMask">
+              Use native Xray implementation (requires Xray-core v26.1.23+)
+            </b-checkbox>
+          </b-field>
         </b-tab-item>
 
         <b-tab-item label="HTTP">
@@ -640,6 +665,10 @@ export default {
         obfs: "none",
         obfsPassword: "",
         sni: "",
+        up: "",
+        down: "",
+        congestion: "",
+        finalMask: false,
         name: "",
         protocol: "hysteria2",
       },
@@ -674,9 +703,8 @@ export default {
       .querySelector("#QRCodeImport")
       .addEventListener("change", this.handleFileChange, false);
     if (this.which) {
-      const apiRoot = localStorage.getItem("backendAddress");
       this.$axios({
-        url: apiRoot + "/api/sharingAddress",
+        url: apiRoot + "/sharingAddress",
         method: "get",
         params: {
           touch: {
@@ -847,7 +875,7 @@ export default {
         plugin = u.params.plugin || "";
         if (u.username) {
           // SIP002
-          let parts = Base64.decode(u.username).split(":");
+          let parts = Base64.decode(decodeURIComponent(u.username)).split(":");
           method = parts[0];
           password = parts.slice(1).join(":");
           server = u.host;
@@ -876,7 +904,9 @@ export default {
           backend: u.params["v2raya-backend"] || "",
         };
       } else if (url.toLowerCase().startsWith("ssr://")) {
-        url = Base64.decode(url.substr(6));
+        let t = url.substring(6);
+        if (t.indexOf("#") > -1) t = t.substring(0, t.indexOf("#"));
+        url = Base64.decode(t);
         let arr = url.split("/?");
         let pre = arr[0].split(":");
         if (pre.length > 6) {
@@ -888,7 +918,11 @@ export default {
         if (arr[1]) {
           arr[1].split("&").forEach((x) => {
             let a = x.split("=");
-            query[a[0]] = Base64.decode(a[1]);
+            if (a.length > 1 && a[1]) {
+              query[a[0]] = Base64.decode(a[1]);
+            } else {
+              query[a[0]] = "";
+            }
           });
         }
         return {
@@ -927,6 +961,7 @@ export default {
           cc: u.params.congestion_control || "bbr",
           allowInsecure: u.params.allow_insecure === "1",
           sni: u.params.sni || "",
+          pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           name: decodeURIComponent(u.hash),
           protocol: "juicity",
         };
@@ -948,10 +983,7 @@ export default {
           name: decodeURIComponent(u.hash),
           protocol: "tuic",
         };
-      } else if (
-        url.toLowerCase().startsWith("hysteria2://") ||
-        url.toLowerCase().startsWith("hy2://")
-      ) {
+      } else if (url.toLowerCase().startsWith("hysteria2://") || url.toLowerCase().startsWith("hy2://")) {
         let u = parseURL(url);
         return {
           password: decodeURIComponent(u.username),
@@ -961,6 +993,10 @@ export default {
           obfs: u.params.obfs || "none",
           obfsPassword: u.params["obfs-password"] || "",
           sni: u.params.sni || "",
+          up: u.params.upmbps || "",
+          down: u.params.downmbps || "",
+          congestion: u.params.congestion || "",
+          finalMask: u.params.finalmask === "1",
           name: decodeURIComponent(u.hash),
           protocol: "hysteria2",
         };
@@ -1233,12 +1269,16 @@ export default {
         coded = url;
       } else if (this.tabChoice === 6) {
         // hysteria2://password@server:port?insecure=1&obfs=xxx#name
-        const { password, server, port, allowInsecure, obfs, obfsPassword, sni, name } = this.hysteria2;
+        const { password, server, port, allowInsecure, obfs, obfsPassword, sni, up, down, congestion, finalMask, name } = this.hysteria2;
         let params = [];
         if (allowInsecure) params.push("insecure=1");
         if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
         if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
         if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        if (up) params.push(`upmbps=${encodeURIComponent(up)}`);
+        if (down) params.push(`downmbps=${encodeURIComponent(down)}`);
+        if (congestion) params.push(`congestion=${encodeURIComponent(congestion)}`);
+        if (finalMask) params.push("finalmask=1");
         let url = `hysteria2://${encodeURIComponent(password)}@${bracketIfIPv6(server)}:${port}`;
         if (params.length) url += `?${params.join("&")}`;
         if (name) url += `#${encodeURIComponent(name)}`;
@@ -1283,47 +1323,56 @@ export default {
 
 .modal-card {
   max-width: 720px;
+  width: 100%;
+}
+
+.b-tabs.is-vertical {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch;
+
+  .tabs {
+    flex: 0 0 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    ul {
+      width: 100%;
+    }
+
+    li {
+      font-size: 0.85rem;
+
+      a {
+        padding: 0.5em 0.2em !important;
+        justify-content: flex-start;
+      }
+    }
+  }
+
+  .tab-content {
+    flex: 1 1 0 !important;
+    /* Allow to shrink to zero */
+    min-width: 0 !important;
+    padding: 0.5rem 0.2rem 0.5rem 0.5rem !important;
+    overflow-x: hidden;
+
+    .control,
+    .field,
+    input,
+    select {
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+  }
 }
 
 @media screen and (max-width: 768px) {
   .b-tabs.is-vertical {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: stretch;
-
     .tabs {
       flex: 0 0 80px !important;
       min-width: 80px !important;
       max-width: 80px !important;
-
-      ul {
-        width: 100%;
-      }
-
-      li {
-        font-size: 0.85rem;
-
-        a {
-          padding: 0.5em 0.2em !important;
-          justify-content: flex-start;
-        }
-      }
-    }
-
-    .tab-content {
-      flex: 1 1 0 !important;
-      /* Allow to shrink to zero */
-      min-width: 0 !important;
-      padding: 0.5rem 0.2rem 0.5rem 0.5rem !important;
-      overflow-x: hidden;
-
-      .control,
-      .field,
-      input,
-      select {
-        max-width: 100% !important;
-        min-width: 0 !important;
-      }
     }
   }
 }

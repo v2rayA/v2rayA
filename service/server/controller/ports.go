@@ -82,7 +82,7 @@ func _getLinkForVmess(hostname string) (link string, err error) {
 	p := service.GetPorts()
 	info := serverObj.V2Ray{
 		Ps:       "VMess | v2rayA",
-		Add:      hostname,
+		Address:  hostname,
 		Port:     strconv.Itoa(p.Vmess),
 		ID:       id,
 		Aid:      "0",

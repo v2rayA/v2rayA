@@ -23,16 +23,16 @@ func init() {
 	FromLinkRegister("vmess", NewV2Ray)
 	FromLinkRegister("vless", NewV2Ray)
 	EmptyRegister("vmess", func() (ServerObj, error) {
-		return new(V2Ray), nil
+		return &V2Ray{Protocol: "vmess"}, nil
 	})
 	EmptyRegister("vless", func() (ServerObj, error) {
-		return new(V2Ray), nil
+		return &V2Ray{Protocol: "vless"}, nil
 	})
 }
 
 type V2Ray struct {
 	Ps            string `json:"ps"`
-	Add           string `json:"add"`
+	Address       string `json:"add" server:"server" hostname:"hostname" address:"address"`
 	Port          string `json:"port"`
 	ID            string `json:"id"`
 	Aid           string `json:"aid"`
@@ -73,7 +73,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	}
 	data = &V2Ray{
 		Ps:            u.Fragment,
-		Add:           u.Hostname(),
+		Address:       u.Hostname(),
 		Port:          u.Port(),
 		ID:            u.User.String(),
 		Aid:           u.Query().Get("aid"),
@@ -133,13 +133,11 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 
 func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 	var info V2Ray
-	// perform base64 decoding and unmarshal to VmessInfo
 	raw, err := common.Base64StdDecode(vmess[8:])
 	if err != nil {
 		raw, err = common.Base64URLDecode(vmess[8:])
 	}
 	if err != nil {
-		// not in json format, try to resolve as vmess://BASE64(Security:ID@Add:Port)?remarks=Ps&obfsParam=Host&Path=Path&obfs=Net&tls=TLS
 		var u *url.URL
 		u, err = url.Parse(vmess)
 		if err != nil {
@@ -166,7 +164,6 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		path := q.Get("path")
 		if obfs == "kcp" || obfs == "mkcp" {
 			m := make(map[string]string)
-			//cater to v2rayN definition
 			_ = jsoniter.Unmarshal([]byte(obfsParam), &m)
 			path = m["seed"]
 			obfsParam = ""
@@ -182,7 +179,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		sni := q.Get("sni")
 		info = V2Ray{
 			ID:            subMatch[1],
-			Add:           subMatch[2],
+			Address:       subMatch[2],
 			Port:          subMatch[3],
 			Ps:            ps,
 			Host:          obfsParam,
@@ -198,7 +195,6 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 			info.Net = "ws"
 		}
 	} else {
-		// fuzzily parse allowInsecure
 		if allowInsecure := gjson.Get(raw, "allowInsecure"); allowInsecure.Exists() {
 			if newRaw, err := sjson.Set(raw, "allowInsecure", allowInsecure.Bool()); err == nil {
 				raw = newRaw
@@ -208,8 +204,11 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		if err != nil {
 			return
 		}
+		// backward compatibility for 'add' tag
+		if info.Address == "" {
+			info.Address = gjson.Get(raw, "add").String()
+		}
 	}
-	// correct the wrong vmess as much as possible
 	if strings.HasPrefix(info.Host, "/") && info.Path == "" {
 		info.Path = info.Host
 		info.Host = ""
@@ -253,7 +252,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
-					Address: v.Add,
+					Address: v.Address,
 					Port:    port,
 					Users: []coreObj.User{
 						{
@@ -271,7 +270,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
-					Address: v.Add,
+					Address: v.Address,
 					Port:    port,
 					Users: []coreObj.User{
 						{
@@ -281,17 +280,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					},
 				},
 			}
-		// if network == "tcp" {
-		// 	tcpSetting := coreObj.TCPSettings{
-		// 		Header: coreObj.TCPHeader{
-		// 			Type: "none",
-		// 		},
-		// 	}
-		// 	core.StreamSettings.TCPSettings = &tcpSetting
-		// }
 		}
-		// 根据传输协议(network)修改streamSettings
-		//TODO: QUIC
 		switch strings.ToLower(v.Net) {
 		case "grpc":
 			if v.Path == "" {
@@ -405,13 +394,11 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if v.AllowInsecure {
 				core.StreamSettings.TLSSettings.AllowInsecure = true
 			}
-			// SNI
 			if v.SNI != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.SNI
 			} else if v.Host != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.Host
 			}
-			// Alpn
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
 				for i := range alpn {
@@ -419,12 +406,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.TLSSettings.Alpn = alpn
 			}
-			// uTLS fingerprint
 			core.StreamSettings.TLSSettings.Fingerprint = v.Fingerprint
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
-			// SNI
 			if v.SNI != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.SNI
 			} else if v.Host != "" {
@@ -451,7 +436,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				SpiderX:     v.SpiderX,
 			}
 		}
-		// Flow
 		if v.Flow != "" {
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -468,7 +452,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 func (v *V2Ray) ExportToURL() string {
 	switch v.Protocol {
 	case "vless":
-		// https://github.com/XTLS/Xray-core/issues/91
 		var query = make(url.Values)
 		setValue(&query, "type", v.Net)
 		setValue(&query, "security", v.TLS)
@@ -513,7 +496,7 @@ func (v *V2Ray) ExportToURL() string {
 		U := url.URL{
 			Scheme:   "vless",
 			User:     url.User(v.ID),
-			Host:     net.JoinHostPort(v.Add, v.Port),
+			Host:     net.JoinHostPort(v.Address, v.Port),
 			RawQuery: query.Encode(),
 			Fragment: v.Ps,
 		}
@@ -543,7 +526,7 @@ func (v *V2Ray) GetProtocol() string {
 }
 
 func (v *V2Ray) GetHostname() string {
-	return v.Add
+	return v.Address
 }
 
 func (v *V2Ray) GetPort() int {
