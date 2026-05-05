@@ -57,6 +57,56 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 	}
 }
 
+func safeStatigzHandler(fsys fs.FS) (http.Handler, bool) {
+	fi, err := fs.Stat(fsys, ".")
+	if err != nil || !fi.IsDir() {
+		return nil, false
+	}
+
+	readDirFS, ok := fsys.(fs.ReadDirFS)
+	if !ok {
+		return nil, false
+	}
+
+	var handler http.Handler
+	panicked := false
+	func() {
+		defer func() {
+			if recover() != nil {
+				panicked = true
+			}
+		}()
+		handler = statigz.FileServer(readDirFS)
+	}()
+
+	if panicked || handler == nil {
+		return nil, false
+	}
+
+	return handler, true
+}
+
+func registerEmbeddedRoute(r *gin.Engine, routePrefix string, fsCandidates ...fs.FS) bool {
+	for _, candidate := range fsCandidates {
+		if candidate == nil {
+			continue
+		}
+
+		handler, ok := safeStatigzHandler(candidate)
+		if !ok {
+			continue
+		}
+
+		stripped := http.StripPrefix(routePrefix, handler)
+		r.GET(routePrefix+"/*w", func(c *gin.Context) {
+			stripped.ServeHTTP(c.Writer, c.Request)
+		})
+		return true
+	}
+
+	return false
+}
+
 func ServeGUI(r *gin.Engine) {
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
@@ -66,25 +116,17 @@ func ServeGUI(r *gin.Engine) {
 		}
 
 		// --- /static/* route (used by legacy gui Vite build) ---
-		staticFS := webFS.(fs.ReadDirFS)
+		var staticCandidates []fs.FS
 		if sub, subErr := fs.Sub(webFS, "static"); subErr == nil {
-			staticFS = sub.(fs.ReadDirFS)
+			staticCandidates = append(staticCandidates, sub)
 		}
-		ss := http.StripPrefix("/static", statigz.FileServer(staticFS))
-		r.GET("/static/*w", func(c *gin.Context) {
-			ss.ServeHTTP(c.Writer, c.Request)
-		})
+		// Backward-compatible fallback for legacy builds that emit hashed assets at web root.
+		staticCandidates = append(staticCandidates, webFS)
+		_ = registerEmbeddedRoute(r, "/static", staticCandidates...)
 
 		// --- /_nuxt/* route (used by ngui Nuxt 3 build) ---
-		// Only register the route when _nuxt/ directory exists in the embedded filesystem.
-		// When it does not exist (e.g. legacy gui build), silently skip to avoid panic
-		// in statigz.FileServer when the underlying FS does not support Open(".").
 		if sub, subErr := fs.Sub(webFS, "_nuxt"); subErr == nil {
-			nuxtFS := sub.(fs.ReadDirFS)
-			ns := http.StripPrefix("/_nuxt", statigz.FileServer(nuxtFS))
-			r.GET("/_nuxt/*w", func(c *gin.Context) {
-				ns.ServeHTTP(c.Writer, c.Request)
-			})
+			_ = registerEmbeddedRoute(r, "/_nuxt", sub)
 		}
 
 		f, err := webFS.Open("index.html")
