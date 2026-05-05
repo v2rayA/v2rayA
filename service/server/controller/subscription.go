@@ -5,6 +5,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/touch"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -57,4 +58,26 @@ func PutSubscription(ctx *gin.Context) {
 		return
 	}
 	getTouch(ctx)
+}
+
+// 获订阅
+func GetSubscription(ctx *gin.Context) {
+	// Get connected configures
+	css := configure.GetConnectedServers()
+	if css.Len() == 0 {
+		ctx.String(200, "")
+	}
+
+	server := configure.GetServers()
+
+	s := ""
+	for _, cs := range css.Get() {
+		if cs.ID <= 0 || cs.ID > len(server) {
+			log.Info("AutoIncrease: ID ", cs.ID, len(server))
+			continue
+		}
+		ind := cs.ID - 1
+		s += server[ind].ServerObj.ExportToURL() + "\n"
+	}
+	ctx.String(200, s)
 }

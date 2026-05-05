@@ -323,6 +323,7 @@ func updateSubscriptions() {
 
 func initUpdatingTicker() {
 	conf.TickerUpdateGFWList = time.NewTicker(24 * time.Hour * 365 * 100)
+	conf.TickerUpdateServers = time.NewTicker(30 * time.Minute)
 	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range conf.TickerUpdateGFWList.C {
@@ -335,6 +336,11 @@ func initUpdatingTicker() {
 	go func() {
 		for range conf.TickerUpdateSubscription.C {
 			updateSubscriptions()
+		}
+	}()
+	go func() {
+		for range conf.TickerUpdateServers.C {
+			service.AutoIncrease()
 		}
 	}()
 }

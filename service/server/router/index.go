@@ -162,6 +162,8 @@ func Run() error {
 		noAuth.POST("login", controller.PostLogin)
 		noAuth.GET("account", controller.GetAccount)
 		noAuth.POST("account", controller.PostAccount)
+
+		noAuth.GET("sub", controller.GetSubscription)
 	}
 	auth := engine.Group("api",
 		nocache,
