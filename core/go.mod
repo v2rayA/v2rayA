@@ -10,7 +10,6 @@ go 1.26
 require (
 	anytls v0.0.12
 	github.com/daeuniverse/softwind v0.0.0-20231230065827-eed67f20d2c1
-	github.com/juicity/juicity v0.4.0
 	github.com/sagernet/sing v0.5.1
 	github.com/xtls/xray-core v0.0.0-local
 	google.golang.org/grpc v1.79.3
