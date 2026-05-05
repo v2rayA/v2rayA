@@ -76,15 +76,16 @@ func ServeGUI(r *gin.Engine) {
 		})
 
 		// --- /_nuxt/* route (used by ngui Nuxt 3 build) ---
-		// When _nuxt/ directory does not exist (legacy gui), statigz safely returns 404
-		nuxtFS := webFS.(fs.ReadDirFS)
+		// Only register the route when _nuxt/ directory exists in the embedded filesystem.
+		// When it does not exist (e.g. legacy gui build), silently skip to avoid panic
+		// in statigz.FileServer when the underlying FS does not support Open(".").
 		if sub, subErr := fs.Sub(webFS, "_nuxt"); subErr == nil {
-			nuxtFS = sub.(fs.ReadDirFS)
+			nuxtFS := sub.(fs.ReadDirFS)
+			ns := http.StripPrefix("/_nuxt", statigz.FileServer(nuxtFS))
+			r.GET("/_nuxt/*w", func(c *gin.Context) {
+				ns.ServeHTTP(c.Writer, c.Request)
+			})
 		}
-		ns := http.StripPrefix("/_nuxt", statigz.FileServer(nuxtFS))
-		r.GET("/_nuxt/*w", func(c *gin.Context) {
-			ns.ServeHTTP(c.Writer, c.Request)
-		})
 
 		f, err := webFS.Open("index.html")
 		if err != nil {
