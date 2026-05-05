@@ -8,6 +8,17 @@
       <p class="modal-card-title">RoutingA</p>
     </header>
     <section class="modal-card-body rules">
+      <!-- Deprecation warning for inbound definitions -->
+      <b-message
+        v-if="hasInboundDef"
+        type="is-warning"
+        size="is-small"
+        :active="true"
+        closable
+        @close="hasInboundDef = false"
+      >
+        {{ $t("routingA.inboundDeprecated") }}
+      </b-message>
       <b-input
         v-model="routingA"
         type="textarea"
@@ -18,6 +29,7 @@
         autocorrect="off"
         autocapitalize="off"
         spellcheck="false"
+        @input="checkInboundDef"
       />
     </section>
     <footer class="modal-card-foot">
@@ -50,6 +62,7 @@ export default {
   name: "ModalCustomRoutingA",
   data: () => ({
     routingA: "",
+    hasInboundDef: false,
   }),
   mounted() {
     this.$axios({
@@ -61,6 +74,7 @@ export default {
           this,
           () => {
             this.routingA = res.data.data.routingA;
+            this.checkInboundDef();
           },
           () => {
             this.$parent.close();
@@ -85,10 +99,34 @@ export default {
         );
       }
     },
+    checkInboundDef() {
+      // Check if the RoutingA text contains inbound definitions (deprecated feature)
+      const lines = (this.routingA || "").split("\n");
+      this.hasInboundDef = lines.some(
+        (line) =>
+          line.trim().startsWith("inbound(") || line.trim().startsWith("inbound (")
+      );
+    },
     handleClickManual() {
       window.open("https://github.com/v2rayA/v2rayA/wiki/RoutingA", "_blank");
     },
     handleClickSubmit() {
+      // If inbound definitions exist, show a confirmation dialog
+      if (this.hasInboundDef) {
+        this.$buefy.dialog.confirm({
+          message: this.$t("routingA.inboundDeprecatedConfirm"),
+          type: "is-warning",
+          confirmText: this.$t("operations.save"),
+          cancelText: this.$t("operations.cancel"),
+          onConfirm: () => {
+            this.submitRoutingA();
+          },
+        });
+      } else {
+        this.submitRoutingA();
+      }
+    },
+    submitRoutingA() {
       this.$axios({
         url: apiRoot + "/routingA",
         method: "put",
@@ -97,6 +135,16 @@ export default {
         },
       }).then((res) => {
         handleResponse(res, this, () => {
+          // Show warning from server if any
+          if (res.data.data && res.data.data.warning) {
+            this.$buefy.toast.open({
+              message: res.data.data.warning,
+              type: "is-warning",
+              position: "is-top",
+              duration: 8000,
+              queue: false,
+            });
+          }
           this.$parent.close();
         });
       });

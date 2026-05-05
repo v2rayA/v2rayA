@@ -656,59 +656,10 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 								},
 							})
 						case "inbound":
-							// reform from outbound
-							in := coreObj.Inbound{
-								Tag:      o.Name,
-								Protocol: o.Value.Name,
-								Listen:   server.Address,
-								Port:     server.Port,
-								Settings: &coreObj.InboundSettings{
-									UDP: false,
-								},
-								Sniffing: coreObj.Sniffing{
-									Enabled:      false,
-									DestOverride: []string{"http", "tls"},
-									RouteOnly:    false,
-								},
-							}
-							if sniffing := proto.NamedParams["sniffing"]; len(sniffing) > 0 {
-								// support inbound:a=socks(address: 127.0.0.1, port: 1080, sniffing:tls, sniffing:http)
-								// support inbound:a=http(address: 127.0.0.1, port: 1081, sniffing:"http,tls")
-								in.Sniffing.Enabled = true
-								var sniffs []string
-								for _, sniff := range sniffing {
-									fields := strings.Split(sniff, ",")
-									for i := range fields {
-										fields[i] = strings.TrimSpace(fields[i])
-									}
-									sniffs = append(sniffs, fields...)
-								}
-								in.Sniffing.DestOverride = sniffs
-							}
-							if proto.Name == "socks" {
-								if len(server.Users) > 0 {
-									in.Settings.Auth = "password"
-								}
-								if udp := proto.NamedParams["udp"]; len(udp) > 0 {
-									in.Settings.UDP = udp[0] == "true"
-								}
-								if userLevels := proto.NamedParams["userLevel"]; len(userLevels) > 0 {
-									userLevel, err := strconv.Atoi(userLevels[0])
-									if err == nil {
-										in.Settings.UserLevel = userLevel
-									}
-								}
-							}
-							if len(server.Users) > 0 {
-								for _, u := range server.Users {
-									in.Settings.Accounts = append(in.Settings.Accounts, coreObj.Account{
-										User: u.User,
-										Pass: u.Pass,
-									})
-								}
-							}
-							t.Inbounds = append(t.Inbounds, in)
-							routingInboundTags = append(routingInboundTags, o.Name)
+							// DEPRECATED: inbound definition in RoutingA is no longer supported.
+							// Log a warning and skip creating the inbound.
+							log.Warn("parseRoutingA: inbound definition '%s' is deprecated and will be ignored. "+
+								"Use custom inbound settings with RoutingA rules instead.", o.Name)
 						}
 					case "freedom":
 						settings := coreObj.Settings{}
@@ -823,6 +774,99 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 		InboundTag:  []string{"rule-http", "rule-socks"},
 	})
 	return nil
+}
+
+// parseRoutingARules parses RoutingA rule text and returns routing rules
+// filtered by the given inboundTag. This is used for custom inbound RoutingA rules.
+// It does NOT create any inbounds or outbounds - only routing rules.
+func parseRoutingARules(rulesText string, inboundTag string) (rules []coreObj.RoutingRule, err error) {
+	lines := strings.Split(rulesText, "\n")
+	hardcodeReplacement := regexp.MustCompile(`\$\$.+?\$\$`)
+	for i := range lines {
+		hardcodes := hardcodeReplacement.FindAllString(lines[i], -1)
+		for _, hardcode := range hardcodes {
+			env := strings.TrimSuffix(strings.TrimPrefix(hardcode, "$$"), "$$")
+			val, ok := os.LookupEnv(env)
+			if !ok {
+				log.Error("parseRoutingARules: Environment variable \"%v\" is not found", env)
+			} else {
+				log.Info("parseRoutingARules: Environment variable %v=%v", env, strconv.Quote(val))
+			}
+			lines[i] = strings.Replace(lines[i], hardcode, val, 1)
+		}
+	}
+	parsedRules, err := RoutingA.Parse(strings.Join(lines, "\n"))
+	if err != nil {
+		return nil, err
+	}
+	for _, rule := range parsedRules {
+		switch rule := rule.(type) {
+		case RoutingA.Routing:
+			rr := deepcopy.Copy(coreObj.RoutingRule{
+				Type:        "field",
+				OutboundTag: rule.Out,
+				InboundTag:  []string{inboundTag},
+			}).(coreObj.RoutingRule)
+			for _, f := range rule.And {
+				switch f.Name {
+				case "domain", "domains":
+					for k, vv := range f.NamedParams {
+						for _, v := range vv {
+							if k == "contains" {
+								rr.Domain = append(rr.Domain, v)
+								continue
+							}
+							if k == "ext" {
+								datFilenameAndTag := strings.SplitN(v, ":", 2)
+								if len(datFilenameAndTag) < 2 {
+									return nil, fmt.Errorf("%v: tag is not given", v)
+								}
+								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
+									return nil, fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+								}
+							}
+							rr.Domain = append(rr.Domain, fmt.Sprintf("%v:%v", k, v))
+						}
+					}
+					rr.Domain = append(rr.Domain, f.Params...)
+				case "ip":
+					for k, vv := range f.NamedParams {
+						for _, v := range vv {
+							if k == "ext" {
+								datFilenameAndTag := strings.SplitN(v, ":", 2)
+								if len(datFilenameAndTag) < 2 {
+									return nil, fmt.Errorf("%v: tag is not given", v)
+								}
+								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
+									return nil, fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+								}
+							}
+							rr.IP = append(rr.IP, fmt.Sprintf("%v:%v", k, v))
+						}
+					}
+					rr.IP = append(rr.IP, f.Params...)
+				case "network":
+					rr.Network = strings.Join(f.Params, ",")
+				case "port":
+					rr.Port = strings.Join(f.Params, ",")
+				case "sourcePort":
+					rr.SourcePort = strings.Join(f.Params, ",")
+				case "protocol":
+					rr.Protocol = f.Params
+				case "source":
+					rr.Source = f.Params
+				case "user":
+					rr.User = f.Params
+				case "inboundTag":
+					rr.InboundTag = f.Params
+				}
+			}
+			if rr.OutboundTag != "" {
+				rules = append(rules, rr)
+			}
+		}
+	}
+	return rules, nil
 }
 
 func (t *Template) setTransparentRouting() (err error) {
@@ -1248,6 +1292,29 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 			ib.Settings = &coreObj.InboundSettings{UDP: true}
 		}
 		t.Inbounds = append(t.Inbounds, ib)
+
+		// Generate per-inbound routing rules based on the bound outbound group
+		if ci.Outbound != "" && ci.OutboundType != "" {
+			switch ci.OutboundType {
+			case "direct":
+				// Direct single outbound: route all traffic from this inbound to the bound outbound group
+				t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
+					Type:        "field",
+					OutboundTag: ci.Outbound,
+					InboundTag:  []string{ci.Tag},
+				})
+			case "routingA":
+				// RoutingA rules: parse and apply with InboundTag filter
+				if ci.RoutingARules != "" {
+					rules, err := parseRoutingARules(ci.RoutingARules, ci.Tag)
+					if err != nil {
+						log.Warn("setInbound: failed to parse RoutingA rules for inbound %s: %v", ci.Tag, err)
+					} else {
+						t.Routing.Rules = append(t.Routing.Rules, rules...)
+					}
+				}
+			}
+		}
 	}
 	if IsTransparentOn(t.Setting) {
 		switch t.Setting.TransparentType {

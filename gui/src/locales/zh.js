@@ -369,6 +369,8 @@ export default {
   },
   routingA: {
     messages: ["点击“查看帮助”按钮以获取帮助"],
+    inboundDeprecated: "RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。",
+    inboundDeprecatedConfirm: "当前 RoutingA 配置包含已弃用的入站定义，生成的配置将不会包含这些入站端口。是否继续保存？",
   },
   outbound: {
     addMessage: "请输入你想要添加的代理分组名称：",
@@ -477,7 +479,15 @@ export default {
     portPlaceholder: "如 10800",
     empty: "暂无自定义入站",
     hint: "入站端口仅支持 SOCKS 和 HTTP 协议，标签必须唯一，将作为 v2ray core 的 tag 使用。",
-    fillAll: "请喆写全部字段",
+    fillAll: "请填写全部字段",
     deleteConfirm: "确认删除入站 {tag}？",
+    outbound: "绑定出口组",
+    outboundPlaceholder: "请选择出口组",
+    outboundType: "绑定方式",
+    outboundTypeDirect: "直接选择",
+    outboundTypeRoutingA: "RoutingA 规则",
+    outboundRequired: "请选择绑定的出口组",
+    routingARules: "RoutingA 分流规则",
+    routingARulesPlaceholder: "请输入 RoutingA 分流规则...",
   },
 };

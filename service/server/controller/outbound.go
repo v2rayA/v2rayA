@@ -88,6 +88,22 @@ func DeleteOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("outbound \"proxy\" cannot be deleted"))
 		return
 	}
+
+	// Check if any custom inbound is bound to this outbound group
+	boundInbounds := configure.GetCustomInboundsByOutbound(data.Outbound)
+	if len(boundInbounds) > 0 {
+		names := make([]string, len(boundInbounds))
+		for i, ci := range boundInbounds {
+			names[i] = fmt.Sprintf("%s (port %d, %s)", ci.Tag, ci.Port, ci.Protocol)
+		}
+		common.ResponseError(ctx, logError(fmt.Errorf(
+			"cannot delete outbound group '%s': the following custom inbounds are bound to it:\n%s\nPlease unbind them first",
+			data.Outbound,
+			strings.Join(names, "\n"),
+		)))
+		return
+	}
+
 	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {
 		if err := service.Disconnect(configure.Which{Outbound: data.Outbound}, true); err != nil {
 			common.ResponseError(ctx, logError(err))
