@@ -1,6 +1,40 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: false,
+
+  // Output directory control: OUTPUT_DIR env var overrides default
+  // Keeps the same convention as gui/vite.config.js
+  nitro: {
+    output: {
+      publicDir: process.env.OUTPUT_DIR || '../service/server/router/web',
+    },
+    prerender: {
+      failOnError: false,
+    },
+  },
+
+  // Resource path: Nuxt uses /_nuxt/ by default (not /static/)
+  app: {
+    baseURL: '/',
+    buildAssetsDir: '/_nuxt',
+  },
+
+  // Dev proxy for API calls during development
+  devServer: {
+    port: 3000,
+  },
+  devProxy: {
+    '/api': {
+      target: 'http://127.0.0.1:2017',
+      changeOrigin: true,
+    },
+  },
+
+  // Pre-generate known routes for SPA fallback
+  generate: {
+    routes: ['/', '/login', '/signup', '/setting', '/log', '/about'],
+  },
+
   modules: [
     '@vueuse/nuxt',
     '@unocss/nuxt',

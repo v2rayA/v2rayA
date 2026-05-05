@@ -64,6 +64,8 @@ func ServeGUI(r *gin.Engine) {
 		if err != nil {
 			log.Fatal("fs.Sub: %v", err)
 		}
+
+		// --- /static/* route (used by legacy gui Vite build) ---
 		staticFS := webFS.(fs.ReadDirFS)
 		if sub, subErr := fs.Sub(webFS, "static"); subErr == nil {
 			staticFS = sub.(fs.ReadDirFS)
@@ -72,6 +74,18 @@ func ServeGUI(r *gin.Engine) {
 		r.GET("/static/*w", func(c *gin.Context) {
 			ss.ServeHTTP(c.Writer, c.Request)
 		})
+
+		// --- /_nuxt/* route (used by ngui Nuxt 3 build) ---
+		// When _nuxt/ directory does not exist (legacy gui), statigz safely returns 404
+		nuxtFS := webFS.(fs.ReadDirFS)
+		if sub, subErr := fs.Sub(webFS, "_nuxt"); subErr == nil {
+			nuxtFS = sub.(fs.ReadDirFS)
+		}
+		ns := http.StripPrefix("/_nuxt", statigz.FileServer(nuxtFS))
+		r.GET("/_nuxt/*w", func(c *gin.Context) {
+			ns.ServeHTTP(c.Writer, c.Request)
+		})
+
 		f, err := webFS.Open("index.html")
 		if err != nil {
 			log.Fatal("webFS.Open index.html:", err)
@@ -93,12 +107,20 @@ func ServeGUI(r *gin.Engine) {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
 			log.Warn("web files cannot be found at %v. web UI cannot be served", webDir)
 		} else {
+			// --- /static/* route (dev mode, legacy gui) ---
 			staticDir := filepath.Join(webDir, "static")
 			if info, statErr := os.Stat(staticDir); statErr == nil && info.IsDir() {
 				r.Static("/static", staticDir)
 			} else {
 				// Backward-compatible fallback for legacy builds that emit hashed assets at web root.
 				r.Static("/static", webDir)
+			}
+
+			// --- /_nuxt/* route (dev mode, ngui) ---
+			// Directory not existing is silently skipped, compatible with legacy gui dev mode
+			nuxtDir := filepath.Join(webDir, "_nuxt")
+			if info, statErr := os.Stat(nuxtDir); statErr == nil && info.IsDir() {
+				r.Static("/_nuxt", nuxtDir)
 			}
 
 			f, err := os.Open(filepath.Join(webDir, "index.html"))
