@@ -1,5 +1,11 @@
 {
   "private": true,
+  "pnpm": {
+    "overrides": {
+      "@intlify/shared": "9.3.0-beta.16",
+      "@intlify/message-compiler": "9.3.0-beta.16"
+    }
+  },
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
