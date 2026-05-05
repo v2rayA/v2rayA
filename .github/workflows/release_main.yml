@@ -130,6 +130,16 @@ jobs:
       with:
         name: v2raya_core_linux_x64_${{ steps.prep.outputs.VERSION }}
         path: Downloads
+    - name: Download Artifact Linux arm64
+      uses: actions/download-artifact@v8
+      with:
+        name: v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
+        path: Downloads
+    - name: Download Core Artifact Linux arm64
+      uses: actions/download-artifact@v8
+      with:
+        name: v2raya_core_linux_arm64_${{ steps.prep.outputs.VERSION }}
+        path: Downloads
     - name: Download Artifact macOS x64
       uses: actions/download-artifact@v8
       with:
@@ -154,11 +164,14 @@ jobs:
       run: |
         mkdir v2raya-x86_64-linux; cp Downloads/v2raya_linux_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-linux/v2raya
         cp Downloads/v2raya_core_linux_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-linux/v2raya_core
+        mkdir v2raya-arm64-linux; cp Downloads/v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }} ./v2raya-arm64-linux/v2raya
+        cp Downloads/v2raya_core_linux_arm64_${{ steps.prep.outputs.VERSION }} ./v2raya-arm64-linux/v2raya_core
         mkdir v2raya-x86_64-macos; cp Downloads/v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-macos/v2raya
         cp Downloads/v2raya_core_darwin_x64_${{ steps.prep.outputs.VERSION }} ./v2raya-x86_64-macos/v2raya_core
         mkdir v2raya-aarch64-macos; cp Downloads/v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }} ./v2raya-aarch64-macos/v2raya
         cp Downloads/v2raya_core_darwin_arm64_${{ steps.prep.outputs.VERSION }} ./v2raya-aarch64-macos/v2raya_core
         zip -r9 v2raya-x86_64-linux.zip ./v2raya-x86_64-linux/*
+        zip -r9 v2raya-arm64-linux.zip ./v2raya-arm64-linux/*
         zip -r9 v2raya-x86_64-macos.zip ./v2raya-x86_64-macos/*
         zip -r9 v2raya-aarch64-macos.zip ./v2raya-aarch64-macos/*
         for file in $(ls v2raya-*.zip); do
@@ -173,6 +186,7 @@ jobs:
           --title "Releases $VERSION" --generate-notes
         gh release upload $tag_version --repo v2rayA/homebrew-v2raya \
           v2raya-x86_64-linux.zip v2raya-x86_64-linux.zip.sha256.txt \
+          v2raya-arm64-linux.zip v2raya-arm64-linux.zip.sha256.txt \
           v2raya-x86_64-macos.zip v2raya-x86_64-macos.zip.sha256.txt \
           v2raya-aarch64-macos.zip v2raya-aarch64-macos.zip.sha256.txt
   Release_v2rayA_to_Docker:
