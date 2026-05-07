@@ -244,6 +244,13 @@
 
       <b-field label-position="on-border">
         <template slot="label">
+          Encryption
+        </template>
+        <b-input v-model="encryption" expanded placeholder="none" />
+      </b-field>
+
+      <b-field label-position="on-border">
+        <template slot="label">
           {{ $t("setting.logLevel") }}
         </template>
         <b-select v-model="logLevel" expanded>
@@ -297,7 +304,6 @@
           custom-class="no-shadow" type="number" min="1" max="1024" validation-icon=" iconfont icon-alert"
           style="flex: 1" />
       </b-field>
-
 
       <b-field v-show="pacMode === 'gfwlist' || transparent === 'gfwlist'" :label="$t('setting.autoUpdateGfwlist')"
         label-position="on-border">
@@ -397,9 +403,6 @@ export default {
     routeOnly: false,
     tproxyExcludedInterfaces: "",
     tunAutoRoute: true,
-    tunBypassInterfaces: "",
-    tunBypassInterfacesList: [],
-    tunBypassCustom: "",
     availableInterfaces: [],
     tunRouteShellType: "",
     tunRouteShellPath: "",
@@ -407,11 +410,14 @@ export default {
     tunTeardownScript: "",
     tunProcessBackend: "",
     tunExcludeProcesses: "",
+    ssBackend: "",
+    trojanBackend: "",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
     inboundSniffing: "no",
+    encryption: "",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -423,31 +429,6 @@ export default {
     tinytunSupported: false,
   }),
   computed: {
-    tunBypassInterfacesComputed: {
-      get() {
-        const parts = [];
-        if (this.tunBypassInterfacesList.length > 0) {
-          parts.push(...this.tunBypassInterfacesList);
-        }
-        if (this.tunBypassCustom.trim()) {
-          parts.push(
-            ...this.tunBypassCustom
-              .split(',')
-              .map((s) => s.trim())
-              .filter((s) => s.length > 0)
-          );
-        }
-        return [...new Set(parts)].join(',');
-      },
-      set(val) {
-        const parts = val
-          ? val.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
-          : [];
-        const known = (this.availableInterfaces || []).map((i) => i.name);
-        this.tunBypassInterfacesList = parts.filter((p) => known.includes(p));
-        this.tunBypassCustom = parts.filter((p) => !known.includes(p)).join(',');
-      },
-    },
     lite() {
       return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
     },
@@ -462,18 +443,29 @@ export default {
       }
       return toInt(port);
     },
+    tunBypassInterfacesList: {
+      get() {
+        return this.availableInterfaces
+          .filter((i) => i.isBypassed)
+          .map((i) => i.name);
+      },
+      set(val) {
+        this.availableInterfaces.forEach((i) => {
+          i.isBypassed = val.includes(i.name);
+        });
+      },
+    },
+    tunBypassInterfacesComputed() {
+      let ifaces = this.availableInterfaces
+        .filter((i) => i.isBypassed)
+        .map((i) => i.name);
+      if (this.tunBypassCustom) {
+        ifaces.push(...this.tunBypassCustom.split(",").map((s) => s.trim()));
+      }
+      return ifaces.join(",");
+    },
   },
   watch: {
-    transparentType(val) {
-      if (val === 'tun' && this.tinytunSupported) {
-        this.fetchNetworkInterfaces();
-      }
-    },
-    tinytunSupported(val) {
-      if (val && this.transparentType === 'tun') {
-        this.fetchNetworkInterfaces();
-      }
-    },
   },
   created() {
     this.getSettingData();
@@ -481,17 +473,6 @@ export default {
   methods: {
     dayjs() {
       return dayjs.apply(this, arguments);
-    },
-    fetchNetworkInterfaces() {
-      this.$axios({ url: apiRoot + '/networkInterfaces' }).then((res) => {
-        if (res.data && res.data.data && res.data.data.interfaces) {
-          this.availableInterfaces = res.data.data.interfaces;
-          // Re-apply the tunBypassInterfaces string now that we know available names
-          if (this.tunBypassInterfaces) {
-            this.tunBypassInterfacesComputed = this.tunBypassInterfaces;
-          }
-        }
-      });
     },
     getSettingData() {
       this.$axios({
@@ -518,9 +499,6 @@ export default {
               this.os = versionRes.data.data.os || "";
               this.isRoot = versionRes.data.data.isRoot || false;
               this.tinytunSupported = versionRes.data.data.tinytunSupported || false;
-            }
-            if (this.transparentType === 'tun' && this.tinytunSupported) {
-              this.fetchNetworkInterfaces();
             }
           });
           if (this.lite) {
@@ -564,6 +542,9 @@ export default {
             tunTeardownScript: this.tunTeardownScript,
             tunProcessBackend: this.tunProcessBackend,
             tunExcludeProcesses: this.tunExcludeProcesses,
+            ssBackend: this.ssBackend,
+            trojanBackend: this.trojanBackend,
+            encryption: this.encryption,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
