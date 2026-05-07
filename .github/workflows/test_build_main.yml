@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat-hysteria2-finalmask
       - dependabot/*
     paths:
       - "**/*.go"
