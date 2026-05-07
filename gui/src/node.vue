@@ -622,8 +622,10 @@
       trap-focus
       aria-role="dialog"
       aria-modal
+      destroy-on-hide
     >
       <ModalServer
+        v-if="showModalServer"
         :which="which"
         :readonly="modalServerReadOnly"
         @submit="handleModalServerSubmit"
@@ -907,30 +909,12 @@ export default {
     });
   },
   beforeDestroy() {
-    this.clipboard.destroy();
+    if (this.clipboard) this.clipboard.destroy();
   },
   mounted() {
     document
       .querySelector("#QRCodeImport")
       .addEventListener("change", this.handleFileChange, false);
-    this.clipboard = new ClipboardJS(".sharingAddressTag");
-    this.clipboard.on("success", (e) => {
-      this.$buefy.toast.open({
-        message: this.$t("common.success"),
-        type: "is-primary",
-        position: "is-top",
-        queue: false,
-      });
-      e.clearSelection();
-    });
-    this.clipboard.on("error", (e) => {
-      this.$buefy.toast.open({
-        message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
-        type: "is-warning",
-        position: "is-top",
-        queue: false,
-      });
-    });
     const that = this;
     let scrollTimer = null;
     window.addEventListener("scroll", (e) => {

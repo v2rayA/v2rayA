@@ -23,45 +23,45 @@ func init() {
 	FromLinkRegister("vmess", NewV2Ray)
 	FromLinkRegister("vless", NewV2Ray)
 	EmptyRegister("vmess", func() (ServerObj, error) {
-		return new(V2Ray), nil
+		return &V2Ray{Protocol: "vmess"}, nil
 	})
 	EmptyRegister("vless", func() (ServerObj, error) {
-		return new(V2Ray), nil
+		return &V2Ray{Protocol: "vless"}, nil
 	})
 }
 
 type V2Ray struct {
-	Ps            string `json:"ps"`
-	Add           string `json:"add"`
-	Port          string `json:"port"`
-	ID            string `json:"id"`
-	Aid           string `json:"aid"`
-	Security      string `json:"scy"`
-	Net           string `json:"net"`
-	Type          string `json:"type"`
-	Host          string `json:"host"`
-	SNI           string `json:"sni,omitempty"`
-	Path          string `json:"path"`
-	TLS           string `json:"tls"`
-	Fingerprint   string `json:"fingerprint,omitempty"`
-	PublicKey     string `json:"pbk,omitempty"`
-	ShortId       string `json:"sid,omitempty"`
-	SpiderX       string `json:"spx,omitempty"`
-	Flow          string `json:"flow,omitempty"`
-	Alpn          string `json:"alpn,omitempty"`
-	AllowInsecure bool   `json:"allowInsecure"`
-	Key           string `json:"key,omitempty"`
-	QuicSecurity  string `json:"quicSecurity"`
+	Ps                  string `json:"ps"`
+	Address             string `json:"add" server:"server" hostname:"hostname" address:"address"`
+	Port                string `json:"port"`
+	ID                  string `json:"id"`
+	Aid                 string `json:"aid"`
+	Security            string `json:"scy"`
+	Net                 string `json:"net"`
+	Type                string `json:"type"`
+	Host                string `json:"host"`
+	SNI                 string `json:"sni,omitempty"`
+	Path                string `json:"path"`
+	TLS                 string `json:"tls"`
+	Fingerprint         string `json:"fingerprint,omitempty"`
+	PublicKey           string `json:"pbk,omitempty"`
+	ShortId             string `json:"sid,omitempty"`
+	SpiderX             string `json:"spx,omitempty"`
+	Flow                string `json:"flow,omitempty"`
+	Alpn                string `json:"alpn,omitempty"`
+	AllowInsecure       bool   `json:"allowInsecure"`
+	Key                 string `json:"key,omitempty"`
+	QuicSecurity        string `json:"quicSecurity"`
 	XHTTPMode           string `json:"xhttpMode,omitempty"`
-	MaxEarlyData        string `json:"maxEarlyData,omitempty"`        // WebSocket Early Data 最大字节数
-	EarlyDataHeaderName string `json:"earlyDataHeaderName,omitempty"` // WebSocket Early Data 头部名称
-	MultiMode           string `json:"multiMode,omitempty"`           // gRPC MultiMode
-	IdleTimeout         string `json:"idleTimeout,omitempty"`         // gRPC IdleTimeout (秒)
-	HealthCheckTimeout  string `json:"healthCheckTimeout,omitempty"`  // gRPC HealthCheckTimeout (秒)
-	PermitWithoutStream string `json:"permitWithoutStream,omitempty"` // gRPC PermitWithoutStream
-	InitialWindowsSize  string `json:"initialWindowsSize,omitempty"`  // gRPC InitialWindowsSize
+	MaxEarlyData        string `json:"maxEarlyData,omitempty"`
+	EarlyDataHeaderName string `json:"earlyDataHeaderName,omitempty"`
+	MultiMode           string `json:"multiMode,omitempty"`
+	IdleTimeout         string `json:"idleTimeout,omitempty"`
+	HealthCheckTimeout  string `json:"healthCheckTimeout,omitempty"`
+	PermitWithoutStream string `json:"permitWithoutStream,omitempty"`
+	InitialWindowsSize  string `json:"initialWindowsSize,omitempty"`
 	V                   string `json:"v"`
-	Protocol      string `json:"protocol"`
+	Protocol            string `json:"protocol"`
 }
 
 func NewV2Ray(link string) (ServerObj, error) {
@@ -79,27 +79,41 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		return nil, err
 	}
 	data = &V2Ray{
-		Ps:            u.Fragment,
-		Add:           u.Hostname(),
-		Port:          u.Port(),
-		ID:            u.User.String(),
-		Aid:           u.Query().Get("aid"),
-		Net:           u.Query().Get("type"),
-		Type:          u.Query().Get("headerType"),
-		Host:          u.Query().Get("host"),
-		SNI:           u.Query().Get("sni"),
-		Path:          u.Query().Get("path"),
-		TLS:           u.Query().Get("security"),
-		Fingerprint:   u.Query().Get("fp"),
-		PublicKey:     u.Query().Get("pbk"),
-		ShortId:       u.Query().Get("sid"),
-		SpiderX:       u.Query().Get("spx"),
-		Flow:          u.Query().Get("flow"),
-		Alpn:          u.Query().Get("alpn"),
-		AllowInsecure: u.Query().Get("allowInsecure") == "true",
-		Key:           u.Query().Get("key"),
-		V:             vless,
-		Protocol:      "vless",
+		Ps:                  u.Fragment,
+		Address:             u.Hostname(),
+		Port:                u.Port(),
+		ID:                  u.User.String(),
+		Aid:                 u.Query().Get("aid"),
+		Net:                 u.Query().Get("type"),
+		Type:                u.Query().Get("headerType"),
+		Host:                u.Query().Get("host"),
+		SNI:                 u.Query().Get("sni"),
+		Path:                u.Query().Get("path"),
+		TLS:                 u.Query().Get("security"),
+		Fingerprint:         u.Query().Get("fp"),
+		PublicKey:           u.Query().Get("pbk"),
+		ShortId:             u.Query().Get("sid"),
+		SpiderX:             u.Query().Get("spx"),
+		Flow:                u.Query().Get("flow"),
+		Security:            u.Query().Get("encryption"),
+		Alpn:                u.Query().Get("alpn"),
+		AllowInsecure:       u.Query().Get("allowInsecure") == "true",
+		Key:                 u.Query().Get("key"),
+		MaxEarlyData:        u.Query().Get("maxEarlyData"),
+		EarlyDataHeaderName: u.Query().Get("earlyDataHeaderName"),
+		MultiMode:           u.Query().Get("multiMode"),
+		IdleTimeout:         u.Query().Get("idleTimeout"),
+		HealthCheckTimeout:  u.Query().Get("healthCheckTimeout"),
+		PermitWithoutStream: u.Query().Get("permitWithoutStream"),
+		InitialWindowsSize:  u.Query().Get("initialWindowsSize"),
+		V:                   vless,
+		Protocol:            "vless",
+	}
+	if data.Flow == "" {
+		data.Flow = u.Query().Get("flows")
+	}
+	if data.TLS == "" {
+		data.TLS = u.Query().Get("tls")
 	}
 	if data.Net == "" {
 		data.Net = "tcp"
@@ -128,25 +142,16 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 			data.XHTTPMode = "auto"
 		}
 	}
-	data.MaxEarlyData = u.Query().Get("maxEarlyData")
-	data.EarlyDataHeaderName = u.Query().Get("earlyDataHeaderName")
-	data.MultiMode = u.Query().Get("multiMode")
-	data.IdleTimeout = u.Query().Get("idleTimeout")
-	data.HealthCheckTimeout = u.Query().Get("healthCheckTimeout")
-	data.PermitWithoutStream = u.Query().Get("permitWithoutStream")
-	data.InitialWindowsSize = u.Query().Get("initialWindowsSize")
 	return data, nil
 }
 
 func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 	var info V2Ray
-	// perform base64 decoding and unmarshal to VmessInfo
 	raw, err := common.Base64StdDecode(vmess[8:])
 	if err != nil {
 		raw, err = common.Base64URLDecode(vmess[8:])
 	}
 	if err != nil {
-		// not in json format, try to resolve as vmess://BASE64(Security:ID@Add:Port)?remarks=Ps&obfsParam=Host&Path=Path&obfs=Net&tls=TLS
 		var u *url.URL
 		u, err = url.Parse(vmess)
 		if err != nil {
@@ -173,7 +178,6 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		path := q.Get("path")
 		if obfs == "kcp" || obfs == "mkcp" {
 			m := make(map[string]string)
-			//cater to v2rayN definition
 			_ = jsoniter.Unmarshal([]byte(obfsParam), &m)
 			path = m["seed"]
 			obfsParam = ""
@@ -189,7 +193,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		sni := q.Get("sni")
 		info = V2Ray{
 			ID:            subMatch[1],
-			Add:           subMatch[2],
+			Address:       subMatch[2],
 			Port:          subMatch[3],
 			Ps:            ps,
 			Host:          obfsParam,
@@ -205,7 +209,6 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 			info.Net = "ws"
 		}
 	} else {
-		// fuzzily parse allowInsecure
 		if allowInsecure := gjson.Get(raw, "allowInsecure"); allowInsecure.Exists() {
 			if newRaw, err := sjson.Set(raw, "allowInsecure", allowInsecure.Bool()); err == nil {
 				raw = newRaw
@@ -215,8 +218,11 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		if err != nil {
 			return
 		}
+		// backward compatibility for 'add' tag
+		if info.Address == "" {
+			info.Address = gjson.Get(raw, "add").String()
+		}
 	}
-	// correct the wrong vmess as much as possible
 	if strings.HasPrefix(info.Host, "/") && info.Path == "" {
 		info.Path = info.Host
 		info.Host = ""
@@ -260,7 +266,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
-					Address: v.Add,
+					Address: v.Address,
 					Port:    port,
 					Users: []coreObj.User{
 						{
@@ -274,31 +280,21 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		case "vless":
 			security := v.Security
 			if security == "" {
-				security = "auto"
+				security = "none"
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
-					Address: v.Add,
+					Address: v.Address,
 					Port:    port,
 					Users: []coreObj.User{
 						{
 							ID:         id,
-							Encryption: "none",
+							Encryption: security,
 						},
 					},
 				},
 			}
-		// if network == "tcp" {
-		// 	tcpSetting := coreObj.TCPSettings{
-		// 		Header: coreObj.TCPHeader{
-		// 			Type: "none",
-		// 		},
-		// 	}
-		// 	core.StreamSettings.TCPSettings = &tcpSetting
-		// }
 		}
-		// 根据传输协议(network)修改streamSettings
-		//TODO: QUIC
 		switch strings.ToLower(v.Net) {
 		case "grpc":
 			if v.Path == "" {
@@ -307,31 +303,26 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			grpcSettings := coreObj.GrpcSettings{
 				ServiceName: v.Path,
 			}
-			// 解析 gRPC MultiMode
 			if v.MultiMode != "" {
 				if mm, err := strconv.ParseBool(v.MultiMode); err == nil {
 					grpcSettings.MultiMode = mm
 				}
 			}
-			// 解析 gRPC IdleTimeout
 			if v.IdleTimeout != "" {
 				if it, err := strconv.Atoi(v.IdleTimeout); err == nil {
 					grpcSettings.IdleTimeout = it
 				}
 			}
-			// 解析 gRPC HealthCheckTimeout
 			if v.HealthCheckTimeout != "" {
 				if hct, err := strconv.Atoi(v.HealthCheckTimeout); err == nil {
 					grpcSettings.HealthCheckTimeout = hct
 				}
 			}
-			// 解析 gRPC PermitWithoutStream
 			if v.PermitWithoutStream != "" {
 				if pws, err := strconv.ParseBool(v.PermitWithoutStream); err == nil {
 					grpcSettings.PermitWithoutStream = pws
 				}
 			}
-			// 解析 gRPC InitialWindowsSize
 			if v.InitialWindowsSize != "" {
 				if iws, err := strconv.Atoi(v.InitialWindowsSize); err == nil {
 					grpcSettings.InitialWindowsSize = iws
@@ -345,7 +336,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Host: v.Host,
 				},
 			}
-			// 解析 WebSocket Early Data
 			if v.MaxEarlyData != "" {
 				if med, err := strconv.Atoi(v.MaxEarlyData); err == nil && med > 0 {
 					wsSettings.MaxEarlyData = med
@@ -455,13 +445,11 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			if v.AllowInsecure {
 				core.StreamSettings.TLSSettings.AllowInsecure = true
 			}
-			// SNI
 			if v.SNI != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.SNI
 			} else if v.Host != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.Host
 			}
-			// Alpn
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
 				for i := range alpn {
@@ -469,12 +457,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				}
 				core.StreamSettings.TLSSettings.Alpn = alpn
 			}
-			// uTLS fingerprint
 			core.StreamSettings.TLSSettings.Fingerprint = v.Fingerprint
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{}
-			// SNI
 			if v.SNI != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.SNI
 			} else if v.Host != "" {
@@ -501,7 +487,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				SpiderX:     v.SpiderX,
 			}
 		}
-		// Flow
 		if v.Flow != "" {
 			vnext := core.Settings.Vnext.([]coreObj.Vnext)
 			vnext[0].Users[0].Flow = v.Flow
@@ -518,7 +503,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 func (v *V2Ray) ExportToURL() string {
 	switch v.Protocol {
 	case "vless":
-		// https://github.com/XTLS/Xray-core/issues/91
 		var query = make(url.Values)
 		setValue(&query, "type", v.Net)
 		setValue(&query, "security", v.TLS)
@@ -553,6 +537,9 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "host", v.Host)
 			setValue(&query, "xhttpMode", v.XHTTPMode)
 		}
+		if v.Security != "" && v.Security != "none" {
+			setValue(&query, "encryption", v.Security)
+		}
 		if v.TLS != "none" {
 			setValue(&query, "flow", v.Flow)
 			setValue(&query, "sni", v.SNI)
@@ -569,7 +556,7 @@ func (v *V2Ray) ExportToURL() string {
 		U := url.URL{
 			Scheme:   "vless",
 			User:     url.User(v.ID),
-			Host:     net.JoinHostPort(v.Add, v.Port),
+			Host:     net.JoinHostPort(v.Address, v.Port),
 			RawQuery: query.Encode(),
 			Fragment: v.Ps,
 		}
@@ -599,7 +586,7 @@ func (v *V2Ray) GetProtocol() string {
 }
 
 func (v *V2Ray) GetHostname() string {
-	return v.Add
+	return v.Address
 }
 
 func (v *V2Ray) GetPort() int {

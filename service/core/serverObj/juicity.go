@@ -13,37 +13,61 @@ import (
 func init() {
 	FromLinkRegister("juicity", NewJuicity)
 	EmptyRegister("juicity", func() (ServerObj, error) {
-		return new(Juicity), nil
+		return &Juicity{Protocol: "juicity"}, nil
 	})
 }
 
 type Juicity struct {
-	Name     string `json:"name"`
-	Server   string `json:"server"`
-	Port     int    `json:"port"`
-	Protocol string `json:"protocol"`
-	Link     string `json:"link"`
+	Address               string `json:"address" server:"server" hostname:"hostname" add:"add"`
+	Port                  int    `json:"port"`
+	UUID                  string `json:"uuid"`
+	Password              string `json:"password"`
+	Sni                   string `json:"sni"`
+	AllowInsecure         bool   `json:"allowInsecure"`
+	CC                    string `json:"cc"`
+	PinnedCertchainSha256 string `json:"pinnedCertchainSha256"`
+	Name                  string `json:"name"`
+	Protocol              string `json:"protocol"`
+	Link                  string `json:"link"`
 }
 
 func NewJuicity(link string) (ServerObj, error) {
 	return ParseJuicityURL(link)
 }
 
-func ParseJuicityURL(link string) (data *Juicity, err error) {
+func ParseJuicityURL(link string) (*Juicity, error) {
 	u, err := url.Parse(link)
 	if err != nil {
 		return nil, err
 	}
-	port, err := strconv.Atoi(u.Port())
+	host, portStr, err := net.SplitHostPort(u.Host)
 	if err != nil {
-		return nil, err
+		host = u.Host
+		portStr = "443"
+	}
+	port, _ := strconv.Atoi(portStr)
+	var uuid, password string
+	if u.User != nil {
+		uuid = u.User.Username()
+		password, _ = u.User.Password()
+	}
+	q := u.Query()
+	cc := q.Get("congestion_control")
+	if cc == "" {
+		cc = q.Get("congestionControl")
 	}
 	return &Juicity{
-		Name:     u.Fragment,
-		Server:   u.Hostname(),
-		Port:     port,
-		Protocol: "juicity",
-		Link:     link,
+		Address:               host,
+		Port:                  port,
+		UUID:                  uuid,
+		Password:              password,
+		Sni:                   q.Get("sni"),
+		AllowInsecure:         q.Get("allow_insecure") == "1" || q.Get("allowInsecure") == "true",
+		CC:                    cc,
+		PinnedCertchainSha256: q.Get("pinned_certchain_sha256"),
+		Name:                  u.Fragment,
+		Link:                  link,
+		Protocol:              "juicity",
 	}, nil
 }
 
@@ -60,34 +84,14 @@ type juicitySettings struct {
 }
 
 func (s *Juicity) Configuration(info PriorInfo) (c Configuration, err error) {
-	u, err := url.Parse(s.Link)
-	if err != nil {
-		return c, fmt.Errorf("juicity: parse link: %w", err)
-	}
-
-	uuid := ""
-	password := ""
-	if u.User != nil {
-		uuid = u.User.Username()
-		password, _ = u.User.Password()
-	}
-	q := u.Query()
-	sni := q.Get("sni")
-	insecure := q.Get("insecure") == "1" || q.Get("allowInsecure") == "1"
-	congestion := q.Get("congestion_control")
-	if congestion == "" {
-		congestion = q.Get("congestionControl")
-	}
-	pinnedSHA := q.Get("pinned_certchain_sha256")
-
 	settingsJSON, err := json.Marshal(juicitySettings{
-		Address:           net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
-		UUID:              uuid,
-		Password:          password,
-		SNI:               sni,
-		AllowInsecure:     insecure,
-		CongestionControl: congestion,
-		PinnedSHA256:      pinnedSHA,
+		Address:           net.JoinHostPort(s.Address, strconv.Itoa(s.Port)),
+		UUID:              s.UUID,
+		Password:          s.Password,
+		SNI:               s.Sni,
+		AllowInsecure:     s.AllowInsecure,
+		CongestionControl: s.CC,
+		PinnedSHA256:      s.PinnedCertchainSha256,
 	})
 	if err != nil {
 		return c, fmt.Errorf("juicity: marshal settings: %w", err)
@@ -112,15 +116,15 @@ func (s *Juicity) NeedPluginPort() bool {
 }
 
 func (s *Juicity) ProtoToShow() string {
-	return fmt.Sprintf("Juicity")
+	return "Juicity"
 }
 
 func (s *Juicity) GetProtocol() string {
-	return s.Protocol
+	return "juicity"
 }
 
 func (s *Juicity) GetHostname() string {
-	return s.Server
+	return s.Address
 }
 
 func (s *Juicity) GetPort() int {
