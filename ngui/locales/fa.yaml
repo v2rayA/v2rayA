@@ -1,0 +1,434 @@
+common:
+  outboundSetting: تنظیمات خروجی
+  setting: تنظیمات
+  about: درباره
+  loggedAs: 'خوش آمدید <b>{username}</b>'
+  v2rayCoreStatus: وضعیت v2ray-core
+  checkRunning: بررسی
+  isRunning: درحال اجرا
+  notRunning: آماده
+  waitingNetwork: در انتظار اتصال شبکه
+  notLogin: لطفا وارد شوید
+  latest: آخرین
+  local: محلی
+  success: موفق
+  fail: عدم موفقیت
+  empty: هیچ سروری اضافه نشده
+  message: پیام
+  none: هیچ یک
+  optional: اختیاری
+  loadBalance: متعادل کردن
+  log: گزارش ها
+  proxyGroups: گروه‌های پروکسی
+  darkTheme: تم تیره
+  lightTheme: تم روشن
+  autoTheme: تم خودکار
+log:
+  logModalTitle: مشاهده لاگ‌ها
+  logsLabel: لاگ‌ها
+  refreshInterval: فاصله به‌روزرسانی
+  seconds: ثانیه
+  autoScoll: اسکرول خودکار
+  autoShowNew: نمایش خودکار لاگ‌های جدید
+  category: دسته‌بندی
+  source: منبع لاگ
+  categories:
+    all: همه
+    error: خطا
+    warn: هشدار
+    info: اطلاعات
+    debug: دیباگ
+    trace: ردیابی
+    other: سایر
+  sources:
+    all: همه
+welcome:
+  title: خوش آمدید
+  docker: 'سرویس v2rayA در Docker درحال اجرا است. نسخه: {version}'
+  default: 'سرویس v2rayA درحال اجرا است. نسخه: {version}'
+  newVersion: 'نسخه جدید شناسایی شد: {version}'
+  messages:
+    - هیچ سروری وجود ندارد.
+    - می‌توانید یک سرور ایجاد/وارد کنید یا یک اشتراک وارد کنید.
+v2ray:
+  start: شروع
+  stop: توقف
+server:
+  name: نام سرور
+  address: آدرس سرور
+  protocol: پروتکل
+  latency: تاخیر
+  lastSeenTime: آخرین زمان مشاهده
+  lastTryTime: آخرین زمان تست
+  messages:
+    notAllowInsecure: 'بر اساس مستندات {name}، اگر از {name} استفاده کنید، AllowInsecure ممنوع خواهد بود.'
+    notRecommend: 'بر اساس مستندات {name}، اگر از {name} استفاده کنید، AllowInsecure توصیه نمی‌شود.'
+InSecureConfirm:
+  title: پیکربندی خطرناک شناسایی شد
+  message: 'تنظیمات <b>AllowInsecure</b> را روی true قرار داده است. این ممکن است خطرات امنیتی ایجاد کند. آیا مطمئن هستید که ادامه می‌دهید؟'
+  confirm: می‌دانم چه کار می‌کنم
+  cancel: لغو
+subscription:
+  host: هاست
+  remarks: یادداشت
+  timeLastUpdate: زمان آخرین به‌روزرسانی
+  numberServers: تعداد سرورها
+  subscription: اشتراک
+  autoSelect: اتصال خودکار به سرورهای جدید پس از به‌روزرسانی خودکار اشتراک
+operations:
+  tproxyWhiteIpGroups: گروه‌های IP مجاز مستقیم
+  name: عملیات
+  update: به‌روزرسانی
+  autoUpdate: به‌روزرسانی خودکار
+  manualUpdate: به‌روزرسانی دستی
+  modify: تغییر
+  share: اشتراک‌گذاری
+  view: مشاهده
+  delete: حذف
+  create: ایجاد
+  import: وارد کردن
+  inBatch: دسته‌ای
+  connect: اتصال
+  disconnect: قطع اتصال
+  select: انتخاب
+  addTo: افزودن به
+  addToProxyGroup: افزودن به گروه {group}
+  removeFromProxyGroup: حذف از گروه {group}
+  login: ورود
+  logout: خروج
+  configure: پیکربندی
+  cancel: لغو
+  confirm: تایید
+  confirm2: با دقت تایید شد
+  saveApply: ذخیره و اعمال
+  save: ذخیره
+  copyLink: کپی لینک
+  export: خروجی
+  copySelected: کپی گره‌های انتخاب شده
+  downloadTxt: دانلود فایل TXT
+  helpManual: راهنما
+  'yes': بله
+  'no': خیر
+  switchSite: تغییر به سایت جایگزین
+  addOutbound: افزودن یک گروه خروجی
+  add: افزودن
+  close: بستن
+  domainsExcluded: دامنه‌های حذف شده
+  tproxyExcludedInterfaces: پیشوندهای رابط حذف شده
+  configureTunRouteScript: پیکربندی اسکریپت مسیر
+register:
+  title: ابتدا یک حساب مدیریت ایجاد کنید
+  messages:
+    - حساب مدیریت خود را به خاطر بسپارید که برای ورود استفاده می‌شود.
+    - اطلاعات حساب به صورت محلی ذخیره می‌شود. ما هرگز اطلاعاتی به سرور ارسال نمی‌کنیم.
+    - در صورت فراموشی رمز عبور، می‌توانید از v2raya --reset-password برای بازنشانی استفاده کنید.
+login:
+  title: ورود
+  username: نام کاربری
+  password: رمز عبور
+setting:
+  inboundSniffing: اسنیفینگ
+  transparentProxy: پروکسی شفاف/پروکسی سیستم
+  transparentType: نوع پیاده‌سازی پروکسی شفاف/پروکسی سیستم
+  logLevel: سطح لاگ
+  pacMode: حالت تقسیم ترافیک پورت قانون
+  preventDnsSpoofing: جلوگیری از آلودگی DNS
+  specialMode: حالت ویژه
+  mux: مالتی‌پلکس
+  autoUpdateSub: به‌روزرسانی خودکار اشتراک‌ها
+  autoUpdateGfwlist: به‌روزرسانی خودکار GFWList
+  preferModeWhenUpdate: حالت هنگام به‌روزرسانی اشتراک‌ها و GFWList
+  tproxyExcludedInterfaces: پیشوندهای رابط حذف شده
+  tunAutoRoute: مسیر خودکار
+  tunBypassInterfaces: رابط‌های عبوری TUN
+  tunBypassCustomPlaceholder: 'الگوهای glob سفارشی، مثال: docker*, vmnet*'
+  tunBypassSelectPlaceholder: انتخاب رابط‌ها...
+  tunBypassSelected: '{n} رابط انتخاب شد'
+  ipForwardOn: IP Forward
+  portSharingOn: اشتراک‌گذاری پورت
+  concurrency: همزمانی
+  tunProcessBackend: روش حذف فرآیند TinyTun
+  tunExcludeProcesses: فرآیندهای حذف شده TinyTun
+  ssBackend: پشتیبان Shadowsocks
+  trojanBackend: پشتیبان Trojan
+  nodeBackend: پشتیبان
+  options:
+    trace: ردیابی
+    debug: دیباگ
+    info: اطلاعات
+    warn: هشدار
+    error: خطا
+    global: ترافیک را تقسیم نکن
+    direct: مستقیم
+    pac: وابسته به پورت قانون
+    whitelistCn: پروکسی به جز سایت‌های CN
+    gfwlist: پروکسی فقط GFWList
+    sameAsPacMode: حالت تقسیم ترافیک همانند پورت قانون است
+    customRouting: مسیریابی سفارشی
+    antiDnsHijack: فقط جلوگیری از ربودن DNS (سریع)
+    forwardDnsRequest: ارسال درخواست DNS
+    doh: DoH (DNS-over-HTTPS)
+    default: پیش‌فرض
+    'on': روشن
+    'off': خاموش
+    notIntegrated: یکپارچه نشده
+    updateSubWhenStart: به‌روزرسانی اشتراک‌ها هنگام شروع سرویس
+    updateSubAtIntervals: 'به‌روزرسانی منظم اشتراک‌ها (واحد: ساعت)'
+    updateGfwlistWhenStart: به‌روزرسانی GFWList هنگام شروع سرویس
+    updateGfwlistAtIntervals: 'به‌روزرسانی منظم GFWList (واحد: ساعت)'
+    dependTransparentMode: پیروی از پروکسی شفاف/پروکسی سیستم
+    closed: خاموش
+    advanced: تنظیمات پیشرفته
+    leastPing: کمترین تاخیر اولویت
+    tunBackendTun: TUN (پیش‌فرض، جستجوی /proc)
+    tunBackendEbpf: eBPF (حذف فرآیند cgroupv2)
+    backendV2ray: v2ray / xray
+    backendSystemDefault: پیش‌فرض سیستم
+  messages:
+    inboundSniffing: ترافیک ورودی را اسنیف کنید. اگر روشن نباشد، ممکن است برخی ترافیک‌ها به درستی هدایت نشوند.
+    gfwlist: بر اساس زمان تغییر فایل که گاهی پس از آخرین نسخه آنلاین است.
+    transparentProxy: 'اگر پروکسی شفاف روشن باشد، هیچ پیکربندی اضافی نیاز نیست و تمام ترافیک TCP از v2rayA عبور می‌کند. ارائه سرویس پروکسی به سایر کامپیوترها و docker به عنوان دروازه باید گزینه "اشتراک‌گذاری در LAN" را روشن کند.'
+    transparentType: '★tproxy: پشتیبانی از UDP، اما پشتیبانی از docker نمی‌کند. ★redirect: مناسب برای docker، اما از UDP پشتیبانی نمی‌کند و باید پورت محلی 53 را برای جلوگیری از آلودگی DNS اشغال کند. ★tun (TinyTun): پروکسی TUN跨平台، نیاز به فایل باینری tinytun دارد.'
+    tproxyExcludedInterfaces: 'پیشوندهای رابط شبکه را تنظیم کنید که نباید از پروکسی شفاف عبور کنند. wildcard * پشتیبانی می‌شود. مثال: docker*, veth*, wg*, ppp*, br-*.'
+    tunAutoRoute: 'هنگام فعال بودن، TinyTun به طور خودکار مسیرهای سیستم را پیکربندی می‌کند. هنگام غیرفعال بودن، باید اسکریپت‌های راه‌اندازی/توقف سفارشی برای پیکربندی مسیر ارائه دهید.'
+    tunBypassInterfaces: 'رابط‌هایی را که باید از پروکسی TUN حذف شوند انتخاب کنید، یا الگوهای glob سفارشی را در زیر وارد کنید.'
+    tunProcessBackend: 'روش حذف فرآیند TinyTun را در لینوکس انتخاب کنید. حالت TUN از /proc برای سازگاری گسترده استفاده می‌کند؛ حالت eBPF از cgroupv2 برای حذف دقیق‌تر فرآیند استفاده می‌کند.'
+    tunExcludeProcesses: 'نام فرآیندهای اضافی برای عبور از TinyTun را پیکربندی کنید. یک نام در هر خط توصیه می‌شود.'
+    pacMode: 'در اینجا می‌توانید قانون تقسیم ترافیک پورت قانون را تنظیم کنید. به طور پیش‌فرض، پورت "قانون تقسیم ترافیک" 20172 و پروتکل HTTP است.'
+    preventDnsSpoofing: '★ارسال درخواست DNS: ارسال درخواست‌های DNS از طریق سرور پروکسی. ★DoH (v2ray-core: 4.22.0+): DNS over HTTPS.'
+    specialMode: '★supervisor: نظارت بر آلودگی DNS، رهگیری زودهنگام. ★fakedns: استفاده از استراتژی fakedns برای تسریع حل.'
+    tcpFastOpen: 'فرآیند دست‌دهی TCP را برای تسریع برقراری اتصال ساده می‌کند. ممکن است ویژگی‌های بسته را برجسته کند.'
+    mux: 'مالتی‌پلکس کردن اتصالات TCP برای کاهش تعداد دست‌دهی، اما بر موارد استفاده با توان بالا مانند تماشای ویدیو، دانلود و تست سرعت تأثیر می‌گذارد.'
+    confirmEgressPorts: '<p>شما در حال تنظیم پروکسی شفاف در LANها هستید، لیست سفید پورت خروجی را تأیید کنید.</p><p>لیست سفید:</p><p>TCP: {tcpPorts}</p><p>UDP: {udpPorts}</p>'
+    grpcShouldWithTls: gRPC باید با TLS باشد
+    ssPluginImpl: '★پیش‌فرض: ''transport'' برای simple-obfs، ''chained'' برای v2ray-plugin. ★chained: ترافیک shadowsocks به پلاگین مستقل هدایت می‌شود. ★transport: توسط لایه حمل v2ray/xray core پردازش می‌شود.'
+customAddressPort:
+  title: آدرس و پورت‌ها
+  serviceAddress: آدرس سرویس
+  portSocks5: پورت SOCKS5
+  portHttp: پورت HTTP
+  portSocks5WithPac: پورت SOCKS5 (با قانون)
+  portHttpWithPac: پورت HTTP (با قانون)
+  portVmess: پورت VMess (با قانون)
+  portVmessLink: لینک پورت VMess
+  portApi: پورت API (0 برای تصادفی)
+  apiServices: سرویس‌های API فعال
+  messages:
+    - 'آدرس سرویس پیش‌فرض 0.0.0.0:2017 را می‌توان با تنظیم متغیر محیطی <code>V2RAYA_ADDRESS</code> و آرگومان <code>--address</code> تغییر داد.'
+    - 'اگر کانتینر docker v2raya را با نگاشت پورت به جای <code>--network host</code> شروع کنید، می‌توانید پورت‌ها را به این روش دوباره نگاشت کنید.'
+    - ما نمی‌توانیم اشغال پورت را در حالت docker قضاوت کنیم. خودتان تأیید کنید.
+    - صفر به معنای بستن این پورت است.
+customRouting:
+  title: سفارشی‌سازی قانون مسیریابی
+  defaultRoutingRule: قانون پیش‌فرض مسیریابی
+  sameAsDefaultRule: همانند قانون پیش‌فرض
+  appendRule: افزودن قانون
+  direct: مستقیم
+  proxy: پروکسی
+  block: مسدود
+  rule: قانون
+  domainFile: فایل دامنه
+  typeRule: نوع قانون
+  messages:
+    '0': 'v2rayA تمام فایل‌های SiteDat را در <b>{V2RayLocationAsset}</b> شناسایی می‌کند'
+    '1': '<a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ساخت فایل SiteDat</a>'
+    '2': انتخاب چندگانه پشتیبانی می‌شود.
+    noSiteDatFileFound: 'فایل siteDat در {V2RayLocationAsset} یافت نشد'
+    emptyRuleNotPermitted: قانون خالی مجاز نیست
+dns:
+  title: تنظیمات DNS
+  help: راهنمای DNS
+  helpTooltip: مشاهده مستندات v2fly DNS
+  colServer: سرور DNS
+  colDomains: لیست دامنه
+  colOutbound: خروجی
+  serverPlaceholder: 'مثال: 8.8.8.8 یا https://dns.google/dns-query'
+  domainsPlaceholder: "یک دامنه در هر خط، مثال: geosite:cn\nبرای DNS پشتیبان خالی بگذارید"
+  addRule: افزودن قانون
+  resetDefault: بازنشانی به پیش‌فرض
+  errNoRules: حداقل یک قانون DNS لازم است
+  internalQueryServers: سرورهای جستجوی دامنه
+  externalQueryServers: سرورهای جستجوی دامنه خارجی
+  messages:
+    - '"@:dns.internalQueryServers" برای جستجوی دامنه‌های داخلی و "@:dns.externalQueryServers" برای جستجوی دامنه‌های خارجی استفاده می‌شود.'
+    - 'اگر "@:dns.externalQueryServers" خالی بماند، "@:dns.internalQueryServers" تمام دامنه‌ها را جستجو می‌کند.'
+doh:
+  title: پیکربندی سرور DoH
+  dohPriorityList: لیست اولویت سرورهای DoH
+  messages:
+    - 'DoH (DNS over HTTPS) می‌تواند به طور موثر از آلودگی DNS جلوگیری کند. اما برخی ارائه‌دهندگان DoH ممکن است خودشان آلوده شوند.'
+    - سرورهای DoH عمومی عالی در چین شامل alidns، geekdns، rubyfish و غیره هستند
+    - در منطقه تایوان شامل quad101 و غیره
+    - آمریکا: cloudflare، dns.google و غیره
+    - 'لیست: <a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>'
+    - 'راه‌اندازی سرویس DoH در سرور خودتان توصیه می‌شود <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>.'
+    - بهینه این است که یک یا دو خط بالا قرار دهید. لیست پس از ذخیره با محتوای خالی به پیش‌فرض بازمی‌گردد.
+egressPortWhitelist:
+  title: لیست سفید پورت خروجی
+  tcpPortWhitelist: لیست سفید پورت TCP
+  udpPortWhitelist: لیست سفید پورت UDP
+  messages:
+    - اگر v2rayA روی سرور A که به سرور پروکسی B متصل است راه‌اندازی شده باشد، توجه کنید:
+    - 'پروکسی شفاف تمام ترافیک TCP و UDP را مجبور به عبور از سرور پروکسی B می‌کند، جایی که آدرس IP مبدأ با آدرس IP پروکسی B جایگزین می‌شود.'
+    - 'برای حل آن، باید آن پورت‌های سرویس را به لیست سفید اضافه کنیم تا از پروکسی عبور نکنند. مثال: ssh(22)، v2raya({v2rayaPort}).'
+    - اگر سرور هیچ سرویسی ارائه نمی‌دهد، می‌توانید از پیکربندی صرف‌نظر کنید.
+    - 'فرمت: 22 به معنی پورت 22، 20170:20172 به معنی سه پورت 20170 تا 20172.'
+configureServer:
+  title: پیکربندی سرور | سرور
+  servername: نام سرور
+  port: پورت
+  forceTLS: اجباری TLS
+  noObfuscation: بدون مبهم‌سازی
+  httpObfuscation: مبهم‌سازی به عنوان HTTP
+  srtpObfuscation: مبهم‌سازی به عنوان تماس ویدیویی (SRTP)
+  utpObfuscation: مبهم‌سازی به عنوان Bittorrent (uTP)
+  wechatVideoObfuscation: مبهم‌سازی به عنوان تماس ویدیویی Wechat
+  dtlsObfuscation: مبهم‌سازی به عنوان بسته‌های DTLS1.2
+  wireguardObfuscation: مبهم‌سازی به عنوان بسته‌های WireGuard
+  hostObfuscation: هاست
+  pathObfuscation: مسیر
+  seedObfuscation: Seed
+  username: نام کاربری
+  password: رمز عبور
+  origin: اصلی
+  pinnedCertchainSha256: pinned certificate chain sha256
+  maxEarlyData: Max Early Data
+  earlyDataHeaderName: Early Data Header Name
+  multiMode: MultiMode
+  idleTimeout: Idle Timeout
+  healthCheckTimeout: Health Check Timeout
+  permitWithoutStream: Permit Without Stream
+  initialWindowsSize: Initial Windows Size
+  wireguardName: نام
+  wireguardAddress: آدرس
+  wireguardPort: پورت
+  wireguardPublicKey: کلید عمومی
+  wireguardPrivateKey: کلید خصوصی
+  wireguardLocalAddress: آدرس (محلی)
+  wireguardDns: DNS
+  wireguardMtu: MTU
+  wireguardAllowedIPs: IPهای مجاز
+  wireguardPersistentKeepalive: Persistent Keepalive
+  wireguardPreSharedKey: کلید پیش‌اشتراک
+  wireguardEndpoint: Endpoint
+configureSubscription:
+  title: پیکربندی اشتراک
+import:
+  message: 'لینک سرور یا آدرس اشتراک را وارد کنید:'
+  batchMessage: 'یک لینک سرور در هر خط:'
+  qrcodeError: یافتن QRCode معتبر ممکن نیست، لطفاً دوباره تلاش کنید
+delete:
+  title: تایید حذف
+  message: 'آیا از <b>حذف</b> این سرورها/اشتراک‌ها مطمئن هستید؟ این عمل قابل بازگشت نیست.'
+latency:
+  message: تست تاخیر ممکن است چند دقیقه طول بکشد. لطفاً صبور باشید.
+version:
+  higherVersionNeeded: 'این عملیات به نسخه بالاتر از {version} نیاز دارد'
+  v2rayInvalid: 'geosite.dat، geoip.dat یا v2ray-core ممکن است به درستی نصب نشده باشند'
+  v2rayNotV5: 'نسخه v2ray-core v5 نیست. از v5 استفاده کنید یا v2rayA را به v1.5 کاهش دهید'
+  coreVersionMismatch: 'عدم تطابق نسخه هسته: نسخه v2raya_core باید دقیقاً با نسخه v2rayA مطابقت داشته باشد. {err}'
+about: |-
+  <p>v2rayA یک رابط کاربری وب برای V2Ray است.</p>
+            <p class="about-small">پورت‌های پیش‌فرض:</p>
+            <p class="about-small">2017: پورت سرویس v2rayA</p>
+            <p class="about-small">20170: پروتکل SOCKS</p>
+            <p class="about-small">20171: پروتکل HTTP</p>
+            <p class="about-small">20172: پروتکل HTTP با "قانون تقسیم ترافیک"</p>
+            <p class="about-small">سایر پورت‌ها:</p>
+            <p class="about-small">32345: tproxy، مورد نیاز پروکسی شفاف</p>
+            <p>تمام داده‌ها به صورت محلی ذخیره می‌شوند نه در ابر.</p>
+            <p>مشکلات یافت شده را می‌توانید در <a href="https://github.com/v2rayA/v2rayA/issues">issues</a> گزارش دهید.</p>
+            <p>مستندات: <a href="https://v2raya.org">https://v2raya.org</a></p>
+axios:
+  messages:
+    optimizeBackend: آدرس سرویس v2rayA را تنظیم کنید؟
+    noBackendFound: 'v2rayA در {url} یافت نشد. مطمئن شوید v2rayA در این آدرس در حال اجرا است.'
+    cannotCommunicate:
+      - 'عدم ارتباط. اگر سرویس شما در حال اجرا است و پورت‌ها به درستی باز هستند، ممکن است مرورگر فعلی به سایت‌های https اجازه دسترسی به منابع http را ندهد.'
+      - 'عدم ارتباط. Firefox به سایت‌های https اجازه دسترسی به منابع http را نمی‌دهد.'
+  urls:
+    usage: 'https://github.com/v2rayA/v2rayA/wiki/Usage'
+routingA:
+  messages:
+    - برای راهنما روی دکمه "Help&Manual" کلیک کنید
+  inboundDeprecated: تعریف inbounds در RoutingA منسوخ شده است. لطفاً از تنظیمات inbound سفارشی با قوانین RoutingA استفاده کنید.
+  inboundDeprecatedConfirm: 'این پیکربندی RoutingA شامل تعاریف inbound منسوخ شده است. آیا ادامه می‌دهید؟'
+outbound:
+  addMessage: 'لطفاً نام گروه خروجی را که می‌خواهید اضافه کنید وارد کنید:'
+  deleteMessage: 'آیا از <b>حذف</b> خروجی "{outboundName}" مطمئن هستید؟ این عمل قابل بازگشت نیست.'
+proxyGroup:
+  pickTitle: افزودن به گروه پروکسی
+  pickMessage: گروه پروکسی را که این گره باید به آن بپیوندد انتخاب کنید.
+  group: گروه پروکسی
+driver:
+  welcome:
+    - ابتدا یک سرور وارد کنید
+    - اولین بار استفاده، هیچ سروری وجود ندارد. در اینجا یک سرور وارد یا ایجاد کنید.
+  tabs:
+    - اشتراک‌ها و سرورها
+    - پس از وارد کردن اشتراک‌ها و سرورها، در اینجا می‌توانید آنها را مدیریت کنید.
+tproxyWhiteIpGroups:
+  title: گروه‌های IP مجاز مستقیم
+  messages:
+    - گروه IP انتخاب شده مستقیماً از XRay/V2Ray core خارج می‌شود. لطفاً مطمئن شوید سرور DNS شما قابل اعتماد است.
+    - بهتر است هنگام استفاده از Nftables از این ویژگی استفاده کنید.
+  formName1: برای انتخاب چندگانه Ctrl را نگه دارید
+  formName2: IPهای سفارشی (یک در هر خط، فرمت CIDR استاندارد)
+  formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48"
+  invalidCustomIps: IPهای سفارشی نامعتبر
+  cn: چین
+  private: خصوصی
+  us: ایالات متحده
+  cloudflare: Cloudflare
+domainsExcluded:
+  title: دامنه‌های حذف شده
+  messages:
+    - لیستی از نام دامنه‌ها. اگر نتیجه اسنیفینگ با دامنه‌ای در این لیست مطابقت داشت، آدرس هدف بازنشانی نمی‌شود.
+  formName: لیست دامنه‌های حذف شده
+  formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+gfwList:
+  title: به‌روزرسانی GFWList
+  messages:
+    - اگر دسترسی به GitHub در محیط شما دشوار است، می‌توانید آخرین GFWList (geosite.dat) را از GitHub دانلود کنید.
+    - اگر فرم ورودی خالی باشد، به طور خودکار از GitHub دانلود می‌شود.
+    - 'توجه: فایل اشتباه ممکن است باعث شکست راه‌اندازی سرویس شود.'
+  formName: لینک دانلود سفارشی
+  wrongCustomLink: لینک دانلود سفارشی اشتباه
+tinytun:
+  routeScript:
+    title: اسکریپت مسیر سفارشی TinyTun
+    warning: 'هشدار: اسکریپت‌های نادرست ممکن است شبکه یا مسیریابی سیستم شما را خراب کنند.'
+    shellType: نوع Shell
+    customShell: سفارشی (مسیر را در زیر مشخص کنید)
+    shellPath: مسیر Shell
+    shellPathPlaceholder: /usr/bin/bash
+    setupScript: اسکریپت راه‌اندازی (پس از شروع TinyTun اجرا می‌شود)
+    setupScriptPlaceholder: "# اسکریپت پیکربندی مسیرها هنگام شروع TinyTun\n# مثال: ip route add default dev tun0"
+    teardownScript: اسکریپت توقف (قبل از توقف TinyTun اجرا می‌شود)
+    teardownScriptPlaceholder: "# اسکریپت حذف مسیرها هنگام توقف TinyTun\n# مثال: ip route del default dev tun0"
+  processExclude:
+    title: حذف فرآیند سفارشی TinyTun
+    warning: 'هشدار: نام فرآیند نادرست ممکن است ترافیک را به طور غیرمنتظره‌ای عبور دهد.'
+    listLabel: نام فرآیندهای حذف شده
+    placeholder: "v2raya\nv2ray\nchrome.exe"
+    hint: از جداکننده کاما یا خط جدید پشتیبانی می‌کند.
+customInbound:
+  title: پورت‌های ورودی سفارشی
+  tag: برچسب (نام یادداشت)
+  protocol: پروتکل
+  port: پورت
+  addNew: افزودن ورودی جدید
+  tagPlaceholder: 'مثال: my-socks'
+  portPlaceholder: 'مثال: 10800'
+  empty: بدون ورودی سفارشی
+  hint: فقط پروتکل‌های SOCKS و HTTP پشتیبانی می‌شوند. برچسب باید یکتا باشد.
+  fillAll: لطفاً همه فیلدها را پر کنید
+  deleteConfirm: 'حذف ورودی {tag}؟'
+  outbound: گروه خروجی متصل
+  outboundPlaceholder: گروه خروجی را انتخاب کنید
+  outboundType: حالت اتصال
+  outboundTypeDirect: انتخاب مستقیم
+  outboundTypeRoutingA: قوانین RoutingA
+  outboundRequired: لطفاً یک گروه خروجی متصل انتخاب کنید
+  routingARules: قوانین RoutingA
+  routingARulesPlaceholder: قوانین مسیریابی RoutingA را وارد کنید...

@@ -3,14 +3,23 @@ definePageMeta({ middleware: ['auth', 'every-check'] })
 
 const currentTab = ref('SUBSCRIPTION')
 
-const { data: { value: { data: { outbounds } } } } = await useV2Fetch<any>('outbounds').json()
-const { data: { value: { data: { touch } } } } = await useV2Fetch<any>('touch').json()
+// 使用 try-catch 保护顶层 await，防止 API 失败时白屏
+try {
+  const outboundRes = await useV2Fetch<any>('outbounds').json()
+  const touchRes = await useV2Fetch<any>('touch').json()
 
-proxies.value = {
-  ...proxies.value,
-  outbounds,
-  subs: touch.subscriptions,
-  servers: touch.servers
+  if (outboundRes.data.value?.code === 'SUCCESS' && touchRes.data.value?.code === 'SUCCESS') {
+    const { outbounds } = outboundRes.data.value.data
+    const { touch } = touchRes.data.value.data
+    proxies.value = {
+      ...proxies.value,
+      outbounds,
+      subs: touch.subscriptions,
+      servers: touch.servers
+    }
+  }
+} catch (e) {
+  console.error('Failed to load initial data:', e)
 }
 </script>
 

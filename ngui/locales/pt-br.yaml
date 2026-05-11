@@ -1,0 +1,438 @@
+common:
+  outboundSetting: Configuração de Saída
+  setting: Configuração
+  about: Sobre
+  loggedAs: 'Logado como <b>{username}</b>'
+  v2rayCoreStatus: Status do v2ray-core
+  checkRunning: Verificando
+  isRunning: Executando
+  notRunning: Pronto
+  waitingNetwork: Aguardando conexão de rede
+  notLogin: Por favor, faça login
+  latest: Mais recente
+  local: Local
+  success: SUCESSO
+  fail: FALHA
+  empty: Nenhum servidor adicionado
+  message: Mensagem
+  none: nenhum
+  optional: opcional
+  loadBalance: Balanceamento de Carga
+  log: Logs
+  proxyGroups: Grupos de Proxy
+  darkTheme: Tema Escuro
+  lightTheme: Tema Claro
+  autoTheme: Tema Automático
+log:
+  logModalTitle: Visualizar logs
+  logsLabel: Logs
+  refreshInterval: Intervalo de atualização
+  seconds: segundos
+  autoScoll: Rolagem Automática
+  autoShowNew: Mostrar novos logs automaticamente
+  category: Categoria
+  source: Fonte do Log
+  categories:
+    all: Todos
+    error: Erro
+    warn: Aviso
+    info: Info
+    debug: Debug
+    trace: Trace
+    other: Outros
+  sources:
+    all: Todos
+welcome:
+  title: Bem-vindo
+  docker: 'O serviço v2rayA está rodando no Docker. Versão: {version}'
+  default: 'O serviço v2rayA está rodando. Versão: {version}'
+  newVersion: 'Nova versão detectada: {version}'
+  messages:
+    - Não há servidor.
+    - Você pode criar/importar um servidor ou importar uma assinatura.
+v2ray:
+  start: Iniciar
+  stop: Parar
+server:
+  name: Nome do Servidor
+  address: Endereço do Servidor
+  protocol: Protocolo
+  latency: Latência
+  lastSeenTime: Última vez visto
+  lastTryTime: Última tentativa
+  messages:
+    notAllowInsecure: 'De acordo com a documentação do {name}, se você usar {name}, AllowInsecure será proibido.'
+    notRecommend: 'De acordo com a documentação do {name}, se você usar {name}, AllowInsecure não é recomendado.'
+InSecureConfirm:
+  title: Configuração perigosa detectada
+  message: A configuração definiu o <b>AllowInsecure</b> como verdadeiro. Isso pode causar riscos de segurança. Tem certeza de que deseja continuar?
+  confirm: Eu sei o que estou fazendo
+  cancel: cancelar
+subscription:
+  host: Host
+  remarks: Observações
+  timeLastUpdate: Data e Hora da Última Atualização
+  numberServers: Número de Servidores
+  subscription: Assinatura
+  autoSelect: Selecionar automaticamente novo servidor após atualização
+operations:
+  tproxyWhiteIpGroups: Grupos de IP do TPROXY
+  name: Operações
+  update: Atualizar
+  autoUpdate: Atualização Automática
+  manualUpdate: Atualização Manual
+  modify: Modificar
+  share: Compartilhar
+  view: Visualizar
+  delete: Excluir
+  create: Criar
+  import: Importar
+  inBatch: Em lote
+  connect: Conectar
+  disconnect: Desconectar
+  select: Selecionar
+  addTo: Adicionar a
+  addToProxyGroup: Adicionar ao grupo {group}
+  removeFromProxyGroup: Remover do grupo {group}
+  login: Login
+  logout: Logout
+  configure: Configurar
+  cancel: Cancelar
+  confirm: Confirmar
+  confirm2: Cuidadosamente confirmado
+  saveApply: Salvar e Aplicar
+  save: Salvar
+  copyLink: COPIAR LINK
+  export: Exportar
+  copySelected: Copiar selecionados
+  downloadTxt: Baixar arquivo TXT
+  helpManual: Ajuda & Manual
+  'yes': Sim
+  'no': Não
+  switchSite: Mudar para site alternativo
+  addOutbound: Adicionar uma saída
+  add: Adicionar
+  close: Fechar
+  domainsExcluded: Domínios Excluídos
+  tproxyExcludedInterfaces: Prefixos de interface a ignorar
+  configureTunRouteScript: Configurar script de rota
+register:
+  title: Crie uma conta de administrador primeiro
+  messages:
+    - Lembre-se de sua conta de administrador que é importante para o login.
+    - As informações da conta são armazenadas localmente. Nunca enviamos informações para nenhum servidor.
+    - Uma vez que a senha foi esquecida, você pode usar v2raya --reset-password para redefinir.
+login:
+  title: Login
+  username: Nome de usuário
+  password: Senha
+setting:
+  inboundSniffing: Sniffing
+  transparentProxy: Proxy Transparente/Proxy do Sistema
+  transparentType: Implementação do Proxy Transparente/Proxy do Sistema
+  logLevel: Nível de Log
+  pacMode: Modo de Divisão de Tráfego da Porta de Regra
+  preventDnsSpoofing: Prevenir contaminação DNS
+  specialMode: Modo Especial
+  mux: Multiplexação
+  autoUpdateSub: Atualizar Assinaturas Automaticamente
+  autoUpdateGfwlist: Atualizar GFWList Automaticamente
+  preferModeWhenUpdate: Modo ao Atualizar Assinaturas e GFWList
+  tproxyExcludedInterfaces: Prefixos de interface a ignorar
+  tunAutoRoute: Rota Automática
+  tunBypassInterfaces: Interfaces para ignorar no TUN
+  tunBypassCustomPlaceholder: 'Curingas personalizados, ex: docker*, vmnet*'
+  tunBypassSelectPlaceholder: Selecionar interfaces...
+  tunBypassSelected: '{n} interface(s) selecionada(s)'
+  ipForwardOn: Encaminhamento de IP
+  portSharingOn: Compartilhamento de Porta
+  concurrency: Concorrência
+  tunProcessBackend: Modo de exclusão de processo TinyTun
+  tunExcludeProcesses: Processos personalizados para excluir no TinyTun
+  ssBackend: Backend do Shadowsocks
+  trojanBackend: Backend do Trojan
+  nodeBackend: Backend
+  options:
+    trace: Trace
+    debug: Debug
+    info: Info
+    warn: Aviso
+    error: Erro
+    global: Não Dividir Tráfego
+    direct: Direto
+    pac: Depende da Porta de Regra
+    whitelistCn: Proxy exceto Sites CN
+    gfwlist: Proxy apenas GFWList
+    sameAsPacMode: Modo de Divisão de Tráfego é o Mesmo que a Porta de Regra
+    customRouting: Roteamento Personalizado
+    antiDnsHijack: Apenas prevenir sequestro DNS (rápido)
+    forwardDnsRequest: Encaminhar consultas DNS
+    doh: DoH (DNS-over-HTTPS)
+    default: Manter Padrão
+    'on': Ligado
+    'off': Desligado
+    notIntegrated: Não integrado
+    updateSubWhenStart: Atualizar Assinaturas Quando o Serviço Inicia
+    updateSubAtIntervals: 'Atualizar Assinaturas Regularmente (Unidade: hora)'
+    updateGfwlistWhenStart: Atualizar GFWList Quando o Serviço Inicia
+    updateGfwlistAtIntervals: 'Atualizar GFWList Regularmente (Unidade: hora)'
+    dependTransparentMode: Segue Proxy Transparente/Proxy do Sistema
+    closed: Desligado
+    advanced: Configuração Avançada
+    leastPing: Menor Latência Primeiro
+    tunBackendTun: TUN (padrão, busca de processo /proc)
+    tunBackendEbpf: eBPF (exclusão de processo cgroupv2)
+    backendV2ray: v2ray / xray
+    backendSystemDefault: Padrão do Sistema
+  messages:
+    inboundSniffing: Sniffing de domínio de entrada. Se desativado, pode causar erros de roteamento de domínio.
+    gfwlist: Baseado no tempo de modificação do arquivo que às vezes é após a versão mais recente online.
+    transparentProxy: Se o proxy transparente estiver ligado, nenhuma configuração extra é necessária e todo o tráfego TCP passará pelo v2rayA. Fornecendo serviço de proxy para outros computadores e docker como gateway deve fazer a opção 'Compartilhar na LAN' ligada.
+    transparentType: '★tproxy: suporta UDP, mas não suporta docker. ★redirect: amigável para docker, mas não suporta UDP e precisa ocupar a porta local 53 para dns anti-poluição. ★tun (TinyTun): Proxy transparente TUN multiplataforma, requer binário tinytun; o plano de dados no Linux é processado pelo backend TinyTun, a configuração YAML gerada deve corresponder à versão TinyTun.'
+    tproxyExcludedInterfaces: 'Define prefixos de interface que não passam pelo proxy transparente. Suporta curinga * (iptables converte automaticamente para +). Ex: docker*, veth*, wg*, ppp*, br-*. Múltiplos prefixos separados por vírgula.'
+    tunAutoRoute: Quando ativado, TinyTun configura automaticamente a rota do sistema. Quando desativado, scripts personalizados de inicializaçã/parada são necessários.
+    tunBypassInterfaces: Selecione interfaces para ignorar no proxy TUN, ou insira curingas personalizados abaixo.
+    tunProcessBackend: Selecione a implementação de exclusão de processo TinyTun no Linux. Modo TUN usa /proc para busca, compatibilidade forte; modo eBPF usa cgroupv2 para exclusão de processo mais precisa, requer tinytun-ebpf.o (/usr/lib/tinytun/).
+    tunExcludeProcesses: 'Configure nomes de processos adicionais para bypass direto. Um por linha, ex: chrome.exe, firefox.'
+    pacMode: 'Aqui você pode definir a regra de divisão de tráfego da porta de regra. Por padrão, a "Regra de Divisão de Tráfego" porta é 20172 e protocolo HTTP.'
+    preventDnsSpoofing: '★Encaminhar consultas DNS: Encaminha consultas DNS através do servidor proxy. ★DoH (v2ray-core: 4.22.0+): DNS over HTTPS.'
+    specialMode: '★supervisor: Monitora contaminação DNS, intercepta precocemente, usa sniffing do v2ray-core para resolver. ★fakedns: Usa estratégia fakedns para aceleração de resolução.'
+    tcpFastOpen: Simplifica o processo de handshake do TCP para acelerar o estabelecimento da conexão. Risco de enfatizar as características dos pacotes existe. Pode causar falha na conexão se o seu sistema não suportar.
+    mux: Multiplexando conexões TCP para reduzir o número de handshake, mas isso afetará os casos de uso com alta taxa de transferência, como assistir vídeos, baixar e testar a velocidade. Suporta apenas vmess agora.
+    confirmEgressPorts: |-
+      <p>Você está configurando um proxy transparente em LANs, confirme a lista de permissões da porta de saída.</p>
+                                <p>Lista de permissões:</p>
+                                <p>TCP: {tcpPorts}</p>
+                                <p>UDP: {udpPorts}</p>
+    grpcShouldWithTls: gRPC deve estar com TLS
+    ssPluginImpl: '★padrão: ''transport'' para simple-obfs, ''chained'' para v2ray-plugin. ★chained: o tráfego shadowsocks será redirecionado para o plugin standalone. ★transport: processado pela camada de transporte do v2ray/xray core diretamente.'
+customAddressPort:
+  title: Endereço e Portas
+  serviceAddress: Endereço do Serviço
+  portSocks5: Porta do SOCKS5
+  portHttp: Porta do HTTP
+  portSocks5WithPac: Porta do SOCKS5(com Regra)
+  portHttpWithPac: Porta do HTTP(com Regra)
+  portVmess: Porta do VMess(com Regra)
+  portVmessLink: Link da porta VMess
+  portApi: Porta da API (0 para aleatório)
+  apiServices: Serviços da API
+  messages:
+    - O endereço do serviço padrão como 0.0.0.0:2017 pode ser alterado definindo a variável de ambiente <code>V2RAYA_ADDRESS</code> e o argumento do comando<code>--address</code>.
+    - Se você iniciar o contêiner docker v2raya com mapeamento de porta em vez de <code>--network host</code>, você pode remapear portas desta maneira.
+    - Não podemos julgar as ocupações de porta no modo docker. Confirme por si mesmo.
+    - Zero significa fechar esta porta.
+customRouting:
+  title: Personalizar Regra de Roteamento
+  defaultRoutingRule: Regra de Roteamento Padrão
+  sameAsDefaultRule: o mesmo que a regra padrão
+  appendRule: Anexar Regra
+  direct: Direto
+  proxy: Proxy
+  block: Bloquear
+  rule: Regra
+  domainFile: Arquivo de Domínio
+  typeRule: Tipo de Regra
+  messages:
+    '0': v2rayA reconhecerá todos os arquivos SiteDat em <b>{V2RayLocationAsset}</b>
+    '1': 'Para fazer um arquivo SiteDat por si mesmo: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>'
+    '2': A seleção múltipla é suportada.
+    noSiteDatFileFound: Nenhum arquivo siteDat encontrado em {V2RayLocationAsset}
+    emptyRuleNotPermitted: Regra vazia não é permitida
+dns:
+  title: Configurações de DNS
+  help: Ajuda DNS
+  helpTooltip: Ver documentação v2fly DNS
+  colServer: Servidor DNS
+  colDomains: Lista de Domínios
+  colOutbound: Saída
+  serverPlaceholder: 'ex. 8.8.8.8 ou https://dns.google/dns-query'
+  domainsPlaceholder: "Um por linha, ex. geosite:cn\nDeixe vazio para DNS de fallback"
+  addRule: Adicionar Regra
+  resetDefault: Restaurar Padrões
+  errNoRules: Pelo menos uma regra DNS é necessária
+  internalQueryServers: Servidores de consulta de domínio interno
+  externalQueryServers: Servidores de consulta de domínio externo
+  messages:
+    - '"@:dns.internalQueryServers" para consultar domínios nacionais, "@:dns.externalQueryServers" para consultar domínios estrangeiros.'
+    - 'Se "@:dns.externalQueryServers" estiver vazio, "@:dns.internalQueryServers" irá consultar todos os domínios.'
+doh:
+  title: Configurar Servidor DoH
+  dohPriorityList: Lista de prioridade dos servidores DoH
+  messages:
+    - DoH (DNS sobre HTTPS) pode evitar efetivamente a poluição DNS. Mas alguns provedores nativos de DoH podem ser contaminados às vezes. Além disso, alguns serviços DoH podem ser bloqueados por provedores de rede locais. Por favor, escolha o servidor DoH mais rápido e estável.
+    - Servidores públicos incríveis de DoH na China continental incluem alidns, geekdns, rubyfish, etc
+    - Na área de Taiwan incluem quad101, etc
+    - 'EUA: cloudflare, dns.google, etc'
+    - 'Lista de verificação：<a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>'
+    - 'Além disso, a configuração do serviço DoH em seu próprio servidor nativo é sugerida e bem comportada na maioria dos casos <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>. Neste caso, é recomendado executar o servidor(doh-proxy/doh-httpproxy) fornecendo serviço e cliente(doh-stub) conectando ao doh.opendns.com ao mesmo tempo e conectá-los em série, porque você dificilmente encontrará um servidor que não está poluído em uma região geralmente contaminada.'
+    - Idealmente, coloque uma ou duas linhas acima. A lista será restaurada para o padrão após salvar com conteúdo vazio.
+egressPortWhitelist:
+  title: Lista de Portas de Saída
+  tcpPortWhitelist: Lista de Portas TCP Permitidas
+  udpPortWhitelist: Lista de Portas UDP Permitidas
+  messages:
+    - Se o v2rayA estiver configurado em um servidor A que está conectado a um servidor proxy B, preste atenção:
+    - O proxy transparente forçará todo o tráfego TCP e UDP a passar pelo servidor proxy B, onde o endereço IP de origem será substituído pelo endereço IP do proxy B. Além disso, se alguns clientes enviarem solicitações ao servidor A que fornece o serviço, eles receberão respostas do endereço IP do seu proxy B de forma estranha, o que é ilegal.
+    - Para resolver isso, precisamos adicionar as portas de serviço à lista de permissões para que não passem pelo proxy. Por exemplo, ssh(22) e v2raya({v2rayaPort}).
+    - Obviamente, se o servidor não fornecer nenhum serviço, você pode pular essa configuração.
+    - 'Formatação: 22 significa a porta 22, 20170:20172 significa três portas de 20170 a 20172.'
+configureServer:
+  title: Configurar Servidor | Servidor
+  servername: Nome do Servidor
+  port: Porta
+  forceTLS: Forçar TLS
+  noObfuscation: Sem ofuscação
+  httpObfuscation: Ofuscado como HTTP
+  srtpObfuscation: Ofuscado como Chamadas de Vídeo (SRTP)
+  utpObfuscation: Ofuscado como Bittorrent (uTP)
+  wechatVideoObfuscation: Ofuscado como Chamadas de Vídeo do WeChat
+  dtlsObfuscation: Ofuscado como Pacotes DTLS1.2
+  wireguardObfuscation: Ofuscado como Pacotes WireGuard
+  hostObfuscation: Host
+  pathObfuscation: Caminho
+  seedObfuscation: Seed
+  username: Nome de Usuário
+  password: Senha
+  origin: origem
+  pinnedCertchainSha256: Certchain SHA256 Fixo
+  maxEarlyData: Max Early Data
+  earlyDataHeaderName: Early Data Header Name
+  multiMode: MultiMode
+  idleTimeout: Idle Timeout
+  healthCheckTimeout: Health Check Timeout
+  permitWithoutStream: Permit Without Stream
+  initialWindowsSize: Initial Windows Size
+  wireguardName: Nome
+  wireguardAddress: Endereço do Servidor
+  wireguardPort: Porta
+  wireguardPublicKey: Chave Pública
+  wireguardPrivateKey: Chave Privada
+  wireguardLocalAddress: Endereço Local
+  wireguardDns: DNS
+  wireguardMtu: MTU
+  wireguardAllowedIPs: Intervalo de IPs Permitidos
+  wireguardPersistentKeepalive: Intervalo de Keepalive Persistente
+  wireguardPreSharedKey: Chave Pré-Compartilhada
+  wireguardEndpoint: Endereço do Endpoint
+configureSubscription:
+  title: Configurar Assinatura
+import:
+  message: 'Digite um link de servidor ou endereço de assinatura:'
+  batchMessage: 'Um link de servidor por linha:'
+  qrcodeError: Não foi possível encontrar um código QR válido, tente novamente
+delete:
+  title: Confirmar EXCLUSÃO
+  message: Tem certeza de que deseja <b>EXCLUIR</b> esses servidores/assinaturas? Essa ação não pode ser desfeita.
+latency:
+  message: Os testes de latência costumavam levar um ou vários minutos. Aguarde pacientemente, por favor.
+version:
+  higherVersionNeeded: 'Essa operação requer uma versão mais recente do v2rayA do que {version}'
+  v2rayInvalid: O arquivo geosite.dat, geoip.dat ou o v2ray-core podem não estar instalados corretamente
+  v2rayNotV5: A versão do v2ray-core não é a versão 5. Use a versão 5 ou faça o downgrade do v2rayA para a versão 1.5
+  coreVersionMismatch: 'Incompatibilidade de versão do core: a versão do v2raya_core deve corresponder exatamente à versão do v2rayA. {err}'
+about: |-
+  <p>O v2rayA é um cliente GUI da V2Ray.</p>
+            <p class="about-small">Portas padrão:</p>
+            <p class="about-small">2017: porta de serviço do v2rayA</p>
+            <p class="about-small">20170: protocolo SOCKS</p>
+            <p class="about-small">20171: protocolo HTTP</p>
+            <p class="about-small">20172: protocolo HTTP com "Regra de Divisão de Tráfego"</p>
+            <p class="about-small">Outras portas:</p>
+            <p class="about-small">32345: tproxy, necessário para proxy transparente</p>
+            <p>Todos os dados são armazenados localmente, não na nuvem.</p>
+            <p>Problemas encontrados durante o uso podem ser relatados em <a href="https://github.com/v2rayA/v2rayA/issues">issues</a>.</p>
+            <p>Documentação: <a href="https://v2raya.org">https://v2raya.org</a></p>
+axios:
+  messages:
+    optimizeBackend: Ajustar o endereço do serviço v2rayA?
+    noBackendFound: 'Não é possível encontrar o v2rayA em {url}. Verifique se o v2rayA está sendo executado nesse endereço.'
+    cannotCommunicate:
+      - Não é possível comunicar. Se o seu serviço estiver em execução e as portas estiverem abertas corretamente, a razão pode ser que o navegador atual não permite que sites https acessem recursos http. Você pode tentar usar o Chrome ou alternar para um site http alternativo.
+      - Não é possível comunicar. O Firefox não permite que sites https acessem recursos http. Você pode tentar alternar para sites http alternativos.
+  urls:
+    usage: 'https://v2raya.org/'
+routingA:
+  messages:
+    - clique no botão 'Help&Manual' para obter ajuda
+  inboundDeprecated: A funcionalidade de definir entrada (inbound) no RoutingA foi descontinuada. A configuração JSON gerada não incluirá as portas de entrada correspondentes. Use a função de regras RoutingA nas configurações de entrada personalizadas como alternativa.
+  inboundDeprecatedConfirm: A configuração atual do RoutingA contém definições de entrada obsoletas. A configuração gerada não incluirá essas portas de entrada. Deseja continuar salvando?
+outbound:
+  addMessage: 'Digite o nome do destino de saída que deseja adicionar:'
+  deleteMessage: 'Tem certeza de que deseja <b>EXCLUIR</b> o destino de saída "{outboundName}"? Essa ação não pode ser desfeita.'
+proxyGroup:
+  pickTitle: Adicionar ao Grupo de Proxy
+  pickMessage: Selecione o grupo de proxy para adicionar.
+  group: Grupo de Proxy
+driver:
+  welcome:
+    - Primeiro, importe servidores de nó
+    - Primeiro uso, ainda não há servidores de nó. Importe ou crie servidores de nó aqui.
+  tabs:
+    - Assinaturas e Servidores de Nó
+    - Após importar assinaturas e servidores de nó, gerencie suas assinaturas, nós comuns e nós de assinatura aqui.
+tproxyWhiteIpGroups:
+  title: Grupos de IP do TPROXY
+  messages:
+    - Os grupos de IP selecionados não passarão pelo core XRay/V2Ray e serão roteados diretamente (via Nftables/Iptables). Certifique-se de que seu servidor DNS seja confiável e livre de contaminação para que o cliente resolva o IP correto.
+    - É melhor usar este recurso com Nftables. Iptables pode ter problemas de desempenho ao adicionar muitos IPs.
+  formName1: Segure Ctrl para seleção múltipla
+  formName2: IPs personalizados (um por linha, formato CIDR padrão)
+  formPlaceholder2: "172.30.0.0/16\nfd00:dead:beef::/48"
+  invalidCustomIps: Formato de IP personalizado inválido
+  cn: China Continental
+  private: Rede Privada
+  us: Estados Unidos
+  cloudflare: Cloudflare
+domainsExcluded:
+  title: Domínios Excluídos
+  messages:
+    - Uma lista de domínios. Se o resultado da inspeção de tráfego estiver nesta lista, o endereço de destino NÃO será redefinido.
+  formName: Lista de domínios excluídos
+  formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+gfwList:
+  title: Atualizar GFWList
+  messages:
+    - Se o ambiente atual tiver dificuldade de acessar o GitHub, você pode baixar manualmente o GFWList mais recente (geosite.dat) em (https://github.com/v2rayA/dist-v2ray-rules-dat), enviar para seu servidor e preencher o link do seu servidor para download.
+    - Se não preencher o campo de link de download personalizado, o download será automático do GitHub.
+    - 'Nota: Um arquivo incorreto pode causar falha na inicialização do serviço. Se o servidor falhar ao iniciar após a atualização, clique no botão excluir para remover o GFWList baixado.'
+  formName: Link de download personalizado
+  wrongCustomLink: Link de download personalizado inválido
+tinytun:
+  routeScript:
+    title: Script de Rota Personalizado TinyTun
+    warning: 'Aviso: Scripts incorretos podem danificar sua rede ou rota do sistema. Certifique-se de saber o que está fazendo antes de salvar.'
+    shellType: Tipo de Shell
+    customShell: Personalizado (especifique o caminho abaixo)
+    shellPath: Caminho do Shell
+    shellPathPlaceholder: /usr/bin/bash
+    setupScript: Script de inicialização (executado após o TinyTun iniciar)
+    setupScriptPlaceholder: "# Script para configurar rota quando TinyTun inicia\n# Ex: ip route add default dev tun0"
+    teardownScript: Script de parada (executado antes do TinyTun parar)
+    teardownScriptPlaceholder: "# Script para remover rota quando TinyTun para\n# Ex: ip route del default dev tun0"
+  processExclude:
+    title: Exclusão de Processo Personalizado TinyTun
+    warning: 'Aviso: Nomes de processo incorretos podem causar bypass inesperado do tráfego. Adicione apenas processos que você tem certeza que precisam ser excluídos.'
+    listLabel: Nomes de processo para excluir
+    placeholder: "v2raya\nv2ray\nchrome.exe"
+    hint: Suporta separação por vírgula ou nova linha. A duplicação é removida automaticamente ao salvar.
+customInbound:
+  title: Porta de Entrada Personalizada
+  tag: Tag (nome de observação)
+  protocol: Protocolo
+  port: Porta
+  addNew: Adicionar nova entrada
+  tagPlaceholder: ex. my-socks
+  portPlaceholder: ex. 10800
+  empty: Nenhuma entrada personalizada
+  hint: Portas de entrada suportam apenas protocolos SOCKS e HTTP. Tags devem ser únicas e serão usadas como tag do v2ray core.
+  fillAll: Por favor, preencha todos os campos
+  deleteConfirm: Confirmar exclusão da entrada {tag}?
+  outbound: Grupo de saída vinculado
+  outboundPlaceholder: Selecione o grupo de saída
+  outboundType: Tipo de vinculação
+  outboundTypeDirect: Seleção direta
+  outboundTypeRoutingA: Regra RoutingA
+  outboundRequired: Por favor, selecione o grupo de saída vinculado
+  routingARules: Regras de divisão RoutingA
+  routingARulesPlaceholder: Insira as regras de divisão RoutingA...

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { Delete } from '@element-plus/icons-vue'
+
 definePageMeta({ middleware: ['auth'] })
 
 const { t } = useI18n()
@@ -120,6 +122,41 @@ const deleteInbound = async (tag: string) => {
   } catch { return }
   const { data } = await useV2Fetch<any>('customInbound').delete({ tag }).json()
   if (data.value?.code === 'SUCCESS') inbounds = data.value.data.inbounds || []
+}
+
+// ====================== DoH Configuration ======================
+let dohList = $ref<string[]>([])
+let showDohDialog = $ref(false)
+const loadDohConfig = async () => {
+  const { data } = await useV2Fetch<any>('doh').json()
+  if (data.value?.code === 'SUCCESS') dohList = data.value.data?.doh || []
+  showDohDialog = true
+}
+const addDohItem = () => { dohList.push('') }
+const removeDohItem = (i: number) => { dohList.splice(i, 1) }
+const saveDohConfig = async () => {
+  const valid = dohList.filter(s => s.trim())
+  const { data } = await useV2Fetch<any>('doh').put({ doh: valid }).json()
+  if (data.value?.code === 'SUCCESS') { ElMessage.success(t('common.success')); showDohDialog = false }
+}
+
+// ====================== Egress Port Whitelist ======================
+let egressPorts = $ref({ tcp: '', udp: '' })
+let showEgressDialog = $ref(false)
+const loadEgressPorts = async () => {
+  const { data } = await useV2Fetch<any>('egressPortWhitelist').json()
+  if (data.value?.code === 'SUCCESS') {
+    egressPorts.tcp = data.value.data?.tcpPortWhitelist || ''
+    egressPorts.udp = data.value.data?.udpPortWhitelist || ''
+  }
+  showEgressDialog = true
+}
+const saveEgressPorts = async () => {
+  const { data } = await useV2Fetch<any>('egressPortWhitelist').put({
+    tcpPortWhitelist: egressPorts.tcp,
+    udpPortWhitelist: egressPorts.udp,
+  }).json()
+  if (data.value?.code === 'SUCCESS') { ElMessage.success(t('common.success')); showEgressDialog = false }
 }
 
 // ====================== Sniffing Excluded Domains ======================
@@ -511,6 +548,12 @@ const showTproxyOptions = computed(() =>
       <ElButton @click="loadDnsRules">
         {{ $t('dns.title') || 'DNS 设置' }}
       </ElButton>
+      <ElButton @click="loadDohConfig">
+        {{ $t('doh.title') || 'DoH 设置' }}
+      </ElButton>
+      <ElButton @click="loadEgressPorts">
+        {{ $t('egressPortWhitelist.title') || '出站端口白名单' }}
+      </ElButton>
       <ElButton @click="loadInbounds">
         {{ $t('customInbound.title') || '自定义入站' }}
       </ElButton>
@@ -575,6 +618,42 @@ const showTproxyOptions = computed(() =>
       <template #footer>
         <ElButton @click="showDnsDialog = false">{{ $t('operations.cancel') }}</ElButton>
         <ElButton type="primary" @click="saveDnsRules">{{ $t('operations.save') }}</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- ==================== DoH Dialog ==================== -->
+    <ElDialog v-model="showDohDialog" :title="$t('doh.title') || 'DoH 设置'" width="600px" :close-on-click-modal="false">
+      <div class="mb-3">
+        <ElButton size="small" type="primary" @click="addDohItem">+ {{ $t('operations.add') }}</ElButton>
+      </div>
+      <div class="space-y-2">
+        <div v-for="(item, i) in dohList" :key="i" class="flex items-center gap-2">
+          <ElInput v-model="dohList[i]" size="small" placeholder="https://dns.google/dns-query" class="flex-1" />
+          <ElButton size="small" type="danger" :icon="Delete" circle @click="removeDohItem(i)" />
+        </div>
+        <div v-if="dohList.length === 0" class="text-gray-400 text-sm text-center py-4">
+          {{ $t('common.none') }}
+        </div>
+      </div>
+      <template #footer>
+        <ElButton @click="showDohDialog = false">{{ $t('operations.cancel') }}</ElButton>
+        <ElButton type="primary" @click="saveDohConfig">{{ $t('operations.save') }}</ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- ==================== Egress Port Whitelist Dialog ==================== -->
+    <ElDialog v-model="showEgressDialog" :title="$t('egressPortWhitelist.title') || '出站端口白名单'" width="520px" :close-on-click-modal="false">
+      <ElForm label-width="180px" label-position="left" size="default">
+        <ElFormItem :label="$t('egressPortWhitelist.tcpPortWhitelist') || 'TCP 端口白名单'">
+          <ElInput v-model="egressPorts.tcp" size="small" placeholder="22, 20170:20172" />
+        </ElFormItem>
+        <ElFormItem :label="$t('egressPortWhitelist.udpPortWhitelist') || 'UDP 端口白名单'">
+          <ElInput v-model="egressPorts.udp" size="small" placeholder="22, 20170:20172" />
+        </ElFormItem>
+      </ElForm>
+      <template #footer>
+        <ElButton @click="showEgressDialog = false">{{ $t('operations.cancel') }}</ElButton>
+        <ElButton type="primary" @click="saveEgressPorts">{{ $t('operations.save') }}</ElButton>
       </template>
     </ElDialog>
 

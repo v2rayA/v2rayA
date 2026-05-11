@@ -1,24 +1,31 @@
 <script lang="ts" setup>
-if (!user.value.exist) navigateTo('/signup')
+import { ElMessage } from 'element-plus'
+import { ref } from 'vue'
+import { user } from '~/composables/user'
+
+// If no account exists, redirect to signup page.
+if (!user.value.exist) {
+  await navigateTo('/signup', { replace: true })
+}
 
 const { t } = useI18n()
 
-const username = $ref('')
-const password = $ref('')
-const isSubmitting = $ref(false)
+const username = ref('')
+const password = ref('')
+const isSubmitting = ref(false)
 
 async function login() {
-  if (isSubmitting)
+  if (isSubmitting.value)
     return
 
-  isSubmitting = true
+  isSubmitting.value = true
 
-  const { data } = await useV2Fetch<any>('login').post({ username, password }).json()
+  const { data } = await useV2Fetch<any>('login').post({ username: username.value, password: password.value }).json()
 
   if (data.value?.data?.first === true) {
     user.value.exist = false
-    navigateTo('/signup')
-    isSubmitting = false
+    await navigateTo('/signup')
+    isSubmitting.value = false
     return
   }
 
@@ -27,10 +34,10 @@ async function login() {
   } else {
     user.value.token = data.value.data.token
     ElMessage.success(t('common.success'))
-    navigateTo('/')
+    await navigateTo('/')
   }
 
-  isSubmitting = false
+  isSubmitting.value = false
 }
 </script>
 

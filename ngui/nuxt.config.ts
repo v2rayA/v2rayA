@@ -50,6 +50,30 @@ export default defineNuxtConfig({
         iso: 'zh-hans',
         file: 'zh-hans.yaml',
         name: '简体中文'
+      },
+      {
+        code: 'en',
+        iso: 'en-US',
+        file: 'en.yaml',
+        name: 'English-US'
+      },
+      {
+        code: 'fa',
+        iso: 'fa-IR',
+        file: 'fa.yaml',
+        name: 'فارسی'
+      },
+      {
+        code: 'ru',
+        iso: 'ru-RU',
+        file: 'ru.yaml',
+        name: 'Русский'
+      },
+      {
+        code: 'pt-br',
+        iso: 'pt-BR',
+        file: 'pt-br.yaml',
+        name: 'Português-Brasil'
       }
     ]
   },

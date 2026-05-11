@@ -1,0 +1,434 @@
+common:
+  outboundSetting: Настройка исходящего узла
+  setting: Настройки
+  about: О программе
+  loggedAs: 'Текущий логин: <b>{username}</b>'
+  v2rayCoreStatus: Статус v2ray-core
+  checkRunning: Проверка
+  isRunning: Работает
+  notRunning: Готово
+  waitingNetwork: Ожидание подключения к сети
+  notLogin: Пожалуйста, войдите
+  latest: Последняя
+  local: Текущая
+  success: УСПЕХ
+  fail: ПРОВАЛ
+  empty: Нет добавленных серверов
+  message: Сообщение
+  none: нет
+  optional: необязательно
+  loadBalance: Load Balance
+  log: Журнал
+  proxyGroups: Прокси группы
+  darkTheme: Темная тема
+  lightTheme: Светлая тема
+  autoTheme: Авто тема
+log:
+  logModalTitle: Просмотр журнала
+  logsLabel: Журнал
+  refreshInterval: Интервал обновления
+  seconds: секунд
+  autoScoll: Авто-пролистывание
+  autoShowNew: Авто-показ новых логов
+  category: Категория
+  source: Источник лога
+  categories:
+    all: Все
+    error: Ошибка
+    warn: Предупреждение
+    info: Инфо
+    debug: Debug
+    trace: Trace
+    other: Другое
+  sources:
+    all: Все
+welcome:
+  title: Добро пожаловать
+  docker: 'v2rayA сервис запускается в Docker. Версия: {version}'
+  default: 'v2rayA сервис запущен. Версия: {version}'
+  newVersion: 'Обнаружена новая версия: {version}'
+  messages:
+    - Здесь нет ни одного сервера.
+    - Вы можете создать или добавить сервер, а также подписку.
+v2ray:
+  start: Пуск
+  stop: Стоп
+server:
+  name: Название сервера
+  address: Адрес сервера
+  protocol: Протокол
+  latency: Задержка
+  lastSeenTime: Последнее время жизни
+  lastTryTime: Последнее время теста
+  messages:
+    notAllowInsecure: 'Согласно документации {name}, если вы используете {name}, опция AllowInsecure запрещена.'
+    notRecommend: 'Согласно документации {name}, если вы используете {name}, опция AllowInsecure не рекомендуется.'
+InSecureConfirm:
+  title: Найдена небезопасная настройка
+  message: 'В конфигурации установлена опция <b>AllowInsecure</b> в значении true. Это может вызвать риски безопасности. Вы уверены, что хотите продолжить?'
+  confirm: Понимаю, что делаю
+  cancel: отмена
+subscription:
+  host: Хост
+  remarks: Примечания
+  timeLastUpdate: Время последнего обновления
+  numberServers: Число серверов
+  subscription: Подписка
+  autoSelect: Автоматически подключаться к новым серверам после обновления подписки
+operations:
+  tproxyWhiteIpGroups: Прямые белые IP группы
+  name: Операции
+  update: Обновить
+  autoUpdate: Автообновление
+  manualUpdate: Ручное обновление
+  modify: Изменить
+  share: Поделиться
+  view: Посмотреть
+  delete: Удалить
+  create: Создать
+  import: Импортировать
+  inBatch: Группа
+  connect: Подключиться
+  disconnect: Отключиться
+  select: Выбрать
+  addTo: Добавить в
+  addToProxyGroup: Добавить в группу {group}
+  removeFromProxyGroup: Удалить из группы {group}
+  login: Войти
+  logout: Выйти
+  configure: Настройка
+  cancel: Отмена
+  confirm: Подтвердить
+  confirm2: Точно подтвердить
+  saveApply: Сохранить и применить
+  save: Сохранить
+  copyLink: Скопировать ссылку
+  export: Экспорт
+  copySelected: Копировать выбранные узлы
+  downloadTxt: Скачать TXT файл
+  helpManual: Помощь и руководство
+  'yes': Да
+  'no': Нет
+  switchSite: Переключится в альтернативный сайт
+  addOutbound: Добавить исходящий узел
+  add: Добавить
+  close: Закрыть
+  domainsExcluded: Исключённые домены
+  tproxyExcludedInterfaces: Исключённые префиксы интерфейсов
+  configureTunRouteScript: Настроить скрипт маршрута
+register:
+  title: Создайте учётную запись администратора
+  messages:
+    - Запомните данные учётной записи администратора. Это важно для входа в систему
+    - Информация о учётной записи хранится локально. Мы никогда не отправляем данные на любой сервер.
+    - Если забыли пароль, используйте v2raya --reset-password для сброса.
+login:
+  title: Вход в систему
+  username: Имя пользователя
+  password: Пароль
+setting:
+  inboundSniffing: Сниффер
+  transparentProxy: Прозрачный прокси/Системный прокси
+  transparentType: Реализация прозрачного прокси/Системного прокси
+  logLevel: Уровень журнала
+  pacMode: Режим разделения трафика на порте с правилами
+  preventDnsSpoofing: Защита от DNS спуфинга
+  specialMode: Специальный режим
+  mux: Мультиплекс
+  autoUpdateSub: Автоматически обновлять подписки
+  autoUpdateGfwlist: Автоматически обновлять GFWList
+  preferModeWhenUpdate: Режим обновления подписок и GFWList
+  tproxyExcludedInterfaces: Исключённые префиксы интерфейсов
+  tunAutoRoute: Автомаршрут
+  tunBypassInterfaces: TUN обход интерфейсов
+  tunBypassCustomPlaceholder: 'Пользовательские шаблоны, например: docker*, vmnet*'
+  tunBypassSelectPlaceholder: Выберите интерфейсы...
+  tunBypassSelected: 'Выбрано {n} интерфейсов'
+  ipForwardOn: IP форвардинг
+  portSharingOn: Port Sharing
+  concurrency: Параллелизм
+  tunProcessBackend: Бэкенд исключения процессов TinyTun
+  tunExcludeProcesses: TinyTun исключённые процессы
+  ssBackend: Shadowsocks Backend
+  trojanBackend: Trojan Backend
+  nodeBackend: Backend
+  options:
+    trace: Trace
+    debug: Debug
+    info: Info
+    warn: Warn
+    error: Error
+    global: Не разделять трафик
+    direct: Напрямую
+    pac: Зависит от порта правил
+    whitelistCn: Использовать прокси кроме CN сайтов
+    gfwlist: Использовать прокси только для сайтов GFWList
+    sameAsPacMode: Режим разделения трафика такой же, как у порта с правилами
+    customRouting: Настраиваемая адресация
+    antiDnsHijack: Только защита от перехвата DNS (быстро)
+    forwardDnsRequest: Перенаправлять DNS запросы
+    doh: DoH (DNS-over-HTTPS)
+    default: По-умолчанию
+    'on': Включено
+    'off': Выключено
+    notIntegrated: Не интегрировано
+    updateSubWhenStart: Обновлять подписки при запуске сервиса
+    updateSubAtIntervals: 'Обновлять подписки регулярно (в часах)'
+    updateGfwlistWhenStart: Обновлять GFWList при запуске сервиса
+    updateGfwlistAtIntervals: 'Обновлять GFWList регулярно (в часах)'
+    dependTransparentMode: Следовать за Прозрачным прокси/Системным Прокси
+    closed: Выключено
+    advanced: Расширенная настройка
+    leastPing: С наименьшей задержкой
+    tunBackendTun: TUN (по умолчанию, /proc поиск)
+    tunBackendEbpf: eBPF (cgroupv2 исключение процессов)
+    backendV2ray: v2ray / xray
+    backendSystemDefault: По умолчанию системы
+  messages:
+    inboundSniffing: 'Анализировать входящий трафик. Если эта опция выключена, часть трафика может быть не перенаправлена корректно.'
+    gfwlist: 'Основывается на времени изменения файла, которое иногда бывает после последней версии в Интернете.'
+    transparentProxy: 'Если прозрачный прокси включен, это не нужно дополнительно настраивать, и весь TCP-трафик будет проходить через v2rayA.'
+    transparentType: '★tproxy: поддерживает UDP, но не поддерживает docker. ★redirect: подходит для docker, но не поддерживает UDP. ★tun (TinyTun): кроссплатформенный TUN прокси.'
+    tproxyExcludedInterfaces: 'Установите префиксы сетевых интерфейсов, которые не должны проходить через прозрачный прокси. Поддерживается wildcard *.'
+    tunAutoRoute: 'При включении TinyTun автоматически настраивает системные маршруты. При отключении необходимо предоставить пользовательские скрипты.'
+    tunBypassInterfaces: 'Выберите интерфейсы для исключения из TUN прокси или введите пользовательские шаблоны ниже.'
+    tunProcessBackend: 'Выберите метод исключения процессов TinyTun в Linux. Режим TUN использует /proc для широкой совместимости; режим eBPF использует cgroupv2.'
+    tunExcludeProcesses: 'Настройте дополнительные имена процессов для обхода TinyTun. Рекомендуется одно имя на строку.'
+    pacMode: 'Здесь вы можете установить правило разделения трафика для порта правил. По умолчанию порт 20172, протокол HTTP.'
+    preventDnsSpoofing: '★Перенаправление DNS: отправка DNS запросов через прокси-сервер. ★DoH (v2ray-core: 4.22.0+): DNS over HTTPS.'
+    specialMode: '★supervisor: мониторинг DNS загрязнения, раннее перехватывание. ★fakedns: использование стратегии fakedns для ускорения разрешения.'
+    tcpFastOpen: 'Упрощает процесс TCP рукопожатия для ускорения установки соединения. Может подчеркнуть характеристики пакетов.'
+    mux: 'Мультиплексирует TCP соединения для уменьшения количества рукопожатий, но влияет на сценарии с высокой пропускной способностью.'
+    confirmEgressPorts: '<p>Вы настраиваете прозрачный прокси между LAN, подтвердите белый список портов.</p><p>Белый список:</p><p>TCP: {tcpPorts}</p><p>UDP: {udpPorts}</p>'
+    grpcShouldWithTls: gRPC должен быть с TLS
+    ssPluginImpl: '★по умолчанию: ''transport'' для simple-obfs, ''chained'' для v2ray-plugin. ★chained: трафик shadowsocks перенаправляется в отдельный плагин. ★transport: обработка транспортным слоем v2ray/xray core.'
+customAddressPort:
+  title: Адреса и порты
+  serviceAddress: Адрес сервиса
+  portSocks5: Порт SOCKS5
+  portHttp: Порт HTTP
+  portSocks5WithPac: Порт SOCKS5 (с правилами)
+  portHttpWithPac: Порт HTTP (с правилами)
+  portVmess: Порт VMess (с правилами)
+  portVmessLink: Ссылка порта VMess
+  portApi: Порт API (0 для случайного)
+  apiServices: Включенные API сервисы
+  messages:
+    - 'Адрес сервера по умолчанию 0.0.0.0:2017 может быть изменен через переменную среды <code>V2RAYA_ADDRESS</code> и аргумент <code>--address</code>.'
+    - 'Если вы запускаете docker контейнер v2raya с маппингом портов вместо <code>--network host</code>, вы можете переназначить порты здесь.'
+    - Мы не можем определить занятость портов в docker режиме. Подтвердите это сами.
+    - Ноль означает закрытие этого порта.
+customRouting:
+  title: Настройка порта с правилами
+  defaultRoutingRule: Правило адресации по умолчанию
+  sameAsDefaultRule: такой же как порт по умолчанию
+  appendRule: Вставить правило
+  direct: Напрямую
+  proxy: Прокси
+  block: Блокировать
+  rule: Правило
+  domainFile: Файл с доменами
+  typeRule: Тип правила
+  messages:
+    '0': 'v2rayA будет распознавать все файлы SiteDat в <b>{V2RayLocationAsset}</b>'
+    '1': '<a href="https://github.com/ToutyRater/V2Ray-SiteDAT">Создать SiteDat файл</a>'
+    '2': Поддерживается множественный выбор
+    noSiteDatFileFound: 'SiteDat файл не найден в {V2RayLocationAsset}'
+    emptyRuleNotPermitted: Пустые правила не разрешаются
+dns:
+  title: DNS настройки
+  help: DNS справка
+  helpTooltip: Просмотреть документацию v2fly DNS
+  colServer: DNS сервер
+  colDomains: Список доменов
+  colOutbound: Исходящий
+  serverPlaceholder: 'Напр. 8.8.8.8 или https://dns.google/dns-query'
+  domainsPlaceholder: "По одному на строку, напр. geosite:cn\nОставьте пустым для резервного DNS"
+  addRule: Добавить правило
+  resetDefault: Сбросить настройки
+  errNoRules: Необходимо хотя бы одно правило DNS
+  internalQueryServers: Серверы запросов доменов
+  externalQueryServers: Серверы запросов иностранных доменов
+  messages:
+    - '"@:dns.internalQueryServers" используется для запроса внутренних доменов, а "@:dns.externalQueryServers" для запроса иностранных доменов.'
+    - 'Если "@:dns.externalQueryServers" оставить пустым, "@:dns.internalQueryServers" будет запрашивать все домены.'
+doh:
+  title: Настройка DoH сервера
+  dohPriorityList: Список приоритетных DoH серверов
+  messages:
+    - 'DoH (DNS over HTTPS) может эффективно избегать DNS загрязнения. Но некоторые DoH провайдеры могут быть загрязнены.'
+    - Отличные публичные DoH сервера в Китае: alidns, geekdns, rubyfish и т.д
+    - На Тайване: quad101 и т.д
+    - США: cloudflare, dns.google и т.д
+    - 'Список: <a href="https://dnscrypt.info/public-servers" target="_blank">public-servers</a>'
+    - 'Настройка DoH на своем сервере: <a href="https://github.com/facebookexperimental/doh-proxy" target="_blank">doh-proxy</a>.'
+    - 'Оптимально: 1-2 строки выше. Список восстановится после сохранения с пустым содержимым.'
+egressPortWhitelist:
+  title: Белый список портов
+  tcpPortWhitelist: Белый список портов TCP
+  udpPortWhitelist: Белый список портов UDP
+  messages:
+    - Если v2rayA настроен на сервере A, подключенном к прокси-серверу B, обратите внимание:
+    - 'Прозрачный прокси перенаправляет весь TCP и UDP трафик через прокси-сервер B, где IP-адрес источника заменяется на адрес прокси B.'
+    - 'Чтобы решить это, добавьте порты сервиса в белый список. Например: ssh(22), v2raya({v2rayaPort}).'
+    - Если сервер не предоставляет сервисов, можно пропустить настройку.
+    - 'Формат: 22 означает порт 22, 20170:20172 означает три порта с 20170 по 20172.'
+configureServer:
+  title: Настройка сервера | Сервер
+  servername: Название сервера
+  port: Порт
+  forceTLS: Принудительно включить TLS
+  noObfuscation: Без обфускации
+  httpObfuscation: Обфускация под HTTP
+  srtpObfuscation: Обфускация под видео-звонки (SRTP)
+  utpObfuscation: Обфускация под Bittorrent (uTP)
+  wechatVideoObfuscation: Обфускация под видео-звонки Wechat
+  dtlsObfuscation: Обфускация под пакеты DTLS1.2
+  wireguardObfuscation: Обфускация под пакеты WireGuard
+  hostObfuscation: Хост
+  pathObfuscation: Путь
+  seedObfuscation: Сид
+  username: Имя пользователя
+  password: Пароль
+  origin: origin
+  pinnedCertchainSha256: pinned certificate chain sha256
+  maxEarlyData: Max Early Data
+  earlyDataHeaderName: Early Data Header Name
+  multiMode: MultiMode
+  idleTimeout: Idle Timeout
+  healthCheckTimeout: Health Check Timeout
+  permitWithoutStream: Permit Without Stream
+  initialWindowsSize: Initial Windows Size
+  wireguardName: Имя
+  wireguardAddress: Адрес
+  wireguardPort: Порт
+  wireguardPublicKey: Публичный ключ
+  wireguardPrivateKey: Приватный ключ
+  wireguardLocalAddress: Адрес (локальный)
+  wireguardDns: DNS
+  wireguardMtu: MTU
+  wireguardAllowedIPs: Разрешенные IP
+  wireguardPersistentKeepalive: Persistent Keepalive
+  wireguardPreSharedKey: Предварительный общий ключ
+  wireguardEndpoint: Endpoint
+configureSubscription:
+  title: Настройка подписки
+import:
+  message: 'Введите ссылку на сервер или адрес подписки:'
+  batchMessage: 'Одна ссылка сервера на строку:'
+  qrcodeError: Не удалось найти верный QRCode, пожалуйста попробуйте снова
+delete:
+  title: Подтвердить УДАЛЕНИЕ
+  message: 'Вы уверены что хотите <b>УДАЛИТЬ</b> эти сервера/подписки? Это нельзя отменить.'
+latency:
+  message: Проверка задержки занимает как правило одну или две минуты. Пожалуйста подождите.
+version:
+  higherVersionNeeded: 'Эта операция требует версию v2rayA выше чем {version}'
+  v2rayInvalid: 'geosite.dat, geoip.dat или v2ray-core могут быть установлены некорректно'
+  v2rayNotV5: 'Версия v2ray-core не v5. Используйте v5 или понизьте v2rayA до v1.5'
+  coreVersionMismatch: 'Несоответствие версии ядра: версия v2raya_core должна точно совпадать с версией v2rayA. {err}'
+about: |-
+  <p>v2rayA это графический веб-клиент V2Ray.</p>
+            <p class="about-small">Порты по умолчанию:</p>
+            <p class="about-small">2017: порт сервиса v2rayA</p>
+            <p class="about-small">20170: протокол SOCKS</p>
+            <p class="about-small">20171: протокол HTTP</p>
+            <p class="about-small">20172: протокол HTTP с правилами разделения трафика</p>
+            <p class="about-small">Другие порты:</p>
+            <p class="about-small">32345: tproxy, нужно для прозрачного прокси</p>
+            <p>Все данные хранятся локально, вместо хранения на облаке.</p>
+            <p>О найденных проблемах сообщайте в <a href="https://github.com/v2rayA/v2rayA/issues">issues</a>.</p>
+            <p>Документация: <a href="https://v2raya.org">https://v2raya.org</a></p>
+axios:
+  messages:
+    optimizeBackend: Изменить адрес v2rayA сервиса?
+    noBackendFound: 'Не удалось найти v2rayA по адресу {url}. Убедитесь, что v2rayA запущен по этому адресу.'
+    cannotCommunicate:
+      - 'Не удалось подключиться. Если сервис запущен и порты открыты, причина может быть в том, что браузер не разрешает https сайтам http ресурсы.'
+      - 'Не удалось подключиться. Firefox не разрешает https сайтам http ресурсы.'
+  urls:
+    usage: 'https://github.com/v2rayA/v2rayA/wiki/Usage'
+routingA:
+  messages:
+    - нажмите кнопку "Помощь и руководство" для помощи
+  inboundDeprecated: 'Определение inbounds в RoutingA устарело. Пожалуйста, используйте пользовательские настройки inbound с правилами RoutingA.'
+  inboundDeprecatedConfirm: 'Эта конфигурация RoutingA содержит устаревшие определения inbound. Продолжить сохранение?'
+outbound:
+  addMessage: 'Введите имя выходного узла, который вы хотите добавить:'
+  deleteMessage: 'Вы уверены, что хотите <b>УДАЛИТЬ</b> выходной узел "{outboundName}"? Это нельзя отменить.'
+proxyGroup:
+  pickTitle: Добавить в прокси группу
+  pickMessage: Выберите прокси группу, к которой должен присоединиться этот узел.
+  group: Прокси группа
+driver:
+  welcome:
+    - Сначала импортируйте сервер
+    - При первом использовании нет серверов. Импортируйте или создайте сервер здесь.
+  tabs:
+    - Подписки и серверы
+    - После импорта подписок и серверов, управляйте ими здесь.
+tproxyWhiteIpGroups:
+  title: Прямые белые IP группы
+  messages:
+    - 'Выбранная IP группа будет обходить XRay/V2Ray core напрямую. Убедитесь, что ваш DNS сервер надежен.'
+    - Лучше использовать эту функцию с Nftables.
+  formName1: Удерживайте Ctrl для множественного выбора
+  formName2: 'Пользовательские IP (один на строку, стандартный формат CIDR)'
+  formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48"
+  invalidCustomIps: Неверные пользовательские IP
+  cn: Китай
+  private: Частные
+  us: США
+  cloudflare: Cloudflare
+domainsExcluded:
+  title: Исключённые домены
+  messages:
+    - 'Список доменных имён. Если результат сниффинга совпадает с доменом из списка, целевой адрес не будет сброшен.'
+  formName: Список исключённых доменов
+  formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+gfwList:
+  title: Обновление GFWList
+  messages:
+    - 'Если доступ к GitHub затруднен, скачайте последний GFWList (geosite.dat) вручную.'
+    - Если поле ввода пусто, загрузка будет автоматической с GitHub.
+    - 'Внимание: неверный файл может привести к ошибке запуска сервиса.'
+  formName: Пользовательская ссылка для скачивания
+  wrongCustomLink: Неверная пользовательская ссылка
+tinytun:
+  routeScript:
+    title: Пользовательский скрипт маршрута TinyTun
+    warning: 'Предупреждение: неверные скрипты могут нарушить работу сети или системную маршрутизацию.'
+    shellType: Тип Shell
+    customShell: Пользовательский (укажите путь ниже)
+    shellPath: Путь Shell
+    shellPathPlaceholder: /usr/bin/bash
+    setupScript: 'Скрипт запуска (выполняется после запуска TinyTun)'
+    setupScriptPlaceholder: "# Скрипт настройки маршрутов при запуске TinyTun\n# Например: ip route add default dev tun0"
+    teardownScript: 'Скрипт остановки (выполняется перед остановкой TinyTun)'
+    teardownScriptPlaceholder: "# Скрипт удаления маршрутов при остановке TinyTun\n# Например: ip route del default dev tun0"
+  processExclude:
+    title: Пользовательское исключение процессов TinyTun
+    warning: 'Предупреждение: неверные имена процессов могут привести к неожиданному обходу трафика.'
+    listLabel: Исключённые имена процессов
+    placeholder: "v2raya\nv2ray\nchrome.exe"
+    hint: Поддерживает разделение запятой или новой строкой.
+customInbound:
+  title: Пользовательские входящие порты
+  tag: Тег (имя примечания)
+  protocol: Протокол
+  port: Порт
+  addNew: Добавить новый входящий
+  tagPlaceholder: 'например: my-socks'
+  portPlaceholder: 'например: 10800'
+  empty: Нет пользовательских входящих
+  hint: 'Поддерживаются только протоколы SOCKS и HTTP. Тег должен быть уникальным.'
+  fillAll: Пожалуйста, заполните все поля
+  deleteConfirm: 'Удалить входящий {tag}?'
+  outbound: Связанная исходящая группа
+  outboundPlaceholder: Выберите исходящую группу
+  outboundType: Режим привязки
+  outboundTypeDirect: Прямой выбор
+  outboundTypeRoutingA: Правила RoutingA
+  outboundRequired: Пожалуйста, выберите связанную исходящую группу
+  routingARules: Правила RoutingA
+  routingARulesPlaceholder: Введите правила маршрутизации RoutingA...
