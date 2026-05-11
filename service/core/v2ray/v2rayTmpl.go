@@ -1340,7 +1340,10 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				Port:     tinytunSocksPort,
 				Protocol: "socks",
 				Listen:   "127.0.0.1",
-				Tag:      "transparent",
+				Settings: &coreObj.InboundSettings{
+					UDP: true,
+				},
+				Tag: "transparent",
 			})
 			// TinyTun v0.0.2+ handles DNS routing natively via its own DNS groups.
 			// The former dns-in-tun dokodemo-door (127.0.0.1:6053) is no longer needed;

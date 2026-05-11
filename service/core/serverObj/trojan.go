@@ -137,7 +137,13 @@ func (t *Trojan) ConfigurationMC(info PriorInfo) (c Configuration, err error) {
 }
 
 func (t *Trojan) ConfigurationMT(info PriorInfo) (c Configuration, err error) {
-	return t.ConfigurationMC(info)
+	c, err = t.ConfigurationMC(info)
+	if err != nil {
+		return c, err
+	}
+	// Xray core supports UDP over Trojan
+	c.UDPSupport = true
+	return c, nil
 }
 
 func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
