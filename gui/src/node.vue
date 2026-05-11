@@ -824,6 +824,7 @@ export default {
       tab: 0,
       runningState: {
         running: this.$t("common.checkRunning"),
+        networkPaused: false,
         connectedServer: null,
         outboundToServerName: {},
       },
@@ -901,7 +902,7 @@ export default {
     this.$axios({
       url: apiRoot + "/touch",
     }).then((res) => {
-      this.refreshTableData(res.data.data.touch, res.data.data.running);
+      this.refreshTableData(res.data.data.touch, res.data.data.running, res.data.data.networkPaused);
       this.locateTabToConnected();
       this.ready = true;
     });
@@ -948,6 +949,12 @@ export default {
     }
   },
   methods: {
+    getRunningLabel(running, networkPaused = false) {
+      if (networkPaused) {
+        return this.$t("common.waitingNetwork");
+      }
+      return running ? this.$t("common.isRunning") : this.$t("common.notRunning");
+    },
     connectedServerKey(which = {}) {
       const parts = [
         which._type || "unknown",
@@ -979,7 +986,7 @@ export default {
       }
       return outbound.toUpperCase();
     },
-    refreshTableData(touch, running) {
+    refreshTableData(touch, running, networkPaused = false) {
       touch.servers.forEach((v) => {
         v.connected = false;
       });
@@ -991,9 +998,8 @@ export default {
       this.tableData = touch;
       if (running !== undefined) {
         Object.assign(this.runningState, {
-          running: running
-            ? this.$t("common.isRunning")
-            : this.$t("common.notRunning"),
+          running: this.getRunningLabel(running, networkPaused),
+          networkPaused,
           connectedServer: touch.connectedServer,
         });
       }
@@ -1004,7 +1010,7 @@ export default {
           url: apiRoot + "/touch",
         });
         if (res.data.code === "SUCCESS") {
-          this.refreshTableData(res.data.data.touch, res.data.data.running);
+          this.refreshTableData(res.data.data.touch, res.data.data.running, res.data.data.networkPaused);
           this.updateConnectView();
           return true;
         }
@@ -1309,12 +1315,25 @@ export default {
     },
     // notifyStopped is called by the parent (App.vue) when a WebSocket
     // running_state message with running=false is received (e.g. TinyTun
-    // crashed). It immediately updates the local running state so the UI
-    // reflects the correct status without waiting for the next /touch poll.
-    notifyStopped() {
-      if (this.runningState.running !== this.$t("common.notRunning")) {
+    // crashed or transparent proxy paused because the physical network is down).
+    // It immediately updates the local running state so the UI reflects the
+    // correct status without waiting for the next /touch poll.
+    notifyStopped(networkPaused = false) {
+      const next = this.getRunningLabel(false, networkPaused);
+      if (this.runningState.running !== next || this.runningState.networkPaused !== networkPaused) {
         Object.assign(this.runningState, {
-          running: this.$t("common.notRunning"),
+          running: next,
+          networkPaused,
+        });
+        this.$emit("input", this.runningState);
+      }
+    },
+    notifyRunning(networkPaused = false) {
+      const next = this.getRunningLabel(true, networkPaused);
+      if (this.runningState.running !== next || this.runningState.networkPaused !== networkPaused) {
+        Object.assign(this.runningState, {
+          running: next,
+          networkPaused,
         });
         this.$emit("input", this.runningState);
       }
@@ -1449,9 +1468,8 @@ export default {
         if (res.data.code === "SUCCESS") {
           row.connected = false;
           Object.assign(this.runningState, {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
+            running: this.getRunningLabel(res.data.data.running, res.data.data.networkPaused),
+            networkPaused: !!res.data.data.networkPaused,
             connectedServer: res.data.data.touch.connectedServer,
           });
           this.updateConnectView();
@@ -1548,9 +1566,8 @@ export default {
           loading.close();
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
-              running: res.data.data.running
-                ? this.$t("common.isRunning")
-                : this.$t("common.notRunning"),
+              running: this.getRunningLabel(res.data.data.running, res.data.data.networkPaused),
+              networkPaused: !!res.data.data.networkPaused,
               connectedServer: res.data.data.touch.connectedServer,
             });
             this.$nextTick(() => {
@@ -1628,9 +1645,8 @@ export default {
         loading.close();
         if (res.data.code === "SUCCESS") {
           Object.assign(this.runningState, {
-            running: res.data.data.running
-              ? this.$t("common.isRunning")
-              : this.$t("common.notRunning"),
+            running: this.getRunningLabel(res.data.data.running, res.data.data.networkPaused),
+            networkPaused: !!res.data.data.networkPaused,
             connectedServer: res.data.data.touch.connectedServer,
           });
           this.$nextTick(() => { this.updateConnectView(); });
@@ -2205,15 +2221,15 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   text-transform: uppercase;
   border-radius: 999px;
   padding: 0.1rem 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background-color: rgba(255, 255, 255, 0.15);
-  color: inherit;
+  border: 1px solid var(--node-status-group-border, rgba(255, 255, 255, 0.6));
+  background-color: var(--node-status-group-bg, rgba(255, 255, 255, 0.15));
+  color: var(--node-status-group-color, inherit);
   white-space: nowrap;
 }
 
 .message.is-light .node-status-card__group {
-  border-color: rgba(0, 0, 0, 0.45);
-  background-color: rgba(0, 0, 0, 0.05);
+  border-color: var(--node-status-group-light-border, rgba(0, 0, 0, 0.45));
+  background-color: var(--node-status-group-light-bg, rgba(0, 0, 0, 0.05));
 }
 
 .node-status-card__body {
@@ -2230,12 +2246,22 @@ $coverBackground: rgba(0, 0, 0, 0.6);
 
 tr.highlight-row-connected {
   transition: background-color 0.05s linear;
-  background-color: #a8cff0;
+  background-color: var(--node-highlight-connected, #a8cff0);
+}
+
+tr.highlight-row-connected > td {
+  transition: background-color 0.05s linear;
+  background-color: var(--node-highlight-connected, #a8cff0) !important;
 }
 
 tr.highlight-row-disconnected {
   transition: background-color 0.05s linear;
-  background-color: rgba(255, 69, 58, 0.55);
+  background-color: var(--node-highlight-disconnected, rgba(255, 69, 58, 0.55));
+}
+
+tr.highlight-row-disconnected > td {
+  transition: background-color 0.05s linear;
+  background-color: var(--node-highlight-disconnected, rgba(255, 69, 58, 0.55)) !important;
 }
 
 .click-through {

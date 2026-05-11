@@ -8,6 +8,7 @@ export default {
     checkRunning: "Checking",
     isRunning: "Running",
     notRunning: "Ready",
+    waitingNetwork: "Waiting for network",
     notLogin: "Login please",
     latest: "Latest",
     local: "Local",

@@ -8,6 +8,7 @@ export default {
     checkRunning: "检测中",
     isRunning: "正在运行",
     notRunning: "就绪",
+    waitingNetwork: "等待网络连接",
     notLogin: "未登录",
     latest: "最新",
     local: "本地",

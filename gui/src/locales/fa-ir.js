@@ -8,6 +8,7 @@ export default {
     checkRunning: "بررسی",
     isRunning: "درحال اجرا",
     notRunning: "آماده",
+    waitingNetwork: "در انتظار اتصال شبکه",
     notLogin: "لطفا وارد شوید",
     latest: "آخرین",
     local: "محلی",

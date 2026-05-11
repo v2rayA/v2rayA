@@ -8,6 +8,7 @@ export default {
     checkRunning: "Проверка",
     isRunning: "Работает",
     notRunning: "Готово",
+    waitingNetwork: "Ожидание подключения к сети",
     notLogin: "Пожалуйста, войдите",
     latest: "Последняя",
     local: "Текущая",
