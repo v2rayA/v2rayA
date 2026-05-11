@@ -1,10 +1,14 @@
 package serverObj
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
@@ -76,16 +80,47 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 	return data, nil
 }
 
+// tuicSettings mirrors hint/proxy/tuic.ClientConfig JSON tags for serialization.
+type tuicSettings struct {
+	Address           string   `json:"address"`
+	UUID              string   `json:"uuid"`
+	Password          string   `json:"password"`
+	Sni               string   `json:"sni,omitempty"`
+	AllowInsecure     bool     `json:"allow_insecure,omitempty"`
+	CongestionControl string   `json:"congestion_control,omitempty"`
+	UdpRelayMode      string   `json:"udp_relay_mode,omitempty"`
+	Alpn              []string `json:"alpn,omitempty"`
+	DisableSni        bool     `json:"disable_sni,omitempty"`
+}
+
 func (s *Tuic) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+	alpn := strings.Split(strings.ReplaceAll(s.Alpn, " ", ""), ",")
+	if len(alpn) == 0 || (len(alpn) == 1 && alpn[0] == "") {
+		alpn = []string{"h3"}
 	}
-	chain := []string{socks5.String(), s.ExportToURL()}
+
+	settingsJSON, err := json.Marshal(tuicSettings{
+		Address:           net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
+		UUID:              s.UUID,
+		Password:          s.Password,
+		Sni:               s.Sni,
+		AllowInsecure:     s.AllowInsecure,
+		CongestionControl: s.CongestionControl,
+		UdpRelayMode:      s.UdpRelayMode,
+		Alpn:              alpn,
+		DisableSni:        s.DisableSni,
+	})
+	if err != nil {
+		return c, fmt.Errorf("tuic: marshal settings: %w", err)
+	}
+
 	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   true,
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:      info.Tag,
+			Protocol: "tuic",
+			Settings: coreObj.Settings{Inlined: settingsJSON},
+		},
+		UDPSupport: true,
 	}, nil
 }
 
@@ -116,7 +151,7 @@ func (s *Tuic) ExportToURL() string {
 }
 
 func (s *Tuic) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (s *Tuic) ProtoToShow() string {

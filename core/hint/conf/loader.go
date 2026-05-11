@@ -1,7 +1,7 @@
 // Package conf provides a v2raya-core JSON configuration loader.
 // It extends xray-core's JSON loader with support for multiObservatory,
 // and automatically injects the v2ray-compatible observatory gRPC service.
-// It also pre-processes custom protocols (anytls, juicity) from the JSON
+// It also pre-processes custom protocols (anytls, juicity, tuic) from the JSON
 // config, strips them before xray parses, then appends the built handlers.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -19,6 +19,7 @@ import (
 	multiobs "github.com/v2rayA/v2raya-core/hint/app/observatory/multiobservatory"
 	hint_anytls "github.com/v2rayA/v2raya-core/hint/proxy/anytls"
 	hint_juicity "github.com/v2rayA/v2raya-core/hint/proxy/juicity"
+	hint_tuic "github.com/v2rayA/v2raya-core/hint/proxy/tuic"
 	xray_commander "github.com/xtls/xray-core/app/commander"
 	xray_proxyman "github.com/xtls/xray-core/app/proxyman"
 	"github.com/xtls/xray-core/common"
@@ -88,6 +89,7 @@ type customOutboundJSON struct {
 var customProtocols = map[string]bool{
 	"anytls":  true,
 	"juicity": true,
+	"tuic":    true,
 }
 
 // stripCustomOutbounds parses raw JSON, removes custom-protocol outbound entries,
@@ -164,6 +166,14 @@ func buildCustomOutbounds(customs []customOutboundJSON) ([]*xray_core.OutboundHa
 			if c.Settings != nil {
 				if err := json.Unmarshal(c.Settings, &cfg); err != nil {
 					return nil, errors.New("invalid juicity settings for tag ", c.Tag).Base(err)
+				}
+			}
+			proxySettings = serial.ToTypedMessage(&cfg)
+		case "tuic":
+			var cfg hint_tuic.ClientConfig
+			if c.Settings != nil {
+				if err := json.Unmarshal(c.Settings, &cfg); err != nil {
+					return nil, errors.New("invalid tuic settings for tag ", c.Tag).Base(err)
 				}
 			}
 			proxySettings = serial.ToTypedMessage(&cfg)
