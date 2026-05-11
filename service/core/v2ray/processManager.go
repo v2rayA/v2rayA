@@ -14,8 +14,11 @@ import (
 )
 
 type CoreProcessManager struct {
-	p  *Process
-	mu sync.Mutex
+	p                *Process
+	mu               sync.Mutex
+	testing          bool
+	networkPaused    bool
+	connectivityStop chan struct{}
 }
 
 var ProcessManager CoreProcessManager
@@ -45,6 +48,34 @@ func (m *CoreProcessManager) GetRunningTemplate() *Template {
 		return nil
 	}
 	return m.p.template
+}
+
+func (m *CoreProcessManager) SetLatencyTesting(testing bool) {
+	m.mu.Lock()
+	m.testing = testing
+	m.mu.Unlock()
+}
+
+// ServiceRunning reports whether the proxy service should be treated as running
+// by the frontend. Temporary latency tests and connectivity-paused transparent
+// proxy states are excluded from this view.
+func (m *CoreProcessManager) ServiceRunning() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.p != nil && !m.testing && !m.networkPaused
+}
+
+func (m *CoreProcessManager) NetworkPaused() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.networkPaused
+}
+
+func (m *CoreProcessManager) stopConnectivityMonitorLocked() {
+	if m.connectivityStop != nil {
+		close(m.connectivityStop)
+		m.connectivityStop = nil
+	}
 }
 
 func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting, tmpl *Template) (err error) {
@@ -169,6 +200,9 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 
 	p := m.p
 
+	m.stopConnectivityMonitorLocked()
+	m.networkPaused = false
+
 	m.beforeStop(p)
 
 	err := p.Close()
@@ -184,7 +218,7 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 	m.p = nil
 
 	// Notify connected frontend clients that the proxy is no longer running.
-	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false})
+	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false, "networkPaused": false})
 }
 
 func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
@@ -226,6 +260,7 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 	if err = m.CheckAndSetupTransparentProxy(false, t.Setting, t); err != nil {
 		return err
 	}
+	m.startConnectivityMonitor(t)
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
@@ -264,6 +299,9 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	}()
 
 	configure.SetRunning(true)
+	if !m.testing {
+		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
+	}
 	return nil
 }
 

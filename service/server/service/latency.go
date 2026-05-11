@@ -206,7 +206,9 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
+	v2ray.ProcessManager.SetLatencyTesting(true)
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
+		v2ray.ProcessManager.SetLatencyTesting(false)
 		return nil, err
 	}
 	//limit the concurrency
@@ -230,6 +232,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}(i)
 	}
 	wg.Wait()
+	v2ray.ProcessManager.SetLatencyTesting(false)
 	if v2rayRunning && configure.GetConnectedServers() != nil {
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {

@@ -25,11 +25,13 @@ func GetTouch(ctx *gin.Context) {
 
 }
 func getTouch(ctx *gin.Context) {
-	running := v2ray.ProcessManager.Running()
+	running := v2ray.ProcessManager.ServiceRunning()
+	networkPaused := v2ray.ProcessManager.NetworkPaused()
 	t := touch.GenerateTouch()
 	common.ResponseSuccess(ctx, gin.H{
-		"running": running,
-		"touch":   t,
+		"running":       running,
+		"networkPaused": networkPaused,
+		"touch":         t,
 	})
 }
 
