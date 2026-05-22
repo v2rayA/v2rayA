@@ -217,8 +217,11 @@ func sanitizeConfigDirForPlatform(config string, isLite bool) string {
 	cleaned := filepath.Clean(config)
 	normalized := strings.ToLower(filepath.ToSlash(cleaned))
 
-	// Detect Linux default path on Windows where volume is missing and path starts with /etc/v2raya
-	if filepath.VolumeName(cleaned) == "" && strings.HasPrefix(normalized, "/etc/v2raya") {
+	// Catch drive-relative paths (/etc/v2raya → \etc\v2raya → C:\etc\v2raya)
+	// and relative paths (etc/v2raya → etc\v2raya), both of which are Linux
+	// default paths that make no sense on Windows.
+	if filepath.VolumeName(cleaned) == "" &&
+		(strings.HasPrefix(normalized, "/etc/v2raya") || strings.HasPrefix(normalized, "etc/v2raya")) {
 		fallback := defaultConfigDir(isLite)
 		log.Warn("Detected Linux-style config path on Windows (%s); falling back to %s", config, fallback)
 		return fallback
