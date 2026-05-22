@@ -230,17 +230,10 @@ func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 	m.stop(true)
 }
 
-func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
-	resolv.CheckResolvConf()
-
-	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
-	}
-
-	if err = t.CheckInboundPortsOccupied(); err != nil {
-		return err
-	}
-
+// runPreStartHook executes the configured core pre-start hook.
+// It is called inside the Start lock so it is correctly ordered after the
+// pre-stop hook that runs inside m.stop.
+func (m *CoreProcessManager) runPreStartHook() error {
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
 		hook = append(hook, "--stage=pre-start", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
@@ -278,28 +271,46 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 }
 
 func (m *CoreProcessManager) Start(t *Template) (err error) {
+	// Phase 1 (pre-lock): lightweight checks that do not depend on whether a
+	// previous process is running.  Port occupancy is checked by NewProcess
+	// after the old process has been stopped.
+	resolv.CheckResolvConf()
+	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
+		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+	}
+
+	// Phase 2 (locked): stop the old process, run the pre-start hook (ordered
+	// after the pre-stop hook in beforeStop), then start the new core.
+	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TinyTun,
+	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	m.stop(true)
-
 	process, err := NewProcess(t, func() error {
-		return m.beforeStart(t)
+		return m.runPreStartHook()
 	}, func() error {
-		return m.afterStart(t)
+		return nil // afterStart executed post-lock in Phase 3
 	}, m.handleUnexpectedStop)
 	if err != nil {
+		m.mu.Unlock()
 		return err
 	}
 	m.p = process
+	testing := m.testing
+	m.mu.Unlock()
+
 	defer func() {
 		if err != nil {
-			m.stop(true)
+			m.Stop(true)
 		}
 	}()
 
+	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
+	// TinyTun), connectivity monitor, and post-start hook.
+	if err = m.afterStart(t); err != nil {
+		return err
+	}
 	configure.SetRunning(true)
-	if !m.testing {
+	if !testing {
 		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
 	}
 	return nil

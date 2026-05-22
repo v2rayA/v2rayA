@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/md5"
 	"embed"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,6 +24,11 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
 	"github.com/vearutop/statigz"
+)
+
+var (
+	httpServerMu sync.Mutex
+	httpServer   *http.Server
 )
 
 //go:embed web
@@ -287,7 +294,39 @@ func Run() error {
 
 	ServeGUI(engine)
 
-	return engine.Run(conf.GetEnvironmentConfig().Address)
+	addr := conf.GetEnvironmentConfig().Address
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
+	}
+
+	srv := &http.Server{Handler: engine}
+	httpServerMu.Lock()
+	httpServer = srv
+	httpServerMu.Unlock()
+	defer func() {
+		httpServerMu.Lock()
+		httpServer = nil
+		httpServerMu.Unlock()
+	}()
+
+	err = srv.Serve(l)
+	if err == http.ErrServerClosed {
+		return nil
+	}
+	return err
+}
+
+// Shutdown gracefully stops the HTTP server started by Run.
+// It is safe to call even if Run has not been called or has already returned.
+func Shutdown(ctx context.Context) error {
+	httpServerMu.Lock()
+	srv := httpServer
+	httpServerMu.Unlock()
+	if srv == nil {
+		return nil
+	}
+	return srv.Shutdown(ctx)
 }
 
 func printRunningAt(address string) {

@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -150,8 +152,10 @@ var tinytunDefaultSkipNetworks = []string{
 
 // tinyTunState tracks the running TinyTun process.
 var tinyTunState struct {
-	cancel context.CancelFunc
-	mu     sync.Mutex
+	cancel   context.CancelFunc
+	done     chan struct{} // closed by the monitor goroutine when cmd.Wait() returns
+	mu       sync.Mutex
+	stopping int32 // atomic; 1 while stopTinyTun is in progress
 }
 
 // GetTinyTunBinPath returns the path to the TinyTun binary.
@@ -217,26 +221,21 @@ func isResolvableHost(host string) bool {
 }
 
 // collectNodeIPs returns the deduplicated list of IP addresses for all proxy
-// nodes referenced by tmpl. Domain-based node addresses are resolved to IPs.
+// nodes referenced by tmpl. Domain-based node addresses are resolved to IPs
+// concurrently to reduce latency when many nodes need DNS lookups.
 func collectNodeIPs(tmpl *Template) []string {
-	seen := make(map[string]struct{})
-	var result []string
-	appendIPs := func(hostname string) {
-		if !isResolvableHost(hostname) {
+	// First pass: gather all unique, resolvable hostnames.
+	seenHost := make(map[string]struct{})
+	var hostnames []string
+	addHostname := func(h string) {
+		if !isResolvableHost(h) {
 			return
 		}
-		ips, err := resolveHostToIPs(hostname)
-		if err != nil {
-			log.Warn("tinytun: failed to resolve node hostname %v: %v", hostname, err)
+		if _, ok := seenHost[h]; ok {
 			return
 		}
-		for _, ip := range ips {
-			if _, ok := seen[ip]; ok {
-				continue
-			}
-			seen[ip] = struct{}{}
-			result = append(result, ip)
-		}
+		seenHost[h] = struct{}{}
+		hostnames = append(hostnames, h)
 	}
 
 	// Source 1: read directly from the connected-server database.
@@ -249,16 +248,48 @@ func collectNodeIPs(tmpl *Template) []string {
 				log.Warn("tinytun: failed to locate server raw for skip_ips: %v", err)
 				continue
 			}
-			appendIPs(sr.ServerObj.GetHostname())
+			addHostname(sr.ServerObj.GetHostname())
 		}
 	}
 
 	// Source 2: serverInfoMap in the template (covers cases where the template
 	// was constructed from a snapshot that may differ from the live DB state).
 	for _, info := range tmpl.serverInfoMap {
-		appendIPs(info.Info.GetHostname())
+		addHostname(info.Info.GetHostname())
 	}
 
+	if len(hostnames) == 0 {
+		return nil
+	}
+
+	// Second pass: resolve all hostnames concurrently.
+	var (
+		wg     sync.WaitGroup
+		mu     sync.Mutex
+		seenIP = make(map[string]struct{})
+		result []string
+	)
+	for _, hostname := range hostnames {
+		wg.Add(1)
+		go func(host string) {
+			defer wg.Done()
+			ips, err := resolveHostToIPs(host)
+			if err != nil {
+				log.Warn("tinytun: failed to resolve node hostname %v: %v", host, err)
+				return
+			}
+			mu.Lock()
+			for _, ip := range ips {
+				if _, ok := seenIP[ip]; ok {
+					continue
+				}
+				seenIP[ip] = struct{}{}
+				result = append(result, ip)
+			}
+			mu.Unlock()
+		}(hostname)
+	}
+	wg.Wait()
 	return result
 }
 
@@ -448,6 +479,8 @@ func domainPatternToYamlRule(pattern, geositePath, action string) (string, bool)
 		if err != nil || filePath == "" {
 			return "", false
 		}
+		// Normalize to forward slashes so the path is valid YAML on all platforms.
+		filePath = strings.ReplaceAll(filePath, "\\", "/")
 		condition = "geosite:" + parts[1] + ":" + filePath
 
 	case strings.HasPrefix(pattern, "full:"):
@@ -484,7 +517,9 @@ func buildTinyTunDNSConfig() tinytunDnsConf {
 	rules := configure.GetDnsRulesNotNil()
 
 	// Resolve the geosite.dat path once; used for every geosite: pattern.
+	// Normalize to forward slashes so the path is valid YAML on Windows.
 	geositePath, _ := asset.GetV2rayLocationAsset("geosite.dat")
+	geositePath = strings.ReplaceAll(geositePath, "\\", "/")
 
 	var (
 		directServers []string
@@ -806,22 +841,35 @@ func startTinyTun(tmpl *Template) error {
 		return fmt.Errorf("failed to start tinytun: %w", err)
 	}
 
+	doneCh := make(chan struct{})
+
 	tinyTunState.mu.Lock()
 	if tinyTunState.cancel != nil {
 		tinyTunState.cancel()
 	}
+	// Set the new cancel function before resetting the stopping flag so that
+	// any concurrent stopTinyTun that reads stopping==0 already sees the new
+	// cancel and will correctly cancel the new process.
 	tinyTunState.cancel = cancel
+	tinyTunState.done = doneCh
+	atomic.StoreInt32(&tinyTunState.stopping, 0)
 	tinyTunState.mu.Unlock()
 
 	// Monitor for unexpected exits: if TinyTun dies without its context being cancelled,
 	// the proxy is in an inconsistent state and must be stopped.
 	go func() {
 		_ = cmd.Wait()
+		close(doneCh) // signal stopTinyTun that the process has exited
 		select {
 		case <-ctx.Done():
 			// Context was cancelled by stopTinyTun — intentional stop, nothing to do.
 			return
 		default:
+		}
+		// Ignore if a graceful shutdown is already in progress (stopTinyTun was
+		// called but the context cancellation has not propagated yet).
+		if atomic.LoadInt32(&tinyTunState.stopping) != 0 {
+			return
 		}
 		log.Warn("tinytun: process exited unexpectedly, stopping proxy")
 		ProcessManager.Stop(true)
@@ -848,13 +896,27 @@ func stopTinyTun() {
 	}
 
 	tinyTunState.mu.Lock()
+	// Signal the unexpected-exit monitor that this is an intentional stop
+	// before cancelling the context, to close the race window between the
+	// process exiting and ctx.Done() being observable.
+	atomic.StoreInt32(&tinyTunState.stopping, 1)
 	cancel := tinyTunState.cancel
+	doneCh := tinyTunState.done
 	tinyTunState.cancel = nil
 	tinyTunState.mu.Unlock()
 
 	if cancel != nil {
 		log.Info("Stopping TinyTun")
 		cancel()
+		// Wait for the process to exit (cmd.Wait in the monitor goroutine closes
+		// doneCh).  A 5-second timeout prevents an indefinite hang on a stuck process.
+		if doneCh != nil {
+			select {
+			case <-doneCh:
+			case <-time.After(5 * time.Second):
+				log.Warn("tinytun: process did not exit within 5 seconds after stop")
+			}
+		}
 	}
 }
 

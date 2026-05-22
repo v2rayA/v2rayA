@@ -1,7 +1,8 @@
 package v2ray
 
 import (
-	"net/http"
+	"net"
+	"runtime"
 	"time"
 
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -9,28 +10,57 @@ import (
 )
 
 const (
-	connectivityProbeURL      = "https://connectivitycheck.gstatic.com/generate_204"
 	connectivityCheckInterval = 15 * time.Second
 	connectivityCheckTimeout  = 5 * time.Second
-	// connectivityStartupDelay gives TinyTun time to fully set up the TUN interface
-	// and routing rules before the first probe.  On Windows this is especially
-	// important because the wintun driver briefly disrupts all traffic while it
-	// installs routes, which would otherwise cause a spurious networkPaused=true.
-	connectivityStartupDelay = 5 * time.Second
+	// connectivityBackoffBase is the initial retry delay after the first consecutive
+	// probe failure (30 s).  Subsequent failures double the delay up to
+	// connectivityBackoffMax to avoid a rapid stop→start oscillation loop.
+	connectivityBackoffBase = 30 * time.Second
+	// connectivityBackoffMax caps the exponential backoff delay.
+	connectivityBackoffMax = 120 * time.Second
+	// connectivitySocksAddr is the local SOCKS5 forward address used for probing.
+	// It matches the "transparent" inbound port added by setInbound for TransparentTun
+	// (tinytunSocksPort = 52345).  Using a local TCP dial avoids routing the probe
+	// through the TUN device itself, which could produce false negatives while
+	// wintun routes are being (re-)configured on Windows.
+	connectivitySocksAddr = "127.0.0.1:52345"
 )
 
+// connectivityStartupDelay is the initial wait before the first connectivity
+// probe.  On Windows it is larger to accommodate wintun driver initialisation.
+var connectivityStartupDelay time.Duration
+
+func init() {
+	connectivityStartupDelay = 5 * time.Second
+	if runtime.GOOS == "windows" {
+		connectivityStartupDelay = 15 * time.Second
+	}
+}
+
+// probePhysicalConnectivity checks whether the local SOCKS5 forward port is
+// reachable.  A successful TCP dial to the loopback address confirms that the
+// v2ray/xray inbound is up without routing the probe through the TUN device.
 func probePhysicalConnectivity() bool {
-	client := &http.Client{Timeout: connectivityCheckTimeout}
-	req, err := http.NewRequest(http.MethodGet, connectivityProbeURL, nil)
+	conn, err := net.DialTimeout("tcp", connectivitySocksAddr, connectivityCheckTimeout)
 	if err != nil {
 		return false
 	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return false
+	conn.Close()
+	return true
+}
+
+// connectivityBackoffDelay returns the delay to wait after consecutiveFailures
+// consecutive probe failures, using exponential backoff capped at
+// connectivityBackoffMax.
+func connectivityBackoffDelay(consecutiveFailures int) time.Duration {
+	delay := connectivityBackoffBase
+	for i := 1; i < consecutiveFailures; i++ {
+		delay *= 2
+		if delay >= connectivityBackoffMax {
+			return connectivityBackoffMax
+		}
 	}
-	defer resp.Body.Close()
-	return resp.StatusCode >= 200 && resp.StatusCode < 400
+	return delay
 }
 
 func (m *CoreProcessManager) startConnectivityMonitor(t *Template) {
@@ -63,42 +93,54 @@ func (m *CoreProcessManager) connectivityLoop(stopCh chan struct{}, t *Template)
 	case <-time.After(connectivityStartupDelay):
 	}
 
-	ticker := time.NewTicker(connectivityCheckInterval)
-	defer ticker.Stop()
-
+	failureCount := 0
 	for {
-		if m.syncConnectivityState(t) {
+		stop, healthy := m.syncConnectivityState(t)
+		if stop {
 			return
 		}
+
+		var delay time.Duration
+		if !healthy {
+			failureCount++
+			delay = connectivityBackoffDelay(failureCount)
+		} else {
+			failureCount = 0
+			delay = connectivityCheckInterval
+		}
+
 		select {
 		case <-stopCh:
 			return
-		case <-ticker.C:
+		case <-time.After(delay):
 		}
 	}
 }
 
-func (m *CoreProcessManager) syncConnectivityState(t *Template) bool {
+// syncConnectivityState checks and updates the transparent proxy connectivity
+// state.  It returns (stop, healthy): stop=true means the monitor goroutine
+// should exit; healthy=true means the local SOCKS5 probe succeeded.
+func (m *CoreProcessManager) syncConnectivityState(t *Template) (stop bool, healthy bool) {
 	if t == nil || t.Setting == nil {
-		return true
+		return true, false
 	}
 
 	m.mu.Lock()
 	if m.p == nil || m.testing {
 		m.mu.Unlock()
-		return true
+		return true, false
 	}
 	paused := m.networkPaused
 	setting := t.Setting
 	m.mu.Unlock()
 
 	if setting.TransparentType == configure.TransparentSystemProxy || !IsTransparentOn(setting) {
-		return false
+		return false, true
 	}
 
 	if !probePhysicalConnectivity() {
 		if paused {
-			return false
+			return false, false
 		}
 		deleteTransparentProxyRulesKeepSystemProxy()
 		m.mu.Lock()
@@ -107,18 +149,18 @@ func (m *CoreProcessManager) syncConnectivityState(t *Template) bool {
 			m.mu.Unlock()
 			ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false, "networkPaused": true})
 			log.Info("connectivity lost, transparent proxy paused")
-			return false
+			return false, false
 		}
 		m.mu.Unlock()
-		return true
+		return true, false
 	}
 
 	if !paused {
-		return false
+		return false, true
 	}
 	if err := m.CheckAndSetupTransparentProxy(false, setting, t); err != nil {
 		log.Warn("failed to resume transparent proxy after network recovery: %v", err)
-		return false
+		return false, true
 	}
 	m.mu.Lock()
 	if m.p != nil && !m.testing {
@@ -126,8 +168,8 @@ func (m *CoreProcessManager) syncConnectivityState(t *Template) bool {
 		m.mu.Unlock()
 		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
 		log.Info("connectivity restored, transparent proxy resumed")
-		return false
+		return false, true
 	}
 	m.mu.Unlock()
-	return true
+	return true, true
 }
