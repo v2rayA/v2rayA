@@ -307,6 +307,15 @@ export default {
       ws.onopen = () => {
         // console.log("ws opened");
         this._wsRetries = 0; // 连接成功后重置重试计数
+        // Re-sync running state on every (re)connect.  WebSocket messages are
+        // not replayed, so if the connection was broken while Tun was setting up
+        // routes the frontend might miss the running_state message and stay
+        // stuck on "检测中" (Checking) forever.
+        this.$nextTick(() => {
+          if (this.$refs.nodeRef) {
+            this.$refs.nodeRef.syncLatestNodeOverview();
+          }
+        });
       };
       ws.onmessage = (msg) => {
         msg.data && that.handleMessage(JSON.parse(msg.data));

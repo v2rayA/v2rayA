@@ -10,8 +10,13 @@ import (
 
 const (
 	connectivityProbeURL      = "https://connectivitycheck.gstatic.com/generate_204"
-	connectivityCheckInterval  = 15 * time.Second
-	connectivityCheckTimeout   = 5 * time.Second
+	connectivityCheckInterval = 15 * time.Second
+	connectivityCheckTimeout  = 5 * time.Second
+	// connectivityStartupDelay gives TinyTun time to fully set up the TUN interface
+	// and routing rules before the first probe.  On Windows this is especially
+	// important because the wintun driver briefly disrupts all traffic while it
+	// installs routes, which would otherwise cause a spurious networkPaused=true.
+	connectivityStartupDelay = 5 * time.Second
 )
 
 func probePhysicalConnectivity() bool {
@@ -47,6 +52,17 @@ func (m *CoreProcessManager) startConnectivityMonitor(t *Template) {
 }
 
 func (m *CoreProcessManager) connectivityLoop(stopCh chan struct{}, t *Template) {
+	// Wait for the transparent proxy (e.g. TinyTun) to fully initialize before
+	// the first connectivity check.  Probing too early on Windows can yield a
+	// false network-unavailable result while the wintun driver is still setting
+	// up routes, which would stop TinyTun prematurely and leave the frontend
+	// stuck on "检测中" (Checking).
+	select {
+	case <-stopCh:
+		return
+	case <-time.After(connectivityStartupDelay):
+	}
+
 	ticker := time.NewTicker(connectivityCheckInterval)
 	defer ticker.Stop()
 

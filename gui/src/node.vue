@@ -899,13 +899,32 @@ export default {
     this.coreVersionValid = localStorage["coreVersionValid"] !== "false";
     this.coreVersionErr = localStorage["coreVersionErr"] || "";
     if (!localStorage["token"]) return; // Not authenticated yet — skip to avoid spurious 401 modals
-    this.$axios({
-      url: apiRoot + "/touch",
-    }).then((res) => {
-      this.refreshTableData(res.data.data.touch, res.data.data.running, res.data.data.networkPaused);
-      this.locateTabToConnected();
-      this.ready = true;
-    });
+    const loadTouch = (retries = 3) => {
+      this.$axios({
+        url: apiRoot + "/touch",
+      }).then((res) => {
+        if (res.data && res.data.code === "SUCCESS") {
+          this.refreshTableData(res.data.data.touch, res.data.data.running, res.data.data.networkPaused);
+          this.updateConnectView();
+          this.locateTabToConnected();
+          this.ready = true;
+        } else if (retries > 0) {
+          // Non-SUCCESS response (e.g. server busy) — retry after a short delay
+          setTimeout(() => loadTouch(retries - 1), 2000);
+        } else {
+          // Give up retrying; unblock the UI so the user isn't stuck on a spinner
+          this.ready = true;
+        }
+      }).catch(() => {
+        // Network error (can happen during Tun route setup on Windows) — retry
+        if (retries > 0) {
+          setTimeout(() => loadTouch(retries - 1), 2000);
+        } else {
+          this.ready = true;
+        }
+      });
+    };
+    loadTouch();
   },
   beforeDestroy() {
     this.clipboard.destroy();
