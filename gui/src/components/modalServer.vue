@@ -1208,6 +1208,7 @@ export default {
             host: srcObj.host,
             headerType: srcObj.type,
             sni: srcObj.sni,
+            encryption: srcObj.scy || "none",
           };
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;

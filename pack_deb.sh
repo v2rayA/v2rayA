@@ -36,7 +36,7 @@ chmod 755 "${STAGING_DIR}/usr/bin/v2raya_core"
 # Write DEBIAN/control file
 cat <<EOF > "${DEBIAN_DIR}/control"
 Package: v2raya
-Version: 2.2.5-test3
+Version: 2.2.5-test4
 Section: net
 Priority: optional
 Architecture: arm64
@@ -65,9 +65,9 @@ EOF
 chmod 755 "${DEBIAN_DIR}/prerm"
 
 # Build the Debian package
-dpkg-deb --root-owner-group -b "${STAGING_DIR}" v2raya_2.2.5-test3_arm64.deb
+dpkg-deb --root-owner-group -b "${STAGING_DIR}" v2raya_2.2.5-test4_arm64.deb
 
 # Cleanup staging directory
 rm -rf "${STAGING_DIR}"
 
-echo "Debian package successfully built: v2raya_2.2.5-test3_arm64.deb"
+echo "Debian package successfully built: v2raya_2.2.5-test4_arm64.deb"
