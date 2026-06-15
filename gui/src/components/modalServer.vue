@@ -897,7 +897,11 @@ export default {
   },
   methods: {
     variant() {
-      return localStorage["variant"]?.toLowerCase() || "v2ray";
+      const v = localStorage["variant"]?.toLowerCase() || "v2ray";
+      if (v === "v2rayacore" || v === "xray") {
+        return "xray";
+      }
+      return v;
     },
     handleV2rayProtocolSwitch() {
       if (this.v2ray.protocol === "vless" && this.v2ray.scy === "auto") {
