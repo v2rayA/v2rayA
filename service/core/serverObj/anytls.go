@@ -55,7 +55,6 @@ type anytlsSettings struct {
 	Port            int    `json:"port"`
 	Password        string `json:"password"`
 	SNI             string `json:"sni,omitempty"`
-	AllowInsecure   bool   `json:"allow_insecure,omitempty"`
 	MinIdleSessions int    `json:"min_idle_sessions,omitempty"`
 }
 
@@ -71,7 +70,6 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 	q := u.Query()
 	sni := q.Get("sni")
-	insecure := q.Get("insecure") == "1" || q.Get("allowInsecure") == "true" || q.Get("allowInsecure") == "1"
 	minIdle, _ := strconv.Atoi(q.Get("minIdleSession"))
 
 	settingsJSON, err := json.Marshal(anytlsSettings{
@@ -79,7 +77,6 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 		Port:            s.Port,
 		Password:        password,
 		SNI:             sni,
-		AllowInsecure:   insecure,
 		MinIdleSessions: minIdle,
 	})
 	if err != nil {

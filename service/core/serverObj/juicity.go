@@ -23,7 +23,6 @@ type Juicity struct {
 	UUID                  string `json:"uuid"`
 	Password              string `json:"password"`
 	Sni                   string `json:"sni"`
-	AllowInsecure         bool   `json:"allowInsecure"`
 	CC                    string `json:"cc"`
 	PinnedCertchainSha256 string `json:"pinnedCertchainSha256"`
 	Name                  string `json:"name"`
@@ -62,7 +61,6 @@ func ParseJuicityURL(link string) (*Juicity, error) {
 		UUID:                  uuid,
 		Password:              password,
 		Sni:                   q.Get("sni"),
-		AllowInsecure:         q.Get("allow_insecure") == "1" || q.Get("allowInsecure") == "true",
 		CC:                    cc,
 		PinnedCertchainSha256: q.Get("pinned_certchain_sha256"),
 		Name:                  u.Fragment,
@@ -78,7 +76,6 @@ type juicitySettings struct {
 	UUID              string `json:"uuid"`
 	Password          string `json:"password"`
 	SNI               string `json:"sni,omitempty"`
-	AllowInsecure     bool   `json:"allow_insecure,omitempty"`
 	CongestionControl string `json:"congestion_control,omitempty"`
 	PinnedSHA256      string `json:"pinned_certchain_sha256,omitempty"`
 }
@@ -89,7 +86,6 @@ func (s *Juicity) Configuration(info PriorInfo) (c Configuration, err error) {
 		UUID:              s.UUID,
 		Password:          s.Password,
 		SNI:               s.Sni,
-		AllowInsecure:     s.AllowInsecure,
 		CongestionControl: s.CC,
 		PinnedSHA256:      s.PinnedCertchainSha256,
 	})

@@ -30,7 +30,6 @@ type Hysteria2 struct {
 	Up           string `json:"up"`
 	Down         string `json:"down"`
 	Congestion    string `json:"congestion"`
-	Insecure     bool   `json:"insecure"`
 	FinalMask    bool   `json:"finalMask"`
 	Name         string `json:"name"`
 	Protocol     string `json:"protocol"`
@@ -68,7 +67,6 @@ func ParseHysteria2URL(link string) (data *Hysteria2, err error) {
 		Up:            q.Get("upmbps"),
 		Down:          q.Get("downmbps"),
 		Congestion:    q.Get("congestion"),
-		Insecure:      q.Get("insecure") == "1" || q.Get("allowInsecure") == "true",
 		FinalMask:     q.Get("finalmask") == "1",
 		Protocol:      "hysteria2",
 		Link:          link,
@@ -104,7 +102,6 @@ func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
 		Security: "tls",
 		TLSSettings: &coreObj.TLSSettings{
 			ServerName:    s.Sni,
-			AllowInsecure: s.Insecure,
 			Alpn:          []string{"h3"},
 		},
 		HysteriaSettings: &coreObj.HysteriaSettings{

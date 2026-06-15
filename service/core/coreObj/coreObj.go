@@ -155,7 +155,6 @@ func (s Settings) MarshalJSON() ([]byte, error) {
 }
 
 type TLSSettings struct {
-	AllowInsecure                    bool          `json:"allowInsecure"`
 	ServerName                       interface{}   `json:"serverName,omitempty"`
 	Alpn                             []string      `json:"alpn,omitempty"`
 	PinnedPeerCertificateChainSha256 string        `json:"pinnedPeerCertificateChainSha256,omitempty"`

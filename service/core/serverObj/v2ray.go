@@ -12,7 +12,6 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/ntp"
 	"github.com/v2rayA/v2rayA/core/coreObj"
@@ -49,7 +48,6 @@ type V2Ray struct {
 	SpiderX             string `json:"spx,omitempty"`
 	Flow                string `json:"flow,omitempty"`
 	Alpn                string `json:"alpn,omitempty"`
-	AllowInsecure       bool   `json:"allowInsecure"`
 	Key                 string `json:"key,omitempty"`
 	QuicSecurity        string `json:"quicSecurity"`
 	XHTTPMode           string `json:"xhttpMode,omitempty"`
@@ -97,7 +95,6 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Flow:                u.Query().Get("flow"),
 		Security:            u.Query().Get("encryption"),
 		Alpn:                u.Query().Get("alpn"),
-		AllowInsecure:       u.Query().Get("allowInsecure") == "true",
 		Key:                 u.Query().Get("key"),
 		MaxEarlyData:        u.Query().Get("maxEarlyData"),
 		EarlyDataHeaderName: u.Query().Get("earlyDataHeaderName"),
@@ -203,17 +200,11 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 			Aid:           aid,
 			Security:      security,
 			TLS:           map[string]string{"1": "tls"}[q.Get("tls")],
-			AllowInsecure: false,
 		}
 		if info.Net == "websocket" {
 			info.Net = "ws"
 		}
 	} else {
-		if allowInsecure := gjson.Get(raw, "allowInsecure"); allowInsecure.Exists() {
-			if newRaw, err := sjson.Set(raw, "allowInsecure", allowInsecure.Bool()); err == nil {
-				raw = newRaw
-			}
-		}
 		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
 			return
@@ -442,9 +433,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		if strings.ToLower(v.TLS) == "tls" {
 			core.StreamSettings.Security = "tls"
 			core.StreamSettings.TLSSettings = &coreObj.TLSSettings{}
-			if v.AllowInsecure {
-				core.StreamSettings.TLSSettings.AllowInsecure = true
-			}
 			if v.SNI != "" {
 				core.StreamSettings.TLSSettings.ServerName = v.SNI
 			} else if v.Host != "" {
@@ -465,9 +453,6 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				core.StreamSettings.XTLSSettings.ServerName = v.SNI
 			} else if v.Host != "" {
 				core.StreamSettings.XTLSSettings.ServerName = v.Host
-			}
-			if v.AllowInsecure {
-				core.StreamSettings.XTLSSettings.AllowInsecure = true
 			}
 			if v.Alpn != "" {
 				alpn := strings.Split(v.Alpn, ",")
@@ -544,7 +529,6 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "flow", v.Flow)
 			setValue(&query, "sni", v.SNI)
 			setValue(&query, "alpn", v.Alpn)
-			setValue(&query, "allowInsecure", strconv.FormatBool(v.AllowInsecure))
 			setValue(&query, "fp", v.Fingerprint)
 			if v.TLS == "reality" {
 				setValue(&query, "pbk", v.PublicKey)

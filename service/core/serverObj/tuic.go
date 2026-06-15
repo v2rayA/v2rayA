@@ -20,7 +20,6 @@ type Tuic struct {
 	UUID           string `json:"uuid"`
 	Password       string `json:"password"`
 	CC             string `json:"cc"`
-	AllowInsecure  bool   `json:"allowInsecure"`
 	DisableSni     bool   `json:"disableSni"`
 	Sni            string `json:"sni"`
 	Alpn           string `json:"alpn"`
@@ -102,7 +101,6 @@ func ParseTuicURL(link string) (*Tuic, error) {
 		UUID:           uuid,
 		Password:       password,
 		CC:             q.Get("congestion_control"),
-		AllowInsecure:  q.Get("allow_insecure") == "1",
 		DisableSni:     q.Get("disable_sni") == "1",
 		Sni:            q.Get("sni"),
 		Alpn:           q.Get("alpn"),

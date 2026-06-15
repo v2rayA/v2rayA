@@ -33,7 +33,6 @@ type Trojan struct {
 	Host          string `json:"host"`
 	Path          string `json:"path"`
 	ServiceName   string `json:"serviceName"`
-	AllowInsecure bool   `json:"allowInsecure"`
 	Alpn          string `json:"alpn,omitempty"`
 	Protocol      string `json:"protocol"`
 	Backend       string `json:"backend,omitempty"` // "" (follow system), "daeuniverse", "v2ray"
@@ -50,7 +49,6 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		err = fmt.Errorf("invalid trojan format")
 		return
 	}
-	allowInsecure := t.Query().Get("allowInsecure")
 	sni := t.Query().Get("peer")
 	if sni == "" {
 		sni = t.Query().Get("sni")
@@ -73,7 +71,6 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		Type:          t.Query().Get("type"),
 		Path:          t.Query().Get("path"),
 		ServiceName:   t.Query().Get("serviceName"),
-		AllowInsecure: allowInsecure == "1" || allowInsecure == "true",
 		Protocol:      "trojan",
 		Backend:       t.Query().Get("v2raya-backend"),
 	}
@@ -84,7 +81,6 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		data.Path = t.Query().Get("path")
 		data.ServiceName = t.Query().Get("serviceName")
 		data.Type = t.Query().Get("type")
-		data.AllowInsecure = false
 	}
 	return data, nil
 }
@@ -101,7 +97,6 @@ func (t *Trojan) ConfigurationMC(info PriorInfo) (c Configuration, err error) {
 	}
 	tlsSettings := &coreObj.TLSSettings{
 		ServerName:    t.Sni,
-		AllowInsecure: t.AllowInsecure,
 	}
 	if t.Alpn != "" {
 		tlsSettings.Alpn = strings.Split(t.Alpn, ",")
@@ -176,9 +171,6 @@ func (t *Trojan) ExportToURL() string {
 		setValue(&query, "serviceName", t.ServiceName)
 	}
 
-	if t.AllowInsecure {
-		query.Set("allowInsecure", "1")
-	}
 	setValue(&query, "sni", t.Sni)
 
 	if t.Protocol == "trojan-go" {

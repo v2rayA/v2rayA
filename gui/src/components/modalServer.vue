@@ -88,18 +88,7 @@
             <b-field v-show="v2ray.tls !== 'none'" label="Alpn" label-position="on-border">
               <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
             </b-field>
-            <b-field label-position="on-border">
-              <template slot="label"> AllowInsecure </template>
-              <b-tooltip v-show="v2ray.protocol === 'vless'" type="is-dark"
-                :label="$t('server.messages.notRecommend', { name: 'VLESS' })" multilined position="is-right">
-                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-                  style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-              </b-tooltip>
-              <b-select v-model="v2ray.allowInsecure" expanded required>
-                <option :value="false">{{ $t("operations.no") }}</option>
-                <option :value="true">{{ $t("operations.yes") }}</option>
-              </b-select>
-            </b-field>
+
             <b-field label="Network" label-position="on-border">
               <b-select v-model="v2ray.net" expanded @input="handleNetworkChange">
                 <option value="tcp">TCP</option>
@@ -414,18 +403,7 @@
             <b-input ref="trojan_password" required :placeholder="$t('configureServer.password')"
               v-model="trojan.password" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-tooltip v-show="trojan.method !== 'origin' || trojan.obfs !== 'none'" type="is-dark"
-              :label="$t('server.messages.notAllowInsecure', { name: 'Trojan-Go' })" multilined position="is-right">
-              <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
-                style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-            </b-tooltip>
-            <b-select ref="trojan_allow_insecure" v-model="trojan.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true"> {{ $t("operations.yes") }} </option>
-            </b-select>
-          </b-field>
+
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
           </b-field>
@@ -462,13 +440,7 @@
               <option value="bbr">bbr</option>
             </b-select>
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="juicity_allow_insecure" v-model="juicity.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true"> {{ $t("operations.yes") }} </option>
-            </b-select>
-          </b-field>
+
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="juicity.sni" placeholder="SNI" expanded />
           </b-field>
@@ -502,14 +474,7 @@
               <option value="bbr">bbr</option>
             </b-select>
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select v-if="tuic.disableSni === false" ref="tuic_allow_insecure" v-model="tuic.allowInsecure" expanded
-              required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true"> {{ $t("operations.yes") }} </option>
-            </b-select>
-          </b-field>
+
           <b-field label-position="on-border">
             <template slot="label"> DisableSni </template>
             <b-select ref="tuic_disable_sni" v-model="tuic.disableSni" expanded required>
@@ -550,13 +515,7 @@
             <b-input ref="hysteria2_password" required :placeholder="$t('configureServer.password')"
               v-model="hysteria2.password" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="hysteria2_allow_insecure" v-model="hysteria2.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true"> {{ $t("operations.yes") }} </option>
-            </b-select>
-          </b-field>
+
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
           </b-field>
@@ -665,14 +624,7 @@
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input ref="anytls_sni" placeholder="SNI / Peer (Optional)" v-model="anytls.sni" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="anytls_allow_insecure" v-model="anytls.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
           </div>
-              <option :value="true">{{ $t("operations.yes") }}</option>
-            </b-select>
-          </b-field>
         </b-tab-item>
       </b-tabs>
     </section>
@@ -727,7 +679,6 @@ export default {
         alpn: "",
         scy: "auto",
         v: "",
-        allowInsecure: false,
         protocol: "vmess",
         key: "none",
         xhttpMode: "auto",
@@ -767,7 +718,6 @@ export default {
         password: "",
         server: "",
         port: "",
-        allowInsecure: false,
         peer: "",
         name: "",
         protocol: "trojan",
@@ -779,7 +729,6 @@ export default {
         server: "",
         port: "",
         cc: "bbr",
-        allowInsecure: false,
         sni: "",
         pinnedCertchainSha256: "",
         name: "",
@@ -791,7 +740,6 @@ export default {
         server: "",
         port: "",
         cc: "bbr",
-        allowInsecure: false,
         disableSni: false,
         sni: "",
         alpn: "h3",
@@ -803,7 +751,6 @@ export default {
         password: "",
         server: "",
         port: "",
-        allowInsecure: false,
         obfs: "none",
         obfsPassword: "",
         sni: "",
@@ -834,7 +781,6 @@ export default {
         host: "",
         port: "",
         sni: "",
-        allowInsecure: false,
         name: "",
         protocol: "anytls",
       },
@@ -991,7 +937,6 @@ export default {
           host: obj.host,
           path: obj.path,
           tls: obj.tls,
-          allowInsecure: obj.allowInsecure || false,
           key: obj.key,
           quicSecurity: obj.quicSecurity,
           xhttpMode: obj.xhttpMode || "auto",
@@ -1017,7 +962,6 @@ export default {
           pbk: u.params.pbk || "",
           sid: u.params.sid || "",
           spx: u.params.spx || "",
-          allowInsecure: u.params.allowInsecure === "true",
           flow: u.params.flow || u.params.flows || "",
           scy: u.params.encryption || "none",
           key: u.params.key,
@@ -1112,7 +1056,6 @@ export default {
           password: decodeURIComponent(u.username),
           server: u.host,
           port: u.port,
-          allowInsecure: u.params.allowInsecure === "1",
           peer: u.params.sni || "",
           name: decodeURIComponent(u.hash),
           protocol: "trojan",
@@ -1128,7 +1071,6 @@ export default {
           server: u.host,
           port: u.port,
           cc: u.params.congestion_control || "bbr",
-          allowInsecure: u.params.allow_insecure === "1",
           sni: u.params.sni || "",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           name: decodeURIComponent(u.hash),
@@ -1144,7 +1086,6 @@ export default {
           server: u.host,
           port: u.port,
           cc: u.params.congestion_control || "bbr",
-          allowInsecure: u.params.allow_insecure === "1",
           disableSni: u.params.disable_sni === "1",
           sni: u.params.sni || "",
           alpn: u.params.alpn || "h3",
@@ -1161,7 +1102,6 @@ export default {
           password: decodeURIComponent(u.username),
           server: u.host,
           port: u.port,
-          allowInsecure: u.params.insecure === "1",
           obfs: u.params.obfs || "none",
           obfsPassword: u.params["obfs-password"] || "",
           sni: u.params.sni || "",
@@ -1201,14 +1141,12 @@ export default {
         let u = parseURL(url);
         let auth = u.username ? decodeURIComponent(u.username) : "";
         let sni = u.params.peer || u.params.sni || "";
-        let allowInsecure = u.params.insecure === "1";
         return {
           name: decodeURIComponent(u.hash),
           host: u.host,
           port: u.port,
           auth: auth,
           sni: sni,
-          allowInsecure: allowInsecure,
           protocol: "anytls",
         };
       } else if (url.toLowerCase().startsWith("wireguard://")) {
@@ -1250,7 +1188,6 @@ export default {
             host: srcObj.host,
             path: srcObj.path,
             tls: srcObj.tls,
-            allowInsecure: srcObj.allowInsecure,
             key: srcObj.key,
             quicSecurity: srcObj.quicSecurity,
             xhttpMode: srcObj.xhttpMode,
@@ -1267,7 +1204,6 @@ export default {
             host: srcObj.host,
             headerType: srcObj.type,
             sni: srcObj.sni,
-            allowInsecure: srcObj.allowInsecure,
           };
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
@@ -1380,7 +1316,6 @@ export default {
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
             type: srcObj.net || "tcp",
-            allowInsecure: srcObj.allowInsecure ? "1" : "0",
           };
           if (srcObj.peer !== "") {
             query.sni = srcObj.peer;
@@ -1398,7 +1333,6 @@ export default {
           });
         case "juicity":
           query = {
-            allow_insecure: srcObj.allowInsecure ? "1" : "0",
             congestion_control: srcObj.cc,
           };
           if (srcObj.sni !== "") {
@@ -1418,7 +1352,6 @@ export default {
           });
         case "tuic":
           query = {
-            allow_insecure: srcObj.allowInsecure ? "1" : "0",
             congestion_control: srcObj.cc,
             disable_sni: srcObj.disableSni ? "1" : "0",
             alpn: srcObj.alpn,
@@ -1437,9 +1370,7 @@ export default {
             params: query,
           });
         case "hysteria2":
-          query = {
-            insecure: srcObj.allowInsecure ? "1" : "0",
-          };
+          query = {};
           if (srcObj.sni !== "") {
             query.sni = srcObj.sni;
           }
@@ -1493,9 +1424,7 @@ export default {
           if (srcObj.sni) {
             query.peer = srcObj.sni;
           }
-          if (srcObj.allowInsecure) {
-            query.insecure = "1";
-          }
+
           return generateURL({
             protocol: "anytls",
             username: srcObj.auth,
@@ -1623,24 +1552,6 @@ export default {
       }
       let coded = "";
       if (this.tabChoice === 0) {
-        const { allowInsecure, protocol } = this.v2ray;
-        if (allowInsecure) {
-          const result = await new Promise((resolve) => {
-            this.$buefy.dialog.confirm({
-              title: this.$t("InSecureConfirm.title"),
-              message: this.$t("InSecureConfirm.message"),
-              confirmText: this.$t("InSecureConfirm.confirm"),
-              cancelText: this.$t("InSecureConfirm.cancel"),
-              type: "is-danger",
-              hasIcon: true,
-              onConfirm: () => resolve(true),
-              onCancel: () => resolve(false),
-            });
-          });
-          if (!result) {
-            return;
-          }
-        }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
         coded = this.generateURL(this.wireguard);
