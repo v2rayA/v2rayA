@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/core/coreObj"
 )
 
 func init() {
@@ -35,14 +37,36 @@ func NewHTTP(link string) (ServerObj, error) {
 }
 
 func (h *HTTP) Configuration(info PriorInfo) (Configuration, error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+	core := coreObj.OutboundObject{
+		Tag:      info.Tag,
+		Protocol: "http",
 	}
-	chain := []string{socks5.String(), h.ExportToURL()}
+	var users []coreObj.OutboundUser
+	if h.Username != "" {
+		users = append(users, coreObj.OutboundUser{
+			User: h.Username,
+			Pass: h.Password,
+		})
+	}
+	core.Settings.Servers = []coreObj.Server{
+		{
+			Address: h.Address,
+			Port:    h.Port,
+			Users:   users,
+		},
+	}
+	if strings.ToLower(h.Protocol) == "https" {
+		core.StreamSettings = &coreObj.StreamSettings{
+			Security: "tls",
+			TLSSettings: &coreObj.TLSSettings{
+				ServerName: h.Address,
+				Alpn:       []string{"http/1.1"},
+			},
+		}
+	}
 	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
+		CoreOutbound: core,
+		PluginChain:  "",
 		UDPSupport:   false,
 	}, nil
 }
@@ -52,7 +76,7 @@ func (h *HTTP) ExportToURL() string {
 }
 
 func (h *HTTP) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (h *HTTP) ProtoToShow() string {

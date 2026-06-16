@@ -21,19 +21,20 @@ func init() {
 }
 
 type Hysteria2 struct {
-	Address      string `json:"address" server:"server" hostname:"hostname" add:"add"`
-	Port         int    `json:"port"`
-	Auth         string `json:"auth"`
-	Obfs         string `json:"obfs"`
-	ObfsPassword string `json:"obfsPassword"`
-	Sni          string `json:"sni"`
-	Up           string `json:"up"`
-	Down         string `json:"down"`
-	Congestion    string `json:"congestion"`
-	FinalMask    bool   `json:"finalMask"`
-	Name         string `json:"name"`
-	Protocol     string `json:"protocol"`
-	Link         string `json:"link"`
+	Address              string `json:"address" server:"server" hostname:"hostname" add:"add"`
+	Port                 int    `json:"port"`
+	Auth                 string `json:"auth"`
+	Obfs                 string `json:"obfs"`
+	ObfsPassword         string `json:"obfsPassword"`
+	Sni                  string `json:"sni"`
+	Up                   string `json:"up"`
+	Down                 string `json:"down"`
+	Congestion           string `json:"congestion"`
+	FinalMask            bool   `json:"finalMask"`
+	PinnedPeerCertSha256 string `json:"pinnedPeerCertSha256"`
+	Name                 string `json:"name"`
+	Protocol             string `json:"protocol"`
+	Link                 string `json:"link"`
 }
 
 func NewHysteria2(link string) (ServerObj, error) {
@@ -56,20 +57,25 @@ func ParseHysteria2URL(link string) (data *Hysteria2, err error) {
 		auth += ":" + p
 	}
 	q := u.Query()
+	pinSHA256 := q.Get("pinSHA256")
+	if pinSHA256 == "" {
+		pinSHA256 = q.Get("pinnedPeerCertSha256")
+	}
 	return &Hysteria2{
-		Name:          u.Fragment,
-		Address:       host,
-		Port:          port,
-		Auth:          auth,
-		Obfs:          q.Get("obfs"),
-		ObfsPassword:  q.Get("obfs-password"),
-		Sni:           q.Get("sni"),
-		Up:            q.Get("upmbps"),
-		Down:          q.Get("downmbps"),
-		Congestion:    q.Get("congestion"),
-		FinalMask:     q.Get("finalmask") == "1",
-		Protocol:      "hysteria2",
-		Link:          link,
+		Name:                 u.Fragment,
+		Address:              host,
+		Port:                 port,
+		Auth:                 auth,
+		Obfs:                 q.Get("obfs"),
+		ObfsPassword:         q.Get("obfs-password"),
+		Sni:                  q.Get("sni"),
+		Up:                   q.Get("upmbps"),
+		Down:                 q.Get("downmbps"),
+		Congestion:           q.Get("congestion"),
+		FinalMask:            q.Get("finalmask") == "1",
+		PinnedPeerCertSha256: pinSHA256,
+		Protocol:             "hysteria2",
+		Link:                 link,
 	}, nil
 }
 
@@ -101,8 +107,9 @@ func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
 		Network:  "hysteria",
 		Security: "tls",
 		TLSSettings: &coreObj.TLSSettings{
-			ServerName:    s.Sni,
-			Alpn:          []string{"h3"},
+			ServerName:           s.Sni,
+			Alpn:                 []string{"h3"},
+			PinnedPeerCertSha256: s.PinnedPeerCertSha256,
 		},
 		HysteriaSettings: &coreObj.HysteriaSettings{
 			Version: 2,
@@ -136,11 +143,61 @@ func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
 }
 
 func (s *Hysteria2) ExportToURL() string {
-	u, err := url.Parse(s.Link)
-	if err != nil {
-		return s.Link
+	var u *url.URL
+	if s.Link != "" {
+		var err error
+		u, err = url.Parse(s.Link)
+		if err != nil {
+			u = nil
+		}
+	}
+	if u == nil {
+		u = &url.URL{
+			Scheme: "hysteria2",
+		}
 	}
 	u.Host = net.JoinHostPort(s.Address, strconv.Itoa(s.Port))
+	u.User = url.User(s.Auth)
+	u.Fragment = s.Name
+	q := u.Query()
+	if s.Sni != "" {
+		q.Set("sni", s.Sni)
+	} else {
+		q.Del("sni")
+	}
+	if s.Obfs != "none" && s.Obfs != "" {
+		q.Set("obfs", s.Obfs)
+		q.Set("obfs-password", s.ObfsPassword)
+	} else {
+		q.Del("obfs")
+		q.Del("obfs-password")
+	}
+	if s.Up != "" {
+		q.Set("upmbps", s.Up)
+	} else {
+		q.Del("upmbps")
+	}
+	if s.Down != "" {
+		q.Set("downmbps", s.Down)
+	} else {
+		q.Del("downmbps")
+	}
+	if s.Congestion != "" {
+		q.Set("congestion", s.Congestion)
+	} else {
+		q.Del("congestion")
+	}
+	if s.FinalMask {
+		q.Set("finalmask", "1")
+	} else {
+		q.Del("finalmask")
+	}
+	if s.PinnedPeerCertSha256 != "" {
+		q.Set("pinSHA256", s.PinnedPeerCertSha256)
+	} else {
+		q.Del("pinSHA256")
+	}
+	u.RawQuery = q.Encode()
 	return u.String()
 }
 

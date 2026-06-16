@@ -519,6 +519,9 @@
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
           </b-field>
+          <b-field label="pinnedPeerCertSha256" label-position="on-border">
+            <b-input v-model="hysteria2.pinnedPeerCertSha256" placeholder="pinnedPeerCertSha256" expanded />
+          </b-field>
           <b-field label="Obfs" label-position="on-border">
             <b-select v-model="hysteria2.obfs" expanded required>
               <option value="none">none</option>
@@ -758,6 +761,7 @@ export default {
         down: "",
         congestion: "",
         finalMask: false,
+        pinnedPeerCertSha256: "",
         name: "",
         protocol: "hysteria2",
       },
@@ -775,6 +779,7 @@ export default {
         port: "",
         username: "",
         password: "",
+        protocol: "socks5",
       },
       anytls: {
         auth: "",
@@ -1113,6 +1118,7 @@ export default {
           down: u.params.downmbps || "",
           congestion: u.params.congestion || "",
           finalMask: u.params.finalmask === "1",
+          pinnedPeerCertSha256: u.params.pinSHA256 || u.params.pinnedPeerCertSha256 || "",
           name: decodeURIComponent(u.hash),
           protocol: "hysteria2",
         };
@@ -1387,6 +1393,9 @@ export default {
           if (srcObj.down) query.downmbps = srcObj.down;
           if (srcObj.congestion) query.congestion = srcObj.congestion;
           if (srcObj.finalMask) query.finalmask = "1";
+          if (srcObj.pinnedPeerCertSha256) {
+            query.pinSHA256 = srcObj.pinnedPeerCertSha256;
+          }
           return generateURL({
             protocol: "hysteria2",
             username: srcObj.password,
@@ -1410,6 +1419,7 @@ export default {
             });
           }
           return generateURL(tmp);
+        case "socks":
         case "socks5":
           tmp = {
             protocol: "socks5",

@@ -158,6 +158,7 @@ type TLSSettings struct {
 	ServerName                       interface{}   `json:"serverName,omitempty"`
 	Alpn                             []string      `json:"alpn,omitempty"`
 	PinnedPeerCertificateChainSha256 string        `json:"pinnedPeerCertificateChainSha256,omitempty"`
+	PinnedPeerCertSha256             string        `json:"pinnedPeerCertSha256,omitempty"`
 	Certificates                     []Certificate `json:"certificates,omitempty"`
 	Fingerprint                      string        `json:"fingerprint,omitempty"`
 }
