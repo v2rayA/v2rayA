@@ -195,4 +195,14 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+#canvas.qrcode {
+  min-width: unset !important;
+  min-height: unset !important;
+  max-width: 280px !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 auto 1.5rem auto;
+  display: block;
+}
+</style>
