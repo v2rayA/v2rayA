@@ -115,15 +115,22 @@ export default {
       add = "sub://" + Base64.encode(add);
     }
     let canvas = document.getElementById("canvas");
-    QRCode.toCanvas(
-      canvas,
-      add,
-      { errorCorrectionLevel: "H" },
-      function (error) {
-        if (error) console.error(error);
-        // console.log("QRCode has been generated successfully!");
-      }
-    );
+    const generateQRCode = (level) => {
+      QRCode.toCanvas(
+        canvas,
+        add,
+        { errorCorrectionLevel: level },
+        (error) => {
+          if (error) {
+            console.error(`QRCode generation failed at level ${level}:`, error);
+            if (level === "H") generateQRCode("Q");
+            else if (level === "Q") generateQRCode("M");
+            else if (level === "M") generateQRCode("L");
+          }
+        }
+      );
+    };
+    generateQRCode("H");
     let targets = document.querySelectorAll(".sharingAddressTagModal");
     let covers = document.querySelectorAll(".tag-cover");
     let coverText = document.querySelector("#tag-cover-text");
