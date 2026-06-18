@@ -42,7 +42,7 @@ func Import(url string, which *configure.Which) (err error) {
 		return err
 	}
 	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
-		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
+		"https-proxy", "socks5", "socks", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
 		"shadowsocks", "shadowsocksr", "hy1", "hy2", "mcore", "mcp", "plugin", "wireguard"}
 	for i := range supportedPrefix {
 		supportedPrefix[i] += "://"

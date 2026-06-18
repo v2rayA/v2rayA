@@ -105,7 +105,6 @@ const viewServer = async() => {
         sni: string
         path: string
         tls: string
-        allowInsecure: boolean
         v: boolean
         protocol: string
       } = JSON.parse(atob(serverInfo.host))

@@ -65,8 +65,10 @@ func ServeGUI(r *gin.Engine) {
 			log.Fatal("fs.Sub: %v", err)
 		}
 		staticFS := webFS.(fs.ReadDirFS)
-		if sub, subErr := fs.Sub(webFS, "static"); subErr == nil {
-			staticFS = sub.(fs.ReadDirFS)
+		if _, err := fs.Stat(webFS, "static"); err == nil {
+			if sub, subErr := fs.Sub(webFS, "static"); subErr == nil {
+				staticFS = sub.(fs.ReadDirFS)
+			}
 		}
 		ss := http.StripPrefix("/static", statigz.FileServer(staticFS))
 		r.GET("/static/*w", func(c *gin.Context) {

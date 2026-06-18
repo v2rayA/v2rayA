@@ -50,3 +50,7 @@ WINDOWS_SERVICE_README.md
 WINDOWS_SERVICE_GUIDE.md
 service\core\v2ray\CORE_CONFIGURATION.mdplans
 plans
+/build_in_docker.sh
+/pack_deb_multi.sh
+/pack_deb.sh
+/service/core/serverObj/v2ray_reality_test.go

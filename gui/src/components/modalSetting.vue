@@ -244,6 +244,13 @@
 
       <b-field label-position="on-border">
         <template slot="label">
+          Encryption
+        </template>
+        <b-input v-model="encryption" expanded placeholder="none" />
+      </b-field>
+
+      <b-field label-position="on-border">
+        <template slot="label">
           {{ $t("setting.logLevel") }}
         </template>
         <b-select v-model="logLevel" expanded>
@@ -297,7 +304,6 @@
           custom-class="no-shadow" type="number" min="1" max="1024" validation-icon=" iconfont icon-alert"
           style="flex: 1" />
       </b-field>
-
 
       <b-field v-show="pacMode === 'gfwlist' || transparent === 'gfwlist'" :label="$t('setting.autoUpdateGfwlist')"
         label-position="on-border">
@@ -407,11 +413,14 @@ export default {
     tunTeardownScript: "",
     tunProcessBackend: "",
     tunExcludeProcesses: "",
+    ssBackend: "",
+    trojanBackend: "",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
     inboundSniffing: "no",
+    encryption: "",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -423,6 +432,20 @@ export default {
     tinytunSupported: false,
   }),
   computed: {
+    lite() {
+      return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
+    },
+    dockerMode() {
+      return window.localStorage["docker"] === "true";
+    },
+    v2rayaPort() {
+      let U = parseURL(apiRoot);
+      let port = U.port;
+      if (!port) {
+        port = U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+      }
+      return toInt(port);
+    },
     tunBypassInterfacesComputed: {
       get() {
         const parts = [];
@@ -447,20 +470,6 @@ export default {
         this.tunBypassInterfacesList = parts.filter((p) => known.includes(p));
         this.tunBypassCustom = parts.filter((p) => !known.includes(p)).join(',');
       },
-    },
-    lite() {
-      return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
-    },
-    dockerMode() {
-      return window.localStorage["docker"] === "true";
-    },
-    v2rayaPort() {
-      let U = parseURL(apiRoot);
-      let port = U.port;
-      if (!port) {
-        port = U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
-      }
-      return toInt(port);
     },
   },
   watch: {
@@ -564,6 +573,9 @@ export default {
             tunTeardownScript: this.tunTeardownScript,
             tunProcessBackend: this.tunProcessBackend,
             tunExcludeProcesses: this.tunExcludeProcesses,
+            ssBackend: this.ssBackend,
+            trojanBackend: this.trojanBackend,
+            encryption: this.encryption,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
