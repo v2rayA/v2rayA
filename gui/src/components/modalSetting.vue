@@ -241,14 +241,6 @@
           <option value="no">{{ $t("setting.options.off") }}</option>
         </b-select>
       </b-field>
-
-      <b-field label-position="on-border">
-        <template slot="label">
-          Encryption
-        </template>
-        <b-input v-model="encryption" expanded placeholder="none" />
-      </b-field>
-
       <b-field label-position="on-border">
         <template slot="label">
           {{ $t("setting.logLevel") }}
@@ -420,7 +412,6 @@ export default {
     subscriptionAutoUpdateMode: "none",
     subscriptionAutoUpdateIntervalHour: 0,
     inboundSniffing: "no",
-    encryption: "",
     customSiteDAT: {},
     pacMode: "whitelist",
     showClockPicker: true,
@@ -575,7 +566,6 @@ export default {
             tunExcludeProcesses: this.tunExcludeProcesses,
             ssBackend: this.ssBackend,
             trojanBackend: this.trojanBackend,
-            encryption: this.encryption,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
             cancel = c;
