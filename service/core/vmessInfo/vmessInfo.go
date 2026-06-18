@@ -26,7 +26,6 @@ type VmessInfo struct {
 	Flow          string `json:"flow,omitempty"`
 	Alpn          string `json:"alpn,omitempty"` // VLESS only
 	V             string `json:"v"`
-	AllowInsecure bool   `json:"allowInsecure"`
 	Protocol      string `json:"protocol"`
 }
 
@@ -126,9 +125,6 @@ func (v *VmessInfo) ExportToURL() string {
 			Fragment: v.Ps,
 		}
 		q := u.Query()
-		if v.AllowInsecure {
-			q.Set("allowInsecure", "1")
-		}
 		if v.Protocol == "trojan-go" {
 			u.Scheme = "trojan-go"
 			if v.Host != "" {
