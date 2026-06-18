@@ -403,6 +403,9 @@ export default {
     routeOnly: false,
     tproxyExcludedInterfaces: "",
     tunAutoRoute: true,
+    tunBypassInterfaces: "",
+    tunBypassInterfacesList: [],
+    tunBypassCustom: "",
     availableInterfaces: [],
     tunRouteShellType: "",
     tunRouteShellPath: "",
@@ -443,29 +446,43 @@ export default {
       }
       return toInt(port);
     },
-    tunBypassInterfacesList: {
+    tunBypassInterfacesComputed: {
       get() {
-        return this.availableInterfaces
-          .filter((i) => i.isBypassed)
-          .map((i) => i.name);
+        const parts = [];
+        if (this.tunBypassInterfacesList.length > 0) {
+          parts.push(...this.tunBypassInterfacesList);
+        }
+        if (this.tunBypassCustom.trim()) {
+          parts.push(
+            ...this.tunBypassCustom
+              .split(',')
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          );
+        }
+        return [...new Set(parts)].join(',');
       },
       set(val) {
-        this.availableInterfaces.forEach((i) => {
-          i.isBypassed = val.includes(i.name);
-        });
+        const parts = val
+          ? val.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
+          : [];
+        const known = (this.availableInterfaces || []).map((i) => i.name);
+        this.tunBypassInterfacesList = parts.filter((p) => known.includes(p));
+        this.tunBypassCustom = parts.filter((p) => !known.includes(p)).join(',');
       },
-    },
-    tunBypassInterfacesComputed() {
-      let ifaces = this.availableInterfaces
-        .filter((i) => i.isBypassed)
-        .map((i) => i.name);
-      if (this.tunBypassCustom) {
-        ifaces.push(...this.tunBypassCustom.split(",").map((s) => s.trim()));
-      }
-      return ifaces.join(",");
     },
   },
   watch: {
+    transparentType(val) {
+      if (val === 'tun' && this.tinytunSupported) {
+        this.fetchNetworkInterfaces();
+      }
+    },
+    tinytunSupported(val) {
+      if (val && this.transparentType === 'tun') {
+        this.fetchNetworkInterfaces();
+      }
+    },
   },
   created() {
     this.getSettingData();
@@ -473,6 +490,17 @@ export default {
   methods: {
     dayjs() {
       return dayjs.apply(this, arguments);
+    },
+    fetchNetworkInterfaces() {
+      this.$axios({ url: apiRoot + '/networkInterfaces' }).then((res) => {
+        if (res.data && res.data.data && res.data.data.interfaces) {
+          this.availableInterfaces = res.data.data.interfaces;
+          // Re-apply the tunBypassInterfaces string now that we know available names
+          if (this.tunBypassInterfaces) {
+            this.tunBypassInterfacesComputed = this.tunBypassInterfaces;
+          }
+        }
+      });
     },
     getSettingData() {
       this.$axios({
@@ -499,6 +527,9 @@ export default {
               this.os = versionRes.data.data.os || "";
               this.isRoot = versionRes.data.data.isRoot || false;
               this.tinytunSupported = versionRes.data.data.tinytunSupported || false;
+            }
+            if (this.transparentType === 'tun' && this.tinytunSupported) {
+              this.fetchNetworkInterfaces();
             }
           });
           if (this.lite) {
