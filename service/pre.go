@@ -345,6 +345,7 @@ func run() (err error) {
 	go func() {
 		errch <- router.Run()
 	}()
+	service.StartAutoSwitchTicker()
 	//监听信号，处理透明代理的关闭
 	go func() {
 		sigs := make(chan os.Signal, 1)
