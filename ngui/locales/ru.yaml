@@ -63,6 +63,10 @@ server:
   messages:
     notAllowInsecure: 'Согласно документации {name}, если вы используете {name}, опция AllowInsecure запрещена.'
     notRecommend: 'Согласно документации {name}, если вы используете {name}, опция AllowInsecure не рекомендуется.'
+pinnedPeerCertSha256: "Pinned Certificate SHA256"
+pinnedPeerCertSha256Placeholder: "SHA256 hash of the pinned certificate (e.g., ae243d668ec9c7f74a0dcd1ad21c6676b4efe30c39728934b362093af886bf77)"
+verifyPeerCertByName: "Verify Peer Cert By Name"
+verifyPeerCertByNamePlaceholder: "Domain name to verify (e.g., example.com)"
 InSecureConfirm:
   title: Найдена небезопасная настройка
   message: 'В конфигурации установлена опция <b>AllowInsecure</b> в значении true. Это может вызвать риски безопасности. Вы уверены, что хотите продолжить?'

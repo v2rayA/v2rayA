@@ -344,4 +344,6 @@ export default {
       other: "Outros",
     },
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

@@ -20,7 +20,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.21.11
 	github.com/stevenroose/gonfig v0.1.5
 	github.com/tidwall/gjson v1.10.2
-	github.com/tidwall/sjson v1.2.3
 	github.com/v2fly/v2ray-core/v5 v5.7.0
 	github.com/v2rayA/RoutingA v1.0.2
 	github.com/v2rayA/beego/v2 v2.0.7
@@ -74,6 +73,7 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/sjson v1.2.3 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect

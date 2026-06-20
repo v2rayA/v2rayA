@@ -491,4 +491,6 @@ export default {
     routingARules: "RoutingA 分流规则",
     routingARulesPlaceholder: "请输入 RoutingA 分流规则...",
   },
+  pinnedPeerCertSha256: "固定证书 SHA256",
+  verifyPeerCertByName: "证书验证域名",
 };

@@ -188,7 +188,8 @@ const v2ray = reactive({
   sni: '',
   scy: 'auto',
   v: '',
-  allowInsecure: false,
+  pinnedPeerCertSha256: '',
+  verifyPeerCertByName: '',
   protocol: 'vmess' as 'vmess' | 'vless',
   key: 'none',
   xhttpMode: 'auto',
@@ -258,7 +259,8 @@ const trojan = reactive({
   peer: '',
   host: '',
   path: '',
-  allowInsecure: false,
+  pinnedPeerCertSha256: '',
+  verifyPeerCertByName: '',
   port: '',
   password: '',
   method: 'origin' as 'origin' | 'shadowsocks',
@@ -281,7 +283,6 @@ const juicity = reactive({
   uuid: '',
   password: '',
   pinnedCertchainSha256: '',
-  allowInsecure: false,
   fingerprint: '',
   protocol: 'juicity',
 })
@@ -295,7 +296,8 @@ const tuic = reactive({
   cc: 'bbr',
   uuid: '',
   password: '',
-  allowInsecure: false,
+  pinnedPeerCertSha256: '',
+  verifyPeerCertByName: '',
   disableSni: false,
   alpn: 'h3',
   fingerprint: '',
@@ -312,7 +314,8 @@ const hysteria2 = reactive({
   sni: '',
   obfs: 'none',
   obfsPassword: '',
-  allowInsecure: false,
+  pinnedPeerCertSha256: '',
+  verifyPeerCertByName: '',
   up: '',
   down: '',
   protocol: 'hysteria2',
@@ -347,7 +350,8 @@ const anytls = reactive({
   sni: '',
   alpn: '',
   fingerprint: '',
-  allowInsecure: false,
+  pinnedPeerCertSha256: '',
+  verifyPeerCertByName: '',
   protocol: 'anytls',
 })
 
@@ -388,7 +392,8 @@ function resolveURL(url: string): any {
       pbk: u.params.pbk || '',
       sid: u.params.sid || '',
       spx: u.params.spx || '',
-      allowInsecure: u.params.allowInsecure === 'true' || u.params.allowInsecure === '1',
+      pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || '',
+      verifyPeerCertByName: u.params.verifyPeerCertByName || '',
       key: u.params.key || '',
       xhttpMode: u.params.xhttpMode || 'auto',
       xhttpRawJson: u.params.xhttpRawJson || '',
@@ -473,7 +478,8 @@ function resolveURL(url: string): any {
       port: u.port,
       name: decodeURIComponent(u.hash),
       peer: u.params.peer || u.params.sni || '',
-      allowInsecure: u.params.allowInsecure === 'true' || u.params.allowInsecure === '1',
+      pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || '',
+      verifyPeerCertByName: u.params.verifyPeerCertByName || '',
       method: 'origin',
       net: u.params.type || 'tcp',
       obfs: 'none',
@@ -509,7 +515,6 @@ function resolveURL(url: string): any {
       server: u.host,
       port: u.port,
       sni: u.params.sni || '',
-      allowInsecure: u.params.allow_insecure === 'true' || u.params.allow_insecure === '1',
       pinnedCertchainSha256: u.params.pinned_certchain_sha256 || '',
       cc: u.params.congestion_control || 'bbr',
       fingerprint: u.params.fp || '',
@@ -526,7 +531,8 @@ function resolveURL(url: string): any {
       server: u.host,
       port: u.port,
       sni: u.params.sni || '',
-      allowInsecure: u.params.allow_insecure === 'true' || u.params.allow_insecure === '1',
+      pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || '',
+      verifyPeerCertByName: u.params.verifyPeerCertByName || '',
       disableSni: u.params.disable_sni === 'true' || u.params.disable_sni === '1',
       alpn: u.params.alpn || 'h3',
       cc: u.params.congestion_control || 'bbr',
@@ -544,7 +550,8 @@ function resolveURL(url: string): any {
       server: u.host,
       port: u.port,
       sni: u.params.sni || '',
-      allowInsecure: u.params.insecure === 'true' || u.params.insecure === '1',
+      pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || '',
+      verifyPeerCertByName: u.params.verifyPeerCertByName || '',
       obfs: u.params.obfs || 'none',
       obfsPassword: u.params['obfs-password'] || '',
       up: u.params.up || '',
@@ -581,7 +588,6 @@ function resolveURL(url: string): any {
     let u = parseURL(url)
     let auth = u.username ? decodeURIComponent(u.username) : ''
     let sni = u.params.peer || u.params.sni || ''
-    let allowInsecure = u.params.insecure === '1'
     return {
       name: decodeURIComponent(u.hash),
       host: u.host,
@@ -590,7 +596,8 @@ function resolveURL(url: string): any {
       sni,
       alpn: u.params.alpn || '',
       fingerprint: u.params.fp || '',
-      allowInsecure,
+      pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || '',
+      verifyPeerCertByName: u.params.verifyPeerCertByName || '',
       protocol: 'anytls',
     }
   }
@@ -634,7 +641,8 @@ function generateServerURL(srcObj: any): string | null {
           host: srcObj.host,
           headerType: srcObj.type,
           sni: srcObj.sni,
-          allowInsecure: srcObj.allowInsecure,
+          pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256 || '',
+          verifyPeerCertByName: srcObj.verifyPeerCertByName || '',
         }
         if (srcObj.alpn) query.alpn = srcObj.alpn
         if (srcObj.net === 'ws') {
@@ -741,7 +749,8 @@ function generateServerURL(srcObj: any): string | null {
     case 'trojan': {
       query = {
         type: srcObj.net,
-        allowInsecure: srcObj.allowInsecure,
+        pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256 || '',
+        verifyPeerCertByName: srcObj.verifyPeerCertByName || '',
       }
       if (srcObj.peer) query.sni = srcObj.peer
       if (srcObj.alpn) query.alpn = srcObj.alpn
@@ -757,7 +766,6 @@ function generateServerURL(srcObj: any): string | null {
           query.host = srcObj.host || ''
           query.path = srcObj.path || '/'
         }
-        delete query.allowInsecure
       }
       if (srcObj.net === 'grpc') query.serviceName = srcObj.path
       if (srcObj.net === 'mkcp' || srcObj.net === 'kcp') query.seed = srcObj.path
@@ -775,7 +783,6 @@ function generateServerURL(srcObj: any): string | null {
 
     case 'juicity': {
       query = {
-        allow_insecure: srcObj.allowInsecure,
         congestion_control: srcObj.cc,
       }
       if (srcObj.sni) query.sni = srcObj.sni
@@ -794,7 +801,8 @@ function generateServerURL(srcObj: any): string | null {
 
     case 'tuic': {
       query = {
-        allow_insecure: srcObj.allowInsecure,
+        pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256 || '',
+        verifyPeerCertByName: srcObj.verifyPeerCertByName || '',
         congestion_control: srcObj.cc,
         disable_sni: srcObj.disableSni,
         alpn: srcObj.alpn,
@@ -815,7 +823,8 @@ function generateServerURL(srcObj: any): string | null {
 
     case 'hysteria2': {
       query = {
-        insecure: srcObj.allowInsecure ? '1' : '0',
+        pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256 || '',
+        verifyPeerCertByName: srcObj.verifyPeerCertByName || '',
       }
       if (srcObj.sni) query.sni = srcObj.sni
       if (srcObj.obfs !== 'none') {
@@ -864,8 +873,9 @@ function generateServerURL(srcObj: any): string | null {
     case 'anytls': {
       const q: Record<string, any> = {}
       if (srcObj.sni) q.peer = srcObj.sni
-      if (srcObj.allowInsecure) q.insecure = '1'
       if (srcObj.alpn) q.alpn = srcObj.alpn
+      if (srcObj.pinnedPeerCertSha256) q.pinnedPeerCertSha256 = srcObj.pinnedPeerCertSha256
+      if (srcObj.verifyPeerCertByName) q.verifyPeerCertByName = srcObj.verifyPeerCertByName
       if (srcObj.fingerprint) q.fp = srcObj.fingerprint
       return generateURL({
         protocol: 'anytls',
@@ -935,24 +945,6 @@ async function handleSubmit() {
   if (tabChoice.value === 0) {
     if (!v2ray.add || !v2ray.port || !v2ray.id) {
       ElMessage.warning(t('configureServer.servername'))
-      return
-    }
-  }
-
-  // AllowInsecure warning for V2Ray
-  if (tabChoice.value === 0 && (v2ray.allowInsecure === true || v2ray.allowInsecure === 'true')) {
-    try {
-      await ElMessageBox.confirm(
-        '即将保存的配置中<b>AllowInsecure</b>被设置为true，除非你知道你在做什么，否则贸然开启可能导致数据泄漏！是否继续？',
-        '检测到不安全的配置',
-        {
-          confirmButtonText: '我知道我在做什么',
-          cancelButtonText: t('operations.cancel'),
-          type: 'warning',
-          dangerouslyUseHTMLString: true,
-        }
-      )
-    } catch {
       return
     }
   }
@@ -1129,7 +1121,6 @@ const showV2rayFP = computed(() => v2ray.tls === 'tls' || v2ray.tls === 'reality
 const showV2rayALPN = computed(() => v2ray.tls === 'tls')
 const showV2rayFlow = computed(() => v2ray.protocol === 'vless' && v2ray.tls !== 'none')
 const showV2rayReality = computed(() => v2ray.tls === 'reality')
-const showV2rayAllowInsecure = computed(() => v2ray.tls !== 'none')
 const showV2rayTypeTCP = computed(() => v2ray.net === 'tcp')
 const showV2rayQUICSecurity = computed(() => v2ray.protocol === 'vless' && v2ray.net === 'quic')
 const showV2rayTypeKCPQUIC = computed(() => v2ray.net === 'kcp' || v2ray.net === 'quic')
@@ -1250,11 +1241,11 @@ const showTrojanGRPC = computed(() => trojan.net === 'grpc')
           <ElFormItem v-show="showV2rayReality" label="spx">
             <ElInput v-model="v2ray.spx" placeholder="SpiderX" />
           </ElFormItem>
-          <ElFormItem v-show="showV2rayAllowInsecure" label="AllowInsecure">
-            <ElSelect v-model="v2ray.allowInsecure">
-              <ElOption :value="false" label="否" />
-              <ElOption :value="true" label="是" />
-            </ElSelect>
+          <ElFormItem label="固定证书 SHA256">
+            <ElInput v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256Placeholder')" class="mb-2" />
+          </ElFormItem>
+          <ElFormItem label="证书验证域名">
+            <ElInput v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByNamePlaceholder')" />
           </ElFormItem>
           <ElFormItem label="Network">
             <ElSelect v-model="v2ray.net" @change="handleNetworkChange">
@@ -1540,11 +1531,11 @@ const showTrojanGRPC = computed(() => trojan.net === 'grpc')
           <ElFormItem v-if="showTrojanSS" label="Shadowsocks 密码">
             <ElInput v-model="trojan.ssPassword" placeholder="shadowsocks密码" />
           </ElFormItem>
-          <ElFormItem label="AllowInsecure">
-            <ElSelect v-model="trojan.allowInsecure">
-              <ElOption :value="false" label="否" />
-              <ElOption :value="true" :disabled="trojan.method !== 'origin' || trojan.obfs !== 'none'" label="是" />
-            </ElSelect>
+          <ElFormItem label="固定证书 SHA256">
+            <ElInput v-model="trojan.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256Placeholder')" class="mb-2" />
+          </ElFormItem>
+          <ElFormItem label="证书验证域名">
+            <ElInput v-model="trojan.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByNamePlaceholder')" />
           </ElFormItem>
           <ElFormItem label="SNI(Peer)">
             <ElInput v-model="trojan.peer" placeholder="SNI(Peer)" />
@@ -1617,12 +1608,6 @@ const showTrojanGRPC = computed(() => trojan.net === 'grpc')
               <ElOption value="bbr" label="bbr" />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem label="AllowInsecure">
-            <ElSelect v-model="juicity.allowInsecure">
-              <ElOption :value="false" label="否" />
-              <ElOption :value="true" label="是" />
-            </ElSelect>
-          </ElFormItem>
           <ElFormItem label="SNI">
             <ElInput v-model="juicity.sni" placeholder="SNI" />
           </ElFormItem>
@@ -1668,11 +1653,11 @@ const showTrojanGRPC = computed(() => trojan.net === 'grpc')
               <ElOption value="bbr" label="bbr" />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem v-if="!tuic.disableSni" label="AllowInsecure">
-            <ElSelect v-model="tuic.allowInsecure">
-              <ElOption :value="false" label="否" />
-              <ElOption :value="true" label="是" />
-            </ElSelect>
+          <ElFormItem label="固定证书 SHA256">
+            <ElInput v-model="tuic.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256Placeholder')" class="mb-2" />
+          </ElFormItem>
+          <ElFormItem label="证书验证域名">
+            <ElInput v-model="tuic.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByNamePlaceholder')" />
           </ElFormItem>
           <ElFormItem label="DisableSni">
             <ElSelect v-model="tuic.disableSni">
@@ -1723,11 +1708,11 @@ const showTrojanGRPC = computed(() => trojan.net === 'grpc')
           <ElFormItem label="密码" required>
             <ElInput v-model="hysteria2.password" placeholder="密码" />
           </ElFormItem>
-          <ElFormItem label="AllowInsecure">
-            <ElSelect v-model="hysteria2.allowInsecure">
-              <ElOption :value="false" label="否" />
-              <ElOption :value="true" label="是" />
-            </ElSelect>
+          <ElFormItem label="固定证书 SHA256">
+            <ElInput v-model="hysteria2.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256Placeholder')" class="mb-2" />
+          </ElFormItem>
+          <ElFormItem label="证书验证域名">
+            <ElInput v-model="hysteria2.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByNamePlaceholder')" />
           </ElFormItem>
           <ElFormItem label="SNI">
             <ElInput v-model="hysteria2.sni" placeholder="SNI" />
@@ -1832,11 +1817,11 @@ const showTrojanGRPC = computed(() => trojan.net === 'grpc')
               <ElOption value="randomized" label="randomized" />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem label="AllowInsecure">
-            <ElSelect v-model="anytls.allowInsecure">
-              <ElOption :value="false" label="否" />
-              <ElOption :value="true" label="是" />
-            </ElSelect>
+          <ElFormItem label="固定证书 SHA256">
+            <ElInput v-model="anytls.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256Placeholder')" class="mb-2" />
+          </ElFormItem>
+          <ElFormItem label="证书验证域名">
+            <ElInput v-model="anytls.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByNamePlaceholder')" />
           </ElFormItem>
         </ElForm>
       </ElTabPane>

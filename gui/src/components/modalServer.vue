@@ -61,14 +61,11 @@
           <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
             <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
-            <template slot="label">
-              AllowInsecure
-            </template>
-            <b-select ref="v2ray_allow_insecure" v-model="v2ray.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
-            </b-select>
+          <b-field v-show="v2ray.tls !== 'none'" label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls !== 'none'" label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="Network" label-position="on-border">
             <b-select ref="v2ray_net" v-model="v2ray.net" expanded required @input="handleNetworkChange">
@@ -272,17 +269,11 @@
           <b-field v-show="v2ray.tls === 'reality'" label="Spider X (spx)" label-position="on-border">
             <b-input v-model="v2ray.spx" placeholder="Spider X" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
-            <template slot="label">
-              AllowInsecure
-              <b-tooltip type="is-dark" :label="$t('server.messages.notRecommend', { name: 'VLESS' })" multilined position="is-right">
-                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline" style="position:relative;top:2px;right:3px;font-weight:normal;" />
-              </b-tooltip>
-            </template>
-            <b-select v-model="v2ray.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
-            </b-select>
+          <b-field v-show="v2ray.tls !== 'none'" label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls !== 'none'" label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="Network" label-position="on-border">
             <b-select v-model="v2ray.net" expanded required @input="handleNetworkChange">
@@ -667,25 +658,11 @@
             <b-input ref="trojan_ss_password" v-model="trojan.ssPassword" required
               :placeholder="`shadowsocks${$t('configureServer.password')}`" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label">
-              AllowInsecure
-              <b-tooltip v-show="trojan.method !== 'origin' || trojan.obfs !== 'none'" type="is-dark" :label="$t('server.messages.notAllowInsecure', { name: 'Trojan-Go' })
-                " multilined position="is-right">
-                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline" style="
-                    position: relative;
-                    top: 2px;
-                    right: 3px;
-                    font-weight: normal;
-                  " />
-              </b-tooltip>
-            </template>
-            <b-select ref="trojan_allow_insecure" v-model="trojan.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true" :disabled="trojan.method !== 'origin' || trojan.obfs !== 'none'">
-                {{ $t("operations.yes") }}
-              </option>
-            </b-select>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="trojan.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="trojan.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
@@ -760,15 +737,6 @@
               <option value="bbr">bbr</option>
             </b-select>
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="juicity_allow_insecure" v-model="juicity.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">
-                {{ $t("operations.yes") }}
-              </option>
-            </b-select>
-          </b-field>
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="juicity.sni" placeholder="SNI" expanded />
           </b-field>
@@ -801,15 +769,11 @@
               <option value="bbr">bbr</option>
             </b-select>
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select v-if="tuic.disableSni === false" ref="tuic_allow_insecure" v-model="tuic.allowInsecure" expanded
-              required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">
-                {{ $t("operations.yes") }}
-              </option>
-            </b-select>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="tuic.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="tuic.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label-position="on-border">
             <template slot="label"> DisableSni </template>
@@ -851,14 +815,11 @@
             <b-input ref="hysteria2_password" v-model="hysteria2.password" required
               :placeholder="$t('configureServer.password')" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="hysteria2_allow_insecure" v-model="hysteria2.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">
-                {{ $t("operations.yes") }}
-              </option>
-            </b-select>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="hysteria2.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="hysteria2.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
@@ -938,12 +899,11 @@
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input ref="anytls_sni" v-model="anytls.sni" placeholder="SNI / Peer (Optional)" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="anytls_allow_insecure" v-model="anytls.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
-            </b-select>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="anytls.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="anytls.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -999,7 +959,8 @@ export default {
       alpn: "",
       scy: "auto",
       v: "",
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       protocol: "vmess",
       key: "none",
       xhttpMode: "auto",
@@ -1069,7 +1030,8 @@ export default {
       peer: "" /* tls sni */,
       host: "" /* websocket host */,
       path: "" /* websocket path */,
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       port: "",
       password: "",
       method: "origin" /* shadowsocks */,
@@ -1089,7 +1051,6 @@ export default {
       uuid: "",
       password: "",
       pinnedCertchainSha256: "",
-      allowInsecure: false,
       protocol: "juicity",
     },
     tuic: {
@@ -1100,7 +1061,8 @@ export default {
       cc: "bbr",
       uuid: "",
       password: "",
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       disableSni: false,
       alpn: "h3",
       udpRelayMode: "native",
@@ -1114,7 +1076,8 @@ export default {
       sni: "",
       obfs: "none",
       obfsPassword: "",
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       protocol: "hysteria2",
     },
     http: {
@@ -1139,7 +1102,8 @@ export default {
       port: "",
       auth: "",
       sni: "",
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       protocol: "anytls",
     },
     wireguard: {
@@ -1299,7 +1263,8 @@ export default {
           pbk: u.params.pbk || "",
           sid: u.params.sid || "",
           spx: u.params.spx || "",
-          allowInsecure: u.params.allowInsecure || false,
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || "",
           key: u.params.key,
           xhttpMode: u.params.xhttpMode || "auto",
           noGRPCHeader: u.params.noGRPCHeader === "true",
@@ -1417,8 +1382,8 @@ export default {
           port: u.port,
           name: decodeURIComponent(u.hash),
           peer: u.params.peer || u.params.sni || "",
-          allowInsecure:
-            u.params.allowInsecure === "true" || u.params.allowInsecure === "1",
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || "",
           method: "origin",
           net: u.params.type || "tcp",
           obfs: "none",
@@ -1451,9 +1416,6 @@ export default {
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
-          allowInsecure:
-            u.params.allow_insecure === "true" ||
-            u.params.allow_insecure === "1",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           cc: u.params.congestion_control || "bbr",
           protocol: "juicity",
@@ -1467,9 +1429,8 @@ export default {
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
-          allowInsecure:
-            u.params.allow_insecure === "true" ||
-            u.params.allow_insecure === "1",
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
           disableSni:
             u.params.disable_sni === "true" || u.params.disable_sni === "1",
           alpn: u.params.alpn,
@@ -1488,7 +1449,8 @@ export default {
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
-          allowInsecure: u.params.insecure === "true" || u.params.insecure === "1",
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
           obfs: u.params.obfs || "none",
           obfsPassword: u.params["obfs-password"] || "",
           protocol: "hysteria2",
@@ -1520,14 +1482,14 @@ export default {
         let u = parseURL(url);
         let auth = u.username ? decodeURIComponent(u.username) : "";
         let sni = u.params.peer || u.params.sni || "";
-        let allowInsecure = u.params.insecure === "1";
         return {
           name: decodeURIComponent(u.hash),
           host: u.host,
           port: u.port,
           auth: auth,
           sni: sni,
-          allowInsecure: allowInsecure,
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
           protocol: "anytls",
         };
       } else if (url.toLowerCase().startsWith("wireguard://")) {
@@ -1566,7 +1528,8 @@ export default {
             host: srcObj.host,
             headerType: srcObj.type,
             sni: srcObj.sni,
-            allowInsecure: srcObj.allowInsecure,
+            pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256,
+            verifyPeerCertByName: srcObj.verifyPeerCertByName,
           };
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
@@ -1731,7 +1694,8 @@ export default {
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
             type: srcObj.net,
-            allowInsecure: srcObj.allowInsecure,
+            pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256,
+            verifyPeerCertByName: srcObj.verifyPeerCertByName,
           };
           if (srcObj.peer !== "") {
             query.sni = srcObj.peer;
@@ -1747,7 +1711,6 @@ export default {
               query.host = srcObj.host || "";
               query.path = srcObj.path || "/";
             }
-            delete query.allowInsecure;
           }
 
           if (srcObj.alpn !== "") {
@@ -1769,7 +1732,6 @@ export default {
           });
         case "juicity":
           query = {
-            allow_insecure: srcObj.allowInsecure,
             congestion_control: srcObj.cc,
           };
           if (srcObj.sni !== "") {
@@ -1789,7 +1751,8 @@ export default {
           });
         case "tuic":
           query = {
-            allow_insecure: srcObj.allowInsecure,
+            pinned_peer_cert_sha256: srcObj.pinnedPeerCertSha256,
+            verify_peer_cert_by_name: srcObj.verifyPeerCertByName,
             congestion_control: srcObj.cc,
             disable_sni: srcObj.disableSni,
             alpn: srcObj.alpn,
@@ -1809,7 +1772,8 @@ export default {
           });
         case "hysteria2":
           query = {
-            insecure: srcObj.allowInsecure ? "1" : "0",
+            pinned_peer_cert_sha256: srcObj.pinnedPeerCertSha256,
+            verify_peer_cert_by_name: srcObj.verifyPeerCertByName,
           };
           if (srcObj.sni !== "") {
             query.sni = srcObj.sni;
@@ -1860,8 +1824,11 @@ export default {
           if (srcObj.sni) {
             query.peer = srcObj.sni;
           }
-          if (srcObj.allowInsecure) {
-            query.insecure = "1";
+          if (srcObj.pinnedPeerCertSha256) {
+            query.pinnedPeerCertSha256 = srcObj.pinnedPeerCertSha256;
+          }
+          if (srcObj.verifyPeerCertByName) {
+            query.verifyPeerCertByName = srcObj.verifyPeerCertByName;
           }
           return generateURL({
             protocol: "anytls",
@@ -1985,44 +1952,8 @@ export default {
       let coded = "";
       // 0: vmess, 1: vless, 2: wireguard, 3: ss, 4: ssr, 5: trojan, 6: juicity, 7: tuic, 8: hysteria2, 9: http, 10: socks5, 11: anytls
       if (this.tabChoice === 0) {
-        if (
-          this.v2ray.allowInsecure === true ||
-          this.v2ray.allowInsecure === "true"
-        ) {
-          const { result } = await this.$buefy.dialog.confirm({
-            title: this.$t("InSecureConfirm.title"),
-            message: this.$t("InSecureConfirm.message"),
-            confirmText: this.$t("InSecureConfirm.confirm"),
-            cancelText: this.$t("InSecureConfirm.cancel"),
-            type: "is-danger",
-            hasIcon: true,
-            onConfirm: () => true,
-            onCancel: () => false,
-          });
-          if (!result) {
-            return;
-          }
-        }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
-        if (
-          this.v2ray.allowInsecure === true ||
-          this.v2ray.allowInsecure === "true"
-        ) {
-          const { result } = await this.$buefy.dialog.confirm({
-            title: this.$t("InSecureConfirm.title"),
-            message: this.$t("InSecureConfirm.message"),
-            confirmText: this.$t("InSecureConfirm.confirm"),
-            cancelText: this.$t("InSecureConfirm.cancel"),
-            type: "is-danger",
-            hasIcon: true,
-            onConfirm: () => true,
-            onCancel: () => false,
-          });
-          if (!result) {
-            return;
-          }
-        }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 2) {
         // wireguard://address:port?key=value#name
@@ -2052,10 +1983,11 @@ export default {
         let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
         coded = url;
       } else if (this.tabChoice === 5) {
-        // trojan://password@server:port?allowInsecure=1&sni=sni&v2raya-backend=...#name
-        const { password, server, port, allowInsecure, peer, name, backend } = this.trojan;
+        // trojan://password@server:port?pinnedPeerCertSha256=&verifyPeerCertByName=&sni=sni&v2raya-backend=...#name
+        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, peer, name, backend } = this.trojan;
         let params = [];
-        if (allowInsecure) params.push("allowInsecure=1");
+        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
         if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
         if (backend) params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
         let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
@@ -2063,10 +1995,9 @@ export default {
         if (name) url += `#${encodeURIComponent(name)}`;
         coded = url;
       } else if (this.tabChoice === 6) {
-        // juicity://uuid:password@server:port?allow_insecure=1&cc=xxx#name
-        const { uuid, password, server, port, allowInsecure, cc, sni, name } = this.juicity;
+        // juicity://uuid:password@server:port?cc=xxx#name
+        const { uuid, password, server, port, cc, sni, name } = this.juicity;
         let params = [];
-        if (allowInsecure) params.push("allow_insecure=1");
         if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
         if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
         let url = `juicity://${uuid}:${password}@${server}:${port}`;
@@ -2074,10 +2005,11 @@ export default {
         if (name) url += `#${encodeURIComponent(name)}`;
         coded = url;
       } else if (this.tabChoice === 7) {
-        // tuic://uuid:password@server:port?allow_insecure=1&cc=xxx#name
-        const { uuid, password, server, port, allowInsecure, cc, sni, name } = this.tuic;
+        // tuic://uuid:password@server:port?pinned_peer_cert_sha256=&verify_peer_cert_by_name=&cc=xxx#name
+        const { uuid, password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, cc, sni, name } = this.tuic;
         let params = [];
-        if (allowInsecure) params.push("allow_insecure=1");
+        if (pinnedPeerCertSha256) params.push("pinned_peer_cert_sha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
         if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
         if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
         let url = `tuic://${uuid}:${password}@${server}:${port}`;
@@ -2085,10 +2017,11 @@ export default {
         if (name) url += `#${encodeURIComponent(name)}`;
         coded = url;
       } else if (this.tabChoice === 8) {
-        // hysteria2://password@server:port?insecure=1&obfs=xxx#name
-        const { password, server, port, allowInsecure, obfs, obfsPassword, sni, name } = this.hysteria2;
+        // hysteria2://password@server:port?pinned_peer_cert_sha256=&verify_peer_cert_by_name=&obfs=xxx#name
+        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword, sni, name } = this.hysteria2;
         let params = [];
-        if (allowInsecure) params.push("insecure=1");
+        if (pinnedPeerCertSha256) params.push("pinned_peer_cert_sha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
         if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
         if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
         if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
@@ -2113,11 +2046,12 @@ export default {
         if (name) url += `#${encodeURIComponent(name)}`;
         coded = url;
       } else if (this.tabChoice === 11) {
-        // anytls://auth@host:port?peer=sni&insecure=1#name
-        const { auth, host, port, sni, allowInsecure, name } = this.anytls;
+        // anytls://auth@host:port?peer=sni&pinnedPeerCertSha256=&verifyPeerCertByName=#name
+        const { auth, host, port, sni, pinnedPeerCertSha256, verifyPeerCertByName, name } = this.anytls;
         let params = [];
         if (sni) params.push(`peer=${encodeURIComponent(sni)}`);
-        if (allowInsecure) params.push("insecure=1");
+        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
         let url = `anytls://${encodeURIComponent(auth)}@${host}:${port}`;
         if (params.length) url += `?${params.join("&")}`;
         if (name) url += `#${encodeURIComponent(name)}`;

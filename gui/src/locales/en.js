@@ -488,4 +488,6 @@ export default {
     routingARules: "RoutingA Rules",
     routingARulesPlaceholder: "Enter RoutingA routing rules...",
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

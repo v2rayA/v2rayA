@@ -53,6 +53,10 @@ server:
   messages:
     notAllowInsecure: 'According to the official documentation of {name}, if you use {name}, AllowInsecure will not be allowed'
     notRecommend: 'According to the official documentation of {name}, if you use {name}, it is not recommended to enable AllowInsecure'
+pinnedPeerCertSha256: "Pinned Certificate SHA256"
+pinnedPeerCertSha256Placeholder: "SHA256 hash of the pinned certificate (e.g., ae243d668ec9c7f74a0dcd1ad21c6676b4efe30c39728934b362093af886bf77)"
+verifyPeerCertByName: "Verify Peer Cert By Name"
+verifyPeerCertByNamePlaceholder: "Domain name to verify (e.g., example.com)"
 InSecureConfirm:
   title: Insecure Configuration Detected
   message: '<b>AllowInsecure</b> is set to true. Unless you know what you are doing, enabling this may lead to data leakage! Continue?'

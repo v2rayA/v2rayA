@@ -354,4 +354,6 @@ export default {
     formName: "Список исключённых доменов",
     formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

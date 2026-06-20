@@ -63,6 +63,10 @@ server:
   messages:
     notAllowInsecure: 'بر اساس مستندات {name}، اگر از {name} استفاده کنید، AllowInsecure ممنوع خواهد بود.'
     notRecommend: 'بر اساس مستندات {name}، اگر از {name} استفاده کنید، AllowInsecure توصیه نمی‌شود.'
+pinnedPeerCertSha256: "Pinned Certificate SHA256"
+pinnedPeerCertSha256Placeholder: "SHA256 hash of the pinned certificate (e.g., ae243d668ec9c7f74a0dcd1ad21c6676b4efe30c39728934b362093af886bf77)"
+verifyPeerCertByName: "Verify Peer Cert By Name"
+verifyPeerCertByNamePlaceholder: "Domain name to verify (e.g., example.com)"
 InSecureConfirm:
   title: پیکربندی خطرناک شناسایی شد
   message: 'تنظیمات <b>AllowInsecure</b> را روی true قرار داده است. این ممکن است خطرات امنیتی ایجاد کند. آیا مطمئن هستید که ادامه می‌دهید؟'

@@ -111,7 +111,7 @@ jobs:
         cd service
         GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" \
           CGO_ENABLED="$cgo_enabled" CC="$cc" \
-          go build "${build_tags[@]}" \
+          go build -trimpath "${build_tags[@]}" \
           -o ../v2raya_binaries/v2raya_${filename}_${{ inputs.version }}${ext} \
           -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${{ inputs.version }} -s -w" \
           -trimpath
@@ -127,7 +127,7 @@ jobs:
         [ "${{ matrix.goos }}" = "windows" ] && ext=".exe"
         cd core
         GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" \
-          go build \
+          go build -trimpath \
           -o ../v2raya_binaries/v2raya_core_${filename}_${{ inputs.version }}${ext} \
           -ldflags="-X main.Version=${{ inputs.version }} -s -w" \
           -trimpath \

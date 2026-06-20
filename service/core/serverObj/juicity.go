@@ -54,7 +54,6 @@ type juicitySettings struct {
 	UUID              string `json:"uuid"`
 	Password          string `json:"password"`
 	SNI               string `json:"sni,omitempty"`
-	AllowInsecure     bool   `json:"allow_insecure,omitempty"`
 	CongestionControl string `json:"congestion_control,omitempty"`
 	PinnedSHA256      string `json:"pinned_certchain_sha256,omitempty"`
 }
@@ -73,7 +72,6 @@ func (s *Juicity) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 	q := u.Query()
 	sni := q.Get("sni")
-	insecure := q.Get("insecure") == "1" || q.Get("allowInsecure") == "1"
 	congestion := q.Get("congestion_control")
 	if congestion == "" {
 		congestion = q.Get("congestionControl")
@@ -85,7 +83,6 @@ func (s *Juicity) Configuration(info PriorInfo) (c Configuration, err error) {
 		UUID:              uuid,
 		Password:          password,
 		SNI:               sni,
-		AllowInsecure:     insecure,
 		CongestionControl: congestion,
 		PinnedSHA256:      pinnedSHA,
 	})

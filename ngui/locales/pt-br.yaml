@@ -63,6 +63,10 @@ server:
   messages:
     notAllowInsecure: 'De acordo com a documentação do {name}, se você usar {name}, AllowInsecure será proibido.'
     notRecommend: 'De acordo com a documentação do {name}, se você usar {name}, AllowInsecure não é recomendado.'
+pinnedPeerCertSha256: "Pinned Certificate SHA256"
+pinnedPeerCertSha256Placeholder: "SHA256 hash of the pinned certificate (e.g., ae243d668ec9c7f74a0dcd1ad21c6676b4efe30c39728934b362093af886bf77)"
+verifyPeerCertByName: "Verify Peer Cert By Name"
+verifyPeerCertByNamePlaceholder: "Domain name to verify (e.g., example.com)"
 InSecureConfirm:
   title: Configuração perigosa detectada
   message: A configuração definiu o <b>AllowInsecure</b> como verdadeiro. Isso pode causar riscos de segurança. Tem certeza de que deseja continuar?

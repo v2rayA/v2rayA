@@ -49,7 +49,7 @@ Function Build-v2rayA(){
     #Build v2raya-core (merged xray-core + MultiObservatory)
     Set-Location -Path "$CurrentPath/core"
     ${env:CGO_ENABLED} = "0"
-    go build -ldflags "-s -w" -o "$CurrentPath/$v2rayaCoreBin" ./main
+    go build -trimpath -trimpath -ldflags "-s -w" -o "$CurrentPath/$v2rayaCoreBin" ./main
     #Build v2rayA
     Set-Location -Path "$CurrentPath/service"
     if ($env:GOOS -eq "windows") {
@@ -59,7 +59,7 @@ Function Build-v2rayA(){
     } else {
         $v2rayaBin = "v2raya"
     }
-    go build -tags "tinytun" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
+    go build -trimpath -tags "tinytun" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
     Set-Location -Path "$TerminalPath"
 }
 

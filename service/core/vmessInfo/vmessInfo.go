@@ -12,22 +12,23 @@ import (
 
 // Deprecated: use serverObj instead.
 type VmessInfo struct {
-	Ps            string `json:"ps"`
-	Add           string `json:"add"`
-	Port          string `json:"port"`
-	ID            string `json:"id"`
-	Aid           string `json:"aid"`
-	Net           string `json:"net"`
-	Type          string `json:"type"`
-	Host          string `json:"host"`
-	Path          string `json:"path"`
-	SNI           string `json:"sni"`
-	TLS           string `json:"tls"`
-	Flow          string `json:"flow,omitempty"`
-	Alpn          string `json:"alpn,omitempty"` // VLESS only
-	V             string `json:"v"`
-	AllowInsecure bool   `json:"allowInsecure"`
-	Protocol      string `json:"protocol"`
+	Ps                   string `json:"ps"`
+	Add                  string `json:"add"`
+	Port                 string `json:"port"`
+	ID                   string `json:"id"`
+	Aid                  string `json:"aid"`
+	Net                  string `json:"net"`
+	Type                 string `json:"type"`
+	Host                 string `json:"host"`
+	Path                 string `json:"path"`
+	SNI                  string `json:"sni"`
+	TLS                  string `json:"tls"`
+	Flow                 string `json:"flow,omitempty"`
+	Alpn                 string `json:"alpn,omitempty"` // VLESS only
+	V                    string `json:"v"`
+	PinnedPeerCertSha256 string `json:"pinnedPeerCertSha256,omitempty"`
+	VerifyPeerCertByName string `json:"verifyPeerCertByName,omitempty"`
+	Protocol             string `json:"protocol"`
 }
 
 func setValue(values *url.Values, key string, value string) {
@@ -126,9 +127,8 @@ func (v *VmessInfo) ExportToURL() string {
 			Fragment: v.Ps,
 		}
 		q := u.Query()
-		if v.AllowInsecure {
-			q.Set("allowInsecure", "1")
-		}
+		setValue(&q, "pinnedPeerCertSha256", v.PinnedPeerCertSha256)
+		setValue(&q, "verifyPeerCertByName", v.VerifyPeerCertByName)
 		if v.Protocol == "trojan-go" {
 			u.Scheme = "trojan-go"
 			if v.Host != "" {
