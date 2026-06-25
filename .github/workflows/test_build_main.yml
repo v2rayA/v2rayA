@@ -22,17 +22,17 @@ jobs:
     outputs:
       version: ${{ steps.prep.outputs.VERSION }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Compute Version
-      id: prep
-      run: |
-        date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
-        count=$(git rev-list --count HEAD)
-        commit=$(git rev-parse --short HEAD)
-        version="unstable-$date.r${count}.$commit"
-        echo "VERSION=$version" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Compute Version
+        id: prep
+        run: |
+          date=$(git log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
 
   Build_v2rayA_Binaries:
     needs: [Build_v2rayA_Web, Compute_Version]

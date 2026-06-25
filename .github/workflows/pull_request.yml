@@ -16,49 +16,49 @@ jobs:
     strategy:
       matrix:
         include:
-          - { os: ubuntu-latest,  goarch: amd64 }
-          - { os: ubuntu-latest,  goarch: arm64 }
+          - { os: ubuntu-latest, goarch: amd64 }
+          - { os: ubuntu-latest, goarch: arm64 }
           - { os: windows-latest, goarch: amd64 }
           - { os: windows-latest, goarch: arm64 }
-          - { os: macos-latest,   goarch: amd64 }
-          - { os: macos-latest,   goarch: arm64 }
+          - { os: macos-latest, goarch: amd64 }
+          - { os: macos-latest, goarch: arm64 }
     needs: Build_v2rayA_Web
     steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Download Artifact
-      uses: actions/download-artifact@v8
-      with:
-        name: web
-        path: service/server/router/web
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        cache-dependency-path: |
-          service/go.mod
-          service/go.sum
-        go-version: '1.26'
-    - name: Build v2rayA
-      shell: bash
-      run: |
-        mkdir v2raya_bin
-        CurrentDir="$(pwd)"
-        date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
-        count=$(git -C "$CurrentDir" rev-list --count HEAD)
-        commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
-        version="unstable-$date.r${count}.$commit"
-        case "${{ matrix.os }}" in
-          windows-latest) os="windows"; ext=".exe" ;;
-          macos-latest)   os="darwin";  ext="" ;;
-          ubuntu-latest)  os="linux";   ext="" ;;
-        esac
-        cd "$CurrentDir"/service
-        # All PR builds target amd64/arm64 on linux/windows/darwin — all support TinyTun
-        GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath -tags "tinytun" \
-          -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" \
-          -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
-    - name: Upload Binary
-      uses: actions/upload-artifact@v7
-      with:
-        path: v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Download Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: service/server/router/web
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          cache-dependency-path: |
+            service/go.mod
+            service/go.sum
+          go-version: "1.26"
+      - name: Build v2rayA
+        shell: bash
+        run: |
+          mkdir v2raya_bin
+          CurrentDir="$(pwd)"
+          date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
+          count=$(git -C "$CurrentDir" rev-list --count HEAD)
+          commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
+          version="unstable-$date.r${count}.$commit"
+          case "${{ matrix.os }}" in
+            windows-latest) os="windows"; ext=".exe" ;;
+            macos-latest)   os="darwin";  ext="" ;;
+            ubuntu-latest)  os="linux";   ext="" ;;
+          esac
+          cd "$CurrentDir"/service
+          # All PR builds target amd64/arm64 on linux/windows/darwin — all support TinyTun
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath -tags "tinytun" \
+            -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" \
+            -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
+      - name: Upload Binary
+        uses: actions/upload-artifact@v7
+        with:
+          path: v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}
