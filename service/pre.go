@@ -158,9 +158,14 @@ func initConfigure() {
 			// If db.IsNewDB is false, v2raya.db already existed (from a previous
 			// migration or a previous startup), so we skip initialization.
 			if db.IsNewDB {
-				//confv4.SetConfig(confv4.Params{Config: conf.GetEnvironmentConfig().Config})
-				// need to migrate?
-				if !configurev4.IsConfigureNotExists() {
+				// On Windows, v2rayA v4 was never available, so there is no v4
+				// data to migrate. Calling any v4 library function here would
+				// trigger the v4 library to initialize with its Linux-default
+				// config path (/etc/v2raya), which on Windows resolves to
+				// \etc\v2raya on the current drive root and causes the library
+				// to create that directory and a boltv4.db file there.
+				// Skip the v4 migration check entirely on Windows.
+				if runtime.GOOS != "windows" && !configurev4.IsConfigureNotExists() {
 					// There is different format in server and subscription.
 					// So we keep other content and reimport servers and subscriptions.
 					log.Warn("Migrating from v4 to main")

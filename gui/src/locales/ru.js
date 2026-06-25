@@ -8,6 +8,7 @@ export default {
     checkRunning: "Проверка",
     isRunning: "Работает",
     notRunning: "Готово",
+    waitingNetwork: "Ожидание подключения к сети",
     notLogin: "Пожалуйста, войдите",
     latest: "Последняя",
     local: "Текущая",
@@ -353,4 +354,6 @@ export default {
     formName: "Список исключённых доменов",
     formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

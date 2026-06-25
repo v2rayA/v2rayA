@@ -7,6 +7,7 @@ type LogItem = {
   id: number
   text: string
   level: string
+  source: string
 }
 
 const items = $ref<LogItem[]>([])
@@ -15,7 +16,9 @@ const currentSkip = $ref(0)
 const intervalTime = $ref(5)
 const intervalCandidate = [2, 5, 10, 15]
 const autoScroll = $ref(true)
+const autoShowNew = $ref(true)
 const levelFilter = $ref('all')
+const sourceFilter = $ref('all')
 const logContainer = ref<HTMLElement | null>(null)
 
 let intervalId: ReturnType<typeof setInterval> | null = null
@@ -35,10 +38,32 @@ const detectLevel = (text: string) => {
   return 'other'
 }
 
+const detectSource = (text: string): string => {
+  // Try to extract source from log format like [source] message
+  const match = text.match(/^\[(\w+)\]/)
+  if (match) return match[1].toLowerCase()
+  return 'other'
+}
+
 const filteredItems = computed(() => {
-  if (levelFilter === 'all')
-    return items
-  return items.filter(item => item.level === levelFilter)
+  let result = items
+  if (levelFilter !== 'all') {
+    result = result.filter(item => item.level === levelFilter)
+  }
+  if (sourceFilter !== 'all') {
+    result = result.filter(item => item.source === sourceFilter)
+  }
+  return result
+})
+
+// Collect available sources from items
+const availableSources = computed(() => {
+  const sources = new Set<string>()
+  sources.add('all')
+  items.forEach(item => {
+    if (item.source) sources.add(item.source)
+  })
+  return Array.from(sources)
 })
 
 const appendLogs = (payload: string) => {
@@ -49,7 +74,8 @@ const appendLogs = (payload: string) => {
   const nextItems = rows.map((text, index) => ({
     id: baseIndex + index,
     text,
-    level: detectLevel(text)
+    level: detectLevel(text),
+    source: detectSource(text)
   }))
   if (endOfLine) {
     items.push(...nextItems)
@@ -95,9 +121,10 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-4">
     <div class="flex flex-wrap items-center gap-3">
+      <!-- Level Filter -->
       <div class="flex items-center gap-2">
         <span class="text-sm">{{ $t('log.category') }}</span>
-        <ElSelect v-model="levelFilter" size="small">
+        <ElSelect v-model="levelFilter" size="small" style="width:100px">
           <ElOption value="all" :label="$t('log.categories.all')" />
           <ElOption value="error" :label="$t('log.categories.error')" />
           <ElOption value="warn" :label="$t('log.categories.warn')" />
@@ -108,22 +135,38 @@ onBeforeUnmount(() => {
         </ElSelect>
       </div>
 
+      <!-- Source Filter -->
+      <div class="flex items-center gap-2">
+        <span class="text-sm">{{ $t('log.source') }}</span>
+        <ElSelect v-model="sourceFilter" size="small" style="width:100px">
+          <ElOption value="all" :label="$t('log.sources.all')" />
+          <ElOption v-for="src in availableSources.filter(s => s !== 'all')" :key="src" :value="src" :label="src" />
+        </ElSelect>
+      </div>
+
+      <!-- Refresh Interval -->
       <div class="flex items-center gap-2">
         <span class="text-sm">{{ $t('log.refreshInterval') }}</span>
-        <ElSelect v-model="intervalTime" size="small" @change="startPolling">
+        <ElSelect v-model="intervalTime" size="small" style="width:120px" @change="startPolling">
           <ElOption v-for="candidate in intervalCandidate" :key="candidate" :label="`${candidate} ${$t('log.seconds')}`" :value="candidate" />
         </ElSelect>
       </div>
 
+      <!-- Auto Scroll -->
       <ElCheckbox v-model="autoScroll">{{ $t('log.autoScroll') }}</ElCheckbox>
+
+      <!-- Auto Show New -->
+      <ElCheckbox v-model="autoShowNew">{{ $t('log.autoShowNew') }}</ElCheckbox>
     </div>
 
+    <!-- Log Panel -->
     <div ref="logContainer" class="log-panel">
       <div v-if="filteredItems.length === 0" class="text-sm text-gray-500">
         Empty
       </div>
-      <div v-for="(item, index) in filteredItems" :key="item.id" class="log-line">
+      <div v-for="(item, index) in filteredItems" :key="item.id" class="log-line" :class="`log-level-${item.level}`">
         <span class="log-line-number">{{ index + 1 }}</span>
+        <span class="log-line-source">{{ item.source }}</span>
         <span class="log-line-text">{{ item.text }}</span>
       </div>
     </div>
@@ -147,7 +190,7 @@ onBeforeUnmount(() => {
 .log-line {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
   white-space: pre;
 }
 
@@ -158,7 +201,35 @@ onBeforeUnmount(() => {
   user-select: none;
 }
 
+.log-line-source {
+  min-width: 5rem;
+  color: #66d9ef;
+  user-select: none;
+  font-size: 0.9em;
+}
+
 .log-line-text {
   white-space: pre;
+  flex: 1;
+}
+
+.log-level-error .log-line-text {
+  color: #f92672;
+}
+
+.log-level-warn .log-line-text {
+  color: #e6db74;
+}
+
+.log-level-info .log-line-text {
+  color: #a6e22e;
+}
+
+.log-level-debug .log-line-text {
+  color: #66d9ef;
+}
+
+.log-level-trace .log-line-text {
+  color: #75715e;
 }
 </style>

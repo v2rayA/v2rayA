@@ -115,10 +115,12 @@ export default {
         [this.$t("common.checkRunning")]: "is-light",
         [this.$t("common.notRunning")]: "is-danger",
         [this.$t("common.isRunning")]: "is-success",
+        [this.$t("common.waitingNetwork")]: "is-warning",
       },
       coverStatusText: "",
       runningState: {
         running: this.$t("common.checkRunning"),
+        networkPaused: false,
         connectedServer: null,
         outboundToServerName: {},
       },
@@ -305,6 +307,15 @@ export default {
       ws.onopen = () => {
         // console.log("ws opened");
         this._wsRetries = 0; // 连接成功后重置重试计数
+        // Re-sync running state on every (re)connect.  WebSocket messages are
+        // not replayed, so if the connection was broken while Tun was setting up
+        // routes the frontend might miss the running_state message and stay
+        // stuck on "检测中" (Checking) forever.
+        this.$nextTick(() => {
+          if (this.$refs.nodeRef) {
+            this.$refs.nodeRef.syncLatestNodeOverview();
+          }
+        });
       };
       ws.onmessage = (msg) => {
         msg.data && that.handleMessage(JSON.parse(msg.data));
@@ -330,8 +341,12 @@ export default {
       ) {
         this.observatory = msg;
       }
-      if (msg.type === "running_state" && msg.body && msg.body.running === false) {
-        this.$refs.nodeRef && this.$refs.nodeRef.notifyStopped();
+      if (msg.type === "running_state" && msg.body) {
+        if (msg.body.running === false) {
+          this.$refs.nodeRef && this.$refs.nodeRef.notifyStopped(!!msg.body.networkPaused);
+        } else {
+          this.$refs.nodeRef && this.$refs.nodeRef.notifyRunning(!!msg.body.networkPaused);
+        }
       }
     },
     handleOutboundDropdownActiveChange(active) {
@@ -518,6 +533,8 @@ export default {
         this.coverStatusText = this.$t("v2ray.stop");
       } else if (this.runningState.running === this.$t("common.notRunning")) {
         this.coverStatusText = this.$t("v2ray.start");
+      } else if (this.runningState.running === this.$t("common.waitingNetwork")) {
+        this.coverStatusText = this.$t("common.waitingNetwork");
       }
     },
     handleOnStatusMouseLeave() {
@@ -560,7 +577,10 @@ export default {
       });
     },
     handleClickStatus() {
-      if (this.runningState.running === this.$t("common.notRunning")) {
+      if (
+        this.runningState.running === this.$t("common.notRunning") ||
+        this.runningState.running === this.$t("common.waitingNetwork")
+      ) {
         let cancel;
         let loading = this.$buefy.loading.open();
         waitingConnected(
@@ -574,6 +594,7 @@ export default {
             if (res.data.code === "SUCCESS") {
               Object.assign(this.runningState, {
                 running: this.$t("common.isRunning"),
+                networkPaused: false,
                 connectedServer: res.data.data.touch.connectedServer,
               });
             } else {
@@ -599,6 +620,7 @@ export default {
           if (res.data.code === "SUCCESS") {
             Object.assign(this.runningState, {
               running: this.$t("common.notRunning"),
+              networkPaused: false,
               connectedServer: res.data.data.touch.connectedServer,
             });
           } else {

@@ -3,6 +3,7 @@ package v2ray
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -17,6 +18,9 @@ type ResolvHijacker struct {
 }
 
 func NewResolvHijacker() *ResolvHijacker {
+	if runtime.GOOS != "linux" {
+		return nil
+	}
 	hij := ResolvHijacker{
 		ticker:   time.NewTicker(checkInterval),
 		localDNS: ShouldLocalDnsListen(),
@@ -39,6 +43,9 @@ const HijackFlag = "# v2rayA DNS hijack"
 var hijacker *ResolvHijacker
 
 func (h *ResolvHijacker) HijackResolv() error {
+	if runtime.GOOS != "linux" {
+		return nil
+	}
 	err := os.WriteFile(resolverFile,
 		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 119.29.29.29\n"),
 		os.FileMode(0644),
@@ -50,6 +57,9 @@ func (h *ResolvHijacker) HijackResolv() error {
 }
 
 func resetResolvHijacker() {
+	if runtime.GOOS != "linux" {
+		return
+	}
 	if hijacker != nil {
 		hijacker.Close()
 	}
@@ -57,6 +67,9 @@ func resetResolvHijacker() {
 }
 
 func removeResolvHijacker() {
+	if runtime.GOOS != "linux" {
+		return
+	}
 	if hijacker != nil {
 		hijacker.Close()
 		if hijacker.localDNS {
@@ -66,6 +79,5 @@ func removeResolvHijacker() {
 			)
 		}
 		hijacker = nil
-
 	}
 }

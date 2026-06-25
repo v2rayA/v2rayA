@@ -10,6 +10,22 @@ body.theme-dark {
   --md-primary: #d0bcff;
   --md-primary-container: #4f378b;
   --md-on-primary-container: #eaddff;
+  --node-status-group-border: rgba(255, 255, 255, 0.32);
+  --node-status-group-bg: rgba(255, 255, 255, 0.12);
+  --node-status-group-color: var(--md-on-surface);
+  --node-status-group-light-border: rgba(255, 255, 255, 0.2);
+  --node-status-group-light-bg: rgba(255, 255, 255, 0.08);
+  --node-highlight-connected: rgba(79, 195, 217, 0.2);
+  --node-highlight-disconnected: rgba(255, 138, 128, 0.22);
+  --node-msg-primary-bg: #3f2f63;
+  --node-msg-primary-border: #8f7bd8;
+  --node-msg-success-bg: #1f3f53;
+  --node-msg-success-border: #4fc3d9;
+  --node-msg-light-bg: #34313a;
+  --node-msg-light-border: #8f8a96;
+  --node-msg-danger-bg: #4a2b32;
+  --node-msg-danger-border: #ff8a80;
+  --node-msg-on-color: #f2edf5;
 
   background-color: var(--md-bg);
   color: var(--md-on-bg);
@@ -432,6 +448,48 @@ body.theme-dark {
   .b-sidebar.node-status-sidebar-reduced > .sidebar-content.is-fixed {
     background-color: var(--md-surface-container) !important;
     color: var(--md-on-surface);
+  }
+
+  /* Keep node status cards semantic in dark mode (selected/healthy/unknown/down). */
+  .b-sidebar.node-status-sidebar .message,
+  .b-sidebar.node-status-sidebar .message .message-header,
+  .b-sidebar.node-status-sidebar .message .message-body {
+    color: var(--node-msg-on-color) !important;
+  }
+
+  .b-sidebar.node-status-sidebar .message.is-primary .message-header,
+  .b-sidebar.node-status-sidebar .message.is-primary .message-body {
+    background-color: var(--node-msg-primary-bg) !important;
+    border-color: var(--node-msg-primary-border) !important;
+  }
+
+  .b-sidebar.node-status-sidebar .message.is-success .message-header,
+  .b-sidebar.node-status-sidebar .message.is-success .message-body {
+    background-color: var(--node-msg-success-bg) !important;
+    border-color: var(--node-msg-success-border) !important;
+  }
+
+  .b-sidebar.node-status-sidebar .message.is-light .message-header,
+  .b-sidebar.node-status-sidebar .message.is-light .message-body {
+    background-color: var(--node-msg-light-bg) !important;
+    border-color: var(--node-msg-light-border) !important;
+  }
+
+  .b-sidebar.node-status-sidebar .message.is-danger .message-header,
+  .b-sidebar.node-status-sidebar .message.is-danger .message-body {
+    background-color: var(--node-msg-danger-bg) !important;
+    border-color: var(--node-msg-danger-border) !important;
+  }
+
+  .b-sidebar.node-status-sidebar .message .node-status-card__group {
+    border-color: rgba(255, 255, 255, 0.42) !important;
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    color: inherit !important;
+  }
+
+  .b-sidebar.node-status-sidebar .message.is-light .node-status-card__group {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
   }
 
   .rules::-webkit-scrollbar,

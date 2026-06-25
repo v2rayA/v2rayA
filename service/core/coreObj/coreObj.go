@@ -149,10 +149,11 @@ func (s Settings) MarshalJSON() ([]byte, error) {
 }
 
 type TLSSettings struct {
-	AllowInsecure                    bool          `json:"allowInsecure"`
 	ServerName                       interface{}   `json:"serverName,omitempty"`
 	Alpn                             []string      `json:"alpn,omitempty"`
 	PinnedPeerCertificateChainSha256 string        `json:"pinnedPeerCertificateChainSha256,omitempty"`
+	PinnedPeerCertSha256             string        `json:"pinnedPeerCertSha256,omitempty"`
+	VerifyPeerCertByName             string        `json:"verifyPeerCertByName,omitempty"`
 	Certificates                     []Certificate `json:"certificates,omitempty"`
 	Fingerprint                      string        `json:"fingerprint,omitempty"`
 }
@@ -288,10 +289,34 @@ type QuicSettings struct {
 	Key      string    `json:"key,omitempty"`
 	Security string    `json:"security"`
 }
+type XHTTPRangeConfig struct {
+	From int32 `json:"from,omitempty"`
+	To   int32 `json:"to,omitempty"`
+}
+
+type XHTTPXmux struct {
+	MaxConcurrency   *XHTTPRangeConfig `json:"maxConcurrency,omitempty"`
+	MaxConnections   *XHTTPRangeConfig `json:"maxConnections,omitempty"`
+	CMaxReuseTimes   *XHTTPRangeConfig `json:"cMaxReuseTimes,omitempty"`
+	HMaxRequestTimes *XHTTPRangeConfig `json:"hMaxRequestTimes,omitempty"`
+	HMaxReusableSecs *XHTTPRangeConfig `json:"hMaxReusableSecs,omitempty"`
+	HKeepAlivePeriod int64             `json:"hKeepAlivePeriod,omitempty"`
+}
+
 type XHTTPSettings struct {
-	Path string `json:"path"`
-	Host string `json:"host,omitempty"`
-	Mode string `json:"mode,omitempty"`
+	Path                 string            `json:"path,omitempty"`
+	Host                 string            `json:"host,omitempty"`
+	Mode                 string            `json:"mode,omitempty"`
+	Headers              map[string]string `json:"headers,omitempty"`
+	XPaddingBytes        *XHTTPRangeConfig `json:"xPaddingBytes,omitempty"`
+	NoGRPCHeader         bool              `json:"noGRPCHeader,omitempty"`
+	NoSSEHeader          bool              `json:"noSSEHeader,omitempty"`
+	ScMaxEachPostBytes   *XHTTPRangeConfig `json:"scMaxEachPostBytes,omitempty"`
+	ScMinPostsIntervalMs *XHTTPRangeConfig `json:"scMinPostsIntervalMs,omitempty"`
+	ScMaxBufferedPosts   int64             `json:"scMaxBufferedPosts,omitempty"`
+	ScStreamUpServerSecs *XHTTPRangeConfig `json:"scStreamUpServerSecs,omitempty"`
+	Xmux                 *XHTTPXmux        `json:"xmux,omitempty"`
+	UplinkHTTPMethod     string            `json:"uplinkHTTPMethod,omitempty"`
 }
 // WireGuard 出站配置
 type WireGuardSettings struct {

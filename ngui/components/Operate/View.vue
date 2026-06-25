@@ -76,19 +76,19 @@ const viewServer = async() => {
       break
     }
     case 'vless': {
-      const auth = atob(serverInfo.auth).split(':')
       const address = serverInfo.host.split(':')
 
       serverInfo = {
-        ...serverInfo,
+        ...serverInfo.query,
         host: address[0],
         port: address[1],
-        method: auth[0],
-        password: auth[1],
+        id: decodeURIComponent(serverInfo.auth),
+        protocol: serverInfo.protocol,
         name: decodeURIComponent(serverInfo.hash).slice(1)
       }
 
       delete serverInfo.auth
+      delete serverInfo.query
       break
     }
     case 'vmess': {

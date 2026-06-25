@@ -11,7 +11,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
-func deleteTransparentProxyRules() {
+func deleteTransparentProxyRulesKeepSystemProxy() {
 	stopTinyTun()
 	iptables.CloseWatcher()
 	if !conf.GetEnvironmentConfig().Lite {
@@ -20,8 +20,12 @@ func deleteTransparentProxyRules() {
 		iptables.Redirect.GetCleanCommands().Run(false)
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
 	}
-	iptables.SystemProxy.GetCleanCommands().Run(false)
 	time.Sleep(30 * time.Millisecond)
+}
+
+func deleteTransparentProxyRules() {
+	deleteTransparentProxyRulesKeepSystemProxy()
+	iptables.SystemProxy.GetCleanCommands().Run(false)
 }
 
 func writeTransparentProxyRules(tmpl *Template) (err error) {

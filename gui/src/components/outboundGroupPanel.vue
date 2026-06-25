@@ -482,8 +482,27 @@ export default {
             this.expandedGroup = null;
           }
           this.$emit("group-deleted", res.data.data.outbounds);
+        } else {
+          // Show error message from server (e.g., bound custom inbounds)
+          this.$buefy.toast.open({
+            message: res.data.message || this.$t("common.fail"),
+            type: "is-warning",
+            position: "is-top",
+            duration: 8000,
+            queue: false,
+          });
         }
-      } catch (_) {}
+      } catch (err) {
+        // Show error from server response
+        const msg = err?.response?.data?.message || err?.message || this.$t("common.fail");
+        this.$buefy.toast.open({
+          message: msg,
+          type: "is-warning",
+          position: "is-top",
+          duration: 8000,
+          queue: false,
+        });
+      }
     },
   },
   mounted() {

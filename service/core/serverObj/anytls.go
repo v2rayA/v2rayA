@@ -48,12 +48,13 @@ func ParseAnyTLSURL(link string) (data *AnyTLS, err error) {
 
 // anytlsSettings holds the settings serialized into the hybrid-core xray config.
 type anytlsSettings struct {
-	Address         string `json:"address"`
-	Port            int    `json:"port"`
-	Password        string `json:"password"`
-	SNI             string `json:"sni,omitempty"`
-	AllowInsecure   bool   `json:"allow_insecure,omitempty"`
-	MinIdleSessions int    `json:"min_idle_sessions,omitempty"`
+	Address              string `json:"address"`
+	Port                 int    `json:"port"`
+	Password             string `json:"password"`
+	SNI                  string `json:"sni,omitempty"`
+	MinIdleSessions      int    `json:"min_idle_sessions,omitempty"`
+	PinnedPeerCertSha256 string `json:"pinnedPeerCertSha256,omitempty"`
+	VerifyPeerCertByName string `json:"verifyPeerCertByName,omitempty"`
 }
 
 func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
@@ -68,16 +69,16 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 	q := u.Query()
 	sni := q.Get("sni")
-	insecure := q.Get("insecure") == "1" || q.Get("allowInsecure") == "1"
 	minIdle, _ := strconv.Atoi(q.Get("minIdleSession"))
 
 	settingsJSON, err := json.Marshal(anytlsSettings{
-		Address:         s.Server,
-		Port:            s.Port,
-		Password:        password,
-		SNI:             sni,
-		AllowInsecure:   insecure,
-		MinIdleSessions: minIdle,
+		Address:              s.Server,
+		Port:                 s.Port,
+		Password:             password,
+		SNI:                  sni,
+		MinIdleSessions:      minIdle,
+		PinnedPeerCertSha256: q.Get("pinnedPeerCertSha256"),
+		VerifyPeerCertByName: q.Get("verifyPeerCertByName"),
 	})
 	if err != nil {
 		return c, fmt.Errorf("anytls: marshal settings: %w", err)

@@ -8,6 +8,7 @@ export default {
     checkRunning: "Checking",
     isRunning: "Running",
     notRunning: "Ready",
+    waitingNetwork: "Waiting for network",
     notLogin: "Login please",
     latest: "Latest",
     local: "Local",
@@ -377,6 +378,8 @@ export default {
   },
   routingA: {
     messages: ["click the button 'Help&Manual' for help"],
+    inboundDeprecated: "Defining inbounds in RoutingA is deprecated. The generated JSON config will NOT include those inbound ports. Please use the custom inbound settings with RoutingA rules instead.",
+    inboundDeprecatedConfirm: "This RoutingA configuration contains deprecated inbound definitions. The generated config will not include those inbound ports. Continue saving?",
   },
   outbound: {
     addMessage: "Please input the proxy group name you want to add:",
@@ -476,5 +479,15 @@ export default {
     hint: "Only SOCKS and HTTP protocols are supported. Tag must be unique and will be used as the v2ray core tag.",
     fillAll: "Please fill in all fields",
     deleteConfirm: "Delete inbound {tag}?",
+    outbound: "Bound Outbound Group",
+    outboundPlaceholder: "Select outbound group",
+    outboundType: "Binding Mode",
+    outboundTypeDirect: "Direct Select",
+    outboundTypeRoutingA: "RoutingA Rules",
+    outboundRequired: "Please select a bound outbound group",
+    routingARules: "RoutingA Rules",
+    routingARulesPlaceholder: "Enter RoutingA routing rules...",
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

@@ -14,8 +14,11 @@ import (
 )
 
 type CoreProcessManager struct {
-	p  *Process
-	mu sync.Mutex
+	p                *Process
+	mu               sync.Mutex
+	testing          bool
+	networkPaused    bool
+	connectivityStop chan struct{}
 }
 
 var ProcessManager CoreProcessManager
@@ -45,6 +48,34 @@ func (m *CoreProcessManager) GetRunningTemplate() *Template {
 		return nil
 	}
 	return m.p.template
+}
+
+func (m *CoreProcessManager) SetLatencyTesting(testing bool) {
+	m.mu.Lock()
+	m.testing = testing
+	m.mu.Unlock()
+}
+
+// ServiceRunning reports whether the proxy service should be treated as running
+// by the frontend. Temporary latency tests and connectivity-paused transparent
+// proxy states are excluded from this view.
+func (m *CoreProcessManager) ServiceRunning() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.p != nil && !m.testing && !m.networkPaused
+}
+
+func (m *CoreProcessManager) NetworkPaused() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.networkPaused
+}
+
+func (m *CoreProcessManager) stopConnectivityMonitorLocked() {
+	if m.connectivityStop != nil {
+		close(m.connectivityStop)
+		m.connectivityStop = nil
+	}
 }
 
 func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting, tmpl *Template) (err error) {
@@ -169,6 +200,9 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 
 	p := m.p
 
+	m.stopConnectivityMonitorLocked()
+	m.networkPaused = false
+
 	m.beforeStop(p)
 
 	err := p.Close()
@@ -184,7 +218,7 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 	m.p = nil
 
 	// Notify connected frontend clients that the proxy is no longer running.
-	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false})
+	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false, "networkPaused": false})
 }
 
 func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
@@ -196,17 +230,10 @@ func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 	m.stop(true)
 }
 
-func (m *CoreProcessManager) beforeStart(t *Template) (err error) {
-	resolv.CheckResolvConf()
-
-	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
-	}
-
-	if err = t.CheckInboundPortsOccupied(); err != nil {
-		return err
-	}
-
+// runPreStartHook executes the configured core pre-start hook.
+// It is called inside the Start lock so it is correctly ordered after the
+// pre-stop hook that runs inside m.stop.
+func (m *CoreProcessManager) runPreStartHook() error {
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
 		hook = append(hook, "--stage=pre-start", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
@@ -226,6 +253,7 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 	if err = m.CheckAndSetupTransparentProxy(false, t.Setting, t); err != nil {
 		return err
 	}
+	m.startConnectivityMonitor(t)
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
@@ -243,27 +271,48 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 }
 
 func (m *CoreProcessManager) Start(t *Template) (err error) {
+	// Phase 1 (pre-lock): lightweight checks that do not depend on whether a
+	// previous process is running.  Port occupancy is checked by NewProcess
+	// after the old process has been stopped.
+	resolv.CheckResolvConf()
+	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
+		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+	}
+
+	// Phase 2 (locked): stop the old process, run the pre-start hook (ordered
+	// after the pre-stop hook in beforeStop), then start the new core.
+	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TinyTun,
+	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	m.stop(true)
-
 	process, err := NewProcess(t, func() error {
-		return m.beforeStart(t)
+		return m.runPreStartHook()
 	}, func() error {
-		return m.afterStart(t)
+		return nil // afterStart executed post-lock in Phase 3
 	}, m.handleUnexpectedStop)
 	if err != nil {
+		m.mu.Unlock()
 		return err
 	}
 	m.p = process
+	testing := m.testing
+	m.mu.Unlock()
+
 	defer func() {
 		if err != nil {
-			m.stop(true)
+			m.Stop(true)
 		}
 	}()
 
+	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
+	// TinyTun), connectivity monitor, and post-start hook.
+	if err = m.afterStart(t); err != nil {
+		return err
+	}
 	configure.SetRunning(true)
+	if !testing {
+		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
+	}
 	return nil
 }
 

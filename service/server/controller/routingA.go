@@ -37,9 +37,27 @@ func PutRoutingA(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
+
+	// Check for deprecated inbound definitions in RoutingA rules
+	hasInboundDef := false
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "inbound(") || strings.HasPrefix(trimmed, "inbound (") {
+			hasInboundDef = true
+			break
+		}
+	}
+
 	err = configure.SetRoutingA(&data.RoutingA)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
+		return
+	}
+
+	if hasInboundDef {
+		common.ResponseSuccess(ctx, gin.H{
+			"warning": "RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。",
+		})
 		return
 	}
 	common.ResponseSuccess(ctx, nil)

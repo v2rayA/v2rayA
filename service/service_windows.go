@@ -7,17 +7,19 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"github.com/v2rayA/v2rayA/server/router"
 	"golang.org/x/sys/windows/svc"
-	"golang.org/x/sys/windows/svc/debug"
+	svcdbg "golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
 )
 
-var elog debug.Log
+var elog svcdbg.Log
 
 const coreShutdownTimeout = 30 * time.Second
 
@@ -59,6 +61,12 @@ func (m *v2rayAService) Execute(args []string, r <-chan svc.ChangeRequest, chang
 	// Start main program
 	errChan := make(chan error, 1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				elog.Error(1, fmt.Sprintf("panic in runService: %v\n%s", r, debug.Stack()))
+				errChan <- fmt.Errorf("panic: %v", r)
+			}
+		}()
 		// Execute official v2rayA main function
 		if err := runService(); err != nil {
 			errChan <- err
@@ -82,6 +90,7 @@ loop:
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				elog.Info(1, "v2rayA service stopping")
+				changes <- svc.Status{State: svc.StopPending}
 				// Graceful shutdown: stop v2ray/xray process first
 				cleanupResources()
 				break loop
@@ -101,7 +110,7 @@ func runAsService(isDebug bool) error {
 	var err error
 
 	if isDebug {
-		elog = debug.New("v2rayA")
+		elog = svcdbg.New("v2rayA")
 	} else {
 		elog, err = eventlog.Open("v2rayA")
 		if err != nil {
@@ -114,7 +123,7 @@ func runAsService(isDebug bool) error {
 
 	// Run service
 	if isDebug {
-		err = debug.Run("v2rayA", &v2rayAService{})
+		err = svcdbg.Run("v2rayA", &v2rayAService{})
 	} else {
 		err = svc.Run("v2rayA", &v2rayAService{})
 	}
@@ -128,30 +137,69 @@ func runAsService(isDebug bool) error {
 	return nil
 }
 
-// cleanupResources cleans up resources, stops v2ray/xray processes
+// cleanupResources cleans up resources with an overall 30-second safety timeout.
+// Individual cleanup steps are logged so Windows Event Log shows exactly where
+// a hang occurs if the SCM deadline approaches.
 func cleanupResources() {
+	const overallTimeout = 30 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), overallTimeout)
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				elog.Error(1, fmt.Sprintf("panic during cleanup: %v\n%s", r, debug.Stack()))
+			}
+			close(done)
+		}()
+		doCleanup()
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		elog.Error(1, fmt.Sprintf("cleanup timed out after %v, forcing exit", overallTimeout))
+	}
+}
+
+// doCleanup performs the actual resource teardown.
+func doCleanup() {
 	elog.Info(1, "Cleaning up resources...")
+
+	// Step 1: stop accepting new HTTP requests so the frontend receives no
+	// further responses after this point.
+	elog.Info(1, "Shutting down HTTP server...")
+	httpCtx, httpCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer httpCancel()
+	if err := router.Shutdown(httpCtx); err != nil {
+		elog.Error(1, fmt.Sprintf("HTTP server shutdown error: %v", err))
+	} else {
+		elog.Info(1, "HTTP server stopped")
+	}
+
+	// Step 2: capture the running core before Stop() clears it.
 	runningCore := v2ray.ProcessManager.Process()
 
-	// Stop transparent proxy
-	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
-	elog.Info(1, "Transparent proxy stopped")
-
-	// Stop v2ray/xray process
+	// Step 3: stop v2ray/xray and transparent proxy (beforeStop calls
+	// CheckAndStopTransparentProxy internally, so no explicit call needed here).
+	elog.Info(1, "Stopping v2ray/xray process...")
 	v2ray.ProcessManager.Stop(false)
 	elog.Info(1, "v2ray/xray process stopped")
+
 	if runningCore != nil {
 		elog.Info(1, "Waiting for v2ray/xray core to exit...")
-		ctx, cancel := context.WithTimeout(context.Background(), coreShutdownTimeout)
-		defer cancel()
-		if err := runningCore.WaitUntilExit(ctx); err != nil {
+		waitCtx, waitCancel := context.WithTimeout(context.Background(), coreShutdownTimeout)
+		defer waitCancel()
+		if err := runningCore.WaitUntilExit(waitCtx); err != nil {
 			elog.Error(1, fmt.Sprintf("Timeout while waiting for v2ray/xray core to exit: %v", err))
 		} else {
 			elog.Info(1, "v2ray/xray core exit confirmed")
 		}
 	}
 
-	// Close database connection
+	// Step 4: close the database.
+	elog.Info(1, "Closing database...")
 	if err := db.Close(); err != nil {
 		elog.Error(1, fmt.Sprintf("Failed to close database: %v", err))
 	} else {

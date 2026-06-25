@@ -1,13 +1,20 @@
 <script lang="ts" setup>
-if (user.value.exist) navigateTo('/login')
+import { ElMessage } from 'element-plus'
+import { ref } from 'vue'
+import { user } from '~/composables/user'
+
+// If account already exists, redirect to login page.
+if (user.value.exist) {
+  await navigateTo('/login', { replace: true })
+}
 
 const { t } = useI18n()
 
-const username = $ref('')
-const password = $ref('')
+const username = ref('')
+const password = ref('')
 
 async function signup() {
-  const { data } = await useV2Fetch<any>('account').post({ username, password }).json()
+  const { data } = await useV2Fetch<any>('account').post({ username: username.value, password: password.value }).json()
 
   if (data.value.code !== 'SUCCESS') {
     ElMessage.warning({ message: data.value.message, duration: 5000 })
@@ -15,7 +22,7 @@ async function signup() {
     user.value.exist = true
     user.value.token = data.value.data.token
     ElMessage.success(t('common.success'))
-    navigateTo('/')
+    await navigateTo('/')
   }
 }
 </script>

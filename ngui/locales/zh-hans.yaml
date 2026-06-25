@@ -1,5 +1,5 @@
 common:
-  outboundSetting: 出站设置
+  outboundSetting: 代理分组设置
   setting: 设置
   about: 关于
   loggedAs: '正在以 <b>{username}</b> 的身份登录'
@@ -7,18 +7,31 @@ common:
   checkRunning: 检测中
   isRunning: 正在运行
   notRunning: 就绪
+  waitingNetwork: 等待网络连接
   notLogin: 未登录
   latest: 最新
   local: 本地
   success: 成功
   fail: 失败
+  empty: 没有加入节点
   message: 提示
   none: 无
   optional: 可选
   loadBalance: 负载均衡
   log: 日志
+  proxyGroups: 代理分组
+  darkTheme: 深色主题
+  lightTheme: 浅色主题
+  autoTheme: 自动主题
 log:
+  logModalTitle: 查看日志
+  logsLabel: 日志
+  refreshInterval: 刷新间隔
+  seconds: 秒
+  autoScoll: 自动滚动
+  autoShowNew: 自动显示新日志
   category: 分类
+  source: 日志来源
   categories:
     all: 全部
     error: 错误
@@ -27,9 +40,8 @@ log:
     debug: 调试
     trace: 跟踪
     other: 其他
-  refreshInterval: 刷新间隔
-  seconds: 秒
-  autoScroll: 自动滚动
+  sources:
+    all: 全部
 welcome:
   title: 初来乍到，请多关照
   docker: 'v2rayA服务端正在运行于Docker环境中，Version: {version}'
@@ -51,6 +63,10 @@ server:
   messages:
     notAllowInsecure: '根据 {name} 的官方文档，如果你使用 {name}，将不允许 AllowInsecure'
     notRecommend: '根据 {name} 的官方文档，如果你使用 {name}，不推荐开启 AllowInsecure'
+pinnedPeerCertSha256: "固定证书 SHA256"
+pinnedPeerCertSha256Placeholder: "固定证书的 SHA256 哈希值（如 ae243d668ec9c7f74a0dcd1ad21c6676b4efe30c39728934b362093af886bf77）"
+verifyPeerCertByName: "证书验证域名"
+verifyPeerCertByNamePlaceholder: "要验证的域名（如 example.com）"
 InSecureConfirm:
   title: 检测到不安全的配置
   message: 即将保存的配置中<b>AllowInsecure</b>被设置为true，除非你知道你在做什么，否则贸然开启可能导致数据泄漏！是否继续？
@@ -61,9 +77,14 @@ subscription:
   remarks: 别名
   timeLastUpdate: 上次更新时间
   numberServers: 节点数
+  subscription: 订阅
+  autoSelect: 自动订阅更新后自动连接新节点
 operations:
+  tproxyWhiteIpGroups: 直通白名单IP组
   name: 操作
   update: 更新
+  autoUpdate: 自动更新
+  manualUpdate: 手动更新
   modify: 修改
   share: 分享
   view: 查看
@@ -74,6 +95,9 @@ operations:
   connect: 连接
   disconnect: 断开
   select: 选择
+  addTo: 添加到
+  addToProxyGroup: 加入分组 {group}
+  removeFromProxyGroup: 移出分组 {group}
   login: 登录
   logout: 注销
   configure: 配置
@@ -83,11 +107,19 @@ operations:
   saveApply: 保存并应用
   save: 保存
   copyLink: 复制链接
+  export: 导出
+  copySelected: 复制勾选节点
+  downloadTxt: 下载 TXT 文件
   helpManual: 查看帮助
   'yes': 是
   'no': 否
   switchSite: 切换至备用站点
-  addOutbound: 新增一个出站 (outbound)
+  addOutbound: 新增一个代理分组
+  add: 添加
+  close: 关闭
+  domainsExcluded: 排除域名
+  tproxyExcludedInterfaces: 不走代理的网卡前缀
+  configureTunRouteScript: 配置路由脚本
 register:
   title: 初来乍到，创建一个管理员账号
   messages:
@@ -99,6 +131,7 @@ login:
   username: 用户名
   password: 密码
 setting:
+  inboundSniffing: 嗅探
   transparentProxy: 透明代理/系统代理
   transparentType: 透明代理/系统代理实现方式
   logLevel: 日志等级
@@ -109,9 +142,20 @@ setting:
   autoUpdateSub: 自动更新订阅
   autoUpdateGfwlist: 自动更新GFWList
   preferModeWhenUpdate: 解析订阅链接/更新时优先使用
+  tproxyExcludedInterfaces: 不走代理的网卡前缀
+  tunAutoRoute: 自动路由
+  tunBypassInterfaces: TUN 不走代理的网卡
+  tunBypassCustomPlaceholder: '自定义通配符，例如: docker*, vmnet*'
+  tunBypassSelectPlaceholder: 选择网卡...
+  tunBypassSelected: 已选 {n} 个网卡
   ipForwardOn: 开启IP转发
-  portSharingOn: 开启端口分享
+  portSharingOn: 允许局域网的连接
   concurrency: 最大并发数
+  tunProcessBackend: TinyTun 进程排除方式
+  tunExcludeProcesses: TinyTun 自定义排除进程
+  ssBackend: Shadowsocks 后端
+  trojanBackend: Trojan 后端
+  nodeBackend: 后端
   options:
     trace: 跟踪
     debug: 调试
@@ -131,6 +175,7 @@ setting:
     default: 保持系统默认
     'on': 启用
     'off': 关闭
+    notIntegrated: 未集成
     updateSubWhenStart: 服务端启动时更新订阅
     updateSubAtIntervals: 每隔一段时间更新订阅（单位：小时）
     updateGfwlistWhenStart: 服务端启动时更新GFWList
@@ -139,11 +184,21 @@ setting:
     closed: 关闭
     advanced: 自定义高级设置
     leastPing: 最小时延优先
+    tunBackendTun: TUN（默认，/proc 进程查找）
+    tunBackendEbpf: eBPF（cgroupv2 进程排除）
+    backendV2ray: v2ray / xray
+    backendSystemDefault: 跟随系统设置
   messages:
+    inboundSniffing: 嗅探入站域名，如不开启，可能导致部分域名分流错误
     gfwlist: 该时间是指本地文件最后修改时间，因此可能会领先最新版本
     transparentProxy: >-
-      全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。
-    transparentType: '★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。'
+      全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选"开启局域网共享"。
+    transparentType: '★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun (TinyTun): 跨平台TUN透明代理，需要tinytun二进制文件；Linux 下的数据面由 TinyTun 自身后端处理，生成的 YAML 配置需与 TinyTun 版本匹配。'
+    tproxyExcludedInterfaces: '设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。'
+    tunAutoRoute: 开启时，TinyTun 自动配置系统路由。关闭时，需要提供自定义的启动/停止脚本手动配置路由。
+    tunBypassInterfaces: 勾选不走 TUN 代理的网卡，或在下方输入自定义通配符。
+    tunProcessBackend: Linux 下选择 TinyTun 的进程排除实现。TUN 模式使用 /proc 查找，兼容性强；eBPF 模式通过 cgroupv2 钉子实现更准确的进程级排除，需安装 tinytun-ebpf.o（/usr/lib/tinytun/）。
+    tunExcludeProcesses: 配置额外需要直通的进程名。建议一行一个，例如：chrome.exe、firefox。
     pacMode: 该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。
     preventDnsSpoofing: '★转发DNS查询: 通过代理服务器转发DNS请求。★DoH(v2ray-core: 4.22.0+): DNS over HTTPS。'
     specialMode: >-
@@ -168,6 +223,8 @@ customAddressPort:
   portHttpWithPac: http端口(带分流规则)
   portVmess: VMess端口(带分流规则)
   portVmessLink: VMess端口链接
+  portApi: Api 端口（0 表示随机）
+  apiServices: API 启用服务
   messages:
     - >-
       如需修改后端运行地址(默认0.0.0.0:2017)，可添加环境变量<code>V2RAYA_ADDRESS</code>或添加启动参数<code>--address</code>。
@@ -195,6 +252,27 @@ customRouting:
     '2': 在选择Tags时，可按Ctrl等多选键进行多选。
     noSiteDatFileFound: '未在{V2RayLocationAsset}中发现siteDat文件'
     emptyRuleNotPermitted: 不能存在tags为空的规则，请检查
+dns:
+  title: DNS 设置
+  help: DNS 帮助
+  helpTooltip: 查看 v2fly DNS 文档
+  colServer: DNS 服务器
+  colDomains: 域名列表
+  colOutbound: 出口
+  serverPlaceholder: '如 8.8.8.8 或 https://dns.google/dns-query'
+  domainsPlaceholder: "每行一个，如 geosite:cn\n留空表示兜底 DNS"
+  addRule: 添加规则
+  resetDefault: 恢复默认
+  errNoRules: 至少需要一条 DNS 规则
+  internalQueryServers: 域名查询服务器
+  externalQueryServers: 国外域名查询服务器
+  messages:
+    - >-
+      "@:dns.internalQueryServers" 用于查询国内域名，而 "@:dns.externalQueryServers"
+      用于查询国外域名。
+    - >-
+      如果将 "@:dns.externalQueryServers" 留空，"@:dns.internalQueryServers"
+      将会负责查询所有域名。
 doh:
   title: 配置DoH服务器
   dohPriorityList: DoH服务优先级列表
@@ -215,17 +293,6 @@ doh:
       提供对外服务)和客户端(doh-stub,
       连接至doh.opendns.com)并将他们串联，因为通常情况下在普遍受到污染的地区找到一个完全不受污染的服务器是很困难的。
     - 建议上述列表1-2行即可，留空保存可恢复默认
-dns:
-  title: 配置DNS服务器
-  internalQueryServers: 域名查询服务器
-  externalQueryServers: 国外域名查询服务器
-  messages:
-    - >-
-      “@:dns.internalQueryServers” 用于查询国内域名，而 “@:dns.externalQueryServers”
-      用于查询国外域名。
-    - >-
-      如果将 “@:dns.externalQueryServers” 留空，“@:dns.internalQueryServers”
-      将会负责查询所有域名。
 egressPortWhitelist:
   title: 出方向端口白名单
   tcpPortWhitelist: TCP端口白名单
@@ -255,6 +322,26 @@ configureServer:
   username: 用户名
   password: 密码
   origin: 原版
+  pinnedCertchainSha256: 固定证书链sha256
+  maxEarlyData: Max Early Data
+  earlyDataHeaderName: Early Data Header Name
+  multiMode: MultiMode
+  idleTimeout: Idle Timeout
+  healthCheckTimeout: Health Check Timeout
+  permitWithoutStream: Permit Without Stream
+  initialWindowsSize: Initial Windows Size
+  wireguardName: 名称
+  wireguardAddress: 服务器地址
+  wireguardPort: 端口
+  wireguardPublicKey: 公钥
+  wireguardPrivateKey: 私钥
+  wireguardLocalAddress: 本地地址
+  wireguardDns: DNS
+  wireguardMtu: MTU
+  wireguardAllowedIPs: 允许的 IP 范围
+  wireguardPersistentKeepalive: 持久化保活间隔
+  wireguardPreSharedKey: 预共享密钥
+  wireguardEndpoint: 端点地址
 configureSubscription:
   title: 订阅配置
 import:
@@ -270,19 +357,16 @@ version:
   higherVersionNeeded: '该操作需要 v2rayA 的版本高于{version}'
   v2rayInvalid: '检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查'
   v2rayNotV5: 检测到 v2ray-core 的版本并非 v5，请使用 v5 版本或将 v2rayA 降级至 v1.5
+  coreVersionMismatch: '核心版本不匹配：v2raya_core 的版本必须与 v2rayA 版本完全一致。{err}'
 about: |-
   <p>v2rayA 是 V2Ray 的一个 Web 客户端。</p>
-            <p>默认端口：</p>
-            <ul>
-              <ol><code>2017</code>: v2rayA后端端口</ol>
-              <ol><code>20170</code>: SOCKS协议</ol>
-              <ol><code>20171</code>: HTTP协议</ol>
-              <ol><code>20172</code>: 带分流规则的HTTP协议</ol>
-            </ul>
-            <p>其他端口：</p>
-            <ul>
-              <ol><code>32345</code>: tproxy，透明代理所需 </ol>
-            </ul>
+            <p class="about-small">默认端口：</p>
+            <p class="about-small">2017: v2rayA后端端口</p>
+            <p class="about-small">20170: SOCKS协议</p>
+            <p class="about-small">20171: HTTP协议</p>
+            <p class="about-small">20172: 带分流规则的HTTP协议</p>
+            <p class="about-small">其他端口：</p>
+            <p class="about-small">32345: tproxy，透明代理所需 </p>
             <p>在使用中如果发现任何问题，欢迎<a href="https://github.com/v2rayA/v2rayA/issues">提出issue</a>.</p>
             <p>文档：<a href="https://v2raya.org">https://v2raya.org</a>.</p>
 axios:
@@ -296,10 +380,16 @@ axios:
     usage: 'https://v2raya.org/'
 routingA:
   messages:
-    - 点击“查看帮助”按钮以获取帮助
+    - 点击"查看帮助"按钮以获取帮助
+  inboundDeprecated: RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。
+  inboundDeprecatedConfirm: 当前 RoutingA 配置包含已弃用的入站定义，生成的配置将不会包含这些入站端口。是否继续保存？
 outbound:
-  addMessage: 请输入你想要添加的出站(outbound)名称：
+  addMessage: 请输入你想要添加的代理分组名称：
   deleteMessage: '确定要<b>删除</b>出站 "{outboundName}" 吗？注意，该操作是不可逆的。'
+proxyGroup:
+  pickTitle: 添加到代理分组
+  pickMessage: 选择要加入的代理分组。
+  group: 代理分组
 driver:
   welcome:
     - 首先导入节点服务器
@@ -307,7 +397,68 @@ driver:
   tabs:
     - 订阅与节点服务器
     - 导入订阅、节点服务器后，在这里切换和管理你的订阅、普通节点以及订阅节点。
-log:
-  logModalTitle: 查看日志
-  refreshInterval: 刷新间隔
-  seconds: 秒
+tproxyWhiteIpGroups:
+  title: 直通白名单IP组
+  messages:
+    - 选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP
+    - 最好系统使用Nftables时使用此功能，Iptables可能在添加大量IP时存在性能问题
+  formName1: 按住Ctrl可以多选
+  formName2: 自定义IP（一行一个，标准CIDR格式）
+  formPlaceholder2: "172.30.0.0/16\nfd00:dead:beef::/48"
+  invalidCustomIps: 自定义IP格式错误
+  cn: 中国大陆
+  private: 私网网段
+  us: 美国
+  cloudflare: Cloudflare
+domainsExcluded:
+  title: 排除域名
+  messages:
+    - 一个域名列表，如果流量探测结果在这个列表中时，将 不会 重置目标地址。
+  formName: 排除域名列表
+  formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
+gfwList:
+  title: 更新GFWList
+  messages:
+    - 如果当前环境访问Github困难，你可以从此处（https://github.com/v2rayA/dist-v2ray-rules-dat）手动下载最新GFWList（geosite.dat），上传到你的服务器，然后填写你的服务器链接进行下载
+    - 如果不填写自定义下载链接输入框则自动从Github进行下载
+    - 注意：错误的文件可能导致服务启动失败，如果更新后服务器启动失败，你可以点击删除按钮删除下载的GFWList
+  formName: 自定义下载链接
+  wrongCustomLink: 错误的自定义下载链接
+tinytun:
+  routeScript:
+    title: TinyTun 自定义路由脚本
+    warning: 警告：错误的脚本可能会破坏您的网络或系统路由。请确保您清楚自己正在做什么再保存。
+    shellType: Shell 类型
+    customShell: 自定义（在下方指定路径）
+    shellPath: Shell 路径
+    shellPathPlaceholder: /usr/bin/bash
+    setupScript: 启动脚本（TinyTun 启动后执行）
+    setupScriptPlaceholder: "# TinyTun 启动时配置路由的脚本\n# 例如: ip route add default dev tun0"
+    teardownScript: 停止脚本（TinyTun 停止前执行）
+    teardownScriptPlaceholder: "# TinyTun 停止时移除路由的脚本\n# 例如: ip route del default dev tun0"
+  processExclude:
+    title: TinyTun 自定义进程排除
+    warning: 警告：错误的进程名可能导致流量被意外直通。请仅添加你确认需要排除的进程。
+    listLabel: 排除进程名称
+    placeholder: "v2raya\nv2ray\nchrome.exe"
+    hint: 支持逗号或换行分隔。保存时会自动去重。
+customInbound:
+  title: 自定义入站端口
+  tag: 标签（备注名称）
+  protocol: 协议
+  port: 端口
+  addNew: 添加新入站
+  tagPlaceholder: 如 my-socks
+  portPlaceholder: 如 10800
+  empty: 暂无自定义入站
+  hint: 入站端口仅支持 SOCKS 和 HTTP 协议，标签必须唯一，将作为 v2ray core 的 tag 使用。
+  fillAll: 请填写全部字段
+  deleteConfirm: 确认删除入站 {tag}？
+  outbound: 绑定出口组
+  outboundPlaceholder: 请选择出口组
+  outboundType: 绑定方式
+  outboundTypeDirect: 直接选择
+  outboundTypeRoutingA: RoutingA 规则
+  outboundRequired: 请选择绑定的出口组
+  routingARules: RoutingA 分流规则
+  routingARulesPlaceholder: 请输入 RoutingA 分流规则...

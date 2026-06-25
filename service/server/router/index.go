@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/md5"
 	"embed"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,6 +24,11 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
 	"github.com/vearutop/statigz"
+)
+
+var (
+	httpServerMu sync.Mutex
+	httpServer   *http.Server
 )
 
 //go:embed web
@@ -57,6 +64,56 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 	}
 }
 
+func safeStatigzHandler(fsys fs.FS) (http.Handler, bool) {
+	fi, err := fs.Stat(fsys, ".")
+	if err != nil || !fi.IsDir() {
+		return nil, false
+	}
+
+	readDirFS, ok := fsys.(fs.ReadDirFS)
+	if !ok {
+		return nil, false
+	}
+
+	var handler http.Handler
+	panicked := false
+	func() {
+		defer func() {
+			if recover() != nil {
+				panicked = true
+			}
+		}()
+		handler = statigz.FileServer(readDirFS)
+	}()
+
+	if panicked || handler == nil {
+		return nil, false
+	}
+
+	return handler, true
+}
+
+func registerEmbeddedRoute(r *gin.Engine, routePrefix string, fsCandidates ...fs.FS) bool {
+	for _, candidate := range fsCandidates {
+		if candidate == nil {
+			continue
+		}
+
+		handler, ok := safeStatigzHandler(candidate)
+		if !ok {
+			continue
+		}
+
+		stripped := http.StripPrefix(routePrefix, handler)
+		r.GET(routePrefix+"/*w", func(c *gin.Context) {
+			stripped.ServeHTTP(c.Writer, c.Request)
+		})
+		return true
+	}
+
+	return false
+}
+
 func ServeGUI(r *gin.Engine) {
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
@@ -64,14 +121,21 @@ func ServeGUI(r *gin.Engine) {
 		if err != nil {
 			log.Fatal("fs.Sub: %v", err)
 		}
-		staticFS := webFS.(fs.ReadDirFS)
+
+		// --- /static/* route (used by legacy gui Vite build) ---
+		var staticCandidates []fs.FS
 		if sub, subErr := fs.Sub(webFS, "static"); subErr == nil {
-			staticFS = sub.(fs.ReadDirFS)
+			staticCandidates = append(staticCandidates, sub)
 		}
-		ss := http.StripPrefix("/static", statigz.FileServer(staticFS))
-		r.GET("/static/*w", func(c *gin.Context) {
-			ss.ServeHTTP(c.Writer, c.Request)
-		})
+		// Backward-compatible fallback for legacy builds that emit hashed assets at web root.
+		staticCandidates = append(staticCandidates, webFS)
+		_ = registerEmbeddedRoute(r, "/static", staticCandidates...)
+
+		// --- /_nuxt/* route (used by ngui Nuxt 3 build) ---
+		if sub, subErr := fs.Sub(webFS, "_nuxt"); subErr == nil {
+			_ = registerEmbeddedRoute(r, "/_nuxt", sub)
+		}
+
 		f, err := webFS.Open("index.html")
 		if err != nil {
 			log.Fatal("webFS.Open index.html:", err)
@@ -93,12 +157,20 @@ func ServeGUI(r *gin.Engine) {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
 			log.Warn("web files cannot be found at %v. web UI cannot be served", webDir)
 		} else {
+			// --- /static/* route (dev mode, legacy gui) ---
 			staticDir := filepath.Join(webDir, "static")
 			if info, statErr := os.Stat(staticDir); statErr == nil && info.IsDir() {
 				r.Static("/static", staticDir)
 			} else {
 				// Backward-compatible fallback for legacy builds that emit hashed assets at web root.
 				r.Static("/static", webDir)
+			}
+
+			// --- /_nuxt/* route (dev mode, ngui) ---
+			// Directory not existing is silently skipped, compatible with legacy gui dev mode
+			nuxtDir := filepath.Join(webDir, "_nuxt")
+			if info, statErr := os.Stat(nuxtDir); statErr == nil && info.IsDir() {
+				r.Static("/_nuxt", nuxtDir)
 			}
 
 			f, err := os.Open(filepath.Join(webDir, "index.html"))
@@ -222,7 +294,39 @@ func Run() error {
 
 	ServeGUI(engine)
 
-	return engine.Run(conf.GetEnvironmentConfig().Address)
+	addr := conf.GetEnvironmentConfig().Address
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
+	}
+
+	srv := &http.Server{Handler: engine}
+	httpServerMu.Lock()
+	httpServer = srv
+	httpServerMu.Unlock()
+	defer func() {
+		httpServerMu.Lock()
+		httpServer = nil
+		httpServerMu.Unlock()
+	}()
+
+	err = srv.Serve(l)
+	if err == http.ErrServerClosed {
+		return nil
+	}
+	return err
+}
+
+// Shutdown gracefully stops the HTTP server started by Run.
+// It is safe to call even if Run has not been called or has already returned.
+func Shutdown(ctx context.Context) error {
+	httpServerMu.Lock()
+	srv := httpServer
+	httpServerMu.Unlock()
+	if srv == nil {
+		return nil
+	}
+	return srv.Shutdown(ctx)
 }
 
 func printRunningAt(address string) {

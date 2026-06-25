@@ -11,8 +11,10 @@ if [ -d "$CurrentDir/.git" ]; then
 else
   version="unstable"
 fi
-# https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-cd "$CurrentDir"/gui && yarn --ignore-engines && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn --ignore-engines build
+
+# Build ngui frontend with pnpm + nuxt generate
+cd "$CurrentDir"/ngui && pnpm install --frozen-lockfile && OUTPUT_DIR="$CurrentDir"/service/server/router/web pnpm run generate
+
 # Build v2raya-core (merged xray-core + custom protocols)
 cd "$CurrentDir"/core && CGO_ENABLED=0 go build -trimpath -ldflags "-X main.Version=$version -s -w" -o "$CurrentDir"/v2raya_core ./main
 

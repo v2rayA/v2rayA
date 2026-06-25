@@ -8,6 +8,7 @@ export default {
     checkRunning: "بررسی",
     isRunning: "درحال اجرا",
     notRunning: "آماده",
+    waitingNetwork: "در انتظار اتصال شبکه",
     notLogin: "لطفا وارد شوید",
     latest: "آخرین",
     local: "محلی",
@@ -337,4 +338,6 @@ export default {
       other: "Other",
     },
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

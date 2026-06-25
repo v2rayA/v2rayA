@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package v2raya.proxy.tuic;
+option go_package = "github.com/v2rayA/v2raya-core/hint/proxy/tuic";
+
+message ClientConfig {
+  // Server address in "host:port" format
+  string address = 1;
+  // User UUID
+  string uuid = 2;
+  // Authentication password
+  string password = 3;
+  // TLS SNI override (optional)
+  string sni = 4;
+  // Allow insecure TLS (skip verification)
+  bool allow_insecure = 5;
+  // Congestion control algorithm: bbr, cubic, new_reno
+  string congestion_control = 6;
+  // UDP relay mode: native or quic
+  string udp_relay_mode = 7;
+  // ALPN list (e.g. ["h3"])
+  repeated string alpn = 8;
+  // Disable SNI in TLS ClientHello
+  bool disable_sni = 9;
+}
