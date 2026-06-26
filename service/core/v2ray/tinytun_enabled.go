@@ -173,17 +173,15 @@ func getTinyTunBinPathAuto() (string, error) {
 	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(target), ".exe") {
 		target += ".exe"
 	}
+	// Search in the same directory as the executable
+	if exe, err := os.Executable(); err == nil {
+		path := filepath.Join(filepath.Dir(exe), target)
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
+	}
 	// Search in PATH
 	if path, err := exec.LookPath(target); err == nil {
-		return path, nil
-	}
-	// Search in current working directory
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("tinytun binary not found: please install tinytun or use --tinytun-bin")
-	}
-	path := filepath.Join(pwd, target)
-	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}
 	return "", fmt.Errorf("tinytun binary not found: please install tinytun or use --tinytun-bin to specify its path")

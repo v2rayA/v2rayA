@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/v2rayA/v2rayA/core/coreObj"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 )
 
 func init() {
@@ -148,10 +147,7 @@ func (t *Trojan) ConfigurationMT(info PriorInfo) (c Configuration, err error) {
 }
 
 func (t *Trojan) Configuration(info PriorInfo) (c Configuration, err error) {
-	if info.Variant == where.Xray {
-		return t.ConfigurationMT(info)
-	}
-	return t.ConfigurationMC(info)
+	return t.ConfigurationMT(info)
 }
 
 func (t *Trojan) ExportToURL() string {

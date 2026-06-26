@@ -10,7 +10,6 @@ import (
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/coreObj"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 )
 
 func init() {
@@ -333,10 +332,7 @@ func (s *Shadowsocks) GetBackend() string {
 }
 
 func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error) {
-	if info.Variant == where.Xray {
-		return s.ConfigurationMT(info)
-	}
-	return s.ConfigurationMC(info)
+	return s.ConfigurationMT(info)
 }
 
 // exportToChainURL is kept for the ConfigurationMC path used by non-xray variants.

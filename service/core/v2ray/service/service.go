@@ -2,14 +2,14 @@ package service
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
+	"os/exec"
+	"strings"
+
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
-	"os/exec"
-	"strings"
 )
 
 var LowVersionError = fmt.Errorf("core version too low")
@@ -42,24 +42,17 @@ func CheckAndProbeTProxy() (err error) {
 	return
 }
 
-func isVersionSatisfied(version string) (where.Variant, error) {
-	variant, ver, err := where.GetV2rayServiceVersion()
+func isVersionSatisfied(version string) error {
+	_, ver, err := where.GetV2rayServiceVersion()
 	if err != nil {
-		return where.Unknown, fmt.Errorf("failed to get the version of v2ray-core: %v", err)
+		return fmt.Errorf("failed to get the version of v2ray-core: %v", err)
 	}
 	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
-		return variant, fmt.Errorf("%w: the version %v is lower than %v", LowVersionError, ver, version)
+		return fmt.Errorf("%w: the version %v is lower than %v", LowVersionError, ver, version)
 	}
-	return variant, nil
+	return nil
 }
 
-func CheckV5() (variant where.Variant, err error) {
-	variant, err = isVersionSatisfied("5.0.0")
-	if err != nil {
-		if errors.Is(err, LowVersionError) && variant != where.V2ray {
-			return variant, nil
-		}
-		return variant, err
-	}
-	return variant, nil
+func CheckV5() error {
+	return isVersionSatisfied("5.0.0")
 }
