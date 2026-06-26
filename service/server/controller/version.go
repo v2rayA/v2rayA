@@ -31,7 +31,7 @@ func GetVersion(ctx *gin.Context) {
 		isRoot = privilege.IsRootOrAdmin()
 	}
 
-	versionErr := service.CheckV5()
+	versionErr := service.CheckCoreVersionMatch()
 
 	common.ResponseSuccess(ctx, gin.H{
 		"version":          conf.Version,
@@ -40,14 +40,19 @@ func GetVersion(ctx *gin.Context) {
 		"serviceValid":     service.IsV2rayServiceValid(),
 		"v5":               versionErr == nil,
 		"lite":             lite,
-		"loadBalanceValid": versionErr == nil,
+		"loadBalanceValid": true,
 		"variant":          where.V2rayaCore,
 		"os":               runtime.GOOS,
 		"isRoot":           isRoot,
 		"tinytunSupported": v2ray.IsTinyTunEnabled(),
-		"coreVersionValid": true,
-		"coreVersionErr":   "",
-		"hasAccounts":      configure.HasAnyAccounts(),
+		"coreVersionValid": versionErr == nil,
+		"coreVersionErr": func() string {
+			if versionErr != nil {
+				return versionErr.Error()
+			}
+			return ""
+		}(),
+		"hasAccounts": configure.HasAnyAccounts(),
 	})
 }
 

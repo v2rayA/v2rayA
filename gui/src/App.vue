@@ -242,14 +242,6 @@ export default {
             queue: false,
             duration: 10000,
           });
-        } else if (!res.data.data.v5) {
-          this.$buefy.toast.open({
-            message: this.$t("version.v2rayNotV5"),
-            type: "is-danger",
-            position: "is-top",
-            queue: false,
-            duration: 10000,
-          });
         }
         localStorage["lite"] = res.data.data.lite;
         localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;

@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/core/v2ray/asset"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 )
 
-var LowVersionError = fmt.Errorf("core version too low")
+var CoreVersionMismatchError = fmt.Errorf("core version mismatch")
 
 func IsV2rayServiceValid() bool {
 	if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
@@ -42,17 +43,29 @@ func CheckAndProbeTProxy() (err error) {
 	return
 }
 
-func isVersionSatisfied(version string) error {
-	_, ver, err := where.GetV2rayServiceVersion()
+// CheckCoreVersionMatch checks whether the v2raya_core binary version matches
+// the v2rayA service version. Development builds ("debug", "unstable") skip
+// strict matching. In release builds, the two binaries are built from the same
+// source tree with the same version string, so they must match exactly.
+func CheckCoreVersionMatch() error {
+	_, coreVer, err := where.GetV2rayServiceVersion()
 	if err != nil {
-		return fmt.Errorf("failed to get the version of v2ray-core: %v", err)
+		return fmt.Errorf("failed to get v2raya_core version: %v", err)
 	}
-	if greaterEqual, err := common.VersionGreaterEqual(ver, version); err != nil || !greaterEqual {
-		return fmt.Errorf("%w: the version %v is lower than %v", LowVersionError, ver, version)
+	serviceVer := conf.Version
+
+	// Development builds: skip strict matching
+	var DevVersions = []string{"debug", "unstable"}
+	if common.PrefixListSatisfyString(DevVersions, coreVer) != -1 ||
+		common.PrefixListSatisfyString(DevVersions, serviceVer) != -1 {
+		return nil
+	}
+
+	if coreVer != serviceVer {
+		return fmt.Errorf(
+			"%w: v2raya_core version %q does not match v2rayA version %q",
+			CoreVersionMismatchError, coreVer, serviceVer,
+		)
 	}
 	return nil
-}
-
-func CheckV5() error {
-	return isVersionSatisfied("5.0.0")
 }
