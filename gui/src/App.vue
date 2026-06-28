@@ -285,8 +285,11 @@ export default {
       if (u.protocol === "https") {
         protocol = "wss";
       }
-      url = `${protocol}://${u.host}:${u.port
-        }/api/message?Authorization=${encodeURIComponent(localStorage["token"])}`;
+      let basePath = u.path;
+      if (basePath.endsWith("/api")) {
+        basePath = basePath.slice(0, -4);
+      }
+      url = `${protocol}://${u.host}:${u.port}${basePath}/api/message?Authorization=${encodeURIComponent(localStorage["token"])}`;
       if (this.ws) {
         // console.log("ws close");
         this.ws.close();
