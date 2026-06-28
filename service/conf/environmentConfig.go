@@ -15,6 +15,8 @@ import (
 
 type Params struct {
 	Address              string `id:"address" short:"a" default:"0.0.0.0:2017" desc:"Listening address"`
+	Socket               string `id:"socket" desc:"Unix socket path for listening"`
+	BaseUrl              string `id:"baseurl" default:"/" desc:"Base URL path prefix"`
 	V2rayBin             string `id:"v2ray-bin" short:"b" desc:"Executable v2ray binary path. Auto-detect if put it empty."`
 	CoreType             string `id:"core-type" desc:"Specify core type: v2ray or xray. Required when using custom v2ray-bin path."`
 	Config               string `id:"config" short:"c" desc:"v2rayA configuration directory"`
@@ -55,6 +57,16 @@ func initFunc() {
 	if err != nil {
 		if err.Error() != "unexpected word while parsing flags: '-test.v'" {
 			log2.Fatal(err)
+		}
+	}
+	if params.BaseUrl == "" {
+		params.BaseUrl = "/"
+	} else {
+		if !strings.HasPrefix(params.BaseUrl, "/") {
+			params.BaseUrl = "/" + params.BaseUrl
+		}
+		if params.BaseUrl != "/" {
+			params.BaseUrl = strings.TrimSuffix(params.BaseUrl, "/")
 		}
 	}
 	if params.ShowVersion {

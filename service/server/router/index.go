@@ -93,7 +93,18 @@ func safeStatigzHandler(fsys fs.FS) (http.Handler, bool) {
 	return handler, true
 }
 
-func registerEmbeddedRoute(r *gin.Engine, routePrefix string, fsCandidates ...fs.FS) bool {
+func registerEmbeddedRoute(r gin.IRoutes, routePrefix string, fsCandidates ...fs.FS) bool {
+	prefix := ""
+	if group, ok := r.(*gin.RouterGroup); ok {
+		prefix = group.BasePath()
+	} else if engine, ok := r.(*gin.Engine); ok {
+		prefix = engine.BasePath()
+	}
+	staticPrefix := filepath.ToSlash(filepath.Join(prefix, routePrefix))
+	if !strings.HasPrefix(staticPrefix, "/") {
+		staticPrefix = "/" + staticPrefix
+	}
+
 	for _, candidate := range fsCandidates {
 		if candidate == nil {
 			continue
@@ -104,7 +115,7 @@ func registerEmbeddedRoute(r *gin.Engine, routePrefix string, fsCandidates ...fs
 			continue
 		}
 
-		stripped := http.StripPrefix(routePrefix, handler)
+		stripped := http.StripPrefix(staticPrefix, handler)
 		r.GET(routePrefix+"/*w", func(c *gin.Context) {
 			stripped.ServeHTTP(c.Writer, c.Request)
 		})
@@ -114,7 +125,7 @@ func registerEmbeddedRoute(r *gin.Engine, routePrefix string, fsCandidates ...fs
 	return false
 }
 
-func ServeGUI(r *gin.Engine) {
+func ServeGUI(r gin.IRoutes) {
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
 		webFS, err := fs.Sub(webRoot, "web")
@@ -192,6 +203,11 @@ func ServeGUI(r *gin.Engine) {
 
 	app := conf.GetEnvironmentConfig()
 
+	if app.Socket != "" {
+		log.Alert("v2rayA is listening at unix:%v", app.Socket)
+		return
+	}
+
 	ip, port, _ := net.SplitHostPort(app.Address)
 	addrs, err := net.InterfaceAddrs()
 	if net.ParseIP(ip).IsUnspecified() && err == nil {
@@ -225,7 +241,9 @@ func Run() error {
 	corsConfig.AddAllowHeaders("Authorization", common.RequestIdHeader)
 	corsConfig.AddExposeHeaders("Content-Disposition")
 	engine.Use(cors.New(corsConfig))
-	noAuth := engine.Group("api",
+	app := conf.GetEnvironmentConfig()
+	root := engine.Group(app.BaseUrl)
+	noAuth := root.Group("api",
 		nocache,
 		reqCache.ReqCache,
 	)
@@ -235,7 +253,7 @@ func Run() error {
 		noAuth.GET("account", controller.GetAccount)
 		noAuth.POST("account", controller.PostAccount)
 	}
-	auth := engine.Group("api",
+	auth := root.Group("api",
 		nocache,
 		func(ctx *gin.Context) {
 			if !configure.HasAnyAccounts() {
@@ -292,13 +310,27 @@ func Run() error {
 		auth.GET("networkInterfaces", controller.GetNetworkInterfaces)
 	}
 
-	ServeGUI(engine)
+	ServeGUI(root)
 
-	addr := conf.GetEnvironmentConfig().Address
-	l, err := net.Listen("tcp", addr)
-	if err != nil {
-		return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
+	var l net.Listener
+	var err error
+	if app.Socket != "" {
+		_ = os.Remove(app.Socket)
+		l, err = net.Listen("unix", app.Socket)
+		if err != nil {
+			return fmt.Errorf("router: failed to listen on unix socket %v: %w", app.Socket, err)
+		}
+		if err = os.Chmod(app.Socket, 0777); err != nil {
+			log.Warn("failed to chmod unix socket %v: %v", app.Socket, err)
+		}
+	} else {
+		addr := app.Address
+		l, err = net.Listen("tcp", addr)
+		if err != nil {
+			return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
+		}
 	}
+
 
 	srv := &http.Server{Handler: engine}
 	httpServerMu.Lock()

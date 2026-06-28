@@ -14,7 +14,7 @@
           ref="backendAddress"
           v-model="table.backendAddress"
           placeholder="http://localhost:2017"
-          pattern="https?://.+(:\d+)?"
+          pattern="(|https?://.+|/.+)"
         >
           >
         </b-input>
