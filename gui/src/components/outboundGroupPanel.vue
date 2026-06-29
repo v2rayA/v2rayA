@@ -539,6 +539,10 @@ export default {
   flex-direction: column;
 }
 
+.pointerTag {
+  cursor: pointer;
+}
+
 .ogp-group-row {
   display: flex;
   align-items: center;
