@@ -647,6 +647,7 @@ export default {
     },
     applyThemeClass() {
       document.body.classList.toggle('theme-dark', this.isDarkTheme);
+      document.documentElement.classList.toggle('theme-dark', this.isDarkTheme);
     },
     toggleTheme() {
       const order = ['auto', 'light', 'dark'];
@@ -705,7 +706,7 @@ html {
   //  }
 
   #app {
-    height: calc(100vh - 3.25rem);
+    min-height: calc(100vh - 3.25rem);
     /*overflow-y: auto;*/
     //overflow-scrolling: touch;
     //-webkit-overflow-scrolling: touch;
