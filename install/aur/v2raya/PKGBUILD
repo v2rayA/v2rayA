@@ -19,11 +19,15 @@ build() {
     yarn --check-files --ignore-engines
     OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn --ignore-engines build
 
-    cd "$srcdir/v2rayA-$pkgver/service"
     export GO111MODULE=on
     export GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+    git submodule update --init
+    cd "$srcdir/v2rayA-$pkgver/service"
     go build -trimpath -ldflags '-X github.com/v2rayA/v2rayA/conf.Version='$pkgver' -s -w' -o v2raya
-    
+    cd "$srcdir/v2rayA-$pkgver/core"
+    go build -trimpath -ldflags "-X main.Version='$pkgver' -s -w" -o v2raya_core ./main
+    cd "$srcdir/v2rayA-$pkgver/"
+
     # generate default config
     cat > "$srcdir/v2rayA-$pkgver/v2raya.conf" << EOF
 # v2raya config example
@@ -31,15 +35,14 @@ build() {
 # change
 
 EOF
-    chmod +x ./v2raya
-    ./v2raya --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/'  >> "$srcdir/v2rayA-$pkgver/v2raya.conf"
+    chmod +x ./service/v2raya
+    ./service/v2raya --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/'  >> "$srcdir/v2rayA-$pkgver/v2raya.conf"
 }
 
 package() {
-    depends+=('v2ray>=5.0.0')
-
     cd "${srcdir}"/"v2rayA-${pkgver}"/
     install -Dm 755 service/v2raya -t "${pkgdir}"/usr/bin/
+    install -Dm 755 core/v2raya_core -t "${pkgdir}"/usr/bin/
     install -dm 750 "${pkgdir}"/etc/v2raya/
     install -Dm 644 install/universal/v2raya.desktop -t "${pkgdir}"/usr/share/applications/
     install -Dm 644 install/universal/v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/

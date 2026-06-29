@@ -23,4 +23,3 @@ pkgbase = v2raya
 
 pkgname = v2raya
 	depends = glibc
-	depends = v2ray>=5.0.0

@@ -29,29 +29,7 @@
         </span>
       </div>
     </section>
-    <footer class="modal-card-foot" style="justify-content: center">
-      <a
-        class="is-link"
-        href="https://github.com/v2rayA/v2rayA"
-        target="_blank"
-      >
-        <img
-          class="leave-right"
-          src="https://img.shields.io/github/stars/mzz2017/v2rayA.svg?style=social"
-          alt="stars"
-        />
-        <img
-          class="leave-right"
-          src="https://img.shields.io/github/forks/mzz2017/v2rayA.svg?style=social"
-          alt="forks"
-        />
-        <img
-          class="leave-right"
-          src="https://img.shields.io/github/watchers/mzz2017/v2rayA.svg?style=social"
-          alt="watchers"
-        />
-      </a>
-    </footer>
+
   </div>
 </template>
 
@@ -188,4 +166,17 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.modal-card-head,
+.modal-card-foot {
+  border-radius: 0.25rem;
+}
+.modal-card-head {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.modal-card-foot {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+</style>
