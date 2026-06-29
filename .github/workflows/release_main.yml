@@ -356,7 +356,7 @@ jobs:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
           eval $(ssh-agent)
-          cat > ./key <<< "$SSH_PRIVATE_KEY"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ./key
           chmod 0600 ./key
           ./install/aur/tool/ssh-add_expect ./key
           bash install/aur/deploy.sh
