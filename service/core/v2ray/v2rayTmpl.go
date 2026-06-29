@@ -413,14 +413,12 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 	isTinyTunMode := t.Setting != nil && t.Setting.TransparentType == configure.TransparentTun && IsTransparentOn(t.Setting)
 	if !isTinyTunMode {
 		t.Routing.Rules = append(t.Routing.Rules, routing...)
-		t.Routing.Rules = append(t.Routing.Rules,
-			coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
-		)
 	}
 	setting := t.Setting
 	// DNS is always active: hijack port-53 traffic into dns-out
 	if ShouldLocalDnsListen() {
 		if couldListenLocalhost, _ := CouldLocalDnsListen(); couldListenLocalhost {
+			// 先添加特定规则：DNS 端口 53 优先匹配 dns-out
 			t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{
 				Type:        "field",
 				InboundTag:  []string{"dns-in"},
@@ -428,6 +426,12 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 				OutboundTag: "dns-out",
 			})
 		}
+	}
+	// 后添加通用规则，排除 DNS 端口（避免通用规则抢在特定规则之前匹配）
+	if !isTinyTunMode {
+		t.Routing.Rules = append(t.Routing.Rules,
+			coreObj.RoutingRule{Type: "field", InboundTag: []string{"dns-in"}, OutboundTag: "direct"},
+		)
 	}
 	if !supportUDP[firstOutboundTag] {
 		// find an outbound that supports UDP and redirect all leaky UDP traffic to it
@@ -457,15 +461,16 @@ func (t *Template) setDNSRouting(routing []coreObj.RoutingRule, supportUDP map[s
 		}
 	} else {
 		if IsTransparentOn(setting) {
+			// TProxy 模式下，将透明代理入站的 DNS 流量无条件路由到 dns-out
+			// 此规则在 setDNSRouting 中添加，早于 setTransparentRouting 的其他规则，因此优先匹配
 			t.Routing.Rules = append(t.Routing.Rules,
 				coreObj.RoutingRule{
 					Type:        "field",
-					OutboundTag: "direct",
+					OutboundTag: "dns-out",
 					InboundTag: []string{
 						"transparent",
 					},
 					Port: "53",
-					IP:   []string{"geoip:private"},
 				})
 		}
 	}
@@ -1352,7 +1357,7 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 
 	}
 	if ShouldLocalDnsListen() {
-		if couldListenLocalhost, _ := CouldLocalDnsListen(); couldListenLocalhost {
+		if couldListenLocalhost, err := CouldLocalDnsListen(); couldListenLocalhost {
 			// set up a solo dokodemo-door for dns
 			t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 				Port:     53,
@@ -1368,6 +1373,8 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 				},
 				Tag: "dns-in",
 			})
+		} else {
+			log.Warn("DNS hijack may be unavailable: cannot listen on port 53: %v", err)
 		}
 	}
 

@@ -194,6 +194,16 @@ func GetSettingNotNil() *Setting {
 		_ = jsoniter.Unmarshal(b, r)
 	}
 	_ = common.FillEmpty(r, NewSetting())
+	// Restore TproxyExcludedInterfaces from DB if user explicitly cleared it
+	// FillEmpty replaces empty strings with defaults, but we need to preserve
+	// user's intent to clear this field
+	if e == nil && b != nil {
+		var raw Setting
+		if err := jsoniter.Unmarshal(b, &raw); err == nil {
+			// If user explicitly saved an empty string, keep it empty
+			r.TproxyExcludedInterfaces = raw.TproxyExcludedInterfaces
+		}
+	}
 	if r.TransparentType == "" {
 		r.TransparentType = TransparentRedirect
 	}
