@@ -1,6 +1,7 @@
 package iptables
 
 import (
+	"sync"
 	"time"
 )
 
@@ -8,6 +9,7 @@ import (
 type LocalIPWatcher struct {
 	ticker      *time.Ticker
 	cidrPool    map[string]struct{}
+	mu          sync.Mutex
 	AddedFunc   func(cidr string)
 	RemovedFunc func(cidr string)
 	UpdateFunc  func(cidrs []string)
@@ -30,8 +32,11 @@ func NewLocalIPWatcher(interval time.Duration, AddedFunc func(cidr string), Remo
 }
 
 func (w *LocalIPWatcher) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	w.AddedFunc = func(cidr string) {}
 	w.RemovedFunc = w.AddedFunc
+	w.cidrPool = nil
 	w.ticker.Stop()
 	return nil
 }
@@ -43,6 +48,7 @@ func (w *LocalIPWatcher) SyncIP() {
 	}
 	m := make(map[string]struct{})
 
+	w.mu.Lock()
 	for _, cidr := range cidrs {
 		m[cidr] = struct{}{}
 		if _, ok := w.cidrPool[cidr]; !ok {
@@ -55,4 +61,5 @@ func (w *LocalIPWatcher) SyncIP() {
 		}
 	}
 	w.cidrPool = m
+	w.mu.Unlock()
 }

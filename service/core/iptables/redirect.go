@@ -43,7 +43,7 @@ func (r *legacyRedirect) AddIPWhitelist(cidr string) {
 
 func (r *legacyRedirect) RemoveIPWhitelist(cidr string) {
 	var commands string
-	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D TP_RULE -d %s -j RETURN`, cidr)
+	commands = fmt.Sprintf(`iptables -w 2 -t nat -D TP_RULE -d %s -j RETURN`, cidr)
 	cmds.ExecCommands(commands, false)
 }
 
@@ -63,7 +63,7 @@ iptables -w 2 -t nat -A TP_RULE -d 192.0.2.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 192.88.99.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 192.168.0.0/16 -j RETURN
 # fakedns
-# iptables -w 2 -t nat -A TP_RULE -d 198.18.0.0/15 -j RETURN
+iptables -w 2 -t nat -A TP_RULE -d 198.18.0.0/15 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 198.51.100.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 224.0.0.0/4 -j RETURN
@@ -72,6 +72,12 @@ iptables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 `
 	for _, v := range GetExcludedInterfaces() {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+	}
+	if IsEnabledTproxyWhiteIpGroups() {
+		whiteIpv4List, _ := GetWhiteListIPs()
+		for _, v := range whiteIpv4List {
+			commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -d %s -j RETURN\n", v)
+		}
 	}
 	commands += `
 iptables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345
@@ -95,13 +101,19 @@ ip6tables -w 2 -t nat -A TP_RULE -d 2001:20::/28 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 2001:db8::/32 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 2002::/16 -j RETURN
 # fakedns
-# ip6tables -w 2 -t nat -A TP_RULE -d fc00::/7 -j RETURN
+ip6tables -w 2 -t nat -A TP_RULE -d fc00::/7 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d fe80::/10 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 `
 		for _, v := range GetExcludedInterfaces() {
 			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+		}
+		if IsEnabledTproxyWhiteIpGroups() {
+			_, whiteIpv6List := GetWhiteListIPs()
+			for _, v := range whiteIpv6List {
+				commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -d %s -j RETURN\n", v)
+			}
 		}
 		commands += `
 ip6tables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345
@@ -162,6 +174,18 @@ func (t *nftRedirect) RemoveIPWhitelist(cidr string) {
 }
 
 func (r *nftRedirect) GetSetupCommands() Setter {
+	// Prepare white IP group elements
+	var whiteIpv4Elements, whiteIpv6Elements string
+	if IsEnabledTproxyWhiteIpGroups() {
+		whiteIpv4List, whiteIpv6List := GetWhiteListIPs()
+		if len(whiteIpv4List) > 0 {
+			whiteIpv4Elements = ",\n            " + strings.Join(whiteIpv4List, ",\n            ")
+		}
+		if len(whiteIpv6List) > 0 {
+			whiteIpv6Elements = ",\n            " + strings.Join(whiteIpv6List, ",\n            ")
+		}
+	}
+
 	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
 	table := `
 table inet v2raya {
@@ -180,10 +204,11 @@ table inet v2raya {
             192.0.2.0/24,
             192.88.99.0/24,
             192.168.0.0/16,
+            198.18.0.0/15,
             198.51.100.0/24,
             203.0.113.0/24,
             224.0.0.0/4,
-            240.0.0.0/4
+            240.0.0.0/4` + whiteIpv4Elements + `
         }
     }
 
@@ -198,11 +223,12 @@ table inet v2raya {
             100::/64,
             2001::/32,
             2001:20::/28,
+            fc00::/7,
             fe80::/10,
-            ff00::/8
+            ff00::/8` + whiteIpv6Elements + `
         }
     }
- 
+  
     set interface {
         type ipv4_addr
         flags interval

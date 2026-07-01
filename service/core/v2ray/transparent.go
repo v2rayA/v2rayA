@@ -5,11 +5,46 @@ import (
 	"strings"
 	"time"
 
+	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/iptables"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
+
+// cleanupResidualTransparentProxyRules cleans up any residual iptables/nftables rules
+// that may have been left behind after an abnormal termination (e.g., kill -9, system crash, panic).
+// It uses "2>/dev/null || true" to ensure no errors are raised if rules/chains don't exist.
+func cleanupResidualTransparentProxyRules() {
+	commands := `
+iptables -w 2 -t mangle -F TP_OUT 2>/dev/null || true
+iptables -w 2 -t mangle -D OUTPUT -j TP_OUT 2>/dev/null || true
+iptables -w 2 -t mangle -X TP_OUT 2>/dev/null || true
+iptables -w 2 -t mangle -F TP_PRE 2>/dev/null || true
+iptables -w 2 -t mangle -D PREROUTING -j TP_PRE 2>/dev/null || true
+iptables -w 2 -t mangle -X TP_PRE 2>/dev/null || true
+iptables -w 2 -t mangle -F TP_RULE 2>/dev/null || true
+iptables -w 2 -t mangle -X TP_RULE 2>/dev/null || true
+iptables -w 2 -t mangle -F TP_MARK 2>/dev/null || true
+iptables -w 2 -t mangle -X TP_MARK 2>/dev/null || true
+iptables -w 2 -t nat -F TP_OUT 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -j TP_OUT 2>/dev/null || true
+iptables -w 2 -t nat -X TP_OUT 2>/dev/null || true
+iptables -w 2 -t nat -F TP_PRE 2>/dev/null || true
+iptables -w 2 -t nat -D PREROUTING -j TP_PRE 2>/dev/null || true
+iptables -w 2 -t nat -X TP_PRE 2>/dev/null || true
+iptables -w 2 -t nat -F TP_RULE 2>/dev/null || true
+iptables -w 2 -t nat -X TP_RULE 2>/dev/null || true
+iptables -w 2 -F DROP_SPOOFING 2>/dev/null || true
+iptables -w 2 -D INPUT -j DROP_SPOOFING 2>/dev/null || true
+iptables -w 2 -D FORWARD -j DROP_SPOOFING 2>/dev/null || true
+iptables -w 2 -X DROP_SPOOFING 2>/dev/null || true
+ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
+ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null || true
+nft delete table inet v2raya 2>/dev/null || true
+`
+	cmds.ExecCommands(commands, false)
+}
 
 func deleteTransparentProxyRulesKeepSystemProxy() {
 	stopTinyTun()
@@ -35,6 +70,7 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			deleteTransparentProxyRules()
 		}
 	}()
+	cleanupResidualTransparentProxyRules()
 	setting := configure.GetSettingNotNil()
 	switch setting.TransparentType {
 	case configure.TransparentTun:

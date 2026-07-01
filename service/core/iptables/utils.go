@@ -114,7 +114,7 @@ func GetWhiteListIPs() ([]string, []string) {
 
 func IsEnabledTproxyWhiteIpGroups() bool {
 	ipv4List, ipv6List := GetWhiteListIPs()
-	return len(ipv4List) > 0 && len(ipv6List) > 0
+	return len(ipv4List) > 0 || len(ipv6List) > 0
 }
 
 func GetExcludedInterfaces() []string {

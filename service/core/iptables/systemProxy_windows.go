@@ -9,6 +9,7 @@ import (
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 	"os/exec"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -179,6 +180,16 @@ func getProfileListSubKeyNames() ([]string, error) {
 	return k.ReadSubKeyNames(0)
 }
 
+// windowsProxySavedState stores the original proxy values before v2rayA modifies them
+type windowsProxySavedState struct {
+	mu          sync.Mutex
+	saved       bool
+	proxyEnable uint32
+	proxyServer string
+}
+
+var savedWindowsProxy windowsProxySavedState
+
 type systemProxy struct{}
 
 var SystemProxy systemProxy
@@ -192,6 +203,65 @@ type todo struct {
 	Prefix string
 }
 
+// readRegistryProxyState reads ProxyEnable and ProxyServer from a registry key path
+func readRegistryProxyState(key registry.Key, prefix string) (proxyEnable uint32, proxyServer string, err error) {
+	k, err := registry.OpenKey(key, prefix+`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.READ)
+	if err != nil {
+		return 0, "", fmt.Errorf("open key for reading: %v", err)
+	}
+	defer k.Close()
+
+	proxyEnable, _, err = k.GetIntegerValue("ProxyEnable")
+	if err != nil {
+		proxyEnable = 0
+	}
+
+	proxyServer, _, err = k.GetStringValue("ProxyServer")
+	if err != nil {
+		proxyServer = ""
+	}
+
+	return proxyEnable, proxyServer, nil
+}
+
+// saveProxyState reads and saves the current proxy state before we modify it
+func saveProxyState(hasAdminRights bool) {
+	var savedEnable uint32
+	var savedServer string
+
+	if hasAdminRights {
+		sids, err := getProfileListSubKeyNames()
+		if err != nil {
+			log.Debug("saveProxyState: getProfileListSubKeyNames: %v", err)
+			return
+		}
+		for _, sid := range sids {
+			enable, server, err := readRegistryProxyState(registry.USERS, sid+`\`)
+			if err != nil {
+				log.Debug("saveProxyState: readRegistryProxyState for %v: %v", sid, err)
+				continue
+			}
+			savedEnable = enable
+			savedServer = server
+			break
+		}
+	} else {
+		enable, server, err := readRegistryProxyState(registry.CURRENT_USER, "")
+		if err != nil {
+			log.Debug("saveProxyState: readRegistryProxyState: %v", err)
+			return
+		}
+		savedEnable = enable
+		savedServer = server
+	}
+
+	savedWindowsProxy.mu.Lock()
+	savedWindowsProxy.proxyEnable = savedEnable
+	savedWindowsProxy.proxyServer = savedServer
+	savedWindowsProxy.saved = true
+	savedWindowsProxy.mu.Unlock()
+}
+
 func (p *systemProxy) GetSetupCommands() Setter {
 	hasAdminRights, err := HasAdminRights()
 	if err != nil {
@@ -199,6 +269,10 @@ func (p *systemProxy) GetSetupCommands() Setter {
 	}
 	setter := Setter{
 		PreFunc: func() error {
+			// Step 1: Save current proxy state before modifying
+			saveProxyState(hasAdminRights)
+
+			// Step 2: Original setup logic - set proxy to v2rayA
 			var todolist []todo
 			if hasAdminRights {
 				// https://docs.microsoft.com/en-us/windows/win32/services/services-and-the-registry
@@ -257,12 +331,70 @@ func (p *systemProxy) GetCleanCommands() Setter {
 	if err != nil {
 		return NewErrorSetter(err)
 	}
+
+	savedWindowsProxy.mu.Lock()
+	saved := savedWindowsProxy.saved
+	savedEnable := savedWindowsProxy.proxyEnable
+	savedServer := savedWindowsProxy.proxyServer
+	savedWindowsProxy.mu.Unlock()
+
+	if !saved {
+		// No saved state: fall back to original behavior (disable proxy)
+		setter := Setter{
+			PreFunc: func() error {
+				var todolist []todo
+				if hasAdminRights {
+					sids, err := getProfileListSubKeyNames()
+					if err != nil {
+						return err
+					}
+					for _, sid := range sids {
+						todolist = append(todolist, todo{
+							Key:    registry.USERS,
+							Prefix: sid + `\`,
+						})
+					}
+				} else {
+					todolist = append(todolist, todo{
+						Key:    registry.CURRENT_USER,
+						Prefix: "",
+					})
+				}
+
+				var errs []error
+				for _, todo := range todolist {
+					key, _, err := registry.CreateKey(todo.Key, todo.Prefix+`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
+					defer key.Close()
+					if err = key.SetDWordValue("ProxyEnable", 0); err != nil {
+						errs = append(errs, err)
+						continue
+					}
+				}
+				_, _ = InternetOptionSettingsChanged()
+				if hasAdminRights {
+					e := exec.Command("netsh", "winhttp", "import", "proxy", "source=ie").Run()
+					if e != nil {
+						errs = append(errs, e)
+					}
+				}
+				if len(errs) > 0 {
+					return errs[0]
+				}
+				return nil
+			},
+		}
+		return setter
+	}
+
+	// Restore original state
 	setter := Setter{
 		PreFunc: func() error {
 			var todolist []todo
 			if hasAdminRights {
-				// https://docs.microsoft.com/en-us/windows/win32/services/services-and-the-registry
-				// A service should not access HKEY_CURRENT_USER or HKEY_CLASSES_ROOT, especially when impersonating a user.
 				sids, err := getProfileListSubKeyNames()
 				if err != nil {
 					return err
@@ -288,16 +420,29 @@ func (p *systemProxy) GetCleanCommands() Setter {
 					continue
 				}
 				defer key.Close()
-				if err = key.SetDWordValue("ProxyEnable", 0); err != nil {
-					errs = append(errs, err)
-					continue
+
+				if savedEnable == 1 {
+					// Proxy was originally enabled: restore original server
+					if savedServer != "" {
+						if err = key.SetStringValue("ProxyServer", savedServer); err != nil {
+							errs = append(errs, err)
+							continue
+						}
+					}
+					if err = key.SetDWordValue("ProxyEnable", 1); err != nil {
+						errs = append(errs, err)
+						continue
+					}
+				} else {
+					// Proxy was originally disabled: disable it
+					if err = key.SetDWordValue("ProxyEnable", 0); err != nil {
+						errs = append(errs, err)
+						continue
+					}
 				}
 			}
 			_, _ = InternetOptionSettingsChanged()
 			if hasAdminRights {
-				// https://helpcenter.gsx.com/hc/en-us/articles/216487418-How-to-Import-Internet-Explorer-Proxy-Configuration-for-PowerShell-Use
-				// You can browse the Internet and open OWA successfully using Internet Explorer (IE) but you cannot connect to Office 365 using PowerShell.
-				// To fix this, we set Windows Proxy settings using NETSH for all applications that rely on default system configuration.
 				e := exec.Command("netsh", "winhttp", "import", "proxy", "source=ie").Run()
 				if e != nil {
 					errs = append(errs, e)
@@ -309,5 +454,10 @@ func (p *systemProxy) GetCleanCommands() Setter {
 			return nil
 		},
 	}
+
+	savedWindowsProxy.mu.Lock()
+	savedWindowsProxy.saved = false
+	savedWindowsProxy.mu.Unlock()
+
 	return setter
 }

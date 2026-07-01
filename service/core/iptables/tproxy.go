@@ -196,6 +196,7 @@ ip6tables -w 2 -t mangle -F TP_MARK
 ip6tables -w 2 -t mangle -X TP_MARK
 `
 	}
+	commands += "conntrack -D --mark 0x40 2>/dev/null || true\n"
 	return Setter{
 		Cmds: commands,
 	}
@@ -358,5 +359,6 @@ ip -6 route del local ::/0 dev lo table 100
 	if !IsIPv6Supported() {
 		command = strings.Replace(command, "inet", "ip", 1)
 	}
+	command += "\nconntrack -D --mark 0x40 2>/dev/null || true"
 	return Setter{Cmds: command}
 }
