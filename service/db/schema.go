@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -34,8 +35,10 @@ CREATE TABLE IF NOT EXISTS servers (
 CREATE TABLE IF NOT EXISTS subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     address TEXT NOT NULL DEFAULT '',
+    remarks TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
+    auto_select INTEGER NOT NULL DEFAULT 0,
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -81,5 +84,37 @@ func InitSchema(db *sql.DB) error {
 		return err
 	}
 	log.Info("Database schema initialized successfully")
+	return nil
+}
+
+// MigrateSchema applies incremental schema migrations for existing databases.
+// Unlike InitSchema (which uses CREATE TABLE IF NOT EXISTS), this handles
+// ALTER TABLE additions for columns added after the initial schema version.
+func MigrateSchema(db *sql.DB) error {
+	// Check if remarks column exists (added after initial schema)
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'remarks'").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for remarks column: %w", err)
+	}
+	if count == 0 {
+		log.Info("Adding remarks column to subscriptions table")
+		if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN remarks TEXT NOT NULL DEFAULT ''"); err != nil {
+			return fmt.Errorf("failed to add remarks column: %w", err)
+		}
+	}
+
+	// Check if auto_select column exists (added after initial schema)
+	err = db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'auto_select'").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for auto_select column: %w", err)
+	}
+	if count == 0 {
+		log.Info("Adding auto_select column to subscriptions table")
+		if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN auto_select INTEGER NOT NULL DEFAULT 0"); err != nil {
+			return fmt.Errorf("failed to add auto_select column: %w", err)
+		}
+	}
+
 	return nil
 }

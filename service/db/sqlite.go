@@ -91,6 +91,11 @@ func initDB() {
 	if err := InitSchema(sqlDB); err != nil {
 		log.Fatal("InitSchema: %v", err)
 	}
+
+	// Apply incremental schema migrations for existing databases
+	if err := MigrateSchema(sqlDB); err != nil {
+		log.Fatal("MigrateSchema: %v", err)
+	}
 }
 
 // GetDB returns the singleton SQLite database connection

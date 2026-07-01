@@ -274,8 +274,8 @@ func migrateSubscriptions(data []byte, tx *sql.Tx) (map[int64]int64, error) {
 	subIDMap := make(map[int64]int64, len(results))
 
 	subStmt, err := tx.Prepare(`
-		INSERT INTO subscriptions (address, status, info, sort)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort)
+		VALUES (?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return nil, err
@@ -293,10 +293,15 @@ func migrateSubscriptions(data []byte, tx *sql.Tx) (map[int64]int64, error) {
 
 	for i, r := range results {
 		address := r.Get("address").String()
+		remarks := r.Get("remarks").String()
 		status := r.Get("status").String()
 		info := r.Get("info").String()
+		autoSelect := 0
+		if r.Get("autoSelect").Bool() {
+			autoSelect = 1
+		}
 
-		res, err := subStmt.Exec(address, status, info, i)
+		res, err := subStmt.Exec(address, remarks, status, info, autoSelect, i)
 		if err != nil {
 			return nil, fmt.Errorf("failed to insert subscription %d: %w", i, err)
 		}

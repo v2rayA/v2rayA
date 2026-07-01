@@ -39,12 +39,17 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 		}
 		parsed := gjson.ParseBytes(b)
 		address := parsed.Get("address").String()
+		remarks := parsed.Get("remarks").String()
 		status := parsed.Get("status").String()
 		info := parsed.Get("info").String()
+		autoSelect := 0
+		if parsed.Get("autoSelect").Bool() {
+			autoSelect = 1
+		}
 
 		result, err := db.Exec(
-			"UPDATE subscriptions SET address = ?, status = ?, info = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ?",
-			address, status, info, index,
+			"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ?",
+			address, remarks, status, info, autoSelect, index,
 		)
 		if err != nil {
 			return err
@@ -94,10 +99,11 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 		return []byte(configJSON), nil
 
 	case "touch/subscriptions":
-		var address, status, info string
+		var address, remarks, status, info string
+		var autoSelectInt int
 		err = db.QueryRow(
-			"SELECT address, status, info FROM subscriptions WHERE sort = ?", index,
-		).Scan(&address, &status, &info)
+			"SELECT address, remarks, status, info, auto_select FROM subscriptions WHERE sort = ?", index,
+		).Scan(&address, &remarks, &status, &info, &autoSelectInt)
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("ListGet: can't get element from an empty list")
 		}
@@ -125,8 +131,9 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 		}
 
 		serversJSON := "[" + strings.Join(servers, ",") + "]"
-		result := fmt.Sprintf(`{"address":"%s","status":"%s","info":"%s","servers":%s}`,
-			address, status, info, serversJSON)
+		autoSelect := autoSelectInt != 0
+		result := fmt.Sprintf(`{"remarks":"%s","address":"%s","status":"%s","info":"%s","servers":%s,"autoSelect":%v}`,
+			remarks, address, status, info, serversJSON, autoSelect)
 		return []byte(result), nil
 
 	default:
@@ -181,16 +188,21 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 		if parsed.IsArray() {
 			for _, item := range parsed.Array() {
 				address := item.Get("address").String()
+				remarks := item.Get("remarks").String()
 				status := item.Get("status").String()
 				info := item.Get("info").String()
+				autoSelect := 0
+				if item.Get("autoSelect").Bool() {
+					autoSelect = 1
+				}
 
 				var maxSort int
 				db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM subscriptions").Scan(&maxSort)
 				newSort := maxSort + 1
 
 				res, err := db.Exec(
-					"INSERT INTO subscriptions (address, status, info, sort) VALUES (?, ?, ?, ?)",
-					address, status, info, newSort,
+					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort) VALUES (?, ?, ?, ?, ?, ?)",
+					address, remarks, status, info, autoSelect, newSort,
 				)
 				if err != nil {
 					return err
@@ -245,7 +257,7 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 		return list, rows.Err()
 
 	case "touch/subscriptions":
-		rows, err := db.Query("SELECT id, address, status, info FROM subscriptions ORDER BY sort")
+		rows, err := db.Query("SELECT id, address, remarks, status, info, auto_select FROM subscriptions ORDER BY sort")
 		if err != nil {
 			return nil, err
 		}
@@ -253,8 +265,9 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 
 		for rows.Next() {
 			var id int64
-			var address, status, info string
-			if err := rows.Scan(&id, &address, &status, &info); err != nil {
+			var address, remarks, status, info string
+			var autoSelectInt int
+			if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoSelectInt); err != nil {
 				return nil, err
 			}
 
@@ -278,8 +291,9 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 			serverRows.Close()
 
 			serversJSON := "[" + strings.Join(servers, ",") + "]"
-			result := fmt.Sprintf(`{"address":"%s","status":"%s","info":"%s","servers":%s}`,
-				address, status, info, serversJSON)
+			autoSelect := autoSelectInt != 0
+			result := fmt.Sprintf(`{"remarks":"%s","address":"%s","status":"%s","info":"%s","servers":%s,"autoSelect":%v}`,
+				remarks, address, status, info, serversJSON, autoSelect)
 			list = append(list, []byte(result))
 		}
 		return list, rows.Err()
