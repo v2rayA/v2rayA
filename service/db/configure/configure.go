@@ -529,3 +529,23 @@ func GetRunning() (running bool) {
 	_ = db.Get("system", "running", &running)
 	return running
 }
+
+const (
+	// LastKernelExit status values.
+	LastKernelExitStopped = "stopped"
+	LastKernelExitRunning = "running"
+	LastKernelExitCrashed = "crashed"
+)
+
+// SetLastKernelExitStatus records how the kernel last exited.
+// Values: "stopped" (clean stop), "running" (currently running), "crashed" (unexpected exit).
+func SetLastKernelExitStatus(status string) error {
+	return db.Set("system", "lastKernelExit", status)
+}
+
+// GetLastKernelExitStatus returns the recorded last kernel exit status.
+func GetLastKernelExitStatus() string {
+	var s string
+	_ = db.Get("system", "lastKernelExit", &s)
+	return s
+}

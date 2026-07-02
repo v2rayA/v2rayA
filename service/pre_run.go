@@ -16,8 +16,32 @@ import (
 )
 
 func run() (err error) {
-	// check if v2ray should be started
-	if configure.GetRunning() {
+	// Check the last kernel exit status to decide startup behavior.
+	lastExit := configure.GetLastKernelExitStatus()
+	shouldStart := configure.GetRunning()
+
+	switch lastExit {
+	case configure.LastKernelExitCrashed:
+		log.Warn("v2ray-core exited abnormally the last time; check the logs for details")
+		// Even if the kernel crashed, the running flag was set to false by
+		// handleUnexpectedStop, so shouldStart will be false. We do NOT attempt
+		// to auto-start after a crash to give the user a chance to inspect.
+		if shouldStart {
+			// This shouldn't normally happen if handleUnexpectedStop correctly
+			// cleared the flag, but be defensive.
+			log.Warn("the running flag was left set after a crash; clearing it")
+			_ = configure.SetRunning(false)
+			shouldStart = false
+		}
+	case configure.LastKernelExitRunning:
+		// The kernel was running when v2rayA exited — auto-start.
+		log.Info("v2ray-core was running when v2rayA last exited; attempting to restore")
+	default:
+		// LastKernelExitStopped or empty (fresh install / legacy data).
+		log.Info("v2ray-core was not running when v2rayA last exited")
+	}
+
+	if shouldStart {
 		//configure the ip forward
 		setting := service.GetSetting()
 		if setting.IpForward != ipforward.IsIpForwardOn() {
@@ -31,8 +55,6 @@ func run() (err error) {
 		if err != nil {
 			log.Error("failed to start v2ray-core: %v", err)
 		}
-	} else {
-		log.Info("the core was not running the last time v2rayA exited")
 	}
 	//w := configure.GetConnectedServers()
 	//log.Println(err, ", which:", w)

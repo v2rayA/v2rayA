@@ -8,8 +8,8 @@ import (
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
-	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -190,6 +190,17 @@ func (m *CoreProcessManager) afterStop(p *Process) {
 func (m *CoreProcessManager) Stop(saveRunning bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.p == nil {
+		return
+	}
+	if saveRunning {
+		// User explicitly stopped the core via API (StopV2ray).
+		defer func() { _ = configure.SetLastKernelExitStatus(configure.LastKernelExitStopped) }()
+	} else {
+		// Graceful shutdown — the kernel was running when v2rayA exited.
+		// Preserve the "running" status so it is restored on next startup.
+		defer func() { _ = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning) }()
+	}
 	m.stop(saveRunning)
 }
 
@@ -228,6 +239,9 @@ func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 		return
 	}
 	m.stop(true)
+	// Override the default status (Stop() would have saved "running" or "stopped")
+	// to record the abnormal exit so the startup code can warn the user.
+	_ = configure.SetLastKernelExitStatus(configure.LastKernelExitCrashed)
 }
 
 // runPreStartHook executes the configured core pre-start hook.
@@ -310,6 +324,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 		return err
 	}
 	configure.SetRunning(true)
+	_ = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning)
 	if !testing {
 		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
 	}
