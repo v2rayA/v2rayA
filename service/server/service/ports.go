@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/go-leo/slicex"
-	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"reflect"
 	"strconv"

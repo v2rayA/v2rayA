@@ -15,6 +15,12 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
+// isJSONFieldExists 检查原始 JSON 中是否存在指定字段。
+// 用于在迁移场景中判断字段是否由旧配置显式设置。
+func isJSONFieldExists(raw []byte, field string) bool {
+	return gjson.GetBytes(raw, field).Exists()
+}
+
 type Configure struct {
 	Servers             []*ServerRaw        `json:"servers"`
 	Subscriptions       []*SubscriptionRaw  `json:"subscriptions"`
@@ -206,6 +212,26 @@ func GetSettingNotNil() *Setting {
 	}
 	if r.TransparentType == "" {
 		r.TransparentType = TransparentRedirect
+	}
+	// 执行新 DNS 模块配置迁移（处理旧配置升级场景）
+	MigrateSetting(r)
+	// 处理 DNS 缓存布尔字段默认值：common.FillEmpty 跳过布尔字段，
+	// 因此如果旧配置中缺少这些字段，它们会保持 false。
+	if e == nil && b != nil {
+		hasDNSListenAddr := isJSONFieldExists(b, "dnsListenAddr")
+		hasDNSCacheEnabled := isJSONFieldExists(b, "dnsCacheEnabled")
+		hasDNSPrefetch := isJSONFieldExists(b, "dnsPrefetch")
+		hasDNSNegativeCache := isJSONFieldExists(b, "dnsNegativeCache")
+
+		if !hasDNSListenAddr && !hasDNSCacheEnabled && !hasDNSPrefetch && !hasDNSNegativeCache {
+			r.DnsCacheEnabled = true
+			r.DnsPrefetch = true
+			r.DnsNegativeCache = true
+		}
+	} else if e != nil || b == nil {
+		r.DnsCacheEnabled = true
+		r.DnsPrefetch = true
+		r.DnsNegativeCache = true
 	}
 	return r
 }

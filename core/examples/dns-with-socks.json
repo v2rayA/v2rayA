@@ -1,0 +1,146 @@
+{
+  "_comment": "Example config for v2raya-core with standalone DNS module and SOCKS outbound.",
+  "_note": "DNS 模块是 v2raya-core 的一部分，在 xray-core 启动前独立运行。\n配置中的 'dns_module' 段由 v2raya-core 启动时解析，不经过 xray-core。\niptables/nftables 规则将 53 端口流量重定向到 DNS 模块监听端口 52353。",
+
+  "log": {
+    "loglevel": "info"
+  },
+
+  "inbounds": [
+    {
+      "tag": "socks-in",
+      "protocol": "socks",
+      "listen": "127.0.0.1",
+      "port": 20170,
+      "settings": {
+        "udp": true
+      }
+    },
+    {
+      "tag": "http-in",
+      "protocol": "http",
+      "listen": "127.0.0.1",
+      "port": 20171
+    }
+  ],
+
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "your-socks-server.com",
+            "port": 1080,
+            "users": []
+          }
+        ]
+      },
+      "streamSettings": {
+        "sockopt": {
+          "mark": 128
+        }
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "streamSettings": {
+        "sockopt": {
+          "mark": 128
+        }
+      }
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole"
+    }
+  ],
+
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": ["geosite:cn"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "port": "0-65535",
+        "outboundTag": "proxy"
+      }
+    ]
+  },
+
+  "dns_module": {
+    "_comment": "DNS 模块配置。v2raya-core 启动时解析此段，启动独立 DNS 监听器。",
+    "listener": {
+      "listen_addr": "127.2.0.17:52353",
+      "timeout": 5
+    },
+    "cache": {
+      "enabled": true,
+      "size": 4096,
+      "min_ttl": 60,
+      "max_ttl": 86400,
+      "prefetch": true,
+      "prefetch_threshold": 30,
+      "neg_cache": true
+    },
+    "proxy_map": {
+      "proxy": "127.0.0.1:20170"
+    },
+    "upstreams": [
+      {
+        "id": "dns-direct",
+        "addr": "223.5.5.5:53",
+        "protocol": "udp",
+        "proxy_tag": "direct"
+      },
+      {
+        "id": "dns-proxy",
+        "addr": "8.8.8.8:53",
+        "protocol": "udp",
+        "proxy_tag": "proxy"
+      },
+      {
+        "id": "dns-doh",
+        "addr": "https://dns.google/dns-query",
+        "protocol": "https",
+        "proxy_tag": "proxy"
+      }
+    ],
+    "rules": [
+      {
+        "id": "rule-private",
+        "domain": ["geosite:private"],
+        "upstream": "dns-direct",
+        "action": "route",
+        "policy": "single"
+      },
+      {
+        "id": "rule-cn",
+        "domain": ["geosite:cn"],
+        "upstream": "dns-direct",
+        "action": "route",
+        "policy": "single"
+      },
+      {
+        "id": "rule-fallback",
+        "domain_suffix": [],
+        "domain": [],
+        "ip": [],
+        "upstream": "dns-proxy",
+        "action": "route",
+        "policy": "single"
+      }
+    ]
+  }
+}
