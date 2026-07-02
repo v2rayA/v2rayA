@@ -3,7 +3,7 @@ package httpClient
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	proxyWithHttp2 "github.com/v2rayA/v2rayA/pkg/util/proxyWithHttp"
 	"net"

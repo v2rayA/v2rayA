@@ -28,15 +28,15 @@ var cmdRun = &base.Command{
 	Long: `
 Run Xray with config, the default command.
 
-The -config=file, -c=file flags set the config files for 
+The -config=file, -c=file flags set the config files for
 Xray. Multiple assign is accepted.
 
 The -confdir=dir flag sets a dir with multiple json config
 
-The -format=json flag sets the format of config files. 
+The -format=json flag sets the format of config files.
 Default "auto".
 
-The -test flag tells Xray to test config files only, 
+The -test flag tells Xray to test config files only,
 without launching the server.
 
 The -dump flag tells Xray to print the merged config.
@@ -75,10 +75,15 @@ func executeRun(cmd *base.Command, args []string) {
 	}
 
 	printVersion()
-	server, err := startXray()
+
+	// 获取配置文件路径（需要在 xray 加载配置之前读取，因为 xray 会处理掉自定义字段）
+	configFiles := getConfigFilePath(true)
+
+	// 先启动 xray-core，使其路由引擎（dispatcher）可用。
+	// DNS 模块在 xray 之后启动，以便使用 xray 的路由分流走内部逻辑（类似原始 xray DNS 模块）。
+	server, err := startXrayFromFiles(configFiles)
 	if err != nil {
 		fmt.Println("Failed to start:", err)
-		// Configuration error. Exit with a special value to prevent systemd from restarting.
 		os.Exit(23)
 	}
 
@@ -91,13 +96,18 @@ func executeRun(cmd *base.Command, args []string) {
 		fmt.Println("Failed to start:", err)
 		os.Exit(-1)
 	}
-	defer server.Close()
 
-	/*
-		conf.FileCache = nil
-		conf.IPCache = nil
-		conf.SiteCache = nil
-	*/
+	// xray 启动后，获取路由 dispatcher 并启动 DNS 模块（如配置了 dns_module）
+	if err := startDnsModuleWithXray(configFiles, server); err != nil {
+		fmt.Println("Failed to start DNS module:", err)
+		os.Exit(23)
+	}
+
+	defer func() {
+		// DNS 模块在 xray 之前关闭，确保所有进行中的 DNS 查询能完成
+		stopDnsModule()
+		server.Close()
+	}()
 
 	// Explicitly triggering GC to remove garbage from config loading.
 	runtime.GC()
@@ -108,6 +118,22 @@ func executeRun(cmd *base.Command, args []string) {
 		signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
 		<-osSignals
 	}
+}
+
+// startXrayFromFiles loads xray config from the given files and creates a server.
+// This is split from startXray to allow DNS module to read config files first.
+func startXrayFromFiles(configFiles cmdarg.Arg) (*core.Instance, error) {
+	c, err := core.LoadConfig(getConfigFormat(), configFiles)
+	if err != nil {
+		return nil, errors.New("failed to load config files: [", configFiles.String(), "]").Base(err)
+	}
+
+	server, err := core.New(c)
+	if err != nil {
+		return nil, errors.New("failed to create server").Base(err)
+	}
+
+	return server, nil
 }
 
 func dumpConfig() int {
@@ -213,20 +239,4 @@ func getConfigFormat() string {
 		f = "auto"
 	}
 	return f
-}
-
-func startXray() (core.Server, error) {
-	configFiles := getConfigFilePath(true)
-
-	c, err := core.LoadConfig(getConfigFormat(), configFiles)
-	if err != nil {
-		return nil, errors.New("failed to load config files: [", configFiles.String(), "]").Base(err)
-	}
-
-	server, err := core.New(c)
-	if err != nil {
-		return nil, errors.New("failed to create server").Base(err)
-	}
-
-	return server, nil
 }

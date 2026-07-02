@@ -2,7 +2,7 @@ package configure
 
 import (
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/ipforward"
+	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -34,6 +34,16 @@ type Setting struct {
 	TunExcludeProcesses                string          `json:"tunExcludeProcesses"`
 	SsBackend                          string          `json:"ssBackend"`
 	TrojanBackend                      string          `json:"trojanBackend"`
+	// 新 DNS 模块监听配置
+	DnsListenAddr string `json:"dnsListenAddr"` // 监听地址，默认 "0.0.0.0:52353"
+
+	// DNS 缓存配置
+	DnsCacheEnabled  bool `json:"dnsCacheEnabled"`  // 启用缓存，默认 true
+	DnsCacheSize     int  `json:"dnsCacheSize"`     // 缓存大小，默认 4096
+	DnsCacheMinTTL   int  `json:"dnsCacheMinTTL"`   // 最小 TTL，默认 60
+	DnsCacheMaxTTL   int  `json:"dnsCacheMaxTTL"`   // 最大 TTL，默认 86400
+	DnsPrefetch      bool `json:"dnsPrefetch"`      // 启用预取，默认 true
+	DnsNegativeCache bool `json:"dnsNegativeCache"` // 启用负缓存，默认 true
 }
 
 func NewSetting() (setting *Setting) {
@@ -55,6 +65,14 @@ func NewSetting() (setting *Setting) {
 		TransparentType:                    TransparentRedirect,
 		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
 		TunAutoRoute:                       true,
+		// 新 DNS 模块默认值
+		DnsListenAddr:    "0.0.0.0:52353",
+		DnsCacheEnabled:  true,
+		DnsCacheSize:     4096,
+		DnsCacheMinTTL:   60,
+		DnsCacheMaxTTL:   86400,
+		DnsPrefetch:      true,
+		DnsNegativeCache: true,
 	}
 }
 

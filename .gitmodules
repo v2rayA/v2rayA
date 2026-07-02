@@ -1,6 +1,3 @@
 [submodule "core/xray"]
 	path = core/xray
 	url = https://github.com/XTLS/Xray-core.git
-[submodule "core/v2ray"]
-	path = core/v2ray
-	url = https://github.com/v2fly/v2ray-core.git

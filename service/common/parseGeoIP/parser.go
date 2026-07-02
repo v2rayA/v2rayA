@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"google.golang.org/protobuf/proto"
 )
 
