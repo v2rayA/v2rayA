@@ -18,6 +18,7 @@ import (
 	obscmd "github.com/v2rayA/v2raya-core/hint/app/observatory/command"
 	multiobs "github.com/v2rayA/v2raya-core/hint/app/observatory/multiobservatory"
 	hint_anytls "github.com/v2rayA/v2raya-core/hint/proxy/anytls"
+	hint_hysteria2 "github.com/v2rayA/v2raya-core/hint/proxy/hysteria2"
 	hint_juicity "github.com/v2rayA/v2raya-core/hint/proxy/juicity"
 	hint_tuic "github.com/v2rayA/v2raya-core/hint/proxy/tuic"
 	xray_commander "github.com/xtls/xray-core/app/commander"
@@ -87,9 +88,10 @@ type customOutboundJSON struct {
 
 // customProtocols is the set of outbound protocols handled by hint/proxy.
 var customProtocols = map[string]bool{
-	"anytls":  true,
-	"juicity": true,
-	"tuic":    true,
+	"anytls":    true,
+	"hysteria2": true,
+	"juicity":   true,
+	"tuic":      true,
 }
 
 // stripCustomOutbounds parses raw JSON, removes custom-protocol outbound entries,
@@ -158,6 +160,14 @@ func buildCustomOutbounds(customs []customOutboundJSON) ([]*xray_core.OutboundHa
 			if c.Settings != nil {
 				if err := json.Unmarshal(c.Settings, &cfg); err != nil {
 					return nil, errors.New("invalid anytls settings for tag ", c.Tag).Base(err)
+				}
+			}
+			proxySettings = serial.ToTypedMessage(&cfg)
+		case "hysteria2":
+			var cfg hint_hysteria2.ClientConfig
+			if c.Settings != nil {
+				if err := json.Unmarshal(c.Settings, &cfg); err != nil {
+					return nil, errors.New("invalid hysteria2 settings for tag ", c.Tag).Base(err)
 				}
 			}
 			proxySettings = serial.ToTypedMessage(&cfg)
