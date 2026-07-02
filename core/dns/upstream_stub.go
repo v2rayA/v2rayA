@@ -109,7 +109,7 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 	// DNS_MARK/TP_OUT chains check and RETURN (skip), preventing the loop.
 	markFd := func(network, address string, c syscall.RawConn) error {
 		return c.Control(func(fd uintptr) {
-			syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, 36, 0x80) // SO_MARK=36
+			_ = setSocketMark(fd) // SO_MARK=36
 		})
 	}
 
@@ -241,7 +241,7 @@ func (m *UpstreamManager) exchangeUDPWithMark(client *dns.Client, msg *dns.Msg, 
 		return nil, 0, fmt.Errorf("get raw conn: %w", err)
 	}
 	rawConn.Control(func(fd uintptr) {
-		syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, 36, 0x80)
+		_ = setSocketMark(fd)
 	})
 
 	// Pack and send the DNS query
