@@ -5,14 +5,15 @@ package iptables
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"golang.org/x/sys/windows"
-	"golang.org/x/sys/windows/registry"
 	"os/exec"
 	"sync"
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 const (
@@ -211,9 +212,11 @@ func readRegistryProxyState(key registry.Key, prefix string) (proxyEnable uint32
 	}
 	defer k.Close()
 
-	proxyEnable, _, err = k.GetIntegerValue("ProxyEnable")
+	val, _, err := k.GetIntegerValue("ProxyEnable")
 	if err != nil {
 		proxyEnable = 0
+	} else {
+		proxyEnable = uint32(val)
 	}
 
 	proxyServer, _, err = k.GetStringValue("ProxyServer")
