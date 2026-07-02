@@ -1,11 +1,13 @@
 package serverObj
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
+
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
 )
 
 func init() {
@@ -53,16 +55,72 @@ func ParseHysteria2URL(link string) (data *Hysteria2, err error) {
 	}, nil
 }
 
+// hysteria2Settings holds the settings serialized into the v2raya-core xray config.
+type hysteria2Settings struct {
+	Address                string `json:"address"` // "host:port" format — maps to ClientConfig.address proto field
+	Password               string `json:"password"`
+	SNI                    string `json:"sni,omitempty"`
+	AllowInsecure          bool   `json:"allow_insecure,omitempty"`
+	PinnedCertchainSha256  string `json:"pinned_certchain_sha256,omitempty"`
+	Obfs                   string `json:"obfs,omitempty"`
+	ObfsPassword           string `json:"obfs_password,omitempty"`
+	UpMbps                 int    `json:"up_mbps,omitempty"`
+	DownMbps               int    `json:"down_mbps,omitempty"`
+}
+
 func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+	u, err := url.Parse(s.Link)
+	if err != nil {
+		return c, fmt.Errorf("hysteria2: parse link: %w", err)
 	}
-	chain := []string{socks5.String(), s.Link}
+
+	password := ""
+	if u.User != nil {
+		password = u.User.Username()
+	}
+	q := u.Query()
+	sni := q.Get("sni")
+	obfs := q.Get("obfs")
+	if obfs == "" {
+		obfs = "none"
+	}
+	obfsPassword := q.Get("obfs-password")
+
+	allowInsecure := false
+	if q.Get("allowInsecure") == "1" || q.Get("insecure") == "1" {
+		allowInsecure = true
+	}
+	upMbps, _ := strconv.Atoi(q.Get("upmbps"))
+	if upMbps < 0 {
+		upMbps = 0
+	}
+	downMbps, _ := strconv.Atoi(q.Get("downmbps"))
+	if downMbps < 0 {
+		downMbps = 0
+	}
+
+	settingsJSON, err := json.Marshal(hysteria2Settings{
+		Address:                net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
+		Password:               password,
+		SNI:                    sni,
+		AllowInsecure:          allowInsecure,
+		PinnedCertchainSha256:  q.Get("pinnedPeerCertSha256"),
+		Obfs:                   obfs,
+		ObfsPassword:           obfsPassword,
+		UpMbps:                 upMbps,
+		DownMbps:               downMbps,
+	})
+	if err != nil {
+		return c, fmt.Errorf("hysteria2: marshal settings: %w", err)
+	}
+
 	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   true,
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:      info.Tag,
+			Protocol: "hysteria2",
+			Settings: coreObj.Settings{Inlined: settingsJSON},
+		},
+		UDPSupport: true,
 	}, nil
 }
 
@@ -71,11 +129,11 @@ func (s *Hysteria2) ExportToURL() string {
 }
 
 func (s *Hysteria2) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (s *Hysteria2) ProtoToShow() string {
-	return fmt.Sprintf("hysteria2")
+	return "hysteria2"
 }
 
 func (s *Hysteria2) GetProtocol() string {

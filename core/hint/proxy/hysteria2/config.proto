@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package v2raya.proxy.hysteria2;
+option go_package = "github.com/v2rayA/v2raya-core/hint/proxy/hysteria2";
+
+message ClientConfig {
+  // Server address in "host:port" format
+  string address = 1;
+  // Authentication password
+  string password = 2;
+  // TLS SNI override (optional)
+  string sni = 3;
+  // Allow insecure TLS (skip verification)
+  bool allow_insecure = 4;
+  // Pinned certificate chain SHA256 hash (reserved — not yet wired to TLS verify)
+  string pinned_certchain_sha256 = 5;
+  // Obfuscation type: "none" or "salamander" (reserved — not yet wired to dialer)
+  string obfs = 6;
+  // Salamander obfuscation password (reserved — see obfs)
+  string obfs_password = 7;
+  // Upload bandwidth limit (Mbps, 0 = unlimited)
+  uint32 up_mbps = 8;
+  // Download bandwidth limit (Mbps, 0 = unlimited)
+  uint32 down_mbps = 9;
+}

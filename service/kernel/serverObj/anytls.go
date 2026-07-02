@@ -69,6 +69,9 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 	q := u.Query()
 	sni := q.Get("sni")
+	if sni == "" {
+		sni = q.Get("peer") // fallback for frontend-generated URLs
+	}
 	minIdle, _ := strconv.Atoi(q.Get("minIdleSession"))
 
 	settingsJSON, err := json.Marshal(anytlsSettings{
