@@ -82,6 +82,10 @@ iptables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 	for _, v := range GetExcludedInterfaces() {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
+	// OUTPUT 路径使用 -o 匹配输出网卡（本地流量在 OUTPUT 链中 -i 始终为 lo）
+	for _, v := range GetExcludedInterfaces() {
+		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+	}
 	if IsEnabledTproxyWhiteIpGroups() {
 		whiteIpv4List, _ := GetWhiteListIPs()
 		for _, v := range whiteIpv4List {
@@ -124,6 +128,10 @@ ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 `
 		for _, v := range GetExcludedInterfaces() {
 			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+		}
+		// IPv6 OUTPUT 路径使用 -o 匹配输出网卡
+		for _, v := range GetExcludedInterfaces() {
+			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
 		if IsEnabledTproxyWhiteIpGroups() {
 			_, whiteIpv6List := GetWhiteListIPs()
@@ -186,17 +194,17 @@ ip6tables -w 2 -t nat -X TP_RULE
 }
 
 func (t *nftRedirect) AddIPWhitelist(cidr string) {
-	command := fmt.Sprintf("nft add element inet v2raya interface { %s }", cidr)
+	command := fmt.Sprintf("nft add element inet v2raya local_ips { %s }", cidr)
 	if !strings.Contains(cidr, ".") {
-		command = strings.Replace(command, "interface", "interface6", 1)
+		command = strings.Replace(command, "local_ips", "local_ips6", 1)
 	}
 	cmds.ExecCommands(command, false)
 }
 
 func (t *nftRedirect) RemoveIPWhitelist(cidr string) {
-	command := fmt.Sprintf("nft delete element inet v2raya interface { %s }", cidr)
+	command := fmt.Sprintf("nft delete element inet v2raya local_ips { %s }", cidr)
 	if !strings.Contains(cidr, ".") {
-		command = strings.Replace(command, "interface", "interface6", 1)
+		command = strings.Replace(command, "local_ips", "local_ips6", 1)
 	}
 	cmds.ExecCommands(command, false)
 }
@@ -256,14 +264,16 @@ table inet v2raya {
             ff00::/8` + whiteIpv6Elements + `
         }
     }
-  
-    set interface {
+
+    # 用于记录本机网卡 IP 地址（由 watcher 动态维护），
+    # 避免发往本机地址的流量被重定向造成环路
+    set local_ips {
         type ipv4_addr
         flags interval
         auto-merge
     }
 
-    set interface6 {
+    set local_ips6 {
         type ipv6_addr
         flags interval
         auto-merge
@@ -274,17 +284,20 @@ table inet v2raya {
         meta l4proto { tcp, udp } th dport 53 redirect to :52353
     }
 
-    chain tp_rule {
-        ip daddr @whitelist return
-        ip daddr @interface return
-        ip6 daddr @whitelist6 return
-        ip6 daddr @interface6 return
-        meta mark & 0x80 == 0x80 return
+    	chain tp_rule {
+    	    ip daddr @whitelist return
+    	    ip daddr @local_ips return
+    	    ip6 daddr @whitelist6 return
+    	    ip6 daddr @local_ips6 return
+    	    meta mark & 0x80 == 0x80 return
 `
- for _, v := range GetExcludedInterfaces() {
-  table += fmt.Sprintf("        iifname \"%s\" return\n", v)
- }
- table += `
+	for _, v := range GetExcludedInterfaces() {
+		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
+	}
+	for _, v := range GetExcludedInterfaces() {
+		table += fmt.Sprintf("        oifname \"%s\" return\n", v)
+	}
+	table += `
         meta l4proto tcp redirect to :52345
     }
 

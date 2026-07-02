@@ -101,6 +101,10 @@ iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 	for _, v := range GetExcludedInterfaces() {
 		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
+	// OUTPUT 路径使用 -o 匹配输出网卡（本地流量在 OUTPUT 链中 -i 始终为 lo）
+	for _, v := range GetExcludedInterfaces() {
+		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+	}
 	commands += `
 iptables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
@@ -162,6 +166,10 @@ ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 		for _, v := range GetExcludedInterfaces() {
 			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
+		}
+		// IPv6 OUTPUT 路径使用 -o 匹配输出网卡
+		for _, v := range GetExcludedInterfaces() {
+			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
 		commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
@@ -243,17 +251,17 @@ ip6tables -w 2 -t mangle -X DNS_MARK
 }
 
 func (t *nftTproxy) AddIPWhitelist(cidr string) {
-	command := fmt.Sprintf("nft add element inet v2raya interface { %s }", cidr)
+	command := fmt.Sprintf("nft add element inet v2raya local_ips { %s }", cidr)
 	if !strings.Contains(cidr, ".") {
-		command = strings.Replace(command, "interface", "interface6", 1)
+		command = strings.Replace(command, "local_ips", "local_ips6", 1)
 	}
 	cmds.ExecCommands(command, false)
 }
 
 func (t *nftTproxy) RemoveIPWhitelist(cidr string) {
-	command := fmt.Sprintf("nft delete element inet v2raya interface { %s }", cidr)
+	command := fmt.Sprintf("nft delete element inet v2raya local_ips { %s }", cidr)
 	if !strings.Contains(cidr, ".") {
-		command = strings.Replace(command, "interface", "interface6", 1)
+		command = strings.Replace(command, "local_ips", "local_ips6", 1)
 	}
 	cmds.ExecCommands(command, false)
 }
@@ -292,13 +300,15 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
 
 	table += `
-    set interface {
+    # 用于记录本机网卡 IP 地址（由 watcher 动态维护），
+    # 避免发往本机地址的流量被重定向造成环路
+    set local_ips {
         type ipv4_addr
         flags interval
         auto-merge
     }
 
-    set interface6 {
+    set local_ips6 {
         type ipv6_addr
         flags interval
         auto-merge
@@ -347,10 +357,13 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 	for _, v := range GetExcludedInterfaces() {
 		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
 	}
+	for _, v := range GetExcludedInterfaces() {
+		table += fmt.Sprintf("        oifname \"%s\" return\n", v)
+	}
 	table += `
-        # anti-pollution
-        ip daddr @interface return
-	`
+	        # anti-pollution
+	        ip daddr @local_ips return
+		`
 	if IsEnabledTproxyWhiteIpGroups() {
 		table += `
         ip daddr @whitelist return
@@ -358,7 +371,7 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 	`
 	}
 	table += `
-        ip6 daddr @interface6 return
+        ip6 daddr @local_ips6 return
         jump tp_mark
     }
 
