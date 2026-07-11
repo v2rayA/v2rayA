@@ -286,18 +286,28 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 	// Set up domain sniffing
 	if setting.InboundSniffing != configure.InboundSniffingDisable && setting.InboundSniffing != "" {
 		enableSniffingRouteOnly := configure.GetSettingNotNil().RouteOnly
-		domainsExcludedText := configure.GetDomainsExcluded()
+		domainsExcluded := splitNonEmptyLines(configure.GetDomainsExcluded())
 		for i := len(t.Inbounds) - 1; i >= 0; i-- {
 			if setting.InboundSniffing == configure.InboundSniffingHttpTLS {
 				t.Inbounds[i].Sniffing.DestOverride = []string{"http", "tls"}
 			} else {
 				t.Inbounds[i].Sniffing.DestOverride = []string{"http", "tls", "quic"}
 			}
-			t.Inbounds[i].Sniffing.DomainsExcluded = strings.Split(domainsExcludedText, "\n")
+			t.Inbounds[i].Sniffing.DomainsExcluded = domainsExcluded
 			t.Inbounds[i].Sniffing.Enabled = true
 			t.Inbounds[i].Sniffing.RouteOnly = enableSniffingRouteOnly
 		}
 
 	}
 	return nil
+}
+
+func splitNonEmptyLines(text string) []string {
+	var lines []string
+	for _, line := range strings.Split(text, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			lines = append(lines, line)
+		}
+	}
+	return lines
 }
