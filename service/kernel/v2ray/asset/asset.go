@@ -79,6 +79,12 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 			if err != nil {
 				return "", err
 			}
+			// On macOS, XDG data and runtime directories default to the same
+			// Application Support directory. Avoid replacing the asset with a
+			// symlink to itself when both paths resolve to the same location.
+			if filepath.Clean(fullpath) == filepath.Clean(runtimepath) {
+				return fullpath, nil
+			}
 			os.Remove(runtimepath)
 			err = os.Symlink(fullpath, runtimepath)
 			if err != nil {
