@@ -6,7 +6,7 @@ import (
 )
 
 // DnsRule 代表一条 DNS 服务器规则。
-// Server 是 DNS 服务器地址，例如 "8.8.8.8"、"https://dns.google/dns-query"、"localhost"。
+// Server 是 DNS 服务器地址，例如 "1.0.0.1"、"https://dns.google/dns-query"、"localhost"。
 // Domains 是换行分隔的域名模式列表；空字符串表示该服务器作为"兜底"DNS。
 // Outbound 是路由出口标签，例如 "direct" 或 "proxy"。
 //
@@ -41,7 +41,7 @@ type DnsRule struct {
 var DefaultDnsRules = []DnsRule{
 	{Server: "localhost", Domains: "geosite:private", Outbound: "direct"},
 	{Server: "223.5.5.5", Domains: "geosite:cn", Outbound: "direct"},
-	{Server: "8.8.8.8", Domains: "", Outbound: "proxy"},
+	{Server: "1.0.0.1", Domains: "", Outbound: "proxy"},
 }
 
 // GetDnsRulesNotNil 返回用户配置的 DNS 规则，若未配置则返回 DefaultDnsRules。
