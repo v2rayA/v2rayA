@@ -201,8 +201,8 @@ ip6tables -w 2 -t mangle -A DNS_MARK -j ACCEPT
 
 func (t *legacyTproxy) GetCleanCommands() Setter {
 	commands := `
-ip rule del fwmark 0x40/0xc0 table 100
-ip route del local 0.0.0.0/0 dev lo table 100
+ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
+ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null || true
 
 iptables -w 2 -t mangle -F TP_OUT
 iptables -w 2 -t mangle -D OUTPUT -j TP_OUT
@@ -223,8 +223,8 @@ iptables -w 2 -t mangle -X DNS_MARK
 `
 	if IsIPv6Supported() {
 		commands += `
-ip -6 rule del fwmark 0x40/0xc0 table 100
-ip -6 route del local ::/0 dev lo table 100
+ip -6 rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
+ip -6 route del local ::/0 dev lo table 100 2>/dev/null || true
 
 ip6tables -w 2 -t mangle -F TP_OUT
 ip6tables -w 2 -t mangle -D OUTPUT -j TP_OUT
@@ -412,20 +412,17 @@ ip -6 route add local ::/0 dev lo table 100
 
 func (t *nftTproxy) GetCleanCommands() Setter {
 	command := `
-ip rule del fwmark 0x40/0xc0 table 100
-ip route del local 0.0.0.0/0 dev lo table 100
+ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
+ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null || true
 `
 	if IsIPv6Supported() {
 		command += `
-ip -6 rule del fwmark 0x40/0xc0 table 100
-ip -6 route del local ::/0 dev lo table 100
+ip -6 rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
+ip -6 route del local ::/0 dev lo table 100 2>/dev/null || true
 		`
 	}
 
 	command += `nft delete table inet v2raya`
-	if !IsIPv6Supported() {
-		command = strings.Replace(command, "inet", "ip", 1)
-	}
 	command += "\nconntrack -D --mark 0x40 2>/dev/null || true"
 	return Setter{Cmds: command}
 }

@@ -44,6 +44,10 @@ func (r *legacyRedirect) AddIPWhitelist(cidr string) {
 func (r *legacyRedirect) RemoveIPWhitelist(cidr string) {
 	var commands string
 	commands = fmt.Sprintf(`iptables -w 2 -t nat -D TP_RULE -d %s -j RETURN`, cidr)
+	if !strings.Contains(cidr, ".") {
+		//ipv6
+		commands = strings.Replace(commands, "iptables", "ip6tables", 1)
+	}
 	cmds.ExecCommands(commands, false)
 }
 
@@ -284,12 +288,12 @@ table inet v2raya {
         meta l4proto { tcp, udp } th dport 53 redirect to :52353
     }
 
-    	chain tp_rule {
-    	    ip daddr @whitelist return
-    	    ip daddr @local_ips return
-    	    ip6 daddr @whitelist6 return
-    	    ip6 daddr @local_ips6 return
-    	    meta mark & 0x80 == 0x80 return
+    chain tp_rule {
+        ip daddr @whitelist return
+        ip daddr @local_ips return
+        ip6 daddr @whitelist6 return
+        ip6 daddr @local_ips6 return
+        meta mark & 0x80 == 0x80 return
 `
 	for _, v := range GetExcludedInterfaces() {
 		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
