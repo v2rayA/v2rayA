@@ -260,8 +260,11 @@ func (m *UpstreamManager) exchangeUDPWithMark(client *dns.Client, msg *dns.Msg, 
 		return nil, 0, fmt.Errorf("dns write: %w", err)
 	}
 
-	// Read response
-	respBuf := make([]byte, dns.DefaultMsgSize)
+	// Read response — use dns.MaxMsgSize (65535) as the receive buffer.
+	// The query has EDNS0 UDP size 4096, so the upstream may respond with
+	// up to 4096 bytes. dns.DefaultMsgSize (512) is too small and would
+	// silently truncate large responses (UDP datagram remainder is lost).
+	respBuf := make([]byte, dns.MaxMsgSize)
 	conn.SetReadDeadline(time.Now().Add(client.ReadTimeout))
 	n, err := conn.Read(respBuf)
 	rtt := time.Since(start)
