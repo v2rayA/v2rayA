@@ -79,8 +79,8 @@ func (r *Router) Route(query *DnsQuery) *RouteResult {
 		}
 		matchers := r.matchers[i]
 
-		// Check if all matchers match (AND logic).
-		if MatchAny(matchers, query) {
+		// Check if all matcher groups match (AND across groups, OR within each group).
+		if MatchAll(matchers, query) {
 			// Rule matched — determine upstream address.
 			upstreamAddr := r.upstreamMap[rule.Upstream]
 

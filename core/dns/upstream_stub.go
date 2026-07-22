@@ -90,11 +90,15 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 	msg.SetQuestion(dns.Fqdn(query.Name), uint16(query.QType))
 	msg.RecursionDesired = true
 
+	// IMPORTANT: SetEdns0 MUST be called BEFORE AddECSSubnet.
+	// SetEdns0 in miekg/dns v1.1.72 always appends a new OPT record without
+	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
+	// would create TWO OPT records in the query, causing FORMERR.
+	msg.SetEdns0(4096, true)
 	if query.ClientIP != nil {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
-	msg.SetEdns0(4096, true)
 
 	protocol := upstream.Protocol
 	if protocol == "" {
@@ -312,11 +316,15 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 	msg.SetQuestion(dns.Fqdn(query.Name), uint16(query.QType))
 	msg.RecursionDesired = true
 
+	// IMPORTANT: SetEdns0 MUST be called BEFORE AddECSSubnet.
+	// SetEdns0 in miekg/dns v1.1.72 always appends a new OPT record without
+	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
+	// would create TWO OPT records in the query, causing FORMERR.
+	msg.SetEdns0(4096, true)
 	if query.ClientIP != nil {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
-	msg.SetEdns0(4096, true)
 
 	// Exchange via SOCKS5 proxy (DNS over TCP).
 	start := time.Now()
@@ -628,11 +636,15 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 	msg.SetQuestion(dns.Fqdn(query.Name), uint16(query.QType))
 	msg.RecursionDesired = true
 
+	// IMPORTANT: SetEdns0 MUST be called BEFORE AddECSSubnet.
+	// SetEdns0 in miekg/dns v1.1.72 always appends a new OPT record without
+	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
+	// would create TWO OPT records in the query, causing FORMERR.
+	msg.SetEdns0(4096, true)
 	if query.ClientIP != nil {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
-	msg.SetEdns0(4096, true)
 
 	// Pack DNS query for TCP transport.
 	packed, err := msg.Pack()

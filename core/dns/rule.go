@@ -153,6 +153,33 @@ func (r *ClientIPRule) Value() string {
 	return r.CIDR.String()
 }
 
+// OrMatcher matches if ANY of its child matchers match (OR logic).
+// It is used to group matchers from the same rule field together,
+// so that multiple domain patterns from a geosite expansion are OR-ed.
+type OrMatcher struct {
+	Matchers []RuleMatcher
+}
+
+// Match returns true if any child matcher matches.
+func (m *OrMatcher) Match(query *DnsQuery) bool {
+	for _, matcher := range m.Matchers {
+		if matcher.Match(query) {
+			return true
+		}
+	}
+	return false
+}
+
+// Type returns the matcher type.
+func (m *OrMatcher) Type() string {
+	return "or_group"
+}
+
+// Value returns a description of the group.
+func (m *OrMatcher) Value() string {
+	return fmt.Sprintf("%d matchers", len(m.Matchers))
+}
+
 // parseCIDR parses a CIDR string and returns the IPNet.
 // Supports both regular CIDR (e.g., "10.0.0.0/8") and single IP (e.g., "10.0.0.1").
 func parseCIDR(s string) (*net.IPNet, error) {
@@ -183,84 +210,126 @@ func parseCIDR(s string) (*net.IPNet, error) {
 }
 
 // BuildMatchers constructs a list of RuleMatcher from a DnsRule configuration.
-// Each rule field generates one or more matchers. All matchers must match (AND logic).
-// If a resolver is provided, geosite tags (e.g. "geosite:cn") are expanded.
+//
+// Matching semantics: within each field group, matchers are OR-ed (any one match
+// is sufficient); across different field groups, matchers are AND-ed (all groups
+// must match). For example, a rule with domain=["geosite:cn"] and query_type=[A]
+// matches if the domain is in geosite:cn AND the query type is A.
+//
+// If a resolver is provided, geosite tags (e.g. "geosite:cn") are expanded into
+// individual domain matchers, all grouped into a single OR group.
 func BuildMatchers(rule *DnsRule, resolver GeositeResolver) ([]RuleMatcher, error) {
-	var matchers []RuleMatcher
+	// Collect matchers by field group. Each group uses OR logic internally.
+	var domainMatchers []RuleMatcher
+	var ipMatchers []RuleMatcher
+	var qtypeMatchers []RuleMatcher
+	var clientIPMatchers []RuleMatcher
 
-	// Build domain exact matchers, expanding geosite tags if resolver is available.
+	// ── Domain group (OR): exact + suffix + regex + geosite expansion ──
+
 	for _, d := range rule.Domain {
 		if strings.HasPrefix(d, "geosite:") {
 			if resolver != nil {
 				doms, suffs := resolver(strings.TrimPrefix(d, "geosite:"))
 				for _, dom := range doms {
-					matchers = append(matchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
+					domainMatchers = append(domainMatchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
 				}
 				for _, suf := range suffs {
-					matchers = append(matchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
+					domainMatchers = append(domainMatchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
 				}
 			}
 			// Without resolver, geosite tags are silently skipped (no matcher created).
 			continue
 		}
-		matchers = append(matchers, &DomainRule{Domain: d, IsSuffix: false, IsRegex: false})
+		domainMatchers = append(domainMatchers, &DomainRule{Domain: d, IsSuffix: false, IsRegex: false})
 	}
 
-	// Build domain suffix matchers (also check for geosite patterns).
 	for _, d := range rule.DomainSuffix {
 		if strings.HasPrefix(d, "geosite:") {
 			if resolver != nil {
 				doms, suffs := resolver(strings.TrimPrefix(d, "geosite:"))
 				for _, dom := range doms {
-					matchers = append(matchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
+					domainMatchers = append(domainMatchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
 				}
 				for _, suf := range suffs {
-					matchers = append(matchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
+					domainMatchers = append(domainMatchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
 				}
 			}
 			continue
 		}
-		matchers = append(matchers, &DomainRule{Domain: d, IsSuffix: true, IsRegex: false})
+		domainMatchers = append(domainMatchers, &DomainRule{Domain: d, IsSuffix: true, IsRegex: false})
 	}
 
-	// Build domain regex matchers
 	for _, d := range rule.DomainRegex {
 		re, err := regexp.Compile(d)
 		if err != nil {
 			return nil, fmt.Errorf("invalid domain regex %q: %w", d, err)
 		}
-		matchers = append(matchers, &DomainRule{Domain: d, IsRegex: true, Re: re})
+		domainMatchers = append(domainMatchers, &DomainRule{Domain: d, IsRegex: true, Re: re})
 	}
 
-	// Build IP CIDR matchers
+	// ── IP group (OR) ──
 	for _, ipStr := range rule.IP {
 		cidr, err := parseCIDR(ipStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid IP CIDR %q: %w", ipStr, err)
 		}
-		matchers = append(matchers, &IPRule{CIDR: cidr})
+		ipMatchers = append(ipMatchers, &IPRule{CIDR: cidr})
 	}
 
-	// Build query type matchers
+	// ── QueryType group (OR) ──
 	for _, qt := range rule.QueryType {
-		matchers = append(matchers, &QueryTypeRule{QType: qt})
+		qtypeMatchers = append(qtypeMatchers, &QueryTypeRule{QType: qt})
 	}
 
-	// Build client IP CIDR matchers
+	// ── ClientIP group (OR) ──
 	for _, cipStr := range rule.ClientIP {
 		cidr, err := parseCIDR(cipStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid client IP CIDR %q: %w", cipStr, err)
 		}
-		matchers = append(matchers, &ClientIPRule{CIDR: cidr})
+		clientIPMatchers = append(clientIPMatchers, &ClientIPRule{CIDR: cidr})
+	}
+
+	// ── Build final list: each group is OR internally, AND across groups ──
+	var matchers []RuleMatcher
+
+	if len(domainMatchers) > 0 {
+		if len(domainMatchers) == 1 {
+			matchers = append(matchers, domainMatchers[0])
+		} else {
+			matchers = append(matchers, &OrMatcher{Matchers: domainMatchers})
+		}
+	}
+	if len(ipMatchers) > 0 {
+		if len(ipMatchers) == 1 {
+			matchers = append(matchers, ipMatchers[0])
+		} else {
+			matchers = append(matchers, &OrMatcher{Matchers: ipMatchers})
+		}
+	}
+	if len(qtypeMatchers) > 0 {
+		if len(qtypeMatchers) == 1 {
+			matchers = append(matchers, qtypeMatchers[0])
+		} else {
+			matchers = append(matchers, &OrMatcher{Matchers: qtypeMatchers})
+		}
+	}
+	if len(clientIPMatchers) > 0 {
+		if len(clientIPMatchers) == 1 {
+			matchers = append(matchers, clientIPMatchers[0])
+		} else {
+			matchers = append(matchers, &OrMatcher{Matchers: clientIPMatchers})
+		}
 	}
 
 	return matchers, nil
 }
 
-// MatchAny checks if all matchers in the list match the query (AND logic).
-// Returns true only if every matcher matches.
-func MatchAny(matchers []RuleMatcher, query *DnsQuery) bool {
+// MatchAll checks if all matcher groups match the query (AND across groups).
+// Within each group (e.g. OrMatcher), the semantics is OR (any one matches).
+// Empty matchers list means no constraints — matches everything.
+func MatchAll(matchers []RuleMatcher, query *DnsQuery) bool {
 	if len(matchers) == 0 {
 		// Empty matchers means no constraints — matches everything.
 		return true

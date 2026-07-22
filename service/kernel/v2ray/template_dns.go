@@ -155,8 +155,13 @@ func (t *Template) generateDnsModuleConfig() error {
 		if upstreamAddr == "" {
 			upstreamAddr = rule.Server
 		}
-		if upstreamAddr == "" || upstreamAddr == "localhost" {
+		if upstreamAddr == "" {
 			continue
+		}
+
+		// "localhost" 表示本地系统 DNS 解析器，映射为 127.0.0.1
+		if upstreamAddr == "localhost" {
+			upstreamAddr = "127.0.0.1"
 		}
 
 		// 解析协议和地址，确保端口默认值正确

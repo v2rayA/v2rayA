@@ -191,8 +191,33 @@ func (l *DnsListener) handlePacket(w dns.ResponseWriter, msg *dns.Msg) {
 	m.SetReply(msg)
 
 	if resp != nil && resp.RawMsg != nil {
-		m = resp.RawMsg
+		// Deep-copy the upstream response so we don't modify the cached RawMsg in-place.
+		// This is critical: resp.RawMsg may be shared with the cache (via cache.Set),
+		// and m.SetReply(msg) below would corrupt the cached message.
+		rawBytes, err := resp.RawMsg.Pack()
+		if err != nil {
+			log.Printf("[dns] error packing response for %s %s: %v", dns.Type(q.Qtype).String(), q.Name, err)
+			m := new(dns.Msg)
+			m.SetReply(msg)
+			m.Rcode = dns.RcodeServerFailure
+			_ = w.WriteMsg(m)
+			return
+		}
+		m = new(dns.Msg)
+		if err := m.Unpack(rawBytes); err != nil {
+			log.Printf("[dns] error unpacking response for %s %s: %v", dns.Type(q.Qtype).String(), q.Name, err)
+			m := new(dns.Msg)
+			m.SetReply(msg)
+			m.Rcode = dns.RcodeServerFailure
+			_ = w.WriteMsg(m)
+			return
+		}
+		// Set the response header to match the client's request (ID, flags, question).
+		// Preserve the upstream Rcode — SetReply always sets Rcode=RcodeSuccess,
+		// but we need to keep NXDOMAIN etc. from the upstream.
+		origRcode := m.Rcode
 		m.SetReply(msg)
+		m.Rcode = origRcode
 	} else if resp != nil {
 		m.Rcode = resp.Rcode
 		m.Answer = resp.Answer

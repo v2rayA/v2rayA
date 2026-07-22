@@ -150,10 +150,10 @@ func (h *DnsHandler) HandleQuery(ctx context.Context, query *DnsQuery) (*DnsResp
 // handleRoute sends the query to the matched upstream server.
 // 查询流程（方案2：先路由再查缓存）：
 //
-//	1. Route the query to determine upstream + proxy channel.
-//	2. Build full CacheKey (with upstream + proxy tag).
-//	3. Check cache. If hit: return cached response, optionally trigger prefetch.
-//	4. If miss: send query to upstream, store result in cache, return response.
+//  1. Route the query to determine upstream + proxy channel.
+//  2. Build full CacheKey (with upstream + proxy tag).
+//  3. Check cache. If hit: return cached response, optionally trigger prefetch.
+//  4. If miss: send query to upstream, store result in cache, return response.
 func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *DnsModule,
 	result *RouteResult, upstreamMgr *UpstreamManager) (*DnsResponse, error) {
 
@@ -288,7 +288,7 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 	}
 
 	// Log successful upstream response.
-	log.Printf("[dns] upstream: %s:53 via %s (rtt=%dms)",
+	log.Printf("[dns] upstream: %s via %s (rtt=%dms)",
 		upstream.Addr, proxyInfo, rtt.Milliseconds())
 
 	// Store response in cache (if enabled and not a bootstrap query).

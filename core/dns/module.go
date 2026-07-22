@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/miekg/dns"
@@ -240,27 +241,19 @@ func (m *DnsModule) resolveBootstrap(domains []string) map[string]string {
 		return resolved
 	}
 
-	// 优先使用配置中保存的系统 DNS（在劫持发生前由 v2rayA 读取并写入配置）。
-	// 回退到直接从 /etc/resolv.conf 读取（劫持可能已生效）。
-	var sysServers []netip.AddrPort
-	if len(m.config.BootstrapDns) > 0 {
-		for _, s := range m.config.BootstrapDns {
-			if ap, err := netip.ParseAddrPort(s); err == nil {
-				sysServers = append(sysServers, ap)
-			}
-		}
-	}
+	// 收集可用的 bootstrap DNS 服务器（优先级从高到低）：
+	// 1. 配置中保存的系统 DNS（劫持发生前由 v2rayA 读取）
+	// 2. /etc/resolv.conf 实时读取
+	// 3. 硬编码的著名公共 DNS（兜底）
+	sysServers := m.collectBootstrapDns()
 	if len(sysServers) == 0 {
-		sysServers = GetSystemDNS()
-	}
-	if len(sysServers) == 0 {
-		log.Printf("[dns module] warning: no system DNS available for bootstrap resolution")
+		log.Printf("[dns module] warning: no DNS servers available for bootstrap resolution")
 		return resolved
 	}
 
-	log.Printf("[dns module] resolving %d bootstrap domains using system DNS", len(domains))
+	log.Printf("[dns module] resolving %d bootstrap domains using %d DNS servers", len(domains), len(sysServers))
 	for _, s := range sysServers {
-		log.Printf("[dns module]   system DNS: %s", s.String())
+		log.Printf("[dns module]   bootstrap DNS: %s", s.String())
 	}
 
 	for _, domain := range domains {
@@ -271,14 +264,30 @@ func (m *DnsModule) resolveBootstrap(domains []string) map[string]string {
 			resolved[domain] = domain
 			continue
 		}
-		// 对每个系统 DNS 服务器尝试解析
+		// 对每个 DNS 服务器尝试解析
 		for _, srv := range sysServers {
 			addr := srv.String()
 			m := new(dns.Msg)
 			m.SetQuestion(dns.Fqdn(domain), dns.TypeA)
 			m.RecursionDesired = true
 
-			client := &dns.Client{Net: "udp", Timeout: 3 * time.Second}
+			// Use SO_MARK=0x80 to bypass iptables DNS redirect loop.
+			// Without this mark, the bootstrap query to the system DNS's port 53
+			// would be intercepted by iptables and redirected back to our own
+			// DNS module (which hasn't finished starting yet), causing a timeout.
+			bootstrapMarkFd := func(network, address string, c syscall.RawConn) error {
+				return c.Control(func(fd uintptr) {
+					_ = setSocketMark(fd)
+				})
+			}
+			client := &dns.Client{
+				Net:     "udp",
+				Timeout: 3 * time.Second,
+				Dialer: &net.Dialer{
+					Timeout: 3 * time.Second,
+					Control: bootstrapMarkFd,
+				},
+			}
 			resp, _, err := client.Exchange(m, addr)
 			if err != nil {
 				log.Printf("[dns module] bootstrap: %s via %s failed: %v", domain, addr, err)
@@ -304,6 +313,98 @@ func (m *DnsModule) resolveBootstrap(domains []string) map[string]string {
 	}
 
 	return resolved
+}
+
+// wellKnownPublicDns 是硬编码的著名公共 DNS 服务器列表，作为 bootstrap 解析的兜底。
+// 当系统 DNS 不可用（被劫持/不可达）时，使用这些知名服务器来解析上游域名。
+// 同时包含 IPv4 和 IPv6 地址，确保在各种网络环境下都能工作。
+var wellKnownPublicDns = []string{
+	// 阿里 DNS
+	"223.5.5.5:53",
+	"223.6.6.6:53",
+	"[2400:3200::1]:53",
+	"[2400:3200:baba::1]:53",
+	// 腾讯 DNS
+	"119.29.29.29:53",
+	// Google DNS
+	"8.8.8.8:53",
+	"8.8.4.4:53",
+	"[2001:4860:4860::8888]:53",
+	"[2001:4860:4860::8844]:53",
+	// Cloudflare DNS
+	"1.1.1.1:53",
+	"1.0.0.1:53",
+	"[2606:4700:4700::1111]:53",
+	"[2606:4700:4700::1001]:53",
+}
+
+// collectBootstrapDns 收集可用的 bootstrap DNS 服务器地址。
+// 优先级：
+//  1. 配置中保存的系统 DNS（劫持发生前由 v2rayA 读取并写入配置）
+//  2. /etc/resolv.conf 实时读取
+//  3. 硬编码的著名公共 DNS（兜底，确保即使系统 DNS 不可用也能解析）
+func (m *DnsModule) collectBootstrapDns() []netip.AddrPort {
+	var servers []netip.AddrPort
+	seen := make(map[string]bool) // 去重
+
+	addServers := func(list []string) {
+		for _, s := range list {
+			if !seen[s] {
+				if ap, err := netip.ParseAddrPort(s); err == nil {
+					servers = append(servers, ap)
+					seen[s] = true
+				}
+			}
+		}
+	}
+
+	// 1. 配置中保存的系统 DNS（劫持发生前由 v2rayA 读取并写入配置）
+	if len(m.config.BootstrapDns) > 0 {
+		addServers(m.config.BootstrapDns)
+	}
+
+	// 2. /etc/resolv.conf 实时读取（劫持可能已生效，但过滤掉自身的地址避免自引用）
+	sysDns := GetSystemDNS()
+	for _, ap := range sysDns {
+		s := ap.String()
+		// 跳过自身地址（DNS 模块的监听地址），避免自引用循环
+		if isOwnAddress(ap) {
+			log.Printf("[dns module] bootstrap: skipping own address %s from system DNS", s)
+			continue
+		}
+		if !seen[s] {
+			servers = append(servers, ap)
+			seen[s] = true
+		}
+	}
+
+	// 3. 硬编码的著名公共 DNS（兜底）
+	// 即使系统 DNS 全部被劫持，也能通过公共 DNS 解析上游域名
+	addServers(wellKnownPublicDns)
+
+	return servers
+}
+
+// isOwnAddress 检查地址是否是 DNS 模块自身监听的地址。
+// 用于过滤 bootstrap 中的自引用地址，避免循环。
+func isOwnAddress(ap netip.AddrPort) bool {
+	if !ap.Addr().IsLoopback() && !ap.Addr().IsPrivate() {
+		return false
+	}
+	// 检查是否是常见的 DNS 模块自身地址
+	selfAddrs := []string{
+		"127.0.0.1:53",
+		"127.2.0.17:53",
+		"127.0.0.1:5353",
+	}
+	for _, addr := range selfAddrs {
+		if parsed, err := netip.ParseAddrPort(addr); err == nil {
+			if parsed == ap {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Stop gracefully shuts down the DNS module and all its components.

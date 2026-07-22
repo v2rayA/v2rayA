@@ -174,7 +174,7 @@ func (b *ResponseBuilder) AddECSSubnet(m *dns.Msg, clientIP net.IP) {
 		Address:       ip,
 	}
 
-	b.AddEDNS0(m, dns.DefaultMsgSize, subnet)
+	b.AddEDNS0(m, 4096, subnet)
 }
 
 // SetDNSSEC sets the DNSSEC OK (DO) bit on the message.
