@@ -66,8 +66,18 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 			return fmt.Errorf("ListSet: subscription at index %d not found", index)
 		}
 
-		// Update servers within this subscription
-		db.Exec("DELETE FROM servers WHERE type = 'subscription_server' AND sub_id = ?", subID)
+		// Update servers within this subscription.
+		// Clean up outbound_connections first to satisfy foreign key constraint;
+		// otherwise the delete fails and the insert below duplicates the list.
+		if _, err := db.Exec(`
+			DELETE FROM outbound_connections
+			WHERE server_id IN (SELECT id FROM servers WHERE type = 'subscription_server' AND sub_id = ?)
+		`, subID); err != nil {
+			return fmt.Errorf("ListSet: failed to clear outbound connections of subscription %d: %w", index, err)
+		}
+		if _, err := db.Exec("DELETE FROM servers WHERE type = 'subscription_server' AND sub_id = ?", subID); err != nil {
+			return fmt.Errorf("ListSet: failed to clear old servers of subscription %d: %w", index, err)
+		}
 
 		servers := parsed.Get("servers").Array()
 		for j, s := range servers {
