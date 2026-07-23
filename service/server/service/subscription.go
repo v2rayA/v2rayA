@@ -271,6 +271,33 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			delete(connectedVmessInfo2CssIndex, link)
 		}
 	}
+	// Last fallback: some providers keep node names stable but rotate IPs, which
+	// defeats the endpoint match. Remap by name, but only when the name maps to
+	// exactly one server on each side to avoid connecting to a different node.
+	name2Index := make(map[string]int)
+	nameCount := make(map[string]int)
+	for i, info := range subscriptionInfos {
+		nameCount[info.GetName()]++
+		name2Index[info.GetName()] = i
+	}
+	oldNameCount := make(map[string]int)
+	for link := range connectedVmessInfo2CssIndex {
+		oldNameCount[link2Raw[link].ServerObj.GetName()]++
+	}
+	for link, cssIndexes := range connectedVmessInfo2CssIndex {
+		name := link2Raw[link].ServerObj.GetName()
+		if nameCount[name] != 1 || oldNameCount[name] != 1 {
+			continue
+		}
+		i := name2Index[name]
+		for _, cssIndex := range cssIndexes {
+			cssAfter[cssIndex].ID = i + 1
+		}
+		connectedServerChanged = true
+		log.Info("UpdateSubscription: remapped connected server %v (%v -> %v) by unique name match",
+			name, link2Raw[link].ServerObj.GetHostname(), subscriptionInfos[i].GetHostname())
+		delete(connectedVmessInfo2CssIndex, link)
+	}
 	for link, cssIndexes := range connectedVmessInfo2CssIndex {
 		for _, cssIndex := range cssIndexes {
 			if disconnectIfNecessary {
