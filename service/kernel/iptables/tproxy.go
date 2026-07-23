@@ -89,6 +89,10 @@ iptables -w 2 -t mangle -A TP_OUT -p udp -m addrtype --src-type LOCAL ! --dst-ty
 iptables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 iptables -w 2 -t mangle -A TP_PRE -p udp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
+# 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
+# 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
+iptables -w 2 -t mangle -A TP_PRE -p tcp --dport 52353 -j RETURN
+iptables -w 2 -t mangle -A TP_PRE -p udp --dport 52353 -j RETURN
 # DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip 127.2.0.17
 iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip 127.2.0.17
@@ -155,6 +159,10 @@ ip6tables -w 2 -t mangle -A TP_OUT -p udp -m addrtype --src-type LOCAL ! --dst-t
 ip6tables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 0x40/0xc0 -j RETURN
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
+# 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
+# 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
+ip6tables -w 2 -t mangle -A TP_PRE -p tcp --dport 52353 -j RETURN
+ip6tables -w 2 -t mangle -A TP_PRE -p udp --dport 52353 -j RETURN
 # DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip ::1
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip ::1
@@ -322,6 +330,9 @@ func (t *nftTproxy) GetSetupCommands() Setter {
     chain tp_pre {
         iifname "lo" mark & 0xc0 != 0x40 return
         meta l4proto { tcp, udp } fib saddr type != local fib daddr type != local jump tp_rule
+        # 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
+        # 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
+        meta l4proto { tcp, udp } th dport 52353 return
         # DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
         meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 tproxy ip to 127.2.0.17:52353
         meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 tproxy ip6 to [::1]:52353
