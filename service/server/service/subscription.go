@@ -18,6 +18,7 @@ import (
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/touch"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -245,6 +246,58 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		}
 		infoServerRaws[i] = infoServerRaw
 	}
+	// Fallback: subscription providers often rename nodes (traffic/expiry counters in
+	// names) while keeping the same endpoint. Remap remaining connected servers to new
+	// servers with the same protocol, hostname and port.
+	looseKey := func(obj serverObj.ServerObj) string {
+		return obj.GetProtocol() + "://" + net.JoinHostPort(obj.GetHostname(), strconv.Itoa(obj.GetPort()))
+	}
+	loose2Index := make(map[string]int)
+	for i, info := range subscriptionInfos {
+		k := looseKey(info)
+		if _, ok := loose2Index[k]; !ok {
+			loose2Index[k] = i
+		}
+	}
+	var connectedServerChanged bool
+	for link, cssIndexes := range connectedVmessInfo2CssIndex {
+		if i, ok := loose2Index[looseKey(link2Raw[link].ServerObj)]; ok {
+			for _, cssIndex := range cssIndexes {
+				cssAfter[cssIndex].ID = i + 1
+			}
+			connectedServerChanged = true
+			log.Info("UpdateSubscription: remapped connected server %v to %v by endpoint match",
+				link2Raw[link].ServerObj.GetName(), subscriptionInfos[i].GetName())
+			delete(connectedVmessInfo2CssIndex, link)
+		}
+	}
+	// Last fallback: some providers keep node names stable but rotate IPs, which
+	// defeats the endpoint match. Remap by name, but only when the name maps to
+	// exactly one server on each side to avoid connecting to a different node.
+	name2Index := make(map[string]int)
+	nameCount := make(map[string]int)
+	for i, info := range subscriptionInfos {
+		nameCount[info.GetName()]++
+		name2Index[info.GetName()] = i
+	}
+	oldNameCount := make(map[string]int)
+	for link := range connectedVmessInfo2CssIndex {
+		oldNameCount[link2Raw[link].ServerObj.GetName()]++
+	}
+	for link, cssIndexes := range connectedVmessInfo2CssIndex {
+		name := link2Raw[link].ServerObj.GetName()
+		if nameCount[name] != 1 || oldNameCount[name] != 1 {
+			continue
+		}
+		i := name2Index[name]
+		for _, cssIndex := range cssIndexes {
+			cssAfter[cssIndex].ID = i + 1
+		}
+		connectedServerChanged = true
+		log.Info("UpdateSubscription: remapped connected server %v (%v -> %v) by unique name match",
+			name, link2Raw[link].ServerObj.GetHostname(), subscriptionInfos[i].GetHostname())
+		delete(connectedVmessInfo2CssIndex, link)
+	}
 	for link, cssIndexes := range connectedVmessInfo2CssIndex {
 		for _, cssIndex := range cssIndexes {
 			if disconnectIfNecessary {
@@ -255,7 +308,6 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 				}
 			} else {
 				// Append previously connected node
-				// TODO: may need consideration when ServerRaw changes
 				infoServerRaws = append(infoServerRaws, *link2Raw[link])
 				cssAfter[cssIndex].ID = len(infoServerRaws)
 			}
@@ -267,7 +319,17 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions[index].Servers = infoServerRaws
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
 	subscriptions[index].Info = status
-	return configure.SetSubscription(index, &subscriptions[index])
+	if err := configure.SetSubscription(index, &subscriptions[index]); err != nil {
+		return err
+	}
+	// A remapped connection may point at a server whose config differs from the old
+	// one; the running core keeps using the old config until it is regenerated.
+	if connectedServerChanged && v2ray.ProcessManager.Running() {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			log.Warn("UpdateSubscription: failed to reload core after remapping connected servers: %v", err)
+		}
+	}
+	return nil
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
