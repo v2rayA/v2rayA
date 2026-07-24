@@ -1512,8 +1512,8 @@ export default {
       return null;
     },
     generateURL(srcObj) {
-      let obj = {};
       let query = {};
+      let obj = {};
       let tmp;
       switch (srcObj.protocol) {
         case "vless":
@@ -1820,7 +1820,6 @@ export default {
           }
           return generateURL(tmp);
         case "anytls":
-          let query = {};
           if (srcObj.sni) {
             query.peer = srcObj.sni;
           }
