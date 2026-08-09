@@ -62,33 +62,55 @@ type hysteria2ClientSettings struct {
 	Port    int    `json:"port"`
 }
 
+// hysteria2Params holds the parameters extracted from a hysteria2:// link.
+type hysteria2Params struct {
+	password             string
+	sni                  string
+	pinnedPeerCertSha256 string
+	verifyPeerCertByName string
+	obfs                 string
+	obfsPassword         string
+}
+
 // parseLinkParams extracts the hysteria2 URL parameters, which are the source
-// of the transport config (password, sni, certificate pinning, salamander obfs).
-func (s *Hysteria2) parseLinkParams() (password, sni, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword string) {
+// of the transport config (password, sni, certificate pinning, salamander
+// obfs). Both the standard hysteria2 client parameter names
+// (pinSHA256/pinSha256) and v2rayA's legacy names (pinned_peer_cert_sha256)
+// are accepted.
+func (s *Hysteria2) parseLinkParams() (p hysteria2Params) {
 	if s.Link == "" {
-		return
+		return p
 	}
 	u, err := url.Parse(s.Link)
 	if err != nil {
-		return
+		return p
 	}
 	if u.User != nil {
-		password = u.User.Username()
+		p.password = u.User.Username()
 		if pw, ok := u.User.Password(); ok {
-			password += ":" + pw
+			p.password += ":" + pw
 		}
 	}
 	q := u.Query()
-	return password,
-		q.Get("sni"),
-		q.Get("pinned_peer_cert_sha256"),
-		q.Get("verify_peer_cert_by_name"),
-		q.Get("obfs"),
-		q.Get("obfs-password")
+	p.sni = q.Get("sni")
+	p.pinnedPeerCertSha256 = q.Get("pinSHA256")
+	if p.pinnedPeerCertSha256 == "" {
+		p.pinnedPeerCertSha256 = q.Get("pinSha256")
+	}
+	if p.pinnedPeerCertSha256 == "" {
+		p.pinnedPeerCertSha256 = q.Get("pin_sha256")
+	}
+	if p.pinnedPeerCertSha256 == "" {
+		p.pinnedPeerCertSha256 = q.Get("pinned_peer_cert_sha256")
+	}
+	p.verifyPeerCertByName = q.Get("verify_peer_cert_by_name")
+	p.obfs = q.Get("obfs")
+	p.obfsPassword = q.Get("obfs-password")
+	return p
 }
 
 func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
-	password, sni, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword := s.parseLinkParams()
+	p := s.parseLinkParams()
 
 	settingsJSON, err := json.Marshal(hysteria2ClientSettings{
 		Version: 2,
@@ -100,13 +122,13 @@ func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 
 	tlsSettings := &coreObj.TLSSettings{
-		PinnedPeerCertSha256: pinnedPeerCertSha256,
-		VerifyPeerCertByName: verifyPeerCertByName,
+		PinnedPeerCertSha256: p.pinnedPeerCertSha256,
+		VerifyPeerCertByName: p.verifyPeerCertByName,
 	}
-	if sni == "" {
+	if p.sni == "" {
 		tlsSettings.ServerName = s.Server
 	} else {
-		tlsSettings.ServerName = sni
+		tlsSettings.ServerName = p.sni
 	}
 
 	streamSettings := &coreObj.StreamSettings{
@@ -115,11 +137,11 @@ func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
 		TLSSettings: tlsSettings,
 		HysteriaSettings: &coreObj.HysteriaSettings{
 			Version: 2,
-			Auth:    password,
+			Auth:    p.password,
 		},
 	}
-	if obfs == "salamander" {
-		maskSettings, err := json.Marshal(map[string]string{"password": obfsPassword})
+	if p.obfs == "salamander" {
+		maskSettings, err := json.Marshal(map[string]string{"password": p.obfsPassword})
 		if err != nil {
 			return c, fmt.Errorf("hysteria2: marshal obfs settings: %w", err)
 		}

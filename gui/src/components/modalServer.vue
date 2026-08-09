@@ -1449,7 +1449,8 @@ export default {
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
-          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
+          pinnedPeerCertSha256:
+            u.params.pinSHA256 || u.params.pinSha256 || u.params.pin_sha256 || u.params.pinned_peer_cert_sha256 || u.params.pinnedPeerCertSha256 || "",
           verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
           obfs: u.params.obfs || "none",
           obfsPassword: u.params["obfs-password"] || "",
@@ -2017,10 +2018,10 @@ export default {
         if (name) url += `#${encodeURIComponent(name)}`;
         coded = url;
       } else if (this.tabChoice === 8) {
-        // hysteria2://password@server:port?pinned_peer_cert_sha256=&verify_peer_cert_by_name=&obfs=xxx#name
+        // hysteria2://password@server:port?pinSHA256=&obfs=xxx#name
         const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword, sni, name } = this.hysteria2;
         let params = [];
-        if (pinnedPeerCertSha256) params.push("pinned_peer_cert_sha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (pinnedPeerCertSha256) params.push("pinSHA256=" + encodeURIComponent(pinnedPeerCertSha256));
         if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
         if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
         if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
