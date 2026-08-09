@@ -30,7 +30,7 @@ jobs:
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Get Friendly File Name
@@ -72,6 +72,7 @@ jobs:
       - name: Build Packages
         run: |
           sudo gem install fpm -v 1.15.1
+          sudo apt update
           sudo apt-get install -y libarchive-tools rpm tar unzip
           sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
           ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default

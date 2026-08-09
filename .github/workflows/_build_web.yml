@@ -12,7 +12,7 @@ jobs:
   Build_v2rayA_Web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Set up Node.js

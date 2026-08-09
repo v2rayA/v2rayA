@@ -24,7 +24,7 @@ jobs:
           - { os: macos-latest, goarch: arm64 }
     needs: Build_v2rayA_Web
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Download Artifact
