@@ -1,11 +1,12 @@
 package serverObj
 
 import (
+	"encoding/json"
 	"fmt"
-	"net"
 	"net/url"
 	"strconv"
-	"strings"
+
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
 )
 
 func init() {
@@ -53,16 +54,91 @@ func ParseHysteria2URL(link string) (data *Hysteria2, err error) {
 	}, nil
 }
 
-func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+// hysteria2ClientSettings is the outbound "settings" JSON of xray's native
+// hysteria protocol (version 2, i.e. hysteria2).
+type hysteria2ClientSettings struct {
+	Version int32  `json:"version"`
+	Address string `json:"address"`
+	Port    int    `json:"port"`
+}
+
+// parseLinkParams extracts the hysteria2 URL parameters, which are the source
+// of the transport config (password, sni, certificate pinning, salamander obfs).
+func (s *Hysteria2) parseLinkParams() (password, sni, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword string) {
+	if s.Link == "" {
+		return
 	}
-	chain := []string{socks5.String(), s.Link}
+	u, err := url.Parse(s.Link)
+	if err != nil {
+		return
+	}
+	if u.User != nil {
+		password = u.User.Username()
+		if pw, ok := u.User.Password(); ok {
+			password += ":" + pw
+		}
+	}
+	q := u.Query()
+	return password,
+		q.Get("sni"),
+		q.Get("pinned_peer_cert_sha256"),
+		q.Get("verify_peer_cert_by_name"),
+		q.Get("obfs"),
+		q.Get("obfs-password")
+}
+
+func (s *Hysteria2) Configuration(info PriorInfo) (c Configuration, err error) {
+	password, sni, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword := s.parseLinkParams()
+
+	settingsJSON, err := json.Marshal(hysteria2ClientSettings{
+		Version: 2,
+		Address: s.Server,
+		Port:    s.Port,
+	})
+	if err != nil {
+		return c, fmt.Errorf("hysteria2: marshal settings: %w", err)
+	}
+
+	tlsSettings := &coreObj.TLSSettings{
+		PinnedPeerCertSha256: pinnedPeerCertSha256,
+		VerifyPeerCertByName: verifyPeerCertByName,
+	}
+	if sni == "" {
+		tlsSettings.ServerName = s.Server
+	} else {
+		tlsSettings.ServerName = sni
+	}
+
+	streamSettings := &coreObj.StreamSettings{
+		Network:     "hysteria",
+		Security:    "tls",
+		TLSSettings: tlsSettings,
+		HysteriaSettings: &coreObj.HysteriaSettings{
+			Version: 2,
+			Auth:    password,
+		},
+	}
+	if obfs == "salamander" {
+		maskSettings, err := json.Marshal(map[string]string{"password": obfsPassword})
+		if err != nil {
+			return c, fmt.Errorf("hysteria2: marshal obfs settings: %w", err)
+		}
+		streamSettings.FinalMask = &coreObj.FinalMask{
+			Udp: []coreObj.UdpMask{{
+				Type:     "salamander",
+				Settings: maskSettings,
+			}},
+		}
+	}
+
 	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   true,
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:            info.Tag,
+			Protocol:       "hysteria",
+			Settings:       coreObj.Settings{Inlined: settingsJSON},
+			StreamSettings: streamSettings,
+		},
+		UDPSupport: true,
 	}, nil
 }
 
@@ -71,7 +147,7 @@ func (s *Hysteria2) ExportToURL() string {
 }
 
 func (s *Hysteria2) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (s *Hysteria2) ProtoToShow() string {

@@ -186,7 +186,20 @@ type StreamSettings struct {
 	HTTPSettings    *HttpSettings    `json:"httpSettings,omitempty"`
 	GrpcSettings    *GrpcSettings    `json:"grpcSettings,omitempty"`
 	QuicSettings    *QuicSettings    `json:"quicSettings,omitempty"`
+	HysteriaSettings *HysteriaSettings `json:"hysteriaSettings,omitempty"`
+	FinalMask        *FinalMask        `json:"finalmask,omitempty"`
 	Sockopt         *Sockopt         `json:"sockopt,omitempty"`
+}
+type HysteriaSettings struct {
+	Version int32  `json:"version"`
+	Auth    string `json:"auth,omitempty"`
+}
+type FinalMask struct {
+	Udp []UdpMask `json:"udp,omitempty"`
+}
+type UdpMask struct {
+	Type     string          `json:"type"`
+	Settings json.RawMessage `json:"settings,omitempty"`
 }
 type RealitySettings struct {
 	ServerName  string `json:"serverName,omitempty"`
