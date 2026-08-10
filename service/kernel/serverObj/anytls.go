@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/v2rayA/v2rayA/kernel/coreObj"
 )
@@ -52,6 +53,7 @@ type anytlsSettings struct {
 	Port                 int    `json:"port"`
 	Password             string `json:"password"`
 	SNI                  string `json:"sni,omitempty"`
+	AllowInsecure        bool   `json:"allow_insecure,omitempty"`
 	MinIdleSessions      int    `json:"min_idle_sessions,omitempty"`
 	PinnedPeerCertSha256 string `json:"pinnedPeerCertSha256,omitempty"`
 	VerifyPeerCertByName string `json:"verifyPeerCertByName,omitempty"`
@@ -76,6 +78,7 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 		Port:                 s.Port,
 		Password:             password,
 		SNI:                  sni,
+		AllowInsecure:        isTruthy(q.Get("insecure")),
 		MinIdleSessions:      minIdle,
 		PinnedPeerCertSha256: q.Get("pinnedPeerCertSha256"),
 		VerifyPeerCertByName: q.Get("verifyPeerCertByName"),
@@ -92,6 +95,15 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 		},
 		UDPSupport: true,
 	}, nil
+}
+
+func isTruthy(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *AnyTLS) ExportToURL() string {
