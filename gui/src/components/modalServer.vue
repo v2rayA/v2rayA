@@ -1242,6 +1242,21 @@ export default {
         obj.type = obj.type || "none";
         obj.scy = obj.scy || "auto";
         obj.protocol = obj.protocol || "vmess";
+        // xhttpHeaders arrives as a JSON-encoded string; convert it to the
+        // array model used by the GUI so the editor round-trips correctly.
+        if (typeof obj.xhttpHeaders === "string") {
+          try {
+            const hdrsObj = JSON.parse(obj.xhttpHeaders);
+            obj.xhttpHeaders = Object.entries(hdrsObj || {}).map(([key, value]) => ({ key, value }));
+          } catch (_) {
+            obj.xhttpHeaders = [];
+          }
+        }
+        if (!Array.isArray(obj.xhttpHeaders)) obj.xhttpHeaders = [];
+        // multiMode/permitWithoutStream arrive as strings; restore the booleans
+        // used by the GUI model.
+        if (typeof obj.multiMode === "string") obj.multiMode = obj.multiMode === "true" || obj.multiMode === "1";
+        if (typeof obj.permitWithoutStream === "string") obj.permitWithoutStream = obj.permitWithoutStream === "true" || obj.permitWithoutStream === "1";
         return obj;
       } else if (url.toLowerCase().startsWith("vless://")) {
         let u = parseURL(url);
@@ -1615,6 +1630,20 @@ export default {
         case "vmess":
           //https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2)
           obj = Object.assign({}, srcObj);
+          // xhttpHeaders is stored on the backend as a JSON-encoded string; the
+          // GUI model uses an array of {key,value}. Serialize as a string so the
+          // vmess payload can round-trip through the backend parser.
+          if (Array.isArray(obj.xhttpHeaders)) {
+            const hdrsObj = {};
+            obj.xhttpHeaders.forEach(h => {
+              if (h && h.key) hdrsObj[h.key] = h.value;
+            });
+            obj.xhttpHeaders = Object.keys(hdrsObj).length > 0 ? JSON.stringify(hdrsObj) : "";
+          }
+          // multiMode/permitWithoutStream are stored as strings on the backend
+          // but modeled as booleans in the GUI; serialize them as strings.
+          if (typeof obj.multiMode === "boolean") obj.multiMode = obj.multiMode ? "true" : "false";
+          if (typeof obj.permitWithoutStream === "boolean") obj.permitWithoutStream = obj.permitWithoutStream ? "true" : "false";
           switch (obj.net) {
             case "kcp":
             case "tcp":

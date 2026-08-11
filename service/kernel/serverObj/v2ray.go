@@ -277,6 +277,16 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		if allowInsecure := gjson.Get(raw, "allowInsecure"); allowInsecure.Exists() {
 			// allowInsecure is deprecated, silently ignore
 		}
+		// Older v2rayA releases exported a few fields with the wrong JSON type
+		// (xhttpHeaders as array, multiMode/permitWithoutStream as boolean).
+		// Normalize them into the string form the struct expects.
+		var m map[string]interface{}
+		if e := jsoniter.Unmarshal([]byte(raw), &m); e == nil {
+			normalizeVmessFields(m)
+			if b, e := jsoniter.Marshal(m); e == nil {
+				raw = string(b)
+			}
+		}
 		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
 			return
@@ -292,6 +302,45 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 	}
 	info.Protocol = "vmess"
 	return &info, nil
+}
+
+// normalizeVmessFields coerces legacy JSON values that leaked into string fields
+// of V2Ray back into the JSON-encoded string form the struct expects.
+func normalizeVmessFields(m map[string]interface{}) {
+	coerceStringField := func(key string) {
+		v, ok := m[key]
+		if !ok {
+			return
+		}
+		switch val := v.(type) {
+		case bool:
+			m[key] = strconv.FormatBool(val)
+		case []interface{}:
+			// legacy array-of-{key,value} form for xhttpHeaders
+			hdrs := make(map[string]string)
+			for _, e := range val {
+				if obj, ok := e.(map[string]interface{}); ok {
+					if k, _ := obj["key"].(string); k != "" {
+						hdrs[k], _ = obj["value"].(string)
+					}
+				}
+			}
+			m[key] = ""
+			if len(hdrs) > 0 {
+				b, _ := jsoniter.Marshal(hdrs)
+				m[key] = string(b)
+			}
+		case map[string]interface{}:
+			m[key] = ""
+			if len(val) > 0 {
+				b, _ := jsoniter.Marshal(val)
+				m[key] = string(b)
+			}
+		}
+	}
+	coerceStringField("xhttpHeaders")
+	coerceStringField("multiMode")
+	coerceStringField("permitWithoutStream")
 }
 
 func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
