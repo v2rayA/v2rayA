@@ -127,6 +127,12 @@ func SetServer(index int, server *ServerRaw) (err error) {
 func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 	return db.ListSet("touch", "subscriptions", index, subscription)
 }
+func MarkSubscriptionUpdateAttempt(databaseID int64) error {
+	return db.MarkSubscriptionUpdateAttempt(databaseID)
+}
+func GetSubscriptionIndexByID(databaseID int64) (int, error) {
+	return db.GetSubscriptionIndexByID(databaseID)
+}
 func SetSetting(setting *Setting) (err error) {
 	return db.Set("system", "setting", setting)
 }

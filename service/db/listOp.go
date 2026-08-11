@@ -2,12 +2,46 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
+
+type subscriptionListValue struct {
+	DatabaseID             int64             `json:"_databaseId"`
+	Remarks                string            `json:"remarks,omitempty"`
+	Address                string            `json:"address"`
+	Status                 string            `json:"status"`
+	Info                   string            `json:"info"`
+	Servers                []json.RawMessage `json:"servers"`
+	AutoSelect             bool              `json:"autoSelect"`
+	AutoUpdateMode         string            `json:"autoUpdateMode"`
+	AutoUpdateIntervalHour int               `json:"autoUpdateIntervalHour"`
+	LastUpdateAttemptAt    string            `json:"lastUpdateAttemptAt,omitempty"`
+}
+
+func marshalSubscriptionListValue(id int64, remarks, address, status, info string, servers []string,
+	autoSelect bool, autoUpdateMode string, autoUpdateIntervalHour int, lastUpdateAttemptAt string,
+) ([]byte, error) {
+	rawServers := make([]json.RawMessage, len(servers))
+	for i, server := range servers {
+		rawServers[i] = json.RawMessage(server)
+	}
+	return json.Marshal(subscriptionListValue{
+		DatabaseID:             id,
+		Remarks:                remarks,
+		Address:                address,
+		Status:                 status,
+		Info:                   info,
+		Servers:                rawServers,
+		AutoSelect:             autoSelect,
+		AutoUpdateMode:         autoUpdateMode,
+		AutoUpdateIntervalHour: autoUpdateIntervalHour,
+		LastUpdateAttemptAt:    lastUpdateAttemptAt,
+	})
+}
 
 // ListSet sets an element at a specific index in a list.
 func ListSet(bucket string, key string, index int, val interface{}) (err error) {
@@ -53,10 +87,15 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 		if parsed.Get("autoSelect").Bool() {
 			autoSelect = 1
 		}
+		autoUpdateMode := parsed.Get("autoUpdateMode").String()
+		if autoUpdateMode == "" {
+			autoUpdateMode = "none"
+		}
+		autoUpdateIntervalHour := int(parsed.Get("autoUpdateIntervalHour").Int())
 
 		result, err := db.Exec(
-			"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-			address, remarks, status, info, autoSelect, subID,
+			"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, auto_update_mode = ?, auto_update_interval_hour = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+			address, remarks, status, info, autoSelect, autoUpdateMode, autoUpdateIntervalHour, subID,
 		)
 		if err != nil {
 			return err
@@ -96,6 +135,31 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 	}
 }
 
+// MarkSubscriptionUpdateAttempt records an update attempt regardless of its outcome.
+func MarkSubscriptionUpdateAttempt(databaseID int64) error {
+	result, err := GetDB().Exec(
+		"UPDATE subscriptions SET last_update_attempt_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+		databaseID,
+	)
+	if err != nil {
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("MarkSubscriptionUpdateAttempt: subscription %d not found", databaseID)
+	}
+	return nil
+}
+
+func GetSubscriptionIndexByID(databaseID int64) (int, error) {
+	var index int
+	err := GetDB().QueryRow("SELECT sort FROM subscriptions WHERE id = ?", databaseID).Scan(&index)
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("subscription %d not found", databaseID)
+	}
+	return index, err
+}
+
 // ListGet retrieves an element at a specific index from a list.
 func ListGet(bucket string, key string, index int) (b []byte, err error) {
 	db := GetDB()
@@ -115,46 +179,51 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 		return []byte(configJSON), nil
 
 	case "touch/subscriptions":
-		var address, remarks, status, info string
-		var autoSelectInt int
-		err = db.QueryRow(
-			"SELECT address, remarks, status, info, auto_select FROM subscriptions WHERE sort = ?", index,
-		).Scan(&address, &remarks, &status, &info, &autoSelectInt)
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("ListGet: can't get element from an empty list")
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		// Reconstruct the subscription JSON with servers
-		rows, err := db.Query(
-			"SELECT config_json FROM servers WHERE type = 'subscription_server' AND sub_id = ? ORDER BY sort",
-			int64(index+1),
-		)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		var servers []string
-		for rows.Next() {
-			var s string
-			if err := rows.Scan(&s); err != nil {
-				return nil, err
-			}
-			servers = append(servers, s)
-		}
-
-		serversJSON := "[" + strings.Join(servers, ",") + "]"
-		autoSelect := autoSelectInt != 0
-		result := fmt.Sprintf(`{"remarks":"%s","address":"%s","status":"%s","info":"%s","servers":%s,"autoSelect":%v}`,
-			remarks, address, status, info, serversJSON, autoSelect)
-		return []byte(result), nil
+		return listGetSubscription(db, index)
 
 	default:
 		return nil, fmt.Errorf("ListGet: unsupported bucket/key: %s/%s", bucket, key)
 	}
+}
+
+func listGetSubscription(db *sql.DB, index int) ([]byte, error) {
+	var id int64
+	var address, remarks, status, info, autoUpdateMode string
+	var autoSelectInt, autoUpdateIntervalHour int
+	var lastUpdateAttemptAt sql.NullString
+	err := db.QueryRow(
+		"SELECT id, address, remarks, status, info, auto_select, auto_update_mode, auto_update_interval_hour, last_update_attempt_at FROM subscriptions WHERE sort = ?", index,
+	).Scan(&id, &address, &remarks, &status, &info, &autoSelectInt, &autoUpdateMode, &autoUpdateIntervalHour, &lastUpdateAttemptAt)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("ListGet: can't get element from an empty list")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Reconstruct the subscription JSON with servers
+	rows, err := db.Query(
+		"SELECT config_json FROM servers WHERE type = 'subscription_server' AND sub_id = ? ORDER BY sort",
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var servers []string
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, err
+		}
+		servers = append(servers, s)
+	}
+	autoSelect := autoSelectInt != 0
+	return marshalSubscriptionListValue(
+		id, remarks, address, status, info, servers, autoSelect,
+		autoUpdateMode, autoUpdateIntervalHour, lastUpdateAttemptAt.String,
+	)
 }
 
 // ListAppend appends values to a list.
@@ -211,14 +280,19 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 				if item.Get("autoSelect").Bool() {
 					autoSelect = 1
 				}
+				autoUpdateMode := item.Get("autoUpdateMode").String()
+				if autoUpdateMode == "" {
+					autoUpdateMode = "none"
+				}
+				autoUpdateIntervalHour := int(item.Get("autoUpdateIntervalHour").Int())
 
 				var maxSort int
 				db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM subscriptions").Scan(&maxSort)
 				newSort := maxSort + 1
 
 				res, err := db.Exec(
-					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort) VALUES (?, ?, ?, ?, ?, ?)",
-					address, remarks, status, info, autoSelect, newSort,
+					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, auto_update_mode, auto_update_interval_hour, last_update_attempt_at, sort) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), ?)",
+					address, remarks, status, info, autoSelect, autoUpdateMode, autoUpdateIntervalHour, newSort,
 				)
 				if err != nil {
 					return err
@@ -273,7 +347,7 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 		return list, rows.Err()
 
 	case "touch/subscriptions":
-		rows, err := db.Query("SELECT id, address, remarks, status, info, auto_select FROM subscriptions ORDER BY sort")
+		rows, err := db.Query("SELECT id, address, remarks, status, info, auto_select, auto_update_mode, auto_update_interval_hour, last_update_attempt_at FROM subscriptions ORDER BY sort")
 		if err != nil {
 			return nil, err
 		}
@@ -281,9 +355,10 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 
 		for rows.Next() {
 			var id int64
-			var address, remarks, status, info string
-			var autoSelectInt int
-			if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoSelectInt); err != nil {
+			var address, remarks, status, info, autoUpdateMode string
+			var autoSelectInt, autoUpdateIntervalHour int
+			var lastUpdateAttemptAt sql.NullString
+			if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoSelectInt, &autoUpdateMode, &autoUpdateIntervalHour, &lastUpdateAttemptAt); err != nil {
 				return nil, err
 			}
 
@@ -306,11 +381,15 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 			}
 			serverRows.Close()
 
-			serversJSON := "[" + strings.Join(servers, ",") + "]"
 			autoSelect := autoSelectInt != 0
-			result := fmt.Sprintf(`{"remarks":"%s","address":"%s","status":"%s","info":"%s","servers":%s,"autoSelect":%v}`,
-				remarks, address, status, info, serversJSON, autoSelect)
-			list = append(list, []byte(result))
+			result, err := marshalSubscriptionListValue(
+				id, remarks, address, status, info, servers, autoSelect,
+				autoUpdateMode, autoUpdateIntervalHour, lastUpdateAttemptAt.String,
+			)
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, result)
 		}
 		return list, rows.Err()
 
