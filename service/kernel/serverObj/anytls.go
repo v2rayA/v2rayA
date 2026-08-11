@@ -17,11 +17,12 @@ func init() {
 }
 
 type AnyTLS struct {
-	Name     string `json:"name"`
-	Server   string `json:"server"`
-	Port     int    `json:"port"`
-	Protocol string `json:"protocol"`
-	Link     string `json:"link"`
+	Name          string `json:"name"`
+	Server        string `json:"server"`
+	Port          int    `json:"port"`
+	Protocol      string `json:"protocol"`
+	Link          string `json:"link"`
+	AllowInsecure bool   `json:"allowInsecure"`
 }
 
 func NewAnyTLS(link string) (ServerObj, error) {
@@ -38,23 +39,25 @@ func ParseAnyTLSURL(link string) (data *AnyTLS, err error) {
 		return nil, err
 	}
 	return &AnyTLS{
-		Name:     u.Fragment,
-		Server:   u.Hostname(),
-		Port:     port,
-		Protocol: "anytls",
-		Link:     link,
+		Name:          u.Fragment,
+		Server:        u.Hostname(),
+		Port:          port,
+		Protocol:      "anytls",
+		Link:          link,
+		AllowInsecure: u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
 	}, nil
 }
 
 // anytlsSettings holds the settings serialized into the hybrid-core xray config.
 type anytlsSettings struct {
-	Address              string `json:"address"`
-	Port                 int    `json:"port"`
-	Password             string `json:"password"`
-	SNI                  string `json:"sni,omitempty"`
-	MinIdleSessions      int    `json:"min_idle_sessions,omitempty"`
-	PinnedPeerCertSha256 string `json:"pinnedPeerCertSha256,omitempty"`
-	VerifyPeerCertByName string `json:"verifyPeerCertByName,omitempty"`
+	Address                          string `json:"address"`
+	Port                             int    `json:"port"`
+	Password                         string `json:"password"`
+	SNI                              string `json:"sni,omitempty"`
+	MinIdleSessions                  int    `json:"min_idle_sessions,omitempty"`
+	AllowInsecure                    bool   `json:"allow_insecure,omitempty"`
+	PinnedPeerCertificateChainSha256 string `json:"pinned_peer_certificate_chain_sha256,omitempty"`
+	VerifyPeerCertByName             string `json:"verifyPeerCertByName,omitempty"`
 }
 
 func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
@@ -72,13 +75,14 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 	minIdle, _ := strconv.Atoi(q.Get("minIdleSession"))
 
 	settingsJSON, err := json.Marshal(anytlsSettings{
-		Address:              s.Server,
-		Port:                 s.Port,
-		Password:             password,
-		SNI:                  sni,
-		MinIdleSessions:      minIdle,
-		PinnedPeerCertSha256: q.Get("pinnedPeerCertSha256"),
-		VerifyPeerCertByName: q.Get("verifyPeerCertByName"),
+		Address:                          s.Server,
+		Port:                             s.Port,
+		Password:                         password,
+		SNI:                              sni,
+		MinIdleSessions:                  minIdle,
+		AllowInsecure:                    s.AllowInsecure,
+		PinnedPeerCertificateChainSha256: q.Get("pinnedPeerCertSha256"),
+		VerifyPeerCertByName:             q.Get("verifyPeerCertByName"),
 	})
 	if err != nil {
 		return c, fmt.Errorf("anytls: marshal settings: %w", err)

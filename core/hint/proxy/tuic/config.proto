@@ -22,4 +22,6 @@ message ClientConfig {
   repeated string alpn = 8;
   // Disable SNI in TLS ClientHello
   bool disable_sni = 9;
+  // Pinned peer certificate chain SHA256 hash. Accepts hex or base64.
+  string pinned_peer_certificate_chain_sha256 = 10;
 }

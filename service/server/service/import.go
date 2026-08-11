@@ -12,10 +12,10 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/touch"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
-	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 func PluginManagerValidateLink(url string) bool {
@@ -36,10 +36,12 @@ func Import(url string, which *configure.Which) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to resolve addresses: %w", err)
 		}
-		for _, info := range infos {
-			err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: info}})
+		for i, info := range infos {
+			if err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: info}}); err != nil {
+				return fmt.Errorf("failed to import server %d/%d (%v): %w", i+1, len(infos), info.GetName(), err)
+			}
 		}
-		return err
+		return nil
 	}
 	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
 		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
@@ -100,13 +102,16 @@ func Import(url string, which *configure.Which) (err error) {
 		// subscription
 		source := url
 		if u, err := url2.Parse(source); err == nil {
-			if u.Scheme == "sub" {
+			switch strings.ToLower(u.Scheme) {
+			case "sub":
+				// strip the "sub://" (case-insensitive) scheme, then base64 decode
+				// the payload
+				payload := source[len(u.Scheme)+3:]
 				var e error
-				source, e = common.Base64StdDecode(source[6:])
-				if e != nil {
-					source, _ = common.Base64URLDecode(source[6:])
+				if source, e = common.Base64StdDecode(payload); e != nil {
+					source, _ = common.Base64URLDecode(payload)
 				}
-			} else if u.Scheme == "" {
+			case "":
 				u.Scheme = "http"
 				source = u.String()
 			}
@@ -124,11 +129,13 @@ func Import(url string, which *configure.Which) (err error) {
 			servers[i] = configure.ServerRaw{ServerObj: v}
 		}
 
-		// deduplicate using address as key since ServerRaw contains non-comparable fields
+		// deduplicate using protocol://host:port as key since ServerRaw contains
+		// non-comparable fields. Host:port alone is not enough: the same endpoint
+		// can legitimately serve multiple protocols (e.g. vmess + trojan).
 		seen := make(map[string]struct{})
 		uniqueServers := make([]configure.ServerRaw, 0, len(servers))
 		for _, s := range servers {
-			key := s.ServerObj.GetHostname() + ":" + fmt.Sprintf("%d", s.ServerObj.GetPort())
+			key := fmt.Sprintf("%s://%s:%d", s.ServerObj.GetProtocol(), s.ServerObj.GetHostname(), s.ServerObj.GetPort())
 			if _, ok := seen[key]; ok {
 				continue
 			}

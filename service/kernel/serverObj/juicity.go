@@ -54,6 +54,7 @@ type juicitySettings struct {
 	UUID              string `json:"uuid"`
 	Password          string `json:"password"`
 	SNI               string `json:"sni,omitempty"`
+	AllowInsecure     bool   `json:"allow_insecure,omitempty"`
 	CongestionControl string `json:"congestion_control,omitempty"`
 	PinnedSHA256      string `json:"pinned_certchain_sha256,omitempty"`
 }
@@ -77,12 +78,15 @@ func (s *Juicity) Configuration(info PriorInfo) (c Configuration, err error) {
 		congestion = q.Get("congestionControl")
 	}
 	pinnedSHA := q.Get("pinned_certchain_sha256")
+	// accept both "allow_insecure" and "allowInsecure" query spellings
+	allowInsecure := q.Get("allow_insecure") == "true" || q.Get("allowInsecure") == "true"
 
 	settingsJSON, err := json.Marshal(juicitySettings{
 		Address:           net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 		UUID:              uuid,
 		Password:          password,
 		SNI:               sni,
+		AllowInsecure:     allowInsecure,
 		CongestionControl: congestion,
 		PinnedSHA256:      pinnedSHA,
 	})

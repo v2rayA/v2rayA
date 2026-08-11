@@ -16,10 +16,10 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/touch"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -47,11 +47,21 @@ func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err err
 		return
 	}
 	for _, server := range sip.Servers {
+		rawQuery := url.Values{}
+		if server.Plugin != "" {
+			// SIP008's "plugin" is the plugin name and "plugin_opts" its options;
+			// combine them into the ss:// "plugin=name;opts" parameter.
+			plugin := server.Plugin
+			if server.PluginOpts != "" {
+				plugin += ";" + server.PluginOpts
+			}
+			rawQuery.Set("plugin", plugin)
+		}
 		u := url.URL{
 			Scheme:   "ss",
 			User:     url.UserPassword(server.Method, server.Password),
 			Host:     net.JoinHostPort(server.Server, strconv.Itoa(server.ServerPort)),
-			RawQuery: url.Values{"plugin": []string{server.PluginOpts}}.Encode(),
+			RawQuery: rawQuery.Encode(),
 			Fragment: server.Remarks,
 		}
 		obj, err := serverObj.NewFromLink("shadowsocks", u.String())

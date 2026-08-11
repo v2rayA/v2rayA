@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"fmt"
 	"net"
 	"runtime"
 	"time"
@@ -18,13 +19,14 @@ const (
 	connectivityBackoffBase = 30 * time.Second
 	// connectivityBackoffMax caps the exponential backoff delay.
 	connectivityBackoffMax = 120 * time.Second
-	// connectivitySocksAddr is the local SOCKS5 forward address used for probing.
-	// It matches the "transparent" inbound port added by setInbound for TransparentTun
-	// (tinytunSocksPort = 52345).  Using a local TCP dial avoids routing the probe
-	// through the TUN device itself, which could produce false negatives while
-	// wintun routes are being (re-)configured on Windows.
-	connectivitySocksAddr = "127.0.0.1:52345"
 )
+
+// connectivitySocksAddr is the local SOCKS5 forward address used for probing.
+// It matches the "transparent" inbound port added by setInbound for the
+// transparent proxy modes (tinytunSocksPort = 52345).  Using a local TCP dial
+// avoids routing the probe through the TUN device itself, which could produce
+// false negatives while wintun routes are being (re-)configured on Windows.
+var connectivitySocksAddr = fmt.Sprintf("127.0.0.1:%d", tinytunSocksPort)
 
 // connectivityStartupDelay is the initial wait before the first connectivity
 // probe.  On Windows it is larger to accommodate wintun driver initialisation.

@@ -20,6 +20,8 @@ import (
 	"github.com/xtls/xray-core/common/task"
 	"github.com/xtls/xray-core/transport"
 	"github.com/xtls/xray-core/transport/internet"
+
+	"github.com/v2rayA/v2raya-core/hint/tlsutil"
 )
 
 // Client is the tuic outbound handler.
@@ -58,6 +60,16 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 		InsecureSkipVerify: config.AllowInsecure, // #nosec G402 -- user-configurable
 		NextProtos:         alpn,
 		MinVersion:         tls.VersionTLS13,
+	}
+	if config.PinnedPeerCertificateChainSha256 != "" {
+		hash, err := tlsutil.ParsePinnedChain(config.PinnedPeerCertificateChainSha256)
+		if err != nil {
+			return nil, fmt.Errorf("tuic: invalid pinned peer certificate chain hash: %w", err)
+		}
+		tlsCfg.VerifyPeerCertificate = tlsutil.PinVerifier(hash)
+		// Pin verification is self-contained against rawCerts, so the chain / host
+		// checks can be bypassed. Without this a self-signed cert would always fail.
+		tlsCfg.InsecureSkipVerify = true // #nosec G402 -- guarded by pinning
 	}
 	if config.DisableSni {
 		tlsCfg.ServerName = ""

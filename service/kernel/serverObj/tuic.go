@@ -26,6 +26,7 @@ type Tuic struct {
 	Password             string `json:"password"`
 	Sni                  string `json:"sni"`
 	DisableSni           bool   `json:"disableSni"`
+	AllowInsecure        bool   `json:"allowInsecure"`
 	Alpn                 string `json:"alpn"`
 	CongestionControl    string `json:"congestionControl"`
 	UdpRelayMode         string `json:"udpRelayMode"`
@@ -66,6 +67,7 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 		Password:             u.User.String(),
 		Sni:                  u.Query().Get("sni"),
 		DisableSni:           u.Query().Get("disable_sni") == "true" || u.Query().Get("disable_sni") == "1",
+		AllowInsecure:        u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
 		Alpn:                 alpn,
 		CongestionControl:    u.Query().Get("congestion_control"),
 		UdpRelayMode:         u.Query().Get("udp_relay_mode"),
@@ -84,16 +86,17 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 
 // tuicSettings mirrors hint/proxy/tuic.ClientConfig JSON tags for serialization.
 type tuicSettings struct {
-	Address              string   `json:"address"`
-	UUID                 string   `json:"uuid"`
-	Password             string   `json:"password"`
-	Sni                  string   `json:"sni,omitempty"`
-	CongestionControl    string   `json:"congestion_control,omitempty"`
-	UdpRelayMode         string   `json:"udp_relay_mode,omitempty"`
-	Alpn                 []string `json:"alpn,omitempty"`
-	DisableSni           bool     `json:"disable_sni,omitempty"`
-	PinnedPeerCertSha256 string   `json:"pinnedPeerCertSha256,omitempty"`
-	VerifyPeerCertByName string   `json:"verifyPeerCertByName,omitempty"`
+	Address                          string   `json:"address"`
+	UUID                             string   `json:"uuid"`
+	Password                         string   `json:"password"`
+	Sni                              string   `json:"sni,omitempty"`
+	CongestionControl                string   `json:"congestion_control,omitempty"`
+	UdpRelayMode                     string   `json:"udp_relay_mode,omitempty"`
+	Alpn                             []string `json:"alpn,omitempty"`
+	DisableSni                       bool     `json:"disable_sni,omitempty"`
+	AllowInsecure                    bool     `json:"allow_insecure,omitempty"`
+	PinnedPeerCertificateChainSha256 string   `json:"pinned_peer_certificate_chain_sha256,omitempty"`
+	VerifyPeerCertByName             string   `json:"verifyPeerCertByName,omitempty"`
 }
 
 func (s *Tuic) Configuration(info PriorInfo) (c Configuration, err error) {
@@ -103,16 +106,17 @@ func (s *Tuic) Configuration(info PriorInfo) (c Configuration, err error) {
 	}
 
 	settingsJSON, err := json.Marshal(tuicSettings{
-		Address:              net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
-		UUID:                 s.UUID,
-		Password:             s.Password,
-		Sni:                  s.Sni,
-		CongestionControl:    s.CongestionControl,
-		UdpRelayMode:         s.UdpRelayMode,
-		Alpn:                 alpn,
-		DisableSni:           s.DisableSni,
-		PinnedPeerCertSha256: s.PinnedPeerCertSha256,
-		VerifyPeerCertByName: s.VerifyPeerCertByName,
+		Address:                          net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
+		UUID:                             s.UUID,
+		Password:                         s.Password,
+		Sni:                              s.Sni,
+		CongestionControl:                s.CongestionControl,
+		UdpRelayMode:                     s.UdpRelayMode,
+		Alpn:                             alpn,
+		DisableSni:                       s.DisableSni,
+		AllowInsecure:                    s.AllowInsecure,
+		PinnedPeerCertificateChainSha256: s.PinnedPeerCertSha256,
+		VerifyPeerCertByName:             s.VerifyPeerCertByName,
 	})
 	if err != nil {
 		return c, fmt.Errorf("tuic: marshal settings: %w", err)
@@ -140,6 +144,9 @@ func (s *Tuic) ExportToURL() string {
 	setValue(&query, "verifyPeerCertByName", s.VerifyPeerCertByName)
 	if s.DisableSni {
 		query.Set("disable_sni", "true")
+	}
+	if s.AllowInsecure {
+		query.Set("allow_insecure", "true")
 	}
 	setValue(&query, "sni", s.Sni)
 	alpn := strings.ReplaceAll(s.Alpn, " ", "")

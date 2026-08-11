@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -127,11 +127,11 @@ func Connect(which *configure.Which) (err error) {
 	if err = configure.AddConnect(*which); err != nil {
 		return
 	}
-	//update the v2ray config and start/restart v2ray
-	if v2ray.ProcessManager.Running() {
-		if err = v2ray.UpdateV2RayConfig(); err != nil {
-			return
-		}
+	//update the v2ray config and start/restart v2ray.
+	//UpdateV2RayConfig starts the core when it is not running, so a connect
+	//request always takes effect instead of silently only saving the selection.
+	if err = v2ray.UpdateV2RayConfig(); err != nil {
+		return
 	}
 	return
 }

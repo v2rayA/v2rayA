@@ -16,4 +16,6 @@ message ClientConfig {
   bool allow_insecure = 5;
   // Minimum number of idle sessions to keep
   uint32 min_idle_sessions = 6;
+  // Pinned peer certificate chain SHA256 hash. Accepts hex or base64.
+  string pinned_peer_certificate_chain_sha256 = 7;
 }
