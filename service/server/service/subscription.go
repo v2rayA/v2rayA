@@ -513,6 +513,29 @@ func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
 	return nil
 }
 
+func connectedSubscriptionServers(index int, connected *configure.Whiches) []*configure.Which {
+	if connected == nil {
+		return nil
+	}
+	servers := make([]*configure.Which, 0)
+	for _, which := range connected.Get() {
+		if which != nil && which.TYPE == configure.SubscriptionServerType && which.Sub == index {
+			servers = append(servers, which)
+		}
+	}
+	return servers
+}
+
+func disconnectSubscriptionServers(index int) error {
+	connected := configure.GetConnectedServersByOutbound("proxy")
+	for _, which := range connectedSubscriptionServers(index, connected) {
+		if err := Disconnect(*which, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func AutoSelectServersFromSubscriptionIDs(databaseIDs []int64, shouldDisconnect bool) error {
 	subscriptionMutationMu.Lock()
 	defer subscriptionMutationMu.Unlock()
@@ -527,7 +550,14 @@ func AutoSelectServersFromSubscriptionIDs(databaseIDs []int64, shouldDisconnect 
 		if subscription == nil || !subscription.AutoSelect {
 			continue
 		}
-		if err := SelectServersFromSubscription(index, shouldDisconnect); err != nil {
+		if shouldDisconnect {
+			// Only remove this source's connections. The legacy helper clears
+			// the whole proxy outbound, which would disconnect other sources.
+			err = disconnectSubscriptionServers(index)
+		} else {
+			err = SelectServersFromSubscription(index, false)
+		}
+		if err != nil {
 			return err
 		}
 	}
