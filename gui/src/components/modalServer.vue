@@ -235,7 +235,6 @@
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
               <option v-if="variant() === 'xray'" value="reality">reality</option>
-              <option v-if="variant() === 'xray'" value="xtls">xtls</option>
             </b-select>
           </b-field>
           <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
@@ -1226,7 +1225,9 @@ export default {
   },
   methods: {
     variant() {
-      return localStorage["variant"]?.toLowerCase() || "v2ray";
+      const v = (localStorage["variant"] || "v2ray").toLowerCase();
+      // v2raya_core is the merged xray-based core; treat it as the revised "xray" variant.
+      return v === "v2rayacore" ? "xray" : v;
     },
     handleV2rayProtocolSwitch() {
       // protocol is now driven by tab selection
@@ -1272,7 +1273,7 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           sni: u.params.sni || "",
-          tls: u.params.security || "none",
+          tls: u.params.security === "xtls" ? "tls" : u.params.security || "none",
           quicSecurity: u.params.quicSecurity || "none",
           fp: u.params.fp || "",
           pbk: u.params.pbk || "",
