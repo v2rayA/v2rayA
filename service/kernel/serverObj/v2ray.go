@@ -560,13 +560,13 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 		}
 		if strings.ToLower(v.TLS) == "tls" {
 			core.StreamSettings.Security = "tls"
-			pins, err := coreObj.PinnedPeerCertChain(v.PinnedPeerCertSha256)
+			pins, err := coreObj.PinnedPeerCertSha256Hex(v.PinnedPeerCertSha256)
 			if err != nil {
 				return Configuration{}, err
 			}
 			core.StreamSettings.TLSSettings = &coreObj.TLSSettings{
-				PinnedPeerCertificateChainSha256: pins,
-				VerifyPeerCertByName:             v.VerifyPeerCertByName,
+				PinnedPeerCertSha256: pins,
+				VerifyPeerCertByName: v.VerifyPeerCertByName,
 			}
 			// SNI
 			if v.SNI != "" {
@@ -586,13 +586,13 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			core.StreamSettings.TLSSettings.Fingerprint = v.Fingerprint
 		} else if strings.ToLower(v.TLS) == "xtls" {
 			core.StreamSettings.Security = "xtls"
-			pins, err := coreObj.PinnedPeerCertChain(v.PinnedPeerCertSha256)
+			pins, err := coreObj.PinnedPeerCertSha256Hex(v.PinnedPeerCertSha256)
 			if err != nil {
 				return Configuration{}, err
 			}
 			core.StreamSettings.XTLSSettings = &coreObj.TLSSettings{
-				PinnedPeerCertificateChainSha256: pins,
-				VerifyPeerCertByName:             v.VerifyPeerCertByName,
+				PinnedPeerCertSha256: pins,
+				VerifyPeerCertByName: v.VerifyPeerCertByName,
 			}
 			// SNI
 			if v.SNI != "" {

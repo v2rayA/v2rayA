@@ -9,46 +9,61 @@ import (
 	"time"
 )
 
-// PinnedPeerCertChain normalizes a peer certificate pin value found in an
-// imported link into the base64 slice that xray-core's
-// pinnedPeerCertificateChainSha256 field expects.
+// PinnedPeerCertSha256Hex normalizes a peer certificate pin value found in an
+// imported link into the hex string that xray-core's "pinnedPeerCertSha256"
+// field expects (comma-separated lowercase hex, 64 chars each).
 //
 // Link formats disagree about the pin representation:
-//   - xray/v2rayN style: base64 of the (chain) SHA256 hash
+//   - xray/v2rayN style: base64 of the SHA256 hash
 //   - sing-box / hysteria2 style: hex string of the SHA256 hash
 //   - some formats may include an optional "sha256:" prefix
 //   - openssl-style pins may separate octets with colons (AB:CD:EF:...)
+//   - multiple pins may be joined with commas
 //
-// The returned slice (typically a single element) is suitable for assignment to
-// TLSSettings.PinnedPeerCertificateChainSha256. An empty input yields (nil, nil).
-// A non-empty pin that cannot be normalized returns an error so a silently
-// dropped pin never downgrades verification.
-func PinnedPeerCertChain(pin string) ([]string, error) {
-	pin = strings.TrimSpace(pin)
-	pin = strings.TrimPrefix(pin, "sha256:")
-	pin = strings.TrimPrefix(pin, "SHA256:")
-	// Strip openssl-style colons: AB:CD:EF:...
-	pin = strings.ReplaceAll(pin, ":", "")
+// An empty input yields ("", nil). A non-empty pin that cannot be normalized
+// returns an error so a silently dropped pin never downgrades verification.
+func PinnedPeerCertSha256Hex(pin string) (string, error) {
 	pin = strings.TrimSpace(pin)
 	if pin == "" {
-		return nil, nil
+		return "", nil
 	}
-	// Try hex (32 bytes = 64 hex chars).
-	if raw, err := hex.DecodeString(pin); err == nil && len(raw) == 32 {
-		return []string{base64.StdEncoding.EncodeToString(raw)}, nil
-	}
-	// Try base64 / base64url, with or without padding.
-	for _, dec := range []*base64.Encoding{
-		base64.StdEncoding,
-		base64.RawStdEncoding,
-		base64.URLEncoding,
-		base64.RawURLEncoding,
-	} {
-		if raw, err := dec.DecodeString(pin); err == nil && len(raw) == 32 {
-			return []string{base64.StdEncoding.EncodeToString(raw)}, nil
+	var out []string
+	for _, part := range strings.Split(pin, ",") {
+		part = strings.TrimSpace(part)
+		part = strings.TrimPrefix(part, "sha256:")
+		part = strings.TrimPrefix(part, "SHA256:")
+		// Strip openssl-style colons: AB:CD:EF:...
+		part = strings.ReplaceAll(part, ":", "")
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
 		}
+		// Try hex (32 bytes = 64 hex chars).
+		if raw, err := hex.DecodeString(part); err == nil && len(raw) == 32 {
+			out = append(out, hex.EncodeToString(raw))
+			continue
+		}
+		// Try base64 / base64url, with or without padding.
+		var raw []byte
+		matched := false
+		for _, dec := range []*base64.Encoding{
+			base64.StdEncoding,
+			base64.RawStdEncoding,
+			base64.URLEncoding,
+			base64.RawURLEncoding,
+		} {
+			if decoded, err := dec.DecodeString(part); err == nil && len(decoded) == 32 {
+				raw = decoded
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return "", fmt.Errorf("unrecognized peer certificate pin: %q", pin)
+		}
+		out = append(out, hex.EncodeToString(raw))
 	}
-	return nil, fmt.Errorf("unrecognized peer certificate chain pin: %q", pin)
+	return strings.Join(out, ","), nil
 }
 
 type APIObject struct {
@@ -200,14 +215,15 @@ func (s Settings) MarshalJSON() ([]byte, error) {
 type TLSSettings struct {
 	ServerName interface{} `json:"serverName,omitempty"`
 	Alpn       []string    `json:"alpn,omitempty"`
-	// PinnedPeerCertificateChainSha256 pins the peer certificate chain by its
-	// SHA256 hash. xray-core expects each entry to be the base64 encoding of the
-	// 32-byte hash. Use PinnedPeerCertChain() to build this from the value found
-	// in imported links (which may be hex or base64).
-	PinnedPeerCertificateChainSha256 []string      `json:"pinnedPeerCertificateChainSha256,omitempty"`
-	VerifyPeerCertByName             string        `json:"verifyPeerCertByName,omitempty"`
-	Certificates                     []Certificate `json:"certificates,omitempty"`
-	Fingerprint                      string        `json:"fingerprint,omitempty"`
+	// PinnedPeerCertSha256 pins the peer certificate by the SHA256 hash of its
+	// DER-encoded leaf certificate (or a CA certificate within its chain).
+	// xray-core expects a comma-separated hex string. Use PinnedPeerCertSha256Hex()
+	// to build this from the value found in imported links (which may be hex or
+	// base64).
+	PinnedPeerCertSha256 string        `json:"pinnedPeerCertSha256,omitempty"`
+	VerifyPeerCertByName string        `json:"verifyPeerCertByName,omitempty"`
+	Certificates         []Certificate `json:"certificates,omitempty"`
+	Fingerprint          string        `json:"fingerprint,omitempty"`
 }
 type Certificate struct {
 	CertificateFile string `json:"certificateFile"`

@@ -98,14 +98,14 @@ func (t *Trojan) ConfigurationMC(info PriorInfo) (c Configuration, err error) {
 		Port:     t.Port,
 		Password: t.Password,
 	}
-	pins, err := coreObj.PinnedPeerCertChain(t.PinnedPeerCertSha256)
+	pins, err := coreObj.PinnedPeerCertSha256Hex(t.PinnedPeerCertSha256)
 	if err != nil {
 		return Configuration{}, err
 	}
 	tlsSettings := &coreObj.TLSSettings{
-		ServerName:                       t.Sni,
-		PinnedPeerCertificateChainSha256: pins,
-		VerifyPeerCertByName:             t.VerifyPeerCertByName,
+		ServerName:           t.Sni,
+		PinnedPeerCertSha256: pins,
+		VerifyPeerCertByName: t.VerifyPeerCertByName,
 	}
 	if t.Alpn != "" {
 		tlsSettings.Alpn = strings.Split(t.Alpn, ",")
