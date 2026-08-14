@@ -11,16 +11,17 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/where"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -35,6 +36,7 @@ type Process struct {
 	template       *Template
 	tag2WhichIndex map[string]int
 	done           chan struct{}
+	expectedStop   atomic.Bool
 }
 
 func NewProcess(tmpl *Template,
@@ -105,7 +107,7 @@ func NewProcess(tmpl *Template,
 	go func() {
 		defer close(process.done)
 		p, e := proc.Wait()
-		if process.procCancel == nil {
+		if process.expectedStop.Load() {
 			// canceled by v2rayA
 			return
 		}
@@ -188,8 +190,10 @@ func (p *Process) Close() error {
 	defer p.mutex.Unlock()
 	// 停止 xray 进程（v2raya-core 内部会同时关闭 DNS 模块）
 	if p.procCancel != nil {
-		p.procCancel()
+		cancel := p.procCancel
+		p.expectedStop.Store(true)
 		p.procCancel = nil
+		cancel()
 		err := p.template.Close()
 		if err != nil {
 			return err
