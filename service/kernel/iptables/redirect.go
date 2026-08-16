@@ -77,11 +77,6 @@ iptables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 # DNS 重定向到新 DNS 模块端口 52353（必须在通用 REDIRECT 规则之前）
 iptables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
 iptables -w 2 -t nat -A DNS_REDIRECT -j REDIRECT --to-port 52353
-# 在 PREROUTING 和 OUTPUT 中插入 DNS 规则（优先于 TP_PRE/TP_OUT）
-iptables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j DNS_REDIRECT
-iptables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
-iptables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
-iptables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 `
 	for _, v := range GetExcludedInterfaces() {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
@@ -103,6 +98,13 @@ iptables -w 2 -t nat -I PREROUTING -p tcp -j TP_PRE
 iptables -w 2 -t nat -I OUTPUT -p tcp -j TP_OUT
 iptables -w 2 -t nat -A TP_PRE -j TP_RULE
 iptables -w 2 -t nat -A TP_OUT -j TP_RULE
+# DNS 跳转在 TP_PRE/TP_OUT 之后插入：-I 总是插到链首，后插入者排在前面，
+# 因此 DNS 规则实际位于通用透明代理规则之前（否则本机/局域网 TCP DNS 会
+# 先命中 TP_OUT/TP_PRE 被重定向到 52345，绕过 DNS 模块）。
+iptables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j DNS_REDIRECT
+iptables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
+iptables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
+iptables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 `
 	if IsIPv6Supported() {
 		commands += `
@@ -112,10 +114,6 @@ ip6tables -w 2 -t nat -N TP_RULE
 ip6tables -w 2 -t nat -N DNS_REDIRECT
 ip6tables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
 ip6tables -w 2 -t nat -A DNS_REDIRECT -j REDIRECT --to-port 52353
-ip6tables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j DNS_REDIRECT
-ip6tables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
-ip6tables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
-ip6tables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 ip6tables -w 2 -t nat -A TP_RULE -d ::/128 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ::1/128 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 64:ff9b::/96 -j RETURN
@@ -150,6 +148,11 @@ ip6tables -w 2 -t nat -I PREROUTING -p tcp -j TP_PRE
 ip6tables -w 2 -t nat -I OUTPUT -p tcp -j TP_OUT
 ip6tables -w 2 -t nat -A TP_PRE -j TP_RULE
 ip6tables -w 2 -t nat -A TP_OUT -j TP_RULE
+# DNS 跳转最后插入（-I 后到者居首），确保排在 TP_PRE/TP_OUT 之前
+ip6tables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j DNS_REDIRECT
+ip6tables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
+ip6tables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
+ip6tables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 `
 	}
 	return Setter{
