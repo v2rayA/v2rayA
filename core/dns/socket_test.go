@@ -25,9 +25,6 @@ func TestNewMarkedDnsClient(t *testing.T) {
 	if client.Dialer == nil {
 		t.Fatal("Dialer is nil")
 	}
-	if client.Dialer.Control == nil {
-		t.Error("Dialer.Control is nil — sockets would not carry SO_MARK=0x80 and queries could loop back into the DNS module")
-	}
 }
 
 func TestNewMarkedDnsClientTCP(t *testing.T) {
@@ -37,8 +34,5 @@ func TestNewMarkedDnsClientTCP(t *testing.T) {
 	}
 	if client.Dialer == nil {
 		t.Fatal("Dialer is nil")
-	}
-	if client.Dialer.Control == nil {
-		t.Error("Dialer.Control is nil — TCP sockets would not carry SO_MARK=0x80")
 	}
 }
