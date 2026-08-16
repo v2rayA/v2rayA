@@ -211,7 +211,7 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 		return nil, nil
 	}
 
-	log.Printf("[dns upstream] exchange via proxy: %s %s → %s (proxyTag=%s)",
+	dnsLogf("[dns upstream] exchange via proxy: %s %s → %s (proxyTag=%s)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, upstream.ProxyTag)
 
 	// Get the proxy address for the configured tag.
@@ -304,7 +304,7 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 		Cached:     false,
 	}
 
-	log.Printf("[dns upstream] proxy response: %s %s → %s via %s (rcode=%d, rtt=%v, answers=%d)",
+	dnsLogf("[dns upstream] proxy response: %s %s → %s via %s (rcode=%d, rtt=%v, answers=%d)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, proxyAddr,
 		resp.Rcode, rtt, len(resp.Answer))
 
@@ -544,7 +544,7 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		return nil, nil
 	}
 
-	log.Printf("[dns upstream] exchange via xray routing: %s %s → %s (proxyTag=%s)",
+	dnsLogf("[dns upstream] exchange via xray routing: %s %s → %s (proxyTag=%s)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, upstream.ProxyTag)
 
 	// Build DNS query message.
@@ -661,7 +661,7 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		Cached:     false,
 	}
 
-	log.Printf("[dns upstream] dispatcher response: %s %s → %s (rcode=%d, rtt=%v, answers=%d)",
+	dnsLogf("[dns upstream] dispatcher response: %s %s → %s (rcode=%d, rtt=%v, answers=%d)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr,
 		dnsResp.Rcode, rtt, len(dnsResp.Answer))
 

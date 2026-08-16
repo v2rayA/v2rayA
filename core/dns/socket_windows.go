@@ -3,31 +3,12 @@
 package dns
 
 import (
-	"log"
 	"net"
-	"os"
-	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/miekg/dns"
 )
-
-// dnsDebugEnabled controls per-query verbose logging (see socket_unix.go).
-var dnsDebugEnabled = func() bool {
-	v, err := strconv.ParseBool(os.Getenv("V2RAYA_DNS_DEBUG"))
-	if err != nil {
-		return false
-	}
-	return v
-}()
-
-// dnsLogf logs a line only when verbose DNS debug logging is enabled.
-func dnsLogf(format string, args ...interface{}) {
-	if dnsDebugEnabled {
-		log.Printf(format, args...)
-	}
-}
 
 // setSocketMark is a no-op on Windows since SO_MARK is a Linux-specific
 // socket option used for iptables/nftables mark-based filtering.

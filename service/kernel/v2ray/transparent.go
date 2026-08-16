@@ -92,11 +92,37 @@ nft delete table inet v2raya 2>/dev/null || true
 	cmds.ExecCommands(commands, false)
 }
 
+// cleanDnsRedirectRules removes the direct nat OUTPUT/PREROUTING DNS
+// redirect rules (REDIRECT --to-port 52353) and the fwmark 0x80 exemption
+// rules that writeTransparentProxyRules adds with -A/-I. Tproxy/Redirect
+// GetCleanCommands() only clean their own chains, so without this the
+// rules survive a normal proxy stop: local DNS queries keep being hijacked
+// to :52353, and once the DNS module exits they hit a dead port and DNS
+// fails. Idempotent (2>/dev/null || true).
+func cleanDnsRedirectRules() {
+	commands := `
+iptables -w 2 -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+iptables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+ip6tables -w 2 -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+ip6tables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+`
+	cmds.ExecCommands(commands, false)
+}
+
 func deleteTransparentProxyRulesKeepSystemProxy() {
 	stopTinyTun()
 	iptables.CloseWatcher()
 	if !conf.GetEnvironmentConfig().Lite {
 		removeResolvHijacker()
+		cleanDnsRedirectRules()
 		iptables.Tproxy.GetCleanCommands().Run(false)
 		iptables.Redirect.GetCleanCommands().Run(false)
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
