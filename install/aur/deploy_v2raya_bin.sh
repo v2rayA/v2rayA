@@ -1,6 +1,26 @@
 #!/bin/bash
 set -ex
 
+if [ -z "$VERSION" ]; then
+  echo "::error::VERSION is not set" >&2
+  exit 1
+fi
+
+# Release binaries must have been downloaded into $P_DIR by the workflow.
+missing=0
+for f in \
+  v2raya_linux_x86_$VERSION v2raya_core_linux_x86_$VERSION \
+  v2raya_linux_x64_$VERSION v2raya_core_linux_x64_$VERSION \
+  v2raya_linux_loongarch64_$VERSION v2raya_core_linux_loongarch64_$VERSION \
+  v2raya_linux_armv7_$VERSION v2raya_core_linux_armv7_$VERSION \
+  v2raya_linux_arm64_$VERSION v2raya_core_linux_arm64_$VERSION; do
+  if [ ! -s "$P_DIR/$f" ]; then
+    echo "::error::Missing release binary $P_DIR/$f" >&2
+    missing=1
+  fi
+done
+[ "$missing" -eq 0 ] || exit 1
+
 sha1sums_i686=$(sha1sum "$P_DIR"/v2raya_linux_x86_$VERSION | awk '{print $1}')
 sha1sums_core_i686=$(sha1sum "$P_DIR"/v2raya_core_linux_x86_$VERSION | awk '{print $1}')
 sha1sums_x86_64=$(sha1sum "$P_DIR"/v2raya_linux_x64_$VERSION | awk '{print $1}')
@@ -40,11 +60,29 @@ sed -i s/{{sha_service_lite}}/"${sha_service_lite}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha_png}}/"${sha_png}"/g PKGBUILD .SRCINFO
 sed -i s/{{sha_desktop}}/"${sha_desktop}"/g PKGBUILD .SRCINFO
 
-cd /tmp/
-git clone ssh://aur@aur.archlinux.org/v2raya-bin.git
-cd v2raya-bin
+# If this exact pkgver is already on the AUR (re-release), bump pkgrel.
+CURRENT="$(curl -fsSL "https://aur.archlinux.org/rpc/?v=5&type=info&arg[]=v2raya-bin" 2>/dev/null | jq -r '.results[0].Version // empty' || true)"
+if [ -n "$CURRENT" ]; then
+  CUR_VER="${CURRENT%-*}"
+  CUR_REL="${CURRENT##*-}"
+  if [ "$CUR_VER" = "$VERSION" ] && [[ "$CUR_REL" =~ ^[0-9]+$ ]]; then
+    NEW_REL=$((CUR_REL + 1))
+    sed -i "s/^pkgrel=.*/pkgrel=$NEW_REL/" PKGBUILD
+    sed -i "s/^	pkgrel = .*/	pkgrel = $NEW_REL/" .SRCINFO
+    echo "pkgver $VERSION is already on AUR; bumping pkgrel to $NEW_REL"
+  fi
+fi
+
+# Never push a template with unsubstituted placeholders.
+if grep -q '{{' PKGBUILD .SRCINFO; then
+  echo "::error::Unsubstituted placeholders left in PKGBUILD/.SRCINFO" >&2
+  exit 1
+fi
+
+rm -rf /tmp/v2raya-bin
+git clone ssh://aur@aur.archlinux.org/v2raya-bin.git /tmp/v2raya-bin
+cd /tmp/v2raya-bin
 cp -rf /tmp/prepare/v2raya-bin/. ./
 git add .
 git commit -m "release $VERSION"
-git push -u -f origin master
-cd $P_DIR
+git push origin master

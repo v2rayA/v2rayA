@@ -1,0 +1,166 @@
+# Release to AUR
+#
+# Pushes the v2raya and v2raya-bin PKGBUILDs to the Arch User Repository
+# (aur.archlinux.org/v2raya.git and aur.archlinux.org/v2raya-bin.git) every
+# time a stable GitHub release is published.
+#
+# It reuses the templates and scripts already committed under install/aur/:
+#   install/aur/v2raya/       - source package (built on the user's machine)
+#   install/aur/v2raya-bin/   - binary package (prebuilt release assets)
+#   install/aur/deploy.sh     - orchestrates both pushes
+#
+# Required repository secrets:
+#   SSH_PRIVATE_KEY   - SSH private key registered on the AUR account that
+#                       maintains the v2raya / v2raya-bin packages
+#                       (https://aur.archlinux.org/account/).
+#   SIGNING_PASSWORD  - passphrase of that key, if the key is encrypted.
+#
+# Optional repository variables:
+#   AUR_GIT_NAME / AUR_GIT_EMAIL - git identity for the AUR commits
+#                       (default: author of the release commit).
+
+name: Release to AUR
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v2.4.11); leave empty to use the latest release"
+        required: false
+        type: string
+
+concurrency:
+  group: aur-release-${{ github.event.release.tag_name || inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      should_run: ${{ steps.resolve.outputs.should_run }}
+    steps:
+      - name: Resolve release and version
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            tag="${{ github.event.release.tag_name }}"
+            prerelease="${{ github.event.release.prerelease }}"
+          else
+            tag="${{ inputs.tag }}"
+            prerelease="false"
+          fi
+          # Manual dispatch without a tag: fall back to the latest release.
+          if [ -z "$tag" ] && [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="$(gh release view --json tagName -q .tagName)"
+          fi
+
+          if [ -z "$tag" ]; then
+            echo "::error::No release tag could be determined."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # AUR only tracks stable releases (betas go through v2raya-git).
+          if [ "$prerelease" = "true" ]; then
+            echo "::notice::$tag is a prerelease; AUR tracks stable releases only. Skipping."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          version="${tag#v}"
+          # AUR pkgver may only contain [0-9A-Za-z._+~].
+          if ! echo "$version" | grep -qE '^[0-9A-Za-z._+~]+$'; then
+            echo "::error::Version '$version' (from tag '$tag') is not a valid AUR pkgver. Skipping."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: prepare
+    if: needs.prepare.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      P_DIR: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # v2raya-bin embeds sha1sums of the prebuilt assets, so download them
+      # here. The release is created before its assets finish uploading, so
+      # retry until every asset is actually available.
+      - name: Download release binaries for checksums
+        run: |
+          set -euo pipefail
+          archs="x86 x64 loongarch64 armv7 arm64"
+          for attempt in $(seq 1 15); do
+            missing=0
+            for arch in $archs; do
+              for bin in v2raya v2raya_core; do
+                file="${bin}_linux_${arch}_${VERSION}"
+                if [ ! -s "$file" ]; then
+                  if curl -fsSL --retry 3 \
+                    "https://github.com/v2rayA/v2rayA/releases/download/v${VERSION}/${file}" \
+                    -o "$file"; then
+                    chmod +x "$file"
+                  else
+                    missing=1
+                  fi
+                fi
+              done
+            done
+            [ "$missing" -eq 0 ] && break
+            echo "Release assets not fully available yet (attempt ${attempt}/15); retrying in 20s..."
+            sleep 20
+          done
+          for arch in $archs; do
+            for bin in v2raya v2raya_core; do
+              [ -s "${bin}_linux_${arch}_${VERSION}" ] || {
+                echo "::error::Missing release asset ${bin}_linux_${arch}_${VERSION}"
+                exit 1
+              }
+            done
+          done
+          ls -l v2raya*_linux_*_${VERSION}
+
+      - name: Set up SSH key for AUR
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "::error::Secret SSH_PRIVATE_KEY is not configured. Add your AUR SSH key (registered at https://aur.archlinux.org/account/) as a repository secret."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null || true
+          eval "$(ssh-agent -s)"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/aur_key"
+          chmod 600 "$RUNNER_TEMP/aur_key"
+          # Plain ssh-add first (unencrypted key); fall back to the expect
+          # helper for an encrypted key using the SIGNING_PASSWORD secret.
+          if ! ssh-add "$RUNNER_TEMP/aur_key" </dev/null 2>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq expect
+            ./install/aur/tool/ssh-add_expect "$RUNNER_TEMP/aur_key"
+          fi
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+      - name: Deploy to AUR
+        run: bash ./install/aur/deploy.sh
