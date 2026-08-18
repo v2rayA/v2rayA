@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -54,11 +54,6 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		conf.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
 	} else {
 		conf.TickerUpdateGFWList.Reset(24 * time.Hour * 365 * 100)
-	}
-	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-		conf.TickerUpdateSubscription.Reset(time.Duration(setting.SubscriptionAutoUpdateIntervalHour) * time.Hour)
-	} else {
-		conf.TickerUpdateSubscription.Reset(24 * time.Hour * 365 * 100)
 	}
 	return
 }

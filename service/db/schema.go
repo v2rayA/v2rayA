@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -39,6 +40,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
     auto_select INTEGER NOT NULL DEFAULT 0,
+    auto_update_mode TEXT NOT NULL DEFAULT 'none',
+    auto_update_interval_hour INTEGER NOT NULL DEFAULT 0,
+    last_update_attempt_at DATETIME DEFAULT NULL,
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -116,5 +120,89 @@ func MigrateSchema(db *sql.DB) error {
 		}
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin subscription update policy migration: %w", err)
+	}
+	defer tx.Rollback()
+
+	policyNeedsBackfill := false
+	err = tx.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'auto_update_mode'").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for auto_update_mode column: %w", err)
+	}
+	if count == 0 {
+		log.Info("Adding auto_update_mode column to subscriptions table")
+		if _, err := tx.Exec("ALTER TABLE subscriptions ADD COLUMN auto_update_mode TEXT NOT NULL DEFAULT 'none'"); err != nil {
+			return fmt.Errorf("failed to add auto_update_mode column: %w", err)
+		}
+		policyNeedsBackfill = true
+	}
+
+	err = tx.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'auto_update_interval_hour'").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for auto_update_interval_hour column: %w", err)
+	}
+	if count == 0 {
+		log.Info("Adding auto_update_interval_hour column to subscriptions table")
+		if _, err := tx.Exec("ALTER TABLE subscriptions ADD COLUMN auto_update_interval_hour INTEGER NOT NULL DEFAULT 0"); err != nil {
+			return fmt.Errorf("failed to add auto_update_interval_hour column: %w", err)
+		}
+		policyNeedsBackfill = true
+	}
+
+	err = tx.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'last_update_attempt_at'").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for last_update_attempt_at column: %w", err)
+	}
+	if count == 0 {
+		log.Info("Adding last_update_attempt_at column to subscriptions table")
+		if _, err := tx.Exec("ALTER TABLE subscriptions ADD COLUMN last_update_attempt_at DATETIME DEFAULT NULL"); err != nil {
+			return fmt.Errorf("failed to add last_update_attempt_at column: %w", err)
+		}
+	}
+
+	if policyNeedsBackfill {
+		if err := migrateLegacySubscriptionUpdatePolicy(tx); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit subscription update policy migration: %w", err)
+	}
+	return nil
+}
+
+func migrateLegacySubscriptionUpdatePolicy(tx *sql.Tx) error {
+	var settingJSON string
+	err := tx.QueryRow("SELECT value FROM system_config WHERE key = 'system:setting'").Scan(&settingJSON)
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read legacy subscription update setting: %w", err)
+	}
+
+	mode := gjson.Get(settingJSON, "subscriptionAutoUpdateMode").String()
+	intervalHour := int(gjson.Get(settingJSON, "subscriptionAutoUpdateIntervalHour").Int())
+	switch mode {
+	case "auto_update":
+		intervalHour = 0
+	case "auto_update_at_intervals":
+		if intervalHour < 1 {
+			mode = "none"
+			intervalHour = 0
+		}
+	default:
+		mode = "none"
+		intervalHour = 0
+	}
+	if _, err := tx.Exec(
+		"UPDATE subscriptions SET auto_update_mode = ?, auto_update_interval_hour = ?",
+		mode, intervalHour,
+	); err != nil {
+		return fmt.Errorf("failed to migrate subscription update settings: %w", err)
+	}
 	return nil
 }

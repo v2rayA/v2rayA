@@ -5,6 +5,9 @@ import (
 )
 
 func DeleteWhich(ws []*configure.Which) (err error) {
+	subscriptionMutationMu.Lock()
+	defer subscriptionMutationMu.Unlock()
+
 	var data *configure.Whiches
 	// Deduplicate touches to delete
 	data = configure.NewWhiches(ws)

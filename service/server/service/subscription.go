@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -210,9 +211,59 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 	return
 }
 
-func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
-	subscriptions := configure.GetSubscriptions()
-	addr := subscriptions[index].Address
+var subscriptionMutationMu sync.Mutex
+var updatingSubscriptionIDs = make(map[int64]struct{})
+
+func beginSubscriptionUpdate(subscription *configure.SubscriptionRaw) error {
+	if subscription == nil || subscription.DatabaseID == 0 {
+		return fmt.Errorf("UpdateSubscription: subscription not found")
+	}
+	if _, updating := updatingSubscriptionIDs[subscription.DatabaseID]; updating {
+		return fmt.Errorf("UpdateSubscription: subscription is already updating")
+	}
+	if err := configure.MarkSubscriptionUpdateAttempt(subscription.DatabaseID); err != nil {
+		return fmt.Errorf("UpdateSubscription: failed to record update attempt: %w", err)
+	}
+	updatingSubscriptionIDs[subscription.DatabaseID] = struct{}{}
+	return nil
+}
+
+func finishSubscriptionUpdate(databaseID int64) {
+	subscriptionMutationMu.Lock()
+	delete(updatingSubscriptionIDs, databaseID)
+	subscriptionMutationMu.Unlock()
+}
+
+func UpdateSubscription(index int, disconnectIfNecessary bool) error {
+	subscriptionMutationMu.Lock()
+	subscription := configure.GetSubscription(index)
+	err := beginSubscriptionUpdate(subscription)
+	subscriptionMutationMu.Unlock()
+	if err != nil {
+		return err
+	}
+	defer finishSubscriptionUpdate(subscription.DatabaseID)
+	return updateSubscription(subscription.DatabaseID, subscription.Address, disconnectIfNecessary)
+}
+
+func UpdateSubscriptionByID(databaseID int64, disconnectIfNecessary bool) error {
+	subscriptionMutationMu.Lock()
+	index, err := configure.GetSubscriptionIndexByID(databaseID)
+	if err != nil {
+		subscriptionMutationMu.Unlock()
+		return fmt.Errorf("UpdateSubscription: %w", err)
+	}
+	subscription := configure.GetSubscription(index)
+	err = beginSubscriptionUpdate(subscription)
+	subscriptionMutationMu.Unlock()
+	if err != nil {
+		return err
+	}
+	defer finishSubscriptionUpdate(databaseID)
+	return updateSubscription(databaseID, subscription.Address, disconnectIfNecessary)
+}
+
+func updateSubscription(databaseID int64, addr string, disconnectIfNecessary bool) (err error) {
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
@@ -221,6 +272,21 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
 		return fmt.Errorf("UpdateSubscription: %v", reason)
 	}
+
+	subscriptionMutationMu.Lock()
+	defer subscriptionMutationMu.Unlock()
+	index, err := configure.GetSubscriptionIndexByID(databaseID)
+	if err != nil {
+		return fmt.Errorf("UpdateSubscription: %w", err)
+	}
+	subscription := configure.GetSubscription(index)
+	if subscription == nil {
+		return fmt.Errorf("UpdateSubscription: subscription %d not found", databaseID)
+	}
+	if subscription.Address != addr {
+		return fmt.Errorf("UpdateSubscription: subscription address changed during update")
+	}
+
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
 	cssAfter := css.Get()
@@ -326,10 +392,10 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
 		return err
 	}
-	subscriptions[index].Servers = infoServerRaws
-	subscriptions[index].Status = string(touch.NewUpdateStatus())
-	subscriptions[index].Info = status
-	if err := configure.SetSubscription(index, &subscriptions[index]); err != nil {
+	subscription.Servers = infoServerRaws
+	subscription.Status = string(touch.NewUpdateStatus())
+	subscription.Info = status
+	if err := configure.SetSubscription(index, subscription); err != nil {
 		return err
 	}
 	// A remapped connection may point at a server whose config differs from the old
@@ -343,13 +409,32 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
+	subscriptionMutationMu.Lock()
+	defer subscriptionMutationMu.Unlock()
+
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
 		return fmt.Errorf("failed to find the corresponding subscription")
 	}
+	if subscription.AutoUpdateMode == "" {
+		subscription.AutoUpdateMode = raw.AutoUpdateMode
+		subscription.AutoUpdateIntervalHour = raw.AutoUpdateIntervalHour
+	}
+	switch subscription.AutoUpdateMode {
+	case configure.NotAutoUpdate, configure.AutoUpdate:
+		subscription.AutoUpdateIntervalHour = 0
+	case configure.AutoUpdateAtIntervals:
+		if subscription.AutoUpdateIntervalHour < 1 {
+			return fmt.Errorf("subscription update interval must be at least 1 hour")
+		}
+	default:
+		return fmt.Errorf("invalid subscription auto-update mode")
+	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
+	raw.AutoUpdateMode = subscription.AutoUpdateMode
+	raw.AutoUpdateIntervalHour = subscription.AutoUpdateIntervalHour
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 
@@ -423,6 +508,57 @@ func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
 					return err
 				}
 			}
+		}
+	}
+	return nil
+}
+
+func connectedSubscriptionServers(index int, connected *configure.Whiches) []*configure.Which {
+	if connected == nil {
+		return nil
+	}
+	servers := make([]*configure.Which, 0)
+	for _, which := range connected.Get() {
+		if which != nil && which.TYPE == configure.SubscriptionServerType && which.Sub == index {
+			servers = append(servers, which)
+		}
+	}
+	return servers
+}
+
+func disconnectSubscriptionServers(index int) error {
+	connected := configure.GetConnectedServersByOutbound("proxy")
+	for _, which := range connectedSubscriptionServers(index, connected) {
+		if err := Disconnect(*which, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func AutoSelectServersFromSubscriptionIDs(databaseIDs []int64, shouldDisconnect bool) error {
+	subscriptionMutationMu.Lock()
+	defer subscriptionMutationMu.Unlock()
+
+	for _, databaseID := range databaseIDs {
+		index, err := configure.GetSubscriptionIndexByID(databaseID)
+		if err != nil {
+			log.Warn("[AutoSelect] Failed to find subscription %d, skipping", databaseID)
+			continue
+		}
+		subscription := configure.GetSubscription(index)
+		if subscription == nil || !subscription.AutoSelect {
+			continue
+		}
+		if shouldDisconnect {
+			// Only remove this source's connections. The legacy helper clears
+			// the whole proxy outbound, which would disconnect other sources.
+			err = disconnectSubscriptionServers(index)
+		} else {
+			err = SelectServersFromSubscription(index, false)
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil

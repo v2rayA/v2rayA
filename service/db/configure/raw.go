@@ -13,12 +13,16 @@ type ServerRaw struct {
 }
 
 type SubscriptionRaw struct {
-	Remarks string      `json:"remarks,omitempty"`
-	Address string      `json:"address"`
-	Status  string      `json:"status"` //update time, error info, etc.
-	Servers []ServerRaw `json:"servers"`
-	Info    string      `json:"info"` // maybe include some info from provider
-	AutoSelect bool     `json:"autoSelect"`
+	DatabaseID             int64          `json:"-"`
+	Remarks                string         `json:"remarks,omitempty"`
+	Address                string         `json:"address"`
+	Status                 string         `json:"status"` //update time, error info, etc.
+	Servers                []ServerRaw    `json:"servers"`
+	Info                   string         `json:"info"` // maybe include some info from provider
+	AutoSelect             bool           `json:"autoSelect"`
+	AutoUpdateMode         AutoUpdateMode `json:"autoUpdateMode"`
+	AutoUpdateIntervalHour int            `json:"autoUpdateIntervalHour"`
+	LastUpdateAttemptAt    string         `json:"lastUpdateAttemptAt,omitempty"`
 }
 
 func Bytes2SubscriptionRaw(b []byte) (*SubscriptionRaw, error) {
@@ -35,6 +39,7 @@ func Bytes2SubscriptionRaw(b []byte) (*SubscriptionRaw, error) {
 	if err := jsoniter.Unmarshal(b, &s); err != nil {
 		return nil, err
 	}
+	s.DatabaseID = gjson.GetBytes(b, "_databaseId").Int()
 	if s.Servers == nil {
 		s.Servers = []ServerRaw{}
 	}

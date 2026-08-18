@@ -314,20 +314,6 @@
           v-model="pacAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
           validation-icon=" iconfont icon-alert" style="flex: 1" />
       </b-field>
-      <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
-        <b-select v-model="subscriptionAutoUpdateMode" expanded>
-          <option value="none">{{ $t("setting.options.off") }}</option>
-          <option value="auto_update">
-            {{ $t("setting.options.updateSubWhenStart") }}
-          </option>
-          <option value="auto_update_at_intervals">
-            {{ $t("setting.options.updateSubAtIntervals") }}
-          </option>
-        </b-select>
-        <cus-b-input v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdateSubInput"
-          v-model="subscriptionAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon=" iconfont icon-alert" style="flex: 1" />
-      </b-field>
       <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
           <option value="direct">
@@ -508,7 +494,6 @@ export default {
           Object.assign(this, res.data.data.setting);
           delete res.data.data["setting"];
           Object.assign(this, res.data.data);
-          this.subscriptionAutoUpdateTime = new Date(this.subscriptionAutoUpdateTime);
           this.pacAutoUpdateTime = new Date(this.pacAutoUpdateTime);
           // Get OS and isRoot info from version API
           this.$axios({
@@ -593,12 +578,6 @@ export default {
     },
     handleClickSubmit() {
       if (this.muxOn === "yes" && !this.$refs.muxinput.checkHtml5Validity()) {
-        return;
-      }
-      if (
-        this.subscriptionAutoUpdateMode === "auto_update_at_intervals" &&
-        !this.$refs.autoUpdateSubInput.checkHtml5Validity()
-      ) {
         return;
       }
       if (

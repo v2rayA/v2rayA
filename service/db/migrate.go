@@ -75,6 +75,10 @@ func MigrateFromBoltDB() error {
 		_ = tx.Rollback()
 		return fmt.Errorf("failed to migrate touch bucket: %w", err)
 	}
+	if err := migrateLegacySubscriptionUpdatePolicy(tx); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("failed to migrate subscription update policy: %w", err)
+	}
 
 	// NOTE: Accounts are NOT migrated. Users must re-register after migration.
 	// This is intentional: the old MD5-based password hashing is deprecated,

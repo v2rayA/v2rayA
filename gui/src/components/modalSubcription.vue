@@ -23,6 +23,29 @@
 	  >{{ $t("subscription.autoSelect") }}
 	</b-checkbox>
       </b-field>
+      <b-field :label="$t('setting.autoUpdateSub')">
+        <b-select v-model="which.autoUpdateMode" expanded>
+          <option value="none">{{ $t("setting.options.off") }}</option>
+          <option value="auto_update">
+            {{ $t("setting.options.updateSubWhenStart") }}
+          </option>
+          <option value="auto_update_at_intervals">
+            {{ $t("setting.options.updateSubAtIntervals") }}
+          </option>
+        </b-select>
+      </b-field>
+      <b-field
+        v-if="which.autoUpdateMode === 'auto_update_at_intervals'"
+        :label="$t('setting.options.updateSubAtIntervals')"
+      >
+        <b-input
+          ref="autoUpdateIntervalInput"
+          v-model.number="which.autoUpdateIntervalHour"
+          type="number"
+          min="1"
+          required
+        />
+      </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
       <button class="button" type="button" @click="$parent.close()">
@@ -48,6 +71,15 @@ export default {
   },
   methods: {
     handleClickSubmit() {
+      if (
+        this.which.autoUpdateMode === "auto_update_at_intervals" &&
+        !this.$refs.autoUpdateIntervalInput.checkHtml5Validity()
+      ) {
+        return;
+      }
+      if (this.which.autoUpdateMode !== "auto_update_at_intervals") {
+        this.which.autoUpdateIntervalHour = 0;
+      }
       this.$emit("submit", this.which);
     },
   },
