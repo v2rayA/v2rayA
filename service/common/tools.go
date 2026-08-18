@@ -2,8 +2,10 @@ package common
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/gob"
 	"fmt"
+	"math/big"
 	"net/url"
 	"os"
 	"os/user"
@@ -13,6 +15,14 @@ import (
 	"strconv"
 	"strings"
 )
+
+func RandInt(max int) int {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0
+	}
+	return int(nBig.Int64())
+}
 
 var (
 	NotSameTypeErr    = fmt.Errorf("cannot fill empty: the two value have different type")

@@ -14,7 +14,7 @@
           ref="backendAddress"
           v-model="table.backendAddress"
           placeholder="http://localhost:2017"
-          pattern="https?://.+(:\d+)?"
+          pattern="(|https?://.+|/.+)"
         >
           >
         </b-input>
@@ -141,14 +141,22 @@
         </b-message>
       </template>
     </section>
-    <footer class="modal-card-foot flex-end">
-      <button class="button" @click="$emit('close')">
-        {{ $t("operations.cancel") }}
-      </button>
-      <button class="button is-primary" @click="handleClickSubmit">
-        {{ $t("operations.confirm") }}
-      </button>
+    <footer class="modal-card-foot" style="justify-content: space-between">
+      <b-button outlined type="is-info" icon-left="plus" @click="showCustomInbound = true">
+        {{ $t("customInbound.title") }}
+      </b-button>
+      <div>
+        <button class="button" @click="$emit('close')">
+          {{ $t("operations.cancel") }}
+        </button>
+        <button class="button is-primary" style="margin-left: 0.5rem" @click="handleClickSubmit">
+          {{ $t("operations.confirm") }}
+        </button>
+      </div>
     </footer>
+    <b-modal :active.sync="showCustomInbound" has-modal-card trap-focus>
+      <ModalCustomInbound @close="showCustomInbound = false" />
+    </b-modal>
   </div>
 </template>
 
@@ -156,11 +164,13 @@
 import CONST from "@/assets/js/const";
 import { handleResponse } from "@/assets/js/utils";
 import ModalSharing from "@/components/modalSharing";
+import ModalCustomInbound from "@/components/modalCustomInbound";
 import i18n from "@/plugins/i18n";
 
 export default {
   name: "ModalCustomPorts",
   i18n,
+  components: { ModalCustomInbound },
   data: () => ({
     table: {
       backendAddress: "http://localhost:2017",
@@ -176,6 +186,7 @@ export default {
       },
     },
     backendReady: false,
+    showCustomInbound: false,
   }),
   computed: {
     dockerMode() {

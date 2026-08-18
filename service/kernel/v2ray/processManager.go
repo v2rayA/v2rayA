@@ -1,0 +1,343 @@
+package v2ray
+
+import (
+	"fmt"
+	"os/exec"
+	"strings"
+	"sync"
+
+	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
+)
+
+type CoreProcessManager struct {
+	p                *Process
+	mu               sync.Mutex
+	testing          bool
+	networkPaused    bool
+	connectivityStop chan struct{}
+}
+
+var ProcessManager CoreProcessManager
+
+func (m *CoreProcessManager) beforeStop(p *Process) {
+	m.CheckAndStopTransparentProxy(p.template.Setting)
+
+	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
+		hook := strings.Split(corehook, " ")
+		hook = append(hook, "--stage=pre-stop", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+		log.Info("Execute the core pre stop hook: %v", hook)
+		b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+		if len(b) > 0 {
+			log.Info("Executing the core pre stop hook: %v", string(b))
+		}
+		if err != nil {
+			log.Warn("Error when executing the core pre stop hook: %v", err)
+			return
+		}
+	}
+}
+
+func (m *CoreProcessManager) GetRunningTemplate() *Template {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.p == nil {
+		return nil
+	}
+	return m.p.template
+}
+
+func (m *CoreProcessManager) SetLatencyTesting(testing bool) {
+	m.mu.Lock()
+	m.testing = testing
+	m.mu.Unlock()
+}
+
+// ServiceRunning reports whether the proxy service should be treated as running
+// by the frontend. Temporary latency tests and connectivity-paused transparent
+// proxy states are excluded from this view.
+func (m *CoreProcessManager) ServiceRunning() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.p != nil && !m.testing && !m.networkPaused
+}
+
+func (m *CoreProcessManager) NetworkPaused() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.networkPaused
+}
+
+func (m *CoreProcessManager) stopConnectivityMonitorLocked() {
+	if m.connectivityStop != nil {
+		close(m.connectivityStop)
+		m.connectivityStop = nil
+	}
+}
+
+func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting, tmpl *Template) (err error) {
+	if setting != nil {
+		setting.FillEmpty()
+	} else {
+		setting = configure.GetSettingNotNil()
+	}
+	if (!checkRunning || ProcessManager.Running()) && IsTransparentOn(setting) {
+		deleteTransparentProxyRules()
+
+		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
+			hook := strings.Split(thook, " ")
+			hook = append(hook,
+				fmt.Sprintf("--transparent-type=%v", setting.TransparentType),
+				"--stage=pre-start",
+				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+			log.Info("Execute the transparent pre start hook: %v", hook)
+			b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+			if len(b) > 0 {
+				log.Info("Executing the transparent pre start hook: %v", string(b))
+			}
+			if err != nil {
+				return fmt.Errorf("error when executing the transparent pre start hook: %w", err)
+			}
+		}
+
+		err = writeTransparentProxyRules(tmpl)
+
+		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
+			hook := strings.Split(thook, " ")
+			hook = append(hook,
+				fmt.Sprintf("--transparent-type=%v", setting.TransparentType),
+				"--stage=post-start",
+				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+			log.Info("Execute the transparent post start hook: %v", hook)
+			b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+			if len(b) > 0 {
+				log.Info("Executing the transparent post start hook: %v", string(b))
+			}
+			if err != nil {
+				return fmt.Errorf("error when executing the transparent post start hook: %w", err)
+			}
+		}
+	}
+	return
+}
+
+func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Setting) {
+	if setting == nil {
+		if t := m.GetRunningTemplate(); t != nil {
+			setting = t.Setting
+		} else {
+			return
+		}
+	}
+	if setting.Transparent != configure.TransparentClose {
+		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
+			hook := strings.Split(thook, " ")
+			hook = append(hook,
+				fmt.Sprintf("--transparent-type=%v", setting.TransparentType),
+				"--stage=pre-stop",
+				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+			log.Info("Execute the transparent pre stop hook: %v", hook)
+			b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+			if len(b) > 0 {
+				log.Info("Executing the transparent pre stop hook: %v", string(b))
+			}
+			if err != nil {
+				log.Warn("Error when executing the transparent pre stop hook: %v", err)
+				return
+			}
+		}
+
+		deleteTransparentProxyRules()
+
+		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
+			hook := strings.Split(thook, " ")
+			hook = append(hook,
+				fmt.Sprintf("--transparent-type=%v", setting.TransparentType),
+				"--stage=post-stop",
+				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+			log.Info("Execute the transparent post stop hook: %v", hook)
+			b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+			if len(b) > 0 {
+				log.Info("Executing the transparent post stop hook: %v", string(b))
+			}
+			if err != nil {
+				log.Warn("Error when executing the transparent post stop hook: %v", err)
+				return
+			}
+		}
+	}
+}
+
+func (m *CoreProcessManager) afterStop(p *Process) {
+	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
+		hook := strings.Split(corehook, " ")
+		hook = append(hook, "--stage=post-stop", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+		log.Info("Execute the core post stop hook: %v", hook)
+		b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+		if len(b) > 0 {
+			log.Info("Executing the core post stop hook: %v", string(b))
+		}
+		if err != nil {
+			log.Warn("Error when executing the core post stop hook: %v", err)
+			return
+		}
+	}
+}
+
+func (m *CoreProcessManager) Stop(saveRunning bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.p == nil {
+		return
+	}
+	if saveRunning {
+		// User explicitly stopped the core via API (StopV2ray).
+		defer func() { _ = configure.SetLastKernelExitStatus(configure.LastKernelExitStopped) }()
+	} else {
+		// Graceful shutdown — the kernel was running when v2rayA exited.
+		// Preserve the "running" status so it is restored on next startup.
+		defer func() { _ = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning) }()
+	}
+	m.stop(saveRunning)
+}
+
+func (m *CoreProcessManager) stop(saveRunning bool) {
+	if m.p == nil {
+		return
+	}
+
+	p := m.p
+
+	m.stopConnectivityMonitorLocked()
+	m.networkPaused = false
+
+	m.beforeStop(p)
+
+	err := p.Close()
+	if err != nil {
+		log.Warn("CoreProcessManager.Stop: %v", err)
+	}
+	if saveRunning {
+		configure.SetRunning(false)
+	}
+
+	m.afterStop(p)
+
+	m.p = nil
+
+	// Notify connected frontend clients that the proxy is no longer running.
+	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false, "networkPaused": false})
+}
+
+func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.p != p {
+		return
+	}
+	m.stop(true)
+	// Override the default status (Stop() would have saved "running" or "stopped")
+	// to record the abnormal exit so the startup code can warn the user.
+	_ = configure.SetLastKernelExitStatus(configure.LastKernelExitCrashed)
+}
+
+// runPreStartHook executes the configured core pre-start hook.
+// It is called inside the Start lock so it is correctly ordered after the
+// pre-stop hook that runs inside m.stop.
+func (m *CoreProcessManager) runPreStartHook() error {
+	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
+		hook := strings.Split(corehook, " ")
+		hook = append(hook, "--stage=pre-start", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+		log.Info("Execute the core pre start hook: %v", hook)
+		b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+		if len(b) > 0 {
+			log.Info("Executing the core pre start hook: %v", string(b))
+		}
+		if err != nil {
+			return fmt.Errorf("error when executing the core pre start hook: %w", err)
+		}
+	}
+	return nil
+}
+
+func (m *CoreProcessManager) afterStart(t *Template) (err error) {
+	if err = m.CheckAndSetupTransparentProxy(false, t.Setting, t); err != nil {
+		return err
+	}
+	m.startConnectivityMonitor(t)
+
+	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
+		hook := strings.Split(corehook, " ")
+		hook = append(hook, "--stage=post-start", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
+		log.Info("Execute the core post start hook: %v", hook)
+		b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+		if len(b) > 0 {
+			log.Info("Executing the core post start hook: %v", string(b))
+		}
+		if err != nil {
+			return fmt.Errorf("error when executing the core post start hook: %w", err)
+		}
+	}
+	return nil
+}
+
+func (m *CoreProcessManager) Start(t *Template) (err error) {
+	// Phase 1 (pre-lock): lightweight checks that do not depend on whether a
+	// previous process is running.  Port occupancy is checked by NewProcess
+	// after the old process has been stopped.
+	resolv.CheckResolvConf()
+	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
+		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+	}
+
+	// Phase 2 (locked): stop the old process, run the pre-start hook (ordered
+	// after the pre-stop hook in beforeStop), then start the new core.
+	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TinyTun,
+	// transparent-proxy hooks) do not block while the lock is held.
+	m.mu.Lock()
+	m.stop(true)
+	process, err := NewProcess(t, func() error {
+		return m.runPreStartHook()
+	}, func() error {
+		return nil // afterStart executed post-lock in Phase 3
+	}, m.handleUnexpectedStop)
+	if err != nil {
+		m.mu.Unlock()
+		return err
+	}
+	m.p = process
+	testing := m.testing
+	m.mu.Unlock()
+
+	defer func() {
+		if err != nil {
+			m.Stop(true)
+		}
+	}()
+
+	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
+	// TinyTun), connectivity monitor, and post-start hook.
+	if err = m.afterStart(t); err != nil {
+		return err
+	}
+	configure.SetRunning(true)
+	_ = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning)
+	if !testing {
+		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
+	}
+	return nil
+}
+
+// Running reports if v2ray-core is running.
+func (m *CoreProcessManager) Running() bool {
+	return m.p != nil
+}
+
+func (m *CoreProcessManager) Process() *Process {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.p
+}

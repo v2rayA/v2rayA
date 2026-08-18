@@ -7,13 +7,7 @@
     </header>
     <section ref="section" :class="{ 'modal-card-body': true }">
       <b-tabs v-model="tabChoice" position="is-centered" class="block" type="is-boxed is-twitter same-width-5">
-        <b-tab-item label="V2RAY">
-          <b-field label="Protocol" label-position="on-border">
-            <b-select v-model="v2ray.protocol" expanded @input="handleV2rayProtocolSwitch">
-              <option value="vmess">VMESS</option>
-              <option value="vless">VLESS</option>
-            </b-select>
-          </b-field>
+        <b-tab-item label="VMESS">
           <b-field label="Name" label-position="on-border">
             <b-input ref="v2ray_name" v-model="v2ray.ps" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
@@ -27,16 +21,13 @@
           <b-field label="ID" label-position="on-border">
             <b-input ref="v2ray_id" v-model="v2ray.id" required placeholder="UserID" expanded />
           </b-field>
-          <b-field v-if="v2ray.protocol === 'vmess'" label="AlterID" label-position="on-border">
+          <b-field label="AlterID" label-position="on-border">
             <b-input ref="v2ray_aid" v-model="v2ray.aid" placeholder="AlterID" type="number" min="0" max="65535"
               expanded />
           </b-field>
-          <b-field v-if="v2ray.protocol === 'vmess'" label="Security" label-position="on-border">
+          <b-field label="Security" label-position="on-border">
             <b-select v-model="v2ray.scy" expanded required>
               <option value="auto">Auto</option>
-              <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
-              <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
-              <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
@@ -49,49 +40,32 @@
             <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
-              <option v-if="variant() === 'xray'" value="reality">
-                reality
-              </option>
-              <option v-if="variant() === 'xray'" value="xtls">xtls</option>
             </b-select>
           </b-field>
           <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
             <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint"
-            label-position="on-border">
-            <b-input ref="v2ray_fp" v-model="v2ray.fp" placeholder="A uTLS compatable fingerprint name" expanded />
-          </b-field>
-          <b-field v-if="v2ray.protocol === 'vless' && v2ray.tls !== 'none'" ref="v2ray_flow" label="Flow"
-            label-position="on-border">
-            <b-input ref="v2ray_flow" v-model="v2ray.flow" placeholder="Flow" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="pbk" label-position="on-border">
-            <b-input v-model="v2ray.pbk" placeholder="pbk" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="sid" label-position="on-border">
-            <b-input v-model="v2ray.sid" placeholder="sid" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="spx" label-position="on-border">
-            <b-input v-model="v2ray.spx" placeholder="spx" expanded />
-          </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label-position="on-border">
-            <template slot="label">
-              AllowInsecure
-              <b-tooltip v-show="v2ray.protocol === 'vless'" type="is-dark"
-                :label="$t('server.messages.notRecommend', { name: 'VLESS' })" multilined position="is-right">
-                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline" style="
-                    position: relative;
-                    top: 2px;
-                    right: 3px;
-                    font-weight: normal;
-                  " />
-              </b-tooltip>
-            </template>
-            <b-select ref="v2ray_allow_insecure" v-model="v2ray.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">{{ $t("operations.yes") }}</option>
+          <b-field v-show="v2ray.tls === 'tls'" label="uTLS fingerprint" label-position="on-border">
+            <b-select ref="v2ray_fp" v-model="v2ray.fp" expanded>
+              <option value="">empty</option>
+              <option value="chrome">chrome</option>
+              <option value="firefox">firefox</option>
+              <option value="safari">safari</option>
+              <option value="ios">ios</option>
+              <option value="android">android</option>
+              <option value="edge">edge</option>
+              <option value="random">random</option>
+              <option value="randomized">randomized</option>
             </b-select>
+          </b-field>
+          <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
+            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls !== 'none'" label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls !== 'none'" label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="Network" label-position="on-border">
             <b-select ref="v2ray_net" v-model="v2ray.net" expanded required @input="handleNetworkChange">
@@ -101,68 +75,36 @@
               <option value="h2">HTTP/2</option>
               <option value="grpc">gRPC</option>
               <option value="quic">QUIC</option>
-              <option v-if="variant() === 'xray'" value="xhttp">XHTTP</option>
+              <option value="xhttp">XHTTP</option>
             </b-select>
           </b-field>
           <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
-              <option value="none">
-                {{ $t("configureServer.noObfuscation") }}
-              </option>
-              <option value="http">
-                {{ $t("configureServer.httpObfuscation") }}
-              </option>
-            </b-select>
-          </b-field>
-          <b-field v-show="v2ray.protocol === 'vless' && v2ray.net == 'quic'" label="QUIC Security"
-            label-position="on-border">
-            <b-select v-model="v2ray.quicSecurity" expanded>
-              <option value="none">none</option>
-              <option value="aes-128-gcm">aes-128-gcm</option>
-              <option value="chacha20-poly1305">chacha20-poly1305</option>
+              <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
+              <option value="http">{{ $t("configureServer.httpObfuscation") }}</option>
             </b-select>
           </b-field>
           <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Type" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
-              <option value="none">
-                {{ $t("configureServer.noObfuscation") }}
-              </option>
-              <option value="srtp">
-                {{ $t("configureServer.srtpObfuscation") }}
-              </option>
-              <option value="utp">
-                {{ $t("configureServer.utpObfuscation") }}
-              </option>
-              <option value="wechat-video">
-                {{ $t("configureServer.wechatVideoObfuscation") }}
-              </option>
-              <option value="dtls">
-                {{
-                  `${$t("configureServer.dtlsObfuscation")}(${$t(
-                    "configureServer.forceTLS"
-                  )})`
-                }}
-              </option>
-              <option value="wireguard">
-                {{ $t("configureServer.wireguardObfuscation") }}
-              </option>
+              <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
+              <option value="srtp">{{ $t("configureServer.srtpObfuscation") }}</option>
+              <option value="utp">{{ $t("configureServer.utpObfuscation") }}</option>
+              <option value="wechat-video">{{ $t("configureServer.wechatVideoObfuscation") }}</option>
+              <option value="dtls">{{ `${$t("configureServer.dtlsObfuscation")}(${$t("configureServer.forceTLS")})` }}</option>
+              <option value="wireguard">{{ $t("configureServer.wireguardObfuscation") }}</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' ||
-            v2ray.net === 'h2' ||
-            v2ray.tls === 'tls' ||
-            (v2ray.net === 'tcp' && v2ray.type === 'http')
-            " label="Host" label-position="on-border">
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.net === 'xhttp' || v2ray.tls === 'tls' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Host" label-position="on-border">
             <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
-            <b-input v-model="v2ray.alpn" placeholder="h2,http/1.1" expanded />
-          </b-field>
-          <b-field v-show="v2ray.net === 'ws' ||
-            v2ray.net === 'h2' ||
-            (v2ray.net === 'tcp' && v2ray.type === 'http')
-            " label="Path" label-position="on-border">
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Path" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'ws'" label="Max Early Data" label-position="on-border">
+            <b-input v-model="v2ray.maxEarlyData" type="number" placeholder="Max Early Data" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'ws'" label="Early Data Header Name" label-position="on-border">
+            <b-input v-model="v2ray.earlyDataHeaderName" placeholder="Early Data Header Name" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
@@ -170,11 +112,354 @@
           <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
             <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
           </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="MultiMode" label-position="on-border">
+            <b-switch v-model="v2ray.multiMode">{{ v2ray.multiMode ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Idle Timeout" label-position="on-border">
+            <b-input v-model="v2ray.idleTimeout" type="number" placeholder="Idle Timeout (s)" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Health Check Timeout" label-position="on-border">
+            <b-input v-model="v2ray.healthCheckTimeout" type="number" placeholder="Health Check Timeout (s)" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Permit Without Stream" label-position="on-border">
+            <b-switch v-model="v2ray.permitWithoutStream">{{ v2ray.permitWithoutStream ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Initial Windows Size" label-position="on-border">
+            <b-input v-model="v2ray.initialWindowsSize" type="number" placeholder="Initial Windows Size" expanded />
+          </b-field>
+          <!-- XHTTP fields (VMess) -->
+          <b-field v-show="v2ray.net === 'xhttp'" label="Path" label-position="on-border">
+            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="Mode" label-position="on-border">
+            <b-select v-model="v2ray.xhttpMode" expanded>
+              <option value="auto">auto</option>
+              <option value="packet-up">packet-up</option>
+              <option value="stream-up">stream-up</option>
+              <option value="stream-one">stream-one</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="Uplink HTTP Method" label-position="on-border">
+            <b-select v-model="v2ray.uplinkHTTPMethod" expanded>
+              <option value="">default (POST)</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="PATCH">PATCH</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="noGRPCHeader" label-position="on-border">
+            <b-switch v-model="v2ray.noGRPCHeader">{{ v2ray.noGRPCHeader ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="noSSEHeader" label-position="on-border">
+            <b-switch v-model="v2ray.noSSEHeader">{{ v2ray.noSSEHeader ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scMaxEachPostBytes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.scMaxEachPostBytesFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.scMaxEachPostBytesTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scMinPostsIntervalMs (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.scMinPostsIntervalFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.scMinPostsIntervalTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scMaxBufferedPosts" label-position="on-border">
+            <b-input v-model="v2ray.scMaxBufferedPosts" type="number" placeholder="scMaxBufferedPosts" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scStreamUpServerSecs (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.scStreamUpServerFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.scStreamUpServerTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xPaddingBytes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xPaddingBytesFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xPaddingBytesTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConcurrency (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxMaxConcurFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxMaxConcurTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConnections (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxMaxConnFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxMaxConnTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux cMaxReuseTimes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxCMaxReuseFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxCMaxReuseTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxRequestTimes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxHMaxReqFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReqTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxReusableSecs (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxHMaxReusableFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReusableTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux hKeepAlivePeriod" label-position="on-border">
+            <b-input v-model="v2ray.xmuxHKeepAlive" type="number" placeholder="hKeepAlivePeriod" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="Custom Headers" label-position="on-border">
+            <div style="width:100%">
+              <div v-for="(hdr, idx) in v2ray.xhttpHeaders" :key="idx" style="display:flex;gap:4px;margin-bottom:4px">
+                <b-input v-model="hdr.key" placeholder="Header-Name" expanded />
+                <b-input v-model="hdr.value" placeholder="value" expanded />
+                <b-button type="is-danger is-light" icon-left="delete" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
+              </div>
+              <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">Add Header</b-button>
+            </div>
+          </b-field>
+          <!-- QUIC -->
+          <b-field v-show="v2ray.net === 'quic'" label="QUIC Security" label-position="on-border">
+            <b-select v-model="v2ray.quicSecurity" expanded>
+              <option value="none">none</option>
+              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="chacha20-poly1305">chacha20-poly1305</option>
+            </b-select>
+          </b-field>
           <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
             <b-input ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="path" label-position="on-border">
-            <b-input v-model="v2ray.path" placeholder="XHTTP Path" expanded />
+        </b-tab-item>
+        <b-tab-item label="VLESS">
+          <b-field label="Name" label-position="on-border">
+            <b-input v-model="v2ray.ps" :placeholder="$t('configureServer.servername')" expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input v-model="v2ray.add" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input v-model="v2ray.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
+          </b-field>
+          <b-field label="ID" label-position="on-border">
+            <b-input v-model="v2ray.id" required placeholder="UserID" expanded />
+          </b-field>
+          <b-field v-show="v2ray.type !== 'dtls'" label="TLS" label-position="on-border">
+            <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
+              <option value="none">{{ $t("setting.options.off") }}</option>
+              <option value="tls">tls</option>
+              <option v-if="variant() === 'xray'" value="reality">reality</option>
+            </b-select>
+          </b-field>
+          <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
+            <b-input v-model="v2ray.sni" placeholder="SNI" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint" label-position="on-border">
+            <b-select v-model="v2ray.fp" expanded>
+              <option value="">empty</option>
+              <option value="chrome">chrome</option>
+              <option value="firefox">firefox</option>
+              <option value="safari">safari</option>
+              <option value="ios">ios</option>
+              <option value="android">android</option>
+              <option value="edge">edge</option>
+              <option value="random">random</option>
+              <option value="randomized">randomized</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
+            <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
+          </b-field>
+          <b-field v-if="v2ray.tls !== 'none'" label="Flow" label-position="on-border">
+            <b-input v-model="v2ray.flow" placeholder="Flow" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'reality'" label="Public Key (pbk)" label-position="on-border">
+            <b-input v-model="v2ray.pbk" placeholder="Public Key" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'reality'" label="Short ID (sid)" label-position="on-border">
+            <b-input v-model="v2ray.sid" placeholder="Short ID" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls === 'reality'" label="Spider X (spx)" label-position="on-border">
+            <b-input v-model="v2ray.spx" placeholder="Spider X" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls !== 'none'" label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.tls !== 'none'" label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
+          </b-field>
+          <b-field label="Network" label-position="on-border">
+            <b-select v-model="v2ray.net" expanded required @input="handleNetworkChange">
+              <option value="tcp">TCP</option>
+              <option value="kcp">mKCP</option>
+              <option value="ws">WebSocket</option>
+              <option value="h2">HTTP/2</option>
+              <option value="grpc">gRPC</option>
+              <option value="quic">QUIC</option>
+              <option value="xhttp">XHTTP</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
+            <b-select v-model="v2ray.type" expanded>
+              <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
+              <option value="http">{{ $t("configureServer.httpObfuscation") }}</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Type" label-position="on-border">
+            <b-select v-model="v2ray.type" expanded>
+              <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
+              <option value="srtp">{{ $t("configureServer.srtpObfuscation") }}</option>
+              <option value="utp">{{ $t("configureServer.utpObfuscation") }}</option>
+              <option value="wechat-video">{{ $t("configureServer.wechatVideoObfuscation") }}</option>
+              <option value="dtls">{{ `${$t("configureServer.dtlsObfuscation")}(${$t("configureServer.forceTLS")})` }}</option>
+              <option value="wireguard">{{ $t("configureServer.wireguardObfuscation") }}</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.net === 'xhttp' || v2ray.tls === 'tls' || v2ray.tls === 'reality' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Host" label-position="on-border">
+            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Path" label-position="on-border">
+            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'ws'" label="Max Early Data" label-position="on-border">
+            <b-input v-model="v2ray.maxEarlyData" type="number" placeholder="Max Early Data" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'ws'" label="Early Data Header Name" label-position="on-border">
+            <b-input v-model="v2ray.earlyDataHeaderName" placeholder="Early Data Header Name" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
+            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
+            <b-input v-model="v2ray.path" type="text" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="MultiMode" label-position="on-border">
+            <b-switch v-model="v2ray.multiMode">{{ v2ray.multiMode ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Idle Timeout" label-position="on-border">
+            <b-input v-model="v2ray.idleTimeout" type="number" placeholder="Idle Timeout (s)" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Health Check Timeout" label-position="on-border">
+            <b-input v-model="v2ray.healthCheckTimeout" type="number" placeholder="Health Check Timeout (s)" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Permit Without Stream" label-position="on-border">
+            <b-switch v-model="v2ray.permitWithoutStream">{{ v2ray.permitWithoutStream ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'grpc'" label="Initial Windows Size" label-position="on-border">
+            <b-input v-model="v2ray.initialWindowsSize" type="number" placeholder="Initial Windows Size" expanded />
+          </b-field>
+          <!-- XHTTP fields (VLESS) -->
+          <b-field v-show="v2ray.net === 'xhttp'" label="Path" label-position="on-border">
+            <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="Mode" label-position="on-border">
+            <b-select v-model="v2ray.xhttpMode" expanded>
+              <option value="auto">auto</option>
+              <option value="packet-up">packet-up</option>
+              <option value="stream-up">stream-up</option>
+              <option value="stream-one">stream-one</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="Uplink HTTP Method" label-position="on-border">
+            <b-select v-model="v2ray.uplinkHTTPMethod" expanded>
+              <option value="">default (POST)</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="PATCH">PATCH</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="noGRPCHeader" label-position="on-border">
+            <b-switch v-model="v2ray.noGRPCHeader">{{ v2ray.noGRPCHeader ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="noSSEHeader" label-position="on-border">
+            <b-switch v-model="v2ray.noSSEHeader">{{ v2ray.noSSEHeader ? $t('operations.yes') : $t('operations.no') }}</b-switch>
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scMaxEachPostBytes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.scMaxEachPostBytesFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.scMaxEachPostBytesTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scMinPostsIntervalMs (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.scMinPostsIntervalFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.scMinPostsIntervalTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scMaxBufferedPosts" label-position="on-border">
+            <b-input v-model="v2ray.scMaxBufferedPosts" type="number" placeholder="scMaxBufferedPosts" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="scStreamUpServerSecs (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.scStreamUpServerFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.scStreamUpServerTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xPaddingBytes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xPaddingBytesFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xPaddingBytesTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConcurrency (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxMaxConcurFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxMaxConcurTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConnections (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxMaxConnFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxMaxConnTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux cMaxReuseTimes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxCMaxReuseFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxCMaxReuseTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxRequestTimes (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxHMaxReqFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReqTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxReusableSecs (From-To)" label-position="on-border">
+            <b-input v-model="v2ray.xmuxHMaxReusableFrom" type="number" placeholder="From" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReusableTo" type="number" placeholder="To" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="xmux hKeepAlivePeriod" label-position="on-border">
+            <b-input v-model="v2ray.xmuxHKeepAlive" type="number" placeholder="hKeepAlivePeriod" expanded />
+          </b-field>
+          <b-field v-show="v2ray.net === 'xhttp'" label="Custom Headers" label-position="on-border">
+            <div style="width:100%">
+              <div v-for="(hdr, idx) in v2ray.xhttpHeaders" :key="idx" style="display:flex;gap:4px;margin-bottom:4px">
+                <b-input v-model="hdr.key" placeholder="Header-Name" expanded />
+                <b-input v-model="hdr.value" placeholder="value" expanded />
+                <b-button type="is-danger is-light" icon-left="delete" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
+              </div>
+              <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">Add Header</b-button>
+            </div>
+          </b-field>
+          <!-- QUIC -->
+          <b-field v-show="v2ray.net === 'quic'" label="QUIC Security" label-position="on-border">
+            <b-select v-model="v2ray.quicSecurity" expanded>
+              <option value="none">none</option>
+              <option value="aes-128-gcm">aes-128-gcm</option>
+              <option value="chacha20-poly1305">chacha20-poly1305</option>
+            </b-select>
+          </b-field>
+          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
+            <b-input v-model="v2ray.key" :placeholder="$t('configureServer.password')" expanded />
+          </b-field>
+        </b-tab-item>
+        <b-tab-item label="WireGuard">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="wireguard_name" v-model="wireguard.name" :placeholder="$t('configureServer.servername')" expanded />
+          </b-field>
+          <b-field label="Address" label-position="on-border">
+            <b-input ref="wireguard_address" v-model="wireguard.address" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="wireguard_port" v-model="wireguard.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
+          </b-field>
+          <b-field label="Public Key" label-position="on-border">
+            <b-input ref="wireguard_public_key" v-model="wireguard.publicKey" required placeholder="Public Key" expanded />
+          </b-field>
+          <b-field label="Private Key" label-position="on-border">
+            <b-input ref="wireguard_private_key" v-model="wireguard.privateKey" required placeholder="Private Key" expanded />
+          </b-field>
+          <b-field label="Address (Local)" label-position="on-border">
+            <b-input ref="wireguard_local_address" v-model="wireguard.localAddress" placeholder="CIDR, e.g. 10.0.0.1/24" expanded />
+          </b-field>
+          <b-field label="DNS" label-position="on-border">
+            <b-input ref="wireguard_dns" v-model="wireguard.dns" placeholder="DNS Server" expanded />
+          </b-field>
+          <b-field label="MTU" label-position="on-border">
+            <b-input ref="wireguard_mtu" v-model="wireguard.mtu" type="number" placeholder="MTU" expanded />
+          </b-field>
+          <b-field label="Allowed IPs" label-position="on-border">
+            <b-input ref="wireguard_allowed_ips" v-model="wireguard.allowedIPs" placeholder="0.0.0.0/0, ::/0" expanded />
+          </b-field>
+          <b-field label="Persistent Keepalive" label-position="on-border">
+            <b-input ref="wireguard_persistent_keepalive" v-model="wireguard.persistentKeepalive" type="number" placeholder="Persistent Keepalive (s)" expanded />
+          </b-field>
+          <b-field label="Pre-shared Key" label-position="on-border">
+            <b-input ref="wireguard_pre_shared_key" v-model="wireguard.preSharedKey" placeholder="Pre-shared Key" expanded />
+          </b-field>
+          <b-field label="Endpoint" label-position="on-border">
+            <b-input ref="wireguard_endpoint" v-model="wireguard.endpoint" placeholder="Endpoint (optional, default same as Address:Port)" expanded />
           </b-field>
         </b-tab-item>
         <b-tab-item label="SS">
@@ -260,6 +545,12 @@
             ss.plugin === 'v2ray-plugin'
           " label="Path" label-position="on-border">
             <b-input ref="ss_path" v-model="ss.path" placeholder="/" expanded />
+          </b-field>
+          <b-field :label="$t('setting.nodeBackend')" label-position="on-border">
+            <b-select v-model="ss.backend" expanded>
+              <option value="">{{ $t("setting.options.backendSystemDefault") }}</option>
+              <option value="v2ray">{{ $t("setting.options.backendV2ray") }}</option>
+            </b-select>
           </b-field>
         </b-tab-item>
         <b-tab-item label="SSR">
@@ -366,25 +657,11 @@
             <b-input ref="trojan_ss_password" v-model="trojan.ssPassword" required
               :placeholder="`shadowsocks${$t('configureServer.password')}`" expanded />
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label">
-              AllowInsecure
-              <b-tooltip v-show="trojan.method !== 'origin' || trojan.obfs !== 'none'" type="is-dark" :label="$t('server.messages.notAllowInsecure', { name: 'Trojan-Go' })
-                " multilined position="is-right">
-                <b-icon size="is-small" icon=" iconfont icon-help-circle-outline" style="
-                    position: relative;
-                    top: 2px;
-                    right: 3px;
-                    font-weight: normal;
-                  " />
-              </b-tooltip>
-            </template>
-            <b-select ref="trojan_allow_insecure" v-model="trojan.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true" :disabled="trojan.method !== 'origin' || trojan.obfs !== 'none'">
-                {{ $t("operations.yes") }}
-              </option>
-            </b-select>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="trojan.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="trojan.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
@@ -413,7 +690,7 @@
             <b-input v-model="trojan.path" placeholder="/" expanded />
           </b-field>
           <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" label="Host" label-position="on-border">
-            <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
+            <b-input v-model="trojan.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
           <b-field v-show="trojan.tls === 'tls'" label="Alpn" label-position="on-border">
             <b-input v-model="trojan.alpn" placeholder="h2,http/1.1" expanded />
@@ -426,6 +703,12 @@
           </b-field>
           <b-field v-show="trojan.net === 'grpc'" label="Service Name" label-position="on-border">
             <b-input ref="trojan_service_name" v-model="trojan.path" type="text" expanded />
+          </b-field>
+          <b-field :label="$t('setting.nodeBackend')" label-position="on-border">
+            <b-select v-model="trojan.backend" expanded>
+              <option value="">{{ $t("setting.options.backendSystemDefault") }}</option>
+              <option value="v2ray">{{ $t("setting.options.backendV2ray") }}</option>
+            </b-select>
           </b-field>
         </b-tab-item>
 
@@ -451,15 +734,6 @@
           <b-field label="Congestion Control" label-position="on-border">
             <b-select ref="juicity_cc" v-model="juicity.cc" expanded required>
               <option value="bbr">bbr</option>
-            </b-select>
-          </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select ref="juicity_allow_insecure" v-model="juicity.allowInsecure" expanded required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">
-                {{ $t("operations.yes") }}
-              </option>
             </b-select>
           </b-field>
           <b-field label="SNI" label-position="on-border">
@@ -494,15 +768,11 @@
               <option value="bbr">bbr</option>
             </b-select>
           </b-field>
-          <b-field label-position="on-border">
-            <template slot="label"> AllowInsecure </template>
-            <b-select v-if="tuic.disableSni === false" ref="tuic_allow_insecure" v-model="tuic.allowInsecure" expanded
-              required>
-              <option :value="false">{{ $t("operations.no") }}</option>
-              <option :value="true">
-                {{ $t("operations.yes") }}
-              </option>
-            </b-select>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="tuic.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="tuic.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label-position="on-border">
             <template slot="label"> DisableSni </template>
@@ -525,6 +795,42 @@
               <option value="native">native</option>
               <option value="quic">quic</option>
             </b-select>
+          </b-field>
+        </b-tab-item>
+
+        <b-tab-item label="Hysteria2">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="hysteria2_name" v-model="hysteria2.name" :placeholder="$t('configureServer.servername')"
+              expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="hysteria2_server" v-model="hysteria2.server" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="hysteria2_port" v-model="hysteria2.port" required :placeholder="$t('configureServer.port')"
+              type="number" expanded />
+          </b-field>
+          <b-field label="Password" label-position="on-border">
+            <b-input ref="hysteria2_password" v-model="hysteria2.password" required
+              :placeholder="$t('configureServer.password')" expanded />
+          </b-field>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="hysteria2.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="hysteria2.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
+          </b-field>
+          <b-field label="SNI" label-position="on-border">
+            <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
+          </b-field>
+          <b-field label="Obfs" label-position="on-border">
+            <b-select v-model="hysteria2.obfs" expanded required>
+              <option value="none">none</option>
+              <option value="salamander">salamander</option>
+            </b-select>
+          </b-field>
+          <b-field v-if="hysteria2.obfs !== 'none'" label="Obfs Password" label-position="on-border">
+            <b-input v-model="hysteria2.obfsPassword" placeholder="Obfs Password" expanded />
           </b-field>
         </b-tab-item>
 
@@ -573,6 +879,30 @@
           <b-field label="Password" label-position="on-border">
             <b-input ref="socks5_password" v-model="socks5.password" :placeholder="$t('configureServer.password')"
               expanded />
+          </b-field>
+        </b-tab-item>
+
+        <b-tab-item label="AnyTLS">
+          <b-field label="Name" label-position="on-border">
+            <b-input ref="anytls_name" v-model="anytls.name" :placeholder="$t('configureServer.servername')" expanded />
+          </b-field>
+          <b-field label="Host" label-position="on-border">
+            <b-input ref="anytls_host" v-model="anytls.host" required placeholder="IP / HOST" expanded />
+          </b-field>
+          <b-field label="Port" label-position="on-border">
+            <b-input ref="anytls_port" v-model="anytls.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
+          </b-field>
+          <b-field label="Auth" label-position="on-border">
+            <b-input ref="anytls_auth" v-model="anytls.auth" required placeholder="Authentication Key" expanded />
+          </b-field>
+          <b-field label="SNI(Peer)" label-position="on-border">
+            <b-input ref="anytls_sni" v-model="anytls.sni" placeholder="SNI / Peer (Optional)" expanded />
+          </b-field>
+          <b-field label="Pinned Cert SHA256" label-position="on-border">
+            <b-input v-model="anytls.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
+          </b-field>
+          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+            <b-input v-model="anytls.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -628,9 +958,42 @@ export default {
       alpn: "",
       scy: "auto",
       v: "",
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       protocol: "vmess",
       key: "none",
+      xhttpMode: "auto",
+      xhttpHeaders: [],
+      noGRPCHeader: false,
+      noSSEHeader: false,
+      uplinkHTTPMethod: "",
+      scMaxEachPostBytesFrom: "",
+      scMaxEachPostBytesTo: "",
+      scMinPostsIntervalFrom: "",
+      scMinPostsIntervalTo: "",
+      scMaxBufferedPosts: "",
+      scStreamUpServerFrom: "",
+      scStreamUpServerTo: "",
+      xPaddingBytesFrom: "",
+      xPaddingBytesTo: "",
+      xmuxMaxConcurFrom: "",
+      xmuxMaxConcurTo: "",
+      xmuxMaxConnFrom: "",
+      xmuxMaxConnTo: "",
+      xmuxCMaxReuseFrom: "",
+      xmuxCMaxReuseTo: "",
+      xmuxHMaxReqFrom: "",
+      xmuxHMaxReqTo: "",
+      xmuxHMaxReusableFrom: "",
+      xmuxHMaxReusableTo: "",
+      xmuxHKeepAlive: "",
+      maxEarlyData: "",
+      earlyDataHeaderName: "",
+      multiMode: false,
+      idleTimeout: "",
+      healthCheckTimeout: "",
+      permitWithoutStream: false,
+      initialWindowsSize: "",
     },
     ss: {
       method: "2022-blake3-aes-128-gcm",
@@ -646,6 +1009,7 @@ export default {
       name: "",
       protocol: "ss",
       impl: "",
+      backend: "",
     },
     ssr: {
       method: "aes-128-cfb",
@@ -665,7 +1029,8 @@ export default {
       peer: "" /* tls sni */,
       host: "" /* websocket host */,
       path: "" /* websocket path */,
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       port: "",
       password: "",
       method: "origin" /* shadowsocks */,
@@ -674,6 +1039,7 @@ export default {
       net: "tcp",
       obfs: "none" /* websocket */,
       protocol: "trojan",
+      backend: "",
     },
     juicity: {
       name: "",
@@ -684,7 +1050,6 @@ export default {
       uuid: "",
       password: "",
       pinnedCertchainSha256: "",
-      allowInsecure: false,
       protocol: "juicity",
     },
     tuic: {
@@ -695,11 +1060,24 @@ export default {
       cc: "bbr",
       uuid: "",
       password: "",
-      allowInsecure: false,
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
       disableSni: false,
       alpn: "h3",
       udpRelayMode: "native",
       protocol: "tuic",
+    },
+    hysteria2: {
+      name: "",
+      server: "",
+      port: "",
+      password: "",
+      sni: "",
+      obfs: "none",
+      obfsPassword: "",
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
+      protocol: "hysteria2",
     },
     http: {
       username: "",
@@ -717,6 +1095,30 @@ export default {
       protocol: "socks5",
       name: "",
     },
+    anytls: {
+      name: "",
+      host: "",
+      port: "",
+      auth: "",
+      sni: "",
+      pinnedPeerCertSha256: "",
+      verifyPeerCertByName: "",
+      protocol: "anytls",
+    },
+    wireguard: {
+      name: "",
+      address: "",
+      port: "",
+      publicKey: "",
+      privateKey: "",
+      localAddress: "",
+      dns: "",
+      mtu: "",
+      allowedIPs: "",
+      persistentKeepalive: "",
+      preSharedKey: "",
+      endpoint: "",
+    },
     tabChoice: 0,
   }),
   mounted() {
@@ -730,21 +1132,30 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           if (
-            res.data.data.sharingAddress.toLowerCase().startsWith("vmess://") ||
-            res.data.data.sharingAddress.toLowerCase().startsWith("vless://")
+            res.data.data.sharingAddress.toLowerCase().startsWith("vmess://")
           ) {
             this.v2ray = this.resolveURL(res.data.data.sharingAddress);
             this.tabChoice = 0;
           } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("vless://")
+          ) {
+            this.v2ray = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 1;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("wireguard://")
+          ) {
+            this.wireguard = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 2;
+          } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("ss://")
           ) {
             this.ss = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 1;
+            this.tabChoice = 3;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("ssr://")
           ) {
             this.ssr = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 2;
+            this.tabChoice = 4;
           } else if (
             res.data.data.sharingAddress
               .toLowerCase()
@@ -754,28 +1165,39 @@ export default {
               .startsWith("trojan-go://")
           ) {
             this.trojan = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 3;
+            this.tabChoice = 5;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("juicity://")
           ) {
             this.juicity = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 4;
+            this.tabChoice = 6;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("tuic://")
           ) {
             this.tuic = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 5;
+            this.tabChoice = 7;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("hysteria2://") ||
+            res.data.data.sharingAddress.toLowerCase().startsWith("hy2://")
+          ) {
+            this.hysteria2 = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 8;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("http://") ||
             res.data.data.sharingAddress.toLowerCase().startsWith("https://")
           ) {
             this.http = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 6;
+            this.tabChoice = 9;
           } else if (
             res.data.data.sharingAddress.toLowerCase().startsWith("socks5://")
           ) {
             this.socks5 = this.resolveURL(res.data.data.sharingAddress);
-            this.tabChoice = 7;
+            this.tabChoice = 10;
+          } else if (
+            res.data.data.sharingAddress.toLowerCase().startsWith("anytls://")
+          ) {
+            this.anytls = this.resolveURL(res.data.data.sharingAddress);
+            this.tabChoice = 11;
           }
           this.$nextTick(() => {
             if (this.readonly) {
@@ -795,11 +1217,21 @@ export default {
       });
     }
   },
+  watch: {
+    tabChoice(val) {
+      if (val === 0) this.v2ray.protocol = "vmess";
+      if (val === 1) this.v2ray.protocol = "vless";
+    },
+  },
   methods: {
     variant() {
-      return localStorage["variant"]?.toLowerCase() || "v2ray";
+      const v = (localStorage["variant"] || "v2ray").toLowerCase();
+      // v2raya_core is the merged xray-based core; treat it as the revised "xray" variant.
+      return v === "v2rayacore" ? "xray" : v;
     },
-    handleV2rayProtocolSwitch() { },
+    handleV2rayProtocolSwitch() {
+      // protocol is now driven by tab selection
+    },
     resolveURL(url) {
       if (url.toLowerCase().startsWith("vmess://")) {
         let obj = JSON.parse(
@@ -811,6 +1243,21 @@ export default {
         obj.type = obj.type || "none";
         obj.scy = obj.scy || "auto";
         obj.protocol = obj.protocol || "vmess";
+        // xhttpHeaders arrives as a JSON-encoded string; convert it to the
+        // array model used by the GUI so the editor round-trips correctly.
+        if (typeof obj.xhttpHeaders === "string") {
+          try {
+            const hdrsObj = JSON.parse(obj.xhttpHeaders);
+            obj.xhttpHeaders = Object.entries(hdrsObj || {}).map(([key, value]) => ({ key, value }));
+          } catch (_) {
+            obj.xhttpHeaders = [];
+          }
+        }
+        if (!Array.isArray(obj.xhttpHeaders)) obj.xhttpHeaders = [];
+        // multiMode/permitWithoutStream arrive as strings; restore the booleans
+        // used by the GUI model.
+        if (typeof obj.multiMode === "string") obj.multiMode = obj.multiMode === "true" || obj.multiMode === "1";
+        if (typeof obj.permitWithoutStream === "string") obj.permitWithoutStream = obj.permitWithoutStream === "true" || obj.permitWithoutStream === "1";
         return obj;
       } else if (url.toLowerCase().startsWith("vless://")) {
         let u = parseURL(url);
@@ -826,14 +1273,54 @@ export default {
           path: u.params.path || u.params.serviceName || "",
           alpn: u.params.alpn || "",
           sni: u.params.sni || "",
-          tls: u.params.security || "none",
+          tls: u.params.security === "xtls" ? "tls" : u.params.security || "none",
           quicSecurity: u.params.quicSecurity || "none",
           fp: u.params.fp || "",
           pbk: u.params.pbk || "",
           sid: u.params.sid || "",
           spx: u.params.spx || "",
-          allowInsecure: u.params.allowInsecure || false,
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || "",
           key: u.params.key,
+          xhttpMode: u.params.xhttpMode || "auto",
+          noGRPCHeader: u.params.noGRPCHeader === "true",
+          noSSEHeader: u.params.noSSEHeader === "true",
+          uplinkHTTPMethod: u.params.uplinkHTTPMethod || "",
+          scMaxEachPostBytesFrom: u.params.scMaxEachPostBytesFrom || "",
+          scMaxEachPostBytesTo: u.params.scMaxEachPostBytesTo || "",
+          scMinPostsIntervalFrom: u.params.scMinPostsIntervalFrom || "",
+          scMinPostsIntervalTo: u.params.scMinPostsIntervalTo || "",
+          scMaxBufferedPosts: u.params.scMaxBufferedPosts || "",
+          scStreamUpServerFrom: u.params.scStreamUpServerFrom || "",
+          scStreamUpServerTo: u.params.scStreamUpServerTo || "",
+          xPaddingBytesFrom: u.params.xPaddingBytesFrom || "",
+          xPaddingBytesTo: u.params.xPaddingBytesTo || "",
+          xmuxMaxConcurFrom: u.params.xmuxMaxConcurFrom || "",
+          xmuxMaxConcurTo: u.params.xmuxMaxConcurTo || "",
+          xmuxMaxConnFrom: u.params.xmuxMaxConnFrom || "",
+          xmuxMaxConnTo: u.params.xmuxMaxConnTo || "",
+          xmuxCMaxReuseFrom: u.params.xmuxCMaxReuseFrom || "",
+          xmuxCMaxReuseTo: u.params.xmuxCMaxReuseTo || "",
+          xmuxHMaxReqFrom: u.params.xmuxHMaxReqFrom || "",
+          xmuxHMaxReqTo: u.params.xmuxHMaxReqTo || "",
+          xmuxHMaxReusableFrom: u.params.xmuxHMaxReusableFrom || "",
+          xmuxHMaxReusableTo: u.params.xmuxHMaxReusableTo || "",
+          xmuxHKeepAlive: u.params.xmuxHKeepAlive || "",
+          xhttpHeaders: (() => {
+            try {
+              const raw = u.params.xhttpHeaders;
+              if (!raw) return [];
+              const obj = JSON.parse(raw);
+              return Object.entries(obj).map(([key, value]) => ({ key, value }));
+            } catch (_) { return []; }
+          })(),
+          maxEarlyData: u.params.maxEarlyData || "",
+          earlyDataHeaderName: u.params.earlyDataHeaderName || "",
+          multiMode: u.params.multiMode === "true" || u.params.multiMode === "1",
+          idleTimeout: u.params.idleTimeout || "",
+          healthCheckTimeout: u.params.healthCheckTimeout || "",
+          permitWithoutStream: u.params.permitWithoutStream === "true" || u.params.permitWithoutStream === "1",
+          initialWindowsSize: u.params.initialWindowsSize || "",
           protocol: "vless",
         };
         if (o.alpn !== "") {
@@ -846,75 +1333,31 @@ export default {
         return o;
       } else if (url.toLowerCase().startsWith("ss://")) {
         let u = parseURL(url);
-        let mp;
-        if (!u.password) {
-          try {
-            u.username = Base64.decode(decodeURIComponent(u.username));
-            mp = u.username.split(":");
-            if (mp.length > 2) {
-              mp[1] = mp.slice(1).join(":");
-              mp = mp.slice(0, 2);
-            }
-          } catch (e) {
-            //pass
+        let userinfo = u.username;
+        // Handle SIP002 format: ss://BASE64URL@host:port vs legacy ss://BASE64
+        let method = "", password = "";
+        try {
+          let decoded = Base64.decode(userinfo);
+          let idx = decoded.indexOf(":");
+          if (idx > -1) {
+            method = decoded.substring(0, idx);
+            password = decoded.substring(idx + 1);
           }
-        } else {
-          mp = [u.username, u.password];
+        } catch (e) {
+          method = userinfo;
         }
-        console.log(mp);
-        u.hash = decodeURIComponent(u.hash);
-        let obj = {
-          method: mp[0],
-          password: mp[1],
+        const ssPlugin = u.params.plugin || "";
+        return {
+          method: method,
+          password: password,
           server: u.host,
           port: u.port,
-          name: u.hash,
-          obfs: "http",
-          plugin: "",
+          name: decodeURIComponent(u.hash || ""),
+          plugin: ssPlugin.split(";")[0] || "",
+          plugin_opts: ssPlugin.split(";").slice(1).join(";") || "",
           protocol: "ss",
-          impl: "",
+          backend: u.params["v2raya-backend"] || "",
         };
-        if (u.params.plugin) {
-          u.params.plugin = decodeURIComponent(u.params.plugin);
-          const arr = u.params.plugin.split(";");
-          obj.plugin = arr[0];
-          switch (obj.plugin) {
-            case "obfs-local":
-            case "simpleobfs":
-              obj.plugin = "simple-obfs";
-              break;
-            case "v2ray-plugin":
-              obj.tls = "";
-              obj.mode = "websocket";
-              break;
-          }
-          for (let i = 1; i < arr.length; i++) {
-            //"obfs-local;obfs=tls;obfs-host=4cb6a43103.wns.windows.com"
-            const a = arr[i].split("=");
-            switch (a[0]) {
-              case "obfs":
-                obj.obfs = a[1];
-                break;
-              case "host":
-              case "obfs-host":
-                obj.host = a[1];
-                break;
-              case "path":
-              case "obfs-path":
-                obj.path = a[1];
-                break;
-              case "mode":
-                obj.mode = a[1];
-                break;
-              case "tls":
-                obj.tls = "tls";
-                break;
-              case "impl":
-                obj.impl = a[1];
-            }
-          }
-        }
-        return obj;
       } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
@@ -955,16 +1398,17 @@ export default {
           port: u.port,
           name: decodeURIComponent(u.hash),
           peer: u.params.peer || u.params.sni || "",
-          allowInsecure:
-            u.params.allowInsecure === "true" || u.params.allowInsecure === "1",
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || "",
           method: "origin",
           net: u.params.type || "tcp",
           obfs: "none",
           ssCipher: "2022-blake3-aes-128-gcm",
           path: u.params.path || u.params.serviceName || "",
           protocol: "trojan",
+          backend: u.params["v2raya-backend"] || "",
         };
-        if (url.toLowerCase().startsWith("" + "")) {
+        if (url.toLowerCase().startsWith("trojan-go://")) {
           console.log(u.params.encryption);
           if (u.params.encryption?.startsWith("ss;")) {
             o.method = "shadowsocks";
@@ -988,9 +1432,6 @@ export default {
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
-          allowInsecure:
-            u.params.allow_insecure === "true" ||
-            u.params.allow_insecure === "1",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           cc: u.params.congestion_control || "bbr",
           protocol: "juicity",
@@ -1004,15 +1445,32 @@ export default {
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
-          allowInsecure:
-            u.params.allow_insecure === "true" ||
-            u.params.allow_insecure === "1",
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
           disableSni:
             u.params.disable_sni === "true" || u.params.disable_sni === "1",
           alpn: u.params.alpn,
           cc: u.params.congestion_control || "bbr",
           udpRelayMode: u.params.udp_relay_mode || "native",
           protocol: "tuic",
+        };
+      } else if (
+        url.toLowerCase().startsWith("hysteria2://") ||
+        url.toLowerCase().startsWith("hy2://")
+      ) {
+        let u = parseURL(url);
+        return {
+          name: decodeURIComponent(u.hash),
+          password: decodeURIComponent(u.username),
+          server: u.host,
+          port: u.port,
+          sni: u.params.sni || "",
+          pinnedPeerCertSha256:
+            u.params.pinSHA256 || u.params.pinSha256 || u.params.pin_sha256 || u.params.pinned_peer_cert_sha256 || u.params.pinnedPeerCertSha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
+          obfs: u.params.obfs || "none",
+          obfsPassword: u.params["obfs-password"] || "",
+          protocol: "hysteria2",
         };
       } else if (
         url.toLowerCase().startsWith("http://") ||
@@ -1037,6 +1495,36 @@ export default {
           protocol: u.protocol,
           name: decodeURIComponent(u.hash),
         };
+      } else if (url.toLowerCase().startsWith("anytls://")) {
+        let u = parseURL(url);
+        let auth = u.username ? decodeURIComponent(u.username) : "";
+        let sni = u.params.peer || u.params.sni || "";
+        return {
+          name: decodeURIComponent(u.hash),
+          host: u.host,
+          port: u.port,
+          auth: auth,
+          sni: sni,
+          pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
+          verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
+          protocol: "anytls",
+        };
+      } else if (url.toLowerCase().startsWith("wireguard://")) {
+        let u = parseURL(url);
+        return {
+          name: decodeURIComponent(u.hash),
+          address: u.host,
+          port: u.port,
+          publicKey: decodeURIComponent(u.username),
+          privateKey: u.params.privateKey || "",
+          localAddress: u.params.localAddress || "",
+          dns: u.params.dns || "",
+          mtu: u.params.mtu || "",
+          allowedIPs: u.params.allowedIPs || "",
+          persistentKeepalive: u.params.persistentKeepalive || "",
+          preSharedKey: u.params.preSharedKey || "",
+          endpoint: u.params.endpoint || "",
+        };
       }
       return null;
     },
@@ -1057,13 +1545,37 @@ export default {
             host: srcObj.host,
             headerType: srcObj.type,
             sni: srcObj.sni,
-            allowInsecure: srcObj.allowInsecure,
+            pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256,
+            verifyPeerCertByName: srcObj.verifyPeerCertByName,
           };
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
           }
+          if (srcObj.net === "ws") {
+            if (srcObj.maxEarlyData) {
+              query.maxEarlyData = srcObj.maxEarlyData;
+            }
+            if (srcObj.earlyDataHeaderName) {
+              query.earlyDataHeaderName = srcObj.earlyDataHeaderName;
+            }
+          }
           if (srcObj.net === "grpc") {
             query.serviceName = srcObj.path;
+            if (srcObj.multiMode) {
+              query.multiMode = srcObj.multiMode;
+            }
+            if (srcObj.idleTimeout) {
+              query.idleTimeout = srcObj.idleTimeout;
+            }
+            if (srcObj.healthCheckTimeout) {
+              query.healthCheckTimeout = srcObj.healthCheckTimeout;
+            }
+            if (srcObj.permitWithoutStream) {
+              query.permitWithoutStream = srcObj.permitWithoutStream;
+            }
+            if (srcObj.initialWindowsSize) {
+              query.initialWindowsSize = srcObj.initialWindowsSize;
+            }
           }
           if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
             query.seed = srcObj.path;
@@ -1071,6 +1583,37 @@ export default {
           if (srcObj.net === "quic") {
             query.key = srcObj.key;
             query.quicSecurity = srcObj.quicSecurity;
+          }
+          if (srcObj.net === "xhttp") {
+            query.xhttpMode = srcObj.xhttpMode;
+            if (srcObj.noGRPCHeader) query.noGRPCHeader = "true";
+            if (srcObj.noSSEHeader) query.noSSEHeader = "true";
+            if (srcObj.uplinkHTTPMethod) query.uplinkHTTPMethod = srcObj.uplinkHTTPMethod;
+            if (srcObj.scMaxEachPostBytesFrom) query.scMaxEachPostBytesFrom = srcObj.scMaxEachPostBytesFrom;
+            if (srcObj.scMaxEachPostBytesTo) query.scMaxEachPostBytesTo = srcObj.scMaxEachPostBytesTo;
+            if (srcObj.scMinPostsIntervalFrom) query.scMinPostsIntervalFrom = srcObj.scMinPostsIntervalFrom;
+            if (srcObj.scMinPostsIntervalTo) query.scMinPostsIntervalTo = srcObj.scMinPostsIntervalTo;
+            if (srcObj.scMaxBufferedPosts) query.scMaxBufferedPosts = srcObj.scMaxBufferedPosts;
+            if (srcObj.scStreamUpServerFrom) query.scStreamUpServerFrom = srcObj.scStreamUpServerFrom;
+            if (srcObj.scStreamUpServerTo) query.scStreamUpServerTo = srcObj.scStreamUpServerTo;
+            if (srcObj.xPaddingBytesFrom) query.xPaddingBytesFrom = srcObj.xPaddingBytesFrom;
+            if (srcObj.xPaddingBytesTo) query.xPaddingBytesTo = srcObj.xPaddingBytesTo;
+            if (srcObj.xmuxMaxConcurFrom) query.xmuxMaxConcurFrom = srcObj.xmuxMaxConcurFrom;
+            if (srcObj.xmuxMaxConcurTo) query.xmuxMaxConcurTo = srcObj.xmuxMaxConcurTo;
+            if (srcObj.xmuxMaxConnFrom) query.xmuxMaxConnFrom = srcObj.xmuxMaxConnFrom;
+            if (srcObj.xmuxMaxConnTo) query.xmuxMaxConnTo = srcObj.xmuxMaxConnTo;
+            if (srcObj.xmuxCMaxReuseFrom) query.xmuxCMaxReuseFrom = srcObj.xmuxCMaxReuseFrom;
+            if (srcObj.xmuxCMaxReuseTo) query.xmuxCMaxReuseTo = srcObj.xmuxCMaxReuseTo;
+            if (srcObj.xmuxHMaxReqFrom) query.xmuxHMaxReqFrom = srcObj.xmuxHMaxReqFrom;
+            if (srcObj.xmuxHMaxReqTo) query.xmuxHMaxReqTo = srcObj.xmuxHMaxReqTo;
+            if (srcObj.xmuxHMaxReusableFrom) query.xmuxHMaxReusableFrom = srcObj.xmuxHMaxReusableFrom;
+            if (srcObj.xmuxHMaxReusableTo) query.xmuxHMaxReusableTo = srcObj.xmuxHMaxReusableTo;
+            if (srcObj.xmuxHKeepAlive) query.xmuxHKeepAlive = srcObj.xmuxHKeepAlive;
+            if (srcObj.xhttpHeaders && srcObj.xhttpHeaders.length > 0) {
+              const hdrsObj = {};
+              srcObj.xhttpHeaders.forEach(h => { if (h.key) hdrsObj[h.key] = h.value; });
+              if (Object.keys(hdrsObj).length > 0) query.xhttpHeaders = JSON.stringify(hdrsObj);
+            }
           }
           if (query.security == "reality") {
             query.pbk = srcObj.pbk;
@@ -1088,6 +1631,20 @@ export default {
         case "vmess":
           //https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2)
           obj = Object.assign({}, srcObj);
+          // xhttpHeaders is stored on the backend as a JSON-encoded string; the
+          // GUI model uses an array of {key,value}. Serialize as a string so the
+          // vmess payload can round-trip through the backend parser.
+          if (Array.isArray(obj.xhttpHeaders)) {
+            const hdrsObj = {};
+            obj.xhttpHeaders.forEach(h => {
+              if (h && h.key) hdrsObj[h.key] = h.value;
+            });
+            obj.xhttpHeaders = Object.keys(hdrsObj).length > 0 ? JSON.stringify(hdrsObj) : "";
+          }
+          // multiMode/permitWithoutStream are stored as strings on the backend
+          // but modeled as booleans in the GUI; serialize them as strings.
+          if (typeof obj.multiMode === "boolean") obj.multiMode = obj.multiMode ? "true" : "false";
+          if (typeof obj.permitWithoutStream === "boolean") obj.permitWithoutStream = obj.permitWithoutStream ? "true" : "false";
           switch (obj.net) {
             case "kcp":
             case "tcp":
@@ -1168,7 +1725,8 @@ export default {
           /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
           query = {
             type: srcObj.net,
-            allowInsecure: srcObj.allowInsecure,
+            pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256,
+            verifyPeerCertByName: srcObj.verifyPeerCertByName,
           };
           if (srcObj.peer !== "") {
             query.sni = srcObj.peer;
@@ -1184,7 +1742,6 @@ export default {
               query.host = srcObj.host || "";
               query.path = srcObj.path || "/";
             }
-            delete query.allowInsecure;
           }
 
           if (srcObj.alpn !== "") {
@@ -1206,7 +1763,6 @@ export default {
           });
         case "juicity":
           query = {
-            allow_insecure: srcObj.allowInsecure,
             congestion_control: srcObj.cc,
           };
           if (srcObj.sni !== "") {
@@ -1226,7 +1782,8 @@ export default {
           });
         case "tuic":
           query = {
-            allow_insecure: srcObj.allowInsecure,
+            pinned_peer_cert_sha256: srcObj.pinnedPeerCertSha256,
+            verify_peer_cert_by_name: srcObj.verifyPeerCertByName,
             congestion_control: srcObj.cc,
             disable_sni: srcObj.disableSni,
             alpn: srcObj.alpn,
@@ -1241,7 +1798,27 @@ export default {
             password: srcObj.password,
             host: srcObj.server,
             port: srcObj.port,
-            hash: srcObj.name,
+            hash: srcObj.ps || srcObj.name,
+            params: query,
+          });
+        case "hysteria2":
+          query = {
+            pinned_peer_cert_sha256: srcObj.pinnedPeerCertSha256,
+            verify_peer_cert_by_name: srcObj.verifyPeerCertByName,
+          };
+          if (srcObj.sni !== "") {
+            query.sni = srcObj.sni;
+          }
+          if (srcObj.obfs !== "none") {
+            query.obfs = srcObj.obfs;
+            query["obfs-password"] = srcObj.obfsPassword;
+          }
+          return generateURL({
+            protocol: "hysteria2",
+            username: srcObj.password,
+            host: srcObj.server,
+            port: srcObj.port,
+            hash: srcObj.ps || srcObj.name,
             params: query,
           });
         case "http":
@@ -1273,6 +1850,59 @@ export default {
             });
           }
           return generateURL(tmp);
+        case "anytls":
+          let query = {};
+          if (srcObj.sni) {
+            query.peer = srcObj.sni;
+          }
+          if (srcObj.pinnedPeerCertSha256) {
+            query.pinnedPeerCertSha256 = srcObj.pinnedPeerCertSha256;
+          }
+          if (srcObj.verifyPeerCertByName) {
+            query.verifyPeerCertByName = srcObj.verifyPeerCertByName;
+          }
+          return generateURL({
+            protocol: "anytls",
+            username: srcObj.auth,
+            host: srcObj.host,
+            port: srcObj.port,
+            hash: srcObj.name,
+            params: query,
+          });
+        case "wireguard":
+          query = {};
+          if (srcObj.privateKey) {
+            query.privateKey = srcObj.privateKey;
+          }
+          if (srcObj.localAddress) {
+            query.localAddress = srcObj.localAddress;
+          }
+          if (srcObj.dns) {
+            query.dns = srcObj.dns;
+          }
+          if (srcObj.mtu) {
+            query.mtu = srcObj.mtu;
+          }
+          if (srcObj.allowedIPs) {
+            query.allowedIPs = srcObj.allowedIPs;
+          }
+          if (srcObj.persistentKeepalive) {
+            query.persistentKeepalive = srcObj.persistentKeepalive;
+          }
+          if (srcObj.preSharedKey) {
+            query.preSharedKey = srcObj.preSharedKey;
+          }
+          if (srcObj.endpoint) {
+            query.endpoint = srcObj.endpoint;
+          }
+          return generateURL({
+            protocol: "wireguard",
+            username: srcObj.publicKey,
+            host: srcObj.address,
+            port: srcObj.port,
+            hash: srcObj.name,
+            params: query,
+          });
       }
       return null;
     },
@@ -1300,25 +1930,37 @@ export default {
         if (this.tabChoice === 0 && !k.startsWith("v2ray_")) {
           continue;
         }
-        if (this.tabChoice === 1 && !k.startsWith("ss_")) {
+        if (this.tabChoice === 1 && !k.startsWith("v2ray_")) {
           continue;
         }
-        if (this.tabChoice === 2 && !k.startsWith("ssr_")) {
+        if (this.tabChoice === 2 && !k.startsWith("wireguard_")) {
           continue;
         }
-        if (this.tabChoice === 3 && !k.startsWith("trojan_")) {
+        if (this.tabChoice === 3 && !k.startsWith("ss_")) {
           continue;
         }
-        if (this.tabChoice === 4 && !k.startsWith("juicity_")) {
+        if (this.tabChoice === 4 && !k.startsWith("ssr_")) {
           continue;
         }
-        if (this.tabChoice === 5 && !k.startsWith("tuic_")) {
+        if (this.tabChoice === 5 && !k.startsWith("trojan_")) {
           continue;
         }
-        if (this.tabChoice === 6 && !k.startsWith("http_")) {
+        if (this.tabChoice === 6 && !k.startsWith("juicity_")) {
           continue;
         }
-        if (this.tabChoice === 7 && !k.startsWith("socks5_")) {
+        if (this.tabChoice === 7 && !k.startsWith("tuic_")) {
+          continue;
+        }
+        if (this.tabChoice === 8 && !k.startsWith("hysteria2_")) {
+          continue;
+        }
+        if (this.tabChoice === 9 && !k.startsWith("http_")) {
+          continue;
+        }
+        if (this.tabChoice === 10 && !k.startsWith("socks5_")) {
+          continue;
+        }
+        if (this.tabChoice === 11 && !k.startsWith("anytls_")) {
           continue;
         }
         let x = this.$refs[k];
@@ -1339,40 +1981,112 @@ export default {
         return;
       }
       let coded = "";
+      // 0: vmess, 1: vless, 2: wireguard, 3: ss, 4: ssr, 5: trojan, 6: juicity, 7: tuic, 8: hysteria2, 9: http, 10: socks5, 11: anytls
       if (this.tabChoice === 0) {
-        if (
-          this.v2ray.allowInsecure === true || // sometimes bool, sometimes string
-          this.v2ray.allowInsecure === "true"
-        ) {
-          const { result } = await this.$buefy.dialog.confirm({
-            title: this.$t("InSecureConfirm.title"),
-            message: this.$t("InSecureConfirm.message"),
-            confirmText: this.$t("InSecureConfirm.confirm"),
-            cancelText: this.$t("InSecureConfirm.cancel"),
-            type: "is-danger",
-            hasIcon: true,
-            onConfirm: () => true,
-            onCancel: () => false,
-          });
-          if (!result) {
-            return;
-          }
-        }
         coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 1) {
-        coded = this.generateURL(this.ss);
+        coded = this.generateURL(this.v2ray);
       } else if (this.tabChoice === 2) {
-        coded = this.generateURL(this.ssr);
+        // wireguard://address:port?key=value#name
+        coded = this.generateURL(this.wireguard);
       } else if (this.tabChoice === 3) {
-        coded = this.generateURL(this.trojan);
+        // ss://BASE64(method:password)@server:port?plugin=...&v2raya-backend=...#name
+        const { method, password, server, port, name, plugin, plugin_opts, backend } = this.ss;
+        let userinfo = btoa(`${method}:${password}`);
+        let params = [];
+        if (plugin) {
+          params.push(`plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`);
+        }
+        if (backend) {
+          params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
+        }
+        let url = `ss://${userinfo}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 4) {
-        coded = this.generateURL(this.juicity);
+        // ssr://server:port:proto:method:obfs:base64(password)/?remarks=base64(remarks)
+        const { server, port, proto, method, obfs, password, name, protoParam, obfsParam } = this.ssr;
+        let pwdB64 = btoa(password);
+        let remarksB64 = name ? btoa(name) : "";
+        let protoParamB64 = protoParam ? btoa(protoParam) : "";
+        let obfsParamB64 = obfsParam ? btoa(obfsParam) : "";
+        let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
+        coded = url;
       } else if (this.tabChoice === 5) {
-        coded = this.generateURL(this.tuic);
+        // trojan://password@server:port?pinnedPeerCertSha256=&verifyPeerCertByName=&sni=sni&v2raya-backend=...#name
+        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, peer, name, backend } = this.trojan;
+        let params = [];
+        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
+        if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
+        if (backend) params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
+        let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 6) {
-        coded = this.generateURL(this.http);
+        // juicity://uuid:password@server:port?cc=xxx#name
+        const { uuid, password, server, port, cc, sni, name } = this.juicity;
+        let params = [];
+        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `juicity://${uuid}:${password}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       } else if (this.tabChoice === 7) {
-        coded = this.generateURL(this.socks5);
+        // tuic://uuid:password@server:port?pinned_peer_cert_sha256=&verify_peer_cert_by_name=&cc=xxx#name
+        const { uuid, password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, cc, sni, name } = this.tuic;
+        let params = [];
+        if (pinnedPeerCertSha256) params.push("pinned_peer_cert_sha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
+        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `tuic://${uuid}:${password}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
+      } else if (this.tabChoice === 8) {
+        // hysteria2://password@server:port?pinSHA256=&obfs=xxx#name
+        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword, sni, name } = this.hysteria2;
+        let params = [];
+        if (pinnedPeerCertSha256) params.push("pinSHA256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
+        if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
+        if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
+        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
+        let url = `hysteria2://${encodeURIComponent(password)}@${server}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
+      } else if (this.tabChoice === 9) {
+        // http(s)://username:password@server:port#name
+        const { protocol, username, password, host, port, name } = this.http;
+        let url = `${protocol}://`;
+        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
+        url += `${host}:${port}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
+      } else if (this.tabChoice === 10) {
+        // socks5://username:password@server:port#name
+        const { username, password, host, port, name } = this.socks5;
+        let url = `socks5://`;
+        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
+        url += `${host}:${port}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
+      } else if (this.tabChoice === 11) {
+        // anytls://auth@host:port?peer=sni&pinnedPeerCertSha256=&verifyPeerCertByName=#name
+        const { auth, host, port, sni, pinnedPeerCertSha256, verifyPeerCertByName, name } = this.anytls;
+        let params = [];
+        if (sni) params.push(`peer=${encodeURIComponent(sni)}`);
+        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
+        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
+        let url = `anytls://${encodeURIComponent(auth)}@${host}:${port}`;
+        if (params.length) url += `?${params.join("&")}`;
+        if (name) url += `#${encodeURIComponent(name)}`;
+        coded = url;
       }
       this.$emit("submit", coded);
     },

@@ -6,10 +6,10 @@ import (
 
 func DeleteWhich(ws []*configure.Which) (err error) {
 	var data *configure.Whiches
-	//对要删除的touch去重
+	// Deduplicate touches to delete
 	data = configure.NewWhiches(ws)
 	data = configure.NewWhiches(data.GetNonDuplicated())
-	//对要删除的touch排序，将大的下标排在前面，从后往前删
+	// Sort touches to delete, placing larger indices first to delete from back to front
 	data.SortSameTypeReverse()
 	touches := data.Get()
 	cssRaw := configure.GetConnectedServers()
@@ -21,8 +21,8 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 	for _, v := range touches {
 		ind := v.ID - 1
 		switch v.TYPE {
-		case configure.SubscriptionType: //这里删的是某个订阅
-			//检查现在连接的结点是否在该订阅中，是的话断开连接
+		case configure.SubscriptionType: // Here a subscription is being deleted
+			// Check if the currently connected node is in this subscription, if so, disconnect
 			css := cssRaw.Get()
 			for i := len(css) - 1; i >= 0; i-- {
 				cs := css[i]
@@ -41,7 +41,7 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 			subscriptionsIndexes = append(subscriptionsIndexes, ind)
 			bDeletedSubscription = true
 		case configure.ServerType:
-			//检查现在连接的结点是否是该服务器，是的话断开连接
+			// Check if the currently connected node is this server, if so, disconnect
 			css := cssRaw.Get()
 			for i := len(css) - 1; i >= 0; i-- {
 				cs := css[i]

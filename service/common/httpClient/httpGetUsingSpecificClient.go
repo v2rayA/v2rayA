@@ -2,8 +2,9 @@ package httpClient
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/conf"
 	"net/http"
+
+	"github.com/v2rayA/v2rayA/conf"
 )
 
 func HttpGetUsingSpecificClient(c *http.Client, url string) (resp *http.Response, err error) {
@@ -15,6 +16,9 @@ func HttpGetUsingSpecificClient(c *http.Client, url string) (resp *http.Response
 	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%v WebRequestHelper", conf.Version))
 	if resp, err = c.Do(req); err != nil {
 		resp, err = http.DefaultClient.Do(req)
+	}
+	if resp == nil {
+		return nil, fmt.Errorf("httpGetUsingSpecificClient: response is nil")
 	}
 	return
 }

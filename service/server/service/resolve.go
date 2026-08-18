@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/core/serverObj"
+	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"net/url"
 	"strings"
 )

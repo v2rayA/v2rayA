@@ -14,13 +14,51 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-// 用一个花里胡哨的加密方式来加密密码，密码最多32位
+// CryptoPwd 使用 bcrypt 加密密码。
+// 如果 bcrypt 失败（极少情况），回退到旧版 MD5 哈希方式以保持兼容。
 func CryptoPwd(password string) string {
-	shaed := sha512.Sum512_256([]byte(password))
-	pwd := md5.Sum(shaed[:])
-	return fmt.Sprintf("%x", pwd)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		// fallback to legacy hash on error
+		shaed := sha512.Sum512_256([]byte(password))
+		pwd := md5.Sum(shaed[:])
+		return fmt.Sprintf("%x", pwd)
+	}
+	return string(hash)
+}
+
+// isBcryptHash 判断字符串是否为 bcrypt 哈希（以 $2a$、$2b$ 或 $2y$ 开头）
+func isBcryptHash(hash string) bool {
+	return len(hash) >= 4 && (hash[:4] == "$2a$" || hash[:4] == "$2b$" || hash[:4] == "$2y$")
+}
+
+// isLegacyMD5Hash 判断字符串是否为旧版 MD5 哈希（32位十六进制字符串）
+func isLegacyMD5Hash(hash string) bool {
+	if len(hash) != 32 {
+		return false
+	}
+	_, err := hex.DecodeString(hash)
+	return err == nil
+}
+
+// CheckPassword 验证密码，优先使用 bcrypt，同时向后兼容旧版 MD5 哈希。
+// 旧版哈希方式：sha512.Sum512_256(password) → md5.Sum → 32位十六进制字符串
+func CheckPassword(password, hash string) bool {
+	// 如果是 bcrypt 哈希，使用 bcrypt 验证
+	if isBcryptHash(hash) {
+		return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
+	}
+	// 如果是旧版 MD5 哈希（32位十六进制），使用旧版方式验证
+	if isLegacyMD5Hash(hash) {
+		shaed := sha512.Sum512_256([]byte(password))
+		pwd := md5.Sum(shaed[:])
+		return fmt.Sprintf("%x", pwd) == hash
+	}
+	return false
 }
 
 // HMACSHA256

@@ -4,12 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/v2rayA/v2rayA/core/ipforward"
-	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
-	"github.com/v2rayA/v2rayA/core/v2ray/service"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/ipforward"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -84,19 +82,8 @@ func checkSupport(toAppend []*configure.Which) (err error) {
 	if err = checkAssetsExist(setting); err != nil {
 		return err
 	}
-	variant, err := service.CheckV5()
-	if err != nil {
-		return err
-	}
-	if variant != where.V2ray {
-		outbound2cnt := map[string]int{}
-		for _, wt := range append(toAppend, configure.GetConnectedServers().Get()...) {
-			outbound2cnt[wt.Outbound]++
-			if outbound2cnt[wt.Outbound] > 1 {
-				return fmt.Errorf("cannot select multiple servers: %w", V2OnlyFeatureError)
-			}
-		}
-	}
+	// Both v2ray-core and xray-core support load balancing now
+	// No need to restrict multiple servers for any core type
 	return nil
 }
 
@@ -140,11 +127,82 @@ func Connect(which *configure.Which) (err error) {
 	if err = configure.AddConnect(*which); err != nil {
 		return
 	}
-	//update the v2ray config and start/restart v2ray
-	if v2ray.ProcessManager.Running() {
-		if err = v2ray.UpdateV2RayConfig(); err != nil {
-			return
-		}
+	//update the v2ray config and start/restart v2ray.
+	//UpdateV2RayConfig starts the core when it is not running, so a connect
+	//request always takes effect instead of silently only saving the selection.
+	if err = v2ray.UpdateV2RayConfig(); err != nil {
+		return
 	}
 	return
+}
+
+// ReplaceOutboundConnections atomically replaces members of one outbound group.
+// It updates v2ray config once after DB changes, and rolls back on failure.
+func ReplaceOutboundConnections(outbound string, touches []configure.Which) (err error) {
+	log.Trace("ReplaceOutboundConnections: begin")
+	defer log.Trace("ReplaceOutboundConnections: done")
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("failed to replace outbound connections: %w", err)
+		}
+	}()
+
+	if outbound == "" {
+		outbound = "proxy"
+	}
+
+	// Normalize outbound and deduplicate touches.
+	normalized := make([]configure.Which, 0, len(touches))
+	seen := make(map[string]struct{})
+	for i, wt := range touches {
+		if wt.ID <= 0 {
+			return fmt.Errorf("invalid touch id at index %d: %d", i, wt.ID)
+		}
+		switch wt.TYPE {
+		case configure.ServerType:
+			wt.Sub = 0
+		case configure.SubscriptionServerType:
+			if wt.Sub < 0 {
+				return fmt.Errorf("invalid subscription index at index %d: %d", i, wt.Sub)
+			}
+		default:
+			return fmt.Errorf("invalid touch type at index %d: %q", i, wt.TYPE)
+		}
+		wt.Outbound = outbound
+		key := fmt.Sprintf("%s/%d/%d", wt.TYPE, wt.ID, wt.Sub)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		normalized = append(normalized, wt)
+	}
+
+	backup := configure.GetConnectedServersByOutbound(outbound)
+	restore := func() {
+		if backup != nil {
+			_ = configure.OverwriteConnects(backup)
+		} else {
+			_ = configure.ClearConnects(outbound)
+		}
+	}
+
+	if err = configure.ClearConnects(outbound); err != nil {
+		return err
+	}
+	for _, wt := range normalized {
+		if err = configure.AddConnect(wt); err != nil {
+			restore()
+			return err
+		}
+	}
+
+	if v2ray.ProcessManager.Running() {
+		if err = v2ray.UpdateV2RayConfig(); err != nil {
+			restore()
+			_ = v2ray.UpdateV2RayConfig()
+			return err
+		}
+	}
+
+	return nil
 }

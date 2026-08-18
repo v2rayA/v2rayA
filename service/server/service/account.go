@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/server/jwt"
-	"time"
 )
 
 func Login(username, password string) (token string, err error) {
@@ -23,7 +24,7 @@ func IsValidAccount(username, password string) bool {
 	if err != nil {
 		return false
 	}
-	return pwd == common.CryptoPwd(password)
+	return common.CheckPassword(password, pwd)
 }
 
 func Register(username, password string) (token string, err error) {

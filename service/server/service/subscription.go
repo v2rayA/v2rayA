@@ -16,10 +16,10 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
-	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/touch"
-	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/kernel/touch"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -47,11 +47,21 @@ func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err err
 		return
 	}
 	for _, server := range sip.Servers {
+		rawQuery := url.Values{}
+		if server.Plugin != "" {
+			// SIP008's "plugin" is the plugin name and "plugin_opts" its options;
+			// combine them into the ss:// "plugin=name;opts" parameter.
+			plugin := server.Plugin
+			if server.PluginOpts != "" {
+				plugin += ";" + server.PluginOpts
+			}
+			rawQuery.Set("plugin", plugin)
+		}
 		u := url.URL{
 			Scheme:   "ss",
 			User:     url.UserPassword(server.Method, server.Password),
 			Host:     net.JoinHostPort(server.Server, strconv.Itoa(server.ServerPort)),
-			RawQuery: url.Values{"plugin": []string{server.PluginOpts}}.Encode(),
+			RawQuery: rawQuery.Encode(),
 			Fragment: server.Remarks,
 		}
 		obj, err := serverObj.NewFromLink("shadowsocks", u.String())
@@ -64,9 +74,9 @@ func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err err
 }
 
 func resolveByLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
-	// 切分raw
+	// Split raw
 	rows := strings.Split(strings.TrimSpace(raw), "\n")
-	// 解析
+	// Parse
 	infos = make([]serverObj.ServerObj, 0)
 	for _, row := range rows {
 		if strings.HasPrefix(row, "STATUS=") {
@@ -222,13 +232,17 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			if sRaw, err := cs.LocateServerRaw(); err != nil {
 				return err
 			} else {
+				if sRaw.ServerObj == nil {
+					log.Warn("UpdateSubscription: skipping connected server with nil ServerObj (Sub=%d, ID=%d)", cs.Sub, cs.ID)
+					continue
+				}
 				link := sRaw.ServerObj.ExportToURL()
 				link2Raw[link] = sRaw
 				connectedVmessInfo2CssIndex[link] = append(connectedVmessInfo2CssIndex[link], i)
 			}
 		}
 	}
-	//将列表更换为新的，并且找到一个跟现在连接的server值相等的，设为Connected，如果没有，则断开连接
+	// Replace list with new one, and find one with the same server value as the current connection, set it as Connected; if none, disconnect
 	for i, info := range subscriptionInfos {
 		infoServerRaw := configure.ServerRaw{
 			ServerObj: info,
@@ -242,6 +256,58 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		}
 		infoServerRaws[i] = infoServerRaw
 	}
+	// Fallback: subscription providers often rename nodes (traffic/expiry counters in
+	// names) while keeping the same endpoint. Remap remaining connected servers to new
+	// servers with the same protocol, hostname and port.
+	looseKey := func(obj serverObj.ServerObj) string {
+		return obj.GetProtocol() + "://" + net.JoinHostPort(obj.GetHostname(), strconv.Itoa(obj.GetPort()))
+	}
+	loose2Index := make(map[string]int)
+	for i, info := range subscriptionInfos {
+		k := looseKey(info)
+		if _, ok := loose2Index[k]; !ok {
+			loose2Index[k] = i
+		}
+	}
+	var connectedServerChanged bool
+	for link, cssIndexes := range connectedVmessInfo2CssIndex {
+		if i, ok := loose2Index[looseKey(link2Raw[link].ServerObj)]; ok {
+			for _, cssIndex := range cssIndexes {
+				cssAfter[cssIndex].ID = i + 1
+			}
+			connectedServerChanged = true
+			log.Info("UpdateSubscription: remapped connected server %v to %v by endpoint match",
+				link2Raw[link].ServerObj.GetName(), subscriptionInfos[i].GetName())
+			delete(connectedVmessInfo2CssIndex, link)
+		}
+	}
+	// Last fallback: some providers keep node names stable but rotate IPs, which
+	// defeats the endpoint match. Remap by name, but only when the name maps to
+	// exactly one server on each side to avoid connecting to a different node.
+	name2Index := make(map[string]int)
+	nameCount := make(map[string]int)
+	for i, info := range subscriptionInfos {
+		nameCount[info.GetName()]++
+		name2Index[info.GetName()] = i
+	}
+	oldNameCount := make(map[string]int)
+	for link := range connectedVmessInfo2CssIndex {
+		oldNameCount[link2Raw[link].ServerObj.GetName()]++
+	}
+	for link, cssIndexes := range connectedVmessInfo2CssIndex {
+		name := link2Raw[link].ServerObj.GetName()
+		if nameCount[name] != 1 || oldNameCount[name] != 1 {
+			continue
+		}
+		i := name2Index[name]
+		for _, cssIndex := range cssIndexes {
+			cssAfter[cssIndex].ID = i + 1
+		}
+		connectedServerChanged = true
+		log.Info("UpdateSubscription: remapped connected server %v (%v -> %v) by unique name match",
+			name, link2Raw[link].ServerObj.GetHostname(), subscriptionInfos[i].GetHostname())
+		delete(connectedVmessInfo2CssIndex, link)
+	}
 	for link, cssIndexes := range connectedVmessInfo2CssIndex {
 		for _, cssIndex := range cssIndexes {
 			if disconnectIfNecessary {
@@ -251,8 +317,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 					return fmt.Errorf("UpdateSubscription: %v", reason)
 				}
 			} else {
-				// 将之前连接的节点append进去
-				// TODO: 变更ServerRaw时可能需要考虑
+				// Append previously connected node
 				infoServerRaws = append(infoServerRaws, *link2Raw[link])
 				cssAfter[cssIndex].ID = len(infoServerRaws)
 			}
@@ -264,7 +329,17 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions[index].Servers = infoServerRaws
 	subscriptions[index].Status = string(touch.NewUpdateStatus())
 	subscriptions[index].Info = status
-	return configure.SetSubscription(index, &subscriptions[index])
+	if err := configure.SetSubscription(index, &subscriptions[index]); err != nil {
+		return err
+	}
+	// A remapped connection may point at a server whose config differs from the old
+	// one; the running core keeps using the old config until it is regenerated.
+	if connectedServerChanged && v2ray.ProcessManager.Running() {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			log.Warn("UpdateSubscription: failed to reload core after remapping connected servers: %v", err)
+		}
+	}
+	return nil
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
@@ -283,14 +358,18 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
-	variant, _, err := where.GetV2rayServiceVersion()
-	if err != nil {
-		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
-	}
 
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
-		subscriptionServer.ID = i                                            // Server IDs start with 1
-		serverObj := configure.GetSubscription(index).Servers[i-1].ServerObj // ServerObj IDs start with 0
+		subscriptionServer.ID = i // Server IDs start with 1
+		sub := configure.GetSubscription(index)
+		if sub == nil {
+			return fmt.Errorf("SelectServersFromSubscription: subscription at index %d not found", index)
+		}
+		serverObj := sub.Servers[i-1].ServerObj // ServerObj IDs start with 0
+		if serverObj == nil {
+			log.Warn("[AutoSelect] Skipping server %d in subscription %d: nil ServerObj", i, index)
+			continue
+		}
 		serverName := serverObj.GetName()
 
 		// Workaround for partial SS support in v2fly and xray
@@ -300,7 +379,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 			continue
 		}
 
-		if shouldDisconnect && variant != where.Xray {
+		if shouldDisconnect {
 			err := Disconnect(subscriptionServer, true)
 			if err == nil {
 				log.Info("[AutoSelect] Disconnected from server: %v", serverName)
@@ -312,10 +391,6 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 			err := Connect(&subscriptionServer)
 			if err == nil {
 				log.Info("[AutoSelect] Automatically selected server: %v", serverName)
-				//Xray only supports connecting to one server at a time
-				if variant == where.Xray {
-					break
-				}
 			} else {
 				log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
 				return err
@@ -326,14 +401,14 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 }
 
 func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
-	variant, _, err := where.GetV2rayServiceVersion()
-	if err != nil {
-		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
-	}
 	for i := 0; i < configure.GetLenSubscriptions(); i++ {
 		subscription := configure.GetSubscription(i)
+		if subscription == nil {
+			log.Warn("[AutoSelect] Failed to read subscription at index %d, skipping", i)
+			continue
+		}
 		if subscription.AutoSelect {
-			if shouldDisconnect && variant != where.Xray {
+			if shouldDisconnect {
 				log.Info("[AutoSelect] Automatically disconnecting servers from subscription: %v", subscription.Address)
 				err := SelectServersFromSubscription(i, true)
 				if err != nil {
@@ -343,11 +418,6 @@ func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
 			} else {
 				log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
 				err := SelectServersFromSubscription(i, false)
-				//Xray only supports connecting to one server at a time,
-				//there's no point in selecting servers from multiple subscriptions
-				if variant == where.Xray {
-					break
-				}
 				if err != nil {
 					log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
 					return err

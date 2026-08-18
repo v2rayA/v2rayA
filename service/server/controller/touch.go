@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/touch"
-	"github.com/v2rayA/v2rayA/core/v2ray"
+	"github.com/v2rayA/v2rayA/kernel/touch"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/server/service"
 )
@@ -25,11 +25,13 @@ func GetTouch(ctx *gin.Context) {
 
 }
 func getTouch(ctx *gin.Context) {
-	running := v2ray.ProcessManager.Running()
+	running := v2ray.ProcessManager.ServiceRunning()
+	networkPaused := v2ray.ProcessManager.NetworkPaused()
 	t := touch.GenerateTouch()
 	common.ResponseSuccess(ctx, gin.H{
-		"running": running,
-		"touch":   t,
+		"running":       running,
+		"networkPaused": networkPaused,
+		"touch":         t,
 	})
 }
 

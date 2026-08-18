@@ -17,7 +17,9 @@ function waitingConnected(promise, interval, cancel, timeout) {
             if (res.data.data.running && res.data.data.touch.connectedServer) {
               clearInterval(timer);
               cancel && cancel();
-              Vue.prototype.$remount();
+              // Do NOT call $remount() here — it recreates the whole App and can
+              // trigger spurious "create account" modals. The connection state is
+              // already updated in connectToProxyGroup's .then() handler.
             }
           },
           () => {

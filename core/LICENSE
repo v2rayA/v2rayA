@@ -1,0 +1,12 @@
+Mozilla Public License Version 2.0
+==================================
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+Note on bundled code:
+- core/xray/ is a git submodule of github.com/xtls/xray-core,
+  licensed under the Mozilla Public License Version 2.0.
+- core/v2ray/ is a git submodule of github.com/v2fly/v2ray-core,
+  licensed under the MIT License.

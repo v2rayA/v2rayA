@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/v2rayA/v2rayA/db/configure"
 	"testing"
+
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 func TestUrlEncoded(t *testing.T) {
@@ -24,15 +25,10 @@ func TestFillEmpty(t *testing.T) {
 		Transparent:                        "10",
 		IpForward:                          false,
 		PortSharing:                        false,
-		SpecialMode:                        "",
 		TransparentType:                    "",
-		AntiPollution:                      "",
 	}
 	if err := FillEmpty(setting, configure.NewSetting()); err != nil {
 		t.Fatal(err)
-	}
-	if setting.SpecialMode != configure.NewSetting().SpecialMode {
-		t.Fatal()
 	}
 	emptySetting := &configure.Setting{}
 	if err := FillEmpty(emptySetting, configure.NewSetting()); err != nil {

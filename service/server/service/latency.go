@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -13,10 +14,10 @@ import (
 
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
-	"github.com/v2rayA/v2rayA/core/coreObj"
-	"github.com/v2rayA/v2rayA/core/serverObj"
-	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
+	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -24,19 +25,19 @@ const HttpTestURL = "https://gstatic.com/generate_204"
 
 func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which, err error) {
 	var whiches = configure.NewWhiches(which)
-	//对要Ping的which去重
+	// Deduplicate whiches to Ping
 	which = whiches.GetNonDuplicated()
-	//暂时关闭透明代理
+	// Temporarily disable transparent proxy
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	defer func() {
-		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil); e != nil {
+		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
 			err = fmt.Errorf("Ping: %v: %v", e, err)
 		}
 	}()
-	//多线程异步ping
+	// Multi-threaded asynchronous ping
 	wg := new(sync.WaitGroup)
 	for i, v := range which {
-		if v.TYPE == configure.SubscriptionType { //subscription不能ping
+		if v.TYPE == configure.SubscriptionType { // subscriptions cannot be pinged
 			continue
 		}
 		wg.Add(1)
@@ -47,7 +48,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	}
 	wg.Wait()
 	for i := len(which) - 1; i >= 0; i-- {
-		if which[i].TYPE == configure.SubscriptionType { //不返回subscriptionType
+		if which[i].TYPE == configure.SubscriptionType { // do not return subscriptionType
 			which = append(which[:i], which[i+1:]...)
 		}
 	}
@@ -96,7 +97,7 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
 	var whiches = configure.NewWhiches(which)
 	for i := len(which) - 1; i >= 0; i-- {
-		if which[i].TYPE == configure.SubscriptionType { //去掉subscriptionType
+		if which[i].TYPE == configure.SubscriptionType { // remove subscriptionType
 			which = append(which[:i], which[i+1:]...)
 		}
 	}
@@ -129,12 +130,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	if tmpl == nil {
 		tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
-			RulePortMode:  configure.WhitelistMode,
-			TcpFastOpen:   configure.Default,
-			MuxOn:         configure.No,
-			Transparent:   configure.TransparentClose,
-			SpecialMode:   configure.SpecialModeNone,
-			AntiPollution: configure.AntipollutionClosed,
+			RulePortMode: configure.WhitelistMode,
+			TcpFastOpen:  configure.Default,
+			MuxOn:        configure.No,
+			Transparent:  configure.TransparentClose,
 		})
 		tmpl.SetAPI(nil)
 	}
@@ -208,7 +207,9 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
+	v2ray.ProcessManager.SetLatencyTesting(true)
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
+		v2ray.ProcessManager.SetLatencyTesting(false)
 		return nil, err
 	}
 	//limit the concurrency
@@ -232,6 +233,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}(i)
 	}
 	wg.Wait()
+	v2ray.ProcessManager.SetLatencyTesting(false)
 	if v2rayRunning && configure.GetConnectedServers() != nil {
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
@@ -272,17 +274,21 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	resp, err := c.Do(req)
 	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		if err != nil {
-			es := strings.ToLower(err.Error())
-			switch {
-			case strings.Contains(es, "eof"):
-				which.Latency = "NOT STABLE"
-			case strings.Contains(es, "does not look like a tls handshake"):
-				which.Latency = "INVALID"
-			case strings.Contains(es, "timeout"):
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() {
 				which.Latency = "TIMEOUT"
-			default:
-				which.Latency = err.Error()
+				return
 			}
+			var recErr tls.RecordHeaderError
+			if errors.As(err, &recErr) {
+				which.Latency = "INVALID"
+				return
+			}
+			if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+				which.Latency = "NOT STABLE"
+				return
+			}
+			which.Latency = err.Error()
 		} else {
 			which.Latency = "BAD RESPONSE"
 		}
@@ -299,12 +305,10 @@ func IsSupported(which configure.Which) (bool, error) {
 	)
 
 	tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
-		RulePortMode:  configure.WhitelistMode,
-		TcpFastOpen:   configure.Default,
-		MuxOn:         configure.No,
-		Transparent:   configure.TransparentClose,
-		SpecialMode:   configure.SpecialModeNone,
-		AntiPollution: configure.AntipollutionClosed,
+		RulePortMode: configure.WhitelistMode,
+		TcpFastOpen:  configure.Default,
+		MuxOn:        configure.No,
+		Transparent:  configure.TransparentClose,
 	})
 	tmpl.SetAPI(nil)
 	serverRaw, _ := which.LocateServerRaw()

@@ -8,6 +8,7 @@ export default {
     checkRunning: "Проверка",
     isRunning: "Работает",
     notRunning: "Готово",
+    waitingNetwork: "Ожидание подключения к сети",
     notLogin: "Пожалуйста, войдите",
     latest: "Последняя",
     local: "Текущая",
@@ -18,6 +19,9 @@ export default {
     optional: "необязательно",
     loadBalance: "Load Balance",
     log: "Журнал",
+    darkTheme: "Темная тема",
+    lightTheme: "Светлая тема",
+    autoTheme: "Авто тема",
   },
   welcome: {
     title: "Добро пожаловать",
@@ -107,9 +111,8 @@ export default {
   setting: {
     transparentProxy: "Прозрачный прокси/Системный прокси",
     transparentType: "Реализация прозрачного прокси/Системного прокси",
+    logLevel: "Уровень журнала",
     pacMode: "Режим разделения трафика на порте с правилами",
-    preventDnsSpoofing: "Предотвратить DNS-спуфинг",
-    specialMode: "Специальный режим",
     mux: "Мультиплекс",
     autoUpdateSub: "Автоматически обновлять подписки",
     autoUpdateGfwlist: "Автоматически обновлять GFWList",
@@ -118,7 +121,15 @@ export default {
     portSharingOn: "Port Sharing",
     concurrency: "Параллелизм",
     inboundSniffing: "Сниффер",
+    ssBackend: "Shadowsocks Backend",
+    trojanBackend: "Trojan Backend",
+    nodeBackend: "Backend",
     options: {
+      trace: "Trace",
+      debug: "Debug",
+      info: "Info",
+      warn: "Warn",
+      error: "Error",
       global: "Не разделять трафик",
       direct: "Напрямую",
       pac: "Зависит от порта правил",
@@ -127,9 +138,6 @@ export default {
       sameAsPacMode:
         "Режим разделения трафика такой же, как у порта с правилами",
       customRouting: "Настраиваемая адресация",
-      antiDnsHijack: "Только защита от перехвата DNS (быстро)",
-      forwardDnsRequest: "Перенаправлять DNS запросы",
-      doh: "DoH (dns-over-https)",
       default: "По-умолчанию",
       on: "Включено",
       off: "Выключено",
@@ -141,6 +149,8 @@ export default {
       closed: "Выключено",
       advanced: "Расширенная настройка",
       leastPing: "С наименьшей задержкой",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "По умолчанию",
     },
     messages: {
       inboundSniffing: "Анализировать входящий трафик. Если эта опция выключена, часть трафик может быть не перенаправлена корректно.",
@@ -151,11 +161,7 @@ export default {
       transparentType:
         "★tproxy: поддерживает UDP, но не поддерживает docker. ★redirect: подходит для docker, но не поддерживает UDP и требуется занять локальный порт 53 для защиты dns от загрязнения.",
       pacMode: `Здесь вы можете выбрать правила разделения трафика для порта с правилами. По-умолчанию, порт для разделения трафика это 20172 с протоколом HTTP.`,
-      preventDnsSpoofing:
-        "★Перенаправлять DNS запросы: DNS запросы будут отправляться через прокси-сервер." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS over HTTPS.",
-      specialMode:
-        "★supervisor：Мониторинг загрязнения dns, перехват заранее, используется механизм сниффинга v2ray-core для предотвращения загрязнения. ★fakedns：Использование стратегии fakedns для ускорения резолвинга.",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "Упростить процесс TCP рукопожатия для ускорения установки соединения. Есть риск распознавания характеристик пакетов. Это может помешать установить соединение если ваша система не подергивает это",
       mux:
@@ -221,13 +227,17 @@ export default {
     ],
   },
   dns: {
-    title: "Настройка DNS сервера",
-    internalQueryServers: "Серверы запросов домена",
-    externalQueryServers: "Внешние серверы запросов домена",
-    messages: [
-      '"@:(dns.internalQueryServers)" применяются для просмотра доменных имен в Китае, в то время как "@:(dns.externalQueryServers)" используется для других доменов.',
-      '"@:(dns.internalQueryServers)" будет использован для всех доменных имен если "@:(dns.externalQueryServers)" пуст.',
-    ],
+    title: "DNS настройки",
+    help: "DNS справка",
+    helpTooltip: "Просмотреть документацию v2fly DNS",
+    colServer: "DNS сервер",
+    colDomains: "Список доменов",
+    colOutbound: "Исходящий",
+    serverPlaceholder: "Напр. 8.8.8.8 или https://dns.google/dns-query",
+    domainsPlaceholder: "По одному на строку, напр. geosite:cn\nОставьте пустым для резервного DNS",
+    addRule: "Добавить правило",
+    resetDefault: "Сбросить настройки",
+    errNoRules: "Необходимо хотя бы одно правило DNS",
   },
   egressPortWhitelist: {
     title: "Настройка белового списка портов",
@@ -321,9 +331,20 @@ export default {
   },
   log: {
     logModalTitle: "Просмотр журнала",
+    logsLabel: "Журнал",
     refreshInterval: "Интервал обновления",
     seconds: "секунд",
     autoScoll: "Авто-пролистывание",
+    category: "Категория",
+    categories: {
+      all: "Все",
+      error: "Ошибка",
+      warn: "Предупреждение",
+      info: "Инфо",
+      debug: "Debug",
+      trace: "Trace",
+      other: "Другое",
+    },
   },
   domainsExcluded: {
     title: "Исключённые домены",
@@ -333,4 +354,6 @@ export default {
     formName: "Список исключённых доменов",
     formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com"
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

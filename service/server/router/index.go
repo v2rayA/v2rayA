@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/md5"
 	"embed"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,6 +24,11 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
 	"github.com/vearutop/statigz"
+)
+
+var (
+	httpServerMu sync.Mutex
+	httpServer   *http.Server
 )
 
 //go:embed web
@@ -57,17 +64,89 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 	}
 }
 
-func ServeGUI(r *gin.Engine) {
+func safeStatigzHandler(fsys fs.FS) (http.Handler, bool) {
+	fi, err := fs.Stat(fsys, ".")
+	if err != nil || !fi.IsDir() {
+		return nil, false
+	}
+
+	readDirFS, ok := fsys.(fs.ReadDirFS)
+	if !ok {
+		return nil, false
+	}
+
+	var handler http.Handler
+	panicked := false
+	func() {
+		defer func() {
+			if recover() != nil {
+				panicked = true
+			}
+		}()
+		handler = statigz.FileServer(readDirFS)
+	}()
+
+	if panicked || handler == nil {
+		return nil, false
+	}
+
+	return handler, true
+}
+
+func registerEmbeddedRoute(r gin.IRoutes, routePrefix string, fsCandidates ...fs.FS) bool {
+	prefix := ""
+	if group, ok := r.(*gin.RouterGroup); ok {
+		prefix = group.BasePath()
+	} else if engine, ok := r.(*gin.Engine); ok {
+		prefix = engine.BasePath()
+	}
+	staticPrefix := filepath.ToSlash(filepath.Join(prefix, routePrefix))
+	if !strings.HasPrefix(staticPrefix, "/") {
+		staticPrefix = "/" + staticPrefix
+	}
+
+	for _, candidate := range fsCandidates {
+		if candidate == nil {
+			continue
+		}
+
+		handler, ok := safeStatigzHandler(candidate)
+		if !ok {
+			continue
+		}
+
+		stripped := http.StripPrefix(staticPrefix, handler)
+		r.GET(routePrefix+"/*w", func(c *gin.Context) {
+			stripped.ServeHTTP(c.Writer, c.Request)
+		})
+		return true
+	}
+
+	return false
+}
+
+func ServeGUI(r gin.IRoutes) {
 	webDir := conf.GetEnvironmentConfig().WebDir
 	if webDir == "" {
 		webFS, err := fs.Sub(webRoot, "web")
 		if err != nil {
 			log.Fatal("fs.Sub: %v", err)
 		}
-		ss := http.StripPrefix("/static", statigz.FileServer(webFS.(fs.ReadDirFS)))
-		r.GET("/static/*w", func(c *gin.Context) {
-			ss.ServeHTTP(c.Writer, c.Request)
-		})
+
+		// --- /static/* route (used by legacy gui Vite build) ---
+		var staticCandidates []fs.FS
+		if sub, subErr := fs.Sub(webFS, "static"); subErr == nil {
+			staticCandidates = append(staticCandidates, sub)
+		}
+		// Backward-compatible fallback for legacy builds that emit hashed assets at web root.
+		staticCandidates = append(staticCandidates, webFS)
+		_ = registerEmbeddedRoute(r, "/static", staticCandidates...)
+
+		// --- /_nuxt/* route (used by ngui Nuxt 3 build) ---
+		if sub, subErr := fs.Sub(webFS, "_nuxt"); subErr == nil {
+			_ = registerEmbeddedRoute(r, "/_nuxt", sub)
+		}
+
 		f, err := webFS.Open("index.html")
 		if err != nil {
 			log.Fatal("webFS.Open index.html:", err)
@@ -78,21 +157,32 @@ func ServeGUI(r *gin.Engine) {
 			log.Fatal("ReadAll index.html: %v", err)
 		}
 		r.GET("/", cachedHTML(html))
+		if favicon, favErr := webFS.Open("favicon.ico"); favErr == nil {
+			defer favicon.Close()
+			favData, _ := io.ReadAll(favicon)
+			r.GET("/favicon.ico", func(c *gin.Context) {
+				c.Data(http.StatusOK, "image/x-icon", favData)
+			})
+		}
 	} else {
 		if _, err := os.Stat(webDir); os.IsNotExist(err) {
 			log.Warn("web files cannot be found at %v. web UI cannot be served", webDir)
 		} else {
-			filepath.Walk(webDir, func(path string, info os.FileInfo, err error) error {
-				if path == webDir {
-					return nil
-				}
-				if info.IsDir() {
-					r.Static("/static/"+info.Name(), path)
-					return filepath.SkipDir
-				}
-				r.StaticFile("/static/"+info.Name(), path)
-				return nil
-			})
+			// --- /static/* route (dev mode, legacy gui) ---
+			staticDir := filepath.Join(webDir, "static")
+			if info, statErr := os.Stat(staticDir); statErr == nil && info.IsDir() {
+				r.Static("/static", staticDir)
+			} else {
+				// Backward-compatible fallback for legacy builds that emit hashed assets at web root.
+				r.Static("/static", webDir)
+			}
+
+			// --- /_nuxt/* route (dev mode, ngui) ---
+			// Directory not existing is silently skipped, compatible with legacy gui dev mode
+			nuxtDir := filepath.Join(webDir, "_nuxt")
+			if info, statErr := os.Stat(nuxtDir); statErr == nil && info.IsDir() {
+				r.Static("/_nuxt", nuxtDir)
+			}
 
 			f, err := os.Open(filepath.Join(webDir, "index.html"))
 			if err != nil {
@@ -104,10 +194,19 @@ func ServeGUI(r *gin.Engine) {
 				log.Fatal("ReadAll index.html: %v", err)
 			}
 			r.GET("/", cachedHTML(html))
+			favPath := filepath.Join(webDir, "favicon.ico")
+			if _, favErr := os.Stat(favPath); favErr == nil {
+				r.StaticFile("/favicon.ico", favPath)
+			}
 		}
 	}
 
 	app := conf.GetEnvironmentConfig()
+
+	if app.Socket != "" {
+		log.Alert("v2rayA is listening at unix:%v", app.Socket)
+		return
+	}
 
 	ip, port, _ := net.SplitHostPort(app.Address)
 	addrs, err := net.InterfaceAddrs()
@@ -140,17 +239,21 @@ func Run() error {
 	corsConfig.AllowWebSockets = true
 	corsConfig.AllowCredentials = true
 	corsConfig.AddAllowHeaders("Authorization", common.RequestIdHeader)
+	corsConfig.AddExposeHeaders("Content-Disposition")
 	engine.Use(cors.New(corsConfig))
-	noAuth := engine.Group("api",
+	app := conf.GetEnvironmentConfig()
+	root := engine.Group(app.BaseUrl)
+	noAuth := root.Group("api",
 		nocache,
 		reqCache.ReqCache,
 	)
 	{
 		noAuth.GET("version", controller.GetVersion)
 		noAuth.POST("login", controller.PostLogin)
+		noAuth.GET("account", controller.GetAccount)
 		noAuth.POST("account", controller.PostAccount)
 	}
-	auth := engine.Group("api",
+	auth := root.Group("api",
 		nocache,
 		func(ctx *gin.Context) {
 			if !configure.HasAnyAccounts() {
@@ -184,25 +287,78 @@ func Run() error {
 		auth.PATCH("subscription", controller.PatchSubscription)
 		auth.GET("ports", controller.GetPorts)
 		auth.PUT("ports", controller.PutPorts)
+		auth.GET("customInbound", controller.GetCustomInbound)
+		auth.POST("customInbound", controller.PostCustomInbound)
+		auth.DELETE("customInbound", controller.DeleteCustomInbound)
 		//auth.PUT("account", controller.PutAccount)
-		auth.GET("dnsList", controller.GetDnsList)
-		auth.PUT("dnsList", controller.PutDnsList)
+		auth.GET("dnsRules", controller.GetDnsRules)
+		auth.PUT("dnsRules", controller.PutDnsRules)
 		auth.GET("routingA", controller.GetRoutingA)
 		auth.PUT("routingA", controller.PutRoutingA)
 		auth.GET("outbounds", controller.GetOutbounds)
 		auth.GET("outbound", controller.GetOutbound)
 		auth.POST("outbound", controller.PostOutbound)
 		auth.PUT("outbound", controller.PutOutbound)
+		auth.PUT("outboundConnections", controller.PutOutboundConnections)
 		auth.DELETE("outbound", controller.DeleteOutbound)
 		auth.GET("message", controller.WsMessage)
 		auth.GET("logger", controller.GetLogger)
 		auth.GET("domainsExcluded", controller.GetDomainsExcluded)
+		auth.GET("tproxyWhiteIpGroups", controller.GetTproxyWhiteIpGroups)
 		auth.PUT("domainsExcluded", controller.PutDomainsExcluded)
+		auth.PUT("tproxyWhiteIpGroups", controller.PutTproxyWhiteIpGroups)
+		auth.GET("networkInterfaces", controller.GetNetworkInterfaces)
 	}
 
-	ServeGUI(engine)
+	ServeGUI(root)
 
-	return engine.Run(conf.GetEnvironmentConfig().Address)
+	var l net.Listener
+	var err error
+	if app.Socket != "" {
+		_ = os.Remove(app.Socket)
+		l, err = net.Listen("unix", app.Socket)
+		if err != nil {
+			return fmt.Errorf("router: failed to listen on unix socket %v: %w", app.Socket, err)
+		}
+		if err = os.Chmod(app.Socket, 0777); err != nil {
+			log.Warn("failed to chmod unix socket %v: %v", app.Socket, err)
+		}
+	} else {
+		addr := app.Address
+		l, err = net.Listen("tcp", addr)
+		if err != nil {
+			return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
+		}
+	}
+
+
+	srv := &http.Server{Handler: engine}
+	httpServerMu.Lock()
+	httpServer = srv
+	httpServerMu.Unlock()
+	defer func() {
+		httpServerMu.Lock()
+		httpServer = nil
+		httpServerMu.Unlock()
+	}()
+
+	err = srv.Serve(l)
+	if err == http.ErrServerClosed {
+		return nil
+	}
+	return err
+}
+
+// Shutdown gracefully stops the HTTP server started by Run.
+// It is safe to call even if Run has not been called or has already returned.
+func Shutdown(ctx context.Context) error {
+	httpServerMu.Lock()
+	srv := httpServer
+	httpServerMu.Unlock()
+	if srv == nil {
+		return nil
+	}
+	return srv.Shutdown(ctx)
 }
 
 func printRunningAt(address string) {

@@ -1,0 +1,65 @@
+{
+  "_comment": "Example config for v2raya hybrid core with anytls outbound.",
+  "log": {
+    "loglevel": "info"
+  },
+  "inbounds": [
+    {
+      "tag": "socks-in",
+      "protocol": "socks",
+      "listen": "127.0.0.1",
+      "port": 20170,
+      "settings": {
+        "udp": true
+      }
+    },
+    {
+      "tag": "http-in",
+      "protocol": "http",
+      "listen": "127.0.0.1",
+      "port": 20171
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "anytls",
+      "settings": {
+        "address": "1.2.3.4",
+        "port": 443,
+        "password": "your-password-here",
+        "sni": "example.com",
+        "allow_insecure": false,
+        "min_idle_sessions": 5
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": ["geosite:cn"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "port": "0-65535",
+        "outboundTag": "proxy"
+      }
+    ]
+  }
+}

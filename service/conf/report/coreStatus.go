@@ -3,8 +3,8 @@ package report
 import (
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/v2rayA/v2rayA/core/v2ray"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"net"
 	"strconv"

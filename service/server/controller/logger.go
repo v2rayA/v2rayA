@@ -4,9 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
-	"unsafe"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
@@ -43,10 +41,10 @@ func GetLogger(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	str, err := ioutil.ReadAll(bufio.NewReader(f))
+	data, err := io.ReadAll(bufio.NewReader(f))
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	ctx.String(200, *(*string)(unsafe.Pointer(&str)))
+	ctx.String(200, string(data))
 }

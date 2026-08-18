@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package v2raya.proxy.juicity;
+option go_package = "github.com/v2rayA/v2raya-core/hint/proxy/juicity";
+
+message ClientConfig {
+  // Server address in "host:port" format
+  string address = 1;
+  // User UUID
+  string uuid = 2;
+  // Authentication password
+  string password = 3;
+  // TLS SNI override (optional)
+  string sni = 4;
+  // Allow insecure TLS (skip verification)
+  bool allow_insecure = 5;
+  // Congestion control algorithm: bbr, cubic, new_reno
+  string congestion_control = 6;
+  // Pinned certificate chain SHA256 hash (optional)
+  string pinned_certchain_sha256 = 7;
+}

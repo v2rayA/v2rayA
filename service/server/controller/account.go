@@ -1,13 +1,21 @@
 package controller
 
 import (
+	"sync"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/server/service"
-	"sync"
-	"time"
 )
+
+/*检查是否存在账户*/
+func GetAccount(ctx *gin.Context) {
+	common.ResponseSuccess(ctx, gin.H{
+		"hasAnyAccounts": configure.HasAnyAccounts(),
+	})
+}
 
 var loginSessions = make(chan interface{}, 1)
 
@@ -24,6 +32,12 @@ func PostLogin(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		common.ResponseError(ctx, logError("bad request"))
+		return
+	}
+	if !configure.HasAnyAccounts() {
+		common.Response(ctx, common.UNAUTHORIZED, gin.H{
+			"first": true,
+		})
 		return
 	}
 	jwt, err := service.Login(data.Username, data.Password)

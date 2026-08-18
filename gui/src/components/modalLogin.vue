@@ -33,6 +33,8 @@
     <footer class="modal-card-foot flex-end">
       <b-button
         :class="{ 'is-primary': !first, 'is-twitter': first }"
+        :loading="isSubmitting"
+        :disabled="isSubmitting"
         @click="handleClickSubmit"
       >
         {{ first ? $t("operations.create") : $t("operations.login") }}
@@ -57,12 +59,17 @@ export default {
   data: () => ({
     username: "",
     password: "",
+    isSubmitting: false,
   }),
   mounted() {
     this.$refs.username.focus();
   },
   methods: {
     handleClickSubmit() {
+      if (this.isSubmitting) {
+        return;
+      }
+      this.isSubmitting = true;
       if (this.first) {
         //register
         this.$axios({
@@ -78,6 +85,8 @@ export default {
             this.$emit("close");
             this.$remount();
           });
+        }).finally(() => {
+          this.isSubmitting = false;
         });
       } else {
         //login
@@ -94,11 +103,15 @@ export default {
             this.$emit("close");
             this.$remount();
           });
+        }).finally(() => {
+          this.isSubmitting = false;
         });
       }
     },
     handleEnter() {
-      this.handleClickSubmit();
+      if (!this.isSubmitting) {
+        this.handleClickSubmit();
+      }
     },
   },
 };
@@ -107,6 +120,24 @@ export default {
 <style lang="scss">
 .modal-login .modal-background {
   background-color: rgba(10, 10, 10, 0.7) !important;
+}
+
+.modal-login .modal-background,
+.modal-login-app .modal-background,
+.modal-login-programmatic .modal-background {
+  pointer-events: none !important;
+}
+
+.modal-login-programmatic {
+  z-index: 4500 !important;
+}
+
+.modal-login-programmatic .modal-content,
+.modal-login-programmatic .animation-content,
+.modal-login-programmatic .modal-card {
+  position: relative;
+  z-index: 1 !important;
+  pointer-events: auto !important;
 }
 </style>
 <style lang="scss" scoped>

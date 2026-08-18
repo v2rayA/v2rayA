@@ -1,9 +1,10 @@
 package common
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/infra/dataStructure/lru"
-	"net/http"
 )
 
 type Code string
@@ -22,11 +23,19 @@ const (
 	RequestIdHeader = "X-V2raya-Request-Id"
 )
 
-//当code为FAIL时，data为string类型返回给前端的消息
+// 当code为FAIL时，data为string类型返回给前端的消息
 func Response(ctx *gin.Context, code Code, data interface{}) (status int, body gin.H) {
 	if reqId := ctx.GetHeader(RequestIdHeader); reqId != "" {
 		if resp := RespCache.Get(reqId); resp != nil {
-			resp := resp.(Resp)
+			resp, ok := resp.(Resp)
+			if !ok {
+				ctx.JSON(http.StatusInternalServerError, gin.H{
+					"code":    FAIL,
+					"message": "internal cache error",
+					"data":    nil,
+				})
+				return http.StatusInternalServerError, nil
+			}
 			ctx.JSON(resp.Status, resp.Body)
 			return resp.Status, resp.Body
 		}

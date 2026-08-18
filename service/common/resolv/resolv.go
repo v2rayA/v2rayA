@@ -1,14 +1,19 @@
 package resolv
 
 import (
-	"github.com/v2rayA/v2rayA/conf"
 	"os"
+	"runtime"
 	"strings"
+
+	"github.com/v2rayA/v2rayA/conf"
 )
 
 const resolvConf = "/etc/resolv.conf"
 
 func WriteResolvConf(servers []string) {
+	if runtime.GOOS != "linux" {
+		return
+	}
 	var sb strings.Builder
 	for _, server := range servers {
 		sb.WriteString("nameserver " + server + "\n")
@@ -17,6 +22,9 @@ func WriteResolvConf(servers []string) {
 }
 
 func CheckResolvConf() {
+	if runtime.GOOS != "linux" {
+		return
+	}
 	if conf.GetEnvironmentConfig().Lite {
 		return
 	}

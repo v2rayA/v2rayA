@@ -1,13 +1,14 @@
 package jwt
 
 import (
-	"github.com/dgrijalva/jwt-go/v4"
-	"github.com/dgrijalva/jwt-go/v4/request"
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
-	"github.com/v2rayA/v2rayA/common"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5/request"
+	"github.com/pkg/errors"
+	"github.com/v2rayA/v2rayA/common"
 )
 
 // stripBearerPrefixFromTokenString strips 'Bearer ' prefix from bearer token string
@@ -28,16 +29,21 @@ var AuthorizationArgumentExtractor = &request.PostExtractionFilter{
 
 func JWTAuth(Admin bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
 		token, err := request.ParseFromRequest(ctx.Request, request.AuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
 				return getSecret(), nil
-			})
+			},
+			request.WithParser(parser),
+		)
 		if err != nil {
 			if errors.Is(err, request.ErrNoTokenInRequest) {
 				token, err = request.ParseFromRequest(ctx.Request, AuthorizationArgumentExtractor,
 					func(token *jwt.Token) (interface{}, error) {
 						return getSecret(), nil
-					})
+					},
+					request.WithParser(parser),
+				)
 			}
 			if err != nil {
 				common.Response(ctx, common.UNAUTHORIZED, err.Error())
@@ -45,29 +51,33 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 				return
 			}
 		}
-		mapClaims := token.Claims.(jwt.MapClaims)
-		exp, ok := mapClaims["exp"]
-		if ok {
-			fExp, ok := exp.(float64)
-			if !ok {
-				common.ResponseError(ctx, errors.New("bad token: 4"))
-				ctx.Abort()
-				return
-			}
-			if time.Now().After(time.Unix(int64(fExp), 0)) {
+		mapClaims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			common.ResponseError(ctx, errors.New("bad token: invalid claims"))
+			ctx.Abort()
+			return
+		}
+		exp, err := mapClaims.GetExpirationTime()
+		if err == nil && exp != nil {
+			if time.Now().After(exp.Time) {
 				common.ResponseError(ctx, errors.New("expired token"))
 				ctx.Abort()
 				return
 			}
 		}
 		//如果需要Admin权限
-		if Admin && mapClaims["admin"] == false {
-			common.ResponseError(ctx, errors.New("admin required"))
-			ctx.Abort()
-			return
+		if Admin {
+			adminVal, _ := mapClaims["admin"]
+			if adminVal != true {
+				common.ResponseError(ctx, errors.New("admin required"))
+				ctx.Abort()
+				return
+			}
 		}
 		//将用户名丢入参数
-		ctx.Set("Name", mapClaims["name"])
+		if name, ok := mapClaims["name"]; ok && name != nil {
+			ctx.Set("Name", name)
+		}
 	}
 }
 
@@ -77,7 +87,18 @@ func MakeJWT(payload map[string]string, expDuration *time.Duration) (string, err
 		claims[k] = payload[k]
 	}
 	if expDuration != nil {
-		claims["exp"] = time.Now().Add(*expDuration).Unix()
+		claims["exp"] = jwt.NewNumericDate(time.Now().Add(*expDuration))
 	}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(getSecret())
+}
+
+// ValidateToken validates a JWT token string and returns true if valid
+func ValidateToken(tokenString string) bool {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return getSecret(), nil
+	}, jwt.WithValidMethods([]string{"HS256"}))
+	if err != nil {
+		return false
+	}
+	return token.Valid
 }

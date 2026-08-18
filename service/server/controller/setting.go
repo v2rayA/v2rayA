@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/server/service"
 )
@@ -46,6 +46,8 @@ func PutSetting(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("mux should be between 1 and 1024"))
 		return
 	}
+	// 对 DNS 配置字段执行迁移，确保旧格式请求中的缺失字段被填充默认值
+	configure.MigrateSetting(&data)
 	err = service.UpdateSetting(&data)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))

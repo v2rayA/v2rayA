@@ -59,7 +59,7 @@ func (l *LRU) get(key interface{}) (value interface{}) {
 	if !ok {
 		return nil
 	}
-	l.list.PushFront(v)
+	l.list.MoveToFront(v)
 	ev := v.Value.(*EncapsulatedValue)
 	ev.LastUseTime = time.Now()
 	return ev.Value

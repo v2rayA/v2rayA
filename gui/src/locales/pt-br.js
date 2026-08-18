@@ -8,6 +8,7 @@ export default {
     checkRunning: "Verificando",
     isRunning: "Executando",
     notRunning: "Pronto",
+    waitingNetwork: "Aguardando conexão de rede",
     notLogin: "Por favor, faça login",
     latest: "Mais recente",
     local: "Local",
@@ -18,6 +19,9 @@ export default {
     optional: "opcional",
     loadBalance: "Balanceamento de Carga",
     log: "Logs",
+    darkTheme: "Tema Escuro",
+    lightTheme: "Tema Claro",
+    autoTheme: "Tema Automático",
   },
   welcome: {
     title: "Bem-vindo",
@@ -104,9 +108,8 @@ export default {
   setting: {
     transparentProxy: "Proxy Transparente/Proxy do Sistema",
     transparentType: "Implementação do Proxy Transparente/Proxy do Sistema",
+    logLevel: "Nível de Log",
     pacMode: "Modo de Divisão de Tráfego da Porta de Regra",
-    preventDnsSpoofing: "Prevenir Falsificação de DNS",
-    specialMode: "Modo Especial",
     mux: "Multiplexação",
     autoUpdateSub: "Atualizar Assinaturas Automaticamente",
     autoUpdateGfwlist: "Atualizar GFWList Automaticamente",
@@ -114,7 +117,15 @@ export default {
     ipForwardOn: "Encaminhamento de IP",
     portSharingOn: "Compartilhamento de Porta",
     concurrency: "Concorrência",
+    ssBackend: "Backend do Shadowsocks",
+    trojanBackend: "Backend do Trojan",
+    nodeBackend: "Backend",
     options: {
+      trace: "Trace",
+      debug: "Debug",
+      info: "Info",
+      warn: "Aviso",
+      error: "Erro",
       global: "Não Dividir Tráfego",
       direct: "Direto",
       pac: "Depende da Porta de Regra",
@@ -123,9 +134,6 @@ export default {
       sameAsPacMode:
         "Modo de Divisão de Tráfego é o Mesmo que a Porta de Regra",
       customRouting: "Roteamento Personalizado",
-      antiDnsHijack: "Prevenir apenas sequestro de DNS (rápido)",
-      forwardDnsRequest: "Encaminhar Solicitação de DNS",
-      doh: "DoH(dns-over-https)",
       default: "Manter Padrão",
       on: "Ligado",
       off: "Desligado",
@@ -139,6 +147,8 @@ export default {
       closed: "Desligado",
       advanced: "Configuração Avançada",
       leastPing: "Menor Latência Primeiro",
+      backendV2ray: "v2ray / xray",
+      backendSystemDefault: "Padrão do Sistema",
     },
     messages: {
       gfwlist:
@@ -148,11 +158,7 @@ export default {
       transparentType:
         "★tproxy: suporta UDP, mas não suporta docker. ★redirect: amigável para docker, mas não suporta UDP e precisa ocupar a porta local 53 para dns anti-poluição.",
       pacMode: `Aqui você pode definir a regra de divisão de tráfego da porta de regra. Por padrão, a "Regra de Divisão de Tráfego" porta é 20172 e protocolo HTTP.`,
-      preventDnsSpoofing:
-        "★Encaminhar Solicitação de DNS: As solicitações de DNS serão encaminhadas pelo servidor proxy." +
-        "★DoH(dns-over-https, v2ray-core: 4.22.0+): DNS sobre HTTPS.",
-      specialMode:
-        "★supervisor：Monitora a poluição dns, intercepta antecipadamente, usa o mecanismo de sniffing do v2ray-core para prevenir a poluição. ★fakedns：Use a estratégia fakens para acelerar a resolução.",
+      preventDnsSpoofing: "",
       tcpFastOpen:
         "Simplifica o processo de handshake do TCP para acelerar o estabelecimento da conexão. Risco de enfatizar as características dos pacotes existe. Pode causar falha na conexão se o seu sistema não suportar.",
       mux:
@@ -219,13 +225,17 @@ export default {
     ],
   },
   dns: {
-    title: "Configurar Servidor DNS",
-    internalQueryServers: "Servidores de Consulta de Domínio Internos",
-    externalQueryServers: "Servidores de Consulta de Domínio Externos",
-    messages: [
-      '"@:(dns.internalQueryServers)" são projetados para serem usados para pesquisar nomes de domínio na China, enquanto "@:(dns.externalQueryServers)" é usado para pesquisar outros.',
-      '"@:(dns.internalQueryServers)" será usado para pesquisar todos os nomes de domínio se "@:(dns.externalQueryServers)" estiver vazio.',
-    ],
+    title: "Configurações de DNS",
+    help: "Ajuda DNS",
+    helpTooltip: "Ver documentação v2fly DNS",
+    colServer: "Servidor DNS",
+    colDomains: "Lista de Domínios",
+    colOutbound: "Saída",
+    serverPlaceholder: "ex. 8.8.8.8 ou https://dns.google/dns-query",
+    domainsPlaceholder: "Um por linha, ex. geosite:cn\nDeixe vazio para DNS de fallback",
+    addRule: "Adicionar Regra",
+    resetDefault: "Restaurar Padrões",
+    errNoRules: "Pelo menos uma regra DNS é necessária",
   },
   egressPortWhitelist: {
     title: "Lista de Portas de Saída",
@@ -319,8 +329,21 @@ export default {
   },
   log: {
     logModalTitle: "Visualizar logs",
+    logsLabel: "Logs",
     refreshInterval: "Intervalo de atualização",
     seconds: "segundos",
     autoScoll: "Rolagem Automática",
+    category: "Categoria",
+    categories: {
+      all: "Todos",
+      error: "Erro",
+      warn: "Aviso",
+      info: "Info",
+      debug: "Debug",
+      trace: "Trace",
+      other: "Outros",
+    },
   },
+  pinnedPeerCertSha256: "Pinned Certificate SHA256",
+  verifyPeerCertByName: "Verify Peer Cert By Name",
 };

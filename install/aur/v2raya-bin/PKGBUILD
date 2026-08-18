@@ -27,18 +27,23 @@ source=(
 
 source_i686=(
     "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_x86_${pkgver}"
+    "v2raya_core_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_core_linux_x86_${pkgver}"
 )
 source_x86_64=(
     "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_x64_${pkgver}"
+    "v2raya_core_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_core_linux_x64_${pkgver}"
 )
 source_aarch64=(
     "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_arm64_${pkgver}"
+    "v2raya_core_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_core_linux_arm64_${pkgver}"
 )
 source_armv7h=(
     "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_armv7_${pkgver}"
+    "v2raya_core_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_core_linux_armv7_${pkgver}"
 )
 source_loong64=(
     "v2raya_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_linux_loongarch64_${pkgver}"
+    "v2raya_core_${pkgver}::https://github.com/v2rayA/v2rayA/releases/download/v${pkgver}/v2raya_core_linux_loongarch64_${pkgver}"
 )
 
 sha1sums=(
@@ -50,18 +55,23 @@ sha1sums=(
 
 sha1sums_i686=(
     '{{sha1sums_i686}}'
+    '{{sha1sums_core_i686}}'
 )
 sha1sums_x86_64=(
     '{{sha1sums_x86_64}}'
+    '{{sha1sums_core_x86_64}}'
 )
 sha1sums_aarch64=(
     '{{sha1sums_aarch64}}'
+    '{{sha1sums_core_aarch64}}'
 )
 sha1sums_armv7h=(
     '{{sha1sums_armv7h}}'
+    '{{sha1sums_core_armv7h}}'
 )
 sha1sums_loong64=(
     '{{sha1sums_loong64}}'
+    '{{sha1sums_core_loong64}}'
 )
 
 build() {
@@ -76,13 +86,13 @@ build() {
 EOF
     chmod +x ./v2raya_"${pkgver}"
     ./v2raya_"${pkgver}" --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/'  >> "$srcdir/v2raya.conf"
+    chmod +x ./v2raya_core_"${pkgver}"
 }
 
 package() {
-    depends+=('v2ray>=5.0.0')
-
     cd "$srcdir"
     install -Dm 755 v2raya_"${pkgver}" "${pkgdir}"/usr/bin/v2raya
+    install -Dm 755 v2raya_core_"${pkgver}" "${pkgdir}"/usr/bin/v2raya_core
     install -Dm 644 v2raya.desktop -t "${pkgdir}"/usr/share/applications/
     install -Dm 644 v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
     install -Dm 644 v2raya-lite.service -t "${pkgdir}"/usr/lib/systemd/user/

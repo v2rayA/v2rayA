@@ -1,111 +1,138 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
+	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"go.etcd.io/bbolt"
 )
 
+// makeKey constructs a prefixed key using bucket:key format for data isolation
+func makeKey(bucket string, key string) string {
+	return bucket + ":" + key
+}
+
+// Get retrieves a value from system_config table by key and unmarshals it into val.
 func Get(bucket string, key string, val interface{}) (err error) {
-	return Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
-		dirty := false
-		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
-			return dirty, err
-		} else {
-			if v := bkt.Get([]byte(key)); v == nil {
-				return dirty, fmt.Errorf("Get: key is not found")
-			} else {
-				return dirty, jsoniter.Unmarshal(v, val)
-			}
-		}
-	})
+	db := GetDB()
+	fullKey := makeKey(bucket, key)
+	var value string
+	err = db.QueryRow("SELECT value FROM system_config WHERE key = ?", fullKey).Scan(&value)
+	if err == sql.ErrNoRows && bucket == "accounts" {
+		// Backward compatibility: legacy SQLite stored account keys without
+		// bucket prefix, e.g. "admin" instead of "accounts:admin".
+		err = db.QueryRow("SELECT value FROM system_config WHERE key = ?", key).Scan(&value)
+	}
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("Get: key is not found")
+	}
+	if err != nil {
+		return err
+	}
+	return jsoniter.Unmarshal([]byte(value), val)
 }
 
+// GetRaw retrieves a raw byte value from system_config table by key.
 func GetRaw(bucket string, key string) (b []byte, err error) {
-	err = Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
-		dirty := false
-		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
-			return dirty, err
-		} else {
-			v := bkt.Get([]byte(key))
-			if v == nil {
-				return dirty, fmt.Errorf("GetRaw: key is not found")
-			}
-			b = common.BytesCopy(v)
-			return dirty, nil
-		}
-	})
-	return b, err
+	db := GetDB()
+	fullKey := makeKey(bucket, key)
+	var value string
+	err = db.QueryRow("SELECT value FROM system_config WHERE key = ?", fullKey).Scan(&value)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("GetRaw: key is not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return common.BytesCopy([]byte(value)), nil
 }
 
+// Exists checks if a key exists in the system_config table.
 func Exists(bucket string, key string) (exists bool) {
-	if err := Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
-		dirty := false
-		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
-			return dirty, err
-		} else {
-			v := bkt.Get([]byte(key))
-			exists = v != nil
-			return dirty, nil
-		}
-	}); err != nil {
+	db := GetDB()
+	fullKey := makeKey(bucket, key)
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM system_config WHERE key = ?", fullKey).Scan(&count)
+	if err == nil && count == 0 && bucket == "accounts" {
+		err = db.QueryRow("SELECT COUNT(*) FROM system_config WHERE key = ?", key).Scan(&count)
+	}
+	if err != nil {
 		log.Warn("%v", err)
 		return false
 	}
-	return exists
+	return count > 0
 }
 
+// GetBucketLen returns the number of entries in the specified bucket.
 func GetBucketLen(bucket string) (length int, err error) {
-	err = Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
-		dirty := false
-		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
-			return dirty, err
-		} else {
-			length = bkt.Stats().KeyN
-		}
-		return dirty, nil
-	})
+	db := GetDB()
+	prefix := bucket + ":"
+	err = db.QueryRow("SELECT COUNT(*) FROM system_config WHERE key LIKE ?", prefix+"%").Scan(&length)
 	return length, err
 }
 
+// GetBucketKeys returns all keys in the specified bucket (without the bucket prefix).
 func GetBucketKeys(bucket string) (keys []string, err error) {
-	err = Transaction(DB(), func(tx *bbolt.Tx) (bool, error) {
-		dirty := false
-		if bkt, err := CreateBucketIfNotExists(tx, []byte(bucket), &dirty); err != nil {
-			return dirty, err
-		} else {
-			return dirty, bkt.ForEach(func(k, v []byte) error {
-				keys = append(keys, string(k))
-				return nil
-			})
+	db := GetDB()
+	prefix := bucket + ":"
+	query := "SELECT key FROM system_config WHERE key LIKE ? ORDER BY key"
+	args := []interface{}{prefix + "%"}
+	if bucket == "accounts" {
+		// Backward compatibility: also include legacy unprefixed keys.
+		query = "SELECT key FROM system_config WHERE key LIKE ? OR key NOT LIKE '%:%' ORDER BY key"
+	}
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
 		}
-	})
-	return keys, err
+		// Remove the bucket prefix from the key.
+		key = strings.TrimPrefix(key, prefix)
+		keys = append(keys, key)
+	}
+	return keys, rows.Err()
 }
 
+// Set inserts or replaces a value in the system_config table.
 func Set(bucket string, key string, val interface{}) (err error) {
 	b, err := jsoniter.Marshal(val)
 	if err != nil {
-		return
+		return err
 	}
-	return DB().Update(func(tx *bbolt.Tx) error {
-		if bkt, err := tx.CreateBucketIfNotExists([]byte(bucket)); err != nil {
-			return err
-		} else {
-			return bkt.Put([]byte(key), b)
-		}
-	})
+	db := GetDB()
+	fullKey := makeKey(bucket, key)
+	_, err = db.Exec("INSERT OR REPLACE INTO system_config (key, value) VALUES (?, ?)", fullKey, string(b))
+	return err
 }
 
-func BucketClear(bucket string) error {
-	err := DB().Update(func(tx *bbolt.Tx) error {
-		return tx.DeleteBucket([]byte(bucket))
-	})
-	if err == bbolt.ErrBucketNotFound {
-		return nil
+// Delete removes a single key from system_config.
+func Delete(bucket string, key string) error {
+	db := GetDB()
+	fullKey := makeKey(bucket, key)
+	query := "DELETE FROM system_config WHERE key = ?"
+	args := []interface{}{fullKey}
+	if bucket == "accounts" {
+		// Remove both new-format and legacy-format account keys.
+		query = "DELETE FROM system_config WHERE key = ? OR key = ?"
+		args = []interface{}{fullKey, key}
 	}
+	_, err := db.Exec(query, args...)
+	return err
+}
+
+// BucketClear removes all entries from the specified bucket in system_config table.
+func BucketClear(bucket string) error {
+	db := GetDB()
+	prefix := bucket + ":"
+	_, err := db.Exec("DELETE FROM system_config WHERE key LIKE ?", prefix+"%")
 	return err
 }

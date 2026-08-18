@@ -34,11 +34,11 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	}
 	s = s[l+len(prefix):]
 	r := strings.Index(s, "\n")
-	if r < 0 { //没有换行就到末尾
+	if r < 0 { // Go to end if no newline
 		r = len(s)
 	}
 	s = s[:r]
-	// 远端版本获取完毕
+	// Remote version obtained
 	ge, err := common.VersionGreaterEqual(conf.Version, s)
 	return !ge, s, err
 }
