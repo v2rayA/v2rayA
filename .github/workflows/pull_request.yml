@@ -58,7 +58,15 @@ jobs:
           GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath -tags "tinytun" \
             -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" \
             -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
-      - name: Upload Binary
+          cd "$CurrentDir"/core
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath \
+            -ldflags "-X main.Version=$version -s -w" \ 
+            -o "$CurrentDir/v2raya_bin/v2raya_core_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}" ./main.go
+      - name: Upload v2rayA Binary
         uses: actions/upload-artifact@v7
         with:
           path: v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}
+      - name: Upload v2rayA Core Binary
+        uses: actions/upload-artifact@v7
+        with:
+          path: v2raya_bin/v2raya_core_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}
