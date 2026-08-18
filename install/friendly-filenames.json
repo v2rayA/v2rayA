@@ -35,6 +35,18 @@
     "linux-loong64": {
         "friendlyName": "linux_loongarch64"
     },
+    "linux-mipssf": {
+        "friendlyName": "linux_mips32sf"
+    },
+    "linux-mipslesf": {
+        "friendlyName": "linux_mips32lesf"
+    },
+    "linux-mips64sf": {
+        "friendlyName": "linux_mips64sf"
+    },
+    "linux-mips64lesf": {
+        "friendlyName": "linux_mips64lesf"
+    },
     "windows-amd64": {
         "friendlyName": "windows_x64"
     },
