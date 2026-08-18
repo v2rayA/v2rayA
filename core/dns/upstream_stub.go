@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"syscall"
 	"time"
 
 	"github.com/miekg/dns"
@@ -105,28 +104,13 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 		protocol = "udp"
 	}
 
-	log.Printf("[dns upstream] exchange direct: %s %s → %s (%s)",
+	dnsLogf("[dns upstream] exchange direct: %s %s → %s (%s)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, protocol)
 
 	// Create DNS client with SO_MARK=0x80 on all sockets.
 	// The Control function sets the socket mark to 0x80, which iptables
 	// DNS_MARK/TP_OUT chains check and RETURN (skip), preventing the loop.
-	markFd := func(network, address string, c syscall.RawConn) error {
-		return c.Control(func(fd uintptr) {
-			_ = setSocketMark(fd) // SO_MARK=36
-		})
-	}
-
-	client := &dns.Client{
-		Net:          protocol,
-		Timeout:      5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		Dialer: &net.Dialer{
-			Timeout: 5 * time.Second,
-			Control: markFd,
-		},
-	}
+	client := newMarkedDnsClient(protocol)
 
 	// Attempt the exchange with retry logic.
 	var resp *dns.Msg
@@ -140,11 +124,7 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 			time.Sleep(100 * time.Millisecond)
 		}
 
-		if protocol == "udp" {
-			resp, rtt, err = m.exchangeUDPWithMark(client, msg, upstream.Addr)
-		} else {
-			resp, rtt, err = client.Exchange(msg, upstream.Addr)
-		}
+		resp, rtt, err = client.Exchange(msg, upstream.Addr)
 
 		if err != nil {
 			log.Printf("[dns upstream] attempt %d error: %s %s → %s: %v", attempt+1,
@@ -157,14 +137,7 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 			log.Printf("[dns upstream] truncated response, falling back to TCP: %s %s → %s",
 				dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr)
 
-			tcpClient := &dns.Client{
-				Net:     "tcp",
-				Timeout: 5 * time.Second,
-				Dialer: &net.Dialer{
-					Timeout: 5 * time.Second,
-					Control: markFd,
-				},
-			}
+			tcpClient := newMarkedDnsClient("tcp")
 			resp, rtt, err = tcpClient.Exchange(msg, upstream.Addr)
 			if err != nil {
 				log.Printf("[dns upstream] TCP fallback error (attempt %d): %s %s → %s: %v", attempt+1,
@@ -215,70 +188,11 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 		Cached:     false,
 	}
 
-	log.Printf("[dns upstream] direct response: %s %s → %s (rcode=%d, rtt=%v, answers=%d)",
+	dnsLogf("[dns upstream] direct response: %s %s → %s (rcode=%d, rtt=%v, answers=%d)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr,
 		resp.Rcode, rtt, len(resp.Answer))
 
 	return dnsResp, nil
-}
-
-// exchangeUDPWithMark sends a DNS query over UDP with SO_MARK=0x80 set on the socket.
-// miekg/dns.Client.Exchange for UDP doesn't use the Dialer.Control function,
-// so we create the UDP socket manually to set the socket mark.
-func (m *UpstreamManager) exchangeUDPWithMark(client *dns.Client, msg *dns.Msg, addr string) (*dns.Msg, time.Duration, error) {
-	// Resolve UDP address
-	udpAddr, err := net.ResolveUDPAddr("udp", addr)
-	if err != nil {
-		return nil, 0, fmt.Errorf("resolve udp: %w", err)
-	}
-
-	// Create UDP connection with SO_MARK=0x80
-	conn, err := net.DialUDP("udp", nil, udpAddr)
-	if err != nil {
-		return nil, 0, fmt.Errorf("dial udp: %w", err)
-	}
-	defer conn.Close()
-
-	// Set SO_MARK on the UDP socket
-	rawConn, err := conn.SyscallConn()
-	if err != nil {
-		return nil, 0, fmt.Errorf("get raw conn: %w", err)
-	}
-	rawConn.Control(func(fd uintptr) {
-		_ = setSocketMark(fd)
-	})
-
-	// Pack and send the DNS query
-	packed, err := msg.Pack()
-	if err != nil {
-		return nil, 0, fmt.Errorf("dns pack: %w", err)
-	}
-
-	start := time.Now()
-
-	if _, err := conn.Write(packed); err != nil {
-		return nil, 0, fmt.Errorf("dns write: %w", err)
-	}
-
-	// Read response — use dns.MaxMsgSize (65535) as the receive buffer.
-	// The query has EDNS0 UDP size 4096, so the upstream may respond with
-	// up to 4096 bytes. dns.DefaultMsgSize (512) is too small and would
-	// silently truncate large responses (UDP datagram remainder is lost).
-	respBuf := make([]byte, dns.MaxMsgSize)
-	conn.SetReadDeadline(time.Now().Add(client.ReadTimeout))
-	n, err := conn.Read(respBuf)
-	rtt := time.Since(start)
-	if err != nil {
-		return nil, rtt, fmt.Errorf("dns read: %w", err)
-	}
-
-	// Unpack response
-	resp := new(dns.Msg)
-	if err := resp.Unpack(respBuf[:n]); err != nil {
-		return nil, rtt, fmt.Errorf("dns unpack: %w", err)
-	}
-
-	return resp, rtt, nil
 }
 
 // exchangeViaProxy sends a DNS query through a proxy channel.
@@ -297,7 +211,7 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 		return nil, nil
 	}
 
-	log.Printf("[dns upstream] exchange via proxy: %s %s → %s (proxyTag=%s)",
+	dnsLogf("[dns upstream] exchange via proxy: %s %s → %s (proxyTag=%s)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, upstream.ProxyTag)
 
 	// Get the proxy address for the configured tag.
@@ -390,7 +304,7 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 		Cached:     false,
 	}
 
-	log.Printf("[dns upstream] proxy response: %s %s → %s via %s (rcode=%d, rtt=%v, answers=%d)",
+	dnsLogf("[dns upstream] proxy response: %s %s → %s via %s (rcode=%d, rtt=%v, answers=%d)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, proxyAddr,
 		resp.Rcode, rtt, len(resp.Answer))
 
@@ -573,12 +487,11 @@ func (m *UpstreamManager) getClientForProtocol(upstream *UpstreamInstance, proto
 	}
 
 	// Create a new client for the requested protocol.
-	return &dns.Client{
-		Net:          protocol,
-		Timeout:      5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-	}
+	// IMPORTANT: the client MUST carry SO_MARK=0x80 (newMarkedDnsClient),
+	// otherwise its queries are hijacked by the transparent-proxy redirect
+	// rules back into this DNS module, forming an infinite loop that grows
+	// memory until the host is exhausted.
+	return newMarkedDnsClient(protocol)
 }
 
 // ExchangeRaw sends a raw *dns.Msg to the upstream and returns the raw response.
@@ -631,7 +544,7 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		return nil, nil
 	}
 
-	log.Printf("[dns upstream] exchange via xray routing: %s %s → %s (proxyTag=%s)",
+	dnsLogf("[dns upstream] exchange via xray routing: %s %s → %s (proxyTag=%s)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, upstream.ProxyTag)
 
 	// Build DNS query message.
@@ -748,7 +661,7 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		Cached:     false,
 	}
 
-	log.Printf("[dns upstream] dispatcher response: %s %s → %s (rcode=%d, rtt=%v, answers=%d)",
+	dnsLogf("[dns upstream] dispatcher response: %s %s → %s (rcode=%d, rtt=%v, answers=%d)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr,
 		dnsResp.Rcode, rtt, len(dnsResp.Answer))
 

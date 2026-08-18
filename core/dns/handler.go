@@ -32,7 +32,7 @@ func (h *DnsHandler) prefetchAsync(ctx context.Context, upstream *UpstreamInstan
 		h.module.metrics.RecordPrefetch()
 	}
 
-	log.Printf("[dns] prefetch: %s %s via %s (tag=%s)",
+	dnsLogf("[dns] prefetch: %s %s via %s (tag=%s)",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, upstream.ProxyTag)
 
 	resp, err := upstreamMgr.Exchange(upstream, query)
@@ -52,7 +52,7 @@ func (h *DnsHandler) prefetchAsync(ctx context.Context, upstream *UpstreamInstan
 	h.module.cache.Set(key, resp, resp.TTL)
 	h.module.cache.RecordPrefetchSuccess(key)
 
-	log.Printf("[dns] prefetch completed: %s %s via %s",
+	dnsLogf("[dns] prefetch completed: %s %s via %s",
 		dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr)
 }
 
@@ -104,7 +104,7 @@ func (h *DnsHandler) HandleQuery(ctx context.Context, query *DnsQuery) (*DnsResp
 	if query.ClientIP != nil {
 		clientIP = query.ClientIP.String()
 	}
-	log.Printf("[dns] query: %s %s from %s", QTypeToString(query.QType), query.Name, clientIP)
+	dnsLogf("[dns] query: %s %s from %s", QTypeToString(query.QType), query.Name, clientIP)
 
 	// Get module references.
 	module := h.module
@@ -216,7 +216,7 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 	if result.RuleID != "" {
 		ruleInfo = fmt.Sprintf(" rule(%s)", result.RuleID)
 	}
-	log.Printf("[dns] route: %s %s → %s(%s)%s action(route)",
+	dnsLogf("[dns] route: %s %s → %s(%s)%s action(route)",
 		QTypeToString(query.QType), query.Name, upstreamID, proxyInfo, ruleInfo)
 
 	// Check cache (if enabled).
@@ -225,7 +225,7 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 		if cached, ok := cache.Get(cacheKey); ok {
 			// Log cache hit.
 			_ = cached // DnsResponse, used below
-			log.Printf("[dns] cache-hit: %s %s",
+			dnsLogf("[dns] cache-hit: %s %s",
 				QTypeToString(query.QType), query.Name)
 
 			// Track cache hit (backward compatible stats).
@@ -248,7 +248,7 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 		}
 
 		// Log cache miss.
-		log.Printf("[dns] cache-miss: %s %s", QTypeToString(query.QType), query.Name)
+		dnsLogf("[dns] cache-miss: %s %s", QTypeToString(query.QType), query.Name)
 
 		// Track cache miss (backward compatible stats).
 		module.stats.mu.Lock()
@@ -288,7 +288,7 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 	}
 
 	// Log successful upstream response.
-	log.Printf("[dns] upstream: %s via %s (rtt=%dms)",
+	dnsLogf("[dns] upstream: %s via %s (rtt=%dms)",
 		upstream.Addr, proxyInfo, rtt.Milliseconds())
 
 	// Store response in cache (if enabled and not a bootstrap query).
@@ -312,7 +312,7 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 
 // handleReject returns a REFUSED response for rejected queries.
 func (h *DnsHandler) handleReject(query *DnsQuery, module *DnsModule, result *RouteResult) (*DnsResponse, error) {
-	log.Printf("[dns] reject: %s %s (rule=%s)", QTypeToString(query.QType), query.Name, result.RuleID)
+	dnsLogf("[dns] reject: %s %s (rule=%s)", QTypeToString(query.QType), query.Name, result.RuleID)
 
 	// Track statistics.
 	module.stats.mu.Lock()
@@ -335,7 +335,7 @@ func (h *DnsHandler) handleReject(query *DnsQuery, module *DnsModule, result *Ro
 func (h *DnsHandler) handleBypass(query *DnsQuery, module *DnsModule, result *RouteResult,
 	upstreamMgr *UpstreamManager) (*DnsResponse, error) {
 
-	log.Printf("[dns] bypass: %s %s (rule=%s)", QTypeToString(query.QType), query.Name, result.RuleID)
+	dnsLogf("[dns] bypass: %s %s (rule=%s)", QTypeToString(query.QType), query.Name, result.RuleID)
 
 	// Track statistics.
 	module.stats.mu.Lock()
@@ -393,7 +393,7 @@ func (h *DnsHandler) handleBypass(query *DnsQuery, module *DnsModule, result *Ro
 	}
 
 	// Log successful bypass response.
-	log.Printf("[dns] upstream: %s:53 direct (rtt=%dms)",
+	dnsLogf("[dns] upstream: %s:53 direct (rtt=%dms)",
 		upstream.Addr, rtt.Milliseconds())
 
 	module.stats.mu.Lock()

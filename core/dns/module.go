@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/netip"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/miekg/dns"
@@ -272,22 +271,12 @@ func (m *DnsModule) resolveBootstrap(domains []string) map[string]string {
 			m.RecursionDesired = true
 
 			// Use SO_MARK=0x80 to bypass iptables DNS redirect loop.
-			// Without this mark, the bootstrap query to the system DNS's port 53
-			// would be intercepted by iptables and redirected back to our own
-			// DNS module (which hasn't finished starting yet), causing a timeout.
-			bootstrapMarkFd := func(network, address string, c syscall.RawConn) error {
-				return c.Control(func(fd uintptr) {
-					_ = setSocketMark(fd)
-				})
-			}
-			client := &dns.Client{
-				Net:     "udp",
-				Timeout: 3 * time.Second,
-				Dialer: &net.Dialer{
-					Timeout: 3 * time.Second,
-					Control: bootstrapMarkFd,
-				},
-			}
+			// newMarkedDnsClient sets the mark on all sockets; the bootstrap
+			// client only overrides the timeout so a dead server fails fast
+			// and the next candidate is tried.
+			client := newMarkedDnsClient("udp")
+			client.Timeout = 3 * time.Second
+			client.Dialer.Timeout = 3 * time.Second
 			resp, _, err := client.Exchange(m, addr)
 			if err != nil {
 				log.Printf("[dns module] bootstrap: %s via %s failed: %v", domain, addr, err)

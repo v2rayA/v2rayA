@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/miekg/dns"
 )
@@ -92,12 +91,7 @@ func NewUpstreamManager(configs []UpstreamConfig) *UpstreamManager {
 			ProxyTag:  proxyTag,
 			Healthy:   true,
 			Bootstrap: cfg.Bootstrap,
-			Client: &dns.Client{
-				Net:          net,
-				Timeout:      5 * time.Second,
-				ReadTimeout:  5 * time.Second,
-				WriteTimeout: 5 * time.Second,
-			},
+			Client:    newMarkedDnsClient(net),
 		}
 
 		compositeKey := instance.CompositeKey()
@@ -176,12 +170,7 @@ func (m *UpstreamManager) GetOrCreateUpstream(config UpstreamConfig) *UpstreamIn
 		ProxyTag:  proxyTag,
 		Healthy:   true,
 		Bootstrap: config.Bootstrap,
-		Client: &dns.Client{
-			Net:          net,
-			Timeout:      5 * time.Second,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 5 * time.Second,
-		},
+		Client:    newMarkedDnsClient(net),
 	}
 
 	m.upstreams[compositeKey] = instance
@@ -241,6 +230,10 @@ func (m *UpstreamManager) pingUpstream(upstream *UpstreamInstance) bool {
 	msg.SetQuestion(".", dns.TypeSOA)
 	msg.RecursionDesired = true
 
+	// upstream.Client is always built by newMarkedDnsClient, whose Dialer
+	// sets SO_MARK=0x80 on every socket (UDP included — miekg/dns dials via
+	// net.Dialer, which honors Control for all socket types). The mark lets
+	// health-check pings bypass the transparent-proxy DNS redirect rules.
 	_, _, err := client.Exchange(msg, upstream.Addr)
 	return err == nil
 }

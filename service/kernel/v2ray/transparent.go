@@ -37,6 +37,9 @@ iptables -w 2 -t mangle -X DNS_MARK 2>/dev/null || true
 	iptables -w 2 -t nat -D PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
 	iptables -w 2 -t nat -D OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
 	iptables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+	# 清理 mark 0x80 豁免规则（配合上述 REDIRECT 的防回环豁免，成对删除避免重复累积）
+	iptables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+	iptables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
 # IPv6 清理
 ip6tables -w 2 -t mangle -F DNS_MARK 2>/dev/null || true
 ip6tables -w 2 -t mangle -D PREROUTING -p udp --dport 53 -j DNS_MARK 2>/dev/null || true
@@ -55,6 +58,9 @@ ip6tables -w 2 -t mangle -X DNS_MARK 2>/dev/null || true
 	ip6tables -w 2 -t nat -D PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
 	ip6tables -w 2 -t nat -D OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
 	ip6tables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+	# 清理 IPv6 mark 0x80 豁免规则
+	ip6tables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+	ip6tables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
 # 清理 TProxy 链
 iptables -w 2 -t mangle -F TP_OUT 2>/dev/null || true
 iptables -w 2 -t mangle -D OUTPUT -j TP_OUT 2>/dev/null || true
@@ -86,11 +92,37 @@ nft delete table inet v2raya 2>/dev/null || true
 	cmds.ExecCommands(commands, false)
 }
 
+// cleanDnsRedirectRules removes the direct nat OUTPUT/PREROUTING DNS
+// redirect rules (REDIRECT --to-port 52353) and the fwmark 0x80 exemption
+// rules that writeTransparentProxyRules adds with -A/-I. Tproxy/Redirect
+// GetCleanCommands() only clean their own chains, so without this the
+// rules survive a normal proxy stop: local DNS queries keep being hijacked
+// to :52353, and once the DNS module exits they hit a dead port and DNS
+// fails. Idempotent (2>/dev/null || true).
+func cleanDnsRedirectRules() {
+	commands := `
+iptables -w 2 -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+iptables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+iptables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+ip6tables -w 2 -t nat -D PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>/dev/null || true
+ip6tables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+ip6tables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
+`
+	cmds.ExecCommands(commands, false)
+}
+
 func deleteTransparentProxyRulesKeepSystemProxy() {
 	stopTinyTun()
 	iptables.CloseWatcher()
 	if !conf.GetEnvironmentConfig().Lite {
 		removeResolvHijacker()
+		cleanDnsRedirectRules()
 		iptables.Tproxy.GetCleanCommands().Run(false)
 		iptables.Redirect.GetCleanCommands().Run(false)
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
@@ -152,19 +184,29 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 	// 无论哪种透明代理模式，都用 nat 表的 REDIRECT 将 DNS 流量（:53）转到 DNS 模块（:52353）。
 	// 同时拦截 OUTPUT（本地进程）和 PREROUTING（LAN 设备）的 DNS 查询。
 	// TPROXY 模式对回环（loopback）流量的 TPROXY 拦截不可靠，而 REDIRECT 在 OUTPUT 链上稳定。
+	//
+	// IMPORTANT (fix): mark 0x80 豁免规则必须排在 REDIRECT 规则之前，否则 v2raya-core
+	// 自己向上游转发的 DNS 查询（socket 带 SO_MARK=0x80）会被自己的 REDIRECT 规则劫持回
+	// :52353，形成无限回环（内存雪崩直至 OOM）。iptables 按顺序匹配：
+	//   - REDIRECT 用 -A（追加到链尾），确保在 mark 豁免之后
+	//   - mark 豁免用 -I（插入到链首），确保最先匹配
 	if ShouldLocalDnsListen() {
 		dnsRedirect := `
-iptables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353
-iptables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353
-iptables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353
-iptables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353
+iptables -w 2 -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353
+iptables -w 2 -t nat -A OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353
+iptables -w 2 -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353
+iptables -w 2 -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353
+iptables -w 2 -t nat -I OUTPUT -m mark --mark 0x80/0x80 -j RETURN
+iptables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 `
 		if iptables.IsIPv6Supported() {
 			dnsRedirect += `
-ip6tables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353
-ip6tables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353
-ip6tables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353
-ip6tables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353
+ip6tables -w 2 -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-port 52353
+ip6tables -w 2 -t nat -A OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353
+ip6tables -w 2 -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-port 52353
+ip6tables -w 2 -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-port 52353
+ip6tables -w 2 -t nat -I OUTPUT -m mark --mark 0x80/0x80 -j RETURN
+ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 `
 		}
 		cmds.ExecCommands(dnsRedirect, false)

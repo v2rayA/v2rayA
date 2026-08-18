@@ -172,7 +172,7 @@ func (l *DnsListener) handlePacket(w dns.ResponseWriter, msg *dns.Msg) {
 		query.ClientIP = addr.IP
 	}
 
-	log.Printf("[dns] query: %s %s from %s", dns.Type(q.Qtype).String(), q.Name, clientAddr.String())
+	dnsLogf("[dns] query: %s %s from %s", dns.Type(q.Qtype).String(), q.Name, clientAddr.String())
 
 	ctx, cancel := context.WithTimeout(l.ctx, time.Duration(l.config.Timeout)*time.Second)
 	defer cancel()

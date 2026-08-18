@@ -84,7 +84,7 @@ func (r *Router) Route(query *DnsQuery) *RouteResult {
 			// Rule matched — determine upstream address.
 			upstreamAddr := r.upstreamMap[rule.Upstream]
 
-			log.Printf("[dns router] rule %q matched query %s %s → upstream=%s action=%s",
+			dnsLogf("[dns router] rule %q matched query %s %s → upstream=%s action=%s",
 				rule.ID, query.Name, rule.Upstream, upstreamAddr, rule.Action)
 
 			action := rule.Action
@@ -111,7 +111,7 @@ func (r *Router) Route(query *DnsQuery) *RouteResult {
 	}
 
 	// No rule matched — use default upstream.
-	log.Printf("[dns router] no rule matched for %s %d → using default upstream %s",
+	dnsLogf("[dns router] no rule matched for %s %d → using default upstream %s",
 		query.Name, query.QType, r.defaultUpstream)
 
 	defaultAddr := r.upstreamMap[r.defaultUpstream]
