@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          submodules: recursive
       - name: Download Artifact
         uses: actions/download-artifact@v8
         with:
@@ -60,13 +61,10 @@ jobs:
             -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
           cd "$CurrentDir"/core
           GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath \
-            -ldflags "-X main.Version=$version -s -w" \ 
-            -o "$CurrentDir/v2raya_bin/v2raya_core_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}" ./main.go
+            -ldflags "-X main.Version=$version -s -w" \
+            -o "$CurrentDir/v2raya_bin/v2raya_core_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}" ./main
       - name: Upload v2rayA Binary
         uses: actions/upload-artifact@v7
         with:
-          path: v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}
-      - name: Upload v2rayA Core Binary
-        uses: actions/upload-artifact@v7
-        with:
-          path: v2raya_bin/v2raya_core_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}
+          name: v2raya_pr_build_${{ matrix.os }}_${{ matrix.goarch }}
+          path: v2raya_bin/v2raya*
