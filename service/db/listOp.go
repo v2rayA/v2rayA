@@ -115,11 +115,12 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 		return []byte(configJSON), nil
 
 	case "touch/subscriptions":
+		var subID int64
 		var address, remarks, status, info string
 		var autoSelectInt int
 		err = db.QueryRow(
-			"SELECT address, remarks, status, info, auto_select FROM subscriptions WHERE sort = ?", index,
-		).Scan(&address, &remarks, &status, &info, &autoSelectInt)
+			"SELECT id, address, remarks, status, info, auto_select FROM subscriptions WHERE sort = ?", index,
+		).Scan(&subID, &address, &remarks, &status, &info, &autoSelectInt)
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("ListGet: can't get element from an empty list")
 		}
@@ -130,7 +131,7 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 		// Reconstruct the subscription JSON with servers
 		rows, err := db.Query(
 			"SELECT config_json FROM servers WHERE type = 'subscription_server' AND sub_id = ? ORDER BY sort",
-			int64(index+1),
+			subID,
 		)
 		if err != nil {
 			return nil, err
