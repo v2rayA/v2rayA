@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/kernel/touch"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/touch"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -56,5 +56,12 @@ func PutSubscription(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	getTouch(ctx)
+
+	sub := configure.GetSubscription(index)
+	affected := make([]*configure.Which, 0, len(sub.Servers))
+	for i := range sub.Servers {
+		affected = append(affected, &configure.Which{TYPE: configure.SubscriptionServerType, Sub: index, ID: i + 1})
+	}
+	resp := gin.H{}
+	certFixResponseAugment(ctx, resp, affected)
 }

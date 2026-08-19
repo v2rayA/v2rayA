@@ -27,21 +27,29 @@ func PluginManagerValidateLink(url string) bool {
 	}
 }
 
-func Import(url string, which *configure.Which) (err error) {
+func Import(url string, which *configure.Which) (affected []*configure.Which, err error) {
 	log.Trace("Import: received url=%v, which=%+v", url, which)
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
 		infos, _, err := ResolveByLines(url)
 		if err != nil {
-			return fmt.Errorf("failed to resolve addresses: %w", err)
+			return nil, fmt.Errorf("failed to resolve addresses: %w", err)
 		}
+		serverRaws := make([]*configure.ServerRaw, len(infos))
 		for i, info := range infos {
-			if err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: info}}); err != nil {
-				return fmt.Errorf("failed to import server %d/%d (%v): %w", i+1, len(infos), info.GetName(), err)
-			}
+			serverRaws[i] = &configure.ServerRaw{ServerObj: info}
 		}
-		return nil
+		if err = configure.AppendServers(serverRaws); err != nil {
+			return nil, fmt.Errorf("failed to import servers: %w", err)
+		}
+		servers := configure.GetServers()
+		base := len(servers) - len(infos)
+		affected = make([]*configure.Which, len(infos))
+		for i := range infos {
+			affected[i] = &configure.Which{TYPE: configure.ServerType, ID: base + i + 1}
+		}
+		return affected, nil
 	}
 	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
 		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
@@ -67,13 +75,13 @@ func Import(url string, which *configure.Which) (err error) {
 				// but for now, we primarily care about ServerType
 				if which.TYPE != configure.SubscriptionServerType {
 					log.Warn("Import: unsupported touch type for modification: %v", which.TYPE)
-					return fmt.Errorf("bad request: unsupported touch type")
+					return nil, fmt.Errorf("bad request: unsupported touch type")
 				}
 			}
 
 			if which.TYPE == configure.ServerType && (ind < 0 || ind >= configure.GetLenServers()) {
 				log.Warn("Import: invalid server index: %v", ind)
-				return fmt.Errorf("bad request: invalid index")
+				return nil, fmt.Errorf("bad request: invalid index")
 			}
 
 			if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
@@ -81,6 +89,7 @@ func Import(url string, which *configure.Which) (err error) {
 				return
 			}
 			log.Info("Import: SetServer success for index %v", ind)
+			affected = []*configure.Which{{TYPE: which.TYPE, ID: which.ID, Sub: which.Sub}}
 			css := configure.GetConnectedServers()
 			if css.Len() > 0 {
 				for _, cs := range css.Get() {
@@ -96,7 +105,13 @@ func Import(url string, which *configure.Which) (err error) {
 		} else {
 			// append a server
 			log.Info("Import: appending a new server")
-			err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: obj}})
+			if err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: obj}}); err != nil {
+				return
+			}
+			servers := configure.GetServers()
+			if len(servers) > 0 {
+				affected = []*configure.Which{{TYPE: configure.ServerType, ID: len(servers)}}
+			}
 		}
 	} else {
 		// subscription
@@ -118,9 +133,11 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 		c := httpClient.GetHttpClientAutomatically()
 		c.Timeout = 90 * time.Second
-		infos, status, err := ResolveSubscriptionWithClient(source, c)
+		var infos []serverObj.ServerObj
+		var status string
+		infos, status, err = ResolveSubscriptionWithClient(source, c)
 		if err != nil {
-			return fmt.Errorf("failed to resolve subscription address: %w", err)
+			return nil, fmt.Errorf("failed to resolve subscription address: %w", err)
 		}
 
 		// info to serverRawV2
@@ -142,12 +159,22 @@ func Import(url string, which *configure.Which) (err error) {
 			seen[key] = struct{}{}
 			uniqueServers = append(uniqueServers, s)
 		}
-		err = configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
+		if err = configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
 			Address: source,
 			Status:  string(touch.NewUpdateStatus()),
 			Servers: uniqueServers,
 			Info:    status,
-		}})
+		}}); err != nil {
+			return
+		}
+		subs := configure.GetSubscriptions()
+		if len(subs) > 0 {
+			subIndex := len(subs) - 1
+			affected = make([]*configure.Which, len(uniqueServers))
+			for i := range uniqueServers {
+				affected[i] = &configure.Which{TYPE: configure.SubscriptionServerType, Sub: subIndex, ID: i + 1}
+			}
+		}
 	}
 	return
 }

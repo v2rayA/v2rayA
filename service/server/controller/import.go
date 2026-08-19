@@ -30,10 +30,11 @@ func PostImport(ctx *gin.Context) {
 		}
 	}
 
-	err := service.Import(body.URL, which)
+	affected, err := service.Import(body.URL, which)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
-	getTouch(ctx)
+	data := gin.H{}
+	certFixResponseAugment(ctx, data, affected)
 }

@@ -110,6 +110,30 @@ export default {
     tproxyExcludedInterfaces: "Excluded Interface Prefixes",
     configureTunRouteScript: "Configure Route Script",
   },
+  certfix: {
+    detectTitle: "Certificate Fix",
+    fixTitle: "Fixing Certificates",
+    description:
+      "The following nodes may need their TLS certificate pins updated. Select the nodes to process.",
+    process: "Process",
+    cancel: "Cancel Fix",
+    retry: "Retry failed",
+    trusted: "Trusted",
+    pinned: "Pinned",
+    failed: "Failed",
+    noCandidates: "No certificate fix candidates.",
+    summarySuccess:
+      "Completed: {trusted} trusted, {pinned} pinned, {failed} failed out of {total} nodes.",
+    summaryFailed:
+      "Completed with failures: {trusted} trusted, {pinned} pinned, {failed} failed out of {total} nodes.",
+    status: {
+      trusted: "Trusted",
+      pinned: "Pinned",
+      failed: "Failed",
+      skipped: "Skipped",
+      pending: "Pending",
+    },
+  },
   register: {
     title: "Create an admin account first",
     messages: [

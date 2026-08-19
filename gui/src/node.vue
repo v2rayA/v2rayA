@@ -974,6 +974,11 @@ export default {
       }
       return running ? this.$t("common.isRunning") : this.$t("common.notRunning");
     },
+    openCertFixModalIfNeeded(data) {
+      if (data?.certFixCandidates?.length > 0) {
+        this.$modal.show("certfix", { candidates: data.certFixCandidates }, { parent: this });
+      }
+    },
     connectedServerKey(which = {}) {
       const parts = [
         which._type || "unknown",
@@ -1413,6 +1418,7 @@ export default {
             position: "is-top",
             queue: false,
           });
+          this.openCertFixModalIfNeeded(res.data.data);
           this.showModalImport = false;
           this.showModalImportInBatch = false;
           this.importWhat = "";
@@ -1913,6 +1919,7 @@ export default {
             duration: 5000,
             queue: false,
           });
+          this.openCertFixModalIfNeeded(res.data.data);
         });
       });
     },
@@ -1952,6 +1959,7 @@ export default {
           });
           this.showModalServer = false;
           this.syncLatestNodeOverview();
+          this.openCertFixModalIfNeeded(res.data.data);
         });
       });
     },

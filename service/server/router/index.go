@@ -301,6 +301,10 @@ func Run() error {
 		auth.PUT("outbound", controller.PutOutbound)
 		auth.PUT("outboundConnections", controller.PutOutboundConnections)
 		auth.DELETE("outbound", controller.DeleteOutbound)
+		auth.POST("certfix/detect", controller.PostCertFixDetect)
+		auth.POST("certfix", controller.PostCertFix)
+		auth.GET("certfix/:id", controller.GetCertFix)
+		auth.DELETE("certfix/:id", controller.DeleteCertFix)
 		auth.GET("message", controller.WsMessage)
 		auth.GET("logger", controller.GetLogger)
 		auth.GET("domainsExcluded", controller.GetDomainsExcluded)
@@ -330,7 +334,6 @@ func Run() error {
 			return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
 		}
 	}
-
 
 	srv := &http.Server{Handler: engine}
 	httpServerMu.Lock()

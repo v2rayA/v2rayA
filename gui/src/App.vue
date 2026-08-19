@@ -336,6 +336,9 @@ export default {
       ) {
         this.observatory = msg;
       }
+      if (msg.type === "certfix" && msg.body) {
+        this.$root.$emit("certfix-message", msg.body);
+      }
       if (msg.type === "running_state" && msg.body) {
         if (msg.body.running === false) {
           this.$refs.nodeRef && this.$refs.nodeRef.notifyStopped(!!msg.body.networkPaused);

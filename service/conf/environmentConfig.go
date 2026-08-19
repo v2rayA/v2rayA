@@ -49,15 +49,25 @@ func initFunc() {
 	if err := loadPlatformEnv(); err != nil {
 		log.Warn("failed to load platform env: %v", err)
 	}
+	// gonfig parses os.Args directly and chokes on Go test flags such as
+	// -test.v or -test.run. Strip them before loading configuration.
+	originalArgs := os.Args
+	filtered := make([]string, 0, len(originalArgs))
+	for _, arg := range originalArgs {
+		if strings.HasPrefix(arg, "-test.") {
+			continue
+		}
+		filtered = append(filtered, arg)
+	}
+	os.Args = filtered
 	err := gonfig.Load(&params, gonfig.Conf{
 		FileDisable:       true,
 		FlagIgnoreUnknown: false,
 		EnvPrefix:         "V2RAYA_",
 	})
+	os.Args = originalArgs
 	if err != nil {
-		if err.Error() != "unexpected word while parsing flags: '-test.v'" {
-			log2.Fatal(err)
-		}
+		log2.Fatal(err)
 	}
 	if params.BaseUrl == "" {
 		params.BaseUrl = "/"

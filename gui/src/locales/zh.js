@@ -109,6 +109,30 @@ export default {
     tproxyExcludedInterfaces: "不走代理的网卡前缀",
     configureTunRouteScript: "配置路由脚本",
   },
+  certfix: {
+    detectTitle: "证书修复",
+    fixTitle: "正在修复证书",
+    description:
+      "以下节点可能需要更新 TLS 证书固定（pin）。请选择要处理的节点。",
+    process: "处理",
+    cancel: "取消修复",
+    retry: "重试失败节点",
+    trusted: "已信任",
+    pinned: "已固定",
+    failed: "失败",
+    noCandidates: "没有需要修复证书的节点。",
+    summarySuccess:
+      "完成：共 {total} 个节点，{trusted} 个受信任，{pinned} 个已固定，{failed} 个失败。",
+    summaryFailed:
+      "完成（部分失败）：共 {total} 个节点，{trusted} 个受信任，{pinned} 个已固定，{failed} 个失败。",
+    status: {
+      trusted: "受信任",
+      pinned: "已固定",
+      failed: "失败",
+      skipped: "已跳过",
+      pending: "等待中",
+    },
+  },
   register: {
     title: "初来乍到，创建一个管理员账号",
     messages: [

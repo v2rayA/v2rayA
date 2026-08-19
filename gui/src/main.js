@@ -4,6 +4,7 @@ import "@/plugins/backendPort";
 import "@/plugins/mount";
 import "@/plugins/dayjs";
 import "@/plugins/virtual-scroll";
+import "@/plugins/modal";
 import Vue from "vue";
 import "normalize.css";
 // import "@/registerServiceWorker";

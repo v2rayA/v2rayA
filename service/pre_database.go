@@ -126,7 +126,7 @@ func initConfigure() {
 					subs := configurev4.GetSubscriptionsV2()
 					for _, sub := range subs {
 						log.Info("Importing subscription: %v", sub.Address)
-						if e := service.Import(sub.Address, nil); e != nil {
+						if _, e := service.Import(sub.Address, nil); e != nil {
 							log.Warn("Failed to migrate subscription: %v", sub.Address)
 						}
 					}
@@ -135,7 +135,7 @@ func initConfigure() {
 							TYPE: configurev4.ServerType,
 							ID:   iSvr + 1,
 						}); e == nil {
-							if e := service.Import(addr, nil); e != nil {
+							if _, e := service.Import(addr, nil); e != nil {
 								log.Warn("Failed to migrate server: %v", addr)
 							}
 						}
