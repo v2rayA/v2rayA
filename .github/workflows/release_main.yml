@@ -356,12 +356,10 @@ jobs:
       - name: Update HASH
         run: |
           podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya-bin && updpkgsums"
-      - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@v7
+      - name: Import OpenSSH Key
+        uses: webfactory/ssh-agent@v0.10.0
         with:
-          gpg_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
+          ssh-private-key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
       - name: Commit & Push to AUR
         run: |
           Current_Dir=$(pwd)
