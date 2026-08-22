@@ -356,7 +356,7 @@ jobs:
       - name: Update HASH
         run: |
           podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya-bin && updpkgsums && makepkg --printsrcinfo > .SRCINFO"
-          podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya && updpkgsums && makepkg --printsrcinfo > .SRCINFO"
+          podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya && makepkg --printsrcinfo > .SRCINFO"
       - name: Import OpenSSH Key
         uses: shimataro/ssh-key-action@v2
         with:
