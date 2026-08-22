@@ -351,10 +351,11 @@ jobs:
         run: |
           podman pull docker.io/archlinux:latest
           podman run -d --rm --name archContainer -v $PWD/aur:/aur docker.io/archlinux:latest sleep infinity
-          podman exec archContainer pacman -Syu base-devel pacman-contrib --noconfirm
+          podman exec --user root:root archContainer pacman -Syu base-devel pacman-contrib --noconfirm
+          podman exec --user root:root archContainer chown -R $(id --user):$(id --user) /aur
       - name: Update HASH
         run: |
-          podman exec archContainer bash -c "cd /aur/v2raya-bin && updpkgsums"
+          podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya-bin && updpkgsums"
       - name: Import GPG Key
         uses: crazy-max/ghaction-import-gpg@v7
         with:
@@ -366,3 +367,6 @@ jobs:
           Current_Dir=$(pwd)
           cd $Current_Dir/aur/v2raya && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya.git
           cd $Current_Dir/aur/v2raya-bin && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
+      - name: Clean Up
+        run: |
+          podman stop archContainer
