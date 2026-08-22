@@ -36,5 +36,10 @@ sha256sums_aarch64=('{{sha256sums_aarch64}}')
 sha256sums_loong64=('{{sha256sums_loong64}}')
 
 package() {
+    depends+=('v2ray-domain-list-community' 'v2ray-geoip')
+
     cp -a "${srcdir}"/etc "${srcdir}"/usr "${pkgdir}"/
+    rm -rf "${pkgdir}"/usr/share/v2raya/*
+    ln -sf /usr/share/v2ray/geoip.dat "${pkgdir}"/usr/share/v2raya/geoip.dat
+    ln -sf /usr/share/v2ray/geosite.dat "${pkgdir}"/usr/share/v2raya/geosite.dat
 }

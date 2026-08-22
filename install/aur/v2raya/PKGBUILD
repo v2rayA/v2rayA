@@ -9,18 +9,19 @@ arch=('i686' 'pentium4' 'x86_64' 'arm' 'armv7h' 'armv6h' 'aarch64' 'loong64')
 url="https://github.com/v2rayA/v2rayA"
 license=('AGPL3')
 depends=('glibc')
-makedepends=('git' 'go>=2:1.19.0-1' 'nodejs>=14' 'yarn')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/v2rayA/v2rayA/archive/v$pkgver.tar.gz")
-sha512sums=('SKIP')
+makedepends=('git' 'go>=2:1.25.0-1' 'nodejs>=24' 'yarn')
+# source=("$pkgname-$pkgver.zip::https://github.com/v2rayA/v2rayA/archive/refs/tags/v$pkgver.zip")
+# sha512sums=('SKIP')
 backup=("etc/default/v2raya")
 
 build() {
+    [ -d "$srcdir/v2rayA-$pkgver" ] && rm -rf "$srcdir/v2rayA-$pkgver"
+    git clone --depth 1 --branch "v$pkgver" "https://github.com/v2rayA/v2rayA.git" "$srcdir/v2rayA-$pkgver" >/dev/null 2>&1
+    cd "$srcdir/v2rayA-$pkgver" && git submodule update --init
     cd "$srcdir/v2rayA-$pkgver/gui"
     yarn --check-files --ignore-engines
     OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn --ignore-engines build
-
     export GOPROXY=https://proxy.golang.org,direct
-    git submodule update --init
     cd "$srcdir/v2rayA-$pkgver/service"
     go build -trimpath -ldflags '-X github.com/v2rayA/v2rayA/conf.Version='$pkgver' -s -w' -o v2raya
     cd "$srcdir/v2rayA-$pkgver/core"
@@ -39,10 +40,15 @@ EOF
 }
 
 package() {
+    depends+=('v2ray-domain-list-community' 'v2ray-geoip')
+
     cd "${srcdir}"/"v2rayA-${pkgver}"/
     install -Dm 755 service/v2raya -t "${pkgdir}"/usr/bin/
     install -Dm 755 core/v2raya_core -t "${pkgdir}"/usr/bin/
     install -dm 750 "${pkgdir}"/etc/v2raya/
+    mkdir -p "${pkgdir}"/usr/share/v2raya/
+    ln -sf /usr/share/v2ray/geoip.dat "${pkgdir}"/usr/share/v2raya/geoip.dat
+    ln -sf /usr/share/v2ray/geosite.dat "${pkgdir}"/usr/share/v2raya/geosite.dat
     install -Dm 644 install/universal/v2raya.desktop -t "${pkgdir}"/usr/share/applications/
     install -Dm 644 install/universal/v2raya.service -t "${pkgdir}"/usr/lib/systemd/system/
     install -Dm 644 install/universal/v2raya-lite.service -t "${pkgdir}"/usr/lib/systemd/user/
