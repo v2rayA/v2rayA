@@ -5,11 +5,11 @@ pkgver=The_Real_Version
 pkgrel=1
 install=.INSTALL
 pkgdesc="A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
-arch=('i686' 'pentium4' 'x86_64' 'arm' 'armv7h' 'armv6h' 'aarch64')
+arch=('i686' 'pentium4' 'x86_64' 'arm' 'armv7h' 'armv6h' 'aarch64' 'loong64')
 url="https://github.com/v2rayA/v2rayA"
 license=('AGPL3')
 depends=('glibc')
-makedepends=('git' 'go>=2:1.17.0-1' 'nodejs>=14' 'yarn')
+makedepends=('git' 'go>=2:1.19.0-1' 'nodejs>=14' 'yarn')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/v2rayA/v2rayA/archive/v$pkgver.tar.gz")
 sha512sums=('SKIP')
 backup=("etc/default/v2raya")
@@ -19,8 +19,7 @@ build() {
     yarn --check-files --ignore-engines
     OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn --ignore-engines build
 
-    export GO111MODULE=on
-    export GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+    export GOPROXY=https://proxy.golang.org,direct
     git submodule update --init
     cd "$srcdir/v2rayA-$pkgver/service"
     go build -trimpath -ldflags '-X github.com/v2rayA/v2rayA/conf.Version='$pkgver' -s -w' -o v2raya

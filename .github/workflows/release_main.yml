@@ -365,6 +365,8 @@ jobs:
       - name: Commit & Push to AUR
         run: |
           Current_Dir=$(pwd)
+          sudo chown -R $(id -u):$(id -u) aur/v2raya
+          sudo chown -R $(id -u):$(id -u) aur/v2raya-bin
           cd $Current_Dir/aur/v2raya && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya.git
           cd $Current_Dir/aur/v2raya-bin && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
       - name: Clean Up
