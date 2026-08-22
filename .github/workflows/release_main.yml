@@ -358,16 +358,19 @@ jobs:
           podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya-bin && updpkgsums && makepkg --printsrcinfo > .SRCINFO"
           podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya && makepkg --printsrcinfo > .SRCINFO"
       - name: Import OpenSSH Key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          known_hosts: aur.archlinux.org
-          if_key_exists: replace
-          config: |
-            Host aur.archlinux.org
-              HostName aur.archlinux.org
-              User aur
-              IdentityFile ~/.ssh/id_rsa
+        shell: bash
+        run: |
+          [ -d ~/.ssh ] || mkdir ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOL
+          Host aur.archlinux.org
+            HostName aur.archlinux.org
+            IdentityFile ~/.ssh/id_ed25519
+          EOL
       - name: Commit & Push to AUR
         run: |
           Current_Dir=$(pwd)
