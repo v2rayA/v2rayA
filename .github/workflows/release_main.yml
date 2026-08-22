@@ -86,24 +86,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/v2rayA/v2rayA/releases/latest | jq -r '.tag_name')
+          Latest_Releases=$(curl -s -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r '.tag_name')
           Latest_tag=v${{ steps.prep.outputs.VERSION }}
           if [ "$Latest_Releases" != "$Latest_tag" ]; then
             gh release create "v${{ steps.prep.outputs.VERSION }}" -t "v${{ steps.prep.outputs.VERSION }}" --generate-notes
           fi
           gh release upload "v${{ steps.prep.outputs.VERSION }}" release/*
-      - name: Refresh Cloudflare Cache
-        env:
-          CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
-          CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
-          CF_ZONE: ${{ secrets.CF_ZONE }}
-        shell: bash
-        run: |
-          curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
-            -H "X-Auth-Email: $CF_AUTH_EMAIL" \
-            -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
-            -H "Content-Type: application/json" \
-            --data '{"purge_everything":true}'
+      # - name: Refresh Cloudflare Cache
+      #   env:
+      #     CF_AUTH_EMAIL: ${{ secrets.CF_AUTH_EMAIL }}
+      #     CF_PARGE_CACHE_AUTH_KEY: ${{ secrets.CF_PARGE_CACHE_AUTH_KEY }}
+      #     CF_ZONE: ${{ secrets.CF_ZONE }}
+      #   shell: bash
+      #   run: |
+      #     curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+      #       -H "X-Auth-Email: $CF_AUTH_EMAIL" \
+      #       -H "Authorization: Bearer $CF_PARGE_CACHE_AUTH_KEY" \
+      #       -H "Content-Type: application/json" \
+      #       --data '{"purge_everything":true}'
   Release_to_Homebrew:
     runs-on: ubuntu-latest
     needs: [Build_v2rayA_Binaries]
@@ -365,6 +365,8 @@ jobs:
           Current_Dir=$(pwd)
           sudo chown -R $(id -u):$(id -u) aur/v2raya
           sudo chown -R $(id -u):$(id -u) aur/v2raya-bin
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
           cd $Current_Dir/aur/v2raya && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya.git
           cd $Current_Dir/aur/v2raya-bin && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
       - name: Clean Up
