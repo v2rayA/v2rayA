@@ -357,9 +357,11 @@ jobs:
         run: |
           podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya-bin && updpkgsums"
       - name: Import OpenSSH Key
-        uses: webfactory/ssh-agent@v0.10.0
+        uses: shimataro/ssh-key-action@v2
         with:
-          ssh-private-key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          known_hosts: aur.archlinux.org
+          if_key_exists: replace
       - name: Commit & Push to AUR
         run: |
           Current_Dir=$(pwd)
