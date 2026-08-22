@@ -367,8 +367,12 @@ jobs:
           sudo chown -R $(id -u):$(id -u) aur/v2raya-bin
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          cd $Current_Dir/aur/v2raya && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya.git
-          cd $Current_Dir/aur/v2raya-bin && git add .SRCINFO .INSTALL && git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
+          cd $Current_Dir/aur/v2raya && git add .SRCINFO .INSTALL && \
+            git commit -a -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
+            git push --force ssh://aur@aur.archlinux.org/v2raya.git
+          cd $Current_Dir/aur/v2raya-bin && git add .SRCINFO .INSTALL && \
+            git commit -a -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
+            git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
       - name: Clean Up
         run: |
           podman stop archContainer
