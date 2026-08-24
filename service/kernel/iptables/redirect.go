@@ -21,6 +21,12 @@ type nftRedirect struct{}
 
 var Redirect redirect
 
+func legacyDNSRedirectTargetRules(command string) string {
+	return fmt.Sprintf(`%s -w 2 -t nat -A DNS_REDIRECT -p tcp -j REDIRECT --to-port 52353
+%s -w 2 -t nat -A DNS_REDIRECT -p udp -j REDIRECT --to-port 52353
+`, command, command)
+}
+
 func init() {
 	if IsNftablesSupported() {
 		Redirect = &nftRedirect{}
@@ -76,8 +82,7 @@ iptables -w 2 -t nat -A TP_RULE -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 # DNS 重定向到新 DNS 模块端口 52353（必须在通用 REDIRECT 规则之前）
 iptables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
-iptables -w 2 -t nat -A DNS_REDIRECT -j REDIRECT --to-port 52353
-`
+` + legacyDNSRedirectTargetRules("iptables")
 	for _, v := range GetExcludedInterfaces() {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
@@ -113,7 +118,7 @@ ip6tables -w 2 -t nat -N TP_PRE
 ip6tables -w 2 -t nat -N TP_RULE
 ip6tables -w 2 -t nat -N DNS_REDIRECT
 ip6tables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
-ip6tables -w 2 -t nat -A DNS_REDIRECT -j REDIRECT --to-port 52353
+` + legacyDNSRedirectTargetRules("ip6tables") + `
 ip6tables -w 2 -t nat -A TP_RULE -d ::/128 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ::1/128 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 64:ff9b::/96 -j RETURN

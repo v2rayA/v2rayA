@@ -103,7 +103,9 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 			}
 		}
 
-		err = writeTransparentProxyRules(tmpl)
+		if err = writeTransparentProxyRules(tmpl); err != nil {
+			return err
+		}
 
 		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
 			hook := strings.Split(thook, " ")

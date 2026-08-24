@@ -135,6 +135,13 @@ func deleteTransparentProxyRules() {
 	iptables.SystemProxy.GetCleanCommands().Run(false)
 }
 
+func runDNSRedirectCommands(commands string) error {
+	if err := cmds.ExecCommands(commands, false); err != nil {
+		return fmt.Errorf("failed to set up DNS redirect rules: %w", err)
+	}
+	return nil
+}
+
 func writeTransparentProxyRules(tmpl *Template) (err error) {
 	defer func() {
 		if err != nil {
@@ -209,7 +216,9 @@ ip6tables -w 2 -t nat -I OUTPUT -m mark --mark 0x80/0x80 -j RETURN
 ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 `
 		}
-		cmds.ExecCommands(dnsRedirect, false)
+		if err = runDNSRedirectCommands(dnsRedirect); err != nil {
+			return err
+		}
 
 		if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
