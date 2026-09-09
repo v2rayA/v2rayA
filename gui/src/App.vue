@@ -131,6 +131,7 @@ export default {
         { code: "fa_IR", label: "فارسی", flag: "fa" },
         { code: "ru_RU", label: "Русский", flag: "ru" },
         { code: "pt_BR", label: "Português-Brasil", flag: "pt" },
+        { code: "ko_KR", label: "한국어-대한민국", flag: "ko" },
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],
