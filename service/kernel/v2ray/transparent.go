@@ -4,14 +4,44 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/bounddevice"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
+
+var boundDeviceGuard struct {
+	sync.Mutex
+	guard *bounddevice.Guard
+}
+
+func stopBoundDeviceGuard() {
+	boundDeviceGuard.Lock()
+	defer boundDeviceGuard.Unlock()
+	if err := boundDeviceGuard.guard.Close(); err != nil {
+		log.Warn("detach bound-device REDIRECT bypass: %v", err)
+	}
+	boundDeviceGuard.guard = nil
+}
+
+func startBoundDeviceGuard() error {
+	boundDeviceGuard.Lock()
+	defer boundDeviceGuard.Unlock()
+	if boundDeviceGuard.guard != nil {
+		return nil
+	}
+	guard, err := bounddevice.Start("/sys/fs/cgroup")
+	if err != nil {
+		return err
+	}
+	boundDeviceGuard.guard = guard
+	return nil
+}
 
 // cleanupResidualTransparentProxyRules cleans up any residual iptables/nftables rules
 // that may have been left behind after an abnormal termination (e.g., kill -9, system crash, panic).
@@ -127,6 +157,7 @@ func deleteTransparentProxyRulesKeepSystemProxy() {
 		iptables.Redirect.GetCleanCommands().Run(false)
 		iptables.DropSpoofing.GetCleanCommands().Run(false)
 	}
+	stopBoundDeviceGuard()
 	time.Sleep(30 * time.Millisecond)
 }
 
@@ -156,6 +187,7 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 	}
 	cleanupResidualTransparentProxyRules()
+	stopBoundDeviceGuard()
 	setting := configure.GetSettingNotNil()
 	switch setting.TransparentType {
 	case configure.TransparentTun:
@@ -169,6 +201,11 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		}
 		iptables.SetWatcher(iptables.Tproxy)
 	case configure.TransparentRedirect:
+		if conf.GetEnvironmentConfig().RedirectRespectBoundDevice {
+			if err = startBoundDeviceGuard(); err != nil {
+				return fmt.Errorf("cannot enable bound-device REDIRECT bypass: %w", err)
+			}
+		}
 		if err = iptables.Redirect.GetSetupCommands().Run(true); err != nil {
 			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
 		}
