@@ -100,7 +100,42 @@ device binding, mark preservation, existing bypass marks, UDP exclusion,
 detachment, and a mismatched namespace cookie. The cookie mismatch test models
 a different namespace; it does not create a separate network namespace.
 
-Before enabling by default or deploying, complete the privileged test,
-end-to-end REDIRECT tests, restart/crash lifecycle checks, and a connect-rate
-benchmark. Disable any existing destination-IP probe exemption during the
-end-to-end test so it cannot mask failure of this implementation.
+## Observed live validation (2026-09-11)
+
+The experimental manager and matching core were deployed on Arch Linux
+(amd64, Linux 7.2.2). The bound-device option was enabled and the previous
+IP-based transparent hook was disabled. The service remained active with no
+restarts during the observation, and its API reported a matching, valid core.
+
+Tests used native user-space sockets, without explicit HTTP/SOCKS proxy
+settings. All three IPv4 TCP cases used the same HTTP 204 endpoint:
+
+| Socket setup | SO_MARK before connect | SO_MARK after connect | Result |
+| --- | --- | --- | --- |
+| Ordinary TCP | 0x0 | 0x0 | HTTP 204 |
+| Source-IP bind only | 0x0 | 0x0 | HTTP 204 |
+| Physical-device bind | 0x0 | 0x80 | HTTP 204 |
+
+The proxy log contained the ordinary and source-IP-bound connections at its
+transparent inbound, but not the device-bound connection when correlated by
+local port. This distinguishes bypass from Xray's own direct outbound.
+The original `curl --interface` reproduction also returned HTTP 204.
+
+Additional live checks:
+
+- NetworkManager's explicitly refreshed connectivity check returned `full`.
+- The Akonadi Google resource was online and ready, with an empty task queue.
+- IPv6 loopback TCP stayed unmarked normally and received `0x80` when bound to
+  `lo`, demonstrating the live IPv6 connect hook as well.
+- IPv4/IPv6 UDP sockets bound to `lo` remained unmarked after connect; no UDP
+  datagrams were sent in that check.
+- ICMP ping bound to the physical device reached the local gateway (2/2).
+
+These observations validate the deployed IPv4/IPv6 connect-time marking and the
+original IPv4 REDIRECT failure case on this host. They are not a claim that the
+entire privileged test suite was independently rerun or that all environments
+are covered. Nonzero-mark preservation, namespace isolation, restart/crash
+lifecycle, full IPv6 public connectivity, and connect-rate performance still
+need further live validation before changing the default or claiming production
+readiness. Keep destination-IP exemptions disabled during further testing so
+they cannot mask a failure of the socket-based bypass.
