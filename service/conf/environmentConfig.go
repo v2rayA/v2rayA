@@ -14,6 +14,8 @@ import (
 )
 
 type Params struct {
+	RedirectRespectBoundDevice bool `id:"redirect-respect-bound-device" desc:"Experimental Linux cgroup-BPF bypass for TCP sockets bound to a device before connect. Preserves SO_MARK and adds v2rayA's 0x80 bypass bit. Requires cgroup v2 and BPF links."`
+
 	Address              string `id:"address" short:"a" default:"0.0.0.0:2017" desc:"Listening address"`
 	Socket               string `id:"socket" desc:"Unix socket path for listening"`
 	BaseUrl              string `id:"baseurl" default:"/" desc:"Base URL path prefix"`
