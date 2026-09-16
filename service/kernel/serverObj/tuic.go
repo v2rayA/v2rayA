@@ -59,12 +59,17 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 		alpn = "h3"
 	}
 
+	password := ""
+	if u.User != nil {
+		password, _ = u.User.Password()
+	}
+
 	data = &Tuic{
 		Name:                 u.Fragment,
 		Server:               u.Hostname(),
 		Port:                 port,
 		UUID:                 u.User.Username(),
-		Password:             u.User.String(),
+		Password:             password,
 		Sni:                  u.Query().Get("sni"),
 		DisableSni:           u.Query().Get("disable_sni") == "true" || u.Query().Get("disable_sni") == "1",
 		AllowInsecure:        u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
@@ -74,12 +79,6 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 		PinnedPeerCertSha256: u.Query().Get("pinnedPeerCertSha256"),
 		VerifyPeerCertByName: u.Query().Get("verifyPeerCertByName"),
 		Protocol:             "tuic",
-	}
-	if data.Password != "" && strings.Contains(data.Password, ":") {
-		data.Password = strings.SplitN(data.Password, ":", 2)[1]
-	} else if data.Password != "" {
-		// handle case where password might be just the password part if user:pass was not used
-		// but typically u.User.String() is user:pass or user
 	}
 	return data, nil
 }
