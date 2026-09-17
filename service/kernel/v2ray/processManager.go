@@ -146,7 +146,6 @@ func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Set
 			}
 			if err != nil {
 				log.Warn("Error when executing the transparent pre stop hook: %v", err)
-				return
 			}
 		}
 

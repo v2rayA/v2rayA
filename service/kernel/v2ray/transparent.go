@@ -2,11 +2,10 @@ package v2ray
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
-	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/miekg/dns"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
@@ -89,7 +88,7 @@ ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
 ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null || true
 nft delete table inet v2raya 2>/dev/null || true
 `
-	cmds.ExecCommands(commands, false)
+	iptables.Setter{Cmds: commands}.Run(false)
 }
 
 // cleanDnsRedirectRules removes the direct nat OUTPUT/PREROUTING DNS
@@ -114,7 +113,7 @@ ip6tables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>
 ip6tables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
 ip6tables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
 `
-	cmds.ExecCommands(commands, false)
+	iptables.Setter{Cmds: commands}.Run(false)
 }
 
 func deleteTransparentProxyRulesKeepSystemProxy() {
@@ -209,7 +208,7 @@ ip6tables -w 2 -t nat -I OUTPUT -m mark --mark 0x80/0x80 -j RETURN
 ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 `
 		}
-		cmds.ExecCommands(dnsRedirect, false)
+		iptables.Setter{Cmds: dnsRedirect}.Run(false)
 
 		if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
@@ -242,10 +241,17 @@ func IsTransparentOn(setting *configure.Setting) bool {
 // This ensures the v2raya-core DNS module is accepting queries before we apply firewall rules.
 func waitForDnsPort(addr string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
+	request := new(dns.Msg)
+	request.SetQuestion("localhost.", dns.TypeA)
+	client := &dns.Client{
+		Net:     "udp",
+		Timeout: 500 * time.Millisecond,
+	}
 	for time.Now().Before(deadline) {
-		conn, err := net.DialTimeout("udp", addr, 500*time.Millisecond)
-		if err == nil {
-			conn.Close()
+		if remaining := time.Until(deadline); remaining < client.Timeout {
+			client.Timeout = remaining
+		}
+		if _, _, err := client.Exchange(request, addr); err == nil {
 			return nil
 		}
 		time.Sleep(100 * time.Millisecond)

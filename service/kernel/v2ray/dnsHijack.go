@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -24,8 +25,10 @@ const (
 // 新 DNS 模块启用时，劫持后的 53 端口流量被 iptables REDIRECT/TPROXY 规则捕获，
 // 导向 DNS 模块的监听端口 52353，由 UpstreamManager 进行解析。
 type ResolvHijacker struct {
-	ticker   *time.Ticker
-	localDNS bool
+	ticker    *time.Ticker
+	done      chan struct{}
+	closeOnce sync.Once
+	localDNS  bool
 }
 
 func NewResolvHijacker() *ResolvHijacker {
@@ -34,18 +37,27 @@ func NewResolvHijacker() *ResolvHijacker {
 	}
 	hij := ResolvHijacker{
 		ticker:   time.NewTicker(checkInterval),
+		done:     make(chan struct{}),
 		localDNS: ShouldLocalDnsListen(),
 	}
 	hij.HijackResolv()
 	go func() {
-		for range hij.ticker.C {
-			hij.HijackResolv()
+		for {
+			select {
+			case <-hij.ticker.C:
+				hij.HijackResolv()
+			case <-hij.done:
+				return
+			}
 		}
 	}()
 	return &hij
 }
 func (h *ResolvHijacker) Close() error {
-	h.ticker.Stop()
+	h.closeOnce.Do(func() {
+		h.ticker.Stop()
+		close(h.done)
+	})
 	return nil
 }
 

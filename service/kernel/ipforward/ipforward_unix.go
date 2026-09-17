@@ -25,6 +25,6 @@ func WriteIpForward(on bool) (err error) {
 	if on {
 		val = "1"
 	}
-	_, err = exec.Command("sysctl -w net.inet.ip.forwarding=" + val).CombinedOutput()
+	_, err = exec.Command("sysctl", "-w", "net.inet.ip.forwarding="+val).CombinedOutput()
 	return err
 }
