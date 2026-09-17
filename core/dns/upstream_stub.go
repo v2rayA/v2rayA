@@ -103,6 +103,7 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
 	// would create TWO OPT records in the query, causing FORMERR.
 	msg.SetEdns0(4096, true)
+	markOutgoing(msg)
 	if shouldAttachECS(query.ClientIP) {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
@@ -247,6 +248,7 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
 	// would create TWO OPT records in the query, causing FORMERR.
 	msg.SetEdns0(4096, true)
+	markOutgoing(msg)
 	if shouldAttachECS(query.ClientIP) {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
@@ -514,6 +516,9 @@ func (m *UpstreamManager) ExchangeRaw(upstream *UpstreamInstance, msg *dns.Msg) 
 		protocol = "udp"
 	}
 
+	// Mark it too: a raw forward is still a query this process sends.
+	markOutgoing(msg)
+
 	client := m.getClientForProtocol(upstream, protocol)
 
 	resp, rtt, err := client.Exchange(msg, upstream.Addr)
@@ -561,6 +566,7 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
 	// would create TWO OPT records in the query, causing FORMERR.
 	msg.SetEdns0(4096, true)
+	markOutgoing(msg)
 	if shouldAttachECS(query.ClientIP) {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)

@@ -171,6 +171,17 @@ func (l *DnsListener) handlePacket(w dns.ResponseWriter, msg *dns.Msg) {
 	q := msg.Question[0]
 	clientAddr := w.RemoteAddr()
 
+	// A query carrying this process's own token has been sent back to us by an
+	// upstream — a local resolver that forwards to v2rayA while a rule points
+	// back at that resolver. Answering it would start the loop again.
+	if carriesOwnToken(msg) {
+		loopDetected(q, clientAddr)
+		m := new(dns.Msg)
+		m.SetRcode(msg, dns.RcodeServerFailure)
+		_ = w.WriteMsg(m)
+		return
+	}
+
 	query := &DnsQuery{
 		Name:  q.Name,
 		QType: QueryType(q.Qtype),
