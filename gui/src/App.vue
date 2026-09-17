@@ -795,10 +795,37 @@ html {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
+  // The brand row is a flex row whose items do not shrink by default, so
+  // below ~400px the tags pushed the burger past the right edge and the menu
+  // could not be opened. Let the tags shrink and truncate; pin the burger.
+  .navbar-brand {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .navbar-brand > .navbar-item {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .navbar-brand .tag {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  #statusTag {
+    min-width: 0;
+  }
+
   .navbar-burger {
     height: 48px;
     width: 48px;
     margin-left: auto;
+    flex: 0 0 48px;
   }
 }
 
