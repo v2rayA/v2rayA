@@ -313,9 +313,7 @@
         </b-tab-item>
         <b-tab-item
           :label="$t('server.server')"
-          :icon="`${
-            connectedServerInTab['server'] ? ' iconfont icon-dian' : ''
-          }`"
+          :header-class="connectedServerInTab['server'] ? 'tab-connected' : ''"
         >
           <b-field :label="`${$t('server.server')}(${tableData.servers.length})`">
             <b-table
@@ -459,11 +457,7 @@
           :label="
             (sub.remarks && sub.remarks.toUpperCase()) || sub.host.toUpperCase()
           "
-          :icon="`${
-            connectedServerInTab['subscriptionServer'][subi]
-              ? ' iconfont icon-dian'
-              : ''
-          }`"
+          :header-class="connectedServerInTab['subscriptionServer'][subi] ? 'tab-connected' : ''"
         >
           <b-field
             v-if="tab === subi + 2"
@@ -2182,20 +2176,11 @@ td {
   }
 }
 
-.tabs {
-  .icon + span {
-    color: #ff6719; //方案1
-  }
-
-  .icon {
-    display: none; //方案1
-    margin: 0 0 0 -0.5em !important;
-
-    .iconfont {
-      font-size: 32px;
-      color: coral;
-    }
-  }
+// a tab whose table holds a connected node; set through header-class
+// instead of a hidden 32px icon that showed as a stray glyph on some
+// phones
+.tabs li.tab-connected a span {
+  color: #ff6719;
 }
 
 .node-group-option {
@@ -2290,7 +2275,7 @@ $coverBackground: rgba(0, 0, 0, 0.6);
 .mobile-small {
   @media screen and (max-width: 450px) {
     border-radius: 2px;
-    font-size: 0.65rem;
+    font-size: 0.85rem;
   }
 }
 

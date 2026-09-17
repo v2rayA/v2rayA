@@ -755,6 +755,13 @@ html {
   }
 }
 
+// Buefy's toast/snackbar layer starts at the viewport top and covered the
+// fixed navbar (and, on phones, the toolbar buttons right under it); start
+// it below the navbar.
+.notices {
+  padding-top: 4.5rem !important;
+}
+
 // Bulma only centres navbar items from the desktop breakpoint up; below it
 // the brand row is a plain block and the status tag and group panel sit at
 // the top of the row while the logo fills it.
