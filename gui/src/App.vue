@@ -380,7 +380,7 @@ export default {
       if (this.$refs.nodeRef) {
         this.$refs.nodeRef.$axios({ url: apiRoot + "/touch" }).then((res) => {
           if (res.data && res.data.code === "SUCCESS") {
-            this.$refs.nodeRef.refreshTableData(res.data.data.touch, res.data.data.running);
+            this.$refs.nodeRef.refreshTableData(res.data.data.touch, res.data.data.running, res.data.data.networkPaused);
             this.$refs.nodeRef.updateConnectView();
           }
         }).catch(() => {});

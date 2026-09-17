@@ -1111,6 +1111,7 @@ export default {
       protocol: "anytls",
     },
     wireguard: {
+      protocol: "wireguard",
       name: "",
       address: "",
       port: "",
@@ -1242,8 +1243,15 @@ export default {
         let obj = JSON.parse(
           Base64.decode(url.substring(url.indexOf("://") + 3))
         );
-        // console.log(obj);
-        obj.ps = decodeURIComponent(obj.ps);
+        // the backend stores ps as typed; only decode when it is valid
+        // percent-encoding, a literal "%" in a name must survive
+        try {
+          obj.ps = decodeURIComponent(obj.ps);
+        } catch (_) {
+          // keep obj.ps as is
+        }
+        // the backend keys the uTLS fingerprint "fingerprint" in vmess JSON
+        obj.fp = obj.fp || obj.fingerprint || "";
         obj.tls = obj.tls || "none";
         obj.type = obj.type || "none";
         obj.scy = obj.scy || "auto";
@@ -1555,18 +1563,21 @@ export default {
           protocol: "anytls",
         };
       } else if (url.toLowerCase().startsWith("wireguard://")) {
+        // layout of kernel/serverObj/wireguard.go:
+        // wireguard://PRIVATEKEY@server:port?publicKey=&address=&preSharedKey=&allowedIPs=&keepAlive=&mtu=#name
         let u = parseURL(url);
         return {
+          protocol: "wireguard",
           name: decodeURIComponent(u.hash),
           address: u.host,
           port: u.port,
-          publicKey: decodeURIComponent(u.username),
-          privateKey: u.params.privateKey || "",
-          localAddress: u.params.localAddress || "",
+          privateKey: decodeURIComponent(u.username || ""),
+          publicKey: u.params.publicKey || "",
+          localAddress: u.params.address || "",
           dns: u.params.dns || "",
           mtu: u.params.mtu || "",
           allowedIPs: u.params.allowedIPs || "",
-          persistentKeepalive: u.params.persistentKeepalive || "",
+          persistentKeepalive: u.params.keepAlive || "",
           preSharedKey: u.params.preSharedKey || "",
           endpoint: u.params.endpoint || "",
         };
@@ -1690,6 +1701,9 @@ export default {
           // but modeled as booleans in the GUI; serialize them as strings.
           if (typeof obj.multiMode === "boolean") obj.multiMode = obj.multiMode ? "true" : "false";
           if (typeof obj.permitWithoutStream === "boolean") obj.permitWithoutStream = obj.permitWithoutStream ? "true" : "false";
+          // kernel/serverObj/v2ray.go tags the uTLS fingerprint "fingerprint"
+          if (obj.fp) obj.fingerprint = obj.fp;
+          delete obj.fp;
           switch (obj.net) {
             case "kcp":
             case "tcp":
@@ -1922,34 +1936,18 @@ export default {
             params: query,
           });
         case "wireguard":
+          // parameter names of kernel/serverObj/wireguard.go; the private key
+          // travels as the userinfo
           query = {};
-          if (srcObj.privateKey) {
-            query.privateKey = srcObj.privateKey;
-          }
-          if (srcObj.localAddress) {
-            query.localAddress = srcObj.localAddress;
-          }
-          if (srcObj.dns) {
-            query.dns = srcObj.dns;
-          }
-          if (srcObj.mtu) {
-            query.mtu = srcObj.mtu;
-          }
-          if (srcObj.allowedIPs) {
-            query.allowedIPs = srcObj.allowedIPs;
-          }
-          if (srcObj.persistentKeepalive) {
-            query.persistentKeepalive = srcObj.persistentKeepalive;
-          }
-          if (srcObj.preSharedKey) {
-            query.preSharedKey = srcObj.preSharedKey;
-          }
-          if (srcObj.endpoint) {
-            query.endpoint = srcObj.endpoint;
-          }
+          if (srcObj.publicKey) query.publicKey = srcObj.publicKey;
+          if (srcObj.localAddress) query.address = srcObj.localAddress;
+          if (srcObj.mtu) query.mtu = srcObj.mtu;
+          if (srcObj.allowedIPs) query.allowedIPs = srcObj.allowedIPs;
+          if (srcObj.persistentKeepalive) query.keepAlive = srcObj.persistentKeepalive;
+          if (srcObj.preSharedKey) query.preSharedKey = srcObj.preSharedKey;
           return generateURL({
             protocol: "wireguard",
-            username: srcObj.publicKey,
+            username: srcObj.privateKey,
             host: srcObj.address,
             port: srcObj.port,
             hash: srcObj.name,

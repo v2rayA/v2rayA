@@ -157,7 +157,7 @@ axios.interceptors.response.use(
           // Chrome and other WebKit browsers allow access to http://localhost, 
           // failures are likely due to backend service not being started.
           informNotRunning(u.source.replace(u.relative, ""));
-          return;
+          return Promise.reject(err);
         }
         if (browser.versions.gecko) {
           msg = i18n.t("axios.messages.cannotCommunicate.1");
