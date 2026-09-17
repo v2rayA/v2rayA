@@ -360,7 +360,10 @@ export default {
     title: "Configure Subscription",
   },
   import: {
-    message: "Input a server link or subscription address:",
+    server: "Server link",
+    subscription: "Subscription address",
+    serverMessage: "Input a server link:",
+    subscriptionMessage: "Input a subscription address:",
     batchMessage: "One server link per line:",
     qrcodeError: "No QR code found in the image. Try a clearer image",
     notImage: "Choose an image file",

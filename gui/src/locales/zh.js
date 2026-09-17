@@ -358,7 +358,10 @@ export default {
     title: "订阅配置",
   },
   import: {
-    message: "填入节点链接或订阅地址：",
+    server: "节点链接",
+    subscription: "订阅地址",
+    serverMessage: "填入节点链接：",
+    subscriptionMessage: "填入订阅地址：",
     batchMessage: "一行一个节点链接:",
     qrcodeError: "图片中未识别到二维码，请换一张更清晰的图片",
     notImage: "请选择图片文件",

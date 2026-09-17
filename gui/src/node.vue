@@ -660,7 +660,29 @@
           <p class="modal-card-title">{{ $t("operations.import") }}</p>
         </header>
         <section class="modal-card-body">
-          {{ $t("import.message") }}
+          <b-field>
+            <b-radio-button
+              v-model="importKind"
+              native-value="server"
+              type="is-primary is-light"
+              size="is-small"
+            >
+              {{ $t("import.server") }}
+            </b-radio-button>
+            <b-radio-button
+              v-model="importKind"
+              native-value="subscription"
+              type="is-primary is-light"
+              size="is-small"
+            >
+              {{ $t("import.subscription") }}
+            </b-radio-button>
+          </b-field>
+          {{
+            importKind === "subscription"
+              ? $t("import.subscriptionMessage")
+              : $t("import.serverMessage")
+          }}
           <b-input
             ref="importInput"
             v-model="importWhat"
@@ -672,6 +694,7 @@
         </section>
         <footer class="modal-card-foot">
           <button
+            v-if="importKind === 'server'"
             class="button is-link is-light"
             type="button"
             @click="handleClickImportInBatch"
@@ -816,6 +839,7 @@ export default {
       showSidebar: false,
       importWhat: "",
       importing: false,
+      importKind: "server",
       showModalImport: false,
       showModalImportInBatch: false,
       currentPage: { servers: 1, subscriptions: 1 },
@@ -1428,6 +1452,8 @@ export default {
         timeout: 120000,
         data: {
           url: value || this.importWhat,
+          // the batch dialog only takes server links
+          kind: this.showModalImportInBatch ? "server" : this.importKind,
         },
       }).then((res) => {
         if (res.data.code === "SUCCESS") {
@@ -2004,6 +2030,7 @@ export default {
         method: "post",
         data: {
           url: url,
+          kind: "server",
           which: this.which,
         },
         timeout: 0,

@@ -363,7 +363,10 @@ export default {
     title: "구독 구성",
   },
   import: {
-    message: "서버 링크 또는 구독 주소를 입력하세요:",
+    server: "서버 링크",
+    subscription: "구독 주소",
+    serverMessage: "서버 링크를 입력하세요:",
+    subscriptionMessage: "구독 주소를 입력하세요:",
     batchMessage: "한 줄에 서버 링크 하나:",
     qrcodeError: "이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 이미지를 사용해 보세요",
     notImage: "이미지 파일을 선택하세요",

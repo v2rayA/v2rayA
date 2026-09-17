@@ -351,7 +351,10 @@ export default {
     title: "Configurar assinatura",
   },
   import: {
-    message: "Insira um link de servidor ou endereço de assinatura:",
+    server: "Link do servidor",
+    subscription: "Endereço da assinatura",
+    serverMessage: "Digite um link de servidor:",
+    subscriptionMessage: "Digite um endereço de assinatura:",
     batchMessage: "Um link de servidor por linha:",
     qrcodeError: "Nenhum código QR encontrado na imagem. Tente uma imagem mais nítida.",
     notImage: "Escolha um arquivo de imagem",
