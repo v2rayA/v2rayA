@@ -781,9 +781,43 @@ html {
     padding-right: 0.5rem;
   }
   .navbar-burger {
-    height: 3.5rem;
-    width: 3.5rem;
+    height: 48px;
+    width: 48px;
+    // the brand row is 40px-tall content in a 0.8em root; keep the burger
+    // a square touch target aligned with it
+    margin-left: auto;
+
+    span {
+      height: 2px;
+      width: 18px;
+      left: calc(50% - 9px);
+    }
   }
+}
+
+// Bulma pins .modal-close to the top-right of the viewport, far from the
+// card it closes. Put it on the card instead, at every width; the card is
+// position: relative so the button lands on its corner.
+// Buefy puts .modal-close inside .animation-content, which wraps the card
+// but is stretched to the whole modal, so the button lands in the corner of
+// the screen rather than of the card. Shrink the wrapper to its card.
+.modal .animation-content {
+  position: relative;
+  width: auto;
+  margin: auto;
+}
+
+.modal .modal-close.is-large {
+  // Bulma sets position: fixed on .modal-close, which anchors it to the
+  // viewport; absolute puts it on the wrapper above, i.e. the card corner
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  height: 2rem;
+  width: 2rem;
+  max-height: 2rem;
+  max-width: 2rem;
+  z-index: 1;
 }
 
 // Phone dialogs: Bulma floats the card in the middle of the viewport
@@ -804,11 +838,6 @@ html {
   .modal .modal-card-foot {
     border-radius: 0;
   }
-  .modal .modal-close {
-    top: 0.85rem;
-    right: 0.85rem;
-    z-index: 1;
-  }
 }
 
 // Bulma only centres navbar items from the desktop breakpoint up; below it
@@ -820,12 +849,28 @@ html {
 }
 
 @media screen and (max-width: 1023px) {
-  .dropdown.is-mobile-modal .dropdown-menu {
-    // fix modal blur issues
-    left: 0 !important;
-    right: 0 !important;
-    margin: auto;
-    transform: unset !important;
+  // The dropdowns are no longer mobile modals (see plugins/buefy.js), so
+  // the menu is positioned inside the collapsed navbar menu: keep it in
+  // the flow of its row instead of floating over the page.
+  .navbar-menu .navbar-end > .dropdown {
+    position: relative;
+
+    > .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: auto;
+      width: max-content;
+      min-width: 100%;
+      max-width: calc(100vw - 2rem);
+      transform: none;
+      padding-top: 0;
+    }
+
+    > .dropdown-menu .dropdown-content {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
   }
 
   // In the collapsed menu each dropdown is inline-flex, so the language and
