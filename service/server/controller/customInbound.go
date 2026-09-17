@@ -8,6 +8,7 @@ import (
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"regexp"
 	"strings"
 )
@@ -28,7 +29,13 @@ func PostCustomInbound(ctx *gin.Context) {
 		return
 	}
 	if ci.Port <= 0 || ci.Port > 65535 {
-		common.ResponseError(ctx, logError(fmt.Errorf("invalid port")))
+		common.ResponseError(ctx, logError(fmt.Errorf("port %d must be between 1 and 65535", ci.Port)))
+		return
+	}
+	ports := configure.GetPortsNotNil()
+	if ci.Port == ports.Socks5 || ci.Port == ports.Http || ci.Port == ports.Socks5WithPac ||
+		ci.Port == ports.HttpWithPac || ci.Port == ports.Vmess || ci.Port == ports.Api.Port {
+		common.ResponseError(ctx, logError(fmt.Errorf("port %d is already in use by a configured port", ci.Port)))
 		return
 	}
 	if ci.Tag == "" {
@@ -102,6 +109,12 @@ func PostCustomInbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
+	if v2ray.ProcessManager.Running() {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			common.ResponseError(ctx, logError(err))
+			return
+		}
+	}
 	common.ResponseSuccess(ctx, gin.H{"inbounds": inbounds})
 }
 
@@ -130,6 +143,12 @@ func DeleteCustomInbound(ctx *gin.Context) {
 	if err := configure.SetCustomInbounds(newList); err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
+	}
+	if v2ray.ProcessManager.Running() {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			common.ResponseError(ctx, logError(err))
+			return
+		}
 	}
 	common.ResponseSuccess(ctx, gin.H{"inbounds": newList})
 }
