@@ -126,7 +126,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Ps:                   u.Fragment,
 		Add:                  u.Hostname(),
 		Port:                 u.Port(),
-		ID:                   u.User.String(),
+		ID:                   u.User.Username(),
 		Aid:                  u.Query().Get("aid"),
 		Net:                  u.Query().Get("type"),
 		Type:                 u.Query().Get("headerType"),
@@ -710,6 +710,10 @@ func (v *V2Ray) ExportToURL() string {
 			if v.MultiMode != "" {
 				setValue(&query, "multiMode", v.MultiMode)
 			}
+			setValue(&query, "idleTimeout", v.IdleTimeout)
+			setValue(&query, "healthCheckTimeout", v.HealthCheckTimeout)
+			setValue(&query, "permitWithoutStream", v.PermitWithoutStream)
+			setValue(&query, "initialWindowsSize", v.InitialWindowsSize)
 		case "quic":
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "key", v.Key)

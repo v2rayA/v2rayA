@@ -33,9 +33,11 @@ func ParseSocksURL(u string) (data *SOCKS, err error) {
 	if err != nil {
 		return nil, ErrInvalidParameter
 	}
-	port, err := strconv.Atoi(t.Port())
-	if err != nil {
-		return nil, ErrInvalidParameter
+	port := 0
+	if p := t.Port(); p != "" {
+		if port, err = strconv.Atoi(p); err != nil {
+			return nil, ErrInvalidParameter
+		}
 	}
 	data = &SOCKS{
 		Name:   t.Fragment,
