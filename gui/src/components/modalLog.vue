@@ -11,7 +11,11 @@
         <!-- A virtual scroller needs one fixed row height, so a phone would
              only ever show the left edge of each line. There the tail is
              rendered plainly instead, with the lines wrapped. -->
-        <div v-if="narrow" ref="narrowLog" class="log-scroller log-scroller--narrow">
+        <div
+          v-if="narrow"
+          ref="narrowLog"
+          class="log-scroller log-scroller--narrow"
+        >
           <div v-if="tailSkipped > 0" class="log-tail-note">
             {{ $t("log.tailOnly", { count: tailLimit, skipped: tailSkipped }) }}
           </div>
@@ -20,7 +24,9 @@
             :key="item.id || index"
             class="log-row log-row--wrap"
           >
-            <span class="log-line-number">{{ filteredItems.length - narrowItems.length + index + 1 }}</span>
+            <span class="log-line-number">{{
+              filteredItems.length - narrowItems.length + index + 1
+            }}</span>
             <hightlight-log class="text" :text="item.text"></hightlight-log>
           </div>
         </div>
@@ -79,7 +85,7 @@
                   :key="option.value"
                   :value="option.value"
                 >
-                  {{ option.value === 'all' ? $t(option.label) : option.label }}
+                  {{ option.value === "all" ? $t(option.label) : option.label }}
                 </option>
               </b-select>
             </div>
@@ -93,13 +99,16 @@
             </div>
           </div>
           <div class="log-footer-item">
-            <b-button
-              icon-left="download"
-              :disabled="filteredItems.length === 0"
-              @click="handleExport"
-            >
-              {{ $t("log.export") }}
-            </b-button>
+            <div class="log-footer-label" aria-hidden="true">&nbsp;</div>
+            <div class="log-footer-control">
+              <b-button
+                icon-left="download"
+                :disabled="filteredItems.length === 0"
+                @click="handleExport"
+              >
+                {{ $t("log.export") }}
+              </b-button>
+            </div>
           </div>
         </div>
       </div>
@@ -135,30 +144,30 @@ export default {
       narrow: false,
       tailLimit: 300,
       sourceFilter: "all",
-      sourceOptions: [
-        { value: "all", label: "log.sources.all" },
-      ],
+      sourceOptions: [{ value: "all", label: "log.sources.all" }],
     };
   },
   computed: {
     narrowItems() {
       const items = this.filteredItems;
-      return items.length > this.tailLimit ? items.slice(-this.tailLimit) : items;
+      return items.length > this.tailLimit
+        ? items.slice(-this.tailLimit)
+        : items;
     },
     tailSkipped() {
       return Math.max(0, this.filteredItems.length - this.tailLimit);
     },
     filteredItems() {
       let filtered = this.items;
-      
+
       if (this.levelFilter !== "all") {
         filtered = filtered.filter((item) => item.level === this.levelFilter);
       }
-      
+
       if (this.sourceFilter !== "all") {
         filtered = filtered.filter((item) => item.source === this.sourceFilter);
       }
-      
+
       return filtered;
     },
   },
@@ -246,17 +255,19 @@ export default {
         return "tinytun";
       }
       // 匹配 [xxx.go:123] 或 [xxxService] 格式
-      const match = text.match(/\[([^\]]+\.go|[A-Za-z]+Service|[A-Za-z]+\.[A-Za-z]+)(?::\d+)?\]/);
+      const match = text.match(
+        /\[([^\]]+\.go|[A-Za-z]+Service|[A-Za-z]+\.[A-Za-z]+)(?::\d+)?\]/,
+      );
       if (match) {
         return match[1];
       }
       return "other";
     },
     addSourceOption(source) {
-      if (source && !this.sourceOptions.find(opt => opt.value === source)) {
+      if (source && !this.sourceOptions.find((opt) => opt.value === source)) {
         this.sourceOptions.push({
           value: source,
-          label: source
+          label: source,
         });
       }
     },
@@ -268,9 +279,11 @@ export default {
       return this.$axios({
         url: apiRoot + "/logger",
         params: { skip: this.currentSkip },
-      }).then(this.updateLog).finally(() => {
-        this.fetching = false;
-      });
+      })
+        .then(this.updateLog)
+        .finally(() => {
+          this.fetching = false;
+        });
     },
     updateLog(logs) {
       if (logs.data.length && logs.data.length !== 0) {
@@ -311,7 +324,9 @@ export default {
         if (this.autoScoll && !this.narrow && this.filteredItems.length > 0) {
           this.$nextTick(() => {
             if (this.$refs.logScroller && this.filteredItems.length > 0) {
-              this.$refs.logScroller.scrollToItem(this.filteredItems.length - 1);
+              this.$refs.logScroller.scrollToItem(
+                this.filteredItems.length - 1,
+              );
             }
           });
         }
@@ -328,10 +343,7 @@ export default {
       // Export what the dialog shows, filters included, so the file matches
       // what the user was looking at.
       const text = this.filteredItems.map((item) => item.text).join("\n");
-      const stamp = new Date()
-        .toISOString()
-        .replace(/[:T]/g, "-")
-        .slice(0, 19);
+      const stamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19);
       const blob = new Blob([text + "\n"], {
         type: "text/plain;charset=utf-8",
       });
@@ -411,7 +423,7 @@ export default {
 
 .log-footer {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1.5rem;
 }
@@ -426,16 +438,30 @@ export default {
 
 .log-footer-right {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
+  gap: 1.5rem;
   margin-left: auto;
+}
+
+.log-footer-right .log-footer-item {
+  min-width: 0;
 }
 
 .log-footer-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: flex-end;
   gap: 0.5rem;
   min-width: 160px;
+}
+
+/* Every control sits on one baseline: a select is 2.5em tall, a switch and a
+   button are not, so the row is given the height and centres what it holds. */
+.log-footer-control {
+  display: flex;
+  align-items: center;
+  min-height: 2.5em;
 }
 
 .log-footer-label {
