@@ -98,6 +98,12 @@ func Connect(which *configure.Which) (err error) {
 	if which == nil {
 		return fmt.Errorf("which can not be nil")
 	}
+	// Reject a malformed or stale selection before it is stored: AddConnect
+	// below persists it, and a stored entry that cannot be located makes
+	// every later connect and core start fail with the same error.
+	if _, err = which.LocateServerRaw(); err != nil {
+		return err
+	}
 	setting := GetSetting()
 	if err = checkSupport([]*configure.Which{which}); err != nil {
 		if !errors.Is(err, V2OnlyFeatureError) {
@@ -117,10 +123,19 @@ func Connect(which *configure.Which) (err error) {
 	//locate server
 	currentConnected := configure.GetConnectedServersByOutbound(which.Outbound)
 	defer func() {
-		// if error occurs, restore the result of connecting
-		if err != nil && currentConnected != nil && v2ray.ProcessManager.Running() {
-			_ = configure.OverwriteConnects(currentConnected)
-			_ = v2ray.UpdateV2RayConfig()
+		// if error occurs, restore the result of connecting. The stored list
+		// is restored whether or not the core runs; regenerating the config
+		// only makes sense when it does.
+		if err != nil {
+			if currentConnected != nil {
+				_ = configure.OverwriteConnects(currentConnected)
+			} else {
+				// nothing was connected in this group before (fresh database)
+				_ = configure.ClearConnects(which.Outbound)
+			}
+			if v2ray.ProcessManager.Running() {
+				_ = v2ray.UpdateV2RayConfig()
+			}
 		}
 	}()
 	//save the result of connecting to database
