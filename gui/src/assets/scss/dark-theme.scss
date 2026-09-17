@@ -59,6 +59,13 @@ body.theme-dark {
     box-shadow: 0 2px 0 0 var(--md-surface-variant);
   }
 
+  // the mobile-card checkbox is absolutely positioned over the ID line
+  @media screen and (max-width: 768px) {
+    .b-table .table tbody td.checkbox-cell {
+      background-color: transparent !important;
+    }
+  }
+
   #toolbar.float-toolbar {
     background: var(--md-surface-container);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);

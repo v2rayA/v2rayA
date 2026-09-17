@@ -2412,6 +2412,34 @@ tr.highlight-row-disconnected > td {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+// Buefy's mobile cards (below 769px): one td per line with the label on
+// the left. Long host names wrapped over three lines and the checkbox
+// took a line of its own, so a card was ~350px tall.
+@media screen and (max-width: 768px) {
+  .b-table .table tbody tr {
+    position: relative;
+  }
+  .b-table .table tbody td.checkbox-cell {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.5rem;
+    width: 2.5rem;
+    justify-content: flex-end;
+    padding: 0;
+    border: 0;
+  }
+  // the ID line shares the row with the checkbox, which sits at its right end
+  .b-table .table tbody td.checkbox-cell + td {
+    padding-right: 3.5rem !important;
+  }
+  .b-table .table tbody td .address-column {
+    max-width: 60vw !important;
+    white-space: nowrap;
+    direction: rtl; // keep the distinctive tail of long host names visible
+    text-align: right;
+  }
+}
 .latency-column {
   max-width: 120px !important;
   overflow: hidden !important;
