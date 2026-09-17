@@ -12,8 +12,12 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 	// Sort touches to delete, placing larger indices first to delete from back to front
 	data.SortSameTypeReverse()
 	touches := data.Get()
+	// cssAfter is edited in place below; take a copy so the removals do not
+	// shift entries under the list being iterated (both used to alias the
+	// same backing array, leaving a stale duplicate at the tail after a
+	// non-tail removal and panicking on the next touch)
 	cssRaw := configure.GetConnectedServers()
-	cssAfter := cssRaw.Get()
+	cssAfter := append([]*configure.Which(nil), cssRaw.Get()...)
 	subscriptionsIndexes := make([]int, 0, len(ws))
 	serversIndexes := make([]int, 0, len(ws))
 	bDeletedSubscription := false
@@ -23,7 +27,7 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 		switch v.TYPE {
 		case configure.SubscriptionType: // Here a subscription is being deleted
 			// Check if the currently connected node is in this subscription, if so, disconnect
-			css := cssRaw.Get()
+			css := cssAfter
 			for i := len(css) - 1; i >= 0; i-- {
 				cs := css[i]
 				if cs != nil && cs.TYPE == configure.SubscriptionServerType {
@@ -42,7 +46,7 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 			bDeletedSubscription = true
 		case configure.ServerType:
 			// Check if the currently connected node is this server, if so, disconnect
-			css := cssRaw.Get()
+			css := cssAfter
 			for i := len(css) - 1; i >= 0; i-- {
 				cs := css[i]
 				if cs != nil && cs.TYPE == configure.ServerType {
