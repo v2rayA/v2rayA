@@ -90,6 +90,7 @@ export default {
       items: [],
       endOfLine: true,
       currentSkip: 0,
+      fetching: false,
       intervalId: 0,
       intervalTime: 5,
       intervalCandidate: [2, 5, 10, 15],
@@ -129,16 +130,11 @@ export default {
   created() {
     this.autoScoll = !(localStorage.getItem("log.autoScoll") === "false");
 
-    this.$axios({
-      url: apiRoot + "/logger",
-    }).then(this.updateLog);
+    this.fetchLog();
   },
   mounted() {
     this.intervalId = setInterval(() => {
-      this.$axios({
-        url: apiRoot + `/logger`,
-        params: { skip: this.currentSkip },
-      }).then(this.updateLog);
+      this.fetchLog();
     }, this.intervalTime * 1000);
   },
   destroyed() {
@@ -212,28 +208,45 @@ export default {
         });
       }
     },
+    fetchLog() {
+      if (this.fetching) {
+        return;
+      }
+      this.fetching = true;
+      return this.$axios({
+        url: apiRoot + "/logger",
+        params: { skip: this.currentSkip },
+      }).then(this.updateLog).finally(() => {
+        this.fetching = false;
+      });
+    },
     updateLog(logs) {
       if (logs.data.length && logs.data.length !== 0) {
-        const baseIndex = this.items.length;
-        const items = logs.data
-          .split("\n")
-          .map((x, i) => {
-            const source = this.detectSource(x);
-            this.addSourceOption(source);
-            return {
-              text: x,
-              id: baseIndex + i,
-              level: this.detectLevel(x),
-              source: source,
-            };
-          });
-        if (this.endOfLine) {
-          this.items = this.items.concat(items);
-        } else {
-          this.items[this.items.length - 1].text += items[0].text;
-          this.items = this.items.concat(items.slice(1));
+        const lines = logs.data.split("\n");
+        const endsWithNewline = logs.data.endsWith("\n");
+        if (endsWithNewline) {
+          lines.pop();
         }
-        this.endOfLine = items[items.length - 1].text.endsWith("\n");
+        if (!this.endOfLine && this.items.length) {
+          const lastItem = this.items[this.items.length - 1];
+          lastItem.text += lines.shift() || "";
+          lastItem.level = this.detectLevel(lastItem.text);
+          lastItem.source = this.detectSource(lastItem.text);
+          this.addSourceOption(lastItem.source);
+        }
+        const baseIndex = this.items.length;
+        const items = lines.map((x, i) => {
+          const source = this.detectSource(x);
+          this.addSourceOption(source);
+          return {
+            text: x,
+            id: baseIndex + i,
+            level: this.detectLevel(x),
+            source,
+          };
+        });
+        this.items = this.items.concat(items);
+        this.endOfLine = endsWithNewline;
         this.currentSkip += new Blob([logs.data]).size;
         if (this.autoScoll && this.filteredItems.length > 0) {
           this.$nextTick(() => {
@@ -248,10 +261,7 @@ export default {
       this.intervalTime = val;
       clearInterval(this.intervalId);
       this.intervalId = setInterval(() => {
-        this.$axios({
-          url: apiRoot + `/logger`,
-          params: { skip: this.currentSkip },
-        }).then(this.updateLog);
+        this.fetchLog();
       }, this.intervalTime * 1000);
     },
     changeScoll(val) {

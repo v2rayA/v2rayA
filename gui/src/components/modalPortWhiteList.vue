@@ -55,13 +55,11 @@ export default {
   }),
   computed: {
     v2rayaPort() {
-      let U = parseURL(apiRoot);
-      let port = U.port;
-      if (!port) {
-        port =
-          U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+      if (apiRoot.startsWith("/")) {
+        return location.port || (location.protocol === "https:" ? "443" : "80");
       }
-      return port;
+      const U = parseURL(apiRoot);
+      return U.port;
     },
   },
   created() {

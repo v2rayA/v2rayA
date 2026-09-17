@@ -78,7 +78,7 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" />
+    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" />
     <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
@@ -137,6 +137,7 @@ export default {
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],
+      loadBalanceValid: localStorage["loadBalanceValid"] === "true",
       outboundDropdownHover: {},
       updateOutboundDropdown: true,
       themePreference: 'auto',
@@ -189,9 +190,13 @@ export default {
   mounted() {
     console.log("app created");
     this.initTheme();
-    let ba = localStorage.getItem("backendAddress");
-    if (ba) {
-      let u = parseURL(ba);
+    const ba = localStorage.getItem("backendAddress");
+    const isRelativeAddress =
+      !ba || (ba.startsWith("/") && !ba.startsWith("//"));
+    if (isRelativeAddress) {
+      document.title = `v2rayA - ${location.host}`;
+    } else {
+      const u = parseURL(ba);
       document.title = `v2rayA - ${u.host}:${u.port}`;
     }
     // 没有 token：先检查是否需要注册，避免触发需要认证的请求导致 401 二次弹窗
@@ -263,6 +268,9 @@ export default {
         }
         localStorage["lite"] = res.data.data.lite;
         localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
+        this.loadBalanceValid =
+          res.data.data.loadBalanceValid === true ||
+          res.data.data.loadBalanceValid === "true";
         localStorage["variant"] = res.data.data.variant;
         localStorage["coreVersionValid"] = res.data.data.coreVersionValid;
         localStorage["coreVersionErr"] = res.data.data.coreVersionErr || "";
@@ -860,7 +868,7 @@ a {
 }
 
 #statusTag {
-  width: 5em;
+  min-width: 5em;
 }
 
 .dropdown-menu .is-fullwidth {

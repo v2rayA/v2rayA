@@ -35,7 +35,6 @@
 
 <script>
 import QRCode from "qrcode";
-import ClipboardJS from "clipboard";
 import CONST from "@/assets/js/const";
 import { Base64 } from "js-base64";
 import i18n from "@/plugins/i18n";
@@ -61,29 +60,8 @@ export default {
       required: true,
     },
   },
-  beforeDestroy() {
-    this.clipboard.destroy();
-  },
-  mounted() {
-    this.clipboard = new ClipboardJS(".sharingAddressTag");
-    this.clipboard.on("success", (e) => {
-      this.$buefy.toast.open({
-        message: this.$t("common.success"),
-        type: "is-primary",
-        position: "is-top",
-        queue: false,
-      });
-      e.clearSelection();
-    });
-    this.clipboard.on("error", (e) => {
-      this.$buefy.toast.open({
-        message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
-        type: "is-warning",
-        position: "is-top",
-        queue: false,
-      });
-    });
 
+  mounted() {
     let add = this.sharingAddress;
     if (this.type === CONST.SubscriptionType) {
       add = "sub://" + Base64.encode(add);

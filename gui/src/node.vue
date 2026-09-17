@@ -799,6 +799,10 @@ export default {
         return ["proxy"];
       },
     },
+    loadBalanceValid: {
+      type: Boolean,
+      default: false,
+    },
     observatory: {
       type: Object,
       default() {
@@ -844,11 +848,6 @@ export default {
       coreVersionValid: true,
       coreVersionErr: "",
     };
-  },
-  computed: {
-    loadBalanceValid() {
-      return localStorage["loadBalanceValid"] === "true";
-    },
   },
   watch: {
     "runningState.running"() {
@@ -1016,7 +1015,18 @@ export default {
           v.connected = false;
         });
       });
+      // re-point the selection at the replacement row objects so a refresh
+      // neither drops the user's selection nor leaves stale rows behind
+      const keyOf = (data, row) => {
+        const sub = data.subscriptions.findIndex((s) => s.servers.includes(row));
+        return `${row._type}|${sub}|${row.id}`;
+      };
+      const selected = this.checkedRows.map((x) => keyOf(this.tableData, x));
       this.tableData = touch;
+      const byKey = new Map();
+      touch.servers.forEach((v) => byKey.set(keyOf(touch, v), v));
+      touch.subscriptions.forEach((s) => s.servers.forEach((v) => byKey.set(keyOf(touch, v), v)));
+      this.checkedRows = selected.map((k) => byKey.get(k)).filter(Boolean);
       if (running !== undefined) {
         Object.assign(this.runningState, {
           running: this.getRunningLabel(running, networkPaused),
@@ -1549,22 +1559,26 @@ export default {
       }
       return normalized;
     },
+    getConnectedServersInOutbound(outbound) {
+      const connectedServers = this.runningState.connectedServer;
+      if (!(connectedServers instanceof Array)) {
+        return [];
+      }
+      return connectedServers.filter(
+        (which) => (which.outbound || "proxy") === (outbound || "proxy")
+      );
+    },
     // 判断某节点是否已连接到指定分组，用于下拉菜单黄色高亮
     isNodeInOutbound(row, sub, outboundName) {
-      return this.connectedServerInfo.some((x) => {
+      return this.getConnectedServersInOutbound(outboundName).some((which) => {
         if (sub !== undefined) {
           return (
-            x.which._type === "subscriptionServer" &&
-            x.which.id === row.id &&
-            x.which.sub === sub &&
-            x.which.outbound === outboundName
+            which._type === "subscriptionServer" &&
+            which.id === row.id &&
+            which.sub === sub
           );
         }
-        return (
-          x.which._type === "server" &&
-          x.which.id === row.id &&
-          x.which.outbound === outboundName
-        );
+        return which._type === "server" && which.id === row.id;
       });
     },
     openPickProxyGroup(row, sub) {
@@ -1644,15 +1658,12 @@ export default {
       const targetType = row._type;
       const targetSub = targetType === "subscriptionServer" ? sub : 0;
       const targetId = row.id;
-      const currentMembers = this.connectedServerInfo
-        .map((x) => x.which)
-        .filter((w) => (w.outbound || "proxy") === group)
-        .map((w) => ({
-          id: w.id,
-          _type: w._type,
-          sub: w._type === "subscriptionServer" ? w.sub : 0,
-          outbound: group,
-        }));
+      const currentMembers = this.getConnectedServersInOutbound(group).map((w) => ({
+        id: w.id,
+        _type: w._type,
+        sub: w._type === "subscriptionServer" ? w.sub : 0,
+        outbound: group,
+      }));
 
       const sameWhich = (w) => {
         if (w._type !== targetType || w.id !== targetId) {

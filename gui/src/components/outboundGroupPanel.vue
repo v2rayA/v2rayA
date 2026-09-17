@@ -401,7 +401,6 @@ export default {
         this.showPicker = false;
         return;
       }
-      const restartAfterSave = this.isCoreRunning;
       this.saving = true;
       try {
         const selectedNodes = this.allNodes.filter((node) => {
@@ -414,7 +413,7 @@ export default {
           sub: node._type === "subscriptionServer" ? node.sub : 0,
           outbound: this.pickerGroup,
         }));
-        await this.requestSuccess({
+        const res = await this.requestSuccess({
           url: apiRoot + "/outboundConnections",
           method: "put",
           data: {
@@ -422,17 +421,8 @@ export default {
             touches,
           },
         }, this.$t("common.fail"));
-        if (restartAfterSave) {
-          await this.requestSuccess({
-            url: apiRoot + "/v2ray",
-            method: "delete",
-          }, this.$t("common.fail"));
-          await this.requestSuccess({
-            url: apiRoot + "/v2ray",
-            method: "post",
-          }, this.$t("common.fail"));
-        }
-        await this.fetchTouchData();
+        this.touchData = res.data.data.touch;
+        this.isCoreRunning = !!res.data.data.running;
         this.$emit("changed");
         this.showPicker = false;
         this.$buefy.toast.open({
@@ -456,7 +446,7 @@ export default {
     },
     async disconnectNode(node) {
       try {
-        await this.$axios({
+        await this.requestSuccess({
           url: apiRoot + "/connection",
           method: "delete",
           data: {
@@ -465,10 +455,18 @@ export default {
             sub: node.sub,
             outbound: this.expandedGroup,
           },
-        });
+        }, this.$t("common.fail"));
         await this.fetchTouchData();
         this.$emit("changed");
-      } catch (_) {}
+      } catch (err) {
+        this.$buefy.toast.open({
+          message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          type: "is-warning",
+          position: "is-top",
+          duration: 5000,
+          queue: false,
+        });
+      }
     },
     async deleteGroup(outbound) {
       try {
