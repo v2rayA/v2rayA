@@ -58,7 +58,30 @@ func Import(url string, which *configure.Which) (err error) {
 	if PluginManagerValidateLink(url) || common.HasAnyPrefix(urlLower, supportedPrefix) {
 		return ImportServer(url, which)
 	}
+	if isBareHttpProxyLink(url) {
+		return ImportServer(url, which)
+	}
 	return ImportSubscription(url)
+}
+
+// isBareHttpProxyLink recognises the one http(s) URL shape that cannot be a
+// subscription address: credentials, a port, and nothing else. A subscription
+// address always carries a path or a query, and never credentials. Clients
+// that send "kind" never reach this guess.
+func isBareHttpProxyLink(rawURL string) bool {
+	u, err := url2.Parse(rawURL)
+	if err != nil || u.User == nil || u.User.String() == "" {
+		return false
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http", "https":
+	default:
+		return false
+	}
+	if u.RawQuery != "" {
+		return false
+	}
+	return u.Path == "" || u.Path == "/"
 }
 
 // ImportServer imports one server link, or several separated by newlines,
