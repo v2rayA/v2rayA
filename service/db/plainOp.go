@@ -10,6 +10,16 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
+var bucketLikeEscaper = strings.NewReplacer(
+	`\`, `\\`,
+	`%`, `\%`,
+	`_`, `\_`,
+)
+
+func bucketLikePattern(bucket string) string {
+	return bucketLikeEscaper.Replace(bucket+":") + "%"
+}
+
 // makeKey constructs a prefixed key using bucket:key format for data isolation
 func makeKey(bucket string, key string) string {
 	return bucket + ":" + key
@@ -132,7 +142,6 @@ func Delete(bucket string, key string) error {
 // BucketClear removes all entries from the specified bucket in system_config table.
 func BucketClear(bucket string) error {
 	db := GetDB()
-	prefix := bucket + ":"
-	_, err := db.Exec("DELETE FROM system_config WHERE key LIKE ?", prefix+"%")
+	_, err := db.Exec("DELETE FROM system_config WHERE key LIKE ? ESCAPE '\\'", bucketLikePattern(bucket))
 	return err
 }

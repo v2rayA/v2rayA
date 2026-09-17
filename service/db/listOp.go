@@ -167,23 +167,18 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 		parsed := gjson.ParseBytes(b)
 		if parsed.IsArray() {
 			for _, item := range parsed.Array() {
-				var maxSort int
-				db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM servers WHERE type = 'server'").Scan(&maxSort)
-
 				_, err = db.Exec(
-					"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, ?)",
-					item.Raw, maxSort+1,
+					"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM servers WHERE type = 'server'))",
+					item.Raw,
 				)
 				if err != nil {
 					return err
 				}
 			}
 		} else {
-			var maxSort int
-			db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM servers WHERE type = 'server'").Scan(&maxSort)
 			_, err = db.Exec(
-				"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, ?)",
-				string(b), maxSort+1,
+				"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM servers WHERE type = 'server'))",
+				string(b),
 			)
 			if err != nil {
 				return err
@@ -208,13 +203,9 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 					autoSelect = 1
 				}
 
-				var maxSort int
-				db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM subscriptions").Scan(&maxSort)
-				newSort := maxSort + 1
-
 				res, err := db.Exec(
-					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort) VALUES (?, ?, ?, ?, ?, ?)",
-					address, remarks, status, info, autoSelect, newSort,
+					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM subscriptions))",
+					address, remarks, status, info, autoSelect,
 				)
 				if err != nil {
 					return err
