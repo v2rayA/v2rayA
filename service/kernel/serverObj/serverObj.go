@@ -3,7 +3,9 @@ package serverObj
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/kernel/coreObj"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/where"
@@ -83,13 +85,20 @@ func New(name string) (ServerObj, error) {
 }
 func NewFromLink(name string, link string) (ServerObj, error) {
 	if creator, ok := fromLinkCreators[name]; ok {
-		return creator(link)
+		obj, err := creator(link)
+		if err != nil {
+			return nil, common.Coded("LINK_MALFORMED", err, map[string]interface{}{
+				"protocol": name,
+				"detail":   strings.TrimPrefix(err.Error(), ErrInvalidParameter.Error()+": "),
+			})
+		}
+		return obj, nil
 	} else if pm := conf.GetEnvironmentConfig().PluginManager; pm != "" {
 		// we do not support to override build-in protocols
 		creator := fromLinkCreators[PluginManagerScheme]
 		return creator(link)
 	} else {
-		return nil, fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, ssr, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name)
+		return nil, common.Coded("LINK_UNSUPPORTED_SCHEME", fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, ssr, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name), map[string]interface{}{"scheme": name})
 	}
 }
 

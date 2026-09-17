@@ -21,21 +21,30 @@ func GetCustomInbound(ctx *gin.Context) {
 func PostCustomInbound(ctx *gin.Context) {
 	var ci configure.CustomInbound
 	if err := ctx.ShouldBindJSON(&ci); err != nil {
-		common.ResponseError(ctx, logError(fmt.Errorf("request body is not a valid custom inbound object: %v", err)))
+		common.ResponseError(ctx, badRequest("custom inbound", fmt.Errorf("request body is not a valid custom inbound object: %v", err)))
 		return
 	}
 	if ci.Protocol != "socks" && ci.Protocol != "http" {
-		common.ResponseError(ctx, logError(fmt.Errorf("protocol %q is not supported; use socks or http", ci.Protocol)))
+		common.ResponseError(ctx, common.Coded("CUSTOM_INBOUND_INVALID", logError(fmt.Errorf("protocol %q is not supported; use socks or http", ci.Protocol)), map[string]interface{}{
+			"field": "protocol",
+			"value": ci.Protocol,
+		}))
 		return
 	}
 	if ci.Port <= 0 || ci.Port > 65535 {
-		common.ResponseError(ctx, logError(fmt.Errorf("port %d is out of range; use 1-65535", ci.Port)))
+		common.ResponseError(ctx, common.Coded("CUSTOM_INBOUND_INVALID", logError(fmt.Errorf("port %d is out of range; use 1-65535", ci.Port)), map[string]interface{}{
+			"field": "port",
+			"value": ci.Port,
+		}))
 		return
 	}
 	ports := configure.GetPortsNotNil()
 	if ci.Port == ports.Socks5 || ci.Port == ports.Http || ci.Port == ports.Socks5WithPac ||
 		ci.Port == ports.HttpWithPac || ci.Port == ports.Vmess || ci.Port == ports.Api.Port {
-		common.ResponseError(ctx, logError(fmt.Errorf("port %d is already in use by a configured port", ci.Port)))
+		common.ResponseError(ctx, common.Coded("CUSTOM_INBOUND_INVALID", logError(fmt.Errorf("port %d is already in use by a configured port", ci.Port)), map[string]interface{}{
+			"field": "port",
+			"value": ci.Port,
+		}))
 		return
 	}
 	if ci.Tag == "" {
@@ -52,7 +61,10 @@ func PostCustomInbound(ctx *gin.Context) {
 		return
 	}
 	if ci.OutboundType != "direct" && ci.OutboundType != "routingA" {
-		common.ResponseError(ctx, logError(fmt.Errorf("outboundType %q is not supported; use direct or routingA", ci.OutboundType)))
+		common.ResponseError(ctx, common.Coded("CUSTOM_INBOUND_INVALID", logError(fmt.Errorf("outboundType %q is not supported; use direct or routingA", ci.OutboundType)), map[string]interface{}{
+			"field": "outboundType",
+			"value": ci.OutboundType,
+		}))
 		return
 	}
 
@@ -100,7 +112,10 @@ func PostCustomInbound(ctx *gin.Context) {
 			return
 		}
 		if existing.Port == ci.Port {
-			common.ResponseError(ctx, logError(fmt.Errorf("port %d is already in use by '%s'", ci.Port, existing.Tag)))
+			common.ResponseError(ctx, common.Coded("CUSTOM_INBOUND_INVALID", logError(fmt.Errorf("port %d is already in use by '%s'", ci.Port, existing.Tag)), map[string]interface{}{
+				"field": "port",
+				"value": ci.Port,
+			}))
 			return
 		}
 	}
@@ -123,7 +138,7 @@ func DeleteCustomInbound(ctx *gin.Context) {
 		Tag string `json:"tag"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil || req.Tag == "" {
-		common.ResponseError(ctx, logError("request body must be an object with a non-empty \"tag\""))
+		common.ResponseError(ctx, badRequest("tag", "request body must be an object with a non-empty \"tag\""))
 		return
 	}
 	inbounds := configure.GetCustomInbounds()

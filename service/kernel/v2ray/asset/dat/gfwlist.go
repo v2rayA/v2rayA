@@ -3,6 +3,7 @@ package dat
 import (
 	libSha256 "crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/tidwall/gjson"
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -29,6 +31,20 @@ var g GFWList
 var gMutex sync.Mutex
 
 func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
+	const host = "api.github.com"
+	status := ""
+	defer func() {
+		if err != nil {
+			var coded *common.CodedError
+			if !errors.As(err, &coded) {
+				err = common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
+					"host":   host,
+					"status": status,
+				})
+			}
+		}
+	}()
+
 	gMutex.Lock()
 	defer gMutex.Unlock()
 	if !g.UpdateTime.IsZero() {
@@ -39,6 +55,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 		err = fmt.Errorf("failed to get latest version of GFWList: %w", err)
 		return
 	}
+	status = resp.Status
 	b, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	tag := gjson.GetBytes(b, "0.name").Str
@@ -147,7 +164,10 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	u2 := fmt.Sprintf(`https://github.com/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat.sha256sum`, gfwlist.Tag)
 	siteDatSha256, err := httpGet(u2)
 	if err != nil {
-		err = fmt.Errorf("%w for GFWList: %w", FailCheckSha, err)
+		err = common.Coded("ASSET_DOWNLOAD_FAILED", fmt.Errorf("%w for GFWList: %w", FailCheckSha, err), map[string]interface{}{
+			"host":   "github.com",
+			"status": "",
+		})
 		log.Warn("UpdateLocalGFWList: %v", err)
 		return "", err
 	}

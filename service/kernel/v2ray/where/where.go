@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 )
 
@@ -47,7 +48,7 @@ func GetV2rayServiceVersion() (variant Variant, ver string, err error) {
 		return V2rayaCore, "", err
 	}
 	if len(v2rayPath) <= 0 {
-		return V2rayaCore, "", fmt.Errorf("%w: v2raya_core executable not found next to v2rayA or in PATH; set --v2ray-bin", NotFoundErr)
+		return V2rayaCore, "", common.Coded("CORE_NOT_FOUND", fmt.Errorf("%w: v2raya_core executable not found next to v2rayA or in PATH; set --v2ray-bin", NotFoundErr), nil)
 	}
 
 	// Get version from binary
@@ -93,7 +94,7 @@ func getV2rayBinPathAnyway() (path string, err error) {
 			return
 		}
 	}
-	return "", fmt.Errorf("%w: v2raya_core executable not found next to v2rayA or in PATH; set --v2ray-bin", NotFoundErr)
+	return "", common.Coded("CORE_NOT_FOUND", fmt.Errorf("%w: v2raya_core executable not found next to v2rayA or in PATH; set --v2ray-bin", NotFoundErr), nil)
 }
 
 func getV2rayBinPath(target string) (string, error) {

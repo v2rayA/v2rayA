@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
@@ -47,7 +48,8 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if v2ray.ProcessManager.Running() && css.Len() > 0 {
 		err = v2ray.UpdateV2RayConfig()
 		if err != nil {
-			return fmt.Errorf("invalid config: the core could not restart with the new settings: %w", err)
+			invalidConfigErr := fmt.Errorf("invalid config: the core could not restart with the new settings: %w", err)
+			return common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": err.Error()})
 		}
 	}
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {

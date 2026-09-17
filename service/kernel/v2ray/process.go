@@ -25,7 +25,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
-var NoConnectedServerErr = fmt.Errorf("no selected servers")
+var NoConnectedServerErr = common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no selected servers"), nil)
 
 // Process is a v2ray-core process
 type Process struct {
@@ -96,7 +96,11 @@ func NewProcess(tmpl *Template,
 	}
 	proc, err := StartCoreProcess(pCtx)
 	if err != nil {
-		return nil, err
+		var coded *common.CodedError
+		if errors.As(err, &coded) {
+			return nil, err
+		}
+		return nil, common.Coded("CORE_START_FAILED", err, map[string]interface{}{"detail": err.Error()})
 	}
 	rollbackStage = 1 // xray 已启动
 	if err = poststart(); err != nil {
@@ -138,15 +142,13 @@ func NewProcess(tmpl *Template,
 			continue
 		}
 		if unexpectedExiting {
-			if log.Log.GetLevel() > log.ParseLevel("info") {
-				log.Error("some critical information may lost due to your log level")
-			}
-			return nil, fmt.Errorf("v2raya_core exited right after starting; the reason is in the v2rayA log")
+			return nil, common.Coded("CORE_START_FAILED", fmt.Errorf("v2raya_core exited right after starting; the reason is in the v2rayA log"), map[string]interface{}{"detail": "v2raya_core exited right after starting; the reason is in the v2rayA log"})
 		}
 		if time.Since(startTime) > startTimeOut {
 			log.Info("Attempting to terminate timed-out process with SIGTERM")
 			_ = proc.Signal(syscall.SIGTERM)
-			return nil, fmt.Errorf("v2raya_core did not open its API port within %d s (--core-startup-timeout); the reason is in the v2rayA log", int(startTimeOut/time.Second))
+			err := fmt.Errorf("v2raya_core did not open its API port within %d s (--core-startup-timeout); the reason is in the v2rayA log", int(startTimeOut/time.Second))
+			return nil, common.Coded("CORE_START_FAILED", err, map[string]interface{}{"detail": err.Error()})
 		}
 		time.Sleep(100 * time.Millisecond)
 	}

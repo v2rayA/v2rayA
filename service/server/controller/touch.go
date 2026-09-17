@@ -53,7 +53,7 @@ func DeleteTouch(ctx *gin.Context) {
 	var ws configure.Whiches
 	err := ctx.ShouldBindJSON(&ws)
 	if err != nil {
-		common.ResponseError(ctx, logError("request body must be {\"touches\": [...]} of server or subscription items"))
+		common.ResponseError(ctx, badRequest("touches", "request body must be {\"touches\": [...]} of server or subscription items"))
 		return
 	}
 	err = service.DeleteWhich(ws.Get())

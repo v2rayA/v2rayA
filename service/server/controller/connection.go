@@ -27,7 +27,7 @@ func PostConnection(ctx *gin.Context) {
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
-		common.ResponseError(ctx, logError("request body must be a server item with _type, id, sub and outbound"))
+		common.ResponseError(ctx, badRequest("server item", "request body must be a server item with _type, id, sub and outbound"))
 		return
 	}
 	err = service.Connect(&which)
@@ -57,7 +57,7 @@ func DeleteConnection(ctx *gin.Context) {
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
-		common.ResponseError(ctx, logError("request body must be a server item with _type, id, sub and outbound"))
+		common.ResponseError(ctx, badRequest("server item", "request body must be a server item with _type, id, sub and outbound"))
 		return
 	}
 	err = service.Disconnect(which, false)

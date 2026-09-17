@@ -21,7 +21,7 @@ type DnsConfigResponse struct {
 func PutDnsRules(ctx *gin.Context) {
 	var rules []configure.DnsRule
 	if err := ctx.ShouldBindJSON(&rules); err != nil {
-		common.ResponseError(ctx, logError(fmt.Errorf("request body must be a JSON array of DNS rules: %w", err)))
+		common.ResponseError(ctx, badRequest("DNS rules", fmt.Errorf("request body must be a JSON array of DNS rules: %w", err)))
 		return
 	}
 	for i, rule := range rules {

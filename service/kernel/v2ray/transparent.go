@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
@@ -139,6 +140,10 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		if err != nil {
 			log.Warn("writeTransparentProxyRules: %v", err)
 			deleteTransparentProxyRules()
+			err = common.Coded("TRANSPARENT_SETUP_FAILED", err, map[string]interface{}{
+				"mode":   configure.GetSettingNotNil().TransparentType,
+				"detail": err.Error(),
+			})
 		}
 	}()
 	// v2raya-core 进程内启动 DNS 模块（监听 :52353），

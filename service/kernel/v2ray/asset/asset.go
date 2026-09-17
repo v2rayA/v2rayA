@@ -15,6 +15,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/muhammadmuzzammil1998/jsonc"
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -106,7 +107,8 @@ func DoesV2rayAssetExist(filename string) bool {
 }
 
 func GFWListMissingError() error {
-	return fmt.Errorf("GFWList mode needs LoyalsoldierSite.dat, which is missing from %s; update GFWList first", GetV2rayLocationAssetOverride())
+	dir := GetV2rayLocationAssetOverride()
+	return common.Coded("GFWLIST_MISSING", fmt.Errorf("GFWList mode needs LoyalsoldierSite.dat, which is missing from %s; update GFWList first", dir), map[string]interface{}{"dir": dir})
 }
 
 func GetGFWListModTime() (time.Time, error) {
@@ -141,23 +143,38 @@ func GetNftablesConfigPath() (p string) {
 
 func Download(url string, to string) (err error) {
 	log.Info("Downloading %v to %v", url, to)
+	host := "unknown host"
+	if u, parseErr := url2.Parse(url); parseErr == nil && u.Hostname() != "" {
+		host = u.Hostname()
+	}
+	status := ""
 	c := http.Client{Timeout: 90 * time.Second}
 	resp, err := c.Get(url)
 	if err != nil || resp.StatusCode != 200 {
 		if err == nil {
 			defer resp.Body.Close()
-			host := "unknown host"
-			if u, parseErr := url2.Parse(url); parseErr == nil && u.Hostname() != "" {
-				host = u.Hostname()
-			}
-			err = fmt.Errorf("download from %s failed: HTTP %s", host, resp.Status)
+			status = resp.Status
+			err = fmt.Errorf("download from %s failed: HTTP %s", host, status)
 		}
-		return err
+		return common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
+			"host":   host,
+			"status": status,
+		})
 	}
 	defer resp.Body.Close()
+	status = resp.Status
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
+			"host":   host,
+			"status": status,
+		})
 	}
-	return os.WriteFile(to, b, 0644)
+	if err = os.WriteFile(to, b, 0644); err != nil {
+		return common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
+			"host":   host,
+			"status": status,
+		})
+	}
+	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -82,15 +83,16 @@ func PortOccupied(syntax []string) (err error) {
 				continue
 			}
 			occupiedErr := fmt.Errorf("port %d %w by %v (pid %v)", s.LocalAddress.Port, OccupiedErr, p.Name, p.PID)
+			codedErr := common.Coded("PORT_OCCUPIED", occupiedErr, map[string]interface{}{"port": s.LocalAddress.Port})
 			if configure.GetSettingNotNil().PortSharing {
 				// want to listen 0.0.0.0, which conflicts with all IPs
-				return occupiedErr
+				return codedErr
 			}
 			if s.LocalAddress.IP.IsUnspecified() {
-				return occupiedErr
+				return codedErr
 			}
 			if s.LocalAddress.IP.IsLoopback() {
-				return occupiedErr
+				return codedErr
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
@@ -30,7 +31,7 @@ func StartV2ray() (err error) {
 		}
 	}
 	if css := configure.GetConnectedServers(); css.Len() == 0 {
-		return fmt.Errorf("no server is selected; select at least one server first")
+		return common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no server is selected; select at least one server first"), nil)
 	}
 	return v2ray.UpdateV2RayConfig()
 }

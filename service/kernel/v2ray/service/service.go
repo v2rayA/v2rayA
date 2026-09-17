@@ -61,10 +61,13 @@ func CheckCoreVersionMatch() error {
 	}
 
 	if coreVer != serviceVer {
-		return fmt.Errorf(
+		return common.Coded("CORE_VERSION_MISMATCH", fmt.Errorf(
 			"%w: v2raya_core version %q does not match v2rayA version %q",
 			CoreVersionMismatchError, coreVer, serviceVer,
-		)
+		), map[string]interface{}{
+			"core": coreVer,
+			"app":  serviceVer,
+		})
 	}
 	return nil
 }

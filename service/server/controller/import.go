@@ -19,7 +19,7 @@ func PostImport(ctx *gin.Context) {
 		Which interface{} `json:"which"`
 	}
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		common.ResponseError(ctx, logError(fmt.Sprintf("request body must be a JSON object with \"url\" (string) and optional \"kind\" and \"which\": %v", err)))
+		common.ResponseError(ctx, badRequest("import", fmt.Sprintf("request body must be a JSON object with \"url\" (string) and optional \"kind\" and \"which\": %v", err)))
 		return
 	}
 
@@ -28,7 +28,7 @@ func PostImport(ctx *gin.Context) {
 		b, _ := jsoniter.Marshal(body.Which)
 		err := jsoniter.Unmarshal(b, &which)
 		if err != nil {
-			common.ResponseError(ctx, logError(fmt.Sprintf("\"which\" must be an object with _type, id, sub and outbound: %v", err)))
+			common.ResponseError(ctx, badRequest("which", fmt.Sprintf("\"which\" must be an object with _type, id, sub and outbound: %v", err)))
 			return
 		}
 	}
@@ -42,7 +42,7 @@ func PostImport(ctx *gin.Context) {
 	case "":
 		err = service.Import(body.URL, which)
 	default:
-		common.ResponseError(ctx, logError(fmt.Sprintf("kind %q is not valid; expected \"server\" or \"subscription\"", body.Kind)))
+		common.ResponseError(ctx, common.Coded("INVALID_KIND", logError(fmt.Sprintf("kind %q is not valid; expected \"server\" or \"subscription\"", body.Kind)), map[string]interface{}{"kind": body.Kind}))
 		return
 	}
 	if err != nil {

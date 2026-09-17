@@ -22,7 +22,7 @@ func PutRoutingA(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("request body must be {\"routingA\": string}"))
+		common.ResponseError(ctx, badRequest("routingA", "request body must be {\"routingA\": string}"))
 		return
 	}
 	// remove hardcode replacement and try parsing

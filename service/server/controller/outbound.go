@@ -23,7 +23,7 @@ func PostOutbound(ctx *gin.Context) {
 		Outbound string `json:"outbound"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError("request body must be a JSON object with a non-empty \"outbound\" string"))
+		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
 	if err := configure.AddOutbound(data.Outbound); err != nil {
@@ -46,7 +46,7 @@ func PutOutbound(ctx *gin.Context) {
 		Setting  configure.OutboundSetting `json:"setting"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError("request body must be a JSON object with a non-empty \"outbound\" string"))
+		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
 	if err := configure.SetOutboundSetting(data.Outbound, data.Setting); err != nil {
@@ -56,7 +56,8 @@ func PutOutbound(ctx *gin.Context) {
 	if v2ray.ProcessManager.Running() && configure.GetConnectedServers().Len() > 0 {
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
-			common.ResponseError(ctx, fmt.Errorf("invalid config: %w", err))
+			invalidConfigErr := fmt.Errorf("invalid config: %w", err)
+			common.ResponseError(ctx, common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": err.Error()}))
 			return
 		}
 	}
@@ -82,7 +83,7 @@ func DeleteOutbound(ctx *gin.Context) {
 		Outbound string `json:"outbound"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError("request body must be a JSON object with a non-empty \"outbound\" string"))
+		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
 	if data.Outbound == "proxy" {
@@ -144,7 +145,7 @@ func PutOutboundConnections(ctx *gin.Context) {
 		} `json:"touches"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		common.ResponseError(ctx, logError("request body must be {\"outbound\": string, \"touches\": [...]}"))
+		common.ResponseError(ctx, badRequest("outbound connections", "request body must be {\"outbound\": string, \"touches\": [...]}"))
 		return
 	}
 

@@ -103,7 +103,10 @@ func ImportServer(url string, which *configure.Which) (err error) {
 			case configure.ServerType:
 				if ind < 0 || ind >= configure.GetLenServers() {
 					log.Warn("Import: invalid server index: %v", ind)
-					return fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", which.ID, configure.GetLenServers())
+					return common.Coded("SERVER_NOT_FOUND", fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", which.ID, configure.GetLenServers()), map[string]interface{}{
+						"id":    which.ID,
+						"count": configure.GetLenServers(),
+					})
 				}
 				if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
 					log.Warn("Import: SetServer failed: %v", err)
@@ -116,7 +119,10 @@ func ImportServer(url string, which *configure.Which) (err error) {
 				subs := configure.GetSubscriptions()
 				if which.Sub < 0 || which.Sub >= len(subs) || ind < 0 || ind >= len(subs[which.Sub].Servers) {
 					log.Warn("Import: invalid subscription server index: sub=%v ind=%v", which.Sub, ind)
-					return fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", which.ID, which.Sub+1)
+					return common.Coded("SUBSCRIPTION_SERVER_NOT_FOUND", fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", which.ID, which.Sub+1), map[string]interface{}{
+						"id":  which.ID,
+						"sub": which.Sub + 1,
+					})
 				}
 				sub := subs[which.Sub]
 				sub.Servers[ind] = configure.ServerRaw{ServerObj: obj}
@@ -163,7 +169,11 @@ func ImportSubscription(url string) (err error) {
 				var e error
 				if source, e = common.Base64StdDecode(payload); e != nil {
 					if source, e = common.Base64URLDecode(payload); e != nil {
-						return fmt.Errorf("sub:// link payload is not valid base64; expected sub://BASE64(subscription URL)")
+						err := fmt.Errorf("sub:// link payload is not valid base64; expected sub://BASE64(subscription URL)")
+						return common.Coded("SUBSCRIPTION_FETCH_FAILED", err, map[string]interface{}{
+							"host":   "unknown host",
+							"detail": err.Error(),
+						})
 					}
 				}
 			case "":

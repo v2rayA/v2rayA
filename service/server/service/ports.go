@@ -2,11 +2,13 @@ package service
 
 import (
 	"fmt"
-	"github.com/go-leo/slicex"
-	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"reflect"
 	"strconv"
+
+	"github.com/go-leo/slicex"
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 )
 
 func GetPorts() configure.Ports {
@@ -26,13 +28,13 @@ func SetPorts(ports *configure.Ports) (err error) {
 		ports.Api.Port,
 	} {
 		if port < 0 || port > 65535 {
-			return fmt.Errorf("port %d is outside valid range 0-65535", port)
+			return common.Coded("INVALID_PORT", fmt.Errorf("port %d is outside valid range 0-65535", port), map[string]interface{}{"port": port})
 		}
 		if port == 0 {
 			continue
 		}
 		if _, ok := set[port]; ok {
-			return fmt.Errorf("port %d is assigned to more than one inbound; each port can be used once", port)
+			return common.Coded("PORT_DUPLICATE", fmt.Errorf("port %d is assigned to more than one inbound; each port can be used once", port), map[string]interface{}{"port": port})
 		}
 		set[port] = struct{}{}
 	}

@@ -29,7 +29,7 @@ func PutPorts(ctx *gin.Context) {
 	var data configure.Ports
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("request body is not a valid ports object"))
+		common.ResponseError(ctx, badRequest("ports", "request body is not a valid ports object"))
 		return
 	}
 	origin := service.GetPorts()
