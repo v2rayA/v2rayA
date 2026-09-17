@@ -59,6 +59,14 @@ body.theme-dark {
     box-shadow: 0 2px 0 0 var(--md-surface-variant);
   }
 
+  #toolbar.float-toolbar {
+    background: var(--md-surface-container);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  #toolbar.float-toolbar-active {
+    background: #2b2930;
+  }
+
   .navbar.is-light {
     .navbar-brand > .navbar-item,
     .navbar-brand .navbar-link,

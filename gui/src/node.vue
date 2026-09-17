@@ -88,14 +88,10 @@
         id="toolbar"
         grouped
         group-multiline
-        :style="{
-          background: overHeight
-            ? isCheckedRowsPingable() || isCheckedRowsDeletable()
-              ? 'rgba(0, 0, 0, 0.1)'
-              : 'rgba(0, 0, 0, 0.05)'
-            : 'transparent',
+        :class="{
+          'float-toolbar': overHeight,
+          'float-toolbar-active': overHeight && (isCheckedRowsPingable() || isCheckedRowsDeletable()),
         }"
-        :class="{ 'float-toolbar': overHeight }"
       >
         <div style="max-width: 60%">
           <button
@@ -2131,10 +2127,22 @@ td {
   position: sticky;
   top: 65px;
   z-index: 2;
-  background: rgba(0, 0, 0, 0.05);
+  background: transparent;
   width: 100%;
   border-radius: 3px;
   pointer-events: none;
+
+  // While stuck to the top the table scrolls underneath; the bar needs an
+  // opaque surface or the rows show through between and behind the
+  // (possibly disabled, half-transparent) buttons. Dark values live in
+  // dark-theme.scss.
+  &.float-toolbar {
+    background: #f5f5f5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  &.float-toolbar-active {
+    background: #ececec;
+  }
 
   * {
     pointer-events: auto;
