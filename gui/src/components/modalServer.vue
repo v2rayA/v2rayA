@@ -1351,18 +1351,58 @@ export default {
         } catch (e) {
           method = userinfo;
         }
-        const ssPlugin = u.params.plugin || "";
-        return {
+        const ssPlugin = decodeURIComponent(u.params.plugin || "");
+        const opts = ssPlugin.split(";");
+        let o = {
           method: method,
           password: password,
           server: u.host,
           port: u.port,
           name: decodeURIComponent(u.hash || ""),
-          plugin: ssPlugin.split(";")[0] || "",
-          plugin_opts: ssPlugin.split(";").slice(1).join(";") || "",
+          plugin: opts[0] || "",
+          obfs: "http",
+          tls: "",
+          mode: "websocket",
+          host: "",
+          path: "",
+          impl: "",
           protocol: "ss",
           backend: u.params["v2raya-backend"] || "",
         };
+        switch (o.plugin) {
+          case "obfs-local":
+          case "simpleobfs":
+            o.plugin = "simple-obfs";
+            break;
+        }
+        // "obfs-local;obfs=tls;obfs-host=example.com" or
+        // "v2ray-plugin;tls;mode=websocket;host=example.com;path=/ws"
+        for (const opt of opts.slice(1)) {
+          const [k, v = ""] = opt.split("=");
+          switch (k) {
+            case "obfs":
+              o.obfs = v;
+              break;
+            case "host":
+            case "obfs-host":
+              o.host = v;
+              break;
+            case "path":
+            case "obfs-path":
+              o.path = v;
+              break;
+            case "mode":
+              o.mode = v;
+              break;
+            case "tls":
+              o.tls = "tls";
+              break;
+            case "impl":
+              o.impl = v;
+              break;
+          }
+        }
+        return o;
       } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
@@ -1675,8 +1715,9 @@ export default {
           }
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":
-          /* ss://BASE64(method:password)@server:port#name */
-          tmp = `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${srcObj.server
+          /* ss://BASE64URL(method:password)@server:port#name; SIP002 userinfo is
+             base64url without padding and the backend decodes only that. */
+          tmp = `ss://${Base64.encodeURI(`${srcObj.method}:${srcObj.password}`)}@${srcObj.server
             }:${srcObj.port}/`;
           if (srcObj.plugin) {
             const plugin = [srcObj.plugin];
@@ -1710,6 +1751,9 @@ export default {
               }
             }
             tmp += `?plugin=${encodeURIComponent(plugin.join(";"))}`;
+          }
+          if (srcObj.backend) {
+            tmp += `${srcObj.plugin ? "&" : "?"}v2raya-backend=${encodeURIComponent(srcObj.backend)}`;
           }
           tmp += srcObj.name.length
             ? `#${encodeURIComponent(srcObj.name)}`
@@ -1757,6 +1801,9 @@ export default {
           }
           if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
             query.seed = srcObj.path;
+          }
+          if (srcObj.backend) {
+            query["v2raya-backend"] = srcObj.backend;
           }
           return generateURL({
             protocol: tmp,
@@ -1994,103 +2041,23 @@ export default {
         // wireguard://address:port?key=value#name
         coded = this.generateURL(this.wireguard);
       } else if (this.tabChoice === 3) {
-        // ss://BASE64(method:password)@server:port?plugin=...&v2raya-backend=...#name
-        const { method, password, server, port, name, plugin, plugin_opts, backend } = this.ss;
-        let userinfo = btoa(`${method}:${password}`);
-        let params = [];
-        if (plugin) {
-          params.push(`plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`);
-        }
-        if (backend) {
-          params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
-        }
-        let url = `ss://${userinfo}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.ss);
       } else if (this.tabChoice === 4) {
-        // ssr://server:port:proto:method:obfs:base64(password)/?remarks=base64(remarks)
-        const { server, port, proto, method, obfs, password, name, protoParam, obfsParam } = this.ssr;
-        let pwdB64 = btoa(password);
-        let remarksB64 = name ? btoa(name) : "";
-        let protoParamB64 = protoParam ? btoa(protoParam) : "";
-        let obfsParamB64 = obfsParam ? btoa(obfsParam) : "";
-        let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
-        coded = url;
+        coded = this.generateURL(this.ssr);
       } else if (this.tabChoice === 5) {
-        // trojan://password@server:port?pinnedPeerCertSha256=&verifyPeerCertByName=&sni=sni&v2raya-backend=...#name
-        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, peer, name, backend } = this.trojan;
-        let params = [];
-        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
-        if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
-        if (backend) params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
-        let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.trojan);
       } else if (this.tabChoice === 6) {
-        // juicity://uuid:password@server:port?cc=xxx#name
-        const { uuid, password, server, port, cc, sni, name } = this.juicity;
-        let params = [];
-        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
-        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
-        let url = `juicity://${uuid}:${password}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.juicity);
       } else if (this.tabChoice === 7) {
-        // tuic://uuid:password@server:port?pinned_peer_cert_sha256=&verify_peer_cert_by_name=&cc=xxx#name
-        const { uuid, password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, cc, sni, name } = this.tuic;
-        let params = [];
-        if (pinnedPeerCertSha256) params.push("pinned_peer_cert_sha256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
-        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
-        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
-        let url = `tuic://${uuid}:${password}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.tuic);
       } else if (this.tabChoice === 8) {
-        // hysteria2://password@server:port?pinSHA256=&obfs=xxx#name
-        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword, sni, name } = this.hysteria2;
-        let params = [];
-        if (pinnedPeerCertSha256) params.push("pinSHA256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
-        if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
-        if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
-        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
-        let url = `hysteria2://${encodeURIComponent(password)}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.hysteria2);
       } else if (this.tabChoice === 9) {
-        // http(s)://username:password@server:port#name
-        const { protocol, username, password, host, port, name } = this.http;
-        let url = `${protocol}://`;
-        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
-        url += `${host}:${port}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.http);
       } else if (this.tabChoice === 10) {
-        // socks5://username:password@server:port#name
-        const { username, password, host, port, name } = this.socks5;
-        let url = `socks5://`;
-        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
-        url += `${host}:${port}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.socks5);
       } else if (this.tabChoice === 11) {
-        // anytls://auth@host:port?peer=sni&pinnedPeerCertSha256=&verifyPeerCertByName=#name
-        const { auth, host, port, sni, pinnedPeerCertSha256, verifyPeerCertByName, name } = this.anytls;
-        let params = [];
-        if (sni) params.push(`peer=${encodeURIComponent(sni)}`);
-        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
-        let url = `anytls://${encodeURIComponent(auth)}@${host}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.anytls);
       }
       this.$emit("submit", coded);
     },
