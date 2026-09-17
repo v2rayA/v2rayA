@@ -748,6 +748,9 @@
             <b-input v-model="juicity.pinnedCertchainSha256" :placeholder="$t('configureServer.pinnedCertchainSha256')"
               expanded />
           </b-field>
+          <b-field label="Allow insecure" label-position="on-border">
+            <b-switch v-model="juicity.allowInsecure">{{ juicity.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
+          </b-field>
         </b-tab-item>
 
         <b-tab-item label="Tuic">
@@ -778,6 +781,9 @@
           </b-field>
           <b-field label="Verify Peer Cert By Name" label-position="on-border">
             <b-input v-model="tuic.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
+          </b-field>
+          <b-field label="Allow insecure" label-position="on-border">
+            <b-switch v-model="tuic.allowInsecure">{{ tuic.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
           </b-field>
           <b-field label-position="on-border">
             <template slot="label"> DisableSni </template>
@@ -908,6 +914,12 @@
           </b-field>
           <b-field label="Verify Peer Cert By Name" label-position="on-border">
             <b-input v-model="anytls.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
+          </b-field>
+          <b-field label="Allow insecure" label-position="on-border">
+            <b-switch v-model="anytls.allowInsecure">{{ anytls.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
+          </b-field>
+          <b-field label="Min idle session" label-position="on-border">
+            <b-input v-model="anytls.minIdleSession" type="number" expanded />
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -1055,6 +1067,7 @@ export default {
       uuid: "",
       password: "",
       pinnedCertchainSha256: "",
+      allowInsecure: false,
       protocol: "juicity",
     },
     tuic: {
@@ -1067,6 +1080,7 @@ export default {
       password: "",
       pinnedPeerCertSha256: "",
       verifyPeerCertByName: "",
+      allowInsecure: false,
       disableSni: false,
       alpn: "h3",
       udpRelayMode: "native",
@@ -1108,6 +1122,8 @@ export default {
       sni: "",
       pinnedPeerCertSha256: "",
       verifyPeerCertByName: "",
+      allowInsecure: false,
+      minIdleSession: "",
       protocol: "anytls",
     },
     wireguard: {
@@ -1487,6 +1503,8 @@ export default {
           sni: u.params.sni || "",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           cc: u.params.congestion_control || "bbr",
+          allowInsecure:
+            u.params.allow_insecure === "true" || u.params.allowInsecure === "true",
           protocol: "juicity",
         };
       } else if (url.toLowerCase().startsWith("tuic://")) {
@@ -1505,6 +1523,8 @@ export default {
           alpn: u.params.alpn,
           cc: u.params.congestion_control || "bbr",
           udpRelayMode: u.params.udp_relay_mode || "native",
+          allowInsecure:
+            u.params.allow_insecure === "true" || u.params.allow_insecure === "1",
           protocol: "tuic",
         };
       } else if (
@@ -1512,9 +1532,19 @@ export default {
         url.toLowerCase().startsWith("hy2://")
       ) {
         let u = parseURL(url);
+        let password = decodeURIComponent(u.username);
+        const userInfoEnd = u.source.indexOf("@");
+        if (
+          userInfoEnd !== -1 &&
+          u.source
+            .slice(u.source.indexOf("://") + 3, userInfoEnd)
+            .includes(":")
+        ) {
+          password += `:${decodeURIComponent(u.password)}`;
+        }
         return {
           name: decodeURIComponent(u.hash),
-          password: decodeURIComponent(u.username),
+          password: password,
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
@@ -1560,6 +1590,9 @@ export default {
           sni: sni,
           pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
           verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
+          allowInsecure:
+            u.params.allow_insecure === "true" || u.params.allow_insecure === "1",
+          minIdleSession: u.params.minIdleSession || "",
           protocol: "anytls",
         };
       } else if (url.toLowerCase().startsWith("wireguard://")) {
@@ -1806,6 +1839,13 @@ export default {
               query.path = srcObj.path || "/";
             }
           }
+          if (
+            tmp === "trojan" &&
+            (srcObj.net === "ws" || srcObj.net === "h2")
+          ) {
+            query.host = srcObj.host;
+            query.path = srcObj.path;
+          }
 
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
@@ -1837,6 +1877,9 @@ export default {
           if (srcObj.pinnedCertchainSha256 !== "") {
             query.pinned_certchain_sha256 = srcObj.pinnedCertchainSha256;
           }
+          if (srcObj.allowInsecure) {
+            query.allow_insecure = "true";
+          }
           return generateURL({
             protocol: "juicity",
             username: srcObj.uuid,
@@ -1848,8 +1891,8 @@ export default {
           });
         case "tuic":
           query = {
-            pinned_peer_cert_sha256: srcObj.pinnedPeerCertSha256,
-            verify_peer_cert_by_name: srcObj.verifyPeerCertByName,
+            pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256,
+            verifyPeerCertByName: srcObj.verifyPeerCertByName,
             congestion_control: srcObj.cc,
             disable_sni: srcObj.disableSni,
             alpn: srcObj.alpn,
@@ -1857,6 +1900,9 @@ export default {
           };
           if (srcObj.sni !== "") {
             query.sni = srcObj.sni;
+          }
+          if (srcObj.allowInsecure) {
+            query.allow_insecure = "true";
           }
           return generateURL({
             protocol: "tuic",
@@ -1926,6 +1972,12 @@ export default {
           }
           if (srcObj.verifyPeerCertByName) {
             query.verifyPeerCertByName = srcObj.verifyPeerCertByName;
+          }
+          if (srcObj.allowInsecure) {
+            query.allow_insecure = "true";
+          }
+          if (srcObj.minIdleSession) {
+            query.minIdleSession = srcObj.minIdleSession;
           }
           return generateURL({
             protocol: "anytls",
