@@ -12,6 +12,7 @@ module.exports = {
 
   parserOptions: {
     parser: "@babel/eslint-parser",
+    requireConfigFile: false,
   },
 
   extends: ["plugin:vue/recommended", "@vue/prettier"],
