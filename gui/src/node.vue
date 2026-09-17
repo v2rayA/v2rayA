@@ -2073,11 +2073,31 @@ td {
     pointer-events: auto;
   }
 
+  // Both groups stay in flow: with the buttons absolutely positioned the
+  // toolbar collapsed to its padding when the left group was hidden (no
+  // rows selected) and the create/import buttons overlapped whatever came
+  // next, e.g. the welcome card on an empty page.
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  // below the tablet breakpoint Buefy wraps the groups in
+  // .field-body > .field.is-grouped, neither of which stretches; keep
+  // both full-width flex rows so the right group still ends up right
+  > .field-body,
+  > .field-body > .field.is-grouped {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
   .right {
-    position: absolute;
-    right: 0.75rem;
-    top: 0.75em;
-    /*max-width: 70%;*/
+    margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   transition: all 200ms linear;
