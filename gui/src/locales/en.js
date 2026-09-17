@@ -474,6 +474,7 @@ export default {
       all: "All",
     },
     tailOnly: "Showing the last {count} lines ({skipped} older lines hidden on this screen)",
+    export: "Export",
   },
   tproxyWhiteIpGroups: {
     title: "White IP Groups",

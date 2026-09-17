@@ -473,6 +473,7 @@ export default {
       all: "Все",
     },
     tailOnly: "Показаны последние {count} строк ({skipped} более старых скрыто на этом экране)",
+    export: "Экспорт",
   },
   tproxyWhiteIpGroups: {
     title: "Группы IP-адресов прямого доступа",

@@ -460,6 +460,7 @@ export default {
       all: "Todas",
     },
     tailOnly: "Mostrando as últimas {count} linhas ({skipped} linhas mais antigas ocultas nesta tela)",
+    export: "Exportar",
   },
   tproxyWhiteIpGroups: {
     title: "Grupos de IPs na lista branca",

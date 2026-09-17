@@ -473,6 +473,7 @@ export default {
       all: "همه",
     },
     tailOnly: "نمایش {count} خط آخر ({skipped} خط قدیمی‌تر در این صفحه پنهان است)",
+    export: "برون‌ریزی",
   },
   tproxyWhiteIpGroups: {
     title: "گروه‌های IP سفید",

@@ -92,6 +92,15 @@
               <b-switch v-model="autoScoll" @input="changeScoll" />
             </div>
           </div>
+          <div class="log-footer-item">
+            <b-button
+              icon-left="download"
+              :disabled="filteredItems.length === 0"
+              @click="handleExport"
+            >
+              {{ $t("log.export") }}
+            </b-button>
+          </div>
         </div>
       </div>
     </section>
@@ -314,6 +323,26 @@ export default {
       this.intervalId = setInterval(() => {
         this.fetchLog();
       }, this.intervalTime * 1000);
+    },
+    handleExport() {
+      // Export what the dialog shows, filters included, so the file matches
+      // what the user was looking at.
+      const text = this.filteredItems.map((item) => item.text).join("\n");
+      const stamp = new Date()
+        .toISOString()
+        .replace(/[:T]/g, "-")
+        .slice(0, 19);
+      const blob = new Blob([text + "\n"], {
+        type: "text/plain;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `v2raya-log-${stamp}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     },
     changeScoll(val) {
       localStorage.setItem("log.autoScoll", val);
