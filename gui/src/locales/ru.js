@@ -594,6 +594,7 @@ export default {
     REQUEST_IN_PROGRESS: "the last request is being processed",
     GFWLIST_MISSING: "Файл GFWList отсутствует в каталоге {dir}.",
     INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_UNREACHABLE: "Не удалось соединиться с {host}: {detail}",
     ASSET_DOWNLOAD_FAILED:
       "Не удалось загрузить ресурс по адресу {host} (HTTP {status}).",
     TRANSPARENT_SETUP_FAILED:

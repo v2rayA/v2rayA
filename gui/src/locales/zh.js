@@ -597,6 +597,7 @@ export default {
     REQUEST_IN_PROGRESS: "上一个请求正在处理。",
     GFWLIST_MISSING: "目录 {dir} 中缺少 GFWList。",
     INVALID_CONFIG: "配置无效：{detail}",
+    ASSET_UNREACHABLE: "无法连接 {host}：{detail}",
     ASSET_DOWNLOAD_FAILED: "无法从 {host} 下载资源（HTTP {status}）。",
     TRANSPARENT_SETUP_FAILED: "无法设置 {mode} 透明代理：{detail}",
     MUX_RANGE: "无效的 MUX 并发值：{value}",

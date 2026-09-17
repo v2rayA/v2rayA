@@ -595,6 +595,7 @@ export default {
     REQUEST_IN_PROGRESS: "the last request is being processed",
     GFWLIST_MISSING: "GFWList is missing from {dir}.",
     INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_UNREACHABLE: "Could not reach {host}: {detail}",
     ASSET_DOWNLOAD_FAILED:
       "Could not download the asset from {host} (HTTP {status}).",
     TRANSPARENT_SETUP_FAILED:

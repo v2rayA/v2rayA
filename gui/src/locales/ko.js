@@ -599,6 +599,7 @@ export default {
     REQUEST_IN_PROGRESS: "the last request is being processed",
     GFWLIST_MISSING: "GFWList가 {dir}에 없음.",
     INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_UNREACHABLE: "{host}에 연결할 수 없습니다: {detail}",
     ASSET_DOWNLOAD_FAILED:
       "{host}에서 자산 다운로드 실패 (HTTP {status}).",
     TRANSPARENT_SETUP_FAILED:

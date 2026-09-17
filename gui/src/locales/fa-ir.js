@@ -594,6 +594,7 @@ export default {
     REQUEST_IN_PROGRESS: "the last request is being processed",
     GFWLIST_MISSING: "GFWList در {dir} وجود ندارد.",
     INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_UNREACHABLE: "اتصال به {host} ممکن نشد: {detail}",
     ASSET_DOWNLOAD_FAILED: "بارگیری منبع از {host} ناموفق بود (HTTP {status}).",
     TRANSPARENT_SETUP_FAILED:
       "راه‌اندازی پروکسی شفاف {mode} ناموفق بود: {detail}",
