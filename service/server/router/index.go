@@ -335,7 +335,6 @@ func Run() error {
 		}
 	}
 
-
 	srv := &http.Server{Handler: engine}
 	httpServerMu.Lock()
 	httpServer = srv
