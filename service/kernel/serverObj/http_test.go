@@ -23,6 +23,8 @@ func TestParseHttpURLDefaultPort(t *testing.T) {
 	}
 	for _, bad := range []string{
 		"http-proxy://example.com:abc",
+		"http-proxy://",
+		"http-proxy://user:pass@",
 		"https://example.com/sub?token=x",
 		"http://example.com/sub",
 	} {

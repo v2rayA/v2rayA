@@ -51,6 +51,11 @@ func ParseHttpURL(u string) (data *HTTP, err error) {
 	if (t.Path != "" && t.Path != "/") || t.RawQuery != "" {
 		return nil, fmt.Errorf("%w: http proxy link for %q has a path or query; expected http-proxy://[user:pass@]host:port", ErrInvalidParameter, t.Hostname())
 	}
+	// A default port only makes sense with a host to connect to; an empty
+	// hostname used to be rejected by the port conversion.
+	if t.Hostname() == "" {
+		return nil, fmt.Errorf("%w: http proxy link has no server address; expected http-proxy://[user:pass@]host:port", ErrInvalidParameter)
+	}
 	// An absent port falls through to the per-scheme default below.
 	port := 0
 	if p := t.Port(); p != "" {

@@ -77,6 +77,12 @@ func TestParseSocksURLDefaultPort(t *testing.T) {
 	if got.Protocol != "socks5" || got.Server != "example.com" || got.Port != 1080 {
 		t.Fatalf("got %#v", got)
 	}
+
+	for _, bad := range []string{"socks5://", "socks5://user:pass@"} {
+		if _, err := ParseSocksURL(bad); err == nil {
+			t.Errorf("%s should be rejected", bad)
+		}
+	}
 }
 
 func TestVlessURLRoundTrip(t *testing.T) {
