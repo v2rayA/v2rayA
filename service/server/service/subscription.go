@@ -18,6 +18,7 @@ import (
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/kernel/serverObj/clash"
 	"github.com/v2rayA/v2rayA/kernel/touch"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -214,6 +215,10 @@ func ResolveByLines(raw string) (infos []serverObj.ServerObj, status string, err
 	var sip SIP008
 	if infos, sip, err = resolveSIP008(raw); err == nil {
 		status = getDataUsageStatus(sip.BytesUsed, sip.BytesRemaining)
+	} else if clashInfos, ok, clashErr := clash.Resolve(raw); ok {
+		// a Clash config is never a link list; parsing it line by line
+		// would only pick up stray URLs from its rules
+		infos, err = clashInfos, clashErr
 	} else {
 		infos, status, err = resolveByLines(raw)
 	}
