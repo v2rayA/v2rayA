@@ -590,6 +590,9 @@ export default {
             // FIXME: tricky
             this.$parent.$parent.runningState.running = this.$t("common.notRunning");
           }
+        }).finally(() => {
+          // waitingConnected cancels this request once the core reports
+          // connected; the spinner must close on that path too
           loading.close();
         }),
         3 * 1000,

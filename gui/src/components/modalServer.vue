@@ -1210,10 +1210,10 @@ export default {
                 .querySelectorAll("input, textarea")
                 .forEach((x) => (x.readOnly = "readOnly"));
               this.$refs.section.querySelectorAll("select").forEach((x) => {
-                const text = x.querySelector(
-                  `option[value="${x.value}"]`
-                ).textContent;
-                console.log(x.value, text);
+                // a subscription node may carry a value the option list
+                // does not offer (e.g. a newer transport); show it raw
+                const opt = x.querySelector(`option[value="${x.value}"]`);
+                const text = opt ? opt.textContent : x.value;
                 x.outerHTML = `<input type="text" class="input" readonly="readonly" value="${text}">`;
               });
             }
