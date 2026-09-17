@@ -73,16 +73,16 @@
         </div>
       </b-message>
     </b-sidebar>
-    <b-message
+    <b-notification
       v-if="ready && coreVersionValid === false"
       type="is-danger"
-      size="is-small"
+      role="alert"
       :closable="false"
       class="core-version-error"
     >
-      <i class="lucide icon-triangle-alert" />
-      {{ $t("version.coreVersionMismatch", { err: coreVersionErr || "" }) }}
-    </b-message>
+      <span class="core-version-error__icon"><i class="lucide icon-triangle-alert" /></span>
+      <span>{{ $t("version.coreVersionMismatch", { err: coreVersionErr || "" }) }}</span>
+    </b-notification>
     <div v-if="ready" class="hero-body">
       <b-field
         id="toolbar"
@@ -2375,6 +2375,27 @@ tr.highlight-row-disconnected > td {
 
 .click-through {
   pointer-events: none;
+}
+
+// The core-version notice is the one persistent banner in the app; keep it
+// inside the content column instead of edge to edge, and lay the icon out
+// as a column so long text does not wrap under it.
+.core-version-error {
+  margin: 0.75rem auto 0;
+  max-width: 1200px;
+  width: calc(100% - 1.5rem);
+  display: flex;
+  border-radius: 6px;
+  font-size: 0.9rem;
+
+  ::v-deep .media,
+  ::v-deep .media-content {
+    align-items: flex-start;
+  }
+
+  &__icon {
+    margin-right: 0.5rem;
+  }
 }
 .address-column {
   max-width: 350px !important;

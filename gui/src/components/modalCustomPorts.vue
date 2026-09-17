@@ -296,7 +296,4 @@ export default {
 </script>
 
 <style lang="scss">
-.modal-custom-ports .modal-background {
-  background-color: rgba(0, 0, 0, 0.6);
-}
 </style>

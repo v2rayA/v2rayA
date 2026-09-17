@@ -72,6 +72,31 @@ body.theme-dark {
     filter: invert(1) hue-rotate(180deg) brightness(1.3);
   }
 
+  // the persistent core-version notice keeps its danger colour; the generic
+  // .message override above would flatten it to the surface colour
+  .notification.core-version-error {
+    background-color: var(--node-msg-danger-bg) !important;
+    border: 1px solid var(--node-msg-danger-border);
+    color: var(--node-msg-on-color) !important;
+  }
+
+  @media screen and (max-width: 1023px) {
+    .navbar-menu .navbar-end > .dropdown > .dropdown-menu .dropdown-content {
+      border-color: var(--md-surface-variant);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  .modal .modal-close.is-large {
+    color: var(--md-on-surface-variant);
+
+    &:hover,
+    &:focus {
+      background-color: rgba(255, 255, 255, 0.12);
+      color: var(--md-on-surface);
+    }
+  }
+
   #toolbar.float-toolbar {
     background: var(--md-surface-container);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
@@ -558,10 +583,6 @@ body.theme-dark {
   .is-link,
   code {
     color: var(--md-primary) !important;
-  }
-
-  .modal-background {
-    background-color: rgba(0, 0, 0, 0.62);
   }
 
   /* Final high-priority overrides for Buefy/Bulma defaults */

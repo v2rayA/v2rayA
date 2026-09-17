@@ -801,6 +801,22 @@ html {
 // Buefy puts .modal-close inside .animation-content, which wraps the card
 // but is stretched to the whole modal, so the button lands in the corner of
 // the screen rather than of the card. Shrink the wrapper to its card.
+// One backdrop value for every dialog: the component library ships several
+// (0.86 opaque here, a lighter one in two components), which read as a
+// shadow around the light card.
+.modal .modal-background {
+  background-color: rgba(10, 10, 10, 0.55);
+}
+
+.modal .modal-card-head,
+.modal .modal-card-foot {
+  border-radius: 6px 6px 0 0;
+}
+
+.modal .modal-card-foot {
+  border-radius: 0 0 6px 6px;
+}
+
 .modal .animation-content {
   position: relative;
   width: auto;
@@ -818,6 +834,22 @@ html {
   max-height: 2rem;
   max-width: 2rem;
   z-index: 1;
+  background-color: transparent;
+
+  // Bulma draws the glyph as two white bars, which vanish on the light
+  // card head; follow the head's text colour instead.
+  &::before,
+  &::after {
+    background-color: currentColor;
+  }
+
+  color: rgba(0, 0, 0, 0.55);
+
+  &:hover,
+  &:focus {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.8);
+  }
 }
 
 // Phone dialogs: Bulma floats the card in the middle of the viewport
@@ -852,6 +884,16 @@ html {
   // The dropdowns are no longer mobile modals (see plugins/buefy.js), so
   // the menu is positioned inside the collapsed navbar menu: keep it in
   // the flow of its row instead of floating over the page.
+  // Bulma gives the collapsed menu `overflow: auto` with a max-height, which
+  // clips anything floating out of it: the language menu showed one row and
+  // the rest was cut off. The menu holds six items and never needs its own
+  // scrollbar on a phone, so let it overflow and give the dropdown its own
+  // bounded scroll instead.
+  .navbar.is-fixed-top .navbar-menu,
+  .navbar-menu {
+    overflow: visible;
+  }
+
   .navbar-menu .navbar-end > .dropdown {
     position: relative;
 
@@ -864,12 +906,17 @@ html {
       min-width: 100%;
       max-width: calc(100vw - 2rem);
       transform: none;
-      padding-top: 0;
+      padding-top: 0.25rem;
     }
 
+    // a menu floating over the rows below it needs its own surface and a
+    // border, or it reads as part of the list it covers
     > .dropdown-menu .dropdown-content {
       max-height: 60vh;
       overflow-y: auto;
+      border: 1px solid rgba(10, 10, 10, 0.12);
+      border-radius: 6px;
+      box-shadow: 0 8px 16px rgba(10, 10, 10, 0.18);
     }
   }
 

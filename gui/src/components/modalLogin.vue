@@ -118,10 +118,6 @@ export default {
 </script>
 
 <style lang="scss">
-.modal-login .modal-background {
-  background-color: rgba(10, 10, 10, 0.7) !important;
-}
-
 .modal-login .modal-background,
 .modal-login-app .modal-background,
 .modal-login-programmatic .modal-background {
