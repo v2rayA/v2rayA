@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/netTools/netstat"
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/where"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -54,6 +58,36 @@ func (t *Template) checkDuplicatedInboundSockets() error {
 	return nil
 }
 
+// killOrphanCore terminates a core process that was reparented to init after
+// the v2rayA that started it died. It reports whether the port is free again.
+func killOrphanCore(p *netstat.Process) bool {
+	if runtime.GOOS == "windows" || p.PPID != "1" {
+		return false
+	}
+	binPath, err := where.GetV2rayBinPath()
+	if err != nil || filepath.Base(binPath) != p.Name {
+		return false
+	}
+	pid, err := strconv.Atoi(p.PID)
+	if err != nil {
+		return false
+	}
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	log.Warn("killing the orphaned %v (pid %v) that still holds the port", p.Name, p.PID)
+	if err := proc.Kill(); err != nil {
+		log.Warn("cannot kill the orphaned %v (pid %v): %v", p.Name, p.PID, err)
+		return false
+	}
+	// Not our child, so Wait cannot reap it; give the kernel a moment to drop
+	// the socket before the caller looks again.
+	_, _ = proc.Wait()
+	time.Sleep(200 * time.Millisecond)
+	return true
+}
+
 var OccupiedErr = fmt.Errorf("is already in use")
 
 func PortOccupied(syntax []string) (err error) {
@@ -80,6 +114,13 @@ func PortOccupied(syntax []string) (err error) {
 			}
 			if ownPID := strconv.Itoa(os.Getpid()); p.PPID == ownPID ||
 				p.PID == ownPID {
+				continue
+			}
+			// A core that outlived the v2rayA which started it — the OOM
+			// killer takes v2rayA first, init adopts the core and it keeps the
+			// ports, so every later start failed until someone killed it by
+			// hand. It is ours to clean up.
+			if killOrphanCore(p) {
 				continue
 			}
 			occupiedErr := fmt.Errorf("port %d %w by %v (pid %v)", s.LocalAddress.Port, OccupiedErr, p.Name, p.PID)

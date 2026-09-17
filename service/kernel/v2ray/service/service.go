@@ -61,8 +61,11 @@ func CheckCoreVersionMatch() error {
 	}
 
 	if coreVer != serviceVer {
+		// The two binaries are released together from one tree, so a mismatch
+		// almost always means an xray-core or v2ray-core binary is installed
+		// where v2raya_core belongs. Say that instead of two bare numbers.
 		return common.Coded("CORE_VERSION_MISMATCH", fmt.Errorf(
-			"%w: v2raya_core version %q does not match v2rayA version %q",
+			"%w: the core reports version %q but v2rayA is %q; v2rayA needs the v2raya_core binary of the same version, not xray-core or v2ray-core",
 			CoreVersionMismatchError, coreVer, serviceVer,
 		), map[string]interface{}{
 			"core": coreVer,
