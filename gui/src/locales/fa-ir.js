@@ -511,6 +511,7 @@ export default {
     wrongCustomLink: "پیوند بارگیری سفارشی باید با http:// یا https:// شروع شود",
     updated: "GFWList به‌روزرسانی شد",
     saveFailed: "به‌روزرسانی GFWList ناموفق بود: {message}",
+    alreadyUpToDate: "GFWList هم‌اکنون به‌روز است ({version})",
   },
   tinytun: {
     routeScript: {

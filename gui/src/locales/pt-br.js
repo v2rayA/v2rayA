@@ -498,6 +498,7 @@ export default {
     wrongCustomLink: "O link de download personalizado deve começar com http:// ou https://",
     updated: "GFWList atualizada",
     saveFailed: "Falha ao atualizar a GFWList: {message}",
+    alreadyUpToDate: "A GFWList já está na versão mais recente ({version})",
   },
   tinytun: {
     routeScript: {

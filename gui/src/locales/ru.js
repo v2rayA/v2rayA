@@ -511,6 +511,7 @@ export default {
     wrongCustomLink: "Пользовательская ссылка для скачивания должна начинаться с http:// или https://",
     updated: "GFWList обновлён",
     saveFailed: "Не удалось обновить GFWList: {message}",
+    alreadyUpToDate: "GFWList уже последней версии ({version})",
   },
   tinytun: {
     routeScript: {

@@ -93,9 +93,16 @@ export default {
         loading.close();
         handleResponse(res, this, () => {
           this.$emit("close");
+          // "Already the latest" is a result, not a failure: the backend used
+          // to report it as an error and the dialog said "could not update".
+          const upToDate = res.data.data && res.data.data.alreadyUpToDate;
           this.$buefy.toast.open({
-            message: this.$t("gfwList.updated"),
-            type: "is-success",
+            message: upToDate
+              ? this.$t("gfwList.alreadyUpToDate", {
+                  version: res.data.data.localGFWListVersion,
+                })
+              : this.$t("gfwList.updated"),
+            type: upToDate ? "is-info" : "is-success",
             position: "is-top",
             duration: 5000,
           });

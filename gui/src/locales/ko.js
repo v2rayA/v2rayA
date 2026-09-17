@@ -516,6 +516,7 @@ export default {
     wrongCustomLink: "사용자 지정 다운로드 링크는 http:// 또는 https://로 시작해야 합니다",
     updated: "GFWList 업데이트됨",
     saveFailed: "GFWList 업데이트 실패: {message}",
+    alreadyUpToDate: "GFWList는 이미 최신 버전입니다({version})",
   },
   tinytun: {
     routeScript: {

@@ -518,6 +518,7 @@ export default {
     wrongCustomLink: "自定义下载链接必须以 http:// 或 https:// 开头",
     updated: "GFWList 已更新",
     saveFailed: "无法更新 GFWList：{message}",
+    alreadyUpToDate: "GFWList 已是最新版本（{version}）",
   },
   tinytun: {
     routeScript: {
