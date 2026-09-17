@@ -7,6 +7,10 @@ import utc from "dayjs/plugin/utc";
 import Vue from "vue";
 import "dayjs/locale/zh-cn";
 import "dayjs/locale/en";
+import "dayjs/locale/fa";
+import "dayjs/locale/ru";
+import "dayjs/locale/pt-br";
+import "dayjs/locale/ko";
 
 dayjs.extend(relativeTime);
 dayjs.extend(utc);

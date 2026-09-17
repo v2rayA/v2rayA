@@ -8,7 +8,8 @@
         <b-navbar-item tag="div">
           <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusMap[runningState.running]"
             @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
-            @click.native="handleClickStatus">{{ coverStatusText ? coverStatusText : runningState.running }}
+            @click.native="handleClickStatus" @keydown.native.enter.prevent="handleClickStatus"
+            @keydown.native.space.prevent="handleClickStatus"><span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
           </b-tag>
         </b-navbar-item>
         <b-navbar-item tag="div">
@@ -23,37 +24,52 @@
           />
         </b-navbar-item>
       </template>
+      <template slot="burger" slot-scope="{ isOpened, toggleActive }">
+        <a
+          class="navbar-burger burger"
+          role="button"
+          :aria-label="$t('common.menu')"
+          :aria-expanded="isOpened ? 'true' : 'false'"
+          tabindex="0"
+          @click="toggleActive"
+          @keydown.enter.prevent="toggleActive"
+          @keydown.space.prevent="toggleActive"
+        >
+          <i class="lucide" :class="isOpened ? 'icon-x' : 'icon-menu'"></i>
+        </a>
+      </template>
+
       <template slot="start"></template>
 
       <template slot="end">
         <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
-        <!--          <i class="iconfont icon-cloud" style="font-size: 1.4em"></i>-->
+        <!--          <i class="lucide icon-cloud" style="font-size: 1.4em"></i>-->
         <!--          节点-->
         <!--        </b-navbar-item>-->
         <b-navbar-item tag="a" @click.native="handleClickSetting">
-          <i class="iconfont icon-setting" style="font-size: 1.25em"></i>
+          <i class="lucide icon-settings" style="font-size: 1.25em"></i>
           {{ $t("common.setting") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickAbout">
-          <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
+          <i class="lucide icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickLogs">
-          <i class="iconfont icon-info" style="font-size: 1.25em"></i>
+          <i class="lucide icon-scroll-text" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="toggleTheme">
           <i
-            :class="themePreference === 'auto' ? 'mdi mdi-theme-light-dark' : (isDarkTheme ? 'mdi mdi-weather-sunny' : 'mdi mdi-weather-night')"
+            :class="['lucide', themePreference === 'auto' ? 'icon-sun-moon' : (isDarkTheme ? 'icon-sun' : 'icon-moon')]"
             style="font-size: 1.25em"
           ></i>
           {{ themeSwitchLabel }}
         </b-navbar-item>
         <b-dropdown position="is-bottom-left" aria-role="menu" class="langdropdown">
           <a slot="trigger" class="navbar-item" role="button">
-            <i class="iconfont icon-earth" style="font-size: 1.25em; margin-right: 4px"></i>
+            <i class="lucide icon-globe" style="font-size: 1.25em; margin-right: 4px"></i>
             <span class="no-select">{{ currentLangLabel }}</span>
-            <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
+            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
           <b-dropdown-item v-for="lang of langs" :key="lang.code" aria-role="menuitem" class="no-select"
             @click="handleClickLang(lang.code)">
@@ -63,20 +79,21 @@
         </b-dropdown>
         <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
           <a slot="trigger" class="navbar-item" role="button">
+            <i class="lucide icon-user" style="font-size: 1.25em; margin-right: 4px"></i>
             <span class="no-select">{{ username }}</span>
-            <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
+            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
-          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username })">
+          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username: usernameHtml })">
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
-            <i class="iconfont icon-logout" style="position: relative; top: 1px"></i>
+            <i class="lucide icon-log-out" style="position: relative; top: 1px"></i>
             {{ $t("operations.logout") }}
           </b-dropdown-item>
         </b-dropdown>
       </template>
     </b-navbar>
-    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" />
+    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
     <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
@@ -95,7 +112,7 @@ import { Base64 } from "js-base64";
 import ModalCustomAddress from "@/components/modalCustomPorts";
 import ModalOutboundSetting from "@/components/modalOutboundSetting";
 import OutboundGroupPanel from "@/components/outboundGroupPanel";
-import { parseURL } from "@/assets/js/utils";
+import { backendMessage, parseURL } from "@/assets/js/utils";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import ModalLog from "@/components/modalLog";
@@ -135,6 +152,11 @@ export default {
       ],
       outboundName: "proxy",
       outbounds: ["proxy"],
+      loadBalanceValid: localStorage["loadBalanceValid"] === "true",
+      // seeded from the last load so a reload paints the banner immediately,
+      // then replaced by the /version response of this load
+      coreVersionValid: localStorage["coreVersionValid"] !== "false",
+      coreVersionErr: localStorage["coreVersionErr"] || "",
       outboundDropdownHover: {},
       updateOutboundDropdown: true,
       themePreference: 'auto',
@@ -147,16 +169,31 @@ export default {
       if (!token) {
         return this.$t("common.notLogin");
       }
-      let payload = JSON.parse(Base64.decode(token.split(".")[1]));
+      let payload;
+      try {
+        payload = JSON.parse(Base64.decode(token.split(".")[1]));
+      } catch (e) {
+        // a corrupt token would otherwise throw during render and blank
+        // the app before any request could clear it
+        return this.$t("common.notLogin");
+      }
       return payload["uname"];
+    },
+    usernameHtml() {
+      // the account menu renders this through v-html
+      return String(this.username).replace(
+        /[&<>"']/g,
+        (c) => `&#${c.charCodeAt(0)};`
+      );
     },
     isMobile() {
       return window.screen.width < 800;
     },
     currentLangLabel() {
-      const currentLang = localStorage["_lang"] || "zh";
-      const lang = this.langs.find(l => l.flag === currentLang);
-      return lang ? lang.label : "中文-中国";
+      // Read the locale vue-i18n actually chose (browser language when
+      // nothing is stored) rather than guessing from localStorage.
+      const lang = this.langs.find((l) => l.flag === this.$i18n.locale);
+      return lang ? lang.label : this.$i18n.locale;
     },
     isDarkTheme() {
       if (this.themePreference === 'dark') return true;
@@ -172,9 +209,13 @@ export default {
   mounted() {
     console.log("app created");
     this.initTheme();
-    let ba = localStorage.getItem("backendAddress");
-    if (ba) {
-      let u = parseURL(ba);
+    const ba = localStorage.getItem("backendAddress");
+    const isRelativeAddress =
+      !ba || (ba.startsWith("/") && !ba.startsWith("//"));
+    if (isRelativeAddress) {
+      document.title = `v2rayA - ${location.host}`;
+    } else {
+      const u = parseURL(ba);
       document.title = `v2rayA - ${u.host}:${u.port}`;
     }
     // 没有 token：先检查是否需要注册，避免触发需要认证的请求导致 401 二次弹窗
@@ -213,42 +254,53 @@ export default {
           type: "is-dark",
           position: "is-top",
           duration: 3000,
-          queue: false,
         };
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
           toastConf.message +=
-            ". " +
+            this.$t("welcome.separator") +
             this.$t("welcome.newVersion", {
               version: res.data.data.remoteVersion,
             });
           toastConf.type = "is-success";
         }
-        this.$buefy.toast.open(toastConf);
+        // the running/new-version notice once per browser session, not on
+        // every reload or remount
+        const seenKey = "welcomeShown:" + res.data.data.version;
+        let seen = false;
+        try {
+          seen = sessionStorage.getItem(seenKey) === "1";
+          sessionStorage.setItem(seenKey, "1");
+        } catch (_) {
+          // storage unavailable: fall back to showing it
+        }
+        if (!seen || res.data.data.foundNew) {
+          this.$buefy.toast.open(toastConf);
+        }
         localStorage["docker"] = res.data.data.dockerMode;
         localStorage["version"] = res.data.data.version;
+        // a core version mismatch is already shown as the persistent banner
+        // in node.vue; no toast on top of it
         if (res.data.data.coreVersionValid === false) {
-          this.$buefy.toast.open({
-            message: this.$t("version.coreVersionMismatch", { err: res.data.data.coreVersionErr || "" }),
-            type: "is-danger",
-            position: "is-top",
-            queue: false,
-            duration: 0,
-          });
+          // banner only
         } else if (res.data.data.serviceValid === false) {
           this.$buefy.toast.open({
             message: this.$t("version.v2rayInvalid"),
             type: "is-danger",
             position: "is-top",
-            queue: false,
             duration: 10000,
           });
         }
         localStorage["lite"] = res.data.data.lite;
         localStorage["loadBalanceValid"] = res.data.data.loadBalanceValid;
+        this.loadBalanceValid =
+          res.data.data.loadBalanceValid === true ||
+          res.data.data.loadBalanceValid === "true";
         localStorage["variant"] = res.data.data.variant;
         localStorage["coreVersionValid"] = res.data.data.coreVersionValid;
         localStorage["coreVersionErr"] = res.data.data.coreVersionErr || "";
+        this.coreVersionValid = res.data.data.coreVersionValid !== false;
+        this.coreVersionErr = res.data.data.coreVersionErr || "";
       }
     });
     this.$axios({
@@ -264,7 +316,11 @@ export default {
   },
   beforeDestroy() {
     if (this.ws) {
+      // detach first: onclose would otherwise schedule a reconnect from the
+      // destroyed instance
+      this.ws.onclose = null;
       this.ws.close();
+      this.ws = null;
     }
     if (this._darkMediaQuery && this._onSystemThemeChange) {
       this._darkMediaQuery.removeEventListener('change', this._onSystemThemeChange);
@@ -319,6 +375,9 @@ export default {
       ws.onclose = () => {
         ws.onmessage = null;
         that.ws = null;
+        if (that._isDestroyed) {
+          return;
+        }
         // 指数退避重连：1s, 2s, 4s, 8s... 最大 30 秒
         const delay = Math.min(1000 * Math.pow(2, that._wsRetries), 30000);
         that._wsRetries++;
@@ -353,10 +412,10 @@ export default {
     },
     handleGroupChanged() {
       // Refresh node.vue's data after group membership change from the panel
-      if (this.$refs.nodeRef && this.$refs.nodeRef.created) {
+      if (this.$refs.nodeRef) {
         this.$refs.nodeRef.$axios({ url: apiRoot + "/touch" }).then((res) => {
           if (res.data && res.data.code === "SUCCESS") {
-            this.$refs.nodeRef.refreshTableData(res.data.data.touch, res.data.data.running);
+            this.$refs.nodeRef.refreshTableData(res.data.data.touch, res.data.data.running, res.data.data.networkPaused);
             this.$refs.nodeRef.updateConnectView();
           }
         }).catch(() => {});
@@ -425,20 +484,20 @@ export default {
             }).then((res) => {
               if (res.data.code === "SUCCESS") {
                 this.$buefy.toast.open({
-                  message: this.$t("common.success"),
+                  message: this.$t("outbound.added"),
                   type: "is-success",
                   duration: 2000,
                   position: "is-top",
-                  queue: false,
                 });
                 this.outbounds = this.normalizeOutbounds(res.data.data.outbounds);
               } else {
                 this.$buefy.toast.open({
-                  message: res.data.message,
+                  message: this.$t("outbound.addFailed", {
+                    message: backendMessage(this, res) || this.$t("common.fail"),
+                  }),
                   type: "is-warning",
                   duration: 5000,
                   position: "is-top",
-                  queue: false,
                 });
               }
             }),
@@ -463,11 +522,10 @@ export default {
         }).then((res) => {
           if (res.data.code === "SUCCESS") {
             this.$buefy.toast.open({
-              message: this.$t("common.success"),
+              message: this.$t("outbound.deleted"),
               type: "is-success",
               duration: 2000,
               position: "is-top",
-              queue: false,
             });
             this.outbounds = this.normalizeOutbounds(res.data.data.outbounds);
             if (this.outboundName === outbound) {
@@ -481,11 +539,13 @@ export default {
             }
           } else {
             this.$buefy.toast.open({
-              message: res.data.message,
+              message: this.$t("outbound.deleteFailed", {
+                group: outbound,
+                message: backendMessage(this, res) || this.$t("common.fail"),
+              }),
               type: "is-warning",
               duration: 5000,
               position: "is-top",
-              queue: false,
             });
           }
         }),
@@ -595,11 +655,12 @@ export default {
               });
             } else {
               this.$buefy.toast.open({
-                message: res.data.message,
+                message: this.$t("v2ray.startFailed", {
+                  message: backendMessage(this, res) || this.$t("common.fail"),
+                }),
                 type: "is-warning",
                 duration: 5000,
                 position: "is-top",
-                queue: false,
               });
             }
           }).finally(() => {
@@ -621,11 +682,12 @@ export default {
             });
           } else {
             this.$buefy.toast.open({
-              message: res.data.message,
+              message: this.$t("v2ray.stopFailed", {
+                message: backendMessage(this, res) || this.$t("common.fail"),
+              }),
               type: "is-warning",
               duration: 5000,
               position: "is-top",
-              queue: false,
             });
           }
         });
@@ -670,7 +732,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "assets/iconfont/fonts/font.css";
 @import "assets/scss/reset.scss";
 @import "assets/scss/dark-theme.scss";
 </style>
@@ -690,7 +751,7 @@ export default {
   margin-right: 1em;
 }
 
-.navbar-item .iconfont {
+.navbar-item .lucide {
   margin-right: 0.15em;
 }
 
@@ -714,13 +775,255 @@ html {
   }
 }
 
+// Buefy's toast/snackbar layer starts at the viewport top and covered the
+// fixed navbar (and, on phones, the toolbar buttons right under it); start
+// it below the navbar.
+.notices {
+  padding-top: 4.5rem !important;
+}
+
+// Below the tablet breakpoint reset.scss scales the root font to 0.8em,
+// which made the status tags ~10px and the logo ~32px; size the brand row
+// in px so it stays a touch target.
+@media screen and (max-width: 768px) {
+  .navbar-brand .logo {
+    height: 34px;
+    min-height: 34px;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+  }
+
+  // very narrow phones: the two tags and the burger come first; the
+  // wordmark shrinks, then goes
+  @media screen and (max-width: 380px) {
+    .navbar-brand .logo {
+      height: 26px;
+      min-height: 26px;
+      margin-left: 0.25em;
+      margin-right: 0.25em;
+    }
+  }
+
+  @media screen and (max-width: 330px) {
+    .navbar-brand > .navbar-item:first-child {
+      display: none;
+    }
+  }
+  .navbar-brand .tag {
+    font-size: 13px;
+    height: 2.2em;
+    padding-left: 0.9em;
+    padding-right: 0.9em;
+  }
+  .navbar-brand > .navbar-item {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  // The brand row is a flex row whose items do not shrink by default, so
+  // below ~400px the tags pushed the burger past the right edge and the menu
+  // could not be opened. Let the tags shrink and truncate; pin the burger.
+  .navbar-brand {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .navbar-brand > .navbar-item {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  // keep Bulma's inline-flex centring (inline-block blockifies as a flex
+  // item and drops the text to the baseline); truncate the inner span
+  .navbar-brand .tag {
+    min-width: 0;
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .navbar-brand .tag .tag-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  #statusTag {
+    min-width: 0;
+  }
+
+  .navbar-burger {
+    height: 48px;
+    width: 48px;
+    margin-left: auto;
+    flex: 0 0 48px;
+  }
+}
+
+// The burger is a Lucide glyph, not Bulma's three spans; centre it and give
+// it the navbar's text colour. Keep Bulma's breakpoint: this block used to
+// set display unconditionally, which showed the burger next to the full menu
+// on a desktop screen.
+.navbar-burger {
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+
+  .lucide {
+    font-size: 24px;
+    vertical-align: 0;
+  }
+}
+
 @media screen and (max-width: 1023px) {
-  .dropdown.is-mobile-modal .dropdown-menu {
-    // fix modal blur issues
-    left: 0 !important;
-    right: 0 !important;
-    margin: auto;
-    transform: unset !important;
+  .navbar-burger {
+    display: flex;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .navbar-burger {
+    display: none;
+  }
+}
+
+// Bulma pins .modal-close to the top-right of the viewport, far from the
+// card it closes. Put it on the card instead, at every width; the card is
+// position: relative so the button lands on its corner.
+// Buefy puts .modal-close inside .animation-content, which wraps the card
+// but is stretched to the whole modal, so the button lands in the corner of
+// the screen rather than of the card. Shrink the wrapper to its card.
+// One backdrop value for every dialog: the component library ships several
+// (0.86 opaque here, a lighter one in two components), which read as a
+// shadow around the light card.
+.modal .modal-background {
+  background-color: rgba(10, 10, 10, 0.55);
+}
+
+.modal .modal-card-head,
+.modal .modal-card-foot {
+  border-radius: 6px 6px 0 0;
+}
+
+.modal .modal-card-foot {
+  border-radius: 0 0 6px 6px;
+}
+
+.modal .animation-content {
+  position: relative;
+  width: auto;
+  margin: auto;
+}
+
+.modal .modal-close.is-large {
+  // Bulma sets position: fixed on .modal-close, which anchors it to the
+  // viewport; absolute puts it on the wrapper above, i.e. the card corner
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  height: 2rem;
+  width: 2rem;
+  max-height: 2rem;
+  max-width: 2rem;
+  z-index: 1;
+  background-color: transparent;
+
+  // Bulma draws the glyph as two white bars, which vanish on the light
+  // card head; follow the head's text colour instead.
+  &::before,
+  &::after {
+    background-color: currentColor;
+  }
+
+  color: rgba(0, 0, 0, 0.75);
+
+  &:hover,
+  &:focus {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.95);
+  }
+}
+
+// Phone dialogs: Bulma floats the card in the middle of the viewport
+// (max-height: 100vh - 160px) with the close button fixed at the top of the
+// screen, far above the card. Fill the screen so the card head is at the
+// top and the close button sits at its top-right corner.
+@media screen and (max-width: 768px) {
+  .modal .modal-card {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+  }
+  .modal .modal-card-head {
+    padding-right: 3.75rem;
+    border-radius: 0;
+  }
+  .modal .modal-card-foot {
+    border-radius: 0;
+  }
+}
+
+// Bulma only centres navbar items from the desktop breakpoint up; below it
+// the brand row is a plain block and the status tag and group panel sit at
+// the top of the row while the logo fills it.
+.navbar-brand > .navbar-item {
+  display: flex;
+  align-items: center;
+}
+
+@media screen and (max-width: 1023px) {
+  // The dropdowns are no longer mobile modals (see plugins/buefy.js), so
+  // the menu is positioned inside the collapsed navbar menu: keep it in
+  // the flow of its row instead of floating over the page.
+  // Bulma gives the collapsed menu `overflow: auto` with a max-height, which
+  // clips anything floating out of it: the language menu showed one row and
+  // the rest was cut off. The menu holds six items and never needs its own
+  // scrollbar on a phone, so let it overflow and give the dropdown its own
+  // bounded scroll instead.
+  .navbar.is-fixed-top .navbar-menu,
+  .navbar-menu {
+    overflow: visible;
+  }
+
+  .navbar-menu .navbar-end > .dropdown {
+    position: relative;
+
+    > .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: auto;
+      width: max-content;
+      min-width: 100%;
+      max-width: calc(100vw - 2rem);
+      transform: none;
+      padding-top: 0.25rem;
+    }
+
+    // a menu floating over the rows below it needs its own surface and a
+    // border, or it reads as part of the list it covers
+    > .dropdown-menu .dropdown-content {
+      max-height: 60vh;
+      overflow-y: auto;
+      border: 1px solid rgba(10, 10, 10, 0.12);
+      border-radius: 6px;
+      box-shadow: 0 8px 16px rgba(10, 10, 10, 0.18);
+    }
+  }
+
+  // In the collapsed menu each dropdown is inline-flex, so the language and
+  // account triggers share one row with different baselines. Give each its
+  // own full-width row like the plain navbar items above them.
+  .navbar-menu .navbar-end > .dropdown {
+    display: flex;
+    // Buefy spaces adjacent dropdowns with .dropdown + .dropdown; stacked
+    // rows must not inherit that indent.
+    margin-left: 0;
+
+    > .dropdown-trigger {
+      width: 100%;
+    }
   }
 }
 
@@ -762,7 +1065,7 @@ a {
   color: $success;
 }
 
-.icon-loading_ico-copy {
+.icon-loader-circle {
   font-size: 2.5rem;
   color: rgba(0, 0, 0, 0.45);
   animation: loading-rotate 2s infinite linear;
@@ -814,7 +1117,7 @@ a {
 }
 
 #statusTag {
-  width: 5em;
+  min-width: 5em;
 }
 
 .dropdown-menu .is-fullwidth {

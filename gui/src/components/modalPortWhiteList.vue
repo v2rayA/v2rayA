@@ -21,14 +21,14 @@
         <b-taginput
           v-model="tcp"
           :before-adding="beforeAdding"
-          icon=" iconfont icon-label"
+          icon="tag"
         >
         </b-taginput> </b-field
       ><b-field :label="$t('egressPortWhitelist.udpPortWhitelist')">
         <b-taginput
           v-model="udp"
           :before-adding="beforeAdding"
-          icon=" iconfont icon-label"
+          icon="tag"
         >
         </b-taginput>
       </b-field>
@@ -55,13 +55,11 @@ export default {
   }),
   computed: {
     v2rayaPort() {
-      let U = parseURL(apiRoot);
-      let port = U.port;
-      if (!port) {
-        port =
-          U.protocol === "http" ? "80" : U.protocol === "https" ? "443" : "";
+      if (apiRoot.startsWith("/")) {
+        return location.port || (location.protocol === "https:" ? "443" : "80");
       }
-      return port;
+      const U = parseURL(apiRoot);
+      return U.port;
     },
   },
   created() {
@@ -90,7 +88,7 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$emit("close");
-        });
+        }, null, "egressPortWhitelist.saveFailed");
       });
     },
     beforeAdding(tag) {

@@ -22,7 +22,7 @@
         <template slot="label">
           {{ $t("setting.transparentProxy") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.transparentProxy')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -56,7 +56,7 @@
         <template slot="label">
           {{ $t("setting.transparentType") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.transparentType')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -66,7 +66,7 @@
           <option v-show="!lite" value="tun" :disabled="!tinytunSupported">
             tun (TinyTun){{ !tinytunSupported ? ' — ' + $t("setting.options.notIntegrated") : '' }}
           </option>
-          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>
+          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">{{ $t("setting.options.systemProxy") }}</option>
         </b-select>
 
         <template v-if="transparentType == 'tproxy'">
@@ -100,11 +100,11 @@
         <template slot="label">
           {{ $t("setting.tproxyExcludedInterfaces") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tproxyExcludedInterfaces')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
-        <b-input v-model="tproxyExcludedInterfaces" expanded placeholder="docker*, veth*, wg*, ppp*, br-*" />
+        <b-input v-model="tproxyExcludedInterfaces" expanded :placeholder="$t('setting.tproxyExcludedInterfacesPlaceholder')" />
       </b-field>
 
       <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported"
@@ -122,7 +122,7 @@
             style="flex-shrink: 0"
           >
             <template #trigger>
-              <b-button icon-right="menu-down" style="min-width: 160px; justify-content: space-between">
+              <b-button icon-right="chevron-down" style="min-width: 160px; justify-content: space-between">
                 <span v-if="tunBypassInterfacesList.length === 0" style="color: #aaa">
                   {{ $t("setting.tunBypassSelectPlaceholder") }}
                 </span>
@@ -158,7 +158,7 @@
         <template slot="label">
           {{ $t("setting.tunProcessBackend") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunProcessBackend')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -173,7 +173,7 @@
         <template slot="label">
           {{ $t("setting.tunExcludeProcesses") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunExcludeProcesses')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -192,7 +192,7 @@
         <template slot="label">
           {{ $t("setting.pacMode") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.pacMode')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -201,9 +201,6 @@
             {{ $t("setting.options.whitelistCn") }}
           </option>
           <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
-          <!--          <option value="custom">{{-->
-          <!--            $t("setting.options.customRouting")-->
-          <!--          }}</option>-->
           <option value="routingA">RoutingA</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
@@ -229,9 +226,9 @@
 
       <b-field label-position="on-border">
         <template slot="label">
-          TCPFastOpen
+          {{ $t("setting.tcpFastOpen") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.tcpFastOpen')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -259,7 +256,7 @@
         <template slot="label">
           {{ $t("setting.inboundSniffing") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.inboundSniffing')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -285,7 +282,7 @@
         <template slot="label">
           {{ $t("setting.mux") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.mux')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -294,7 +291,7 @@
           <option value="yes">{{ $t("setting.options.on") }}</option>
         </b-select>
         <cus-b-input v-if="muxOn === 'yes'" ref="muxinput" v-model="mux" :placeholder="$t('setting.concurrency')"
-          custom-class="no-shadow" type="number" min="1" max="1024" validation-icon=" iconfont icon-alert"
+          custom-class="no-shadow" type="number" min="1" max="1024" validation-icon="triangle-alert"
           style="flex: 1" />
       </b-field>
 
@@ -312,7 +309,7 @@
         </b-select>
         <cus-b-input v-if="pacAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdatePacInput"
           v-model="pacAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon=" iconfont icon-alert" style="flex: 1" />
+          validation-icon="triangle-alert" style="flex: 1" />
       </b-field>
       <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
@@ -326,7 +323,7 @@
         </b-select>
         <cus-b-input v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdateSubInput"
           v-model="subscriptionAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon=" iconfont icon-alert" style="flex: 1" />
+          validation-icon="triangle-alert" style="flex: 1" />
       </b-field>
       <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
@@ -363,6 +360,7 @@
 
 <script>
 import { handleResponse } from "@/assets/js/utils";
+import i18n from "@/plugins/i18n";
 import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
@@ -416,8 +414,8 @@ export default {
     pacMode: "whitelist",
     showClockPicker: true,
     serverListMode: "noSubscription",
-    remoteGFWListVersion: "checking...",
-    localGFWListVersion: "checking...",
+    remoteGFWListVersion: i18n.t("common.checkRunning"),
+    localGFWListVersion: i18n.t("common.checkRunning"),
     os: "",
     isRoot: false,
     tinytunSupported: false,
@@ -557,7 +555,12 @@ export default {
             routeOnly: this.routeOnly,
             tproxyExcludedInterfaces: this.tproxyExcludedInterfaces,
             tunAutoRoute: this.tunAutoRoute,
-            tunBypassInterfaces: this.tunBypassInterfacesComputed,
+            // the list/custom split only exists once the interface names
+            // were fetched (TUN mode); before that the computed is empty and
+            // would wipe the stored value
+            tunBypassInterfaces: this.availableInterfaces.length
+              ? this.tunBypassInterfacesComputed
+              : this.tunBypassInterfaces,
             tunRouteShellType: this.tunRouteShellType,
             tunRouteShellPath: this.tunRouteShellPath,
             tunSetupScript: this.tunSetupScript,
@@ -571,20 +574,23 @@ export default {
         }).then((res) => {
           handleResponse(res, this, () => {
             this.$buefy.toast.open({
-              message: res.data.code,
+              message: this.$t("setting.saved"),
               type: "is-primary",
               position: "is-top",
-              queue: false,
             });
             this.$parent.close();
-          });
+          }, null, "setting.saveFailed");
           if (
             res.data.code !== "SUCCESS" &&
-            res.data.message.indexOf("invalid config") >= 0
+            (res.data.errorCode === "INVALID_CONFIG" ||
+              res.data.message.indexOf("invalid config") >= 0)
           ) {
             // FIXME: tricky
             this.$parent.$parent.runningState.running = this.$t("common.notRunning");
           }
+        }).finally(() => {
+          // waitingConnected cancels this request once the core reports
+          // connected; the spinner must close on that path too
           loading.close();
         }),
         3 * 1000,
@@ -754,7 +760,7 @@ export default {
     right: 0;
   }
 
-  .icon-alert {
+  .icon-triangle-alert {
     font-size: 18px;
   }
 }

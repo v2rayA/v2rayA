@@ -9,7 +9,7 @@ Vue.use(VueI18n);
 // Create VueI18n instance with options
 let locale = "en";
 let _lang = localStorage["_lang"];
-if (_lang) {
+if (_lang && _lang in messages) {
   locale = _lang;
 } else {
   for (let l of window.navigator.languages) {
@@ -26,5 +26,6 @@ const i18n = new VueI18n({
   messages,
   fallbackLocale: "en",
 });
+document.documentElement.lang = locale;
 
 export default i18n;

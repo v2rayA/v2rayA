@@ -8,13 +8,13 @@
     <section ref="section" :class="{ 'modal-card-body': true }">
       <b-tabs v-model="tabChoice" position="is-centered" class="block" type="is-boxed is-twitter same-width-5">
         <b-tab-item label="VMESS">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="v2ray_name" v-model="v2ray.ps" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="v2ray_add" v-model="v2ray.add" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="v2ray_add" v-model="v2ray.add" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="v2ray_port" v-model="v2ray.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
@@ -25,9 +25,9 @@
             <b-input ref="v2ray_aid" v-model="v2ray.aid" placeholder="AlterID" type="number" min="0" max="65535"
               expanded />
           </b-field>
-          <b-field label="Security" label-position="on-border">
+          <b-field :label="$t('configureServer.security')" label-position="on-border">
             <b-select v-model="v2ray.scy" expanded required>
-              <option value="auto">Auto</option>
+              <option value="auto">{{ $t("configureServer.auto") }}</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
@@ -45,9 +45,9 @@
           <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
             <b-input ref="v2ray_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls'" label="uTLS fingerprint" label-position="on-border">
+          <b-field v-show="v2ray.tls === 'tls'" :label="$t('configureServer.utlsFingerprint')" label-position="on-border">
             <b-select ref="v2ray_fp" v-model="v2ray.fp" expanded>
-              <option value="">empty</option>
+              <option value="">{{ $t("common.none") }}</option>
               <option value="chrome">chrome</option>
               <option value="firefox">firefox</option>
               <option value="safari">safari</option>
@@ -61,13 +61,13 @@
           <b-field v-show="v2ray.tls === 'tls'" label="Alpn" label-position="on-border">
             <b-input v-model="v2ray.alpn" placeholder="h3,h2,http/1.1" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label="Pinned Cert SHA256" label-position="on-border">
+          <b-field v-show="v2ray.tls !== 'none'" :label="$t('pinnedPeerCertSha256')" label-position="on-border">
             <b-input v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label="Verify Peer Cert By Name" label-position="on-border">
+          <b-field v-show="v2ray.tls !== 'none'" :label="$t('verifyPeerCertByName')" label-position="on-border">
             <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
-          <b-field label="Network" label-position="on-border">
+          <b-field :label="$t('configureServer.network')" label-position="on-border">
             <b-select ref="v2ray_net" v-model="v2ray.net" expanded required @input="handleNetworkChange">
               <option value="tcp">TCP</option>
               <option value="kcp">mKCP</option>
@@ -78,13 +78,13 @@
               <option value="xhttp">XHTTP</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
+          <b-field v-show="v2ray.net === 'tcp'" :label="$t('configureServer.type')" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
               <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
               <option value="http">{{ $t("configureServer.httpObfuscation") }}</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Type" label-position="on-border">
+          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" :label="$t('configureServer.type')" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
               <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
               <option value="srtp">{{ $t("configureServer.srtpObfuscation") }}</option>
@@ -94,44 +94,44 @@
               <option value="wireguard">{{ $t("configureServer.wireguardObfuscation") }}</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.net === 'xhttp' || v2ray.tls === 'tls' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Host" label-position="on-border">
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.net === 'xhttp' || v2ray.tls === 'tls' || (v2ray.net === 'tcp' && v2ray.type === 'http')" :label="$t('configureServer.hostObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Path" label-position="on-border">
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http')" :label="$t('configureServer.pathObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws'" label="Max Early Data" label-position="on-border">
-            <b-input v-model="v2ray.maxEarlyData" type="number" placeholder="Max Early Data" expanded />
+          <b-field v-show="v2ray.net === 'ws'" :label="$t('configureServer.maxEarlyData')" label-position="on-border">
+            <b-input v-model="v2ray.maxEarlyData" type="number" :placeholder="$t('configureServer.maxEarlyData')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws'" label="Early Data Header Name" label-position="on-border">
-            <b-input v-model="v2ray.earlyDataHeaderName" placeholder="Early Data Header Name" expanded />
+          <b-field v-show="v2ray.net === 'ws'" :label="$t('configureServer.earlyDataHeaderName')" label-position="on-border">
+            <b-input v-model="v2ray.earlyDataHeaderName" :placeholder="$t('configureServer.earlyDataHeaderName')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
+          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" :label="$t('configureServer.seedObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.serviceName')" label-position="on-border">
             <b-input ref="v2ray_service_name" v-model="v2ray.path" type="text" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="MultiMode" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.multiMode')" label-position="on-border">
             <b-switch v-model="v2ray.multiMode">{{ v2ray.multiMode ? $t('operations.yes') : $t('operations.no') }}</b-switch>
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Idle Timeout" label-position="on-border">
-            <b-input v-model="v2ray.idleTimeout" type="number" placeholder="Idle Timeout (s)" expanded />
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.idleTimeout')" label-position="on-border">
+            <b-input v-model="v2ray.idleTimeout" type="number" :placeholder="$t('configureServer.idleTimeout')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Health Check Timeout" label-position="on-border">
-            <b-input v-model="v2ray.healthCheckTimeout" type="number" placeholder="Health Check Timeout (s)" expanded />
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.healthCheckTimeout')" label-position="on-border">
+            <b-input v-model="v2ray.healthCheckTimeout" type="number" :placeholder="$t('configureServer.healthCheckTimeout')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Permit Without Stream" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.permitWithoutStream')" label-position="on-border">
             <b-switch v-model="v2ray.permitWithoutStream">{{ v2ray.permitWithoutStream ? $t('operations.yes') : $t('operations.no') }}</b-switch>
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Initial Windows Size" label-position="on-border">
-            <b-input v-model="v2ray.initialWindowsSize" type="number" placeholder="Initial Windows Size" expanded />
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.initialWindowsSize')" label-position="on-border">
+            <b-input v-model="v2ray.initialWindowsSize" type="number" :placeholder="$t('configureServer.initialWindowsSize')" expanded />
           </b-field>
           <!-- XHTTP fields (VMess) -->
-          <b-field v-show="v2ray.net === 'xhttp'" label="Path" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.pathObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="Mode" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.mode')" label-position="on-border">
             <b-select v-model="v2ray.xhttpMode" expanded>
               <option value="auto">auto</option>
               <option value="packet-up">packet-up</option>
@@ -139,9 +139,9 @@
               <option value="stream-one">stream-one</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="Uplink HTTP Method" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.uplinkHttpMethod')" label-position="on-border">
             <b-select v-model="v2ray.uplinkHTTPMethod" expanded>
-              <option value="">default (POST)</option>
+              <option value="">{{ $t("configureServer.uplinkDefault") }}</option>
               <option value="POST">POST</option>
               <option value="PUT">PUT</option>
               <option value="PATCH">PATCH</option>
@@ -154,78 +154,78 @@
             <b-switch v-model="v2ray.noSSEHeader">{{ v2ray.noSSEHeader ? $t('operations.yes') : $t('operations.no') }}</b-switch>
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scMaxEachPostBytes (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.scMaxEachPostBytesFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.scMaxEachPostBytesTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.scMaxEachPostBytesFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.scMaxEachPostBytesTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scMinPostsIntervalMs (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.scMinPostsIntervalFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.scMinPostsIntervalTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.scMinPostsIntervalFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.scMinPostsIntervalTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scMaxBufferedPosts" label-position="on-border">
             <b-input v-model="v2ray.scMaxBufferedPosts" type="number" placeholder="scMaxBufferedPosts" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scStreamUpServerSecs (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.scStreamUpServerFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.scStreamUpServerTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.scStreamUpServerFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.scStreamUpServerTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xPaddingBytes (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.xPaddingBytesFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.xPaddingBytesTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.xPaddingBytesFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.xPaddingBytesTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConcurrency (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.xmuxMaxConcurFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.xmuxMaxConcurTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.xmuxMaxConcurFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.xmuxMaxConcurTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConnections (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.xmuxMaxConnFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.xmuxMaxConnTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.xmuxMaxConnFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.xmuxMaxConnTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux cMaxReuseTimes (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.xmuxCMaxReuseFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.xmuxCMaxReuseTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.xmuxCMaxReuseFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.xmuxCMaxReuseTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxRequestTimes (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.xmuxHMaxReqFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.xmuxHMaxReqTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReqFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReqTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxReusableSecs (From-To)" label-position="on-border">
-            <b-input v-model="v2ray.xmuxHMaxReusableFrom" type="number" placeholder="From" expanded />
-            <b-input v-model="v2ray.xmuxHMaxReusableTo" type="number" placeholder="To" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReusableFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input v-model="v2ray.xmuxHMaxReusableTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux hKeepAlivePeriod" label-position="on-border">
             <b-input v-model="v2ray.xmuxHKeepAlive" type="number" placeholder="hKeepAlivePeriod" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="Custom Headers" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.customHeaders')" label-position="on-border">
             <div style="width:100%">
               <div v-for="(hdr, idx) in v2ray.xhttpHeaders" :key="idx" style="display:flex;gap:4px;margin-bottom:4px">
-                <b-input v-model="hdr.key" placeholder="Header-Name" expanded />
-                <b-input v-model="hdr.value" placeholder="value" expanded />
-                <b-button type="is-danger is-light" icon-left="delete" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
+                <b-input v-model="hdr.key" :placeholder="$t('configureServer.headerName')" expanded />
+                <b-input v-model="hdr.value" :placeholder="$t('configureServer.headerValue')" expanded />
+                <b-button type="is-danger is-light" icon-left="trash-2" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
               </div>
-              <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">Add Header</b-button>
+              <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">{{ $t("configureServer.addHeader") }}</b-button>
             </div>
           </b-field>
           <!-- QUIC -->
-          <b-field v-show="v2ray.net === 'quic'" label="QUIC Security" label-position="on-border">
+          <b-field v-show="v2ray.net === 'quic'" :label="$t('configureServer.quicSecurity')" label-position="on-border">
             <b-select v-model="v2ray.quicSecurity" expanded>
               <option value="none">none</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
+          <b-field v-show="v2ray.net === 'quic'" :label="$t('configureServer.key')" label-position="on-border">
             <b-input ref="v2ray_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')" expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="VLESS">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="vless_name" v-model="v2ray.ps" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="vless_add" v-model="v2ray.add" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="vless_add" v-model="v2ray.add" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="vless_port" v-model="v2ray.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
           </b-field>
           <b-field label="ID" label-position="on-border">
@@ -241,9 +241,9 @@
           <b-field v-if="v2ray.tls !== 'none'" label="SNI" label-position="on-border">
             <b-input ref="vless_sni" v-model="v2ray.sni" placeholder="SNI" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" label="uTLS fingerprint" label-position="on-border">
+          <b-field v-show="v2ray.tls === 'tls' || v2ray.tls === 'reality'" :label="$t('configureServer.utlsFingerprint')" label-position="on-border">
             <b-select ref="vless_fp" v-model="v2ray.fp" expanded>
-              <option value="">empty</option>
+              <option value="">{{ $t("common.none") }}</option>
               <option value="chrome">chrome</option>
               <option value="firefox">firefox</option>
               <option value="safari">safari</option>
@@ -260,22 +260,22 @@
           <b-field v-if="v2ray.tls !== 'none'" label="Flow" label-position="on-border">
             <b-input v-model="v2ray.flow" placeholder="Flow" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="Public Key (pbk)" label-position="on-border">
-            <b-input v-model="v2ray.pbk" placeholder="Public Key" expanded />
+          <b-field v-show="v2ray.tls === 'reality'" :label="$t('configureServer.realityPublicKey')" label-position="on-border">
+            <b-input v-model="v2ray.pbk" :placeholder="$t('configureServer.realityPublicKey')" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="Short ID (sid)" label-position="on-border">
-            <b-input v-model="v2ray.sid" placeholder="Short ID" expanded />
+          <b-field v-show="v2ray.tls === 'reality'" :label="$t('configureServer.realityShortId')" label-position="on-border">
+            <b-input v-model="v2ray.sid" :placeholder="$t('configureServer.realityShortId')" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls === 'reality'" label="Spider X (spx)" label-position="on-border">
-            <b-input v-model="v2ray.spx" placeholder="Spider X" expanded />
+          <b-field v-show="v2ray.tls === 'reality'" :label="$t('configureServer.realitySpiderX')" label-position="on-border">
+            <b-input v-model="v2ray.spx" :placeholder="$t('configureServer.realitySpiderX')" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label="Pinned Cert SHA256" label-position="on-border">
+          <b-field v-show="v2ray.tls !== 'none'" :label="$t('pinnedPeerCertSha256')" label-position="on-border">
             <b-input v-model="v2ray.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
           </b-field>
-          <b-field v-show="v2ray.tls !== 'none'" label="Verify Peer Cert By Name" label-position="on-border">
+          <b-field v-show="v2ray.tls !== 'none'" :label="$t('verifyPeerCertByName')" label-position="on-border">
             <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
-          <b-field label="Network" label-position="on-border">
+          <b-field :label="$t('configureServer.network')" label-position="on-border">
             <b-select ref="vless_net" v-model="v2ray.net" expanded required @input="handleNetworkChange">
               <option value="tcp">TCP</option>
               <option value="kcp">mKCP</option>
@@ -286,13 +286,13 @@
               <option value="xhttp">XHTTP</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'tcp'" label="Type" label-position="on-border">
+          <b-field v-show="v2ray.net === 'tcp'" :label="$t('configureServer.type')" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
               <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
               <option value="http">{{ $t("configureServer.httpObfuscation") }}</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" label="Type" label-position="on-border">
+          <b-field v-show="v2ray.net === 'kcp' || v2ray.net === 'quic'" :label="$t('configureServer.type')" label-position="on-border">
             <b-select v-model="v2ray.type" expanded>
               <option value="none">{{ $t("configureServer.noObfuscation") }}</option>
               <option value="srtp">{{ $t("configureServer.srtpObfuscation") }}</option>
@@ -302,44 +302,44 @@
               <option value="wireguard">{{ $t("configureServer.wireguardObfuscation") }}</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.net === 'xhttp' || v2ray.tls === 'tls' || v2ray.tls === 'reality' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Host" label-position="on-border">
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || v2ray.net === 'xhttp' || v2ray.tls === 'tls' || v2ray.tls === 'reality' || (v2ray.net === 'tcp' && v2ray.type === 'http')" :label="$t('configureServer.hostObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http')" label="Path" label-position="on-border">
+          <b-field v-show="v2ray.net === 'ws' || v2ray.net === 'h2' || (v2ray.net === 'tcp' && v2ray.type === 'http')" :label="$t('configureServer.pathObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws'" label="Max Early Data" label-position="on-border">
-            <b-input ref="vless_maxEarlyData" v-model="v2ray.maxEarlyData" type="number" placeholder="Max Early Data" expanded />
+          <b-field v-show="v2ray.net === 'ws'" :label="$t('configureServer.maxEarlyData')" label-position="on-border">
+            <b-input ref="vless_maxEarlyData" v-model="v2ray.maxEarlyData" type="number" :placeholder="$t('configureServer.maxEarlyData')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'ws'" label="Early Data Header Name" label-position="on-border">
-            <b-input v-model="v2ray.earlyDataHeaderName" placeholder="Early Data Header Name" expanded />
+          <b-field v-show="v2ray.net === 'ws'" :label="$t('configureServer.earlyDataHeaderName')" label-position="on-border">
+            <b-input v-model="v2ray.earlyDataHeaderName" :placeholder="$t('configureServer.earlyDataHeaderName')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" label="Seed" label-position="on-border">
+          <b-field v-show="v2ray.net === 'mkcp' || v2ray.net === 'kcp'" :label="$t('configureServer.seedObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Service Name" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.serviceName')" label-position="on-border">
             <b-input ref="vless_service_name" v-model="v2ray.path" type="text" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="MultiMode" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.multiMode')" label-position="on-border">
             <b-switch v-model="v2ray.multiMode">{{ v2ray.multiMode ? $t('operations.yes') : $t('operations.no') }}</b-switch>
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Idle Timeout" label-position="on-border">
-            <b-input ref="vless_idleTimeout" v-model="v2ray.idleTimeout" type="number" placeholder="Idle Timeout (s)" expanded />
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.idleTimeout')" label-position="on-border">
+            <b-input ref="vless_idleTimeout" v-model="v2ray.idleTimeout" type="number" :placeholder="$t('configureServer.idleTimeout')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Health Check Timeout" label-position="on-border">
-            <b-input ref="vless_healthCheckTimeout" v-model="v2ray.healthCheckTimeout" type="number" placeholder="Health Check Timeout (s)" expanded />
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.healthCheckTimeout')" label-position="on-border">
+            <b-input ref="vless_healthCheckTimeout" v-model="v2ray.healthCheckTimeout" type="number" :placeholder="$t('configureServer.healthCheckTimeout')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Permit Without Stream" label-position="on-border">
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.permitWithoutStream')" label-position="on-border">
             <b-switch v-model="v2ray.permitWithoutStream">{{ v2ray.permitWithoutStream ? $t('operations.yes') : $t('operations.no') }}</b-switch>
           </b-field>
-          <b-field v-show="v2ray.net === 'grpc'" label="Initial Windows Size" label-position="on-border">
-            <b-input ref="vless_initialWindowsSize" v-model="v2ray.initialWindowsSize" type="number" placeholder="Initial Windows Size" expanded />
+          <b-field v-show="v2ray.net === 'grpc'" :label="$t('configureServer.initialWindowsSize')" label-position="on-border">
+            <b-input ref="vless_initialWindowsSize" v-model="v2ray.initialWindowsSize" type="number" :placeholder="$t('configureServer.initialWindowsSize')" expanded />
           </b-field>
           <!-- XHTTP fields (VLESS) -->
-          <b-field v-show="v2ray.net === 'xhttp'" label="Path" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.pathObfuscation')" label-position="on-border">
             <b-input v-model="v2ray.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="Mode" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.mode')" label-position="on-border">
             <b-select v-model="v2ray.xhttpMode" expanded>
               <option value="auto">auto</option>
               <option value="packet-up">packet-up</option>
@@ -347,9 +347,9 @@
               <option value="stream-one">stream-one</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="Uplink HTTP Method" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.uplinkHttpMethod')" label-position="on-border">
             <b-select v-model="v2ray.uplinkHTTPMethod" expanded>
-              <option value="">default (POST)</option>
+              <option value="">{{ $t("configureServer.uplinkDefault") }}</option>
               <option value="POST">POST</option>
               <option value="PUT">PUT</option>
               <option value="PATCH">PATCH</option>
@@ -362,125 +362,125 @@
             <b-switch v-model="v2ray.noSSEHeader">{{ v2ray.noSSEHeader ? $t('operations.yes') : $t('operations.no') }}</b-switch>
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scMaxEachPostBytes (From-To)" label-position="on-border">
-            <b-input ref="vless_scMaxEachPostBytesFrom" v-model="v2ray.scMaxEachPostBytesFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_scMaxEachPostBytesTo" v-model="v2ray.scMaxEachPostBytesTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_scMaxEachPostBytesFrom" v-model="v2ray.scMaxEachPostBytesFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_scMaxEachPostBytesTo" v-model="v2ray.scMaxEachPostBytesTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scMinPostsIntervalMs (From-To)" label-position="on-border">
-            <b-input ref="vless_scMinPostsIntervalFrom" v-model="v2ray.scMinPostsIntervalFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_scMinPostsIntervalTo" v-model="v2ray.scMinPostsIntervalTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_scMinPostsIntervalFrom" v-model="v2ray.scMinPostsIntervalFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_scMinPostsIntervalTo" v-model="v2ray.scMinPostsIntervalTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scMaxBufferedPosts" label-position="on-border">
             <b-input ref="vless_scMaxBufferedPosts" v-model="v2ray.scMaxBufferedPosts" type="number" placeholder="scMaxBufferedPosts" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="scStreamUpServerSecs (From-To)" label-position="on-border">
-            <b-input ref="vless_scStreamUpServerFrom" v-model="v2ray.scStreamUpServerFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_scStreamUpServerTo" v-model="v2ray.scStreamUpServerTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_scStreamUpServerFrom" v-model="v2ray.scStreamUpServerFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_scStreamUpServerTo" v-model="v2ray.scStreamUpServerTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xPaddingBytes (From-To)" label-position="on-border">
-            <b-input ref="vless_xPaddingBytesFrom" v-model="v2ray.xPaddingBytesFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_xPaddingBytesTo" v-model="v2ray.xPaddingBytesTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_xPaddingBytesFrom" v-model="v2ray.xPaddingBytesFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_xPaddingBytesTo" v-model="v2ray.xPaddingBytesTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConcurrency (From-To)" label-position="on-border">
-            <b-input ref="vless_xmuxMaxConcurFrom" v-model="v2ray.xmuxMaxConcurFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_xmuxMaxConcurTo" v-model="v2ray.xmuxMaxConcurTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_xmuxMaxConcurFrom" v-model="v2ray.xmuxMaxConcurFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_xmuxMaxConcurTo" v-model="v2ray.xmuxMaxConcurTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux maxConnections (From-To)" label-position="on-border">
-            <b-input ref="vless_xmuxMaxConnFrom" v-model="v2ray.xmuxMaxConnFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_xmuxMaxConnTo" v-model="v2ray.xmuxMaxConnTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_xmuxMaxConnFrom" v-model="v2ray.xmuxMaxConnFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_xmuxMaxConnTo" v-model="v2ray.xmuxMaxConnTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux cMaxReuseTimes (From-To)" label-position="on-border">
-            <b-input ref="vless_xmuxCMaxReuseFrom" v-model="v2ray.xmuxCMaxReuseFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_xmuxCMaxReuseTo" v-model="v2ray.xmuxCMaxReuseTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_xmuxCMaxReuseFrom" v-model="v2ray.xmuxCMaxReuseFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_xmuxCMaxReuseTo" v-model="v2ray.xmuxCMaxReuseTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxRequestTimes (From-To)" label-position="on-border">
-            <b-input ref="vless_xmuxHMaxReqFrom" v-model="v2ray.xmuxHMaxReqFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_xmuxHMaxReqTo" v-model="v2ray.xmuxHMaxReqTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_xmuxHMaxReqFrom" v-model="v2ray.xmuxHMaxReqFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_xmuxHMaxReqTo" v-model="v2ray.xmuxHMaxReqTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux hMaxReusableSecs (From-To)" label-position="on-border">
-            <b-input ref="vless_xmuxHMaxReusableFrom" v-model="v2ray.xmuxHMaxReusableFrom" type="number" placeholder="From" expanded />
-            <b-input ref="vless_xmuxHMaxReusableTo" v-model="v2ray.xmuxHMaxReusableTo" type="number" placeholder="To" expanded />
+            <b-input ref="vless_xmuxHMaxReusableFrom" v-model="v2ray.xmuxHMaxReusableFrom" type="number" :placeholder="$t('configureServer.rangeFrom')" expanded />
+            <b-input ref="vless_xmuxHMaxReusableTo" v-model="v2ray.xmuxHMaxReusableTo" type="number" :placeholder="$t('configureServer.rangeTo')" expanded />
           </b-field>
           <b-field v-show="v2ray.net === 'xhttp'" label="xmux hKeepAlivePeriod" label-position="on-border">
             <b-input ref="vless_xmuxHKeepAlive" v-model="v2ray.xmuxHKeepAlive" type="number" placeholder="hKeepAlivePeriod" expanded />
           </b-field>
-          <b-field v-show="v2ray.net === 'xhttp'" label="Custom Headers" label-position="on-border">
+          <b-field v-show="v2ray.net === 'xhttp'" :label="$t('configureServer.customHeaders')" label-position="on-border">
             <div style="width:100%">
               <div v-for="(hdr, idx) in v2ray.xhttpHeaders" :key="idx" style="display:flex;gap:4px;margin-bottom:4px">
-                <b-input v-model="hdr.key" placeholder="Header-Name" expanded />
-                <b-input v-model="hdr.value" placeholder="value" expanded />
-                <b-button type="is-danger is-light" icon-left="delete" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
+                <b-input v-model="hdr.key" :placeholder="$t('configureServer.headerName')" expanded />
+                <b-input v-model="hdr.value" :placeholder="$t('configureServer.headerValue')" expanded />
+                <b-button type="is-danger is-light" icon-left="trash-2" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
               </div>
-              <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">Add Header</b-button>
+              <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">{{ $t("configureServer.addHeader") }}</b-button>
             </div>
           </b-field>
           <!-- QUIC -->
-          <b-field v-show="v2ray.net === 'quic'" label="QUIC Security" label-position="on-border">
+          <b-field v-show="v2ray.net === 'quic'" :label="$t('configureServer.quicSecurity')" label-position="on-border">
             <b-select v-model="v2ray.quicSecurity" expanded>
               <option value="none">none</option>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="chacha20-poly1305">chacha20-poly1305</option>
             </b-select>
           </b-field>
-          <b-field v-show="v2ray.net === 'quic'" label="Key" label-position="on-border">
+          <b-field v-show="v2ray.net === 'quic'" :label="$t('configureServer.key')" label-position="on-border">
             <b-input ref="vless_key" v-model="v2ray.key" :placeholder="$t('configureServer.password')" expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="WireGuard">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.wireguardName')" label-position="on-border">
             <b-input ref="wireguard_name" v-model="wireguard.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Address" label-position="on-border">
-            <b-input ref="wireguard_address" v-model="wireguard.address" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.wireguardAddress')" label-position="on-border">
+            <b-input ref="wireguard_address" v-model="wireguard.address" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.wireguardPort')" label-position="on-border">
             <b-input ref="wireguard_port" v-model="wireguard.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
           </b-field>
-          <b-field label="Public Key" label-position="on-border">
-            <b-input ref="wireguard_public_key" v-model="wireguard.publicKey" required placeholder="Public Key" expanded />
+          <b-field :label="$t('configureServer.wireguardPublicKey')" label-position="on-border">
+            <b-input ref="wireguard_public_key" v-model="wireguard.publicKey" required :placeholder="$t('configureServer.wireguardPublicKey')" expanded />
           </b-field>
-          <b-field label="Private Key" label-position="on-border">
-            <b-input ref="wireguard_private_key" v-model="wireguard.privateKey" required placeholder="Private Key" expanded />
+          <b-field :label="$t('configureServer.wireguardPrivateKey')" label-position="on-border">
+            <b-input ref="wireguard_private_key" v-model="wireguard.privateKey" required :placeholder="$t('configureServer.wireguardPrivateKey')" expanded />
           </b-field>
-          <b-field label="Address (Local)" label-position="on-border">
-            <b-input ref="wireguard_local_address" v-model="wireguard.localAddress" placeholder="CIDR, e.g. 10.0.0.1/24" expanded />
+          <b-field :label="$t('configureServer.wireguardLocalAddress')" label-position="on-border">
+            <b-input ref="wireguard_local_address" v-model="wireguard.localAddress" :placeholder="$t('configureServer.wireguardLocalAddressPlaceholder')" expanded />
           </b-field>
-          <b-field label="DNS" label-position="on-border">
-            <b-input ref="wireguard_dns" v-model="wireguard.dns" placeholder="DNS Server" expanded />
+          <b-field :label="$t('configureServer.wireguardDns')" label-position="on-border">
+            <b-input ref="wireguard_dns" v-model="wireguard.dns" :placeholder="$t('dns.colServer')" expanded />
           </b-field>
-          <b-field label="MTU" label-position="on-border">
+          <b-field :label="$t('configureServer.wireguardMtu')" label-position="on-border">
             <b-input ref="wireguard_mtu" v-model="wireguard.mtu" type="number" placeholder="MTU" expanded />
           </b-field>
-          <b-field label="Allowed IPs" label-position="on-border">
+          <b-field :label="$t('configureServer.wireguardAllowedIPs')" label-position="on-border">
             <b-input ref="wireguard_allowed_ips" v-model="wireguard.allowedIPs" placeholder="0.0.0.0/0, ::/0" expanded />
           </b-field>
-          <b-field label="Persistent Keepalive" label-position="on-border">
-            <b-input ref="wireguard_persistent_keepalive" v-model="wireguard.persistentKeepalive" type="number" placeholder="Persistent Keepalive (s)" expanded />
+          <b-field :label="$t('configureServer.wireguardPersistentKeepalive')" label-position="on-border">
+            <b-input ref="wireguard_persistent_keepalive" v-model="wireguard.persistentKeepalive" type="number" :placeholder="$t('configureServer.wireguardPersistentKeepalive')" expanded />
           </b-field>
-          <b-field label="Pre-shared Key" label-position="on-border">
-            <b-input ref="wireguard_pre_shared_key" v-model="wireguard.preSharedKey" placeholder="Pre-shared Key" expanded />
+          <b-field :label="$t('configureServer.wireguardPreSharedKey')" label-position="on-border">
+            <b-input ref="wireguard_pre_shared_key" v-model="wireguard.preSharedKey" :placeholder="$t('configureServer.wireguardPreSharedKey')" expanded />
           </b-field>
-          <b-field label="Endpoint" label-position="on-border">
-            <b-input ref="wireguard_endpoint" v-model="wireguard.endpoint" placeholder="Endpoint (optional, default same as Address:Port)" expanded />
+          <b-field :label="$t('configureServer.wireguardEndpoint')" label-position="on-border">
+            <b-input ref="wireguard_endpoint" v-model="wireguard.endpoint" :placeholder="$t('configureServer.wireguardEndpointPlaceholder')" expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="SS">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="ss_name" v-model="ss.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="ss_server" v-model="ss.server" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="ss_server" v-model="ss.server" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="ss_port" v-model="ss.port" required :placeholder="$t('configureServer.port')" type="number"
               expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="ss_password" v-model="ss.password" required :placeholder="$t('configureServer.password')"
               expanded />
           </b-field>
-          <b-field label="Method" label-position="on-border">
+          <b-field :label="$t('configureServer.method')" label-position="on-border">
             <b-select ref="ss_method" v-model="ss.method" expanded required>
               <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
               <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
@@ -495,7 +495,7 @@
               <option value="none">none</option>
             </b-select>
           </b-field>
-          <b-field label="Plugin" label-position="on-border">
+          <b-field :label="$t('configureServer.plugin')" label-position="on-border">
             <b-select ref="ss_plugin" v-model="ss.plugin" expanded>
               <option value="">{{ $t("setting.options.off") }}</option>
               <option value="simple-obfs">simple-obfs</option>
@@ -505,9 +505,9 @@
           <b-field v-if="ss.plugin === 'simple-obfs' || ss.plugin === 'v2ray-plugin'" label-position="on-border"
             class="with-icon-alert">
             <template slot="label">
-              Impl
+              {{ $t("configureServer.pluginImpl") }}
               <b-tooltip type="is-dark" :label="$t('setting.messages.ssPluginImpl')" multilined position="is-right">
-                <b-icon size="is-samll" icon=" iconfont icon-help-circle-outline" style="
+                <b-icon size="is-samll" icon="circle-help" style="
                     position: relative;
                     top: 2px;
                     right: 3px;
@@ -521,13 +521,13 @@
               <option value="transport">transport</option>
             </b-select>
           </b-field>
-          <b-field v-show="ss.plugin === 'simple-obfs'" label="Obfs" label-position="on-border">
+          <b-field v-show="ss.plugin === 'simple-obfs'" :label="$t('configureServer.obfs')" label-position="on-border">
             <b-select ref="ss_obfs" v-model="ss.obfs" expanded>
               <option value="http">http</option>
               <option value="tls">tls</option>
             </b-select>
           </b-field>
-          <b-field v-show="ss.plugin === 'v2ray-plugin'" label="Mode" label-position="on-border">
+          <b-field v-show="ss.plugin === 'v2ray-plugin'" :label="$t('configureServer.mode')" label-position="on-border">
             <b-select ref="ss_mode" v-model="ss.mode" expanded>
               <option value="websocket">websocket</option>
             </b-select>
@@ -541,12 +541,12 @@
           <b-field v-if="(ss.plugin === 'simple-obfs' &&
             (ss.obfs === 'http' || ss.obfs === 'tls')) ||
             ss.plugin === 'v2ray-plugin'
-          " label="Host" label-position="on-border">
-            <b-input ref="ss_host" v-model="ss.host" placeholder="(optional)" expanded />
+          " :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="ss_host" v-model="ss.host" :placeholder="`(${$t('common.optional')})`" expanded />
           </b-field>
           <b-field v-if="(ss.plugin === 'simple-obfs' && ss.obfs === 'http') ||
             ss.plugin === 'v2ray-plugin'
-          " label="Path" label-position="on-border">
+          " :label="$t('configureServer.pathObfuscation')" label-position="on-border">
             <b-input ref="ss_path" v-model="ss.path" placeholder="/" expanded />
           </b-field>
           <b-field :label="$t('setting.nodeBackend')" label-position="on-border">
@@ -558,21 +558,21 @@
         </b-tab-item>
 
         <b-tab-item label="SSR">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="ssr_name" v-model="ssr.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="ssr_server" v-model="ssr.server" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="ssr_server" v-model="ssr.server" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="ssr_port" v-model="ssr.port" required :placeholder="$t('configureServer.port')" type="number"
               expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="ssr_password" v-model="ssr.password" required :placeholder="$t('configureServer.password')"
               expanded />
           </b-field>
-          <b-field label="Method" label-position="on-border">
+          <b-field :label="$t('configureServer.method')" label-position="on-border">
             <b-select ref="ssr_method" v-model="ssr.method" expanded required>
               <option value="aes-128-cfb">aes-128-cfb</option>
               <option value="aes-192-cfb">aes-192-cfb</option>
@@ -599,7 +599,7 @@
               <option value="none">none</option>
             </b-select>
           </b-field>
-          <b-field label="Protocol" label-position="on-border">
+          <b-field :label="$t('server.protocol')" label-position="on-border">
             <b-select ref="ssr_proto" v-model="ssr.proto" expanded required>
               <option value="origin">origin</option>
               <option value="verify_sha1">verify_sha1</option>
@@ -610,10 +610,10 @@
               <option value="auth_chain_b">auth_chain_b</option>
             </b-select>
           </b-field>
-          <b-field v-if="ssr.proto !== 'origin'" label="Protocol Param" label-position="on-border">
-            <b-input ref="ssr_protoParam" v-model="ssr.protoParam" placeholder="(optional)" expanded />
+          <b-field v-if="ssr.proto !== 'origin'" :label="$t('configureServer.protocolParam')" label-position="on-border">
+            <b-input ref="ssr_protoParam" v-model="ssr.protoParam" :placeholder="`(${$t('common.optional')})`" expanded />
           </b-field>
-          <b-field label="Obfs" label-position="on-border">
+          <b-field :label="$t('configureServer.obfs')" label-position="on-border">
             <b-select ref="ssr_obfs" v-model="ssr.obfs" expanded required>
               <option value="plain">plain</option>
               <option value="http_simple">http_simple</option>
@@ -622,33 +622,33 @@
               <option value="tls1.2_ticket_auth">tls1.2_ticket_auth</option>
             </b-select>
           </b-field>
-          <b-field v-if="ssr.obfs !== 'plain'" label="Obfs Param" label-position="on-border">
-            <b-input ref="ssr_obfsParam" v-model="ssr.obfsParam" placeholder="(optional)" expanded />
+          <b-field v-if="ssr.obfs !== 'plain'" :label="$t('configureServer.obfsParam')" label-position="on-border">
+            <b-input ref="ssr_obfsParam" v-model="ssr.obfsParam" :placeholder="`(${$t('common.optional')})`" expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="Trojan">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="trojan_name" v-model="trojan.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="trojan_server" v-model="trojan.server" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="trojan_server" v-model="trojan.server" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="trojan_port" v-model="trojan.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="trojan_password" v-model="trojan.password" required
               :placeholder="$t('configureServer.password')" expanded />
           </b-field>
-          <b-field label="Protocol" label-position="on-border">
+          <b-field :label="$t('server.protocol')" label-position="on-border">
             <b-select ref="trojan_method" v-model="trojan.method" expanded required>
               <option value="origin">{{ $t("configureServer.origin") }}</option>
               <option value="shadowsocks">shadowsocks</option>
             </b-select>
           </b-field>
-          <b-field v-if="trojan.method === 'shadowsocks'" label="Shadowsocks Cipher" label-position="on-border">
+          <b-field v-if="trojan.method === 'shadowsocks'" :label="$t('configureServer.ssCipher')" label-position="on-border">
             <b-select ref="trojan_ss_cipher" v-model="trojan.ssCipher" expanded required>
               <option value="aes-128-gcm">aes-128-gcm</option>
               <option value="aes-256-gcm">aes-256-gcm</option>
@@ -658,20 +658,20 @@
               </option>
             </b-select>
           </b-field>
-          <b-field v-if="trojan.method === 'shadowsocks'" label="Shadowsocks Password" label-position="on-border">
+          <b-field v-if="trojan.method === 'shadowsocks'" :label="$t('configureServer.ssPassword')" label-position="on-border">
             <b-input ref="trojan_ss_password" v-model="trojan.ssPassword" required
-              :placeholder="`shadowsocks${$t('configureServer.password')}`" expanded />
+              :placeholder="$t('configureServer.ssPassword')" expanded />
           </b-field>
-          <b-field label="Pinned Cert SHA256" label-position="on-border">
+          <b-field :label="$t('pinnedPeerCertSha256')" label-position="on-border">
             <b-input v-model="trojan.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
           </b-field>
-          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+          <b-field :label="$t('verifyPeerCertByName')" label-position="on-border">
             <b-input v-model="trojan.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="SNI(Peer)" label-position="on-border">
             <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
           </b-field>
-          <b-field label="Network" label-position="on-border">
+          <b-field :label="$t('configureServer.network')" label-position="on-border">
             <b-select ref="trojan_net" v-model="trojan.net" expanded required @input="handleNetworkChange">
               <option value="tcp">TCP</option>
               <option value="kcp">mKCP</option>
@@ -680,7 +680,7 @@
               <option value="grpc">gRPC</option>
             </b-select>
           </b-field>
-          <b-field label="Obfs" label-position="on-border">
+          <b-field :label="$t('configureServer.obfs')" label-position="on-border">
             <b-select ref="trojan_obfs" v-model="trojan.obfs" expanded required>
               <option value="none">
                 {{ $t("configureServer.noObfuscation") }}
@@ -688,25 +688,25 @@
               <option value="websocket">websocket</option>
             </b-select>
           </b-field>
-          <b-field v-show="trojan.obfs === 'websocket'" label="Websocket Host" label-position="on-border">
+          <b-field v-show="trojan.obfs === 'websocket'" :label="$t('configureServer.websocketHost')" label-position="on-border">
             <b-input v-model="trojan.host" expanded />
           </b-field>
-          <b-field v-show="trojan.obfs === 'websocket'" label="Websocket Path" label-position="on-border">
+          <b-field v-show="trojan.obfs === 'websocket'" :label="$t('configureServer.websocketPath')" label-position="on-border">
             <b-input v-model="trojan.path" placeholder="/" expanded />
           </b-field>
-          <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" label="Host" label-position="on-border">
+          <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" :label="$t('configureServer.hostObfuscation')" label-position="on-border">
             <b-input v-model="trojan.host" :placeholder="$t('configureServer.hostObfuscation')" expanded />
           </b-field>
           <b-field v-show="trojan.tls === 'tls'" label="Alpn" label-position="on-border">
             <b-input v-model="trojan.alpn" placeholder="h2,http/1.1" expanded />
           </b-field>
-          <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" label="Path" label-position="on-border">
+          <b-field v-show="trojan.net === 'ws' || trojan.net === 'h2'" :label="$t('configureServer.pathObfuscation')" label-position="on-border">
             <b-input v-model="trojan.path" :placeholder="$t('configureServer.pathObfuscation')" expanded />
           </b-field>
-          <b-field v-show="trojan.net === 'mkcp' || trojan.net === 'kcp'" label="Seed" label-position="on-border">
+          <b-field v-show="trojan.net === 'mkcp' || trojan.net === 'kcp'" :label="$t('configureServer.seedObfuscation')" label-position="on-border">
             <b-input v-model="trojan.path" :placeholder="$t('configureServer.seedObfuscation')" expanded />
           </b-field>
-          <b-field v-show="trojan.net === 'grpc'" label="Service Name" label-position="on-border">
+          <b-field v-show="trojan.net === 'grpc'" :label="$t('configureServer.serviceName')" label-position="on-border">
             <b-input ref="trojan_service_name" v-model="trojan.path" type="text" expanded />
           </b-field>
           <b-field :label="$t('setting.nodeBackend')" label-position="on-border">
@@ -718,25 +718,25 @@
         </b-tab-item>
 
         <b-tab-item label="Juicity">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="juicity_name" v-model="juicity.name" :placeholder="$t('configureServer.servername')"
               expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="juicity_server" v-model="juicity.server" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="juicity_server" v-model="juicity.server" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="juicity_port" v-model="juicity.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
           <b-field label="UUID" label-position="on-border">
             <b-input ref="juicity_uuid" v-model="juicity.uuid" required placeholder="UUID" expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="juicity_password" v-model="juicity.password" required
               :placeholder="$t('configureServer.password')" expanded />
           </b-field>
-          <b-field label="Congestion Control" label-position="on-border">
+          <b-field :label="$t('configureServer.congestionControl')" label-position="on-border">
             <b-select ref="juicity_cc" v-model="juicity.cc" expanded required>
               <option value="bbr">bbr</option>
             </b-select>
@@ -744,43 +744,49 @@
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="juicity.sni" placeholder="SNI" expanded />
           </b-field>
-          <b-field label="Pinned Cert Chain Sha256" label-position="on-border">
+          <b-field :label="$t('configureServer.pinnedCertchainSha256')" label-position="on-border">
             <b-input v-model="juicity.pinnedCertchainSha256" :placeholder="$t('configureServer.pinnedCertchainSha256')"
               expanded />
+          </b-field>
+          <b-field :label="$t('configureServer.allowInsecure')" label-position="on-border">
+            <b-switch v-model="juicity.allowInsecure">{{ juicity.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="Tuic">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="tuic_name" v-model="tuic.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="tuic_server" v-model="tuic.server" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="tuic_server" v-model="tuic.server" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="tuic_port" v-model="tuic.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
           <b-field label="UUID" label-position="on-border">
             <b-input ref="tuic_uuid" v-model="tuic.uuid" required placeholder="UUID" expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="tuic_password" v-model="tuic.password" required :placeholder="$t('configureServer.password')"
               expanded />
           </b-field>
-          <b-field label="Congestion Control" label-position="on-border">
+          <b-field :label="$t('configureServer.congestionControl')" label-position="on-border">
             <b-select ref="tuic_cc" v-model="tuic.cc" expanded required>
               <option value="bbr">bbr</option>
             </b-select>
           </b-field>
-          <b-field label="Pinned Cert SHA256" label-position="on-border">
+          <b-field :label="$t('pinnedPeerCertSha256')" label-position="on-border">
             <b-input v-model="tuic.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
           </b-field>
-          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+          <b-field :label="$t('verifyPeerCertByName')" label-position="on-border">
             <b-input v-model="tuic.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
+          <b-field :label="$t('configureServer.allowInsecure')" label-position="on-border">
+            <b-switch v-model="tuic.allowInsecure">{{ tuic.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
+          </b-field>
           <b-field label-position="on-border">
-            <template slot="label"> DisableSni </template>
+            <template slot="label">{{ $t("configureServer.disableSni") }}</template>
             <b-select ref="tuic_disable_sni" v-model="tuic.disableSni" expanded required>
               <option :value="false">{{ $t("operations.no") }}</option>
               <option :value="true">
@@ -795,7 +801,7 @@
             <b-input v-model="tuic.alpn" placeholder="h3" expanded />
           </b-field>
           <b-field label-position="on-border">
-            <template slot="label"> UDP relay mode </template>
+            <template slot="label">{{ $t("configureServer.udpRelayMode") }}</template>
             <b-select ref="tuic_udp_relay_mode" v-model="tuic.udpRelayMode" expanded required>
               <option value="native">native</option>
               <option value="quic">quic</option>
@@ -804,110 +810,116 @@
         </b-tab-item>
 
         <b-tab-item label="Hysteria2">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="hysteria2_name" v-model="hysteria2.name" :placeholder="$t('configureServer.servername')"
               expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="hysteria2_server" v-model="hysteria2.server" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="hysteria2_server" v-model="hysteria2.server" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="hysteria2_port" v-model="hysteria2.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="hysteria2_password" v-model="hysteria2.password" required
               :placeholder="$t('configureServer.password')" expanded />
           </b-field>
-          <b-field label="Pinned Cert SHA256" label-position="on-border">
+          <b-field :label="$t('pinnedPeerCertSha256')" label-position="on-border">
             <b-input v-model="hysteria2.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
           </b-field>
-          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+          <b-field :label="$t('verifyPeerCertByName')" label-position="on-border">
             <b-input v-model="hysteria2.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field label="SNI" label-position="on-border">
             <b-input v-model="hysteria2.sni" placeholder="SNI" expanded />
           </b-field>
-          <b-field label="Obfs" label-position="on-border">
+          <b-field :label="$t('configureServer.obfs')" label-position="on-border">
             <b-select v-model="hysteria2.obfs" expanded required>
               <option value="none">none</option>
               <option value="salamander">salamander</option>
             </b-select>
           </b-field>
-          <b-field v-if="hysteria2.obfs !== 'none'" label="Obfs Password" label-position="on-border">
-            <b-input v-model="hysteria2.obfsPassword" placeholder="Obfs Password" expanded />
+          <b-field v-if="hysteria2.obfs !== 'none'" :label="$t('configureServer.obfsPassword')" label-position="on-border">
+            <b-input v-model="hysteria2.obfsPassword" :placeholder="$t('configureServer.obfsPassword')" expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="HTTP">
-          <b-field label="Protocol" label-position="on-border">
+          <b-field :label="$t('server.protocol')" label-position="on-border">
             <b-select v-model="http.protocol" expanded>
               <option value="http">HTTP</option>
               <option value="https">HTTPS</option>
             </b-select>
           </b-field>
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="http_name" v-model="http.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="http_host" v-model="http.host" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="http_host" v-model="http.host" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="http_port" v-model="http.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
-          <b-field label="Username" label-position="on-border">
+          <b-field :label="$t('configureServer.username')" label-position="on-border">
             <b-input ref="http_username" v-model="http.username" :placeholder="$t('configureServer.username')"
               expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="http_password" v-model="http.password" :placeholder="$t('configureServer.password')"
               expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="SOCKS5">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="socks5_name" v-model="socks5.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="socks5_host" v-model="socks5.host" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="socks5_host" v-model="socks5.host" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="socks5_port" v-model="socks5.port" required :placeholder="$t('configureServer.port')"
               type="number" expanded />
           </b-field>
-          <b-field label="Username" label-position="on-border">
+          <b-field :label="$t('configureServer.username')" label-position="on-border">
             <b-input ref="socks5_username" v-model="socks5.username" :placeholder="$t('configureServer.username')"
               expanded />
           </b-field>
-          <b-field label="Password" label-position="on-border">
+          <b-field :label="$t('configureServer.password')" label-position="on-border">
             <b-input ref="socks5_password" v-model="socks5.password" :placeholder="$t('configureServer.password')"
               expanded />
           </b-field>
         </b-tab-item>
 
         <b-tab-item label="AnyTLS">
-          <b-field label="Name" label-position="on-border">
+          <b-field :label="$t('configureServer.servername')" label-position="on-border">
             <b-input ref="anytls_name" v-model="anytls.name" :placeholder="$t('configureServer.servername')" expanded />
           </b-field>
-          <b-field label="Host" label-position="on-border">
-            <b-input ref="anytls_host" v-model="anytls.host" required placeholder="IP / HOST" expanded />
+          <b-field :label="$t('configureServer.host')" label-position="on-border">
+            <b-input ref="anytls_host" v-model="anytls.host" required :placeholder="$t('configureServer.host')" expanded />
           </b-field>
-          <b-field label="Port" label-position="on-border">
+          <b-field :label="$t('configureServer.port')" label-position="on-border">
             <b-input ref="anytls_port" v-model="anytls.port" required :placeholder="$t('configureServer.port')" type="number" expanded />
           </b-field>
-          <b-field label="Auth" label-position="on-border">
-            <b-input ref="anytls_auth" v-model="anytls.auth" required placeholder="Authentication Key" expanded />
+          <b-field :label="$t('configureServer.auth')" label-position="on-border">
+            <b-input ref="anytls_auth" v-model="anytls.auth" required :placeholder="$t('configureServer.authKey')" expanded />
           </b-field>
           <b-field label="SNI(Peer)" label-position="on-border">
-            <b-input ref="anytls_sni" v-model="anytls.sni" placeholder="SNI / Peer (Optional)" expanded />
+            <b-input ref="anytls_sni" v-model="anytls.sni" :placeholder="`SNI / Peer (${$t('common.optional')})`" expanded />
           </b-field>
-          <b-field label="Pinned Cert SHA256" label-position="on-border">
+          <b-field :label="$t('pinnedPeerCertSha256')" label-position="on-border">
             <b-input v-model="anytls.pinnedPeerCertSha256" :placeholder="$t('pinnedPeerCertSha256')" expanded />
           </b-field>
-          <b-field label="Verify Peer Cert By Name" label-position="on-border">
+          <b-field :label="$t('verifyPeerCertByName')" label-position="on-border">
             <b-input v-model="anytls.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
+          </b-field>
+          <b-field :label="$t('configureServer.allowInsecure')" label-position="on-border">
+            <b-switch v-model="anytls.allowInsecure">{{ anytls.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
+          </b-field>
+          <b-field :label="$t('configureServer.minIdleSession')" label-position="on-border">
+            <b-input v-model="anytls.minIdleSession" type="number" expanded />
           </b-field>
         </b-tab-item>
       </b-tabs>
@@ -1055,6 +1067,7 @@ export default {
       uuid: "",
       password: "",
       pinnedCertchainSha256: "",
+      allowInsecure: false,
       protocol: "juicity",
     },
     tuic: {
@@ -1067,6 +1080,7 @@ export default {
       password: "",
       pinnedPeerCertSha256: "",
       verifyPeerCertByName: "",
+      allowInsecure: false,
       disableSni: false,
       alpn: "h3",
       udpRelayMode: "native",
@@ -1108,9 +1122,12 @@ export default {
       sni: "",
       pinnedPeerCertSha256: "",
       verifyPeerCertByName: "",
+      allowInsecure: false,
+      minIdleSession: "",
       protocol: "anytls",
     },
     wireguard: {
+      protocol: "wireguard",
       name: "",
       address: "",
       port: "",
@@ -1210,15 +1227,15 @@ export default {
                 .querySelectorAll("input, textarea")
                 .forEach((x) => (x.readOnly = "readOnly"));
               this.$refs.section.querySelectorAll("select").forEach((x) => {
-                const text = x.querySelector(
-                  `option[value="${x.value}"]`
-                ).textContent;
-                console.log(x.value, text);
+                // a subscription node may carry a value the option list
+                // does not offer (e.g. a newer transport); show it raw
+                const opt = x.querySelector(`option[value="${x.value}"]`);
+                const text = opt ? opt.textContent : x.value;
                 x.outerHTML = `<input type="text" class="input" readonly="readonly" value="${text}">`;
               });
             }
           });
-        });
+        }, null, "sharing.failed");
       });
     }
   },
@@ -1242,8 +1259,15 @@ export default {
         let obj = JSON.parse(
           Base64.decode(url.substring(url.indexOf("://") + 3))
         );
-        // console.log(obj);
-        obj.ps = decodeURIComponent(obj.ps);
+        // the backend stores ps as typed; only decode when it is valid
+        // percent-encoding, a literal "%" in a name must survive
+        try {
+          obj.ps = decodeURIComponent(obj.ps);
+        } catch (_) {
+          // keep obj.ps as is
+        }
+        // the backend keys the uTLS fingerprint "fingerprint" in vmess JSON
+        obj.fp = obj.fp || obj.fingerprint || "";
         obj.tls = obj.tls || "none";
         obj.type = obj.type || "none";
         obj.scy = obj.scy || "auto";
@@ -1339,6 +1363,14 @@ export default {
       } else if (url.toLowerCase().startsWith("ss://")) {
         let u = parseURL(url);
         let userinfo = u.username;
+        // The backend percent-escapes the base64 userinfo ("=" becomes %3D),
+        // and js-base64 decodes those escapes as data, which corrupted the
+        // password of every shadowsocks node opened for editing.
+        try {
+          userinfo = decodeURIComponent(userinfo);
+        } catch (_) {
+          // a literal "%" in the userinfo: use it as it came
+        }
         // Handle SIP002 format: ss://BASE64URL@host:port vs legacy ss://BASE64
         let method = "", password = "";
         try {
@@ -1351,18 +1383,61 @@ export default {
         } catch (e) {
           method = userinfo;
         }
+        // parseURL already decoded the query values; decoding again turns
+        // %2F into a path separator and throws on a literal percent sign
         const ssPlugin = u.params.plugin || "";
-        return {
+        const opts = ssPlugin.split(";");
+        let o = {
           method: method,
           password: password,
           server: u.host,
           port: u.port,
           name: decodeURIComponent(u.hash || ""),
-          plugin: ssPlugin.split(";")[0] || "",
-          plugin_opts: ssPlugin.split(";").slice(1).join(";") || "",
+          plugin: opts[0] || "",
+          obfs: "http",
+          tls: "",
+          mode: "websocket",
+          host: "",
+          path: "",
+          impl: "",
           protocol: "ss",
           backend: u.params["v2raya-backend"] || "",
         };
+        switch (o.plugin) {
+          case "obfs-local":
+          case "simpleobfs":
+            o.plugin = "simple-obfs";
+            break;
+        }
+        // "obfs-local;obfs=tls;obfs-host=example.com" or
+        // "v2ray-plugin;tls;mode=websocket;host=example.com;path=/ws"
+        for (const opt of opts.slice(1)) {
+          const [k, v = ""] = opt.split("=");
+          switch (k) {
+            case "obfs":
+              o.obfs = v;
+              break;
+            case "host":
+            case "obfs-host":
+              o.host = v;
+              break;
+            case "path":
+            case "obfs-path":
+            case "obfs-uri":
+              o.path = v;
+              break;
+            case "mode":
+              o.mode = v;
+              break;
+            case "tls":
+              o.tls = "tls";
+              break;
+            case "impl":
+              o.impl = v;
+              break;
+          }
+        }
+        return o;
       } else if (url.toLowerCase().startsWith("ssr://")) {
         url = Base64.decode(url.substr(6));
         let arr = url.split("/?");
@@ -1407,6 +1482,7 @@ export default {
           verifyPeerCertByName: u.params.verifyPeerCertByName || "",
           method: "origin",
           net: u.params.type || "tcp",
+          host: u.params.host || "",
           obfs: "none",
           ssCipher: "2022-blake3-aes-128-gcm",
           path: u.params.path || u.params.serviceName || "",
@@ -1439,6 +1515,8 @@ export default {
           sni: u.params.sni || "",
           pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
           cc: u.params.congestion_control || "bbr",
+          allowInsecure:
+            u.params.allow_insecure === "true" || u.params.allowInsecure === "true",
           protocol: "juicity",
         };
       } else if (url.toLowerCase().startsWith("tuic://")) {
@@ -1457,6 +1535,8 @@ export default {
           alpn: u.params.alpn,
           cc: u.params.congestion_control || "bbr",
           udpRelayMode: u.params.udp_relay_mode || "native",
+          allowInsecure:
+            u.params.allow_insecure === "true" || u.params.allow_insecure === "1",
           protocol: "tuic",
         };
       } else if (
@@ -1464,9 +1544,19 @@ export default {
         url.toLowerCase().startsWith("hy2://")
       ) {
         let u = parseURL(url);
+        let password = decodeURIComponent(u.username);
+        const userInfoEnd = u.source.indexOf("@");
+        if (
+          userInfoEnd !== -1 &&
+          u.source
+            .slice(u.source.indexOf("://") + 3, userInfoEnd)
+            .includes(":")
+        ) {
+          password += `:${decodeURIComponent(u.password)}`;
+        }
         return {
           name: decodeURIComponent(u.hash),
-          password: decodeURIComponent(u.username),
+          password: password,
           server: u.host,
           port: u.port,
           sni: u.params.sni || "",
@@ -1512,21 +1602,27 @@ export default {
           sni: sni,
           pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || u.params.pinned_peer_cert_sha256 || "",
           verifyPeerCertByName: u.params.verifyPeerCertByName || u.params.verify_peer_cert_by_name || "",
+          allowInsecure:
+            u.params.allow_insecure === "true" || u.params.allow_insecure === "1",
+          minIdleSession: u.params.minIdleSession || "",
           protocol: "anytls",
         };
       } else if (url.toLowerCase().startsWith("wireguard://")) {
+        // layout of kernel/serverObj/wireguard.go:
+        // wireguard://PRIVATEKEY@server:port?publicKey=&address=&preSharedKey=&allowedIPs=&keepAlive=&mtu=#name
         let u = parseURL(url);
         return {
+          protocol: "wireguard",
           name: decodeURIComponent(u.hash),
           address: u.host,
           port: u.port,
-          publicKey: decodeURIComponent(u.username),
-          privateKey: u.params.privateKey || "",
-          localAddress: u.params.localAddress || "",
+          privateKey: decodeURIComponent(u.username || ""),
+          publicKey: u.params.publicKey || "",
+          localAddress: u.params.address || "",
           dns: u.params.dns || "",
           mtu: u.params.mtu || "",
           allowedIPs: u.params.allowedIPs || "",
-          persistentKeepalive: u.params.persistentKeepalive || "",
+          persistentKeepalive: u.params.keepAlive || "",
           preSharedKey: u.params.preSharedKey || "",
           endpoint: u.params.endpoint || "",
         };
@@ -1650,6 +1746,9 @@ export default {
           // but modeled as booleans in the GUI; serialize them as strings.
           if (typeof obj.multiMode === "boolean") obj.multiMode = obj.multiMode ? "true" : "false";
           if (typeof obj.permitWithoutStream === "boolean") obj.permitWithoutStream = obj.permitWithoutStream ? "true" : "false";
+          // kernel/serverObj/v2ray.go tags the uTLS fingerprint "fingerprint"
+          if (obj.fp) obj.fingerprint = obj.fp;
+          delete obj.fp;
           switch (obj.net) {
             case "kcp":
             case "tcp":
@@ -1675,8 +1774,9 @@ export default {
           }
           return "vmess://" + Base64.encode(JSON.stringify(obj));
         case "ss":
-          /* ss://BASE64(method:password)@server:port#name */
-          tmp = `ss://${Base64.encode(`${srcObj.method}:${srcObj.password}`)}@${srcObj.server
+          /* ss://BASE64URL(method:password)@server:port#name; SIP002 userinfo is
+             base64url without padding and the backend decodes only that. */
+          tmp = `ss://${Base64.encodeURI(`${srcObj.method}:${srcObj.password}`)}@${srcObj.server
             }:${srcObj.port}/`;
           if (srcObj.plugin) {
             const plugin = [srcObj.plugin];
@@ -1703,13 +1803,16 @@ export default {
               plugin.push("obfs=" + srcObj.obfs);
               plugin.push("obfs-host=" + srcObj.host);
               if (srcObj.obfs === "http") {
-                plugin.push("obfs-path=" + srcObj.path);
+                plugin.push("obfs-uri=" + srcObj.path);
               }
               if (srcObj.impl) {
                 plugin.push("impl=" + srcObj.impl);
               }
             }
             tmp += `?plugin=${encodeURIComponent(plugin.join(";"))}`;
+          }
+          if (srcObj.backend) {
+            tmp += `${srcObj.plugin ? "&" : "?"}v2raya-backend=${encodeURIComponent(srcObj.backend)}`;
           }
           tmp += srcObj.name.length
             ? `#${encodeURIComponent(srcObj.name)}`
@@ -1748,6 +1851,13 @@ export default {
               query.path = srcObj.path || "/";
             }
           }
+          if (
+            tmp === "trojan" &&
+            (srcObj.net === "ws" || srcObj.net === "h2")
+          ) {
+            query.host = srcObj.host;
+            query.path = srcObj.path;
+          }
 
           if (srcObj.alpn !== "") {
             query.alpn = srcObj.alpn;
@@ -1757,6 +1867,9 @@ export default {
           }
           if (srcObj.net === "mkcp" || srcObj.net === "kcp") {
             query.seed = srcObj.path;
+          }
+          if (srcObj.backend) {
+            query["v2raya-backend"] = srcObj.backend;
           }
           return generateURL({
             protocol: tmp,
@@ -1776,6 +1889,9 @@ export default {
           if (srcObj.pinnedCertchainSha256 !== "") {
             query.pinned_certchain_sha256 = srcObj.pinnedCertchainSha256;
           }
+          if (srcObj.allowInsecure) {
+            query.allow_insecure = "true";
+          }
           return generateURL({
             protocol: "juicity",
             username: srcObj.uuid,
@@ -1787,8 +1903,8 @@ export default {
           });
         case "tuic":
           query = {
-            pinned_peer_cert_sha256: srcObj.pinnedPeerCertSha256,
-            verify_peer_cert_by_name: srcObj.verifyPeerCertByName,
+            pinnedPeerCertSha256: srcObj.pinnedPeerCertSha256,
+            verifyPeerCertByName: srcObj.verifyPeerCertByName,
             congestion_control: srcObj.cc,
             disable_sni: srcObj.disableSni,
             alpn: srcObj.alpn,
@@ -1796,6 +1912,9 @@ export default {
           };
           if (srcObj.sni !== "") {
             query.sni = srcObj.sni;
+          }
+          if (srcObj.allowInsecure) {
+            query.allow_insecure = "true";
           }
           return generateURL({
             protocol: "tuic",
@@ -1857,13 +1976,20 @@ export default {
           return generateURL(tmp);
         case "anytls":
           if (srcObj.sni) {
-            query.peer = srcObj.sni;
+            // the backend (kernel/serverObj/anytls.go) reads sni, not peer
+            query.sni = srcObj.sni;
           }
           if (srcObj.pinnedPeerCertSha256) {
             query.pinnedPeerCertSha256 = srcObj.pinnedPeerCertSha256;
           }
           if (srcObj.verifyPeerCertByName) {
             query.verifyPeerCertByName = srcObj.verifyPeerCertByName;
+          }
+          if (srcObj.allowInsecure) {
+            query.allow_insecure = "true";
+          }
+          if (srcObj.minIdleSession) {
+            query.minIdleSession = srcObj.minIdleSession;
           }
           return generateURL({
             protocol: "anytls",
@@ -1874,34 +2000,18 @@ export default {
             params: query,
           });
         case "wireguard":
+          // parameter names of kernel/serverObj/wireguard.go; the private key
+          // travels as the userinfo
           query = {};
-          if (srcObj.privateKey) {
-            query.privateKey = srcObj.privateKey;
-          }
-          if (srcObj.localAddress) {
-            query.localAddress = srcObj.localAddress;
-          }
-          if (srcObj.dns) {
-            query.dns = srcObj.dns;
-          }
-          if (srcObj.mtu) {
-            query.mtu = srcObj.mtu;
-          }
-          if (srcObj.allowedIPs) {
-            query.allowedIPs = srcObj.allowedIPs;
-          }
-          if (srcObj.persistentKeepalive) {
-            query.persistentKeepalive = srcObj.persistentKeepalive;
-          }
-          if (srcObj.preSharedKey) {
-            query.preSharedKey = srcObj.preSharedKey;
-          }
-          if (srcObj.endpoint) {
-            query.endpoint = srcObj.endpoint;
-          }
+          if (srcObj.publicKey) query.publicKey = srcObj.publicKey;
+          if (srcObj.localAddress) query.address = srcObj.localAddress;
+          if (srcObj.mtu) query.mtu = srcObj.mtu;
+          if (srcObj.allowedIPs) query.allowedIPs = srcObj.allowedIPs;
+          if (srcObj.persistentKeepalive) query.keepAlive = srcObj.persistentKeepalive;
+          if (srcObj.preSharedKey) query.preSharedKey = srcObj.preSharedKey;
           return generateURL({
             protocol: "wireguard",
-            username: srcObj.publicKey,
+            username: srcObj.privateKey,
             host: srcObj.address,
             port: srcObj.port,
             hash: srcObj.name,
@@ -1917,7 +2027,6 @@ export default {
           message: this.$t("setting.messages.grpcShouldWithTls"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 5000,
         });
         this.$nextTick(() => {
@@ -1994,103 +2103,23 @@ export default {
         // wireguard://address:port?key=value#name
         coded = this.generateURL(this.wireguard);
       } else if (this.tabChoice === 3) {
-        // ss://BASE64(method:password)@server:port?plugin=...&v2raya-backend=...#name
-        const { method, password, server, port, name, plugin, plugin_opts, backend } = this.ss;
-        let userinfo = btoa(`${method}:${password}`);
-        let params = [];
-        if (plugin) {
-          params.push(`plugin=${encodeURIComponent(plugin + (plugin_opts ? `;${plugin_opts}` : ""))}`);
-        }
-        if (backend) {
-          params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
-        }
-        let url = `ss://${userinfo}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.ss);
       } else if (this.tabChoice === 4) {
-        // ssr://server:port:proto:method:obfs:base64(password)/?remarks=base64(remarks)
-        const { server, port, proto, method, obfs, password, name, protoParam, obfsParam } = this.ssr;
-        let pwdB64 = btoa(password);
-        let remarksB64 = name ? btoa(name) : "";
-        let protoParamB64 = protoParam ? btoa(protoParam) : "";
-        let obfsParamB64 = obfsParam ? btoa(obfsParam) : "";
-        let url = `ssr://${btoa(`${server}:${port}:${proto}:${method}:${obfs}:${pwdB64}/?remarks=${remarksB64}&protoparam=${protoParamB64}&obfsparam=${obfsParamB64}`)}`;
-        coded = url;
+        coded = this.generateURL(this.ssr);
       } else if (this.tabChoice === 5) {
-        // trojan://password@server:port?pinnedPeerCertSha256=&verifyPeerCertByName=&sni=sni&v2raya-backend=...#name
-        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, peer, name, backend } = this.trojan;
-        let params = [];
-        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
-        if (peer) params.push(`sni=${encodeURIComponent(peer)}`);
-        if (backend) params.push(`v2raya-backend=${encodeURIComponent(backend)}`);
-        let url = `trojan://${encodeURIComponent(password)}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.trojan);
       } else if (this.tabChoice === 6) {
-        // juicity://uuid:password@server:port?cc=xxx#name
-        const { uuid, password, server, port, cc, sni, name } = this.juicity;
-        let params = [];
-        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
-        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
-        let url = `juicity://${uuid}:${password}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.juicity);
       } else if (this.tabChoice === 7) {
-        // tuic://uuid:password@server:port?pinned_peer_cert_sha256=&verify_peer_cert_by_name=&cc=xxx#name
-        const { uuid, password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, cc, sni, name } = this.tuic;
-        let params = [];
-        if (pinnedPeerCertSha256) params.push("pinned_peer_cert_sha256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
-        if (cc) params.push(`congestion_control=${encodeURIComponent(cc)}`);
-        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
-        let url = `tuic://${uuid}:${password}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.tuic);
       } else if (this.tabChoice === 8) {
-        // hysteria2://password@server:port?pinSHA256=&obfs=xxx#name
-        const { password, server, port, pinnedPeerCertSha256, verifyPeerCertByName, obfs, obfsPassword, sni, name } = this.hysteria2;
-        let params = [];
-        if (pinnedPeerCertSha256) params.push("pinSHA256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verify_peer_cert_by_name=" + encodeURIComponent(verifyPeerCertByName));
-        if (obfs) params.push(`obfs=${encodeURIComponent(obfs)}`);
-        if (obfsPassword) params.push(`obfs-password=${encodeURIComponent(obfsPassword)}`);
-        if (sni) params.push(`sni=${encodeURIComponent(sni)}`);
-        let url = `hysteria2://${encodeURIComponent(password)}@${server}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.hysteria2);
       } else if (this.tabChoice === 9) {
-        // http(s)://username:password@server:port#name
-        const { protocol, username, password, host, port, name } = this.http;
-        let url = `${protocol}://`;
-        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
-        url += `${host}:${port}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.http);
       } else if (this.tabChoice === 10) {
-        // socks5://username:password@server:port#name
-        const { username, password, host, port, name } = this.socks5;
-        let url = `socks5://`;
-        if (username && password) url += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
-        url += `${host}:${port}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.socks5);
       } else if (this.tabChoice === 11) {
-        // anytls://auth@host:port?peer=sni&pinnedPeerCertSha256=&verifyPeerCertByName=#name
-        const { auth, host, port, sni, pinnedPeerCertSha256, verifyPeerCertByName, name } = this.anytls;
-        let params = [];
-        if (sni) params.push(`peer=${encodeURIComponent(sni)}`);
-        if (pinnedPeerCertSha256) params.push("pinnedPeerCertSha256=" + encodeURIComponent(pinnedPeerCertSha256));
-        if (verifyPeerCertByName) params.push("verifyPeerCertByName=" + encodeURIComponent(verifyPeerCertByName));
-        let url = `anytls://${encodeURIComponent(auth)}@${host}:${port}`;
-        if (params.length) url += `?${params.join("&")}`;
-        if (name) url += `#${encodeURIComponent(name)}`;
-        coded = url;
+        coded = this.generateURL(this.anytls);
       }
       this.$emit("submit", coded);
     },

@@ -19,6 +19,11 @@
           <b-tag :type="props.row.protocol === 'socks' ? 'is-info' : 'is-success'" size="is-small">
             {{ props.row.protocol.toUpperCase() }}
           </b-tag>
+          <i
+            v-if="props.row.username"
+            class="lucide icon-lock"
+            :title="$t('customInbound.authEnabled')"
+          />
         </b-table-column>
         <b-table-column v-slot="props" :label="$t('customInbound.port')" width="70">
           {{ props.row.port }}
@@ -34,7 +39,7 @@
           <b-button
             size="is-small"
             type="is-danger"
-            icon-left="delete"
+            icon-left="trash-2"
             @click="handleDelete(props.row.tag)"
           ></b-button>
         </b-table-column>
@@ -50,35 +55,30 @@
         <p class="is-size-6 has-text-weight-semibold" style="margin-bottom: 0.5rem">
           {{ $t("customInbound.addNew") }}
         </p>
-        <b-field grouped group-multiline>
-          <b-field :label="$t('customInbound.tag')" expanded label-position="on-border">
+        <div class="inbound-form">
+          <b-field :label="$t('customInbound.tag')" label-position="on-border" class="inbound-form__tag">
             <b-input
               v-model="form.tag"
               :placeholder="$t('customInbound.tagPlaceholder')"
             ></b-input>
           </b-field>
-          <b-field :label="$t('customInbound.protocol')" label-position="on-border">
-            <b-select v-model="form.protocol">
+          <b-field :label="$t('customInbound.protocol')" label-position="on-border" class="inbound-form__protocol">
+            <b-select v-model="form.protocol" expanded>
               <option value="socks">SOCKS</option>
               <option value="http">HTTP</option>
             </b-select>
           </b-field>
-          <b-field :label="$t('customInbound.port')" label-position="on-border">
+          <b-field :label="$t('customInbound.port')" label-position="on-border" class="inbound-form__port">
             <b-input
               v-model.number="form.port"
               type="number"
               min="1"
               max="65535"
-              style="width: 100px"
               :placeholder="$t('customInbound.portPlaceholder')"
             ></b-input>
           </b-field>
-        </b-field>
-
-        <!-- Outbound binding -->
-        <b-field grouped group-multiline>
-          <b-field :label="$t('customInbound.outbound')" expanded label-position="on-border">
-            <b-select v-model="form.outbound" expanded :placeholder="$t('customInbound.outboundPlaceholder')">
+          <b-field :label="$t('customInbound.outbound')" label-position="on-border" class="inbound-form__outbound">
+            <b-select v-model="form.outbound" expanded>
               <option
                 v-for="ob in outbounds"
                 :key="ob"
@@ -86,18 +86,34 @@
               >{{ ob }}</option>
             </b-select>
           </b-field>
-          <b-field :label="$t('customInbound.outboundType')" label-position="on-border">
-            <b-select v-model="form.outboundType">
+          <b-field :label="$t('customInbound.outboundType')" label-position="on-border" class="inbound-form__mode">
+            <b-select v-model="form.outboundType" expanded>
               <option value="direct">{{ $t("customInbound.outboundTypeDirect") }}</option>
               <option value="routingA">{{ $t("customInbound.outboundTypeRoutingA") }}</option>
             </b-select>
           </b-field>
-          <b-field label=" " label-position="on-border">
-            <b-button type="is-primary" :loading="adding" @click="handleAdd">
+          <b-field :label="$t('customInbound.username')" label-position="on-border" class="inbound-form__user">
+            <b-input
+              v-model="form.username"
+              :placeholder="$t('customInbound.authOptional')"
+              autocomplete="off"
+            ></b-input>
+          </b-field>
+          <b-field :label="$t('customInbound.password')" label-position="on-border" class="inbound-form__pass">
+            <b-input
+              v-model="form.password"
+              type="password"
+              password-reveal
+              :placeholder="$t('customInbound.authOptional')"
+              autocomplete="off"
+            ></b-input>
+          </b-field>
+          <div class="inbound-form__add">
+            <b-button type="is-primary" expanded :loading="adding" @click="handleAdd">
               {{ $t("operations.add") }}
             </b-button>
-          </b-field>
-        </b-field>
+          </div>
+        </div>
 
         <!-- RoutingA rules editor (shown when outboundType is routingA) -->
         <b-field v-if="form.outboundType === 'routingA'" :label="$t('customInbound.routingARules')" label-position="on-border">
@@ -137,6 +153,8 @@ export default {
       outbound: "",
       outboundType: "direct",
       routingARules: "",
+      username: "",
+      password: "",
     },
     adding: false,
   }),
@@ -156,6 +174,11 @@ export default {
       this.$axios({ url: apiRoot + "/outbounds" }).then((res) => {
         if (res.data.code === "SUCCESS") {
           this.outbounds = res.data.data.outbounds || [];
+          // The select renders blank with no value, which reads as an empty
+          // list; every inbound needs a group anyway, so preselect the first.
+          if (!this.form.outbound && this.outbounds.length > 0) {
+            this.form.outbound = this.outbounds[0];
+          }
         }
       });
     },
@@ -165,7 +188,6 @@ export default {
           message: this.$t("customInbound.fillAll"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
         });
         return;
       }
@@ -174,7 +196,6 @@ export default {
           message: this.$t("customInbound.outboundRequired"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
         });
         return;
       }
@@ -189,13 +210,24 @@ export default {
           outbound: this.form.outbound,
           outboundType: this.form.outboundType,
           routingARules: this.form.outboundType === "routingA" ? this.form.routingARules : "",
+          username: this.form.username.trim(),
+          password: this.form.password,
         },
       })
         .then((res) => {
           handleResponse(res, this, () => {
             this.inbounds = res.data.data.inbounds || [];
-            this.form = { tag: "", protocol: "socks", port: "", outbound: "", outboundType: "direct", routingARules: "" };
-          });
+            this.form = {
+              tag: "",
+              protocol: "socks",
+              port: "",
+              outbound: this.outbounds[0] || "",
+              outboundType: "direct",
+              routingARules: "",
+              username: "",
+              password: "",
+            };
+          }, null, "customInbound.saveFailed");
         })
         .finally(() => {
           this.adding = false;
@@ -215,7 +247,7 @@ export default {
           }).then((res) => {
             handleResponse(res, this, () => {
               this.inbounds = res.data.data.inbounds || [];
-            });
+            }, null, "customInbound.deleteFailed");
           });
         },
       });
@@ -223,3 +255,63 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+// A grid keeps the labels on their own borders and the columns aligned; the
+// previous grouped fields put the outbound select on a row of its own with the
+// Add button wedged against it.
+.inbound-form {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.25rem 0.75rem;
+  align-items: end;
+
+  .field {
+    margin-bottom: 0;
+  }
+}
+
+.inbound-form__tag {
+  grid-column: span 6;
+}
+
+.inbound-form__protocol,
+.inbound-form__port {
+  grid-column: span 3;
+}
+
+.inbound-form__outbound,
+.inbound-form__mode {
+  grid-column: span 6;
+}
+
+.inbound-form__user,
+.inbound-form__pass,
+.inbound-form__add {
+  grid-column: span 4;
+}
+
+@media screen and (max-width: 640px) {
+  .inbound-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .inbound-form__tag,
+  .inbound-form__outbound,
+  .inbound-form__mode,
+  .inbound-form__add {
+    grid-column: span 2;
+  }
+
+  .inbound-form__protocol,
+  .inbound-form__port,
+  .inbound-form__user,
+  .inbound-form__pass {
+    grid-column: span 1;
+  }
+
+  .inbound-form__add {
+    grid-column: span 2;
+  }
+}
+</style>

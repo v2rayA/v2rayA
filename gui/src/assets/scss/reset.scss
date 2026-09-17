@@ -1,4 +1,29 @@
-@import "../iconfont/fonts/font_ex";
+.icon .lucide {
+  font-size: 1.25em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+// Lucide glyphs used inline (buttons, navbar items, labels) sit on the
+// text baseline; centre them on the x-height like the old icon font did.
+.lucide {
+  display: inline-block;
+  line-height: 1;
+  vertical-align: -0.2em;
+}
+.button > .lucide,
+.navbar-item > .lucide,
+.dropdown-item > .lucide {
+  margin-inline-end: 0.35em;
+}
+
+.icon-md {
+  font-size: 1.5em;
+}
+
+.icon-lg {
+  font-size: 2em;
+}
 body.has-navbar-fixed-top, html.has-navbar-fixed-top{
   padding-top:2.25rem;
 }
@@ -52,10 +77,6 @@ html{
   height: 100%;
   max-height: 100%;
   max-width: unset !important;
-}
-
-.modal-close:not(:hover){
-  filter: drop-shadow(0 0 5px #000);
 }
 
 .icon-camera {

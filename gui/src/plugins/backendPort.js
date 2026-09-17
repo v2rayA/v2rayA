@@ -9,10 +9,12 @@ if (typeof window !== "undefined") {
     currentPrefix = match[1];
   }
 }
-if (currentPrefix && currentPrefix !== "/") {
+if (
+  currentPrefix &&
+  currentPrefix !== "/" &&
+  (!ba || (ba.startsWith("/") && !ba.startsWith("//")))
+) {
   localStorage.setItem("backendAddress", currentPrefix);
-} else {
-  if (ba == null) {
-    localStorage.setItem("backendAddress", "");
-  }
+} else if (ba == null) {
+  localStorage.setItem("backendAddress", "");
 }

@@ -6,10 +6,10 @@
       </p>
     </header>
     <section class="modal-card-body">
-      <b-field label="ProbeURL" label-position="on-border">
+      <b-field :label="$t('outbound.probeUrl')" label-position="on-border">
         <b-input ref="probe_url" v-model="setting.probeURL" required expanded />
       </b-field>
-      <b-field label="ProbeInterval" label-position="on-border">
+      <b-field :label="$t('outbound.probeInterval')" label-position="on-border">
         <b-input
           ref="probe_interval"
           v-model="setting.probeInterval"
@@ -17,7 +17,7 @@
           expanded
         />
       </b-field>
-      <b-field label="Type" label-position="on-border">
+      <b-field :label="$t('outbound.type')" label-position="on-border">
         <b-select v-model="setting.type" expanded>
           <option value="leastping">
             {{ $t("setting.options.leastPing") }}
@@ -88,7 +88,7 @@ export default {
         cancelText: that.$t("operations.cancel"),
         type: "is-danger",
         hasIcon: true,
-        icon: " iconfont icon-alert",
+        icon: "triangle-alert",
         onConfirm: () => {
           that.$emit("delete");
           that.$parent.close();
@@ -129,16 +129,16 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({
-            message: res.data.code,
+            message: this.$t("outbound.settingSaved"),
             type: "is-primary",
             position: "is-top",
-            queue: false,
           });
           this.$parent.close();
-        });
+        }, null, "outbound.settingSaveFailed");
         if (
           res.data.code !== "SUCCESS" &&
-          res.data.message.indexOf("invalid config") >= 0
+          (res.data.errorCode === "INVALID_CONFIG" ||
+            res.data.message.indexOf("invalid config") >= 0)
         ) {
           // FIXME: tricky
           this.$parent.$parent.runningState.running =
@@ -151,7 +151,4 @@ export default {
 </script>
 
 <style lang="scss">
-.modal-custom-ports .modal-background {
-  background-color: rgba(0, 0, 0, 0.6);
-}
 </style>

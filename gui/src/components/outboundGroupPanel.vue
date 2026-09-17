@@ -3,14 +3,14 @@
     <b-tag
       class="pointerTag"
       type="is-info"
-      :icon-right="menuOpen ? 'menu-up' : 'menu-down'"
+      :icon-right="menuOpen ? 'chevron-up' : 'chevron-down'"
       role="button"
       tabindex="0"
       @click.native.stop="toggleMenu"
       @keydown.native.enter.prevent.stop="toggleMenu"
       @keydown.native.space.prevent.stop="toggleMenu"
     >
-      {{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}
+      <span class="tag-text">{{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}</span>
     </b-tag>
 
     <!-- Persistent expandable menu: close only on outside click or manual toggle -->
@@ -32,7 +32,7 @@
             <span class="ogp-group-label">
               <span
                 v-if="outbound === currentOutbound"
-                class="mdi mdi-circle has-text-success"
+                class="lucide icon-circle has-text-success"
                 style="font-size: 0.5em; vertical-align: middle; margin-right: 4px"
               ></span>
               {{ outbound.toUpperCase() }}
@@ -45,8 +45,8 @@
               style="margin-left: auto; margin-right: 4px"
             >{{ getGroupCount(outbound) }}</b-tag>
             <span
-              class="mdi"
-              :class="expandedGroup === outbound ? 'mdi-chevron-down' : 'mdi-chevron-right'"
+              class="lucide"
+              :class="expandedGroup === outbound ? 'icon-chevron-down' : 'icon-chevron-right'"
               style="color: #aaa"
             ></span>
           </div>
@@ -66,7 +66,7 @@
                 size="is-small"
                 type="is-danger"
                 outlined
-                icon-left="delete"
+                icon-left="trash-2"
                 style="margin-left: auto"
                 @click.stop="deleteGroup(outbound)"
               >{{ $t("operations.delete") }}</b-button>
@@ -77,16 +77,16 @@
                 :key="node.key"
                 class="ogp-node-row"
               >
-                <span class="mdi mdi-circle has-text-warning" style="font-size: 0.7em"></span>
+                <span class="lucide icon-circle has-text-warning" style="font-size: 0.7em"></span>
                 <span class="ogp-node-name" :title="node.name">{{ node.name }}</span>
                 <span
-                  class="mdi mdi-close ogp-node-del"
+                  class="lucide icon-x ogp-node-del"
                   :title="$t('operations.disconnect')"
                   @click.stop="disconnectNode(node)"
                 ></span>
               </div>
               <div v-if="!getGroupNodes(outbound).length" class="ogp-nodes-empty">
-                {{ $t("common.empty") || "暂无节点" }}
+                {{ $t("common.empty") }}
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@
 
         <hr class="dropdown-divider" style="margin: 4px 0" />
         <div class="ogp-group-row ogp-group-row--add" @click.stop="$emit('add-outbound')">
-          <span class="mdi mdi-plus"></span> {{ $t("operations.addOutbound") }}
+          <span class="lucide icon-plus"></span> {{ $t("operations.addOutbound") }}
         </div>
     </div>
 
@@ -112,8 +112,8 @@
         <section class="modal-card-body" style="min-height: 200px; max-height: 60vh; overflow-y: auto">
           <b-input
             v-model="nodeSearch"
-            placeholder="搜索节点..."
-            icon="magnify"
+            :placeholder="$t('proxyGroup.searchNodes')"
+            icon="search"
             style="margin-bottom: 0.75rem"
           ></b-input>
           <div v-if="loadingNodes" style="text-align: center; padding: 2rem">
@@ -128,7 +128,7 @@
               @click="toggleNode(node)"
             >
               <span
-                class="mdi"
+                class="lucide"
                 :class="pickerNodeIconClass(node)"
                 style="font-size: 1.1em; margin-right: 6px; flex-shrink: 0"
               ></span>
@@ -145,7 +145,7 @@
               </b-tag>
             </div>
             <div v-if="!filteredNodes.length && !loadingNodes" style="text-align: center; padding: 1rem; color: #888">
-              暂无节点
+              {{ $t("common.empty") }}
             </div>
           </template>
         </section>
@@ -161,6 +161,7 @@
 </template>
 
 <script>
+import { backendMessage } from "@/assets/js/utils";
 import i18n from "@/plugins/i18n";
 
 export default {
@@ -271,7 +272,11 @@ export default {
     async requestSuccess(config, fallbackMessage) {
       const res = await this.$axios(config);
       if (!res || !res.data || res.data.code !== "SUCCESS") {
-        throw new Error((res && res.data && res.data.message) || fallbackMessage || "request failed");
+        throw new Error(
+          (res && res.data && backendMessage(this, res)) ||
+            fallbackMessage ||
+            this.$t("common.fail")
+        );
       }
       return res;
     },
@@ -304,9 +309,9 @@ export default {
     },
     pickerNodeIconClass(node) {
       if (this.isPickerNodeHighlighted(node)) {
-        return "mdi-check-circle has-text-warning";
+        return "icon-circle-check has-text-warning";
       }
-      return "mdi-circle-outline has-text-grey-light";
+      return "icon-circle-dashed has-text-grey-light";
     },
     findServer(cs) {
       if (!this.touchData) return null;
@@ -401,7 +406,6 @@ export default {
         this.showPicker = false;
         return;
       }
-      const restartAfterSave = this.isCoreRunning;
       this.saving = true;
       try {
         const selectedNodes = this.allNodes.filter((node) => {
@@ -414,7 +418,7 @@ export default {
           sub: node._type === "subscriptionServer" ? node.sub : 0,
           outbound: this.pickerGroup,
         }));
-        await this.requestSuccess({
+        const res = await this.requestSuccess({
           url: apiRoot + "/outboundConnections",
           method: "put",
           data: {
@@ -422,33 +426,25 @@ export default {
             touches,
           },
         }, this.$t("common.fail"));
-        if (restartAfterSave) {
-          await this.requestSuccess({
-            url: apiRoot + "/v2ray",
-            method: "delete",
-          }, this.$t("common.fail"));
-          await this.requestSuccess({
-            url: apiRoot + "/v2ray",
-            method: "post",
-          }, this.$t("common.fail"));
-        }
-        await this.fetchTouchData();
+        this.touchData = res.data.data.touch;
+        this.isCoreRunning = !!res.data.data.running;
         this.$emit("changed");
         this.showPicker = false;
         this.$buefy.toast.open({
-          message: this.$t("common.success"),
+          message: this.$t("proxyGroup.saved", { group: this.pickerGroup }),
           type: "is-success",
           position: "is-top",
           duration: 2000,
-          queue: false,
         });
       } catch (err) {
         this.$buefy.toast.open({
-          message: err?.response?.data?.message || err?.message || "Save failed",
+          message: this.$t("proxyGroup.saveFailed", {
+            group: this.pickerGroup,
+            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          }),
           type: "is-warning",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
       } finally {
         this.saving = false;
@@ -456,7 +452,7 @@ export default {
     },
     async disconnectNode(node) {
       try {
-        await this.$axios({
+        await this.requestSuccess({
           url: apiRoot + "/connection",
           method: "delete",
           data: {
@@ -465,10 +461,19 @@ export default {
             sub: node.sub,
             outbound: this.expandedGroup,
           },
-        });
+        }, this.$t("common.fail"));
         await this.fetchTouchData();
         this.$emit("changed");
-      } catch (_) {}
+      } catch (err) {
+        this.$buefy.toast.open({
+          message: this.$t("connection.disconnectFailed", {
+            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          }),
+          type: "is-warning",
+          position: "is-top",
+          duration: 5000,
+        });
+      }
     },
     async deleteGroup(outbound) {
       try {
@@ -485,22 +490,26 @@ export default {
         } else {
           // Show error message from server (e.g., bound custom inbounds)
           this.$buefy.toast.open({
-            message: res.data.message || this.$t("common.fail"),
+            message: this.$t("outbound.deleteFailed", {
+              group: outbound,
+              message: backendMessage(this, res) || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 8000,
-            queue: false,
           });
         }
       } catch (err) {
         // Show error from server response
-        const msg = err?.response?.data?.message || err?.message || this.$t("common.fail");
+        const msg = this.$t("outbound.deleteFailed", {
+          group: outbound,
+          message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+        });
         this.$buefy.toast.open({
           message: msg,
           type: "is-warning",
           position: "is-top",
           duration: 8000,
-          queue: false,
         });
       }
     },
@@ -516,7 +525,10 @@ export default {
 
 <style lang="scss">
 .ogp-wrapper {
-  display: inline-block;
+  // inline-flex, not inline-block: the block's line box put the tag one
+  // or two pixels below the status tag next to it in the navbar
+  display: inline-flex;
+  align-items: center;
   position: relative;
 }
 

@@ -1,6 +1,27 @@
 import CONST from "./const.js";
 import URI from "urijs";
 
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
+function backendMessage(vm, res) {
+  const code = res.data.errorCode;
+  if (!code || !vm.$te("backend." + code)) {
+    return res.data.message;
+  }
+  const escapedParams = {};
+  const params = res.data.params || {};
+  for (const key in params) {
+    const value = params[key];
+    escapedParams[key] = typeof value === "string" ? escapeHtml(value) : value;
+  }
+  return vm.$t("backend." + code, {
+    ...escapedParams,
+    message: res.data.message,
+  });
+}
+
 function _locateServer(touch, whichServer) {
   let ind = whichServer.id - 1;
   let sub = whichServer.sub;
@@ -42,11 +63,17 @@ function handleResponse(res, that, suc, err, fail) {
       if (fail && fail instanceof Function) {
         fail.apply(that);
       } else {
+        const backendText = backendMessage(that, res);
+        const message =
+          typeof fail === "string"
+            ? that.$t(fail, {
+                message: backendText || that.$t("common.fail"),
+              })
+            : backendText;
         that.$buefy.toast.open({
-          message: res.data.message,
+          message,
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 5000,
         });
       }
@@ -181,4 +208,13 @@ function sanitizeALPN(alpn) {
   return alpn; // Retain the original input
 }
 
-export { locateServer, handleResponse, parseURL, generateURL, toInt, sanitizeALPN };
+export {
+  locateServer,
+  handleResponse,
+  parseURL,
+  generateURL,
+  toInt,
+  sanitizeALPN,
+  escapeHtml,
+  backendMessage,
+};

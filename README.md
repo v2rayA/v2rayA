@@ -29,7 +29,10 @@ See [**v2rayA - Docs**](https://v2raya.org/en/docs/prologue/introduction/)
 
 ## Screenshot
 
-<img src="https://i.loli.net/2020/04/19/gt3NqOMiafYbp7L.png" border="0">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/screenshot-dark.png">
+  <img src="docs/images/screenshot-light.png" alt="v2rayA web interface" width="100%">
+</picture>
 
 ## Statement
 

@@ -1,3 +1,7 @@
+html.theme-dark {
+  background-color: #1c1b1f;
+}
+
 body.theme-dark {
   /* Material 3 dark roles */
   --md-bg: #1c1b1f;
@@ -53,6 +57,52 @@ body.theme-dark {
   .navbar.is-fixed-top.has-shadow,
   .navbar.is-fixed-top.has-shadow::after {
     box-shadow: 0 2px 0 0 var(--md-surface-variant);
+  }
+
+  // the mobile-card checkbox is absolutely positioned over the ID line
+  @media screen and (max-width: 768px) {
+    .b-table .table tbody td.checkbox-cell {
+      background-color: transparent !important;
+    }
+  }
+
+  // logo2.png is a dark-blue wordmark on transparent; lift it to a light
+  // blue on the dark surfaces (navbar, login dialog)
+  img.logo {
+    filter: invert(1) hue-rotate(180deg) brightness(1.3);
+  }
+
+  // the persistent core-version notice keeps its danger colour; the generic
+  // .message override above would flatten it to the surface colour
+  .notification.core-version-error {
+    background-color: var(--node-msg-danger-bg) !important;
+    border: 1px solid var(--node-msg-danger-border);
+    color: var(--node-msg-on-color) !important;
+  }
+
+  @media screen and (max-width: 1023px) {
+    .navbar-menu .navbar-end > .dropdown > .dropdown-menu .dropdown-content {
+      border-color: var(--md-surface-variant);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  .modal .modal-close.is-large {
+    color: var(--md-on-surface-variant);
+
+    &:hover,
+    &:focus {
+      background-color: rgba(255, 255, 255, 0.12);
+      color: var(--md-on-surface);
+    }
+  }
+
+  #toolbar.float-toolbar {
+    background: var(--md-surface-container);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  #toolbar.float-toolbar-active {
+    background: #2b2930;
   }
 
   .navbar.is-light {
@@ -124,9 +174,10 @@ body.theme-dark {
     }
   }
 
+  // .modal-card stays transparent as in Bulma: only its head and foot are
+  // rounded, and painting the card itself squares the corners.
   .box,
   .card,
-  .modal-card,
   .modal-card-head,
   .modal-card-body,
   .modal-card-foot,
@@ -139,6 +190,14 @@ body.theme-dark {
     border-color: var(--md-surface-variant);
   }
 
+  .card-header,
+  .card-footer,
+  .card-footer-item {
+    border-color: var(--md-surface-variant);
+  }
+
+  .card-header-title,
+  .card-footer-item,
   .modal-card-title,
   .message .title,
   .message .subtitle,
@@ -524,10 +583,6 @@ body.theme-dark {
   .is-link,
   code {
     color: var(--md-primary) !important;
-  }
-
-  .modal-background {
-    background-color: rgba(0, 0, 0, 0.62);
   }
 
   /* Final high-priority overrides for Buefy/Bulma defaults */

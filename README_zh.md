@@ -29,7 +29,10 @@ v2rayA 主要提供了下述使用方法：
 
 ## 界面截图
 
-<img src="https://i.loli.net/2020/04/19/kp2oedPiSzVwgHJ.png" border="0">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/screenshot-dark.png">
+  <img src="docs/images/screenshot-light.png" alt="v2rayA 网页界面" width="100%">
+</picture>
 
 
 ## 注意

@@ -37,7 +37,7 @@
             {{ $t("customRouting.defaultRoutingRule") }}
           </p>
           <a class="card-header-icon">
-            <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"> </b-icon>
+            <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"> </b-icon>
           </a>
         </div>
         <div class="card-content">
@@ -75,14 +75,7 @@
             >
           </p>
           <a class="card-header-icon">
-            <b-icon
-              :icon="
-                props.open
-                  ? ' iconfont icon-caret-down'
-                  : ' iconfont icon-caret-up'
-              "
-            >
-            </b-icon>
+            <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
         <div class="card-content">
@@ -100,20 +93,16 @@
               </option>
             </b-select>
           </b-field>
-          <b-field label="Tags" label-position="on-border">
+          <b-field :label="$t('customRouting.tags')" label-position="on-border">
             <b-select
               v-model="rule.tags"
               multiple
-              :native-size="
-                siteDatFiles[rule.filename].tags.length > 16
-                  ? 16
-                  : siteDatFiles[rule.filename].tags.length
-              "
+              :native-size="Math.min(16, tagsOf(rule.filename).length)"
               size="is-small"
               expanded
             >
               <option
-                v-for="tag of siteDatFiles[rule.filename].tags"
+                v-for="tag of tagsOf(rule.filename)"
                 :key="tag"
                 :value="tag"
               >
@@ -122,7 +111,7 @@
             </b-select>
           </b-field>
           <p class="content" style="font-size: 0.8em; margin-left: 0.5em">
-            tags: {{ rule.tags }}
+            {{ $t("customRouting.tags") }}: {{ rule.tags }}
           </p>
           <b-field
             :label="$t('customRouting.typeRule')"
@@ -228,7 +217,6 @@ export default {
               }),
               type: "is-warning",
               position: "is-top",
-              queue: false,
               duration: 5000,
             });
             closing = true;
@@ -242,6 +230,11 @@ export default {
     })();
   },
   methods: {
+    tagsOf(filename) {
+      // a saved rule may name a .dat file that no longer exists
+      const f = this.siteDatFiles[filename];
+      return f && f.tags ? f.tags : [];
+    },
     handleNew() {
       this.customPac.routingRules.push({
         filename: this.firstSiteDatFilename,
@@ -265,7 +258,6 @@ export default {
           message: this.$t("customRouting.messages.emptyRuleNotPermitted"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 3000,
         });
         return;
@@ -279,7 +271,7 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$parent.close();
-        });
+        }, null, "customRouting.saveFailed");
       });
     },
   },
@@ -294,7 +286,7 @@ export default {
 }
 </style>
 <style lang="scss">
-.icon-label {
+.icon-tag {
   font-size: 24px !important;
 }
 .after-line-dot5 {

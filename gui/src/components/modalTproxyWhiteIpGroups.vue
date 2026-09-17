@@ -75,7 +75,6 @@ export default {
                     message: this.$t("tproxyWhiteIpGroups.invalidCustomIps"),
                     type: "is-danger",
                     position: "is-top",
-                    queue: false,
                     duration: 10000,
                 });
                 return
@@ -90,7 +89,7 @@ export default {
             }).then((res) => {
                 handleResponse(res, this, () => {
                     this.$emit("close");
-                });
+                }, null, "tproxyWhiteIpGroups.saveFailed");
             });
         },
     },
