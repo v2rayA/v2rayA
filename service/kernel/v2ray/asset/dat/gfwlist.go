@@ -207,6 +207,10 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	return
 }
 
+// ErrGFWListUpToDate reports that the local GFWList already matches the latest
+// release, so no download was needed.
+var ErrGFWListUpToDate = errors.New("GFWList is already up to date")
+
 func CheckAndUpdateGFWList(downloadLink string) (localGFWListVersionAfterUpdate string, err error) {
 	if downloadLink == "" {
 		update, tRemote, err := IsGFWListUpdate()
@@ -214,9 +218,10 @@ func CheckAndUpdateGFWList(downloadLink string) (localGFWListVersionAfterUpdate 
 			return "", err
 		}
 		if update {
-			return "", fmt.Errorf(
-				"latest version is %v. GFWList is up to date", tRemote.Local().Format("2006-01-02"),
-			)
+			// Nothing to download. This is not a failure, and reporting it as
+			// one made the GUI say "could not update GFWList: GFWList is up to
+			// date"; the caller decides how to present it.
+			return tRemote.Local().Format("2006-01-02"), ErrGFWListUpToDate
 		}
 
 		/* 更新LoyalsoldierSite.dat */
@@ -246,7 +251,12 @@ func DeleteGFWList() error {
 	if err != nil {
 		return err
 	}
-	return os.Remove(pathSiteDat)
+	// Deleting what is already gone is the result the caller asked for; it
+	// used to answer "remove …: no such file or directory".
+	if err := os.Remove(pathSiteDat); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 // unwrappedReason returns the innermost cause of err, which is what a user can

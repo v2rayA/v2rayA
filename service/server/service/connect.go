@@ -97,7 +97,7 @@ func Connect(which *configure.Which) (err error) {
 		}
 	}()
 	if which == nil {
-		return fmt.Errorf("which can not be nil")
+		return fmt.Errorf("no server was given to connect to")
 	}
 	// Reject a malformed or stale selection before it is stored: AddConnect
 	// below persists it, and a stored entry that cannot be located makes

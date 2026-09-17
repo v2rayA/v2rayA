@@ -9,7 +9,7 @@ import (
 
 func GetSharingAddress(w *configure.Which) (addr string, err error) {
 	if w == nil {
-		return "", fmt.Errorf("which can not be nil")
+		return "", fmt.Errorf("no server was given to share")
 	}
 	subscriptions := configure.GetSubscriptions()
 	if w.TYPE == configure.SubscriptionType {
