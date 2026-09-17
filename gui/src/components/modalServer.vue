@@ -1904,7 +1904,8 @@ export default {
           return generateURL(tmp);
         case "anytls":
           if (srcObj.sni) {
-            query.peer = srcObj.sni;
+            // the backend (kernel/serverObj/anytls.go) reads sni, not peer
+            query.sni = srcObj.sni;
           }
           if (srcObj.pinnedPeerCertSha256) {
             query.pinnedPeerCertSha256 = srcObj.pinnedPeerCertSha256;
