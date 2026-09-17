@@ -21,7 +21,13 @@ axios.defaults.timeout = 60 * 1000; // timeout: 60秒
 
 axios.interceptors.request.use(
   (config) => {
-    if (localStorage.hasOwnProperty("token")) {
+    // Only the backend that issued the token gets it. The backend-address
+    // dialog probes a user-typed URL with /api/version, which needs no auth.
+    if (
+      localStorage.hasOwnProperty("token") &&
+      typeof config.url === "string" &&
+      config.url.startsWith(apiRoot)
+    ) {
       config.headers.Authorization = `${localStorage["token"]}`;
       config.headers["X-V2raya-Request-Id"] = nanoid();
     }
@@ -95,8 +101,16 @@ function informNotRunning(url = localStorage["backendAddress"]) {
   });
 }
 
+const escapeHtml = (text) =>
+  text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 axios.interceptors.response.use(
   function (res) {
+    // Buefy toasts and snackbars render their message with v-html, and
+    // backend error strings embed user data such as node remarks.
+    if (res.data && typeof res.data.message === "string") {
+      res.data.message = escapeHtml(res.data.message);
+    }
     return res;
   },
   function (err) {
