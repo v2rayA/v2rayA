@@ -231,7 +231,7 @@ export default {
         });
       } else {
         this.$buefy.toast.open({
-          message: "no vmessLink found",
+          message: this.$t("customAddressPort.noVmessLink"),
           type: "is-warning",
           position: "is-top",
           queue: false,
@@ -280,7 +280,7 @@ export default {
             }
             localStorage["backendAddress"] = backendAddress;
             this.$emit("close");
-          });
+          }, null, "customAddressPort.saveFailed");
         });
       } else {
         this.$axios({

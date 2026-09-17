@@ -100,7 +100,7 @@
               </option>
             </b-select>
           </b-field>
-          <b-field label="Tags" label-position="on-border">
+          <b-field :label="$t('customRouting.tags')" label-position="on-border">
             <b-select
               v-model="rule.tags"
               multiple
@@ -118,7 +118,7 @@
             </b-select>
           </b-field>
           <p class="content" style="font-size: 0.8em; margin-left: 0.5em">
-            tags: {{ rule.tags }}
+            {{ $t("customRouting.tags") }}: {{ rule.tags }}
           </p>
           <b-field
             :label="$t('customRouting.typeRule')"
@@ -280,7 +280,7 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$parent.close();
-        });
+        }, null, "customRouting.saveFailed");
       });
     },
   },

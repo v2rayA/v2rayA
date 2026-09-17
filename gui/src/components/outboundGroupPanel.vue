@@ -271,7 +271,7 @@ export default {
     async requestSuccess(config, fallbackMessage) {
       const res = await this.$axios(config);
       if (!res || !res.data || res.data.code !== "SUCCESS") {
-        throw new Error((res && res.data && res.data.message) || fallbackMessage || "request failed");
+        throw new Error((res && res.data && res.data.message) || fallbackMessage || this.$t("common.fail"));
       }
       return res;
     },
@@ -426,7 +426,7 @@ export default {
         this.$emit("changed");
         this.showPicker = false;
         this.$buefy.toast.open({
-          message: this.$t("common.success"),
+          message: this.$t("proxyGroup.saved", { group: this.pickerGroup }),
           type: "is-success",
           position: "is-top",
           duration: 2000,
@@ -434,7 +434,10 @@ export default {
         });
       } catch (err) {
         this.$buefy.toast.open({
-          message: err?.response?.data?.message || err?.message || "Save failed",
+          message: this.$t("proxyGroup.saveFailed", {
+            group: this.pickerGroup,
+            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          }),
           type: "is-warning",
           position: "is-top",
           duration: 5000,
@@ -460,7 +463,9 @@ export default {
         this.$emit("changed");
       } catch (err) {
         this.$buefy.toast.open({
-          message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          message: this.$t("connection.disconnectFailed", {
+            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          }),
           type: "is-warning",
           position: "is-top",
           duration: 5000,
@@ -483,7 +488,10 @@ export default {
         } else {
           // Show error message from server (e.g., bound custom inbounds)
           this.$buefy.toast.open({
-            message: res.data.message || this.$t("common.fail"),
+            message: this.$t("outbound.deleteFailed", {
+              group: outbound,
+              message: res.data.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 8000,
@@ -492,7 +500,10 @@ export default {
         }
       } catch (err) {
         // Show error from server response
-        const msg = err?.response?.data?.message || err?.message || this.$t("common.fail");
+        const msg = this.$t("outbound.deleteFailed", {
+          group: outbound,
+          message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+        });
         this.$buefy.toast.open({
           message: msg,
           type: "is-warning",

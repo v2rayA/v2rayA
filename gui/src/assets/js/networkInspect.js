@@ -1,5 +1,6 @@
 import axios from "../../plugins/axios";
 import Vue from "vue";
+import i18n from "@/plugins/i18n";
 import { handleResponse } from "./utils";
 
 // 如果节点已连接，reload页面
@@ -24,8 +25,10 @@ function waitingConnected(promise, interval, cancel, timeout) {
           },
           () => {
             if (res.data.message !== "the last request is being processed") {
-              this.$buefy.toast.open({
-                message: res.data.message,
+              Vue.prototype.$buefy.toast.open({
+                message: i18n.t("connection.checkFailed", {
+                  message: res.data.message || i18n.t("common.fail"),
+                }),
                 type: "is-warning",
                 position: "is-top",
                 queue: false,

@@ -84,7 +84,7 @@ export default {
             localStorage["token"] = res.data.data.token;
             this.$emit("close");
             this.$remount();
-          });
+          }, null, "register.failed");
         }).finally(() => {
           this.isSubmitting = false;
         });
@@ -102,7 +102,7 @@ export default {
             localStorage["token"] = res.data.data.token;
             this.$emit("close");
             this.$remount();
-          });
+          }, null, "login.failed");
         }).finally(() => {
           this.isSubmitting = false;
         });

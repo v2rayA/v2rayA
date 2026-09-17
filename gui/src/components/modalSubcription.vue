@@ -4,20 +4,20 @@
       <p class="modal-card-title">{{ $t("configureSubscription.title") }}</p>
     </header>
     <section class="modal-card-body">
-      <b-field label="SUBSCRIPTION">
+      <b-field :label="$t('subscription.subscription')">
         <b-input
           v-model="which.address"
           type="textarea"
           :placeholder="$t('subscription.subscription')"
         />
       </b-field>
-      <b-field label="REMARKS">
+      <b-field :label="$t('subscription.remarks')">
         <b-input
           v-model="which.remarks"
           :placeholder="$t('subscription.remarks')"
         />
       </b-field>
-      <b-field label="AUTO-SELECT">
+      <b-field :label="$t('subscription.autoSelectLabel')">
         <b-checkbox
 	  v-model="which.autoSelect"
 	  >{{ $t("subscription.autoSelect") }}

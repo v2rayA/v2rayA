@@ -240,7 +240,7 @@ export default {
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
           toastConf.message +=
-            ". " +
+            this.$t("welcome.separator") +
             this.$t("welcome.newVersion", {
               version: res.data.data.remoteVersion,
             });
@@ -457,7 +457,7 @@ export default {
             }).then((res) => {
               if (res.data.code === "SUCCESS") {
                 this.$buefy.toast.open({
-                  message: this.$t("common.success"),
+                  message: this.$t("outbound.added"),
                   type: "is-success",
                   duration: 2000,
                   position: "is-top",
@@ -466,7 +466,9 @@ export default {
                 this.outbounds = this.normalizeOutbounds(res.data.data.outbounds);
               } else {
                 this.$buefy.toast.open({
-                  message: res.data.message,
+                  message: this.$t("outbound.addFailed", {
+                    message: res.data.message || this.$t("common.fail"),
+                  }),
                   type: "is-warning",
                   duration: 5000,
                   position: "is-top",
@@ -495,7 +497,7 @@ export default {
         }).then((res) => {
           if (res.data.code === "SUCCESS") {
             this.$buefy.toast.open({
-              message: this.$t("common.success"),
+              message: this.$t("outbound.deleted"),
               type: "is-success",
               duration: 2000,
               position: "is-top",
@@ -513,7 +515,10 @@ export default {
             }
           } else {
             this.$buefy.toast.open({
-              message: res.data.message,
+              message: this.$t("outbound.deleteFailed", {
+                group: outbound,
+                message: res.data.message || this.$t("common.fail"),
+              }),
               type: "is-warning",
               duration: 5000,
               position: "is-top",
@@ -627,7 +632,9 @@ export default {
               });
             } else {
               this.$buefy.toast.open({
-                message: res.data.message,
+                message: this.$t("v2ray.startFailed", {
+                  message: res.data.message || this.$t("common.fail"),
+                }),
                 type: "is-warning",
                 duration: 5000,
                 position: "is-top",
@@ -653,7 +660,9 @@ export default {
             });
           } else {
             this.$buefy.toast.open({
-              message: res.data.message,
+              message: this.$t("v2ray.stopFailed", {
+                message: res.data.message || this.$t("common.fail"),
+              }),
               type: "is-warning",
               duration: 5000,
               position: "is-top",

@@ -66,7 +66,7 @@
           <option v-show="!lite" value="tun" :disabled="!tinytunSupported">
             tun (TinyTun){{ !tinytunSupported ? ' — ' + $t("setting.options.notIntegrated") : '' }}
           </option>
-          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">system proxy</option>
+          <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">{{ $t("setting.options.systemProxy") }}</option>
         </b-select>
 
         <template v-if="transparentType == 'tproxy'">
@@ -104,7 +104,7 @@
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
-        <b-input v-model="tproxyExcludedInterfaces" expanded placeholder="docker*, veth*, wg*, ppp*, br-*" />
+        <b-input v-model="tproxyExcludedInterfaces" expanded :placeholder="$t('setting.tproxyExcludedInterfacesPlaceholder')" />
       </b-field>
 
       <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported"
@@ -201,9 +201,6 @@
             {{ $t("setting.options.whitelistCn") }}
           </option>
           <option value="gfwlist">{{ $t("setting.options.gfwlist") }}</option>
-          <!--          <option value="custom">{{-->
-          <!--            $t("setting.options.customRouting")-->
-          <!--          }}</option>-->
           <option value="routingA">RoutingA</option>
         </b-select>
         <template v-if="pacMode === 'custom'">
@@ -229,7 +226,7 @@
 
       <b-field label-position="on-border">
         <template slot="label">
-          TCPFastOpen
+          {{ $t("setting.tcpFastOpen") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.tcpFastOpen')" multilined position="is-right">
             <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
@@ -363,6 +360,7 @@
 
 <script>
 import { handleResponse } from "@/assets/js/utils";
+import i18n from "@/plugins/i18n";
 import dayjs from "dayjs";
 import ModalCustomRouting from "@/components/modalCustomRouting";
 import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
@@ -416,8 +414,8 @@ export default {
     pacMode: "whitelist",
     showClockPicker: true,
     serverListMode: "noSubscription",
-    remoteGFWListVersion: "checking...",
-    localGFWListVersion: "checking...",
+    remoteGFWListVersion: i18n.t("common.checkRunning"),
+    localGFWListVersion: i18n.t("common.checkRunning"),
     os: "",
     isRoot: false,
     tinytunSupported: false,
@@ -576,13 +574,13 @@ export default {
         }).then((res) => {
           handleResponse(res, this, () => {
             this.$buefy.toast.open({
-              message: res.data.code,
+              message: this.$t("setting.saved"),
               type: "is-primary",
               position: "is-top",
               queue: false,
             });
             this.$parent.close();
-          });
+          }, null, "setting.saveFailed");
           if (
             res.data.code !== "SUCCESS" &&
             res.data.message.indexOf("invalid config") >= 0

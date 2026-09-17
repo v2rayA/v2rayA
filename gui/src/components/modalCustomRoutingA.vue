@@ -138,7 +138,9 @@ export default {
           // Show warning from server if any
           if (res.data.data && res.data.data.warning) {
             this.$buefy.toast.open({
-              message: res.data.data.warning,
+              message: this.$t("routingA.savedWithWarning", {
+                warning: res.data.data.warning,
+              }),
               type: "is-warning",
               position: "is-top",
               duration: 8000,
@@ -146,7 +148,7 @@ export default {
             });
           }
           this.$parent.close();
-        });
+        }, null, "routingA.saveFailed");
       });
     },
   },

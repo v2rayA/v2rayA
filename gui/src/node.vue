@@ -110,7 +110,7 @@
             @click="handleClickLatency(true)"
           >
             <i class="iconfont icon-wave" />
-            <span>PING</span>
+            <span>{{ $t("operations.ping") }}</span>
           </button>
           <button
             :class="{
@@ -225,8 +225,8 @@
         class="main-tabs"
         @input="handleTabsChange"
       >
-        <b-tab-item label="SUBSCRIPTION">
-          <b-field :label="`SUBSCRIPTION(${tableData.subscriptions.length})`">
+        <b-tab-item :label="$t('subscription.subscription')">
+          <b-field :label="`${$t('subscription.subscription')}(${tableData.subscriptions.length})`">
             <b-table
               :data="tableData.subscriptions"
               :checked-rows.sync="checkedRows"
@@ -316,12 +316,12 @@
           </b-field>
         </b-tab-item>
         <b-tab-item
-          label="SERVER"
+          :label="$t('server.server')"
           :icon="`${
             connectedServerInTab['server'] ? ' iconfont icon-dian' : ''
           }`"
         >
-          <b-field :label="`SERVER(${tableData.servers.length})`">
+          <b-field :label="`${$t('server.server')}(${tableData.servers.length})`">
             <b-table
               per-page="100"
               :current-page.sync="currentPage.servers"
@@ -939,7 +939,7 @@ export default {
     this.clipboard = new ClipboardJS(".sharingAddressTag");
     this.clipboard.on("success", (e) => {
       this.$buefy.toast.open({
-        message: this.$t("common.success"),
+        message: this.$t("sharing.copied"),
         type: "is-primary",
         position: "is-top",
         queue: false,
@@ -948,7 +948,7 @@ export default {
     });
     this.clipboard.on("error", (e) => {
       this.$buefy.toast.open({
-        message: this.$t("common.fail") + ", error:" + e.toLocaleString(),
+        message: this.$t("sharing.copyFailed"),
         type: "is-warning",
         position: "is-top",
         queue: false,
@@ -1047,7 +1047,9 @@ export default {
         }
         if (showError) {
           this.$buefy.toast.open({
-            message: res.data.message || this.$t("common.fail"),
+            message: this.$t("server.refreshFailed", {
+              message: res.data.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 5000,
@@ -1057,7 +1059,9 @@ export default {
       } catch (err) {
         if (showError) {
           this.$buefy.toast.open({
-            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+            message: this.$t("server.refreshFailed", {
+              message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 5000,
@@ -1159,7 +1163,7 @@ export default {
       // console.log(file);
       if (!file.type.match(/image\/.*/)) {
         this.$buefy.toast.open({
-          message: this.$t("import.qrcodeError"),
+          message: this.$t("import.notImage"),
           type: "is-warning",
           position: "is-top",
           queue: false,
@@ -1429,7 +1433,7 @@ export default {
         if (res.data.code === "SUCCESS") {
           this.syncLatestNodeOverview();
           this.$buefy.toast.open({
-            message: this.$t("common.success"),
+            message: this.$t("import.success"),
             type: "is-primary",
             position: "is-top",
             queue: false,
@@ -1439,7 +1443,9 @@ export default {
           this.importWhat = "";
         } else {
           this.$buefy.toast.open({
-            message: res.data.message,
+            message: this.$t("import.failed", {
+              message: res.data.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             queue: false,
@@ -1450,7 +1456,7 @@ export default {
         // client-side timeouts silently
         if (err && err.code === "ECONNABORTED") {
           this.$buefy.toast.open({
-            message: err.message,
+            message: this.$t("import.timeout"),
             type: "is-warning",
             position: "is-top",
             queue: false,
@@ -1478,7 +1484,9 @@ export default {
           this.syncLatestNodeOverview();
         } else {
           this.$buefy.toast.open({
-            message: res.data.message,
+            message: this.$t("delete.failed", {
+              message: res.data.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 5000,
@@ -1490,7 +1498,7 @@ export default {
     handleClickDelete() {
       this.$buefy.dialog.confirm({
         title: this.$t("delete.title"),
-        message: this.$t("delete.message"),
+        message: this.$t("delete.message", { n: this.checkedRows.length }),
         confirmText: this.$t("operations.delete"),
         cancelText: this.$t("operations.cancel"),
         type: "is-danger",
@@ -1529,7 +1537,9 @@ export default {
           this.syncLatestNodeOverview();
         } else {
           this.$buefy.toast.open({
-            message: res.data.message,
+            message: this.$t("connection.disconnectFailed", {
+              message: res.data.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 5000,
@@ -1633,7 +1643,9 @@ export default {
             this.syncLatestNodeOverview();
           } else {
             this.$buefy.toast.open({
-              message: res.data.message,
+              message: this.$t("connection.connectFailed", {
+                message: res.data.message || this.$t("common.fail"),
+              }),
               type: "is-warning",
               position: "is-top",
               duration: 5000,
@@ -1643,7 +1655,9 @@ export default {
         }).catch((err) => {
           loading.close();
           this.$buefy.toast.open({
-            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+            message: this.$t("connection.connectFailed", {
+              message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 5000,
@@ -1707,7 +1721,10 @@ export default {
           this.syncLatestNodeOverview();
         } else {
           this.$buefy.toast.open({
-            message: res.data.message || this.$t("common.fail"),
+            message: this.$t("proxyGroup.updateFailed", {
+              group,
+              message: res.data.message || this.$t("common.fail"),
+            }),
             type: "is-warning",
             position: "is-top",
             duration: 5000,
@@ -1717,7 +1734,10 @@ export default {
       }).catch((err) => {
         loading.close();
         this.$buefy.toast.open({
-          message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          message: this.$t("proxyGroup.updateFailed", {
+            group,
+            message: err?.response?.data?.message || err?.message || this.$t("common.fail"),
+          }),
           type: "is-warning",
           position: "is-top",
           duration: 5000,
@@ -1739,7 +1759,7 @@ export default {
           };
         })
       );
-      this.checkedRows.forEach((x) => (x.pingLatency = "testing...")); //refresh
+      this.checkedRows.forEach((x) => (x.pingLatency = this.$t("latency.testing"))); //refresh
       // this.checkedRows = [];
       let timerTip = setTimeout(() => {
         this.$buefy.toast.open({
@@ -1770,7 +1790,9 @@ export default {
             },
             () => {
               this.$buefy.toast.open({
-                message: res.data.message,
+                message: this.$t("latency.failed", {
+                  message: res.data.message || this.$t("common.fail"),
+                }),
                 type: "is-warning",
                 position: "is-top",
                 queue: false,
@@ -1838,7 +1860,7 @@ export default {
       const responses = await Promise.all(requests);
       return responses.map((res) => {
         if (!res?.data || res.data.code !== "SUCCESS") {
-          throw new Error(res?.data?.message || this.$t("common.fail"));
+          throw new Error(res?.data?.message || this.$t("operations.exportEmpty"));
         }
         return res.data.data.sharingAddress || "";
       }).filter((address) => !!address);
@@ -1846,7 +1868,7 @@ export default {
     async buildSelectedNodesExportText() {
       const addresses = await this.collectSelectedSharingAddresses();
       if (!addresses.length) {
-        throw new Error(this.$t("common.fail"));
+        throw new Error(this.$t("operations.exportEmpty"));
       }
       return addresses.join("\n");
     },
@@ -1888,7 +1910,9 @@ export default {
           this.downloadTextFile(exportText);
         }
         this.$buefy.toast.open({
-          message: this.$t("common.success"),
+          message: this.$t(
+            mode === "copy" ? "operations.copySelectedDone" : "operations.downloadTxtDone"
+          ),
           type: "is-primary",
           position: "is-top",
           duration: 2500,
@@ -1896,7 +1920,9 @@ export default {
         });
       } catch (err) {
         this.$buefy.toast.open({
-          message: err?.message || this.$t("common.fail"),
+          message: this.$t("operations.exportFailed", {
+            message: err?.message || this.$t("common.fail"),
+          }),
           type: "is-warning",
           position: "is-top",
           duration: 5000,
@@ -1906,9 +1932,9 @@ export default {
     },
     handleClickShare(row, sub) {
       const TYPE_MAP = {
-        [CONST.SubscriptionServerType]: "SERVER",
-        [CONST.ServerType]: "SERVER",
-        [CONST.SubscriptionType]: "SUBSCRIPTION",
+        [CONST.SubscriptionServerType]: this.$t("sharing.serverTitle"),
+        [CONST.ServerType]: this.$t("sharing.serverTitle"),
+        [CONST.SubscriptionType]: this.$t("sharing.subscriptionTitle"),
       };
       this.$axios({
         url: apiRoot + "/sharingAddress",
@@ -1932,7 +1958,7 @@ export default {
               type: row._type,
             },
           });
-        });
+        }, null, "sharing.failed");
       });
     },
     handleClickUpdateSubscription(row) {
@@ -1947,13 +1973,13 @@ export default {
         handleResponse(res, this, () => {
           this.syncLatestNodeOverview();
           this.$buefy.toast.open({
-            message: this.$t("common.success"),
+            message: this.$t("subscription.updated"),
             type: "is-primary",
             position: "is-top",
             duration: 5000,
             queue: false,
           });
-        });
+        }, null, "subscription.updateFailed");
       });
     },
     handleClickCreate() {
@@ -1984,7 +2010,7 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({
-            message: this.$t("common.success"),
+            message: this.$t("server.saved"),
             type: "is-primary",
             position: "is-top",
             duration: 3000,
@@ -1992,7 +2018,7 @@ export default {
           });
           this.showModalServer = false;
           this.syncLatestNodeOverview();
-        });
+        }, null, "server.saveFailed");
       });
     },
     handleClickModifySubscription(row) {
@@ -2010,7 +2036,7 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$buefy.toast.open({
-            message: this.$t("common.success"),
+            message: this.$t("subscription.saved"),
             type: "is-primary",
             position: "is-top",
             duration: 3000,
@@ -2018,7 +2044,7 @@ export default {
           });
           this.showModalSubscription = false;
           this.syncLatestNodeOverview();
-        });
+        }, null, "subscription.saveFailed");
       });
     },
   },

@@ -155,7 +155,7 @@ export default {
       }).then((res) => {
         handleResponse(res, this, () => {
           this.$emit("close");
-        });
+        }, null, "dns.saveFailed");
       });
     },
   },

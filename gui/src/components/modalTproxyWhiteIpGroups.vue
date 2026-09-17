@@ -90,7 +90,7 @@ export default {
             }).then((res) => {
                 handleResponse(res, this, () => {
                     this.$emit("close");
-                });
+                }, null, "tproxyWhiteIpGroups.saveFailed");
             });
         },
     },

@@ -42,8 +42,14 @@ function handleResponse(res, that, suc, err, fail) {
       if (fail && fail instanceof Function) {
         fail.apply(that);
       } else {
+        const message =
+          typeof fail === "string"
+            ? that.$t(fail, {
+                message: res.data.message || that.$t("common.fail"),
+              })
+            : res.data.message;
         that.$buefy.toast.open({
-          message: res.data.message,
+          message,
           type: "is-warning",
           position: "is-top",
           queue: false,

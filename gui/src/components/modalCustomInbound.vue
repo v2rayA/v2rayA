@@ -195,7 +195,7 @@ export default {
           handleResponse(res, this, () => {
             this.inbounds = res.data.data.inbounds || [];
             this.form = { tag: "", protocol: "socks", port: "", outbound: "", outboundType: "direct", routingARules: "" };
-          });
+          }, null, "customInbound.saveFailed");
         })
         .finally(() => {
           this.adding = false;
@@ -215,7 +215,7 @@ export default {
           }).then((res) => {
             handleResponse(res, this, () => {
               this.inbounds = res.data.data.inbounds || [];
-            });
+            }, null, "customInbound.deleteFailed");
           });
         },
       });
