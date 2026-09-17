@@ -32,10 +32,13 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		return asset.GFWListMissingError()
 	}
-	if setting.IpForward != ipforward.IsIpForwardOn() {
-		e := ipforward.WriteIpForward(setting.IpForward)
-		if e != nil {
+	previousIpForward := ipforward.IsIpForwardOn()
+	ipForwardChanged := false
+	if setting.IpForward != previousIpForward {
+		if e := ipforward.WriteIpForward(setting.IpForward); e != nil {
 			log.Warn("UpdateSetting: %v", e)
+		} else {
+			ipForwardChanged = true
 		}
 	}
 	previous := configure.GetSettingNotNil()
@@ -53,13 +56,28 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 			// rejected setting used to leave the core stopped, and the next
 			// save reported success while nothing was running.
 			log.SetLogLevel(previous.LogLevel)
+			restored := true
+			if ipForwardChanged {
+				if e := ipforward.WriteIpForward(previousIpForward); e != nil {
+					restored = false
+					log.Warn("UpdateSetting: failed to restore ip forwarding: %v", e)
+				}
+			}
 			if e := configure.SetSetting(previous); e != nil {
+				restored = false
 				log.Warn("UpdateSetting: failed to restore the previous setting: %v", e)
 			} else if e := v2ray.UpdateV2RayConfig(); e != nil {
+				restored = false
 				log.Warn("UpdateSetting: failed to restart the core with the previous setting: %v", e)
 			}
-			invalidConfigErr := fmt.Errorf("invalid config: the core could not restart with the new settings, the previous ones are back: %w", err)
-			return common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": err.Error()})
+			// Say which of the two happened: a client told "the previous ones
+			// are back" while the core is in fact down would stop looking.
+			message := "invalid config: the core could not restart with the new settings, the previous ones are back: %w"
+			if !restored {
+				message = "invalid config: the core could not restart with the new settings and the previous ones could not be restored either, the core is stopped: %w"
+			}
+			invalidConfigErr := fmt.Errorf(message, err)
+			return common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": err.Error(), "restored": restored})
 		}
 	}
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {

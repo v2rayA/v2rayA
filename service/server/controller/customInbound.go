@@ -9,9 +9,39 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"regexp"
 	"strings"
 )
+
+// applyCustomInbounds stores the new list and reloads the running core with it.
+// A core that refuses the new list used to stay stopped with the rejected
+// inbound stored, so every later start failed too; put the old list back and
+// bring the core up with it instead.
+func applyCustomInbounds(previous, next []configure.CustomInbound) error {
+	if err := configure.SetCustomInbounds(next); err != nil {
+		return err
+	}
+	if !v2ray.ProcessManager.Running() {
+		return nil
+	}
+	err := v2ray.UpdateV2RayConfig()
+	if err == nil {
+		return nil
+	}
+	restored := true
+	if e := configure.SetCustomInbounds(previous); e != nil {
+		restored = false
+		log.Warn("applyCustomInbounds: failed to restore the previous inbounds: %v", e)
+	} else if e := v2ray.UpdateV2RayConfig(); e != nil {
+		restored = false
+		log.Warn("applyCustomInbounds: failed to restart the core with the previous inbounds: %v", e)
+	}
+	if restored {
+		return fmt.Errorf("the core could not restart with the new inbound, the previous ones are back: %w", err)
+	}
+	return fmt.Errorf("the core could not restart with the new inbound and could not be restored either: %w", err)
+}
 
 func GetCustomInbound(ctx *gin.Context) {
 	inbounds := configure.GetCustomInbounds()
@@ -119,16 +149,11 @@ func PostCustomInbound(ctx *gin.Context) {
 			return
 		}
 	}
+	previous := append([]configure.CustomInbound(nil), inbounds...)
 	inbounds = append(inbounds, ci)
-	if err := configure.SetCustomInbounds(inbounds); err != nil {
+	if err := applyCustomInbounds(previous, inbounds); err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
-	}
-	if v2ray.ProcessManager.Running() {
-		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			common.ResponseError(ctx, logError(err))
-			return
-		}
 	}
 	common.ResponseSuccess(ctx, gin.H{"inbounds": inbounds})
 }
@@ -142,6 +167,7 @@ func DeleteCustomInbound(ctx *gin.Context) {
 		return
 	}
 	inbounds := configure.GetCustomInbounds()
+	previous := append([]configure.CustomInbound(nil), inbounds...)
 	newList := inbounds[:0]
 	found := false
 	for _, ci := range inbounds {
@@ -155,15 +181,9 @@ func DeleteCustomInbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(fmt.Errorf("tag '%s' not found", req.Tag)))
 		return
 	}
-	if err := configure.SetCustomInbounds(newList); err != nil {
+	if err := applyCustomInbounds(previous, newList); err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
-	}
-	if v2ray.ProcessManager.Running() {
-		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			common.ResponseError(ctx, logError(err))
-			return
-		}
 	}
 	common.ResponseSuccess(ctx, gin.H{"inbounds": newList})
 }
