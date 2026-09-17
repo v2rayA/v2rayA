@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 	"github.com/go-leo/slicex"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"reflect"
 	"strconv"
 )
@@ -17,29 +17,24 @@ func GetPorts() configure.Ports {
 func SetPorts(ports *configure.Ports) (err error) {
 	origin := GetPorts()
 	set := map[int]struct{}{}
-	cnt := 0
-	if ports.Socks5 != 0 {
-		set[ports.Socks5] = struct{}{}
-		cnt++
-	}
-	if ports.Http != 0 {
-		set[ports.Http] = struct{}{}
-		cnt++
-	}
-	if ports.Socks5WithPac != 0 {
-		set[ports.Socks5WithPac] = struct{}{}
-		cnt++
-	}
-	if ports.HttpWithPac != 0 {
-		set[ports.HttpWithPac] = struct{}{}
-		cnt++
-	}
-	if ports.Vmess != 0 {
-		set[ports.Vmess] = struct{}{}
-		cnt++
-	}
-	if cnt > len(set) {
-		return fmt.Errorf("ports duplicate. check it")
+	for _, port := range []int{
+		ports.Socks5,
+		ports.Http,
+		ports.Socks5WithPac,
+		ports.HttpWithPac,
+		ports.Vmess,
+		ports.Api.Port,
+	} {
+		if port < 0 || port > 65535 {
+			return fmt.Errorf("port %d is outside valid range 0-65535", port)
+		}
+		if port == 0 {
+			continue
+		}
+		if _, ok := set[port]; ok {
+			return fmt.Errorf("ports duplicate. check it")
+		}
+		set[port] = struct{}{}
 	}
 	detectSyntax := make([]string, 0)
 	if ports.Socks5 != origin.Socks5 {

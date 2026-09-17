@@ -127,10 +127,9 @@ func Connect(which *configure.Which) (err error) {
 		// is restored whether or not the core runs; regenerating the config
 		// only makes sense when it does.
 		if err != nil {
-			if currentConnected != nil {
+			if currentConnected != nil && currentConnected.Len() > 0 {
 				_ = configure.OverwriteConnects(currentConnected)
 			} else {
-				// nothing was connected in this group before (fresh database)
 				_ = configure.ClearConnects(which.Outbound)
 			}
 			if v2ray.ProcessManager.Running() {
@@ -194,7 +193,7 @@ func ReplaceOutboundConnections(outbound string, touches []configure.Which) (err
 
 	backup := configure.GetConnectedServersByOutbound(outbound)
 	restore := func() {
-		if backup != nil {
+		if backup != nil && backup.Len() > 0 {
 			_ = configure.OverwriteConnects(backup)
 		} else {
 			_ = configure.ClearConnects(outbound)

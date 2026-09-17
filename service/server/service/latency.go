@@ -147,6 +147,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
+	listenAddr := "127.0.0.1"
+	if tmpl.Setting != nil && tmpl.Setting.PortSharing {
+		listenAddr = "0.0.0.0"
+	}
 	var toClose []io.Closer
 	defer func() {
 		for _, l := range toClose {
@@ -161,11 +165,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		t := time.Now()
 		var port int
 		for {
-			l, err := net.Listen("tcp", "0.0.0.0:0")
+			l, err := net.Listen("tcp", listenAddr+":0")
 			if err == nil {
 				port = l.Addr().(*net.TCPAddr).Port
 				toClose = append(toClose, l)
-				l2, err2 := net.ListenPacket("udp", "0.0.0.0:"+strconv.Itoa(port))
+				l2, err2 := net.ListenPacket("udp", listenAddr+":"+strconv.Itoa(port))
 				if err2 == nil {
 					toClose = append(toClose, l2)
 					break
@@ -205,6 +209,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			}
 			return nil, err
 		}
+		tmpl.Inbounds[len(tmpl.Inbounds)-1].Listen = listenAddr
 		inboundPortMap[i] = v2rayInboundPort
 	}
 	for _, l := range toClose {
@@ -218,6 +223,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	v2ray.ProcessManager.SetLatencyTesting(true)
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		v2ray.ProcessManager.SetLatencyTesting(false)
+		if v2rayRunning && configure.GetConnectedServers() != nil {
+			if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
+				return nil, fmt.Errorf("%v; cannot restart v2ray-core: %w", err, restoreErr)
+			}
+		}
 		return nil, err
 	}
 	//limit the concurrency

@@ -219,13 +219,11 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
-	subscriptions := configure.GetSubscriptions()
-	if index < 0 || index >= len(subscriptions) {
-		// the auto-updater works from a startup snapshot; the subscription
-		// may have been deleted since
+	subscription := configure.GetSubscription(index)
+	if subscription == nil {
 		return fmt.Errorf("UpdateSubscription: subscription %d does not exist", index)
 	}
-	addr := subscriptions[index].Address
+	addr := subscription.Address
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
@@ -339,10 +337,14 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
 		return err
 	}
-	subscriptions[index].Servers = infoServerRaws
-	subscriptions[index].Status = string(touch.NewUpdateStatus())
-	subscriptions[index].Info = status
-	if err := configure.SetSubscription(index, &subscriptions[index]); err != nil {
+	subscription = configure.GetSubscription(index)
+	if subscription == nil {
+		return fmt.Errorf("UpdateSubscription: subscription %d does not exist", index)
+	}
+	subscription.Servers = infoServerRaws
+	subscription.Status = string(touch.NewUpdateStatus())
+	subscription.Info = status
+	if err := configure.SetSubscription(index, subscription); err != nil {
 		return err
 	}
 	// A remapped connection may point at a server whose config differs from the old
@@ -371,6 +373,25 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
+	if shouldDisconnect {
+		connections := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
+		if connections == nil {
+			return nil
+		}
+		remaining := make([]configure.Which, 0, connections.Len())
+		var found bool
+		for _, connected := range connections.Get() {
+			if connected.TYPE == configure.SubscriptionServerType && connected.Sub == index {
+				found = true
+				continue
+			}
+			remaining = append(remaining, *connected)
+		}
+		if !found {
+			return nil
+		}
+		return ReplaceOutboundConnections(subscriptionServer.Outbound, remaining)
+	}
 
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
 		subscriptionServer.ID = i // Server IDs start with 1
@@ -392,22 +413,12 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 			continue
 		}
 
-		if shouldDisconnect {
-			err := Disconnect(subscriptionServer, true)
-			if err == nil {
-				log.Info("[AutoSelect] Disconnected from server: %v", serverName)
-			} else {
-				log.Error("[AutoSelect] Failed to disconnect from server: %v", serverName)
-				return err
-			}
+		err := Connect(&subscriptionServer)
+		if err == nil {
+			log.Info("[AutoSelect] Automatically selected server: %v", serverName)
 		} else {
-			err := Connect(&subscriptionServer)
-			if err == nil {
-				log.Info("[AutoSelect] Automatically selected server: %v", serverName)
-			} else {
-				log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
-				return err
-			}
+			log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
+			return err
 		}
 	}
 	return nil
