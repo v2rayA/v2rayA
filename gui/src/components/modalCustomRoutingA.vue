@@ -144,7 +144,6 @@ export default {
               type: "is-warning",
               position: "is-top",
               duration: 8000,
-              queue: false,
             });
           }
           this.$parent.close();

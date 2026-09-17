@@ -577,7 +577,6 @@ export default {
               message: this.$t("setting.saved"),
               type: "is-primary",
               position: "is-top",
-              queue: false,
             });
             this.$parent.close();
           }, null, "setting.saveFailed");

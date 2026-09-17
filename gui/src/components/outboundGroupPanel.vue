@@ -435,7 +435,6 @@ export default {
           type: "is-success",
           position: "is-top",
           duration: 2000,
-          queue: false,
         });
       } catch (err) {
         this.$buefy.toast.open({
@@ -446,7 +445,6 @@ export default {
           type: "is-warning",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
       } finally {
         this.saving = false;
@@ -474,7 +472,6 @@ export default {
           type: "is-warning",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
       }
     },
@@ -500,7 +497,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 8000,
-            queue: false,
           });
         }
       } catch (err) {
@@ -514,7 +510,6 @@ export default {
           type: "is-warning",
           position: "is-top",
           duration: 8000,
-          queue: false,
         });
       }
     },

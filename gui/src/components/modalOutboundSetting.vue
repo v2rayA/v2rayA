@@ -132,7 +132,6 @@ export default {
             message: this.$t("outbound.settingSaved"),
             type: "is-primary",
             position: "is-top",
-            queue: false,
           });
           this.$parent.close();
         }, null, "outbound.settingSaveFailed");

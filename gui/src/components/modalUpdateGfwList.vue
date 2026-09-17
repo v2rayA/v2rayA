@@ -78,7 +78,6 @@ export default {
           type: "is-warning",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
         return;
       }
@@ -99,7 +98,6 @@ export default {
             type: "is-success",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }, null, "gfwList.saveFailed");
       }).catch(() => {

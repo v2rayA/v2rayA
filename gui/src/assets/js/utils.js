@@ -74,7 +74,6 @@ function handleResponse(res, that, suc, err, fail) {
           message,
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 5000,
         });
       }

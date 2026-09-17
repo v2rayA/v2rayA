@@ -165,7 +165,6 @@ export default {
           message: this.$t("customInbound.fillAll"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
         });
         return;
       }
@@ -174,7 +173,6 @@ export default {
           message: this.$t("customInbound.outboundRequired"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
         });
         return;
       }

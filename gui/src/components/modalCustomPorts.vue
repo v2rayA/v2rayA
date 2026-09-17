@@ -234,7 +234,6 @@ export default {
           message: this.$t("customAddressPort.noVmessLink"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 5000,
         });
       }

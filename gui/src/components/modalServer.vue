@@ -2015,7 +2015,6 @@ export default {
           message: this.$t("setting.messages.grpcShouldWithTls"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 5000,
         });
         this.$nextTick(() => {

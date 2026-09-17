@@ -952,7 +952,6 @@ export default {
         message: this.$t("sharing.copied"),
         type: "is-primary",
         position: "is-top",
-        queue: false,
       });
       e.clearSelection();
     });
@@ -961,7 +960,6 @@ export default {
         message: this.$t("sharing.copyFailed"),
         type: "is-warning",
         position: "is-top",
-        queue: false,
       });
     });
     window.addEventListener("scroll", this.handleWindowScroll);
@@ -1063,7 +1061,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }
       } catch (err) {
@@ -1075,7 +1072,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }
       }
@@ -1176,7 +1172,6 @@ export default {
           message: this.$t("import.notImage"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
         });
         return;
       }
@@ -1198,7 +1193,6 @@ export default {
               message: that.$t("import.qrcodeError"),
               type: "is-warning",
               position: "is-top",
-              queue: false,
             });
           });
       };
@@ -1448,7 +1442,6 @@ export default {
             message: this.$t("import.success"),
             type: "is-primary",
             position: "is-top",
-            queue: false,
           });
           this.showModalImport = false;
           this.showModalImportInBatch = false;
@@ -1460,7 +1453,6 @@ export default {
             }),
             type: "is-warning",
             position: "is-top",
-            queue: false,
           });
         }
       }).catch((err) => {
@@ -1471,7 +1463,6 @@ export default {
             message: this.$t("import.timeout"),
             type: "is-warning",
             position: "is-top",
-            queue: false,
           });
         }
       }).finally(() => {
@@ -1502,7 +1493,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }
       });
@@ -1555,7 +1545,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }
       });
@@ -1661,7 +1650,6 @@ export default {
               type: "is-warning",
               position: "is-top",
               duration: 5000,
-              queue: false,
             });
           }
         }).catch((err) => {
@@ -1673,7 +1661,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }),
         3 * 1000,
@@ -1740,7 +1727,6 @@ export default {
             type: "is-warning",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }
       }).catch((err) => {
@@ -1753,7 +1739,6 @@ export default {
           type: "is-warning",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
       });
     },
@@ -1779,7 +1764,6 @@ export default {
           type: "is-primary",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
       }, 10 * 1200);
       this.$axios({
@@ -1807,7 +1791,6 @@ export default {
                 }),
                 type: "is-warning",
                 position: "is-top",
-                queue: false,
                 duration: 5000,
               });
               this.checkedRows.forEach((x) => (x.pingLatency = ""));
@@ -1931,7 +1914,6 @@ export default {
           type: "is-primary",
           position: "is-top",
           duration: 2500,
-          queue: false,
         });
       } catch (err) {
         this.$buefy.toast.open({
@@ -1941,7 +1923,6 @@ export default {
           type: "is-warning",
           position: "is-top",
           duration: 5000,
-          queue: false,
         });
       }
     },
@@ -1992,7 +1973,6 @@ export default {
             type: "is-primary",
             position: "is-top",
             duration: 5000,
-            queue: false,
           });
         }, null, "subscription.updateFailed");
       });
@@ -2030,7 +2010,6 @@ export default {
             type: "is-primary",
             position: "is-top",
             duration: 3000,
-            queue: false,
           });
           this.showModalServer = false;
           this.syncLatestNodeOverview();
@@ -2056,7 +2035,6 @@ export default {
             type: "is-primary",
             position: "is-top",
             duration: 3000,
-            queue: false,
           });
           this.showModalSubscription = false;
           this.syncLatestNodeOverview();

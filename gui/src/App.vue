@@ -235,7 +235,6 @@ export default {
           type: "is-dark",
           position: "is-top",
           duration: 3000,
-          queue: false,
         };
         if (res.data.data.foundNew) {
           toastConf.duration = 5000;
@@ -270,7 +269,6 @@ export default {
             message: this.$t("version.v2rayInvalid"),
             type: "is-danger",
             position: "is-top",
-            queue: false,
             duration: 10000,
           });
         }
@@ -469,7 +467,6 @@ export default {
                   type: "is-success",
                   duration: 2000,
                   position: "is-top",
-                  queue: false,
                 });
                 this.outbounds = this.normalizeOutbounds(res.data.data.outbounds);
               } else {
@@ -480,7 +477,6 @@ export default {
                   type: "is-warning",
                   duration: 5000,
                   position: "is-top",
-                  queue: false,
                 });
               }
             }),
@@ -509,7 +505,6 @@ export default {
               type: "is-success",
               duration: 2000,
               position: "is-top",
-              queue: false,
             });
             this.outbounds = this.normalizeOutbounds(res.data.data.outbounds);
             if (this.outboundName === outbound) {
@@ -530,7 +525,6 @@ export default {
               type: "is-warning",
               duration: 5000,
               position: "is-top",
-              queue: false,
             });
           }
         }),
@@ -646,7 +640,6 @@ export default {
                 type: "is-warning",
                 duration: 5000,
                 position: "is-top",
-                queue: false,
               });
             }
           }).finally(() => {
@@ -674,7 +667,6 @@ export default {
               type: "is-warning",
               duration: 5000,
               position: "is-top",
-              queue: false,
             });
           }
         });
@@ -767,6 +759,56 @@ html {
 // it below the navbar.
 .notices {
   padding-top: 4.5rem !important;
+}
+
+// Below the tablet breakpoint reset.scss scales the root font to 0.8em,
+// which made the status tags ~10px and the logo ~32px; size the brand row
+// in px so it stays a touch target.
+@media screen and (max-width: 768px) {
+  .navbar-brand .logo {
+    height: 40px;
+    min-height: 40px;
+    margin-left: 0.5em;
+  }
+  .navbar-brand .tag {
+    font-size: 13px;
+    height: 2.2em;
+    padding-left: 0.9em;
+    padding-right: 0.9em;
+  }
+  .navbar-brand > .navbar-item {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .navbar-burger {
+    height: 3.5rem;
+    width: 3.5rem;
+  }
+}
+
+// Phone dialogs: Bulma floats the card in the middle of the viewport
+// (max-height: 100vh - 160px) with the close button fixed at the top of the
+// screen, far above the card. Fill the screen so the card head is at the
+// top and the close button sits at its top-right corner.
+@media screen and (max-width: 768px) {
+  .modal .modal-card {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+  }
+  .modal .modal-card-head {
+    padding-right: 3.75rem;
+    border-radius: 0;
+  }
+  .modal .modal-card-foot {
+    border-radius: 0;
+  }
+  .modal .modal-close {
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 1;
+  }
 }
 
 // Bulma only centres navbar items from the desktop breakpoint up; below it

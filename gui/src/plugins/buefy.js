@@ -7,6 +7,12 @@ import "lucide-static/font/lucide.css";
 Vue.use(Buefy);
 ConfigProgrammatic.setOptions({
   defaultProgrammaticPromise: true,
+  // one notice at a time: repeated clicks on a failing action used to
+  // stack a screenful of identical toasts
+  defaultNoticeQueue: true,
+  // on phones Buefy turns every dropdown into a centred modal with a
+  // backdrop; a menu should stay a menu
+  defaultDropdownMobileModal: false,
   defaultIconPack: "lucide",
   customIconPacks: {
     lucide: {

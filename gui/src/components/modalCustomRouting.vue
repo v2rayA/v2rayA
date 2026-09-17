@@ -217,7 +217,6 @@ export default {
               }),
               type: "is-warning",
               position: "is-top",
-              queue: false,
               duration: 5000,
             });
             closing = true;
@@ -259,7 +258,6 @@ export default {
           message: this.$t("customRouting.messages.emptyRuleNotPermitted"),
           type: "is-warning",
           position: "is-top",
-          queue: false,
           duration: 3000,
         });
         return;

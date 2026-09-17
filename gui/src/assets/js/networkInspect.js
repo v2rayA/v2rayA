@@ -39,7 +39,6 @@ function waitingConnected(promise, interval, cancel, timeout) {
                 }),
                 type: "is-warning",
                 position: "is-top",
-                queue: false,
                 duration: 5000,
               });
             }

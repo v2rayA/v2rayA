@@ -86,7 +86,6 @@ function informNotRunning(url = localStorage["backendAddress"]) {
   SnackbarProgrammatic.open({
     message: i18n.t("axios.messages.optimizeBackend"),
     type: "is-primary",
-    queue: false,
     duration: 10000,
     position: "is-top",
     actionText: i18n.t("operations.yes"),
@@ -102,7 +101,6 @@ function informNotRunning(url = localStorage["backendAddress"]) {
   SnackbarProgrammatic.open({
     message: i18n.t("axios.messages.noBackendFound", { url }),
     type: "is-warning",
-    queue: false,
     position: "is-top",
     duration: 10000,
     actionText: i18n.t("operations.helpManual"),
@@ -175,7 +173,6 @@ axios.interceptors.response.use(
         message: msg,
         type: "is-warning",
         position: "is-top",
-        queue: false,
         duration: 10000,
         actionText: i18n.t("operations.switchSite"),
         onAction: () => {
@@ -185,7 +182,6 @@ axios.interceptors.response.use(
       SnackbarProgrammatic.open({
         message: i18n.t("axios.messages.optimizeBackend"),
         type: "is-primary",
-        queue: false,
         duration: 10000,
         position: "is-top",
         actionText: i18n.t("operations.yes"),
@@ -219,7 +215,6 @@ axios.interceptors.response.use(
         message: err,
         type: "is-warning",
         position: "is-top",
-        queue: false,
         duration: 5000,
       });
     }

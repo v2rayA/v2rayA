@@ -4,6 +4,19 @@
   vertical-align: middle;
 }
 
+// Lucide glyphs used inline (buttons, navbar items, labels) sit on the
+// text baseline; centre them on the x-height like the old icon font did.
+.lucide {
+  display: inline-block;
+  line-height: 1;
+  vertical-align: -0.2em;
+}
+.button > .lucide,
+.navbar-item > .lucide,
+.dropdown-item > .lucide {
+  margin-inline-end: 0.35em;
+}
+
 .icon-md {
   font-size: 1.5em;
 }
