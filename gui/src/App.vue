@@ -63,6 +63,7 @@
         </b-dropdown>
         <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
           <a slot="trigger" class="navbar-item" role="button">
+            <i class="mdi mdi-account" style="font-size: 1.25em; margin-right: 4px"></i>
             <span class="no-select">{{ username }}</span>
             <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
@@ -714,6 +715,14 @@ html {
   }
 }
 
+// Bulma only centres navbar items from the desktop breakpoint up; below it
+// the brand row is a plain block and the status tag and group panel sit at
+// the top of the row while the logo fills it.
+.navbar-brand > .navbar-item {
+  display: flex;
+  align-items: center;
+}
+
 @media screen and (max-width: 1023px) {
   .dropdown.is-mobile-modal .dropdown-menu {
     // fix modal blur issues
@@ -721,6 +730,20 @@ html {
     right: 0 !important;
     margin: auto;
     transform: unset !important;
+  }
+
+  // In the collapsed menu each dropdown is inline-flex, so the language and
+  // account triggers share one row with different baselines. Give each its
+  // own full-width row like the plain navbar items above them.
+  .navbar-menu .navbar-end > .dropdown {
+    display: flex;
+    // Buefy spaces adjacent dropdowns with .dropdown + .dropdown; stacked
+    // rows must not inherit that indent.
+    margin-left: 0;
+
+    > .dropdown-trigger {
+      width: 100%;
+    }
   }
 }
 

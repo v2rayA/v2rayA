@@ -124,9 +124,10 @@ body.theme-dark {
     }
   }
 
+  // .modal-card stays transparent as in Bulma: only its head and foot are
+  // rounded, and painting the card itself squares the corners.
   .box,
   .card,
-  .modal-card,
   .modal-card-head,
   .modal-card-body,
   .modal-card-foot,
@@ -139,6 +140,14 @@ body.theme-dark {
     border-color: var(--md-surface-variant);
   }
 
+  .card-header,
+  .card-footer,
+  .card-footer-item {
+    border-color: var(--md-surface-variant);
+  }
+
+  .card-header-title,
+  .card-footer-item,
   .modal-card-title,
   .message .title,
   .message .subtitle,
