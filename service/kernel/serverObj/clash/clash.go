@@ -57,6 +57,7 @@ type clashProxy struct {
 	RealityOpts struct {
 		PublicKey string `yaml:"public-key"`
 		ShortID   string `yaml:"short-id"`
+		SpiderX   string `yaml:"spider-x"`
 	} `yaml:"reality-opts"`
 	// ssr
 	Protocol      string `yaml:"protocol"`
@@ -190,6 +191,7 @@ func (p *clashProxy) link() (string, error) {
 			q.Set("security", "reality")
 			q.Set("pbk", p.RealityOpts.PublicKey)
 			setIf(q, "sid", p.RealityOpts.ShortID)
+			setIf(q, "spx", p.RealityOpts.SpiderX)
 		} else if p.TLS {
 			q.Set("security", "tls")
 		} else {
@@ -204,20 +206,21 @@ func (p *clashProxy) link() (string, error) {
 			network = "tcp"
 		}
 		info := map[string]interface{}{
-			"v":    "2",
-			"ps":   p.Name,
-			"add":  p.Server,
-			"port": strconv.Itoa(p.Port),
-			"id":   p.UUID,
-			"aid":  strconv.Itoa(p.AlterID),
-			"scy":  p.Cipher,
-			"net":  network,
-			"type": "none",
-			"host": "",
-			"path": "",
-			"tls":  "",
-			"sni":  p.sni(),
-			"alpn": strings.Join(p.ALPN, ","),
+			"v":           "2",
+			"ps":          p.Name,
+			"add":         p.Server,
+			"port":        strconv.Itoa(p.Port),
+			"id":          p.UUID,
+			"aid":         strconv.Itoa(p.AlterID),
+			"scy":         p.Cipher,
+			"net":         network,
+			"type":        "none",
+			"host":        "",
+			"path":        "",
+			"tls":         "",
+			"sni":         p.sni(),
+			"alpn":        strings.Join(p.ALPN, ","),
+			"fingerprint": p.Fingerprint,
 		}
 		if p.TLS {
 			info["tls"] = "tls"
