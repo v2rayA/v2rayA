@@ -246,17 +246,25 @@ export default {
             });
           toastConf.type = "is-success";
         }
-        this.$buefy.toast.open(toastConf);
+        // the running/new-version notice once per browser session, not on
+        // every reload or remount
+        const seenKey = "welcomeShown:" + res.data.data.version;
+        let seen = false;
+        try {
+          seen = sessionStorage.getItem(seenKey) === "1";
+          sessionStorage.setItem(seenKey, "1");
+        } catch (_) {
+          // storage unavailable: fall back to showing it
+        }
+        if (!seen || res.data.data.foundNew) {
+          this.$buefy.toast.open(toastConf);
+        }
         localStorage["docker"] = res.data.data.dockerMode;
         localStorage["version"] = res.data.data.version;
+        // a core version mismatch is already shown as the persistent banner
+        // in node.vue; no toast on top of it
         if (res.data.data.coreVersionValid === false) {
-          this.$buefy.toast.open({
-            message: this.$t("version.coreVersionMismatch", { err: res.data.data.coreVersionErr || "" }),
-            type: "is-danger",
-            position: "is-top",
-            queue: false,
-            duration: 0,
-          });
+          // banner only
         } else if (res.data.data.serviceValid === false) {
           this.$buefy.toast.open({
             message: this.$t("version.v2rayInvalid"),
