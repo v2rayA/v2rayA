@@ -556,4 +556,45 @@ export default {
   },
   pinnedPeerCertSha256: "Pinned Certificate SHA256",
   verifyPeerCertByName: "Verify Peer Cert By Name",
+  backend: {
+    NO_SERVER_SELECTED: "No server is selected. Connect a server first.",
+    CORE_START_FAILED: "Failed to start v2raya_core: {detail}",
+    CORE_NOT_FOUND: "v2raya_core was not found.",
+    CORE_VERSION_MISMATCH:
+      "v2raya_core version {core} does not match v2rayA version {app}.",
+    PORT_OCCUPIED: "Port {port} is already in use.",
+    INVALID_PORT: "Port {port} is invalid.",
+    PORT_DUPLICATE: "Port {port} is used more than once.",
+    LINK_EMPTY: "Server link is empty.",
+    LINK_NO_SCHEME: "Server link has no scheme.",
+    LINK_UNSUPPORTED_SCHEME: "Unsupported link scheme: {scheme}",
+    LINK_MALFORMED: "Malformed {protocol} link: {detail}",
+    SUBSCRIPTION_FETCH_FAILED:
+      "Could not fetch the subscription from {host}: {detail}",
+    SUBSCRIPTION_EMPTY: "The subscription contains no servers.",
+    SUBSCRIPTION_NOT_FOUND:
+      "Subscription #{id} does not exist. Reload the page.",
+    SERVER_NOT_FOUND:
+      "Server #{id} does not exist (there are {count} servers). Reload the page.",
+    SUBSCRIPTION_SERVER_NOT_FOUND:
+      "Server #{id} in subscription #{sub} does not exist. Reload the page.",
+    UNKNOWN_ITEM_TYPE: "Unknown item type: {type}",
+    INVALID_KIND: "Invalid import kind: {kind}",
+    BAD_REQUEST: "Invalid request: expected {field}.",
+    WRONG_CREDENTIALS: "Wrong username or password.",
+    USERNAME_TAKEN: "Username {username} is already taken.",
+    ACCOUNT_EXISTS: "An account already exists.",
+    SESSION_EXPIRED: "Your session has expired. Sign in again.",
+    SESSION_INVALID: "Your session is invalid. Sign in again.",
+    ADMIN_REQUIRED: "Administrator access is required.",
+    REQUEST_IN_PROGRESS: "the last request is being processed",
+    GFWLIST_MISSING: "GFWList is missing from {dir}.",
+    INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_DOWNLOAD_FAILED:
+      "Could not download the asset from {host} (HTTP {status}).",
+    TRANSPARENT_SETUP_FAILED:
+      "Failed to set up {mode} transparent proxy: {detail}",
+    MUX_RANGE: "Invalid MUX concurrency value: {value}",
+    CUSTOM_INBOUND_INVALID: "Invalid custom inbound {field}: {value}",
+  },
 };

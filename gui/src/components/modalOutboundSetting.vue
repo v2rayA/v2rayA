@@ -138,7 +138,8 @@ export default {
         }, null, "outbound.settingSaveFailed");
         if (
           res.data.code !== "SUCCESS" &&
-          res.data.message.indexOf("invalid config") >= 0
+          (res.data.errorCode === "INVALID_CONFIG" ||
+            res.data.message.indexOf("invalid config") >= 0)
         ) {
           // FIXME: tricky
           this.$parent.$parent.runningState.running =

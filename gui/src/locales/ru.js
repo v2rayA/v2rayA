@@ -555,4 +555,46 @@ export default {
   },
   pinnedPeerCertSha256: "Закреплённый сертификат SHA256",
   verifyPeerCertByName: "Проверка сертификата узла по имени",
+  backend: {
+    NO_SERVER_SELECTED: "Сервер не выбран. Сначала подключитесь к серверу.",
+    CORE_START_FAILED: "Не удалось запустить v2raya_core: {detail}",
+    CORE_NOT_FOUND: "v2raya_core не найден.",
+    CORE_VERSION_MISMATCH:
+      "Версия v2raya_core ({core}) не совпадает с версией v2rayA ({app}).",
+    PORT_OCCUPIED: "Порт {port} уже используется.",
+    INVALID_PORT: "Недопустимый порт: {port}.",
+    PORT_DUPLICATE: "Порт {port} используется более одного раза.",
+    LINK_EMPTY: "Ссылка на сервер пуста.",
+    LINK_NO_SCHEME: "В ссылке на сервер отсутствует схема.",
+    LINK_UNSUPPORTED_SCHEME: "Неподдерживаемая схема ссылки: {scheme}",
+    LINK_MALFORMED: "Некорректная ссылка протокола {protocol}: {detail}",
+    SUBSCRIPTION_FETCH_FAILED:
+      "Не удалось получить подписку по адресу {host}: {detail}",
+    SUBSCRIPTION_EMPTY: "Подписка не содержит серверов.",
+    SUBSCRIPTION_NOT_FOUND:
+      "Подписка №{id} не существует. Перезагрузите страницу.",
+    SERVER_NOT_FOUND:
+      "Сервер №{id} не существует (всего серверов: {count}). Перезагрузите страницу.",
+    SUBSCRIPTION_SERVER_NOT_FOUND:
+      "Сервер №{id} в подписке №{sub} не существует. Перезагрузите страницу.",
+    UNKNOWN_ITEM_TYPE: "Неизвестный тип элемента: {type}",
+    INVALID_KIND: "Недопустимый тип импорта: {kind}",
+    BAD_REQUEST: "Недопустимый запрос: ожидается {field}.",
+    WRONG_CREDENTIALS: "Неверное имя пользователя или пароль.",
+    USERNAME_TAKEN: "Имя пользователя {username} уже занято.",
+    ACCOUNT_EXISTS: "Учётная запись уже существует.",
+    SESSION_EXPIRED: "Срок действия сеанса истёк. Войдите снова.",
+    SESSION_INVALID: "Сеанс недействителен. Войдите снова.",
+    ADMIN_REQUIRED: "Требуются права администратора.",
+    REQUEST_IN_PROGRESS: "the last request is being processed",
+    GFWLIST_MISSING: "Файл GFWList отсутствует в каталоге {dir}.",
+    INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_DOWNLOAD_FAILED:
+      "Не удалось загрузить ресурс по адресу {host} (HTTP {status}).",
+    TRANSPARENT_SETUP_FAILED:
+      "Не удалось настроить прозрачный прокси в режиме {mode}: {detail}",
+    MUX_RANGE: "Недопустимое значение параллелизма MUX: {value}",
+    CUSTOM_INBOUND_INVALID:
+      "Недопустимое значение поля {field} пользовательского входящего подключения: {value}",
+  },
 };

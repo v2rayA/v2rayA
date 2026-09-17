@@ -161,6 +161,7 @@
 </template>
 
 <script>
+import { backendMessage } from "@/assets/js/utils";
 import i18n from "@/plugins/i18n";
 
 export default {
@@ -271,7 +272,11 @@ export default {
     async requestSuccess(config, fallbackMessage) {
       const res = await this.$axios(config);
       if (!res || !res.data || res.data.code !== "SUCCESS") {
-        throw new Error((res && res.data && res.data.message) || fallbackMessage || this.$t("common.fail"));
+        throw new Error(
+          (res && res.data && backendMessage(this, res)) ||
+            fallbackMessage ||
+            this.$t("common.fail")
+        );
       }
       return res;
     },
@@ -490,7 +495,7 @@ export default {
           this.$buefy.toast.open({
             message: this.$t("outbound.deleteFailed", {
               group: outbound,
-              message: res.data.message || this.$t("common.fail"),
+              message: backendMessage(this, res) || this.$t("common.fail"),
             }),
             type: "is-warning",
             position: "is-top",

@@ -542,4 +542,45 @@ export default {
   },
   pinnedPeerCertSha256: "SHA256 do certificado fixado",
   verifyPeerCertByName: "Verificar certificado do peer pelo nome",
+  backend: {
+    NO_SERVER_SELECTED: "Nenhum servidor selecionado. Conecte um servidor primeiro.",
+    CORE_START_FAILED: "Falha ao iniciar o v2raya_core: {detail}",
+    CORE_NOT_FOUND: "v2raya_core não encontrado.",
+    CORE_VERSION_MISMATCH:
+      "A versão {core} do v2raya_core não corresponde à versão {app} do v2rayA.",
+    PORT_OCCUPIED: "A porta {port} já está em uso.",
+    INVALID_PORT: "A porta {port} é inválida.",
+    PORT_DUPLICATE: "A porta {port} é usada mais de uma vez.",
+    LINK_EMPTY: "O link do servidor está vazio.",
+    LINK_NO_SCHEME: "O link do servidor não tem esquema.",
+    LINK_UNSUPPORTED_SCHEME: "Esquema de link não suportado: {scheme}",
+    LINK_MALFORMED: "Link {protocol} malformado: {detail}",
+    SUBSCRIPTION_FETCH_FAILED:
+      "Não foi possível obter a assinatura de {host}: {detail}",
+    SUBSCRIPTION_EMPTY: "A assinatura não contém servidores.",
+    SUBSCRIPTION_NOT_FOUND:
+      "A assinatura #{id} não existe. Recarregue a página.",
+    SERVER_NOT_FOUND:
+      "O servidor #{id} não existe (há {count} servidores). Recarregue a página.",
+    SUBSCRIPTION_SERVER_NOT_FOUND:
+      "O servidor #{id} da assinatura #{sub} não existe. Recarregue a página.",
+    UNKNOWN_ITEM_TYPE: "Tipo de item desconhecido: {type}",
+    INVALID_KIND: "Tipo de importação inválido: {kind}",
+    BAD_REQUEST: "Solicitação inválida: esperava-se {field}.",
+    WRONG_CREDENTIALS: "Nome de usuário ou senha incorretos.",
+    USERNAME_TAKEN: "O nome de usuário {username} já está em uso.",
+    ACCOUNT_EXISTS: "Já existe uma conta.",
+    SESSION_EXPIRED: "Sua sessão expirou. Entre novamente.",
+    SESSION_INVALID: "Sua sessão é inválida. Entre novamente.",
+    ADMIN_REQUIRED: "É necessário acesso de administrador.",
+    REQUEST_IN_PROGRESS: "the last request is being processed",
+    GFWLIST_MISSING: "A GFWList está ausente no diretório {dir}.",
+    INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_DOWNLOAD_FAILED:
+      "Não foi possível baixar o recurso de {host} (HTTP {status}).",
+    TRANSPARENT_SETUP_FAILED:
+      "Falha ao configurar o proxy transparente {mode}: {detail}",
+    MUX_RANGE: "Valor de concorrência do MUX inválido: {value}",
+    CUSTOM_INBOUND_INVALID: "Entrada personalizada inválida {field}: {value}",
+  },
 };

@@ -774,7 +774,11 @@
 </template>
 
 <script>
-import { locateServer, handleResponse } from "@/assets/js/utils";
+import {
+  backendMessage,
+  handleResponse,
+  locateServer,
+} from "@/assets/js/utils";
 import CONST from "@/assets/js/const";
 import QRCode from "qrcode";
 import { Decoder } from "@nuintun/qrcode";
@@ -1062,7 +1066,7 @@ export default {
         if (showError) {
           this.$buefy.toast.open({
             message: this.$t("server.refreshFailed", {
-              message: res.data.message || this.$t("common.fail"),
+              message: backendMessage(this, res) || this.$t("common.fail"),
             }),
             type: "is-warning",
             position: "is-top",
@@ -1460,7 +1464,7 @@ export default {
         } else {
           this.$buefy.toast.open({
             message: this.$t("import.failed", {
-              message: res.data.message || this.$t("common.fail"),
+              message: backendMessage(this, res) || this.$t("common.fail"),
             }),
             type: "is-warning",
             position: "is-top",
@@ -1501,7 +1505,7 @@ export default {
         } else {
           this.$buefy.toast.open({
             message: this.$t("delete.failed", {
-              message: res.data.message || this.$t("common.fail"),
+              message: backendMessage(this, res) || this.$t("common.fail"),
             }),
             type: "is-warning",
             position: "is-top",
@@ -1554,7 +1558,7 @@ export default {
         } else {
           this.$buefy.toast.open({
             message: this.$t("connection.disconnectFailed", {
-              message: res.data.message || this.$t("common.fail"),
+              message: backendMessage(this, res) || this.$t("common.fail"),
             }),
             type: "is-warning",
             position: "is-top",
@@ -1660,7 +1664,7 @@ export default {
           } else {
             this.$buefy.toast.open({
               message: this.$t("connection.connectFailed", {
-                message: res.data.message || this.$t("common.fail"),
+                message: backendMessage(this, res) || this.$t("common.fail"),
               }),
               type: "is-warning",
               position: "is-top",
@@ -1739,7 +1743,7 @@ export default {
           this.$buefy.toast.open({
             message: this.$t("proxyGroup.updateFailed", {
               group,
-              message: res.data.message || this.$t("common.fail"),
+              message: backendMessage(this, res) || this.$t("common.fail"),
             }),
             type: "is-warning",
             position: "is-top",
@@ -1807,7 +1811,7 @@ export default {
             () => {
               this.$buefy.toast.open({
                 message: this.$t("latency.failed", {
-                  message: res.data.message || this.$t("common.fail"),
+                  message: backendMessage(this, res) || this.$t("common.fail"),
                 }),
                 type: "is-warning",
                 position: "is-top",
@@ -1876,7 +1880,10 @@ export default {
       const responses = await Promise.all(requests);
       return responses.map((res) => {
         if (!res?.data || res.data.code !== "SUCCESS") {
-          throw new Error(res?.data?.message || this.$t("operations.exportEmpty"));
+          throw new Error(
+            (res?.data && backendMessage(this, res)) ||
+              this.$t("operations.exportEmpty")
+          );
         }
         return res.data.data.sharingAddress || "";
       }).filter((address) => !!address);

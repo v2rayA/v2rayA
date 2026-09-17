@@ -583,7 +583,8 @@ export default {
           }, null, "setting.saveFailed");
           if (
             res.data.code !== "SUCCESS" &&
-            res.data.message.indexOf("invalid config") >= 0
+            (res.data.errorCode === "INVALID_CONFIG" ||
+              res.data.message.indexOf("invalid config") >= 0)
           ) {
             // FIXME: tricky
             this.$parent.$parent.runningState.running = this.$t("common.notRunning");

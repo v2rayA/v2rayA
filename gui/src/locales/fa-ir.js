@@ -555,4 +555,45 @@ export default {
   },
   pinnedPeerCertSha256: "گواهی همتا با SHA256 ثابت‌شده",
   verifyPeerCertByName: "تأیید گواهی همتا بر اساس نام",
+  backend: {
+    NO_SERVER_SELECTED:
+      "هیچ سروری انتخاب نشده است. ابتدا یک سرور را متصل کنید.",
+    CORE_START_FAILED: "شروع v2raya_core ناموفق بود: {detail}",
+    CORE_NOT_FOUND: "v2raya_core پیدا نشد.",
+    CORE_VERSION_MISMATCH:
+      "نسخه v2raya_core یعنی {core} با نسخه v2rayA یعنی {app} مطابقت ندارد.",
+    PORT_OCCUPIED: "پورت {port} از قبل در حال استفاده است.",
+    INVALID_PORT: "پورت {port} نامعتبر است.",
+    PORT_DUPLICATE: "پورت {port} بیش از یک بار استفاده شده است.",
+    LINK_EMPTY: "پیوند سرور خالی است.",
+    LINK_NO_SCHEME: "پیوند سرور فاقد scheme است.",
+    LINK_UNSUPPORTED_SCHEME: "طرح پیوند پشتیبانی نمی‌شود: {scheme}",
+    LINK_MALFORMED: "پیوند {protocol} ساختار نادرستی دارد: {detail}",
+    SUBSCRIPTION_FETCH_FAILED: "دریافت اشتراک از {host} ناموفق بود: {detail}",
+    SUBSCRIPTION_EMPTY: "اشتراک شامل هیچ سروری نیست.",
+    SUBSCRIPTION_NOT_FOUND:
+      "اشتراک #{id} وجود ندارد. صفحه را دوباره بارگیری کنید.",
+    SERVER_NOT_FOUND:
+      "سرور #{id} وجود ندارد (تعداد سرورها: {count}). صفحه را دوباره بارگیری کنید.",
+    SUBSCRIPTION_SERVER_NOT_FOUND:
+      "سرور #{id} در اشتراک #{sub} وجود ندارد. صفحه را دوباره بارگیری کنید.",
+    UNKNOWN_ITEM_TYPE: "نوع مورد ناشناخته است: {type}",
+    INVALID_KIND: "نوع وارد کردن نامعتبر است: {kind}",
+    BAD_REQUEST: "درخواست نامعتبر است؛ مقدار مورد انتظار: {field}.",
+    WRONG_CREDENTIALS: "نام کاربری یا گذرواژه نادرست است.",
+    USERNAME_TAKEN: "نام کاربری {username} از قبل استفاده شده است.",
+    ACCOUNT_EXISTS: "حساب کاربری از قبل وجود دارد.",
+    SESSION_EXPIRED: "نشست شما منقضی شده است. دوباره وارد شوید.",
+    SESSION_INVALID: "نشست شما نامعتبر است. دوباره وارد شوید.",
+    ADMIN_REQUIRED: "دسترسی مدیر لازم است.",
+    REQUEST_IN_PROGRESS: "the last request is being processed",
+    GFWLIST_MISSING: "GFWList در {dir} وجود ندارد.",
+    INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_DOWNLOAD_FAILED: "بارگیری منبع از {host} ناموفق بود (HTTP {status}).",
+    TRANSPARENT_SETUP_FAILED:
+      "راه‌اندازی پروکسی شفاف {mode} ناموفق بود: {detail}",
+    MUX_RANGE: "مقدار هم‌زمانی MUX نامعتبر است: {value}",
+    CUSTOM_INBOUND_INVALID:
+      "مقدار {field} در ورودی سفارشی نامعتبر است: {value}",
+  },
 };

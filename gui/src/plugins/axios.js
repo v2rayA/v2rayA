@@ -9,7 +9,7 @@ import {
   ModalProgrammatic,
 } from "buefy";
 import ModalLogin from "@/components/modalLogin";
-import { parseURL } from "@/assets/js/utils";
+import { escapeHtml, parseURL } from "@/assets/js/utils";
 import browser from "@/assets/js/browser";
 import modalCustomPorts from "../components/modalCustomPorts";
 import i18n from "../plugins/i18n";
@@ -111,9 +111,6 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     },
   });
 }
-
-const escapeHtml = (text) =>
-  text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 axios.interceptors.response.use(
   function (res) {

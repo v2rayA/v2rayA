@@ -97,7 +97,7 @@ import { Base64 } from "js-base64";
 import ModalCustomAddress from "@/components/modalCustomPorts";
 import ModalOutboundSetting from "@/components/modalOutboundSetting";
 import OutboundGroupPanel from "@/components/outboundGroupPanel";
-import { parseURL } from "@/assets/js/utils";
+import { backendMessage, parseURL } from "@/assets/js/utils";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import ModalLog from "@/components/modalLog";
@@ -467,7 +467,7 @@ export default {
               } else {
                 this.$buefy.toast.open({
                   message: this.$t("outbound.addFailed", {
-                    message: res.data.message || this.$t("common.fail"),
+                    message: backendMessage(this, res) || this.$t("common.fail"),
                   }),
                   type: "is-warning",
                   duration: 5000,
@@ -517,7 +517,7 @@ export default {
             this.$buefy.toast.open({
               message: this.$t("outbound.deleteFailed", {
                 group: outbound,
-                message: res.data.message || this.$t("common.fail"),
+                message: backendMessage(this, res) || this.$t("common.fail"),
               }),
               type: "is-warning",
               duration: 5000,
@@ -633,7 +633,7 @@ export default {
             } else {
               this.$buefy.toast.open({
                 message: this.$t("v2ray.startFailed", {
-                  message: res.data.message || this.$t("common.fail"),
+                  message: backendMessage(this, res) || this.$t("common.fail"),
                 }),
                 type: "is-warning",
                 duration: 5000,
@@ -661,7 +661,7 @@ export default {
           } else {
             this.$buefy.toast.open({
               message: this.$t("v2ray.stopFailed", {
-                message: res.data.message || this.$t("common.fail"),
+                message: backendMessage(this, res) || this.$t("common.fail"),
               }),
               type: "is-warning",
               duration: 5000,

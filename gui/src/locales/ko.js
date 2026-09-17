@@ -560,4 +560,45 @@ export default {
   },
   pinnedPeerCertSha256: "고정 피어 인증서 SHA256",
   verifyPeerCertByName: "이름으로 피어 인증서 확인",
+  backend: {
+    NO_SERVER_SELECTED: "선택된 서버 없음. 먼저 서버에 연결하세요.",
+    CORE_START_FAILED: "v2raya_core 시작 실패: {detail}",
+    CORE_NOT_FOUND: "v2raya_core를 찾을 수 없음.",
+    CORE_VERSION_MISMATCH:
+      "v2raya_core 버전 {core}와 v2rayA 버전 {app} 불일치.",
+    PORT_OCCUPIED: "포트 {port} 사용 중.",
+    INVALID_PORT: "포트 {port} 잘못됨.",
+    PORT_DUPLICATE: "포트 {port} 중복 사용.",
+    LINK_EMPTY: "서버 링크 비어 있음.",
+    LINK_NO_SCHEME: "서버 링크에 스킴 없음.",
+    LINK_UNSUPPORTED_SCHEME: "지원되지 않는 링크 스킴: {scheme}",
+    LINK_MALFORMED: "잘못된 {protocol} 링크: {detail}",
+    SUBSCRIPTION_FETCH_FAILED:
+      "{host}에서 구독 가져오기 실패: {detail}",
+    SUBSCRIPTION_EMPTY: "구독에 서버 없음.",
+    SUBSCRIPTION_NOT_FOUND:
+      "구독 #{id} 없음. 페이지를 새로 고치세요.",
+    SERVER_NOT_FOUND:
+      "서버 #{id} 없음 (서버 {count}개). 페이지를 새로 고치세요.",
+    SUBSCRIPTION_SERVER_NOT_FOUND:
+      "서버 #{id}가 구독 #{sub}에 없음. 페이지를 새로 고치세요.",
+    UNKNOWN_ITEM_TYPE: "알 수 없는 항목 유형: {type}",
+    INVALID_KIND: "잘못된 가져오기 종류: {kind}",
+    BAD_REQUEST: "잘못된 요청: {field} 필요.",
+    WRONG_CREDENTIALS: "사용자 이름 또는 비밀번호가 잘못됨.",
+    USERNAME_TAKEN: "사용자 이름 {username} 사용 중.",
+    ACCOUNT_EXISTS: "이미 계정이 존재함.",
+    SESSION_EXPIRED: "세션 만료. 다시 로그인하세요.",
+    SESSION_INVALID: "유효하지 않은 세션. 다시 로그인하세요.",
+    ADMIN_REQUIRED: "관리자 권한 필요.",
+    REQUEST_IN_PROGRESS: "the last request is being processed",
+    GFWLIST_MISSING: "GFWList가 {dir}에 없음.",
+    INVALID_CONFIG: "invalid config: {detail}",
+    ASSET_DOWNLOAD_FAILED:
+      "{host}에서 자산 다운로드 실패 (HTTP {status}).",
+    TRANSPARENT_SETUP_FAILED:
+      "투명 프록시 {mode} 설정 실패: {detail}",
+    MUX_RANGE: "잘못된 MUX 동시성 값: {value}",
+    CUSTOM_INBOUND_INVALID: "잘못된 사용자 지정 인바운드 {field}: {value}",
+  },
 };
