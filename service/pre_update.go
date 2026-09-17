@@ -75,7 +75,7 @@ func checkUpdate() {
 		setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals ||
 		setting.Transparent == configure.TransparentGfwlist {
 		if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			conf.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
+			conf.TickerUpdateGFWList.Reset(configure.IntervalHours(setting.GFWListAutoUpdateIntervalHour))
 		}
 		switch setting.RulePortMode {
 		case configure.GfwlistMode:
@@ -98,7 +98,7 @@ func checkUpdate() {
 		setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
 
 		if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			conf.TickerUpdateSubscription.Reset(time.Duration(setting.SubscriptionAutoUpdateIntervalHour) * time.Hour)
+			conf.TickerUpdateSubscription.Reset(configure.IntervalHours(setting.SubscriptionAutoUpdateIntervalHour))
 		}
 		go updateSubscriptions()
 	}

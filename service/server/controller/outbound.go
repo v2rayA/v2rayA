@@ -57,6 +57,7 @@ func PutOutbound(ctx *gin.Context) {
 		err := v2ray.UpdateV2RayConfig()
 		if err != nil {
 			common.ResponseError(ctx, fmt.Errorf("invalid config: %w", err))
+			return
 		}
 	}
 	common.ResponseSuccess(ctx, nil)

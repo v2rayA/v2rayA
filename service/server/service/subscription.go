@@ -162,11 +162,14 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		c.Timeout = 30 * time.Second
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
+	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
 	if err != nil {
 		return
 	}
 	defer res.Body.Close()
+	if res.StatusCode >= 400 {
+		return nil, "", fmt.Errorf("subscription server answered %s", res.Status)
+	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, "", err
@@ -179,6 +182,11 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	infos, status, err = ResolveByLines(raw)
 	if err != nil {
 		return nil, "", err
+	}
+	if len(infos) == 0 {
+		// an update that replaced the list with nothing would drop every
+		// node; treat an unparseable or empty body as a failed fetch
+		return nil, "", fmt.Errorf("no server found in the subscription response")
 	}
 	subscriptionUserInfo := res.Header.Get("Subscription-Userinfo")
 	sui := parseSubscriptionUserInfo(subscriptionUserInfo)
@@ -212,6 +220,11 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptions()
+	if index < 0 || index >= len(subscriptions) {
+		// the auto-updater works from a startup snapshot; the subscription
+		// may have been deleted since
+		return fmt.Errorf("UpdateSubscription: subscription %d does not exist", index)
+	}
 	addr := subscriptions[index].Address
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()

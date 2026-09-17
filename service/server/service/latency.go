@@ -56,6 +56,14 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 }
 
 func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
+	// entries whose server could not be located are left nil by the caller
+	located := vms[:0:0]
+	for _, v := range vms {
+		if v != nil {
+			located = append(located, v)
+		}
+	}
+	vms = located
 	if tmpl.DNS == nil {
 		tmpl.DNS = new(coreObj.DNS)
 	}
