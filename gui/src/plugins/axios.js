@@ -3,12 +3,10 @@
 import Vue from "vue";
 import axios from "axios";
 import {
-  Modal,
   SnackbarProgrammatic,
   ToastProgrammatic,
   ModalProgrammatic,
 } from "buefy";
-import ModalLogin from "@/components/modalLogin";
 import { escapeHtml, parseURL } from "@/assets/js/utils";
 import browser from "@/assets/js/browser";
 import modalCustomPorts from "../components/modalCustomPorts";
@@ -35,7 +33,7 @@ axios.interceptors.request.use(
     // Only the backend that issued the token gets it. The backend-address
     // dialog probes a user-typed URL with /api/version, which needs no auth.
     if (
-      localStorage.hasOwnProperty("token") &&
+      localStorage.getItem("token") !== null &&
       typeof config.url === "string" &&
       config.url.startsWith(apiRoot)
     ) {
@@ -57,27 +55,6 @@ axios.interceptors.request.use(
 );
 
 let informed = "";
-let loginModalShown = false;
-// 401 请求队列：当登录模态框已显示时，后续 401 请求加入队列，
-// 模态框关闭后自动重试，避免请求被静默丢弃导致功能异常
-let pending401Queue = [];
-let isRetryingQueue = false;
-
-// 重试队列中所有等待的 401 请求
-function retryPendingQueue() {
-  if (isRetryingQueue) return;
-  isRetryingQueue = true;
-  const queue = pending401Queue.slice();
-  pending401Queue = [];
-  // 延迟执行，确保模态框完全关闭后再重试
-  setTimeout(() => {
-    for (const item of queue) {
-      axios(item.config).then(item.resolve).catch(item.reject);
-    }
-    isRetryingQueue = false;
-  }, 300);
-}
-
 function informNotRunning(url = localStorage["backendAddress"]) {
   if (informed === url) {
     return;
@@ -142,9 +119,6 @@ axios.interceptors.response.use(
         // Centralize auth recovery in App.vue's mounted() flow to avoid
         // programmatic modal stacking and overlay conflicts.
         localStorage.removeItem("token");
-        loginModalShown = false;
-        pending401Queue = [];
-        isRetryingQueue = false;
         window.location.reload();
       }
       return Promise.reject(err);

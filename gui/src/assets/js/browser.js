@@ -1,7 +1,6 @@
 export default {
   versions: (function () {
-    var u = navigator.userAgent,
-      app = navigator.appVersion;
+    var u = navigator.userAgent;
     return {
       //移动终端浏览器版本信息
       trident: u.indexOf("Trident") > -1, //IE内核
