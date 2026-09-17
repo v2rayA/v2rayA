@@ -36,7 +36,10 @@ func PutSetting(ctx *gin.Context) {
 		updatingMu.Unlock()
 	}()
 
-	var data configure.Setting
+	// Decode over the stored setting so fields the client does not send
+	// (older GUIs omit the DNS cache flags, for example) keep their value
+	// instead of being persisted as zero.
+	data := *configure.GetSettingNotNil()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		common.ResponseError(ctx, logError("bad request"))
