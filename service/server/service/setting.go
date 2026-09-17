@@ -38,6 +38,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 			log.Warn("UpdateSetting: %v", e)
 		}
 	}
+	previous := configure.GetSettingNotNil()
 	err = configure.SetSetting(setting)
 	if err != nil {
 		return
@@ -48,7 +49,16 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if v2ray.ProcessManager.Running() && css.Len() > 0 {
 		err = v2ray.UpdateV2RayConfig()
 		if err != nil {
-			invalidConfigErr := fmt.Errorf("invalid config: the core could not restart with the new settings: %w", err)
+			// Put the working setting back and bring the core up with it: a
+			// rejected setting used to leave the core stopped, and the next
+			// save reported success while nothing was running.
+			log.SetLogLevel(previous.LogLevel)
+			if e := configure.SetSetting(previous); e != nil {
+				log.Warn("UpdateSetting: failed to restore the previous setting: %v", e)
+			} else if e := v2ray.UpdateV2RayConfig(); e != nil {
+				log.Warn("UpdateSetting: failed to restart the core with the previous setting: %v", e)
+			}
+			invalidConfigErr := fmt.Errorf("invalid config: the core could not restart with the new settings, the previous ones are back: %w", err)
 			return common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": err.Error()})
 		}
 	}

@@ -55,8 +55,10 @@ func PutSetting(ctx *gin.Context) {
 	configure.MigrateSetting(&data)
 	err = service.UpdateSetting(&data)
 	if err != nil {
+		// UpdateSetting restores the previous setting and the core with it;
+		// stopping the core here would undo that and leave the user without
+		// a proxy because of one rejected field.
 		common.ResponseError(ctx, logError(err))
-		_ = service.StopV2ray()
 		return
 	}
 	common.ResponseSuccess(ctx, nil)
