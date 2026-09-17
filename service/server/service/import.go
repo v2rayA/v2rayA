@@ -91,16 +91,33 @@ func ImportServer(url string, which *configure.Which) (err error) {
 				}
 			}
 
-			if which.TYPE == configure.ServerType && (ind < 0 || ind >= configure.GetLenServers()) {
-				log.Warn("Import: invalid server index: %v", ind)
-				return fmt.Errorf("bad request: invalid index")
+			switch which.TYPE {
+			case configure.ServerType:
+				if ind < 0 || ind >= configure.GetLenServers() {
+					log.Warn("Import: invalid server index: %v", ind)
+					return fmt.Errorf("bad request: invalid index")
+				}
+				if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
+					log.Warn("Import: SetServer failed: %v", err)
+					return
+				}
+			case configure.SubscriptionServerType:
+				// a subscription node lives inside its subscription; writing it
+				// with SetServer would overwrite the standalone server at the
+				// same index instead
+				subs := configure.GetSubscriptions()
+				if which.Sub < 0 || which.Sub >= len(subs) || ind < 0 || ind >= len(subs[which.Sub].Servers) {
+					log.Warn("Import: invalid subscription server index: sub=%v ind=%v", which.Sub, ind)
+					return fmt.Errorf("bad request: invalid index")
+				}
+				sub := subs[which.Sub]
+				sub.Servers[ind] = configure.ServerRaw{ServerObj: obj}
+				if err = configure.SetSubscription(which.Sub, &sub); err != nil {
+					log.Warn("Import: SetSubscription failed: %v", err)
+					return
+				}
 			}
-
-			if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
-				log.Warn("Import: SetServer failed: %v", err)
-				return
-			}
-			log.Info("Import: SetServer success for index %v", ind)
+			log.Info("Import: modified %v %v", which.TYPE, which.ID)
 			css := configure.GetConnectedServers()
 			if css.Len() > 0 {
 				for _, cs := range css.Get() {
