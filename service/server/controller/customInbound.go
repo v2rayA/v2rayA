@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/RoutingA"
@@ -81,8 +80,13 @@ func PostCustomInbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError(fmt.Errorf("tag is required")))
 		return
 	}
-	if net.ParseIP("0.0.0.0:"+fmt.Sprint(ci.Port)) == nil {
-		// basic port check already done above
+	// Proxy authentication is optional, but half of it is a configuration
+	// mistake that would silently leave the port open.
+	if (ci.Username == "") != (ci.Password == "") {
+		common.ResponseError(ctx, common.Coded("CUSTOM_INBOUND_INVALID", logError(fmt.Errorf("inbound %q needs both a username and a password, or neither", ci.Tag)), map[string]interface{}{
+			"field": "username",
+		}))
+		return
 	}
 
 	// Validate outbound binding

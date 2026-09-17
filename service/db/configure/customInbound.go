@@ -15,6 +15,10 @@ type CustomInbound struct {
 	Outbound      string `json:"outbound"`      // bound outbound group name
 	OutboundType  string `json:"outboundType"`  // "direct" or "routingA"
 	RoutingARules string `json:"routingARules"` // RoutingA rules text (when outboundType="routingA")
+	// Optional proxy authentication. Both empty means the port is open to
+	// anyone who can reach it, which is what every inbound did before.
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // GetCustomInbounds returns all custom inbound configs stored in DB.
