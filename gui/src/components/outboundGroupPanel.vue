@@ -10,7 +10,7 @@
       @keydown.native.enter.prevent.stop="toggleMenu"
       @keydown.native.space.prevent.stop="toggleMenu"
     >
-      {{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}
+      <span class="tag-text">{{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}</span>
     </b-tag>
 
     <!-- Persistent expandable menu: close only on outside click or manual toggle -->

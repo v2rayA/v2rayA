@@ -9,7 +9,7 @@
           <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusMap[runningState.running]"
             @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
             @click.native="handleClickStatus" @keydown.native.enter.prevent="handleClickStatus"
-            @keydown.native.space.prevent="handleClickStatus">{{ coverStatusText ? coverStatusText : runningState.running }}
+            @keydown.native.space.prevent="handleClickStatus"><span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
           </b-tag>
         </b-navbar-item>
         <b-navbar-item tag="div">
@@ -781,9 +781,27 @@ html {
 // in px so it stays a touch target.
 @media screen and (max-width: 768px) {
   .navbar-brand .logo {
-    height: 40px;
-    min-height: 40px;
+    height: 34px;
+    min-height: 34px;
     margin-left: 0.5em;
+    margin-right: 0.5em;
+  }
+
+  // very narrow phones: the two tags and the burger come first; the
+  // wordmark shrinks, then goes
+  @media screen and (max-width: 380px) {
+    .navbar-brand .logo {
+      height: 26px;
+      min-height: 26px;
+      margin-left: 0.25em;
+      margin-right: 0.25em;
+    }
+  }
+
+  @media screen and (max-width: 330px) {
+    .navbar-brand > .navbar-item:first-child {
+      display: none;
+    }
   }
   .navbar-brand .tag {
     font-size: 13px;
@@ -808,13 +826,20 @@ html {
     flex-shrink: 1;
   }
 
+  // keep Bulma's inline-flex centring (inline-block blockifies as a flex
+  // item and drops the text to the baseline); truncate the inner span
   .navbar-brand .tag {
     min-width: 0;
     max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .navbar-brand .tag .tag-text {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    display: inline-block;
+    min-width: 0;
   }
 
   #statusTag {
