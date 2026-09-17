@@ -85,7 +85,7 @@ iptables -w 2 -t nat -A DNS_REDIRECT -p tcp -j REDIRECT --to-port 52353
 iptables -w 2 -t nat -A DNS_REDIRECT -p udp -j REDIRECT --to-port 52353
 `
 	for _, v := range excludedInterfaces {
-		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", v)
+		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
 	// OUTPUT 路径使用 -o 匹配输出网卡（本地流量在 OUTPUT 链中 -i 始终为 lo）
 	for _, v := range excludedInterfaces {
@@ -135,7 +135,7 @@ ip6tables -w 2 -t nat -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 `
 		for _, v := range excludedInterfaces {
-			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", v)
+			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
 		// IPv6 OUTPUT 路径使用 -o 匹配输出网卡
 		for _, v := range excludedInterfaces {

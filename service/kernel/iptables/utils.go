@@ -105,6 +105,12 @@ func GetWhiteListIPs() ([]string, []string, error) {
 		ipv6List = append(ipv6List, ipv6s...)
 	}
 	for _, v := range dataModal.CustomIps {
+		// The GUI submits the textarea lines as typed, so a pasted CIDR can
+		// carry surrounding whitespace that net.ParseCIDR does not accept.
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
 		if net.ParseIP(v) == nil {
 			if _, _, err := net.ParseCIDR(v); err != nil {
 				return nil, nil, fmt.Errorf("invalid tproxy whitelist IP/CIDR %q", v)

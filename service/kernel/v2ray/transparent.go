@@ -155,9 +155,13 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			dnsAddr = tmpl.Setting.DnsListenAddr
 		}
 		if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
-			return fmt.Errorf("dns module not ready: %w", err)
+			// The probe resolves a name, so a dead or slow upstream fails it
+			// even though the listener is up. Waiting is worth it when DNS is
+			// healthy, but it must not be the reason the core cannot start.
+			log.Warn("DNS module did not answer on %s yet, applying transparent proxy rules anyway: %v", dnsAddr, err)
+		} else {
+			log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 		}
-		log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 	}
 	cleanupResidualTransparentProxyRules()
 	setting := configure.GetSettingNotNil()
