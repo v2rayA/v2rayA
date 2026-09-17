@@ -67,7 +67,7 @@
             <span class="no-select">{{ username }}</span>
             <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
-          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username })">
+          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username: usernameHtml })">
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
@@ -148,16 +148,31 @@ export default {
       if (!token) {
         return this.$t("common.notLogin");
       }
-      let payload = JSON.parse(Base64.decode(token.split(".")[1]));
+      let payload;
+      try {
+        payload = JSON.parse(Base64.decode(token.split(".")[1]));
+      } catch (e) {
+        // a corrupt token would otherwise throw during render and blank
+        // the app before any request could clear it
+        return this.$t("common.notLogin");
+      }
       return payload["uname"];
+    },
+    usernameHtml() {
+      // the account menu renders this through v-html
+      return String(this.username).replace(
+        /[&<>"']/g,
+        (c) => `&#${c.charCodeAt(0)};`
+      );
     },
     isMobile() {
       return window.screen.width < 800;
     },
     currentLangLabel() {
-      const currentLang = localStorage["_lang"] || "zh";
-      const lang = this.langs.find(l => l.flag === currentLang);
-      return lang ? lang.label : "中文-中国";
+      // Read the locale vue-i18n actually chose (browser language when
+      // nothing is stored) rather than guessing from localStorage.
+      const lang = this.langs.find((l) => l.flag === this.$i18n.locale);
+      return lang ? lang.label : this.$i18n.locale;
     },
     isDarkTheme() {
       if (this.themePreference === 'dark') return true;
@@ -265,7 +280,11 @@ export default {
   },
   beforeDestroy() {
     if (this.ws) {
+      // detach first: onclose would otherwise schedule a reconnect from the
+      // destroyed instance
+      this.ws.onclose = null;
       this.ws.close();
+      this.ws = null;
     }
     if (this._darkMediaQuery && this._onSystemThemeChange) {
       this._darkMediaQuery.removeEventListener('change', this._onSystemThemeChange);
@@ -320,6 +339,9 @@ export default {
       ws.onclose = () => {
         ws.onmessage = null;
         that.ws = null;
+        if (that._isDestroyed) {
+          return;
+        }
         // 指数退避重连：1s, 2s, 4s, 8s... 最大 30 秒
         const delay = Math.min(1000 * Math.pow(2, that._wsRetries), 30000);
         that._wsRetries++;
@@ -354,7 +376,7 @@ export default {
     },
     handleGroupChanged() {
       // Refresh node.vue's data after group membership change from the panel
-      if (this.$refs.nodeRef && this.$refs.nodeRef.created) {
+      if (this.$refs.nodeRef) {
         this.$refs.nodeRef.$axios({ url: apiRoot + "/touch" }).then((res) => {
           if (res.data && res.data.code === "SUCCESS") {
             this.$refs.nodeRef.refreshTableData(res.data.data.touch, res.data.data.running);

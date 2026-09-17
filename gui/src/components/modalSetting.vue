@@ -557,7 +557,12 @@ export default {
             routeOnly: this.routeOnly,
             tproxyExcludedInterfaces: this.tproxyExcludedInterfaces,
             tunAutoRoute: this.tunAutoRoute,
-            tunBypassInterfaces: this.tunBypassInterfacesComputed,
+            // the list/custom split only exists once the interface names
+            // were fetched (TUN mode); before that the computed is empty and
+            // would wipe the stored value
+            tunBypassInterfaces: this.availableInterfaces.length
+              ? this.tunBypassInterfacesComputed
+              : this.tunBypassInterfaces,
             tunRouteShellType: this.tunRouteShellType,
             tunRouteShellPath: this.tunRouteShellPath,
             tunSetupScript: this.tunSetupScript,

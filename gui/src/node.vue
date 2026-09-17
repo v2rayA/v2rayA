@@ -694,6 +694,7 @@
             </button>
             <button
               class="button is-primary"
+              :class="{ 'is-loading': importing }"
               type="button"
               @click="handleClickImportConfirm"
             >
@@ -746,6 +747,7 @@
             </button>
             <button
               class="button is-primary"
+              :class="{ 'is-loading': importing }"
               type="button"
               @click="handleClickImportConfirm"
             >
@@ -811,6 +813,7 @@ export default {
       enterReducedSidebar: false,
       showSidebar: false,
       importWhat: "",
+      importing: false,
       showModalImport: false,
       showModalImportInBatch: false,
       currentPage: { servers: 1, subscriptions: 1 },
@@ -839,6 +842,7 @@ export default {
       connectedServerInfo: [],
       overHeight: false,
       clipboard: null,
+      scrollTimer: null,
       coreVersionValid: true,
       coreVersionErr: "",
     };
@@ -928,6 +932,8 @@ export default {
   },
   beforeDestroy() {
     this.clipboard.destroy();
+    window.removeEventListener("scroll", this.handleWindowScroll);
+    clearTimeout(this.scrollTimer);
   },
   mounted() {
     document
@@ -951,15 +957,7 @@ export default {
         queue: false,
       });
     });
-    const that = this;
-    let scrollTimer = null;
-    window.addEventListener("scroll", (e) => {
-      clearTimeout(scrollTimer);
-      setTimeout(() => {
-        scrollTimer = null;
-        that.overHeight = e.target.scrollingElement.scrollTop > 50;
-      }, 100);
-    });
+    window.addEventListener("scroll", this.handleWindowScroll);
 
     // if lastNodeTab in the local storage, set it as the current tab.
     const { lastNodeTab } = localStorage;
@@ -968,6 +966,12 @@ export default {
     }
   },
   methods: {
+    handleWindowScroll(e) {
+      clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => {
+        this.overHeight = e.target.scrollingElement.scrollTop > 50;
+      }, 100);
+    },
     getRunningLabel(running, networkPaused = false) {
       if (networkPaused) {
         return this.$t("common.waitingNetwork");
@@ -1398,9 +1402,18 @@ export default {
       if (typeof value != "string") {
         value = null;
       }
+      if (this.importing) {
+        // A second Confirm or Enter while a subscription is still being
+        // fetched would import it twice.
+        return;
+      }
+      this.importing = true;
       return this.$axios({
         url: apiRoot + "/import",
         method: "post",
+        // the backend allows a subscription fetch 90 s; the 60 s default
+        // aborted the request client-side while the import still went through
+        timeout: 120000,
         data: {
           url: value || this.importWhat,
         },
@@ -1424,6 +1437,19 @@ export default {
             queue: false,
           });
         }
+      }).catch((err) => {
+        // the interceptor reports every other error itself but re-throws
+        // client-side timeouts silently
+        if (err && err.code === "ECONNABORTED") {
+          this.$buefy.toast.open({
+            message: err.message,
+            type: "is-warning",
+            position: "is-top",
+            queue: false,
+          });
+        }
+      }).finally(() => {
+        this.importing = false;
       });
     },
     deleteSelectedServers() {

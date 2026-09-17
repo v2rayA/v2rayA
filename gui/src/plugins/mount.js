@@ -22,6 +22,11 @@ Vue.prototype.$remount = () => {
     }
   }
   f(vue);
+  if (vue) {
+    // Otherwise the old root keeps its WebSocket, window listeners and
+    // matchMedia handler alive next to the new one.
+    vue.$destroy();
+  }
   vue = new Vue({
     i18n,
     store,

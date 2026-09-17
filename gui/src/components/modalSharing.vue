@@ -35,7 +35,6 @@
 
 <script>
 import QRCode from "qrcode";
-import { Decoder } from "@nuintun/qrcode";
 import ClipboardJS from "clipboard";
 import CONST from "@/assets/js/const";
 import { Base64 } from "js-base64";
@@ -66,9 +65,6 @@ export default {
     this.clipboard.destroy();
   },
   mounted() {
-    document
-      .querySelector("#QRCodeImport")
-      .addEventListener("change", this.handleFileChange, false);
     this.clipboard = new ClipboardJS(".sharingAddressTag");
     this.clipboard.on("success", (e) => {
       this.$buefy.toast.open({
@@ -89,7 +85,7 @@ export default {
     });
 
     let add = this.sharingAddress;
-    if (this._type === CONST.SubscriptionType) {
+    if (this.type === CONST.SubscriptionType) {
       add = "sub://" + Base64.encode(add);
     }
     let canvas = document.getElementById("canvas");
@@ -115,53 +111,6 @@ export default {
     };
     targets.forEach((x) => x.addEventListener("mouseenter", enter));
     targets.forEach((x) => x.addEventListener("mouseleave", leave));
-  },
-  methods: {
-    handleFileChange(e) {
-      const that = this;
-      const file = e.target.files[0];
-      let elem = document.querySelector("#QRCodeImport");
-      // eslint-disable-next-line no-self-assign
-      elem.outerHTML = elem.outerHTML;
-      this.$nextTick(() => {
-        document
-          .querySelector("#QRCodeImport")
-          .addEventListener("change", this.handleFileChange, false);
-      });
-      // console.log(file);
-      if (!file.type.match(/image\/.*/)) {
-        this.$buefy.toast.open({
-          message: this.$t("import.qrcodeError"),
-          type: "is-warning",
-          position: "is-top",
-          queue: false,
-        });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        // target.result 该属性表示目标对象的DataURL
-        // console.log(e.target.result);
-        const file = e.target.result;
-        const qrcode = new Decoder();
-        qrcode
-          .scan(file)
-          .then((result) => {
-            console.log(result);
-            that.handleClickImportConfirm(result.data);
-          })
-          .catch((error) => {
-            console.error(error);
-            that.$buefy.toast.open({
-              message: that.$t("import.qrcodeError"),
-              type: "is-warning",
-              position: "is-top",
-              queue: false,
-            });
-          });
-      };
-      reader.readAsDataURL(file);
-    },
   },
 };
 </script>
