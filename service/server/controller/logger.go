@@ -19,7 +19,7 @@ func GetLogger(ctx *gin.Context) {
 	config := conf.GetEnvironmentConfig()
 	query := getLogQuery{}
 	if ctx.ShouldBindQuery(&query) != nil {
-		common.ResponseError(ctx, errors.New("invalid query"))
+		common.ResponseError(ctx, errors.New("skip must be an integer"))
 		return
 	}
 	if config.LogFile == "" {

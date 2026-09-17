@@ -2,6 +2,7 @@ package serverObj
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
@@ -18,21 +19,21 @@ func init() {
 }
 
 type WireGuard struct {
-	Name        string `json:"name"`
-	Server      string `json:"server"`
-	Port        int    `json:"port"`
-	PublicKey   string `json:"publicKey"`
-	SecretKey   string `json:"secretKey"`
-	Address     string `json:"address"`
-	PrivateKey  string `json:"privateKey"`
+	Name         string `json:"name"`
+	Server       string `json:"server"`
+	Port         int    `json:"port"`
+	PublicKey    string `json:"publicKey"`
+	SecretKey    string `json:"secretKey"`
+	Address      string `json:"address"`
+	PrivateKey   string `json:"privateKey"`
 	PreSharedKey string `json:"preSharedKey"`
-	AllowedIPs  string `json:"allowedIPs"`
-	KeepAlive   int    `json:"keepAlive"`
-	Workers     int    `json:"workers"`
-	Mtu         int    `json:"mtu"`
-	Reserved    string `json:"reserved"`
-	KernelMode  bool   `json:"kernelMode"`
-	Protocol    string `json:"protocol"`
+	AllowedIPs   string `json:"allowedIPs"`
+	KeepAlive    int    `json:"keepAlive"`
+	Workers      int    `json:"workers"`
+	Mtu          int    `json:"mtu"`
+	Reserved     string `json:"reserved"`
+	KernelMode   bool   `json:"kernelMode"`
+	Protocol     string `json:"protocol"`
 }
 
 func NewWireGuard(link string) (ServerObj, error) {
@@ -42,11 +43,11 @@ func NewWireGuard(link string) (ServerObj, error) {
 func ParseWireGuardURL(link string) (data *WireGuard, err error) {
 	u, err := url.Parse(link)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: wireguard link is not a valid URL; expected wireguard://privateKey@host:port?publicKey=...", ErrInvalidParameter)
 	}
 	port, err := strconv.Atoi(u.Port())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: wireguard link for %q has a missing or invalid port; expected wireguard://privateKey@host:port?publicKey=...", ErrInvalidParameter, u.Hostname())
 	}
 	q := u.Query()
 	keepAlive, _ := strconv.Atoi(q.Get("keepAlive"))

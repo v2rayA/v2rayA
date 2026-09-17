@@ -53,14 +53,14 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 		}
 		mapClaims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			common.ResponseError(ctx, errors.New("bad token: invalid claims"))
+			common.ResponseError(ctx, errors.New("the session token is not valid; sign in again"))
 			ctx.Abort()
 			return
 		}
 		exp, err := mapClaims.GetExpirationTime()
 		if err == nil && exp != nil {
 			if time.Now().After(exp.Time) {
-				common.ResponseError(ctx, errors.New("expired token"))
+				common.ResponseError(ctx, errors.New("session expired; sign in again"))
 				ctx.Abort()
 				return
 			}
@@ -69,7 +69,7 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 		if Admin {
 			adminVal, _ := mapClaims["admin"]
 			if adminVal != true {
-				common.ResponseError(ctx, errors.New("admin required"))
+				common.ResponseError(ctx, errors.New("this action needs an admin account"))
 				ctx.Abort()
 				return
 			}

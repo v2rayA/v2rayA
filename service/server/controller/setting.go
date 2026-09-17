@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -42,11 +44,11 @@ func PutSetting(ctx *gin.Context) {
 	data := *configure.GetSettingNotNil()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError(fmt.Errorf("request body is not a valid settings object: %v", err)))
 		return
 	}
 	if data.MuxOn == configure.Yes && (data.Mux < 1 || data.Mux > 1024) {
-		common.ResponseError(ctx, logError("mux should be between 1 and 1024"))
+		common.ResponseError(ctx, logError(fmt.Errorf("mux concurrency %d is out of range; use 1-1024", data.Mux)))
 		return
 	}
 	// 对 DNS 配置字段执行迁移，确保旧格式请求中的缺失字段被填充默认值

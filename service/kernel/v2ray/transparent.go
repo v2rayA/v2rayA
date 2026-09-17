@@ -162,22 +162,22 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 	case configure.TransparentTproxy:
 		if err = iptables.Tproxy.GetSetupCommands().Run(true); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
-				err = fmt.Errorf("you does not compile xt_TPROXY in kernel")
+				err = fmt.Errorf("the kernel has no xt_TPROXY module; load it or switch transparent proxy to redirect mode")
 			}
-			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
+			return fmt.Errorf("could not set up transparent proxy in tproxy mode: %w", err)
 		}
 		iptables.SetWatcher(iptables.Tproxy)
 	case configure.TransparentRedirect:
 		if err = iptables.Redirect.GetSetupCommands().Run(true); err != nil {
-			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
+			return fmt.Errorf("could not set up transparent proxy in redirect mode: %w", err)
 		}
 		iptables.SetWatcher(iptables.Redirect)
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
-			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)
+			return fmt.Errorf("could not set up transparent proxy in system proxy mode: %w", err)
 		}
 	default:
-		return fmt.Errorf("undefined \"%v\" mode of transparent proxy", setting.TransparentType)
+		return fmt.Errorf("unknown transparent proxy mode %q; expected tproxy, redirect, system_proxy, or tun", setting.TransparentType)
 	}
 
 	// 无论哪种透明代理模式，都用 nat 表的 REDIRECT 将 DNS 流量（:53）转到 DNS 模块（:52353）。

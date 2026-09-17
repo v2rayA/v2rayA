@@ -12,7 +12,7 @@ func PutGFWList(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be {\"downloadLink\": string}"))
 		return
 	}
 	localGFWListVersion, err := dat.CheckAndUpdateGFWList(data.DownloadLink)

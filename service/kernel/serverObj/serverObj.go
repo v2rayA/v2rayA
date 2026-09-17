@@ -9,7 +9,7 @@ import (
 	"github.com/v2rayA/v2rayA/kernel/v2ray/where"
 )
 
-var ErrInvalidParameter = fmt.Errorf("invalid parameters")
+var ErrInvalidParameter = fmt.Errorf("malformed server link")
 
 type ServerObj interface {
 	Configuration(info PriorInfo) (c Configuration, err error)
@@ -78,7 +78,7 @@ func New(name string) (ServerObj, error) {
 		creator := emptyCreators[PluginManagerScheme]
 		return creator()
 	} else {
-		return nil, fmt.Errorf("unsupported link type: %v", name)
+		return nil, fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, ssr, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name)
 	}
 }
 func NewFromLink(name string, link string) (ServerObj, error) {
@@ -89,7 +89,7 @@ func NewFromLink(name string, link string) (ServerObj, error) {
 		creator := fromLinkCreators[PluginManagerScheme]
 		return creator(link)
 	} else {
-		return nil, fmt.Errorf("unsupported link type: %v", name)
+		return nil, fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, ssr, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name)
 	}
 }
 

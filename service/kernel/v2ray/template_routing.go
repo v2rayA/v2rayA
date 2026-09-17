@@ -312,10 +312,10 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 							if k == "ext" {
 								datFilenameAndTag := strings.SplitN(v, ":", 2)
 								if len(datFilenameAndTag) < 2 {
-									return fmt.Errorf("%v: tag is not given", v)
+									return fmt.Errorf("RoutingA ext value %q is missing its tag; expected ext:\"file.dat:tag\"", v)
 								}
 								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
-									return fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+									return fmt.Errorf("RoutingA ext file %q is not in the asset directory", datFilenameAndTag[0])
 								}
 							}
 							rr.Domain = append(rr.Domain, fmt.Sprintf("%v:%v", k, v))
@@ -329,10 +329,10 @@ func parseRoutingA(t *Template, routingInboundTags []string) error {
 							if k == "ext" {
 								datFilenameAndTag := strings.SplitN(v, ":", 2)
 								if len(datFilenameAndTag) < 2 {
-									return fmt.Errorf("%v: tag is not given", v)
+									return fmt.Errorf("RoutingA ext value %q is missing its tag; expected ext:\"file.dat:tag\"", v)
 								}
 								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
-									return fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+									return fmt.Errorf("RoutingA ext file %q is not in the asset directory", datFilenameAndTag[0])
 								}
 							}
 							rr.IP = append(rr.IP, fmt.Sprintf("%v:%v", k, v))
@@ -414,10 +414,10 @@ func parseRoutingARules(rulesText string, inboundTag string) (rules []coreObj.Ro
 							if k == "ext" {
 								datFilenameAndTag := strings.SplitN(v, ":", 2)
 								if len(datFilenameAndTag) < 2 {
-									return nil, fmt.Errorf("%v: tag is not given", v)
+									return nil, fmt.Errorf("RoutingA ext value %q is missing its tag; expected ext:\"file.dat:tag\"", v)
 								}
 								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
-									return nil, fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+									return nil, fmt.Errorf("RoutingA ext file %q is not in the asset directory", datFilenameAndTag[0])
 								}
 							}
 							rr.Domain = append(rr.Domain, fmt.Sprintf("%v:%v", k, v))
@@ -430,10 +430,10 @@ func parseRoutingARules(rulesText string, inboundTag string) (rules []coreObj.Ro
 							if k == "ext" {
 								datFilenameAndTag := strings.SplitN(v, ":", 2)
 								if len(datFilenameAndTag) < 2 {
-									return nil, fmt.Errorf("%v: tag is not given", v)
+									return nil, fmt.Errorf("RoutingA ext value %q is missing its tag; expected ext:\"file.dat:tag\"", v)
 								}
 								if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
-									return nil, fmt.Errorf("%v: file is not found", datFilenameAndTag[0])
+									return nil, fmt.Errorf("RoutingA ext file %q is not in the asset directory", datFilenameAndTag[0])
 								}
 							}
 							rr.IP = append(rr.IP, fmt.Sprintf("%v:%v", k, v))

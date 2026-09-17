@@ -32,11 +32,11 @@ func NewJuicity(link string) (ServerObj, error) {
 func ParseJuicityURL(link string) (data *Juicity, err error) {
 	u, err := url.Parse(link)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: juicity link is not a valid URL; expected juicity://uuid:password@host:port", ErrInvalidParameter)
 	}
 	port, err := strconv.Atoi(u.Port())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: juicity link for %q has a missing or invalid port; expected juicity://uuid:password@host:port", ErrInvalidParameter, u.Hostname())
 	}
 	return &Juicity{
 		Name:     u.Fragment,

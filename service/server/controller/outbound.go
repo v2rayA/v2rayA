@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -23,7 +23,7 @@ func PostOutbound(ctx *gin.Context) {
 		Outbound string `json:"outbound"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
 	if err := configure.AddOutbound(data.Outbound); err != nil {
@@ -46,7 +46,7 @@ func PutOutbound(ctx *gin.Context) {
 		Setting  configure.OutboundSetting `json:"setting"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
 	if err := configure.SetOutboundSetting(data.Outbound, data.Setting); err != nil {
@@ -82,7 +82,7 @@ func DeleteOutbound(ctx *gin.Context) {
 		Outbound string `json:"outbound"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
 	if data.Outbound == "proxy" {
@@ -144,7 +144,7 @@ func PutOutboundConnections(ctx *gin.Context) {
 		} `json:"touches"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be {\"outbound\": string, \"touches\": [...]}"))
 		return
 	}
 
@@ -168,11 +168,11 @@ func PutOutboundConnections(ctx *gin.Context) {
 		}
 		typ, ok := normalizeTouchType(rawType)
 		if !ok {
-			common.ResponseError(ctx, logError(fmt.Errorf("bad request: invalid touch type at index %d: %q", i, rawType)))
+			common.ResponseError(ctx, logError(fmt.Errorf("touches[%d]._type %q is not valid; expected server or subscriptionServer", i, rawType)))
 			return
 		}
 		if w.ID <= 0 {
-			common.ResponseError(ctx, logError(fmt.Errorf("bad request: invalid touch id at index %d: %d", i, w.ID)))
+			common.ResponseError(ctx, logError(fmt.Errorf("touches[%d].id %d must be positive", i, w.ID)))
 			return
 		}
 		sub := 0
@@ -180,7 +180,7 @@ func PutOutboundConnections(ctx *gin.Context) {
 			sub = *w.Sub
 		}
 		if typ == configure.SubscriptionServerType && sub < 0 {
-			common.ResponseError(ctx, logError(fmt.Errorf("bad request: invalid sub index at index %d: %d", i, sub)))
+			common.ResponseError(ctx, logError(fmt.Errorf("touches[%d].sub %d must be non-negative", i, sub)))
 			return
 		}
 		if typ == configure.ServerType {

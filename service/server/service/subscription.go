@@ -221,16 +221,15 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscription := configure.GetSubscription(index)
 	if subscription == nil {
-		return fmt.Errorf("UpdateSubscription: subscription %d does not exist", index)
+		return fmt.Errorf("subscription #%d no longer exists; reload the page", index+1)
 	}
 	addr := subscription.Address
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
-		reason := "failed to resolve subscription address: " + err.Error()
-		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
-		return fmt.Errorf("UpdateSubscription: %v", reason)
+		log.Warn("Subscription fetch failed: %v", err)
+		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -324,8 +323,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			if disconnectIfNecessary {
 				err = Disconnect(*css.Get()[cssIndex], false)
 				if err != nil {
-					reason := "failed to disconnect previous server"
-					return fmt.Errorf("UpdateSubscription: %v", reason)
+					return fmt.Errorf("could not disconnect the server that left the subscription: %w", err)
 				}
 			} else {
 				// Append previously connected node
@@ -339,7 +337,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	}
 	subscription = configure.GetSubscription(index)
 	if subscription == nil {
-		return fmt.Errorf("UpdateSubscription: subscription %d does not exist", index)
+		return fmt.Errorf("subscription #%d no longer exists; reload the page", index+1)
 	}
 	subscription.Servers = infoServerRaws
 	subscription.Status = string(touch.NewUpdateStatus())
@@ -360,7 +358,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return fmt.Errorf("failed to find the corresponding subscription")
+		return fmt.Errorf("subscription #%d does not exist; reload the page", subscription.ID)
 	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
@@ -397,7 +395,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		subscriptionServer.ID = i // Server IDs start with 1
 		sub := configure.GetSubscription(index)
 		if sub == nil {
-			return fmt.Errorf("SelectServersFromSubscription: subscription at index %d not found", index)
+			return fmt.Errorf("subscription #%d no longer exists", index+1)
 		}
 		serverObj := sub.Servers[i-1].ServerObj // ServerObj IDs start with 0
 		if serverObj == nil {

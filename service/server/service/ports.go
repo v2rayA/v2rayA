@@ -32,7 +32,7 @@ func SetPorts(ports *configure.Ports) (err error) {
 			continue
 		}
 		if _, ok := set[port]; ok {
-			return fmt.Errorf("ports duplicate. check it")
+			return fmt.Errorf("port %d is assigned to more than one inbound; each port can be used once", port)
 		}
 		set[port] = struct{}{}
 	}

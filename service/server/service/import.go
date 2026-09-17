@@ -27,6 +27,14 @@ func PluginManagerValidateLink(url string) bool {
 	}
 }
 
+func subscriptionHost(source string) string {
+	u, err := url2.Parse(source)
+	if err != nil || u.Hostname() == "" {
+		return "unknown host"
+	}
+	return u.Hostname()
+}
+
 // Import guesses whether url is a server link or a subscription address
 // from its scheme. Callers that know which one they hold should use
 // ImportServer or ImportSubscription instead; this wrapper only exists for
@@ -75,7 +83,7 @@ func ImportServer(url string, which *configure.Which) (err error) {
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
 		if err != nil {
-			log.Warn("ResolveURL failed: %v", err)
+			log.Warn("Could not parse server link: %v", err)
 			return
 		}
 		if which != nil && which.ID > 0 {
@@ -87,7 +95,7 @@ func ImportServer(url string, which *configure.Which) (err error) {
 				// but for now, we primarily care about ServerType
 				if which.TYPE != configure.SubscriptionServerType {
 					log.Warn("Import: unsupported touch type for modification: %v", which.TYPE)
-					return fmt.Errorf("bad request: unsupported touch type")
+					return fmt.Errorf("cannot edit an item of type %q; only server and subscriptionServer can be edited", which.TYPE)
 				}
 			}
 
@@ -95,7 +103,7 @@ func ImportServer(url string, which *configure.Which) (err error) {
 			case configure.ServerType:
 				if ind < 0 || ind >= configure.GetLenServers() {
 					log.Warn("Import: invalid server index: %v", ind)
-					return fmt.Errorf("bad request: invalid index")
+					return fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", which.ID, configure.GetLenServers())
 				}
 				if err = configure.SetServer(ind, &configure.ServerRaw{ServerObj: obj}); err != nil {
 					log.Warn("Import: SetServer failed: %v", err)
@@ -108,7 +116,7 @@ func ImportServer(url string, which *configure.Which) (err error) {
 				subs := configure.GetSubscriptions()
 				if which.Sub < 0 || which.Sub >= len(subs) || ind < 0 || ind >= len(subs[which.Sub].Servers) {
 					log.Warn("Import: invalid subscription server index: sub=%v ind=%v", which.Sub, ind)
-					return fmt.Errorf("bad request: invalid index")
+					return fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", which.ID, which.Sub+1)
 				}
 				sub := subs[which.Sub]
 				sub.Servers[ind] = configure.ServerRaw{ServerObj: obj}
@@ -154,7 +162,9 @@ func ImportSubscription(url string) (err error) {
 				payload := source[len(u.Scheme)+3:]
 				var e error
 				if source, e = common.Base64StdDecode(payload); e != nil {
-					source, _ = common.Base64URLDecode(payload)
+					if source, e = common.Base64URLDecode(payload); e != nil {
+						return fmt.Errorf("sub:// link payload is not valid base64; expected sub://BASE64(subscription URL)")
+					}
 				}
 			case "":
 				u.Scheme = "http"
@@ -169,7 +179,7 @@ func ImportSubscription(url string) (err error) {
 		var status string
 		infos, status, err = ResolveSubscriptionWithClient(source, c)
 		if err != nil {
-			return fmt.Errorf("failed to resolve subscription address: %w", err)
+			return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(source), err)
 		}
 
 		// info to serverRawV2

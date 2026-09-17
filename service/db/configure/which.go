@@ -215,17 +215,17 @@ func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
-			return nil, fmt.Errorf("LocateServerRaw: ID exceed range")
+			return nil, fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", w.ID, len(servers))
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-			return nil, fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
+			return nil, fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", w.ID, w.Sub+1)
 		}
 		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
-		return nil, fmt.Errorf("LocateServerRaw: invalid TYPE")
+		return nil, fmt.Errorf("unknown item type %q; expected %q or %q", w.TYPE, ServerType, SubscriptionServerType)
 	}
 }
 
@@ -237,16 +237,16 @@ func (ws *Whiches) FillLinks() (err error) {
 		switch w.TYPE {
 		case ServerType:
 			if ind < 0 || ind >= len(servers) {
-				return fmt.Errorf("LocateServerRaw: ID exceed range")
+				return fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", w.ID, len(servers))
 			}
 			w.Link = servers[ind].ServerObj.ExportToURL()
 		case SubscriptionServerType:
 			if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-				return fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
+				return fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", w.ID, w.Sub+1)
 			}
 			w.Link = subscriptions[w.Sub].Servers[ind].ServerObj.ExportToURL()
 		default:
-			return fmt.Errorf("LocateServerRaw: invalid TYPE")
+			return fmt.Errorf("unknown item type %q; expected %q or %q", w.TYPE, ServerType, SubscriptionServerType)
 		}
 	}
 	return nil

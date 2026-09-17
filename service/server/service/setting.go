@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -29,7 +29,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		setting.LogLevel = conf.GetEnvironmentConfig().LogLevel
 	}
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+		return asset.GFWListMissingError()
 	}
 	if setting.IpForward != ipforward.IsIpForwardOn() {
 		e := ipforward.WriteIpForward(setting.IpForward)
@@ -47,7 +47,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	if v2ray.ProcessManager.Running() && css.Len() > 0 {
 		err = v2ray.UpdateV2RayConfig()
 		if err != nil {
-			return fmt.Errorf("invalid config: %w", err)
+			return fmt.Errorf("invalid config: the core could not restart with the new settings: %w", err)
 		}
 	}
 	if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {

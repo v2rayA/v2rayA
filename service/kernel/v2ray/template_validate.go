@@ -53,7 +53,7 @@ func (t *Template) checkDuplicatedInboundSockets() error {
 	return nil
 }
 
-var OccupiedErr = fmt.Errorf("port is occupied")
+var OccupiedErr = fmt.Errorf("is already in use")
 
 func PortOccupied(syntax []string) (err error) {
 	occupied, sockets, err := ports.IsPortOccupied(syntax)
@@ -81,7 +81,7 @@ func PortOccupied(syntax []string) (err error) {
 				p.PID == ownPID {
 				continue
 			}
-			occupiedErr := fmt.Errorf("%w by %v(%v): %v", OccupiedErr, p.Name, p.PID, s.LocalAddress.Port)
+			occupiedErr := fmt.Errorf("port %d %w by %v (pid %v)", s.LocalAddress.Port, OccupiedErr, p.Name, p.PID)
 			if configure.GetSettingNotNil().PortSharing {
 				// want to listen 0.0.0.0, which conflicts with all IPs
 				return occupiedErr

@@ -21,7 +21,7 @@ func UpdateLocalGeoSite() (err error) {
 	}
 	siteDatSha256, err := httpGet("https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat.sha256sum")
 	if err != nil {
-		err = fmt.Errorf("%w: %v", FailCheckSha, err)
+		err = fmt.Errorf("%w for GeoSite: %w", FailCheckSha, err)
 		log.Warn("UpdateLocalGeoSite: %v", err)
 		return err
 	}
@@ -30,7 +30,7 @@ func UpdateLocalGeoSite() (err error) {
 		sha256 = fields[0]
 	}
 	if ok, actual := checkSha256(pathSiteDat+".new", sha256); !ok {
-		err = fmt.Errorf("UpdateLocalGeoSite: %v (expected %s, got %s)", DamagedFile, sha256, actual)
+		err = fmt.Errorf("%w for GeoSite (expected %s, got %s); try again", DamagedFile, sha256, actual)
 		log.Warn("UpdateLocalGeoSite: sha mismatch, expected %s, got %s", sha256, actual)
 		return
 	}

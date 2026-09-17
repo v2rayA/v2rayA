@@ -21,7 +21,7 @@ func PutTproxyWhiteIpGroups(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be {\"countryCodes\": [string], \"customIps\": [string]}"))
 		return
 	}
 	configure.SetTproxyWhiteIpGroups(data.CountryCodes, data.CustomIps)

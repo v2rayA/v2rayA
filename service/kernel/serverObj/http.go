@@ -43,19 +43,19 @@ func NewHTTP(link string) (ServerObj, error) {
 func ParseHttpURL(u string) (data *HTTP, err error) {
 	t, err := url.Parse(u)
 	if err != nil {
-		return nil, ErrInvalidParameter
+		return nil, fmt.Errorf("%w: http proxy link is not a valid URL; expected http-proxy://[user:pass@]host:port", ErrInvalidParameter)
 	}
 	// A proxy link is scheme://[user:pass@]host[:port][#name]. Anything with
 	// a path or query is almost always a subscription URL pasted into the
 	// wrong box, so name that instead of returning a bare parameter error.
 	if (t.Path != "" && t.Path != "/") || t.RawQuery != "" {
-		return nil, fmt.Errorf("%w: an http proxy link has no path or query; import subscription URLs as subscriptions", ErrInvalidParameter)
+		return nil, fmt.Errorf("%w: http proxy link for %q has a path or query; expected http-proxy://[user:pass@]host:port", ErrInvalidParameter, t.Hostname())
 	}
 	// An absent port falls through to the per-scheme default below.
 	port := 0
 	if p := t.Port(); p != "" {
 		if port, err = strconv.Atoi(p); err != nil {
-			return nil, ErrInvalidParameter
+			return nil, fmt.Errorf("%w: http proxy link for %q has an invalid port; expected http-proxy://[user:pass@]host:port", ErrInvalidParameter, t.Hostname())
 		}
 	}
 	data = &HTTP{

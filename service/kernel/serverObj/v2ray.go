@@ -114,7 +114,7 @@ func NewV2Ray(link string) (ServerObj, error) {
 	} else if strings.HasPrefix(link, "vless://") {
 		return ParseVlessURL(link)
 	}
-	return nil, ErrInvalidParameter
+	return nil, fmt.Errorf("%w: expected a link starting with vmess:// or vless://", ErrInvalidParameter)
 }
 
 func ParseVlessURL(vless string) (data *V2Ray, err error) {
@@ -219,6 +219,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		var u *url.URL
 		u, err = url.Parse(vmess)
 		if err != nil {
+			err = fmt.Errorf("%w: vmess link is not a valid URL; expected vmess://BASE64(JSON) or vmess://BASE64(security:id@host:port)", ErrInvalidParameter)
 			return
 		}
 		re := regexp.MustCompile(`.*:(.+)@(.+):(\d+)`)
@@ -229,7 +230,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		}
 		subMatch := re.FindStringSubmatch(s)
 		if subMatch == nil {
-			err = fmt.Errorf("unrecognized vmess address")
+			err = fmt.Errorf("%w: vmess link is neither base64 JSON nor vmess://BASE64(security:id@host:port); check that the whole link was copied", ErrInvalidParameter)
 			return
 		}
 		q := u.Query()
@@ -289,6 +290,7 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		}
 		err = jsoniter.Unmarshal([]byte(raw), &info)
 		if err != nil {
+			err = fmt.Errorf("%w: vmess link payload is not a JSON object; expected vmess://BASE64(JSON)", ErrInvalidParameter)
 			return
 		}
 	}

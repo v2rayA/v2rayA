@@ -32,11 +32,11 @@ func NewAnyTLS(link string) (ServerObj, error) {
 func ParseAnyTLSURL(link string) (data *AnyTLS, err error) {
 	u, err := url.Parse(link)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: anytls link is not a valid URL; expected anytls://password@host:port", ErrInvalidParameter)
 	}
 	port, err := strconv.Atoi(u.Port())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: anytls link for %q has a missing or invalid port; expected anytls://password@host:port", ErrInvalidParameter, u.Hostname())
 	}
 	return &AnyTLS{
 		Name:          u.Fragment,

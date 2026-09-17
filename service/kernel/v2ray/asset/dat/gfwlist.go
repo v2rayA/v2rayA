@@ -14,9 +14,9 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/common/httpClient"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
-	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -42,9 +42,13 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	b, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	tag := gjson.GetBytes(b, "0.name").Str
+	if tag == "" {
+		err = fmt.Errorf("GitHub returned no GFWList tag list (HTTP %s); it may be rate-limiting this IP, try again later or use a custom download link", resp.Status)
+		return
+	}
 	t, err := time.Parse("200601021504", tag)
 	if err != nil {
-		err = fmt.Errorf("failed to get latest version of GFWList: fail in getting commit date of latest tag: %w", err)
+		err = fmt.Errorf("latest GFWList tag %q has an invalid timestamp: %w", tag, err)
 		return
 	}
 	g.Tag = tag
@@ -84,8 +88,8 @@ func checkSha256(p string, sha256 string) (bool, string) {
 }
 
 var (
-	FailCheckSha = fmt.Errorf("failed to check sum256sum of GFWList file")
-	DamagedFile  = fmt.Errorf("damaged GFWList file, update it again please")
+	FailCheckSha = fmt.Errorf("could not fetch checksum")
+	DamagedFile  = fmt.Errorf("downloaded file checksum does not match")
 )
 
 func httpGet(url string) (data string, err error) {
@@ -143,7 +147,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 	u2 := fmt.Sprintf(`https://github.com/v2rayA/dist-v2ray-rules-dat/raw/%v/geosite.dat.sha256sum`, gfwlist.Tag)
 	siteDatSha256, err := httpGet(u2)
 	if err != nil {
-		err = fmt.Errorf("%w: %v", FailCheckSha, err)
+		err = fmt.Errorf("%w for GFWList: %w", FailCheckSha, err)
 		log.Warn("UpdateLocalGFWList: %v", err)
 		return "", err
 	}
@@ -152,7 +156,7 @@ func UpdateLocalGFWList() (localGFWListVersionAfterUpdate string, err error) {
 		sha256 = fields[0]
 	}
 	if ok, actual := checkSha256(pathSiteDat+".new", sha256); !ok {
-		err = fmt.Errorf("UpdateLocalGFWList: %v (expected %s, got %s)", DamagedFile, sha256, actual)
+		err = fmt.Errorf("%w for GFWList (expected %s, got %s); try again", DamagedFile, sha256, actual)
 		log.Warn("UpdateLocalGFWList: sha mismatch, expected %s, got %s", sha256, actual)
 		return
 	}

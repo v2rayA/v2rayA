@@ -289,7 +289,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// after the old process has been stopped.
 	resolv.CheckResolvConf()
 	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+		return asset.GFWListMissingError()
 	}
 
 	// Phase 2 (locked): stop the old process, run the pre-start hook (ordered

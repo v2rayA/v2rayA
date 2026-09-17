@@ -29,7 +29,7 @@ func IsValidAccount(username, password string) bool {
 
 func Register(username, password string) (token string, err error) {
 	if configure.ExistsAccount(username) {
-		return "", fmt.Errorf("username exists")
+		return "", fmt.Errorf("username %q is already taken", username)
 	}
 	err = configure.SetAccount(username, common.CryptoPwd(password))
 	if err != nil {

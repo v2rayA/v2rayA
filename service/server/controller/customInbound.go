@@ -21,15 +21,15 @@ func GetCustomInbound(ctx *gin.Context) {
 func PostCustomInbound(ctx *gin.Context) {
 	var ci configure.CustomInbound
 	if err := ctx.ShouldBindJSON(&ci); err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError(fmt.Errorf("request body is not a valid custom inbound object: %v", err)))
 		return
 	}
 	if ci.Protocol != "socks" && ci.Protocol != "http" {
-		common.ResponseError(ctx, logError(fmt.Errorf("protocol must be socks or http")))
+		common.ResponseError(ctx, logError(fmt.Errorf("protocol %q is not supported; use socks or http", ci.Protocol)))
 		return
 	}
 	if ci.Port <= 0 || ci.Port > 65535 {
-		common.ResponseError(ctx, logError(fmt.Errorf("port %d must be between 1 and 65535", ci.Port)))
+		common.ResponseError(ctx, logError(fmt.Errorf("port %d is out of range; use 1-65535", ci.Port)))
 		return
 	}
 	ports := configure.GetPortsNotNil()
@@ -48,11 +48,11 @@ func PostCustomInbound(ctx *gin.Context) {
 
 	// Validate outbound binding
 	if ci.Outbound == "" {
-		common.ResponseError(ctx, logError(fmt.Errorf("outbound group is required")))
+		common.ResponseError(ctx, logError(fmt.Errorf("inbound %q needs an outbound group", ci.Tag)))
 		return
 	}
 	if ci.OutboundType != "direct" && ci.OutboundType != "routingA" {
-		common.ResponseError(ctx, logError(fmt.Errorf("outboundType must be 'direct' or 'routingA'")))
+		common.ResponseError(ctx, logError(fmt.Errorf("outboundType %q is not supported; use direct or routingA", ci.OutboundType)))
 		return
 	}
 
@@ -73,7 +73,7 @@ func PostCustomInbound(ctx *gin.Context) {
 	// If outboundType is "routingA", validate the RoutingA rules
 	if ci.OutboundType == "routingA" {
 		if ci.RoutingARules == "" {
-			common.ResponseError(ctx, logError(fmt.Errorf("routingA rules are required when outboundType is 'routingA'")))
+			common.ResponseError(ctx, logError(fmt.Errorf("inbound %q uses routingA but its RoutingA rules are empty", ci.Tag)))
 			return
 		}
 		// Parse and validate RoutingA rules
@@ -123,7 +123,7 @@ func DeleteCustomInbound(ctx *gin.Context) {
 		Tag string `json:"tag"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil || req.Tag == "" {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be an object with a non-empty \"tag\""))
 		return
 	}
 	inbounds := configure.GetCustomInbounds()

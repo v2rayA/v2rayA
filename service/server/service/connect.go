@@ -30,7 +30,7 @@ func StartV2ray() (err error) {
 		}
 	}
 	if css := configure.GetConnectedServers(); css.Len() == 0 {
-		return fmt.Errorf("failed: no server is selected. please select at least one server")
+		return fmt.Errorf("no server is selected; select at least one server first")
 	}
 	return v2ray.UpdateV2RayConfig()
 }
@@ -67,11 +67,11 @@ func Disconnect(which configure.Which, clearOutbound bool) (err error) {
 
 func checkAssetsExist(setting *configure.Setting) error {
 	if !asset.DoesV2rayAssetExist("geoip.dat") || !asset.DoesV2rayAssetExist("geosite.dat") {
-		return fmt.Errorf("geoip.dat or geosite.dat file does not exists")
+		return fmt.Errorf("geoip.dat or geosite.dat is missing from %s; put the files there or set --v2ray-assetsdir", asset.GetV2rayLocationAssetOverride())
 	}
 	if setting.RulePortMode == configure.GfwlistMode || setting.Transparent == configure.TransparentGfwlist {
 		if !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-			return fmt.Errorf("GFWList file does not exists. Try updating GFWList please")
+			return asset.GFWListMissingError()
 		}
 	}
 	return nil

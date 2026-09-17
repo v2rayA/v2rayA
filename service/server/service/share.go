@@ -13,7 +13,7 @@ func GetSharingAddress(w *configure.Which) (addr string, err error) {
 	if w.TYPE == configure.SubscriptionType {
 		ind := w.ID - 1
 		if ind < 0 || ind >= len(subscriptions) {
-			return "", fmt.Errorf("id exceed range")
+			return "", fmt.Errorf("subscription #%d does not exist; reload the page", w.ID)
 		}
 		addr = subscriptions[ind].Address
 	} else {
@@ -24,7 +24,7 @@ func GetSharingAddress(w *configure.Which) (addr string, err error) {
 		}
 		addr = tsr.ServerObj.ExportToURL()
 		if addr == "" {
-			return "", fmt.Errorf("an error occurred while generating the address")
+			return "", fmt.Errorf("server %q has no shareable link; re-import it", tsr.ServerObj.GetName())
 		}
 	}
 	return

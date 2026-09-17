@@ -31,7 +31,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	defer func() {
 		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
-			err = fmt.Errorf("Ping: %v: %v", e, err)
+			err = fmt.Errorf("could not restore the transparent proxy after the ping test: %w (ping result: %v)", e, err)
 		}
 	}()
 	// Multi-threaded asynchronous ping
@@ -176,7 +176,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 				}
 			}
 			if time.Since(t) > 3*time.Second {
-				return nil, fmt.Errorf("timeout: failed to find availble ports")
+				return nil, fmt.Errorf("could not find a free local port for the latency test within 3 s")
 			}
 		}
 		v2rayInboundPort := strconv.Itoa(port)
@@ -195,7 +195,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 					}
 				}
 				if time.Since(t) > 3*time.Second {
-					return nil, fmt.Errorf("timeout: failed to find availble ports")
+					return nil, fmt.Errorf("could not find a free local port for the latency test within 3 s")
 				}
 			}
 			pluginPort = port
@@ -306,7 +306,8 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 				which.Latency = "NOT STABLE"
 				return
 			}
-			which.Latency = err.Error()
+			log.Debug("HTTP latency proxy request failed: %T", err)
+			which.Latency = "PROXY ERROR"
 		} else {
 			which.Latency = "BAD RESPONSE"
 		}

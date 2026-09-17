@@ -18,7 +18,7 @@ func PutDomainsExcluded(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, logError("request body must be {\"domains\": string}"))
 		return
 	}
 	configure.SetDomainsExcluded(data.DomainList)

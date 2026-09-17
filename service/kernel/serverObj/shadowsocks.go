@@ -46,6 +46,9 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		if err != nil {
 			return nil, false
 		}
+		if u.User == nil {
+			return nil, false
+		}
 		username := u.User.Username()
 		if password, ok := u.User.Password(); ok {
 			username += ":" + password
@@ -100,7 +103,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		if err != nil {
 			l, err = common.Base64URLDecode(l)
 			if err != nil {
-				return
+				return nil, fmt.Errorf("%w: ss link userinfo is not base64(method:password); expected ss://BASE64(method:password)@host:port or ss://method:password@host:port", ErrInvalidParameter)
 			}
 		}
 		t = "ss://" + l
@@ -110,7 +113,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		v, ok = parse(t)
 	}
 	if !ok {
-		return nil, fmt.Errorf("%w: unrecognized ss address", ErrInvalidParameter)
+		return nil, fmt.Errorf("%w: ss link payload is not method:password@host:port; expected ss://BASE64(method:password)@host:port or ss://method:password@host:port", ErrInvalidParameter)
 	}
 	return v, nil
 }

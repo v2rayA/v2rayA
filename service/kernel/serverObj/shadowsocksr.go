@@ -97,13 +97,14 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 		if err != nil {
 			content, err = common.Base64URLDecode(content)
 			if err != nil {
+				err = fmt.Errorf("%w: ssr link payload is not base64; expected ssr://BASE64(host:port:proto:method:obfs:BASE64(password)/?...)", ErrInvalidParameter)
 				return
 			}
 		}
 		info, ok = parse(content)
 	}
 	if !ok {
-		err = fmt.Errorf("%w: unrecognized ssr address", ErrInvalidParameter)
+		err = fmt.Errorf("%w: ssr link payload is not host:port:proto:method:obfs:BASE64(password)/?...", ErrInvalidParameter)
 		return
 	}
 	return &info, nil

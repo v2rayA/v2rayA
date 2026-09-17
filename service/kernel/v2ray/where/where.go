@@ -43,8 +43,11 @@ func GetV2rayServiceVersion() (variant Variant, ver string, err error) {
 	}
 
 	v2rayPath, err := GetV2rayBinPath()
-	if err != nil || len(v2rayPath) <= 0 {
-		return V2rayaCore, "", fmt.Errorf("cannot find v2ray executable binary")
+	if err != nil {
+		return V2rayaCore, "", err
+	}
+	if len(v2rayPath) <= 0 {
+		return V2rayaCore, "", fmt.Errorf("%w: v2raya_core executable not found next to v2rayA or in PATH; set --v2ray-bin", NotFoundErr)
 	}
 
 	// Get version from binary
@@ -90,7 +93,7 @@ func getV2rayBinPathAnyway() (path string, err error) {
 			return
 		}
 	}
-	return
+	return "", fmt.Errorf("%w: v2raya_core executable not found next to v2rayA or in PATH; set --v2ray-bin", NotFoundErr)
 }
 
 func getV2rayBinPath(target string) (string, error) {

@@ -74,7 +74,7 @@ func NewProcess(tmpl *Template,
 		return nil, err
 	}
 	if err = tmpl.CheckInboundPortsOccupied(); err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	pCtx, cancel := context.WithCancel(context.Background())
 	defer func() {
@@ -141,12 +141,12 @@ func NewProcess(tmpl *Template,
 			if log.Log.GetLevel() > log.ParseLevel("info") {
 				log.Error("some critical information may lost due to your log level")
 			}
-			return nil, fmt.Errorf("unexpected exiting: check the log for more information")
+			return nil, fmt.Errorf("v2raya_core exited right after starting; the reason is in the v2rayA log")
 		}
 		if time.Since(startTime) > startTimeOut {
 			log.Info("Attempting to terminate timed-out process with SIGTERM")
 			_ = proc.Signal(syscall.SIGTERM)
-			return nil, fmt.Errorf("timeout: check the log for more information")
+			return nil, fmt.Errorf("v2raya_core did not open its API port within %d s (--core-startup-timeout); the reason is in the v2rayA log", int(startTimeOut/time.Second))
 		}
 		time.Sleep(100 * time.Millisecond)
 	}

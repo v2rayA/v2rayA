@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	url2 "net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -104,6 +105,10 @@ func DoesV2rayAssetExist(filename string) bool {
 	return true
 }
 
+func GFWListMissingError() error {
+	return fmt.Errorf("GFWList mode needs LoyalsoldierSite.dat, which is missing from %s; update GFWList first", GetV2rayLocationAssetOverride())
+}
+
 func GetGFWListModTime() (time.Time, error) {
 	fullpath, err := GetV2rayLocationAsset("LoyalsoldierSite.dat")
 	if err != nil {
@@ -141,7 +146,11 @@ func Download(url string, to string) (err error) {
 	if err != nil || resp.StatusCode != 200 {
 		if err == nil {
 			defer resp.Body.Close()
-			err = fmt.Errorf("code: %v %v", resp.StatusCode, resp.Status)
+			host := "unknown host"
+			if u, parseErr := url2.Parse(url); parseErr == nil && u.Hostname() != "" {
+				host = u.Hostname()
+			}
+			err = fmt.Errorf("download from %s failed: HTTP %s", host, resp.Status)
 		}
 		return err
 	}

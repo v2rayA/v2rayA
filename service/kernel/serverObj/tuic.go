@@ -42,11 +42,11 @@ func NewTuic(link string) (ServerObj, error) {
 func ParseTuicURL(link string) (data *Tuic, err error) {
 	u, err := url.Parse(link)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: tuic link is not a valid URL; expected tuic://uuid:password@host:port", ErrInvalidParameter)
 	}
 	port, err := strconv.Atoi(u.Port())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: tuic link for %q has a missing or invalid port; expected tuic://uuid:password@host:port", ErrInvalidParameter, u.Hostname())
 	}
 	// u.Query().Get("alpn") only returns the first value if it's encoded in a way that url.Values thinks it's multiple
 	// But usually it's alpn=h3,h2. However, some clients might use alpn=h3&alpn=h2
