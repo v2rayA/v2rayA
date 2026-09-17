@@ -8,7 +8,8 @@
         <b-navbar-item tag="div">
           <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusMap[runningState.running]"
             @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
-            @click.native="handleClickStatus">{{ coverStatusText ? coverStatusText : runningState.running }}
+            @click.native="handleClickStatus" @keydown.native.enter.prevent="handleClickStatus"
+            @keydown.native.space.prevent="handleClickStatus">{{ coverStatusText ? coverStatusText : runningState.running }}
           </b-tag>
         </b-navbar-item>
         <b-navbar-item tag="div">

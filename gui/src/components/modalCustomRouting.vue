@@ -104,16 +104,12 @@
             <b-select
               v-model="rule.tags"
               multiple
-              :native-size="
-                siteDatFiles[rule.filename].tags.length > 16
-                  ? 16
-                  : siteDatFiles[rule.filename].tags.length
-              "
+              :native-size="Math.min(16, tagsOf(rule.filename).length)"
               size="is-small"
               expanded
             >
               <option
-                v-for="tag of siteDatFiles[rule.filename].tags"
+                v-for="tag of tagsOf(rule.filename)"
                 :key="tag"
                 :value="tag"
               >
@@ -242,6 +238,11 @@ export default {
     })();
   },
   methods: {
+    tagsOf(filename) {
+      // a saved rule may name a .dat file that no longer exists
+      const f = this.siteDatFiles[filename];
+      return f && f.tags ? f.tags : [];
+    },
     handleNew() {
       this.customPac.routingRules.push({
         filename: this.firstSiteDatFilename,

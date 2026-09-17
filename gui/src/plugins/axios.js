@@ -143,8 +143,12 @@ axios.interceptors.response.use(
       }
       return Promise.reject(err);
     } else if (
+      u &&
       location.protocol.substr(0, 5) === "https" &&
-      u.protocol === "http"
+      u.protocol === "http" &&
+      // parseURL fabricates http:// for a relative apiRoot; only an absolute
+      // http:// backend address is the mixed-content case
+      /^http:\/\//i.test(err.config.url)
     ) {
       // https frontend communicating with http backend
       let msg = i18n.t("axios.messages.cannotCommunicate.0");
@@ -187,8 +191,9 @@ axios.interceptors.response.use(
         },
       });
     } else if (
-      (err.message && err.message === "Network Error") ||
-      (err.config && err.config.url === "/api/version")
+      u &&
+      ((err.message && err.message === "Network Error") ||
+        (err.config && err.config.url === "/api/version"))
     ) {
       informNotRunning(u.source.replace(u.relative, ""));
     } else {

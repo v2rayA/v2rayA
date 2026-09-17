@@ -774,6 +774,10 @@ import ModalPickProxyGroup from "@/components/modalPickProxyGroup";
 import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import dayjs from "dayjs";
+import i18n from "@/plugins/i18n";
+
+// vue-i18n locale -> dayjs locale (all loaded in plugins/dayjs.js)
+const DAYJS_LOCALES = { zh: "zh-cn", en: "en", fa: "fa", ru: "ru", pt: "pt-br", ko: "ko" };
 
 export default {
   name: "Node",
@@ -781,13 +785,7 @@ export default {
   filters: {
     unix2datetime(x) {
       x = dayjs.unix(x);
-      let now = dayjs();
-      if (localStorage["_lang"] === "zh") {
-        now = now.locale("zh-cn");
-      } else if (localStorage["_lang"] === "en") {
-        now = now.locale("en");
-      }
-      return now.to(x);
+      return dayjs().locale(DAYJS_LOCALES[i18n.locale] || "en").to(x);
     },
   },
   props: {
@@ -1770,6 +1768,11 @@ export default {
               this.checkedRows.forEach((x) => (x.pingLatency = ""));
             }
           );
+        })
+        .catch(() => {
+          // network error: the interceptor already reported it; do not
+          // leave the rows on "testing..."
+          this.checkedRows.forEach((x) => (x.pingLatency = ""));
         })
         .finally(() => {
           clearTimeout(timerTip);

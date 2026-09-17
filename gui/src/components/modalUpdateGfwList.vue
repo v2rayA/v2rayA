@@ -102,6 +102,8 @@ export default {
             queue: false,
           });
         });
+      }).catch(() => {
+        loading.close();
       });
     },
   },

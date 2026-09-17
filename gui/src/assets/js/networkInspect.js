@@ -36,7 +36,7 @@ function waitingConnected(promise, interval, cancel, timeout) {
         );
       })
       .catch((err) => {
-        if (err.response.status === 401) {
+        if (err && err.response && err.response.status === 401) {
           clearInterval(timer);
           cancel && cancel();
         }
