@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
@@ -19,6 +20,10 @@ type CoreProcessManager struct {
 	testing          bool
 	networkPaused    bool
 	connectivityStop chan struct{}
+	// transparentOn records whether this process installed transparent proxy
+	// rules. Shutdown asks for the teardown twice — once in pre_run and once
+	// through Stop — which ran the user's pre-stop and post-stop hooks twice.
+	transparentOn atomic.Bool
 }
 
 var ProcessManager CoreProcessManager
@@ -103,6 +108,9 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 			}
 		}
 
+		// Mark it on before writing: a half-written ruleset still has to be
+		// torn down.
+		m.transparentOn.Store(true)
 		err = writeTransparentProxyRules(tmpl)
 
 		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
@@ -125,10 +133,19 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 }
 
 func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Setting) {
+	if !m.transparentOn.Swap(false) {
+		// Nothing installed by this process, so nothing to remove and no hook
+		// to run. Rules left behind by an earlier process are removed by
+		// cleanupResidualTransparentProxyRules when the rules are set up.
+		return
+	}
 	if setting == nil {
 		if t := m.GetRunningTemplate(); t != nil {
 			setting = t.Setting
 		} else {
+			// No setting to tear down with: leave the mark so a later call
+			// with one still removes the rules.
+			m.transparentOn.Store(true)
 			return
 		}
 	}
