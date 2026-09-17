@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
-const (
-	resolverFile  = "/etc/resolv.conf"
-	checkInterval = 3 * time.Second
+const checkInterval = 3 * time.Second
+
+// Overridden by the tests; production always uses these paths.
+var (
+	resolvPath       = "/etc/resolv.conf"
+	resolvBackupPath = "/etc/resolv.conf.v2raya_backup"
 )
 
 // ResolvHijacker 劫持系统 DNS 配置，将命名服务器指向 127.2.0.17:53。
@@ -28,6 +34,7 @@ type ResolvHijacker struct {
 	ticker    *time.Ticker
 	done      chan struct{}
 	closeOnce sync.Once
+	wg        sync.WaitGroup
 	localDNS  bool
 }
 
@@ -41,7 +48,9 @@ func NewResolvHijacker() *ResolvHijacker {
 		localDNS: ShouldLocalDnsListen(),
 	}
 	hij.HijackResolv()
+	hij.wg.Add(1)
 	go func() {
+		defer hij.wg.Done()
 		for {
 			select {
 			case <-hij.ticker.C:
@@ -58,10 +67,18 @@ func (h *ResolvHijacker) Close() error {
 		h.ticker.Stop()
 		close(h.done)
 	})
+	// Wait for a tick that is already writing: restoring while it runs put the
+	// hijacked file straight back.
+	h.wg.Wait()
 	return nil
 }
 
 const HijackFlag = "# v2rayA DNS hijack"
+
+const (
+	symlinkMarker = "# v2rayA saved symlink: "
+	missingMarker = "# v2rayA: no resolv.conf"
+)
 
 var hijacker *ResolvHijacker
 
@@ -72,7 +89,18 @@ func (h *ResolvHijacker) HijackResolv() error {
 	if runtime.GOOS != "linux" {
 		return nil
 	}
-	err := os.WriteFile(resolverFile,
+	if err := backupResolv(); err != nil {
+		log.Warn("DNS hijack: %v", err)
+	}
+	// /etc/resolv.conf is a symlink on any systemd-resolved, resolvconf or
+	// openresolv system. Writing through it overwrites the resolver's own
+	// file; replace the link with a regular file instead.
+	if fi, err := os.Lstat(resolvPath); err == nil && fi.Mode()&os.ModeSymlink != 0 {
+		if err := os.Remove(resolvPath); err != nil {
+			log.Warn("DNS hijack: cannot replace the %v link: %v", resolvPath, err)
+		}
+	}
+	err := os.WriteFile(resolvPath,
 		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 119.29.29.29\n"),
 		os.FileMode(0644),
 	)
@@ -80,6 +108,79 @@ func (h *ResolvHijacker) HijackResolv() error {
 		err = fmt.Errorf("failed to hijackDNS: [write] %v", err)
 	}
 	return err
+}
+
+// backupResolv records what /etc/resolv.conf was before the first hijack: its
+// target when it is a symlink (systemd-resolved, resolvconf and openresolv all
+// use one), otherwise its content. Without this, stopping the proxy left the
+// machine on the hard-coded public resolvers and the symlink gone for good.
+func backupResolv() error {
+	if _, err := os.Lstat(resolvBackupPath); err == nil {
+		// Already taken; never overwrite it with a hijacked file.
+		return nil
+	}
+	fi, err := os.Lstat(resolvPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Record that there was no file at all.
+			return os.WriteFile(resolvBackupPath, []byte(missingMarker+"\n"), 0644)
+		}
+		return fmt.Errorf("cannot inspect %v: %w", resolvPath, err)
+	}
+	if fi.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(resolvPath)
+		if err != nil {
+			return fmt.Errorf("cannot read the %v link: %w", resolvPath, err)
+		}
+		return os.WriteFile(resolvBackupPath, []byte(symlinkMarker+target+"\n"), 0644)
+	}
+	b, err := os.ReadFile(resolvPath)
+	if err != nil {
+		return fmt.Errorf("cannot read %v: %w", resolvPath, err)
+	}
+	if strings.HasPrefix(string(b), HijackFlag) {
+		// A hijacked file from a previous run that was never restored: keep
+		// looking for the real backup instead of saving our own work.
+		return nil
+	}
+	return os.WriteFile(resolvBackupPath, b, 0644)
+}
+
+// restoreResolv puts back what backupResolv saved. It reports whether the
+// original configuration is back.
+func restoreResolv() bool {
+	b, err := os.ReadFile(resolvBackupPath)
+	if err != nil {
+		return false
+	}
+	content := string(b)
+	switch {
+	case strings.HasPrefix(content, symlinkMarker):
+		target := strings.TrimSpace(strings.TrimPrefix(content, symlinkMarker))
+		if target == "" {
+			return false
+		}
+		if err := os.Remove(resolvPath); err != nil && !os.IsNotExist(err) {
+			log.Warn("DNS hijack: cannot replace %v: %v", resolvPath, err)
+			return false
+		}
+		if err := os.Symlink(target, resolvPath); err != nil {
+			log.Warn("DNS hijack: cannot restore the %v link to %v: %v", resolvPath, target, err)
+			return false
+		}
+	case strings.HasPrefix(strings.TrimSpace(content), missingMarker):
+		if err := os.Remove(resolvPath); err != nil && !os.IsNotExist(err) {
+			log.Warn("DNS hijack: cannot remove %v: %v", resolvPath, err)
+			return false
+		}
+	default:
+		if err := os.WriteFile(resolvPath, b, 0644); err != nil {
+			log.Warn("DNS hijack: cannot restore %v: %v", resolvPath, err)
+			return false
+		}
+	}
+	_ = os.Remove(resolvBackupPath)
+	return true
 }
 
 func resetResolvHijacker() {
@@ -98,8 +199,11 @@ func removeResolvHijacker() {
 	}
 	if hijacker != nil {
 		hijacker.Close()
-		if hijacker.localDNS {
-			os.WriteFile(resolverFile,
+		if hijacker.localDNS && !restoreResolv() {
+			// No usable backup: leave a working resolver behind rather than a
+			// file pointing at a listener that is gone.
+			log.Warn("DNS hijack: no backup of %v to restore, writing public resolvers instead", resolvPath)
+			os.WriteFile(resolvPath,
 				[]byte(HijackFlag+"\nnameserver 223.6.6.6\nnameserver 119.29.29.29\n"),
 				os.FileMode(0644),
 			)
