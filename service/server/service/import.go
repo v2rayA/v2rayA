@@ -27,8 +27,36 @@ func PluginManagerValidateLink(url string) bool {
 	}
 }
 
+// Import guesses whether url is a server link or a subscription address
+// from its scheme. Callers that know which one they hold should use
+// ImportServer or ImportSubscription instead; this wrapper only exists for
+// clients that predate the "kind" field of POST /api/import.
 func Import(url string, which *configure.Which) (err error) {
 	log.Trace("Import: received url=%v, which=%+v", url, which)
+	url = strings.TrimSpace(url)
+	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
+		return ImportServer(url, which)
+	}
+	// "http" and "https" are deliberately absent: a bare http(s) URL has
+	// always meant a subscription here, and single HTTP proxy nodes are
+	// written as http-proxy:// or https-proxy://.
+	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
+		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
+		"shadowsocks", "shadowsocksr", "hy1", "hy2", "mcore", "mcp", "plugin", "wireguard"}
+	for i := range supportedPrefix {
+		supportedPrefix[i] += "://"
+	}
+	urlLower := strings.ToLower(url)
+	if PluginManagerValidateLink(url) || common.HasAnyPrefix(urlLower, supportedPrefix) {
+		return ImportServer(url, which)
+	}
+	return ImportSubscription(url)
+}
+
+// ImportServer imports one server link, or several separated by newlines,
+// or a JSON config. A non-nil which with ID > 0 replaces that server instead
+// of appending.
+func ImportServer(url string, which *configure.Which) (err error) {
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -43,15 +71,7 @@ func Import(url string, which *configure.Which) (err error) {
 		}
 		return nil
 	}
-	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http", "https", "http-proxy",
-		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
-		"shadowsocks", "shadowsocksr", "hy1", "hy2", "mcore", "mcp", "plugin", "wireguard"}
-	for i := range supportedPrefix {
-		supportedPrefix[i] += "://"
-	}
-	urlLower := strings.ToLower(url)
-	if PluginManagerValidateLink(url) || common.HasAnyPrefix(urlLower, supportedPrefix) {
-		log.Trace("Import: url matches supported prefixes or is valid for PluginManager")
+	{
 		var obj serverObj.ServerObj
 		obj, err = ResolveURL(url)
 		if err != nil {
@@ -98,8 +118,16 @@ func Import(url string, which *configure.Which) (err error) {
 			log.Info("Import: appending a new server")
 			err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: obj}})
 		}
-	} else {
-		// subscription
+	}
+	return
+}
+
+// ImportSubscription fetches url (or the base64 payload of a sub:// link),
+// parses the server list it returns and stores it as a new subscription.
+func ImportSubscription(url string) (err error) {
+	resolv.CheckResolvConf()
+	url = strings.TrimSpace(url)
+	{
 		source := url
 		if u, err := url2.Parse(source); err == nil {
 			switch strings.ToLower(u.Scheme) {

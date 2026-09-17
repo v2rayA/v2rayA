@@ -12,7 +12,10 @@ import (
 
 func PostImport(ctx *gin.Context) {
 	var body struct {
-		URL   string      `json:"url"`
+		URL string `json:"url"`
+		// Kind is "server" or "subscription". Empty means the client did not
+		// say, and the scheme of URL decides.
+		Kind  string      `json:"kind"`
 		Which interface{} `json:"which"`
 	}
 	if err := ctx.ShouldBindJSON(&body); err != nil {
@@ -30,7 +33,18 @@ func PostImport(ctx *gin.Context) {
 		}
 	}
 
-	err := service.Import(body.URL, which)
+	var err error
+	switch body.Kind {
+	case "server":
+		err = service.ImportServer(body.URL, which)
+	case "subscription":
+		err = service.ImportSubscription(body.URL)
+	case "":
+		err = service.Import(body.URL, which)
+	default:
+		common.ResponseError(ctx, logError(fmt.Sprintf("bad request: unknown kind %q", body.Kind)))
+		return
+	}
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
