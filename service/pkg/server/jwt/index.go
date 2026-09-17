@@ -1,40 +1,46 @@
 package jwt
 
 import (
-	"crypto/sha256"
-	gonanoid "github.com/matoous/go-nanoid"
-	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"crypto/rand"
+	"encoding/hex"
 	"sync"
+
+	"github.com/v2rayA/v2rayA/db"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 var secret []byte
 var once sync.Once
 
+const (
+	secretBucket = "system"
+	secretKey    = "jwtSecret"
+)
+
+// genSecret loads the signing secret, generating and storing a random one on
+// first use. It used to be the hash of the subscription addresses, or of the
+// server hostnames when there was no subscription, so importing or deleting a
+// server changed the secret and signed every session out.
 func genSecret() {
-	// In order to reduce the number of times to enter the password,
-	// if there is a subscription, the secret is the hash value of all subscription addresses.
-	// Otherwise, the hash value of all server addresses.
-	if sub := configure.GetSubscriptions(); len(sub) > 0 {
-		sha := sha256.New()
-		for _, s := range sub {
-			sha.Write([]byte(s.Address))
+	var stored string
+	if err := db.Get(secretBucket, secretKey, &stored); err == nil && stored != "" {
+		if b, err := hex.DecodeString(stored); err == nil && len(b) == 32 {
+			secret = b
+			return
 		}
-		secret = sha.Sum(nil)
-	} else if servers := configure.GetServers(); len(servers) > 0 {
-		sha := sha256.New()
-		for _, s := range servers {
-			sha.Write([]byte(s.ServerObj.GetHostname()))
-		}
-		secret = sha.Sum(nil)
-	} else {
-		id, err := gonanoid.Nanoid()
-		if err != nil {
-			log.Fatal("failed to genSecret: %v", err)
-		}
-		secret = []byte(id)
 	}
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		log.Fatal("failed to generate the session secret: %v", err)
+	}
+	if err := db.Set(secretBucket, secretKey, hex.EncodeToString(b)); err != nil {
+		// Without persistence every restart signs sessions out, which is
+		// still better than refusing to start.
+		log.Warn("failed to store the session secret, sessions will not survive a restart: %v", err)
+	}
+	secret = b
 }
+
 func getSecret() []byte {
 	once.Do(genSecret)
 	return secret
