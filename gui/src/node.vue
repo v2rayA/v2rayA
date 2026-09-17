@@ -1025,15 +1025,23 @@ export default {
       });
       // re-point the selection at the replacement row objects so a refresh
       // neither drops the user's selection nor leaves stale rows behind
+      // identify a row by what it points at, not by its position: a
+      // subscription update reorders nodes and reuses the ids, so an
+      // id-based key would move the selection onto a different server
       const keyOf = (data, row) => {
         const sub = data.subscriptions.findIndex((s) => s.servers.includes(row));
-        return `${row._type}|${sub}|${row.id}`;
+        return `${row._type}|${sub}|${row.address}|${row.name}|${row.net}`;
       };
       const selected = this.checkedRows.map((x) => keyOf(this.tableData, x));
       this.tableData = touch;
       const byKey = new Map();
-      touch.servers.forEach((v) => byKey.set(keyOf(touch, v), v));
-      touch.subscriptions.forEach((s) => s.servers.forEach((v) => byKey.set(keyOf(touch, v), v)));
+      const remember = (v) => {
+        const k = keyOf(touch, v);
+        // two identical rows: keep the first, so the selection cannot jump
+        if (!byKey.has(k)) byKey.set(k, v);
+      };
+      touch.servers.forEach(remember);
+      touch.subscriptions.forEach((s) => s.servers.forEach(remember));
       this.checkedRows = selected.map((k) => byKey.get(k)).filter(Boolean);
       if (running !== undefined) {
         Object.assign(this.runningState, {

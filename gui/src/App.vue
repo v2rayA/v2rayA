@@ -855,9 +855,10 @@ html {
 }
 
 // The burger is a Lucide glyph, not Bulma's three spans; centre it and give
-// it the navbar's text colour.
+// it the navbar's text colour. Keep Bulma's breakpoint: this block used to
+// set display unconditionally, which showed the burger next to the full menu
+// on a desktop screen.
 .navbar-burger {
-  display: flex;
   align-items: center;
   justify-content: center;
   color: inherit;
@@ -865,6 +866,18 @@ html {
   .lucide {
     font-size: 24px;
     vertical-align: 0;
+  }
+}
+
+@media screen and (max-width: 1023px) {
+  .navbar-burger {
+    display: flex;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .navbar-burger {
+    display: none;
   }
 }
 

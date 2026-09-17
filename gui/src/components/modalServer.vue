@@ -1363,6 +1363,14 @@ export default {
       } else if (url.toLowerCase().startsWith("ss://")) {
         let u = parseURL(url);
         let userinfo = u.username;
+        // The backend percent-escapes the base64 userinfo ("=" becomes %3D),
+        // and js-base64 decodes those escapes as data, which corrupted the
+        // password of every shadowsocks node opened for editing.
+        try {
+          userinfo = decodeURIComponent(userinfo);
+        } catch (_) {
+          // a literal "%" in the userinfo: use it as it came
+        }
         // Handle SIP002 format: ss://BASE64URL@host:port vs legacy ss://BASE64
         let method = "", password = "";
         try {
@@ -1375,7 +1383,9 @@ export default {
         } catch (e) {
           method = userinfo;
         }
-        const ssPlugin = decodeURIComponent(u.params.plugin || "");
+        // parseURL already decoded the query values; decoding again turns
+        // %2F into a path separator and throws on a literal percent sign
+        const ssPlugin = u.params.plugin || "";
         const opts = ssPlugin.split(";");
         let o = {
           method: method,
@@ -1413,6 +1423,7 @@ export default {
               break;
             case "path":
             case "obfs-path":
+            case "obfs-uri":
               o.path = v;
               break;
             case "mode":
@@ -1471,6 +1482,7 @@ export default {
           verifyPeerCertByName: u.params.verifyPeerCertByName || "",
           method: "origin",
           net: u.params.type || "tcp",
+          host: u.params.host || "",
           obfs: "none",
           ssCipher: "2022-blake3-aes-128-gcm",
           path: u.params.path || u.params.serviceName || "",
@@ -1791,7 +1803,7 @@ export default {
               plugin.push("obfs=" + srcObj.obfs);
               plugin.push("obfs-host=" + srcObj.host);
               if (srcObj.obfs === "http") {
-                plugin.push("obfs-path=" + srcObj.path);
+                plugin.push("obfs-uri=" + srcObj.path);
               }
               if (srcObj.impl) {
                 plugin.push("impl=" + srcObj.impl);
