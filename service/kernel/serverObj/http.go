@@ -1,6 +1,7 @@
 package serverObj
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
@@ -44,9 +45,18 @@ func ParseHttpURL(u string) (data *HTTP, err error) {
 	if err != nil {
 		return nil, ErrInvalidParameter
 	}
-	port, err := strconv.Atoi(t.Port())
-	if err != nil {
-		return nil, ErrInvalidParameter
+	// A proxy link is scheme://[user:pass@]host[:port][#name]. Anything with
+	// a path or query is almost always a subscription URL pasted into the
+	// wrong box, so name that instead of returning a bare parameter error.
+	if (t.Path != "" && t.Path != "/") || t.RawQuery != "" {
+		return nil, fmt.Errorf("%w: an http proxy link has no path or query; import subscription URLs as subscriptions", ErrInvalidParameter)
+	}
+	// An absent port falls through to the per-scheme default below.
+	port := 0
+	if p := t.Port(); p != "" {
+		if port, err = strconv.Atoi(p); err != nil {
+			return nil, ErrInvalidParameter
+		}
 	}
 	data = &HTTP{
 		Name:   t.Fragment,
