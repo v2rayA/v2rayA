@@ -66,6 +66,7 @@ export default {
     timeLastUpdate: "上次更新时间",
     numberServers: "节点数",
     subscription: "订阅",
+    autoSelect: "订阅自动更新后自动连接其中的新节点",
   },
   operations: {
     tproxyWhiteIpGroups: "直通白名单IP组",
@@ -382,6 +383,7 @@ export default {
     pickTitle: "添加到代理分组",
     pickMessage: "选择要加入的代理分组。",
     group: "代理分组",
+    searchNodes: "搜索节点...",
   },
   driver: {
     welcome: [

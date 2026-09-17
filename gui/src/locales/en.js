@@ -390,6 +390,7 @@ export default {
     pickTitle: "Add to Proxy Group",
     pickMessage: "Choose the proxy group this node should join.",
     group: "Proxy Group",
+    searchNodes: "Search nodes...",
   },
   log: {
     logModalTitle: "View logs",

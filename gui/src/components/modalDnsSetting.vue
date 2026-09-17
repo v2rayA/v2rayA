@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-card dns-setting-modal" style="width: auto; min-width: 680px; max-width: 95vw; margin: auto">
+  <div class="modal-card dns-setting-modal" style="width: auto; min-width: min(680px, 95vw); max-width: 95vw; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("dns.title") }}</p>
       <a
@@ -247,6 +247,24 @@ export default {
     margin-top: 12px;
     display: flex;
     align-items: center;
+  }
+
+  // Four columns do not fit a phone: the header row goes, and each rule
+  // stacks server / domains / outbound with the delete button beside the
+  // outbound select.
+  @media screen and (max-width: 640px) {
+    .dns-header {
+      display: none;
+    }
+
+    .dns-row {
+      grid-template-columns: 1fr 42px;
+    }
+
+    .col-server,
+    .col-domains {
+      grid-column: 1 / -1;
+    }
   }
 }
 </style>

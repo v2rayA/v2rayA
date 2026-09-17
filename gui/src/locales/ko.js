@@ -397,6 +397,7 @@ export default {
     pickTitle: "프록시 그룹에 추가",
     pickMessage: "이 노드가 참여할 프록시 그룹을 선택하세요.",
     group: "프록시 그룹",
+    searchNodes: "노드 검색...",
   },
   driver: {
     welcome: [

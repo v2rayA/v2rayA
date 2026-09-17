@@ -86,7 +86,7 @@
                 ></span>
               </div>
               <div v-if="!getGroupNodes(outbound).length" class="ogp-nodes-empty">
-                {{ $t("common.empty") || "暂无节点" }}
+                {{ $t("common.empty") }}
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@
         <section class="modal-card-body" style="min-height: 200px; max-height: 60vh; overflow-y: auto">
           <b-input
             v-model="nodeSearch"
-            placeholder="搜索节点..."
+            :placeholder="$t('proxyGroup.searchNodes')"
             icon="magnify"
             style="margin-bottom: 0.75rem"
           ></b-input>
@@ -145,7 +145,7 @@
               </b-tag>
             </div>
             <div v-if="!filteredNodes.length && !loadingNodes" style="text-align: center; padding: 1rem; color: #888">
-              暂无节点
+              {{ $t("common.empty") }}
             </div>
           </template>
         </section>
