@@ -2,7 +2,6 @@ package controller
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"os"
 
@@ -19,7 +18,7 @@ func GetLogger(ctx *gin.Context) {
 	config := conf.GetEnvironmentConfig()
 	query := getLogQuery{}
 	if ctx.ShouldBindQuery(&query) != nil {
-		common.ResponseError(ctx, errors.New("invalid query"))
+		common.ResponseError(ctx, badRequest("skip", "skip must be an integer"))
 		return
 	}
 	if config.LogFile == "" {

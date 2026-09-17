@@ -24,13 +24,13 @@ func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
 	s := buf.String()
 	l := strings.Index(s, "Package: v2raya")
 	if l < 0 {
-		return false, "", fmt.Errorf("failed to get latest version from Package file: 1")
+		return false, "", fmt.Errorf("the APT package index has no v2rayA entry; cannot tell whether a newer version exists")
 	}
 	s = s[l:]
 	prefix := "Version: "
 	l = strings.Index(s, prefix)
 	if l < 0 {
-		return false, "", fmt.Errorf("failed to get latest version from Package file: 2")
+		return false, "", fmt.Errorf("the v2rayA entry in the APT package index has no Version field")
 	}
 	s = s[l+len(prefix):]
 	r := strings.Index(s, "\n")

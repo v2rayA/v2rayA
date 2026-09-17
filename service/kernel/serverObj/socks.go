@@ -1,6 +1,7 @@
 package serverObj
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
@@ -31,11 +32,18 @@ func NewSOCKS(link string) (ServerObj, error) {
 func ParseSocksURL(u string) (data *SOCKS, err error) {
 	t, err := url.Parse(u)
 	if err != nil {
-		return nil, ErrInvalidParameter
+		return nil, fmt.Errorf("%w: socks5 link is not a valid URL; expected socks5://[user:pass@]host:port", ErrInvalidParameter)
 	}
-	port, err := strconv.Atoi(t.Port())
-	if err != nil {
-		return nil, ErrInvalidParameter
+	// A default port only makes sense with a host to connect to; an empty
+	// hostname used to be rejected by the port conversion.
+	if t.Hostname() == "" {
+		return nil, fmt.Errorf("%w: socks5 link has no server address; expected socks5://[user:pass@]host:port", ErrInvalidParameter)
+	}
+	port := 0
+	if p := t.Port(); p != "" {
+		if port, err = strconv.Atoi(p); err != nil {
+			return nil, fmt.Errorf("%w: socks5 link for %q has an invalid port; expected socks5://[user:pass@]host:port", ErrInvalidParameter, t.Hostname())
+		}
 	}
 	data = &SOCKS{
 		Name:   t.Fragment,

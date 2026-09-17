@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
@@ -147,11 +146,7 @@ func ListGet(bucket string, key string, index int) (b []byte, err error) {
 			servers = append(servers, s)
 		}
 
-		serversJSON := "[" + strings.Join(servers, ",") + "]"
-		autoSelect := autoSelectInt != 0
-		result := fmt.Sprintf(`{"remarks":"%s","address":"%s","status":"%s","info":"%s","servers":%s,"autoSelect":%v}`,
-			remarks, address, status, info, serversJSON, autoSelect)
-		return []byte(result), nil
+		return subscriptionJSON(remarks, address, status, info, servers, autoSelectInt != 0)
 
 	default:
 		return nil, fmt.Errorf("ListGet: unsupported bucket/key: %s/%s", bucket, key)
@@ -172,23 +167,18 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 		parsed := gjson.ParseBytes(b)
 		if parsed.IsArray() {
 			for _, item := range parsed.Array() {
-				var maxSort int
-				db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM servers WHERE type = 'server'").Scan(&maxSort)
-
 				_, err = db.Exec(
-					"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, ?)",
-					item.Raw, maxSort+1,
+					"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM servers WHERE type = 'server'))",
+					item.Raw,
 				)
 				if err != nil {
 					return err
 				}
 			}
 		} else {
-			var maxSort int
-			db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM servers WHERE type = 'server'").Scan(&maxSort)
 			_, err = db.Exec(
-				"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, ?)",
-				string(b), maxSort+1,
+				"INSERT INTO servers (type, config_json, sort) VALUES ('server', ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM servers WHERE type = 'server'))",
+				string(b),
 			)
 			if err != nil {
 				return err
@@ -213,13 +203,9 @@ func ListAppend(bucket string, key string, val interface{}) (err error) {
 					autoSelect = 1
 				}
 
-				var maxSort int
-				db.QueryRow("SELECT COALESCE(MAX(sort), -1) FROM subscriptions").Scan(&maxSort)
-				newSort := maxSort + 1
-
 				res, err := db.Exec(
-					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort) VALUES (?, ?, ?, ?, ?, ?)",
-					address, remarks, status, info, autoSelect, newSort,
+					"INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM subscriptions))",
+					address, remarks, status, info, autoSelect,
 				)
 				if err != nil {
 					return err
@@ -307,11 +293,11 @@ func ListGetAll(bucket string, key string) (list [][]byte, err error) {
 			}
 			serverRows.Close()
 
-			serversJSON := "[" + strings.Join(servers, ",") + "]"
-			autoSelect := autoSelectInt != 0
-			result := fmt.Sprintf(`{"remarks":"%s","address":"%s","status":"%s","info":"%s","servers":%s,"autoSelect":%v}`,
-				remarks, address, status, info, serversJSON, autoSelect)
-			list = append(list, []byte(result))
+			result, err := subscriptionJSON(remarks, address, status, info, servers, autoSelectInt != 0)
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, result)
 		}
 		return list, rows.Err()
 
@@ -404,4 +390,23 @@ func ListLen(bucket string, key string) (length int, err error) {
 	default:
 		return 0, fmt.Errorf("ListLen: unsupported bucket/key: %s/%s", bucket, key)
 	}
+}
+
+// subscriptionJSON rebuilds a stored subscription from its columns. The
+// server rows are already JSON; the scalar columns are user- or
+// provider-supplied text and must be escaped, otherwise a remark with a
+// quote made the whole subscription unreadable.
+func subscriptionJSON(remarks, address, status, info string, servers []string, autoSelect bool) ([]byte, error) {
+	raw := make([]jsoniter.RawMessage, 0, len(servers))
+	for _, s := range servers {
+		raw = append(raw, jsoniter.RawMessage(s))
+	}
+	return jsoniter.Marshal(struct {
+		Remarks    string                `json:"remarks"`
+		Address    string                `json:"address"`
+		Status     string                `json:"status"`
+		Info       string                `json:"info"`
+		Servers    []jsoniter.RawMessage `json:"servers"`
+		AutoSelect bool                  `json:"autoSelect"`
+	}{remarks, address, status, info, raw, autoSelect})
 }

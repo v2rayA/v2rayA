@@ -34,13 +34,14 @@ func ReqCache(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(resp.Status, resp.Body)
 		return
 	}
-	_, ok := glen.reqIdMu[reqId]
+	mu, ok := glen.reqIdMu[reqId]
 	if !ok {
-		glen.reqIdMu[reqId] = new(sync.Mutex)
+		mu = new(sync.Mutex)
+		glen.reqIdMu[reqId] = mu
 	}
 	glen.reqMu.Unlock()
-	glen.reqIdMu[reqId].Lock()
-	defer glen.reqIdMu[reqId].Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 	if resp := common.RespCache.Get(reqId); resp != nil {
 		resp := resp.(common.Resp)
 		ctx.AbortWithStatusJSON(resp.Status, resp.Body)

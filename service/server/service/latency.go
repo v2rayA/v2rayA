@@ -31,7 +31,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	defer func() {
 		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
-			err = fmt.Errorf("Ping: %v: %v", e, err)
+			err = fmt.Errorf("could not restore the transparent proxy after the ping test: %w (ping result: %v)", e, err)
 		}
 	}()
 	// Multi-threaded asynchronous ping
@@ -56,6 +56,14 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 }
 
 func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
+	// entries whose server could not be located are left nil by the caller
+	located := vms[:0:0]
+	for _, v := range vms {
+		if v != nil {
+			located = append(located, v)
+		}
+	}
+	vms = located
 	if tmpl.DNS == nil {
 		tmpl.DNS = new(coreObj.DNS)
 	}
@@ -139,6 +147,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
+	listenAddr := "127.0.0.1"
+	if tmpl.Setting != nil && tmpl.Setting.PortSharing {
+		listenAddr = "0.0.0.0"
+	}
 	var toClose []io.Closer
 	defer func() {
 		for _, l := range toClose {
@@ -153,18 +165,18 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		t := time.Now()
 		var port int
 		for {
-			l, err := net.Listen("tcp", "0.0.0.0:0")
+			l, err := net.Listen("tcp", listenAddr+":0")
 			if err == nil {
 				port = l.Addr().(*net.TCPAddr).Port
 				toClose = append(toClose, l)
-				l2, err2 := net.ListenPacket("udp", "0.0.0.0:"+strconv.Itoa(port))
+				l2, err2 := net.ListenPacket("udp", listenAddr+":"+strconv.Itoa(port))
 				if err2 == nil {
 					toClose = append(toClose, l2)
 					break
 				}
 			}
 			if time.Since(t) > 3*time.Second {
-				return nil, fmt.Errorf("timeout: failed to find availble ports")
+				return nil, fmt.Errorf("could not find a free local port for the latency test within 3 s")
 			}
 		}
 		v2rayInboundPort := strconv.Itoa(port)
@@ -183,7 +195,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 					}
 				}
 				if time.Since(t) > 3*time.Second {
-					return nil, fmt.Errorf("timeout: failed to find availble ports")
+					return nil, fmt.Errorf("could not find a free local port for the latency test within 3 s")
 				}
 			}
 			pluginPort = port
@@ -197,6 +209,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			}
 			return nil, err
 		}
+		tmpl.Inbounds[len(tmpl.Inbounds)-1].Listen = listenAddr
 		inboundPortMap[i] = v2rayInboundPort
 	}
 	for _, l := range toClose {
@@ -210,6 +223,11 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	v2ray.ProcessManager.SetLatencyTesting(true)
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		v2ray.ProcessManager.SetLatencyTesting(false)
+		if v2rayRunning && configure.GetConnectedServers() != nil {
+			if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
+				return nil, fmt.Errorf("%v; cannot restart v2ray-core: %w", err, restoreErr)
+			}
+		}
 		return nil, err
 	}
 	//limit the concurrency
@@ -288,7 +306,8 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 				which.Latency = "NOT STABLE"
 				return
 			}
-			which.Latency = err.Error()
+			log.Debug("HTTP latency proxy request failed: %T", err)
+			which.Latency = "PROXY ERROR"
 		} else {
 			which.Latency = "BAD RESPONSE"
 		}

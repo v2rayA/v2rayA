@@ -2,13 +2,15 @@ package configure
 
 import (
 	"fmt"
-	"github.com/v2rayA/v2rayA/common/resolv"
-	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type Whiches struct {
@@ -215,17 +217,23 @@ func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 	case ServerType:
 		servers := GetServers()
 		if ind < 0 || ind >= len(servers) {
-			return nil, fmt.Errorf("LocateServerRaw: ID exceed range")
+			return nil, common.Coded("SERVER_NOT_FOUND", fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", w.ID, len(servers)), map[string]interface{}{
+				"id":    w.ID,
+				"count": len(servers),
+			})
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
 		subscriptions := GetSubscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-			return nil, fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
+			return nil, common.Coded("SUBSCRIPTION_SERVER_NOT_FOUND", fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", w.ID, w.Sub+1), map[string]interface{}{
+				"id":  w.ID,
+				"sub": w.Sub + 1,
+			})
 		}
 		return &subscriptions[w.Sub].Servers[ind], nil
 	default:
-		return nil, fmt.Errorf("LocateServerRaw: invalid TYPE")
+		return nil, common.Coded("UNKNOWN_ITEM_TYPE", fmt.Errorf("unknown item type %q; expected %q or %q", w.TYPE, ServerType, SubscriptionServerType), map[string]interface{}{"type": string(w.TYPE)})
 	}
 }
 
@@ -237,16 +245,22 @@ func (ws *Whiches) FillLinks() (err error) {
 		switch w.TYPE {
 		case ServerType:
 			if ind < 0 || ind >= len(servers) {
-				return fmt.Errorf("LocateServerRaw: ID exceed range")
+				return common.Coded("SERVER_NOT_FOUND", fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", w.ID, len(servers)), map[string]interface{}{
+					"id":    w.ID,
+					"count": len(servers),
+				})
 			}
 			w.Link = servers[ind].ServerObj.ExportToURL()
 		case SubscriptionServerType:
 			if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-				return fmt.Errorf("LocateServerRaw: ID or Sub exceed range")
+				return common.Coded("SUBSCRIPTION_SERVER_NOT_FOUND", fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", w.ID, w.Sub+1), map[string]interface{}{
+					"id":  w.ID,
+					"sub": w.Sub + 1,
+				})
 			}
 			w.Link = subscriptions[w.Sub].Servers[ind].ServerObj.ExportToURL()
 		default:
-			return fmt.Errorf("LocateServerRaw: invalid TYPE")
+			return common.Coded("UNKNOWN_ITEM_TYPE", fmt.Errorf("unknown item type %q; expected %q or %q", w.TYPE, ServerType, SubscriptionServerType), map[string]interface{}{"type": string(w.TYPE)})
 		}
 	}
 	return nil

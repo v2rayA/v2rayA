@@ -55,7 +55,10 @@ func initFunc() {
 		EnvPrefix:         "V2RAYA_",
 	})
 	if err != nil {
-		if err.Error() != "unexpected word while parsing flags: '-test.v'" {
+		// go test hands its own -test.* flags to the binary; only "-test.v"
+		// used to be tolerated, so every package whose tests reach this init
+		// died on the first other test flag.
+		if !strings.Contains(err.Error(), "parsing flags: '-test.") {
 			log2.Fatal(err)
 		}
 	}

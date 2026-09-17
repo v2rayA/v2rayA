@@ -42,11 +42,11 @@ func NewTuic(link string) (ServerObj, error) {
 func ParseTuicURL(link string) (data *Tuic, err error) {
 	u, err := url.Parse(link)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: tuic link is not a valid URL; expected tuic://uuid:password@host:port", ErrInvalidParameter)
 	}
 	port, err := strconv.Atoi(u.Port())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: tuic link for %q has a missing or invalid port; expected tuic://uuid:password@host:port", ErrInvalidParameter, u.Hostname())
 	}
 	// u.Query().Get("alpn") only returns the first value if it's encoded in a way that url.Values thinks it's multiple
 	// But usually it's alpn=h3,h2. However, some clients might use alpn=h3&alpn=h2
@@ -65,19 +65,20 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 	}
 
 	data = &Tuic{
-		Name:                 u.Fragment,
-		Server:               u.Hostname(),
-		Port:                 port,
-		UUID:                 u.User.Username(),
-		Password:             password,
-		Sni:                  u.Query().Get("sni"),
-		DisableSni:           u.Query().Get("disable_sni") == "true" || u.Query().Get("disable_sni") == "1",
-		AllowInsecure:        u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
-		Alpn:                 alpn,
-		CongestionControl:    u.Query().Get("congestion_control"),
-		UdpRelayMode:         u.Query().Get("udp_relay_mode"),
-		PinnedPeerCertSha256: u.Query().Get("pinnedPeerCertSha256"),
-		VerifyPeerCertByName: u.Query().Get("verifyPeerCertByName"),
+		Name:              u.Fragment,
+		Server:            u.Hostname(),
+		Port:              port,
+		UUID:              u.User.Username(),
+		Password:          password,
+		Sni:               u.Query().Get("sni"),
+		DisableSni:        u.Query().Get("disable_sni") == "true" || u.Query().Get("disable_sni") == "1",
+		AllowInsecure:     u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
+		Alpn:              alpn,
+		CongestionControl: u.Query().Get("congestion_control"),
+		UdpRelayMode:      u.Query().Get("udp_relay_mode"),
+		// the GUI form and other clients spell these in snake_case
+		PinnedPeerCertSha256: firstNonEmpty(u.Query().Get("pinnedPeerCertSha256"), u.Query().Get("pinned_peer_cert_sha256")),
+		VerifyPeerCertByName: firstNonEmpty(u.Query().Get("verifyPeerCertByName"), u.Query().Get("verify_peer_cert_by_name")),
 		Protocol:             "tuic",
 	}
 	return data, nil
@@ -185,4 +186,13 @@ func (s *Tuic) GetName() string {
 
 func (s *Tuic) SetName(name string) {
 	s.Name = name
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

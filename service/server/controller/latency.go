@@ -28,7 +28,7 @@ func GetPingLatency(ctx *gin.Context) {
 	var wt []*configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, badRequest("whiches", "query parameter \"whiches\" must be a JSON array of server items"))
 		return
 	}
 	wt, err = service.Ping(wt, 1*time.Second)
@@ -59,7 +59,7 @@ func GetHttpLatency(ctx *gin.Context) {
 	var wt []*configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, badRequest("whiches", "query parameter \"whiches\" must be a JSON array of server items"))
 		return
 	}
 	wt, err = service.TestHttpLatency(wt, 8*time.Second, 32, false, ctx.Query("testUrl"))

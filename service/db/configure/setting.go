@@ -4,6 +4,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"time"
 )
 
 type Setting struct {
@@ -93,4 +94,15 @@ type RoutingRule struct {
 	Tags      []string     `json:"tags"`      //SiteDAT文件的标签
 	MatchType PacMatchType `json:"matchType"` //是domain匹配还是ip匹配
 	RuleType  PacRuleType  `json:"ruleType"`  //在名单上的项进行直连、代理还是拦截
+}
+
+// IntervalHours converts a stored auto-update interval to a ticker period.
+// time.Ticker.Reset panics on a non-positive duration, and a 0 or negative
+// hour count can be stored by an old GUI or a hand-edited database; such a
+// value falls back to one hour instead of crashing every start.
+func IntervalHours(hours int) time.Duration {
+	if hours <= 0 {
+		hours = 1
+	}
+	return time.Duration(hours) * time.Hour
 }

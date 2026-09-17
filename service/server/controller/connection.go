@@ -27,13 +27,13 @@ func PostConnection(ctx *gin.Context) {
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, badRequest("server item", "request body must be a server item with _type, id, sub and outbound"))
 		return
 	}
 	err = service.Connect(&which)
 	if err != nil {
-		log.Warn("PostConnection: %v", err)
-		common.ResponseError(ctx, logError(fmt.Errorf("failed to connect: %w", err)))
+		log.Warn("Connect request failed: %v", err)
+		common.ResponseError(ctx, logError(err))
 		return
 	}
 	getTouch(ctx)
@@ -57,7 +57,7 @@ func DeleteConnection(ctx *gin.Context) {
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, badRequest("server item", "request body must be a server item with _type, id, sub and outbound"))
 		return
 	}
 	err = service.Disconnect(which, false)

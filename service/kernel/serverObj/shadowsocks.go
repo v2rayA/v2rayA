@@ -46,8 +46,17 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		if err != nil {
 			return nil, false
 		}
-		username := u.User.String()
-		username, _ = common.Base64URLDecode(username)
+		if u.User == nil {
+			return nil, false
+		}
+		username := u.User.Username()
+		if password, ok := u.User.Password(); ok {
+			username += ":" + password
+		} else if decoded, err := common.Base64URLDecode(username); err == nil {
+			username = decoded
+		} else if decodedStd, err := common.Base64StdDecode(username); err == nil {
+			username = decodedStd
+		}
 		arr := strings.SplitN(username, ":", 2)
 		if len(arr) != 2 {
 			return nil, false
@@ -94,7 +103,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		if err != nil {
 			l, err = common.Base64URLDecode(l)
 			if err != nil {
-				return
+				return nil, fmt.Errorf("%w: ss link userinfo is not base64(method:password); expected ss://BASE64(method:password)@host:port or ss://method:password@host:port", ErrInvalidParameter)
 			}
 		}
 		t = "ss://" + l
@@ -104,7 +113,7 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 		v, ok = parse(t)
 	}
 	if !ok {
-		return nil, fmt.Errorf("%w: unrecognized ss address", ErrInvalidParameter)
+		return nil, fmt.Errorf("%w: ss link payload is not method:password@host:port; expected ss://BASE64(method:password)@host:port or ss://method:password@host:port", ErrInvalidParameter)
 	}
 	return v, nil
 }
@@ -339,7 +348,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 func (s *Shadowsocks) exportToChainURL() string {
 	u := &url.URL{
 		Scheme:   "ss",
-		User:     url.User(strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(s.Cipher+":"+s.Password)), "=")),
+		User:     url.User(base64.RawURLEncoding.EncodeToString([]byte(s.Cipher + ":" + s.Password))),
 		Host:     net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 		Fragment: s.Name,
 	}
@@ -354,7 +363,7 @@ func (s *Shadowsocks) exportToChainURL() string {
 func (s *Shadowsocks) ExportToURL() string {
 	u := &url.URL{
 		Scheme:   "ss",
-		User:     url.User(strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(s.Cipher+":"+s.Password)), "=")),
+		User:     url.User(base64.RawURLEncoding.EncodeToString([]byte(s.Cipher + ":" + s.Password))),
 		Host:     net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 		Fragment: s.Name,
 	}

@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-	println("[DEBUG] main.main started")
 	gin.SetMode(gin.ReleaseMode)
 
 	// Try running as a service (implemented on Windows, returns false on other platforms)

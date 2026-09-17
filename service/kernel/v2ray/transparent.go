@@ -2,11 +2,11 @@ package v2ray
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
-	"github.com/v2rayA/v2rayA/common/cmds"
+	"github.com/miekg/dns"
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
@@ -89,7 +89,7 @@ ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
 ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null || true
 nft delete table inet v2raya 2>/dev/null || true
 `
-	cmds.ExecCommands(commands, false)
+	iptables.Setter{Cmds: commands}.Run(false)
 }
 
 // cleanDnsRedirectRules removes the direct nat OUTPUT/PREROUTING DNS
@@ -114,7 +114,7 @@ ip6tables -w 2 -t nat -D OUTPUT -p tcp --dport 53 -j REDIRECT --to-port 52353 2>
 ip6tables -w 2 -t nat -D OUTPUT -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
 ip6tables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/null || true
 `
-	cmds.ExecCommands(commands, false)
+	iptables.Setter{Cmds: commands}.Run(false)
 }
 
 func deleteTransparentProxyRulesKeepSystemProxy() {
@@ -140,6 +140,10 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		if err != nil {
 			log.Warn("writeTransparentProxyRules: %v", err)
 			deleteTransparentProxyRules()
+			err = common.Coded("TRANSPARENT_SETUP_FAILED", err, map[string]interface{}{
+				"mode":   configure.GetSettingNotNil().TransparentType,
+				"detail": err.Error(),
+			})
 		}
 	}()
 	// v2raya-core 进程内启动 DNS 模块（监听 :52353），
@@ -151,9 +155,13 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			dnsAddr = tmpl.Setting.DnsListenAddr
 		}
 		if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
-			return fmt.Errorf("dns module not ready: %w", err)
+			// The probe resolves a name, so a dead or slow upstream fails it
+			// even though the listener is up. Waiting is worth it when DNS is
+			// healthy, but it must not be the reason the core cannot start.
+			log.Warn("DNS module did not answer on %s yet, applying transparent proxy rules anyway: %v", dnsAddr, err)
+		} else {
+			log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 		}
-		log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 	}
 	cleanupResidualTransparentProxyRules()
 	setting := configure.GetSettingNotNil()
@@ -163,22 +171,22 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 	case configure.TransparentTproxy:
 		if err = iptables.Tproxy.GetSetupCommands().Run(true); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
-				err = fmt.Errorf("you does not compile xt_TPROXY in kernel")
+				err = fmt.Errorf("the kernel has no xt_TPROXY module; load it or switch transparent proxy to redirect mode")
 			}
-			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
+			return fmt.Errorf("could not set up transparent proxy in tproxy mode: %w", err)
 		}
 		iptables.SetWatcher(iptables.Tproxy)
 	case configure.TransparentRedirect:
 		if err = iptables.Redirect.GetSetupCommands().Run(true); err != nil {
-			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
+			return fmt.Errorf("could not set up transparent proxy in redirect mode: %w", err)
 		}
 		iptables.SetWatcher(iptables.Redirect)
 	case configure.TransparentSystemProxy:
 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
-			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)
+			return fmt.Errorf("could not set up transparent proxy in system proxy mode: %w", err)
 		}
 	default:
-		return fmt.Errorf("undefined \"%v\" mode of transparent proxy", setting.TransparentType)
+		return fmt.Errorf("unknown transparent proxy mode %q; expected tproxy, redirect, system_proxy, or tun", setting.TransparentType)
 	}
 
 	// 无论哪种透明代理模式，都用 nat 表的 REDIRECT 将 DNS 流量（:53）转到 DNS 模块（:52353）。
@@ -209,7 +217,7 @@ ip6tables -w 2 -t nat -I OUTPUT -m mark --mark 0x80/0x80 -j RETURN
 ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 `
 		}
-		cmds.ExecCommands(dnsRedirect, false)
+		iptables.Setter{Cmds: dnsRedirect}.Run(false)
 
 		if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
@@ -242,10 +250,17 @@ func IsTransparentOn(setting *configure.Setting) bool {
 // This ensures the v2raya-core DNS module is accepting queries before we apply firewall rules.
 func waitForDnsPort(addr string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
+	request := new(dns.Msg)
+	request.SetQuestion("localhost.", dns.TypeA)
+	client := &dns.Client{
+		Net:     "udp",
+		Timeout: 500 * time.Millisecond,
+	}
 	for time.Now().Before(deadline) {
-		conn, err := net.DialTimeout("udp", addr, 500*time.Millisecond)
-		if err == nil {
-			conn.Close()
+		if remaining := time.Until(deadline); remaining < client.Timeout {
+			client.Timeout = remaining
+		}
+		if _, _, err := client.Exchange(request, addr); err == nil {
 			return nil
 		}
 		time.Sleep(100 * time.Millisecond)

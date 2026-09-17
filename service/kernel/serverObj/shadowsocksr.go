@@ -97,13 +97,14 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 		if err != nil {
 			content, err = common.Base64URLDecode(content)
 			if err != nil {
+				err = fmt.Errorf("%w: ssr link payload is not base64; expected ssr://BASE64(host:port:proto:method:obfs:BASE64(password)/?...)", ErrInvalidParameter)
 				return
 			}
 		}
 		info, ok = parse(content)
 	}
 	if !ok {
-		err = fmt.Errorf("%w: unrecognized ssr address", ErrInvalidParameter)
+		err = fmt.Errorf("%w: ssr link payload is not host:port:proto:method:obfs:BASE64(password)/?...", ErrInvalidParameter)
 		return
 	}
 	return &info, nil
@@ -124,19 +125,21 @@ func (s *ShadowsocksR) Configuration(info PriorInfo) (c Configuration, err error
 
 func (s *ShadowsocksR) ExportToURL() string {
 	/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
-	return fmt.Sprintf("ssr://%v", strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(
+	// SSR links carry unpadded base64; trimming a single "=" left an invalid
+	// remainder whenever two padding characters were produced.
+	return fmt.Sprintf("ssr://%v", base64.RawURLEncoding.EncodeToString([]byte(
 		fmt.Sprintf(
 			"%v:%v:%v:%v:%v/?remarks=%v&protoparam=%v&obfsparam=%v",
 			net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 			s.Proto,
 			s.Cipher,
 			s.Obfs,
-			base64.URLEncoding.EncodeToString([]byte(s.Password)),
-			base64.URLEncoding.EncodeToString([]byte(s.Name)),
-			base64.URLEncoding.EncodeToString([]byte(s.ProtoParam)),
-			base64.URLEncoding.EncodeToString([]byte(s.ObfsParam)),
+			base64.RawURLEncoding.EncodeToString([]byte(s.Password)),
+			base64.RawURLEncoding.EncodeToString([]byte(s.Name)),
+			base64.RawURLEncoding.EncodeToString([]byte(s.ProtoParam)),
+			base64.RawURLEncoding.EncodeToString([]byte(s.ObfsParam)),
 		),
-	)), "="))
+	)))
 }
 
 func (s *ShadowsocksR) NeedPluginPort() bool {

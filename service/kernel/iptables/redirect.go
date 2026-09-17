@@ -52,6 +52,11 @@ func (r *legacyRedirect) RemoveIPWhitelist(cidr string) {
 }
 
 func (r *legacyRedirect) GetSetupCommands() Setter {
+	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
+	if err != nil {
+		return NewErrorSetter(err)
+	}
+
 	commands := `
 iptables -w 2 -t nat -N TP_OUT
 iptables -w 2 -t nat -N TP_PRE
@@ -79,15 +84,14 @@ iptables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
 iptables -w 2 -t nat -A DNS_REDIRECT -p tcp -j REDIRECT --to-port 52353
 iptables -w 2 -t nat -A DNS_REDIRECT -p udp -j REDIRECT --to-port 52353
 `
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
 	// OUTPUT 路径使用 -o 匹配输出网卡（本地流量在 OUTPUT 链中 -i 始终为 lo）
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
-	if IsEnabledTproxyWhiteIpGroups() {
-		whiteIpv4List, _ := GetWhiteListIPs()
+	if len(whiteIpv4List) > 0 {
 		for _, v := range whiteIpv4List {
 			commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -d %s -j RETURN\n", v)
 		}
@@ -130,15 +134,14 @@ ip6tables -w 2 -t nat -A TP_RULE -d fe80::/10 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 `
-		for _, v := range GetExcludedInterfaces() {
+		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
 		// IPv6 OUTPUT 路径使用 -o 匹配输出网卡
-		for _, v := range GetExcludedInterfaces() {
+		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
-		if IsEnabledTproxyWhiteIpGroups() {
-			_, whiteIpv6List := GetWhiteListIPs()
+		if len(whiteIpv6List) > 0 {
 			for _, v := range whiteIpv6List {
 				commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -d %s -j RETURN\n", v)
 			}
@@ -219,16 +222,18 @@ func (t *nftRedirect) RemoveIPWhitelist(cidr string) {
 }
 
 func (r *nftRedirect) GetSetupCommands() Setter {
+	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
+	if err != nil {
+		return NewErrorSetter(err)
+	}
+
 	// Prepare white IP group elements
 	var whiteIpv4Elements, whiteIpv6Elements string
-	if IsEnabledTproxyWhiteIpGroups() {
-		whiteIpv4List, whiteIpv6List := GetWhiteListIPs()
-		if len(whiteIpv4List) > 0 {
-			whiteIpv4Elements = ",\n            " + strings.Join(whiteIpv4List, ",\n            ")
-		}
-		if len(whiteIpv6List) > 0 {
-			whiteIpv6Elements = ",\n            " + strings.Join(whiteIpv6List, ",\n            ")
-		}
+	if len(whiteIpv4List) > 0 {
+		whiteIpv4Elements = ",\n            " + strings.Join(whiteIpv4List, ",\n            ")
+	}
+	if len(whiteIpv6List) > 0 {
+		whiteIpv6Elements = ",\n            " + strings.Join(whiteIpv6List, ",\n            ")
 	}
 
 	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
@@ -300,10 +305,10 @@ table inet v2raya {
         ip6 daddr @local_ips6 return
         meta mark & 0x80 == 0x80 return
 `
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
 	}
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		table += fmt.Sprintf("        oifname \"%s\" return\n", v)
 	}
 	table += `

@@ -24,6 +24,13 @@ var (
 // indicating that migration to SQLite is required before normal operation.
 var ErrNeedMigration = errors.New("bolt.db exists, migration required")
 
+func sqliteDSN(path string) string {
+	if sqliteDriverName == "sqlite" {
+		return path + "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
+	}
+	return path + "?_busy_timeout=5000&_foreign_keys=1"
+}
+
 func validateSQLiteDriver() error {
 	if sqliteDriverName == "" {
 		return errors.New("mips/loong64 build requires CGO_ENABLED=1 to enable sqlite driver")
@@ -68,7 +75,7 @@ func initDB() {
 	if err = validateSQLiteDriver(); err != nil {
 		log.Fatal("SQLite driver is unavailable: %v", err)
 	}
-	sqlDB, err = sql.Open(sqliteDriverName, dbPath)
+	sqlDB, err = sql.Open(sqliteDriverName, sqliteDSN(dbPath))
 	if err != nil {
 		log.Fatal("sql.Open: %v", err)
 	}
@@ -77,8 +84,6 @@ func initDB() {
 	pragmas := []string{
 		"PRAGMA journal_mode=WAL",
 		"PRAGMA synchronous=NORMAL",
-		"PRAGMA busy_timeout=5000",
-		"PRAGMA foreign_keys=ON",
 		"PRAGMA cache_size=-8000",
 	}
 	for _, p := range pragmas {

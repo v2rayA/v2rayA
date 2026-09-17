@@ -157,16 +157,31 @@ func trapBOM(fileBytes []byte) []byte {
 	return trimmedBytes
 }
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+	defer func() {
+		if err != nil {
+			var coded *common.CodedError
+			if !errors.As(err, &coded) {
+				err = common.Coded("SUBSCRIPTION_FETCH_FAILED", err, map[string]interface{}{
+					"host":   subscriptionHost(source),
+					"detail": err.Error(),
+				})
+			}
+		}
+	}()
+
 	c := *client
 	if c.Timeout < 30*time.Second {
 		c.Timeout = 30 * time.Second
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
+	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
 	if err != nil {
-		return
+		return nil, "", err
 	}
 	defer res.Body.Close()
+	if res.StatusCode >= 400 {
+		return nil, "", fmt.Errorf("subscription server answered %s", res.Status)
+	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, "", err
@@ -179,6 +194,11 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	infos, status, err = ResolveByLines(raw)
 	if err != nil {
 		return nil, "", err
+	}
+	if len(infos) == 0 {
+		// an update that replaced the list with nothing would drop every
+		// node; treat an unparseable or empty body as a failed fetch
+		return nil, "", common.Coded("SUBSCRIPTION_EMPTY", fmt.Errorf("no server found in the subscription response"), nil)
 	}
 	subscriptionUserInfo := res.Header.Get("Subscription-Userinfo")
 	sui := parseSubscriptionUserInfo(subscriptionUserInfo)
@@ -211,15 +231,17 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
-	subscriptions := configure.GetSubscriptions()
-	addr := subscriptions[index].Address
+	subscription := configure.GetSubscription(index)
+	if subscription == nil {
+		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
+	}
+	addr := subscription.Address
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
-		reason := "failed to resolve subscription address: " + err.Error()
-		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
-		return fmt.Errorf("UpdateSubscription: %v", reason)
+		log.Warn("Subscription fetch failed: %v", err)
+		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -313,8 +335,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			if disconnectIfNecessary {
 				err = Disconnect(*css.Get()[cssIndex], false)
 				if err != nil {
-					reason := "failed to disconnect previous server"
-					return fmt.Errorf("UpdateSubscription: %v", reason)
+					return fmt.Errorf("could not disconnect the server that left the subscription: %w", err)
 				}
 			} else {
 				// Append previously connected node
@@ -326,10 +347,14 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
 		return err
 	}
-	subscriptions[index].Servers = infoServerRaws
-	subscriptions[index].Status = string(touch.NewUpdateStatus())
-	subscriptions[index].Info = status
-	if err := configure.SetSubscription(index, &subscriptions[index]); err != nil {
+	subscription = configure.GetSubscription(index)
+	if subscription == nil {
+		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
+	}
+	subscription.Servers = infoServerRaws
+	subscription.Status = string(touch.NewUpdateStatus())
+	subscription.Info = status
+	if err := configure.SetSubscription(index, subscription); err != nil {
 		return err
 	}
 	// A remapped connection may point at a server whose config differs from the old
@@ -345,7 +370,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return fmt.Errorf("failed to find the corresponding subscription")
+		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d does not exist; reload the page", subscription.ID), map[string]interface{}{"id": subscription.ID})
 	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
@@ -358,12 +383,31 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
+	if shouldDisconnect {
+		connections := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
+		if connections == nil {
+			return nil
+		}
+		remaining := make([]configure.Which, 0, connections.Len())
+		var found bool
+		for _, connected := range connections.Get() {
+			if connected.TYPE == configure.SubscriptionServerType && connected.Sub == index {
+				found = true
+				continue
+			}
+			remaining = append(remaining, *connected)
+		}
+		if !found {
+			return nil
+		}
+		return ReplaceOutboundConnections(subscriptionServer.Outbound, remaining)
+	}
 
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
 		subscriptionServer.ID = i // Server IDs start with 1
 		sub := configure.GetSubscription(index)
 		if sub == nil {
-			return fmt.Errorf("SelectServersFromSubscription: subscription at index %d not found", index)
+			return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
 		}
 		serverObj := sub.Servers[i-1].ServerObj // ServerObj IDs start with 0
 		if serverObj == nil {
@@ -379,22 +423,12 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 			continue
 		}
 
-		if shouldDisconnect {
-			err := Disconnect(subscriptionServer, true)
-			if err == nil {
-				log.Info("[AutoSelect] Disconnected from server: %v", serverName)
-			} else {
-				log.Error("[AutoSelect] Failed to disconnect from server: %v", serverName)
-				return err
-			}
+		err := Connect(&subscriptionServer)
+		if err == nil {
+			log.Info("[AutoSelect] Automatically selected server: %v", serverName)
 		} else {
-			err := Connect(&subscriptionServer)
-			if err == nil {
-				log.Info("[AutoSelect] Automatically selected server: %v", serverName)
-			} else {
-				log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
-				return err
-			}
+			log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
+			return err
 		}
 	}
 	return nil

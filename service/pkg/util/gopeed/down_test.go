@@ -5,11 +5,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestDown(t *testing.T) {
@@ -42,14 +41,16 @@ func TestDown(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Remove("favicon.ico")
-			err := Down(tt.args.request, "/tmp")
+			requireNetwork(t)
+			dest := filepath.Join(t.TempDir(), "favicon.ico")
+			err := Down(tt.args.request, dest)
 			if err != nil {
 				t.Errorf("error down= %v", err)
 				return
 			}
-			downMd5 := fileMd5("favicon.ico")
-			os.Remove("favicon.ico")
+			// The file is written into dir; reading it from the working
+			// directory made this test fail on every machine.
+			downMd5 := fileMd5(dest)
 			if "8de7a6a2e786861013d61b77b2394012" != downMd5 {
 				t.Errorf("error md5= %v", downMd5)
 				return
@@ -92,6 +93,7 @@ func TestResolve(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			requireNetwork(t)
 			got, err := Resolve(tt.args.request)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Resolve() error = %v, wantErr %v", err, tt.wantErr)
@@ -102,35 +104,6 @@ func TestResolve(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestTemp(t *testing.T) {
-	f, err := os.Create("e:/testbt/test.data")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := f.Truncate(1024 * 1024 * 512); err != nil {
-		log.Fatal(err)
-	}
-	bts := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	s := time.Now().UnixNano()
-	f.Write(bts)
-	fmt.Printf("write from 0 use: %d\n", time.Now().UnixNano()-s)
-	s = time.Now().UnixNano()
-	f.Seek(1024*1024*128, 0)
-	f.Write(bts)
-	fmt.Printf("write from 128M use %d\n", time.Now().UnixNano()-s)
-	s = time.Now().UnixNano()
-	f.Write(bts)
-	fmt.Printf("write from 128M+9b use %d\n", time.Now().UnixNano()-s)
-	s = time.Now().UnixNano()
-	f.Seek(0, 0)
-	f.Write(bts)
-	fmt.Printf("write from 0 agein use %d\n", time.Now().UnixNano()-s)
-	s = time.Now().UnixNano()
-	f.Seek(1024*1024*64, 0)
-	f.Write(bts)
-	fmt.Printf("write from agein 64M use %d\n", time.Now().UnixNano()-s)
 }
 
 func fileMd5(filePath string) string {
@@ -151,4 +124,14 @@ func fileMd5(filePath string) string {
 
 func TestTemp2(t *testing.T) {
 	fmt.Println("123456789"[2:3])
+}
+
+// Both tests fetch a file from GitHub and compare it with a fixed checksum, so
+// they only mean something with network access and an unchanged upstream file.
+// Set V2RAYA_NETWORK_TESTS=1 to run them.
+func requireNetwork(t *testing.T) {
+	t.Helper()
+	if os.Getenv("V2RAYA_NETWORK_TESTS") != "1" {
+		t.Skip("set V2RAYA_NETWORK_TESTS=1 to run the tests that download from the network")
+	}
 }

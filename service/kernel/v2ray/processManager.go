@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
@@ -19,6 +20,10 @@ type CoreProcessManager struct {
 	testing          bool
 	networkPaused    bool
 	connectivityStop chan struct{}
+	// transparentOn records whether this process installed transparent proxy
+	// rules. Shutdown asks for the teardown twice — once in pre_run and once
+	// through Stop — which ran the user's pre-stop and post-stop hooks twice.
+	transparentOn atomic.Bool
 }
 
 var ProcessManager CoreProcessManager
@@ -103,6 +108,9 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 			}
 		}
 
+		// Mark it on before writing: a half-written ruleset still has to be
+		// torn down.
+		m.transparentOn.Store(true)
 		err = writeTransparentProxyRules(tmpl)
 
 		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
@@ -125,10 +133,19 @@ func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, se
 }
 
 func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Setting) {
+	if !m.transparentOn.Swap(false) {
+		// Nothing installed by this process, so nothing to remove and no hook
+		// to run. Rules left behind by an earlier process are removed by
+		// cleanupResidualTransparentProxyRules when the rules are set up.
+		return
+	}
 	if setting == nil {
 		if t := m.GetRunningTemplate(); t != nil {
 			setting = t.Setting
 		} else {
+			// No setting to tear down with: leave the mark so a later call
+			// with one still removes the rules.
+			m.transparentOn.Store(true)
 			return
 		}
 	}
@@ -146,7 +163,6 @@ func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Set
 			}
 			if err != nil {
 				log.Warn("Error when executing the transparent pre stop hook: %v", err)
-				return
 			}
 		}
 
@@ -290,7 +306,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// after the old process has been stopped.
 	resolv.CheckResolvConf()
 	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
-		return fmt.Errorf("cannot find GFWList files. update GFWList and try again")
+		return asset.GFWListMissingError()
 	}
 
 	// Phase 2 (locked): stop the old process, run the pre-start hook (ordered

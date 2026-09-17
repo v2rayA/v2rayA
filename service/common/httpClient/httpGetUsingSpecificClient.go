@@ -1,8 +1,10 @@
 package httpClient
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	neturl "net/url"
 
 	"github.com/v2rayA/v2rayA/conf"
 )
@@ -18,7 +20,15 @@ func HttpGetUsingSpecificClient(c *http.Client, url string) (resp *http.Response
 		resp, err = http.DefaultClient.Do(req)
 	}
 	if resp == nil {
-		return nil, fmt.Errorf("httpGetUsingSpecificClient: response is nil")
+		cause := err
+		var urlErr *neturl.Error
+		if errors.As(cause, &urlErr) {
+			cause = urlErr.Err
+		}
+		if cause == nil {
+			cause = errors.New("request returned no response")
+		}
+		return nil, fmt.Errorf("could not reach %s: %w", req.URL.Hostname(), cause)
 	}
 	return
 }

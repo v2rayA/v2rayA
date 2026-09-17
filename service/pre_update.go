@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"sync"
 	"time"
 
@@ -51,8 +52,11 @@ func initUpdatingTicker() {
 	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range conf.TickerUpdateGFWList.C {
-			_, err := dat.CheckAndUpdateGFWList("")
-			if err != nil {
+			version, err := dat.CheckAndUpdateGFWList("")
+			switch {
+			case errors.Is(err, dat.ErrGFWListUpToDate):
+				log.Info("[AutoUpdate] GFWList is already at %v", version)
+			case err != nil:
 				log.Info("[AutoUpdate] GFWList: %v", err)
 			}
 		}
@@ -75,13 +79,17 @@ func checkUpdate() {
 		setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals ||
 		setting.Transparent == configure.TransparentGfwlist {
 		if setting.GFWListAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			conf.TickerUpdateGFWList.Reset(time.Duration(setting.GFWListAutoUpdateIntervalHour) * time.Hour)
+			conf.TickerUpdateGFWList.Reset(configure.IntervalHours(setting.GFWListAutoUpdateIntervalHour))
 		}
 		switch setting.RulePortMode {
 		case configure.GfwlistMode:
 			go func() {
 				/* Update LoyalsoldierSite.dat */
 				localGFWListVersion, err := dat.CheckAndUpdateGFWList("")
+				if errors.Is(err, dat.ErrGFWListUpToDate) {
+					log.Info("PAC file is already at %v", localGFWListVersion)
+					return
+				}
 				if err != nil {
 					log.Warn("Failed to update PAC file: %v", err.Error())
 					return
@@ -98,7 +106,7 @@ func checkUpdate() {
 		setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
 
 		if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			conf.TickerUpdateSubscription.Reset(time.Duration(setting.SubscriptionAutoUpdateIntervalHour) * time.Hour)
+			conf.TickerUpdateSubscription.Reset(configure.IntervalHours(setting.SubscriptionAutoUpdateIntervalHour))
 		}
 		go updateSubscriptions()
 	}

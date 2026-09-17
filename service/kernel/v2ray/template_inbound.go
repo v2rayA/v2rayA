@@ -219,6 +219,15 @@ func (t *Template) setInbound(setting *configure.Setting) error {
 		if ci.Protocol == "socks" {
 			ib.Settings = &coreObj.InboundSettings{UDP: true}
 		}
+		if ci.Username != "" || ci.Password != "" {
+			if ib.Settings == nil {
+				ib.Settings = &coreObj.InboundSettings{}
+			}
+			// socks calls it "password", http "noauth"/accounts; both read the
+			// same account list.
+			ib.Settings.Auth = "password"
+			ib.Settings.Accounts = []coreObj.Account{{User: ci.Username, Pass: ci.Password}}
+		}
 		t.Inbounds = append(t.Inbounds, ib)
 
 		// Generate per-inbound routing rules based on the bound outbound group

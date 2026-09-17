@@ -46,21 +46,25 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 				)
 			}
 			if err != nil {
-				common.Response(ctx, common.UNAUTHORIZED, err.Error())
+				code := "SESSION_INVALID"
+				if errors.Is(err, jwt.ErrTokenExpired) {
+					code = "SESSION_EXPIRED"
+				}
+				common.Response(ctx, common.UNAUTHORIZED, common.Coded(code, err, nil))
 				ctx.Abort()
 				return
 			}
 		}
 		mapClaims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			common.ResponseError(ctx, errors.New("bad token: invalid claims"))
+			common.ResponseError(ctx, common.Coded("SESSION_INVALID", errors.New("the session token is not valid; sign in again"), nil))
 			ctx.Abort()
 			return
 		}
 		exp, err := mapClaims.GetExpirationTime()
 		if err == nil && exp != nil {
 			if time.Now().After(exp.Time) {
-				common.ResponseError(ctx, errors.New("expired token"))
+				common.ResponseError(ctx, common.Coded("SESSION_EXPIRED", errors.New("session expired; sign in again"), nil))
 				ctx.Abort()
 				return
 			}
@@ -69,7 +73,7 @@ func JWTAuth(Admin bool) gin.HandlerFunc {
 		if Admin {
 			adminVal, _ := mapClaims["admin"]
 			if adminVal != true {
-				common.ResponseError(ctx, errors.New("admin required"))
+				common.ResponseError(ctx, common.Coded("ADMIN_REQUIRED", errors.New("this action needs an admin account"), nil))
 				ctx.Abort()
 				return
 			}

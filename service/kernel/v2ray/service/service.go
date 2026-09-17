@@ -34,10 +34,9 @@ func CheckAndProbeTProxy() (err error) {
 		out, err = exec.Command("sh", "-c", "modprobe xt_TPROXY").CombinedOutput()
 		if err != nil {
 			if !strings.Contains(string(out), "not found") {
-				return fmt.Errorf("failed to modprobe xt_TPROXY: %v", string(out))
+				return fmt.Errorf("could not load xt_TPROXY: %v", string(out))
 			}
-			// modprobe失败，不支持xt_TPROXY方案
-			return fmt.Errorf("not support xt_TPROXY: %v", string(out))
+			return fmt.Errorf("the kernel has no xt_TPROXY module (modprobe: %v); use redirect mode", string(out))
 		}
 	}
 	return
@@ -62,10 +61,16 @@ func CheckCoreVersionMatch() error {
 	}
 
 	if coreVer != serviceVer {
-		return fmt.Errorf(
-			"%w: v2raya_core version %q does not match v2rayA version %q",
+		// The two binaries are released together from one tree, so a mismatch
+		// almost always means an xray-core or v2ray-core binary is installed
+		// where v2raya_core belongs. Say that instead of two bare numbers.
+		return common.Coded("CORE_VERSION_MISMATCH", fmt.Errorf(
+			"%w: the core reports version %q but v2rayA is %q; v2rayA needs the v2raya_core binary of the same version, not xray-core or v2ray-core",
 			CoreVersionMismatchError, coreVer, serviceVer,
-		)
+		), map[string]interface{}{
+			"core": coreVer,
+			"app":  serviceVer,
+		})
 	}
 	return nil
 }

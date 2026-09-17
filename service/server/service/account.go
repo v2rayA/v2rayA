@@ -11,7 +11,7 @@ import (
 
 func Login(username, password string) (token string, err error) {
 	if !IsValidAccount(username, password) {
-		return "", fmt.Errorf("wrong username or password")
+		return "", common.Coded("WRONG_CREDENTIALS", fmt.Errorf("wrong username or password"), nil)
 	}
 	dur := 30 * 24 * time.Hour
 	return jwt.MakeJWT(map[string]string{
@@ -29,7 +29,7 @@ func IsValidAccount(username, password string) bool {
 
 func Register(username, password string) (token string, err error) {
 	if configure.ExistsAccount(username) {
-		return "", fmt.Errorf("username exists")
+		return "", common.Coded("USERNAME_TAKEN", fmt.Errorf("username %q is already taken", username), map[string]interface{}{"username": username})
 	}
 	err = configure.SetAccount(username, common.CryptoPwd(password))
 	if err != nil {

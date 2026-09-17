@@ -395,7 +395,7 @@ func RemoveConnect(wt Which) (err error) {
 			return db.Set(bucket, "connectedServers", wcs)
 		}
 	}
-	return fmt.Errorf("given server cannot be found in database")
+	return fmt.Errorf("server #%d (%s) is not in the connected list of outbound %q; reload the page", wt.ID, wt.TYPE, wt.Outbound)
 }
 
 func GetOutbounds() (outbounds []string) {
@@ -432,7 +432,7 @@ func AddOutbound(outbound string) (err error) {
 	if outbound == "proxy" ||
 		outbound == "direct" ||
 		outbound == "block" {
-		return fmt.Errorf("cannot add %v as the outbound name", outbound)
+		return fmt.Errorf("%q is a reserved outbound name (proxy, direct, block); choose another", outbound)
 	}
 	if err = db.SetAdd("outbounds", "names", outbound); err != nil {
 		return err

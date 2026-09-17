@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -36,22 +38,27 @@ func PutSetting(ctx *gin.Context) {
 		updatingMu.Unlock()
 	}()
 
-	var data configure.Setting
+	// Decode over the stored setting so fields the client does not send
+	// (older GUIs omit the DNS cache flags, for example) keep their value
+	// instead of being persisted as zero.
+	data := *configure.GetSettingNotNil()
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, badRequest("settings", fmt.Errorf("request body is not a valid settings object: %v", err)))
 		return
 	}
 	if data.MuxOn == configure.Yes && (data.Mux < 1 || data.Mux > 1024) {
-		common.ResponseError(ctx, logError("mux should be between 1 and 1024"))
+		common.ResponseError(ctx, common.Coded("MUX_RANGE", logError(fmt.Errorf("mux concurrency %d is out of range; use 1-1024", data.Mux)), map[string]interface{}{"value": data.Mux}))
 		return
 	}
 	// 对 DNS 配置字段执行迁移，确保旧格式请求中的缺失字段被填充默认值
 	configure.MigrateSetting(&data)
 	err = service.UpdateSetting(&data)
 	if err != nil {
+		// UpdateSetting restores the previous setting and the core with it;
+		// stopping the core here would undo that and leave the user without
+		// a proxy because of one rejected field.
 		common.ResponseError(ctx, logError(err))
-		_ = service.StopV2ray()
 		return
 	}
 	common.ResponseSuccess(ctx, nil)

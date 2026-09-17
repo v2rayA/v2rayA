@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"regexp"
-	"strings"
 )
 
 func GetRoutingA(ctx *gin.Context) {
@@ -20,7 +22,7 @@ func PutRoutingA(ctx *gin.Context) {
 	}
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
-		common.ResponseError(ctx, logError("bad request"))
+		common.ResponseError(ctx, badRequest("routingA", "request body must be {\"routingA\": string}"))
 		return
 	}
 	// remove hardcode replacement and try parsing
@@ -34,7 +36,7 @@ func PutRoutingA(ctx *gin.Context) {
 	}
 	_, err = RoutingA.Parse(strings.Join(lines, "\n"))
 	if err != nil {
-		common.ResponseError(ctx, logError(err))
+		common.ResponseError(ctx, logError(fmt.Errorf("invalid RoutingA rules: %w", err)))
 		return
 	}
 

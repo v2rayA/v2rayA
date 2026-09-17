@@ -52,7 +52,11 @@ func cachedHTML(html []byte) func(ctx *gin.Context) {
 			return
 		}
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		ctx.Header("Cache-Control", "public, must-revalidate")
+		// no-cache: the entry page names hashed assets that vanish on every
+		// upgrade; a copy served from cache without revalidation loads a
+		// bundle that no longer exists and shows a blank page. The ETag
+		// still makes the revalidation a 304.
+		ctx.Header("Cache-Control", "no-cache")
 		ctx.Header("ETag", etag)
 		if match := ctx.GetHeader("If-None-Match"); match != "" {
 			if strings.Contains(match, etag) {
@@ -330,7 +334,6 @@ func Run() error {
 			return fmt.Errorf("router: failed to listen on %v: %w", addr, err)
 		}
 	}
-
 
 	srv := &http.Server{Handler: engine}
 	httpServerMu.Lock()

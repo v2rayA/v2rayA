@@ -1,8 +1,10 @@
 package iptables
 
 import (
+	"fmt"
 	"net"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -92,7 +94,7 @@ func IsNftablesSupported() bool {
 	return strings.Contains(string(out), "nf_tables")
 }
 
-func GetWhiteListIPs() ([]string, []string) {
+func GetWhiteListIPs() ([]string, []string, error) {
 	dataModal := configure.GetTproxyWhiteIpGroups()
 
 	var ipv4List []string
@@ -103,32 +105,57 @@ func GetWhiteListIPs() ([]string, []string) {
 		ipv6List = append(ipv6List, ipv6s...)
 	}
 	for _, v := range dataModal.CustomIps {
+		// The GUI submits the textarea lines as typed, so a pasted CIDR can
+		// carry surrounding whitespace that net.ParseCIDR does not accept.
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		if net.ParseIP(v) == nil {
+			if _, _, err := net.ParseCIDR(v); err != nil {
+				return nil, nil, fmt.Errorf("invalid tproxy whitelist IP/CIDR %q", v)
+			}
+		}
 		if strings.Contains(v, ":") {
 			ipv6List = append(ipv6List, v)
 		} else {
 			ipv4List = append(ipv4List, v)
 		}
 	}
-	return ipv4List, ipv6List
+	return ipv4List, ipv6List, nil
 }
 
 func IsEnabledTproxyWhiteIpGroups() bool {
-	ipv4List, ipv6List := GetWhiteListIPs()
-	return len(ipv4List) > 0 || len(ipv6List) > 0
+	ipv4List, ipv6List, err := GetWhiteListIPs()
+	return err == nil && (len(ipv4List) > 0 || len(ipv6List) > 0)
 }
 
-func GetExcludedInterfaces() []string {
+// interface names plus the "*" wildcard users write for docker*/veth*
+var interfaceNameRegexp = regexp.MustCompile(`^[A-Za-z0-9_.:*+-]+$`)
+
+func GetExcludedInterfaces() ([]string, error) {
 	setting := configure.GetSettingNotNil()
 	if setting.TproxyExcludedInterfaces == "" {
-		return []string{}
+		return []string{}, nil
 	}
 	ifs := strings.Split(setting.TproxyExcludedInterfaces, ",")
 	var res []string
 	for _, v := range ifs {
 		v = strings.TrimSpace(v)
 		if v != "" {
+			if !interfaceNameRegexp.MatchString(v) {
+				return nil, fmt.Errorf("invalid tproxy excluded interface %q", v)
+			}
 			res = append(res, v)
 		}
 	}
-	return res
+	return res, nil
+}
+
+func getTproxySetupValues() (interfaces, ipv4List, ipv6List []string, err error) {
+	if interfaces, err = GetExcludedInterfaces(); err != nil {
+		return
+	}
+	ipv4List, ipv6List, err = GetWhiteListIPs()
+	return
 }

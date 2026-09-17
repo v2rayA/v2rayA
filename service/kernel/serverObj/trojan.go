@@ -47,8 +47,10 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 	//trojan://password@server:port#escape(remarks)
 	t, err := url.Parse(u)
 	if err != nil {
-		err = fmt.Errorf("invalid trojan format")
-		return
+		return nil, fmt.Errorf("%w: trojan link is not a valid URL; expected trojan://password@host:port", ErrInvalidParameter)
+	}
+	if t.User == nil || t.User.Username() == "" {
+		return nil, fmt.Errorf("%w: trojan link is missing a password; expected trojan://password@host:port", ErrInvalidParameter)
 	}
 	sni := t.Query().Get("peer")
 	if sni == "" {
@@ -60,7 +62,7 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 
 	port, err := strconv.Atoi(t.Port())
 	if err != nil {
-		return nil, ErrInvalidParameter
+		return nil, fmt.Errorf("%w: trojan link for %q has a missing or invalid port; expected trojan://password@host:port", ErrInvalidParameter, t.Hostname())
 	}
 	data = &Trojan{
 		Name:                 t.Fragment,
@@ -84,6 +86,10 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		data.Path = t.Query().Get("path")
 		data.ServiceName = t.Query().Get("serviceName")
 		data.Type = t.Query().Get("type")
+	} else if data.Host == "" {
+		// plain trojan over ws/h2 carries the Host header the same way;
+		// ConfigurationMC and ExportToURL both use it
+		data.Host = t.Query().Get("host")
 	}
 	return data, nil
 }

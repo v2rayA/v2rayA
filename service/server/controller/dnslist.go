@@ -21,7 +21,7 @@ type DnsConfigResponse struct {
 func PutDnsRules(ctx *gin.Context) {
 	var rules []configure.DnsRule
 	if err := ctx.ShouldBindJSON(&rules); err != nil {
-		common.ResponseError(ctx, logError(fmt.Errorf("bad request: %w", err)))
+		common.ResponseError(ctx, badRequest("DNS rules", fmt.Errorf("request body must be a JSON array of DNS rules: %w", err)))
 		return
 	}
 	for i, rule := range rules {
@@ -31,7 +31,7 @@ func PutDnsRules(ctx *gin.Context) {
 			upstream = rule.Server
 		}
 		if upstream == "" {
-			common.ResponseError(ctx, logError(fmt.Errorf("rule[%d]: server/upstream cannot be empty", i)))
+			common.ResponseError(ctx, logError(fmt.Errorf("DNS rule %d has no upstream server", i+1)))
 			return
 		}
 		// 同步新旧字段：确保 Server 和 Upstream 至少有一个有值

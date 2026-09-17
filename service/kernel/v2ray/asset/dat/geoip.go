@@ -20,7 +20,7 @@ func UpdateLocalGeoIP() (err error) {
 	}
 	siteDatSha256, err := httpGet("https://github.com/v2fly/geoip/releases/latest/download/geoip.dat.sha256sum")
 	if err != nil {
-		err = fmt.Errorf("%w: %v", FailCheckSha, err)
+		err = fmt.Errorf("%w for GeoIP: %w", FailCheckSha, err)
 		log.Warn("UpdateLocalGeoIP: %v", err)
 		return err
 	}
@@ -29,7 +29,7 @@ func UpdateLocalGeoIP() (err error) {
 		sha256 = fields[0]
 	}
 	if ok, actual := checkSha256(pathSiteDat+".new", sha256); !ok {
-		err = fmt.Errorf("UpdateLocalGeoIP: %v (expected %s, got %s)", DamagedFile, sha256, actual)
+		err = fmt.Errorf("%w for GeoIP (expected %s, got %s); try again", DamagedFile, sha256, actual)
 		log.Warn("UpdateLocalGeoIP: sha mismatch, expected %s, got %s", sha256, actual)
 		return
 	}

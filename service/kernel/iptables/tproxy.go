@@ -63,6 +63,11 @@ func (t *legacyTproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *legacyTproxy) GetSetupCommands() Setter {
+	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
+	if err != nil {
+		return NewErrorSetter(err)
+	}
+
 	commands := `
 ip rule add fwmark 0x40/0xc0 table 100
 ip route add local 0.0.0.0/0 dev lo table 100
@@ -102,11 +107,11 @@ iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on
 iptables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
 	// OUTPUT 路径使用 -o 匹配输出网卡（本地流量在 OUTPUT 链中 -i 始终为 lo）
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
 	commands += `
@@ -115,8 +120,7 @@ iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 
-	if IsEnabledTproxyWhiteIpGroups() {
-		whiteIpv4List, _ := GetWhiteListIPs()
+	if len(whiteIpv4List) > 0 {
 		for _, v := range whiteIpv4List {
 			commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
 		}
@@ -172,11 +176,11 @@ ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --o
 ip6tables -w 2 -t mangle -A TP_RULE -j CONNMARK --restore-mark
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
-		for _, v := range GetExcludedInterfaces() {
+		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
 		// IPv6 OUTPUT 路径使用 -o 匹配输出网卡
-		for _, v := range GetExcludedInterfaces() {
+		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
 		commands += `
@@ -184,8 +188,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
-		if IsEnabledTproxyWhiteIpGroups() {
-			_, whiteIpv6List := GetWhiteListIPs()
+		if len(whiteIpv6List) > 0 {
 			for _, v := range whiteIpv6List {
 				commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
 			}
@@ -275,11 +278,15 @@ func (t *nftTproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *nftTproxy) GetSetupCommands() Setter {
+	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
+	if err != nil {
+		return NewErrorSetter(err)
+	}
+
 	table := `
 	table inet v2raya {
 `
-	if IsEnabledTproxyWhiteIpGroups() {
-		whiteIpv4List, whiteIpv6List := GetWhiteListIPs()
+	if len(whiteIpv4List) > 0 {
 		table += `
     set whitelist {
         type ipv4_addr
@@ -291,7 +298,10 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 		table += `
         }
     }
-
+`
+	}
+	if len(whiteIpv6List) > 0 {
+		table += `
     set whitelist6 {
         type ipv6_addr
         flags interval
@@ -365,21 +375,25 @@ func (t *nftTproxy) GetSetupCommands() Setter {
         meta mark set ct mark
         meta mark & 0xc0 == 0x40 return
 `
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
 	}
-	for _, v := range GetExcludedInterfaces() {
+	for _, v := range excludedInterfaces {
 		table += fmt.Sprintf("        oifname \"%s\" return\n", v)
 	}
 	table += `
 	        # anti-pollution
 	        ip daddr @local_ips return
 		`
-	if IsEnabledTproxyWhiteIpGroups() {
+	if len(whiteIpv4List) > 0 {
 		table += `
         ip daddr @whitelist return
+`
+	}
+	if len(whiteIpv6List) > 0 {
+		table += `
         ip6 daddr @whitelist6 return
-	`
+`
 	}
 	table += `
         ip6 daddr @local_ips6 return
