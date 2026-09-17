@@ -163,7 +163,11 @@ func ImportSubscription(url string) (err error) {
 		}
 		c := httpClient.GetHttpClientAutomatically()
 		c.Timeout = 90 * time.Second
-		infos, status, err := ResolveSubscriptionWithClient(source, c)
+		// assign, do not redeclare: a shadowed err here made the
+		// AppendSubscriptions failure below vanish behind a nil return
+		var infos []serverObj.ServerObj
+		var status string
+		infos, status, err = ResolveSubscriptionWithClient(source, c)
 		if err != nil {
 			return fmt.Errorf("failed to resolve subscription address: %w", err)
 		}

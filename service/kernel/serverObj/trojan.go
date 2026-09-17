@@ -84,6 +84,10 @@ func ParseTrojanURL(u string) (data *Trojan, err error) {
 		data.Path = t.Query().Get("path")
 		data.ServiceName = t.Query().Get("serviceName")
 		data.Type = t.Query().Get("type")
+	} else if data.Host == "" {
+		// plain trojan over ws/h2 carries the Host header the same way;
+		// ConfigurationMC and ExportToURL both use it
+		data.Host = t.Query().Get("host")
 	}
 	return data, nil
 }
