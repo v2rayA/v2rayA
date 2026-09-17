@@ -397,7 +397,7 @@ export default {
           <p class="about-small">پورت‌های دیگر:</p>
           <p class="about-small">32345: tproxy، موردنیاز پروکسی شفاف</p>
           <p>همه داده‌ها به‌صورت محلی و نه در فضای ابری ذخیره می‌شوند.</p>
-          <p>مشکلات مشاهده‌شده هنگام استفاده را می‌توانید در <a href="https://github.com/v2rayA/v2rayA/issues">issues</a> گزارش کنید.</p>
+          <p>مشکلات مشاهده‌شده هنگام استفاده را می‌توانید در <a href="https://github.com/v2rayA/v2rayA/discussions">discussions</a> گزارش کنید.</p>
           <p>مستندات: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
   axios: {
     messages: {
@@ -472,6 +472,7 @@ export default {
     sources: {
       all: "همه",
     },
+    tailOnly: "نمایش {count} خط آخر ({skipped} خط قدیمی‌تر در این صفحه پنهان است)",
   },
   tproxyWhiteIpGroups: {
     title: "گروه‌های IP سفید",

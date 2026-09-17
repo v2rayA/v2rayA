@@ -386,7 +386,7 @@ export default {
           <p class="about-small">Outras portas:</p>
           <p class="about-small">32345: tproxy, necessária para o proxy transparente</p>
           <p>Todos os dados são armazenados localmente, não na nuvem.</p>
-          <p>Problemas encontrados durante o uso podem ser relatados em <a href="https://github.com/v2rayA/v2rayA/issues">problemas</a>.</p>
+          <p>Problemas encontrados durante o uso podem ser relatados em <a href="https://github.com/v2rayA/v2rayA/discussions">discussões</a>.</p>
           <p>Documentação: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
   axios: {
     messages: {
@@ -459,6 +459,7 @@ export default {
     sources: {
       all: "Todas",
     },
+    tailOnly: "Mostrando as últimas {count} linhas ({skipped} linhas mais antigas ocultas nesta tela)",
   },
   tproxyWhiteIpGroups: {
     title: "Grupos de IPs na lista branca",

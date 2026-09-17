@@ -8,7 +8,24 @@
     <section ref="section" :class="{ 'modal-card-body': true }">
       <div class="log-title">{{ $t("log.logsLabel") }}</div>
       <div class="log-content" tabindex="0" @keydown="handleLogKeydown">
+        <!-- A virtual scroller needs one fixed row height, so a phone would
+             only ever show the left edge of each line. There the tail is
+             rendered plainly instead, with the lines wrapped. -->
+        <div v-if="narrow" ref="narrowLog" class="log-scroller log-scroller--narrow">
+          <div v-if="tailSkipped > 0" class="log-tail-note">
+            {{ $t("log.tailOnly", { count: tailLimit, skipped: tailSkipped }) }}
+          </div>
+          <div
+            v-for="(item, index) in narrowItems"
+            :key="item.id || index"
+            class="log-row log-row--wrap"
+          >
+            <span class="log-line-number">{{ filteredItems.length - narrowItems.length + index + 1 }}</span>
+            <hightlight-log class="text" :text="item.text"></hightlight-log>
+          </div>
+        </div>
         <RecycleScroller
+          v-else
           ref="logScroller"
           v-slot="{ item, index }"
           class="log-scroller"
@@ -106,6 +123,8 @@ export default {
         { value: "trace", label: "log.categories.trace" },
         { value: "other", label: "log.categories.other" },
       ],
+      narrow: false,
+      tailLimit: 300,
       sourceFilter: "all",
       sourceOptions: [
         { value: "all", label: "log.sources.all" },
@@ -113,6 +132,13 @@ export default {
     };
   },
   computed: {
+    narrowItems() {
+      const items = this.filteredItems;
+      return items.length > this.tailLimit ? items.slice(-this.tailLimit) : items;
+    },
+    tailSkipped() {
+      return Math.max(0, this.filteredItems.length - this.tailLimit);
+    },
     filteredItems() {
       let filtered = this.items;
       
@@ -129,6 +155,16 @@ export default {
   },
   created() {
     this.autoScoll = !(localStorage.getItem("log.autoScoll") === "false");
+    this.narrowQuery = window.matchMedia("(max-width: 768px)");
+    this.narrow = this.narrowQuery.matches;
+    this.onNarrowChange = (e) => {
+      this.narrow = e.matches;
+    };
+    if (this.narrowQuery.addEventListener) {
+      this.narrowQuery.addEventListener("change", this.onNarrowChange);
+    } else {
+      this.narrowQuery.addListener(this.onNarrowChange);
+    }
 
     this.fetchLog();
   },
@@ -138,6 +174,13 @@ export default {
     }, this.intervalTime * 1000);
   },
   destroyed() {
+    if (this.narrowQuery) {
+      if (this.narrowQuery.removeEventListener) {
+        this.narrowQuery.removeEventListener("change", this.onNarrowChange);
+      } else {
+        this.narrowQuery.removeListener(this.onNarrowChange);
+      }
+    }
     clearInterval(this.intervalId);
   },
   methods: {
@@ -248,7 +291,15 @@ export default {
         this.items = this.items.concat(items);
         this.endOfLine = endsWithNewline;
         this.currentSkip += new Blob([logs.data]).size;
-        if (this.autoScoll && this.filteredItems.length > 0) {
+        if (this.autoScoll && this.narrow) {
+          this.$nextTick(() => {
+            const el = this.$refs.narrowLog;
+            if (el) {
+              el.scrollTop = el.scrollHeight;
+            }
+          });
+        }
+        if (this.autoScoll && !this.narrow && this.filteredItems.length > 0) {
           this.$nextTick(() => {
             if (this.$refs.logScroller && this.filteredItems.length > 0) {
               this.$refs.logScroller.scrollToItem(this.filteredItems.length - 1);
@@ -296,6 +347,29 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* On a phone the line has to wrap: the message is the part worth reading and
+   it used to be clipped, leaving a column of timestamps. */
+.log-row--wrap {
+  align-items: flex-start;
+}
+
+.log-row--wrap .text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+}
+
+.log-row--wrap .log-line-number {
+  padding-top: 2px;
+}
+
+.log-tail-note {
+  font-size: 12px;
+  color: #9aa4b2;
+  padding: 0 0 0.5rem;
 }
 
 .log-line-number {
@@ -455,6 +529,11 @@ export default {
 </style>
 
 <style lang="scss">
+.log-scroller--narrow {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .log-scroller {
   height: 50vh;
   max-height: 600px;
