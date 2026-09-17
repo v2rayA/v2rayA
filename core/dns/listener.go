@@ -78,11 +78,30 @@ func (l *DnsListener) Start() error {
 func (l *DnsListener) startPair(addr string) (*serverPair, error) {
 	timeout := time.Duration(l.config.Timeout) * time.Second
 
+	udpConn, err := net.ListenPacket("udp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("listen udp: %w", err)
+	}
 	udpSrv := &dns.Server{
 		Addr:         addr,
 		Net:          "udp",
+		PacketConn:   udpConn,
 		Handler:      dns.HandlerFunc(l.handlePacket),
 		UDPSize:      1452,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+	}
+
+	tcpListener, err := net.Listen("tcp", addr)
+	if err != nil {
+		_ = udpConn.Close()
+		return nil, fmt.Errorf("listen tcp: %w", err)
+	}
+	tcpSrv := &dns.Server{
+		Addr:         addr,
+		Net:          "tcp",
+		Listener:     tcpListener,
+		Handler:      dns.HandlerFunc(l.handlePacket),
 		ReadTimeout:  timeout,
 		WriteTimeout: timeout,
 	}
@@ -91,24 +110,16 @@ func (l *DnsListener) startPair(addr string) (*serverPair, error) {
 	go func() {
 		defer l.wg.Done()
 		log.Printf("[dns] UDP listener starting on %s", addr)
-		if err := udpSrv.ListenAndServe(); err != nil {
+		if err := udpSrv.ActivateAndServe(); err != nil {
 			log.Printf("[dns] UDP listener stopped: %v", err)
 		}
 	}()
-
-	tcpSrv := &dns.Server{
-		Addr:         addr,
-		Net:          "tcp",
-		Handler:      dns.HandlerFunc(l.handlePacket),
-		ReadTimeout:  timeout,
-		WriteTimeout: timeout,
-	}
 
 	l.wg.Add(1)
 	go func() {
 		defer l.wg.Done()
 		log.Printf("[dns] TCP listener starting on %s", addr)
-		if err := tcpSrv.ListenAndServe(); err != nil {
+		if err := tcpSrv.ActivateAndServe(); err != nil {
 			log.Printf("[dns] TCP listener stopped: %v", err)
 		}
 	}()

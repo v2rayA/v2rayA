@@ -20,16 +20,16 @@ type CacheKey struct {
 type CacheEntry struct {
 	Key               CacheKey
 	Response          *DnsResponse
-	OriginalTTL       uint32    // 上游返回的原始 TTL
-	EffectiveTTL      uint32    // 钳制后的生效 TTL
-	StoredAt          time.Time // 存储时间
-	ExpiresAt         time.Time // 过期时间
-	HitCount          int64     // 命中次数
-	Prefetching       bool      // 是否正在预取
-	Negative          bool      // 是否为负缓存
-	PrefetchFailCount int       // 预取失败次数
+	OriginalTTL       uint32        // 上游返回的原始 TTL
+	EffectiveTTL      uint32        // 钳制后的生效 TTL
+	StoredAt          time.Time     // 存储时间
+	ExpiresAt         time.Time     // 过期时间
+	HitCount          int64         // 命中次数
+	Prefetching       bool          // 是否正在预取
+	Negative          bool          // 是否为负缓存
+	PrefetchFailCount int           // 预取失败次数
 	PrefetchBackoff   time.Duration // 当前预取退避时长
-	LastPrefetchFail  time.Time // 上次预取失败时间
+	LastPrefetchFail  time.Time     // 上次预取失败时间
 }
 
 // DnsCache DNS 缓存（LRU + TTL 双淘汰）
@@ -136,8 +136,9 @@ func (c *DnsCache) Get(key CacheKey) (*DnsResponse, bool) {
 		return nil, false
 	}
 
+	now := time.Now()
 	// 检查是否过期
-	if time.Now().After(entry.ExpiresAt) {
+	if now.After(entry.ExpiresAt) {
 		c.removeElement(elem)
 		c.stats.Misses++
 		c.updateHitRate()
@@ -151,15 +152,83 @@ func (c *DnsCache) Get(key CacheKey) (*DnsResponse, bool) {
 	c.stats.Hits++
 	c.updateHitRate()
 
-	// 标记响应来自缓存
-	resp := *entry.Response
+	return copyCachedResponse(entry.Response, now.Sub(entry.StoredAt), c.config.MinTTL), true
+}
+
+func copyCachedResponse(response *DnsResponse, elapsed time.Duration, configuredMinTTL int) *DnsResponse {
+	resp := *response
+	if response.RawMsg != nil {
+		resp.RawMsg = response.RawMsg.Copy()
+		resp.Answer = resp.RawMsg.Answer
+		resp.Authority = resp.RawMsg.Ns
+		resp.Additional = resp.RawMsg.Extra
+	} else {
+		resp.Answer = copyRRs(response.Answer)
+		resp.Authority = copyRRs(response.Authority)
+		resp.Additional = copyRRs(response.Additional)
+	}
+
+	minTTL := uint32(DefaultMinTTL)
+	if configuredMinTTL > 0 {
+		minTTL = uint32(configuredMinTTL)
+	}
+	var elapsedSeconds uint32
+	if elapsed > 0 {
+		elapsedSeconds = uint32(elapsed / time.Second)
+	}
+	decreaseRecordTTLs(resp.Answer, elapsedSeconds, minTTL)
+	decreaseRecordTTLs(resp.Authority, elapsedSeconds, minTTL)
+	decreaseRecordTTLs(resp.Additional, elapsedSeconds, minTTL)
+	if len(resp.Answer) > 0 {
+		resp.TTL = resp.Answer[0].Header().Ttl
+		for _, rr := range resp.Answer[1:] {
+			if rr.Header().Ttl < resp.TTL {
+				resp.TTL = rr.Header().Ttl
+			}
+		}
+	}
 	resp.Cached = true
-	return &resp, true
+	return &resp
+}
+
+func copyRRs(records []dns.RR) []dns.RR {
+	if len(records) == 0 {
+		return nil
+	}
+	copied := make([]dns.RR, len(records))
+	for i, rr := range records {
+		copied[i] = dns.Copy(rr)
+	}
+	return copied
+}
+
+func decreaseRecordTTLs(records []dns.RR, elapsed, minTTL uint32) {
+	for _, rr := range records {
+		header := rr.Header()
+		if header.Rrtype == dns.TypeOPT || header.Rrtype == dns.TypeTSIG {
+			continue
+		}
+		if header.Ttl > elapsed {
+			header.Ttl -= elapsed
+		} else {
+			header.Ttl = 0
+		}
+		if header.Ttl < minTTL {
+			header.Ttl = minTTL
+		}
+	}
 }
 
 // Set 设置缓存条目
 // 如果键已存在则更新；否则添加新条目。超过最大容量时淘汰最久未使用的条目。
 func (c *DnsCache) Set(key CacheKey, resp *DnsResponse, originalTTL uint32) {
+	if resp != nil && !c.config.NegativeCache {
+		switch resp.Rcode {
+		case dns.RcodeNameError, dns.RcodeServerFailure, dns.RcodeRefused:
+			return
+		}
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
