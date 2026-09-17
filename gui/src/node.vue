@@ -8,7 +8,7 @@
       @mouseenter.native="showSidebar = true"
       @click.native="showSidebar = true"
     >
-      <img src="@/assets/img/switch-menu.svg" width="36px" />
+      <i class="lucide icon-panel-left" style="font-size: 36px; line-height: 1" />
     </b-sidebar>
     <b-sidebar
       :open="showSidebar"
@@ -80,7 +80,7 @@
       :closable="false"
       class="core-version-error"
     >
-      <i class="iconfont icon-alert" />
+      <i class="lucide icon-triangle-alert" />
       {{ $t("version.coreVersionMismatch", { err: coreVersionErr || "" }) }}
     </b-message>
     <div v-if="ready" class="hero-body">
@@ -105,7 +105,7 @@
             :disabled="!isCheckedRowsPingable()"
             @click="handleClickLatency(true)"
           >
-            <i class="iconfont icon-wave" />
+            <i class="lucide icon-activity" />
             <span>{{ $t("operations.ping") }}</span>
           </button>
           <button
@@ -119,7 +119,7 @@
             :disabled="!isCheckedRowsPingable()"
             @click="handleClickLatency(false)"
           >
-            <i class="iconfont icon-wave" />
+            <i class="lucide icon-activity" />
             <span>HTTP</span>
           </button>
           <button
@@ -133,7 +133,7 @@
             :disabled="!isCheckedRowsDeletable()"
             @click="handleClickDelete"
           >
-            <i class="iconfont icon-delete" />
+            <i class="lucide icon-trash-2" />
             <span>{{ $t("operations.delete") }}</span>
           </button>
           <b-dropdown
@@ -147,7 +147,7 @@
           >
             <template #trigger>
               <button class="button is-info mobile-small" :disabled="!isCheckedRowsExportable()">
-                <i class="iconfont icon-share" />
+                <i class="lucide icon-share-2" />
                 <span>{{ $t("operations.export") }}</span>
               </button>
             </template>
@@ -165,7 +165,7 @@
             type="is-primary"
             @click="handleClickCreate"
           >
-            <i class="iconfont icon-chuangjiangongdan1" />
+            <i class="lucide icon-square-plus" />
             <span>{{ $t("operations.create") }}</span>
           </b-button>
           <b-button
@@ -173,7 +173,7 @@
             type="is-primary"
             @click="handleClickImport"
           >
-            <i class="iconfont icon-daoruzupu-xianxing" />
+            <i class="lucide icon-download" />
             <span>{{ $t("operations.import") }}</span>
           </b-button>
         </div>
@@ -195,7 +195,7 @@
             {{ $t("welcome.title") }}
           </p>
           <a class="card-header-icon">
-            <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"></b-icon>
+            <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
         <div class="card-content">
@@ -281,7 +281,7 @@
                 <div class="operate-box">
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-sync"
+                    icon-left="refresh-cw"
                     outlined
                     type="is-warning"
                     @click="handleClickUpdateSubscription(props.row)"
@@ -290,7 +290,7 @@
                   </b-button>
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-wendangxiugai"
+                    icon-left="pencil"
                     outlined
                     type="is-info"
                     @click="handleClickModifySubscription(props.row)"
@@ -299,7 +299,7 @@
                   </b-button>
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-share"
+                    icon-left="share-2"
                     outlined
                     type="is-success"
                     @click="handleClickShare(props.row)"
@@ -393,7 +393,7 @@
                       slot="trigger"
                       size="is-small"
                       type="is-primary"
-                      icon-right="menu-down"
+                      icon-right="chevron-down"
                     >
                       {{ $t("operations.addTo") }}
                     </b-button>
@@ -413,11 +413,7 @@
                   <b-button
                     v-else
                     size="is-small"
-                    :icon-left="` github-circle iconfont ${
-                      props.row.connected
-                        ? 'icon-Link_disconnect'
-                        : 'icon-lianjie'
-                    }`"
+                    :icon-left="props.row.connected ? 'unlink' : 'link'"
                     :outlined="!props.row.connected"
                     :type="props.row.connected ? 'is-warning' : 'is-primary'"
                     @click="handleClickAboutConnection(props.row)"
@@ -430,7 +426,7 @@
                   </b-button>
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-wendangxiugai"
+                    icon-left="pencil"
                     :outlined="!props.row.connected"
                     type="is-info"
                     @click="handleClickModifyServer(props.row)"
@@ -439,7 +435,7 @@
                   </b-button>
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-share"
+                    icon-left="share-2"
                     :outlined="!props.row.connected"
                     type="is-success"
                     @click="handleClickShare(props.row)"
@@ -543,7 +539,7 @@
                       slot="trigger"
                       size="is-small"
                       type="is-primary"
-                      icon-right="menu-down"
+                      icon-right="chevron-down"
                     >
                       {{ $t("operations.addTo") }}
                     </b-button>
@@ -563,11 +559,7 @@
                   <b-button
                     v-else
                     size="is-small"
-                    :icon-left="` github-circle iconfont ${
-                      props.row.connected
-                        ? 'icon-Link_disconnect'
-                        : 'icon-lianjie'
-                    }`"
+                    :icon-left="props.row.connected ? 'unlink' : 'link'"
                     :outlined="!props.row.connected"
                     :type="props.row.connected ? 'is-warning' : 'is-primary'"
                     @click="handleClickAboutConnection(props.row, subi)"
@@ -580,7 +572,7 @@
                   </b-button>
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-winfo-icon-chakanbaogao"
+                    icon-left="file-text"
                     :outlined="!props.row.connected"
                     type="is-info"
                     @click="handleClickViewServer(props.row, subi)"
@@ -589,7 +581,7 @@
                   </b-button>
                   <b-button
                     size="is-small"
-                    icon-left=" github-circle iconfont icon-share"
+                    icon-left="share-2"
                     :outlined="!props.row.connected"
                     type="is-success"
                     @click="handleClickShare(props.row, subi)"
@@ -604,7 +596,7 @@
       </b-tabs>
     </div>
     <b-loading v-else :is-full-page="true" :active="true">
-      <i class="iconfont icon-loading_ico-copy" />
+      <i class="lucide icon-loader-circle" />
     </b-loading>
     <b-modal
       :active.sync="showModalServer"
@@ -676,7 +668,7 @@
           <b-input
             ref="importInput"
             v-model="importWhat"
-            icon-right=" iconfont icon-camera"
+            icon-right="camera"
             icon-right-clickable
             @icon-right-click="handleClickImportQRCode"
             @keyup.native="handleImportEnter"
@@ -1523,7 +1515,7 @@ export default {
         cancelText: this.$t("operations.cancel"),
         type: "is-danger",
         hasIcon: true,
-        icon: " iconfont icon-alert",
+        icon: "triangle-alert",
         onConfirm: () => this.deleteSelectedServers(),
       });
     },
@@ -2083,7 +2075,7 @@ td {
 .node-section {
   margin-top: 1rem;
 
-  .iconfont {
+  .lucide {
     margin-right: 0.1em;
   }
 
@@ -2240,7 +2232,7 @@ table th {
   vertical-align: middle !important;
 }
 
-.dialog .mdi-.iconfont.icon-alert {
+.dialog .icon-triangle-alert {
   font-size: 40px;
 }
 

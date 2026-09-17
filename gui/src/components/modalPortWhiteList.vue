@@ -21,14 +21,14 @@
         <b-taginput
           v-model="tcp"
           :before-adding="beforeAdding"
-          icon=" iconfont icon-label"
+          icon="tag"
         >
         </b-taginput> </b-field
       ><b-field :label="$t('egressPortWhitelist.udpPortWhitelist')">
         <b-taginput
           v-model="udp"
           :before-adding="beforeAdding"
-          icon=" iconfont icon-label"
+          icon="tag"
         >
         </b-taginput>
       </b-field>

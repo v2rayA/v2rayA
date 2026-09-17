@@ -37,7 +37,7 @@
             {{ $t("customRouting.defaultRoutingRule") }}
           </p>
           <a class="card-header-icon">
-            <b-icon :icon="props.open ? 'menu-down' : 'menu-up'"> </b-icon>
+            <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"> </b-icon>
           </a>
         </div>
         <div class="card-content">
@@ -75,14 +75,7 @@
             >
           </p>
           <a class="card-header-icon">
-            <b-icon
-              :icon="
-                props.open
-                  ? ' iconfont icon-caret-down'
-                  : ' iconfont icon-caret-up'
-              "
-            >
-            </b-icon>
+            <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
         <div class="card-content">
@@ -295,7 +288,7 @@ export default {
 }
 </style>
 <style lang="scss">
-.icon-label {
+.icon-tag {
   font-size: 24px !important;
 }
 .after-line-dot5 {

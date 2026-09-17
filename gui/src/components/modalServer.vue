@@ -200,7 +200,7 @@
               <div v-for="(hdr, idx) in v2ray.xhttpHeaders" :key="idx" style="display:flex;gap:4px;margin-bottom:4px">
                 <b-input v-model="hdr.key" :placeholder="$t('configureServer.headerName')" expanded />
                 <b-input v-model="hdr.value" :placeholder="$t('configureServer.headerValue')" expanded />
-                <b-button type="is-danger is-light" icon-left="delete" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
+                <b-button type="is-danger is-light" icon-left="trash-2" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
               </div>
               <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">{{ $t("configureServer.addHeader") }}</b-button>
             </div>
@@ -408,7 +408,7 @@
               <div v-for="(hdr, idx) in v2ray.xhttpHeaders" :key="idx" style="display:flex;gap:4px;margin-bottom:4px">
                 <b-input v-model="hdr.key" :placeholder="$t('configureServer.headerName')" expanded />
                 <b-input v-model="hdr.value" :placeholder="$t('configureServer.headerValue')" expanded />
-                <b-button type="is-danger is-light" icon-left="delete" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
+                <b-button type="is-danger is-light" icon-left="trash-2" size="is-small" @click="v2ray.xhttpHeaders.splice(idx,1)" />
               </div>
               <b-button size="is-small" icon-left="plus" @click="v2ray.xhttpHeaders.push({key:'',value:''})">{{ $t("configureServer.addHeader") }}</b-button>
             </div>
@@ -507,7 +507,7 @@
             <template slot="label">
               {{ $t("configureServer.pluginImpl") }}
               <b-tooltip type="is-dark" :label="$t('setting.messages.ssPluginImpl')" multilined position="is-right">
-                <b-icon size="is-samll" icon=" iconfont icon-help-circle-outline" style="
+                <b-icon size="is-samll" icon="circle-help" style="
                     position: relative;
                     top: 2px;
                     right: 3px;

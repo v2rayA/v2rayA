@@ -3,7 +3,7 @@
     <b-tag
       class="pointerTag"
       type="is-info"
-      :icon-right="menuOpen ? 'menu-up' : 'menu-down'"
+      :icon-right="menuOpen ? 'chevron-up' : 'chevron-down'"
       role="button"
       tabindex="0"
       @click.native.stop="toggleMenu"
@@ -32,7 +32,7 @@
             <span class="ogp-group-label">
               <span
                 v-if="outbound === currentOutbound"
-                class="mdi mdi-circle has-text-success"
+                class="lucide icon-circle has-text-success"
                 style="font-size: 0.5em; vertical-align: middle; margin-right: 4px"
               ></span>
               {{ outbound.toUpperCase() }}
@@ -45,8 +45,8 @@
               style="margin-left: auto; margin-right: 4px"
             >{{ getGroupCount(outbound) }}</b-tag>
             <span
-              class="mdi"
-              :class="expandedGroup === outbound ? 'mdi-chevron-down' : 'mdi-chevron-right'"
+              class="lucide"
+              :class="expandedGroup === outbound ? 'icon-chevron-down' : 'icon-chevron-right'"
               style="color: #aaa"
             ></span>
           </div>
@@ -66,7 +66,7 @@
                 size="is-small"
                 type="is-danger"
                 outlined
-                icon-left="delete"
+                icon-left="trash-2"
                 style="margin-left: auto"
                 @click.stop="deleteGroup(outbound)"
               >{{ $t("operations.delete") }}</b-button>
@@ -77,10 +77,10 @@
                 :key="node.key"
                 class="ogp-node-row"
               >
-                <span class="mdi mdi-circle has-text-warning" style="font-size: 0.7em"></span>
+                <span class="lucide icon-circle has-text-warning" style="font-size: 0.7em"></span>
                 <span class="ogp-node-name" :title="node.name">{{ node.name }}</span>
                 <span
-                  class="mdi mdi-close ogp-node-del"
+                  class="lucide icon-x ogp-node-del"
                   :title="$t('operations.disconnect')"
                   @click.stop="disconnectNode(node)"
                 ></span>
@@ -94,7 +94,7 @@
 
         <hr class="dropdown-divider" style="margin: 4px 0" />
         <div class="ogp-group-row ogp-group-row--add" @click.stop="$emit('add-outbound')">
-          <span class="mdi mdi-plus"></span> {{ $t("operations.addOutbound") }}
+          <span class="lucide icon-plus"></span> {{ $t("operations.addOutbound") }}
         </div>
     </div>
 
@@ -113,7 +113,7 @@
           <b-input
             v-model="nodeSearch"
             :placeholder="$t('proxyGroup.searchNodes')"
-            icon="magnify"
+            icon="search"
             style="margin-bottom: 0.75rem"
           ></b-input>
           <div v-if="loadingNodes" style="text-align: center; padding: 2rem">
@@ -128,7 +128,7 @@
               @click="toggleNode(node)"
             >
               <span
-                class="mdi"
+                class="lucide"
                 :class="pickerNodeIconClass(node)"
                 style="font-size: 1.1em; margin-right: 6px; flex-shrink: 0"
               ></span>
@@ -309,9 +309,9 @@ export default {
     },
     pickerNodeIconClass(node) {
       if (this.isPickerNodeHighlighted(node)) {
-        return "mdi-check-circle has-text-warning";
+        return "icon-circle-check has-text-warning";
       }
-      return "mdi-circle-outline has-text-grey-light";
+      return "icon-circle-dashed has-text-grey-light";
     },
     findServer(cs) {
       if (!this.touchData) return null;

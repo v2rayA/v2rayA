@@ -28,33 +28,33 @@
 
       <template slot="end">
         <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
-        <!--          <i class="iconfont icon-cloud" style="font-size: 1.4em"></i>-->
+        <!--          <i class="lucide icon-cloud" style="font-size: 1.4em"></i>-->
         <!--          节点-->
         <!--        </b-navbar-item>-->
         <b-navbar-item tag="a" @click.native="handleClickSetting">
-          <i class="iconfont icon-setting" style="font-size: 1.25em"></i>
+          <i class="lucide icon-settings" style="font-size: 1.25em"></i>
           {{ $t("common.setting") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickAbout">
-          <i class="iconfont icon-heart" style="font-size: 1.25em"></i>
+          <i class="lucide icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="handleClickLogs">
-          <i class="iconfont icon-info" style="font-size: 1.25em"></i>
+          <i class="lucide icon-scroll-text" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
         <b-navbar-item tag="a" @click.native="toggleTheme">
           <i
-            :class="themePreference === 'auto' ? 'mdi mdi-theme-light-dark' : (isDarkTheme ? 'mdi mdi-weather-sunny' : 'mdi mdi-weather-night')"
+            :class="['lucide', themePreference === 'auto' ? 'icon-sun-moon' : (isDarkTheme ? 'icon-sun' : 'icon-moon')]"
             style="font-size: 1.25em"
           ></i>
           {{ themeSwitchLabel }}
         </b-navbar-item>
         <b-dropdown position="is-bottom-left" aria-role="menu" class="langdropdown">
           <a slot="trigger" class="navbar-item" role="button">
-            <i class="iconfont icon-earth" style="font-size: 1.25em; margin-right: 4px"></i>
+            <i class="lucide icon-globe" style="font-size: 1.25em; margin-right: 4px"></i>
             <span class="no-select">{{ currentLangLabel }}</span>
-            <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
+            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
           <b-dropdown-item v-for="lang of langs" :key="lang.code" aria-role="menuitem" class="no-select"
             @click="handleClickLang(lang.code)">
@@ -64,15 +64,15 @@
         </b-dropdown>
         <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
           <a slot="trigger" class="navbar-item" role="button">
-            <i class="mdi mdi-account" style="font-size: 1.25em; margin-right: 4px"></i>
+            <i class="lucide icon-user" style="font-size: 1.25em; margin-right: 4px"></i>
             <span class="no-select">{{ username }}</span>
-            <i class="iconfont icon-caret-down" style="position: relative; top: 1px; left: 2px"></i>
+            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
           </a>
           <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username: usernameHtml })">
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
-            <i class="iconfont icon-logout" style="position: relative; top: 1px"></i>
+            <i class="lucide icon-log-out" style="position: relative; top: 1px"></i>
             {{ $t("operations.logout") }}
           </b-dropdown-item>
         </b-dropdown>
@@ -711,7 +711,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "assets/iconfont/fonts/font.css";
 @import "assets/scss/reset.scss";
 @import "assets/scss/dark-theme.scss";
 </style>
@@ -731,7 +730,7 @@ export default {
   margin-right: 1em;
 }
 
-.navbar-item .iconfont {
+.navbar-item .lucide {
   margin-right: 0.15em;
 }
 
@@ -832,7 +831,7 @@ a {
   color: $success;
 }
 
-.icon-loading_ico-copy {
+.icon-loader-circle {
   font-size: 2.5rem;
   color: rgba(0, 0, 0, 0.45);
   animation: loading-rotate 2s infinite linear;

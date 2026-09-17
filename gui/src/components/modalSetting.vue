@@ -22,7 +22,7 @@
         <template slot="label">
           {{ $t("setting.transparentProxy") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.transparentProxy')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -56,7 +56,7 @@
         <template slot="label">
           {{ $t("setting.transparentType") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.transparentType')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -100,7 +100,7 @@
         <template slot="label">
           {{ $t("setting.tproxyExcludedInterfaces") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tproxyExcludedInterfaces')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -122,7 +122,7 @@
             style="flex-shrink: 0"
           >
             <template #trigger>
-              <b-button icon-right="menu-down" style="min-width: 160px; justify-content: space-between">
+              <b-button icon-right="chevron-down" style="min-width: 160px; justify-content: space-between">
                 <span v-if="tunBypassInterfacesList.length === 0" style="color: #aaa">
                   {{ $t("setting.tunBypassSelectPlaceholder") }}
                 </span>
@@ -158,7 +158,7 @@
         <template slot="label">
           {{ $t("setting.tunProcessBackend") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunProcessBackend')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -173,7 +173,7 @@
         <template slot="label">
           {{ $t("setting.tunExcludeProcesses") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunExcludeProcesses')" position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -192,7 +192,7 @@
         <template slot="label">
           {{ $t("setting.pacMode") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.pacMode')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -228,7 +228,7 @@
         <template slot="label">
           {{ $t("setting.tcpFastOpen") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.tcpFastOpen')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -256,7 +256,7 @@
         <template slot="label">
           {{ $t("setting.inboundSniffing") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.inboundSniffing')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -282,7 +282,7 @@
         <template slot="label">
           {{ $t("setting.mux") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.mux')" multilined position="is-right">
-            <b-icon size="is-small" icon=" iconfont icon-help-circle-outline"
+            <b-icon size="is-small" icon="circle-help"
               style="position: relative; top: 2px; right: 3px; font-weight: normal" />
           </b-tooltip>
         </template>
@@ -291,7 +291,7 @@
           <option value="yes">{{ $t("setting.options.on") }}</option>
         </b-select>
         <cus-b-input v-if="muxOn === 'yes'" ref="muxinput" v-model="mux" :placeholder="$t('setting.concurrency')"
-          custom-class="no-shadow" type="number" min="1" max="1024" validation-icon=" iconfont icon-alert"
+          custom-class="no-shadow" type="number" min="1" max="1024" validation-icon="triangle-alert"
           style="flex: 1" />
       </b-field>
 
@@ -309,7 +309,7 @@
         </b-select>
         <cus-b-input v-if="pacAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdatePacInput"
           v-model="pacAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon=" iconfont icon-alert" style="flex: 1" />
+          validation-icon="triangle-alert" style="flex: 1" />
       </b-field>
       <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
@@ -323,7 +323,7 @@
         </b-select>
         <cus-b-input v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdateSubInput"
           v-model="subscriptionAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon=" iconfont icon-alert" style="flex: 1" />
+          validation-icon="triangle-alert" style="flex: 1" />
       </b-field>
       <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
@@ -761,7 +761,7 @@ export default {
     right: 0;
   }
 
-  .icon-alert {
+  .icon-triangle-alert {
     font-size: 18px;
   }
 }

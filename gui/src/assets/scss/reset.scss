@@ -1,4 +1,16 @@
-@import "../iconfont/fonts/font_ex";
+.icon .lucide {
+  font-size: 1.25em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.icon-md {
+  font-size: 1.5em;
+}
+
+.icon-lg {
+  font-size: 2em;
+}
 body.has-navbar-fixed-top, html.has-navbar-fixed-top{
   padding-top:2.25rem;
 }

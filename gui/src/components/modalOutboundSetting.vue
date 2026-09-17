@@ -88,7 +88,7 @@ export default {
         cancelText: that.$t("operations.cancel"),
         type: "is-danger",
         hasIcon: true,
-        icon: " iconfont icon-alert",
+        icon: "triangle-alert",
         onConfirm: () => {
           that.$emit("delete");
           that.$parent.close();

@@ -34,7 +34,7 @@
           <b-button
             size="is-small"
             type="is-danger"
-            icon-left="delete"
+            icon-left="trash-2"
             @click="handleDelete(props.row.tag)"
           ></b-button>
         </b-table-column>

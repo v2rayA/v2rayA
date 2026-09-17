@@ -141,7 +141,7 @@ export default {
     },
 
     /**
-     * Icon name (MDI) based on the type.
+     * Icon name (Lucide) based on the type.
      */
     // eslint-disable-next-line vue/return-in-computed-property
     statusTypeIcon() {
@@ -149,11 +149,11 @@ export default {
         case "is-success":
           return "check";
         case "is-danger":
-          return " iconfont icon-alert";
+          return "triangle-alert";
         case "is-info":
-          return "information";
+          return "info";
         case "is-warning":
-          return "alert";
+          return "triangle-alert";
       }
     },
 

@@ -9,7 +9,7 @@
         rel="noopener noreferrer"
         :title="$t('dns.helpTooltip')"
       >
-        <b-icon icon=" iconfont icon-help-circle-outline" size="is-small" />
+        <b-icon icon="circle-help" size="is-small" />
         {{ $t("dns.help") }}
       </a>
     </header>
@@ -62,7 +62,7 @@
             <b-button
               size="is-small"
               type="is-danger"
-              icon-left=" iconfont icon-delete"
+              icon-left="trash-2"
               @click="removeRule(index)"
             />
           </div>
