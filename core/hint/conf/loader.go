@@ -80,9 +80,10 @@ type extendedJSON struct {
 
 // customOutboundJSON is the raw JSON form of an anytls or juicity outbound.
 type customOutboundJSON struct {
-	Protocol string          `json:"protocol"`
-	Tag      string          `json:"tag"`
-	Settings json.RawMessage `json:"settings"`
+	Protocol       string          `json:"protocol"`
+	Tag            string          `json:"tag"`
+	Settings       json.RawMessage `json:"settings"`
+	StreamSettings json.RawMessage `json:"streamSettings"`
 }
 
 // customProtocols is the set of outbound protocols handled by hint/proxy.
@@ -151,6 +152,11 @@ func stripCustomOutbounds(raw []byte) ([]byte, []customOutboundJSON, error) {
 func buildCustomOutbounds(customs []customOutboundJSON) ([]*xray_core.OutboundHandlerConfig, error) {
 	result := make([]*xray_core.OutboundHandlerConfig, 0, len(customs))
 	for _, c := range customs {
+		senderSettings, err := buildCustomSenderSettings(c.StreamSettings)
+		if err != nil {
+			return nil, errors.New("invalid stream settings for tag ", c.Tag).Base(err)
+		}
+
 		var proxySettings *serial.TypedMessage
 		switch c.Protocol {
 		case "anytls":
@@ -182,11 +188,48 @@ func buildCustomOutbounds(customs []customOutboundJSON) ([]*xray_core.OutboundHa
 		}
 		result = append(result, &xray_core.OutboundHandlerConfig{
 			Tag:            c.Tag,
-			SenderSettings: serial.ToTypedMessage(&xray_proxyman.SenderConfig{}),
+			SenderSettings: senderSettings,
 			ProxySettings:  proxySettings,
 		})
 	}
 	return result, nil
+}
+
+func buildCustomSenderSettings(streamSettings json.RawMessage) (*serial.TypedMessage, error) {
+	if len(streamSettings) == 0 {
+		return serial.ToTypedMessage(&xray_proxyman.SenderConfig{}), nil
+	}
+
+	type outboundJSON struct {
+		Protocol       string          `json:"protocol"`
+		Tag            string          `json:"tag"`
+		StreamSettings json.RawMessage `json:"streamSettings"`
+	}
+	raw, err := json.Marshal(struct {
+		Outbounds []outboundJSON `json:"outbounds"`
+	}{
+		Outbounds: []outboundJSON{{
+			Protocol:       "freedom",
+			Tag:            "v2raya-native-sender",
+			StreamSettings: streamSettings,
+		}},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := conf_serial.DecodeJSONConfig(bytes.NewReader(raw))
+	if err != nil {
+		return nil, err
+	}
+	coreConfig, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+	if len(coreConfig.Outbound) != 1 || coreConfig.Outbound[0].SenderSettings == nil {
+		return nil, errors.New("failed to build sender settings")
+	}
+	return coreConfig.Outbound[0].SenderSettings, nil
 }
 
 // injectMultiObservatory appends the multiobservatory.Config TypedMessage to coreConfig.App.

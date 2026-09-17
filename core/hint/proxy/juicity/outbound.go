@@ -6,15 +6,18 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/daeuniverse/softwind/netproxy"
 	"github.com/daeuniverse/softwind/protocol"
-	"github.com/daeuniverse/softwind/protocol/direct"
 	_ "github.com/daeuniverse/softwind/protocol/juicity" // register juicity protocol
 
 	"github.com/xtls/xray-core/common"
 	xray_buf "github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/errors"
+	xray_net "github.com/xtls/xray-core/common/net"
 	xray_session "github.com/xtls/xray-core/common/session"
 	"github.com/xtls/xray-core/common/task"
 	"github.com/xtls/xray-core/transport"
@@ -25,8 +28,11 @@ import (
 
 // Client is the juicity outbound handler.
 type Client struct {
-	config *ClientConfig
-	dialer netproxy.Dialer
+	config     *ClientConfig
+	dialer     netproxy.Dialer
+	newDialer  func(internet.Dialer) (netproxy.Dialer, error)
+	dialerOnce sync.Once
+	dialerErr  error
 }
 
 // NewClient creates a new juicity outbound handler.
@@ -70,26 +76,63 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 		congestion = "bbr"
 	}
 
-	dialer, err := protocol.NewDialer("juicity", direct.SymmetricDirect, protocol.Header{
-		ProxyAddress: config.Address,
-		Feature1:     congestion,
-		TlsConfig:    tlsCfg,
-		User:         config.Uuid,
-		Password:     config.Password,
-		IsClient:     true,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("juicity: failed to create dialer: %w", err)
+	newDialer := func(dialer internet.Dialer) (netproxy.Dialer, error) {
+		return protocol.NewDialer("juicity", xrayDialer{dialer: dialer}, protocol.Header{
+			ProxyAddress: config.Address,
+			Feature1:     congestion,
+			TlsConfig:    tlsCfg,
+			User:         config.Uuid,
+			Password:     config.Password,
+			IsClient:     true,
+		})
 	}
 
 	return &Client{
-		config: config,
-		dialer: dialer,
+		config:    config,
+		newDialer: newDialer,
 	}, nil
 }
 
+type xrayDialer struct {
+	dialer internet.Dialer
+}
+
+func (d xrayDialer) Dial(network, addr string) (netproxy.Conn, error) {
+	return d.DialContext(context.Background(), network, addr)
+}
+
+func (d xrayDialer) DialContext(ctx context.Context, network, addr string) (netproxy.Conn, error) {
+	destination, err := xrayDestination(network, addr)
+	if err != nil {
+		return nil, err
+	}
+	return d.dialer.Dial(ctx, destination)
+}
+
+func xrayDestination(network, addr string) (xray_net.Destination, error) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return xray_net.Destination{}, fmt.Errorf("juicity: invalid server address %q: %w", addr, err)
+	}
+	portNumber, err := strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		return xray_net.Destination{}, fmt.Errorf("juicity: invalid server port %q: %w", port, err)
+	}
+	address := xray_net.ParseAddress(host)
+	if strings.HasPrefix(network, "udp") {
+		return xray_net.UDPDestination(address, xray_net.Port(portNumber)), nil
+	}
+	return xray_net.TCPDestination(address, xray_net.Port(portNumber)), nil
+}
+
 // Process implements proxy.Outbound.
-func (c *Client) Process(ctx context.Context, link *transport.Link, _ internet.Dialer) error {
+func (c *Client) Process(ctx context.Context, link *transport.Link, dialer internet.Dialer) error {
+	c.dialerOnce.Do(func() {
+		c.dialer, c.dialerErr = c.newDialer(dialer)
+	})
+	if c.dialerErr != nil {
+		return errors.New("juicity: failed to create dialer").Base(c.dialerErr)
+	}
 	outbounds := xray_session.OutboundsFromContext(ctx)
 	ob := outbounds[len(outbounds)-1]
 	if !ob.Target.IsValid() {

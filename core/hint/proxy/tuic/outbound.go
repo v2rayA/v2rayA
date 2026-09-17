@@ -5,17 +5,19 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"net/netip"
+	"net"
+	"strconv"
 	"strings"
+	"sync"
 
 	outbound_netproxy "github.com/daeuniverse/outbound/netproxy"
 	outbound_protocol "github.com/daeuniverse/outbound/protocol"
-	"github.com/daeuniverse/outbound/protocol/direct"
 	_ "github.com/daeuniverse/outbound/protocol/tuic" // register tuic protocol
 
 	"github.com/xtls/xray-core/common"
 	xray_buf "github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/errors"
+	xray_net "github.com/xtls/xray-core/common/net"
 	xray_session "github.com/xtls/xray-core/common/session"
 	"github.com/xtls/xray-core/common/task"
 	"github.com/xtls/xray-core/transport"
@@ -24,10 +26,12 @@ import (
 	"github.com/v2rayA/v2raya-core/hint/tlsutil"
 )
 
-// Client is the tuic outbound handler.
 type Client struct {
-	config *ClientConfig
-	dialer outbound_netproxy.Dialer
+	config     *ClientConfig
+	dialer     outbound_netproxy.Dialer
+	newDialer  func(internet.Dialer) (outbound_netproxy.Dialer, error)
+	dialerOnce sync.Once
+	dialerErr  error
 }
 
 // NewClient creates a new tuic outbound handler.
@@ -80,25 +84,49 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 		congestion = "bbr"
 	}
 
-	// TUIC uses QUIC/UDP underneath; use a direct UDP dialer as the underlying transport.
-	nextDialer := direct.NewDirectDialerLaddr(netip.Addr{}, direct.Option{FullCone: false})
-
-	dialer, err := outbound_protocol.NewDialer("tuic", nextDialer, outbound_protocol.Header{
-		ProxyAddress: config.Address,
-		TlsConfig:    tlsCfg,
-		User:         config.Uuid,
-		Password:     config.Password,
-		Feature1:     congestion,
-		IsClient:     true,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("tuic: failed to create dialer: %w", err)
+	newDialer := func(dialer internet.Dialer) (outbound_netproxy.Dialer, error) {
+		return outbound_protocol.NewDialer("tuic", xrayDialer{dialer: dialer}, outbound_protocol.Header{
+			ProxyAddress: config.Address,
+			TlsConfig:    tlsCfg,
+			User:         config.Uuid,
+			Password:     config.Password,
+			Feature1:     congestion,
+			IsClient:     true,
+		})
 	}
 
 	return &Client{
-		config: config,
-		dialer: dialer,
+		config:    config,
+		newDialer: newDialer,
 	}, nil
+}
+
+type xrayDialer struct {
+	dialer internet.Dialer
+}
+
+func (d xrayDialer) DialContext(ctx context.Context, network, addr string) (outbound_netproxy.Conn, error) {
+	destination, err := xrayDestination(network, addr)
+	if err != nil {
+		return nil, err
+	}
+	return d.dialer.Dial(ctx, destination)
+}
+
+func xrayDestination(network, addr string) (xray_net.Destination, error) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return xray_net.Destination{}, fmt.Errorf("tuic: invalid server address %q: %w", addr, err)
+	}
+	portNumber, err := strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		return xray_net.Destination{}, fmt.Errorf("tuic: invalid server port %q: %w", port, err)
+	}
+	address := xray_net.ParseAddress(host)
+	if strings.HasPrefix(network, "udp") {
+		return xray_net.UDPDestination(address, xray_net.Port(portNumber)), nil
+	}
+	return xray_net.TCPDestination(address, xray_net.Port(portNumber)), nil
 }
 
 // splitHostPort splits a host:port string, returning host and port separately.
@@ -119,7 +147,13 @@ func splitHostPort(addr string) (host, port string, err error) {
 }
 
 // Process implements proxy.Outbound.
-func (c *Client) Process(ctx context.Context, link *transport.Link, _ internet.Dialer) error {
+func (c *Client) Process(ctx context.Context, link *transport.Link, dialer internet.Dialer) error {
+	c.dialerOnce.Do(func() {
+		c.dialer, c.dialerErr = c.newDialer(dialer)
+	})
+	if c.dialerErr != nil {
+		return errors.New("tuic: failed to create dialer").Base(c.dialerErr)
+	}
 	outbounds := xray_session.OutboundsFromContext(ctx)
 	ob := outbounds[len(outbounds)-1]
 	if !ob.Target.IsValid() {

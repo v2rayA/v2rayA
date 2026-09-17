@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -33,6 +34,14 @@ func (m *UpstreamManager) SetDispatcher(d RouteDispatcher) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.dispatcher = d
+}
+
+func shouldAttachECS(clientIP net.IP) bool {
+	return clientIP != nil &&
+		clientIP.IsGlobalUnicast() &&
+		!clientIP.IsPrivate() &&
+		!clientIP.IsLoopback() &&
+		!clientIP.IsLinkLocalUnicast()
 }
 
 // Exchange sends a DNS query to the specified upstream server via UDP or TCP
@@ -94,7 +103,8 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
 	// would create TWO OPT records in the query, causing FORMERR.
 	msg.SetEdns0(4096, true)
-	if query.ClientIP != nil && query.ClientIP.IsGlobalUnicast() {
+	markOutgoing(msg)
+	if shouldAttachECS(query.ClientIP) {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
@@ -238,7 +248,8 @@ func (m *UpstreamManager) exchangeViaProxy(upstream *UpstreamInstance, query *Dn
 	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
 	// would create TWO OPT records in the query, causing FORMERR.
 	msg.SetEdns0(4096, true)
-	if query.ClientIP != nil && query.ClientIP.IsGlobalUnicast() {
+	markOutgoing(msg)
+	if shouldAttachECS(query.ClientIP) {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
@@ -404,7 +415,7 @@ func (m *UpstreamManager) exchangeViaSocks5(proxyAddr, targetAddr string, msg *d
 	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 	// Read the 2-byte length prefix.
-	if _, err := conn.Read(tcpMsg[:2]); err != nil {
+	if _, err := io.ReadFull(conn, tcpMsg[:2]); err != nil {
 		return nil, fmt.Errorf("dns read length via socks5: %w", err)
 	}
 	respLen := int(tcpMsg[0])<<8 | int(tcpMsg[1])
@@ -414,13 +425,8 @@ func (m *UpstreamManager) exchangeViaSocks5(proxyAddr, targetAddr string, msg *d
 
 	// Read the full DNS response.
 	respData := make([]byte, respLen)
-	totalRead := 0
-	for totalRead < respLen {
-		n, err := conn.Read(respData[totalRead:])
-		if err != nil {
-			return nil, fmt.Errorf("dns read data via socks5: %w", err)
-		}
-		totalRead += n
+	if _, err := io.ReadFull(conn, respData); err != nil {
+		return nil, fmt.Errorf("dns read data via socks5: %w", err)
 	}
 
 	// Unpack the DNS response.
@@ -510,6 +516,9 @@ func (m *UpstreamManager) ExchangeRaw(upstream *UpstreamInstance, msg *dns.Msg) 
 		protocol = "udp"
 	}
 
+	// Mark it too: a raw forward is still a query this process sends.
+	markOutgoing(msg)
+
 	client := m.getClientForProtocol(upstream, protocol)
 
 	resp, rtt, err := client.Exchange(msg, upstream.Addr)
@@ -557,7 +566,8 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 	// checking if one already exists. Calling AddECSSubnet first then SetEdns0
 	// would create TWO OPT records in the query, causing FORMERR.
 	msg.SetEdns0(4096, true)
-	if query.ClientIP != nil && query.ClientIP.IsGlobalUnicast() {
+	markOutgoing(msg)
+	if shouldAttachECS(query.ClientIP) {
 		builder := NewResponseBuilder()
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
@@ -601,7 +611,7 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 
 	// Read 2-byte length prefix.
 	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-	if _, err := conn.Read(tcpMsg[:2]); err != nil {
+	if _, err := io.ReadFull(conn, tcpMsg[:2]); err != nil {
 		return nil, fmt.Errorf("dns read length via dispatcher: %w", err)
 	}
 	respLen := int(tcpMsg[0])<<8 | int(tcpMsg[1])
@@ -611,13 +621,8 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 
 	// Read full DNS response.
 	respData := make([]byte, respLen)
-	totalRead := 0
-	for totalRead < respLen {
-		n, err := conn.Read(respData[totalRead:])
-		if err != nil {
-			return nil, fmt.Errorf("dns read data via dispatcher: %w", err)
-		}
-		totalRead += n
+	if _, err := io.ReadFull(conn, respData); err != nil {
+		return nil, fmt.Errorf("dns read data via dispatcher: %w", err)
 	}
 
 	rtt := time.Since(start)
