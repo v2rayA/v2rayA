@@ -33,14 +33,28 @@ var gMutex sync.Mutex
 func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	const host = "api.github.com"
 	status := ""
+	// The reason the request never got an answer, without our own wrapping.
+	detail := ""
 	defer func() {
 		if err != nil {
 			var coded *common.CodedError
 			if !errors.As(err, &coded) {
-				err = common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
-					"host":   host,
-					"status": status,
-				})
+				if status == "" {
+					// Nothing was answered, so there is no HTTP status to
+					// report; give the reason instead.
+					if detail == "" {
+						detail = err.Error()
+					}
+					err = common.Coded("ASSET_UNREACHABLE", err, map[string]interface{}{
+						"host":   host,
+						"detail": detail,
+					})
+				} else {
+					err = common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
+						"host":   host,
+						"status": status,
+					})
+				}
 			}
 		}
 	}()
@@ -52,6 +66,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	}
 	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/v2rayA/dist-v2ray-rules-dat/tags")
 	if err != nil {
+		detail = unwrappedReason(err)
 		err = fmt.Errorf("failed to get latest version of GFWList: %w", err)
 		return
 	}
@@ -232,4 +247,16 @@ func DeleteGFWList() error {
 		return err
 	}
 	return os.Remove(pathSiteDat)
+}
+
+// unwrappedReason returns the innermost cause of err, which is what a user can
+// act on: the DNS or connection failure, not the layers that wrap it.
+func unwrappedReason(err error) string {
+	for {
+		inner := errors.Unwrap(err)
+		if inner == nil {
+			return err.Error()
+		}
+		err = inner
+	}
 }

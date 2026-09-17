@@ -214,6 +214,21 @@ func Download(url string, to string) (err error) {
 			defer resp.Body.Close()
 			status = resp.Status
 			err = fmt.Errorf("download from %s failed: HTTP %s", host, status)
+		} else {
+			// The request never got a reply, so there is no status to show;
+			// a message that ends in "HTTP )" tells the user nothing.
+			reason := err
+			for {
+				inner := errors.Unwrap(reason)
+				if inner == nil {
+					break
+				}
+				reason = inner
+			}
+			return common.Coded("ASSET_UNREACHABLE", err, map[string]interface{}{
+				"host":   host,
+				"detail": reason.Error(),
+			})
 		}
 		return common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
 			"host":   host,
