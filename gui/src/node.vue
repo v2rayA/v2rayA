@@ -2272,10 +2272,17 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   pointer-events: none;
 }
 
-.mobile-small {
-  @media screen and (max-width: 450px) {
-    border-radius: 2px;
-    font-size: 0.85rem;
+// Toolbar buttons on phones. reset.scss scales the root font to 0.8em
+// below 768px, so rem values shrink again; use px for a real touch target
+// (14px text, ~36px tall) instead of the old 0.65rem (~8px text).
+@media screen and (max-width: 768px) {
+  #toolbar .button.mobile-small,
+  #toolbar .button.field {
+    font-size: 14px;
+    height: 2.5em;
+    padding-left: 0.9em;
+    padding-right: 0.9em;
+    border-radius: 4px;
   }
 }
 
