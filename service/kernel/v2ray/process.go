@@ -254,6 +254,9 @@ func StartCoreProcess(ctx context.Context) (*os.Process, error) {
 
 	// Get asset directory
 	assetDir := asset.GetV2rayLocationAssetOverride()
+	// The core is told to look in assetDir and nowhere else, so put the dat
+	// files there first when they live in a system directory.
+	asset.EnsureCoreAssets(assetDir)
 	log.Info("Asset directory for %s: %v", "v2raya_core", assetDir)
 
 	// Prepare environment variables, filtering out duplicates
