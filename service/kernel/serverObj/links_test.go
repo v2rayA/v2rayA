@@ -129,3 +129,28 @@ func TestVlessURLRoundTrip(t *testing.T) {
 		t.Fatalf("got %#v", got)
 	}
 }
+
+// A share link must carry base64 a strict decoder accepts: the exporters used
+// to trim a single "=" from a value that needed two.
+func TestExportedBase64IsUnpadded(t *testing.T) {
+	ss := &Shadowsocks{Cipher: "aes-128-gcm", Password: "test", Server: "1.2.3.4", Port: 8388, Name: "n"}
+	link := ss.ExportToURL()
+	u, err := url.Parse(link)
+	if err != nil {
+		t.Fatalf("%s: %v", link, err)
+	}
+	userinfo := u.User.Username()
+	if strings.Contains(userinfo, "=") {
+		t.Errorf("shadowsocks userinfo %q still carries padding", userinfo)
+	}
+	if _, err := base64.RawURLEncoding.DecodeString(userinfo); err != nil {
+		t.Errorf("shadowsocks userinfo %q is not valid unpadded base64: %v", userinfo, err)
+	}
+	back, err := ParseSSURL(link)
+	if err != nil {
+		t.Fatalf("%s: %v", link, err)
+	}
+	if back.Password != ss.Password || back.Cipher != ss.Cipher {
+		t.Errorf("round trip changed the credentials: %q/%q", back.Cipher, back.Password)
+	}
+}

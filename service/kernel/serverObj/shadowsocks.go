@@ -348,7 +348,7 @@ func (s *Shadowsocks) Configuration(info PriorInfo) (c Configuration, err error)
 func (s *Shadowsocks) exportToChainURL() string {
 	u := &url.URL{
 		Scheme:   "ss",
-		User:     url.User(strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(s.Cipher+":"+s.Password)), "=")),
+		User:     url.User(base64.RawURLEncoding.EncodeToString([]byte(s.Cipher + ":" + s.Password))),
 		Host:     net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 		Fragment: s.Name,
 	}
@@ -363,7 +363,7 @@ func (s *Shadowsocks) exportToChainURL() string {
 func (s *Shadowsocks) ExportToURL() string {
 	u := &url.URL{
 		Scheme:   "ss",
-		User:     url.User(strings.TrimSuffix(base64.URLEncoding.EncodeToString([]byte(s.Cipher+":"+s.Password)), "=")),
+		User:     url.User(base64.RawURLEncoding.EncodeToString([]byte(s.Cipher + ":" + s.Password))),
 		Host:     net.JoinHostPort(s.Server, strconv.Itoa(s.Port)),
 		Fragment: s.Name,
 	}
