@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@nuintun/qrcode": "^3.3.0",
-    "axios": "^0.30.0",
+    "axios": "^0.33.0",
     "bulma": "^0.9.4",
     "buefy": "^0.9.22",
     "clipboard": "^2.0.4",
