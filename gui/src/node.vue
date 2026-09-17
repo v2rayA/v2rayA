@@ -808,6 +808,17 @@ export default {
         return ["proxy"];
       },
     },
+    // The /version response arrives after this component is created, so the
+    // core-version banner used to render the previous page load's state until
+    // the next reload. The parent owns it now.
+    coreVersionValid: {
+      type: Boolean,
+      default: true,
+    },
+    coreVersionErr: {
+      type: String,
+      default: "",
+    },
     loadBalanceValid: {
       type: Boolean,
       default: false,
@@ -855,8 +866,6 @@ export default {
       overHeight: false,
       clipboard: null,
       scrollTimer: null,
-      coreVersionValid: true,
-      coreVersionErr: "",
     };
   },
   watch: {
@@ -907,8 +916,6 @@ export default {
     },
   },
   created() {
-    this.coreVersionValid = localStorage["coreVersionValid"] !== "false";
-    this.coreVersionErr = localStorage["coreVersionErr"] || "";
     if (!localStorage["token"]) return; // Not authenticated yet — skip to avoid spurious 401 modals
     const loadTouch = (retries = 3) => {
       this.$axios({

@@ -93,7 +93,7 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" />
+    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
     <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
@@ -153,6 +153,10 @@ export default {
       outboundName: "proxy",
       outbounds: ["proxy"],
       loadBalanceValid: localStorage["loadBalanceValid"] === "true",
+      // seeded from the last load so a reload paints the banner immediately,
+      // then replaced by the /version response of this load
+      coreVersionValid: localStorage["coreVersionValid"] !== "false",
+      coreVersionErr: localStorage["coreVersionErr"] || "",
       outboundDropdownHover: {},
       updateOutboundDropdown: true,
       themePreference: 'auto',
@@ -295,6 +299,8 @@ export default {
         localStorage["variant"] = res.data.data.variant;
         localStorage["coreVersionValid"] = res.data.data.coreVersionValid;
         localStorage["coreVersionErr"] = res.data.data.coreVersionErr || "";
+        this.coreVersionValid = res.data.data.coreVersionValid !== false;
+        this.coreVersionErr = res.data.data.coreVersionErr || "";
       }
     });
     this.$axios({
