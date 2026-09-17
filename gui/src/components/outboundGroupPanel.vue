@@ -525,7 +525,10 @@ export default {
 
 <style lang="scss">
 .ogp-wrapper {
-  display: inline-block;
+  // inline-flex, not inline-block: the block's line box put the tag one
+  // or two pixels below the status tag next to it in the navbar
+  display: inline-flex;
+  align-items: center;
   position: relative;
 }
 
