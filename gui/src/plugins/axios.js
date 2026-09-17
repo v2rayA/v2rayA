@@ -18,6 +18,17 @@ import { nanoid } from "nanoid";
 Vue.prototype.$axios = axios;
 
 axios.defaults.timeout = 60 * 1000; // timeout: 60秒
+// The backend reads object query parameters (touch, whiches) as JSON text,
+// which is how axios 0.21 serialized them; 0.28+ expands them into
+// touch[id]=… instead. Keep the JSON form.
+axios.defaults.paramsSerializer = (params) =>
+  Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => {
+      const value = typeof v === "object" ? JSON.stringify(v) : String(v);
+      return `${encodeURIComponent(k)}=${encodeURIComponent(value)}`;
+    })
+    .join("&");
 
 axios.interceptors.request.use(
   (config) => {
