@@ -1,5 +1,6 @@
 export default {
   common: {
+    menu: "菜单",
     outboundSetting: "代理分组设置",
     setting: "设置",
     about: "关于",

@@ -1,5 +1,6 @@
 export default {
   common: {
+    menu: "منو",
     outboundSetting: "تنظیمات گروه پروکسی",
     setting: "تنظیمات",
     about: "درباره",

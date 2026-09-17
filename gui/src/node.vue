@@ -2084,8 +2084,45 @@ td {
       margin-left: 25px;
       width: calc(100% - 50px);
     }
-    .field.is-grouped .field:not(:last-child) {
-      margin-right: 0.3rem;
+  }
+
+  // Phones: the two groups stack as full-width rows with one gap value, so
+  // the buttons line up instead of wrapping into three ragged rows with
+  // Bulma's per-field margins.
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem;
+
+    > .field-body,
+    > .field-body > .field.is-grouped {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    > .field-body > .field.is-grouped > div,
+    .right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-width: 100% !important;
+      margin: 0;
+    }
+
+    // .right is the create/import pair: keep it right-aligned like on
+    // desktop, on its own row under the selection actions
+    .right {
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .button,
+    .field,
+    .dropdown {
+      margin: 0 !important;
     }
   }
 

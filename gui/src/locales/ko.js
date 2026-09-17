@@ -1,5 +1,6 @@
 export default {
   common: {
+    menu: "메뉴",
     outboundSetting: "프록시 그룹 설정",
     setting: "설정",
     about: "정보",

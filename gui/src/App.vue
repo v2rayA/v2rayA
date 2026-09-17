@@ -24,6 +24,21 @@
           />
         </b-navbar-item>
       </template>
+      <template slot="burger" slot-scope="{ isOpened, toggleActive }">
+        <a
+          class="navbar-burger burger"
+          role="button"
+          :aria-label="$t('common.menu')"
+          :aria-expanded="isOpened ? 'true' : 'false'"
+          tabindex="0"
+          @click="toggleActive"
+          @keydown.enter.prevent="toggleActive"
+          @keydown.space.prevent="toggleActive"
+        >
+          <i class="lucide" :class="isOpened ? 'icon-x' : 'icon-menu'"></i>
+        </a>
+      </template>
+
       <template slot="start"></template>
 
       <template slot="end">
@@ -783,15 +798,21 @@ html {
   .navbar-burger {
     height: 48px;
     width: 48px;
-    // the brand row is 40px-tall content in a 0.8em root; keep the burger
-    // a square touch target aligned with it
     margin-left: auto;
+  }
+}
 
-    span {
-      height: 2px;
-      width: 18px;
-      left: calc(50% - 9px);
-    }
+// The burger is a Lucide glyph, not Bulma's three spans; centre it and give
+// it the navbar's text colour.
+.navbar-burger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+
+  .lucide {
+    font-size: 24px;
+    vertical-align: 0;
   }
 }
 
@@ -843,12 +864,12 @@ html {
     background-color: currentColor;
   }
 
-  color: rgba(0, 0, 0, 0.55);
+  color: rgba(0, 0, 0, 0.75);
 
   &:hover,
   &:focus {
     background-color: rgba(0, 0, 0, 0.08);
-    color: rgba(0, 0, 0, 0.8);
+    color: rgba(0, 0, 0, 0.95);
   }
 }
 

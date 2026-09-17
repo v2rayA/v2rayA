@@ -1,5 +1,6 @@
 export default {
   common: {
+    menu: "Меню",
     outboundSetting: "Настройка группы прокси",
     setting: "Настройки",
     about: "О программе",

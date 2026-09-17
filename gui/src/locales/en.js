@@ -1,5 +1,6 @@
 export default {
   common: {
+    menu: "Menu",
     outboundSetting: "Proxy Group Setting",
     setting: "Setting",
     about: "About",
