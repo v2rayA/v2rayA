@@ -28,7 +28,7 @@ require (
 	github.com/vearutop/statigz v1.1.7
 	go.etcd.io/bbolt v1.4.3
 	golang.org/x/crypto v0.52.0
-	golang.org/x/net v0.54.0
+	golang.org/x/net v0.55.0
 	golang.org/x/sys v0.45.0
 	google.golang.org/grpc v1.57.1
 	google.golang.org/protobuf v1.36.1
