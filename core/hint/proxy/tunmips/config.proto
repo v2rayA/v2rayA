@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package v2raya.proxy.tunmips;
+option go_package = "github.com/v2rayA/v2raya-core/hint/proxy/tunmips";
+
+// Config is the "tun-mips" inbound: a TUN device the core owns, driven by a
+// user-space IP stack. The service side manages routes; the core creates
+// the device and assigns its addresses.
+message Config {
+  // Interface name. On macOS "utun" lets the kernel pick the unit.
+  string name = 1;
+  uint32 mtu = 2;
+  // Operating-system side IPv4 address with prefix, e.g. "10.0.85.2/30".
+  string address4 = 3;
+  // Optional IPv6 address with prefix; empty disables IPv6 on the device.
+  string address6 = 4;
+  // host:port of the core's DNS module; port-53 flows to non-local
+  // resolvers are relayed there.
+  string dns_target = 5;
+  // Executable basenames whose flows bypass the proxy.
+  repeated string exclude_processes = 6;
+  // PIDs whose flows always bypass the proxy (v2rayA and the core itself).
+  repeated uint32 self_pids = 7;
+  // Outbound tag used for excluded flows; "direct" when empty.
+  string direct_tag = 8;
+  uint32 user_level = 9;
+}
