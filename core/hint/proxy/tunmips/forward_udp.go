@@ -42,6 +42,10 @@ func newUDPSessions(f *forwarder) *udpSessions {
 // handlePacket is the stack's UDP callback; it must not block. payload is
 // only valid during the call, so it is copied.
 func (u *udpSessions) handlePacket(flow Flow, payload []byte, reply replyFunc) {
+	if u.f.dns != nil && u.f.dns.matches(flow.Destination) {
+		u.f.dns.handleUDP(flow, payload, reply)
+		return
+	}
 	pkt := &udpPacket{data: append([]byte(nil), payload...), dest: flow.Destination}
 
 	// The send happens under the lock because finished closes egress under

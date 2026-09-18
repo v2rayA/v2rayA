@@ -32,6 +32,8 @@ type forwarder struct {
 	downlink   stats.Counter
 
 	udp *udpSessions
+	// dns, when set, answers port-53 flows to non-local resolvers itself.
+	dns *dnsHijack
 }
 
 func newForwarder(ctx context.Context, dispatcher routing.Dispatcher) *forwarder {
@@ -46,6 +48,10 @@ func (f *forwarder) handlers() Handlers {
 
 func (f *forwarder) handleTCP(flow Flow, conn net.Conn) {
 	defer conn.Close()
+	if f.dns != nil && f.dns.matches(flow.Destination) {
+		f.dns.handleTCP(flow, conn)
+		return
+	}
 	f.dispatch(conn, toDestination(net.Network_TCP, flow.Source), toDestination(net.Network_TCP, flow.Destination))
 }
 
