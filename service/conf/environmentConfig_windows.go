@@ -83,7 +83,16 @@ func loadPlatformEnv() error {
 		}
 
 		if envFilePath == "" {
-			return
+			// The installer writes {app}\v2rayA_env.txt and points at it with a
+			// machine environment variable, but a service started right after
+			// installation runs with the Service Control Manager's environment
+			// from boot time, which does not have it yet. Until the next
+			// reboot the log file and the asset directory were therefore
+			// ignored. Look next to the executable's directory as well.
+			envFilePath = defaultEnvFilePath(os.Args[0])
+			if envFilePath == "" {
+				return
+			}
 		}
 
 		absPath, err := filepath.Abs(envFilePath)
@@ -228,4 +237,24 @@ func sanitizeConfigDirForPlatform(config string, isLite bool) string {
 	}
 
 	return config
+}
+
+// defaultEnvFilePath returns the v2rayA_env.txt the installer creates for the
+// executable at exe — {app}\v2rayA_env.txt for {app}\bin\v2raya.exe, or one
+// beside the executable — and "" when neither exists.
+func defaultEnvFilePath(exe string) string {
+	abs, err := filepath.Abs(exe)
+	if err != nil {
+		return ""
+	}
+	dir := filepath.Dir(abs)
+	for _, candidate := range []string{
+		filepath.Join(filepath.Dir(dir), "v2rayA_env.txt"),
+		filepath.Join(dir, "v2rayA_env.txt"),
+	} {
+		if fi, err := os.Stat(candidate); err == nil && !fi.IsDir() {
+			return candidate
+		}
+	}
+	return ""
 }
