@@ -63,8 +63,8 @@
         <b-select v-model="transparentType" expanded>
           <option v-show="!lite && os === 'linux'" value="redirect">redirect</option>
           <option v-show="!lite && os === 'linux'" value="tproxy">tproxy</option>
-          <option v-show="!lite" value="tun" :disabled="!tinytunSupported">
-            tun (TinyTun){{ !tinytunSupported ? ' — ' + $t("setting.options.notIntegrated") : '' }}
+          <option v-show="!lite" value="tun" :disabled="!tunSupported">
+            tun{{ !tunSupported ? ' — ' + $t("setting.options.tunUnsupported") : '' }}
           </option>
           <option v-show="!(isRoot && (os === 'linux' || os === 'darwin'))" value="system_proxy">{{ $t("setting.options.systemProxy") }}</option>
         </b-select>
@@ -79,7 +79,7 @@
           </b-button>
         </template>
 
-        <template v-if="transparentType === 'tun' && tinytunSupported">
+        <template v-if="transparentType === 'tun' && tunSupported">
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunAutoRoute')" position="is-top">
             <b-checkbox-button v-model="tunAutoRoute" :native-value="true" style="position: relative; left: -1px">
               {{ $t("setting.tunAutoRoute") }}
@@ -107,68 +107,7 @@
         <b-input v-model="tproxyExcludedInterfaces" expanded :placeholder="$t('setting.tproxyExcludedInterfacesPlaceholder')" />
       </b-field>
 
-      <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported"
-        label-position="on-border">
-        <template slot="label">
-          {{ $t("setting.tunBypassInterfaces") }}
-        </template>
-        <div style="width: 100%; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap">
-          <b-dropdown
-            v-model="tunBypassInterfacesList"
-            multiple
-            scrollable
-            max-height="260"
-            :disabled="availableInterfaces.filter(i => !i.isLoopback).length === 0"
-            style="flex-shrink: 0"
-          >
-            <template #trigger>
-              <b-button icon-right="chevron-down" style="min-width: 160px; justify-content: space-between">
-                <span v-if="tunBypassInterfacesList.length === 0" style="color: #aaa">
-                  {{ $t("setting.tunBypassSelectPlaceholder") }}
-                </span>
-                <span v-else>
-                  {{ $t("setting.tunBypassSelected", { n: tunBypassInterfacesList.length }) }}
-                </span>
-              </b-button>
-            </template>
-            <b-dropdown-item
-              v-for="iface in availableInterfaces.filter(i => !i.isLoopback)"
-              :key="iface.name"
-              :value="iface.name"
-            >
-              <div>
-                <span style="font-weight: 500">{{ iface.name }}</span>
-                <div v-if="iface.addrs && iface.addrs.length" style="font-size: 0.8em; color: #888; margin-top: 1px">
-                  {{ iface.addrs.join(', ') }}
-                </div>
-              </div>
-            </b-dropdown-item>
-          </b-dropdown>
-          <b-input
-            v-model="tunBypassCustom"
-            expanded
-            :placeholder="$t('setting.tunBypassCustomPlaceholder')"
-            style="flex: 1; min-width: 180px"
-          />
-        </div>
-      </b-field>
-
-      <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported && os === 'linux'"
-        :label="$t('setting.tunProcessBackend')" label-position="on-border">
-        <template slot="label">
-          {{ $t("setting.tunProcessBackend") }}
-          <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunProcessBackend')" position="is-right">
-            <b-icon size="is-small" icon="circle-help"
-              style="position: relative; top: 2px; right: 3px; font-weight: normal" />
-          </b-tooltip>
-        </template>
-        <b-select v-model="tunProcessBackend" expanded>
-          <option value="">{{ $t("setting.options.tunBackendTun") }}</option>
-          <option value="ebpf">{{ $t("setting.options.tunBackendEbpf") }}</option>
-        </b-select>
-      </b-field>
-
-      <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tinytunSupported"
+      <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tunSupported"
         label-position="on-border">
         <template slot="label">
           {{ $t("setting.tunExcludeProcesses") }}
@@ -178,7 +117,7 @@
           </b-tooltip>
         </template>
         <b-input :value="tunExcludeProcesses" readonly expanded
-          :placeholder="$t('tinytun.processExclude.placeholder')" />
+          :placeholder="$t('tun.processExclude.placeholder')" />
         <b-button style="
             margin-left: 0;
             border-bottom-left-radius: 0;
@@ -367,8 +306,8 @@ import ModalCustomRoutingA from "@/components/modalCustomRoutingA";
 import modalDomainsExcluded from "@/components/modalDomainsExcluded";
 import modalTproxyWhiteIpGroups from "@/components/modalTproxyWhiteIpGroups";
 import modalUpdateGfwList from "@/components/modalUpdateGfwList";
-import modalTinyTunRouteScript from "@/components/modalTinyTunRouteScript";
-import modalTinyTunExcludeProcesses from "@/components/modalTinyTunExcludeProcesses";
+import modalTunRouteScript from "@/components/modalTunRouteScript";
+import modalTunExcludeProcesses from "@/components/modalTunExcludeProcesses";
 import CusBInput from "./input/Input.vue";
 import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
@@ -395,15 +334,10 @@ export default {
     routeOnly: false,
     tproxyExcludedInterfaces: "",
     tunAutoRoute: true,
-    tunBypassInterfaces: "",
-    tunBypassInterfacesList: [],
-    tunBypassCustom: "",
-    availableInterfaces: [],
     tunRouteShellType: "",
     tunRouteShellPath: "",
     tunSetupScript: "",
     tunTeardownScript: "",
-    tunProcessBackend: "",
     tunExcludeProcesses: "",
     pacAutoUpdateMode: "none",
     pacAutoUpdateIntervalHour: 0,
@@ -418,34 +352,9 @@ export default {
     localGFWListVersion: i18n.t("common.checkRunning"),
     os: "",
     isRoot: false,
-    tinytunSupported: false,
+    tunSupported: false,
   }),
   computed: {
-    tunBypassInterfacesComputed: {
-      get() {
-        const parts = [];
-        if (this.tunBypassInterfacesList.length > 0) {
-          parts.push(...this.tunBypassInterfacesList);
-        }
-        if (this.tunBypassCustom.trim()) {
-          parts.push(
-            ...this.tunBypassCustom
-              .split(',')
-              .map((s) => s.trim())
-              .filter((s) => s.length > 0)
-          );
-        }
-        return [...new Set(parts)].join(',');
-      },
-      set(val) {
-        const parts = val
-          ? val.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
-          : [];
-        const known = (this.availableInterfaces || []).map((i) => i.name);
-        this.tunBypassInterfacesList = parts.filter((p) => known.includes(p));
-        this.tunBypassCustom = parts.filter((p) => !known.includes(p)).join(',');
-      },
-    },
     lite() {
       return window.localStorage["lite"] && parseInt(window.localStorage["lite"]) > 0;
     },
@@ -461,35 +370,12 @@ export default {
       return toInt(port);
     },
   },
-  watch: {
-    transparentType(val) {
-      if (val === 'tun' && this.tinytunSupported) {
-        this.fetchNetworkInterfaces();
-      }
-    },
-    tinytunSupported(val) {
-      if (val && this.transparentType === 'tun') {
-        this.fetchNetworkInterfaces();
-      }
-    },
-  },
   created() {
     this.getSettingData();
   },
   methods: {
     dayjs() {
       return dayjs.apply(this, arguments);
-    },
-    fetchNetworkInterfaces() {
-      this.$axios({ url: apiRoot + '/networkInterfaces' }).then((res) => {
-        if (res.data && res.data.data && res.data.data.interfaces) {
-          this.availableInterfaces = res.data.data.interfaces;
-          // Re-apply the tunBypassInterfaces string now that we know available names
-          if (this.tunBypassInterfaces) {
-            this.tunBypassInterfacesComputed = this.tunBypassInterfaces;
-          }
-        }
-      });
     },
     getSettingData() {
       this.$axios({
@@ -515,10 +401,7 @@ export default {
             if (versionRes.data && versionRes.data.data) {
               this.os = versionRes.data.data.os || "";
               this.isRoot = versionRes.data.data.isRoot || false;
-              this.tinytunSupported = versionRes.data.data.tinytunSupported || false;
-            }
-            if (this.transparentType === 'tun' && this.tinytunSupported) {
-              this.fetchNetworkInterfaces();
+              this.tunSupported = versionRes.data.data.tunSupported || false;
             }
           });
           if (this.lite) {
@@ -555,17 +438,10 @@ export default {
             routeOnly: this.routeOnly,
             tproxyExcludedInterfaces: this.tproxyExcludedInterfaces,
             tunAutoRoute: this.tunAutoRoute,
-            // the list/custom split only exists once the interface names
-            // were fetched (TUN mode); before that the computed is empty and
-            // would wipe the stored value
-            tunBypassInterfaces: this.availableInterfaces.length
-              ? this.tunBypassInterfacesComputed
-              : this.tunBypassInterfaces,
             tunRouteShellType: this.tunRouteShellType,
             tunRouteShellPath: this.tunRouteShellPath,
             tunSetupScript: this.tunSetupScript,
             tunTeardownScript: this.tunTeardownScript,
-            tunProcessBackend: this.tunProcessBackend,
             tunExcludeProcesses: this.tunExcludeProcesses,
           },
           cancelToken: new axios.CancelToken(function executor(c) {
@@ -672,7 +548,7 @@ export default {
     handleClickTunRouteScript() {
       this.$buefy.modal.open({
         parent: this,
-        component: modalTinyTunRouteScript,
+        component: modalTunRouteScript,
         hasModalCard: true,
         canCancel: true,
         props: {
@@ -695,7 +571,7 @@ export default {
     handleClickTunExcludeProcesses() {
       this.$buefy.modal.open({
         parent: this,
-        component: modalTinyTunExcludeProcesses,
+        component: modalTunExcludeProcesses,
         hasModalCard: true,
         canCancel: true,
         props: {
