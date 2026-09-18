@@ -7,7 +7,7 @@
     </header>
     <section class="modal-card-body">
       <p style="text-align: center">
-        <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo" />
+        <img src="@/assets/img/v2raya-icon.svg" alt="v2rayA" class="login-logo" />
       </p>
       <b-field :label="$t('login.username')" type="is-success">
         <b-input
@@ -137,6 +137,12 @@ export default {
 }
 </style>
 <style lang="scss" scoped>
+.login-logo {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 0.5rem;
+}
+
 .after-line-dot5 {
   font-size: 14px;
   p {
