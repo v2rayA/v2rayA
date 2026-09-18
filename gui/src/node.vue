@@ -8,7 +8,7 @@
       @mouseenter.native="showSidebar = true"
       @click.native="showSidebar = true"
     >
-      <i class="lucide icon-panel-left" style="font-size: 36px; line-height: 1" />
+      <i class="lucide icon-panel-left sidebar-handle" :title="$t('common.expand')" />
     </b-sidebar>
     <b-sidebar
       :open="showSidebar"
@@ -457,9 +457,7 @@
         >
           <b-field
             v-if="tab === subi + 2"
-            :label="`${sub.host.toUpperCase()}(${sub.servers.length}${
-              sub.info ? ') (' : ''
-            }${sub.info})`"
+            :label="`${sub.host.toUpperCase()} (${sub.servers.length})${sub.info ? ' · ' + sub.info : ''}`"
           >
             <b-table
               :current-page.sync="currentPage[sub.id]"
@@ -2323,6 +2321,17 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   width: unset;
   line-height: 0;
   border-radius: 4px;
+}
+
+// The handle that brings the status sidebar back was a 36px glyph in a
+// shadowed box, larger than any control on the page; a phone showed it as the
+// biggest thing on screen. Keep it a small, evenly padded target.
+.sidebar-handle {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
+  padding: 6px;
+  cursor: pointer;
 }
 
 .b-sidebar.node-status-sidebar > .sidebar-content.is-fixed {

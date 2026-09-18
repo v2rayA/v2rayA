@@ -23,6 +23,7 @@ export default {
     darkTheme: "Tema escuro",
     lightTheme: "Tema claro",
     autoTheme: "Tema automático",
+    expand: "Mostrar o estado da conexão",
   },
   welcome: {
     title: "Boas-vindas",

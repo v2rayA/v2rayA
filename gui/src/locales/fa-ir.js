@@ -23,6 +23,7 @@ export default {
     darkTheme: "پوسته تاریک",
     lightTheme: "پوسته روشن",
     autoTheme: "پوسته خودکار",
+    expand: "نمایش وضعیت اتصال",
   },
   welcome: {
     title: "خوش آمدید",
