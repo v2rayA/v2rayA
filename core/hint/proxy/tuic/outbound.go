@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	outbound_netproxy "github.com/daeuniverse/outbound/netproxy"
 	outbound_protocol "github.com/daeuniverse/outbound/protocol"
@@ -110,7 +112,61 @@ func (d xrayDialer) DialContext(ctx context.Context, network, addr string) (outb
 	if err != nil {
 		return nil, err
 	}
-	return d.dialer.Dial(ctx, destination)
+	conn, err := d.dialer.Dial(ctx, destination)
+	if err != nil {
+		return nil, err
+	}
+	// QUIC-based protocols assert the underlay conn to netproxy.PacketConn,
+	// whose ReadFrom/WriteTo signatures differ from net.PacketConn. xray's UDP
+	// dial returns *internet.PacketConnWrapper, so adapt it here.
+	if destination.Network == xray_net.Network_UDP {
+		if pc, ok := conn.(net.PacketConn); ok {
+			return &packetConnAdapter{conn: conn, pc: pc}, nil
+		}
+		conn.Close()
+		return nil, fmt.Errorf("tuic: UDP dial returned %T, which is not a net.PacketConn", conn)
+	}
+	return conn, nil
+}
+
+// packetConnAdapter adapts xray's UDP conn (net.Conn + net.PacketConn) to
+// outbound's netproxy.PacketConn interface.
+type packetConnAdapter struct {
+	conn net.Conn
+	pc   net.PacketConn
+}
+
+func (a *packetConnAdapter) Read(b []byte) (int, error)  { return a.conn.Read(b) }
+func (a *packetConnAdapter) Write(b []byte) (int, error) { return a.conn.Write(b) }
+func (a *packetConnAdapter) Close() error                { return a.conn.Close() }
+func (a *packetConnAdapter) SetDeadline(t time.Time) error {
+	return a.conn.SetDeadline(t)
+}
+func (a *packetConnAdapter) SetReadDeadline(t time.Time) error {
+	return a.conn.SetReadDeadline(t)
+}
+func (a *packetConnAdapter) SetWriteDeadline(t time.Time) error {
+	return a.conn.SetWriteDeadline(t)
+}
+
+func (a *packetConnAdapter) ReadFrom(p []byte) (int, netip.AddrPort, error) {
+	n, addr, err := a.pc.ReadFrom(p)
+	if err != nil {
+		return n, netip.AddrPort{}, err
+	}
+	ap, err := netip.ParseAddrPort(addr.String())
+	if err != nil {
+		return n, netip.AddrPort{}, err
+	}
+	return n, ap, nil
+}
+
+func (a *packetConnAdapter) WriteTo(p []byte, addr string) (int, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return 0, err
+	}
+	return a.pc.WriteTo(p, udpAddr)
 }
 
 func xrayDestination(network, addr string) (xray_net.Destination, error) {
@@ -123,7 +179,8 @@ func xrayDestination(network, addr string) (xray_net.Destination, error) {
 		return xray_net.Destination{}, fmt.Errorf("tuic: invalid server port %q: %w", port, err)
 	}
 	address := xray_net.ParseAddress(host)
-	if strings.HasPrefix(network, "udp") {
+	mn, err := outbound_netproxy.ParseMagicNetwork(network)
+	if err == nil && mn.Network == "udp" {
 		return xray_net.UDPDestination(address, xray_net.Port(portNumber)), nil
 	}
 	return xray_net.TCPDestination(address, xray_net.Port(portNumber)), nil

@@ -46,7 +46,7 @@ Function Build-v2rayA(){
     #Build Web Panel
     Set-Location -Path "$CurrentPath/gui"
     yarn; yarn build
-    #Build v2raya-core (merged xray-core + MultiObservatory)
+    #Build v2raya-core (xray-core from go mod + MultiObservatory)
     Set-Location -Path "$CurrentPath/core"
     ${env:CGO_ENABLED} = "0"
     go build -trimpath -trimpath -ldflags "-s -w" -o "$CurrentPath/$v2rayaCoreBin" ./main
