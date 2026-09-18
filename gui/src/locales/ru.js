@@ -23,6 +23,7 @@ export default {
     darkTheme: "Тёмная тема",
     lightTheme: "Светлая тема",
     autoTheme: "Автоматическая тема",
+    expand: "Показать состояние подключения",
   },
   welcome: {
     title: "Добро пожаловать",

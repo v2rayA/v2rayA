@@ -105,21 +105,32 @@ type SubscriptionUserInfo struct {
 	Expire   time.Time
 }
 
+// Known reports whether the provider sent any usage field at all.
+func (sui *SubscriptionUserInfo) Known() bool {
+	return sui.Download != -1 || sui.Upload != -1 || sui.Total != -1 || !sui.Expire.IsZero()
+}
+
+// String renders the usage the way the node list shows it: what is used of
+// what is available, and the day it expires. It used to list every raw
+// field ("download: 0 GB; upload: 0 GB; total: 107 GB; expire: 2026-10-04
+// 18:59 UTC") in integer GB next to the provider's own text in GiB.
 func (sui *SubscriptionUserInfo) String() string {
+	const gib = 1024 * 1024 * 1024
 	var outputs []string
-	if sui.Download != -1 {
-		outputs = append(outputs, fmt.Sprintf("download: %v GB", sui.Download/1e9))
-	}
-	if sui.Upload != -1 {
-		outputs = append(outputs, fmt.Sprintf("upload: %v GB", sui.Upload/1e9))
-	}
-	if sui.Total != -1 {
-		outputs = append(outputs, fmt.Sprintf("total: %v GB", sui.Total/1e9))
+	if sui.Download != -1 || sui.Upload != -1 {
+		used := float64(max(sui.Download, 0)+max(sui.Upload, 0)) / gib
+		if sui.Total > 0 {
+			outputs = append(outputs, fmt.Sprintf("Used %.2f GiB / %.2f GiB", used, float64(sui.Total)/gib))
+		} else {
+			outputs = append(outputs, fmt.Sprintf("Used %.2f GiB", used))
+		}
+	} else if sui.Total > 0 {
+		outputs = append(outputs, fmt.Sprintf("Total %.2f GiB", float64(sui.Total)/gib))
 	}
 	if !sui.Expire.IsZero() {
-		outputs = append(outputs, fmt.Sprintf("expire: %v UTC", sui.Expire.Format("2006-01-02 15:04")))
+		outputs = append(outputs, "Expires "+sui.Expire.Local().Format("2006-01-02"))
 	}
-	return strings.Join(outputs, "; ")
+	return strings.Join(outputs, " · ")
 }
 
 func parseSubscriptionUserInfo(str string) SubscriptionUserInfo {
@@ -201,11 +212,11 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		// node; treat an unparseable or empty body as a failed fetch
 		return nil, "", common.Coded("SUBSCRIPTION_EMPTY", fmt.Errorf("no server found in the subscription response"), nil)
 	}
-	subscriptionUserInfo := res.Header.Get("Subscription-Userinfo")
-	sui := parseSubscriptionUserInfo(subscriptionUserInfo)
-	if len(status) > 0 {
-		status = sui.String() + "|" + status
-	} else {
+	// The Subscription-Userinfo header is the standard form of the usage; a
+	// STATUS= line in the body is the provider's own prose for the same
+	// numbers. Showing both printed every figure twice in two formats.
+	sui := parseSubscriptionUserInfo(res.Header.Get("Subscription-Userinfo"))
+	if sui.Known() {
 		status = sui.String()
 	}
 	return infos, status, nil

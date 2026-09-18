@@ -23,6 +23,7 @@ export default {
     darkTheme: "Dark Theme",
     lightTheme: "Light Theme",
     autoTheme: "Auto Theme",
+    expand: "Show the connection status",
   },
   welcome: {
     title: "Welcome",

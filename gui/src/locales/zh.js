@@ -23,6 +23,7 @@ export default {
     darkTheme: "深色主题",
     lightTheme: "浅色主题",
     autoTheme: "自动主题",
+    expand: "显示连接状态",
   },
   welcome: {
     title: "欢迎使用",

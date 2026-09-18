@@ -23,6 +23,7 @@ export default {
     darkTheme: "어두운 테마",
     lightTheme: "밝은 테마",
     autoTheme: "자동 테마",
+    expand: "연결 상태 표시",
   },
   welcome: {
     title: "환영합니다",
