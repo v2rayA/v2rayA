@@ -2,8 +2,9 @@
   <div id="app">
     <b-navbar ref="navs" fixed-top shadow type="is-light">
       <template slot="brand">
-        <b-navbar-item href="/">
-          <img src="@/assets/img/logo2.png" alt="v2rayA" class="logo no-select" />
+        <b-navbar-item href="/" class="brand no-select">
+          <img src="@/assets/img/v2raya-icon.svg" alt="" class="brand__icon" />
+          <span class="brand__name">v2rayA</span>
         </b-navbar-item>
         <b-navbar-item tag="div">
           <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusMap[runningState.running]"
@@ -745,10 +746,27 @@ export default {
   padding: 20px;
 }
 
-.logo {
-  min-height: 2.5rem;
-  margin-left: 1em;
-  margin-right: 1em;
+// The brand is the vector icon plus the name as text: the old PNG wordmark
+// needed a colour filter for the dark theme and blurred at 2x displays.
+.brand {
+  gap: 0.55em;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+.brand__icon {
+  height: 30px;
+  width: 30px;
+  min-height: 30px;
+  max-height: none;
+  flex: 0 0 30px;
+}
+
+.brand__name {
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  color: inherit;
 }
 
 .navbar-item .lucide {
@@ -786,21 +804,23 @@ html {
 // which made the status tags ~10px and the logo ~32px; size the brand row
 // in px so it stays a touch target.
 @media screen and (max-width: 768px) {
-  .navbar-brand .logo {
-    height: 34px;
-    min-height: 34px;
-    margin-left: 0.5em;
-    margin-right: 0.5em;
+  .navbar-brand .brand {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
   }
 
-  // very narrow phones: the two tags and the burger come first; the
-  // wordmark shrinks, then goes
+  .navbar-brand .brand__icon {
+    height: 28px;
+    width: 28px;
+    min-height: 28px;
+    flex-basis: 28px;
+  }
+
+  // very narrow phones: the two tags and the burger come first; the name
+  // goes, then the icon
   @media screen and (max-width: 380px) {
-    .navbar-brand .logo {
-      height: 26px;
-      min-height: 26px;
-      margin-left: 0.25em;
-      margin-right: 0.25em;
+    .navbar-brand .brand__name {
+      display: none;
     }
   }
 
