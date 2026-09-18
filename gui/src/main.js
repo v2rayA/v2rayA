@@ -1,3 +1,4 @@
+import "@/plugins/apiRoot";
 import "@/plugins/buefy";
 import "@/plugins/axios";
 import "@/plugins/backendPort";

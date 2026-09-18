@@ -19,9 +19,6 @@ export default defineConfig(({ mode }) => ({
     },
     extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", ".vue"],
   },
-  define: {
-    apiRoot: '`${localStorage["backendAddress"]}/api`',
-  },
   server: {
     port: 8081,
   },
