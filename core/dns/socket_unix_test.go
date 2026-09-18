@@ -10,8 +10,9 @@ import (
 // dialer carries SO_MARK=0x80 (the fwmark that makes iptables skip the DNS
 // redirect rules). Without Control the upstream queries would be hijacked
 // back into this module — an infinite loop and unbounded memory growth.
-// Windows has no SO_MARK (markFd is a no-op there), so these assertions are
-// platform-specific and live in a !windows file.
+// Windows and macOS have no SO_MARK; their Control binds the socket to the
+// egress interface instead (IP_UNICAST_IF, IP_BOUND_IF), so these
+// assertions are platform-specific and live in a !windows file.
 func TestMarkedDnsClientHasControl(t *testing.T) {
 	udpClient := newMarkedDnsClient("udp")
 	if udpClient.Dialer == nil {

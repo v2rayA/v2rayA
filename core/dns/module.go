@@ -37,6 +37,10 @@ func NewDnsModule(config *DnsModuleConfig) *DnsModule {
 	if config == nil {
 		config = DefaultDnsModuleConfig()
 	}
+	// Bind the egress interface before any dialer exists: every socket the
+	// module opens, including one a caller creates before Start, must leave
+	// through the physical interface once a TUN holds the default route.
+	SetEgressInterface(config.EgressInterface)
 	return &DnsModule{
 		config: config,
 		stats: DnsStats{
@@ -401,6 +405,7 @@ func isOwnAddress(ap netip.AddrPort) bool {
 func (m *DnsModule) Stop() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	SetEgressInterface("")
 
 	if !m.healthy {
 		return nil // Already stopped.
