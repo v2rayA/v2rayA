@@ -4,9 +4,7 @@
   "private": true,
   "license": "GPL-3.0",
   "scripts": {
-    "preserve": "node scripts/lucide-font.mjs",
     "serve": "vite",
-    "prebuild": "node scripts/lucide-font.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint --ext .js,.vue src"
@@ -14,11 +12,12 @@
   "dependencies": {
     "@nuintun/qrcode": "^3.3.0",
     "axios": "^0.33.0",
-    "bulma": "^0.9.4",
     "buefy": "^0.9.22",
+    "bulma": "^0.9.4",
     "clipboard": "^2.0.4",
     "dayjs": "^1.10.6",
     "js-base64": "^2.5.1",
+    "lucide-static": "^1.47.0",
     "nanoid": "^3.3.18",
     "normalize.css": "^8.0.1",
     "pace-js": "^1.2.4",
@@ -26,22 +25,22 @@
     "vue": "^2.7.14",
     "vue-i18n": "^8.15.3",
     "vue-virtual-scroller": "^1.0.10",
-    "vuex": "^3.0.1",
-    "lucide-static": "^1.47.0"
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue2": "^2.3.3",
-    "@vitejs/plugin-vue2-jsx": "^1.1.1",
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",
+    "@vitejs/plugin-vue2": "^2.3.3",
+    "@vitejs/plugin-vue2-jsx": "^1.1.1",
     "@vue/eslint-config-prettier": "^5.0.0",
+    "autoprefixer": "^10.4.20",
     "eslint": "^7.32.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-vue": "^8.0.3",
     "highlight.js": "^11.4.0",
-    "autoprefixer": "^10.4.20",
     "prettier": "^2.4.1",
     "sass": "^1.19.0",
+    "subset-font": "2.7.0",
     "urijs": "^1.19.11",
     "vite": "^4.5.14"
   }
