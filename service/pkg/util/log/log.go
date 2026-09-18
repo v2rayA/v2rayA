@@ -55,6 +55,9 @@ func SetLogFile(logWay string, logFile string, maxdays int64, disableLogColor bo
 		params := string(b)
 		Log.SetLogger("file", params)
 	}
+	// Always keep the tail in memory as well: the web log viewer reads it
+	// when there is no log file to read.
+	Log.SetLogger("memory", "")
 }
 func ParseLevel(logLevel string) int {
 	level := 4 // warning

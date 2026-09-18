@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bufio"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"io"
 	"os"
 
@@ -22,11 +23,11 @@ func GetLogger(ctx *gin.Context) {
 		return
 	}
 	if config.LogFile == "" {
-		if query.Skip == 0 {
-			ctx.String(200, "log printed to console, please see log in console.")
-		} else {
-			ctx.String(200, "")
-		}
+		// No file to read: serve the in-memory tail. When the caller's
+		// offset is older than what is still held, the data starts at the
+		// oldest line kept; the viewer only appends, so the gap is invisible.
+		data, _ := log.ReadMemory(query.Skip)
+		ctx.String(200, string(data))
 		return
 	}
 	f, err := os.Open(config.LogFile)
