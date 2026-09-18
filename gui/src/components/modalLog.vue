@@ -364,8 +364,13 @@ export default {
 </script>
 
 <style scoped>
+/* 60rem is 960px at the 16px root font and never wider than the wrapper
+   Buefy sizes (max-width 960px). At 65rem, on any viewport wider than 1400px
+   (a 200% display scaling or a zoomed-out window reaches that), the card ran
+   80px past the wrapper and the close button, which sits on the wrapper
+   corner, ended up in the middle of the header. */
 .log-modal {
-  width: 65rem;
+  width: 60rem;
   max-width: 95vw;
 }
 
