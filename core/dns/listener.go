@@ -247,9 +247,51 @@ func (l *DnsListener) handlePacket(w dns.ResponseWriter, msg *dns.Msg) {
 		m.Extra = resp.Additional
 	}
 
+	sanitizeForClient(m, msg)
 	if err := w.WriteMsg(m); err != nil {
 		log.Printf("[dns] error writing response to %s: %v", clientAddr, err)
 	}
+}
+
+// sanitizeForClient makes the response match what the client asked for.
+// The upstream answer carries the module's own OPT record — with the loop
+// token and whatever DO flag the upstream echoed — and, when the upstream
+// was asked with DO, RRSIG records. A client that sent no OPT must get
+// none back, and one that did gets a fresh OPT with its own DO bit;
+// macOS's resolver waits out its full timeout on a response whose EDNS
+// does not match its query.
+func sanitizeForClient(m, query *dns.Msg) {
+	clientOpt := query.IsEdns0()
+	extra := m.Extra[:0:0]
+	for _, rr := range m.Extra {
+		if rr.Header().Rrtype != dns.TypeOPT {
+			extra = append(extra, rr)
+		}
+	}
+	m.Extra = extra
+	wantSigs := clientOpt != nil && clientOpt.Do()
+	if !wantSigs {
+		m.Answer = dropSigs(m.Answer)
+		m.Ns = dropSigs(m.Ns)
+		m.Extra = dropSigs(m.Extra)
+	}
+	if clientOpt != nil {
+		size := clientOpt.UDPSize()
+		if size < dns.MinMsgSize {
+			size = dns.MinMsgSize
+		}
+		m.SetEdns0(size, clientOpt.Do())
+	}
+}
+
+func dropSigs(rrs []dns.RR) []dns.RR {
+	out := rrs[:0:0]
+	for _, rr := range rrs {
+		if rr.Header().Rrtype != dns.TypeRRSIG {
+			out = append(out, rr)
+		}
+	}
+	return out
 }
 
 // Healthy returns true if all listeners are active.
