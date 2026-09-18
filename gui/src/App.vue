@@ -7,7 +7,7 @@
           <span class="brand__name">v2rayA</span>
         </b-navbar-item>
         <b-navbar-item tag="div">
-          <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusMap[runningState.running]"
+          <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusType"
             @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
             @click.native="handleClickStatus" @keydown.native.enter.prevent="handleClickStatus"
             @keydown.native.space.prevent="handleClickStatus"><span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
@@ -129,12 +129,6 @@ export default {
       loginModalActive: false,
       loginModalFirst: false,
       showSidebar: true,
-      statusMap: {
-        [this.$t("common.checkRunning")]: "is-light",
-        [this.$t("common.notRunning")]: "is-danger",
-        [this.$t("common.isRunning")]: "is-success",
-        [this.$t("common.waitingNetwork")]: "is-warning",
-      },
       coverStatusText: "",
       runningState: {
         running: this.$t("common.checkRunning"),
@@ -165,6 +159,22 @@ export default {
     };
   },
   computed: {
+    // The label is a translated string, and this used to be a map built once
+    // in data() with the then-current translations as its keys: after a
+    // language change no key matched any more and the tag lost its colour.
+    // A computed re-reads both sides together.
+    statusType() {
+      switch (this.runningState.running) {
+        case this.$t("common.isRunning"):
+          return "is-success";
+        case this.$t("common.notRunning"):
+          return "is-danger";
+        case this.$t("common.waitingNetwork"):
+          return "is-warning";
+        default:
+          return "is-light";
+      }
+    },
     username() {
       let token = localStorage["token"];
       if (!token) {
