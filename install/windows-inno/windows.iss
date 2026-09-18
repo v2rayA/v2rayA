@@ -67,6 +67,11 @@ Filename: "{sys}\sc.exe"; Parameters: "stop v2rayA"; Flags: runhidden
 Filename: "{sys}\timeout.exe"; Parameters: "/t 2 /nobreak"; Flags: runhidden waituntilterminated
 Filename: "{sys}\sc.exe"; Parameters: "delete v2rayA"; Flags: runhidden
 
+[InstallDelete]
+; The TUN is built into the core since this version; the TinyTun process an
+; earlier installer shipped is not used and must not stay on PATH.
+Type: files; Name: "{app}\bin\tinytun.exe"
+
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\bin\v2raya.log"
 
@@ -200,4 +205,7 @@ begin
   // 如果服务存在则停止它
   Exec(ExpandConstant('{sys}\sc.exe'), 'stop v2rayA', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Sleep(2000);
+  // An earlier version ran TinyTun as a child process; it holds its file
+  // open, and [InstallDelete] cannot remove a running executable.
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /im tinytun.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;

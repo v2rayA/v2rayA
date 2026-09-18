@@ -311,7 +311,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 
 	// Phase 2 (locked): stop the old process, run the pre-start hook (ordered
 	// after the pre-stop hook in beforeStop), then start the new core.
-	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TinyTun,
+	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TUN,
 	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
 	m.stop(true)
@@ -335,7 +335,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	}()
 
 	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
-	// TinyTun), connectivity monitor, and post-start hook.
+	// TUN routes), connectivity monitor, and post-start hook.
 	if err = m.afterStart(t); err != nil {
 		return err
 	}

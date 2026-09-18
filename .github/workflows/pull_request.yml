@@ -54,8 +54,7 @@ jobs:
             ubuntu-latest)  os="linux";   ext="" ;;
           esac
           cd "$CurrentDir"/service
-          # All PR builds target amd64/arm64 on linux/windows/darwin — all support TinyTun
-          GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath -tags "tinytun" \
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath \
             -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" \
             -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
           cd "$CurrentDir"/core
