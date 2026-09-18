@@ -66,6 +66,11 @@ func (t *Template) setDualStack() {
 			inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
 			continue
 		}
+		if t.Inbounds[i].Protocol == "tun-mips" {
+			// One device, no listen address; a twin would open it twice.
+			inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
+			continue
+		}
 		if !strings.HasPrefix(t.Inbounds[i].Listen, "127.") {
 			// 0.0.0.0 or other non-loopback address — no ::1 twin needed.
 			inbounds6[i].Tag = "THIS_IS_A_DROPPED_TAG"
@@ -355,6 +360,11 @@ func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
 		o.StreamSettings.Sockopt = new(coreObj.Sockopt)
 	}
 	o.StreamSettings.Sockopt.Mark = &mark
+	// Where the mark means nothing to the kernel, the TUN needs the
+	// core's sockets pinned to the physical interface instead.
+	if iface := tunEgressInterfaceIfTun(t.Setting); iface != "" {
+		o.StreamSettings.Sockopt.Interface = iface
+	}
 }
 
 func (t *Template) InsertMappingOutbound(o serverObj.ServerObj, inboundPort string, udpSupport bool, pluginPort int, protocol string) (err error) {

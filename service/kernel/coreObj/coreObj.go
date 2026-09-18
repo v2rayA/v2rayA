@@ -155,6 +155,15 @@ type InboundSettings struct {
 	Address        string      `json:"address,omitempty"`
 	Port           int         `json:"port,omitempty"`
 	FollowRedirect bool        `json:"followRedirect,omitempty"`
+	// tun-mips inbound (the built-in TUN); see core/hint/proxy/tunmips.
+	Name             string   `json:"name,omitempty"`
+	MTU              uint32   `json:"mtu,omitempty"`
+	Address4         string   `json:"address4,omitempty"`
+	Address6         string   `json:"address6,omitempty"`
+	DnsTarget        string   `json:"dnsTarget,omitempty"`
+	ExcludeProcesses []string `json:"excludeProcesses,omitempty"`
+	SelfPids         []uint32 `json:"selfPids,omitempty"`
+	DirectTag        string   `json:"directTag,omitempty"`
 }
 type VlessClient struct {
 	Id    string `json:"id"`
@@ -284,6 +293,7 @@ type GrpcSettings struct {
 }
 type Sockopt struct {
 	Mark        *int    `json:"mark,omitempty"`
+	Interface   string  `json:"interface,omitempty"`
 	Tos         *int    `json:"tos,omitempty"`
 	TCPFastOpen *bool   `json:"tcpFastOpen,omitempty"`
 	Tproxy      *string `json:"tproxy,omitempty"`

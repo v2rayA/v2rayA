@@ -44,7 +44,7 @@ func GetVersion(ctx *gin.Context) {
 		"variant":          where.V2rayaCore,
 		"os":               runtime.GOOS,
 		"isRoot":           isRoot,
-		"tinytunSupported": v2ray.IsTinyTunEnabled(),
+		"tunSupported":     v2ray.TunSupported(),
 		"coreVersionValid": versionErr == nil,
 		"coreVersionErr": func() string {
 			if versionErr != nil {

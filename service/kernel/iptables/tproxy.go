@@ -206,7 +206,7 @@ ip6tables -w 2 -t mangle -A DNS_MARK -j ACCEPT
 `
 	}
 	return Setter{
-		Cmds: commands,
+		Cmds: withDnsModulePort(commands),
 	}
 }
 
@@ -257,7 +257,7 @@ ip6tables -w 2 -t mangle -X DNS_MARK
 	}
 	commands += "conntrack -D --mark 0x40 2>/dev/null || true\n"
 	return Setter{
-		Cmds: commands,
+		Cmds: withDnsModulePort(commands),
 	}
 }
 
@@ -418,7 +418,7 @@ func (t *nftTproxy) GetSetupCommands() Setter {
 	}
 
 	nftablesConf := asset.GetNftablesConfigPath()
-	os.WriteFile(nftablesConf, []byte(table), 0644)
+	os.WriteFile(nftablesConf, []byte(withDnsModulePort(table)), 0644)
 
 	command := `
 ip rule add fwmark 0x40/0xc0 table 100
