@@ -34,6 +34,9 @@ type forwarder struct {
 	udp *udpSessions
 	// dns, when set, answers port-53 flows to non-local resolvers itself.
 	dns *dnsHijack
+	// excl, when set, sends flows owned by listed processes to directTag.
+	excl      *exclusion
+	directTag string
 }
 
 func newForwarder(ctx context.Context, dispatcher routing.Dispatcher) *forwarder {
@@ -52,12 +55,15 @@ func (f *forwarder) handleTCP(flow Flow, conn net.Conn) {
 		f.dns.handleTCP(flow, conn)
 		return
 	}
-	f.dispatch(conn, toDestination(net.Network_TCP, flow.Source), toDestination(net.Network_TCP, flow.Destination))
+	f.dispatch(conn, net.Network_TCP, flow)
 }
 
 // dispatch runs one session to completion. DispatchLink returns when the
 // outbound is done with the link, so the caller may close conn afterwards.
-func (f *forwarder) dispatch(conn net.Conn, source, destination net.Destination) {
+func (f *forwarder) dispatch(conn net.Conn, network net.Network, flow Flow) {
+	source := toDestination(network, flow.Source)
+	destination := toDestination(network, flow.Destination)
+
 	ctx, cancel := context.WithCancel(f.ctx)
 	defer cancel()
 	ctx = c.ContextWithID(ctx, session.NewID())
@@ -84,6 +90,14 @@ func (f *forwarder) dispatch(conn net.Conn, source, destination net.Destination)
 	ctx = session.ContextWithInbound(ctx, &inbound)
 	ctx = session.ContextWithContent(ctx, &session.Content{SniffingRequest: f.sniffing})
 	ctx = session.SubContextFromMuxInbound(ctx)
+	// Process exclusion is a routing decision: the owner is looked up once
+	// per session and, when listed, the dispatcher is told to skip the
+	// router and use the direct outbound. The tag is an attribute of the
+	// session Content, which must exist and must not yet have attributes
+	// when SubContextFromMuxInbound runs, hence the order.
+	if f.excl != nil && f.excl.excluded(network.SystemString(), flow.Source) {
+		ctx = session.SetForcedOutboundTagToContext(ctx, f.directTag)
+	}
 	ctx = log.ContextWithAccessMessage(ctx, &log.AccessMessage{
 		From:   source,
 		To:     destination,

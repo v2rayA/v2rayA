@@ -26,6 +26,7 @@ type fakeDispatcher struct {
 }
 
 type dispatchCall struct {
+	ctx     context.Context
 	dest    net.Destination
 	inbound *session.Inbound
 	link    *transport.Link
@@ -43,7 +44,7 @@ func (d *fakeDispatcher) Dispatch(context.Context, net.Destination) (*transport.
 }
 
 func (d *fakeDispatcher) DispatchLink(ctx context.Context, dest net.Destination, link *transport.Link) error {
-	call := &dispatchCall{dest: dest, inbound: session.InboundFromContext(ctx), link: link}
+	call := &dispatchCall{ctx: ctx, dest: dest, inbound: session.InboundFromContext(ctx), link: link}
 	d.mu.Lock()
 	d.calls = append(d.calls, *call)
 	d.mu.Unlock()

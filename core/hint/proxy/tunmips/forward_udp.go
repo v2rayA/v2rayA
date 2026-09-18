@@ -79,7 +79,7 @@ func (c *udpConn) enqueue(pkt *udpPacket) {
 
 func (u *udpSessions) run(conn *udpConn) {
 	defer conn.Close()
-	u.f.dispatch(conn, toDestination(net.Network_UDP, conn.src), toDestination(net.Network_UDP, conn.first))
+	u.f.dispatch(conn, net.Network_UDP, Flow{Source: conn.src, Destination: conn.first})
 }
 
 func (u *udpSessions) finished(src netip.AddrPort) {
