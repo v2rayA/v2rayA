@@ -4,7 +4,9 @@
   "private": true,
   "license": "GPL-3.0",
   "scripts": {
+    "preserve": "node scripts/lucide-font.mjs",
     "serve": "vite",
+    "prebuild": "node scripts/lucide-font.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint --ext .js,.vue src"

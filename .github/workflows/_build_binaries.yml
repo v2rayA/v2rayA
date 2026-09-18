@@ -48,7 +48,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          submodules: recursive
       - name: Download Web Artifact
         uses: actions/download-artifact@v8
         with:

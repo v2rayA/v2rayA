@@ -1,5 +1,5 @@
 // This module is the v2rayA merged core (v2raya-core).
-// It wraps xray-core (as a git submodule) and adds MultiObservatory and
+// It wraps xray-core (fetched via go mod) and adds MultiObservatory and
 // v2ray-compatible gRPC services without modifying xray's source.
 //
 // SPDX-License-Identifier: MPL-2.0
@@ -10,10 +10,11 @@ go 1.26
 require (
 	anytls v0.0.12
 	github.com/daeuniverse/outbound v0.0.0-20250722064253-00c4fbb38759
-	github.com/daeuniverse/softwind v0.0.0-20231230065827-eed67f20d2c1
 	github.com/miekg/dns v1.1.72
-	github.com/sagernet/sing v0.5.1
-	github.com/xtls/xray-core v0.0.0-local
+	github.com/sagernet/sing v0.6.0
+	// Pseudo-version for Xray-core v26.7.28 (commit 5ca6f4b7). v26 tags are not
+	// resolvable via go mod because Xray's module path lacks the /v26 suffix.
+	github.com/xtls/xray-core v1.260327.1-0.20260728075948-5ca6f4b7d4dc
 	golang.org/x/sys v0.47.0
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.11
@@ -27,7 +28,6 @@ require (
 	github.com/awnumar/memguard v0.19.1 // indirect
 	github.com/chen3feng/stl4go v0.1.1 // indirect
 	github.com/cloudflare/circl v1.6.4 // indirect
-	github.com/daeuniverse/quic-go v0.0.0-20250210145620-2083199a7851 // indirect
 	github.com/dgryski/go-camellia v0.0.0-20191119043421-69a8a13fb23d // indirect
 	github.com/dgryski/go-idea v0.0.0-20170306091226-d2fb45a411fb // indirect
 	github.com/dgryski/go-rc2 v0.0.0-20150621095337-8a9021637152 // indirect
@@ -42,7 +42,7 @@ require (
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/mzz2017/disk-bloom v1.0.1 // indirect
-	github.com/mzz2017/quic-go v0.0.0-20231230054300-5221ce9164a3 // indirect
+	github.com/olicesx/quic-go v0.0.0-20260910141758-62d80bbebb5b // indirect
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pion/dtls/v3 v3.1.4 // indirect
@@ -51,7 +51,6 @@ require (
 	github.com/pion/transport/v4 v4.0.2 // indirect
 	github.com/pires/go-proxyproto v0.15.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
-	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
 	github.com/refraction-networking/utls v1.8.3-0.20260301010127-aa6edf4b11af // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.7 // indirect
@@ -80,6 +79,6 @@ require (
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
 
-replace github.com/xtls/xray-core => ./xray
-
 replace anytls v0.0.12 => github.com/anytls/anytls-go v0.0.12
+
+replace github.com/daeuniverse/outbound => github.com/olicesx/outbound v0.0.0-sticky-ip.0.20260917223728-6a44445c9106

@@ -17,7 +17,6 @@ backup=("etc/default/v2raya")
 build() {
     [ -d "$srcdir/v2rayA-$pkgver" ] && rm -rf "$srcdir/v2rayA-$pkgver"
     git clone --depth 1 --branch "v$pkgver" "https://github.com/v2rayA/v2rayA.git" "$srcdir/v2rayA-$pkgver" >/dev/null 2>&1
-    cd "$srcdir/v2rayA-$pkgver" && git submodule update --init
     cd "$srcdir/v2rayA-$pkgver/gui"
     yarn --check-files --ignore-engines
     OUTPUT_DIR="$srcdir/v2rayA-$pkgver/service/server/router/web" yarn --ignore-engines build
