@@ -40,20 +40,18 @@
       >
         <template #header>
           <div class="node-status-card__header">
-            <span class="node-status-card__title">
-              {{ formatServerName(v.info) }}
-              <span
-                v-if="v.info.subscription_name"
-                class="node-status-card__subscription"
-              >
-                [{{ v.info.subscription_name }}]
-              </span>
-            </span>
+            <span class="node-status-card__title">{{ formatServerName(v.info) }}</span>
             <span
               v-if="formatOutboundLabel(v.which)"
               class="node-status-card__group"
             >
               {{ formatOutboundLabel(v.which) }}
+            </span>
+            <span
+              v-if="v.info.subscription_name"
+              class="node-status-card__subscription"
+            >
+              {{ v.info.subscription_name }}
             </span>
           </div>
         </template>
@@ -2336,6 +2334,17 @@ $coverBackground: rgba(0, 0, 0, 0.6);
     cursor: pointer;
   }
 
+  // Bulma's small message pads the header and the body differently, which
+  // left a gap under the title and the body text a step further in.
+  .message.is-small .message-header,
+  .message.is-small .message-body {
+    padding: 0.55rem 0.75rem;
+  }
+
+  .message.is-small .message-body {
+    padding-top: 0.45rem;
+  }
+
   .tabs:not(:last-child),
   .pagination:not(:last-child),
   .message:not(:last-child),
@@ -2355,25 +2364,35 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   }
 }
 
+// Three things share the header: the name, the group tag and the
+// subscription it came from. The tag used to sit beside the name and squeeze
+// it into two lines while staying centred against them, and the subscription
+// name wrapped wherever the flex line broke. The name takes the row; a tag
+// that does not fit beside it drops to its own line; the subscription name
+// always sits under both, in a smaller face.
 .node-status-card__header {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.3rem;
   font-weight: 600;
-  gap: 0.5rem;
 }
 
 .node-status-card__title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem;
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.95rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .node-status-card__subscription {
+  flex: 0 0 100%;
   font-size: 0.75rem;
-  opacity: 0.85;
+  font-weight: 500;
+  opacity: 0.75;
+  line-height: 1.2;
 }
 
 .node-status-card__group {
@@ -2386,6 +2405,8 @@ $coverBackground: rgba(0, 0, 0, 0.6);
   background-color: var(--node-status-group-bg, rgba(255, 255, 255, 0.15));
   color: var(--node-status-group-color, inherit);
   white-space: nowrap;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .message.is-light .node-status-card__group {
@@ -2395,10 +2416,11 @@ $coverBackground: rgba(0, 0, 0, 0.6);
 
 .node-status-card__body {
   font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .node-status-card__body p {
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem;
 }
 
 .node-status-card__body p:last-child {
