@@ -458,8 +458,10 @@ type Policy struct {
 		} `json:"0"`
 	} `json:"levels"`
 	System struct {
-		StatsInboundUplink   bool `json:"statsInboundUplink,omitempty"`
-		StatsInboundDownlink bool `json:"statsInboundDownlink,omitempty"`
+		StatsInboundUplink    bool `json:"statsInboundUplink,omitempty"`
+		StatsInboundDownlink  bool `json:"statsInboundDownlink,omitempty"`
+		StatsOutboundUplink   bool `json:"statsOutboundUplink,omitempty"`
+		StatsOutboundDownlink bool `json:"statsOutboundDownlink,omitempty"`
 	} `json:"system"`
 }
 

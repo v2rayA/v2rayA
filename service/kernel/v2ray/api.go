@@ -4,12 +4,14 @@ import (
 	"context"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/devfeel/mapper"
 	"github.com/gin-gonic/gin"
 	"github.com/v2fly/v2ray-core/v5/app/observatory"
 	pb "github.com/v2fly/v2ray-core/v5/app/observatory/command"
+	statscommand "github.com/v2fly/v2ray-core/v5/app/stats/command"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"google.golang.org/grpc"
@@ -21,6 +23,7 @@ var (
 	ApiProducts = []string{
 		"observatory",
 		"running_state",
+		"traffic",
 	}
 	ApiFeed *Feed
 )
@@ -150,4 +153,107 @@ func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func(
 	return func() {
 		close(closed)
 	}
+}
+
+type trafficSample struct {
+	Up        float64 `json:"up"`
+	Down      float64 `json:"down"`
+	UpTotal   int64   `json:"upTotal"`
+	DownTotal int64   `json:"downTotal"`
+}
+
+type trafficCounter struct {
+	up, down int64
+	at       time.Time
+}
+
+func (c *trafficCounter) sample(stats []*statscommand.Stat, now time.Time) trafficSample {
+	var sample trafficSample
+	for _, stat := range stats {
+		name := stat.GetName()
+		if !strings.HasPrefix(name, "outbound>>>") {
+			continue
+		}
+		tag, direction, ok := strings.Cut(strings.TrimPrefix(name, "outbound>>>"), ">>>traffic>>>")
+		if !ok {
+			continue
+		}
+		switch tag {
+		case "direct", "block", "dns-out", "api-out":
+			continue
+		}
+		switch direction {
+		case "uplink":
+			sample.UpTotal += stat.GetValue()
+		case "downlink":
+			sample.DownTotal += stat.GetValue()
+		}
+	}
+	if elapsed := now.Sub(c.at).Seconds(); !c.at.IsZero() && elapsed > 0 {
+		// A restarted core can reset counters between successful samples.
+		if sample.UpTotal >= c.up {
+			sample.Up = float64(sample.UpTotal-c.up) / elapsed
+		}
+		if sample.DownTotal >= c.down {
+			sample.Down = float64(sample.DownTotal-c.down) / elapsed
+		}
+	}
+	c.up, c.down, c.at = sample.UpTotal, sample.DownTotal, now
+	return sample
+}
+
+// TrafficProducer publishes outbound byte totals and rates until its close function is called.
+func TrafficProducer(apiPort int) (closeFunc func()) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(ApiFeedInterval)
+		defer ticker.Stop()
+		var conn *grpc.ClientConn
+		defer func() {
+			if conn != nil {
+				_ = conn.Close()
+			}
+		}()
+		var counter trafficCounter
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+			}
+			if conn == nil {
+				dialCtx, dialCancel := context.WithTimeout(ctx, ApiFeedInterval)
+				c, err := grpc.DialContext(
+					dialCtx,
+					net.JoinHostPort("127.0.0.1", strconv.Itoa(apiPort)),
+					grpc.WithInsecure(),
+					grpc.WithBlock(),
+				)
+				dialCancel()
+				if err != nil {
+					if ctx.Err() != nil {
+						return
+					}
+					log.Warn("TrafficProducer: did not connect: %v", err)
+					continue
+				}
+				conn = c
+			}
+			queryCtx, queryCancel := context.WithTimeout(ctx, ApiFeedInterval)
+			var response statscommand.QueryStatsResponse
+			// The merged core registers xray's service; the v2fly messages share its wire format.
+			err := conn.Invoke(queryCtx, "/xray.app.stats.command.StatsService/QueryStats",
+				&statscommand.QueryStatsRequest{Pattern: "outbound>>>", Reset_: false}, &response)
+			queryCancel()
+			if ctx.Err() != nil {
+				return
+			}
+			if err != nil {
+				log.Warn("TrafficProducer: %v", err)
+				continue
+			}
+			ApiFeed.ProductMessage("traffic", counter.sample(response.GetStat(), time.Now()))
+		}
+	}()
+	return cancel
 }
