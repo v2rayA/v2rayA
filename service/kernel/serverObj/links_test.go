@@ -58,12 +58,6 @@ func TestParseVmessURLRejectsMissingOrInvalidPort(t *testing.T) {
 	}
 }
 
-func TestParseSSRURLRejectsInvalidPasswordBase64(t *testing.T) {
-	if _, err := ParseSSRURL("ssr://example.com:8388:origin:aes-256-cfb:plain:%%%/?remarks=&protoparam=&obfsparam="); err == nil {
-		t.Fatal("invalid SSR password base64 succeeded")
-	}
-}
-
 func TestHTTPConfigurationUsesNativeOutbound(t *testing.T) {
 	obj, err := ParseHttpURL("http://user:pass@1.2.3.4:8080")
 	if err != nil {
@@ -107,17 +101,16 @@ func TestHTTPSConfigurationUsesTLS(t *testing.T) {
 	}
 }
 
-func TestSSRConfigurationIsUnsupported(t *testing.T) {
-	original := &ShadowsocksR{Server: "1.2.3.4", Port: 8388, Password: "secret", Cipher: "aes-256-cfb", Proto: "origin", Obfs: "plain"}
-	parsed, err := ParseSSRURL(original.ExportToURL())
+func TestSSRLinksAreRefusedAndStoredNodesStayUnsupported(t *testing.T) {
+	if _, err := NewFromLink("ssr", "ssr://ZXhhbXBsZS5jb206ODM4ODpvcmlnaW46YWVzLTI1Ni1jZmI6cGxhaW46YzJWamNtVjA"); err == nil || !strings.Contains(err.Error(), "not supported") {
+		t.Fatalf("ssr link import error = %v", err)
+	}
+	stored, err := New("shadowsocksr")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := parsed.Configuration(PriorInfo{}); err == nil || !strings.Contains(err.Error(), "unsupported") {
-		t.Fatalf("Configuration error = %v", err)
-	}
-	if parsed.NeedPluginPort() {
-		t.Fatal("unsupported SSR requested a plugin port")
+	if _, err := stored.Configuration(PriorInfo{}); err == nil || !strings.Contains(err.Error(), "unsupported") {
+		t.Fatalf("stored SSR node configuration error = %v", err)
 	}
 }
 
