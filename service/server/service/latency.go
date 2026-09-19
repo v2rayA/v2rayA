@@ -104,12 +104,15 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
 	var whiches = configure.NewWhiches(which)
+	which = whiches.Get()
 	for i := len(which) - 1; i >= 0; i-- {
 		if which[i].TYPE == configure.SubscriptionType { // remove subscriptionType
 			which = append(which[:i], which[i+1:]...)
 		}
 	}
-	which = whiches.Get()
+	if len(which) == 0 {
+		return which, nil
+	}
 	v2rayRunning := v2ray.ProcessManager.Running()
 	wg := new(sync.WaitGroup)
 	vms := make([]serverObj.ServerObj, len(which))

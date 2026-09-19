@@ -18,6 +18,7 @@ func GetPorts() configure.Ports {
 
 func SetPorts(ports *configure.Ports) (err error) {
 	origin := GetPorts()
+	previous := origin
 	set := map[int]struct{}{}
 	for _, port := range []int{
 		ports.Socks5,
@@ -85,6 +86,14 @@ func SetPorts(ports *configure.Ports) (err error) {
 	}
 	if v2ray.ProcessManager.Running() {
 		err = v2ray.UpdateV2RayConfig()
+		if err != nil {
+			if restoreErr := configure.SetPorts(&previous); restoreErr != nil {
+				return fmt.Errorf("%w; restoring previous ports failed: %v", err, restoreErr)
+			}
+			if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
+				return fmt.Errorf("%w; restarting with previous ports failed: %v", err, restoreErr)
+			}
+		}
 	}
 	return
 }

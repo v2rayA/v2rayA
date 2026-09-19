@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 
 	"github.com/v2rayA/v2rayA/common"
@@ -11,16 +12,25 @@ import (
 )
 
 func CheckUpdate() (foundNew bool, remoteVersion string, err error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/v2rayA/v2raya-apt/master/dists/v2raya/main/binary-amd64/Packages")
+	arch := runtime.GOARCH
+	switch arch {
+	case "386":
+		arch = "i386"
+	case "arm":
+		arch = "armhf"
+	case "mipsle":
+		arch = "mips32le"
+	}
+	resp, err := http.Get("https://raw.githubusercontent.com/v2rayA/v2raya-apt/master/dists/v2raya/main/binary-" + arch + "/Packages")
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 	buf := new(bytes.Buffer)
-	n, err := buf.ReadFrom(resp.Body)
-	if err != nil && n > 0 {
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 	s := buf.String()
 	l := strings.Index(s, "Package: v2raya")
 	if l < 0 {

@@ -28,6 +28,7 @@ type GFWList struct {
 }
 
 var g GFWList
+var gFetchedAt time.Time
 var gMutex sync.Mutex
 
 func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
@@ -61,7 +62,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 
 	gMutex.Lock()
 	defer gMutex.Unlock()
-	if !g.UpdateTime.IsZero() {
+	if !g.UpdateTime.IsZero() && time.Since(gFetchedAt) < time.Hour {
 		return g, nil
 	}
 	resp, err := httpClient.HttpGetUsingSpecificClient(c, "https://api.github.com/repos/v2rayA/dist-v2ray-rules-dat/tags")
@@ -85,6 +86,7 @@ func GetRemoteGFWListUpdateTime(c *http.Client) (gfwlist GFWList, err error) {
 	}
 	g.Tag = tag
 	g.UpdateTime = t
+	gFetchedAt = time.Now()
 	return g, nil
 }
 func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {

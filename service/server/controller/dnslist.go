@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -57,9 +58,21 @@ func PutDnsRules(ctx *gin.Context) {
 	// 执行迁移以确保新字段有默认值
 	migrated := configure.MigrateDnsRules(rules)
 
+	previous := configure.GetDnsRulesNotNil()
 	if err := configure.SetDnsRules(migrated); err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
+	}
+	if v2ray.ProcessManager.Running() {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			if restoreErr := configure.SetDnsRules(previous); restoreErr != nil {
+				err = fmt.Errorf("%w; restoring DNS rules failed: %v", err, restoreErr)
+			} else if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
+				err = fmt.Errorf("%w; restarting with previous DNS rules failed: %v", err, restoreErr)
+			}
+			common.ResponseError(ctx, logError(err))
+			return
+		}
 	}
 	common.ResponseSuccess(ctx, nil)
 }
