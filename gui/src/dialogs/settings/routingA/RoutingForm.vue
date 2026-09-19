@@ -104,11 +104,13 @@ async function edit(index?: number, outbound = false) {
 }
 
 /** the outbound's colour: block in error, direct in tertiary, anything else (proxy, custom) in primary */
+// the same reading as the text view: a proxy outbound in the primary
+// colour, direct plain, block red — so the list tells them apart at a glance
 function outboundColor(outbound: string) {
   return outbound === "block"
     ? "error"
     : outbound === "direct"
-      ? "tertiary"
+      ? "on-surface-variant"
       : "primary";
 }
 </script>
@@ -144,7 +146,7 @@ function outboundColor(outbound: string) {
           <v-list-item-subtitle dir="ltr" class="mt-1">
             <v-chip
               size="small"
-              variant="tonal"
+              :variant="entry.outbound === 'direct' ? 'outlined' : 'tonal'"
               :color="outboundColor(entry.outbound)"
               :prepend-icon="mdiArrowRight"
               >{{ entry.outbound }}</v-chip
