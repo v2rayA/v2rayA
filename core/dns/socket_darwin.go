@@ -1,32 +1,23 @@
-//go:build windows
+//go:build darwin
 
 package dns
 
 import (
-	"encoding/binary"
 	"net"
 	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/miekg/dns"
+	"golang.org/x/sys/unix"
 )
 
-// From ws2ipdef.h; the two options share the number.
-const (
-	ipUnicastIf   = 31
-	ipv6UnicastIf = 31
-)
-
-// setSocketMark is a no-op on Windows: there is no SO_MARK. Self-exclusion
+// setSocketMark is a no-op on macOS: there is no SO_MARK. Self-exclusion
 // from the TUN is done by binding to the physical interface instead.
 func setSocketMark(fd uintptr) error {
 	return nil
 }
 
 // markFd binds the socket to the configured egress interface, if any.
-// IP_UNICAST_IF wants the index in network byte order; IPV6_UNICAST_IF
-// wants host order.
 func markFd(network, address string, c syscall.RawConn) error {
 	idx, ok := egressInterfaceIndex()
 	if !ok {
@@ -35,12 +26,10 @@ func markFd(network, address string, c syscall.RawConn) error {
 	var opErr error
 	err := c.Control(func(fd uintptr) {
 		if isIPv6Address(network, address) {
-			opErr = syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IPV6, ipv6UnicastIf, idx)
-			return
+			opErr = unix.SetsockoptInt(int(fd), unix.IPPROTO_IPV6, unix.IPV6_BOUND_IF, idx)
+		} else {
+			opErr = unix.SetsockoptInt(int(fd), unix.IPPROTO_IP, unix.IP_BOUND_IF, idx)
 		}
-		var be [4]byte
-		binary.BigEndian.PutUint32(be[:], uint32(idx))
-		opErr = syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IP, ipUnicastIf, int(*(*uint32)(unsafe.Pointer(&be[0]))))
 	})
 	if err != nil {
 		return err

@@ -119,6 +119,11 @@ type DnsModuleConfig struct {
 	// Used by resolveBootstrap to avoid chicken-and-egg: the hijacked resolv.conf
 	// points to 127.2.0.17:53 (our own DNS module), but it hasn't started yet.
 	BootstrapDns []string `json:"bootstrap_dns,omitempty"`
+	// EgressInterface is the physical interface the module's own upstream
+	// sockets bind to on Windows and macOS, where there is no SO_MARK to keep
+	// them out of a TUN that holds the default route. Empty leaves them
+	// unbound; Linux ignores it.
+	EgressInterface string `json:"egress_interface,omitempty"`
 }
 
 // CacheConfig holds DNS cache configuration.

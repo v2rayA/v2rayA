@@ -51,7 +51,9 @@ func markOutgoing(msg *dns.Msg) {
 	}
 	opt := msg.IsEdns0()
 	if opt == nil {
-		msg.SetEdns0(4096, true)
+		// No DNSSEC OK: the module does not validate, and a client that did
+		// not ask for signatures must not get RRSIGs back.
+		msg.SetEdns0(4096, false)
 		opt = msg.IsEdns0()
 		if opt == nil {
 			return
