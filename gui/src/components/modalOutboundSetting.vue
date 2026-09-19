@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ outbound }} - {{ $t("common.outboundSetting") }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <b-field :label="$t('outbound.probeUrl')" label-position="on-border">
@@ -49,6 +50,7 @@ import i18n from "@/plugins/i18n";
 
 export default {
   name: "ModalOutboundSetting",
+  emits: ["close", "delete"],
   i18n,
   props: {
     outbound: {
@@ -91,7 +93,7 @@ export default {
         icon: "triangle-alert",
         onConfirm: () => {
           that.$emit("delete");
-          that.$parent.close();
+          that.$emit("close");
         },
       });
     },
@@ -133,7 +135,7 @@ export default {
             type: "is-primary",
             position: "is-top",
           });
-          this.$parent.close();
+          this.$emit("close");
         }, null, "outbound.settingSaveFailed");
         if (
           res.data.code !== "SUCCESS" &&
@@ -141,8 +143,7 @@ export default {
             res.data.message.indexOf("invalid config") >= 0)
         ) {
           // FIXME: tricky
-          this.$parent.$parent.runningState.running =
-            this.$t("common.notRunning");
+          this.$store.commit("RUNNING", this.$t("common.notRunning"));
         }
       });
     },

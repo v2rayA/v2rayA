@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ $t("customAddressPort.title") }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <b-field
@@ -166,9 +167,11 @@ import { handleResponse } from "@/assets/js/utils";
 import ModalSharing from "@/components/modalSharing";
 import ModalCustomInbound from "@/components/modalCustomInbound";
 import i18n from "@/plugins/i18n";
+import { openModal } from "@/plugins/session";
 
 export default {
   name: "ModalCustomPorts",
+  emits: ["close"],
   i18n,
   components: { ModalCustomInbound },
   data: () => ({
@@ -218,8 +221,8 @@ export default {
   methods: {
     handleClickShowVmessLink() {
       if (this.table.vmessLink) {
-        this.$parent.close();
-        this.$buefy.modal.open({
+        this.$emit("close");
+        openModal(this, {
           width: 500,
           component: ModalSharing,
           props: {
@@ -266,7 +269,7 @@ export default {
         }).then((res) => {
           handleResponse(res, this, () => {
             if (res.data.data?.vmessLink) {
-              this.$buefy.modal.open({
+              openModal(this, {
                 width: 500,
                 component: ModalSharing,
                 props: {

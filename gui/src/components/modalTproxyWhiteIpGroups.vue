@@ -4,6 +4,7 @@
             <p class="modal-card-title">
                 {{ $t("tproxyWhiteIpGroups.title") }}
             </p>
+            <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
         </header>
         <section class="modal-card-body">
             <b-message type="is-info" class="after-line-dot5">
@@ -40,6 +41,7 @@ import { handleResponse } from "@/assets/js/utils";
 
 export default {
     name: "modalTproxyWhiteIpGroups",
+  emits: ["close"],
     data: () => ({
         countryCodes: [],
         customIps: "",

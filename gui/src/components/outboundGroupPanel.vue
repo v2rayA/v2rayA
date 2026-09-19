@@ -111,6 +111,7 @@
               {{ pickerGroup ? pickerGroup.toUpperCase() : "" }}
             </b-tag>
           </p>
+          <button type="button" class="delete" aria-label="close" @click="showPicker = false"></button>
         </header>
         <section class="modal-card-body" style="min-height: 200px; max-height: 60vh; overflow-y: auto">
           <b-input
@@ -120,7 +121,7 @@
             style="margin-bottom: 0.75rem"
           ></b-input>
           <div v-if="loadingNodes" style="text-align: center; padding: 2rem">
-            <b-loading :is-full-page="false" :active="true"></b-loading>
+            <b-loading :is-full-page="false" :model-value="true"></b-loading>
           </div>
           <template v-else>
             <div
@@ -169,6 +170,7 @@ import i18n from "@/plugins/i18n";
 
 export default {
   name: "OutboundGroupPanel",
+  emits: ["add-outbound", "changed", "group-deleted", "select"],
   i18n,
   props: {
     outbounds: { type: Array, default: () => ["proxy"] },

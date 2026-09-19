@@ -2,6 +2,7 @@
   <div class="modal-card" style="width: 680px; max-width: 100%; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("tun.routeScript.title") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <!-- Warning -->
@@ -49,7 +50,7 @@
       </b-field>
     </section>
     <footer class="modal-card-foot" style="justify-content: flex-end">
-      <button class="button" type="button" @click="$parent.close()">
+      <button class="button" type="button" @click="$emit('close')">
         {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSave">
@@ -62,6 +63,7 @@
 <script>
 export default {
   name: "ModalTunRouteScript",
+  emits: ["close", "save"],
   props: {
     os: { type: String, default: "" },
     shellType: { type: String, default: "" },
@@ -97,7 +99,7 @@ export default {
         setupScript: this.localSetupScript,
         teardownScript: this.localTeardownScript,
       });
-      this.$parent.close();
+      this.$emit("close");
     },
   },
 };

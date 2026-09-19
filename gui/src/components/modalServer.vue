@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ $tc("configureServer.title", readonly ? 2 : 1) }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section ref="section" :class="{ 'modal-card-body': true }">
       <b-tabs v-model="tabChoice" position="is-centered" class="block" type="is-boxed is-twitter same-width-5">
@@ -925,7 +926,7 @@
       </b-tabs>
     </section>
     <footer v-if="!readonly" class="modal-card-foot flex-end">
-      <button class="button" type="button" @click="$parent.close()">
+      <button class="button" type="button" @click="$emit('close')">
         {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
@@ -941,6 +942,7 @@ import { Base64 } from "js-base64";
 
 export default {
   name: "ModalServer",
+  emits: ["submit", "close"],
   props: {
     which: {
       type: Object,

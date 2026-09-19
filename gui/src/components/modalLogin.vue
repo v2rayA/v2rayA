@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ first ? $t("register.title") : `${$t("login.title")} - v2rayA` }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <p style="text-align: center">
@@ -48,6 +49,7 @@ import { handleResponse } from "@/assets/js/utils";
 import i18n from "@/plugins/i18n";
 
 export default {
+  emits: ["close"],
   i18n,
   name: "ModalLogin",
   props: {

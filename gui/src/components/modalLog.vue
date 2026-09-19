@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ $tc("log.logModalTitle") }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section ref="section" :class="{ 'modal-card-body': true }">
       <div class="log-title">{{ $t("log.logsLabel") }}</div>
@@ -119,6 +120,7 @@
 <script>
 import HightlightLog from "@/components/highlightLog";
 export default {
+  emits: ["close"],
   components: { HightlightLog },
   data() {
     return {

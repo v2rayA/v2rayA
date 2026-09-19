@@ -22,54 +22,60 @@
       @close="showSidebar = false"
       @mouseleave="showSidebar = false"
     >
-      <b-message
+      <!-- Buefy 3 declares a click event on b-message but never emits it,
+           so a listener on the component reaches nothing; the card's own
+           element takes the click. -->
+      <div
         v-for="v of connectedServerInfo"
         :key="connectedServerKey(v.which)"
-        :closable="false"
-        size="is-small"
-        :type="
-          v.info.alive
-            ? v.selected
-              ? 'is-primary'
-              : 'is-success'
-            : v.info.alive === null
-            ? 'is-light'
-            : 'is-danger'
-        "
         @click="handleClickConnectedServer(v.which)"
       >
-        <template #header>
-          <div class="node-status-card__header">
-            <span class="node-status-card__title">{{ formatServerName(v.info) }}</span>
-            <span
-              v-if="formatOutboundLabel(v.which)"
-              class="node-status-card__group"
-            >
-              {{ formatOutboundLabel(v.which) }}
-            </span>
-            <span
-              v-if="v.info.subscription_name"
-              class="node-status-card__subscription"
-            >
-              {{ v.info.subscription_name }}
-            </span>
+        <b-message
+          :closable="false"
+          size="is-small"
+          :type="
+            v.info.alive
+              ? v.selected
+                ? 'is-primary'
+                : 'is-success'
+              : v.info.alive === null
+              ? 'is-light'
+              : 'is-danger'
+          "
+        >
+          <template #header>
+            <div class="node-status-card__header">
+              <span class="node-status-card__title">{{ formatServerName(v.info) }}</span>
+              <span
+                v-if="formatOutboundLabel(v.which)"
+                class="node-status-card__group"
+              >
+                {{ formatOutboundLabel(v.which) }}
+              </span>
+              <span
+                v-if="v.info.subscription_name"
+                class="node-status-card__subscription"
+              >
+                {{ v.info.subscription_name }}
+              </span>
+            </div>
+          </template>
+          <div v-if="v.showContent" class="node-status-card__body">
+            <p>{{ $t("server.protocol") }}: {{ v.info.net }}</p>
+            <p v-if="v.info.delay && v.info.delay < 99999">
+              {{ $t("server.latency") }}: {{ v.info.delay }}ms
+            </p>
+            <p v-if="!v.info.alive && v.info.last_seen_time">
+              {{ $t("server.lastSeenTime") }}:
+              {{ unix2datetime(v.info.last_seen_time) }}
+            </p>
+            <p v-if="v.info.last_try_time">
+              {{ $t("server.lastTryTime") }}:
+              {{ unix2datetime(v.info.last_try_time) }}
+            </p>
           </div>
-        </template>
-        <div v-if="v.showContent" class="node-status-card__body">
-          <p>{{ $t("server.protocol") }}: {{ v.info.net }}</p>
-          <p v-if="v.info.delay && v.info.delay < 99999">
-            {{ $t("server.latency") }}: {{ v.info.delay }}ms
-          </p>
-          <p v-if="!v.info.alive && v.info.last_seen_time">
-            {{ $t("server.lastSeenTime") }}:
-            {{ unix2datetime(v.info.last_seen_time) }}
-          </p>
-          <p v-if="v.info.last_try_time">
-            {{ $t("server.lastTryTime") }}:
-            {{ unix2datetime(v.info.last_try_time) }}
-          </p>
-        </div>
-      </b-message>
+        </b-message>
+      </div>
     </b-sidebar>
     <b-notification
       v-if="ready && coreVersionValid === false"
@@ -593,7 +599,7 @@
         </b-tab-item>
       </b-tabs>
     </div>
-    <b-loading v-else :is-full-page="true" :active="true">
+    <b-loading v-else :is-full-page="true" :model-value="true">
       <i class="lucide icon-loader-circle" />
     </b-loading>
     <b-modal
@@ -607,6 +613,7 @@
         :which="which"
         :readonly="modalServerReadOnly"
         @submit="handleModalServerSubmit"
+        @close="showModalServer = false"
       />
     </b-modal>
     <b-modal
@@ -619,6 +626,7 @@
       <ModalSubscription
         :which="which"
         @submit="handleModalSubscriptionSubmit"
+        @close="showModalSubscription = false"
       />
     </b-modal>
     <input
@@ -638,6 +646,7 @@
       <div class="modal-card" style="width: 350px">
         <header class="modal-card-head">
           <p class="modal-card-title">{{ $t("operations.import") }}</p>
+          <button type="button" class="delete" aria-label="close" @click="showModalImport = false"></button>
         </header>
         <section class="modal-card-body">
           <b-field>
@@ -718,6 +727,7 @@
       <div class="modal-card" style="width: 350px">
         <header class="modal-card-head">
           <p class="modal-card-title">{{ $t("operations.import") }}</p>
+          <button type="button" class="delete" aria-label="close" @click="showModalImportInBatch = false"></button>
         </header>
         <section class="modal-card-body">
           {{ $t("import.batchMessage") }}
@@ -782,12 +792,14 @@ import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import dayjs from "dayjs";
 import i18n from "@/plugins/i18n";
+import { openModal, openLoading } from "@/plugins/session";
 
 // vue-i18n locale -> dayjs locale (all loaded in plugins/dayjs.js)
 const DAYJS_LOCALES = { zh: "zh-cn", en: "en", fa: "fa", ru: "ru", pt: "pt-br", ko: "ko" };
 
 export default {
-  name: "Node",
+  name: "NodeList",
+  emits: ["input"],
   components: { ModalSubscription, ModalServer },
   props: {
     outbound: {
@@ -1609,7 +1621,7 @@ export default {
         this.connectToProxyGroup(row, sub, groups[0]);
         return;
       }
-      this.$buefy.modal.open({
+      openModal(this, {
         component: ModalPickProxyGroup,
         hasModalCard: true,
         canCancel: true,
@@ -1626,7 +1638,7 @@ export default {
     },
     connectToProxyGroup(row, sub, outbound) {
       let cancel;
-      let loading = this.$buefy.loading.open();
+      let loading = openLoading(this);
       waitingConnected(
         this.$axios({
           url: apiRoot + "/connection",
@@ -1710,7 +1722,7 @@ export default {
         }]);
       }
 
-      const loading = this.$buefy.loading.open();
+      const loading = openLoading(this);
       this.$axios({
         url: apiRoot + "/outboundConnections",
         method: "put",
@@ -1954,7 +1966,7 @@ export default {
         },
       }).then((res) => {
         handleResponse(res, this, () => {
-          this.$buefy.modal.open({
+          openModal(this, {
             width: 500,
             component: ModalSharing,
             props: {

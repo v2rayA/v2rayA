@@ -1,5 +1,5 @@
 import axios from "../../plugins/axios";
-import { ToastProgrammatic } from "buefy";
+import { buefy } from "@/plugins/session";
 import i18n from "@/plugins/i18n";
 import { backendMessage, handleResponse } from "./utils";
 
@@ -33,7 +33,7 @@ function waitingConnected(promise, interval, cancel, timeout) {
               res.data.errorCode !== "REQUEST_IN_PROGRESS" &&
               res.data.message !== "the last request is being processed"
             ) {
-              ToastProgrammatic.open({
+              buefy().toast.open({
                 message: i18n.global.t("connection.checkFailed", {
                   message: backendMessage(i18nVm, res) || i18n.global.t("common.fail"),
                 }),

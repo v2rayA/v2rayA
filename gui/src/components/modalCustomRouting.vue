@@ -5,6 +5,7 @@
   >
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("customRouting.title") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body rules">
       <b-message type="is-info" class="after-line-dot5">
@@ -159,7 +160,7 @@
         <button class="button btn-new" type="button" @click="handleNew">
           {{ $t("customRouting.appendRule") }}
         </button>
-        <button class="button" type="button" @click="$parent.close()">
+        <button class="button" type="button" @click="$emit('close')">
           {{ $t("operations.cancel") }}
         </button>
         <button class="button is-primary" @click="handleClickSubmit">
@@ -174,6 +175,7 @@
 import { handleResponse } from "@/assets/js/utils";
 export default {
   name: "ModalCustomRouting",
+  emits: ["close"],
   data: () => ({
     customPac: {
       defaultProxyMode: "",
@@ -225,7 +227,7 @@ export default {
       });
       this.customPac = customPac;
       if (closing) {
-        this.$parent.close();
+        this.$emit("close");
       }
     })();
   },
@@ -270,7 +272,7 @@ export default {
         },
       }).then((res) => {
         handleResponse(res, this, () => {
-          this.$parent.close();
+          this.$emit("close");
         }, null, "customRouting.saveFailed");
       });
     },

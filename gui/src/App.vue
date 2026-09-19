@@ -92,7 +92,8 @@
               <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
             </a>
           </template>
-          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username: usernameHtml })">
+          <b-dropdown-item custom aria-role="menuitem">
+            <span v-html="$t('common.loggedAs', { username: usernameHtml })"></span>
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
@@ -102,7 +103,7 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node ref="nodeRef" @input="runningState = $event" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
+    <node-list ref="nodeRef" @input="runningState = $event" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
     <b-modal v-model="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
@@ -116,7 +117,7 @@
 
 <script>
 import ModalSetting from "@/components/modalSetting";
-import node from "@/node";
+import NodeList from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "@/components/modalCustomPorts";
 import ModalOutboundSetting from "@/components/modalOutboundSetting";
@@ -126,10 +127,10 @@ import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import ModalLog from "@/components/modalLog";
 import ModalLogin from "@/components/modalLogin";
-import { ModalProgrammatic } from "buefy";
+import { openModal, openLoading } from "@/plugins/session";
 
 export default {
-  components: { ModalCustomAddress, node, OutboundGroupPanel, ModalLogin },
+  components: { ModalCustomAddress, NodeList, OutboundGroupPanel, ModalLogin },
   data() {
     return {
       ws: null,
@@ -223,6 +224,20 @@ export default {
       if (this.themePreference === 'auto') return this.$t('common.autoTheme');
       if (this.themePreference === 'dark') return this.$t('common.darkTheme');
       return this.$t('common.lightTheme');
+    },
+  },
+  watch: {
+    // Programmatic dialogs (a separate app instance) can't reach App.vue's
+    // data; they commit RUNNING and this watch copies it into the data.
+    "$store.state.running"(v) {
+      this.runningState.running = v;
+    },
+    // The data stays the source of truth (node.vue and the start/stop
+    // handlers write it directly); mirroring it back keeps the store
+    // current, so a dialog committing the same text twice, with a run in
+    // between, is still a change the watch above sees.
+    "runningState.running"(v) {
+      this.$store.commit("RUNNING", v);
     },
   },
   mounted() {
@@ -575,7 +590,7 @@ export default {
     handleClickOutboundSetting(event, outbound) {
       event.stopPropagation();
       const that = this;
-      this.$buefy.modal.open({
+      openModal(this, {
         component: ModalOutboundSetting,
         hasModalCard: true,
         canCancel: true,
@@ -616,7 +631,7 @@ export default {
     },
     handleClickSetting() {
       const that = this;
-      this.$buefy.modal.open({
+      openModal(this, {
         component: ModalSetting,
         hasModalCard: true,
         canCancel: true,
@@ -628,12 +643,13 @@ export default {
       });
     },
     handleClickAbout() {
-      this.$buefy.modal.open({
+      const about = openModal(this, {
         width: 640,
         content: `
 <div class="modal-card" style="margin:auto">
                     <header class="modal-card-head">
                         <p class="modal-card-title">mzz2017 / v2rayA</p>
+                        <button type="button" class="delete" aria-label="close"></button>
                     </header>
                     <section class="modal-card-body lazy">
                         ${this.$t(`about`)}
@@ -648,6 +664,17 @@ export default {
                 </div>
 `,
       });
+      // Raw HTML content cannot bind a Vue handler; wire the head's close
+      // button to the dialog handle once the dialog has rendered (its root
+      // is a placeholder until the opening transition starts).
+      this.$nextTick(() => {
+        const modals = document.querySelectorAll(".modal.is-active");
+        const head = modals[modals.length - 1];
+        const button = head && head.querySelector(".modal-card-head .delete");
+        if (button) {
+          button.addEventListener("click", () => about.close());
+        }
+      });
     },
     handleClickStatus() {
       if (
@@ -655,7 +682,7 @@ export default {
         this.runningState.running === this.$t("common.waitingNetwork")
       ) {
         let cancel;
-        let loading = this.$buefy.loading.open();
+        let loading = openLoading(this);
         waitingConnected(
           this.$axios({
             url: apiRoot + "/v2ray",
@@ -737,7 +764,7 @@ export default {
       this.applyThemeClass();
     },
     handleClickLogs() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: ModalLog,
         hasModalCard: true,
         canCancel: true,
@@ -922,12 +949,6 @@ html {
   }
 }
 
-// Bulma pins .modal-close to the top-right of the viewport, far from the
-// card it closes. Put it on the card instead, at every width; the card is
-// position: relative so the button lands on its corner.
-// Buefy puts .modal-close inside .animation-content, which wraps the card
-// but is stretched to the whole modal, so the button lands in the corner of
-// the screen rather than of the card. Shrink the wrapper to its card.
 // One backdrop value for every dialog: the component library ships several
 // (0.86 opaque here, a lighter one in two components), which read as a
 // shadow around the light card.
@@ -944,33 +965,48 @@ html {
   border-radius: 0 0 6px 6px;
 }
 
+// Shrink the card wrapper to the card so the card centres horizontally.
 .modal .animation-content {
   position: relative;
   width: auto;
   margin: auto;
 }
 
-.modal .modal-close.is-large {
-  // Bulma sets position: fixed on .modal-close, which anchors it to the
-  // viewport; absolute puts it on the wrapper above, i.e. the card corner
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  height: 2rem;
-  width: 2rem;
-  max-height: 2rem;
-  max-width: 2rem;
-  z-index: 1;
-  background-color: transparent;
+// Buefy 3 pins the table's sort icon to the right edge of the header cell,
+// where it lands on top of a short label such as "ID"; 0.9 placed it right
+// after the label. Keep it after the label.
+.b-table .table th .th-wrap {
+  .sort-icon {
+    position: static;
+    margin-left: 0.25rem;
+    // the library's rules carry a translateY for their absolute placement
+    transform: none !important;
 
-  // Bulma draws the glyph as two white bars, which vanish on the light
-  // card head; follow the head's text colour instead.
+    &.is-desc {
+      transform: rotate(180deg) !important;
+    }
+  }
+
+  // numeric headers lay out row-reverse; the icon still goes last visually
+  &.is-numeric .sort-icon {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0.25rem;
+  }
+}
+
+// The close button in the card head is Bulma's .delete, a dark disc with
+// white bars; the dialogs have always shown a bare glyph in the head's
+// text colour, so draw it that way.
+.modal-card-head .delete {
+  --bulma-delete-dimensions: 2rem;
+  background-color: transparent;
+  color: rgba(0, 0, 0, 0.75);
+
   &::before,
   &::after {
     background-color: currentColor;
   }
-
-  color: rgba(0, 0, 0, 0.75);
 
   &:hover,
   &:focus {
@@ -979,10 +1015,8 @@ html {
   }
 }
 
-// Phone dialogs: Bulma floats the card in the middle of the viewport
-// (max-height: 100vh - 160px) with the close button fixed at the top of the
-// screen, far above the card. Fill the screen so the card head is at the
-// top and the close button sits at its top-right corner.
+// Phone dialogs: fill the screen so the card head sits at the top instead
+// of floating mid-viewport.
 @media screen and (max-width: 768px) {
   .modal .modal-card {
     margin: 0;
@@ -991,7 +1025,6 @@ html {
     max-height: 100vh;
   }
   .modal .modal-card-head {
-    padding-right: 3.75rem;
     border-radius: 0;
   }
   .modal .modal-card-foot {

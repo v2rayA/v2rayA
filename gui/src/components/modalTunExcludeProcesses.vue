@@ -2,6 +2,7 @@
   <div class="modal-card" style="width: 680px; max-width: 100%; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("tun.processExclude.title") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <b-message type="is-warning" has-icon>
@@ -24,7 +25,7 @@
       <p class="help is-size-7">{{ $t("tun.processExclude.hint") }}</p>
     </section>
     <footer class="modal-card-foot" style="justify-content: flex-end">
-      <button class="button" type="button" @click="$parent.close()">
+      <button class="button" type="button" @click="$emit('close')">
         {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSave">
@@ -37,6 +38,7 @@
 <script>
 export default {
   name: "ModalTunExcludeProcesses",
+  emits: ["close", "save"],
   props: {
     excludeProcesses: { type: String, default: "" },
   },
@@ -70,7 +72,7 @@ export default {
       this.$emit("save", {
         excludeProcesses: values.join(","),
       });
-      this.$parent.close();
+      this.$emit("close");
     },
   },
 };

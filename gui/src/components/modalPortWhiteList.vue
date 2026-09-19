@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ $t("egressPortWhitelist.title") }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <b-message type="is-info" class="after-line-dot5">
@@ -49,6 +50,7 @@ import { handleResponse, parseURL } from "@/assets/js/utils";
 
 export default {
   name: "ModalPortWhiteList",
+  emits: ["close"],
   data: () => ({
     tcp: [],
     udp: [],

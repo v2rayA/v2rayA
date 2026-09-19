@@ -2,6 +2,7 @@
   <div class="modal-card modal-setting" style="max-width: 800px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("common.setting") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body rules">
       <b-field label="GFWList" horizontal custom-class="modal-setting-label" style="position: relative"><span>{{
@@ -229,8 +230,8 @@
           <option value="no">{{ $t("setting.options.off") }}</option>
           <option value="yes">{{ $t("setting.options.on") }}</option>
         </b-select>
-        <cus-b-input v-if="muxOn === 'yes'" ref="muxinput" v-model="mux" :placeholder="$t('setting.concurrency')"
-          custom-class="no-shadow" type="number" min="1" max="1024" validation-icon="triangle-alert"
+        <b-input v-if="muxOn === 'yes'" ref="muxinput" v-model="mux" :placeholder="$t('setting.concurrency')"
+          custom-class="no-shadow" type="number" min="1" max="1024"
           style="flex: 1" />
       </b-field>
 
@@ -246,9 +247,9 @@
             {{ $t("setting.options.updateGfwlistAtIntervals") }}
           </option>
         </b-select>
-        <cus-b-input v-if="pacAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdatePacInput"
+        <b-input v-if="pacAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdatePacInput"
           v-model="pacAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon="triangle-alert" style="flex: 1" />
+          style="flex: 1" />
       </b-field>
       <b-field :label="$t('setting.autoUpdateSub')" label-position="on-border">
         <b-select v-model="subscriptionAutoUpdateMode" expanded>
@@ -260,9 +261,9 @@
             {{ $t("setting.options.updateSubAtIntervals") }}
           </option>
         </b-select>
-        <cus-b-input v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdateSubInput"
+        <b-input v-if="subscriptionAutoUpdateMode === 'auto_update_at_intervals'" ref="autoUpdateSubInput"
           v-model="subscriptionAutoUpdateIntervalHour" custom-class="no-shadow" type="number" min="1"
-          validation-icon="triangle-alert" style="flex: 1" />
+          style="flex: 1" />
       </b-field>
       <b-field :label="$t('setting.preferModeWhenUpdate')" label-position="on-border">
         <b-select v-model="proxyModeWhenSubscribe" expanded>
@@ -287,7 +288,7 @@
           {{ $t("dns.title") }}
         </button>
       </div>
-      <button class="button" type="button" @click="$parent.close()">
+      <button class="button" type="button" @click="$emit('close')">
         {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
@@ -308,7 +309,6 @@ import modalTproxyWhiteIpGroups from "@/components/modalTproxyWhiteIpGroups";
 import modalUpdateGfwList from "@/components/modalUpdateGfwList";
 import modalTunRouteScript from "@/components/modalTunRouteScript";
 import modalTunExcludeProcesses from "@/components/modalTunExcludeProcesses";
-import CusBInput from "./input/Input.vue";
 import { parseURL, toInt } from "@/assets/js/utils";
 import BButton from "buefy/src/components/button/Button";
 import BSelect from "buefy/src/components/select/Select";
@@ -316,10 +316,12 @@ import BCheckboxButton from "buefy/src/components/checkbox/CheckboxButton";
 import modalDnsSetting from "./modalDnsSetting";
 import axios from "../plugins/axios";
 import { waitingConnected } from "@/assets/js/networkInspect";
+import { openModal, openLoading } from "@/plugins/session";
 
 export default {
   name: "ModalSetting",
-  components: { BCheckboxButton, BSelect, BButton, CusBInput },
+  emits: ["close", "clickPorts"],
+  components: { BCheckboxButton, BSelect, BButton },
   data: () => ({
     proxyModeWhenSubscribe: "direct",
     tcpFastOpen: "default",
@@ -411,7 +413,7 @@ export default {
       });
     },
     requestUpdateSetting() {
-      let loading = this.$buefy.loading.open();
+      let loading = openLoading(this);
       let cancel;
       waitingConnected(
         this.$axios({
@@ -454,7 +456,7 @@ export default {
               type: "is-primary",
               position: "is-top",
             });
-            this.$parent.close();
+            this.$emit("close");
           }, null, "setting.saveFailed");
           if (
             res.data.code !== "SUCCESS" &&
@@ -462,7 +464,7 @@ export default {
               res.data.message.indexOf("invalid config") >= 0)
           ) {
             // FIXME: tricky
-            this.$parent.$parent.runningState.running = this.$t("common.notRunning");
+            this.$store.commit("RUNNING", this.$t("common.notRunning"));
           }
         }).finally(() => {
           // waitingConnected cancels this request once the core reports
@@ -493,21 +495,21 @@ export default {
       this.requestUpdateSetting();
     },
     handleClickConfigurePac() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: ModalCustomRouting,
         hasModalCard: true,
         canCancel: true,
       });
     },
     handleClickConfigureRoutingA() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: ModalCustomRoutingA,
         hasModalCard: true,
         canCancel: true,
       });
     },
     handleClickUpdateGFWList() {
-      this.$buefy.modal.open({
+      openModal(this, {
         events: {
           close: () => {
             this.getSettingData();
@@ -519,28 +521,28 @@ export default {
       });
     },
     handleClickTproxyWhiteIpGroups() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: modalTproxyWhiteIpGroups,
         hasModalCard: true,
         canCancel: true,
       });
     },
     handleClickDomainsExcluded() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: modalDomainsExcluded,
         hasModalCard: true,
         canCancel: true,
       });
     },
     handleClickDnsSetting() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: modalDnsSetting,
         hasModalCard: true,
         canCancel: true,
       });
     },
     handleClickTunRouteScript() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: modalTunRouteScript,
         hasModalCard: true,
         canCancel: true,
@@ -562,7 +564,7 @@ export default {
       });
     },
     handleClickTunExcludeProcesses() {
-      this.$buefy.modal.open({
+      openModal(this, {
         component: modalTunExcludeProcesses,
         hasModalCard: true,
         canCancel: true,

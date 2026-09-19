@@ -14,6 +14,9 @@ ConfigProgrammatic.setOptions({
   // backdrop; a menu should stay a menu
   defaultDropdownMobileModal: false,
   defaultIconPack: "lucide",
+  // dialogs render their own close button inside the card head; the built-in
+  // .modal-close (showX) is disabled so only escape/outside/backdrop cancel
+  defaultModalCanCancel: ["escape", "outside"],
   customIconPacks: {
     lucide: {
       sizes: {
