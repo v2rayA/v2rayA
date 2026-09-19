@@ -18,6 +18,11 @@ func GetRoutingA(ctx *gin.Context) {
 	})
 }
 func PutRoutingA(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		RoutingA string `json:"routingA"`
 	}

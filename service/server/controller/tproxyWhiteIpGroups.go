@@ -15,6 +15,11 @@ func GetTproxyWhiteIpGroups(ctx *gin.Context) {
 }
 
 func PutTproxyWhiteIpGroups(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		CountryCodes []string `json:"countryCodes"`
 		CustomIps    []string `json:"customIps"`

@@ -212,6 +212,9 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 
 func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 	var info V2Ray
+	if len(vmess) <= len("vmess://") {
+		return nil, fmt.Errorf("%w: vmess link too short", ErrInvalidParameter)
+	}
 	// perform base64 decoding and unmarshal to VmessInfo
 	raw, err := common.Base64StdDecode(vmess[8:])
 	if err != nil {
