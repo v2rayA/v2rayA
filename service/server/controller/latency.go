@@ -11,19 +11,11 @@ import (
 )
 
 func GetPingLatency(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var wt []*configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)
@@ -42,19 +34,11 @@ func GetPingLatency(ctx *gin.Context) {
 }
 
 func GetHttpLatency(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var wt []*configure.Which
 	err := jsoniter.Unmarshal([]byte(ctx.Query("whiches")), &wt)

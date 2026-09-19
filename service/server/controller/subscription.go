@@ -30,19 +30,11 @@ func PatchSubscription(ctx *gin.Context) {
 
 /*更新订阅*/
 func PutSubscription(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var data configure.Which
 	err := ctx.ShouldBindJSON(&data)
