@@ -352,6 +352,13 @@ func normalizeVmessFields(m map[string]interface{}) {
 	coerceStringField("xhttpHeaders")
 	coerceStringField("multiMode")
 	coerceStringField("permitWithoutStream")
+	// v2rayN writes port and aid as strings; many other exporters write
+	// numbers, and a whole subscription's vmess nodes were dropped for it
+	for _, key := range []string{"port", "aid", "v"} {
+		if f, ok := m[key].(float64); ok {
+			m[key] = strconv.FormatInt(int64(f), 10)
+		}
+	}
 }
 
 func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
@@ -363,6 +370,10 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 	switch strings.ToLower(v.Protocol) {
 	case "vmess", "vless":
 		id := v.ID
+		// xray renamed the tcp transport to raw; links from newer clients say type=raw
+		if strings.EqualFold(v.Net, "raw") {
+			v.Net = "tcp"
+		}
 		network := v.Net
 		if l := len([]byte(id)); l < 32 || l > 36 {
 			id = common.StringToUUID5(id)
@@ -699,7 +710,7 @@ func (v *V2Ray) ExportToURL() string {
 		var query = make(url.Values)
 		setValue(&query, "type", v.Net)
 		setValue(&query, "security", v.TLS)
-		switch v.Net {
+		switch strings.ToLower(v.Net) {
 		case "websocket", "ws", "http", "h2":
 			setValue(&query, "path", v.Path)
 			setValue(&query, "host", v.Host)
@@ -712,7 +723,7 @@ func (v *V2Ray) ExportToURL() string {
 		case "mkcp", "kcp":
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "seed", v.Path)
-		case "tcp":
+		case "tcp", "raw":
 			setValue(&query, "headerType", v.Type)
 			setValue(&query, "host", v.Host)
 			setValue(&query, "path", v.Path)
