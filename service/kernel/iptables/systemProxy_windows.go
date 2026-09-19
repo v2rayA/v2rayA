@@ -6,6 +6,7 @@ package iptables
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -182,21 +183,44 @@ func getProfileListSubKeyNames() ([]string, error) {
 	return k.ReadSubKeyNames(0)
 }
 
-// windowsProxySavedState stores the original proxy values before v2rayA modifies them
+// windowsProxySavedState holds the original proxy values of every profile
+// v2rayA wrote to, keyed by SID; "" is the current user when not elevated.
 type windowsProxySavedState struct {
-	mu            sync.Mutex
-	saved         bool
-	proxyEnable   uint32
-	proxyServer   string
-	autoConfigURL string
+	mu       sync.Mutex
+	saved    bool
+	profiles map[string]WindowsProxyProfile
 }
 
 var savedWindowsProxy windowsProxySavedState
 
-type WindowsProxySnapshot struct {
+type WindowsProxyProfile struct {
 	ProxyEnable   uint32 `json:"proxyEnable"`
 	ProxyServer   string `json:"proxyServer"`
 	AutoConfigURL string `json:"autoConfigURL"`
+}
+
+// WindowsProxySnapshot is what a start persists before it changes the
+// registry. The flat fields are the shape an earlier release stored (one
+// profile applied to every user); Profiles carries one entry per SID.
+type WindowsProxySnapshot struct {
+	ProxyEnable   uint32                         `json:"proxyEnable"`
+	ProxyServer   string                         `json:"proxyServer"`
+	AutoConfigURL string                         `json:"autoConfigURL"`
+	Profiles      map[string]WindowsProxyProfile `json:"profiles,omitempty"`
+}
+
+// profilesFor gives the per-profile view of a snapshot; a legacy flat
+// snapshot applies to every profile in sids.
+func (s *WindowsProxySnapshot) profilesFor(sids []string) map[string]WindowsProxyProfile {
+	if len(s.Profiles) > 0 {
+		return s.Profiles
+	}
+	legacy := WindowsProxyProfile{ProxyEnable: s.ProxyEnable, ProxyServer: s.ProxyServer, AutoConfigURL: s.AutoConfigURL}
+	out := make(map[string]WindowsProxyProfile, len(sids))
+	for _, sid := range sids {
+		out[sid] = legacy
+	}
+	return out
 }
 
 type systemProxy struct{}
@@ -249,29 +273,22 @@ func saveProxyState(hasAdminRights bool) error {
 	} else if found || savedWindowsProxy.saved {
 		return fmt.Errorf("original system proxy state is pending restoration")
 	}
-	var savedEnable uint32
-	var savedServer, savedAutoConfigURL string
-
+	profiles := make(map[string]WindowsProxyProfile)
 	if hasAdminRights {
 		sids, err := getProfileListSubKeyNames()
 		if err != nil {
 			log.Debug("saveProxyState: getProfileListSubKeyNames: %v", err)
 			return err
 		}
-		captured := false
 		for _, sid := range sids {
 			enable, server, autoConfigURL, err := readRegistryProxyState(registry.USERS, sid+`\`)
 			if err != nil {
 				log.Debug("saveProxyState: readRegistryProxyState for %v: %v", sid, err)
 				continue
 			}
-			savedEnable = enable
-			savedServer = server
-			savedAutoConfigURL = autoConfigURL
-			captured = true
-			break
+			profiles[sid] = WindowsProxyProfile{ProxyEnable: enable, ProxyServer: server, AutoConfigURL: autoConfigURL}
 		}
-		if !captured {
+		if len(profiles) == 0 {
 			return fmt.Errorf("could not capture any user proxy settings")
 		}
 	} else {
@@ -280,17 +297,13 @@ func saveProxyState(hasAdminRights bool) error {
 			log.Debug("saveProxyState: readRegistryProxyState: %v", err)
 			return err
 		}
-		savedEnable = enable
-		savedServer = server
-		savedAutoConfigURL = autoConfigURL
+		profiles[""] = WindowsProxyProfile{ProxyEnable: enable, ProxyServer: server, AutoConfigURL: autoConfigURL}
 	}
 
-	if err := configure.SetSystemProxySnapshot(&WindowsProxySnapshot{ProxyEnable: savedEnable, ProxyServer: savedServer, AutoConfigURL: savedAutoConfigURL}); err != nil {
+	if err := configure.SetSystemProxySnapshot(&WindowsProxySnapshot{Profiles: profiles}); err != nil {
 		return err
 	}
-	savedWindowsProxy.proxyEnable = savedEnable
-	savedWindowsProxy.proxyServer = savedServer
-	savedWindowsProxy.autoConfigURL = savedAutoConfigURL
+	savedWindowsProxy.profiles = profiles
 	savedWindowsProxy.saved = true
 	return nil
 }
@@ -369,19 +382,14 @@ func (p *systemProxy) GetCleanCommands() Setter {
 
 	savedWindowsProxy.mu.Lock()
 	saved := savedWindowsProxy.saved
-	savedEnable := savedWindowsProxy.proxyEnable
-	savedServer := savedWindowsProxy.proxyServer
-	savedAutoConfigURL := savedWindowsProxy.autoConfigURL
+	snapshot := WindowsProxySnapshot{Profiles: savedWindowsProxy.profiles}
 	savedWindowsProxy.mu.Unlock()
 	if !saved {
-		var snapshot WindowsProxySnapshot
 		found, err := configure.GetSystemProxySnapshot(&snapshot)
 		if err != nil {
 			return NewErrorSetter(err)
 		}
-		if found {
-			saved, savedEnable, savedServer, savedAutoConfigURL = true, snapshot.ProxyEnable, snapshot.ProxyServer, snapshot.AutoConfigURL
-		}
+		saved = found
 	}
 
 	if !saved {
@@ -458,8 +466,17 @@ func (p *systemProxy) GetCleanCommands() Setter {
 				})
 			}
 
+			var sids []string
+			for _, todo := range todolist {
+				sids = append(sids, strings.TrimSuffix(todo.Prefix, `\`))
+			}
+			profiles := snapshot.profilesFor(sids)
 			var errs []error
 			for _, todo := range todolist {
+				// A profile that was written at setup but not captured at save
+				// time has nothing to go back to: it gets the proxy disabled.
+				profile := profiles[strings.TrimSuffix(todo.Prefix, `\`)]
+				savedEnable, savedServer, savedAutoConfigURL := profile.ProxyEnable, profile.ProxyServer, profile.AutoConfigURL
 				key, _, err := registry.CreateKey(todo.Key, todo.Prefix+`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.ALL_ACCESS)
 				if err != nil {
 					errs = append(errs, err)
@@ -520,7 +537,7 @@ func (p *systemProxy) GetCleanCommands() Setter {
 			return err
 		}
 		savedWindowsProxy.saved = false
-		savedWindowsProxy.proxyEnable, savedWindowsProxy.proxyServer, savedWindowsProxy.autoConfigURL = 0, "", ""
+		savedWindowsProxy.profiles = nil
 		return nil
 	}
 
