@@ -1,6 +1,5 @@
 "use strict";
 
-import Vue from "vue";
 import axios from "axios";
 import {
   SnackbarProgrammatic,
@@ -12,8 +11,6 @@ import browser from "@/assets/js/browser";
 import modalCustomPorts from "../components/modalCustomPorts";
 import i18n from "../plugins/i18n";
 import { nanoid } from "nanoid";
-
-Vue.prototype.$axios = axios;
 
 axios.defaults.timeout = 60 * 1000; // timeout: 60秒
 // The backend reads object query parameters (touch, whiches) as JSON text,
@@ -61,11 +58,11 @@ function informNotRunning(url = localStorage["backendAddress"]) {
   }
   informed = url;
   SnackbarProgrammatic.open({
-    message: i18n.t("axios.messages.optimizeBackend"),
+    message: i18n.global.t("axios.messages.optimizeBackend"),
     type: "is-primary",
     duration: 10000,
     position: "is-top",
-    actionText: i18n.t("operations.yes"),
+    actionText: i18n.global.t("operations.yes"),
     onAction: () => {
       // this.showCustomPorts = true;
       ModalProgrammatic.open({
@@ -76,13 +73,13 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     },
   });
   SnackbarProgrammatic.open({
-    message: i18n.t("axios.messages.noBackendFound", { url }),
+    message: i18n.global.t("axios.messages.noBackendFound", { url }),
     type: "is-warning",
     position: "is-top",
     duration: 10000,
-    actionText: i18n.t("operations.helpManual"),
+    actionText: i18n.global.t("operations.helpManual"),
     onAction: () => {
-      window.open(i18n.t("axios.urls.usage"), "_blank");
+      window.open(i18n.global.t("axios.urls.usage"), "_blank");
     },
   });
 }
@@ -131,7 +128,7 @@ axios.interceptors.response.use(
       /^http:\/\//i.test(err.config.url)
     ) {
       // https frontend communicating with http backend
-      let msg = i18n.t("axios.messages.cannotCommunicate.0");
+      let msg = i18n.global.t("axios.messages.cannotCommunicate.0");
       if (host === "localhost" || host === "local" || host === "127.0.0.1") {
         if (browser.versions.webKit) {
           // Chrome and other WebKit browsers allow access to http://localhost, 
@@ -140,7 +137,7 @@ axios.interceptors.response.use(
           return Promise.reject(err);
         }
         if (browser.versions.gecko) {
-          msg = i18n.t("axios.messages.cannotCommunicate.1");
+          msg = i18n.global.t("axios.messages.cannotCommunicate.1");
         }
       }
       SnackbarProgrammatic.open({
@@ -148,17 +145,17 @@ axios.interceptors.response.use(
         type: "is-warning",
         position: "is-top",
         duration: 10000,
-        actionText: i18n.t("operations.switchSite"),
+        actionText: i18n.global.t("operations.switchSite"),
         onAction: () => {
           window.open("http://v.v2raya.org", "_self");
         },
       });
       SnackbarProgrammatic.open({
-        message: i18n.t("axios.messages.optimizeBackend"),
+        message: i18n.global.t("axios.messages.optimizeBackend"),
         type: "is-primary",
         duration: 10000,
         position: "is-top",
-        actionText: i18n.t("operations.yes"),
+        actionText: i18n.global.t("operations.yes"),
         onAction: () => {
           // this.showCustomPorts = true;
           ModalProgrammatic.open({
@@ -195,5 +192,9 @@ axios.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+export function install(app) {
+  app.config.globalProperties.$axios = axios;
+}
 
 export default axios;

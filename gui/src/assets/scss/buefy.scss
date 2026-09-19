@@ -1,51 +1,23 @@
-// Import Bulma's core
-@import "bulma/sass/utilities/_all.sass";
-
-// Set your colors
-$green: $success;
-$green-invert: findColorInvert($green);
-$primary: $warning;
-$primary-invert: findColorInvert($primary);
-$twitter: #4099FF;
-$twitter-invert: findColorInvert($twitter);
-$lightblue: #acd1f0;
-$lightblue-invert: findColorInvert($lightblue);
-$warning: #ff845e;
-$warning-invert: findColorInvert($warning);
-
-$warning: #dc8e47;
-$warning-invert: findColorInvert($warning);
-$info: #4497a5;
-$info-invert: findColorInvert($info);
-$success: #506da4;
-$success-invert: findColorInvert($success);
-$delete: #cd8a7a;
-$delete-invert: findColorInvert($delete);
-$danger: rgba(255, 69, 58, 0.73);
-$danger-invert: findColorInvert($danger);
-
-// Setup $colors to use as bulma classes (e.g. 'is-twitter')
-$colors: (
-        "white": ($white, $black),
-        "black": ($black, $white),
-        "light": ($light, $light-invert),
-        "dark": ($dark, $dark-invert),
-        "primary": ($primary, $primary-invert),
-        "info": ($info, $info-invert),
-        "success": ($success, $success-invert),
-        "warning": ($warning, $warning-invert),
-        "danger": ($danger, $danger-invert),
-        "twitter": ($twitter, $twitter-invert),
-        "green": ($green, $green-invert),
-        "delete": ($delete, $delete-invert),
-        "lightblue": ($lightblue, $lightblue-invert)
+// Configure Bulma 1 before Buefy's component styles.
+@use "bulma/sass" with (
+  $primary: hsl(48, 100%, 67%),
+  $info: #4497a5,
+  $success: #506da4,
+  $warning: #dc8e47,
+  $danger: rgba(255, 69, 58, 0.73),
+  $link: hsl(48, 100%, 67%),
+  $custom-colors: (
+    "twitter": #4099FF,
+    "green": hsl(141, 53%, 53%),
+    "delete": #cd8a7a,
+    "lightblue": #acd1f0,
+  )
 );
 
-// Links
-$link: $primary;
-$link-invert: $primary-invert;
-$link-focus-border: $primary;
+@use "buefy/src/scss/buefy";
 
-// Import Bulma and Buefy styles
-@import "bulma/bulma.sass";
-@import "buefy/src/scss/buefy.scss";
+// Bulma 1 decomposes palette colours into h/s/l and drops alpha; the legacy
+// palette carried 0.73 alpha on $danger, so restore it.
+:root {
+  --bulma-danger: rgba(255, 69, 58, 0.73);
+}

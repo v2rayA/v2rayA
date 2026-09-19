@@ -1,4 +1,3 @@
-import Vue from "vue";
 import Buefy from "buefy";
 import { ConfigProgrammatic } from "buefy";
 import "@/assets/scss/buefy.scss";
@@ -6,7 +5,6 @@ import "@/assets/scss/buefy.scss";
 // build/lucide-subset.mjs); an unknown name fails the build
 import "virtual:lucide-icons.css";
 
-Vue.use(Buefy);
 ConfigProgrammatic.setOptions({
   defaultProgrammaticPromise: true,
   // one notice at a time: repeated clicks on a failing action used to
@@ -45,3 +43,9 @@ ConfigProgrammatic.setOptions({
     },
   },
 });
+
+export default {
+  install(app) {
+    app.use(Buefy);
+  },
+};
