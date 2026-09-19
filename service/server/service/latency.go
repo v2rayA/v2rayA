@@ -322,21 +322,16 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	which.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 }
 
-func IsSupported(which configure.Which) (bool, error) {
-	var (
-		tmpl *v2ray.Template
-		err  error
-	)
-
-	tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
+func isSupportedObj(obj serverObj.ServerObj) (bool, error) {
+	tmpl := v2ray.NewEmptyTemplate(&configure.Setting{
 		RulePortMode: configure.WhitelistMode,
 		TcpFastOpen:  configure.Default,
 		MuxOn:        configure.No,
 		Transparent:  configure.TransparentClose,
 	})
-	tmpl.SetAPI(nil)
-	serverRaw, _ := which.LocateServerRaw()
-	err = tmpl.InsertMappingOutbound(serverRaw.ServerObj, "0", false, 0, "socks")
+	// The template is thrown away: SetAPI would start a traffic producer
+	// that nothing closes.
+	err := tmpl.InsertMappingOutbound(obj, "0", false, 0, "socks")
 	if err != nil {
 		if strings.Contains(err.Error(), "unsupported") {
 			return false, err

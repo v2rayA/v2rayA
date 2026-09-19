@@ -195,14 +195,20 @@ func ReplaceOutboundConnections(outbound string, touches []configure.Which) (err
 		}
 	}
 
-	if err = configure.ClearConnects(outbound); err != nil {
-		return err
-	}
-	for _, wt := range normalized {
-		if err = configure.AddConnect(wt); err != nil {
-			restore()
-			return err
+	// One write for the whole group: a clear followed by one append per
+	// member let a concurrent reader see an empty or partial group.
+	if len(normalized) == 0 {
+		err = configure.ClearConnects(outbound)
+	} else {
+		whiches := new(configure.Whiches)
+		for i := range normalized {
+			whiches.Add(normalized[i])
 		}
+		err = configure.OverwriteConnects(whiches)
+	}
+	if err != nil {
+		restore()
+		return err
 	}
 
 	if v2ray.ProcessManager.Running() {
