@@ -71,8 +71,8 @@ func PutOutbound(ctx *gin.Context) {
 			common.ResponseError(ctx, logError(err))
 			return
 		}
-		invalidConfigErr := fmt.Errorf("invalid config: %w", failure.UpdateErr)
-		common.ResponseError(ctx, common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": failure.UpdateErr.Error()}))
+		invalidConfigErr := fmt.Errorf("invalid config: %w", failure)
+		common.ResponseError(ctx, common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": failure.Error()}))
 		return
 	}
 	common.ResponseSuccess(ctx, nil)

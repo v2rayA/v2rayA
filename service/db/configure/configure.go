@@ -424,19 +424,36 @@ func AddConnect(wt NodeRef) (err error) {
 
 // OverwriteConnects will replace each outbounds contained in given ws with whiches in the ws
 func OverwriteConnects(ws *NodeRefs) (err error) {
-	outWs := make(map[string][]*NodeRef)
-	for _, w := range ws.Get() {
-		outWs[w.Outbound] = append(outWs[w.Outbound], w)
-	}
-	for out, ws := range outWs {
-		refs := new(NodeRefs)
-		refs.Touches = ws
-		bucket := fmt.Sprintf("outbound.%v", out)
-		if err := db.Set(bucket, "connectedServers", refs); err != nil {
+	for out, refs := range ws.byOutbound() {
+		if err := db.Set(fmt.Sprintf("outbound.%v", out), "connectedServers", refs); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (ws *NodeRefs) byOutbound() map[string]*NodeRefs {
+	out := make(map[string]*NodeRefs)
+	for _, w := range ws.Get() {
+		if out[w.Outbound] == nil {
+			out[w.Outbound] = new(NodeRefs)
+		}
+		out[w.Outbound].Touches = append(out[w.Outbound].Touches, w)
+	}
+	return out
+}
+
+// RemoveNodes deletes subscriptions and servers by ordinal together with
+// the connected lists already renumbered for the deletion, atomically.
+func RemoveNodes(subscriptions, servers []int, connected *NodeRefs) error {
+	return db.RemoveTx(subscriptions, servers, func(tx *sql.Tx) error {
+		for out, refs := range connected.byOutbound() {
+			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", out), "connectedServers", refs); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func RemoveConnect(wt NodeRef) (err error) {

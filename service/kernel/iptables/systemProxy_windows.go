@@ -267,11 +267,24 @@ func readRegistryProxyState(key registry.Key, prefix string) (proxyEnable uint32
 func saveProxyState(hasAdminRights bool) error {
 	savedWindowsProxy.mu.Lock()
 	defer savedWindowsProxy.mu.Unlock()
+	// a snapshot still pending from an earlier run is the user's original;
+	// keep it and do not capture our own proxy as the state
 	var previous WindowsProxySnapshot
 	if found, err := configure.GetSystemProxySnapshot(&previous); err != nil {
 		return err
-	} else if found || savedWindowsProxy.saved {
-		return fmt.Errorf("original system proxy state is pending restoration")
+	} else if found {
+		log.Warn("system proxy: reusing the original state saved by an earlier run")
+		sids := []string{""}
+		if hasAdminRights {
+			if s, err := getProfileListSubKeyNames(); err == nil {
+				sids = s
+			}
+		}
+		savedWindowsProxy.profiles = previous.profilesFor(sids)
+		savedWindowsProxy.saved = true
+		return nil
+	} else if savedWindowsProxy.saved {
+		return nil
 	}
 	profiles := make(map[string]WindowsProxyProfile)
 	if hasAdminRights {

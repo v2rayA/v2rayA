@@ -1,6 +1,10 @@
 package service
 
-import "github.com/v2rayA/v2rayA/kernel/v2ray"
+import (
+	"fmt"
+
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
+)
 
 type ApplyCoreConfigError struct {
 	UpdateErr        error
@@ -8,7 +12,15 @@ type ApplyCoreConfigError struct {
 	RestoreUpdateErr error
 }
 
+// Error names the step that failed after the update did: a caller that
+// prints it tells the user whether the previous value and the core came back.
 func (e *ApplyCoreConfigError) Error() string {
+	switch {
+	case e.RestoreStoreErr != nil:
+		return fmt.Sprintf("%v; the previous value could not be restored (%v)", e.UpdateErr, e.RestoreStoreErr)
+	case e.RestoreUpdateErr != nil:
+		return fmt.Sprintf("%v; the core could not be restarted with the previous value (%v)", e.UpdateErr, e.RestoreUpdateErr)
+	}
 	return e.UpdateErr.Error()
 }
 
