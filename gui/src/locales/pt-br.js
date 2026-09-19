@@ -386,8 +386,6 @@ export default {
     plugin: "Plugin",
     pluginImpl: "Implementação",
     obfs: "Obfs",
-    protocolParam: "Parâmetro do protocolo",
-    obfsParam: "Parâmetro de obfs",
     ssCipher: "Cifra do Shadowsocks",
     ssPassword: "Senha do Shadowsocks",
     websocketHost: "Host do WebSocket",

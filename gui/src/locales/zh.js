@@ -373,8 +373,6 @@ export default {
     plugin: "插件",
     pluginImpl: "实现",
     obfs: "混淆",
-    protocolParam: "协议参数",
-    obfsParam: "混淆参数",
     ssCipher: "Shadowsocks 加密方式",
     ssPassword: "Shadowsocks 密码",
     websocketHost: "WebSocket 域名",

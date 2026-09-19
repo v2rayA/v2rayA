@@ -382,8 +382,6 @@ export default {
     plugin: "Plugin",
     pluginImpl: "Implementation",
     obfs: "Obfs",
-    protocolParam: "Protocol Param",
-    obfsParam: "Obfs Param",
     ssCipher: "Shadowsocks Cipher",
     ssPassword: "Shadowsocks Password",
     websocketHost: "WebSocket Host",

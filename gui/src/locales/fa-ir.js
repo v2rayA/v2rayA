@@ -379,8 +379,6 @@ export default {
     plugin: "افزونه",
     pluginImpl: "پیاده‌سازی",
     obfs: "Obfs",
-    protocolParam: "پارامتر پروتکل",
-    obfsParam: "پارامتر Obfs",
     ssCipher: "رمزنگاری Shadowsocks",
     ssPassword: "گذرواژه Shadowsocks",
     websocketHost: "میزبان WebSocket",

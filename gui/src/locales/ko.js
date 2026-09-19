@@ -378,8 +378,6 @@ export default {
     plugin: "플러그인",
     pluginImpl: "구현",
     obfs: "Obfs",
-    protocolParam: "프로토콜 매개변수",
-    obfsParam: "Obfs 매개변수",
     ssCipher: "Shadowsocks 암호화 방식",
     ssPassword: "Shadowsocks 비밀번호",
     websocketHost: "WebSocket 호스트",
