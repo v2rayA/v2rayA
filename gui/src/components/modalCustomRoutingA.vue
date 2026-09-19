@@ -13,7 +13,6 @@
         v-if="hasInboundDef"
         type="is-warning"
         size="is-small"
-        :active="true"
         closable
         @close="hasInboundDef = false"
       >

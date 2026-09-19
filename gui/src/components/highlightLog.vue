@@ -1,4 +1,5 @@
 <script>
+import { h } from "vue";
 import hljs from "highlight.js/lib/core";
 import "highlight.js/styles/github.css";
 import accesslog from "highlight.js/lib/languages/accesslog";
@@ -11,15 +12,13 @@ export default {
       default: "",
     },
   },
-  render(createElement) {
-    return createElement("div", {
+  render() {
+    return h("div", {
       class: "log language-accesslog",
-      domProps: {
-        innerHTML: hljs.highlight(this.text, {
-          language: "accesslog",
-          ignoreIllegals: true,
-        }).value,
-      },
+      innerHTML: hljs.highlight(this.text, {
+        language: "accesslog",
+        ignoreIllegals: true,
+      }).value,
     });
   },
 };

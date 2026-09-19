@@ -2,16 +2,16 @@
   <section id="node-section" class="node-section container hero">
     <b-sidebar
       v-show="connectedServerInfo.length"
-      :open="true"
+      :model-value="true"
       class="node-status-sidebar-reduced"
       :can-cancel="false"
-      @mouseenter.native="showSidebar = true"
-      @click.native="showSidebar = true"
+      @mouseenter="showSidebar = true"
+      @click="showSidebar = true"
     >
       <i class="lucide icon-panel-left sidebar-handle" :title="$t('common.expand')" />
     </b-sidebar>
     <b-sidebar
-      :open="showSidebar"
+      :model-value="showSidebar"
       type="is-light"
       :fullheight="false"
       :fullwidth="false"
@@ -20,7 +20,7 @@
       class="node-status-sidebar"
       :can-cancel="['outside']"
       @close="showSidebar = false"
-      @mouseleave.native="showSidebar = false"
+      @mouseleave="showSidebar = false"
     >
       <b-message
         v-for="v of connectedServerInfo"
@@ -36,7 +36,7 @@
             ? 'is-light'
             : 'is-danger'
         "
-        @click.native="handleClickConnectedServer(v.which)"
+        @click="handleClickConnectedServer(v.which)"
       >
         <template #header>
           <div class="node-status-card__header">
@@ -62,11 +62,11 @@
           </p>
           <p v-if="!v.info.alive && v.info.last_seen_time">
             {{ $t("server.lastSeenTime") }}:
-            {{ v.info.last_seen_time | unix2datetime }}
+            {{ unix2datetime(v.info.last_seen_time) }}
           </p>
           <p v-if="v.info.last_try_time">
             {{ $t("server.lastTryTime") }}:
-            {{ v.info.last_try_time | unix2datetime }}
+            {{ unix2datetime(v.info.last_try_time) }}
           </p>
         </div>
       </b-message>
@@ -182,9 +182,8 @@
         class="card welcome-driver"
         aria-id="contentIdForA11y3"
       >
+        <template #trigger="props">
         <div
-          slot="trigger"
-          slot-scope="props"
           class="card-header"
           role="button"
           aria-controls="contentIdForA11y3"
@@ -196,6 +195,7 @@
             <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
+        </template>
         <div class="card-content">
           <div class="content">
             <p>{{ $t("welcome.messages.0") }}</p>
@@ -217,13 +217,13 @@
         position="is-centered"
         type="is-toggle-rounded"
         class="main-tabs"
-        @input="handleTabsChange"
+        @update:model-value="handleTabsChange"
       >
         <b-tab-item :label="$t('subscription.subscription')">
           <b-field :label="`${$t('subscription.subscription')}(${tableData.subscriptions.length})`">
             <b-table
               :data="tableData.subscriptions"
-              :checked-rows.sync="checkedRows"
+              v-model:checked-rows="checkedRows"
               default-sort="id"
               checkable
             >
@@ -316,9 +316,9 @@
           <b-field :label="`${$t('server.server')}(${tableData.servers.length})`">
             <b-table
               per-page="100"
-              :current-page.sync="currentPage.servers"
+              v-model:current-page="currentPage.servers"
               :data="tableData.servers"
-              :checked-rows.sync="checkedRows"
+              v-model:checked-rows="checkedRows"
               checkable
               default-sort="id"
             >
@@ -387,14 +387,15 @@
                     v-if="loadBalanceValid"
                     position="is-bottom-left"
                   >
+                    <template #trigger>
                     <b-button
-                      slot="trigger"
                       size="is-small"
                       type="is-primary"
                       icon-right="chevron-down"
                     >
                       {{ $t("operations.addTo") }}
                     </b-button>
+                    </template>
                     <b-dropdown-item
                       v-for="group in outbounds"
                       :key="group"
@@ -458,10 +459,10 @@
             :label="`${sub.host.toUpperCase()} (${sub.servers.length})${sub.info ? ' · ' + sub.info : ''}`"
           >
             <b-table
-              :current-page.sync="currentPage[sub.id]"
+              v-model:current-page="currentPage[sub.id]"
               per-page="100"
               :data="sub.servers"
-              :checked-rows.sync="checkedRows"
+              v-model:checked-rows="checkedRows"
               checkable
               default-sort="id"
             >
@@ -531,14 +532,15 @@
                     v-if="loadBalanceValid"
                     position="is-bottom-left"
                   >
+                    <template #trigger>
                     <b-button
-                      slot="trigger"
                       size="is-small"
                       type="is-primary"
                       icon-right="chevron-down"
                     >
                       {{ $t("operations.addTo") }}
                     </b-button>
+                    </template>
                     <b-dropdown-item
                       v-for="group in outbounds"
                       :key="group"
@@ -595,7 +597,7 @@
       <i class="lucide icon-loader-circle" />
     </b-loading>
     <b-modal
-      :active.sync="showModalServer"
+      v-model="showModalServer"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -608,7 +610,7 @@
       />
     </b-modal>
     <b-modal
-      :active.sync="showModalSubscription"
+      v-model="showModalSubscription"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -626,7 +628,7 @@
       accept="image/*"
     />
     <b-modal
-      :active.sync="showModalImport"
+      v-model="showModalImport"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -667,7 +669,7 @@
             icon-right="camera"
             icon-right-clickable
             @icon-right-click="handleClickImportQRCode"
-            @keyup.native="handleImportEnter"
+            @keyup="handleImportEnter"
           ></b-input>
         </section>
         <footer class="modal-card-foot">
@@ -706,7 +708,7 @@
       </div>
     </b-modal>
     <b-modal
-      :active.sync="showModalImportInBatch"
+      v-model="showModalImportInBatch"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -787,12 +789,6 @@ const DAYJS_LOCALES = { zh: "zh-cn", en: "en", fa: "fa", ru: "ru", pt: "pt-br", 
 export default {
   name: "Node",
   components: { ModalSubscription, ModalServer },
-  filters: {
-    unix2datetime(x) {
-      x = dayjs.unix(x);
-      return dayjs().locale(DAYJS_LOCALES[i18n.locale] || "en").to(x);
-    },
-  },
   props: {
     outbound: {
       type: String,
@@ -940,7 +936,7 @@ export default {
     };
     loadTouch();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.clipboard.destroy();
     window.removeEventListener("scroll", this.handleWindowScroll);
     clearTimeout(this.scrollTimer);
@@ -974,6 +970,10 @@ export default {
     }
   },
   methods: {
+    unix2datetime(x) {
+      x = dayjs.unix(x);
+      return dayjs().locale(DAYJS_LOCALES[i18n.global.locale] || "en").to(x);
+    },
     handleWindowScroll(e) {
       clearTimeout(this.scrollTimer);
       this.scrollTimer = setTimeout(() => {
@@ -1610,7 +1610,6 @@ export default {
         return;
       }
       this.$buefy.modal.open({
-        parent: this,
         component: ModalPickProxyGroup,
         hasModalCard: true,
         canCancel: true,
@@ -2086,7 +2085,7 @@ td {
 </style>
 
 <style lang="scss">
-@import "bulma/sass/utilities/all.sass";
+@use "bulma/sass/utilities" as bulma;
 
 #toolbar {
   @media screen and (max-width: 450px) {
@@ -2283,7 +2282,7 @@ $coverBackground: rgba(0, 0, 0, 0.6);
 }
 
 #tag-cover-text {
-  color: findColorInvert($coverBackground);
+  color: bulma.bulmaFindColorInvert($coverBackground);
   position: absolute;
   top: 0;
   left: 0;

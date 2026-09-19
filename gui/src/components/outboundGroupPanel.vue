@@ -1,17 +1,20 @@
 <template>
   <div class="ogp-wrapper">
-    <b-tag
-      class="pointerTag"
-      type="is-info"
-      :icon-right="menuOpen ? 'chevron-up' : 'chevron-down'"
-      role="button"
-      tabindex="0"
-      @click.native.stop="toggleMenu"
-      @keydown.native.enter.prevent.stop="toggleMenu"
-      @keydown.native.space.prevent.stop="toggleMenu"
+    <span
+      @click.stop="toggleMenu"
+      @keydown.enter.prevent.stop="toggleMenu"
+      @keydown.space.prevent.stop="toggleMenu"
     >
-      <span class="tag-text">{{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}</span>
-    </b-tag>
+      <b-tag
+        class="pointerTag"
+        type="is-info"
+        :icon-right="menuOpen ? 'chevron-up' : 'chevron-down'"
+        role="button"
+        tabindex="0"
+      >
+        <span class="tag-text">{{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}</span>
+      </b-tag>
+    </span>
 
     <!-- Persistent expandable menu: close only on outside click or manual toggle -->
     <div v-if="menuOpen" class="ogp-panel" @click.stop>
@@ -99,7 +102,7 @@
     </div>
 
     <!-- Node picker modal (outside dropdown to avoid z-index issues) -->
-    <b-modal :active.sync="showPicker" has-modal-card trap-focus>
+    <b-modal v-model="showPicker" has-modal-card trap-focus>
       <div class="modal-card" style="max-width: 520px; margin: auto">
         <header class="modal-card-head">
           <p class="modal-card-title">
@@ -379,7 +382,7 @@ export default {
     toggleNode(node) {
       if (!this.pickerGroup || this.saving) return;
       const key = this.whichKey(node);
-      this.$set(this.draftSelectionMap, key, !this.draftSelectionMap[key]);
+      this.draftSelectionMap[key] = !this.draftSelectionMap[key];
     },
     async savePickerChanges() {
       if (!this.pickerGroup || this.saving) {
@@ -517,7 +520,7 @@ export default {
   mounted() {
     document.addEventListener("click", this.handleDocumentClick, true);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     document.removeEventListener("click", this.handleDocumentClick, true);
   },
 };

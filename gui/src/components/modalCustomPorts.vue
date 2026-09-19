@@ -154,7 +154,7 @@
         </button>
       </div>
     </footer>
-    <b-modal :active.sync="showCustomInbound" has-modal-card trap-focus>
+    <b-modal v-model="showCustomInbound" has-modal-card trap-focus>
       <ModalCustomInbound @close="showCustomInbound = false" />
     </b-modal>
   </div>

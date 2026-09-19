@@ -37,7 +37,7 @@
             </b-select>
           </b-field>
           <b-field v-show="v2ray.type !== 'dtls'" label="TLS" label-position="on-border">
-            <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
+            <b-select v-model="v2ray.tls" expanded @update:model-value="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
             </b-select>
@@ -68,7 +68,7 @@
             <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field :label="$t('configureServer.network')" label-position="on-border">
-            <b-select ref="v2ray_net" v-model="v2ray.net" expanded required @input="handleNetworkChange">
+            <b-select ref="v2ray_net" v-model="v2ray.net" expanded required @update:model-value="handleNetworkChange">
               <option value="tcp">TCP</option>
               <option value="kcp">mKCP</option>
               <option value="ws">WebSocket</option>
@@ -232,7 +232,7 @@
             <b-input ref="vless_id" v-model="v2ray.id" required placeholder="UserID" expanded />
           </b-field>
           <b-field v-show="v2ray.type !== 'dtls'" label="TLS" label-position="on-border">
-            <b-select v-model="v2ray.tls" expanded @input="handleNetworkChange">
+            <b-select v-model="v2ray.tls" expanded @update:model-value="handleNetworkChange">
               <option value="none">{{ $t("setting.options.off") }}</option>
               <option value="tls">tls</option>
               <option v-if="variant() === 'xray'" value="reality">reality</option>
@@ -276,7 +276,7 @@
             <b-input v-model="v2ray.verifyPeerCertByName" :placeholder="$t('verifyPeerCertByName')" expanded />
           </b-field>
           <b-field :label="$t('configureServer.network')" label-position="on-border">
-            <b-select ref="vless_net" v-model="v2ray.net" expanded required @input="handleNetworkChange">
+            <b-select ref="vless_net" v-model="v2ray.net" expanded required @update:model-value="handleNetworkChange">
               <option value="tcp">TCP</option>
               <option value="kcp">mKCP</option>
               <option value="ws">WebSocket</option>
@@ -504,7 +504,7 @@
           </b-field>
           <b-field v-if="ss.plugin === 'simple-obfs' || ss.plugin === 'v2ray-plugin'" label-position="on-border"
             class="with-icon-alert">
-            <template slot="label">
+            <template #label>
               {{ $t("configureServer.pluginImpl") }}
               <b-tooltip type="is-dark" :label="$t('setting.messages.ssPluginImpl')" multilined position="is-right">
                 <b-icon size="is-samll" icon="circle-help" style="
@@ -672,7 +672,7 @@
             <b-input v-model="trojan.peer" placeholder="SNI(Peer)" expanded />
           </b-field>
           <b-field :label="$t('configureServer.network')" label-position="on-border">
-            <b-select ref="trojan_net" v-model="trojan.net" expanded required @input="handleNetworkChange">
+            <b-select ref="trojan_net" v-model="trojan.net" expanded required @update:model-value="handleNetworkChange">
               <option value="tcp">TCP</option>
               <option value="kcp">mKCP</option>
               <option value="ws">WebSocket</option>
@@ -786,7 +786,7 @@
             <b-switch v-model="tuic.allowInsecure">{{ tuic.allowInsecure ? $t("operations.yes") : $t("operations.no") }}</b-switch>
           </b-field>
           <b-field label-position="on-border">
-            <template slot="label">{{ $t("configureServer.disableSni") }}</template>
+            <template #label>{{ $t("configureServer.disableSni") }}</template>
             <b-select ref="tuic_disable_sni" v-model="tuic.disableSni" expanded required>
               <option :value="false">{{ $t("operations.no") }}</option>
               <option :value="true">
@@ -801,7 +801,7 @@
             <b-input v-model="tuic.alpn" placeholder="h3" expanded />
           </b-field>
           <b-field label-position="on-border">
-            <template slot="label">{{ $t("configureServer.udpRelayMode") }}</template>
+            <template #label>{{ $t("configureServer.udpRelayMode") }}</template>
             <b-select ref="tuic_udp_relay_mode" v-model="tuic.udpRelayMode" expanded required>
               <option value="native">native</option>
               <option value="quic">quic</option>

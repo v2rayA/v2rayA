@@ -19,7 +19,7 @@
       </b-field>
       <hr class="dropdown-divider" style="margin: 1.25rem 0 1.25rem" />
       <b-field label-position="on-border" class="with-icon-alert">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.transparentProxy") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.transparentProxy')" multilined position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -53,7 +53,7 @@
       </b-field>
 
       <b-field v-show="transparent !== 'close'" label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.transparentType") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.transparentType')" position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -97,7 +97,7 @@
 
       <b-field v-show="transparent !== 'close' && (transparentType === 'tproxy' || transparentType === 'redirect')"
         label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.tproxyExcludedInterfaces") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tproxyExcludedInterfaces')" position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -109,7 +109,7 @@
 
       <b-field v-show="transparent !== 'close' && transparentType === 'tun' && tunSupported"
         label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.tunExcludeProcesses") }}
           <b-tooltip type="is-dark" multilined :label="$t('setting.messages.tunExcludeProcesses')" position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -128,7 +128,7 @@
       </b-field>
 
       <b-field label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.pacMode") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.pacMode')" multilined position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -164,7 +164,7 @@
       </b-field>
 
       <b-field label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.tcpFastOpen") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.tcpFastOpen')" multilined position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -179,7 +179,7 @@
       </b-field>
 
       <b-field label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.logLevel") }}
         </template>
         <b-select v-model="logLevel" expanded>
@@ -192,7 +192,7 @@
       </b-field>
 
       <b-field label-position="on-border">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.inboundSniffing") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.inboundSniffing')" multilined position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -218,7 +218,7 @@
       </b-field>
 
       <b-field label-position="on-border" class="with-icon-alert">
-        <template slot="label">
+        <template #label>
           {{ $t("setting.mux") }}
           <b-tooltip type="is-dark" :label="$t('setting.messages.mux')" multilined position="is-right">
             <b-icon size="is-small" icon="circle-help"
@@ -348,8 +348,8 @@ export default {
     pacMode: "whitelist",
     showClockPicker: true,
     serverListMode: "noSubscription",
-    remoteGFWListVersion: i18n.t("common.checkRunning"),
-    localGFWListVersion: i18n.t("common.checkRunning"),
+    remoteGFWListVersion: i18n.global.t("common.checkRunning"),
+    localGFWListVersion: i18n.global.t("common.checkRunning"),
     os: "",
     isRoot: false,
     tunSupported: false,
@@ -494,7 +494,6 @@ export default {
     },
     handleClickConfigurePac() {
       this.$buefy.modal.open({
-        parent: this,
         component: ModalCustomRouting,
         hasModalCard: true,
         canCancel: true,
@@ -502,7 +501,6 @@ export default {
     },
     handleClickConfigureRoutingA() {
       this.$buefy.modal.open({
-        parent: this,
         component: ModalCustomRoutingA,
         hasModalCard: true,
         canCancel: true,
@@ -515,7 +513,6 @@ export default {
             this.getSettingData();
           },
         },
-        parent: this,
         component: modalUpdateGfwList,
         hasModalCard: true,
         canCancel: true,
@@ -523,7 +520,6 @@ export default {
     },
     handleClickTproxyWhiteIpGroups() {
       this.$buefy.modal.open({
-        parent: this,
         component: modalTproxyWhiteIpGroups,
         hasModalCard: true,
         canCancel: true,
@@ -531,7 +527,6 @@ export default {
     },
     handleClickDomainsExcluded() {
       this.$buefy.modal.open({
-        parent: this,
         component: modalDomainsExcluded,
         hasModalCard: true,
         canCancel: true,
@@ -539,7 +534,6 @@ export default {
     },
     handleClickDnsSetting() {
       this.$buefy.modal.open({
-        parent: this,
         component: modalDnsSetting,
         hasModalCard: true,
         canCancel: true,
@@ -547,7 +541,6 @@ export default {
     },
     handleClickTunRouteScript() {
       this.$buefy.modal.open({
-        parent: this,
         component: modalTunRouteScript,
         hasModalCard: true,
         canCancel: true,
@@ -570,7 +563,6 @@ export default {
     },
     handleClickTunExcludeProcesses() {
       this.$buefy.modal.open({
-        parent: this,
         component: modalTunExcludeProcesses,
         hasModalCard: true,
         canCancel: true,

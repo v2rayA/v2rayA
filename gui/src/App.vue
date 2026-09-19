@@ -1,17 +1,21 @@
 <template>
   <div id="app">
     <b-navbar ref="navs" fixed-top shadow type="is-light">
-      <template slot="brand">
+      <template #brand>
         <b-navbar-item href="/" class="brand no-select">
           <img src="@/assets/img/v2raya-icon.svg" alt="" class="brand__icon" />
           <span class="brand__name">v2rayA</span>
         </b-navbar-item>
         <b-navbar-item tag="div">
-          <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusType"
-            @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
-            @click.native="handleClickStatus" @keydown.native.enter.prevent="handleClickStatus"
-            @keydown.native.space.prevent="handleClickStatus"><span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
-          </b-tag>
+          <span
+            @mouseenter="handleOnStatusMouseEnter" @mouseleave="handleOnStatusMouseLeave"
+            @click="handleClickStatus" @keydown.enter.prevent="handleClickStatus"
+            @keydown.space.prevent="handleClickStatus"
+          >
+            <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusType">
+              <span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
+            </b-tag>
+          </span>
         </b-navbar-item>
         <b-navbar-item tag="div">
           <OutboundGroupPanel
@@ -25,7 +29,7 @@
           />
         </b-navbar-item>
       </template>
-      <template slot="burger" slot-scope="{ isOpened, toggleActive }">
+      <template #burger="{ isOpened, toggleActive }">
         <a
           class="navbar-burger burger"
           role="button"
@@ -40,26 +44,26 @@
         </a>
       </template>
 
-      <template slot="start"></template>
+      <template #start></template>
 
-      <template slot="end">
+      <template #end>
         <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
         <!--          <i class="lucide icon-cloud" style="font-size: 1.4em"></i>-->
         <!--          节点-->
         <!--        </b-navbar-item>-->
-        <b-navbar-item tag="a" @click.native="handleClickSetting">
+        <b-navbar-item tag="a" @click="handleClickSetting">
           <i class="lucide icon-settings" style="font-size: 1.25em"></i>
           {{ $t("common.setting") }}
         </b-navbar-item>
-        <b-navbar-item tag="a" @click.native="handleClickAbout">
+        <b-navbar-item tag="a" @click="handleClickAbout">
           <i class="lucide icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
         </b-navbar-item>
-        <b-navbar-item tag="a" @click.native="handleClickLogs">
+        <b-navbar-item tag="a" @click="handleClickLogs">
           <i class="lucide icon-scroll-text" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
-        <b-navbar-item tag="a" @click.native="toggleTheme">
+        <b-navbar-item tag="a" @click="toggleTheme">
           <i
             :class="['lucide', themePreference === 'auto' ? 'icon-sun-moon' : (isDarkTheme ? 'icon-sun' : 'icon-moon')]"
             style="font-size: 1.25em"
@@ -67,11 +71,13 @@
           {{ themeSwitchLabel }}
         </b-navbar-item>
         <b-dropdown position="is-bottom-left" aria-role="menu" class="langdropdown">
-          <a slot="trigger" class="navbar-item" role="button">
-            <i class="lucide icon-globe" style="font-size: 1.25em; margin-right: 4px"></i>
-            <span class="no-select">{{ currentLangLabel }}</span>
-            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
-          </a>
+          <template #trigger>
+            <a class="navbar-item" role="button">
+              <i class="lucide icon-globe" style="font-size: 1.25em; margin-right: 4px"></i>
+              <span class="no-select">{{ currentLangLabel }}</span>
+              <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
+            </a>
+          </template>
           <b-dropdown-item v-for="lang of langs" :key="lang.code" aria-role="menuitem" class="no-select"
             @click="handleClickLang(lang.code)">
             <span style="font-weight: 500; min-width: 120px; display: inline-block">{{ lang.label }}</span>
@@ -79,11 +85,13 @@
           </b-dropdown-item>
         </b-dropdown>
         <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
-          <a slot="trigger" class="navbar-item" role="button">
-            <i class="lucide icon-user" style="font-size: 1.25em; margin-right: 4px"></i>
-            <span class="no-select">{{ username }}</span>
-            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
-          </a>
+          <template #trigger>
+            <a class="navbar-item" role="button">
+              <i class="lucide icon-user" style="font-size: 1.25em; margin-right: 4px"></i>
+              <span class="no-select">{{ username }}</span>
+              <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
+            </a>
+          </template>
           <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username: usernameHtml })">
           </b-dropdown-item>
           <hr class="dropdown-divider" />
@@ -94,12 +102,12 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
-    <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
+    <node ref="nodeRef" @input="runningState = $event" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
+    <b-modal v-model="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
     </b-modal>
-    <b-modal :active.sync="loginModalActive" has-modal-card trap-focus aria-role="dialog" aria-modal class="modal-login modal-login-app">
+    <b-modal v-model="loginModalActive" has-modal-card trap-focus aria-role="dialog" aria-modal class="modal-login modal-login-app">
       <ModalLogin :first="loginModalFirst" @close="loginModalActive = false" />
     </b-modal>
     <div id="login"></div>
@@ -325,7 +333,7 @@ export default {
     });
     this.connectWsMessage();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.ws) {
       // detach first: onclose would otherwise schedule a reconnect from the
       // destroyed instance
@@ -568,7 +576,6 @@ export default {
       event.stopPropagation();
       const that = this;
       this.$buefy.modal.open({
-        parent: this,
         component: ModalOutboundSetting,
         hasModalCard: true,
         canCancel: true,
@@ -610,7 +617,6 @@ export default {
     handleClickSetting() {
       const that = this;
       this.$buefy.modal.open({
-        parent: this,
         component: ModalSetting,
         hasModalCard: true,
         canCancel: true,
@@ -732,7 +738,6 @@ export default {
     },
     handleClickLogs() {
       this.$buefy.modal.open({
-        parent: this,
         component: ModalLog,
         hasModalCard: true,
         canCancel: true,

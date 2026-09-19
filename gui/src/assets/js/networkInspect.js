@@ -1,11 +1,11 @@
 import axios from "../../plugins/axios";
-import Vue from "vue";
+import { ToastProgrammatic } from "buefy";
 import i18n from "@/plugins/i18n";
 import { backendMessage, handleResponse } from "./utils";
 
 const i18nVm = {
-  $te: i18n.te.bind(i18n),
-  $t: i18n.t.bind(i18n),
+  $te: i18n.global.te.bind(i18n.global),
+  $t: i18n.global.t.bind(i18n.global),
 };
 
 // 如果节点已连接，reload页面
@@ -33,9 +33,9 @@ function waitingConnected(promise, interval, cancel, timeout) {
               res.data.errorCode !== "REQUEST_IN_PROGRESS" &&
               res.data.message !== "the last request is being processed"
             ) {
-              Vue.prototype.$buefy.toast.open({
-                message: i18n.t("connection.checkFailed", {
-                  message: backendMessage(i18nVm, res) || i18n.t("common.fail"),
+              ToastProgrammatic.open({
+                message: i18n.global.t("connection.checkFailed", {
+                  message: backendMessage(i18nVm, res) || i18n.global.t("common.fail"),
                 }),
                 type: "is-warning",
                 position: "is-top",

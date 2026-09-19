@@ -27,9 +27,8 @@
         <p>{{ $t("customRouting.messages.2") }}</p>
       </b-message>
       <b-collapse class="card">
+        <template #trigger="props">
         <div
-          slot="trigger"
-          slot-scope="props"
           class="card-header"
           role="button"
         >
@@ -40,6 +39,7 @@
             <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"> </b-icon>
           </a>
         </div>
+        </template>
         <div class="card-content">
           <b-field
             :label="$t('customRouting.defaultRoutingRule')"
@@ -58,9 +58,8 @@
         :key="rule.value"
         class="card"
       >
+        <template #trigger="props">
         <div
-          slot="trigger"
-          slot-scope="props"
           class="card-header"
           role="button"
         >
@@ -78,6 +77,7 @@
             <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
+        </template>
         <div class="card-content">
           <b-field
             :label="$t('customRouting.domainFile')"

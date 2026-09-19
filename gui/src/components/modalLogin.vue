@@ -13,7 +13,7 @@
         <b-input
           ref="username"
           v-model="username"
-          @keyup.enter.native="handleEnter"
+          @keyup.enter="handleEnter"
         ></b-input>
       </b-field>
       <b-field :label="$t('login.password')" type="is-success">
@@ -21,7 +21,7 @@
           v-model="password"
           type="password"
           :maxlength="first ? '32' : ''"
-          @keyup.enter.native="handleEnter"
+          @keyup.enter="handleEnter"
         ></b-input>
       </b-field>
       <b-message v-if="first" type="is-info" class="after-line-dot5">

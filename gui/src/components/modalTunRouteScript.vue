@@ -11,7 +11,7 @@
 
       <!-- Shell type selector -->
       <b-field :label="$t('tun.routeScript.shellType')" label-position="on-border">
-        <b-select v-model="localShellType" expanded @input="onShellTypeChange">
+        <b-select v-model="localShellType" expanded @update:model-value="onShellTypeChange">
           <template v-if="isWindows">
             <option value="windows_powershell">Windows PowerShell</option>
             <option value="pwsh">PowerShell Core (pwsh)</option>
