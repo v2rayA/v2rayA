@@ -111,6 +111,7 @@ func run() error {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGKILL, syscall.SIGILL)
 		<-sigs
+		v2ray.ProcessManager.MarkShuttingDown()
 		errch <- nil
 	}()
 	return waitForShutdown(errch, cleanup)

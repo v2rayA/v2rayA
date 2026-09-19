@@ -135,3 +135,37 @@ func TestStartContinuesPastFailedRecovery(t *testing.T) {
 		t.Fatalf("generation = %d, want 1: Start did not progress past recovery", m.generation)
 	}
 }
+
+func TestCoreExitDuringShutdownIsNotACrash(t *testing.T) {
+	env := conf.GetEnvironmentConfig()
+	previous := *env
+	env.Config = t.TempDir()
+	t.Cleanup(func() { *env = previous })
+	if err := configure.SetRunning(true); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.SetLastKernelExitStatus(configure.LastKernelExitRunning); err != nil {
+		t.Fatal(err)
+	}
+	var m CoreProcessManager
+	p := &Process{template: &Template{Setting: configure.NewSetting()}, done: make(chan struct{})}
+	close(p.done)
+	m.p = p
+	// without the mark the same exit is recorded as a crash
+	m.handleUnexpectedStop(p)
+	if configure.GetLastKernelExitStatus() != configure.LastKernelExitCrashed {
+		t.Fatalf("status %v after an unexpected core exit", configure.GetLastKernelExitStatus())
+	}
+	if err := configure.SetRunning(true); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.SetLastKernelExitStatus(configure.LastKernelExitRunning); err != nil {
+		t.Fatal(err)
+	}
+	m.p = p
+	m.MarkShuttingDown()
+	m.handleUnexpectedStop(p)
+	if !configure.GetRunning() || configure.GetLastKernelExitStatus() != configure.LastKernelExitRunning {
+		t.Fatalf("running=%v status=%v after a core exit during shutdown", configure.GetRunning(), configure.GetLastKernelExitStatus())
+	}
+}

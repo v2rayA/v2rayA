@@ -19,6 +19,7 @@ import (
 )
 
 type CoreProcessManager struct {
+	shuttingDown     atomic.Bool
 	p                *Process
 	startMu          sync.Mutex
 	mu               sync.Mutex
@@ -277,10 +278,22 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false, "networkPaused": false})
 }
 
+// MarkShuttingDown records that the service is exiting: a core that dies
+// now died with it (systemd sends the whole cgroup SIGTERM), not on its own.
+func (m *CoreProcessManager) MarkShuttingDown() {
+	m.shuttingDown.Store(true)
+}
+
 func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.p != p {
+		return
+	}
+	if m.shuttingDown.Load() {
+		// keep running=true and the "running" exit status so the next start
+		// restores the core instead of reporting a crash
+		m.stop(false)
 		return
 	}
 	m.stop(true)

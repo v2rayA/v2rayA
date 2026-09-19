@@ -8,6 +8,7 @@ Wants=network.target
 Type=simple
 ExecStart=/usr/bin/v2raya --lite --log-disable-timestamp
 Environment=V2RAYA_LOG_FILE=%L/v2raya/v2raya.log
+KillMode=mixed
 Restart=on-failure
 
 [Install]
