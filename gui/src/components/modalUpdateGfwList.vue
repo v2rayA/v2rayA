@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ $t("gfwList.title") }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <b-message type="is-info" class="after-line-dot5">
@@ -44,9 +45,11 @@
 </template>
 <script>
 import { handleResponse } from "@/assets/js/utils";
+import { openLoading } from "@/plugins/session";
 
 export default {
   name: "modalUpdateGfwList",
+  emits: ["close"],
   data: () => ({
     disableDeleteBtn: false,
     downloadLink: "",
@@ -81,7 +84,7 @@ export default {
         });
         return;
       }
-      let loading = this.$buefy.loading.open();
+      let loading = openLoading(this);
       this.$axios({
         url: apiRoot + "/gfwList",
         method: "put",

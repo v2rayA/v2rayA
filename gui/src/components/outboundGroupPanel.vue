@@ -1,17 +1,20 @@
 <template>
   <div class="ogp-wrapper">
-    <b-tag
-      class="pointerTag"
-      type="is-info"
-      :icon-right="menuOpen ? 'chevron-up' : 'chevron-down'"
-      role="button"
-      tabindex="0"
-      @click.native.stop="toggleMenu"
-      @keydown.native.enter.prevent.stop="toggleMenu"
-      @keydown.native.space.prevent.stop="toggleMenu"
+    <span
+      @click.stop="toggleMenu"
+      @keydown.enter.prevent.stop="toggleMenu"
+      @keydown.space.prevent.stop="toggleMenu"
     >
-      <span class="tag-text">{{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}</span>
-    </b-tag>
+      <b-tag
+        class="pointerTag"
+        type="is-info"
+        :icon-right="menuOpen ? 'chevron-up' : 'chevron-down'"
+        role="button"
+        tabindex="0"
+      >
+        <span class="tag-text">{{ $t("common.proxyGroups") }}: {{ currentOutbound.toUpperCase() }}</span>
+      </b-tag>
+    </span>
 
     <!-- Persistent expandable menu: close only on outside click or manual toggle -->
     <div v-if="menuOpen" class="ogp-panel" @click.stop>
@@ -99,7 +102,7 @@
     </div>
 
     <!-- Node picker modal (outside dropdown to avoid z-index issues) -->
-    <b-modal :active.sync="showPicker" has-modal-card trap-focus>
+    <b-modal v-model="showPicker" has-modal-card trap-focus>
       <div class="modal-card" style="max-width: 520px; margin: auto">
         <header class="modal-card-head">
           <p class="modal-card-title">
@@ -108,6 +111,7 @@
               {{ pickerGroup ? pickerGroup.toUpperCase() : "" }}
             </b-tag>
           </p>
+          <button type="button" class="delete" aria-label="close" @click="showPicker = false"></button>
         </header>
         <section class="modal-card-body" style="min-height: 200px; max-height: 60vh; overflow-y: auto">
           <b-input
@@ -117,7 +121,7 @@
             style="margin-bottom: 0.75rem"
           ></b-input>
           <div v-if="loadingNodes" style="text-align: center; padding: 2rem">
-            <b-loading :is-full-page="false" :active="true"></b-loading>
+            <b-loading :is-full-page="false" :model-value="true"></b-loading>
           </div>
           <template v-else>
             <div
@@ -166,6 +170,7 @@ import i18n from "@/plugins/i18n";
 
 export default {
   name: "OutboundGroupPanel",
+  emits: ["add-outbound", "changed", "group-deleted", "select"],
   i18n,
   props: {
     outbounds: { type: Array, default: () => ["proxy"] },
@@ -379,7 +384,7 @@ export default {
     toggleNode(node) {
       if (!this.pickerGroup || this.saving) return;
       const key = this.whichKey(node);
-      this.$set(this.draftSelectionMap, key, !this.draftSelectionMap[key]);
+      this.draftSelectionMap[key] = !this.draftSelectionMap[key];
     },
     async savePickerChanges() {
       if (!this.pickerGroup || this.saving) {
@@ -517,7 +522,7 @@ export default {
   mounted() {
     document.addEventListener("click", this.handleDocumentClick, true);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     document.removeEventListener("click", this.handleDocumentClick, true);
   },
 };

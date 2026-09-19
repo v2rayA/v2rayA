@@ -1,19 +1,41 @@
 "use strict";
 
-import Vue from "vue";
 import axios from "axios";
-import {
-  SnackbarProgrammatic,
-  ToastProgrammatic,
-  ModalProgrammatic,
-} from "buefy";
 import { escapeHtml, parseURL } from "@/assets/js/utils";
 import browser from "@/assets/js/browser";
-import modalCustomPorts from "../components/modalCustomPorts";
 import i18n from "../plugins/i18n";
 import { nanoid } from "nanoid";
+import { registerProgrammatic, buefy } from "@/plugins/session";
 
-Vue.prototype.$axios = axios;
+// Programmatic instances mount in their own app and outlive the root
+// tree; register the handles so session.restart() closes them.
+function openSnackbar(params) {
+  const handle = buefy().snackbar.open(params);
+  registerProgrammatic(handle);
+  return handle;
+}
+
+function openModalProgrammatic(params) {
+  const handle = buefy().modal.open(params);
+  registerProgrammatic(handle);
+  return handle;
+}
+
+// modalCustomPorts is a Vue component. Importing it statically here creates
+// axios -> modalCustomPorts -> session -> App -> modalCustomPorts, and App's
+// top-level `components` registration reads the default export before
+// modalCustomPorts finishes evaluating (TDZ), so the app fails to boot.
+// Import it lazily at the moment the action runs.
+async function openCustomPortsModal() {
+  const { default: modalCustomPorts } = await import(
+    "../components/modalCustomPorts"
+  );
+  openModalProgrammatic({
+    component: modalCustomPorts,
+    hasModalCard: true,
+    customClass: "modal-custom-ports",
+  });
+}
 
 axios.defaults.timeout = 60 * 1000; // timeout: 60秒
 // The backend reads object query parameters (touch, whiches) as JSON text,
@@ -44,7 +66,7 @@ axios.interceptors.request.use(
   },
   (err) => {
     console.log("!", err.name, err.message);
-    ToastProgrammatic.open({
+    buefy().toast.open({
       message: err.message,
       type: "is-warning",
       position: "is-top",
@@ -60,29 +82,25 @@ function informNotRunning(url = localStorage["backendAddress"]) {
     return;
   }
   informed = url;
-  SnackbarProgrammatic.open({
-    message: i18n.t("axios.messages.optimizeBackend"),
+  openSnackbar({
+    message: i18n.global.t("axios.messages.optimizeBackend"),
     type: "is-primary",
     duration: 10000,
     position: "is-top",
-    actionText: i18n.t("operations.yes"),
+    actionText: i18n.global.t("operations.yes"),
     onAction: () => {
       // this.showCustomPorts = true;
-      ModalProgrammatic.open({
-        component: modalCustomPorts,
-        hasModalCard: true,
-        customClass: "modal-custom-ports",
-      });
+      openCustomPortsModal();
     },
   });
-  SnackbarProgrammatic.open({
-    message: i18n.t("axios.messages.noBackendFound", { url }),
+  openSnackbar({
+    message: i18n.global.t("axios.messages.noBackendFound", { url }),
     type: "is-warning",
     position: "is-top",
     duration: 10000,
-    actionText: i18n.t("operations.helpManual"),
+    actionText: i18n.global.t("operations.helpManual"),
     onAction: () => {
-      window.open(i18n.t("axios.urls.usage"), "_blank");
+      window.open(i18n.global.t("axios.urls.usage"), "_blank");
     },
   });
 }
@@ -131,7 +149,7 @@ axios.interceptors.response.use(
       /^http:\/\//i.test(err.config.url)
     ) {
       // https frontend communicating with http backend
-      let msg = i18n.t("axios.messages.cannotCommunicate.0");
+      let msg = i18n.global.t("axios.messages.cannotCommunicate.0");
       if (host === "localhost" || host === "local" || host === "127.0.0.1") {
         if (browser.versions.webKit) {
           // Chrome and other WebKit browsers allow access to http://localhost, 
@@ -140,32 +158,28 @@ axios.interceptors.response.use(
           return Promise.reject(err);
         }
         if (browser.versions.gecko) {
-          msg = i18n.t("axios.messages.cannotCommunicate.1");
+          msg = i18n.global.t("axios.messages.cannotCommunicate.1");
         }
       }
-      SnackbarProgrammatic.open({
+      openSnackbar({
         message: msg,
         type: "is-warning",
         position: "is-top",
         duration: 10000,
-        actionText: i18n.t("operations.switchSite"),
+        actionText: i18n.global.t("operations.switchSite"),
         onAction: () => {
           window.open("http://v.v2raya.org", "_self");
         },
       });
-      SnackbarProgrammatic.open({
-        message: i18n.t("axios.messages.optimizeBackend"),
+      openSnackbar({
+        message: i18n.global.t("axios.messages.optimizeBackend"),
         type: "is-primary",
         duration: 10000,
         position: "is-top",
-        actionText: i18n.t("operations.yes"),
+        actionText: i18n.global.t("operations.yes"),
         onAction: () => {
           // this.showCustomPorts = true;
-          ModalProgrammatic.open({
-            component: modalCustomPorts,
-            hasModalCard: true,
-            customClass: "modal-custom-ports",
-          });
+          openCustomPortsModal();
         },
       });
     } else if (
@@ -185,7 +199,7 @@ axios.interceptors.response.use(
         return Promise.reject(err);
       }
       console.log("!other");
-      ToastProgrammatic.open({
+      buefy().toast.open({
         message: err,
         type: "is-warning",
         position: "is-top",
@@ -195,5 +209,9 @@ axios.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+export function install(app) {
+  app.config.globalProperties.$axios = axios;
+}
 
 export default axios;

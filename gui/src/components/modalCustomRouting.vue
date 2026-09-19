@@ -5,6 +5,7 @@
   >
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("customRouting.title") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body rules">
       <b-message type="is-info" class="after-line-dot5">
@@ -27,9 +28,8 @@
         <p>{{ $t("customRouting.messages.2") }}</p>
       </b-message>
       <b-collapse class="card">
+        <template #trigger="props">
         <div
-          slot="trigger"
-          slot-scope="props"
           class="card-header"
           role="button"
         >
@@ -40,6 +40,7 @@
             <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"> </b-icon>
           </a>
         </div>
+        </template>
         <div class="card-content">
           <b-field
             :label="$t('customRouting.defaultRoutingRule')"
@@ -58,9 +59,8 @@
         :key="rule.value"
         class="card"
       >
+        <template #trigger="props">
         <div
-          slot="trigger"
-          slot-scope="props"
           class="card-header"
           role="button"
         >
@@ -78,6 +78,7 @@
             <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
+        </template>
         <div class="card-content">
           <b-field
             :label="$t('customRouting.domainFile')"
@@ -159,7 +160,7 @@
         <button class="button btn-new" type="button" @click="handleNew">
           {{ $t("customRouting.appendRule") }}
         </button>
-        <button class="button" type="button" @click="$parent.close()">
+        <button class="button" type="button" @click="$emit('close')">
           {{ $t("operations.cancel") }}
         </button>
         <button class="button is-primary" @click="handleClickSubmit">
@@ -174,6 +175,7 @@
 import { handleResponse } from "@/assets/js/utils";
 export default {
   name: "ModalCustomRouting",
+  emits: ["close"],
   data: () => ({
     customPac: {
       defaultProxyMode: "",
@@ -225,7 +227,7 @@ export default {
       });
       this.customPac = customPac;
       if (closing) {
-        this.$parent.close();
+        this.$emit("close");
       }
     })();
   },
@@ -270,7 +272,7 @@ export default {
         },
       }).then((res) => {
         handleResponse(res, this, () => {
-          this.$parent.close();
+          this.$emit("close");
         }, null, "customRouting.saveFailed");
       });
     },

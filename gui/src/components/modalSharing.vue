@@ -2,6 +2,7 @@
   <div class="modal-card" style="max-width: 500px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title has-text-centered">{{ title }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body lazy" style="text-align: center">
       <div><canvas id="canvas" class="qrcode"></canvas></div>
@@ -41,6 +42,7 @@ import i18n from "@/plugins/i18n";
 
 export default {
   name: "ModalSharing",
+  emits: ["close"],
   i18n,
   props: {
     title: {

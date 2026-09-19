@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ $tc("log.logModalTitle") }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section ref="section" :class="{ 'modal-card-body': true }">
       <div class="log-title">{{ $t("log.logsLabel") }}</div>
@@ -51,7 +52,7 @@
           <div class="log-footer-item">
             <div class="log-footer-label">{{ $tc("log.refreshInterval") }}</div>
             <div class="log-footer-control">
-              <b-select v-model="intervalTime" @input="changeInterval">
+              <b-select v-model="intervalTime" @update:model-value="changeInterval">
                 <option
                   v-for="candidate in intervalCandidate"
                   :key="candidate"
@@ -95,7 +96,7 @@
           <div class="log-footer-item">
             <div class="log-footer-label">{{ $tc("log.autoShowNew") }}</div>
             <div class="log-footer-control">
-              <b-switch v-model="autoScoll" @input="changeScoll" />
+              <b-switch v-model="autoScoll" @update:model-value="changeScoll" />
             </div>
           </div>
           <div class="log-footer-item">
@@ -119,6 +120,7 @@
 <script>
 import HightlightLog from "@/components/highlightLog";
 export default {
+  emits: ["close"],
   components: { HightlightLog },
   data() {
     return {
@@ -191,7 +193,7 @@ export default {
       this.fetchLog();
     }, this.intervalTime * 1000);
   },
-  destroyed() {
+  unmounted() {
     if (this.narrowQuery) {
       if (this.narrowQuery.removeEventListener) {
         this.narrowQuery.removeEventListener("change", this.onNarrowChange);

@@ -2,6 +2,7 @@
   <div class="modal-card" style="max-width: 400px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("configureSubscription.title") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <b-field :label="$t('subscription.subscription')">
@@ -25,7 +26,7 @@
       </b-field>
     </section>
     <footer class="modal-card-foot flex-end">
-      <button class="button" type="button" @click="$parent.close()">
+      <button class="button" type="button" @click="$emit('close')">
         {{ $t("operations.cancel") }}
       </button>
       <button class="button is-primary" @click="handleClickSubmit">
@@ -38,6 +39,7 @@
 <script>
 export default {
   name: "ModalSubscription",
+  emits: ["submit", "close"],
   props: {
     which: {
       type: Object,

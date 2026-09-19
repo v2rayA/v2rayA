@@ -2,6 +2,7 @@
   <div class="modal-card" style="max-width: 640px; margin: auto">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ $t("customInbound.title") }}</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <!-- Existing custom inbounds list -->
@@ -142,6 +143,7 @@ import i18n from "@/plugins/i18n";
 
 export default {
   name: "ModalCustomInbound",
+  emits: ["close"],
   i18n,
   data: () => ({
     inbounds: [],

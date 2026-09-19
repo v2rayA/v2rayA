@@ -1,12 +1,9 @@
-import Vue from "vue";
-import VueI18n from "vue-i18n";
+import { createI18n } from "vue-i18n";
 import messages from "../locales";
-
-Vue.use(VueI18n);
 
 // Ready translated locale messages
 
-// Create VueI18n instance with options
+// Create i18n instance with options
 let locale = "en";
 let _lang = localStorage["_lang"];
 if (_lang && _lang in messages) {
@@ -21,10 +18,11 @@ if (_lang && _lang in messages) {
   }
 }
 
-const i18n = new VueI18n({
+const i18n = createI18n({
   locale,
   messages,
   fallbackLocale: "en",
+  legacy: true,
 });
 document.documentElement.lang = locale;
 

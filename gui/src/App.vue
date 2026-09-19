@@ -1,17 +1,21 @@
 <template>
   <div id="app">
     <b-navbar ref="navs" fixed-top shadow type="is-light">
-      <template slot="brand">
+      <template #brand>
         <b-navbar-item href="/" class="brand no-select">
           <img src="@/assets/img/v2raya-icon.svg" alt="" class="brand__icon" />
           <span class="brand__name">v2rayA</span>
         </b-navbar-item>
         <b-navbar-item tag="div">
-          <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusType"
-            @mouseenter.native="handleOnStatusMouseEnter" @mouseleave.native="handleOnStatusMouseLeave"
-            @click.native="handleClickStatus" @keydown.native.enter.prevent="handleClickStatus"
-            @keydown.native.space.prevent="handleClickStatus"><span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
-          </b-tag>
+          <span
+            @mouseenter="handleOnStatusMouseEnter" @mouseleave="handleOnStatusMouseLeave"
+            @click="handleClickStatus" @keydown.enter.prevent="handleClickStatus"
+            @keydown.space.prevent="handleClickStatus"
+          >
+            <b-tag id="statusTag" class="pointerTag" role="button" tabindex="0" :type="statusType">
+              <span class="tag-text">{{ coverStatusText ? coverStatusText : runningState.running }}</span>
+            </b-tag>
+          </span>
         </b-navbar-item>
         <b-navbar-item tag="div">
           <OutboundGroupPanel
@@ -25,7 +29,7 @@
           />
         </b-navbar-item>
       </template>
-      <template slot="burger" slot-scope="{ isOpened, toggleActive }">
+      <template #burger="{ isOpened, toggleActive }">
         <a
           class="navbar-burger burger"
           role="button"
@@ -40,26 +44,26 @@
         </a>
       </template>
 
-      <template slot="start"></template>
+      <template #start></template>
 
-      <template slot="end">
+      <template #end>
         <!--        <b-navbar-item tag="router-link" to="/node" :active="nav === 'node'">-->
         <!--          <i class="lucide icon-cloud" style="font-size: 1.4em"></i>-->
         <!--          节点-->
         <!--        </b-navbar-item>-->
-        <b-navbar-item tag="a" @click.native="handleClickSetting">
+        <b-navbar-item tag="a" @click="handleClickSetting">
           <i class="lucide icon-settings" style="font-size: 1.25em"></i>
           {{ $t("common.setting") }}
         </b-navbar-item>
-        <b-navbar-item tag="a" @click.native="handleClickAbout">
+        <b-navbar-item tag="a" @click="handleClickAbout">
           <i class="lucide icon-heart" style="font-size: 1.25em"></i>
           {{ $t("common.about") }}
         </b-navbar-item>
-        <b-navbar-item tag="a" @click.native="handleClickLogs">
+        <b-navbar-item tag="a" @click="handleClickLogs">
           <i class="lucide icon-scroll-text" style="font-size: 1.25em"></i>
           {{ $t("common.log") }}
         </b-navbar-item>
-        <b-navbar-item tag="a" @click.native="toggleTheme">
+        <b-navbar-item tag="a" @click="toggleTheme">
           <i
             :class="['lucide', themePreference === 'auto' ? 'icon-sun-moon' : (isDarkTheme ? 'icon-sun' : 'icon-moon')]"
             style="font-size: 1.25em"
@@ -67,11 +71,13 @@
           {{ themeSwitchLabel }}
         </b-navbar-item>
         <b-dropdown position="is-bottom-left" aria-role="menu" class="langdropdown">
-          <a slot="trigger" class="navbar-item" role="button">
-            <i class="lucide icon-globe" style="font-size: 1.25em; margin-right: 4px"></i>
-            <span class="no-select">{{ currentLangLabel }}</span>
-            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
-          </a>
+          <template #trigger>
+            <a class="navbar-item" role="button">
+              <i class="lucide icon-globe" style="font-size: 1.25em; margin-right: 4px"></i>
+              <span class="no-select">{{ currentLangLabel }}</span>
+              <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
+            </a>
+          </template>
           <b-dropdown-item v-for="lang of langs" :key="lang.code" aria-role="menuitem" class="no-select"
             @click="handleClickLang(lang.code)">
             <span style="font-weight: 500; min-width: 120px; display: inline-block">{{ lang.label }}</span>
@@ -79,12 +85,15 @@
           </b-dropdown-item>
         </b-dropdown>
         <b-dropdown position="is-bottom-left" aria-role="menu" style="margin-right: 10px" class="menudropdown">
-          <a slot="trigger" class="navbar-item" role="button">
-            <i class="lucide icon-user" style="font-size: 1.25em; margin-right: 4px"></i>
-            <span class="no-select">{{ username }}</span>
-            <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
-          </a>
-          <b-dropdown-item custom aria-role="menuitem" v-html="$t('common.loggedAs', { username: usernameHtml })">
+          <template #trigger>
+            <a class="navbar-item" role="button">
+              <i class="lucide icon-user" style="font-size: 1.25em; margin-right: 4px"></i>
+              <span class="no-select">{{ username }}</span>
+              <i class="lucide icon-chevron-down" style="position: relative; top: 1px; left: 2px"></i>
+            </a>
+          </template>
+          <b-dropdown-item custom aria-role="menuitem">
+            <span v-html="$t('common.loggedAs', { username: usernameHtml })"></span>
           </b-dropdown-item>
           <hr class="dropdown-divider" />
           <b-dropdown-item value="logout" aria-role="menuitem" class="no-select" @click="handleClickLogout">
@@ -94,12 +103,12 @@
         </b-dropdown>
       </template>
     </b-navbar>
-    <node ref="nodeRef" v-model="runningState" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
-    <b-modal :active.sync="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
+    <node-list ref="nodeRef" @input="runningState = $event" :outbound="outboundName" :outbounds="outbounds" :observatory="observatory" :load-balance-valid="loadBalanceValid" :core-version-valid="coreVersionValid" :core-version-err="coreVersionErr" />
+    <b-modal v-model="showCustomPorts" has-modal-card trap-focus aria-role="dialog" aria-modal
       class="modal-custom-ports">
       <ModalCustomAddress @close="showCustomPorts = false" />
     </b-modal>
-    <b-modal :active.sync="loginModalActive" has-modal-card trap-focus aria-role="dialog" aria-modal class="modal-login modal-login-app">
+    <b-modal v-model="loginModalActive" has-modal-card trap-focus aria-role="dialog" aria-modal class="modal-login modal-login-app">
       <ModalLogin :first="loginModalFirst" @close="loginModalActive = false" />
     </b-modal>
     <div id="login"></div>
@@ -108,7 +117,7 @@
 
 <script>
 import ModalSetting from "@/components/modalSetting";
-import node from "@/node";
+import NodeList from "@/node";
 import { Base64 } from "js-base64";
 import ModalCustomAddress from "@/components/modalCustomPorts";
 import ModalOutboundSetting from "@/components/modalOutboundSetting";
@@ -118,10 +127,10 @@ import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import ModalLog from "@/components/modalLog";
 import ModalLogin from "@/components/modalLogin";
-import { ModalProgrammatic } from "buefy";
+import { openModal, openLoading } from "@/plugins/session";
 
 export default {
-  components: { ModalCustomAddress, node, OutboundGroupPanel, ModalLogin },
+  components: { ModalCustomAddress, NodeList, OutboundGroupPanel, ModalLogin },
   data() {
     return {
       ws: null,
@@ -215,6 +224,20 @@ export default {
       if (this.themePreference === 'auto') return this.$t('common.autoTheme');
       if (this.themePreference === 'dark') return this.$t('common.darkTheme');
       return this.$t('common.lightTheme');
+    },
+  },
+  watch: {
+    // Programmatic dialogs (a separate app instance) can't reach App.vue's
+    // data; they commit RUNNING and this watch copies it into the data.
+    "$store.state.running"(v) {
+      this.runningState.running = v;
+    },
+    // The data stays the source of truth (node.vue and the start/stop
+    // handlers write it directly); mirroring it back keeps the store
+    // current, so a dialog committing the same text twice, with a run in
+    // between, is still a change the watch above sees.
+    "runningState.running"(v) {
+      this.$store.commit("RUNNING", v);
     },
   },
   mounted() {
@@ -325,7 +348,7 @@ export default {
     });
     this.connectWsMessage();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.ws) {
       // detach first: onclose would otherwise schedule a reconnect from the
       // destroyed instance
@@ -567,8 +590,7 @@ export default {
     handleClickOutboundSetting(event, outbound) {
       event.stopPropagation();
       const that = this;
-      this.$buefy.modal.open({
-        parent: this,
+      openModal(this, {
         component: ModalOutboundSetting,
         hasModalCard: true,
         canCancel: true,
@@ -609,8 +631,7 @@ export default {
     },
     handleClickSetting() {
       const that = this;
-      this.$buefy.modal.open({
-        parent: this,
+      openModal(this, {
         component: ModalSetting,
         hasModalCard: true,
         canCancel: true,
@@ -622,12 +643,13 @@ export default {
       });
     },
     handleClickAbout() {
-      this.$buefy.modal.open({
+      const about = openModal(this, {
         width: 640,
         content: `
 <div class="modal-card" style="margin:auto">
                     <header class="modal-card-head">
                         <p class="modal-card-title">mzz2017 / v2rayA</p>
+                        <button type="button" class="delete" aria-label="close"></button>
                     </header>
                     <section class="modal-card-body lazy">
                         ${this.$t(`about`)}
@@ -642,6 +664,17 @@ export default {
                 </div>
 `,
       });
+      // Raw HTML content cannot bind a Vue handler; wire the head's close
+      // button to the dialog handle once the dialog has rendered (its root
+      // is a placeholder until the opening transition starts).
+      this.$nextTick(() => {
+        const modals = document.querySelectorAll(".modal.is-active");
+        const head = modals[modals.length - 1];
+        const button = head && head.querySelector(".modal-card-head .delete");
+        if (button) {
+          button.addEventListener("click", () => about.close());
+        }
+      });
     },
     handleClickStatus() {
       if (
@@ -649,7 +682,7 @@ export default {
         this.runningState.running === this.$t("common.waitingNetwork")
       ) {
         let cancel;
-        let loading = this.$buefy.loading.open();
+        let loading = openLoading(this);
         waitingConnected(
           this.$axios({
             url: apiRoot + "/v2ray",
@@ -731,8 +764,7 @@ export default {
       this.applyThemeClass();
     },
     handleClickLogs() {
-      this.$buefy.modal.open({
-        parent: this,
+      openModal(this, {
         component: ModalLog,
         hasModalCard: true,
         canCancel: true,
@@ -917,12 +949,6 @@ html {
   }
 }
 
-// Bulma pins .modal-close to the top-right of the viewport, far from the
-// card it closes. Put it on the card instead, at every width; the card is
-// position: relative so the button lands on its corner.
-// Buefy puts .modal-close inside .animation-content, which wraps the card
-// but is stretched to the whole modal, so the button lands in the corner of
-// the screen rather than of the card. Shrink the wrapper to its card.
 // One backdrop value for every dialog: the component library ships several
 // (0.86 opaque here, a lighter one in two components), which read as a
 // shadow around the light card.
@@ -939,33 +965,60 @@ html {
   border-radius: 0 0 6px 6px;
 }
 
+// Shrink the card wrapper to the card so the card centres horizontally.
 .modal .animation-content {
   position: relative;
   width: auto;
   margin: auto;
 }
 
-.modal .modal-close.is-large {
-  // Bulma sets position: fixed on .modal-close, which anchors it to the
-  // viewport; absolute puts it on the wrapper above, i.e. the card corner
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  height: 2rem;
-  width: 2rem;
-  max-height: 2rem;
-  max-width: 2rem;
-  z-index: 1;
-  background-color: transparent;
+// Buefy 3 appends a hidden .touch-dragged-cell after the table wrapper, so
+// the wrapper is no longer the last child and Buefy's
+// `.table-wrapper:not(:last-child)` margin applies below every table. Drop
+// it when the hidden cell is all that follows.
+.b-table > .table-wrapper:nth-last-child(2) {
+  margin-bottom: 0;
+}
 
-  // Bulma draws the glyph as two white bars, which vanish on the light
-  // card head; follow the head's text colour instead.
+// Buefy 3 pins the table's sort icon to the right edge of the header cell,
+// where it lands on top of a short label such as "ID"; 0.9 placed it right
+// after the label. Keep it after the label.
+.b-table .table th .th-wrap {
+  .sort-icon {
+    position: static;
+    margin-left: 0.25rem;
+    // the library's rules carry a translateY for their absolute placement
+    transform: none !important;
+
+    &.is-desc {
+      transform: rotate(180deg) !important;
+    }
+  }
+
+  // numeric headers lay out row-reverse; the icon still goes last visually
+  &.is-numeric .sort-icon {
+    order: -1;
+    margin-left: 0;
+    margin-right: 0.25rem;
+  }
+}
+
+// The close button in the card head is Bulma's .delete, a dark disc with
+// white bars; the dialogs have always shown a bare glyph in the head's
+// text colour, so draw it that way.
+.modal-card-head .delete {
+  --bulma-delete-dimensions: 2rem;
+  // taller than the title line; take the excess out of the head's padding
+  // so the head keeps the height it had without the button
+  margin-top: -0.5rem;
+  margin-bottom: -0.5rem;
+  background-color: transparent;
+  color: rgba(0, 0, 0, 0.75);
+
   &::before,
   &::after {
     background-color: currentColor;
   }
-
-  color: rgba(0, 0, 0, 0.75);
 
   &:hover,
   &:focus {
@@ -974,10 +1027,8 @@ html {
   }
 }
 
-// Phone dialogs: Bulma floats the card in the middle of the viewport
-// (max-height: 100vh - 160px) with the close button fixed at the top of the
-// screen, far above the card. Fill the screen so the card head is at the
-// top and the close button sits at its top-right corner.
+// Phone dialogs: fill the screen so the card head sits at the top instead
+// of floating mid-viewport.
 @media screen and (max-width: 768px) {
   .modal .modal-card {
     margin: 0;
@@ -986,7 +1037,6 @@ html {
     max-height: 100vh;
   }
   .modal .modal-card-head {
-    padding-right: 3.75rem;
     border-radius: 0;
   }
   .modal .modal-card-foot {

@@ -10,12 +10,7 @@ module.exports = {
     "no-debugger": "off",
   },
 
-  parserOptions: {
-    parser: "@babel/eslint-parser",
-    requireConfigFile: false,
-  },
-
-  extends: ["plugin:vue/recommended", "@vue/prettier"],
+  extends: ["plugin:vue/vue3-recommended", "@vue/prettier"],
 
   globals: {
     apiRoot: true,

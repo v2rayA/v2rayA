@@ -2,16 +2,16 @@
   <section id="node-section" class="node-section container hero">
     <b-sidebar
       v-show="connectedServerInfo.length"
-      :open="true"
+      :model-value="true"
       class="node-status-sidebar-reduced"
       :can-cancel="false"
-      @mouseenter.native="showSidebar = true"
-      @click.native="showSidebar = true"
+      @mouseenter="showSidebar = true"
+      @click="showSidebar = true"
     >
       <i class="lucide icon-panel-left sidebar-handle" :title="$t('common.expand')" />
     </b-sidebar>
     <b-sidebar
-      :open="showSidebar"
+      :model-value="showSidebar"
       type="is-light"
       :fullheight="false"
       :fullwidth="false"
@@ -20,56 +20,62 @@
       class="node-status-sidebar"
       :can-cancel="['outside']"
       @close="showSidebar = false"
-      @mouseleave.native="showSidebar = false"
+      @mouseleave="showSidebar = false"
     >
-      <b-message
+      <!-- Buefy 3 declares a click event on b-message but never emits it,
+           so a listener on the component reaches nothing; the card's own
+           element takes the click. -->
+      <div
         v-for="v of connectedServerInfo"
         :key="connectedServerKey(v.which)"
-        :closable="false"
-        size="is-small"
-        :type="
-          v.info.alive
-            ? v.selected
-              ? 'is-primary'
-              : 'is-success'
-            : v.info.alive === null
-            ? 'is-light'
-            : 'is-danger'
-        "
-        @click.native="handleClickConnectedServer(v.which)"
+        @click="handleClickConnectedServer(v.which)"
       >
-        <template #header>
-          <div class="node-status-card__header">
-            <span class="node-status-card__title">{{ formatServerName(v.info) }}</span>
-            <span
-              v-if="formatOutboundLabel(v.which)"
-              class="node-status-card__group"
-            >
-              {{ formatOutboundLabel(v.which) }}
-            </span>
-            <span
-              v-if="v.info.subscription_name"
-              class="node-status-card__subscription"
-            >
-              {{ v.info.subscription_name }}
-            </span>
+        <b-message
+          :closable="false"
+          size="is-small"
+          :type="
+            v.info.alive
+              ? v.selected
+                ? 'is-primary'
+                : 'is-success'
+              : v.info.alive === null
+              ? 'is-light'
+              : 'is-danger'
+          "
+        >
+          <template #header>
+            <div class="node-status-card__header">
+              <span class="node-status-card__title">{{ formatServerName(v.info) }}</span>
+              <span
+                v-if="formatOutboundLabel(v.which)"
+                class="node-status-card__group"
+              >
+                {{ formatOutboundLabel(v.which) }}
+              </span>
+              <span
+                v-if="v.info.subscription_name"
+                class="node-status-card__subscription"
+              >
+                {{ v.info.subscription_name }}
+              </span>
+            </div>
+          </template>
+          <div v-if="v.showContent" class="node-status-card__body">
+            <p>{{ $t("server.protocol") }}: {{ v.info.net }}</p>
+            <p v-if="v.info.delay && v.info.delay < 99999">
+              {{ $t("server.latency") }}: {{ v.info.delay }}ms
+            </p>
+            <p v-if="!v.info.alive && v.info.last_seen_time">
+              {{ $t("server.lastSeenTime") }}:
+              {{ unix2datetime(v.info.last_seen_time) }}
+            </p>
+            <p v-if="v.info.last_try_time">
+              {{ $t("server.lastTryTime") }}:
+              {{ unix2datetime(v.info.last_try_time) }}
+            </p>
           </div>
-        </template>
-        <div v-if="v.showContent" class="node-status-card__body">
-          <p>{{ $t("server.protocol") }}: {{ v.info.net }}</p>
-          <p v-if="v.info.delay && v.info.delay < 99999">
-            {{ $t("server.latency") }}: {{ v.info.delay }}ms
-          </p>
-          <p v-if="!v.info.alive && v.info.last_seen_time">
-            {{ $t("server.lastSeenTime") }}:
-            {{ v.info.last_seen_time | unix2datetime }}
-          </p>
-          <p v-if="v.info.last_try_time">
-            {{ $t("server.lastTryTime") }}:
-            {{ v.info.last_try_time | unix2datetime }}
-          </p>
-        </div>
-      </b-message>
+        </b-message>
+      </div>
     </b-sidebar>
     <b-notification
       v-if="ready && coreVersionValid === false"
@@ -182,9 +188,8 @@
         class="card welcome-driver"
         aria-id="contentIdForA11y3"
       >
+        <template #trigger="props">
         <div
-          slot="trigger"
-          slot-scope="props"
           class="card-header"
           role="button"
           aria-controls="contentIdForA11y3"
@@ -196,6 +201,7 @@
             <b-icon :icon="props.open ? 'chevron-down' : 'chevron-up'"></b-icon>
           </a>
         </div>
+        </template>
         <div class="card-content">
           <div class="content">
             <p>{{ $t("welcome.messages.0") }}</p>
@@ -217,13 +223,13 @@
         position="is-centered"
         type="is-toggle-rounded"
         class="main-tabs"
-        @input="handleTabsChange"
+        @update:model-value="handleTabsChange"
       >
         <b-tab-item :label="$t('subscription.subscription')">
           <b-field :label="`${$t('subscription.subscription')}(${tableData.subscriptions.length})`">
             <b-table
               :data="tableData.subscriptions"
-              :checked-rows.sync="checkedRows"
+              v-model:checked-rows="checkedRows"
               default-sort="id"
               checkable
             >
@@ -316,9 +322,9 @@
           <b-field :label="`${$t('server.server')}(${tableData.servers.length})`">
             <b-table
               per-page="100"
-              :current-page.sync="currentPage.servers"
+              v-model:current-page="currentPage.servers"
               :data="tableData.servers"
-              :checked-rows.sync="checkedRows"
+              v-model:checked-rows="checkedRows"
               checkable
               default-sort="id"
             >
@@ -387,14 +393,15 @@
                     v-if="loadBalanceValid"
                     position="is-bottom-left"
                   >
+                    <template #trigger>
                     <b-button
-                      slot="trigger"
                       size="is-small"
                       type="is-primary"
                       icon-right="chevron-down"
                     >
                       {{ $t("operations.addTo") }}
                     </b-button>
+                    </template>
                     <b-dropdown-item
                       v-for="group in outbounds"
                       :key="group"
@@ -458,10 +465,10 @@
             :label="`${sub.host.toUpperCase()} (${sub.servers.length})${sub.info ? ' · ' + sub.info : ''}`"
           >
             <b-table
-              :current-page.sync="currentPage[sub.id]"
+              v-model:current-page="currentPage[sub.id]"
               per-page="100"
               :data="sub.servers"
-              :checked-rows.sync="checkedRows"
+              v-model:checked-rows="checkedRows"
               checkable
               default-sort="id"
             >
@@ -531,14 +538,15 @@
                     v-if="loadBalanceValid"
                     position="is-bottom-left"
                   >
+                    <template #trigger>
                     <b-button
-                      slot="trigger"
                       size="is-small"
                       type="is-primary"
                       icon-right="chevron-down"
                     >
                       {{ $t("operations.addTo") }}
                     </b-button>
+                    </template>
                     <b-dropdown-item
                       v-for="group in outbounds"
                       :key="group"
@@ -591,11 +599,11 @@
         </b-tab-item>
       </b-tabs>
     </div>
-    <b-loading v-else :is-full-page="true" :active="true">
+    <b-loading v-else :is-full-page="true" :model-value="true">
       <i class="lucide icon-loader-circle" />
     </b-loading>
     <b-modal
-      :active.sync="showModalServer"
+      v-model="showModalServer"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -605,10 +613,11 @@
         :which="which"
         :readonly="modalServerReadOnly"
         @submit="handleModalServerSubmit"
+        @close="showModalServer = false"
       />
     </b-modal>
     <b-modal
-      :active.sync="showModalSubscription"
+      v-model="showModalSubscription"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -617,6 +626,7 @@
       <ModalSubscription
         :which="which"
         @submit="handleModalSubscriptionSubmit"
+        @close="showModalSubscription = false"
       />
     </b-modal>
     <input
@@ -626,7 +636,7 @@
       accept="image/*"
     />
     <b-modal
-      :active.sync="showModalImport"
+      v-model="showModalImport"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -636,6 +646,7 @@
       <div class="modal-card" style="width: 350px">
         <header class="modal-card-head">
           <p class="modal-card-title">{{ $t("operations.import") }}</p>
+          <button type="button" class="delete" aria-label="close" @click="showModalImport = false"></button>
         </header>
         <section class="modal-card-body">
           <b-field>
@@ -667,7 +678,7 @@
             icon-right="camera"
             icon-right-clickable
             @icon-right-click="handleClickImportQRCode"
-            @keyup.native="handleImportEnter"
+            @keyup="handleImportEnter"
           ></b-input>
         </section>
         <footer class="modal-card-foot">
@@ -706,7 +717,7 @@
       </div>
     </b-modal>
     <b-modal
-      :active.sync="showModalImportInBatch"
+      v-model="showModalImportInBatch"
       has-modal-card
       trap-focus
       aria-role="dialog"
@@ -716,6 +727,7 @@
       <div class="modal-card" style="width: 350px">
         <header class="modal-card-head">
           <p class="modal-card-title">{{ $t("operations.import") }}</p>
+          <button type="button" class="delete" aria-label="close" @click="showModalImportInBatch = false"></button>
         </header>
         <section class="modal-card-body">
           {{ $t("import.batchMessage") }}
@@ -780,19 +792,15 @@ import { waitingConnected } from "@/assets/js/networkInspect";
 import axios from "@/plugins/axios";
 import dayjs from "dayjs";
 import i18n from "@/plugins/i18n";
+import { openModal, openLoading } from "@/plugins/session";
 
 // vue-i18n locale -> dayjs locale (all loaded in plugins/dayjs.js)
 const DAYJS_LOCALES = { zh: "zh-cn", en: "en", fa: "fa", ru: "ru", pt: "pt-br", ko: "ko" };
 
 export default {
-  name: "Node",
+  name: "NodeList",
+  emits: ["input"],
   components: { ModalSubscription, ModalServer },
-  filters: {
-    unix2datetime(x) {
-      x = dayjs.unix(x);
-      return dayjs().locale(DAYJS_LOCALES[i18n.locale] || "en").to(x);
-    },
-  },
   props: {
     outbound: {
       type: String,
@@ -940,7 +948,7 @@ export default {
     };
     loadTouch();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.clipboard.destroy();
     window.removeEventListener("scroll", this.handleWindowScroll);
     clearTimeout(this.scrollTimer);
@@ -974,6 +982,10 @@ export default {
     }
   },
   methods: {
+    unix2datetime(x) {
+      x = dayjs.unix(x);
+      return dayjs().locale(DAYJS_LOCALES[i18n.global.locale] || "en").to(x);
+    },
     handleWindowScroll(e) {
       clearTimeout(this.scrollTimer);
       this.scrollTimer = setTimeout(() => {
@@ -1609,8 +1621,7 @@ export default {
         this.connectToProxyGroup(row, sub, groups[0]);
         return;
       }
-      this.$buefy.modal.open({
-        parent: this,
+      openModal(this, {
         component: ModalPickProxyGroup,
         hasModalCard: true,
         canCancel: true,
@@ -1627,7 +1638,7 @@ export default {
     },
     connectToProxyGroup(row, sub, outbound) {
       let cancel;
-      let loading = this.$buefy.loading.open();
+      let loading = openLoading(this);
       waitingConnected(
         this.$axios({
           url: apiRoot + "/connection",
@@ -1711,7 +1722,7 @@ export default {
         }]);
       }
 
-      const loading = this.$buefy.loading.open();
+      const loading = openLoading(this);
       this.$axios({
         url: apiRoot + "/outboundConnections",
         method: "put",
@@ -1955,7 +1966,7 @@ export default {
         },
       }).then((res) => {
         handleResponse(res, this, () => {
-          this.$buefy.modal.open({
+          openModal(this, {
             width: 500,
             component: ModalSharing,
             props: {
@@ -2086,7 +2097,7 @@ td {
 </style>
 
 <style lang="scss">
-@import "bulma/sass/utilities/all.sass";
+@use "bulma/sass/utilities" as bulma;
 
 #toolbar {
   @media screen and (max-width: 450px) {
@@ -2283,7 +2294,7 @@ $coverBackground: rgba(0, 0, 0, 0.6);
 }
 
 #tag-cover-text {
-  color: findColorInvert($coverBackground);
+  color: bulma.bulmaFindColorInvert($coverBackground);
   position: absolute;
   top: 0;
   left: 0;

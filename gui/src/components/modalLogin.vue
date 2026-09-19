@@ -4,6 +4,7 @@
       <p class="modal-card-title">
         {{ first ? $t("register.title") : `${$t("login.title")} - v2rayA` }}
       </p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <p style="text-align: center">
@@ -13,7 +14,7 @@
         <b-input
           ref="username"
           v-model="username"
-          @keyup.enter.native="handleEnter"
+          @keyup.enter="handleEnter"
         ></b-input>
       </b-field>
       <b-field :label="$t('login.password')" type="is-success">
@@ -21,7 +22,7 @@
           v-model="password"
           type="password"
           :maxlength="first ? '32' : ''"
-          @keyup.enter.native="handleEnter"
+          @keyup.enter="handleEnter"
         ></b-input>
       </b-field>
       <b-message v-if="first" type="is-info" class="after-line-dot5">
@@ -48,6 +49,7 @@ import { handleResponse } from "@/assets/js/utils";
 import i18n from "@/plugins/i18n";
 
 export default {
+  emits: ["close"],
   i18n,
   name: "ModalLogin",
   props: {

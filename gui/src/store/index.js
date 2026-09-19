@@ -1,12 +1,10 @@
-import Vue from "vue";
-import Vuex from "vuex";
+import { createStore } from "vuex";
 import i18n from "../plugins/i18n";
 
-Vue.use(Vuex);
-export default new Vuex.Store({
+export default createStore({
   state: {
     nav: "",
-    running: i18n.t("common.checkRunning"),
+    running: i18n.global.t("common.checkRunning"),
     connectedServer: {},
   },
   mutations: {

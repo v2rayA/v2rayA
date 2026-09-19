@@ -6,6 +6,7 @@
   >
     <header class="modal-card-head">
       <p class="modal-card-title">RoutingA</p>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body rules">
       <!-- Deprecation warning for inbound definitions -->
@@ -13,7 +14,6 @@
         v-if="hasInboundDef"
         type="is-warning"
         size="is-small"
-        :active="true"
         closable
         @close="hasInboundDef = false"
       >
@@ -44,7 +44,7 @@
         <button class="button btn-left" @click="handleClickManual">
           {{ $t("operations.helpManual") }}
         </button>
-        <button class="button" type="button" @click="$parent.close()">
+        <button class="button" type="button" @click="$emit('close')">
           {{ $t("operations.cancel") }}
         </button>
         <button class="button is-primary" @click="handleClickSubmit">
@@ -60,6 +60,7 @@ import { handleResponse } from "@/assets/js/utils";
 
 export default {
   name: "ModalCustomRoutingA",
+  emits: ["close"],
   data: () => ({
     routingA: "",
     hasInboundDef: false,
@@ -77,12 +78,12 @@ export default {
             this.checkInboundDef();
           },
           () => {
-            this.$parent.close();
+            this.$emit("close");
           }
         );
       })
       .catch(() => {
-        this.$parent.close();
+        this.$emit("close");
       });
     this.initRoutingAAnimationContentStyle();
   },
@@ -146,7 +147,7 @@ export default {
               duration: 8000,
             });
           }
-          this.$parent.close();
+          this.$emit("close");
         }, null, "routingA.saveFailed");
       });
     },

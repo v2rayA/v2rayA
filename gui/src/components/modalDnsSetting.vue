@@ -12,6 +12,7 @@
         <b-icon icon="circle-help" size="is-small" />
         {{ $t("dns.help") }}
       </a>
+      <button type="button" class="delete" aria-label="close" @click="$emit('close')"></button>
     </header>
     <section class="modal-card-body">
       <!-- DNS rules table -->
@@ -104,6 +105,7 @@ const DEFAULT_RULES = [
 
 export default {
   name: "ModalDnsSetting",
+  emits: ["close"],
   data: () => ({
     rules: DEFAULT_RULES.map((r) => ({ ...r })),
     outbounds: ["proxy"],
