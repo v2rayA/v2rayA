@@ -90,6 +90,9 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 	content := u
 	// try to parse the ss:// link, if it fails, base64 decode first
 	if v, ok = parse(content); !ok {
+		if len(content) <= len("ss://") {
+			return nil, fmt.Errorf("%w: ss link too short", ErrInvalidParameter)
+		}
 		// 进行base64解码，并unmarshal到VmessInfo上
 		t := content[5:]
 		var l, r string

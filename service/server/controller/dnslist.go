@@ -20,6 +20,11 @@ type DnsConfigResponse struct {
 // PutDnsRules 处理 PUT /api/dns 请求，保存 DNS 规则配置。
 // 支持新格式和旧格式请求，向后兼容。
 func PutDnsRules(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var rules []configure.DnsRule
 	if err := ctx.ShouldBindJSON(&rules); err != nil {
 		common.ResponseError(ctx, badRequest("DNS rules", fmt.Errorf("request body must be a JSON array of DNS rules: %w", err)))

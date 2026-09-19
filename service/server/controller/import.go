@@ -11,6 +11,11 @@ import (
 )
 
 func PostImport(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var body struct {
 		URL string `json:"url"`
 		// Kind is "server" or "subscription". Empty means the client did not

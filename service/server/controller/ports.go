@@ -26,6 +26,11 @@ func getHostnameFromHost(host string) string {
 }
 
 func PutPorts(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data configure.Ports
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {

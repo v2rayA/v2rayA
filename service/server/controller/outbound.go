@@ -19,6 +19,11 @@ func GetOutbounds(ctx *gin.Context) {
 }
 
 func PostOutbound(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		Outbound string `json:"outbound"`
 	}
@@ -41,6 +46,11 @@ func GetOutbound(ctx *gin.Context) {
 }
 
 func PutOutbound(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		Outbound string                    `json:"outbound"`
 		Setting  configure.OutboundSetting `json:"setting"`

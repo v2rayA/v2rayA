@@ -261,3 +261,19 @@ func TestExportedBase64IsUnpadded(t *testing.T) {
 		t.Errorf("round trip changed the credentials: %q/%q", back.Cipher, back.Password)
 	}
 }
+
+func TestDegenerateLinksDoNotPanic(t *testing.T) {
+	for _, link := range []string{"ss:", "ss:x", "vmess:", "vmess:x", "ssr:", "trojan:", "vless:"} {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("%q panicked: %v", link, r)
+				}
+			}()
+			scheme := link[:strings.Index(link, ":")]
+			if _, err := NewFromLink(scheme, link); err == nil {
+				t.Fatalf("%q parsed", link)
+			}
+		}()
+	}
+}
