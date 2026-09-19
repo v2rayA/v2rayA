@@ -62,6 +62,7 @@ import OnboardingDialog, {
 import { onSessionTeardown, resetSession, setSessionStarter } from "@/session";
 import { setRefresher } from "@/session/refresh";
 import { useAppStore, type Running } from "@/stores/app";
+import { runningOf } from "@/views/nodes/model";
 import { vuetifyLocales } from "@/theme";
 import { schemeColors } from "@/theme/scheme";
 import logo from "@/assets/img/v2raya-icon.svg";
@@ -283,7 +284,10 @@ async function toggleRunning() {
         );
         // the watcher may win the race; the confirmed state comes from a touch
         const touch = res ?? (await getTouch());
-        store.setRunning(touch.running ? "running" : "stopped");
+        store.setRunning(
+          runningOf(touch.running, touch.networkPaused),
+          touch.networkPaused,
+        );
         store.connectedServer = touch.touch.connectedServer ?? [];
         void pageRef.value?.sync?.();
       } catch (err) {
