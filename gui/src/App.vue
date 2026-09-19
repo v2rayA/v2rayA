@@ -972,6 +972,14 @@ html {
   margin: auto;
 }
 
+// Buefy 3 appends a hidden .touch-dragged-cell after the table wrapper, so
+// the wrapper is no longer the last child and Buefy's
+// `.table-wrapper:not(:last-child)` margin applies below every table. Drop
+// it when the hidden cell is all that follows.
+.b-table > .table-wrapper:nth-last-child(2) {
+  margin-bottom: 0;
+}
+
 // Buefy 3 pins the table's sort icon to the right edge of the header cell,
 // where it lands on top of a short label such as "ID"; 0.9 placed it right
 // after the label. Keep it after the label.
@@ -1000,6 +1008,10 @@ html {
 // text colour, so draw it that way.
 .modal-card-head .delete {
   --bulma-delete-dimensions: 2rem;
+  // taller than the title line; take the excess out of the head's padding
+  // so the head keeps the height it had without the button
+  margin-top: -0.5rem;
+  margin-bottom: -0.5rem;
   background-color: transparent;
   color: rgba(0, 0, 0, 0.75);
 
