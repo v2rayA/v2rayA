@@ -49,7 +49,7 @@ Function Build-v2rayA(){
     #Build v2raya-core (xray-core from go mod + MultiObservatory)
     Set-Location -Path "$CurrentPath/core"
     ${env:CGO_ENABLED} = "0"
-    go build -trimpath -trimpath -ldflags "-s -w" -o "$CurrentPath/$v2rayaCoreBin" ./main
+    go build -trimpath -trimpath -ldflags "-X main.Version=$version -s -w" -o "$CurrentPath/$v2rayaCoreBin" ./main
     #Build v2rayA
     Set-Location -Path "$CurrentPath/service"
     if ($env:GOOS -eq "windows") {

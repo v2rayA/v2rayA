@@ -5,8 +5,8 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 
+	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/main/commands/base"
 )
 
@@ -28,10 +28,8 @@ func executeVersion(cmd *base.Command, args []string) {
 // printVersion prints the version string.
 // The first line MUST start with "V2RAYA_CORE " for v2rayA variant detection.
 func printVersion() {
-	fmt.Printf("V2RAYA_CORE %s (xray-core) (%s %s/%s)\n",
+	fmt.Printf("V2RAYA_CORE %s (based on xray-core %s)\n",
 		Version,
-		runtime.Version(),
-		runtime.GOOS,
-		runtime.GOARCH,
+		core.Version(),
 	)
 }
