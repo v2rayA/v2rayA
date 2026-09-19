@@ -349,10 +349,19 @@ func ListRemove(bucket, key string, indexes []int) error {
 }
 
 func ServersRemove(indexes []int) error {
+	return serversRemove(GetDB(), indexes)
+}
+
+// execer is what a removal needs from either the pool or one transaction.
+type execer interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+}
+
+func serversRemove(db execer, indexes []int) error {
 	if len(indexes) == 0 {
 		return fmt.Errorf("ListRemove: nothing to remove")
 	}
-	db := GetDB()
 	for _, idx := range indexes {
 		_, err := db.Exec("DELETE FROM servers WHERE type = 'server' AND sort = ?", idx)
 		if err != nil {
@@ -370,10 +379,13 @@ func ServersRemove(indexes []int) error {
 }
 
 func SubscriptionsRemove(indexes []int) error {
+	return subscriptionsRemove(GetDB(), indexes)
+}
+
+func subscriptionsRemove(db execer, indexes []int) error {
 	if len(indexes) == 0 {
 		return fmt.Errorf("ListRemove: nothing to remove")
 	}
-	db := GetDB()
 	for _, idx := range indexes {
 		var subID int64
 		err := db.QueryRow("SELECT id FROM subscriptions WHERE sort = ?", idx).Scan(&subID)
@@ -400,6 +412,28 @@ func SubscriptionsRemove(indexes []int) error {
 		)
 	`)
 	return err
+}
+
+// RemoveTx deletes subscriptions and servers by ordinal, and stores the
+// connected lists that were renumbered for the deletion, in one
+// transaction: a reader never sees ordinals that point at the wrong row.
+func RemoveTx(subscriptions, servers []int, connected func(tx *sql.Tx) error) error {
+	return ReadModifyWrite(func(tx *sql.Tx) error {
+		if err := connected(tx); err != nil {
+			return err
+		}
+		if len(subscriptions) > 0 {
+			if err := subscriptionsRemove(tx, subscriptions); err != nil {
+				return err
+			}
+		}
+		if len(servers) > 0 {
+			if err := serversRemove(tx, servers); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // ListLen returns the length of a list.

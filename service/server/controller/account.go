@@ -25,6 +25,8 @@ func PostLogin(ctx *gin.Context) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+	// the body is read before the one-at-a-time semaphore, so it is capped
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 4096)
 	err := ctx.ShouldBindJSON(&data)
 	if err != nil {
 		err := badRequest("username and password", "request body must be {\"username\": string, \"password\": string}")

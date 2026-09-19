@@ -219,7 +219,6 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	upstreams := cfg["upstreams"].([]map[string]interface{})
 	rulesList := cfg["rules"].([]map[string]interface{})
 	defaultUpstream := ""
-	lastRuleUpstream := ""
 
 	for _, rule := range migrated {
 		upstreamAddr := rule.Upstream
@@ -316,7 +315,6 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 				"bootstrap": false,
 			})
 		}
-		lastRuleUpstream = upstreamID
 
 		// 解析域名匹配规则
 		var domains, suffixes []string
@@ -407,9 +405,8 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 			defaultUpstream = upstreamID
 		}
 	}
-	if defaultUpstream == "" {
-		defaultUpstream = lastRuleUpstream
-	}
+	// Without a catch-all rule the module keeps its own fallback (the last
+	// upstream in the list), which is what every earlier release did.
 
 	// 节点服务器域名必须直连解析：若命中默认（代理）上游，查询经 dispatcher
 	// 路由到代理出站，而代理出站连接节点又需要解析节点域名，形成死锁，

@@ -67,20 +67,11 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 			continue
 		}
 	}
-	if err := configure.OverwriteConnects(configure.NewNodeRefs(cssAfter)); err != nil {
-		return err
+	if !bDeletedSubscription {
+		subscriptionsIndexes = nil
 	}
-	if bDeletedSubscription {
-		err = configure.RemoveSubscriptions(subscriptionsIndexes)
-		if err != nil {
-			return
-		}
+	if !bDeletedServer {
+		serversIndexes = nil
 	}
-	if bDeletedServer {
-		err = configure.RemoveServers(serversIndexes)
-		if err != nil {
-			return
-		}
-	}
-	return
+	return configure.RemoveNodes(subscriptionsIndexes, serversIndexes, configure.NewNodeRefs(cssAfter))
 }
