@@ -24,19 +24,11 @@ func GetSetting(ctx *gin.Context) {
 }
 
 func PutSetting(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	// Decode over the stored setting so fields the client does not send
 	// (older GUIs omit the DNS cache flags, for example) keep their value
