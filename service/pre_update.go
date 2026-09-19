@@ -28,14 +28,16 @@ func updateSubscriptions() {
 		wg.Add(1)
 		go func(i int) {
 			control <- struct{}{}
-			err := service.UpdateSubscription(i, false)
-			if err != nil {
-				log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d, err: %v", i, err)
-			} else {
-				log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d, Address: %s", i, subs[i].Address)
-			}
-			wg.Done()
-			<-control
+			defer wg.Done()
+			defer func() { <-control }()
+			runSubscriptionUpdate(i, func() {
+				err := service.UpdateSubscription(i, false)
+				if err != nil {
+					log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d, err: %v", i, err)
+				} else {
+					log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d, Address: %s", i, subs[i].Address)
+				}
+			})
 		}(i)
 	}
 	wg.Wait()
@@ -45,6 +47,17 @@ func updateSubscriptions() {
 		log.Error("[AutoSelect] Failed to auto-select servers from subscriptions -- err: %v", err2)
 	}
 
+}
+
+func runSubscriptionUpdate(index int, update func()) (panicked bool) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			log.Error("[AutoUpdate] subscription %d: panic: %v", index, recovered)
+			panicked = true
+		}
+	}()
+	update()
+	return false
 }
 
 func initUpdatingTicker() {

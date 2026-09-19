@@ -9,6 +9,7 @@ import (
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/server/service"
 )
 
 func GetRoutingA(ctx *gin.Context) {
@@ -50,7 +51,12 @@ func PutRoutingA(ctx *gin.Context) {
 		}
 	}
 
-	err = configure.SetRoutingA(&data.RoutingA)
+	err = service.ApplyCoreConfig(func() func() error {
+		previous := configure.GetRoutingA()
+		return func() error { return configure.SetRoutingA(&previous) }
+	}, func() error {
+		return configure.SetRoutingA(&data.RoutingA)
+	})
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

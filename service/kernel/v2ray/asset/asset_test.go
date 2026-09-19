@@ -1,10 +1,34 @@
 package asset
 
 import (
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
+
+type assetTransport func(*http.Request) (*http.Response, error)
+
+func (f assetTransport) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestAssetBodyOverLimitIsRejected(t *testing.T) {
+	client := &http.Client{Transport: assetTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Body:       io.NopCloser(strings.NewReader(strings.Repeat("x", int(maxAssetDownloadSize+1)))),
+		}, nil
+	})}
+	target := filepath.Join(t.TempDir(), "asset.dat")
+	if err := download(client, "https://example.test/asset.dat", target); err == nil || !strings.Contains(err.Error(), "256 MiB") {
+		t.Fatalf("error = %v, want size limit", err)
+	}
+	if _, err := os.Stat(target); !os.IsNotExist(err) {
+		t.Fatalf("oversized asset created target: %v", err)
+	}
+}
 
 // The core only reads XRAY_LOCATION_ASSET, so a dat file that exists in a
 // system directory has to be linked into that directory before the core runs.

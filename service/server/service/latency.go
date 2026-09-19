@@ -7,11 +7,13 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -104,6 +106,12 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 }
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
+	if customTestUrl != "" {
+		testURL, err := url.Parse(customTestUrl)
+		if err != nil || (testURL.Scheme != "http" && testURL.Scheme != "https") || testURL.Hostname() == "" {
+			return nil, common.Coded("INVALID_TEST_URL", fmt.Errorf("test URL %q must be an HTTP or HTTPS URL with a host", customTestUrl), map[string]interface{}{"testUrl": customTestUrl})
+		}
+	}
 	var whiches = configure.NewWhiches(which)
 	which = whiches.Get()
 	for i := len(which) - 1; i >= 0; i-- {
@@ -296,7 +304,11 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	if len(customTestUrl) != 0 {
 		testUrl = customTestUrl
 	}
-	req, _ := http.NewRequest("GET", testUrl, nil)
+	req, err := http.NewRequest("GET", testUrl, nil)
+	if err != nil {
+		which.Latency = "SYSTEM ERROR"
+		return
+	}
 	//req, _ := http.NewRequest("GET", "http://www.gstatic.com/generate_204", nil)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
@@ -304,6 +316,17 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	req.Header.Set("Connection", "close")
 	req.Header.Set("User-Agent", "curl/7.70.0")
 	resp, err := c.Do(req)
+	setHTTPLatencyResult(which, resp, err, t)
+}
+
+func setHTTPLatencyResult(which *configure.Which, resp *http.Response, err error, started time.Time) {
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if resp == nil && err == nil {
+		which.Latency = "SYSTEM ERROR"
+		return
+	}
 	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		if err != nil {
 			var netErr net.Error
@@ -327,8 +350,7 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 		}
 		return
 	}
-	_ = resp.Body.Close()
-	which.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
+	which.Latency = fmt.Sprintf("%.0fms", time.Since(started).Seconds()*1000)
 }
 
 func isSupportedObj(obj serverObj.ServerObj) (bool, error) {

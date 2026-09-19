@@ -10,6 +10,12 @@ import (
 
 /*修改Remarks*/
 func PatchSubscription(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
+
 	var data struct {
 		Subscription touch.Subscription `json:"subscription"`
 	}

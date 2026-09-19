@@ -446,7 +446,7 @@ func ParseSip003Opts(opts string) Sip003Opts {
 			sip003Opts.Obfs = a[1]
 		case "obfs-path", "obfs-uri", "path":
 			if !strings.HasPrefix(a[1], "/") {
-				a[1] += "/"
+				a[1] = "/" + a[1]
 			}
 			sip003Opts.Path = a[1]
 		case "obfs-host", "host":
@@ -466,7 +466,9 @@ func ParseSip003(plugin string) Sip003 {
 	default:
 		sip003.Name = fields[0]
 	}
-	sip003.Opts = ParseSip003Opts(fields[1])
+	if len(fields) == 2 {
+		sip003.Opts = ParseSip003Opts(fields[1])
+	}
 	return sip003
 }
 

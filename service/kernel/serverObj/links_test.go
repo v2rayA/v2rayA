@@ -2,10 +2,124 @@ package serverObj
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
 )
+
+func TestParseSip003PrependsSlashToPath(t *testing.T) {
+	if got := ParseSip003Opts("obfs-uri=abc").Path; got != "/abc" {
+		t.Fatalf("path = %q, want /abc", got)
+	}
+}
+
+func TestParseSSURLAcceptsPluginWithoutOptions(t *testing.T) {
+	u := &url.URL{
+		Scheme: "ss",
+		User:   url.User(base64.RawURLEncoding.EncodeToString([]byte("aes-128-gcm:secret"))),
+		Host:   "example.com:8388",
+	}
+	query := u.Query()
+	query.Set("plugin", "v2ray-plugin")
+	u.RawQuery = query.Encode()
+	server, err := ParseSSURL(u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if server.Plugin.Name != "v2ray-plugin" {
+		t.Fatalf("plugin = %+v", server.Plugin)
+	}
+}
+
+func TestParseVlessURLRejectsMissingOrInvalidPort(t *testing.T) {
+	for _, link := range []string{"vless://uuid@host", "vless://uuid@host:abc"} {
+		t.Run(link, func(t *testing.T) {
+			if _, err := ParseVlessURL(link); err == nil {
+				t.Fatalf("ParseVlessURL(%q) succeeded", link)
+			}
+		})
+	}
+}
+
+func TestParseVmessURLRejectsMissingOrInvalidPort(t *testing.T) {
+	for _, port := range []string{"", "abc"} {
+		t.Run(port, func(t *testing.T) {
+			payload, err := json.Marshal(map[string]string{"add": "host", "port": port, "id": "uuid"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := ParseVmessURL("vmess://" + base64.StdEncoding.EncodeToString(payload)); err == nil {
+				t.Fatalf("VMess JSON with port %q succeeded", port)
+			}
+		})
+	}
+}
+
+func TestParseSSRURLRejectsInvalidPasswordBase64(t *testing.T) {
+	if _, err := ParseSSRURL("ssr://example.com:8388:origin:aes-256-cfb:plain:%%%/?remarks=&protoparam=&obfsparam="); err == nil {
+		t.Fatal("invalid SSR password base64 succeeded")
+	}
+}
+
+func TestHTTPConfigurationUsesNativeOutbound(t *testing.T) {
+	obj, err := ParseHttpURL("http://user:pass@1.2.3.4:8080")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := obj.Configuration(PriorInfo{Tag: "proxy", PluginPort: 12345})
+	if err != nil {
+		t.Fatal(err)
+	}
+	servers, ok := config.CoreOutbound.Settings.Servers.([]coreObj.Server)
+	if !ok || len(servers) != 1 {
+		t.Fatalf("servers = %#v", config.CoreOutbound.Settings.Servers)
+	}
+	if config.CoreOutbound.Protocol != "http" || servers[0].Address != "1.2.3.4" || servers[0].Port != 8080 || len(servers[0].Users) != 1 || servers[0].Users[0].User != "user" || servers[0].Users[0].Pass != "pass" {
+		t.Fatalf("configuration = %+v", config)
+	}
+	raw, err := json.Marshal(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "127.0.0.1") {
+		t.Fatalf("configuration still uses plugin loopback: %s", raw)
+	}
+	if obj.NeedPluginPort() {
+		t.Fatal("native HTTP outbound requested a plugin port")
+	}
+}
+
+func TestHTTPSConfigurationUsesTLS(t *testing.T) {
+	obj, err := ParseHttpURL("https://proxy.example:8443")
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := obj.Configuration(PriorInfo{Tag: "proxy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream := config.CoreOutbound.StreamSettings
+	if stream == nil || stream.Security != "tls" || stream.TLSSettings == nil || stream.TLSSettings.ServerName != obj.Server {
+		t.Fatalf("stream settings = %+v", stream)
+	}
+}
+
+func TestSSRConfigurationIsUnsupported(t *testing.T) {
+	original := &ShadowsocksR{Server: "1.2.3.4", Port: 8388, Password: "secret", Cipher: "aes-256-cfb", Proto: "origin", Obfs: "plain"}
+	parsed, err := ParseSSRURL(original.ExportToURL())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := parsed.Configuration(PriorInfo{}); err == nil || !strings.Contains(err.Error(), "unsupported") {
+		t.Fatalf("Configuration error = %v", err)
+	}
+	if parsed.NeedPluginPort() {
+		t.Fatal("unsupported SSR requested a plugin port")
+	}
+}
 
 func TestParseSSURLUserinfo(t *testing.T) {
 	const (
