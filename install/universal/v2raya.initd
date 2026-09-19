@@ -1,0 +1,26 @@
+#!/sbin/openrc-run
+# OpenRC service script for v2rayA (Alpine, Gentoo and other OpenRC systems).
+# Install: install -Dm755 v2raya.initd /etc/init.d/v2raya
+#          install -Dm644 v2raya.confd /etc/conf.d/v2raya
+#          rc-update add v2raya default
+# For any problem, contact zakk@gentoozh.org.
+
+name="v2rayA"
+description="A web GUI client of Project V with transparent proxy"
+command="/usr/bin/v2raya"
+command_args="${V2RAYA_OPTS}"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+error_log="/var/log/v2raya/error.log"
+rc_ulimit="-n 30000"
+# the service stops its core itself; the cgroup sweep only catches leftovers
+rc_cgroup_cleanup="yes"
+
+depend() {
+	need net
+	after net firewall
+}
+
+start_pre() {
+	checkpath -d -m 0755 /var/log/v2raya
+}

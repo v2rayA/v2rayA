@@ -1,0 +1,7 @@
+# /etc/conf.d/v2raya: options for /etc/init.d/v2raya
+#
+# Everything in V2RAYA_OPTS is passed to the v2raya command line; run
+# `v2raya --help` for the full list. The environment variables of
+# /etc/default/v2raya (V2RAYA_ADDRESS, V2RAYA_CONFIG, V2RAYA_V2RAY_BIN, ...)
+# work here too.
+V2RAYA_OPTS="--log-disable-timestamp --log-file /var/log/v2raya/v2raya.log"

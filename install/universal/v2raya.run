@@ -13,7 +13,7 @@
 # Note that the actual service directory and supervision directory may differ
 # from disto to disto.
 
-# For any problem, connect yuandi42 <realyuandi42@gmail.com>.
+# For any problem, contact zakk@gentoozh.org.
 
 exec 2>&1
 
