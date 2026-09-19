@@ -282,6 +282,15 @@ const statusText = computed(() => {
   return labelOf(store.running);
 });
 
+/** every text the status button can carry, for its fixed width */
+const statusLabels = computed(() => {
+  const labels = (
+    ["running", "stopped", "paused", "checking"] as Running[]
+  ).map(labelOf);
+  labels.push(t("v2ray.stop"), t("v2ray.start"));
+  return [...new Set(labels)];
+});
+
 const toggling = ref(false);
 async function toggleRunning() {
   if (toggling.value) return;
@@ -398,7 +407,17 @@ onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
         @mouseleave="hovering = false"
         @click="toggleRunning"
       >
-        {{ statusText }}
+        <!-- every label the button can show is laid out in the same cell, so
+             the width is the widest of them and the buttons beside it do not
+             move when 就绪 becomes 正在运行 or the hover text takes over -->
+        <span class="bar__status">
+          <span
+            v-for="label in statusLabels"
+            :key="label"
+            :class="{ 'bar__status-label--hidden': label !== statusText }"
+            >{{ label }}</span
+          >
+        </span>
       </v-btn>
       <OutboundMenu
         :variant="compact ? 'icon' : 'chip'"
@@ -492,6 +511,16 @@ onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
 </template>
 
 <style scoped>
+.bar__status {
+  display: inline-grid;
+}
+.bar__status > span {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+.bar__status-label--hidden {
+  visibility: hidden;
+}
 .bar__logo {
   width: 32px;
   height: 32px;
