@@ -161,7 +161,7 @@ ip6tables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 `
 	}
 	return Setter{
-		Cmds: commands,
+		Cmds: withDnsModulePort(commands),
 	}
 }
 
@@ -201,7 +201,7 @@ ip6tables -w 2 -t nat -X TP_RULE
 `
 	}
 	return Setter{
-		Cmds: commands,
+		Cmds: withDnsModulePort(commands),
 	}
 }
 
@@ -335,7 +335,7 @@ table inet v2raya {
 	}
 
 	nftablesConf := asset.GetNftablesConfigPath()
-	os.WriteFile(nftablesConf, []byte(table), 0644)
+	os.WriteFile(nftablesConf, []byte(withDnsModulePort(table)), 0644)
 
 	command := `nft -f ` + nftablesConf
 

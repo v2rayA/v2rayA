@@ -41,6 +41,10 @@ func run() (err error) {
 		log.Info("v2ray-core was not running when v2rayA last exited")
 	}
 
+	// Repair what a crashed or killed previous run left in the operating
+	// system before anything else, whether or not the core is started.
+	v2ray.CleanupTunResidual()
+
 	if shouldStart {
 		//configure the ip forward
 		setting := service.GetSetting()

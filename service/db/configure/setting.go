@@ -4,6 +4,8 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,13 +27,11 @@ type Setting struct {
 	PortSharing                        bool            `json:"portSharing"`
 	TransparentType                    TransparentType `json:"transparentType"`
 	TproxyExcludedInterfaces           string          `json:"tproxyExcludedInterfaces"`
-	TunBypassInterfaces                string          `json:"tunBypassInterfaces"`
 	TunAutoRoute                       bool            `json:"tunAutoRoute"`
 	TunRouteShellType                  string          `json:"tunRouteShellType"`
 	TunRouteShellPath                  string          `json:"tunRouteShellPath"`
 	TunSetupScript                     string          `json:"tunSetupScript"`
 	TunTeardownScript                  string          `json:"tunTeardownScript"`
-	TunProcessBackend                  string          `json:"tunProcessBackend"`
 	TunExcludeProcesses                string          `json:"tunExcludeProcesses"`
 	SsBackend                          string          `json:"ssBackend"`
 	TrojanBackend                      string          `json:"trojanBackend"`
@@ -105,4 +105,16 @@ func IntervalHours(hours int) time.Duration {
 		hours = 1
 	}
 	return time.Duration(hours) * time.Hour
+}
+
+// DnsModulePort is the port of DnsListenAddr, 52353 when unset or unparsable.
+// The DNS REDIRECT and TPROXY rules and the module's listeners all take it
+// from here.
+func (s *Setting) DnsModulePort() string {
+	if i := strings.LastIndexByte(s.DnsListenAddr, ':'); i >= 0 && i+1 < len(s.DnsListenAddr) {
+		if _, err := strconv.Atoi(s.DnsListenAddr[i+1:]); err == nil {
+			return s.DnsListenAddr[i+1:]
+		}
+	}
+	return "52353"
 }

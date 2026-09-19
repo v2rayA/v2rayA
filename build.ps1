@@ -59,7 +59,7 @@ Function Build-v2rayA(){
     } else {
         $v2rayaBin = "v2raya"
     }
-    go build -trimpath -tags "tinytun" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
+    go build -trimpath -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentPath/$v2rayaBin"
     Set-Location -Path "$TerminalPath"
 }
 

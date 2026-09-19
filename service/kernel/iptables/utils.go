@@ -159,3 +159,18 @@ func getTproxySetupValues() (interfaces, ipv4List, ipv6List []string, err error)
 	ipv4List, ipv6List, err = GetWhiteListIPs()
 	return
 }
+
+// DnsModulePort is the port the DNS module listens on: the rule sets are
+// written for the historical 52353 and rewritten to the configured port
+// when it differs, so the TPROXY and REDIRECT targets, the loop-back RETURN
+// and the module's listener always agree.
+func DnsModulePort() string {
+	return configure.GetSettingNotNil().DnsModulePort()
+}
+
+func withDnsModulePort(rules string) string {
+	if port := DnsModulePort(); port != "52353" {
+		return strings.ReplaceAll(rules, "52353", port)
+	}
+	return rules
+}

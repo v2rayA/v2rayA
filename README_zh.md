@@ -2,7 +2,7 @@
 
 [**English**](https://github.com/v2rayA/v2rayA/blob/main/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/main/README_zh.md)
 
-v2rayA 是一个支持全局透明代理的 V2Ray 客户端，同时兼容 SS、SSR、Trojan(trojan-go)、Tuic 与 [Juicity](https://github.com/juicity)协议。 [[SSR支持清单]](https://github.com/v2rayA/dist/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
+v2rayA 是一个在 Linux、Windows、macOS 上支持全局透明代理的 V2Ray 客户端，同时兼容 SS、SSR、Trojan(trojan-go)、Tuic 与 [Juicity](https://github.com/juicity)协议。 [[SSR支持清单]](https://github.com/v2rayA/dist/shadowsocksR/blob/master/README.md#ss-encrypting-algorithm)
 
 v2rayA 致力于提供最简单的操作，满足绝大部分需求。
 
@@ -26,6 +26,14 @@ v2rayA 主要提供了下述使用方法：
 
 详见 [**v2rayA - Docs**](https://v2raya.org/docs/prologue/introduction/)
 
+
+## 透明代理
+
+Linux 上透明代理有 `redirect`、`tproxy`、`tun` 三种；Windows 与 macOS 上有 `tun` 与系统代理。
+
+`tun` 内建在核心里：核心打开 TUN 设备、配置地址并接管默认路由。核心自己的连接、direct 出站与 DNS 模块的上游查询不会进入 TUN（Linux 靠 socket 标记，Windows 与 macOS 靠绑定物理网卡）；应用发往公网 DNS 的查询由核心的 DNS 模块回答。v2rayA 与核心始终被排除，其他进程可在设置里按可执行文件名排除。直连路由与静态路由始终不经过 TUN。
+
+已知限制：Windows 与 macOS 上直接向局域网 DNS 查询的应用仍会绕过 TUN；系统解析器指向 TUN，不受影响。
 
 ## 界面截图
 

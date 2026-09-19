@@ -1,19 +1,19 @@
 <template>
   <div class="modal-card" style="width: 680px; max-width: 100%; margin: auto">
     <header class="modal-card-head">
-      <p class="modal-card-title">{{ $t("tinytun.processExclude.title") }}</p>
+      <p class="modal-card-title">{{ $t("tun.processExclude.title") }}</p>
     </header>
     <section class="modal-card-body">
       <b-message type="is-warning" has-icon>
-        {{ $t("tinytun.processExclude.warning") }}
+        {{ $t("tun.processExclude.warning") }}
       </b-message>
 
-      <b-field :label="$t('tinytun.processExclude.listLabel')" label-position="on-border">
+      <b-field :label="$t('tun.processExclude.listLabel')" label-position="on-border">
         <b-input
           v-model="localExcludeProcessesText"
           type="textarea"
           rows="10"
-          :placeholder="$t('tinytun.processExclude.placeholder')"
+          :placeholder="$t('tun.processExclude.placeholder')"
           custom-class="code-font horizon-scroll"
           autocomplete="off"
           autocorrect="off"
@@ -21,7 +21,7 @@
           spellcheck="false"
         />
       </b-field>
-      <p class="help is-size-7">{{ $t("tinytun.processExclude.hint") }}</p>
+      <p class="help is-size-7">{{ $t("tun.processExclude.hint") }}</p>
     </section>
     <footer class="modal-card-foot" style="justify-content: flex-end">
       <button class="button" type="button" @click="$parent.close()">
@@ -36,7 +36,7 @@
 
 <script>
 export default {
-  name: "ModalTinyTunExcludeProcesses",
+  name: "ModalTunExcludeProcesses",
   props: {
     excludeProcesses: { type: String, default: "" },
   },

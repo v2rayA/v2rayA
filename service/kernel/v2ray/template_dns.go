@@ -6,12 +6,15 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/iptables"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type Addr struct {
@@ -74,6 +77,72 @@ func (t *Template) setDNS(serverInfos []serverInfo) error {
 	return t.generateDnsModuleConfig(serverInfos)
 }
 
+// dnsModuleListenAddr is the DNS module's primary listener. The stored
+// setting defaults to 0.0.0.0:52353 (NewSetting and MigrateSetting write
+// it), so that value is treated as "not chosen": it stays on loopback
+// unless the box serves other hosts — port sharing, or IP forwarding for
+// a LAN behind it, whose clients' queries the PREROUTING REDIRECT delivers
+// to this host's LAN address. Any other value is the user's and is used
+// as is.
+func dnsModuleListenAddr(setting *configure.Setting) string {
+	const stock = "0.0.0.0:52353"
+	if setting.DnsListenAddr != "" && setting.DnsListenAddr != stock {
+		return setting.DnsListenAddr
+	}
+	if setting.PortSharing || setting.IpForward {
+		return stock
+	}
+	return "127.0.0.1:52353"
+}
+
+// dnsModuleExtraListenAddrs adds the 127.2.0.17:53 listener the resolv.conf
+// hijack points at, but only when port 53 is free for it: a resolver bound
+// to the wildcard address would make the bind fail and the core exit.
+func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
+	addrs := []string{}
+	// The ip6tables REDIRECT sends an application's IPv6 DNS query to ::1,
+	// which a loopback IPv4 primary listener does not cover. A wildcard
+	// primary listener is dual-stack already and a second bind would fail.
+	host, _, _ := net.SplitHostPort(dnsModuleListenAddr(setting))
+	if ip := net.ParseIP(host); ip != nil && !ip.IsUnspecified() && ip.To4() != nil && iptables.IsIPv6Supported() {
+		addrs = append(addrs, net.JoinHostPort("::1", dnsModulePort(setting)))
+	}
+	// macOS's system resolver is pointed at loopback port 53 in tun mode
+	// (see tun_core_darwin.go); the Linux resolv.conf hijack points at
+	// 127.2.0.17. Nothing sends to either on Windows.
+	switch runtime.GOOS {
+	case "darwin":
+		if setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting) {
+			// The system resolver is pointed at loopback in tun mode. If
+			// another resolver already owns the port, leave it to that one
+			// rather than start a core that cannot bind.
+			if err := probeListen("127.0.0.1:53"); err != nil {
+				log.Warn("DNS module will not listen on 127.0.0.1:53, the system resolver keeps using whatever answers there: %v", err)
+				return addrs
+			}
+			return append(addrs, "127.0.0.1:53")
+		}
+		return addrs
+	case "linux":
+	default:
+		return addrs
+	}
+	// The tproxy rules hand LAN clients' queries to 127.2.0.17 on the
+	// module's port and the OUTPUT REDIRECT lands local queries on
+	// 127.0.0.1; a primary listener on a specific address covers neither.
+	if ip := net.ParseIP(host); ip != nil && !ip.IsUnspecified() {
+		if !ip.IsLoopback() {
+			addrs = append(addrs, net.JoinHostPort("127.0.0.1", dnsModulePort(setting)))
+		}
+		addrs = append(addrs, net.JoinHostPort("127.2.0.17", dnsModulePort(setting)))
+	}
+	if could, err := CouldLocalDnsListen(); !could {
+		log.Warn("DNS module will not listen on 127.2.0.17:53: %v", err)
+		return addrs
+	}
+	return append(addrs, "127.2.0.17:53")
+}
+
 // generateDnsModuleConfig 生成新 DNS 模块的 JSON 配置，嵌入 xray JSON 配置文件。
 // v2raya-core 启动时解析此配置并启动独立 DNS 监听器，v2rayA 不参与 DNS 查询处理。
 //
@@ -84,10 +153,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		setting = configure.GetSettingNotNil()
 	}
 
-	listenAddr := setting.DnsListenAddr
-	if listenAddr == "" {
-		listenAddr = "0.0.0.0:52353"
-	}
+	listenAddr := dnsModuleListenAddr(setting)
 
 	// 获取 SOCKS 入站端口（用于 proxy_map）
 	socksPort := 20170
@@ -102,7 +168,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	cfg := map[string]interface{}{
 		"listener": map[string]interface{}{
 			"listen_addr":        listenAddr,
-			"extra_listen_addrs": []string{"127.2.0.17:53"},
+			"extra_listen_addrs": dnsModuleExtraListenAddrs(setting),
 			"timeout":            5,
 		},
 		"cache": map[string]interface{}{
@@ -116,8 +182,11 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		"proxy_map":     make(map[string]interface{}),
 		"bootstrap":     make([]string, 0),
 		"bootstrap_dns": bootstrapDns,
-		"upstreams":     make([]map[string]interface{}, 0),
-		"rules":         make([]map[string]interface{}, 0),
+		// The module's own upstream sockets bind here on Windows and macOS,
+		// where there is no socket mark to keep them out of the TUN.
+		"egress_interface": tunEgressInterfaceIfTun(setting),
+		"upstreams":        make([]map[string]interface{}, 0),
+		"rules":            make([]map[string]interface{}, 0),
 	}
 
 	// 应用默认值
@@ -413,4 +482,20 @@ func getSystemDnsServers() []string {
 		}
 	}
 	return servers
+}
+
+// probeListen reports whether both the UDP and the TCP side of addr can be
+// bound right now.
+func probeListen(addr string) error {
+	pc, err := net.ListenPacket("udp", addr)
+	if err != nil {
+		return err
+	}
+	pc.Close()
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+	l.Close()
+	return nil
 }

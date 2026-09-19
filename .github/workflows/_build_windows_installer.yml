@@ -27,19 +27,6 @@ jobs:
         with:
           name: v2raya_core_windows_x64_${{ inputs.version }}.exe
           path: D:\Downloads
-      - name: Download TinyTun x64
-        shell: pwsh
-        run: |
-          $Url_TinyTun_x64 = "https://github.com/v2rayA/TinyTun/releases/download/v0.0.3-alpha.3/tinytun-v0.0.3-alpha.3-x86_64-pc-windows-msvc.zip"
-          $sha256_TinyTun_x64 = "ea7307f2d0b2792c66ade8a1a46b65c1da6d3dbb8a2646f06dfe30e9bfc89c1e"
-          Invoke-WebRequest $Url_TinyTun_x64 -OutFile "D:\tinytun-x64.zip"
-          $hash_TinyTun_x64 = Get-FileHash -Path "D:\tinytun-x64.zip" -Algorithm SHA256
-          if ($hash_TinyTun_x64.Hash -ne $sha256_TinyTun_x64) {
-            throw "SHA256 hash mismatch for TinyTun x64. Expected: $sha256_TinyTun_x64, Actual: $($hash_TinyTun_x64.Hash)"
-            exit 1
-          } else {
-            Write-Host "SHA256 hash verified for TinyTun x64."
-          }
       - name: Download Artifact Windows arm64
         uses: actions/download-artifact@v8
         with:
@@ -50,19 +37,22 @@ jobs:
         with:
           name: v2raya_core_windows_arm64_${{ inputs.version }}.exe
           path: D:\Downloads
-      - name: Download TinyTun arm64
+      - name: Download Wintun
         shell: pwsh
         run: |
-          $Url_TinyTun_arm64 = "https://github.com/v2rayA/TinyTun/releases/download/v0.0.3-alpha.3/tinytun-v0.0.3-alpha.3-aarch64-pc-windows-msvc.zip"
-          $sha256_TinyTun_arm64 = "51c18f66ae0c11be92ce0cf09db771527233ae433b4731afd214ea79042f79e4"
-          Invoke-WebRequest $Url_TinyTun_arm64 -OutFile "D:\tinytun-arm64.zip"
-          $hash_TinyTun_arm64 = Get-FileHash -Path "D:\tinytun-arm64.zip" -Algorithm SHA256
-          if ($hash_TinyTun_arm64.Hash -ne $sha256_TinyTun_arm64) {
-            throw "SHA256 hash mismatch for TinyTun arm64. Expected: $sha256_TinyTun_arm64, Actual: $($hash_TinyTun_arm64.Hash)"
+          # The core loads wintun.dll from its own directory; the driver
+          # package is the official one, pinned by hash.
+          $Url_Wintun = "https://www.wintun.net/builds/wintun-0.14.1.zip"
+          $sha256_Wintun = "07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51"
+          Invoke-WebRequest $Url_Wintun -OutFile "D:\wintun.zip"
+          $hash_Wintun = Get-FileHash -Path "D:\wintun.zip" -Algorithm SHA256
+          if ($hash_Wintun.Hash -ne $sha256_Wintun) {
+            throw "SHA256 hash mismatch for Wintun. Expected: $sha256_Wintun, Actual: $($hash_Wintun.Hash)"
             exit 1
           } else {
-            Write-Host "SHA256 hash verified for TinyTun arm64."
+            Write-Host "SHA256 hash verified for Wintun."
           }
+          Expand-Archive -Path "D:\wintun.zip" -DestinationPath "D:\wintun"
       - name: Install Inno Setup
         shell: pwsh
         run: |
@@ -82,13 +72,9 @@ jobs:
           Copy-Item -Path D:\Downloads\v2raya_core_windows_arm64_${{ inputs.version }}.exe -Destination D:\v2raya-arm64-windows\bin\v2raya_core.exe
           Copy-Item -Path D:\Downloads\v2raya_core_windows_x64_${{ inputs.version }}.exe -Destination D:\v2raya-x64compatible-windows\bin\v2raya_core.exe
           Copy-Item -Path ".\install\windows-inno\v2raya.ico" -Destination "D:\v2raya.ico"
-          ## Copy TinyTun to Destination Directory
-          Expand-Archive -Path "D:\tinytun-x64.zip" -DestinationPath "D:\tinytun-x64"
-          Move-Item -Path "D:\tinytun-x64\tinytun-x86_64-pc-windows-msvc.exe" -Destination "D:\v2raya-x64compatible-windows\bin\tinytun.exe"
-          Move-Item -Path "D:\tinytun-x64\wintun.dll" -Destination "D:\v2raya-x64compatible-windows\bin\wintun.dll"
-          Expand-Archive -Path "D:\tinytun-arm64.zip" -DestinationPath "D:\tinytun-arm64"
-          Move-Item -Path "D:\tinytun-arm64\tinytun-aarch64-pc-windows-msvc.exe" -Destination "D:\v2raya-arm64-windows\bin\tinytun.exe"
-          Move-Item -Path "D:\tinytun-arm64\wintun.dll" -Destination "D:\v2raya-arm64-windows\bin\wintun.dll"
+          ## Copy the Wintun driver next to the core, one DLL per architecture
+          Copy-Item -Path "D:\wintun\wintun\bin\amd64\wintun.dll" -Destination "D:\v2raya-x64compatible-windows\bin\wintun.dll"
+          Copy-Item -Path "D:\wintun\wintun\bin\arm64\wintun.dll" -Destination "D:\v2raya-arm64-windows\bin\wintun.dll"
           ## Download DAT files directly from Loyalsoldier release
           $DatBaseUrl = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download"
           $DatFiles = @("geoip.dat", "geosite.dat")

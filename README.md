@@ -2,7 +2,7 @@
 
 [**English**](https://github.com/v2rayA/v2rayA/blob/main/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/main/README_zh.md)
 
-v2rayA is a V2Ray client supporting global transparent proxy on Linux and system proxy on Windows and macOS, it is compatible with SS, SSR, Trojan(trojan-go), Tuic and [Juicity](https://github.com/juicity) protocols. [[SSR protocol list]](https://github.com/v2rayA/shadowsocksR/blob/main/README.md#ss-encrypting-algorithm)
+v2rayA is a V2Ray client supporting global transparent proxy on Linux, Windows and macOS, it is compatible with SS, SSR, Trojan(trojan-go), Tuic and [Juicity](https://github.com/juicity) protocols. [[SSR protocol list]](https://github.com/v2rayA/shadowsocksR/blob/main/README.md#ss-encrypting-algorithm)
 
 We are committed to providing the simplest operation and meet most needs.
 
@@ -26,6 +26,14 @@ v2rayA mainly provides the following methods of installation:
 
 See [**v2rayA - Docs**](https://v2raya.org/en/docs/prologue/introduction/)
 
+
+## Transparent proxy
+
+On Linux, transparent proxy is available as `redirect`, `tproxy` or `tun`; on Windows and macOS as `tun` or the system proxy.
+
+`tun` is built into the core: the core opens a TUN device, assigns its address and takes the default route. Its own connections, the direct outbound and the DNS module's upstream queries never enter the TUN (by socket mark on Linux, by binding to the physical interface on Windows and macOS), and every DNS query an application sends to a public resolver is answered by the core's DNS module. v2rayA and the core are always excluded; other processes can be excluded by executable name in the settings. Connected and static routes always bypass the TUN.
+
+Known limitation: on Windows and macOS an application that queries a LAN resolver directly still bypasses the TUN. The system resolver is pointed at the TUN and is covered.
 
 ## Screenshot
 
