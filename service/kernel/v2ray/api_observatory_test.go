@@ -60,7 +60,7 @@ func TestObservatoryUnknownTag(t *testing.T) {
 	pb.RegisterObservatoryServiceServer(server, observer)
 	go server.Serve(listener)
 	defer server.Stop()
-	if err := configure.AddConnect(configure.Which{TYPE: configure.ServerType, ID: 1}); err != nil {
+	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.ServerType, ID: 1}); err != nil {
 		t.Fatal(err)
 	}
 	defer configure.ClearConnects("proxy")

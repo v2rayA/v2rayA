@@ -39,7 +39,7 @@ func subscriptionHost(source string) string {
 // from its scheme. Callers that know which one they hold should use
 // ImportServer or ImportSubscription instead; this wrapper only exists for
 // clients that predate the "kind" field of POST /api/import.
-func Import(url string, which *configure.Which) (err error) {
+func Import(url string, which *configure.NodeRef) (err error) {
 	log.Trace("Import: received url=%v, which=%+v", url, which)
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -87,7 +87,7 @@ func isBareHttpProxyLink(rawURL string) bool {
 // ImportServer imports one server link, or several separated by newlines,
 // or a JSON config. A non-nil which with ID > 0 replaces that server instead
 // of appending.
-func ImportServer(url string, which *configure.Which) (err error) {
+func ImportServer(url string, which *configure.NodeRef) (err error) {
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {

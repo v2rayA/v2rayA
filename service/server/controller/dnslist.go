@@ -1,12 +1,12 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -58,21 +58,24 @@ func PutDnsRules(ctx *gin.Context) {
 	// 执行迁移以确保新字段有默认值
 	migrated := configure.MigrateDnsRules(rules)
 
-	previous := configure.GetDnsRulesNotNil()
-	if err := configure.SetDnsRules(migrated); err != nil {
+	err := service.ApplyCoreConfig(func() func() error {
+		previous := configure.GetDnsRulesNotNil()
+		return func() error { return configure.SetDnsRules(previous) }
+	}, func() error {
+		return configure.SetDnsRules(migrated)
+	})
+	if err != nil {
+		var failure *service.ApplyCoreConfigError
+		if errors.As(err, &failure) {
+			err = failure.UpdateErr
+			if failure.RestoreStoreErr != nil {
+				err = fmt.Errorf("%w; restoring DNS rules failed: %v", err, failure.RestoreStoreErr)
+			} else if failure.RestoreUpdateErr != nil {
+				err = fmt.Errorf("%w; restarting with previous DNS rules failed: %v", err, failure.RestoreUpdateErr)
+			}
+		}
 		common.ResponseError(ctx, logError(err))
 		return
-	}
-	if v2ray.ProcessManager.Running() {
-		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			if restoreErr := configure.SetDnsRules(previous); restoreErr != nil {
-				err = fmt.Errorf("%w; restoring DNS rules failed: %v", err, restoreErr)
-			} else if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
-				err = fmt.Errorf("%w; restarting with previous DNS rules failed: %v", err, restoreErr)
-			}
-			common.ResponseError(ctx, logError(err))
-			return
-		}
 	}
 	common.ResponseSuccess(ctx, nil)
 }

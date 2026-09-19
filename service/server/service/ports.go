@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -81,19 +82,23 @@ func SetPorts(ports *configure.Ports) (err error) {
 	if err = v2ray.PortOccupied(detectSyntax); err != nil {
 		return err
 	}
-	if err = configure.SetPorts(&origin); err != nil {
-		return err
-	}
-	if v2ray.ProcessManager.Running() {
-		err = v2ray.UpdateV2RayConfig()
-		if err != nil {
-			if restoreErr := configure.SetPorts(&previous); restoreErr != nil {
-				return fmt.Errorf("%w; restoring previous ports failed: %v", err, restoreErr)
-			}
-			if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
-				return fmt.Errorf("%w; restarting with previous ports failed: %v", err, restoreErr)
-			}
+	err = ApplyCoreConfig(func() func() error {
+		return func() error { return configure.SetPorts(&previous) }
+	}, func() error {
+		return configure.SetPorts(&origin)
+	})
+	if err != nil {
+		var failure *ApplyCoreConfigError
+		if !errors.As(err, &failure) {
+			return err
 		}
+		if failure.RestoreStoreErr != nil {
+			return fmt.Errorf("%w; restoring previous ports failed: %v", failure.UpdateErr, failure.RestoreStoreErr)
+		}
+		if failure.RestoreUpdateErr != nil {
+			return fmt.Errorf("%w; restarting with previous ports failed: %v", failure.UpdateErr, failure.RestoreUpdateErr)
+		}
+		return failure.UpdateErr
 	}
-	return
+	return nil
 }

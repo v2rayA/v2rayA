@@ -66,7 +66,7 @@ func runningCoreWithInvalidConnection(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	if err := configure.AddConnect(configure.Which{TYPE: configure.ServerType, ID: 999}); err != nil {
+	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.ServerType, ID: 999}); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { configure.ClearConnects("proxy") })
@@ -108,5 +108,36 @@ func TestSetPortsRestoresAfterReloadFailure(t *testing.T) {
 	}
 	if got := service.GetPorts(); !reflect.DeepEqual(got, previous) {
 		t.Fatalf("ports were not restored: %+v, want %+v", got, previous)
+	}
+}
+
+func TestPutOutboundRestoresAfterReloadFailure(t *testing.T) {
+	runningCoreWithInvalidConnection(t)
+	previous := configure.OutboundSetting{
+		ProbeURL:      "https://previous.example/ping",
+		ProbeInterval: "30s",
+		Type:          configure.LeastPing,
+	}
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://next.example/ping","probeInterval":"45s","type":"leastping"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	var response struct {
+		Code common.Code `json:"code"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != common.FAIL {
+		t.Fatalf("reload failure answered %s", recorder.Body.String())
+	}
+	if got := configure.GetOutboundSetting("proxy"); got != previous {
+		t.Fatalf("outbound setting was not restored: %+v, want %+v", got, previous)
 	}
 }

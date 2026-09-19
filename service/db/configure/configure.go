@@ -72,7 +72,7 @@ func isJSONFieldExists(raw []byte, field string) bool {
 type Configure struct {
 	Servers             []*ServerRaw        `json:"servers"`
 	Subscriptions       []*SubscriptionRaw  `json:"subscriptions"`
-	ConnectedServers    []*Which            `json:"connectedServers"`
+	ConnectedServers    []*NodeRef          `json:"connectedServers"`
 	Setting             *Setting            `json:"setting"`
 	Accounts            map[string]string   `json:"accounts"`
 	Ports               Ports               `json:"ports"`
@@ -86,7 +86,7 @@ func New() *Configure {
 	return &Configure{
 		Servers:          make([]*ServerRaw, 0),
 		Subscriptions:    make([]*SubscriptionRaw, 0),
-		ConnectedServers: make([]*Which, 0),
+		ConnectedServers: make([]*NodeRef, 0),
 		Setting:          NewSetting(),
 		Accounts:         map[string]string{},
 		Ports: Ports{
@@ -150,7 +150,7 @@ func SetConfigure(cfg *Configure) error {
 			return err
 		}
 	}
-	if err := OverwriteConnects(NewWhiches(cfg.ConnectedServers)); err != nil {
+	if err := OverwriteConnects(NewNodeRefs(cfg.ConnectedServers)); err != nil {
 		return err
 	}
 	if err := SetSetting(cfg.Setting); err != nil {
@@ -163,27 +163,27 @@ func SetConfigure(cfg *Configure) error {
 }
 
 func RemoveSubscriptions(indexes []int) (err error) {
-	return db.ListRemove("touch", "subscriptions", indexes)
+	return db.SubscriptionsRemove(indexes)
 }
 
 func RemoveServers(indexes []int) (err error) {
-	return db.ListRemove("touch", "servers", indexes)
+	return db.ServersRemove(indexes)
 }
 func SetServer(index int, server *ServerRaw) (err error) {
-	return db.ListSet("touch", "servers", index, server)
+	return db.ServersSet(index, server)
 }
 func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
-	return db.ListSet("touch", "subscriptions", index, subscription)
+	return db.SubscriptionsSet(index, subscription, nil)
 }
 
-func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *Whiches) error {
-	return db.ListSetWithTransaction("touch", "subscriptions", index, subscription, func(tx *sql.Tx) error {
-		outboundWhiches := make(map[string][]*Which)
-		for _, which := range ws.Get() {
-			outboundWhiches[which.Outbound] = append(outboundWhiches[which.Outbound], which)
+func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
+	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
+		outboundRefs := make(map[string][]*NodeRef)
+		for _, ref := range ws.Get() {
+			outboundRefs[ref.Outbound] = append(outboundRefs[ref.Outbound], ref)
 		}
-		for outbound, touches := range outboundWhiches {
-			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "connectedServers", &Whiches{Touches: touches}); err != nil {
+		for outbound, touches := range outboundRefs {
+			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "connectedServers", &NodeRefs{Touches: touches}); err != nil {
 				return err
 			}
 		}
@@ -201,10 +201,10 @@ func SetRoutingA(routingA *string) (err error) {
 }
 
 func AppendServers(server []*ServerRaw) (err error) {
-	return db.ListAppend("touch", "servers", server)
+	return db.ServersAppend(server)
 }
 func AppendSubscriptions(subscription []*SubscriptionRaw) (err error) {
-	return db.ListAppend("touch", "subscriptions", subscription)
+	return db.SubscriptionsAppend(subscription)
 }
 
 func IsConfigureNotExists() bool {
@@ -214,7 +214,7 @@ func IsConfigureNotExists() bool {
 
 func GetServers() []ServerRaw {
 	r := make([]ServerRaw, 0)
-	raw, err := db.ListGetAll("touch", "servers")
+	raw, err := db.ServersGetAll()
 	if err == nil {
 		for _, b := range raw {
 			t, e := Bytes2ServerRaw(b)
@@ -230,7 +230,7 @@ func GetServers() []ServerRaw {
 
 func GetSubscriptions() []SubscriptionRaw {
 	r := make([]SubscriptionRaw, 0)
-	raw, err := db.ListGetAll("touch", "subscriptions")
+	raw, err := db.SubscriptionsGetAll()
 	if err == nil {
 		for _, b := range raw {
 			t, e := Bytes2SubscriptionRaw(b)
@@ -244,7 +244,7 @@ func GetSubscriptions() []SubscriptionRaw {
 	return r
 }
 func GetSubscription(index int) *SubscriptionRaw {
-	b, err := db.ListGet("touch", "subscriptions", index)
+	b, err := db.SubscriptionsGet(index)
 	if err != nil {
 		return nil
 	}
@@ -347,13 +347,13 @@ func GetTproxyWhiteIpGroups() (r TproxyWhiteIpGroups) {
 	db.Get("system", "tproxyWhiteIpGroups", &r)
 	return r
 }
-func GetConnectedServers() (wts *Whiches) {
+func GetConnectedServers() (wts *NodeRefs) {
 	outbounds := GetOutbounds()
 	for _, outbound := range outbounds {
 		w := GetConnectedServersByOutbound(outbound)
 		if w != nil {
 			if wts == nil {
-				wts = new(Whiches)
+				wts = new(NodeRefs)
 			}
 			wts.Extend(*w)
 		}
@@ -363,8 +363,8 @@ func GetConnectedServers() (wts *Whiches) {
 	}
 	return wts
 }
-func GetConnectedServersByOutbound(outbound string) *Whiches {
-	r := new(Whiches)
+func GetConnectedServersByOutbound(outbound string) *NodeRefs {
+	r := new(NodeRefs)
 	if outbound == "" {
 		outbound = "proxy"
 	}
@@ -376,21 +376,21 @@ func GetConnectedServersByOutbound(outbound string) *Whiches {
 }
 
 func GetLenSubscriptions() int {
-	l, err := db.ListLen("touch", "subscriptions")
+	l, err := db.SubscriptionsLen()
 	if err != nil {
 		panic(err)
 	}
 	return l
 }
 func GetLenSubscriptionServers(index int) int {
-	b, err := db.ListGet("touch", "subscriptions", index)
+	b, err := db.SubscriptionsGet(index)
 	if err != nil {
 		panic(err)
 	}
 	return len(gjson.GetBytes(b, "servers").Array())
 }
 func GetLenServers() int {
-	l, err := db.ListLen("touch", "servers")
+	l, err := db.ServersLen()
 	if err != nil {
 		panic(err)
 	}
@@ -402,12 +402,12 @@ func ClearConnects(outbound string) error {
 	}
 	return db.Set(fmt.Sprintf("outbound.%v", outbound), "connectedServers", nil)
 }
-func AddConnect(wt Which) (err error) {
+func AddConnect(wt NodeRef) (err error) {
 	if wt.Outbound == "" {
 		wt.Outbound = "proxy"
 	}
 	bucket := fmt.Sprintf("outbound.%v", wt.Outbound)
-	var wcs Whiches
+	var wcs NodeRefs
 	_ = db.Get(bucket, "connectedServers", &wcs)
 	// Normalize Outbound field of existing entries for consistent comparison
 	for _, v := range wcs.Get() {
@@ -423,28 +423,28 @@ func AddConnect(wt Which) (err error) {
 }
 
 // OverwriteConnects will replace each outbounds contained in given ws with whiches in the ws
-func OverwriteConnects(ws *Whiches) (err error) {
-	outWs := make(map[string][]*Which)
+func OverwriteConnects(ws *NodeRefs) (err error) {
+	outWs := make(map[string][]*NodeRef)
 	for _, w := range ws.Get() {
 		outWs[w.Outbound] = append(outWs[w.Outbound], w)
 	}
 	for out, ws := range outWs {
-		whiches := new(Whiches)
-		whiches.Touches = ws
+		refs := new(NodeRefs)
+		refs.Touches = ws
 		bucket := fmt.Sprintf("outbound.%v", out)
-		if err := db.Set(bucket, "connectedServers", whiches); err != nil {
+		if err := db.Set(bucket, "connectedServers", refs); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func RemoveConnect(wt Which) (err error) {
+func RemoveConnect(wt NodeRef) (err error) {
 	if wt.Outbound == "" {
 		wt.Outbound = "proxy"
 	}
 	bucket := fmt.Sprintf("outbound.%v", wt.Outbound)
-	var wcs Whiches
+	var wcs NodeRefs
 	_ = db.Get(bucket, "connectedServers", &wcs)
 	// Normalize Outbound field of existing entries for consistent comparison
 	for _, v := range wcs.Touches {
