@@ -1,11 +1,12 @@
-# /etc/conf.d/v2raya: config file for /etc/init.d/v2raya
+# /etc/conf.d/v2raya-user: config file for /etc/init.d/v2raya-user.<user>
 #
 # If you want to pass any options while running the v2raya daemon, you can do so here by setting the ${V2RAYA_OPT} variable.
-# e.g.: V2RAYA_OPTS="--address 0.0.0.0:2017 --v2ray-bin /usr/bin/v2raya_core"
+# e.g.: V2RAYA_OPTS="--address 0.0.0.0:2017 --v2ray-bin /usr/bin/v2raya_core --config=/home/<user>/.config/v2raya"
 #
-V2RAYA_OPTS="--log-disable-timestamp --log-file /var/log/v2raya/v2raya.log"
+V2RAYA_OPTS="--log-disable-timestamp"
 
-# Note: Quotes is not encouraged inside the variables here.
+# Note.1: Quotes is not encouraged inside the variables here.
+# Note.2: Absolute path is recommended in the options like --config or --log-file.
 #
 # Available options (`v2raya --help`):
 # -a, --address string             Listening address (default "0.0.0.0:2017")
