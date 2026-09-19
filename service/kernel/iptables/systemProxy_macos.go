@@ -5,6 +5,7 @@ package iptables
 
 import (
 	"fmt"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -150,11 +151,18 @@ func (p *systemProxy) GetSetupCommands() Setter {
 		PreFunc: func() error {
 			savedMacOSProxy.mu.Lock()
 			defer savedMacOSProxy.mu.Unlock()
+			// a snapshot still pending from an earlier run is the user's
+			// original; keep it and do not capture our own proxy as the state
 			var previous MacOSProxySnapshot
 			if found, err := configure.GetSystemProxySnapshot(&previous); err != nil {
 				return err
-			} else if found || savedMacOSProxy.saved {
-				return fmt.Errorf("original system proxy state is pending restoration")
+			} else if found {
+				log.Warn("system proxy: reusing the original state saved by an earlier run")
+				savedMacOSProxy.services = previous.Services
+				savedMacOSProxy.saved = true
+				return nil
+			} else if savedMacOSProxy.saved {
+				return nil
 			}
 
 			services := make(map[string]*MacOSServiceSnapshot, len(networkServices))

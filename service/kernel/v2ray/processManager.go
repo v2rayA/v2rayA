@@ -394,17 +394,18 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
 	m.stop(true)
-	state, err := configure.GetHostState()
-	if err == nil && state != nil {
-		err = RecoverHostState(state)
-		if err == nil {
-			err = configure.SetHostState(nil)
+	// A marker left by a start that never committed is torn down first. A
+	// teardown that fails is logged, not fatal: refusing every later start
+	// would leave that state behind with no service to fix it.
+	if state, err := configure.GetHostState(); err != nil {
+		log.Warn("read pending host state: %v", err)
+	} else if state != nil {
+		if err := RecoverHostState(state); err != nil {
+			log.Warn("recover pending host state: %v", err)
 		}
-	}
-	if err != nil {
-		m.mu.Unlock()
-		_ = t.Close()
-		return fmt.Errorf("recover pending host state: %w", err)
+		if err := configure.SetHostState(nil); err != nil {
+			log.Warn("clear pending host state: %v", err)
+		}
 	}
 	m.generation++
 	generation := m.generation
@@ -432,9 +433,11 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 			m.mu.Lock()
 			defer m.mu.Unlock()
 			if m.ownsProcessLocked(process, generation) {
+				// stop tears the host state down itself; the marker only
+				// records that it happened
 				m.stop(true)
-			}
-			if m.generation == generation && m.p == nil {
+				err = errors.Join(err, configure.SetHostState(nil))
+			} else if m.generation == generation && m.p == nil {
 				state, recoveryErr := configure.GetHostState()
 				if recoveryErr == nil && state != nil {
 					recoveryErr = RecoverHostState(state)

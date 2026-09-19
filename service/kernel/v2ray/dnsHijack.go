@@ -79,6 +79,7 @@ const HijackFlag = "# v2rayA DNS hijack"
 const (
 	symlinkMarker = "# v2rayA saved symlink: "
 	missingMarker = "# v2rayA: no resolv.conf"
+	emptyMarker   = "# v2rayA: empty resolv.conf"
 )
 
 var hijacker *ResolvHijacker
@@ -145,6 +146,11 @@ func backupResolv() error {
 		// looking for the real backup instead of saving our own work.
 		return nil
 	}
+	if len(b) == 0 {
+		// an empty original is legitimate; an empty backup is what a
+		// crash mid-write leaves, so the two must not look alike
+		return writeResolvBackup([]byte(emptyMarker + "\n"))
+	}
 	return writeResolvBackup(b)
 }
 
@@ -202,6 +208,13 @@ func restoreResolv() bool {
 			log.Warn("DNS hijack: cannot restore the %v link to %v: %v", resolvPath, target, err)
 			return false
 		}
+	case strings.HasPrefix(strings.TrimSpace(content), emptyMarker):
+		if err := os.WriteFile(resolvPath, nil, 0644); err != nil {
+			log.Warn("DNS hijack: cannot restore an empty %v: %v", resolvPath, err)
+			return false
+		}
+		_ = os.Remove(resolvBackupPath)
+		return true
 	case strings.HasPrefix(strings.TrimSpace(content), missingMarker):
 		if err := os.Remove(resolvPath); err != nil && !os.IsNotExist(err) {
 			log.Warn("DNS hijack: cannot remove %v: %v", resolvPath, err)

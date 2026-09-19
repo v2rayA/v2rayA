@@ -56,6 +56,11 @@ func TestBoltMigrationPublishesVerifiedDatabaseAndRestarts(t *testing.T) {
 	}
 
 	setBoltValue(t, boltPath, "outbound.proxy", "connectedServers", []byte(validConnections))
+	// An earlier release built the SQLite file in place: an empty one next
+	// to the intact bolt.db must not win.
+	if err := os.WriteFile(sqlitePath, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
 	if err := db.MigrateFromBoltDB(); err != nil {
 		t.Fatalf("migration after fixture repair: %v", err)
 	}

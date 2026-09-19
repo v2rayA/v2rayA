@@ -3,6 +3,7 @@
 package iptables
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,8 +43,14 @@ func TestSystemProxyRestoresPersistedSnapshot(t *testing.T) {
 			if err != nil || !found {
 				t.Errorf("capture was not persisted: found=%v err=%v", found, err)
 			}
-			if err := SystemProxy.GetSetupCommands().Run(true); err == nil {
-				t.Error("setup overwrote unresolved original proxy state")
+			// a second setup keeps the pending snapshot as the original
+			// instead of refusing, so a start after a crash still works
+			if err := SystemProxy.GetSetupCommands().Run(true); err != nil {
+				t.Errorf("setup with a pending snapshot failed: %v", err)
+			}
+			var again map[string]interface{}
+			if _, err := configure.GetSystemProxySnapshot(&again); err != nil || fmt.Sprint(again) != fmt.Sprint(snapshot) {
+				t.Errorf("setup overwrote the original proxy state: %v", again)
 			}
 			savedLinuxProxy = linuxProxySavedState{}
 			if err := os.WriteFile(output, nil, 0600); err != nil {

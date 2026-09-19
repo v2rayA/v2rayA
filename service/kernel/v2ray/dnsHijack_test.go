@@ -155,3 +155,25 @@ func TestResolvHijackerConcurrentResetRemove(t *testing.T) {
 		t.Fatalf("resolver not restored: %q, %v", got, err)
 	}
 }
+
+func TestBackupAndRestoreEmptyResolv(t *testing.T) {
+	dir := t.TempDir()
+	resolv := filepath.Join(dir, "resolv.conf")
+	backup := filepath.Join(dir, "resolv.conf.backup")
+	withPaths(t, resolv, backup)
+	if err := os.WriteFile(resolv, nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := backupResolv(); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if err := os.WriteFile(resolv, []byte(HijackFlag+"\nnameserver 127.2.0.17\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if !restoreResolv() {
+		t.Fatal("an empty original was not restored")
+	}
+	if b, err := os.ReadFile(resolv); err != nil || len(b) != 0 {
+		t.Fatalf("got %q (err %v), want an empty file", b, err)
+	}
+}

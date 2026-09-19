@@ -33,12 +33,24 @@ func MigrateFromBoltDB() error {
 	}
 
 	if _, err := os.Stat(sqlitePath); err == nil {
-		backupPath, err := moveBoltAside(boltPath)
-		if err != nil {
-			return fmt.Errorf("SQLite database already exists but bolt.db could not be moved aside: %w", err)
+		// Both files: the SQLite one is authoritative when it holds data.
+		// An earlier release built it in place, so a failed migration could
+		// leave an empty or partial file next to the intact bolt.db; that one
+		// is discarded and the migration runs again.
+		if sqliteHoldsData(sqlitePath) {
+			backupPath, err := moveBoltAside(boltPath)
+			if err != nil {
+				return fmt.Errorf("SQLite database already exists but bolt.db could not be moved aside: %w", err)
+			}
+			log.Warn("SQLite database already exists; moved stale bolt.db to %s", backupPath)
+			return nil
 		}
-		log.Warn("SQLite database already exists; moved stale bolt.db to %s", backupPath)
-		return nil
+		log.Warn("SQLite database at %s holds no data; discarding it and migrating bolt.db again", sqlitePath)
+		for _, suffix := range []string{"", "-wal", "-shm"} {
+			if err := os.Remove(sqlitePath + suffix); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to discard the partial SQLite database: %w", err)
+			}
+		}
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("failed to inspect SQLite database: %w", err)
 	}
@@ -148,6 +160,22 @@ func MigrateFromBoltDB() error {
 
 	log.Warn("Migration completed successfully. Old BoltDB backed up to %s", backupPath)
 	return nil
+}
+
+// sqliteHoldsData reports whether a SQLite file has the system settings a
+// completed migration always writes; a missing or empty table means the
+// file is the remains of a migration that never finished.
+func sqliteHoldsData(path string) bool {
+	db, err := sql.Open(sqliteDriverName, sqliteDSN(path))
+	if err != nil {
+		return false
+	}
+	defer db.Close()
+	var n int
+	if err := db.QueryRow("SELECT COUNT(*) FROM system_config WHERE key LIKE 'system:%'").Scan(&n); err != nil {
+		return false
+	}
+	return n > 0
 }
 
 func moveBoltAside(boltPath string) (string, error) {

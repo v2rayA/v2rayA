@@ -189,11 +189,19 @@ func (p *systemProxy) GetSetupCommands() Setter {
 		PreFunc: func() error {
 			savedLinuxProxy.mu.Lock()
 			defer savedLinuxProxy.mu.Unlock()
+			// A snapshot still pending from an earlier run is the user's
+			// original: it is kept as the state to go back to, and the
+			// capture is not repeated (the registry already holds our proxy).
 			var previous LinuxProxySnapshot
 			if found, err := configure.GetSystemProxySnapshot(&previous); err != nil {
 				return err
-			} else if found || savedLinuxProxy.saved {
-				return fmt.Errorf("original system proxy state is pending restoration")
+			} else if found {
+				log.Warn("system proxy: reusing the original state saved by an earlier run")
+				savedLinuxProxy.snapshot = &previous
+				savedLinuxProxy.saved = true
+				return nil
+			} else if savedLinuxProxy.saved {
+				return nil
 			}
 
 			if hasGsettings {

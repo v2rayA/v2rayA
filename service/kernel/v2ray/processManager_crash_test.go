@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -110,24 +111,27 @@ func TestStaleGenerationCannotMutateCurrentProcess(t *testing.T) {
 	}
 }
 
-func TestStartRetainsFailedRecovery(t *testing.T) {
+func TestStartContinuesPastFailedRecovery(t *testing.T) {
 	env := conf.GetEnvironmentConfig()
 	previous := *env
 	env.Lite = true
+	env.Config = t.TempDir()
 	t.Cleanup(func() { *env = previous; _ = configure.SetHostState(nil) })
 	marker := &configure.HostState{TransparentType: configure.TransparentTun, APIPort: 23456, TunTeardownScript: "exit 23"}
 	if err := configure.SetHostState(marker); err != nil {
 		t.Fatal(err)
 	}
+	// A recovery that fails is logged, the marker cleared, and the start
+	// goes on: with no core binary it fails later, at the process.
 	var m CoreProcessManager
-	if err := m.Start(&Template{Setting: configure.NewSetting()}); err == nil {
-		t.Fatal("Start ignored failed pending recovery")
+	err := m.Start(&Template{Setting: configure.NewSetting(), API: &coreObj.APIObject{}})
+	if err == nil || strings.Contains(err.Error(), "recover pending host state") {
+		t.Fatalf("Start error = %v, want a failure after recovery", err)
 	}
-	got, err := configure.GetHostState()
-	if err != nil || got == nil || *got != *marker {
-		t.Fatalf("pending recovery was replaced: marker=%+v err=%v", got, err)
+	if got, err := configure.GetHostState(); err != nil || got != nil {
+		t.Fatalf("marker after start: %+v err=%v", got, err)
 	}
-	if m.p != nil || m.generation != 0 {
-		t.Fatal("Start progressed after failed recovery")
+	if m.generation != 1 {
+		t.Fatalf("generation = %d, want 1: Start did not progress past recovery", m.generation)
 	}
 }
