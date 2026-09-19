@@ -15,7 +15,14 @@ import (
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
-func run() (err error) {
+func run() error {
+	cleanup := func() {
+		fmt.Println("Quitting...")
+		v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
+		v2ray.ProcessManager.Stop(false)
+		_ = db.Close()
+	}
+
 	// Check the last kernel exit status to decide startup behavior.
 	lastExit := configure.GetLastKernelExitStatus()
 	shouldStart := configure.GetRunning()
@@ -75,12 +82,13 @@ func run() (err error) {
 		<-sigs
 		errch <- nil
 	}()
+	return waitForShutdown(errch, cleanup)
+}
+
+func waitForShutdown(errch <-chan error, cleanup func()) (err error) {
+	defer cleanup()
 	if err = <-errch; err != nil {
-		log.Fatal("run: %v", err)
+		return fmt.Errorf("run: %w", err)
 	}
-	fmt.Println("Quitting...")
-	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
-	v2ray.ProcessManager.Stop(false)
-	_ = db.Close()
 	return nil
 }

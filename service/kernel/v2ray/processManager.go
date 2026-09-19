@@ -1,11 +1,15 @@
 package v2ray
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
@@ -268,9 +272,26 @@ func (m *CoreProcessManager) runPreStartHook() error {
 		hook := strings.Split(corehook, " ")
 		hook = append(hook, "--stage=pre-start", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
 		log.Info("Execute the core pre start hook: %v", hook)
-		b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+		deadline := time.Duration(conf.GetEnvironmentConfig().CoreStartupTimeout) * time.Second
+		ctx, cancel := context.WithTimeout(context.Background(), deadline)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, hook[0], hook[1:]...)
+		if setHookProcessGroup(cmd) {
+			cmd.Cancel = func() error {
+				group, err := os.FindProcess(-cmd.Process.Pid)
+				if err != nil {
+					return err
+				}
+				return group.Kill()
+			}
+		}
+		cmd.WaitDelay = 100 * time.Millisecond
+		b, err := cmd.CombinedOutput()
 		if len(b) > 0 {
 			log.Info("Executing the core pre start hook: %v", string(b))
+		}
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("core pre-start hook %q exceeded the %s deadline", corehook, deadline)
 		}
 		if err != nil {
 			return fmt.Errorf("error when executing the core pre start hook: %w", err)

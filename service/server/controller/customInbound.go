@@ -48,6 +48,12 @@ func GetCustomInbound(ctx *gin.Context) {
 }
 
 func PostCustomInbound(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
+
 	var ci configure.CustomInbound
 	if err := ctx.ShouldBindJSON(&ci); err != nil {
 		common.ResponseError(ctx, badRequest("custom inbound", fmt.Errorf("request body is not a valid custom inbound object: %v", err)))
@@ -163,6 +169,12 @@ func PostCustomInbound(ctx *gin.Context) {
 }
 
 func DeleteCustomInbound(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
+
 	var req struct {
 		Tag string `json:"tag"`
 	}
