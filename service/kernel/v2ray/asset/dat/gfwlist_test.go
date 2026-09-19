@@ -3,10 +3,34 @@ package dat
 import (
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestInstallGeoSiteFileRejectsInvalidDataWithoutReplacingExistingFile(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "LoyalsoldierSite.dat")
+	downloaded := target + ".new"
+	if err := os.WriteFile(target, []byte("existing"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(downloaded, []byte("not a dat file"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := installGeoSiteFile(downloaded, target); err == nil {
+		t.Fatal("invalid geosite database was installed")
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "existing" {
+		t.Fatalf("existing file changed to %q", got)
+	}
+}
 
 type versionTransport func(*http.Request) (*http.Response, error)
 

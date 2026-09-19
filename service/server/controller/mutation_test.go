@@ -100,6 +100,24 @@ func TestCustomInboundMutationsWaitForTheTurn(t *testing.T) {
 	}
 }
 
+func TestPatchSubscriptionWaitsForTheMutationTurn(t *testing.T) {
+	previous := mutationWait
+	mutationWait = 10 * time.Millisecond
+	t.Cleanup(func() { mutationWait = previous })
+	release, ok := beginMutation(testContext(t))
+	if !ok {
+		t.Fatal("free turn refused")
+	}
+	defer release()
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPatch, "/subscription", nil)
+	PatchSubscription(ctx)
+	if _, errorCode := codeOf(t, recorder); errorCode != "REQUEST_IN_PROGRESS" {
+		t.Fatalf("held turn answered %s", recorder.Body.String())
+	}
+}
+
 func testContext(t *testing.T) *gin.Context {
 	t.Helper()
 	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())

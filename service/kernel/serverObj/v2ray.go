@@ -120,7 +120,10 @@ func NewV2Ray(link string) (ServerObj, error) {
 func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	u, err := url.Parse(vless)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: vless link is not a valid URL; expected vless://uuid@host:port: %v", ErrInvalidParameter, err)
+	}
+	if _, err := strconv.Atoi(u.Port()); err != nil {
+		return nil, fmt.Errorf("%w: vless link for %q has a missing or invalid port; expected vless://uuid@host:port", ErrInvalidParameter, u.Hostname())
 	}
 	data = &V2Ray{
 		Ps:                   u.Fragment,
@@ -303,6 +306,9 @@ func ParseVmessURL(vmess string) (data *V2Ray, err error) {
 		info.Aid = "0"
 	}
 	info.Protocol = "vmess"
+	if _, err := strconv.Atoi(info.Port); err != nil {
+		return nil, fmt.Errorf("%w: vmess link for %q has a missing or invalid port", ErrInvalidParameter, info.Add)
+	}
 	return &info, nil
 }
 

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"net/http"
 	"sync"
 	"time"
 
@@ -24,16 +25,20 @@ func PostLogin(ctx *gin.Context) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+	err := ctx.ShouldBindJSON(&data)
+	if err != nil {
+		err := badRequest("username and password", "request body must be {\"username\": string, \"password\": string}")
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"code": common.FAIL, "message": err.Error(), "data": nil, "errorCode": "BAD_REQUEST",
+			"params": gin.H{"field": "username and password"},
+		})
+		return
+	}
 	loginSessions <- nil
 	defer func() {
 		time.Sleep(500 * time.Millisecond)
 		<-loginSessions
 	}()
-	err := ctx.ShouldBindJSON(&data)
-	if err != nil {
-		common.ResponseError(ctx, badRequest("username and password", "request body must be {\"username\": string, \"password\": string}"))
-		return
-	}
 	if !configure.HasAnyAccounts() {
 		common.Response(ctx, common.UNAUTHORIZED, gin.H{
 			"first": true,

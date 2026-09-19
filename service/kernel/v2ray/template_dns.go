@@ -218,6 +218,8 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	seenUpstream := make(map[upstreamKey]int) // key → index in upstreams list
 	upstreams := cfg["upstreams"].([]map[string]interface{})
 	rulesList := cfg["rules"].([]map[string]interface{})
+	defaultUpstream := ""
+	lastRuleUpstream := ""
 
 	for _, rule := range migrated {
 		upstreamAddr := rule.Upstream
@@ -314,6 +316,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 				"bootstrap": false,
 			})
 		}
+		lastRuleUpstream = upstreamID
 
 		// 解析域名匹配规则
 		var domains, suffixes []string
@@ -400,7 +403,12 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 			}
 
 			rulesList = append(rulesList, rc)
+		} else {
+			defaultUpstream = upstreamID
 		}
+	}
+	if defaultUpstream == "" {
+		defaultUpstream = lastRuleUpstream
 	}
 
 	// 节点服务器域名必须直连解析：若命中默认（代理）上游，查询经 dispatcher
@@ -446,6 +454,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 
 	cfg["upstreams"] = upstreams
 	cfg["rules"] = rulesList
+	cfg["default_upstream"] = defaultUpstream
 
 	// bootstrap 列表去重
 	bootstrapList = common.Deduplicate(bootstrapList)

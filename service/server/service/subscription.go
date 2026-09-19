@@ -43,6 +43,22 @@ type SIP008 struct {
 	} `json:"servers"`
 }
 
+const maxSubscriptionDocumentSize int64 = 32 << 20
+
+func readSubscriptionBody(resp *http.Response) ([]byte, error) {
+	if resp.ContentLength > maxSubscriptionDocumentSize {
+		return nil, fmt.Errorf("subscription document exceeds the 32 MiB limit")
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, maxSubscriptionDocumentSize+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(b)) > maxSubscriptionDocumentSize {
+		return nil, fmt.Errorf("subscription document exceeds the 32 MiB limit")
+	}
+	return b, nil
+}
+
 func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err error) {
 	err = jsoniter.Unmarshal([]byte(raw), &sip)
 	if err != nil {
@@ -195,7 +211,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	if res.StatusCode >= 400 {
 		return nil, "", fmt.Errorf("subscription server answered %s", res.Status)
 	}
-	b, err := io.ReadAll(res.Body)
+	b, err := readSubscriptionBody(res)
 	if err != nil {
 		return nil, "", err
 	}
@@ -376,10 +392,14 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	// one; the running core keeps using the old config until it is regenerated.
 	if connectedServerChanged && v2ray.ProcessManager.Running() {
 		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			log.Warn("UpdateSubscription: failed to reload core after remapping connected servers: %v", err)
+			return subscriptionCoreApplyError(err)
 		}
 	}
 	return nil
+}
+
+func subscriptionCoreApplyError(err error) error {
+	return fmt.Errorf("subscription stored, but the core could not apply it: %w", err)
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -47,6 +49,9 @@ func runningCoreWithInvalidConnection(t *testing.T) {
 	}
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
+		if errors.Is(err, syscall.EPERM) {
+			t.Skip("sandbox does not permit the fake core readiness listener")
+		}
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { listener.Close() })
@@ -91,6 +96,33 @@ func TestPutDnsRulesReportsReloadFailure(t *testing.T) {
 	}
 	if got := configure.GetDnsRulesNotNil(); !reflect.DeepEqual(got, previous) {
 		t.Fatalf("DNS rules were not restored: %+v", got)
+	}
+}
+
+func TestPutRoutingARestoresAfterReloadFailure(t *testing.T) {
+	original := configure.GetRoutingA()
+	t.Cleanup(func() { _ = configure.SetRoutingA(&original) })
+	previous := "default: proxy"
+	if err := configure.SetRoutingA(&previous); err != nil {
+		t.Fatal(err)
+	}
+	runningCoreWithInvalidConnection(t)
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/routingA", strings.NewReader(`{"routingA":"default: direct"}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutRoutingA(ctx)
+	var response struct {
+		Code common.Code `json:"code"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != common.FAIL {
+		t.Fatalf("reload failure answered %s", recorder.Body.String())
+	}
+	if got := configure.GetRoutingA(); got != previous {
+		t.Fatalf("RoutingA = %q, want %q", got, previous)
 	}
 }
 

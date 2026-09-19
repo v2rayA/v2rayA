@@ -1,15 +1,55 @@
 package service
 
 import (
+	"errors"
+	"io"
+	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 )
+
+type closeTrackingBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *closeTrackingBody) Close() error {
+	b.closed = true
+	return nil
+}
+
+func TestHTTPLatencyClosesErrorResponseBody(t *testing.T) {
+	body := &closeTrackingBody{Reader: strings.NewReader("bad gateway")}
+	which := new(configure.Which)
+	setHTTPLatencyResult(which, &http.Response{StatusCode: http.StatusBadGateway, Body: body}, nil, time.Now())
+	if !body.closed {
+		t.Fatal("response body was not closed")
+	}
+	if which.Latency != "BAD RESPONSE" {
+		t.Fatalf("latency = %q", which.Latency)
+	}
+}
+
+func TestHttpLatencyRejectsInvalidTestURLBeforeStartingCore(t *testing.T) {
+	wasRunning := v2ray.ProcessManager.Running()
+	_, err := TestHttpLatency(nil, time.Second, 1, false, "%")
+	var coded *common.CodedError
+	if !errors.As(err, &coded) || coded.Code != "INVALID_TEST_URL" {
+		t.Fatalf("error = %v, want INVALID_TEST_URL", err)
+	}
+	if got := v2ray.ProcessManager.Running(); got != wasRunning {
+		t.Fatalf("core running state changed from %v to %v", wasRunning, got)
+	}
+}
 
 func TestMain(m *testing.M) {
 	dir, err := os.MkdirTemp("", "v2raya-service-test-*")
