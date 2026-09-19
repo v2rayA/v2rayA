@@ -32,6 +32,7 @@ export function detectSource(text: string): string {
 }
 
 export function useLogStream(intervalSeconds = 5) {
+  const maxLines = 20000;
   const lines = ref<LogLine[]>([]);
   const sources = ref<string[]>([]);
   const interval = ref(intervalSeconds);
@@ -67,6 +68,10 @@ export function useLogStream(intervalSeconds = 5) {
         level: detectLevel(text),
         source,
       });
+    }
+    // a page left open for days must not keep every line ever streamed
+    if (lines.value.length > maxLines) {
+      lines.value.splice(0, lines.value.length - maxLines);
     }
     endOfLine = complete;
     // the offset is in bytes, the text in characters

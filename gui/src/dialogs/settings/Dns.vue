@@ -28,7 +28,9 @@ onMounted(async () => {
   try {
     const [dns, groups] = await Promise.all([getDnsRules(), getOutbounds()]);
     if (dns.rules?.length) {
+      // fields set outside the dialog (the DNS module's matchers) survive a save
       rules.value = dns.rules.map((rule) => ({
+        ...rule,
         server: rule.server || "",
         domains: rule.domains || "",
         outbound: rule.outbound || "direct",

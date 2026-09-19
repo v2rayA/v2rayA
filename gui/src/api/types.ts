@@ -120,6 +120,8 @@ export interface DnsRule {
   server: string;
   domains: string;
   outbound: string;
+  // matchers the DNS module reads and only the API sets; kept on save
+  [extra: string]: unknown;
 }
 
 export interface DnsRulesResponse {

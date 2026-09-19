@@ -130,7 +130,7 @@ const gfwUpdateModes = computed(() => [
 const gfwlistInUse = computed(
   () => form.pacMode === "gfwlist" || form.transparent === "gfwlist",
 );
-const localVersionStale = computed(
+const localVersionAhead = computed(
   () =>
     !!localGFWListVersion.value &&
     !!remoteGFWListVersion.value &&
@@ -293,7 +293,7 @@ defineExpose({ sync: () => settings.load() });
         />
         <SettingRow
           :title="t('gfwList.title')"
-          :hint="localVersionStale ? t('setting.messages.gfwlist') : undefined"
+          :hint="localVersionAhead ? t('setting.messages.gfwlist') : undefined"
           :subtitle="`${t('common.latest')}: ${remoteGFWListVersion || t('common.checkRunning')}  ${t('common.local')}: ${localGFWListVersion || t('common.none')}`"
           action
           @click="openGfwList"
