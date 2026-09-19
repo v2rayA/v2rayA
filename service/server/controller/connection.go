@@ -10,19 +10,11 @@ import (
 )
 
 func PostConnection(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
@@ -40,19 +32,11 @@ func PostConnection(ctx *gin.Context) {
 }
 
 func DeleteConnection(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var which configure.Which
 	err := ctx.ShouldBindJSON(&which)
@@ -69,19 +53,11 @@ func DeleteConnection(ctx *gin.Context) {
 }
 
 func PostV2ray(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	err := service.StartV2ray()
 	if err != nil {
@@ -92,19 +68,11 @@ func PostV2ray(ctx *gin.Context) {
 }
 
 func DeleteV2ray(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	err := service.StopV2ray()
 	if err != nil {

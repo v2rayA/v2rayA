@@ -65,19 +65,11 @@ func PutOutbound(ctx *gin.Context) {
 }
 
 func DeleteOutbound(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var data struct {
 		Outbound string `json:"outbound"`
@@ -120,19 +112,11 @@ func DeleteOutbound(ctx *gin.Context) {
 }
 
 func PutOutboundConnections(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var data struct {
 		Outbound string `json:"outbound"`
@@ -206,19 +190,11 @@ func PutOutboundConnections(ctx *gin.Context) {
 // returns the group to balancing when `which` is null. The member must be
 // connected in that group.
 func PutOutboundSelection(ctx *gin.Context) {
-	updatingMu.Lock()
-	if updating {
-		common.ResponseError(ctx, processingErr)
-		updatingMu.Unlock()
+	release, ok := beginMutation(ctx)
+	if !ok {
 		return
 	}
-	updating = true
-	updatingMu.Unlock()
-	defer func() {
-		updatingMu.Lock()
-		updating = false
-		updatingMu.Unlock()
-	}()
+	defer release()
 
 	var data struct {
 		Outbound string           `json:"outbound"`
