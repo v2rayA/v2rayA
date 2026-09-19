@@ -7,7 +7,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 )
 
-func GetSharingAddress(w *configure.Which) (addr string, err error) {
+func GetSharingAddress(w *configure.NodeRef) (addr string, err error) {
 	if w == nil {
 		return "", fmt.Errorf("no server was given to share")
 	}

@@ -41,7 +41,7 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = RemoveSubscriptions([]int{index}) })
 
-	initial := &Whiches{Touches: []*Which{{
+	initial := &NodeRefs{Touches: []*NodeRef{{
 		TYPE:     SubscriptionServerType,
 		ID:       1,
 		Sub:      index,
@@ -50,7 +50,7 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 	if err := OverwriteConnects(initial); err != nil {
 		t.Fatal(err)
 	}
-	replacement := &Whiches{Touches: []*Which{{
+	replacement := &NodeRefs{Touches: []*NodeRef{{
 		TYPE:     SubscriptionServerType,
 		ID:       2,
 		Sub:      index,

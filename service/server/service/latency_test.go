@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestHttpLatencyDropsSubscriptions(t *testing.T) {
-	input := []*configure.Which{{TYPE: configure.SubscriptionType, ID: 1}}
+	input := []*configure.Which{{NodeRef: configure.NodeRef{TYPE: configure.SubscriptionType, ID: 1}}}
 	got, err := TestHttpLatency(input, time.Second, 1, false, "")
 	if err != nil {
 		t.Fatal(err)
@@ -37,14 +37,14 @@ func TestHttpLatencyDropsSubscriptions(t *testing.T) {
 }
 
 func TestAutoSelectMembersKeepsGroupAndSkipsUnsupported(t *testing.T) {
-	existing := []*configure.Which{{TYPE: configure.ServerType, ID: 1, Outbound: "proxy"}}
+	existing := []*configure.NodeRef{{TYPE: configure.ServerType, ID: 1, Outbound: "proxy"}}
 	sub := &configure.SubscriptionRaw{Servers: []configure.ServerRaw{
 		{ServerObj: &serverObj.SOCKS{Server: "127.0.0.1", Port: 1080, Protocol: "socks5", Name: "first"}},
 		{},
 		{ServerObj: &serverObj.SOCKS{Server: "127.0.0.1", Port: 1081, Protocol: "socks5", Name: "third"}},
 	}}
 	got := autoSelectMembers(4, sub, existing)
-	want := []configure.Which{
+	want := []configure.NodeRef{
 		{TYPE: configure.ServerType, ID: 1, Outbound: "proxy"},
 		{TYPE: configure.SubscriptionServerType, ID: 1, Sub: 4, Outbound: "proxy"},
 		{TYPE: configure.SubscriptionServerType, ID: 3, Sub: 4, Outbound: "proxy"},
@@ -83,7 +83,7 @@ func TestReplaceOutboundConnectionsWritesTheGroupOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = configure.RemoveOutbound(outbound) })
-	members := []configure.Which{
+	members := []configure.NodeRef{
 		{TYPE: configure.SubscriptionServerType, ID: 2, Sub: 0},
 		{TYPE: configure.ServerType, ID: 1, Sub: 7},
 		{TYPE: configure.SubscriptionServerType, ID: 2, Sub: 0},

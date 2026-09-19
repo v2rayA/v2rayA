@@ -23,13 +23,13 @@ func TestDeleteWhichMixedSubscriptionsDisconnects(t *testing.T) {
 		configure.RemoveServers([]int{0})
 		configure.RemoveSubscriptions([]int{0, 1})
 	})
-	if err := configure.AddConnect(configure.Which{TYPE: configure.SubscriptionServerType, ID: 1, Sub: 1}); err != nil {
+	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.SubscriptionServerType, ID: 1, Sub: 1}); err != nil {
 		t.Fatal(err)
 	}
 	err := DeleteWhich([]*configure.Which{
-		{TYPE: configure.ServerType, ID: 1},
-		{TYPE: configure.SubscriptionType, ID: 1},
-		{TYPE: configure.SubscriptionType, ID: 2},
+		{NodeRef: configure.NodeRef{TYPE: configure.ServerType, ID: 1}},
+		{NodeRef: configure.NodeRef{TYPE: configure.SubscriptionType, ID: 1}},
+		{NodeRef: configure.NodeRef{TYPE: configure.SubscriptionType, ID: 2}},
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -369,7 +369,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscription.Servers = infoServerRaws
 	subscription.Status = string(touch.NewUpdateStatus())
 	subscription.Info = status
-	if err := configure.SetSubscriptionAndConnects(index, subscription, configure.NewWhiches(cssAfter)); err != nil {
+	if err := configure.SetSubscriptionAndConnects(index, subscription, configure.NewNodeRefs(cssAfter)); err != nil {
 		return err
 	}
 	// A remapped connection may point at a server whose config differs from the old
@@ -394,7 +394,7 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 }
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
-	var subscriptionServer configure.Which
+	var subscriptionServer configure.NodeRef
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
@@ -403,7 +403,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		if connections == nil {
 			return nil
 		}
-		remaining := make([]configure.Which, 0, connections.Len())
+		remaining := make([]configure.NodeRef, 0, connections.Len())
 		var found bool
 		for _, connected := range connections.Get() {
 			if connected.TYPE == configure.SubscriptionServerType && connected.Sub == index {
@@ -425,7 +425,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
 	}
 	backup := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
-	var existing []*configure.Which
+	var existing []*configure.NodeRef
 	if backup != nil {
 		existing = backup.Get()
 	}
@@ -463,8 +463,8 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 
 // autoSelectMembers appends every supported node of the subscription to the
 // members already in the proxy group.
-func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.Which) []configure.Which {
-	members := make([]configure.Which, 0, len(existing)+len(sub.Servers))
+func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.NodeRef) []configure.NodeRef {
+	members := make([]configure.NodeRef, 0, len(existing)+len(sub.Servers))
 	for _, connected := range existing {
 		members = append(members, *connected)
 	}
@@ -479,7 +479,7 @@ func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*co
 			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
 			continue
 		}
-		members = append(members, configure.Which{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
+		members = append(members, configure.NodeRef{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
 		log.Info("[AutoSelect] Automatically selected server: %v", serverName)
 	}
 	return members

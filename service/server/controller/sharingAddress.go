@@ -9,7 +9,7 @@ import (
 )
 
 func GetSharingAddress(ctx *gin.Context) {
-	var w configure.Which
+	var w configure.NodeRef
 	err := jsoniter.Unmarshal([]byte(ctx.Query("touch")), &w)
 	if err != nil {
 		common.ResponseError(ctx, badRequest("touch", "query parameter \"touch\" must be a JSON server or subscription item"))

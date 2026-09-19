@@ -121,7 +121,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	loc := configure.NewLocator()
 	for i := range which {
 		which[i].Latency = ""
-		sr, err := loc.Locate(which[i])
+		sr, err := loc.Locate(&which[i].NodeRef)
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue

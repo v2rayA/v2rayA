@@ -138,7 +138,7 @@ func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func(
 						}
 						var s OutboundStatus
 						_ = mapper.AutoMapper(observed, &s)
-						s.Which = css.Get()[index]
+						s.Which = &configure.Which{NodeRef: *css.Get()[index]}
 						os = append(os, s)
 					}
 					msg := gin.H{
