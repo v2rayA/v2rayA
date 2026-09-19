@@ -14,7 +14,3 @@ import "dayjs/locale/ko";
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-export function install(app) {
-  app.config.globalProperties.$dayjs = dayjs;
-}

@@ -1,0 +1,34 @@
+name: GUI Check
+
+on:
+  pull_request:
+    paths:
+      - "gui/**"
+      - ".github/workflows/gui-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "gui/**"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gui
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: gui/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn i18n-check
+      - run: yarn test
+      - run: OUTPUT_DIR=dist yarn build
+      # Reported only until the old component library leaves the bundle;
+      # the gate value is set in the plan's last milestone.
+      - run: node scripts/size-gate.mjs dist
