@@ -36,63 +36,66 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 		if err != nil {
 			return err
 		}
-		parsed := gjson.ParseBytes(b)
-		var subID int64
-		if err := db.QueryRow("SELECT id FROM subscriptions WHERE sort = ?", index).Scan(&subID); err != nil {
-			if err == sql.ErrNoRows {
-				return fmt.Errorf("ListSet: subscription at index %d not found", index)
-			}
-			return err
-		}
-		address := parsed.Get("address").String()
-		remarks := parsed.Get("remarks").String()
-		status := parsed.Get("status").String()
-		info := parsed.Get("info").String()
-		autoSelect := 0
-		if parsed.Get("autoSelect").Bool() {
-			autoSelect = 1
-		}
-
-		result, err := db.Exec(
-			"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-			address, remarks, status, info, autoSelect, subID,
-		)
-		if err != nil {
-			return err
-		}
-		rows, _ := result.RowsAffected()
-		if rows == 0 {
-			return fmt.Errorf("ListSet: subscription at index %d not found", index)
-		}
-
-		// Update servers within this subscription.
-		// Clean up outbound_connections first to satisfy foreign key constraint;
-		// otherwise the delete fails and the insert below duplicates the list.
-		if _, err := db.Exec(`
-			DELETE FROM outbound_connections
-			WHERE server_id IN (SELECT id FROM servers WHERE type = 'subscription_server' AND sub_id = ?)
-		`, subID); err != nil {
-			return fmt.Errorf("ListSet: failed to clear outbound connections of subscription %d: %w", index, err)
-		}
-		if _, err := db.Exec("DELETE FROM servers WHERE type = 'subscription_server' AND sub_id = ?", subID); err != nil {
-			return fmt.Errorf("ListSet: failed to clear old servers of subscription %d: %w", index, err)
-		}
-
-		servers := parsed.Get("servers").Array()
-		for j, s := range servers {
-			_, err := db.Exec(
-				"INSERT INTO servers (type, sub_id, config_json, sort) VALUES ('subscription_server', ?, ?, ?)",
-				subID, s.Raw, j,
-			)
-			if err != nil {
-				return fmt.Errorf("ListSet: failed to update subscription server %d/%d: %w", index, j, err)
-			}
-		}
-		return nil
+		// One transaction: the node list is deleted and re-inserted, and a
+		// crash between the two must not leave the subscription empty.
+		return ReadModifyWrite(func(tx *sql.Tx) error {
+			return setSubscription(tx, index, gjson.ParseBytes(b))
+		})
 
 	default:
 		return fmt.Errorf("ListSet: unsupported bucket/key: %s/%s", bucket, key)
 	}
+}
+
+func setSubscription(tx *sql.Tx, index int, parsed gjson.Result) error {
+	address := parsed.Get("address").String()
+	remarks := parsed.Get("remarks").String()
+	status := parsed.Get("status").String()
+	info := parsed.Get("info").String()
+	autoSelect := 0
+	if parsed.Get("autoSelect").Bool() {
+		autoSelect = 1
+	}
+
+	// The first statement writes, so the transaction takes the write lock
+	// up front under busy_timeout instead of upgrading a read snapshot that
+	// another connection's commit may have made stale (SQLITE_BUSY_SNAPSHOT).
+	var subID int64
+	err := tx.QueryRow(
+		"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ? RETURNING id",
+		address, remarks, status, info, autoSelect, index,
+	).Scan(&subID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("ListSet: subscription at index %d not found", index)
+	}
+	if err != nil {
+		return err
+	}
+
+	// Update servers within this subscription.
+	// Clean up outbound_connections first to satisfy foreign key constraint;
+	// otherwise the delete fails and the insert below duplicates the list.
+	if _, err := tx.Exec(`
+		DELETE FROM outbound_connections
+		WHERE server_id IN (SELECT id FROM servers WHERE type = 'subscription_server' AND sub_id = ?)
+	`, subID); err != nil {
+		return fmt.Errorf("ListSet: failed to clear outbound connections of subscription %d: %w", index, err)
+	}
+	if _, err := tx.Exec("DELETE FROM servers WHERE type = 'subscription_server' AND sub_id = ?", subID); err != nil {
+		return fmt.Errorf("ListSet: failed to clear old servers of subscription %d: %w", index, err)
+	}
+
+	servers := parsed.Get("servers").Array()
+	for j, s := range servers {
+		_, err := tx.Exec(
+			"INSERT INTO servers (type, sub_id, config_json, sort) VALUES ('subscription_server', ?, ?, ?)",
+			subID, s.Raw, j,
+		)
+		if err != nil {
+			return fmt.Errorf("ListSet: failed to update subscription server %d/%d: %w", index, j, err)
+		}
+	}
+	return nil
 }
 
 // ListGet retrieves an element at a specific index from a list.

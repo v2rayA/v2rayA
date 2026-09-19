@@ -2,7 +2,9 @@ package v2ray
 
 import (
 	"net"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -69,5 +71,26 @@ func TestNewProcessEarlyExit(t *testing.T) {
 	<-exited
 	if err == nil || !strings.Contains(err.Error(), "exited right after starting") {
 		t.Fatalf("startup error: %v", err)
+	}
+}
+
+func TestNewProcessFailedConfigWriteClosesTemplate(t *testing.T) {
+	env := conf.GetEnvironmentConfig()
+	previous := *env
+	t.Cleanup(func() { *env = previous })
+	// A file where the config directory should be fails the config write,
+	// the first exit before the process owns the template.
+	env.Config = filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(env.Config, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	closed := 0
+	tmpl := &Template{API: &coreObj.APIObject{}, ApiCloses: []func(){func() { closed++ }}}
+	_, err := NewProcess(tmpl, func() error { return nil }, func() error { return nil }, func(*Process) {})
+	if err == nil || !strings.Contains(err.Error(), "could not write the core config") {
+		t.Fatalf("unwritable config directory did not fail the start: %v", err)
+	}
+	if closed != 1 {
+		t.Fatalf("template closed %d times after the failed start, want 1", closed)
 	}
 }
