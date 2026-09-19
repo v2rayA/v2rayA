@@ -30,6 +30,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 	}
 	services := []string{
 		"LoggerService",
+		"StatsService",
 	}
 	services = slicex.Uniq(append(services, config.Api.Services...))
 	// observatory
@@ -108,6 +109,13 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 		Tag:      "api-out",
 		Services: services,
 	}
+	t.Stats = &struct{}{}
+	if t.Policy == nil {
+		t.Policy = &coreObj.Policy{}
+	}
+	t.Policy.System.StatsOutboundUplink = true
+	t.Policy.System.StatsOutboundDownlink = true
+	t.ApiCloses = append(t.ApiCloses, TrafficProducer(port))
 
 	t.Inbounds = append(t.Inbounds, coreObj.Inbound{
 		Port:     port,

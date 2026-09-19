@@ -1,0 +1,129 @@
+// Material 3 type scale, expressed as utility classes on top of Vuetify's
+// own text classes so a template says which role it renders. The family is
+// Red Hat Text (self-hosted, fonts.scss) over the system stack, which
+// carries the CJK and other scripts.
+@use "./fonts";
+
+$md3-font:
+  "Red Hat Text",
+  BlinkMacSystemFont,
+  -apple-system,
+  "Segoe UI",
+  Roboto,
+  Oxygen,
+  Ubuntu,
+  Cantarell,
+  "Fira Sans",
+  "Droid Sans",
+  "Helvetica Neue",
+  Helvetica,
+  Arial,
+  sans-serif;
+
+.v-application {
+  --v-font-body: #{$md3-font};
+  --v-font-heading: #{$md3-font};
+  font-family: $md3-font;
+}
+
+$md3-scale: (
+  "display-large": (
+    57px,
+    64px,
+    400,
+    -0.25px,
+  ),
+  "display-medium": (
+    45px,
+    52px,
+    400,
+    0,
+  ),
+  "display-small": (
+    36px,
+    44px,
+    400,
+    0,
+  ),
+  "headline-large": (
+    32px,
+    40px,
+    400,
+    0,
+  ),
+  "headline-medium": (
+    28px,
+    36px,
+    400,
+    0,
+  ),
+  "headline-small": (
+    24px,
+    32px,
+    400,
+    0,
+  ),
+  "title-large": (
+    22px,
+    28px,
+    400,
+    0,
+  ),
+  "title-medium": (
+    16px,
+    24px,
+    500,
+    0.15px,
+  ),
+  "title-small": (
+    14px,
+    20px,
+    500,
+    0.1px,
+  ),
+  "body-large": (
+    16px,
+    24px,
+    400,
+    0.5px,
+  ),
+  "body-medium": (
+    14px,
+    20px,
+    400,
+    0.25px,
+  ),
+  "body-small": (
+    12px,
+    16px,
+    400,
+    0.4px,
+  ),
+  "label-large": (
+    14px,
+    20px,
+    500,
+    0.1px,
+  ),
+  "label-medium": (
+    12px,
+    16px,
+    500,
+    0.5px,
+  ),
+  "label-small": (
+    11px,
+    16px,
+    500,
+    0.5px,
+  ),
+);
+
+@each $name, $spec in $md3-scale {
+  .md3-#{$name} {
+    font-size: nth($spec, 1);
+    line-height: nth($spec, 2);
+    font-weight: nth($spec, 3);
+    letter-spacing: nth($spec, 4);
+  }
+}

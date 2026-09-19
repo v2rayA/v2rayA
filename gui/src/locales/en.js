@@ -1,10 +1,99 @@
 export default {
+  onboarding: {
+    title: "Quick tutorial",
+    importTitle: "Import nodes",
+    importBody:
+      "Import a subscription URL or share link, or create a node manually.",
+    groupTitle: "Join a group",
+    groupBody:
+      "On the Proxies page, select nodes to add them to a group. With multiple nodes, the core picks the one with the lowest latency. You can also choose a single node.",
+    rulesTitle: "Splitting rules",
+    rulesBody:
+      "Choose a splitting mode on the dashboard. RoutingA lets you write your own rules: which sites and IPs go direct, through the proxy, or are blocked. The editor lists the rules, checks each line and keeps the syntax at hand.",
+    startTitle: "Start",
+    startBody:
+      "Start the core on the Dashboard. You can also switch transparent proxy, routing mode and LAN sharing there.",
+    newNode: "New node",
+    goToProxies: "Go to Proxies",
+    back: "Back",
+    next: "Next",
+    finish: "Get started",
+    viewTutorial: "View tutorial",
+    progress: "Step {current} of {total}",
+  },
+  traffic: {
+    upload: "Upload",
+    download: "Download",
+    total: "Total: {value}",
+  },
+  proxies: {
+    newGroup: "New group",
+    newNode: "New node",
+    cards: "Cards",
+    list: "List",
+    testLatency: "Test latency",
+    chooseManually: "Choose manually",
+    sources: { all: "All", local: "Local" },
+    membersOnly: "Members only",
+    members: "no nodes | 1 node | {n} nodes",
+    source: "Source",
+    mode: { auto: "Auto (fastest)", manual: "Manual" },
+    inUse: "In use",
+    groupMode: "Group mode",
+    modeNeedsMembers:
+      "Balancing needs at least two members; the core then routes through the one with the lowest latency.",
+    groupSettings: "Group settings",
+    deleteGroup: "Delete group",
+    modeHint: {
+      auto: "Auto: the core routes through the lowest latency",
+      manual: "Manual: the group uses the node you pick",
+    },
+    useThis: "Use this node",
+    unselect: "Clear selection",
+    addToGroup: "Add to group",
+    removeFromGroup: "Remove from group",
+    selectAll: "Select all",
+    autoUpdate: "Auto-update",
+    deleteSubscriptionNodes:
+      "Subscription nodes cannot be deleted individually.",
+  },
+  dashboard: {
+    status: "Core status",
+    networkSpeed: "Network speed",
+    trafficUsage: "Traffic usage",
+    nodeLatency: "Node latency",
+    moreMembers: "1 more | {n} more",
+    inUse: "Node in use",
+    pinned: "Pinned",
+    balanced: "Auto (1 member) | Auto ({n} members)",
+    switchNode: "Switch",
+    editGroup: "Edit group",
+    autoFastest: "Auto (lowest latency)",
+    manageNodes: "Manage nodes",
+    emptyGroup: "This group has no nodes",
+    allProxySettings: "More proxy options",
+    updateAll: "Update all",
+    updatedAt: "Updated {time}",
+    noSubscriptions: "No subscriptions",
+    moreSubscriptions: "View all",
+    testLatency: "Test latency",
+    usage: "Used {used} / {total}",
+    usedOnly: "Used {used}",
+    totalOnly: "Total {total}",
+    expires: "Expires {date}",
+  },
   common: {
+    optional: "optional",
+    dashboard: "Dashboard",
+    proxies: "Proxies",
+    subscriptions: "Subscriptions",
+    selectedCount: "none selected | 1 selected | {n} selected",
+    nodes: "Nodes",
     menu: "Menu",
     outboundSetting: "Proxy Group Setting",
     setting: "Setting",
     about: "About",
-    loggedAs: "Logged in as <b>{username}</b>",
+    loggedAs: "Logged in as {username}",
     checkRunning: "Checking",
     isRunning: "Running",
     notRunning: "Ready",
@@ -12,29 +101,25 @@ export default {
     notLogin: "Not logged in",
     latest: "Latest",
     local: "Local",
-    success: "Succeeded",
     fail: "Failed",
     empty: "No nodes added",
     none: "none",
-    optional: "optional",
-    loadBalance: "Load Balance",
     log: "Logs",
     proxyGroups: "Proxy Groups",
-    darkTheme: "Dark Theme",
-    lightTheme: "Light Theme",
-    autoTheme: "Auto Theme",
-    expand: "Show the connection status",
+  },
+  theme: {
+    auto: "Auto",
+    light: "Light",
+    dark: "Dark",
+    title: "Theme",
+    appearance: "Appearance",
+    color: "Theme color",
+    custom: "Custom",
   },
   welcome: {
-    title: "Welcome",
     docker: "v2rayA service is running in Docker. Version: {version}",
     default: "v2rayA service is running. Version: {version}",
     newVersion: "New version available: {version}",
-    separator: " ",
-    messages: [
-      "No servers yet.",
-      "Import a server link or subscription address, or create a server manually.",
-    ],
   },
   v2ray: {
     start: "Start",
@@ -43,31 +128,26 @@ export default {
     stopFailed: "Failed to stop the core: {message}",
   },
   server: {
-    name: "Server Name",
-    address: "Server Address",
     protocol: "Protocol",
-    latency: "Latency",
-    lastSeenTime: "Last seen time",
-    lastTryTime: "Last try time",
-    server: "Server",
-    refreshFailed: "Failed to refresh the node list: {message}",
     saved: "Server saved",
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
-    host: "Host",
+    settingsTitle: "Subscription updates",
     remarks: "Remarks",
-    timeLastUpdate: "Datetime of Last Update",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect: "Automatically connect to new servers from the subscription after an automatic update of the subscription",
+    autoSelect:
+      "Automatically connect to new servers from the subscription after an automatic update of the subscription",
     autoSelectLabel: "Auto-select",
     updated: "Subscription updated",
     saved: "Subscription saved",
     saveFailed: "Failed to save subscription: {message}",
-    updateFailed: "Failed to update subscription: {message}",
   },
   operations: {
+    refresh: "Refresh",
+    yes: "Yes",
+    no: "No",
     name: "Operations",
     tproxyWhiteIpGroups: "Direct Whitelist IP Groups",
     update: "Update",
@@ -79,10 +159,6 @@ export default {
     delete: "Delete",
     create: "Create",
     import: "Import",
-    inBatch: "In batch",
-    connect: "Connect",
-    disconnect: "Disconnect",
-    addTo: "Add to",
     login: "Login",
     logout: "Logout",
     configure: "Configure",
@@ -92,22 +168,15 @@ export default {
     save: "Save",
     copyLink: "COPY LINK",
     export: "Export",
-    copySelected: "Copy selected nodes",
-    downloadTxt: "Download TXT file",
     helpManual: "Help & Manual",
-    yes: "Yes",
-    no: "No",
     switchSite: "Switch to alternate site",
     addOutbound: "Add a proxy group",
     add: "Add",
     close: "Close",
     domainsExcluded: "Domains Excluded",
     configureTunRouteScript: "Configure Route Script",
-    ping: "PING",
     copySelectedDone: "Selected nodes copied",
-    downloadTxtDone: "TXT file downloaded",
     exportEmpty: "No sharing link could be generated for the selected nodes",
-    exportFailed: "Export failed: {message}",
   },
   register: {
     title: "Create an admin account first",
@@ -125,13 +194,19 @@ export default {
     failed: "Login failed: {message}",
   },
   connection: {
-    disconnectFailed: "Disconnect failed: {message}",
-    connectFailed: "Connect failed: {message}",
     checkFailed: "Connection check failed: {message}",
   },
   setting: {
+    sections: {
+      proxy: "Proxy",
+      traffic: "Traffic splitting",
+      core: "Core",
+      more: "More",
+    },
     transparentProxy: "Transparent Proxy/System Proxy",
     transparentType: "Transparent Proxy/System Proxy Implementation",
+    transparentOffHint:
+      "Turn the transparent proxy on to choose how it is implemented.",
     logLevel: "Log Level",
     pacMode: "Traffic Splitting Mode of Rule Port",
     mux: "Multiplex",
@@ -177,16 +252,20 @@ export default {
       tunUnsupported: "not supported on this platform",
     },
     messages: {
-      inboundSniffing: "Sniff inbound traffic. If it is not turned on, some traffic may not be diverted correctly.",
+      inboundSniffing:
+        "Sniff inbound traffic. If it is not turned on, some traffic may not be diverted correctly.",
       gfwlist:
         "Based on modified time of file which sometimes is after latest version online.",
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers and docker as the gateway should make option 'Share in LAN' on.",
-      transparentType: "★tproxy: supports UDP, but not docker. ★redirect: friendly for docker, but does not support UDP and needs local port 53 for DNS anti-pollution. ★tun: the core opens a TUN device and takes the default route; works on Linux, Windows and macOS, supports UDP, excludes v2rayA and the core by itself and lets you exclude other processes by name. On Windows and macOS, applications that query a LAN resolver directly still bypass it.",
+      transparentType:
+        "★tproxy: supports UDP, but not docker. ★redirect: friendly for docker, but does not support UDP and needs local port 53 for DNS anti-pollution. ★tun: the core opens a TUN device and takes the default route; works on Linux, Windows and macOS, supports UDP, excludes v2rayA and the core by itself and lets you exclude other processes by name. On Windows and macOS, applications that query a LAN resolver directly still bypass it.",
       tproxyExcludedInterfaces:
         "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*, br-*. Use commas to separate multiple prefixes.",
-      tunAutoRoute: "When enabled, v2rayA installs the routes and DNS settings itself. When disabled, you must provide setup/teardown scripts that configure routing yourself.",
-      tunExcludeProcesses: "Process names whose traffic bypasses the proxy, one per line, e.g. chrome.exe or firefox. v2rayA and the core are always excluded. A process is identified by the executable name of the socket owner; a socket that closed before the lookup, or a port reused by another process, cannot be attributed. Their DNS queries are still answered by the core's DNS module.",
+      tunAutoRoute:
+        "When enabled, v2rayA installs the routes and DNS settings itself. When disabled, you must provide setup/teardown scripts that configure routing yourself.",
+      tunExcludeProcesses:
+        "Process names whose traffic bypasses the proxy, one per line, e.g. chrome.exe or firefox. v2rayA and the core are always excluded. A process is identified by the executable name of the socket owner; a socket that closed before the lookup, or a port reused by another process, cannot be attributed. Their DNS queries are still answered by the core's DNS module.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
@@ -220,27 +299,6 @@ export default {
       "Zero means to close this port.",
     ],
   },
-  customRouting: {
-    title: "Customize Routing Rule",
-    defaultRoutingRule: "Default Routing Rule",
-    sameAsDefaultRule: "the same as default rule",
-    appendRule: "Append Rule",
-    direct: "Direct",
-    proxy: "Proxy",
-    block: "Block",
-    rule: "Rule",
-    domainFile: "Domain File",
-    typeRule: "Type of Rule",
-    tags: "Tags",
-    saveFailed: "Failed to save custom routing rules: {message}",
-    messages: {
-      0: "v2rayA will recognize all SiteDat file in <b>{V2RayLocationAsset}</b>",
-      1: 'To make a SiteDat file by yourself: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
-      2: "Multi-select is supported.",
-      noSiteDatFileFound: "No siteDat file found in {V2RayLocationAsset}",
-      emptyRuleNotPermitted: "Every rule must select at least one tag",
-    },
-  },
   dns: {
     title: "DNS Settings",
     help: "DNS Help",
@@ -249,27 +307,18 @@ export default {
     colDomains: "Domain List",
     colOutbound: "Outbound",
     serverPlaceholder: "e.g. 8.8.8.8 or https://dns.google/dns-query",
-    domainsPlaceholder: "One per line, e.g. geosite:cn\nLeave empty for fallback DNS",
+    domainsPlaceholder:
+      "One per line, e.g. geosite:cn\nLeave empty for fallback DNS",
     addRule: "Add Rule",
+    rule: "Rule {n}",
     resetDefault: "Reset to Defaults",
     errNoRules: "At least one rule needs a DNS server",
     saveFailed: "Failed to save DNS rules: {message}",
   },
-  egressPortWhitelist: {
-    title: "Egress Port Whitelist",
-    tcpPortWhitelist: "TCP Port Whitelist",
-    udpPortWhitelist: "UDP Port Whitelist",
-    messages: [
-      "If v2rayA is setup on a server A which connected with a proxy server B, pay attention:",
-      "Transparent proxy will force all TCP and UDP traffic to pass through proxy server B, where source IP address will be replaced with proxy B's. Moreover, if some clients send requests to server A that provides service, they will received responses from your proxy B's IP address weirdly, which is illegal.",
-      "To resolve it, we need to add those service ports to whitelist so that not pass through proxy.For examples, ssh(22)、v2raya({v2rayaPort}).",
-      "Obviously, if the server does not provide any service, you can skip configuring.",
-      "Formatting：22 means port 22，20170:20172 means three ports 20170 to 20172.",
-    ],
-    saveFailed: "Failed to save egress port whitelist: {message}",
-  },
   configureServer: {
-    title: "Configure Server | Server",
+    required: "Required",
+    title: "Configure Server",
+    titleReadonly: "Server",
     servername: "Servername",
     host: "Host",
     port: "Port",
@@ -354,23 +403,22 @@ export default {
   import: {
     server: "Server link",
     subscription: "Subscription address",
-    serverMessage: "Input a server link:",
     subscriptionMessage: "Input a subscription address:",
     batchMessage: "One server link per line:",
     qrcodeError: "No QR code found in the image. Try a clearer image",
     notImage: "Choose an image file",
     success: "Import succeeded",
     failed: "Import failed: {message}",
-    timeout: "Import timed out. The subscription server did not respond in time",
+    timeout:
+      "Import timed out. The subscription server did not respond in time",
   },
   delete: {
     title: "Delete selected items",
-    message: "Delete the selected {n} servers or subscriptions? This cannot be undone.",
+    message:
+      "Delete the selected item? This cannot be undone. | Delete the selected {n} items? This cannot be undone.",
     failed: "Delete failed: {message}",
   },
   latency: {
-    message:
-      "Latency tests can take several minutes. Wait patiently please.",
     testing: "testing…",
     failed: "Latency test failed: {message}",
   },
@@ -380,17 +428,13 @@ export default {
     coreVersionMismatch:
       "Core version mismatch: v2raya_core version must exactly match v2rayA version. {err}",
   },
-  about: `<p>v2rayA is a web GUI client of V2Ray.</p>
-          <p class="about-small">Default ports:</p>
-          <p class="about-small">2017: v2rayA service port</p>
-          <p class="about-small">20170: SOCKS protocol</p>
-          <p class="about-small">20171: HTTP protocol</p>
-          <p class="about-small">20172: HTTP protocol with "Rule of Splitting Traffic"</p>
-          <p class="about-small">Other ports：</p>
-          <p class="about-small">32345: tproxy, needed by transparent proxy </p>
-          <p>All data is stored in local instead of in the cloud. </p>
-          <p>Problems found during use can be reported in <a href="https://github.com/v2rayA/v2rayA/discussions">discussions</a>.</p>
-          <p>Documentation: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
+  about: {
+    intro: "v2rayA is a web GUI client of V2Ray.",
+    local: "All data is stored in local instead of in the cloud.",
+    report: "Problems found during use can be reported in {discussions}.",
+    discussions: "discussions",
+    docs: "Documentation:",
+  },
   axios: {
     messages: {
       optimizeBackend: "Change the v2rayA service address?",
@@ -406,9 +450,91 @@ export default {
     },
   },
   routingA: {
+    export: "Export",
+    import: {
+      title: "Import",
+      confirm: "Replace the current rules with the imported file?",
+    },
+    form: {
+      title: "Form",
+      text: "Text",
+      default: "Default outbound",
+      orderHint: "Rules are evaluated in order; the first match wins.",
+      addRule: "Add rule",
+      editRule: "Edit rule",
+      condition: "Condition",
+      arguments: "Arguments",
+      addCondition: "Add condition",
+      outbound: "Outbound",
+      customOutbounds: "Custom outbounds",
+      addOutbound: "Add outbound",
+      editOutbound: "Edit outbound",
+      name: "Name",
+      protocol: "Protocol",
+      address: "Address",
+      port: "Port",
+      user: "Username",
+      pass: "Password",
+      required: "This field is required.",
+      invalidArguments:
+        "Enter comma-separated arguments with balanced quotes and parentheses.",
+      invalidName: "Use a unique name without spaces or syntax characters.",
+      deleteConfirm: "Delete this entry?",
+      moveUp: "Move up",
+      moveDown: "Move down",
+      actions: "Entry actions",
+      raw: "Unrecognized syntax; preserved in the text editor.",
+    },
+    editor: "RoutingA rules",
+    loading: "Loading rules",
+    resetDefault: "Restore defaults",
+    resetConfirm: "Replace the current rules with the default template?",
+    discard: "Discard unsaved changes?",
+    insert: "Insert",
+    lineError: "Line {line}: {message}",
+    errors: {
+      noArrow: "Expected a condition followed by -> and an outbound.",
+      brackets: "Brackets are unbalanced.",
+      noOutbound: "An outbound is required after ->.",
+    },
+    reference: {
+      title: "Syntax",
+      format: {
+        title: "Rule format",
+        description:
+          "Use condition [&& condition] -> outbound, one rule per line. The first match wins; # starts a comment.",
+      },
+      domain: {
+        title: "Domains",
+        description:
+          "Match an exact domain with full, a domain and its subdomains with domain, or text with contains and regexp. Use geosite for a domain list; one call can contain several entries.",
+      },
+      ip: {
+        title: "IP addresses",
+        description:
+          "Match an IP address, a CIDR range or a geoip list. Put IPv6 addresses in quotes.",
+      },
+      ports: {
+        title: "Ports and protocols",
+        description:
+          "Match ports or port ranges, network transport, application protocol or source address. Combine conditions with &&.",
+      },
+      outbound: {
+        title: "Outbounds",
+        description:
+          "Built-in outbounds are proxy, direct and block; default selects the fallback. Define a named SOCKS or HTTP outbound with optional user and pass.",
+      },
+      examples: {
+        title: "Examples",
+        description:
+          "Insert the default template or a rule that blocks domains in the advertising list.",
+      },
+    },
     messages: ["click the button 'Help&Manual' for help"],
-    inboundDeprecated: "Defining inbounds in RoutingA is deprecated. The generated JSON config will NOT include those inbound ports. Please use the custom inbound settings with RoutingA rules instead.",
-    inboundDeprecatedConfirm: "This RoutingA configuration contains deprecated inbound definitions. The generated config will not include those inbound ports. Continue saving?",
+    inboundDeprecated:
+      "Defining inbounds in RoutingA is deprecated. The generated JSON config will NOT include those inbound ports. Please use the custom inbound settings with RoutingA rules instead.",
+    inboundDeprecatedConfirm:
+      "This RoutingA configuration contains deprecated inbound definitions. The generated config will not include those inbound ports. Continue saving?",
     savedWithWarning: "RoutingA saved with a warning: {warning}",
     saveFailed: "Failed to save RoutingA: {message}",
   },
@@ -435,7 +561,6 @@ export default {
     noMatch: "No matching nodes",
     saved: "Proxy group {group} saved",
     saveFailed: "Failed to save proxy group {group}: {message}",
-    updateFailed: "Failed to update group {group}: {message}",
   },
   sharing: {
     copied: "Link copied",
@@ -445,12 +570,11 @@ export default {
     failed: "Failed to create sharing link: {message}",
   },
   log: {
-    logModalTitle: "View logs",
+    search: "Search logs…",
     logsLabel: "Logs",
     refreshInterval: "Refresh Interval",
     seconds: "seconds",
     autoShowNew: "Auto Show New Logs",
-    category: "Category",
     source: "Log Source",
     categories: {
       all: "All",
@@ -464,29 +588,28 @@ export default {
     sources: {
       all: "All",
     },
-    tailOnly: "Showing the last {count} lines ({skipped} older lines hidden on this screen)",
     export: "Export",
   },
   tproxyWhiteIpGroups: {
     title: "White IP Groups",
     messages: [
       "The selected IP group will bypass the XRay/V2Ray core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
-      "It's best to use this feature when your system is using Nftables, as iptables may experience performance issues when adding a large number of IPs."
+      "It's best to use this feature when your system is using Nftables, as iptables may experience performance issues when adding a large number of IPs.",
     ],
     formName1: "Hold down Ctrl to select multiple items.",
     formName2: "Custom IPs (one per line, standard CIDR format)",
     formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48",
     invalidCustomIps: "Custom IPs must be one CIDR per line, e.g. 10.0.0.0/8",
     saveFailed: "Failed to save direct IP groups: {message}",
-    cn: 'China Mainland',
-    private: 'Private',
-    us: 'United States',
-    cloudflare: 'Cloudflare',
+    cn: "China Mainland",
+    private: "Private",
+    us: "United States",
+    cloudflare: "Cloudflare",
   },
   domainsExcluded: {
     title: "Domains Excluded",
     messages: [
-      "A list of domain names. If the traffic sniffing result matches a domain name in this list, the target address will not be reset."
+      "A list of domain names. If the traffic sniffing result matches a domain name in this list, the target address will not be reset.",
     ],
     formName: "Domains Excluded List",
     formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com",
@@ -497,10 +620,11 @@ export default {
     messages: [
       "If accessing GitHub is difficult in your current environment, you can download the latest GFWList（geosite.dat）from GitHub（https://github.com/v2rayA/dist-v2ray-rules-dat）, upload it to your server, and then enter your server address here to download it.",
       "If the input form is empty it will automatically download from Github, otherwise it will download using the custom link",
-      "Please note: Wrong file may cause service startup failure. If the service cannot be started after downloading, you can click the Delete GFWList button"
+      "Please note: Wrong file may cause service startup failure. If the service cannot be started after downloading, you can click the Delete GFWList button",
     ],
     formName: "Custom Download Link",
-    wrongCustomLink: "The custom download link must start with http:// or https://",
+    wrongCustomLink:
+      "The custom download link must start with http:// or https://",
     updated: "GFWList updated",
     saveFailed: "Failed to update GFWList: {message}",
     alreadyUpToDate: "GFWList is already the latest version ({version})",
@@ -508,19 +632,23 @@ export default {
   tun: {
     routeScript: {
       title: "TUN Custom Route Script",
-      warning: "Warning: Incorrect scripts may break your network or system routing. Make sure you know what you are doing before saving.",
+      warning:
+        "Warning: Incorrect scripts may break your network or system routing. Make sure you know what you are doing before saving.",
       shellType: "Shell Type",
       customShell: "Custom (specify path below)",
       shellPath: "Shell Path",
       shellPathPlaceholder: "/usr/bin/bash",
       setupScript: "Setup Script (runs after the TUN is up)",
-      setupScriptPlaceholder: "# Script to configure routes when the TUN is up\n# e.g. ip route add default dev tun0",
+      setupScriptPlaceholder:
+        "# Script to configure routes when the TUN is up\n# e.g. ip route add default dev tun0",
       teardownScript: "Teardown Script (runs before the TUN is closed)",
-      teardownScriptPlaceholder: "# Script to remove routes before the TUN is closed\n# e.g. ip route del default dev tun0",
+      teardownScriptPlaceholder:
+        "# Script to remove routes before the TUN is closed\n# e.g. ip route del default dev tun0",
     },
     processExclude: {
       title: "TUN Custom Process Exclusion",
-      warning: "Warning: incorrect process names may bypass traffic unexpectedly. Add only trusted process names.",
+      warning:
+        "Warning: incorrect process names may bypass traffic unexpectedly. Add only trusted process names.",
       listLabel: "Excluded Process Names",
       placeholder: "v2raya, v2ray, chrome.exe",
       hint: "Supports comma or newline separators. Values are deduplicated when saved.",

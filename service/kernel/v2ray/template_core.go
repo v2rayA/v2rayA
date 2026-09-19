@@ -29,6 +29,8 @@ type Template struct {
 	MultiObservatory *coreObj.MultiObservatory `json:"multiObservatory,omitempty"`
 	Observatory      *coreObj.ObservatoryItem  `json:"observatory,omitempty"`
 	API              *coreObj.APIObject        `json:"api,omitempty"`
+	Stats            *struct{}                 `json:"stats,omitempty"`
+	Policy           *coreObj.Policy           `json:"policy,omitempty"`
 	// DnsModuleConfig 是新 DNS 模块的配置，由 v2raya-core 启动时解析并启动 DNS 监听器。
 	DnsModuleConfig json.RawMessage `json:"dns_module,omitempty"`
 

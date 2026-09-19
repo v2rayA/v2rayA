@@ -1,10 +1,98 @@
 export default {
+  onboarding: {
+    title: "사용 안내",
+    importTitle: "노드 가져오기",
+    importBody:
+      "구독 주소나 공유 링크로 노드를 가져오거나 직접 새 노드를 만드세요.",
+    groupTitle: "그룹에 추가",
+    groupBody:
+      "프록시 페이지에서 노드를 선택해 그룹에 추가하세요. 노드가 여러 개면 코어가 지연 시간이 가장 짧은 노드를 자동으로 선택합니다. 하나의 노드만 사용하도록 지정할 수도 있습니다.",
+    rulesTitle: "분류 규칙",
+    rulesBody:
+      "대시보드에서 분류 모드를 선택하세요. RoutingA로 어떤 사이트와 IP를 직접 연결, 프록시, 차단할지 직접 규칙을 쓸 수 있습니다. 편집기는 규칙을 목록으로 보여 주고 줄마다 검사하며 문법을 곁에 둡니다.",
+    startTitle: "시작",
+    startBody:
+      "대시보드에서 코어를 시작하세요. 투명 프록시, 라우팅 모드, LAN 공유도 대시보드에서 전환할 수 있습니다.",
+    newNode: "새 노드",
+    goToProxies: "프록시 페이지로 이동",
+    back: "이전",
+    next: "다음",
+    finish: "사용 시작",
+    viewTutorial: "사용 안내 보기",
+    progress: "{total}단계 중 {current}단계",
+  },
+  traffic: {
+    upload: "업로드",
+    download: "다운로드",
+    total: "합계: {value}",
+  },
+  proxies: {
+    newGroup: "새 그룹",
+    newNode: "새 노드",
+    cards: "카드",
+    list: "목록",
+    testLatency: "지연 시간 테스트",
+    chooseManually: "직접 선택",
+    sources: { all: "전체", local: "로컬" },
+    membersOnly: "구성원만",
+    members: "노드 {n}개",
+    source: "출처",
+    mode: { auto: "자동 (가장 빠른 노드)", manual: "수동" },
+    inUse: "사용 중",
+    groupMode: "그룹 모드",
+    modeNeedsMembers:
+      "노드가 두 개 이상이면 코어가 지연이 가장 낮은 노드를 자동으로 사용합니다.",
+    groupSettings: "그룹 설정",
+    deleteGroup: "그룹 삭제",
+    modeHint: {
+      auto: "자동: 코어가 지연이 가장 낮은 노드를 사용",
+      manual: "수동: 지정한 노드만 사용",
+    },
+    useThis: "이 노드 사용",
+    unselect: "선택 해제",
+    addToGroup: "그룹에 추가",
+    removeFromGroup: "그룹에서 제거",
+    selectAll: "전체 선택",
+    autoUpdate: "자동 업데이트",
+    deleteSubscriptionNodes: "구독 노드는 개별적으로 삭제할 수 없습니다.",
+  },
+  dashboard: {
+    status: "코어 상태",
+    networkSpeed: "네트워크 속도",
+    trafficUsage: "트래픽 사용량",
+    nodeLatency: "노드 지연 시간",
+    moreMembers: "{n}개 더 보기",
+    inUse: "사용 중인 노드",
+    pinned: "고정됨",
+    balanced: "자동 (멤버 {n}개)",
+    switchNode: "전환",
+    editGroup: "그룹 편집",
+    autoFastest: "자동 (최저 지연 시간)",
+    manageNodes: "노드 관리",
+    emptyGroup: "이 그룹에 노드가 없습니다",
+    allProxySettings: "프록시 추가 옵션",
+    updateAll: "모두 업데이트",
+    updatedAt: "업데이트: {time}",
+    noSubscriptions: "구독이 없습니다",
+    moreSubscriptions: "모두 보기",
+    testLatency: "지연 시간 측정",
+    usage: "사용량 {used} / {total}",
+    usedOnly: "사용 {used}",
+    totalOnly: "총 {total}",
+    expires: "만료일 {date}",
+  },
   common: {
+    optional: "선택",
+    dashboard: "대시보드",
+    proxies: "프록시",
+    subscriptions: "구독",
+    selectedCount: "{n}개 선택됨",
+    nodes: "노드",
     menu: "메뉴",
     outboundSetting: "프록시 그룹 설정",
     setting: "설정",
     about: "정보",
-    loggedAs: "로그인 계정: <b>{username}</b>",
+    loggedAs: "로그인 계정: {username}",
     checkRunning: "확인 중",
     isRunning: "실행 중",
     notRunning: "준비됨",
@@ -12,29 +100,25 @@ export default {
     notLogin: "로그인되지 않음",
     latest: "최신",
     local: "로컬",
-    success: "성공",
     fail: "실패",
     empty: "추가된 노드 없음",
     none: "없음",
-    optional: "선택 사항",
-    loadBalance: "로드 밸런싱",
     log: "로그",
     proxyGroups: "프록시 그룹",
-    darkTheme: "어두운 테마",
-    lightTheme: "밝은 테마",
-    autoTheme: "자동 테마",
-    expand: "연결 상태 표시",
+  },
+  theme: {
+    auto: "자동",
+    light: "라이트",
+    dark: "다크",
+    title: "테마",
+    appearance: "모양",
+    color: "테마 색상",
+    custom: "사용자 지정",
   },
   welcome: {
-    title: "환영합니다",
     docker: "v2rayA 서비스가 Docker에서 실행 중입니다. 버전: {version}",
     default: "v2rayA 서비스가 실행 중입니다. 버전: {version}",
     newVersion: "새 버전을 사용할 수 있습니다: {version}",
-    separator: " · ",
-    messages: [
-      "아직 서버가 없습니다.",
-      "서버 링크나 구독 주소를 가져오거나 서버를 수동으로 만드세요.",
-    ],
   },
   v2ray: {
     start: "시작",
@@ -43,21 +127,13 @@ export default {
     stopFailed: "코어 중지 실패: {message}",
   },
   server: {
-    name: "서버 이름",
-    address: "서버 주소",
     protocol: "프로토콜",
-    latency: "지연 시간",
-    lastSeenTime: "마지막 확인 시각",
-    lastTryTime: "마지막 시도 시각",
-    server: "서버",
-    refreshFailed: "노드 목록 새로 고침 실패: {message}",
     saved: "서버 저장됨",
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
-    host: "호스트",
+    settingsTitle: "구독 업데이트",
     remarks: "별칭",
-    timeLastUpdate: "마지막 업데이트 일시",
     numberServers: "서버 수",
     subscription: "구독",
     autoSelect: "구독이 자동 업데이트된 후 구독의 새 서버에 자동으로 연결",
@@ -65,9 +141,11 @@ export default {
     updated: "구독 업데이트됨",
     saved: "구독 저장됨",
     saveFailed: "구독 저장 실패: {message}",
-    updateFailed: "구독 업데이트 실패: {message}",
   },
   operations: {
+    refresh: "새로 고침",
+    yes: "예",
+    no: "아니요",
     name: "작업",
     tproxyWhiteIpGroups: "직접 연결 허용 IP 그룹",
     update: "업데이트",
@@ -79,10 +157,6 @@ export default {
     delete: "삭제",
     create: "생성",
     import: "가져오기",
-    inBatch: "일괄 작업",
-    connect: "연결",
-    disconnect: "연결 해제",
-    addTo: "추가",
     login: "로그인",
     logout: "로그아웃",
     configure: "구성",
@@ -92,22 +166,15 @@ export default {
     save: "저장",
     copyLink: "링크 복사",
     export: "내보내기",
-    copySelected: "선택한 노드 복사",
-    downloadTxt: "TXT 파일 다운로드",
     helpManual: "도움말 및 설명서",
-    yes: "예",
-    no: "아니요",
     switchSite: "대체 사이트로 전환",
     addOutbound: "프록시 그룹 추가",
     add: "추가",
     close: "닫기",
     domainsExcluded: "제외된 도메인",
     configureTunRouteScript: "라우트 스크립트 구성",
-    ping: "핑",
     copySelectedDone: "선택한 노드를 복사했습니다",
-    downloadTxtDone: "TXT 파일을 다운로드했습니다",
     exportEmpty: "선택한 노드의 공유 링크를 생성할 수 없습니다",
-    exportFailed: "내보내기 실패: {message}",
   },
   register: {
     title: "먼저 관리자 계정을 만드세요",
@@ -125,13 +192,18 @@ export default {
     failed: "로그인 실패: {message}",
   },
   connection: {
-    disconnectFailed: "연결 해제 실패: {message}",
-    connectFailed: "연결 실패: {message}",
     checkFailed: "연결 확인 실패: {message}",
   },
   setting: {
+    sections: {
+      proxy: "프록시",
+      traffic: "트래픽 분할",
+      core: "코어",
+      more: "더보기",
+    },
     transparentProxy: "투명 프록시/시스템 프록시",
     transparentType: "투명 프록시/시스템 프록시 구현 방식",
+    transparentOffHint: "투명 프록시를 켜면 구현 방식을 선택할 수 있습니다.",
     logLevel: "로그 수준",
     pacMode: "규칙 포트의 트래픽 분할 모드",
     mux: "멀티플렉싱",
@@ -183,11 +255,14 @@ export default {
         "파일의 수정 시각을 기준으로 하므로 온라인 최신 버전보다 이후일 수 있습니다.",
       transparentProxy:
         "투명 프록시를 켜면 추가 설정 없이 모든 TCP 트래픽이 v2rayA를 통과합니다. 다른 컴퓨터와 Docker에 게이트웨이로 프록시 서비스를 제공하려면 'LAN에서 공유' 옵션을 켜세요.",
-      transparentType: "★tproxy: UDP를 지원하지만 Docker는 지원하지 않습니다. ★redirect: Docker에 적합하지만 UDP를 지원하지 않으며 DNS 오염 방지를 위해 로컬 포트 53을 사용합니다. ★tun: 코어가 TUN 장치를 열고 기본 라우트를 가져갑니다. Linux, Windows, macOS와 UDP를 지원하며 v2rayA와 코어를 자동으로 제외하고 다른 프로세스를 이름으로 제외할 수 있습니다. Windows와 macOS에서는 LAN DNS에 직접 질의하는 애플리케이션이 여전히 우회합니다.",
+      transparentType:
+        "★tproxy: UDP를 지원하지만 Docker는 지원하지 않습니다. ★redirect: Docker에 적합하지만 UDP를 지원하지 않으며 DNS 오염 방지를 위해 로컬 포트 53을 사용합니다. ★tun: 코어가 TUN 장치를 열고 기본 라우트를 가져갑니다. Linux, Windows, macOS와 UDP를 지원하며 v2rayA와 코어를 자동으로 제외하고 다른 프로세스를 이름으로 제외할 수 있습니다. Windows와 macOS에서는 LAN DNS에 직접 질의하는 애플리케이션이 여전히 우회합니다.",
       tproxyExcludedInterfaces:
         "투명 프록시를 거치지 않을 네트워크 인터페이스 접두사를 설정합니다. 와일드카드 *를 지원합니다(iptables 모드에서는 자동으로 +로 변환). 예: docker*, veth*, wg*, ppp*, br-*. 여러 접두사는 쉼표로 구분하세요.",
-      tunAutoRoute: "활성화하면 v2rayA가 라우트와 DNS 설정을 직접 설치합니다. 비활성화하면 라우팅을 직접 구성할 시작/종료 스크립트를 제공해야 합니다.",
-      tunExcludeProcesses: "트래픽이 프록시를 우회할 프로세스 이름을 한 줄에 하나씩 입력합니다. 예: chrome.exe 또는 firefox. v2rayA와 코어는 항상 제외됩니다. 소켓 소유자의 실행 파일 이름으로 식별하므로, 조회 전에 닫힌 소켓이나 다른 프로세스가 재사용한 포트는 식별할 수 없습니다. 제외된 프로세스의 DNS 질의는 여전히 코어의 DNS 모듈이 응답합니다.",
+      tunAutoRoute:
+        "활성화하면 v2rayA가 라우트와 DNS 설정을 직접 설치합니다. 비활성화하면 라우팅을 직접 구성할 시작/종료 스크립트를 제공해야 합니다.",
+      tunExcludeProcesses:
+        "트래픽이 프록시를 우회할 프로세스 이름을 한 줄에 하나씩 입력합니다. 예: chrome.exe 또는 firefox. v2rayA와 코어는 항상 제외됩니다. 소켓 소유자의 실행 파일 이름으로 식별하므로, 조회 전에 닫힌 소켓이나 다른 프로세스가 재사용한 포트는 식별할 수 없습니다. 제외된 프로세스의 DNS 질의는 여전히 코어의 DNS 모듈이 응답합니다.",
       pacMode: `여기에서 규칙 포트의 트래픽 분할 규칙을 설정할 수 있습니다. 기본적으로 "트래픽 분할 규칙" 포트는 20172이며 HTTP 프로토콜입니다.`,
       tcpFastOpen:
         "TCP 핸드셰이크를 단순화하여 연결 수립을 빠르게 합니다. 패킷 특성이 강조될 위험이 있으며 시스템이 지원하지 않으면 연결에 실패할 수 있습니다.",
@@ -221,27 +296,6 @@ export default {
       "0은 해당 포트를 닫는다는 뜻입니다.",
     ],
   },
-  customRouting: {
-    title: "라우팅 규칙 사용자 지정",
-    defaultRoutingRule: "기본 라우팅 규칙",
-    sameAsDefaultRule: "기본 규칙과 동일",
-    appendRule: "규칙 추가",
-    direct: "직접 연결",
-    proxy: "프록시",
-    block: "차단",
-    rule: "규칙",
-    domainFile: "도메인 파일",
-    typeRule: "규칙 유형",
-    tags: "태그",
-    saveFailed: "사용자 지정 라우팅 규칙 저장 실패: {message}",
-    messages: {
-      0: "v2rayA는 <b>{V2RayLocationAsset}</b>의 모든 SiteDat 파일을 인식합니다",
-      1: 'SiteDat 파일을 직접 만들려면: <a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
-      2: "다중 선택을 지원합니다.",
-      noSiteDatFileFound: "{V2RayLocationAsset}에서 siteDat 파일을 찾을 수 없습니다",
-      emptyRuleNotPermitted: "모든 규칙에서 하나 이상의 태그를 선택해야 합니다",
-    },
-  },
   dns: {
     title: "DNS 설정",
     help: "DNS 도움말",
@@ -252,25 +306,15 @@ export default {
     serverPlaceholder: "예: 8.8.8.8 또는 https://dns.google/dns-query",
     domainsPlaceholder: "한 줄에 하나, 예: geosite:cn\n비우면 폴백 DNS 사용",
     addRule: "규칙 추가",
+    rule: "규칙 {n}",
     resetDefault: "기본값으로 재설정",
     errNoRules: "DNS 서버가 있는 규칙이 하나 이상 필요합니다",
     saveFailed: "DNS 규칙 저장 실패: {message}",
   },
-  egressPortWhitelist: {
-    title: "송신 포트 화이트리스트",
-    tcpPortWhitelist: "TCP 포트 화이트리스트",
-    udpPortWhitelist: "UDP 포트 화이트리스트",
-    messages: [
-      "프록시 서버 B에 연결된 서버 A에 v2rayA를 설치했다면 다음 사항에 주의하세요:",
-      "투명 프록시는 모든 TCP 및 UDP 트래픽을 프록시 서버 B로 보내며 출발지 IP 주소가 프록시 B의 주소로 바뀝니다. 또한 일부 클라이언트가 서비스를 제공하는 서버 A에 요청하면 프록시 B의 IP 주소에서 응답을 받게 되어 비정상적이고 불법적입니다.",
-      "이 문제를 해결하려면 해당 서비스 포트를 화이트리스트에 추가하여 프록시를 거치지 않게 해야 합니다. 예: ssh(22), v2raya({v2rayaPort}).",
-      "서버가 서비스를 제공하지 않는다면 구성을 건너뛰어도 됩니다.",
-      "형식: 22는 포트 22, 20170:20172는 20170부터 20172까지의 세 포트를 의미합니다.",
-    ],
-    saveFailed: "송신 포트 화이트리스트 저장 실패: {message}",
-  },
   configureServer: {
-    title: "서버 구성 | 서버",
+    required: "필수",
+    title: "서버 구성",
+    titleReadonly: "서버",
     servername: "서버 이름",
     host: "호스트",
     port: "포트",
@@ -355,10 +399,10 @@ export default {
   import: {
     server: "서버 링크",
     subscription: "구독 주소",
-    serverMessage: "서버 링크를 입력하세요:",
     subscriptionMessage: "구독 주소를 입력하세요:",
     batchMessage: "한 줄에 서버 링크 하나:",
-    qrcodeError: "이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 이미지를 사용해 보세요",
+    qrcodeError:
+      "이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 이미지를 사용해 보세요",
     notImage: "이미지 파일을 선택하세요",
     success: "가져오기 성공",
     failed: "가져오기 실패: {message}",
@@ -366,11 +410,11 @@ export default {
   },
   delete: {
     title: "선택한 항목 삭제",
-    message: "선택한 서버 또는 구독 {n}개를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+    message:
+      "선택한 서버 또는 구독 {n}개를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
     failed: "삭제 실패: {message}",
   },
   latency: {
-    message: "지연 시간 테스트는 몇 분이 걸릴 수 있습니다. 잠시 기다려 주세요.",
     testing: "테스트 중…",
     failed: "지연 시간 테스트 실패: {message}",
   },
@@ -380,17 +424,13 @@ export default {
     coreVersionMismatch:
       "코어 버전 불일치: v2raya_core 버전은 v2rayA 버전과 정확히 일치해야 합니다. {err}",
   },
-  about: `<p>v2rayA는 V2Ray의 웹 GUI 클라이언트입니다.</p>
-          <p class="about-small">기본 포트:</p>
-          <p class="about-small">2017: v2rayA 서비스 포트</p>
-          <p class="about-small">20170: SOCKS 프로토콜</p>
-          <p class="about-small">20171: HTTP 프로토콜</p>
-          <p class="about-small">20172: "트래픽 분할 규칙"이 있는 HTTP 프로토콜</p>
-          <p class="about-small">기타 포트:</p>
-          <p class="about-small">32345: tproxy, 투명 프록시에 필요 </p>
-          <p>모든 데이터는 클라우드가 아닌 로컬에 저장됩니다. </p>
-          <p>사용 중 발견한 문제는 <a href="https://github.com/v2rayA/v2rayA/discussions">discussions</a>에 제보할 수 있습니다.</p>
-          <p>문서: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
+  about: {
+    intro: "v2rayA는 V2Ray의 웹 GUI 클라이언트입니다.",
+    local: "모든 데이터는 클라우드가 아닌 로컬에 저장됩니다.",
+    report: "사용 중 발견한 문제는 {discussions}에 제보할 수 있습니다.",
+    discussions: "discussions",
+    docs: "문서:",
+  },
   axios: {
     messages: {
       optimizeBackend: "v2rayA 서비스 주소를 변경하시겠습니까?",
@@ -406,6 +446,85 @@ export default {
     },
   },
   routingA: {
+    export: "내보내기",
+    import: {
+      title: "가져오기",
+      confirm: "현재 규칙을 가져온 파일의 내용으로 바꾸시겠습니까?",
+    },
+    form: {
+      title: "양식",
+      text: "텍스트",
+      default: "기본 아웃바운드",
+      orderHint: "규칙은 순서대로 확인하며 처음 일치하는 규칙이 적용됩니다.",
+      addRule: "규칙 추가",
+      editRule: "규칙 수정",
+      condition: "조건",
+      arguments: "인수",
+      addCondition: "조건 추가",
+      outbound: "아웃바운드",
+      customOutbounds: "사용자 지정 아웃바운드",
+      addOutbound: "아웃바운드 추가",
+      editOutbound: "아웃바운드 수정",
+      name: "이름",
+      protocol: "프로토콜",
+      address: "주소",
+      port: "포트",
+      user: "사용자 이름",
+      pass: "비밀번호",
+      required: "필수 항목입니다.",
+      invalidArguments: "인수를 쉼표로 구분하고 따옴표와 괄호의 짝을 맞추세요.",
+      invalidName: "공백이나 문법 기호가 없는 고유한 이름을 입력하세요.",
+      deleteConfirm: "이 항목을 삭제하시겠습니까?",
+      moveUp: "위로 이동",
+      moveDown: "아래로 이동",
+      actions: "항목 작업",
+      raw: "인식할 수 없는 문법입니다. 텍스트 편집기에 원문을 보존합니다.",
+    },
+    editor: "RoutingA 규칙",
+    loading: "규칙 불러오는 중",
+    resetDefault: "기본값 복원",
+    resetConfirm: "현재 규칙을 기본 템플릿으로 바꾸시겠습니까?",
+    discard: "저장하지 않은 변경 사항을 버리시겠습니까?",
+    insert: "삽입",
+    lineError: "{line}행: {message}",
+    errors: {
+      noArrow: "조건 뒤에 ->와 아웃바운드가 필요합니다.",
+      brackets: "괄호의 짝이 맞지 않습니다.",
+      noOutbound: "-> 뒤에 아웃바운드가 필요합니다.",
+    },
+    reference: {
+      title: "문법",
+      format: {
+        title: "규칙 형식",
+        description:
+          "조건 [&& 조건] -> 아웃바운드 형식으로 한 줄에 규칙 하나를 작성합니다. 처음 일치하는 규칙이 적용되며 #은 주석을 시작합니다.",
+      },
+      domain: {
+        title: "도메인",
+        description:
+          "full은 정확한 도메인, domain은 하위 도메인까지, contains와 regexp는 각각 텍스트와 정규식을 일치시킵니다. geosite는 도메인 목록을 사용하며 한 호출에 여러 항목을 넣을 수 있습니다.",
+      },
+      ip: {
+        title: "IP 주소",
+        description:
+          "IP 주소, CIDR 범위 또는 geoip 목록을 일치시킵니다. IPv6 주소는 따옴표로 묶으세요.",
+      },
+      ports: {
+        title: "포트 및 프로토콜",
+        description:
+          "포트나 포트 범위, 전송 프로토콜, 응용 프로토콜 또는 출발지 주소를 일치시킵니다. &&로 조건을 결합합니다.",
+      },
+      outbound: {
+        title: "아웃바운드",
+        description:
+          "기본 아웃바운드는 proxy, direct, block이며 default는 일치하는 규칙이 없을 때 사용할 아웃바운드를 지정합니다. 이름이 있는 SOCKS 또는 HTTP 아웃바운드를 정의하고 user와 pass를 선택적으로 지정할 수 있습니다.",
+      },
+      examples: {
+        title: "예제",
+        description:
+          "기본 템플릿이나 광고 목록의 도메인을 차단하는 규칙을 삽입합니다.",
+      },
+    },
     messages: ["도움말을 보려면 '도움말 및 설명서' 버튼을 클릭하세요"],
     inboundDeprecated:
       "RoutingA에서 인바운드를 정의하는 기능은 더 이상 사용되지 않습니다. 생성된 JSON 구성에는 해당 인바운드 포트가 포함되지 않습니다. 대신 RoutingA 규칙과 함께 사용자 지정 인바운드 설정을 사용하세요.",
@@ -437,7 +556,6 @@ export default {
     noMatch: "일치하는 노드가 없습니다",
     saved: "프록시 그룹 {group} 저장됨",
     saveFailed: "프록시 그룹 {group} 저장 실패: {message}",
-    updateFailed: "그룹 {group} 업데이트 실패: {message}",
   },
   sharing: {
     copied: "링크가 복사되었습니다",
@@ -447,12 +565,11 @@ export default {
     failed: "공유 링크 생성 실패: {message}",
   },
   log: {
-    logModalTitle: "로그 보기",
+    search: "로그 검색…",
     logsLabel: "로그",
     refreshInterval: "새로 고침 간격",
     seconds: "초",
     autoShowNew: "새 로그 자동 표시",
-    category: "범주",
     source: "로그 출처",
     categories: {
       all: "전체",
@@ -466,7 +583,6 @@ export default {
     sources: {
       all: "전체",
     },
-    tailOnly: "최근 {count}줄만 표시합니다(이 화면에서는 이전 {skipped}줄이 숨겨짐)",
     export: "내보내기",
   },
   tproxyWhiteIpGroups: {
@@ -478,7 +594,8 @@ export default {
     formName1: "Ctrl을 누른 채 여러 항목을 선택할 수 있습니다.",
     formName2: "사용자 지정 IP (한 줄에 하나, 표준 CIDR 형식)",
     formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48",
-    invalidCustomIps: "사용자 지정 IP는 한 줄에 하나의 CIDR이어야 합니다. 예: 10.0.0.0/8",
+    invalidCustomIps:
+      "사용자 지정 IP는 한 줄에 하나의 CIDR이어야 합니다. 예: 10.0.0.0/8",
     saveFailed: "직접 연결 IP 그룹 저장 실패: {message}",
     cn: "중국 본토",
     private: "사설 네트워크",
@@ -502,7 +619,8 @@ export default {
       "주의: 잘못된 파일은 서비스 시작 실패를 일으킬 수 있습니다. 다운로드 후 서비스를 시작할 수 없으면 GFWList 삭제 버튼을 클릭하세요",
     ],
     formName: "사용자 지정 다운로드 링크",
-    wrongCustomLink: "사용자 지정 다운로드 링크는 http:// 또는 https://로 시작해야 합니다",
+    wrongCustomLink:
+      "사용자 지정 다운로드 링크는 http:// 또는 https://로 시작해야 합니다",
     updated: "GFWList 업데이트됨",
     saveFailed: "GFWList 업데이트 실패: {message}",
     alreadyUpToDate: "GFWList는 이미 최신 버전입니다({version})",
@@ -510,19 +628,23 @@ export default {
   tun: {
     routeScript: {
       title: "TUN 사용자 지정 라우트 스크립트",
-      warning: "경고: 잘못된 스크립트는 네트워크나 시스템 라우팅을 망가뜨릴 수 있습니다. 내용을 이해한 뒤에만 저장하세요.",
+      warning:
+        "경고: 잘못된 스크립트는 네트워크나 시스템 라우팅을 망가뜨릴 수 있습니다. 내용을 이해한 뒤에만 저장하세요.",
       shellType: "셸 유형",
       customShell: "사용자 지정 (아래에 경로 지정)",
       shellPath: "셸 경로",
       shellPathPlaceholder: "/usr/bin/bash",
       setupScript: "설정 스크립트 (TUN 준비 후 실행)",
-      setupScriptPlaceholder: "# TUN 준비 시 라우트를 구성하는 스크립트\n# 예: ip route add default dev tun0",
+      setupScriptPlaceholder:
+        "# TUN 준비 시 라우트를 구성하는 스크립트\n# 예: ip route add default dev tun0",
       teardownScript: "해제 스크립트 (TUN 종료 전 실행)",
-      teardownScriptPlaceholder: "# TUN 종료 전 라우트를 제거하는 스크립트\n# 예: ip route del default dev tun0",
+      teardownScriptPlaceholder:
+        "# TUN 종료 전 라우트를 제거하는 스크립트\n# 예: ip route del default dev tun0",
     },
     processExclude: {
       title: "TUN 사용자 지정 프로세스 제외",
-      warning: "경고: 잘못된 프로세스 이름은 트래픽이 예기치 않게 우회될 수 있습니다. 신뢰할 수 있는 프로세스 이름만 추가하세요.",
+      warning:
+        "경고: 잘못된 프로세스 이름은 트래픽이 예기치 않게 우회될 수 있습니다. 신뢰할 수 있는 프로세스 이름만 추가하세요.",
       listLabel: "제외할 프로세스 이름",
       placeholder: "v2raya, v2ray, chrome.exe",
       hint: "쉼표 또는 줄바꿈으로 구분합니다. 저장 시 중복이 제거됩니다.",
@@ -570,11 +692,9 @@ export default {
     LINK_NO_SCHEME: "서버 링크에 스킴 없음.",
     LINK_UNSUPPORTED_SCHEME: "지원되지 않는 링크 스킴: {scheme}",
     LINK_MALFORMED: "잘못된 {protocol} 링크: {detail}",
-    SUBSCRIPTION_FETCH_FAILED:
-      "{host}에서 구독 가져오기 실패: {detail}",
+    SUBSCRIPTION_FETCH_FAILED: "{host}에서 구독 가져오기 실패: {detail}",
     SUBSCRIPTION_EMPTY: "구독에 서버 없음.",
-    SUBSCRIPTION_NOT_FOUND:
-      "구독 #{id} 없음. 페이지를 새로 고치세요.",
+    SUBSCRIPTION_NOT_FOUND: "구독 #{id} 없음. 페이지를 새로 고치세요.",
     SERVER_NOT_FOUND:
       "서버 #{id} 없음 (서버 {count}개). 페이지를 새로 고치세요.",
     SUBSCRIPTION_SERVER_NOT_FOUND:
@@ -592,10 +712,8 @@ export default {
     GFWLIST_MISSING: "GFWList가 {dir}에 없음.",
     INVALID_CONFIG: "invalid config: {detail}",
     ASSET_UNREACHABLE: "{host}에 연결할 수 없습니다: {detail}",
-    ASSET_DOWNLOAD_FAILED:
-      "{host}에서 자산 다운로드 실패 (HTTP {status}).",
-    TRANSPARENT_SETUP_FAILED:
-      "투명 프록시 {mode} 설정 실패: {detail}",
+    ASSET_DOWNLOAD_FAILED: "{host}에서 자산 다운로드 실패 (HTTP {status}).",
+    TRANSPARENT_SETUP_FAILED: "투명 프록시 {mode} 설정 실패: {detail}",
     MUX_RANGE: "잘못된 MUX 동시성 값: {value}",
     CUSTOM_INBOUND_INVALID: "잘못된 사용자 지정 인바운드 {field}: {value}",
   },

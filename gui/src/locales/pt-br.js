@@ -1,10 +1,99 @@
 export default {
+  onboarding: {
+    title: "Tutorial rápido",
+    importTitle: "Importar nós",
+    importBody:
+      "Importe nós por um endereço de assinatura ou link de compartilhamento, ou crie um nó manualmente.",
+    groupTitle: "Adicionar ao grupo",
+    groupBody:
+      "Na página Proxies, selecione nós para adicioná-los a um grupo. Com vários nós, o núcleo escolhe o de menor latência. Você também pode escolher um único nó.",
+    rulesTitle: "Regras de divisão",
+    rulesBody:
+      "Escolha o modo de divisão no painel. Com o RoutingA você escreve suas próprias regras: quais sites e IPs vão direto, pelo proxy ou são bloqueados. O editor lista as regras, verifica cada linha e mantém a sintaxe à mão.",
+    startTitle: "Iniciar",
+    startBody:
+      "Inicie o núcleo no Painel. O proxy transparente, o modo de roteamento e o compartilhamento na rede local também são alterados ali.",
+    newNode: "Novo nó",
+    goToProxies: "Ir para Proxies",
+    back: "Voltar",
+    next: "Próximo",
+    finish: "Começar a usar",
+    viewTutorial: "Ver tutorial",
+    progress: "Etapa {current} de {total}",
+  },
+  traffic: {
+    upload: "Envio",
+    download: "Recebimento",
+    total: "Total: {value}",
+  },
+  proxies: {
+    newGroup: "Novo grupo",
+    newNode: "Novo nó",
+    cards: "Cartões",
+    list: "Lista",
+    testLatency: "Testar latência",
+    chooseManually: "Escolher manualmente",
+    sources: { all: "Todos", local: "Locais" },
+    membersOnly: "Somente membros",
+    members: "nenhum nó | 1 nó | {n} nós",
+    source: "Origem",
+    mode: { auto: "Automático (mais rápido)", manual: "Manual" },
+    inUse: "Em uso",
+    groupMode: "Modo do grupo",
+    modeNeedsMembers:
+      "Com dois ou mais nós, o núcleo usa automaticamente o de menor latência.",
+    groupSettings: "Configurações do grupo",
+    deleteGroup: "Excluir grupo",
+    modeHint: {
+      auto: "Automático: o núcleo usa o nó de menor latência",
+      manual: "Manual: o grupo usa o nó escolhido",
+    },
+    useThis: "Usar este nó",
+    unselect: "Desmarcar",
+    addToGroup: "Adicionar ao grupo",
+    removeFromGroup: "Remover do grupo",
+    selectAll: "Selecionar todos",
+    autoUpdate: "Atualização automática",
+    deleteSubscriptionNodes:
+      "Os nós de uma assinatura não podem ser excluídos individualmente.",
+  },
+  dashboard: {
+    status: "Estado do núcleo",
+    networkSpeed: "Velocidade da rede",
+    trafficUsage: "Uso de tráfego",
+    nodeLatency: "Latência dos nós",
+    moreMembers: "Mais 1 | Mais {n}",
+    inUse: "Nó em uso",
+    pinned: "Fixado",
+    balanced: "Automático (1 membro) | Automático ({n} membros)",
+    switchNode: "Trocar",
+    editGroup: "Editar grupo",
+    autoFastest: "Automático (menor latência)",
+    manageNodes: "Gerenciar nós",
+    emptyGroup: "Este grupo não tem nós",
+    allProxySettings: "Mais opções de proxy",
+    updateAll: "Atualizar todas",
+    updatedAt: "Atualizado {time}",
+    noSubscriptions: "Nenhuma assinatura",
+    moreSubscriptions: "Ver todas",
+    testLatency: "Testar latência",
+    usage: "Usado {used} / {total}",
+    usedOnly: "Usado {used}",
+    totalOnly: "Total {total}",
+    expires: "Expira em {date}",
+  },
   common: {
+    optional: "opcional",
+    dashboard: "Painel",
+    proxies: "Proxies",
+    subscriptions: "Assinaturas",
+    selectedCount: "nenhum selecionado | 1 selecionado | {n} selecionados",
+    nodes: "Nós",
     menu: "Menu",
     outboundSetting: "Configuração do grupo de proxy",
     setting: "Configurações",
     about: "Sobre",
-    loggedAs: "Conectado como <b>{username}</b>",
+    loggedAs: "Conectado como {username}",
     checkRunning: "Verificando",
     isRunning: "Em execução",
     notRunning: "Pronto",
@@ -12,29 +101,25 @@ export default {
     notLogin: "Não conectado",
     latest: "Mais recente",
     local: "No dispositivo",
-    success: "Concluído",
     fail: "Falhou",
     empty: "Nenhum nó adicionado",
     none: "nenhum",
-    optional: "opcional",
-    loadBalance: "Balanceamento de carga",
     log: "Registros",
     proxyGroups: "Grupos de proxy",
-    darkTheme: "Tema escuro",
-    lightTheme: "Tema claro",
-    autoTheme: "Tema automático",
-    expand: "Mostrar o estado da conexão",
+  },
+  theme: {
+    auto: "Automático",
+    light: "Claro",
+    dark: "Escuro",
+    title: "Tema",
+    appearance: "Aparência",
+    color: "Cor do tema",
+    custom: "Personalizada",
   },
   welcome: {
-    title: "Boas-vindas",
     docker: "O serviço v2rayA está em execução no Docker. Versão: {version}",
     default: "O serviço v2rayA está em execução. Versão: {version}",
     newVersion: "Nova versão disponível: {version}",
-    separator: " — ",
-    messages: [
-      "Ainda não há servidores.",
-      "Importe um link de servidor ou endereço de assinatura, ou crie um servidor manualmente.",
-    ],
   },
   v2ray: {
     start: "Iniciar",
@@ -43,31 +128,26 @@ export default {
     stopFailed: "Falha ao parar o núcleo: {message}",
   },
   server: {
-    name: "Nome do servidor",
-    address: "Endereço do servidor",
     protocol: "Protocolo",
-    latency: "Latência",
-    lastSeenTime: "Última vez visto",
-    lastTryTime: "Última tentativa",
-    server: "Servidor",
-    refreshFailed: "Falha ao atualizar a lista de nós: {message}",
     saved: "Servidor salvo",
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
-    host: "Host",
+    settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
-    timeLastUpdate: "Data e hora da última atualização",
     numberServers: "Número de servidores",
     subscription: "Assinatura",
-    autoSelect: "Conectar automaticamente aos novos servidores da assinatura após uma atualização automática",
+    autoSelect:
+      "Conectar automaticamente aos novos servidores da assinatura após uma atualização automática",
     autoSelectLabel: "Seleção automática",
     updated: "Assinatura atualizada",
     saved: "Assinatura salva",
     saveFailed: "Falha ao salvar a assinatura: {message}",
-    updateFailed: "Falha ao atualizar a assinatura: {message}",
   },
   operations: {
+    refresh: "Atualizar",
+    yes: "Sim",
+    no: "Não",
     name: "Operações",
     tproxyWhiteIpGroups: "Grupos de IPs na lista branca direta",
     update: "Atualizar",
@@ -79,10 +159,6 @@ export default {
     delete: "Excluir",
     create: "Criar",
     import: "Importar",
-    inBatch: "Em lote",
-    connect: "Conectar",
-    disconnect: "Desconectar",
-    addTo: "Adicionar a",
     login: "Entrar",
     logout: "Sair",
     configure: "Configurar",
@@ -92,22 +168,16 @@ export default {
     save: "Salvar",
     copyLink: "COPIAR LINK",
     export: "Exportar",
-    copySelected: "Copiar nós selecionados",
-    downloadTxt: "Baixar arquivo TXT",
     helpManual: "Ajuda e manual",
-    yes: "Sim",
-    no: "Não",
     switchSite: "Mudar para o site alternativo",
     addOutbound: "Adicionar um grupo de proxy",
     add: "Adicionar",
     close: "Fechar",
     domainsExcluded: "Domínios excluídos",
     configureTunRouteScript: "Configurar script de rota",
-    ping: "PING",
     copySelectedDone: "Nós selecionados copiados",
-    downloadTxtDone: "Arquivo TXT baixado",
-    exportEmpty: "Não foi possível gerar um link de compartilhamento para os nós selecionados",
-    exportFailed: "Falha ao exportar: {message}",
+    exportEmpty:
+      "Não foi possível gerar um link de compartilhamento para os nós selecionados",
   },
   register: {
     title: "Crie primeiro uma conta de administrador",
@@ -125,13 +195,19 @@ export default {
     failed: "Falha ao entrar: {message}",
   },
   connection: {
-    disconnectFailed: "Falha ao desconectar: {message}",
-    connectFailed: "Falha ao conectar: {message}",
     checkFailed: "Falha ao verificar a conexão: {message}",
   },
   setting: {
+    sections: {
+      proxy: "Proxy",
+      traffic: "Divisão de tráfego",
+      core: "Núcleo",
+      more: "Mais",
+    },
     transparentProxy: "Proxy transparente/Proxy do sistema",
     transparentType: "Implementação do proxy transparente/proxy do sistema",
+    transparentOffHint:
+      "Ative o proxy transparente para escolher a implementação.",
     logLevel: "Nível de registro",
     pacMode: "Modo de divisão de tráfego da porta de regras",
     mux: "Multiplexação",
@@ -161,14 +237,17 @@ export default {
       pac: "Depende da porta de regras",
       whitelistCn: "Proxy exceto sites da China",
       gfwlist: "Proxy apenas para GFWList",
-      sameAsPacMode: "O modo de divisão de tráfego é igual ao da porta de regras",
+      sameAsPacMode:
+        "O modo de divisão de tráfego é igual ao da porta de regras",
       default: "Manter o padrão",
       on: "Ativado",
       off: "Desativado",
       updateSubWhenStart: "Atualizar assinaturas ao iniciar o serviço",
-      updateSubAtIntervals: "Atualizar assinaturas regularmente (unidade: hora)",
+      updateSubAtIntervals:
+        "Atualizar assinaturas regularmente (unidade: hora)",
       updateGfwlistWhenStart: "Atualizar GFWList ao iniciar o serviço",
-      updateGfwlistAtIntervals: "Atualizar GFWList regularmente (unidade: hora)",
+      updateGfwlistAtIntervals:
+        "Atualizar GFWList regularmente (unidade: hora)",
       dependTransparentMode: "Segue o proxy transparente/proxy do sistema",
       leastPing: "Menor latência primeiro",
       backendV2ray: "v2ray / xray",
@@ -177,18 +256,27 @@ export default {
       tunUnsupported: "não suportado nesta plataforma",
     },
     messages: {
-      inboundSniffing: "Inspeciona o tráfego de entrada. Se estiver desativado, parte do tráfego poderá não ser redirecionada corretamente.",
-      gfwlist: "Baseia-se na data de modificação do arquivo, que às vezes é posterior à versão mais recente online.",
-      transparentProxy: "Com o proxy transparente ativado, nenhuma configuração extra é necessária e todo o tráfego TCP passará pelo v2rayA. Para fornecer proxy a outros computadores e ao Docker pelo gateway, ative a opção 'Compartilhar na LAN'.",
-      transparentType: "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP e precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
-      tproxyExcludedInterfaces: "Defina os prefixos das interfaces de rede que não devem passar pelo proxy transparente. O curinga * é aceito (convertido automaticamente em + no modo iptables). Por exemplo: docker*, veth*, wg*, ppp*, br-*. Separe vários prefixos com vírgulas.",
-      tunAutoRoute: "Quando ativado, o v2rayA instala as rotas e as configurações de DNS por conta própria. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
-      tunExcludeProcesses: "Nomes de processos cujo tráfego não passa pelo proxy, um por linha, por exemplo chrome.exe ou firefox. O v2rayA e o núcleo são sempre excluídos. O processo é identificado pelo nome do executável dono do socket; um socket fechado antes da consulta ou uma porta reutilizada por outro processo não podem ser atribuídos. As consultas DNS desses processos continuam sendo respondidas pelo módulo DNS do núcleo.",
+      inboundSniffing:
+        "Inspeciona o tráfego de entrada. Se estiver desativado, parte do tráfego poderá não ser redirecionada corretamente.",
+      gfwlist:
+        "Baseia-se na data de modificação do arquivo, que às vezes é posterior à versão mais recente online.",
+      transparentProxy:
+        "Com o proxy transparente ativado, nenhuma configuração extra é necessária e todo o tráfego TCP passará pelo v2rayA. Para fornecer proxy a outros computadores e ao Docker pelo gateway, ative a opção 'Compartilhar na LAN'.",
+      transparentType:
+        "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP e precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
+      tproxyExcludedInterfaces:
+        "Defina os prefixos das interfaces de rede que não devem passar pelo proxy transparente. O curinga * é aceito (convertido automaticamente em + no modo iptables). Por exemplo: docker*, veth*, wg*, ppp*, br-*. Separe vários prefixos com vírgulas.",
+      tunAutoRoute:
+        "Quando ativado, o v2rayA instala as rotas e as configurações de DNS por conta própria. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
+      tunExcludeProcesses:
+        "Nomes de processos cujo tráfego não passa pelo proxy, um por linha, por exemplo chrome.exe ou firefox. O v2rayA e o núcleo são sempre excluídos. O processo é identificado pelo nome do executável dono do socket; um socket fechado antes da consulta ou uma porta reutilizada por outro processo não podem ser atribuídos. As consultas DNS desses processos continuam sendo respondidas pelo módulo DNS do núcleo.",
       pacMode: `Aqui você pode definir a regra de divisão de tráfego da porta de regras. Por padrão, a porta da "Regra de divisão de tráfego" é 20172 e usa o protocolo HTTP.`,
-      tcpFastOpen: "Simplifica o handshake TCP para acelerar o estabelecimento da conexão. Isso pode destacar as características dos pacotes e causar falha na conexão se o sistema não for compatível.",
+      tcpFastOpen:
+        "Simplifica o handshake TCP para acelerar o estabelecimento da conexão. Isso pode destacar as características dos pacotes e causar falha na conexão se o sistema não for compatível.",
       mux: "Multiplexa conexões TCP para reduzir o número de handshakes, mas isso afeta casos de alto throughput, como assistir a vídeos, fazer downloads e testar a velocidade. Isso pode destacar as características dos pacotes. Atualmente, é compatível apenas com vmess.",
       grpcShouldWithTls: "gRPC requer TLS; o TLS foi ativado",
-      ssPluginImpl: "★default: 'transport' para simple-obfs, 'chained' para v2ray-plugin." +
+      ssPluginImpl:
+        "★default: 'transport' para simple-obfs, 'chained' para v2ray-plugin." +
         "★chained: o tráfego do shadowsocks será redirecionado para um plugin independente." +
         "★transport: processado diretamente pela camada de transporte do núcleo v2ray/xray.",
     },
@@ -204,35 +292,16 @@ export default {
     portVmessLink: "Link da porta VMess",
     portApi: "Porta da API (0 para aleatória)",
     apiServices: "Serviços de API ativados",
-    noVmessLink: "Ainda não há um link VMess. Defina uma porta VMess e salve primeiro.",
-    saveFailed: "Falha ao salvar as configurações de endereço e porta: {message}",
+    noVmessLink:
+      "Ainda não há um link VMess. Defina uma porta VMess e salve primeiro.",
+    saveFailed:
+      "Falha ao salvar as configurações de endereço e porta: {message}",
     messages: [
       "O endereço padrão do serviço, 0.0.0.0:2017, pode ser alterado definindo a variável de ambiente <code>V2RAYA_ADDRESS</code> e o argumento de comando <code>--address</code>.",
       "Se você iniciar o contêiner Docker do v2rayA com mapeamento de portas em vez de <code>--network host</code>, poderá remapear as portas desta forma.",
       "Não é possível verificar a ocupação das portas no modo Docker. Confirme por conta própria.",
       "Zero significa fechar esta porta.",
     ],
-  },
-  customRouting: {
-    title: "Personalizar regra de roteamento",
-    defaultRoutingRule: "Regra de roteamento padrão",
-    sameAsDefaultRule: "igual à regra padrão",
-    appendRule: "Adicionar regra",
-    direct: "Direto",
-    proxy: "Proxy",
-    block: "Bloquear",
-    rule: "Regra",
-    domainFile: "Arquivo de domínios",
-    typeRule: "Tipo de regra",
-    tags: "Tags",
-    saveFailed: "Falha ao salvar as regras de roteamento personalizadas: {message}",
-    messages: {
-      0: "O v2rayA reconhecerá todos os arquivos SiteDat em <b>{V2RayLocationAsset}</b>",
-      1: "Para criar um arquivo SiteDat por conta própria: <a href=\"https://github.com/ToutyRater/V2Ray-SiteDAT\">ToutyRater/V2Ray-SiteDAT</a>",
-      2: "A seleção múltipla é compatível.",
-      noSiteDatFileFound: "Nenhum arquivo siteDat encontrado em {V2RayLocationAsset}",
-      emptyRuleNotPermitted: "Cada regra deve selecionar pelo menos uma tag",
-    },
   },
   dns: {
     title: "Configurações de DNS",
@@ -242,27 +311,18 @@ export default {
     colDomains: "Lista de domínios",
     colOutbound: "Saída",
     serverPlaceholder: "por exemplo, 8.8.8.8 ou https://dns.google/dns-query",
-    domainsPlaceholder: "Um por linha, por exemplo, geosite:cn\nDeixe vazio para usar o DNS de fallback",
+    domainsPlaceholder:
+      "Um por linha, por exemplo, geosite:cn\nDeixe vazio para usar o DNS de fallback",
     addRule: "Adicionar regra",
+    rule: "Regra {n}",
     resetDefault: "Restaurar padrões",
     errNoRules: "Pelo menos uma regra precisa de um servidor DNS",
     saveFailed: "Falha ao salvar as regras de DNS: {message}",
   },
-  egressPortWhitelist: {
-    title: "Lista branca de portas de saída",
-    tcpPortWhitelist: "Lista branca de portas TCP",
-    udpPortWhitelist: "Lista branca de portas UDP",
-    messages: [
-      "Se o v2rayA estiver configurado no servidor A, conectado a um servidor proxy B, preste atenção:",
-      "O proxy transparente forçará todo o tráfego TCP e UDP a passar pelo servidor proxy B, substituindo o IP de origem pelo IP do proxy B. Além disso, se clientes enviarem solicitações ao servidor A, que fornece um serviço, receberão respostas do IP do proxy B, o que é ilegal.",
-      "Para resolver isso, adicione essas portas de serviço à lista branca para que não passem pelo proxy. Por exemplo, ssh(22) e v2raya({v2rayaPort}).",
-      "Se o servidor não fornecer nenhum serviço, você poderá ignorar esta configuração.",
-      "Formato: 22 significa a porta 22; 20170:20172 significa três portas, de 20170 a 20172.",
-    ],
-    saveFailed: "Falha ao salvar a lista branca de portas de saída: {message}",
-  },
   configureServer: {
-    title: "Configurar servidor | Servidor",
+    required: "Obrigatório",
+    title: "Configurar servidor",
+    titleReadonly: "Servidor",
     servername: "Nome do servidor",
     host: "Host",
     port: "Porta",
@@ -347,44 +407,45 @@ export default {
   import: {
     server: "Link do servidor",
     subscription: "Endereço da assinatura",
-    serverMessage: "Digite um link de servidor:",
     subscriptionMessage: "Digite um endereço de assinatura:",
     batchMessage: "Um link de servidor por linha:",
-    qrcodeError: "Nenhum código QR encontrado na imagem. Tente uma imagem mais nítida.",
+    qrcodeError:
+      "Nenhum código QR encontrado na imagem. Tente uma imagem mais nítida.",
     notImage: "Escolha um arquivo de imagem",
     success: "Importação concluída",
     failed: "Falha na importação: {message}",
-    timeout: "A importação atingiu o tempo limite. O servidor de assinatura não respondeu a tempo.",
+    timeout:
+      "A importação atingiu o tempo limite. O servidor de assinatura não respondeu a tempo.",
   },
   delete: {
     title: "Excluir itens selecionados",
-    message: "Excluir os {n} servidores ou assinaturas selecionados? Esta ação não pode ser desfeita.",
+    message:
+      "Excluir o item selecionado? Esta ação não pode ser desfeita. | Excluir os {n} itens selecionados? Esta ação não pode ser desfeita.",
     failed: "Falha ao excluir: {message}",
   },
   latency: {
-    message: "Os testes de latência podem levar vários minutos. Aguarde com paciência.",
     testing: "testando…",
     failed: "Falha no teste de latência: {message}",
   },
   version: {
-    v2rayInvalid: "geosite.dat, geoip.dat ou o v2ray-core podem não estar instalados corretamente",
-    coreVersionMismatch: "Incompatibilidade de versão do núcleo: a versão do v2raya_core deve corresponder exatamente à versão do v2rayA. {err}",
+    v2rayInvalid:
+      "geosite.dat, geoip.dat ou o v2ray-core podem não estar instalados corretamente",
+    coreVersionMismatch:
+      "Incompatibilidade de versão do núcleo: a versão do v2raya_core deve corresponder exatamente à versão do v2rayA. {err}",
   },
-  about: `<p>v2rayA é um cliente web do V2Ray.</p>
-          <p class="about-small">Portas padrão:</p>
-          <p class="about-small">2017: porta de serviço do v2rayA</p>
-          <p class="about-small">20170: protocolo SOCKS</p>
-          <p class="about-small">20171: protocolo HTTP</p>
-          <p class="about-small">20172: protocolo HTTP com a "Regra de divisão de tráfego"</p>
-          <p class="about-small">Outras portas:</p>
-          <p class="about-small">32345: tproxy, necessária para o proxy transparente</p>
-          <p>Todos os dados são armazenados localmente, não na nuvem.</p>
-          <p>Problemas encontrados durante o uso podem ser relatados em <a href="https://github.com/v2rayA/v2rayA/discussions">discussões</a>.</p>
-          <p>Documentação: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
+  about: {
+    intro: "v2rayA é um cliente web do V2Ray.",
+    local: "Todos os dados são armazenados localmente, não na nuvem.",
+    report:
+      "Problemas encontrados durante o uso podem ser relatados em {discussions}.",
+    discussions: "discussões",
+    docs: "Documentação:",
+  },
   axios: {
     messages: {
       optimizeBackend: "Alterar o endereço do serviço v2rayA?",
-      noBackendFound: "Não foi possível encontrar o v2rayA em {url}. Verifique se o v2rayA está em execução nesse endereço.",
+      noBackendFound:
+        "Não foi possível encontrar o v2rayA em {url}. Verifique se o v2rayA está em execução nesse endereço.",
       cannotCommunicate: [
         "Não foi possível comunicar. Se o serviço estiver em execução e as portas estiverem abertas corretamente, o navegador atual pode não permitir que sites HTTPS acessem recursos HTTP. Tente usar o Chrome ou mudar para o site HTTP alternativo.",
         "Não foi possível comunicar. O Firefox não permite que sites HTTPS acessem recursos HTTP. Tente mudar para o site HTTP alternativo.",
@@ -395,21 +456,108 @@ export default {
     },
   },
   routingA: {
+    export: "Exportar",
+    import: {
+      title: "Importar",
+      confirm:
+        "Substituir as regras atuais pelo conteúdo do arquivo importado?",
+    },
+    form: {
+      title: "Formulário",
+      text: "Texto",
+      default: "Saída padrão",
+      orderHint:
+        "As regras são avaliadas em ordem; a primeira correspondência prevalece.",
+      addRule: "Adicionar regra",
+      editRule: "Editar regra",
+      condition: "Condição",
+      arguments: "Argumentos",
+      addCondition: "Adicionar condição",
+      outbound: "Saída",
+      customOutbounds: "Saídas personalizadas",
+      addOutbound: "Adicionar saída",
+      editOutbound: "Editar saída",
+      name: "Nome",
+      protocol: "Protocolo",
+      address: "Endereço",
+      port: "Porta",
+      user: "Nome de usuário",
+      pass: "Senha",
+      required: "Este campo é obrigatório.",
+      invalidArguments:
+        "Separe os argumentos por vírgulas e balanceie aspas e parênteses.",
+      invalidName:
+        "Use um nome exclusivo sem espaços nem caracteres de sintaxe.",
+      deleteConfirm: "Excluir esta entrada?",
+      moveUp: "Mover para cima",
+      moveDown: "Mover para baixo",
+      actions: "Ações da entrada",
+      raw: "Sintaxe não reconhecida; preservada no editor de texto.",
+    },
+    editor: "Regras RoutingA",
+    loading: "Carregando regras",
+    resetDefault: "Restaurar padrão",
+    resetConfirm: "Substituir as regras atuais pelo modelo padrão?",
+    discard: "Descartar alterações não salvas?",
+    insert: "Inserir",
+    lineError: "Linha {line}: {message}",
+    errors: {
+      noArrow: "É necessário indicar uma condição seguida de -> e uma saída.",
+      brackets: "Parênteses ou colchetes não estão balanceados.",
+      noOutbound: "É necessário indicar uma saída após ->.",
+    },
+    reference: {
+      title: "Sintaxe",
+      format: {
+        title: "Formato das regras",
+        description:
+          "Use condição [&& condição] -> saída, uma regra por linha. A primeira correspondência prevalece; # inicia um comentário.",
+      },
+      domain: {
+        title: "Domínios",
+        description:
+          "full corresponde ao domínio exato, domain inclui subdomínios, e contains e regexp correspondem a texto e expressões regulares. Use geosite para uma lista de domínios; cada chamada aceita várias entradas.",
+      },
+      ip: {
+        title: "Endereços IP",
+        description:
+          "Corresponda a um endereço IP, intervalo CIDR ou lista geoip. Coloque endereços IPv6 entre aspas.",
+      },
+      ports: {
+        title: "Portas e protocolos",
+        description:
+          "Corresponda a portas ou intervalos, protocolo de transporte, protocolo de aplicação ou endereço de origem. Combine condições com &&.",
+      },
+      outbound: {
+        title: "Saídas",
+        description:
+          "As saídas integradas são proxy, direct e block; default define a saída quando nenhuma regra corresponde. Defina uma saída SOCKS ou HTTP nomeada com user e pass opcionais.",
+      },
+      examples: {
+        title: "Exemplos",
+        description:
+          "Insira o modelo padrão ou uma regra que bloqueia domínios da lista de publicidade.",
+      },
+    },
     messages: ["clique no botão 'Ajuda e manual' para obter ajuda"],
-    inboundDeprecated: "Definir inbounds no RoutingA está obsoleto. A configuração JSON gerada NÃO incluirá essas portas de entrada. Use as configurações de entrada personalizada com regras do RoutingA.",
-    inboundDeprecatedConfirm: "Esta configuração do RoutingA contém definições de entrada obsoletas. A configuração gerada não incluirá essas portas de entrada. Continuar salvando?",
+    inboundDeprecated:
+      "Definir inbounds no RoutingA está obsoleto. A configuração JSON gerada NÃO incluirá essas portas de entrada. Use as configurações de entrada personalizada com regras do RoutingA.",
+    inboundDeprecatedConfirm:
+      "Esta configuração do RoutingA contém definições de entrada obsoletas. A configuração gerada não incluirá essas portas de entrada. Continuar salvando?",
     savedWithWarning: "RoutingA salvo com um aviso: {warning}",
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
-    deleteMessage: "Excluir o grupo de proxy \"{outboundName}\"? Os nós serão desconectados. Esta ação não pode ser desfeita.",
+    deleteMessage:
+      'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',
     added: "Grupo de proxy adicionado",
     addFailed: "Falha ao adicionar o grupo de proxy: {message}",
     deleted: "Grupo de proxy excluído",
     deleteFailed: "Falha ao excluir o grupo de proxy {group}: {message}",
     settingSaved: "Configurações do grupo de proxy salvas",
-    settingSaveFailed: "Falha ao salvar as configurações do grupo de proxy: {message}",
+    settingSaveFailed:
+      "Falha ao salvar as configurações do grupo de proxy: {message}",
     probeUrl: "URL de sondagem",
     probeInterval: "Intervalo de sondagem",
     type: "Tipo",
@@ -423,7 +571,6 @@ export default {
     noMatch: "Nenhum nó correspondente",
     saved: "Grupo de proxy {group} salvo",
     saveFailed: "Falha ao salvar o grupo de proxy {group}: {message}",
-    updateFailed: "Falha ao atualizar o grupo {group}: {message}",
   },
   sharing: {
     copied: "Link copiado",
@@ -433,12 +580,11 @@ export default {
     failed: "Falha ao criar o link de compartilhamento: {message}",
   },
   log: {
-    logModalTitle: "Visualizar registros",
+    search: "Pesquisar logs…",
     logsLabel: "Registros",
     refreshInterval: "Intervalo de atualização",
     seconds: "segundos",
     autoShowNew: "Mostrar novos registros automaticamente",
-    category: "Categoria",
     source: "Origem do registro",
     categories: {
       all: "Todos",
@@ -452,7 +598,6 @@ export default {
     sources: {
       all: "Todas",
     },
-    tailOnly: "Mostrando as últimas {count} linhas ({skipped} linhas mais antigas ocultas nesta tela)",
     export: "Exportar",
   },
   tproxyWhiteIpGroups: {
@@ -464,7 +609,8 @@ export default {
     formName1: "Mantenha Ctrl pressionado para selecionar vários itens.",
     formName2: "IPs personalizados (um por linha, formato CIDR padrão)",
     formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48",
-    invalidCustomIps: "Os IPs personalizados devem ser um CIDR por linha, por exemplo, 10.0.0.0/8",
+    invalidCustomIps:
+      "Os IPs personalizados devem ser um CIDR por linha, por exemplo, 10.0.0.0/8",
     saveFailed: "Falha ao salvar os grupos de IPs diretos: {message}",
     cn: "China continental",
     private: "Privado",
@@ -488,7 +634,8 @@ export default {
       "Atenção: um arquivo incorreto pode impedir a inicialização do serviço. Se o serviço não iniciar após o download, clique no botão Excluir GFWList.",
     ],
     formName: "Link de download personalizado",
-    wrongCustomLink: "O link de download personalizado deve começar com http:// ou https://",
+    wrongCustomLink:
+      "O link de download personalizado deve começar com http:// ou https://",
     updated: "GFWList atualizada",
     saveFailed: "Falha ao atualizar a GFWList: {message}",
     alreadyUpToDate: "A GFWList já está na versão mais recente ({version})",
@@ -496,19 +643,24 @@ export default {
   tun: {
     routeScript: {
       title: "Script de rota personalizado do TUN",
-      warning: "Aviso: scripts incorretos podem danificar sua rede ou o roteamento do sistema. Certifique-se de saber o que está fazendo antes de salvar.",
+      warning:
+        "Aviso: scripts incorretos podem danificar sua rede ou o roteamento do sistema. Certifique-se de saber o que está fazendo antes de salvar.",
       shellType: "Tipo de shell",
       customShell: "Personalizado (especifique o caminho abaixo)",
       shellPath: "Caminho do shell",
       shellPathPlaceholder: "/usr/bin/bash",
       setupScript: "Script de configuração (executado após o TUN ficar ativo)",
-      setupScriptPlaceholder: "# Script para configurar rotas quando o TUN estiver ativo\n# por exemplo: ip route add default dev tun0",
-      teardownScript: "Script de remoção (executado antes de o TUN ser fechado)",
-      teardownScriptPlaceholder: "# Script para remover rotas antes de o TUN ser fechado\n# por exemplo: ip route del default dev tun0",
+      setupScriptPlaceholder:
+        "# Script para configurar rotas quando o TUN estiver ativo\n# por exemplo: ip route add default dev tun0",
+      teardownScript:
+        "Script de remoção (executado antes de o TUN ser fechado)",
+      teardownScriptPlaceholder:
+        "# Script para remover rotas antes de o TUN ser fechado\n# por exemplo: ip route del default dev tun0",
     },
     processExclude: {
       title: "Exclusão de processos personalizada do TUN",
-      warning: "Aviso: nomes de processos incorretos podem ignorar o tráfego inesperadamente. Adicione apenas nomes de processos confiáveis.",
+      warning:
+        "Aviso: nomes de processos incorretos podem ignorar o tráfego inesperadamente. Adicione apenas nomes de processos confiáveis.",
       listLabel: "Nomes de processos excluídos",
       placeholder: "v2raya, v2ray, chrome.exe",
       hint: "Aceita separadores por vírgula ou nova linha. Os valores são deduplicados ao salvar.",
@@ -544,7 +696,8 @@ export default {
   pinnedPeerCertSha256: "SHA256 do certificado fixado",
   verifyPeerCertByName: "Verificar certificado do peer pelo nome",
   backend: {
-    NO_SERVER_SELECTED: "Nenhum servidor selecionado. Conecte um servidor primeiro.",
+    NO_SERVER_SELECTED:
+      "Nenhum servidor selecionado. Conecte um servidor primeiro.",
     CORE_START_FAILED: "Falha ao iniciar o v2raya_core: {detail}",
     CORE_NOT_FOUND: "v2raya_core não encontrado.",
     CORE_VERSION_MISMATCH:

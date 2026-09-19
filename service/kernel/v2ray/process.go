@@ -324,7 +324,6 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 		return nil, nil, nil
 	}
 	serverInfos := make([]serverInfo, 0, css.Len())
-	serverObjs := make([]serverObj.ServerObj, 0, css.Len())
 	for _, cs := range css.Get() {
 		sr, err := cs.LocateServerRaw()
 		if err != nil {
@@ -334,9 +333,39 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 			Info:         sr.ServerObj,
 			OutboundName: cs.Outbound,
 		})
-		serverObjs = append(serverObjs, sr.ServerObj)
+	}
+	serverInfos = applySelection(serverInfos, func(outbound string) string {
+		return configure.GetOutboundSetting(outbound).Selected
+	})
+	serverObjs := make([]serverObj.ServerObj, 0, len(serverInfos))
+	for _, info := range serverInfos {
+		serverObjs = append(serverObjs, info.Info)
 	}
 	return serverObjs, serverInfos, nil
+}
+
+// applySelection keeps, for a group whose setting selects one member, only
+// that member; a selection matching no member leaves the group balanced.
+func applySelection(serverInfos []serverInfo, selectedOf func(outbound string) string) []serverInfo {
+	selected := make(map[string]string)
+	matched := make(map[string]bool)
+	for _, info := range serverInfos {
+		if _, ok := selected[info.OutboundName]; !ok {
+			selected[info.OutboundName] = selectedOf(info.OutboundName)
+		}
+		link := selected[info.OutboundName]
+		if link != "" && info.Info.ExportToURL() == link {
+			matched[info.OutboundName] = true
+		}
+	}
+	kept := serverInfos[:0]
+	for _, info := range serverInfos {
+		if matched[info.OutboundName] && info.Info.ExportToURL() != selected[info.OutboundName] {
+			continue
+		}
+		kept = append(kept, info)
+	}
+	return kept
 }
 
 func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template, err error) {

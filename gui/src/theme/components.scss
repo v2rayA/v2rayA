@@ -1,0 +1,64 @@
+// Where Vuetify's Material 3 blueprint stops short of the spec: the
+// filter chip's outline and corners, the primary tab's indicator.
+
+// Material's state layers: 8 % hover, 10 % focus and pressed (Vuetify's
+// defaults are 4 / 12 / 12)
+.v-application {
+  --v-hover-opacity: 0.08;
+  --v-focus-opacity: 0.1;
+  --v-pressed-opacity: 0.1;
+}
+
+// chips: 8 dp corners, a 1 dp outline-variant border when outlined
+.v-chip.v-chip--variant-outlined {
+  border-color: rgb(var(--v-theme-outline-variant));
+}
+
+// primary tabs: a 3 dp indicator with rounded top corners
+.v-tabs:not(.v-tabs--inset) .v-tab__slider {
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+// dialog actions: 40 dp buttons with Material's padding (24 dp filled,
+// 12 dp text) and an 8 dp gap; the card-actions preset slims them
+.v-card-actions {
+  gap: 8px;
+}
+.v-card-actions .v-btn {
+  height: 40px;
+  min-width: 64px;
+}
+.v-card-actions .v-btn.v-btn--slim {
+  padding: 0 12px;
+}
+.v-card-actions .v-btn.v-btn--slim.v-btn--variant-flat,
+.v-card-actions .v-btn.v-btn--slim.v-btn--variant-tonal,
+.v-card-actions .v-btn.v-btn--slim.v-btn--variant-outlined {
+  padding: 0 24px;
+}
+
+// dialog bodies: a text field's floating label rises 8 dp above the
+// field, so the body keeps that much above its first child even when a
+// title precedes it (Vuetify zeroes it there)
+.v-card-item + .v-card-text,
+.v-card-title + .v-card-text {
+  padding-top: 8px;
+}
+
+// scrollbars: thin, in the outline colour, on every scrolling region
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--v-theme-outline-variant)) transparent;
+}
+
+// plain tooltips: Material's inverse surface, 4 dp corners, body-small
+.v-tooltip > .v-overlay__content {
+  background: rgb(var(--v-theme-inverse-surface));
+  color: rgb(var(--v-theme-inverse-on-surface));
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+}
