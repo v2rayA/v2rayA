@@ -324,8 +324,9 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 		return nil, nil, nil
 	}
 	serverInfos := make([]serverInfo, 0, css.Len())
+	loc := configure.NewLocator()
 	for _, cs := range css.Get() {
-		sr, err := cs.LocateServerRaw()
+		sr, err := loc.Locate(cs)
 		if err != nil {
 			return nil, nil, err
 		}

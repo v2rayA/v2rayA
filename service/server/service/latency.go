@@ -35,6 +35,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 	}()
 	// Multi-threaded asynchronous ping
+	loc := configure.NewLocator()
 	wg := new(sync.WaitGroup)
 	for i, v := range which {
 		if v.TYPE == configure.SubscriptionType { // subscriptions cannot be pinged
@@ -42,7 +43,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 		wg.Add(1)
 		go func(i int) {
-			_ = which[i].Ping(timeout)
+			_ = which[i].Ping(loc, timeout)
 			wg.Done()
 		}(i)
 	}
@@ -117,9 +118,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	wg := new(sync.WaitGroup)
 	vms := make([]serverObj.ServerObj, len(which))
 	//init vmessInfos
+	loc := configure.NewLocator()
 	for i := range which {
 		which[i].Latency = ""
-		sr, err := which[i].LocateServerRaw()
+		sr, err := loc.Locate(which[i])
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue

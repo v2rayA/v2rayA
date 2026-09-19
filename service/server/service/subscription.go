@@ -265,9 +265,10 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	// serverObj.ServerObj is a pointer(interface), and shouldn't be as a key
 	link2Raw := make(map[string]*configure.ServerRaw)
 	connectedVmessInfo2CssIndex := make(map[string][]int)
+	loc := configure.NewLocator()
 	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
-			if sRaw, err := cs.LocateServerRaw(); err != nil {
+			if sRaw, err := loc.Locate(cs); err != nil {
 				return err
 			} else {
 				if sRaw.ServerObj == nil {
