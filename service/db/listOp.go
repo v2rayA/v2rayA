@@ -32,19 +32,32 @@ func ListSet(bucket string, key string, index int, val interface{}) (err error) 
 		return nil
 
 	case "touch/subscriptions":
-		b, err := jsoniter.Marshal(val)
-		if err != nil {
-			return err
-		}
-		// One transaction: the node list is deleted and re-inserted, and a
-		// crash between the two must not leave the subscription empty.
-		return ReadModifyWrite(func(tx *sql.Tx) error {
-			return setSubscription(tx, index, gjson.ParseBytes(b))
-		})
+		return ListSetWithTransaction(bucket, key, index, val, nil)
 
 	default:
 		return fmt.Errorf("ListSet: unsupported bucket/key: %s/%s", bucket, key)
 	}
+}
+
+// ListSetWithTransaction runs beforeSet and the list replacement in one
+// transaction. The callback may write related state through transaction-aware
+// database operations.
+func ListSetWithTransaction(bucket string, key string, index int, val interface{}, beforeSet func(tx *sql.Tx) error) error {
+	if bucket+"/"+key != "touch/subscriptions" {
+		return fmt.Errorf("ListSetWithTransaction: unsupported bucket/key: %s/%s", bucket, key)
+	}
+	b, err := jsoniter.Marshal(val)
+	if err != nil {
+		return err
+	}
+	return ReadModifyWrite(func(tx *sql.Tx) error {
+		if beforeSet != nil {
+			if err := beforeSet(tx); err != nil {
+				return err
+			}
+		}
+		return setSubscription(tx, index, gjson.ParseBytes(b))
+	})
 }
 
 func setSubscription(tx *sql.Tx, index int, parsed gjson.Result) error {
@@ -72,15 +85,6 @@ func setSubscription(tx *sql.Tx, index int, parsed gjson.Result) error {
 		return err
 	}
 
-	// Update servers within this subscription.
-	// Clean up outbound_connections first to satisfy foreign key constraint;
-	// otherwise the delete fails and the insert below duplicates the list.
-	if _, err := tx.Exec(`
-		DELETE FROM outbound_connections
-		WHERE server_id IN (SELECT id FROM servers WHERE type = 'subscription_server' AND sub_id = ?)
-	`, subID); err != nil {
-		return fmt.Errorf("ListSet: failed to clear outbound connections of subscription %d: %w", index, err)
-	}
 	if _, err := tx.Exec("DELETE FROM servers WHERE type = 'subscription_server' AND sub_id = ?", subID); err != nil {
 		return fmt.Errorf("ListSet: failed to clear old servers of subscription %d: %w", index, err)
 	}
@@ -320,11 +324,6 @@ func ListRemove(bucket, key string, indexes []int) error {
 	switch bucket + "/" + key {
 	case "touch/servers":
 		for _, idx := range indexes {
-			// Clean up outbound_connections first to satisfy foreign key constraint
-			_, _ = db.Exec(`
-				DELETE FROM outbound_connections
-				WHERE server_id IN (SELECT id FROM servers WHERE type = 'server' AND sort = ?)
-			`, idx)
 			_, err := db.Exec("DELETE FROM servers WHERE type = 'server' AND sort = ?", idx)
 			if err != nil {
 				return err
@@ -349,11 +348,6 @@ func ListRemove(bucket, key string, indexes []int) error {
 				}
 				return err
 			}
-			// Clean up outbound_connections first to satisfy foreign key constraint
-			_, _ = db.Exec(`
-				DELETE FROM outbound_connections
-				WHERE server_id IN (SELECT id FROM servers WHERE type = 'subscription_server' AND sub_id = ?)
-			`, subID)
 			_, err = db.Exec("DELETE FROM servers WHERE type = 'subscription_server' AND sub_id = ?", subID)
 			if err != nil {
 				return err

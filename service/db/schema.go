@@ -57,22 +57,6 @@ CREATE TABLE IF NOT EXISTS outbound_names (
     name TEXT PRIMARY KEY,
     sort INTEGER NOT NULL DEFAULT 0
 );
-
-CREATE TABLE IF NOT EXISTS outbound_connections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    outbound_name TEXT NOT NULL,
-    server_id INTEGER NOT NULL,
-    sort INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (outbound_name) REFERENCES outbound_names(name),
-    FOREIGN KEY (server_id) REFERENCES servers(id),
-    UNIQUE(outbound_name, server_id)
-);
-
-CREATE TABLE IF NOT EXISTS outbound_settings (
-    outbound_name TEXT PRIMARY KEY,
-    setting_json TEXT NOT NULL DEFAULT '{}',
-    FOREIGN KEY (outbound_name) REFERENCES outbound_names(name)
-);
 `
 
 // InitSchema creates all tables if they don't exist

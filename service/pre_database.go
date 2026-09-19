@@ -16,11 +16,9 @@ import (
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset/dat"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/where"
-	"github.com/v2rayA/v2rayA/pkg/util/copyfile"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/service"
 
-	confv4 "github.com/v2rayA/v2rayA-lib4/conf"
 	touchv4 "github.com/v2rayA/v2rayA-lib4/core/touch"
 	configurev4 "github.com/v2rayA/v2rayA-lib4/db/configure"
 	servicev4 "github.com/v2rayA/v2rayA-lib4/server/service"
@@ -92,19 +90,9 @@ func initConfigure() {
 				// to create that directory and a boltv4.db file there.
 				// Skip the v4 migration check entirely on Windows.
 				if runtime.GOOS != "windows" && !configurev4.IsConfigureNotExists() {
-					// There is different format in server and subscription.
-					// So we keep other content and reimport servers and subscriptions.
+					// The v4 readers use boltv4.db directly. A bolt.db copy would
+					// make the next Open return ErrNeedMigration after SQLite exists.
 					log.Warn("Migrating from v4 to main")
-					if err := copyfile.CopyFileContent(filepath.Join(
-						confv4.GetEnvironmentConfig().Config,
-						"boltv4.db",
-					), filepath.Join(
-						conf.GetEnvironmentConfig().Config,
-						"bolt.db",
-					)); err != nil {
-						log.Fatal("Failed to copy boltv4.db to bolt.db: %v", err)
-					}
-
 					// clear connects of outbounds
 					for _, out := range configure.GetOutbounds() {
 						_ = configure.ClearConnects(out)

@@ -114,13 +114,24 @@ func GetBucketKeys(bucket string) (keys []string, err error) {
 
 // Set inserts or replaces a value in the system_config table.
 func Set(bucket string, key string, val interface{}) (err error) {
+	return setValue(GetDB(), bucket, key, val)
+}
+
+func SetTx(tx *sql.Tx, bucket string, key string, val interface{}) error {
+	return setValue(tx, bucket, key, val)
+}
+
+type sqlExecer interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+
+func setValue(execer sqlExecer, bucket string, key string, val interface{}) error {
 	b, err := jsoniter.Marshal(val)
 	if err != nil {
 		return err
 	}
-	db := GetDB()
 	fullKey := makeKey(bucket, key)
-	_, err = db.Exec("INSERT OR REPLACE INTO system_config (key, value) VALUES (?, ?)", fullKey, string(b))
+	_, err = execer.Exec("INSERT OR REPLACE INTO system_config (key, value) VALUES (?, ?)", fullKey, string(b))
 	return err
 }
 

@@ -2,6 +2,7 @@ package configure
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"sort"
@@ -126,6 +127,21 @@ func SetServer(index int, server *ServerRaw) (err error) {
 }
 func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 	return db.ListSet("touch", "subscriptions", index, subscription)
+}
+
+func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *Whiches) error {
+	return db.ListSetWithTransaction("touch", "subscriptions", index, subscription, func(tx *sql.Tx) error {
+		outboundWhiches := make(map[string][]*Which)
+		for _, which := range ws.Get() {
+			outboundWhiches[which.Outbound] = append(outboundWhiches[which.Outbound], which)
+		}
+		for outbound, touches := range outboundWhiches {
+			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "connectedServers", &Whiches{Touches: touches}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 func SetSetting(setting *Setting) (err error) {
 	return db.Set("system", "setting", setting)
