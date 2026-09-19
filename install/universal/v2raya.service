@@ -12,6 +12,9 @@ LimitNOFILE=1000000
 ExecStart=/usr/bin/v2raya --log-disable-timestamp
 Environment=V2RAYA_LOG_FILE=/var/log/v2raya/v2raya.log
 EnvironmentFile=-/etc/default/v2raya
+# v2rayA stops the core itself; a SIGTERM to the whole cgroup made the core
+# exit first and be recorded as a crash, so the next boot did not restore it.
+KillMode=mixed
 Restart=on-failure
 
 [Install]

@@ -93,7 +93,7 @@ func startTunCore(tmpl *Template) error {
 	}
 	tunMu.Lock()
 	defer tunMu.Unlock()
-	setting := configure.GetSettingNotNil()
+	setting := tmpl.Setting
 	if !setting.TunAutoRoute {
 		if err := runTunRouteScript("setup", setting.TunSetupScript); err != nil {
 			log.Warn("tun setup script error: %v", err)
@@ -165,6 +165,24 @@ func CleanupTunResidual() {
 	tunMu.Lock()
 	defer tunMu.Unlock()
 	tunCleanupResidual()
+}
+
+func recoverTunHostState(state *configure.HostState) error {
+	tunMu.Lock()
+	defer tunMu.Unlock()
+	if !state.TunAutoRoute {
+		if err := runTunRouteScript("teardown", state.TunTeardownScript); err != nil {
+			return err
+		}
+		tunScriptRan, tunTeardown = false, ""
+	}
+	if TunSupported() {
+		if tunInstalled() {
+			tunRoutesDown()
+		}
+		tunCleanupResidual()
+	}
+	return nil
 }
 
 func itoa(i int) string { return strconv.Itoa(i) }

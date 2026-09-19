@@ -154,10 +154,14 @@ func Open() error {
 
 // Close closes the SQLite database connection
 func Close() error {
-	if sqlDB != nil {
-		return sqlDB.Close()
+	if sqlDB == nil {
+		return nil
 	}
-	return nil
+	err := sqlDB.Close()
+	// a later GetDB opens afresh instead of handing out the closed handle
+	sqlDB = nil
+	onceDB = sync.Once{}
+	return err
 }
 
 // ReadModifyWrite executes a function within a read-write transaction.

@@ -362,9 +362,6 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 			}
 		}
 	}
-	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
-		return err
-	}
 	subscription = configure.GetSubscription(index)
 	if subscription == nil {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
@@ -372,7 +369,7 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscription.Servers = infoServerRaws
 	subscription.Status = string(touch.NewUpdateStatus())
 	subscription.Info = status
-	if err := configure.SetSubscription(index, subscription); err != nil {
+	if err := configure.SetSubscriptionAndConnects(index, subscription, configure.NewWhiches(cssAfter)); err != nil {
 		return err
 	}
 	// A remapped connection may point at a server whose config differs from the old

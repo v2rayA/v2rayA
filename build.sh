@@ -1,19 +1,29 @@
 #!/usr/bin/env bash
 
-set -ex
-CurrentDir="$(pwd)"
+set -euo pipefail
 
-if [ -d "$CurrentDir/.git" ]; then
-  date=$(git -C "$CurrentDir" log -1 --format="%cd" --date=short | sed s/-//g)
-  count=$(git -C "$CurrentDir" rev-list --count HEAD)
-  commit=$(git -C "$CurrentDir" rev-parse --short HEAD)
-  version="unstable-$date.r${count}.$commit"
-else
-  version="unstable"
-fi
-# https://github.com/webpack/webpack/issues/14532#issuecomment-947012063
-cd "$CurrentDir"/gui && yarn --ignore-engines && OUTPUT_DIR="$CurrentDir"/service/server/router/web yarn --ignore-engines build
-# Build v2raya-core (xray-core from go mod + custom protocols)
-cd "$CurrentDir"/core && CGO_ENABLED=0 go build -trimpath -ldflags "-X main.Version=$version -s -w" -o "$CurrentDir"/v2raya_core ./main
+root_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+version="${1:-$(git -C "$root_dir" describe --tags --always --dirty)}"
+web_dir="$root_dir/service/server/router/web"
 
-cd "$CurrentDir"/service && CGO_ENABLED=0 go build -trimpath -tags "with_gvisor" -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" -o "$CurrentDir"/v2raya
+yarn --cwd "$root_dir/gui" --check-files
+yarn --cwd "$root_dir/gui" build
+
+rm -rf "$web_dir"
+mkdir -p "$web_dir"
+cp -a "$root_dir/web/." "$web_dir/"
+
+(
+  cd "$root_dir/core"
+  CGO_ENABLED=0 go build -trimpath \
+    -o "$root_dir/v2raya_core" \
+    -ldflags="-X main.Version=$version -s -w" \
+    ./main
+)
+
+(
+  cd "$root_dir/service"
+  CGO_ENABLED=0 go build -trimpath \
+    -o "$root_dir/v2raya" \
+    -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w"
+)

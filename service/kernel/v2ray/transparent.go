@@ -1,7 +1,9 @@
 package v2ray
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"runtime"
 	"slices"
 	"strings"
@@ -16,10 +18,50 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
+// hostMu serializes host changes with teardown across process generations.
+var hostMu sync.Mutex
+
+// RecoverHostState restores a pending startup's host changes without runtime state.
+func RecoverHostState(state *configure.HostState) error {
+	hostMu.Lock()
+	defer hostMu.Unlock()
+	iptables.CloseWatcher()
+	var errs []error
+	if state.TransparentType == configure.TransparentTun {
+		errs = append(errs, recoverTunHostState(state))
+	}
+	if !conf.GetEnvironmentConfig().Lite {
+		errs = append(errs, cleanupResidualTransparentProxyRules())
+	}
+	hijackerMu.Lock()
+	if hijacker != nil {
+		_ = hijacker.Close()
+		hijacker = nil
+	}
+	if _, err := os.Lstat(resolvBackupPath); err == nil {
+		if !restoreResolv() {
+			errs = append(errs, fmt.Errorf("could not restore resolver backup %s", resolvBackupPath))
+		}
+	} else if !os.IsNotExist(err) {
+		errs = append(errs, err)
+	}
+	hijackerMu.Unlock()
+	if state.TransparentType == configure.TransparentSystemProxy {
+		var snapshot interface{}
+		found, err := configure.GetSystemProxySnapshot(&snapshot)
+		if err != nil {
+			errs = append(errs, err)
+		} else if found {
+			errs = append(errs, iptables.SystemProxy.GetCleanCommands().Run(true))
+		}
+	}
+	return errors.Join(errs...)
+}
+
 // cleanupResidualTransparentProxyRules cleans up any residual iptables/nftables rules
 // that may have been left behind after an abnormal termination (e.g., kill -9, system crash, panic).
 // It uses "2>/dev/null || true" to ensure no errors are raised if rules/chains don't exist.
-func cleanupResidualTransparentProxyRules() {
+func cleanupResidualTransparentProxyRules() error {
 	tunCleanupResidual()
 	commands := `
 # 清理 DNS_MARK 链（TProxy 模式）
@@ -85,7 +127,7 @@ ip rule del fwmark 0x40/0xc0 table 100 2>/dev/null || true
 ip route del local 0.0.0.0/0 dev lo table 100 2>/dev/null || true
 nft delete table inet v2raya 2>/dev/null || true
 `
-	iptables.Setter{Cmds: commands}.Run(false)
+	return iptables.Setter{Cmds: commands}.Run(true)
 }
 
 // dnsRedirectPorts remembers every port the DNS REDIRECT rules were installed
@@ -162,25 +204,23 @@ func deleteTransparentProxyRulesKeepSystemProxy() {
 
 func deleteTransparentProxyRules() {
 	deleteTransparentProxyRulesKeepSystemProxy()
-	iptables.SystemProxy.GetCleanCommands().Run(false)
+	var snapshot interface{}
+	found, err := configure.GetSystemProxySnapshot(&snapshot)
+	if err != nil {
+		log.Warn("read original system proxy: %v", err)
+		return
+	}
+	if !found {
+		return
+	}
+	if err := iptables.SystemProxy.GetCleanCommands().Run(true); err != nil {
+		log.Warn("restore system proxy: %v", err)
+	}
 }
 
-func writeTransparentProxyRules(tmpl *Template) (err error) {
-	defer func() {
-		if err != nil {
-			log.Warn("writeTransparentProxyRules: %v", err)
-			deleteTransparentProxyRules()
-			err = common.Coded("TRANSPARENT_SETUP_FAILED", err, map[string]interface{}{
-				"mode":   configure.GetSettingNotNil().TransparentType,
-				"detail": err.Error(),
-			})
-		}
-	}()
-	// v2raya-core 进程内启动 DNS 模块，
-	// v2rayA 负责在透明代理时应用 iptables/nftables 规则将 53 端口流量重定向到模块端口。
-	// 等待 DNS 模块就绪后应用防火墙规则。
+func waitForTransparentDNS(tmpl *Template) {
 	if tmpl != nil && tmpl.DnsModuleConfig != nil {
-		dnsAddr := tunDnsTarget(configure.GetSettingNotNil())
+		dnsAddr := tunDnsTarget(tmpl.Setting)
 		if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
 			// The probe resolves a name, so a dead or slow upstream fails it
 			// even though the listener is up. Waiting is worth it when DNS is
@@ -190,8 +230,21 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 		}
 	}
+}
+
+func writeTransparentProxyRules(tmpl *Template) (err error) {
+	defer func() {
+		if err != nil {
+			log.Warn("writeTransparentProxyRules: %v", err)
+			deleteTransparentProxyRules()
+			err = common.Coded("TRANSPARENT_SETUP_FAILED", err, map[string]interface{}{
+				"mode":   tmpl.Setting.TransparentType,
+				"detail": err.Error(),
+			})
+		}
+	}()
 	cleanupResidualTransparentProxyRules()
-	setting := configure.GetSettingNotNil()
+	setting := tmpl.Setting
 	switch setting.TransparentType {
 	case configure.TransparentTun:
 		if err = startTunCore(tmpl); err != nil {

@@ -41,10 +41,6 @@ func SetRemove(bucket string, key string, val interface{}) (err error) {
 		if !ok {
 			return fmt.Errorf("SetRemove: outbound name must be a string")
 		}
-		// Delete related connections and settings first
-		_, _ = db.Exec("DELETE FROM outbound_connections WHERE outbound_name = ?", name)
-		_, _ = db.Exec("DELETE FROM outbound_settings WHERE outbound_name = ?", name)
-		// Delete the outbound name
 		_, err = db.Exec("DELETE FROM outbound_names WHERE name = ?", name)
 		return err
 

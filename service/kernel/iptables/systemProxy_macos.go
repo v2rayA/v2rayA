@@ -5,39 +5,46 @@ package iptables
 
 import (
 	"fmt"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/v2rayA/v2rayA/db/configure"
 )
 
 type systemProxy struct{}
 
 var SystemProxy systemProxy
 
-// macosServiceState holds the saved proxy state for a single network service
-type macosServiceState struct {
-	webEnabled       bool
-	webServer        string
-	webPort          int
-	secureWebEnabled bool
-	secureWebServer  string
-	secureWebPort    int
-	socksEnabled     bool
-	socksServer      string
-	socksPort        int
-	autoProxyEnabled bool
-	autoProxyURL     string
+// MacOSServiceSnapshot holds the saved proxy state for a single network service
+type MacOSServiceSnapshot struct {
+	WebEnabled       bool
+	WebServer        string
+	WebPort          int
+	SecureWebEnabled bool
+	SecureWebServer  string
+	SecureWebPort    int
+	SocksEnabled     bool
+	SocksServer      string
+	SocksPort        int
+	AutoProxyEnabled bool
+	AutoProxyURL     string
 }
 
 // macosProxyState stores the saved proxy state across all network services
 type macosProxyState struct {
 	mu       sync.Mutex
 	saved    bool
-	services map[string]*macosServiceState
+	services map[string]*MacOSServiceSnapshot
 }
 
 var savedMacOSProxy macosProxyState
+
+type MacOSProxySnapshot struct {
+	Services map[string]*MacOSServiceSnapshot `json:"services"`
+}
 
 // GetNetworkServices 用于获取MacOS设备的 networkservices
 func GetNetworkServices() ([]string, error) {
@@ -96,32 +103,32 @@ func parseAutoProxyOutput(output string) (enabled bool, url string) {
 }
 
 // readServiceState reads and returns the current proxy state for a given network service
-func readServiceState(service string) (*macosServiceState, error) {
-	state := &macosServiceState{}
+func readServiceState(service string) (*MacOSServiceSnapshot, error) {
+	state := &MacOSServiceSnapshot{}
 
 	out, err := exec.Command("/usr/sbin/networksetup", "-getwebproxy", service).Output()
 	if err != nil {
 		return nil, fmt.Errorf("getwebproxy: %v", err)
 	}
-	state.webEnabled, state.webServer, state.webPort = parseProxyOutput(string(out))
+	state.WebEnabled, state.WebServer, state.WebPort = parseProxyOutput(string(out))
 
 	out, err = exec.Command("/usr/sbin/networksetup", "-getsecurewebproxy", service).Output()
 	if err != nil {
 		return nil, fmt.Errorf("getsecurewebproxy: %v", err)
 	}
-	state.secureWebEnabled, state.secureWebServer, state.secureWebPort = parseProxyOutput(string(out))
+	state.SecureWebEnabled, state.SecureWebServer, state.SecureWebPort = parseProxyOutput(string(out))
 
 	out, err = exec.Command("/usr/sbin/networksetup", "-getsocksfirewallproxy", service).Output()
 	if err != nil {
 		return nil, fmt.Errorf("getsocksfirewallproxy: %v", err)
 	}
-	state.socksEnabled, state.socksServer, state.socksPort = parseProxyOutput(string(out))
+	state.SocksEnabled, state.SocksServer, state.SocksPort = parseProxyOutput(string(out))
 
 	out, err = exec.Command("/usr/sbin/networksetup", "-getautoproxyurl", service).Output()
 	if err != nil {
 		return nil, fmt.Errorf("getautoproxyurl: %v", err)
 	}
-	state.autoProxyEnabled, state.autoProxyURL = parseAutoProxyOutput(string(out))
+	state.AutoProxyEnabled, state.AutoProxyURL = parseAutoProxyOutput(string(out))
 
 	return state, nil
 }
@@ -144,14 +151,30 @@ func (p *systemProxy) GetSetupCommands() Setter {
 		PreFunc: func() error {
 			savedMacOSProxy.mu.Lock()
 			defer savedMacOSProxy.mu.Unlock()
+			// a snapshot still pending from an earlier run is the user's
+			// original; keep it and do not capture our own proxy as the state
+			var previous MacOSProxySnapshot
+			if found, err := configure.GetSystemProxySnapshot(&previous); err != nil {
+				return err
+			} else if found {
+				log.Warn("system proxy: reusing the original state saved by an earlier run")
+				savedMacOSProxy.services = previous.Services
+				savedMacOSProxy.saved = true
+				return nil
+			} else if savedMacOSProxy.saved {
+				return nil
+			}
 
-			services := make(map[string]*macosServiceState, len(networkServices))
+			services := make(map[string]*MacOSServiceSnapshot, len(networkServices))
 			for _, service := range networkServices {
 				state, err := readServiceState(service)
 				if err != nil {
 					return fmt.Errorf("failed to save proxy state for %v: %v", service, err)
 				}
 				services[service] = state
+			}
+			if err := configure.SetSystemProxySnapshot(&MacOSProxySnapshot{Services: services}); err != nil {
+				return err
 			}
 			savedMacOSProxy.services = services
 			savedMacOSProxy.saved = true
@@ -162,17 +185,26 @@ func (p *systemProxy) GetSetupCommands() Setter {
 }
 
 func (p *systemProxy) GetCleanCommands() Setter {
-	networkServices, err := GetNetworkServices()
-	if err != nil {
-		return NewErrorSetter(err)
-	}
-
 	savedMacOSProxy.mu.Lock()
 	saved := savedMacOSProxy.saved
 	services := savedMacOSProxy.services
 	savedMacOSProxy.mu.Unlock()
+	if !saved {
+		var snapshot MacOSProxySnapshot
+		found, err := configure.GetSystemProxySnapshot(&snapshot)
+		if err != nil {
+			return NewErrorSetter(err)
+		}
+		if found {
+			saved, services = true, snapshot.Services
+		}
+	}
 
 	if !saved || services == nil {
+		networkServices, err := GetNetworkServices()
+		if err != nil {
+			return NewErrorSetter(err)
+		}
 		// No saved state: fall back to simply turning everything off
 		commands := ""
 		for _, service := range networkServices {
@@ -185,55 +217,50 @@ func (p *systemProxy) GetCleanCommands() Setter {
 	}
 
 	var commands strings.Builder
-	for _, service := range networkServices {
-		state, ok := services[service]
-		if !ok {
-			// Service not found in saved state: turn off everything
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setautoproxystate %v off\n", strconv.Quote(service)))
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v off\n", strconv.Quote(service)))
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v off\n", strconv.Quote(service)))
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsocksfirewallproxystate %v off\n", strconv.Quote(service)))
-			continue
-		}
+	for service, state := range services {
 
 		// Restore auto proxy URL
-		if state.autoProxyEnabled && state.autoProxyURL != "" {
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setautoproxyurl %v %v\n", strconv.Quote(service), strconv.Quote(state.autoProxyURL)))
+		if state.AutoProxyEnabled && state.AutoProxyURL != "" {
+			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setautoproxyurl %v %v\n", strconv.Quote(service), strconv.Quote(state.AutoProxyURL)))
 		}
-		if state.autoProxyEnabled {
+		if state.AutoProxyEnabled {
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setautoproxystate %v on\n", strconv.Quote(service)))
 		} else {
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setautoproxystate %v off\n", strconv.Quote(service)))
 		}
 
 		// Restore web proxy
-		if state.webEnabled {
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setwebproxy %v %v %d\n", strconv.Quote(service), strconv.Quote(state.webServer), state.webPort))
+		if state.WebEnabled {
+			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setwebproxy %v %v %d\n", strconv.Quote(service), strconv.Quote(state.WebServer), state.WebPort))
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v on\n", strconv.Quote(service)))
 		} else {
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setwebproxystate %v off\n", strconv.Quote(service)))
 		}
 
 		// Restore secure web proxy
-		if state.secureWebEnabled {
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxy %v %v %d\n", strconv.Quote(service), strconv.Quote(state.secureWebServer), state.secureWebPort))
+		if state.SecureWebEnabled {
+			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxy %v %v %d\n", strconv.Quote(service), strconv.Quote(state.SecureWebServer), state.SecureWebPort))
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v on\n", strconv.Quote(service)))
 		} else {
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsecurewebproxystate %v off\n", strconv.Quote(service)))
 		}
 
 		// Restore SOCKS proxy
-		if state.socksEnabled {
-			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsocksfirewallproxy %v %v %d\n", strconv.Quote(service), strconv.Quote(state.socksServer), state.socksPort))
+		if state.SocksEnabled {
+			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsocksfirewallproxy %v %v %d\n", strconv.Quote(service), strconv.Quote(state.SocksServer), state.SocksPort))
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsocksfirewallproxystate %v on\n", strconv.Quote(service)))
 		} else {
 			commands.WriteString(fmt.Sprintf("/usr/sbin/networksetup -setsocksfirewallproxystate %v off\n", strconv.Quote(service)))
 		}
 	}
 
-	savedMacOSProxy.mu.Lock()
-	savedMacOSProxy.saved = false
-	savedMacOSProxy.mu.Unlock()
-
-	return Setter{Cmds: commands.String()}
+	return Setter{Cmds: commands.String(), AfterFunc: func() error {
+		savedMacOSProxy.mu.Lock()
+		defer savedMacOSProxy.mu.Unlock()
+		if err := configure.SetSystemProxySnapshot(nil); err != nil {
+			return err
+		}
+		savedMacOSProxy.saved, savedMacOSProxy.services = false, nil
+		return nil
+	}}
 }

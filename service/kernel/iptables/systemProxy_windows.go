@@ -11,6 +11,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -191,6 +192,11 @@ type windowsProxySavedState struct {
 
 var savedWindowsProxy windowsProxySavedState
 
+type WindowsProxySnapshot struct {
+	ProxyEnable uint32 `json:"proxyEnable"`
+	ProxyServer string `json:"proxyServer"`
+}
+
 type systemProxy struct{}
 
 var SystemProxy systemProxy
@@ -228,7 +234,15 @@ func readRegistryProxyState(key registry.Key, prefix string) (proxyEnable uint32
 }
 
 // saveProxyState reads and saves the current proxy state before we modify it
-func saveProxyState(hasAdminRights bool) {
+func saveProxyState(hasAdminRights bool) error {
+	savedWindowsProxy.mu.Lock()
+	defer savedWindowsProxy.mu.Unlock()
+	var previous WindowsProxySnapshot
+	if found, err := configure.GetSystemProxySnapshot(&previous); err != nil {
+		return err
+	} else if found || savedWindowsProxy.saved {
+		return fmt.Errorf("original system proxy state is pending restoration")
+	}
 	var savedEnable uint32
 	var savedServer string
 
@@ -236,8 +250,9 @@ func saveProxyState(hasAdminRights bool) {
 		sids, err := getProfileListSubKeyNames()
 		if err != nil {
 			log.Debug("saveProxyState: getProfileListSubKeyNames: %v", err)
-			return
+			return err
 		}
+		captured := false
 		for _, sid := range sids {
 			enable, server, err := readRegistryProxyState(registry.USERS, sid+`\`)
 			if err != nil {
@@ -246,23 +261,29 @@ func saveProxyState(hasAdminRights bool) {
 			}
 			savedEnable = enable
 			savedServer = server
+			captured = true
 			break
+		}
+		if !captured {
+			return fmt.Errorf("could not capture any user proxy settings")
 		}
 	} else {
 		enable, server, err := readRegistryProxyState(registry.CURRENT_USER, "")
 		if err != nil {
 			log.Debug("saveProxyState: readRegistryProxyState: %v", err)
-			return
+			return err
 		}
 		savedEnable = enable
 		savedServer = server
 	}
 
-	savedWindowsProxy.mu.Lock()
+	if err := configure.SetSystemProxySnapshot(&WindowsProxySnapshot{ProxyEnable: savedEnable, ProxyServer: savedServer}); err != nil {
+		return err
+	}
 	savedWindowsProxy.proxyEnable = savedEnable
 	savedWindowsProxy.proxyServer = savedServer
 	savedWindowsProxy.saved = true
-	savedWindowsProxy.mu.Unlock()
+	return nil
 }
 
 func (p *systemProxy) GetSetupCommands() Setter {
@@ -273,7 +294,9 @@ func (p *systemProxy) GetSetupCommands() Setter {
 	setter := Setter{
 		PreFunc: func() error {
 			// Step 1: Save current proxy state before modifying
-			saveProxyState(hasAdminRights)
+			if err := saveProxyState(hasAdminRights); err != nil {
+				return err
+			}
 
 			// Step 2: Original setup logic - set proxy to v2rayA
 			var todolist []todo
@@ -340,6 +363,16 @@ func (p *systemProxy) GetCleanCommands() Setter {
 	savedEnable := savedWindowsProxy.proxyEnable
 	savedServer := savedWindowsProxy.proxyServer
 	savedWindowsProxy.mu.Unlock()
+	if !saved {
+		var snapshot WindowsProxySnapshot
+		found, err := configure.GetSystemProxySnapshot(&snapshot)
+		if err != nil {
+			return NewErrorSetter(err)
+		}
+		if found {
+			saved, savedEnable, savedServer = true, snapshot.ProxyEnable, snapshot.ProxyServer
+		}
+	}
 
 	if !saved {
 		// No saved state: fall back to original behavior (disable proxy)
@@ -458,9 +491,20 @@ func (p *systemProxy) GetCleanCommands() Setter {
 		},
 	}
 
-	savedWindowsProxy.mu.Lock()
-	savedWindowsProxy.saved = false
-	savedWindowsProxy.mu.Unlock()
+	restore := setter.PreFunc
+	setter.PreFunc = func() error {
+		if err := restore(); err != nil {
+			return err
+		}
+		savedWindowsProxy.mu.Lock()
+		defer savedWindowsProxy.mu.Unlock()
+		if err := configure.SetSystemProxySnapshot(nil); err != nil {
+			return err
+		}
+		savedWindowsProxy.saved = false
+		savedWindowsProxy.proxyEnable, savedWindowsProxy.proxyServer = 0, ""
+		return nil
+	}
 
 	return setter
 }

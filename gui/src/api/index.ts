@@ -1,4 +1,4 @@
-// One function per backend operation (method + path), 41 in all, named
+// One function per backend operation (method + path), 40 in all, named
 // <method><Path>. Bodies and queries are what the old components sent, so
 // the recorded requests match byte for byte; types narrow them where the
 // backend's Go types are known (types.ts) and stay open elsewhere.
@@ -69,10 +69,6 @@ export const getHttpLatency = (whiches: Which[]) =>
   });
 
 // ---- connections and the core ---------------------------------------------
-export const postConnection = (which: Which, o: RequestOptions = {}) =>
-  call<TouchResponse>({ url: "connection", method: "post", data: which, ...o });
-export const deleteConnection = (which: Which) =>
-  call<TouchResponse>({ url: "connection", method: "delete", data: which });
 export const putOutboundConnections = (body: {
   outbound: string;
   touches: Which[];

@@ -90,6 +90,31 @@ func TestRestoreResolvWithoutBackup(t *testing.T) {
 	}
 }
 
+func TestRestoreResolvIgnoresEmptyBackup(t *testing.T) {
+	dir := t.TempDir()
+	resolv := filepath.Join(dir, "resolv.conf")
+	backup := filepath.Join(dir, "resolv.conf.backup")
+	withPaths(t, resolv, backup)
+
+	current := []byte("nameserver 192.0.2.53\n")
+	if err := os.WriteFile(resolv, current, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(backup, nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if restoreResolv() {
+		t.Fatal("restore must report failure for an empty backup")
+	}
+	got, err := os.ReadFile(resolv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(current) {
+		t.Fatalf("resolver changed to %q, want %q", got, current)
+	}
+}
+
 func withPaths(t *testing.T, resolv, backup string) {
 	t.Helper()
 	oldResolv, oldBackup := resolvPath, resolvBackupPath
@@ -128,5 +153,27 @@ func TestResolvHijackerConcurrentResetRemove(t *testing.T) {
 	got, err := os.ReadFile(resolv)
 	if err != nil || string(got) != original {
 		t.Fatalf("resolver not restored: %q, %v", got, err)
+	}
+}
+
+func TestBackupAndRestoreEmptyResolv(t *testing.T) {
+	dir := t.TempDir()
+	resolv := filepath.Join(dir, "resolv.conf")
+	backup := filepath.Join(dir, "resolv.conf.backup")
+	withPaths(t, resolv, backup)
+	if err := os.WriteFile(resolv, nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := backupResolv(); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if err := os.WriteFile(resolv, []byte(HijackFlag+"\nnameserver 127.2.0.17\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if !restoreResolv() {
+		t.Fatal("an empty original was not restored")
+	}
+	if b, err := os.ReadFile(resolv); err != nil || len(b) != 0 {
+		t.Fatalf("got %q (err %v), want an empty file", b, err)
 	}
 }

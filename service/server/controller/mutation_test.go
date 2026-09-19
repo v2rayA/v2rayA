@@ -68,6 +68,38 @@ func TestMutationWaitsForTheTurn(t *testing.T) {
 	second()
 }
 
+func TestCustomInboundMutationsWaitForTheTurn(t *testing.T) {
+	previous := mutationWait
+	mutationWait = 10 * time.Millisecond
+	t.Cleanup(func() { mutationWait = previous })
+
+	release, ok := beginMutation(testContext(t))
+	if !ok {
+		t.Fatal("free turn refused")
+	}
+	defer release()
+
+	tests := []struct {
+		name    string
+		method  string
+		handler func(*gin.Context)
+	}{
+		{name: "post", method: http.MethodPost, handler: PostCustomInbound},
+		{name: "delete", method: http.MethodDelete, handler: DeleteCustomInbound},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(recorder)
+			ctx.Request = httptest.NewRequest(tt.method, "/customInbound", nil)
+			tt.handler(ctx)
+			if _, errorCode := codeOf(t, recorder); errorCode != "REQUEST_IN_PROGRESS" {
+				t.Fatalf("held turn answered %s", recorder.Body.String())
+			}
+		})
+	}
+}
+
 func testContext(t *testing.T) *gin.Context {
 	t.Helper()
 	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())

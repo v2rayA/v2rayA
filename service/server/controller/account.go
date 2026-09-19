@@ -50,30 +50,6 @@ func PostLogin(ctx *gin.Context) {
 	})
 }
 
-/*修改密码*/
-func PutAccount(ctx *gin.Context) {
-	var data struct {
-		Password    string `json:"password"`
-		NewPassword string `json:"newPassword"`
-	}
-	err := ctx.ShouldBindJSON(&data)
-	if err != nil {
-		common.ResponseError(ctx, badRequest("password and newPassword", "request body must contain \"password\" and \"newPassword\" strings"))
-		return
-	}
-	if ok, err := service.ValidPasswordLength(data.Password); !ok {
-		common.ResponseError(ctx, logError(err))
-		return
-	}
-	username := ctx.GetString("Name")
-	if !service.IsValidAccount(username, data.Password) {
-		common.ResponseError(ctx, common.Coded("WRONG_CREDENTIALS", logError("wrong username or password"), nil))
-		return
-	}
-	//TODO: modify password
-	common.ResponseSuccess(ctx, nil)
-}
-
 /*注册*/
 var muReg sync.Mutex
 

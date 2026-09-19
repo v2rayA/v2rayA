@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -20,9 +21,9 @@ var SystemProxy systemProxy
 
 // linuxGsettingsState holds saved GNOME/gsettings proxy values
 type linuxGsettingsState struct {
-	mode     string
-	httpHost string
-	httpPort string
+	mode      string
+	httpHost  string
+	httpPort  string
 	httpsHost string
 	httpsPort string
 	socksHost string
@@ -43,6 +44,14 @@ type linuxProxySavedState struct {
 	saved     bool
 	gsettings linuxGsettingsState
 	kde       linuxKDEState
+	snapshot  *LinuxProxySnapshot
+}
+
+type LinuxProxySnapshot struct {
+	GNOMECaptured bool              `json:"gnomeCaptured"`
+	KDECaptured   bool              `json:"kdeCaptured"`
+	GSettings     map[string]string `json:"gsettings"`
+	KDE           map[string]string `json:"kde"`
 }
 
 var savedLinuxProxy linuxProxySavedState
@@ -67,17 +76,18 @@ func readGsettingsValue(schema, key string) string {
 }
 
 // readKDEConfigValue reads a KDE config value using kreadconfig5/6 or grep fallback
-func readKDEConfigValue(configFile, group, key string) string {
+func readKDEConfigValue(configFile, group, key string) (string, error) {
 	// Try kreadconfig6 first, then kreadconfig5
 	for _, cmd := range []string{"kreadconfig6", "kreadconfig5"} {
 		if checkCommand(cmd) {
 			out, err := exec.Command(cmd, "--file", configFile, "--group", group, "--key", key).Output()
 			if err == nil {
-				return strings.TrimSpace(string(out))
+				return strings.TrimSpace(string(out)), nil
 			}
+			return "", fmt.Errorf("capture KDE proxy %s: %w", key, err)
 		}
 	}
-	return ""
+	return "", fmt.Errorf("cannot capture KDE proxy without kreadconfig")
 }
 
 // saveGsettingsState saves current GNOME proxy settings
@@ -95,13 +105,23 @@ func saveGsettingsState(state *linuxGsettingsState) {
 }
 
 // saveKDEState saves current KDE proxy settings
-func saveKDEState(state *linuxKDEState) {
+func saveKDEState(state *linuxKDEState) error {
 	configFile := "kioslaverc"
 	group := "Proxy Settings"
-	state.proxyType = readKDEConfigValue(configFile, group, "ProxyType")
-	state.httpProxy = readKDEConfigValue(configFile, group, "httpProxy")
-	state.httpsProxy = readKDEConfigValue(configFile, group, "httpsProxy")
-	state.socksProxy = readKDEConfigValue(configFile, group, "socksProxy")
+	for _, field := range []struct {
+		key   string
+		value *string
+	}{
+		{"ProxyType", &state.proxyType}, {"httpProxy", &state.httpProxy},
+		{"httpsProxy", &state.httpsProxy}, {"socksProxy", &state.socksProxy},
+	} {
+		value, err := readKDEConfigValue(configFile, group, field.key)
+		if err != nil {
+			return err
+		}
+		*field.value = value
+	}
+	return nil
 }
 
 func (p *systemProxy) GetSetupCommands() Setter {
@@ -169,13 +189,46 @@ func (p *systemProxy) GetSetupCommands() Setter {
 		PreFunc: func() error {
 			savedLinuxProxy.mu.Lock()
 			defer savedLinuxProxy.mu.Unlock()
+			// A snapshot still pending from an earlier run is the user's
+			// original: it is kept as the state to go back to, and the
+			// capture is not repeated (the registry already holds our proxy).
+			var previous LinuxProxySnapshot
+			if found, err := configure.GetSystemProxySnapshot(&previous); err != nil {
+				return err
+			} else if found {
+				log.Warn("system proxy: reusing the original state saved by an earlier run")
+				savedLinuxProxy.snapshot = &previous
+				savedLinuxProxy.saved = true
+				return nil
+			} else if savedLinuxProxy.saved {
+				return nil
+			}
 
 			if hasGsettings {
 				saveGsettingsState(&savedLinuxProxy.gsettings)
 			}
 			if hasKDE {
-				saveKDEState(&savedLinuxProxy.kde)
+				if err := saveKDEState(&savedLinuxProxy.kde); err != nil {
+					return err
+				}
 			}
+			gs, kde := savedLinuxProxy.gsettings, savedLinuxProxy.kde
+			snapshot := &LinuxProxySnapshot{
+				GNOMECaptured: hasGsettings, KDECaptured: hasKDE,
+				GSettings: map[string]string{"mode": gs.mode, "http.host": gs.httpHost, "http.port": gs.httpPort, "https.host": gs.httpsHost, "https.port": gs.httpsPort, "socks.host": gs.socksHost, "socks.port": gs.socksPort},
+				KDE:       map[string]string{"ProxyType": kde.proxyType, "httpProxy": kde.httpProxy, "httpsProxy": kde.httpsProxy, "socksProxy": kde.socksProxy},
+			}
+			if hasGsettings {
+				for key, value := range snapshot.GSettings {
+					if value == "" {
+						return fmt.Errorf("could not capture GNOME proxy %s", key)
+					}
+				}
+			}
+			if err := configure.SetSystemProxySnapshot(snapshot); err != nil {
+				return err
+			}
+			savedLinuxProxy.snapshot = snapshot
 			savedLinuxProxy.saved = true
 			return nil
 		},
@@ -189,17 +242,23 @@ func (p *systemProxy) GetCleanCommands() Setter {
 		return Setter{}
 	}
 
-	if !conf.GetEnvironmentConfig().Lite {
-		return Setter{}
-	}
-
 	savedLinuxProxy.mu.Lock()
-	saved := savedLinuxProxy.saved
-	gs := savedLinuxProxy.gsettings
-	kde := savedLinuxProxy.kde
+	snapshot := savedLinuxProxy.snapshot
 	savedLinuxProxy.mu.Unlock()
-
-	if !saved {
+	if snapshot == nil {
+		var stored LinuxProxySnapshot
+		found, err := configure.GetSystemProxySnapshot(&stored)
+		if err != nil {
+			return NewErrorSetter(err)
+		}
+		if found {
+			snapshot = &stored
+		}
+	}
+	if snapshot == nil {
+		if !conf.GetEnvironmentConfig().Lite {
+			return Setter{}
+		}
 		// No saved state: fall back to original behavior (disable proxy)
 		var commands strings.Builder
 
@@ -225,78 +284,47 @@ func (p *systemProxy) GetCleanCommands() Setter {
 		}
 	}
 
-	// Restore original state
 	var commands strings.Builder
-
-	// Restore GNOME/gsettings
-	if checkCommand("gsettings") && gs.mode != "" {
-		commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy mode %v\n", gs.mode))
-		if gs.httpHost != "" {
-			commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy.http host %v\n", gs.httpHost))
+	if snapshot.GNOMECaptured {
+		if !checkCommand("gsettings") {
+			return NewErrorSetter(fmt.Errorf("gsettings is required to restore captured GNOME proxy"))
 		}
-		if gs.httpPort != "" {
-			commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy.http port %v\n", gs.httpPort))
-		}
-		if gs.httpsHost != "" {
-			commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy.https host %v\n", gs.httpsHost))
-		}
-		if gs.httpsPort != "" {
-			commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy.https port %v\n", gs.httpsPort))
-		}
-		if gs.socksHost != "" {
-			commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy.socks host %v\n", gs.socksHost))
-		}
-		if gs.socksPort != "" {
-			commands.WriteString(fmt.Sprintf("gsettings set org.gnome.system.proxy.socks port %v\n", gs.socksPort))
-		}
-		log.Info("Restoring original system proxy via gsettings")
-	} else if checkCommand("gsettings") {
-		// gsettings exists but no saved state for it: disable
-		commands.WriteString("gsettings set org.gnome.system.proxy mode 'none'\n")
-		log.Info("Disabling system proxy via gsettings (no saved state)")
-	}
-
-	// Restore KDE
-	if kde.proxyType != "" {
-		restoreKDE := func(cmd string) {
-			commands.WriteString(fmt.Sprintf("%v --file kioslaverc --group 'Proxy Settings' --key ProxyType %v\n", cmd, kde.proxyType))
-			if kde.httpProxy != "" {
-				commands.WriteString(fmt.Sprintf("%v --file kioslaverc --group 'Proxy Settings' --key httpProxy '%v'\n", cmd, kde.httpProxy))
+		for _, key := range []string{"mode", "http.host", "http.port", "https.host", "https.port", "socks.host", "socks.port"} {
+			schema, field := "org.gnome.system.proxy", key
+			if backend, suffix, ok := strings.Cut(key, "."); ok {
+				schema += "." + backend
+				field = suffix
 			}
-			if kde.httpsProxy != "" {
-				commands.WriteString(fmt.Sprintf("%v --file kioslaverc --group 'Proxy Settings' --key httpsProxy '%v'\n", cmd, kde.httpsProxy))
-			}
-			if kde.socksProxy != "" {
-				commands.WriteString(fmt.Sprintf("%v --file kioslaverc --group 'Proxy Settings' --key socksProxy '%v'\n", cmd, kde.socksProxy))
-			}
-			commands.WriteString("dbus-send --type=signal /KIO/Scheduler org.kde.KIO.Scheduler.reparseSlaveConfiguration string:''\n")
-		}
-
-		if checkCommand("kwriteconfig6") {
-			restoreKDE("kwriteconfig6")
-			log.Info("Restoring original system proxy via kwriteconfig6")
-		} else if checkCommand("kwriteconfig5") {
-			restoreKDE("kwriteconfig5")
-			log.Info("Restoring original system proxy via kwriteconfig5")
-		}
-	} else {
-		// No saved KDE state: disable KDE proxy if tooling is available
-		if checkCommand("kwriteconfig6") {
-			commands.WriteString("kwriteconfig6 --file kioslaverc --group 'Proxy Settings' --key ProxyType 0\n")
-			commands.WriteString("dbus-send --type=signal /KIO/Scheduler org.kde.KIO.Scheduler.reparseSlaveConfiguration string:''\n")
-			log.Info("Disabling system proxy via kwriteconfig6 (no saved state)")
-		} else if checkCommand("kwriteconfig5") {
-			commands.WriteString("kwriteconfig5 --file kioslaverc --group 'Proxy Settings' --key ProxyType 0\n")
-			commands.WriteString("dbus-send --type=signal /KIO/Scheduler org.kde.KIO.Scheduler.reparseSlaveConfiguration string:''\n")
-			log.Info("Disabling system proxy via kwriteconfig5 (no saved state)")
+			value := strings.ReplaceAll(snapshot.GSettings[key], "'", "'\\''")
+			fmt.Fprintf(&commands, "gsettings set %s %s '%s'\n", schema, field, value)
 		}
 	}
-
-	savedLinuxProxy.mu.Lock()
-	savedLinuxProxy.saved = false
-	savedLinuxProxy.mu.Unlock()
+	if snapshot.KDECaptured {
+		cmd := "kwriteconfig6"
+		if !checkCommand(cmd) {
+			cmd = "kwriteconfig5"
+		}
+		if !checkCommand(cmd) {
+			return NewErrorSetter(fmt.Errorf("kwriteconfig is required to restore captured KDE proxy"))
+		}
+		for _, key := range []string{"ProxyType", "httpProxy", "httpsProxy", "socksProxy"} {
+			value := strings.ReplaceAll(snapshot.KDE[key], "'", "'\\''")
+			fmt.Fprintf(&commands, "%s --file kioslaverc --group 'Proxy Settings' --key %s '%s'\n", cmd, key, value)
+		}
+		commands.WriteString("dbus-send --type=signal /KIO/Scheduler org.kde.KIO.Scheduler.reparseSlaveConfiguration string:''\n")
+	}
 
 	return Setter{
 		Cmds: commands.String(),
+		AfterFunc: func() error {
+			savedLinuxProxy.mu.Lock()
+			defer savedLinuxProxy.mu.Unlock()
+			if err := configure.SetSystemProxySnapshot(nil); err != nil {
+				return err
+			}
+			savedLinuxProxy.saved, savedLinuxProxy.snapshot = false, nil
+			savedLinuxProxy.gsettings, savedLinuxProxy.kde = linuxGsettingsState{}, linuxKDEState{}
+			return nil
+		},
 	}
 }

@@ -1,11 +1,15 @@
 package v2ray
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
@@ -15,8 +19,11 @@ import (
 )
 
 type CoreProcessManager struct {
+	shuttingDown     atomic.Bool
 	p                *Process
+	startMu          sync.Mutex
 	mu               sync.Mutex
+	generation       uint64
 	testing          bool
 	networkPaused    bool
 	connectivityStop chan struct{}
@@ -29,7 +36,9 @@ type CoreProcessManager struct {
 var ProcessManager CoreProcessManager
 
 func (m *CoreProcessManager) beforeStop(p *Process) {
-	m.CheckAndStopTransparentProxy(p.template.Setting)
+	hostMu.Lock()
+	m.checkAndStopTransparentProxy(p.template.Setting)
+	hostMu.Unlock()
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
@@ -84,55 +93,82 @@ func (m *CoreProcessManager) stopConnectivityMonitorLocked() {
 }
 
 func (m *CoreProcessManager) CheckAndSetupTransparentProxy(checkRunning bool, setting *configure.Setting, tmpl *Template) (err error) {
+	m.mu.Lock()
+	p, generation := m.p, m.generation
+	if p == nil && checkRunning {
+		m.mu.Unlock()
+		return nil
+	}
+	if p == nil || p.template != tmpl {
+		m.mu.Unlock()
+		return fmt.Errorf("core process changed before transparent setup")
+	}
+	m.mu.Unlock()
+	return m.setupTransparentProxy(p, generation, setting, tmpl)
+}
+
+func (m *CoreProcessManager) setupTransparentProxy(p *Process, generation uint64, setting *configure.Setting, tmpl *Template) (err error) {
 	if setting != nil {
 		setting.FillEmpty()
 	} else {
 		setting = configure.GetSettingNotNil()
 	}
-	if (!checkRunning || ProcessManager.Running()) && IsTransparentOn(setting) {
-		deleteTransparentProxyRules()
+	if IsTransparentOn(setting) {
+		if err = m.mutateHost(p, generation, func() error { deleteTransparentProxyRules(); return nil }); err != nil {
+			return err
+		}
 
-		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
+		runHook := func(stage string) error {
+			thook := conf.GetEnvironmentConfig().TransparentHook
+			if thook == "" {
+				return nil
+			}
 			hook := strings.Split(thook, " ")
 			hook = append(hook,
 				fmt.Sprintf("--transparent-type=%v", setting.TransparentType),
-				"--stage=pre-start",
+				"--stage="+stage,
 				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
-			log.Info("Execute the transparent pre start hook: %v", hook)
+			log.Info("Execute the transparent %s hook: %v", stage, hook)
 			b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
 			if len(b) > 0 {
-				log.Info("Executing the transparent pre start hook: %v", string(b))
+				log.Info("Executing the transparent %s hook: %v", stage, string(b))
 			}
 			if err != nil {
-				return fmt.Errorf("error when executing the transparent pre start hook: %w", err)
+				return fmt.Errorf("error when executing the transparent %s hook: %w", stage, err)
 			}
+			return nil
 		}
-
-		// Mark it on before writing: a half-written ruleset still has to be
-		// torn down.
-		m.transparentOn.Store(true)
-		err = writeTransparentProxyRules(tmpl)
-
-		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
-			hook := strings.Split(thook, " ")
-			hook = append(hook,
-				fmt.Sprintf("--transparent-type=%v", setting.TransparentType),
-				"--stage=post-start",
-				fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
-			log.Info("Execute the transparent post start hook: %v", hook)
-			b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
-			if len(b) > 0 {
-				log.Info("Executing the transparent post start hook: %v", string(b))
-			}
-			if err != nil {
-				return fmt.Errorf("error when executing the transparent post start hook: %w", err)
-			}
+		if err = m.mutateHost(p, generation, func() error { return runHook("pre-start") }); err != nil {
+			return err
 		}
+		waitForTransparentDNS(tmpl)
+		if err = m.checkProcessOwner(p, generation); err != nil {
+			return err
+		}
+		if err = m.mutateHost(p, generation, func() error {
+			// Partial rulesets must also be torn down.
+			m.transparentOn.Store(true)
+			return writeTransparentProxyRules(tmpl)
+		}); err != nil {
+			return err
+		}
+		return m.mutateHost(p, generation, func() error { return runHook("post-start") })
 	}
 	return
 }
 
 func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Setting) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if setting == nil && m.p != nil {
+		setting = m.p.template.Setting
+	}
+	hostMu.Lock()
+	defer hostMu.Unlock()
+	m.checkAndStopTransparentProxy(setting)
+}
+
+func (m *CoreProcessManager) checkAndStopTransparentProxy(setting *configure.Setting) {
 	if !m.transparentOn.Swap(false) {
 		// Nothing installed by this process, so nothing to remove and no hook
 		// to run. Rules left behind by an earlier process are removed by
@@ -140,14 +176,8 @@ func (m *CoreProcessManager) CheckAndStopTransparentProxy(setting *configure.Set
 		return
 	}
 	if setting == nil {
-		if t := m.GetRunningTemplate(); t != nil {
-			setting = t.Setting
-		} else {
-			// No setting to tear down with: leave the mark so a later call
-			// with one still removes the rules.
-			m.transparentOn.Store(true)
-			return
-		}
+		m.transparentOn.Store(true)
+		return
 	}
 	if setting.Transparent != configure.TransparentClose {
 		if thook := conf.GetEnvironmentConfig().TransparentHook; thook != "" {
@@ -248,10 +278,22 @@ func (m *CoreProcessManager) stop(saveRunning bool) {
 	ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": false, "networkPaused": false})
 }
 
+// MarkShuttingDown records that the service is exiting: a core that dies
+// now died with it (systemd sends the whole cgroup SIGTERM), not on its own.
+func (m *CoreProcessManager) MarkShuttingDown() {
+	m.shuttingDown.Store(true)
+}
+
 func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.p != p {
+		return
+	}
+	if m.shuttingDown.Load() {
+		// keep running=true and the "running" exit status so the next start
+		// restores the core instead of reporting a crash
+		m.stop(false)
 		return
 	}
 	m.stop(true)
@@ -268,9 +310,26 @@ func (m *CoreProcessManager) runPreStartHook() error {
 		hook := strings.Split(corehook, " ")
 		hook = append(hook, "--stage=pre-start", fmt.Sprintf("--v2raya-confdir=%v", conf.GetEnvironmentConfig().Config))
 		log.Info("Execute the core pre start hook: %v", hook)
-		b, err := exec.Command(hook[0], hook[1:]...).CombinedOutput()
+		deadline := time.Duration(conf.GetEnvironmentConfig().CoreStartupTimeout) * time.Second
+		ctx, cancel := context.WithTimeout(context.Background(), deadline)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, hook[0], hook[1:]...)
+		if setHookProcessGroup(cmd) {
+			cmd.Cancel = func() error {
+				group, err := os.FindProcess(-cmd.Process.Pid)
+				if err != nil {
+					return err
+				}
+				return group.Kill()
+			}
+		}
+		cmd.WaitDelay = 100 * time.Millisecond
+		b, err := cmd.CombinedOutput()
 		if len(b) > 0 {
 			log.Info("Executing the core pre start hook: %v", string(b))
+		}
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("core pre-start hook %q exceeded the %s deadline", corehook, deadline)
 		}
 		if err != nil {
 			return fmt.Errorf("error when executing the core pre start hook: %w", err)
@@ -279,11 +338,41 @@ func (m *CoreProcessManager) runPreStartHook() error {
 	return nil
 }
 
-func (m *CoreProcessManager) afterStart(t *Template) (err error) {
-	if err = m.CheckAndSetupTransparentProxy(false, t.Setting, t); err != nil {
+func (m *CoreProcessManager) ownsProcessLocked(p *Process, generation uint64) bool {
+	return p != nil && m.p == p && m.generation == generation
+}
+
+func (m *CoreProcessManager) checkProcessOwner(p *Process, generation uint64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if !m.ownsProcessLocked(p, generation) {
+		return fmt.Errorf("core process exited or was replaced during startup")
+	}
+	return nil
+}
+
+func (m *CoreProcessManager) mutateHost(p *Process, generation uint64, mutate func() error) error {
+	m.mu.Lock()
+	if !m.ownsProcessLocked(p, generation) {
+		m.mu.Unlock()
+		return fmt.Errorf("core process exited or was replaced before host setup")
+	}
+	hostMu.Lock()
+	m.mu.Unlock()
+	err := mutate()
+	hostMu.Unlock()
+	return errors.Join(err, m.checkProcessOwner(p, generation))
+}
+
+func (m *CoreProcessManager) afterStart(p *Process, generation uint64) (err error) {
+	t := p.template
+	if err = m.setupTransparentProxy(p, generation, t.Setting, t); err != nil {
 		return err
 	}
-	m.startConnectivityMonitor(t)
+	m.startConnectivityMonitor(p, generation)
+	if err := m.checkProcessOwner(p, generation); err != nil {
+		return err
+	}
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
 		hook := strings.Split(corehook, " ")
@@ -297,10 +386,12 @@ func (m *CoreProcessManager) afterStart(t *Template) (err error) {
 			return fmt.Errorf("error when executing the core post start hook: %w", err)
 		}
 	}
-	return nil
+	return m.checkProcessOwner(p, generation)
 }
 
 func (m *CoreProcessManager) Start(t *Template) (err error) {
+	m.startMu.Lock()
+	defer m.startMu.Unlock()
 	// Phase 1 (pre-lock): lightweight checks that do not depend on whether a
 	// previous process is running.  Port occupancy is checked by NewProcess
 	// after the old process has been stopped.
@@ -316,6 +407,21 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
 	m.stop(true)
+	// A marker left by a start that never committed is torn down first. A
+	// teardown that fails is logged, not fatal: refusing every later start
+	// would leave that state behind with no service to fix it.
+	if state, err := configure.GetHostState(); err != nil {
+		log.Warn("read pending host state: %v", err)
+	} else if state != nil {
+		if err := RecoverHostState(state); err != nil {
+			log.Warn("recover pending host state: %v", err)
+		}
+		if err := configure.SetHostState(nil); err != nil {
+			log.Warn("clear pending host state: %v", err)
+		}
+	}
+	m.generation++
+	generation := m.generation
 	process, err := NewProcess(t, func() error {
 		return m.runPreStartHook()
 	}, func() error {
@@ -327,21 +433,58 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	}
 	m.p = process
 	testing := m.testing
+	err = configure.SetHostState(&configure.HostState{
+		TransparentType:   t.Setting.TransparentType,
+		APIPort:           t.ApiPort,
+		TunAutoRoute:      t.Setting.TunAutoRoute,
+		TunTeardownScript: t.Setting.TunTeardownScript,
+	})
 	m.mu.Unlock()
 
 	defer func() {
 		if err != nil {
-			m.Stop(true)
+			m.mu.Lock()
+			defer m.mu.Unlock()
+			if m.ownsProcessLocked(process, generation) {
+				// stop tears the host state down itself; the marker only
+				// records that it happened
+				m.stop(true)
+				err = errors.Join(err, configure.SetHostState(nil))
+			} else if m.generation == generation && m.p == nil {
+				state, recoveryErr := configure.GetHostState()
+				if recoveryErr == nil && state != nil {
+					recoveryErr = RecoverHostState(state)
+					if recoveryErr == nil {
+						recoveryErr = configure.SetHostState(nil)
+					}
+				}
+				err = errors.Join(err, recoveryErr)
+			}
 		}
 	}()
+	if err != nil {
+		return err
+	}
 
 	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
 	// TUN routes), connectivity monitor, and post-start hook.
-	if err = m.afterStart(t); err != nil {
+	if err = m.afterStart(process, generation); err != nil {
 		return err
 	}
-	configure.SetRunning(true)
-	_ = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if !m.ownsProcessLocked(process, generation) {
+		return fmt.Errorf("core process exited before startup committed")
+	}
+	if err = configure.SetRunning(true); err != nil {
+		return err
+	}
+	if err = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning); err != nil {
+		return err
+	}
+	if err = configure.SetHostState(nil); err != nil {
+		return err
+	}
 	if !testing {
 		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
 	}
