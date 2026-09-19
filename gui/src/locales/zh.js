@@ -1,10 +1,96 @@
 export default {
+  onboarding: {
+    title: "使用教程",
+    importTitle: "导入节点",
+    importBody: "从订阅地址或分享链接导入，或手动新建节点。",
+    groupTitle: "加入分组",
+    groupBody:
+      "在代理页面选择节点加入分组。分组内有多个节点时，核心会自动选择延迟最低的节点，也可以指定只用某一个。",
+    rulesTitle: "分流规则",
+    rulesBody:
+      "在仪表板选择分流模式。RoutingA 可以自己写规则：哪些站点和 IP 直连、走代理或屏蔽。编辑器以列表编辑规则，逐行检查，语法速查在旁。",
+    startTitle: "启动",
+    startBody:
+      "在仪表板启动核心；透明代理、分流模式、局域网共享都在仪表板上切换。",
+    newNode: "新建节点",
+    goToProxies: "前往代理页面",
+    back: "上一步",
+    next: "下一步",
+    finish: "开始使用",
+    viewTutorial: "查看教程",
+    progress: "第 {current} 步，共 {total} 步",
+  },
+  traffic: {
+    upload: "上传",
+    download: "下载",
+    total: "累计：{value}",
+  },
+  proxies: {
+    newGroup: "新建分组",
+    newNode: "新建节点",
+    cards: "卡片",
+    list: "列表",
+    testLatency: "测试延迟",
+    chooseManually: "手动选择",
+    sources: { all: "全部", local: "本地" },
+    membersOnly: "仅成员",
+    members: "{n} 个节点",
+    source: "来源",
+    mode: { auto: "自动（最快）", manual: "手动" },
+    inUse: "使用中",
+    groupMode: "分组模式",
+    modeNeedsMembers: "分组里有两个以上节点时核心会自动走延迟最低的那个。",
+    groupSettings: "分组设置",
+    deleteGroup: "删除分组",
+    modeHint: {
+      auto: "自动：核心走延迟最低的节点",
+      manual: "手动：只用你指定的节点",
+    },
+    useThis: "使用此节点",
+    unselect: "取消选择",
+    addToGroup: "加入分组",
+    removeFromGroup: "移出分组",
+    selectAll: "全选",
+    autoUpdate: "自动更新",
+    deleteSubscriptionNodes: "无法单独删除订阅中的节点。",
+  },
+  dashboard: {
+    status: "核心状态",
+    networkSpeed: "网络速度",
+    trafficUsage: "流量用量",
+    nodeLatency: "节点延迟",
+    moreMembers: "其他 {n} 个",
+    inUse: "当前节点",
+    pinned: "已指定",
+    balanced: "自动（{n} 个成员）",
+    switchNode: "选择节点",
+    editGroup: "编辑分组",
+    autoFastest: "自动（延迟最低）",
+    manageNodes: "管理节点",
+    emptyGroup: "此分组没有节点",
+    allProxySettings: "更多代理选项",
+    updateAll: "全部更新",
+    updatedAt: "更新于 {time}",
+    noSubscriptions: "没有订阅",
+    moreSubscriptions: "查看更多",
+    testLatency: "测速",
+    usage: "已用 {used} / {total}",
+    usedOnly: "已用 {used}",
+    totalOnly: "总量 {total}",
+    expires: "到期 {date}",
+  },
   common: {
+    optional: "可选",
+    dashboard: "仪表板",
+    proxies: "代理",
+    subscriptions: "订阅",
+    selectedCount: "已选 {n} 项",
+    nodes: "节点",
     menu: "菜单",
     outboundSetting: "代理分组设置",
     setting: "设置",
     about: "关于",
-    loggedAs: "已登录为 <b>{username}</b>",
+    loggedAs: "已登录为 {username}",
     checkRunning: "检测中",
     isRunning: "正在运行",
     notRunning: "就绪",
@@ -12,29 +98,25 @@ export default {
     notLogin: "未登录",
     latest: "最新",
     local: "本地",
-    success: "成功",
     fail: "失败",
     empty: "没有加入节点",
     none: "无",
-    optional: "可选",
-    loadBalance: "负载均衡",
     log: "日志",
     proxyGroups: "代理分组",
-    darkTheme: "深色主题",
-    lightTheme: "浅色主题",
-    autoTheme: "自动主题",
-    expand: "显示连接状态",
+  },
+  theme: {
+    auto: "自动",
+    light: "浅色",
+    dark: "深色",
+    title: "主题",
+    appearance: "外观",
+    color: "主题色",
+    custom: "自定义",
   },
   welcome: {
-    title: "欢迎使用",
     docker: "v2rayA 服务端运行于 Docker，版本：{version}",
     default: "v2rayA 服务端正在运行，版本：{version}",
     newVersion: "检测到新版本：{version}",
-    separator: "；",
-    messages: [
-      "尚未创建或导入任何节点或订阅。",
-      "可以导入节点链接或订阅地址，也可以手动创建节点。",
-    ],
   },
   v2ray: {
     start: "启动",
@@ -43,21 +125,13 @@ export default {
     stopFailed: "无法停止核心：{message}",
   },
   server: {
-    name: "节点名",
-    address: "节点地址",
     protocol: "协议",
-    latency: "时延",
-    lastSeenTime: "上次存活时间",
-    lastTryTime: "上次测试时间",
-    server: "节点",
-    refreshFailed: "无法刷新节点列表：{message}",
     saved: "节点已保存",
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
-    host: "域名",
+    settingsTitle: "订阅更新",
     remarks: "别名",
-    timeLastUpdate: "上次更新时间",
     numberServers: "节点数",
     subscription: "订阅",
     autoSelect: "订阅自动更新后自动连接其中的新节点",
@@ -65,9 +139,11 @@ export default {
     updated: "订阅已更新",
     saved: "订阅已保存",
     saveFailed: "无法保存订阅：{message}",
-    updateFailed: "无法更新订阅：{message}",
   },
   operations: {
+    refresh: "刷新",
+    yes: "是",
+    no: "否",
     tproxyWhiteIpGroups: "直通白名单IP组",
     name: "操作",
     update: "更新",
@@ -79,10 +155,6 @@ export default {
     delete: "删除",
     create: "创建",
     import: "导入",
-    inBatch: "批量",
-    connect: "连接",
-    disconnect: "断开",
-    addTo: "添加到",
     login: "登录",
     logout: "注销",
     configure: "配置",
@@ -92,22 +164,15 @@ export default {
     save: "保存",
     copyLink: "复制链接",
     export: "导出",
-    copySelected: "复制勾选节点",
-    downloadTxt: "下载 TXT 文件",
     helpManual: "查看帮助",
-    yes: "是",
-    no: "否",
     switchSite: "切换至备用站点",
     addOutbound: "新增一个代理分组",
     add: "添加",
     close: "关闭",
     domainsExcluded: "排除域名",
     configureTunRouteScript: "配置路由脚本",
-    ping: "PING",
     copySelectedDone: "已复制勾选节点",
-    downloadTxtDone: "已下载 TXT 文件",
     exportEmpty: "无法为勾选节点生成分享链接",
-    exportFailed: "导出失败：{message}",
   },
   register: {
     title: "初来乍到，创建一个管理员账号",
@@ -125,21 +190,26 @@ export default {
     failed: "登录失败：{message}",
   },
   connection: {
-    disconnectFailed: "断开失败：{message}",
-    connectFailed: "连接失败：{message}",
     checkFailed: "连接状态检测失败：{message}",
   },
   setting: {
+    sections: {
+      proxy: "代理",
+      traffic: "流量分流",
+      core: "内核",
+      more: "更多",
+    },
     inboundSniffing: "嗅探",
     transparentProxy: "透明代理/系统代理",
     transparentType: "透明代理/系统代理实现方式",
+    transparentOffHint: "开启透明代理后可选择实现方式。",
     logLevel: "日志等级",
     pacMode: "规则端口的分流模式",
     mux: "多路复用",
     autoUpdateSub: "自动更新订阅",
     autoUpdateGfwlist: "自动更新GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
-    tproxyExcludedInterfaces: "不走代理的网卡前缀",
+    tproxyExcludedInterfaces: "排除的网卡名前缀",
     tproxyExcludedInterfacesPlaceholder: "docker*、veth*、wg*、ppp*、br-*",
     tunAutoRoute: "自动路由",
     ipForwardOn: "开启IP转发",
@@ -181,11 +251,14 @@ export default {
       gfwlist: "该时间是指本地文件最后修改时间，因此可能会领先最新版本",
       transparentProxy:
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
-      transparentType: "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun: 由核心打开 TUN 设备并接管默认路由；支持 Linux、Windows、macOS 与 UDP，自动排除 v2rayA 与核心自身，并可按进程名排除其他进程。Windows 与 macOS 上直接查询局域网 DNS 的应用仍会绕过它。",
+      transparentType:
+        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun: 由核心打开 TUN 设备并接管默认路由；支持 Linux、Windows、macOS 与 UDP，自动排除 v2rayA 与核心自身，并可按进程名排除其他进程。Windows 与 macOS 上直接查询局域网 DNS 的应用仍会绕过它。",
       tproxyExcludedInterfaces:
         "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
-      tunAutoRoute: "开启时，v2rayA 自行安装路由与 DNS 设置。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
-      tunExcludeProcesses: "流量直连的进程名，一行一个，例如：chrome.exe、firefox。v2rayA 与核心始终排除。按 socket 属主的可执行文件名识别；查找前已关闭的 socket 或被其他进程复用的端口无法归属。被排除进程的 DNS 查询仍由核心 DNS 模块回答。",
+      tunAutoRoute:
+        "开启时，v2rayA 自行安装路由与 DNS 设置。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
+      tunExcludeProcesses:
+        "流量直连的进程名，一行一个，例如：chrome.exe、firefox。v2rayA 与核心始终排除。按 socket 属主的可执行文件名识别；查找前已关闭的 socket 或被其他进程复用的端口无法归属。被排除进程的 DNS 查询仍由核心 DNS 模块回答。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       tcpFastOpen:
@@ -218,27 +291,6 @@ export default {
       "如将端口设为0则表示关闭该端口。",
     ],
   },
-  customRouting: {
-    title: "自定义路由规则",
-    defaultRoutingRule: "默认路由规则",
-    sameAsDefaultRule: "与默认规则相同",
-    appendRule: "追加规则",
-    direct: "直连",
-    proxy: "代理",
-    block: "拦截",
-    rule: "规则",
-    domainFile: "域名文件",
-    typeRule: "规则类型",
-    tags: "标签",
-    saveFailed: "无法保存自定义路由规则：{message}",
-    messages: {
-      0: "将SiteDat文件放于 <b>{V2RayLocationAsset}</b> 目录下，V2rayA将自动进行识别",
-      1: '制作SiteDat文件：<a href="https://github.com/ToutyRater/V2Ray-SiteDAT">ToutyRater/V2Ray-SiteDAT</a>',
-      2: "在选择Tags时，可按Ctrl等多选键进行多选。",
-      noSiteDatFileFound: "未在{V2RayLocationAsset}中发现siteDat文件",
-      emptyRuleNotPermitted: "每条规则至少选择一个 tag",
-    },
-  },
   dns: {
     title: "DNS 设置",
     help: "DNS 帮助",
@@ -249,25 +301,15 @@ export default {
     serverPlaceholder: "如 8.8.8.8 或 https://dns.google/dns-query",
     domainsPlaceholder: "每行一个，如 geosite:cn\n留空表示兜底 DNS",
     addRule: "添加规则",
+    rule: "规则 {n}",
     resetDefault: "恢复默认",
     errNoRules: "至少一条规则需要填写 DNS 服务器",
     saveFailed: "无法保存 DNS 规则：{message}",
   },
-  egressPortWhitelist: {
-    title: "出方向端口白名单",
-    tcpPortWhitelist: "TCP端口白名单",
-    udpPortWhitelist: "UDP端口白名单",
-    messages: [
-      "如果你将v2rayA架设在对外提供服务的服务器A上，连接了代理服务器B，那么你需要注意：",
-      "透明代理会使得所有TCP、UDP流量走代理，通过走代理的流量其源IP地址会被替换为代理服务器B的IP地址，那么如果有客户向你的服务器A发出请求，他却将得到从你代理服务器B发出的回答，该回答在客户看来无疑是不合法的，从而导致连接被拒绝。",
-      "因此，需要将服务器提供的对外服务端口包含在白名单中，使其不走代理。如ssh(22)、v2raya({v2rayaPort})。",
-      "如不对外提供服务或仅对局域网内主机提供服务，则可不设置白名单。",
-      "格式：22表示端口22，20170:20172表示20170到20172三个端口。",
-    ],
-    saveFailed: "无法保存出方向端口白名单：{message}",
-  },
   configureServer: {
-    title: "配置节点 | 节点",
+    required: "必填",
+    title: "配置节点",
+    titleReadonly: "节点",
     servername: "节点名称",
     host: "地址",
     port: "端口号",
@@ -352,7 +394,6 @@ export default {
   import: {
     server: "节点链接",
     subscription: "订阅地址",
-    serverMessage: "填入节点链接：",
     subscriptionMessage: "填入订阅地址：",
     batchMessage: "一行一个节点链接:",
     qrcodeError: "图片中未识别到二维码，请换一张更清晰的图片",
@@ -363,11 +404,10 @@ export default {
   },
   delete: {
     title: "删除所选项",
-    message: "确定删除所选的 {n} 个节点或订阅？此操作不可撤销。",
+    message: "删除选中的 {n} 项？此操作不可撤销。",
     failed: "删除失败：{message}",
   },
   latency: {
-    message: "时延测试往往需要花费较长时间，请耐心等待",
     testing: "测试中…",
     failed: "时延测试失败：{message}",
   },
@@ -377,16 +417,13 @@ export default {
     coreVersionMismatch:
       "核心版本不匹配：v2raya_core 的版本必须与 v2rayA 版本完全一致。{err}",
   },
-  about: `<p>v2rayA 是 V2Ray 的一个 Web 客户端。</p>
-          <p class="about-small">默认端口：</p>
-          <p class="about-small">2017: v2rayA后端端口</p>
-          <p class="about-small">20170: SOCKS协议</p>
-          <p class="about-small">20171: HTTP协议</p>
-          <p class="about-small">20172: 带分流规则的HTTP协议</p>
-          <p class="about-small">其他端口：</p>
-          <p class="about-small">32345: tproxy，透明代理所需 </p>
-          <p>在使用中如果发现任何问题，欢迎到<a href="https://github.com/v2rayA/v2rayA/discussions">讨论区</a>反馈。</p>
-          <p>文档：<a href="https://v2raya.org">https://v2raya.org</a>.</p>`,
+  about: {
+    intro: "v2rayA 是 V2Ray 的一个 Web 客户端。",
+    local: "所有数据均存储在本地，不上传云端。",
+    report: "在使用中如果发现任何问题，欢迎到{discussions}反馈。",
+    discussions: "讨论区",
+    docs: "文档：",
+  },
   axios: {
     messages: {
       optimizeBackend: "是否修改 v2rayA 服务端地址？",
@@ -401,9 +438,89 @@ export default {
     },
   },
   routingA: {
+    export: "导出",
+    import: {
+      title: "导入",
+      confirm: "将当前规则替换为导入文件的内容？",
+    },
+    form: {
+      title: "表单",
+      text: "文本",
+      default: "默认出口",
+      orderHint: "按顺序匹配规则，首条匹配的规则生效。",
+      addRule: "添加规则",
+      editRule: "修改规则",
+      condition: "条件",
+      arguments: "参数",
+      addCondition: "添加条件",
+      outbound: "出口",
+      customOutbounds: "自定义出口",
+      addOutbound: "添加出口",
+      editOutbound: "修改出口",
+      name: "名称",
+      protocol: "协议",
+      address: "地址",
+      port: "端口",
+      user: "用户名",
+      pass: "密码",
+      required: "此项不能为空。",
+      invalidArguments: "参数须以逗号分隔，引号和括号须成对。",
+      invalidName: "名称不能重复，也不能包含空格或语法符号。",
+      deleteConfirm: "删除此条目？",
+      moveUp: "上移",
+      moveDown: "下移",
+      actions: "条目操作",
+      raw: "无法识别此语法，已在文本编辑器中保留原文。",
+    },
+    editor: "RoutingA 规则",
+    loading: "正在加载规则",
+    resetDefault: "恢复默认",
+    resetConfirm: "将当前规则替换为默认模板？",
+    discard: "放弃修改？",
+    insert: "插入",
+    lineError: "第 {line} 行：{message}",
+    errors: {
+      noArrow: "规则需要包含条件、-> 和出口。",
+      brackets: "括号不匹配。",
+      noOutbound: "-> 后缺少出口。",
+    },
+    reference: {
+      title: "语法",
+      format: {
+        title: "规则格式",
+        description:
+          "格式为 条件 [&& 条件] -> 出口，每行一条规则。按顺序匹配，首条匹配的规则生效；# 表示注释。",
+      },
+      domain: {
+        title: "域名",
+        description:
+          "full 精确匹配域名，domain 匹配域名及其子域名，contains 和 regexp 分别匹配文本和正则表达式。geosite 使用域名列表，一次调用可包含多个条目。",
+      },
+      ip: {
+        title: "IP 地址",
+        description:
+          "支持 IP 地址、CIDR 网段和 geoip 列表。IPv6 地址需要加引号。",
+      },
+      ports: {
+        title: "端口与协议",
+        description:
+          "可匹配端口或端口范围、传输协议、应用协议和源地址。使用 && 组合条件。",
+      },
+      outbound: {
+        title: "出口",
+        description:
+          "内置出口为 proxy、direct 和 block，default 指定未匹配规则时的出口。可定义命名的 SOCKS 或 HTTP 出口，user 和 pass 为可选认证参数。",
+      },
+      examples: {
+        title: "示例",
+        description: "插入默认模板，或插入拦截广告列表中域名的规则。",
+      },
+    },
     messages: ["点击“查看帮助”按钮以获取帮助"],
-    inboundDeprecated: "RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。",
-    inboundDeprecatedConfirm: "当前 RoutingA 配置包含已弃用的入站定义，生成的配置将不会包含这些入站端口。是否继续保存？",
+    inboundDeprecated:
+      "RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。",
+    inboundDeprecatedConfirm:
+      "当前 RoutingA 配置包含已弃用的入站定义，生成的配置将不会包含这些入站端口。是否继续保存？",
     savedWithWarning: "RoutingA 已保存，但有警告：{warning}",
     saveFailed: "无法保存 RoutingA：{message}",
   },
@@ -430,7 +547,6 @@ export default {
     noMatch: "没有匹配的节点",
     saved: "代理分组 {group} 已保存",
     saveFailed: "无法保存代理分组 {group}：{message}",
-    updateFailed: "无法更新分组 {group}：{message}",
   },
   sharing: {
     copied: "链接已复制",
@@ -439,23 +555,12 @@ export default {
     subscriptionTitle: "分享订阅",
     failed: "无法创建分享链接：{message}",
   },
-  driver: {
-    welcome: [
-      "首先导入节点服务器",
-      "初次使用，还没有任何节点服务器，在这里导入或创建节点服务器。",
-    ],
-    tabs: [
-      "订阅与节点服务器",
-      "导入订阅、节点服务器后，在这里切换和管理你的订阅、普通节点以及订阅节点。",
-    ],
-  },
   log: {
-    logModalTitle: "查看日志",
+    search: "搜索日志…",
     logsLabel: "日志",
     refreshInterval: "刷新间隔",
     seconds: "秒",
     autoShowNew: "自动显示新日志",
-    category: "分类",
     source: "日志来源",
     categories: {
       all: "全部",
@@ -469,30 +574,29 @@ export default {
     sources: {
       all: "全部",
     },
-    tailOnly: "仅显示最近 {count} 行（此屏幕上隐藏了较早的 {skipped} 行）",
     export: "导出",
   },
-  
+
   tproxyWhiteIpGroups: {
     title: "直通白名单IP组",
     messages: [
       "选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP",
-      "最好系统使用Nftables时使用此功能，Iptables可能在添加大量IP时存在性能问题"
+      "最好系统使用Nftables时使用此功能，Iptables可能在添加大量IP时存在性能问题",
     ],
     formName1: "按住Ctrl可以多选",
     formName2: "自定义IP（一行一个，标准CIDR格式）",
     formPlaceholder2: "172.30.0.0/16\nfd00:dead:beef::/48",
     invalidCustomIps: "自定义 IP 须每行一个 CIDR，例如 10.0.0.0/8",
     saveFailed: "无法保存直通 IP 分组：{message}",
-    cn: '中国大陆',
-    private: '私网网段',
-    us: '美国',
-    cloudflare: 'Cloudflare',
+    cn: "中国大陆",
+    private: "私网网段",
+    us: "美国",
+    cloudflare: "Cloudflare",
   },
   domainsExcluded: {
     title: "排除域名",
     messages: [
-      "一个域名列表，如果流量探测结果在这个列表中时，将 不会 重置目标地址。"
+      "一个域名列表，如果流量探测结果在这个列表中时，将 不会 重置目标地址。",
     ],
     formName: "排除域名列表",
     formPlaceholder: "courier.push.apple.com\nMijia Cloud\ndlg.io.mi.com",
@@ -503,7 +607,7 @@ export default {
     messages: [
       "如果当前环境访问Github困难，你可以从此处（https://github.com/v2rayA/dist-v2ray-rules-dat）手动下载最新GFWList（geosite.dat），上传到你的服务器，然后填写你的服务器链接进行下载",
       "如果不填写自定义下载链接输入框则自动从Github进行下载",
-      "注意：错误的文件可能导致服务启动失败，如果更新后服务器启动失败，你可以点击删除按钮删除下载的GFWList"
+      "注意：错误的文件可能导致服务启动失败，如果更新后服务器启动失败，你可以点击删除按钮删除下载的GFWList",
     ],
     formName: "自定义下载链接",
     wrongCustomLink: "自定义下载链接必须以 http:// 或 https:// 开头",
@@ -514,19 +618,23 @@ export default {
   tun: {
     routeScript: {
       title: "TUN 自定义路由脚本",
-      warning: "警告：错误的脚本可能会破坏您的网络或系统路由。请确保您清楚自己正在做什么再保存。",
+      warning:
+        "警告：错误的脚本可能会破坏您的网络或系统路由。请确保您清楚自己正在做什么再保存。",
       shellType: "Shell 类型",
       customShell: "自定义（在下方指定路径）",
       shellPath: "Shell 路径",
       shellPathPlaceholder: "/usr/bin/bash",
       setupScript: "启动脚本（TUN 就绪后执行）",
-      setupScriptPlaceholder: "# TUN 就绪时配置路由的脚本\n# 例如: ip route add default dev tun0",
+      setupScriptPlaceholder:
+        "# TUN 就绪时配置路由的脚本\n# 例如: ip route add default dev tun0",
       teardownScript: "停止脚本（关闭 TUN 前执行）",
-      teardownScriptPlaceholder: "# 关闭 TUN 前移除路由的脚本\n# 例如: ip route del default dev tun0",
+      teardownScriptPlaceholder:
+        "# 关闭 TUN 前移除路由的脚本\n# 例如: ip route del default dev tun0",
     },
     processExclude: {
       title: "TUN 自定义进程排除",
-      warning: "警告：错误的进程名可能导致流量被意外直通。请仅添加你确认需要排除的进程。",
+      warning:
+        "警告：错误的进程名可能导致流量被意外直通。请仅添加你确认需要排除的进程。",
       listLabel: "排除进程名称",
       placeholder: "v2raya, v2ray, chrome.exe",
       hint: "支持逗号或换行分隔。保存时会自动去重。",
@@ -565,7 +673,8 @@ export default {
     NO_SERVER_SELECTED: "未选择节点，请先连接一个节点。",
     CORE_START_FAILED: "无法启动 v2raya_core：{detail}",
     CORE_NOT_FOUND: "未找到 v2raya_core。",
-    CORE_VERSION_MISMATCH: "v2raya_core 版本 {core} 与 v2rayA 版本 {app} 不一致。",
+    CORE_VERSION_MISMATCH:
+      "v2raya_core 版本 {core} 与 v2rayA 版本 {app} 不一致。",
     PORT_OCCUPIED: "端口 {port} 已被占用。",
     INVALID_PORT: "端口 {port} 无效。",
     PORT_DUPLICATE: "端口 {port} 重复使用。",

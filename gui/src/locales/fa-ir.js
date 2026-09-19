@@ -1,10 +1,98 @@
 export default {
+  onboarding: {
+    title: "آموزش کوتاه",
+    importTitle: "وارد کردن گره‌ها",
+    importBody:
+      "گره‌ها را از نشانی اشتراک یا پیوند اشتراک‌گذاری وارد کنید یا گره جدیدی به‌صورت دستی بسازید.",
+    groupTitle: "افزودن به گروه",
+    groupBody:
+      "در صفحهٔ پروکسی‌ها، گره‌ها را برای افزودن به گروه انتخاب کنید. اگر گروه چند گره داشته باشد، هسته گره با کمترین تأخیر را انتخاب می‌کند. می‌توانید فقط یک گره را نیز مشخص کنید.",
+    rulesTitle: "قواعد مسیریابی",
+    rulesBody:
+      "در داشبورد حالت تقسیم ترافیک را انتخاب کنید. با RoutingA می‌توانید قواعد خود را بنویسید: کدام سایت‌ها و IPها مستقیم، از پروکسی یا مسدود شوند. ویرایشگر قواعد را فهرست می‌کند، هر خط را بررسی می‌کند و نحو را در دسترس نگه می‌دارد.",
+    startTitle: "شروع",
+    startBody:
+      "هسته را از داشبورد راه‌اندازی کنید. پروکسی شفاف، حالت مسیریابی و اشتراک‌گذاری در شبکهٔ محلی نیز از داشبورد تغییر می‌کنند.",
+    newNode: "گره جدید",
+    goToProxies: "رفتن به پروکسی‌ها",
+    back: "قبلی",
+    next: "بعدی",
+    finish: "شروع استفاده",
+    viewTutorial: "مشاهدهٔ آموزش",
+    progress: "مرحلهٔ {current} از {total}",
+  },
+  traffic: {
+    upload: "ارسال",
+    download: "دریافت",
+    total: "مجموع: {value}",
+  },
+  proxies: {
+    newGroup: "گروه جدید",
+    newNode: "گره جدید",
+    cards: "کارت‌ها",
+    list: "فهرست",
+    testLatency: "آزمایش تأخیر",
+    chooseManually: "انتخاب دستی",
+    sources: { all: "همه", local: "محلی" },
+    membersOnly: "فقط اعضا",
+    members: "{n} گره",
+    source: "منبع",
+    mode: { auto: "خودکار (سریع‌ترین)", manual: "دستی" },
+    inUse: "در حال استفاده",
+    groupMode: "حالت گروه",
+    modeNeedsMembers:
+      "با دست‌کم دو گره، هسته به‌طور خودکار کم‌تأخیرترین را انتخاب می‌کند.",
+    groupSettings: "تنظیمات گروه",
+    deleteGroup: "حذف گروه",
+    modeHint: {
+      auto: "خودکار: هسته کم‌تأخیرترین گره را برمی‌گزیند",
+      manual: "دستی: گروه فقط گره انتخابی را به کار می‌برد",
+    },
+    useThis: "استفاده از این گره",
+    unselect: "لغو انتخاب",
+    addToGroup: "افزودن به گروه",
+    removeFromGroup: "حذف از گروه",
+    selectAll: "انتخاب همه",
+    autoUpdate: "به‌روزرسانی خودکار",
+    deleteSubscriptionNodes: "گره‌های اشتراک را نمی‌توان جداگانه حذف کرد.",
+  },
+  dashboard: {
+    status: "وضعیت هسته",
+    networkSpeed: "سرعت شبکه",
+    trafficUsage: "مصرف ترافیک",
+    nodeLatency: "تأخیر گره‌ها",
+    moreMembers: "{n} مورد دیگر",
+    inUse: "گره در حال استفاده",
+    pinned: "ثابت",
+    balanced: "خودکار ({n} عضو)",
+    switchNode: "تغییر",
+    editGroup: "ویرایش گروه",
+    autoFastest: "خودکار (کمترین تأخیر)",
+    manageNodes: "مدیریت گره‌ها",
+    emptyGroup: "این گروه گره‌ای ندارد",
+    allProxySettings: "گزینه‌های بیشتر پروکسی",
+    updateAll: "به‌روزرسانی همه",
+    updatedAt: "به‌روزرسانی {time}",
+    noSubscriptions: "اشتراکی وجود ندارد",
+    moreSubscriptions: "مشاهده همه",
+    testLatency: "آزمایش تأخیر",
+    usage: "مصرف‌شده {used} / {total}",
+    usedOnly: "مصرف‌شده {used}",
+    totalOnly: "مجموع {total}",
+    expires: "انقضا {date}",
+  },
   common: {
+    optional: "اختیاری",
+    dashboard: "داشبورد",
+    proxies: "پروکسی‌ها",
+    subscriptions: "اشتراک‌ها",
+    selectedCount: "{n} مورد انتخاب شد",
+    nodes: "گره‌ها",
     menu: "منو",
     outboundSetting: "تنظیمات گروه پروکسی",
     setting: "تنظیمات",
     about: "درباره",
-    loggedAs: "واردشده با حساب کاربری <b>{username}</b>",
+    loggedAs: "واردشده با حساب کاربری {username}",
     checkRunning: "در حال بررسی",
     isRunning: "در حال اجرا",
     notRunning: "آماده",
@@ -12,29 +100,25 @@ export default {
     notLogin: "وارد نشده‌اید",
     latest: "آخرین",
     local: "محلی",
-    success: "با موفقیت انجام شد",
     fail: "ناموفق",
     empty: "هنوز گرهی اضافه نشده است",
     none: "هیچ‌کدام",
-    optional: "اختیاری",
-    loadBalance: "توزیع بار",
     log: "گزارش‌ها",
     proxyGroups: "گروه‌های پروکسی",
-    darkTheme: "پوسته تاریک",
-    lightTheme: "پوسته روشن",
-    autoTheme: "پوسته خودکار",
-    expand: "نمایش وضعیت اتصال",
+  },
+  theme: {
+    auto: "خودکار",
+    light: "روشن",
+    dark: "تیره",
+    title: "پوسته",
+    appearance: "ظاهر",
+    color: "رنگ پوسته",
+    custom: "سفارشی",
   },
   welcome: {
-    title: "خوش آمدید",
     docker: "سرویس v2rayA در Docker در حال اجرا است. نسخه: {version}",
     default: "سرویس v2rayA در حال اجرا است. نسخه: {version}",
     newVersion: "نسخه جدید موجود است: {version}",
-    separator: " ",
-    messages: [
-      "هنوز سروری وجود ندارد.",
-      "پیوند سرور یا نشانی اشتراک را وارد کنید، یا سروری را به‌صورت دستی ایجاد کنید.",
-    ],
   },
   v2ray: {
     start: "شروع",
@@ -43,31 +127,26 @@ export default {
     stopFailed: "توقف هسته ناموفق بود: {message}",
   },
   server: {
-    name: "نام سرور",
-    address: "نشانی سرور",
     protocol: "پروتکل",
-    latency: "تأخیر",
-    lastSeenTime: "زمان آخرین مشاهده",
-    lastTryTime: "زمان آخرین تلاش",
-    server: "سرور",
-    refreshFailed: "به‌روزرسانی فهرست گره‌ها ناموفق بود: {message}",
     saved: "سرور ذخیره شد",
     saveFailed: "ذخیره سرور ناموفق بود: {message}",
   },
   subscription: {
-    host: "میزبان",
+    settingsTitle: "به‌روزرسانی اشتراک‌ها",
     remarks: "توضیحات",
-    timeLastUpdate: "تاریخ و زمان آخرین به‌روزرسانی",
     numberServers: "تعداد سرورها",
     subscription: "اشتراک",
-    autoSelect: "پس از به‌روزرسانی خودکار اشتراک، به‌طور خودکار به سرورهای جدید آن متصل شوید",
+    autoSelect:
+      "پس از به‌روزرسانی خودکار اشتراک، به‌طور خودکار به سرورهای جدید آن متصل شوید",
     autoSelectLabel: "انتخاب خودکار",
     updated: "اشتراک به‌روزرسانی شد",
     saved: "اشتراک ذخیره شد",
     saveFailed: "ذخیره اشتراک ناموفق بود: {message}",
-    updateFailed: "به‌روزرسانی اشتراک ناموفق بود: {message}",
   },
   operations: {
+    refresh: "تازه‌سازی",
+    yes: "بله",
+    no: "خیر",
     name: "عملیات",
     tproxyWhiteIpGroups: "گروه‌های IP مجاز برای اتصال مستقیم",
     update: "به‌روزرسانی",
@@ -79,10 +158,6 @@ export default {
     delete: "حذف",
     create: "ایجاد",
     import: "وارد کردن",
-    inBatch: "دسته‌ای",
-    connect: "اتصال",
-    disconnect: "قطع اتصال",
-    addTo: "افزودن به",
     login: "ورود",
     logout: "خروج",
     configure: "پیکربندی",
@@ -92,22 +167,15 @@ export default {
     save: "ذخیره",
     copyLink: "کپی پیوند",
     export: "خروجی گرفتن",
-    copySelected: "کپی گره‌های انتخاب‌شده",
-    downloadTxt: "بارگیری فایل TXT",
     helpManual: "راهنما و مستندات",
-    yes: "بله",
-    no: "خیر",
     switchSite: "تغییر به سایت جایگزین",
     addOutbound: "افزودن گروه پروکسی",
     add: "افزودن",
     close: "بستن",
     domainsExcluded: "دامنه‌های مستثنا",
     configureTunRouteScript: "پیکربندی اسکریپت مسیریابی",
-    ping: "PING",
     copySelectedDone: "گره‌های انتخاب‌شده کپی شدند",
-    downloadTxtDone: "فایل TXT بارگیری شد",
     exportEmpty: "برای گره‌های انتخاب‌شده پیوند اشتراکی ایجاد نشد",
-    exportFailed: "خروجی گرفتن ناموفق بود: {message}",
   },
   register: {
     title: "ابتدا یک حساب مدیر ایجاد کنید",
@@ -125,13 +193,18 @@ export default {
     failed: "ورود ناموفق بود: {message}",
   },
   connection: {
-    disconnectFailed: "قطع اتصال ناموفق بود: {message}",
-    connectFailed: "اتصال ناموفق بود: {message}",
     checkFailed: "بررسی اتصال ناموفق بود: {message}",
   },
   setting: {
+    sections: {
+      proxy: "پروکسی",
+      traffic: "تفکیک ترافیک",
+      core: "هسته",
+      more: "بیشتر",
+    },
     transparentProxy: "پروکسی شفاف/پروکسی سیستم",
     transparentType: "پیاده‌سازی پروکسی شفاف/پروکسی سیستم",
+    transparentOffHint: "برای انتخاب روش پیاده‌سازی، پروکسی شفاف را روشن کنید.",
     logLevel: "سطح گزارش‌گیری",
     pacMode: "حالت تفکیک ترافیک برای پورت قوانین",
     mux: "چندگانه‌سازی",
@@ -177,21 +250,24 @@ export default {
       tunUnsupported: "در این سکو پشتیبانی نمی‌شود",
     },
     messages: {
-      inboundSniffing: "ترافیک ورودی را شنود می‌کند. اگر این گزینه فعال نباشد، ممکن است برخی ترافیک‌ها به‌درستی هدایت نشوند.",
+      inboundSniffing:
+        "ترافیک ورودی را شنود می‌کند. اگر این گزینه فعال نباشد، ممکن است برخی ترافیک‌ها به‌درستی هدایت نشوند.",
       gfwlist:
         "بر اساس زمان تغییر فایل است؛ این زمان گاهی پس از آخرین نسخه آنلاین قرار دارد.",
       transparentProxy:
         "با فعال بودن پروکسی شفاف، به پیکربندی اضافی نیاز نیست و همه ترافیک TCP از v2rayA عبور می‌کند. برای ارائه سرویس پروکسی به رایانه‌های دیگر و Docker به‌عنوان دروازه، گزینه «اشتراک‌گذاری در شبکه محلی» را فعال کنید.",
-      transparentType: "★tproxy: از UDP پشتیبانی می‌کند، اما از Docker پشتیبانی نمی‌کند. ★redirect: برای Docker مناسب است، اما از UDP پشتیبانی نمی‌کند و برای جلوگیری از آلودگی DNS باید پورت محلی 53 را اشغال کند. ★tun: هسته یک دستگاه TUN باز می‌کند و مسیر پیش‌فرض را در اختیار می‌گیرد؛ در Linux، Windows و macOS کار می‌کند، از UDP پشتیبانی می‌کند، v2rayA و هسته را خودکار مستثنا می‌کند و اجازه می‌دهد فرایندهای دیگر را با نام مستثنا کنید. در Windows و macOS، برنامه‌هایی که مستقیماً از DNS شبکه محلی پرس‌وجو می‌کنند همچنان از آن عبور می‌کنند.",
+      transparentType:
+        "★tproxy: از UDP پشتیبانی می‌کند، اما از Docker پشتیبانی نمی‌کند. ★redirect: برای Docker مناسب است، اما از UDP پشتیبانی نمی‌کند و برای جلوگیری از آلودگی DNS باید پورت محلی 53 را اشغال کند. ★tun: هسته یک دستگاه TUN باز می‌کند و مسیر پیش‌فرض را در اختیار می‌گیرد؛ در Linux، Windows و macOS کار می‌کند، از UDP پشتیبانی می‌کند، v2rayA و هسته را خودکار مستثنا می‌کند و اجازه می‌دهد فرایندهای دیگر را با نام مستثنا کنید. در Windows و macOS، برنامه‌هایی که مستقیماً از DNS شبکه محلی پرس‌وجو می‌کنند همچنان از آن عبور می‌کنند.",
       tproxyExcludedInterfaces:
         "پیشوندهای رابط‌های شبکه‌ای را تعیین کنید که نباید از پروکسی شفاف عبور کنند. از نویسه‌گردان * پشتیبانی می‌شود (در حالت iptables به‌صورت خودکار به + تبدیل می‌شود). برای نمونه: docker*، veth*، wg*، ppp*، br-*. برای جداسازی چند پیشوند از ویرگول استفاده کنید.",
-      tunAutoRoute: "در حالت فعال، v2rayA خود مسیرها و تنظیمات DNS را نصب می‌کند. در حالت غیرفعال، باید اسکریپت‌های راه‌اندازی و جمع‌آوری را برای پیکربندی مسیریابی ارائه کنید.",
-      tunExcludeProcesses: "نام فرایندهایی که ترافیک آن‌ها از پروکسی عبور نمی‌کند، در هر خط یک نام؛ مانند chrome.exe یا firefox. v2rayA و هسته همیشه مستثنا هستند. فرایند با نام فایل اجرایی مالک سوکت شناسایی می‌شود؛ سوکتی که پیش از جست‌وجو بسته شده یا پورتی که فرایند دیگری دوباره استفاده کرده قابل شناسایی نیست. پرس‌وجوهای DNS این فرایندها همچنان توسط ماژول DNS هسته پاسخ داده می‌شود.",
+      tunAutoRoute:
+        "در حالت فعال، v2rayA خود مسیرها و تنظیمات DNS را نصب می‌کند. در حالت غیرفعال، باید اسکریپت‌های راه‌اندازی و جمع‌آوری را برای پیکربندی مسیریابی ارائه کنید.",
+      tunExcludeProcesses:
+        "نام فرایندهایی که ترافیک آن‌ها از پروکسی عبور نمی‌کند، در هر خط یک نام؛ مانند chrome.exe یا firefox. v2rayA و هسته همیشه مستثنا هستند. فرایند با نام فایل اجرایی مالک سوکت شناسایی می‌شود؛ سوکتی که پیش از جست‌وجو بسته شده یا پورتی که فرایند دیگری دوباره استفاده کرده قابل شناسایی نیست. پرس‌وجوهای DNS این فرایندها همچنان توسط ماژول DNS هسته پاسخ داده می‌شود.",
       pacMode: `در اینجا می‌توانید قانون تفکیک ترافیک پورت قوانین را تعیین کنید. به‌طور پیش‌فرض، پورت «تفکیک ترافیک بر اساس قوانین» شماره 20172 و پروتکل آن HTTP است.`,
       tcpFastOpen:
         "فرایند دست‌دهی TCP را ساده می‌کند تا برقراری اتصال سریع‌تر شود. خطر برجسته‌شدن ویژگی‌های بسته‌ها وجود دارد. اگر سیستم شما از آن پشتیبانی نکند، ممکن است اتصال ناموفق باشد.",
-      mux:
-        "اتصال‌های TCP را چندگانه می‌کند تا تعداد دست‌دهی‌ها کاهش یابد، اما بر کاربردهای پرترافیک مانند تماشای ویدئو، بارگیری و آزمون سرعت تأثیر می‌گذارد. خطر برجسته‌شدن ویژگی‌های بسته‌ها وجود دارد. در حال حاضر فقط از VMess پشتیبانی می‌شود.",
+      mux: "اتصال‌های TCP را چندگانه می‌کند تا تعداد دست‌دهی‌ها کاهش یابد، اما بر کاربردهای پرترافیک مانند تماشای ویدئو، بارگیری و آزمون سرعت تأثیر می‌گذارد. خطر برجسته‌شدن ویژگی‌های بسته‌ها وجود دارد. در حال حاضر فقط از VMess پشتیبانی می‌شود.",
       grpcShouldWithTls: `gRPC به TLS نیاز دارد؛ TLS فعال شده است`,
       ssPluginImpl:
         "★پیش‌فرض: برای simple-obfs، «transport» و برای v2ray-plugin، «chained» است." +
@@ -210,7 +286,8 @@ export default {
     portVmessLink: "پیوند پورت VMess",
     portApi: "پورت API (۰ برای تصادفی)",
     apiServices: "سرویس‌های API فعال",
-    noVmessLink: "هنوز پیوند VMess وجود ندارد. ابتدا پورت VMess را تنظیم و ذخیره کنید",
+    noVmessLink:
+      "هنوز پیوند VMess وجود ندارد. ابتدا پورت VMess را تنظیم و ذخیره کنید",
     saveFailed: "ذخیره تنظیمات نشانی و پورت ناموفق بود: {message}",
     messages: [
       "نشانی پیش‌فرض سرویس، یعنی 0.0.0.0:2017، با تنظیم متغیر محیطی <code>V2RAYA_ADDRESS</code> و آرگومان فرمان <code>--address</code> قابل تغییر است.",
@@ -218,27 +295,6 @@ export default {
       "در حالت Docker نمی‌توانیم اشغال بودن پورت‌ها را تشخیص دهیم. خودتان آن را تأیید کنید.",
       "صفر به معنای بستن این پورت است.",
     ],
-  },
-  customRouting: {
-    title: "سفارشی‌سازی قانون مسیریابی",
-    defaultRoutingRule: "قانون مسیریابی پیش‌فرض",
-    sameAsDefaultRule: "مانند قانون پیش‌فرض",
-    appendRule: "افزودن قانون",
-    direct: "مستقیم",
-    proxy: "پروکسی",
-    block: "مسدود کردن",
-    rule: "قانون",
-    domainFile: "فایل دامنه",
-    typeRule: "نوع قانون",
-    tags: "برچسب‌ها",
-    saveFailed: "ذخیره قوانین مسیریابی سفارشی ناموفق بود: {message}",
-    messages: {
-      0: "v2rayA همه فایل‌های SiteDat را در <b>{V2RayLocationAsset}</b> شناسایی می‌کند",
-      1: "برای ساختن فایل SiteDat به‌صورت دستی: <a href=\"https://github.com/ToutyRater/V2Ray-SiteDAT\">ToutyRater/V2Ray-SiteDAT</a>",
-      2: "انتخاب چندگانه پشتیبانی می‌شود.",
-      noSiteDatFileFound: "هیچ فایل siteDatای در {V2RayLocationAsset} پیدا نشد",
-      emptyRuleNotPermitted: "هر قانون باید دست‌کم یک برچسب انتخاب کند",
-    },
   },
   dns: {
     title: "تنظیمات DNS",
@@ -248,27 +304,18 @@ export default {
     colDomains: "فهرست دامنه‌ها",
     colOutbound: "خروجی",
     serverPlaceholder: "برای نمونه 8.8.8.8 یا https://dns.google/dns-query",
-    domainsPlaceholder: "هر مورد در یک خط؛ برای نمونه geosite:cn\nبرای DNS جایگزین خالی بگذارید",
+    domainsPlaceholder:
+      "هر مورد در یک خط؛ برای نمونه geosite:cn\nبرای DNS جایگزین خالی بگذارید",
     addRule: "افزودن قانون",
+    rule: "قانون {n}",
     resetDefault: "بازنشانی به پیش‌فرض‌ها",
     errNoRules: "دست‌کم یک قانون به سرور DNS نیاز دارد",
     saveFailed: "ذخیره قوانین DNS ناموفق بود: {message}",
   },
-  egressPortWhitelist: {
-    title: "فهرست سفید پورت‌های خروجی",
-    tcpPortWhitelist: "فهرست سفید پورت‌های TCP",
-    udpPortWhitelist: "فهرست سفید پورت‌های UDP",
-    messages: [
-      "اگر v2rayA روی سرور A راه‌اندازی شده باشد و این سرور به یک سرور پروکسی B متصل باشد، به نکات زیر توجه کنید:",
-      "پروکسی شفاف همه ترافیک TCP و UDP را مجبور می‌کند از سرور پروکسی B عبور کند و در این حالت، نشانی IP مبدأ با نشانی پروکسی B جایگزین می‌شود. همچنین، اگر برخی کلاینت‌ها به سرور A که سرویس ارائه می‌دهد درخواست بفرستند، پاسخ‌ها را به‌طور نادرست از نشانی IP پروکسی B دریافت خواهند کرد که غیرقانونی است.",
-      "برای حل این مشکل، باید پورت‌های سرویس را به فهرست سفید اضافه کنیم تا از پروکسی عبور نکنند؛ برای نمونه، ssh(22) و v2raya({v2rayaPort}).",
-      "بدیهی است اگر سرور هیچ سرویسی ارائه نمی‌دهد، می‌توانید از پیکربندی آن صرف‌نظر کنید.",
-      "قالب: 22 به معنای پورت 22 است و 20170:20172 به معنای سه پورت از 20170 تا 20172 است.",
-    ],
-    saveFailed: "ذخیره فهرست سفید پورت‌های خروجی ناموفق بود: {message}",
-  },
   configureServer: {
-    title: "پیکربندی سرور | سرور",
+    required: "الزامی",
+    title: "پیکربندی سرور",
+    titleReadonly: "سرور",
     servername: "نام سرور",
     host: "میزبان",
     port: "پورت",
@@ -307,7 +354,8 @@ export default {
     wireguardPersistentKeepalive: "زنده‌نگه‌داشتن پایدار",
     wireguardPreSharedKey: "کلید ازپیش‌اشتراکی",
     wireguardEndpoint: "نقطه پایانی",
-    wireguardEndpointPlaceholder: "اختیاری؛ به‌طور پیش‌فرض برابر با Address:Port است",
+    wireguardEndpointPlaceholder:
+      "اختیاری؛ به‌طور پیش‌فرض برابر با Address:Port است",
     security: "امنیت",
     auto: "خودکار",
     utlsFingerprint: "اثر انگشت uTLS",
@@ -353,7 +401,6 @@ export default {
   import: {
     server: "پیوند سرور",
     subscription: "نشانی اشتراک",
-    serverMessage: "پیوند سرور را وارد کنید:",
     subscriptionMessage: "نشانی اشتراک را وارد کنید:",
     batchMessage: "در هر خط یک پیوند سرور وارد کنید:",
     qrcodeError: "هیچ کد QRای در تصویر پیدا نشد. تصویر واضح‌تری را امتحان کنید",
@@ -364,12 +411,11 @@ export default {
   },
   delete: {
     title: "حذف موارد انتخاب‌شده",
-    message: "آیا {n} سرور یا اشتراک انتخاب‌شده را حذف می‌کنید؟ این عمل قابل بازگشت نیست.",
+    message:
+      "آیا {n} سرور یا اشتراک انتخاب‌شده را حذف می‌کنید؟ این عمل قابل بازگشت نیست.",
     failed: "حذف ناموفق بود: {message}",
   },
   latency: {
-    message:
-      "آزمون‌های تأخیر ممکن است چند دقیقه طول بکشند. لطفاً شکیبا باشید.",
     testing: "در حال آزمایش…",
     failed: "آزمون تأخیر ناموفق بود: {message}",
   },
@@ -379,17 +425,14 @@ export default {
     coreVersionMismatch:
       "ناسازگاری نسخه هسته: نسخه v2raya_core باید دقیقاً با نسخه v2rayA یکسان باشد. {err}",
   },
-  about: `<p>v2rayA یک رابط وب برای V2Ray است.</p>
-          <p class="about-small">پورت‌های پیش‌فرض:</p>
-          <p class="about-small">2017: پورت سرویس v2rayA</p>
-          <p class="about-small">20170: پروتکل SOCKS</p>
-          <p class="about-small">20171: پروتکل HTTP</p>
-          <p class="about-small">20172: پروتکل HTTP با «قانون تفکیک ترافیک»</p>
-          <p class="about-small">پورت‌های دیگر:</p>
-          <p class="about-small">32345: tproxy، موردنیاز پروکسی شفاف</p>
-          <p>همه داده‌ها به‌صورت محلی و نه در فضای ابری ذخیره می‌شوند.</p>
-          <p>مشکلات مشاهده‌شده هنگام استفاده را می‌توانید در <a href="https://github.com/v2rayA/v2rayA/discussions">discussions</a> گزارش کنید.</p>
-          <p>مستندات: <a href="https://v2raya.org">https://v2raya.org</a></p>`,
+  about: {
+    intro: "v2rayA یک رابط وب برای V2Ray است.",
+    local: "همه داده‌ها به‌صورت محلی و نه در فضای ابری ذخیره می‌شوند.",
+    report:
+      "مشکلات مشاهده‌شده هنگام استفاده را می‌توانید در {discussions} گزارش کنید.",
+    discussions: "discussions",
+    docs: "مستندات:",
+  },
   axios: {
     messages: {
       optimizeBackend: "نشانی سرویس v2rayA تغییر کند؟",
@@ -405,9 +448,91 @@ export default {
     },
   },
   routingA: {
+    export: "برون‌بری",
+    import: {
+      title: "درون‌ریزی",
+      confirm: "قوانین فعلی با محتوای فایل واردشده جایگزین شوند؟",
+    },
+    form: {
+      title: "فرم",
+      text: "متن",
+      default: "خروجی پیش‌فرض",
+      orderHint: "قوانین به‌ترتیب بررسی می‌شوند؛ اولین تطبیق اعمال می‌شود.",
+      addRule: "افزودن قانون",
+      editRule: "ویرایش قانون",
+      condition: "شرط",
+      arguments: "آرگومان‌ها",
+      addCondition: "افزودن شرط",
+      outbound: "خروجی",
+      customOutbounds: "خروجی‌های سفارشی",
+      addOutbound: "افزودن خروجی",
+      editOutbound: "ویرایش خروجی",
+      name: "نام",
+      protocol: "پروتکل",
+      address: "نشانی",
+      port: "پورت",
+      user: "نام کاربری",
+      pass: "گذرواژه",
+      required: "این فیلد الزامی است.",
+      invalidArguments:
+        "آرگومان‌ها را با ویرگول جدا کنید و توازن گیومه‌ها و پرانتزها را بررسی کنید.",
+      invalidName: "نامی یکتا بدون فاصله یا نویسه‌های نحوی وارد کنید.",
+      deleteConfirm: "این ورودی حذف شود؟",
+      moveUp: "انتقال به بالا",
+      moveDown: "انتقال به پایین",
+      actions: "عملیات ورودی",
+      raw: "نحو ناشناخته؛ متن اصلی در ویرایشگر متنی حفظ می‌شود.",
+    },
+    editor: "قوانین RoutingA",
+    loading: "در حال بارگذاری قوانین",
+    resetDefault: "بازگردانی پیش‌فرض",
+    resetConfirm: "قوانین فعلی با الگوی پیش‌فرض جایگزین شوند؟",
+    discard: "تغییرات ذخیره‌نشده کنار گذاشته شوند؟",
+    insert: "درج",
+    lineError: "خط {line}: {message}",
+    errors: {
+      noArrow: "شرط باید با -> و یک خروجی دنبال شود.",
+      brackets: "پرانتزها یا براکت‌ها متوازن نیستند.",
+      noOutbound: "بعد از -> باید یک خروجی مشخص شود.",
+    },
+    reference: {
+      title: "نحو",
+      format: {
+        title: "قالب قانون",
+        description:
+          "در هر خط یک قانون با قالب شرط [&& شرط] -> خروجی بنویسید. اولین تطبیق اعمال می‌شود؛ # شروع توضیح است.",
+      },
+      domain: {
+        title: "دامنه‌ها",
+        description:
+          "full برای دامنهٔ دقیق، domain برای دامنه و زیردامنه‌ها و contains و regexp برای متن و عبارت منظم هستند. geosite فهرست دامنه‌ها را انتخاب می‌کند؛ هر فراخوانی می‌تواند چند ورودی داشته باشد.",
+      },
+      ip: {
+        title: "نشانی‌های IP",
+        description:
+          "نشانی IP، محدودهٔ CIDR یا فهرست geoip را تطبیق دهید. نشانی‌های IPv6 را داخل گیومه قرار دهید.",
+      },
+      ports: {
+        title: "پورت‌ها و پروتکل‌ها",
+        description:
+          "پورت یا بازهٔ پورت، پروتکل انتقال، پروتکل برنامه یا نشانی مبدأ را تطبیق دهید. شرط‌ها را با && ترکیب کنید.",
+      },
+      outbound: {
+        title: "خروجی‌ها",
+        description:
+          "خروجی‌های داخلی proxy، direct و block هستند؛ default خروجی هنگام نبود تطبیق را تعیین می‌کند. می‌توانید خروجی SOCKS یا HTTP نام‌دار با user و pass اختیاری تعریف کنید.",
+      },
+      examples: {
+        title: "نمونه‌ها",
+        description:
+          "الگوی پیش‌فرض یا قانونی برای مسدود کردن دامنه‌های فهرست تبلیغات درج کنید.",
+      },
+    },
     messages: ["برای دریافت راهنمایی، روی دکمه «Help&Manual» کلیک کنید"],
-    inboundDeprecated: "تعریف ورودی‌ها در RoutingA منسوخ شده است. پیکربندی JSON تولیدشده شامل این پورت‌های ورودی نخواهد بود. به‌جای آن، از تنظیمات ورودی سفارشی همراه با قوانین RoutingA استفاده کنید.",
-    inboundDeprecatedConfirm: "این پیکربندی RoutingA شامل تعریف‌های ورودی منسوخ‌شده است. پیکربندی تولیدشده شامل این پورت‌های ورودی نخواهد بود. ذخیره ادامه یابد؟",
+    inboundDeprecated:
+      "تعریف ورودی‌ها در RoutingA منسوخ شده است. پیکربندی JSON تولیدشده شامل این پورت‌های ورودی نخواهد بود. به‌جای آن، از تنظیمات ورودی سفارشی همراه با قوانین RoutingA استفاده کنید.",
+    inboundDeprecatedConfirm:
+      "این پیکربندی RoutingA شامل تعریف‌های ورودی منسوخ‌شده است. پیکربندی تولیدشده شامل این پورت‌های ورودی نخواهد بود. ذخیره ادامه یابد؟",
     savedWithWarning: "RoutingA همراه با هشدار ذخیره شد: {warning}",
     saveFailed: "ذخیره RoutingA ناموفق بود: {message}",
   },
@@ -434,7 +559,6 @@ export default {
     noMatch: "گره منطبقی پیدا نشد",
     saved: "گروه پروکسی {group} ذخیره شد",
     saveFailed: "ذخیره گروه پروکسی {group} ناموفق بود: {message}",
-    updateFailed: "به‌روزرسانی گروه {group} ناموفق بود: {message}",
   },
   sharing: {
     copied: "پیوند کپی شد",
@@ -444,12 +568,11 @@ export default {
     failed: "ایجاد پیوند اشتراک‌گذاری ناموفق بود: {message}",
   },
   log: {
-    logModalTitle: "مشاهده گزارش‌ها",
+    search: "جستجو در گزارش…",
     logsLabel: "گزارش‌ها",
     refreshInterval: "فاصله به‌روزرسانی",
     seconds: "ثانیه",
     autoShowNew: "نمایش خودکار گزارش‌های جدید",
-    category: "دسته‌بندی",
     source: "منبع گزارش",
     categories: {
       all: "همه",
@@ -463,7 +586,6 @@ export default {
     sources: {
       all: "همه",
     },
-    tailOnly: "نمایش {count} خط آخر ({skipped} خط قدیمی‌تر در این صفحه پنهان است)",
     export: "برون‌ریزی",
   },
   tproxyWhiteIpGroups: {
@@ -475,7 +597,8 @@ export default {
     formName1: "برای انتخاب چند مورد، Ctrl را نگه دارید.",
     formName2: "IPهای سفارشی (هر مورد در یک خط، با قالب استاندارد CIDR)",
     formPlaceholder2: "172.30.0.0/16\nfd00:aaaa:bbbb::/48",
-    invalidCustomIps: "IPهای سفارشی باید در هر خط یک CIDR باشند؛ برای نمونه 10.0.0.0/8",
+    invalidCustomIps:
+      "IPهای سفارشی باید در هر خط یک CIDR باشند؛ برای نمونه 10.0.0.0/8",
     saveFailed: "ذخیره گروه‌های IP مستقیم ناموفق بود: {message}",
     cn: "سرزمین اصلی چین",
     private: "خصوصی",
@@ -499,7 +622,8 @@ export default {
       "توجه کنید: فایل نادرست ممکن است باعث شکست راه‌اندازی سرویس شود. اگر سرویس پس از بارگیری شروع نشد، می‌توانید روی دکمه حذف GFWList کلیک کنید.",
     ],
     formName: "پیوند بارگیری سفارشی",
-    wrongCustomLink: "پیوند بارگیری سفارشی باید با http:// یا https:// شروع شود",
+    wrongCustomLink:
+      "پیوند بارگیری سفارشی باید با http:// یا https:// شروع شود",
     updated: "GFWList به‌روزرسانی شد",
     saveFailed: "به‌روزرسانی GFWList ناموفق بود: {message}",
     alreadyUpToDate: "GFWList هم‌اکنون به‌روز است ({version})",
@@ -507,19 +631,23 @@ export default {
   tun: {
     routeScript: {
       title: "اسکریپت مسیر سفارشی TUN",
-      warning: "هشدار: اسکریپت‌های نادرست ممکن است شبکه یا مسیریابی سیستم شما را مختل کنند. پیش از ذخیره، مطمئن شوید از کاری که انجام می‌دهید آگاه هستید.",
+      warning:
+        "هشدار: اسکریپت‌های نادرست ممکن است شبکه یا مسیریابی سیستم شما را مختل کنند. پیش از ذخیره، مطمئن شوید از کاری که انجام می‌دهید آگاه هستید.",
       shellType: "نوع Shell",
       customShell: "سفارشی (مسیر را در زیر تعیین کنید)",
       shellPath: "مسیر Shell",
       shellPathPlaceholder: "/usr/bin/bash",
       setupScript: "اسکریپت راه‌اندازی (پس از آماده شدن TUN اجرا می‌شود)",
-      setupScriptPlaceholder: "# Script to configure routes when the TUN is up\n# e.g. ip route add default dev tun0",
+      setupScriptPlaceholder:
+        "# Script to configure routes when the TUN is up\n# e.g. ip route add default dev tun0",
       teardownScript: "اسکریپت جمع‌آوری (پیش از بستن TUN اجرا می‌شود)",
-      teardownScriptPlaceholder: "# Script to remove routes before the TUN is closed\n# e.g. ip route del default dev tun0",
+      teardownScriptPlaceholder:
+        "# Script to remove routes before the TUN is closed\n# e.g. ip route del default dev tun0",
     },
     processExclude: {
       title: "حذف فرایندهای سفارشی TUN",
-      warning: "هشدار: نام‌های نادرست فرایند ممکن است ناخواسته باعث عبور ترافیک شوند. فقط نام فرایندهای مورد اعتماد را اضافه کنید.",
+      warning:
+        "هشدار: نام‌های نادرست فرایند ممکن است ناخواسته باعث عبور ترافیک شوند. فقط نام فرایندهای مورد اعتماد را اضافه کنید.",
       listLabel: "نام فرایندهای مستثنا",
       placeholder: "v2raya, v2ray, chrome.exe",
       hint: "جداکننده‌های ویرگول یا خط جدید پشتیبانی می‌شوند. هنگام ذخیره، مقادیر تکراری حذف می‌شوند.",
