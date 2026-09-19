@@ -33,18 +33,6 @@ export const links = {
     "ss://" +
     b64("chacha20-ietf-poly1305:passw0rd") +
     "@1.2.3.4:8388?plugin=obfs-local%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#ss%20node",
-  ssr:
-    "ssr://" +
-    b64(
-      "1.2.3.4:8388:auth_aes128_md5:aes-256-cfb:tls1.2_ticket_auth:" +
-        b64("passw0rd") +
-        "/?obfsparam=" +
-        b64("obfs.example.com") +
-        "&protoparam=" +
-        b64("1:abc") +
-        "&remarks=" +
-        b64("ssr node"),
-    ),
   trojan:
     "trojan://passw0rd@1.2.3.4:443?security=tls&sni=example.com&type=ws&host=example.com&path=%2Ftr#trojan%20node",
   juicity:

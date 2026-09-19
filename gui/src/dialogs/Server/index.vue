@@ -19,7 +19,6 @@ import VmessForm from "./forms/VmessForm.vue";
 import VlessForm from "./forms/VlessForm.vue";
 import WireguardForm from "./forms/WireguardForm.vue";
 import SsForm from "./forms/SsForm.vue";
-import SsrForm from "./forms/SsrForm.vue";
 import TrojanForm from "./forms/TrojanForm.vue";
 import JuicityForm from "./forms/JuicityForm.vue";
 import TuicForm from "./forms/TuicForm.vue";
@@ -43,7 +42,6 @@ const forms: Record<Protocol, unknown> = {
   vless: VlessForm,
   wireguard: WireguardForm,
   ss: SsForm,
-  ssr: SsrForm,
   trojan: TrojanForm,
   juicity: JuicityForm,
   tuic: TuicForm,
