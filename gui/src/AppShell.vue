@@ -1,0 +1,505 @@
+<script setup lang="ts">
+// The page, laid out the Material 3 way: a navigation rail from 600 dp
+// (a bottom navigation bar below), a top app bar with the page's title,
+// the core's state chip and the account, theme and language menus, and
+// the current page's pane under v-main; the hosts for notices, dialogs
+// and the loading overlay. The shell also runs the session: it is the
+// starter resetSession() calls.
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  watchEffect,
+} from "vue";
+import { useI18n } from "vue-i18n";
+import { useDisplay, useLocale, useTheme } from "vuetify";
+import dayjs from "dayjs";
+import { mdiDotsVertical, mdiPower } from "@mdi/js";
+import {
+  deleteV2ray,
+  getAccount,
+  getOutbounds,
+  getVersion,
+  postV2ray,
+  getTouch,
+} from "@/api";
+import { ApiError, currentSession } from "@/api/client";
+import { watchConnected } from "@/api/connect";
+import { errorText } from "@/api/errors";
+import type {
+  ObservatoryMessage,
+  RunningStateMessage,
+  TrafficMessage,
+  Which,
+  WsMessage,
+} from "@/api/types";
+import { installClientHooks } from "@/clientHooks";
+import {
+  createMessageSocket,
+  openDialog,
+  openLoading,
+  useBanner,
+  useNotify,
+  useTraffic,
+} from "@/composables";
+import { useDialog } from "@/composables/useDialog";
+import BannerHost from "@/components/hosts/BannerHost.vue";
+import DialogHost from "@/components/hosts/DialogHost.vue";
+import LoadingHost from "@/components/hosts/LoadingHost.vue";
+import NoticeHost from "@/components/hosts/NoticeHost.vue";
+import NavBar from "@/components/NavBar.vue";
+import NavDrawer from "@/components/NavDrawer.vue";
+import NavRail from "@/components/NavRail.vue";
+import ShellMenus from "@/components/ShellMenus.vue";
+import { destinations } from "@/components/destinations";
+import { languages } from "@/components/languages";
+import LoginDialog from "@/dialogs/Login.vue";
+import OnboardingDialog, {
+  shouldShowOnboarding,
+} from "@/dialogs/Onboarding.vue";
+import { onSessionTeardown, resetSession, setSessionStarter } from "@/session";
+import { setRefresher } from "@/session/refresh";
+import { useAppStore, type Running } from "@/stores/app";
+import { vuetifyLocales } from "@/theme";
+import { schemeColors } from "@/theme/scheme";
+import logo from "@/assets/img/v2raya-icon.svg";
+import OutboundMenu from "@/components/OutboundMenu.vue";
+import PortsDialog from "@/dialogs/settings/Ports.vue";
+import AboutView from "@/views/AboutView.vue";
+import DashboardView from "@/views/DashboardView.vue";
+import LogsView from "@/views/LogsView.vue";
+import ProxiesView from "@/views/ProxiesView.vue";
+import SettingsView from "@/views/SettingsView.vue";
+
+const store = useAppStore();
+const { t, locale } = useI18n();
+const notify = useNotify();
+const banner = useBanner();
+const traffic = useTraffic();
+const theme = useTheme();
+const vuetifyLocale = useLocale();
+// Material's window size classes: compact < 600, medium < 840, expanded
+const { width } = useDisplay();
+const compact = computed(() => width.value < 600);
+// Material's window classes: compact < 600 (bottom bar), medium and
+// expanded < 1200 (rail with an app bar), large ≥ 1200 (standard drawer)
+const expanded = computed(() => width.value >= 1200);
+const pageTitle = computed(() =>
+  t(destinations.find((d) => d.view === store.view)?.label ?? "common.about"),
+);
+
+// ---- the page -------------------------------------------------------------------
+
+// the rendered view; the shell calls its sync when the socket reopens
+const pageRef = ref<{ sync?(): Promise<void> } | null>(null);
+// a new session gets a new page
+const sessionSerial = ref(0);
+
+function labelOf(running: Running): string {
+  return t(
+    {
+      running: "common.isRunning",
+      stopped: "common.notRunning",
+      paused: "common.waitingNetwork",
+      checking: "common.checkRunning",
+    }[running],
+  );
+}
+
+// ---- the session -------------------------------------------------------------
+
+function applyTitle() {
+  const address = store.backendAddress;
+  const relative =
+    !address || (address.startsWith("/") && !address.startsWith("//"));
+  let host = location.host;
+  if (!relative) {
+    try {
+      host = new URL(address).host;
+    } catch {
+      host = address;
+    }
+  }
+  document.title = `v2rayA - ${host}`;
+}
+
+// No token: ask whether an account exists, with a few retries in case the
+// backend is still coming up, then show login or registration.
+async function askForLogin() {
+  const session = currentSession();
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const { hasAnyAccounts } = await getAccount();
+      if (session !== currentSession()) return;
+      openDialog(
+        LoginDialog,
+        { first: !hasAnyAccounts },
+        { persistent: true, width: 420 },
+      );
+      return;
+    } catch (err) {
+      if (session !== currentSession()) return;
+      if (!(err instanceof ApiError) || err.kind !== "network" || attempt >= 3)
+        return;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+}
+
+async function announceVersion() {
+  const v = await getVersion();
+  store.applyVersion(v);
+  // the running notice once per browser session, not on every reload
+  const seenKey = "welcomeShown:" + v.version;
+  let seen = false;
+  try {
+    seen = sessionStorage.getItem(seenKey) === "1";
+    sessionStorage.setItem(seenKey, "1");
+  } catch {
+    // storage unavailable: show it
+  }
+  if (!seen)
+    notify.info(
+      t(v.docker ? "welcome.docker" : "welcome.default", {
+        version: v.version,
+      }),
+    );
+  // what stays true stays on screen: a banner, not a toast
+  if (v.foundNew)
+    banner.show({
+      key: "newVersion",
+      kind: "info",
+      text: t("welcome.newVersion", { version: v.remoteVersion }),
+      action: {
+        label: "GitHub",
+        onClick: () =>
+          window.open("https://github.com/v2rayA/v2rayA/releases", "_blank"),
+      },
+    });
+  if (v.coreVersionValid === false)
+    banner.show({
+      key: "coreVersion",
+      kind: "error",
+      text: t("version.coreVersionMismatch", { err: v.coreVersionErr || "" }),
+      dismissible: false,
+    });
+  else if (v.serviceValid === false)
+    banner.show({
+      key: "serviceInvalid",
+      kind: "error",
+      text: t("version.v2rayInvalid"),
+    });
+}
+
+function onMessage(msg: WsMessage) {
+  if (msg.type === "observatory") {
+    const { body } = msg as ObservatoryMessage;
+    if (body?.outboundName)
+      store.observatory[body.outboundName] = body.outboundStatus ?? [];
+  } else if (msg.type === "traffic") {
+    traffic.feed(msg as TrafficMessage);
+  } else if (msg.type === "running_state") {
+    const { body } = msg as RunningStateMessage;
+    if (!body) return;
+    const paused = !!body.networkPaused;
+    store.setRunning(
+      paused ? "paused" : body.running ? "running" : "stopped",
+      paused,
+    );
+  }
+}
+
+async function startSession() {
+  onSessionTeardown(() => traffic.reset());
+  sessionSerial.value++;
+  applyTitle();
+  if (!store.loggedIn) {
+    await askForLogin();
+    return;
+  }
+  void announceVersion().catch(() => {
+    // the client hooks announce an unreachable backend
+  });
+  void getOutbounds()
+    .then((r) => {
+      store.setOutbounds(r.outbounds);
+      if (shouldShowOnboarding())
+        openDialog(OnboardingDialog, {}, { width: 560 });
+    })
+    .catch(() => {
+      // an expired token: the 401 hook resets the session
+    });
+  const socket = createMessageSocket({
+    onMessage,
+    // messages are not replayed: every open re-syncs the state
+    onOpen: () => void pageRef.value?.sync?.(),
+  });
+  onSessionTeardown(() => socket.stop());
+  socket.start();
+}
+
+setSessionStarter(startSession);
+setRefresher(() => pageRef.value?.sync?.());
+installClientHooks({ openAddressDialog: openPorts });
+
+// ---- the core's state ---------------------------------------------------------
+
+const hovering = ref(false);
+const statusColor = computed(
+  () =>
+    ({
+      running: "primary",
+      stopped: "secondary",
+      paused: "tertiary",
+      checking: "surface-variant",
+    })[store.running],
+);
+const statusText = computed(() => {
+  if (hovering.value && store.running === "running") return t("v2ray.stop");
+  if (hovering.value && store.running === "stopped") return t("v2ray.start");
+  return labelOf(store.running);
+});
+
+const toggling = ref(false);
+async function toggleRunning() {
+  if (toggling.value) return;
+  toggling.value = true;
+  try {
+    if (store.running === "stopped" || store.running === "paused") {
+      const loading = openLoading();
+      const control = new AbortController();
+      try {
+        const res = await watchConnected(
+          postV2ray({ signal: control.signal }),
+          () => control.abort(),
+          {
+            onCheckFailed: (err) =>
+              notify.warning(
+                t("connection.checkFailed", { message: errorText(err) }),
+              ),
+          },
+        );
+        // the watcher may win the race; the confirmed state comes from a touch
+        const touch = res ?? (await getTouch());
+        store.setRunning(touch.running ? "running" : "stopped");
+        store.connectedServer = touch.touch.connectedServer ?? [];
+        void pageRef.value?.sync?.();
+      } catch (err) {
+        notify.warning(t("v2ray.startFailed", { message: errorText(err) }));
+      } finally {
+        loading.close();
+      }
+    } else if (store.running === "running") {
+      try {
+        const res = await deleteV2ray();
+        store.setRunning("stopped");
+        store.connectedServer = res.touch.connectedServer ?? [];
+        void pageRef.value?.sync?.();
+      } catch (err) {
+        notify.warning(t("v2ray.stopFailed", { message: errorText(err) }));
+      }
+    }
+  } finally {
+    toggling.value = false;
+  }
+}
+
+// ---- the address dialog -------------------------------------------------------
+
+function openPorts() {
+  useDialog().open(PortsDialog, {}, { width: 520 });
+}
+
+// ---- theme and language ---------------------------------------------------------
+
+watchEffect(() => {
+  // both palettes follow the seed, so switching appearance later is instant
+  theme.themes.value.light.colors = schemeColors(store.themeSeed, false);
+  theme.themes.value.dark.colors = schemeColors(store.themeSeed, true);
+});
+watchEffect(() => {
+  theme.global.name.value = store.isDark ? "dark" : "light";
+  // the old components' dark styles key on this class
+  document.documentElement.classList.toggle("theme-dark", store.isDark);
+  document.body.classList.toggle("theme-dark", store.isDark);
+});
+
+watch(
+  locale,
+  (flag) => {
+    vuetifyLocale.current.value = vuetifyLocales[flag] ?? "en";
+    dayjs.locale(languages.find((l) => l.flag === flag)?.dayjs ?? flag);
+    document.documentElement.lang = flag;
+    document.documentElement.dir = vuetifyLocale.isRtl.value ? "rtl" : "ltr";
+  },
+  { immediate: true },
+);
+
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const onSystemTheme = (e: MediaQueryListEvent) =>
+  (store.systemDark = e.matches);
+onMounted(() => {
+  darkQuery.addEventListener("change", onSystemTheme);
+  void startSession();
+});
+onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
+</script>
+
+<template>
+  <v-app>
+    <NavDrawer v-if="expanded" />
+    <NavRail v-else-if="!compact" />
+
+    <v-app-bar
+      v-if="!expanded"
+      :height="64"
+      color="surface"
+      scroll-behavior="elevate"
+    >
+      <template v-if="compact" #prepend>
+        <img :src="logo" alt="v2rayA" class="bar__logo ms-2" />
+      </template>
+      <v-app-bar-title class="md3-title-large" :class="{ bar__brand: compact }">
+        {{ compact ? "v2rayA" : pageTitle }}
+      </v-app-bar-title>
+      <v-btn
+        :color="statusColor"
+        variant="tonal"
+        :prepend-icon="mdiPower"
+        height="40"
+        class="text-none"
+        :disabled="toggling"
+        @mouseenter="hovering = true"
+        @mouseleave="hovering = false"
+        @click="toggleRunning"
+      >
+        {{ statusText }}
+      </v-btn>
+      <OutboundMenu
+        :variant="compact ? 'icon' : 'chip'"
+        :class="compact ? 'ms-1' : 'mx-2'"
+        @changed="pageRef?.sync?.()"
+      />
+      <template #append>
+        <ShellMenus v-if="!compact" variant="icons" />
+        <v-menu v-else :close-on-content-click="false">
+          <template #activator="{ props: menu }">
+            <v-btn
+              v-bind="menu"
+              :icon="mdiDotsVertical"
+              variant="text"
+              class="me-1"
+              :aria-label="t('common.menu')"
+            />
+          </template>
+          <v-list density="compact" min-width="240" class="pa-2">
+            <ShellMenus variant="list" />
+          </v-list>
+        </v-menu>
+      </template>
+    </v-app-bar>
+
+    <NavBar v-if="compact" />
+
+    <v-main>
+      <div
+        class="page"
+        :class="{
+          'page--wide': ['dashboard', 'proxies', 'nodes'].includes(store.view),
+        }"
+      >
+        <div v-if="expanded" class="page__header">
+          <h1 class="md3-headline-medium page__title">{{ pageTitle }}</h1>
+          <div class="d-flex align-center ga-2">
+            <v-btn
+              :color="statusColor"
+              variant="tonal"
+              :prepend-icon="mdiPower"
+              class="text-none"
+              :disabled="toggling"
+              @mouseenter="hovering = true"
+              @mouseleave="hovering = false"
+              @click="toggleRunning"
+            >
+              {{ statusText }}
+            </v-btn>
+            <OutboundMenu
+              variant="chip"
+              class="me-2"
+              @changed="pageRef?.sync?.()"
+            />
+            <ShellMenus variant="icons" />
+          </div>
+        </div>
+        <BannerHost />
+        <DashboardView
+          v-if="store.view === 'dashboard'"
+          ref="pageRef"
+          :key="sessionSerial"
+        />
+        <ProxiesView
+          v-else-if="store.view === 'proxies'"
+          ref="pageRef"
+          :key="sessionSerial"
+        />
+        <SettingsView
+          v-else-if="store.view === 'settings'"
+          ref="pageRef"
+          :key="sessionSerial"
+        />
+        <LogsView
+          v-else-if="store.view === 'logs'"
+          ref="pageRef"
+          :key="sessionSerial"
+        />
+        <AboutView
+          v-else-if="store.view === 'about'"
+          ref="pageRef"
+          :key="sessionSerial"
+        />
+      </div>
+    </v-main>
+
+    <NoticeHost />
+    <DialogHost />
+    <LoadingHost />
+  </v-app>
+</template>
+
+<style scoped>
+.bar__logo {
+  width: 32px;
+  height: 32px;
+}
+/* the wordmark next to the logo: medium weight, like the drawer's brand */
+.bar__brand {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+/* Material's margins: 16 dp on compact, 24 dp from medium; readable width */
+.page {
+  padding: 16px;
+  margin: 0 auto;
+  max-width: 1040px;
+}
+.page--wide {
+  max-width: 1400px;
+}
+.page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 24px;
+}
+.page__title {
+  margin: 0;
+}
+@media (min-width: 600px) {
+  .page {
+    padding: 24px;
+  }
+}
+</style>
