@@ -5,6 +5,7 @@ on:
     paths:
       - "**/*.go"
       - "service/**"
+      - "core/**"
       - "gui/**"
       - ".github/workflows/*.yml"
 jobs:

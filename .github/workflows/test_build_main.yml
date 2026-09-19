@@ -7,8 +7,8 @@ on:
       - dependabot/*
     paths:
       - "**/*.go"
-      - "go.mod"
-      - "go.sum"
+      - "**/go.mod"
+      - "**/go.sum"
       - "gui/**"
       - ".github/workflows/*.yml"
       - "install/windows-inno/**"

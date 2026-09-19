@@ -294,7 +294,6 @@ func Run() error {
 		auth.GET("customInbound", controller.GetCustomInbound)
 		auth.POST("customInbound", controller.PostCustomInbound)
 		auth.DELETE("customInbound", controller.DeleteCustomInbound)
-		//auth.PUT("account", controller.PutAccount)
 		auth.GET("dnsRules", controller.GetDnsRules)
 		auth.PUT("dnsRules", controller.PutDnsRules)
 		auth.GET("routingA", controller.GetRoutingA)
