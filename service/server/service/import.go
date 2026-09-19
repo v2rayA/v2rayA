@@ -48,6 +48,9 @@ func Import(url string, which *configure.NodeRef) (err error) {
 	// "http" and "https" are deliberately absent: a bare http(s) URL has
 	// always meant a subscription here, and single HTTP proxy nodes are
 	// written as http-proxy:// or https-proxy://.
+	// "ssr" stays so an ssr:// link reaches the server importer, which
+	// answers that ShadowsocksR is not supported instead of treating the
+	// link as a subscription address.
 	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
 		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
 		"shadowsocks", "shadowsocksr", "hy1", "hy2", "mcore", "mcp", "plugin", "wireguard"}

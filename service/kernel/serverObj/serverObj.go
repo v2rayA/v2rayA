@@ -80,10 +80,13 @@ func New(name string) (ServerObj, error) {
 		creator := emptyCreators[PluginManagerScheme]
 		return creator()
 	} else {
-		return nil, fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, ssr, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name)
+		return nil, fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name)
 	}
 }
 func NewFromLink(name string, link string) (ServerObj, error) {
+	if name == "ssr" || name == "shadowsocksr" {
+		return nil, common.Coded("LINK_UNSUPPORTED_SCHEME", fmt.Errorf("%s", ssrUnsupported), map[string]interface{}{"scheme": name})
+	}
 	if creator, ok := fromLinkCreators[name]; ok {
 		obj, err := creator(link)
 		if err != nil {
@@ -98,7 +101,7 @@ func NewFromLink(name string, link string) (ServerObj, error) {
 		creator := fromLinkCreators[PluginManagerScheme]
 		return creator(link)
 	} else {
-		return nil, common.Coded("LINK_UNSUPPORTED_SCHEME", fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, ssr, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name), map[string]interface{}{"scheme": name})
+		return nil, common.Coded("LINK_UNSUPPORTED_SCHEME", fmt.Errorf("%q links are not supported; supported schemes: vmess, vless, ss, trojan, trojan-go, socks5, http, https, http-proxy, https-proxy, hysteria2, hy2, tuic, juicity, anytls, wireguard", name), map[string]interface{}{"scheme": name})
 	}
 }
 
