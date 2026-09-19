@@ -5,7 +5,8 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
+
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
 )
 
 func init() {
@@ -90,15 +91,25 @@ func ParseHttpURL(u string) (data *HTTP, err error) {
 }
 
 func (h *HTTP) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
+	server := coreObj.Server{Address: h.Server, Port: h.Port}
+	if h.Username != "" {
+		server.Users = []coreObj.OutboundUser{{User: h.Username, Pass: h.Password}}
 	}
-	chain := []string{socks5.String(), h.ExportToURL()}
+	var streamSettings *coreObj.StreamSettings
+	if h.Protocol == "https" {
+		streamSettings = &coreObj.StreamSettings{
+			Security:    "tls",
+			TLSSettings: &coreObj.TLSSettings{ServerName: h.Server},
+		}
+	}
 	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   false,
+		CoreOutbound: coreObj.OutboundObject{
+			Tag:            info.Tag,
+			Protocol:       "http",
+			Settings:       coreObj.Settings{Servers: []coreObj.Server{server}},
+			StreamSettings: streamSettings,
+		},
+		UDPSupport: false,
 	}, nil
 }
 
@@ -117,7 +128,7 @@ func (h *HTTP) ExportToURL() string {
 }
 
 func (h *HTTP) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (h *HTTP) ProtoToShow() string {

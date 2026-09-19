@@ -41,13 +41,13 @@ func NewShadowsocksR(link string) (ServerObj, error) {
 
 func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 	// parse attempts to parse ss:// links
-	parse := func(content string) (v ShadowsocksR, ok bool) {
+	parse := func(content string) (v ShadowsocksR, ok bool, parseErr error) {
 		arr := strings.Split(content, "/?")
 		if strings.Contains(content, ":") && len(arr) < 2 {
 			content += "/?remarks=&protoparam=&obfsparam="
 			arr = strings.Split(content, "/?")
 		} else if len(arr) != 2 {
-			return v, false
+			return v, false, nil
 		}
 		pre := strings.Split(arr[0], ":")
 		if len(pre) > 6 {
@@ -56,20 +56,23 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 			pre[len(pre)-6] = strings.Join(pre[:len(pre)-5], ":")
 			pre = pre[len(pre)-6:]
 		} else if len(pre) < 6 {
-			return v, false
+			return v, false, nil
 		}
 		q, err := url.ParseQuery(arr[1])
 		if err != nil {
-			return v, false
+			return v, false, nil
 		}
-		pswd, _ := common.Base64URLDecode(pre[5])
+		pswd, err := common.Base64URLDecode(pre[5])
+		if err != nil {
+			return v, false, fmt.Errorf("%w: ssr password is not base64: %v", ErrInvalidParameter, err)
+		}
 		add, _ := common.Base64URLDecode(pre[0])
 		remarks, _ := common.Base64URLDecode(q.Get("remarks"))
 		protoparam, _ := common.Base64URLDecode(q.Get("protoparam"))
 		obfsparam, _ := common.Base64URLDecode(q.Get("obfsparam"))
 		port, err := strconv.Atoi(pre[1])
 		if err != nil {
-			return v, false
+			return v, false, nil
 		}
 		v = ShadowsocksR{
 			Name:       remarks,
@@ -83,7 +86,7 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 			ObfsParam:  obfsparam,
 			Protocol:   "shadowsocksr",
 		}
-		return v, true
+		return v, true, nil
 	}
 	content := u[6:]
 	var (
@@ -91,7 +94,9 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 		ok   bool
 	)
 	// try parsing the ssr:// link, if it fails, base64 decode first
-	if info, ok = parse(content); !ok {
+	if info, ok, err = parse(content); err != nil {
+		return nil, err
+	} else if !ok {
 		// perform base64 decoding and parse again
 		content, err = common.Base64StdDecode(content)
 		if err != nil {
@@ -101,7 +106,10 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 				return
 			}
 		}
-		info, ok = parse(content)
+		info, ok, err = parse(content)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if !ok {
 		err = fmt.Errorf("%w: ssr link payload is not host:port:proto:method:obfs:BASE64(password)/?...", ErrInvalidParameter)
@@ -111,16 +119,7 @@ func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
 }
 
 func (s *ShadowsocksR) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
-	}
-	chain := []string{socks5.String(), s.ExportToURL()}
-	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   false,
-	}, nil
+	return Configuration{}, fmt.Errorf("unsupported: ShadowsocksR needs a plugin the current core does not ship; use Shadowsocks, VMess, VLESS or Trojan instead")
 }
 
 func (s *ShadowsocksR) ExportToURL() string {
@@ -143,7 +142,7 @@ func (s *ShadowsocksR) ExportToURL() string {
 }
 
 func (s *ShadowsocksR) NeedPluginPort() bool {
-	return true
+	return false
 }
 
 func (s *ShadowsocksR) ProtoToShow() string {
