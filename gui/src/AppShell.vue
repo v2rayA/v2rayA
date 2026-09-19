@@ -25,7 +25,7 @@ import {
   postV2ray,
   getTouch,
 } from "@/api";
-import { ApiError, currentSession } from "@/api/client";
+import { ApiError, backendAddress, currentSession } from "@/api/client";
 import { watchConnected } from "@/api/connect";
 import { errorText } from "@/api/errors";
 import type {
@@ -142,9 +142,28 @@ async function askForLogin() {
       return;
     } catch (err) {
       if (session !== currentSession()) return;
-      if (!(err instanceof ApiError) || err.kind !== "network" || attempt >= 3)
-        return;
-      await new Promise((r) => setTimeout(r, 2000));
+      const transient =
+        err instanceof ApiError &&
+        (err.kind === "network" || err.kind === "timeout");
+      if (transient && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      // a backend that is still not there leaves nothing on the page
+      // otherwise: the banner carries the retry
+      banner.show({
+        key: "login",
+        kind: "warning",
+        text: t("axios.messages.noBackendFound", { url: backendAddress() }),
+        action: {
+          label: t("operations.refresh"),
+          onClick: () => {
+            banner.withdraw("login");
+            void askForLogin();
+          },
+        },
+      });
+      return;
     }
   }
 }
