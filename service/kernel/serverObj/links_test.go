@@ -277,3 +277,28 @@ func TestDegenerateLinksDoNotPanic(t *testing.T) {
 		}()
 	}
 }
+
+func TestVlessRawTransportIsTCP(t *testing.T) {
+	obj, err := NewFromLink("vless", "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?type=raw&security=reality&sni=example.com&pbk=key&fp=chrome#raw")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("raw transport rejected: %v", err)
+	}
+	if c.CoreOutbound.StreamSettings == nil || c.CoreOutbound.StreamSettings.Network != "tcp" {
+		t.Fatalf("stream settings = %+v", c.CoreOutbound.StreamSettings)
+	}
+}
+
+func TestVmessNumericPortAndAid(t *testing.T) {
+	payload := base64.StdEncoding.EncodeToString([]byte(`{"add":"1.2.3.4","aid":0,"id":"93637105-bcea-4a68-b089-1bb6091f0b16","net":"tcp","port":27467,"ps":"n","tls":"none","type":"http","v":2}`))
+	obj, err := NewFromLink("vmess", "vmess://"+payload)
+	if err != nil {
+		t.Fatalf("numeric port/aid rejected: %v", err)
+	}
+	if obj.GetPort() != 27467 {
+		t.Fatalf("port = %d", obj.GetPort())
+	}
+}
