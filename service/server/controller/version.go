@@ -33,6 +33,11 @@ func GetVersion(ctx *gin.Context) {
 	}
 
 	versionErr := service.CheckCoreVersionMatch()
+	// the core's own version, for the dashboard; empty when the binary cannot be asked
+	coreVersion := ""
+	if _, ver, err := where.GetV2rayServiceVersion(); err == nil {
+		coreVersion = ver
+	}
 
 	common.ResponseSuccess(ctx, gin.H{
 		"version":          conf.Version,
@@ -43,6 +48,7 @@ func GetVersion(ctx *gin.Context) {
 		"lite":             lite,
 		"loadBalanceValid": true,
 		"variant":          where.V2rayaCore,
+		"coreVersion":      coreVersion,
 		"os":               runtime.GOOS,
 		"isRoot":           isRoot,
 		"tunSupported":     v2ray.TunSupported(),
