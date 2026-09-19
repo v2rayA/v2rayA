@@ -35,6 +35,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 	}()
 	// Multi-threaded asynchronous ping
+	loc := configure.NewLocator()
 	wg := new(sync.WaitGroup)
 	for i, v := range which {
 		if v.TYPE == configure.SubscriptionType { // subscriptions cannot be pinged
@@ -42,7 +43,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 		wg.Add(1)
 		go func(i int) {
-			_ = which[i].Ping(timeout)
+			_ = which[i].Ping(loc, timeout)
 			wg.Done()
 		}(i)
 	}
@@ -117,9 +118,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	wg := new(sync.WaitGroup)
 	vms := make([]serverObj.ServerObj, len(which))
 	//init vmessInfos
+	loc := configure.NewLocator()
 	for i := range which {
 		which[i].Latency = ""
-		sr, err := which[i].LocateServerRaw()
+		sr, err := loc.Locate(which[i])
 		if err != nil {
 			which[i].Latency = err.Error()
 			continue
@@ -148,6 +150,14 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		})
 		tmpl.SetAPI(nil)
 	}
+	// Until the process manager owns the template, its API producers are
+	// ours to stop on an early return.
+	handedOver := false
+	defer func() {
+		if !handedOver {
+			_ = tmpl.Close()
+		}
+	}()
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
 	listenAddr := "127.0.0.1"
@@ -224,6 +234,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
 	v2ray.ProcessManager.SetLatencyTesting(true)
+	handedOver = true
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		v2ray.ProcessManager.SetLatencyTesting(false)
 		if v2rayRunning && configure.GetConnectedServers() != nil {
@@ -320,21 +331,16 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	which.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
 }
 
-func IsSupported(which configure.Which) (bool, error) {
-	var (
-		tmpl *v2ray.Template
-		err  error
-	)
-
-	tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
+func isSupportedObj(obj serverObj.ServerObj) (bool, error) {
+	tmpl := v2ray.NewEmptyTemplate(&configure.Setting{
 		RulePortMode: configure.WhitelistMode,
 		TcpFastOpen:  configure.Default,
 		MuxOn:        configure.No,
 		Transparent:  configure.TransparentClose,
 	})
-	tmpl.SetAPI(nil)
-	serverRaw, _ := which.LocateServerRaw()
-	err = tmpl.InsertMappingOutbound(serverRaw.ServerObj, "0", false, 0, "socks")
+	// The template is thrown away: SetAPI would start a traffic producer
+	// that nothing closes.
+	err := tmpl.InsertMappingOutbound(obj, "0", false, 0, "socks")
 	if err != nil {
 		if strings.Contains(err.Error(), "unsupported") {
 			return false, err
