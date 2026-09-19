@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,6 +16,52 @@ import (
 	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
+
+type HostState struct {
+	TransparentType   TransparentType `json:"transparentType"`
+	APIPort           int             `json:"apiPort"`
+	TunAutoRoute      bool            `json:"tunAutoRoute"`
+	TunTeardownScript string          `json:"tunTeardownScript"`
+}
+
+func GetHostState() (*HostState, error) {
+	var state HostState
+	found, err := getRecoveryState("hostState", &state)
+	if err != nil || !found {
+		return nil, err
+	}
+	return &state, nil
+}
+
+func SetHostState(state *HostState) error {
+	if state == nil {
+		return db.Delete("system", "hostState")
+	}
+	return db.Set("system", "hostState", state)
+}
+
+func GetSystemProxySnapshot(snapshot interface{}) (bool, error) {
+	return getRecoveryState("systemProxySnapshot", snapshot)
+}
+
+func SetSystemProxySnapshot(snapshot interface{}) error {
+	if snapshot == nil {
+		return db.Delete("system", "systemProxySnapshot")
+	}
+	return db.Set("system", "systemProxySnapshot", snapshot)
+}
+
+func getRecoveryState(key string, value interface{}) (bool, error) {
+	var raw string
+	err := db.GetDB().QueryRow("SELECT value FROM system_config WHERE key = ?", "system:"+key).Scan(&raw)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, jsoniter.Unmarshal([]byte(raw), value)
+}
 
 // isJSONFieldExists 检查原始 JSON 中是否存在指定字段。
 // 用于在迁移场景中判断字段是否由旧配置显式设置。

@@ -15,7 +15,38 @@ import (
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
+var recoverHostState = v2ray.RecoverHostState
+
+// recoverPendingHostState tears down what a start that never committed
+// left on the host. A teardown that fails is logged, not fatal: refusing
+// to start would leave the same state behind with no service to fix it.
+func recoverPendingHostState() {
+	state, err := configure.GetHostState()
+	if err != nil {
+		log.Warn("read pending host state: %v", err)
+		return
+	}
+	if state == nil {
+		var snapshot interface{}
+		found, err := configure.GetSystemProxySnapshot(&snapshot)
+		if err != nil || !found {
+			return
+		}
+		state = &configure.HostState{TransparentType: configure.TransparentSystemProxy}
+	}
+	log.Warn("recovering host state left by an interrupted start (transparent %v)", state.TransparentType)
+	if err := recoverHostState(state); err != nil {
+		// The marker stays so the next start tries again.
+		log.Warn("recover host state: %v", err)
+		return
+	}
+	if err := configure.SetHostState(nil); err != nil {
+		log.Warn("clear pending host state: %v", err)
+	}
+}
+
 func run() error {
+	recoverPendingHostState()
 	cleanup := func() {
 		fmt.Println("Quitting...")
 		v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
