@@ -17,3 +17,10 @@ func TestProcessCloseMarksExpectedStopBeforeCancel(t *testing.T) {
 		t.Fatal("Close() did not record the expected stop")
 	}
 }
+
+func TestLogInfoWriterEmptyWrite(t *testing.T) {
+	n, err := (logInfoWriter{}).Write(nil)
+	if n != 0 || err != nil {
+		t.Fatalf("empty write: n=%d, err=%v", n, err)
+	}
+}

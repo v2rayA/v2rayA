@@ -322,7 +322,7 @@ func GetLenSubscriptions() int {
 func GetLenSubscriptionServers(index int) int {
 	b, err := db.ListGet("touch", "subscriptions", index)
 	if err != nil {
-		log.Fatal("GetLenSubscriptionServers: %v", err)
+		panic(err)
 	}
 	return len(gjson.GetBytes(b, "servers").Array())
 }

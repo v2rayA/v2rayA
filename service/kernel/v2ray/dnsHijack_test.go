@@ -1,9 +1,11 @@
 package v2ray
 
 import (
+	"github.com/v2rayA/v2rayA/db/configure"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -93,4 +95,38 @@ func withPaths(t *testing.T, resolv, backup string) {
 	oldResolv, oldBackup := resolvPath, resolvBackupPath
 	resolvPath, resolvBackupPath = resolv, backup
 	t.Cleanup(func() { resolvPath, resolvBackupPath = oldResolv, oldBackup })
+}
+
+func TestResolvHijackerConcurrentResetRemove(t *testing.T) {
+	dir := t.TempDir()
+	resolv := filepath.Join(dir, "resolv.conf")
+	withPaths(t, resolv, filepath.Join(dir, "backup"))
+	original := "nameserver 192.0.2.53\n"
+	if err := os.WriteFile(resolv, []byte(original), 0644); err != nil {
+		t.Fatal(err)
+	}
+	previous := configure.GetSettingNotNil()
+	setting := *previous
+	setting.Transparent = configure.TransparentFollowRule
+	if err := configure.SetSetting(&setting); err != nil {
+		t.Fatal(err)
+	}
+	defer configure.SetSetting(previous)
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 20 {
+				resetResolvHijacker()
+				removeResolvHijacker()
+			}
+		}()
+	}
+	wg.Wait()
+	removeResolvHijacker()
+	got, err := os.ReadFile(resolv)
+	if err != nil || string(got) != original {
+		t.Fatalf("resolver not restored: %q, %v", got, err)
+	}
 }

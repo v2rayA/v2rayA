@@ -82,59 +82,61 @@ func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func(
 	go func() {
 		const product = "observatory"
 		var conn *grpc.ClientConn
-	nextLoop:
+		defer func() {
+			if conn != nil {
+				_ = conn.Close()
+			}
+		}()
+		ticker := time.NewTicker(ApiFeedInterval)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-closed:
 				return
-			default:
+			case <-ticker.C:
 			}
 			p := ProcessManager.Process()
 			if p == nil {
-				time.Sleep(ApiFeedInterval)
 				continue
 			}
 			// Set up a connection to the server.
 			if conn == nil {
 				ctx, cancel := context.WithTimeout(context.Background(), ApiFeedInterval)
-				defer cancel()
 				c, err := grpc.DialContext(
 					ctx,
 					net.JoinHostPort("127.0.0.1", strconv.Itoa(apiPort)),
 					grpc.WithInsecure(),
 					grpc.WithBlock(),
 				)
+				cancel()
 				if err != nil {
 					log.Warn("ObservatoryProducer: did not connect: %v", err)
-					continue nextLoop
+					continue
 				}
-				defer c.Close()
 				conn = c
 			}
 			resps, err := getObservatoryResponses(conn, observatoryTags)
 			if err != nil {
 				if status.Code(err) == codes.Unavailable {
-					// the connection is reliable, and reconnect
+					_ = conn.Close()
 					conn = nil
-					continue nextLoop
+					continue
 				}
 				log.Warn("ObservatoryProducer: %v", err)
 			} else {
 				css := configure.GetConnectedServers()
 				for _, r := range resps {
 					outboundStatus := r.Resp.GetStatus().GetStatus()
-					os := make([]OutboundStatus, len(outboundStatus))
-					for i := range outboundStatus {
-						_ = mapper.AutoMapper(outboundStatus[i], &os[i])
-						index := p.tag2WhichIndex[os[i].OutboundTag]
-						if index >= css.Len() {
-							continue nextLoop
+					os := make([]OutboundStatus, 0, len(outboundStatus))
+					for _, observed := range outboundStatus {
+						index, ok := p.tag2WhichIndex[observed.OutboundTag]
+						if !ok || index < 0 || index >= css.Len() {
+							continue
 						}
-						os[i].Which = css.Get()[index]
-						var w []configure.Which
-						for _, v := range css.Get() {
-							w = append(w, *v)
-						}
+						var s OutboundStatus
+						_ = mapper.AutoMapper(observed, &s)
+						s.Which = css.Get()[index]
+						os = append(os, s)
 					}
 					msg := gin.H{
 						"outboundName":   r.OutboundName,
@@ -143,7 +145,6 @@ func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func(
 					ApiFeed.ProductMessage(product, msg)
 				}
 			}
-			time.Sleep(ApiFeedInterval)
 		}
 	}()
 	return func() {
