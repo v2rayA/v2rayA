@@ -392,12 +392,13 @@ export function parseShareLink(url: string): ShareForm | null {
       privateKey: decodeSafe(u.username || ""),
       publicKey: u.params.publicKey || "",
       localAddress: u.params.address || "",
-      dns: u.params.dns || "",
       mtu: u.params.mtu || "",
       allowedIPs: u.params.allowedIPs || "",
       persistentKeepalive: u.params.keepAlive || "",
       preSharedKey: u.params.preSharedKey || "",
-      endpoint: u.params.endpoint || "",
+      reserved: u.params.reserved || "",
+      workers: u.params.workers || "",
+      kernelMode: u.params.kernelMode === "true",
     };
   }
   return null;
@@ -806,6 +807,9 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       if (srcObj.persistentKeepalive)
         query.keepAlive = srcObj.persistentKeepalive;
       if (srcObj.preSharedKey) query.preSharedKey = srcObj.preSharedKey;
+      if (srcObj.reserved) query.reserved = srcObj.reserved;
+      if (srcObj.workers) query.workers = srcObj.workers;
+      if (srcObj.kernelMode) query.kernelMode = "true";
       return buildURL({
         protocol: "wireguard",
         username: srcObj.privateKey,

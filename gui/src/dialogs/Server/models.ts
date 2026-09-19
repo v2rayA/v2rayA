@@ -202,12 +202,13 @@ export const wireguardModel = () => ({
   publicKey: "",
   privateKey: "",
   localAddress: "",
-  dns: "",
   mtu: "",
   allowedIPs: "",
   persistentKeepalive: "",
   preSharedKey: "",
-  endpoint: "",
+  reserved: "",
+  workers: "",
+  kernelMode: false,
 });
 export type WireguardModel = ReturnType<typeof wireguardModel>;
 

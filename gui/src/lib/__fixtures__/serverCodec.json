@@ -302,12 +302,13 @@
       "privateKey": "PRIVATEKEY=",
       "publicKey": "PUBKEY=",
       "localAddress": "10.0.0.2/32",
-      "dns": "",
       "mtu": "1420",
       "allowedIPs": "0.0.0.0/0",
       "persistentKeepalive": "25",
       "preSharedKey": "",
-      "endpoint": ""
+      "reserved": "",
+      "workers": "",
+      "kernelMode": false
     },
     "back": "wireguard://PRIVATEKEY%3D@1.2.3.4:51820/?publicKey=PUBKEY%3D&address=10.0.0.2%2F32&mtu=1420&allowedIPs=0.0.0.0%2F0&keepAlive=25#wg node"
   }

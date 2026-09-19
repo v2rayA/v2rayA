@@ -62,11 +62,16 @@ const activeForm = computed(() => forms[protocol.value]);
 const activeKey = computed(() => modelKey(protocol.value));
 
 onMounted(async () => {
+  // a node that could not be loaded must not be saved over from the
+  // defaults, so the dialog closes with the error
   try {
-    if (!(await editor.load()))
+    if (!(await editor.load())) {
       notify.error(t("sharing.failed", { message: t("common.fail") }));
+      emit("close");
+    }
   } catch (err) {
     notify.error(t("sharing.failed", { message: errorText(err) }));
+    emit("close");
   } finally {
     loading.value = false;
   }
@@ -128,8 +133,8 @@ async function save() {
         {{ t(readonly ? "operations.confirm" : "operations.cancel") }}
       </v-btn>
       <v-btn
-        variant="flat"
         v-if="!readonly"
+        variant="flat"
         color="primary"
         :loading="saving"
         :disabled="loading"
