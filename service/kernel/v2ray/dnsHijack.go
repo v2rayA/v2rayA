@@ -81,6 +81,7 @@ const (
 )
 
 var hijacker *ResolvHijacker
+var hijackerMu sync.Mutex
 
 // HijackResolv 将 /etc/resolv.conf 的 nameserver 设置为 127.2.0.17。
 // 当新 DNS 模块启用时，127.2.0.17:53 的流量被 iptables 规则重定向到 :52353（新 DNS 模块端口）。
@@ -187,6 +188,8 @@ func resetResolvHijacker() {
 	if runtime.GOOS != "linux" {
 		return
 	}
+	hijackerMu.Lock()
+	defer hijackerMu.Unlock()
 	if hijacker != nil {
 		hijacker.Close()
 	}
@@ -197,6 +200,8 @@ func removeResolvHijacker() {
 	if runtime.GOOS != "linux" {
 		return
 	}
+	hijackerMu.Lock()
+	defer hijackerMu.Unlock()
 	if hijacker != nil {
 		hijacker.Close()
 		if hijacker.localDNS && !restoreResolv() {

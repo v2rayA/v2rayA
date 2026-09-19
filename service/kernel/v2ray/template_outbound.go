@@ -294,12 +294,9 @@ func (t *Template) resolveOutbounds(
 				Backend:     resolveEffectiveBackend(obj, setting),
 			})
 			if err != nil {
-				// Store server info for balancer outbound (use first balancer's info)
-				if len(balancers) > 0 {
-					t.serverInfoMap[outboundTag] = balancers[0].serverInfo
-				}
 				return nil, nil, err
 			}
+			t.serverInfoMap[outboundTag] = balancers[0].serverInfo
 			extraOutbounds = append(extraOutbounds, c.ExtraOutbounds...)
 			for _, v := range balancers {
 				c.CoreOutbound.Balancers = append(c.CoreOutbound.Balancers, v.name)

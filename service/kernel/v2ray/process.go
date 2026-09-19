@@ -107,7 +107,7 @@ func NewProcess(tmpl *Template,
 		return nil, err
 	}
 	process.proc = proc
-	var unexpectedExiting bool
+	var unexpectedExiting atomic.Bool
 	go func() {
 		defer close(process.done)
 		p, e := proc.Wait()
@@ -127,7 +127,7 @@ func NewProcess(tmpl *Template,
 			t = append(t, e.Error())
 		}
 		log.Warn("v2ray-core: %v", strings.Join(t, ": "))
-		unexpectedExiting = true
+		unexpectedExiting.Store(true)
 	}()
 	// ports to check
 	portList := []string{strconv.Itoa(tmpl.ApiPort)}
@@ -141,7 +141,7 @@ func NewProcess(tmpl *Template,
 			i++
 			continue
 		}
-		if unexpectedExiting {
+		if unexpectedExiting.Load() {
 			return nil, common.Coded("CORE_START_FAILED", fmt.Errorf("v2raya_core exited right after starting; the reason is in the v2rayA log"), map[string]interface{}{"detail": "v2raya_core exited right after starting; the reason is in the v2rayA log"})
 		}
 		if time.Since(startTime) > startTimeOut {
@@ -160,6 +160,9 @@ type logInfoWriter struct {
 }
 
 func (w logInfoWriter) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
 	s := string(p)
 	// trim the ending \n
 	length := len(s)
@@ -200,9 +203,6 @@ func (p *Process) Close() error {
 		if err != nil {
 			return err
 		}
-	} else {
-		_, err := p.proc.Wait()
-		return err
 	}
 	return nil
 }

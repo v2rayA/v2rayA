@@ -349,6 +349,8 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 
 // Running reports if v2ray-core is running.
 func (m *CoreProcessManager) Running() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.p != nil
 }
 
