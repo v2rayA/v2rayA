@@ -201,3 +201,70 @@ func PutOutboundConnections(ctx *gin.Context) {
 	}
 	getTouch(ctx)
 }
+
+// PutOutboundSelection chooses the member a group routes through alone, or
+// returns the group to balancing when `which` is null. The member must be
+// connected in that group.
+func PutOutboundSelection(ctx *gin.Context) {
+	updatingMu.Lock()
+	if updating {
+		common.ResponseError(ctx, processingErr)
+		updatingMu.Unlock()
+		return
+	}
+	updating = true
+	updatingMu.Unlock()
+	defer func() {
+		updatingMu.Lock()
+		updating = false
+		updatingMu.Unlock()
+	}()
+
+	var data struct {
+		Outbound string           `json:"outbound"`
+		Which    *configure.Which `json:"which"`
+	}
+	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
+		common.ResponseError(ctx, badRequest("outbound selection", "request body must be {\"outbound\": string, \"which\": {...} | null}"))
+		return
+	}
+	link := ""
+	if data.Which != nil {
+		data.Which.Outbound = data.Outbound
+		if data.Which.TYPE == configure.ServerType {
+			data.Which.Sub = 0
+		}
+		member := false
+		if members := configure.GetConnectedServersByOutbound(data.Outbound); members != nil {
+			for _, m := range members.Get() {
+				if m.EqualTo(*data.Which) {
+					member = true
+					break
+				}
+			}
+		}
+		if !member {
+			common.ResponseError(ctx, logError(fmt.Errorf("the node is not a member of outbound %q", data.Outbound)))
+			return
+		}
+		sr, err := data.Which.LocateServerRaw()
+		if err != nil {
+			common.ResponseError(ctx, logError(err))
+			return
+		}
+		link = sr.ServerObj.ExportToURL()
+	}
+	setting := configure.GetOutboundSetting(data.Outbound)
+	setting.Selected = link
+	if err := configure.SetOutboundSetting(data.Outbound, setting); err != nil {
+		common.ResponseError(ctx, logError(err))
+		return
+	}
+	if v2ray.ProcessManager.Running() && configure.GetConnectedServers().Len() > 0 {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			common.ResponseError(ctx, common.Coded("INVALID_CONFIG", fmt.Errorf("invalid config: %w", err), map[string]interface{}{"detail": err.Error()}))
+			return
+		}
+	}
+	getTouch(ctx)
+}

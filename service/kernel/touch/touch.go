@@ -98,6 +98,7 @@ func GenerateTouch() (t Touch) {
 		}
 	}
 	t.ConnectedServers = configure.GetConnectedServers().Get()
+	markSelected(t.ConnectedServers)
 	//补充TYPE
 	for i := range t.Subscriptions {
 		t.Subscriptions[i].TYPE = configure.SubscriptionType
@@ -109,4 +110,24 @@ func GenerateTouch() (t Touch) {
 		t.Servers[i].TYPE = configure.ServerType
 	}
 	return
+}
+
+// markSelected flags the member each group routes through alone, when its
+// setting names one that is still a member.
+func markSelected(connected []*configure.Which) {
+	selected := make(map[string]string)
+	for _, w := range connected {
+		if _, ok := selected[w.Outbound]; !ok {
+			selected[w.Outbound] = configure.GetOutboundSetting(w.Outbound).Selected
+		}
+		link := selected[w.Outbound]
+		if link == "" {
+			continue
+		}
+		sr, err := w.LocateServerRaw()
+		if err != nil || sr.ServerObj == nil {
+			continue
+		}
+		w.Selected = sr.ServerObj.ExportToURL() == link
+	}
 }

@@ -153,6 +153,8 @@ type Which struct {
 	Latency  string    `json:"pingLatency,omitempty"` //历史遗留问题，前后端通信还是使用pingLatency这个名字，该值仅作为ping的返回值
 	Link     string    //optional
 	Outbound string    `json:"outbound"`
+	// Selected marks, in a touch, the member the group routes through alone.
+	Selected bool `json:"selected,omitempty"`
 }
 
 func (w *Which) EqualTo(another Which) (ok bool) {
