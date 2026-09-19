@@ -150,6 +150,14 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		})
 		tmpl.SetAPI(nil)
 	}
+	// Until the process manager owns the template, its API producers are
+	// ours to stop on an early return.
+	handedOver := false
+	defer func() {
+		if !handedOver {
+			_ = tmpl.Close()
+		}
+	}()
 	inboundPortMap := make([]string, len(vms))
 	pluginPortMap := make(map[int]int)
 	listenAddr := "127.0.0.1"
@@ -226,6 +234,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
 	v2ray.ProcessManager.SetLatencyTesting(true)
+	handedOver = true
 	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
 		v2ray.ProcessManager.SetLatencyTesting(false)
 		if v2rayRunning && configure.GetConnectedServers() != nil {

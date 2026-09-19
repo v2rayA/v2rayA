@@ -54,6 +54,14 @@ func NewProcess(tmpl *Template,
 			process.rollback(rollbackStage)
 		}
 	}()
+	// The template's API producers were started with it; a start that
+	// fails before the process owns them must stop them, or each failed
+	// start leaves a goroutine polling a port nothing listens on.
+	defer func() {
+		if err != nil {
+			_ = tmpl.Close()
+		}
+	}()
 
 	// DNS 模块由 v2raya-core 进程内启动（基于 dns_module 配置段），
 	// v2rayA 仅负责生成配置和在透明代理时应用防火墙规则。
@@ -80,11 +88,6 @@ func NewProcess(tmpl *Template,
 	defer func() {
 		if err != nil {
 			cancel()
-		}
-	}()
-	defer func() {
-		if err != nil {
-			_ = tmpl.Close()
 		}
 	}()
 	if tmpl.API == nil {
