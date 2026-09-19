@@ -306,6 +306,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// after the old process has been stopped.
 	resolv.CheckResolvConf()
 	if (t.Setting.Transparent == configure.TransparentGfwlist || t.Setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
+		_ = t.Close()
 		return asset.GFWListMissingError()
 	}
 

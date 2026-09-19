@@ -5,6 +5,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/v2rayA/v2rayA/common"
@@ -175,11 +176,11 @@ func (w *Which) EqualTo(another Which) (ok bool) {
 		return false
 	}
 }
-func (w *Which) Ping(timeout time.Duration) (err error) {
+func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 	if w.TYPE == SubscriptionType {
 		return fmt.Errorf("you cannot ping a subscription")
 	}
-	tsr, err := w.LocateServerRaw()
+	tsr, err := loc.Locate(w)
 	if err != nil {
 		return
 	}
@@ -210,11 +211,45 @@ func (w *Which) Ping(timeout time.Duration) (err error) {
 	return
 }
 
-func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
+// Locator resolves whiches against one read of each server list. Reading and
+// parsing every stored node per lookup made a loop over n nodes cost n reads,
+// which a latency test over a large subscription turned into seconds.
+type Locator struct {
+	serversOnce       sync.Once
+	servers           []ServerRaw
+	subscriptionsOnce sync.Once
+	subscriptions     []SubscriptionRaw
+}
+
+// NewLocator reads each list on its first use; a Locator is safe for
+// concurrent lookups.
+func NewLocator() *Locator {
+	return &Locator{}
+}
+
+// LocatorOf resolves against lists the caller has already read.
+func LocatorOf(servers []ServerRaw, subscriptions []SubscriptionRaw) *Locator {
+	l := &Locator{servers: servers, subscriptions: subscriptions}
+	l.serversOnce.Do(func() {})
+	l.subscriptionsOnce.Do(func() {})
+	return l
+}
+
+func (l *Locator) Servers() []ServerRaw {
+	l.serversOnce.Do(func() { l.servers = GetServers() })
+	return l.servers
+}
+
+func (l *Locator) Subscriptions() []SubscriptionRaw {
+	l.subscriptionsOnce.Do(func() { l.subscriptions = GetSubscriptions() })
+	return l.subscriptions
+}
+
+func (l *Locator) Locate(w *Which) (sr *ServerRaw, err error) {
 	ind := w.ID - 1 //转化为下标
 	switch w.TYPE {
 	case ServerType:
-		servers := GetServers()
+		servers := l.Servers()
 		if ind < 0 || ind >= len(servers) {
 			return nil, common.Coded("SERVER_NOT_FOUND", fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", w.ID, len(servers)), map[string]interface{}{
 				"id":    w.ID,
@@ -223,7 +258,7 @@ func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 		}
 		return &servers[ind], nil
 	case SubscriptionServerType:
-		subscriptions := GetSubscriptions()
+		subscriptions := l.Subscriptions()
 		if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
 			return nil, common.Coded("SUBSCRIPTION_SERVER_NOT_FOUND", fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", w.ID, w.Sub+1), map[string]interface{}{
 				"id":  w.ID,
@@ -236,31 +271,19 @@ func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
 	}
 }
 
+// LocateServerRaw reads the lists for this one lookup; loops use a Locator.
+func (w *Which) LocateServerRaw() (sr *ServerRaw, err error) {
+	return NewLocator().Locate(w)
+}
+
 func (ws *Whiches) FillLinks() (err error) {
-	servers := GetServers()
-	subscriptions := GetSubscriptions()
+	loc := NewLocator()
 	for _, w := range ws.Touches {
-		ind := w.ID - 1 //转化为下标
-		switch w.TYPE {
-		case ServerType:
-			if ind < 0 || ind >= len(servers) {
-				return common.Coded("SERVER_NOT_FOUND", fmt.Errorf("server #%d does not exist (there are %d servers); reload the page", w.ID, len(servers)), map[string]interface{}{
-					"id":    w.ID,
-					"count": len(servers),
-				})
-			}
-			w.Link = servers[ind].ServerObj.ExportToURL()
-		case SubscriptionServerType:
-			if w.Sub < 0 || w.Sub >= len(subscriptions) || ind < 0 || ind >= len(subscriptions[w.Sub].Servers) {
-				return common.Coded("SUBSCRIPTION_SERVER_NOT_FOUND", fmt.Errorf("server #%d of subscription #%d does not exist; reload the page", w.ID, w.Sub+1), map[string]interface{}{
-					"id":  w.ID,
-					"sub": w.Sub + 1,
-				})
-			}
-			w.Link = subscriptions[w.Sub].Servers[ind].ServerObj.ExportToURL()
-		default:
-			return common.Coded("UNKNOWN_ITEM_TYPE", fmt.Errorf("unknown item type %q; expected %q or %q", w.TYPE, ServerType, SubscriptionServerType), map[string]interface{}{"type": string(w.TYPE)})
+		sr, err := loc.Locate(w)
+		if err != nil {
+			return err
 		}
+		w.Link = sr.ServerObj.ExportToURL()
 	}
 	return nil
 }
@@ -286,8 +309,9 @@ func (ws *Whiches) SaveLatencies() (err error) {
 		}
 	}
 	// set servers
+	loc := NewLocator()
 	for index, which := range serverIndexes {
-		sRaw, err := which.LocateServerRaw()
+		sRaw, err := loc.Locate(which)
 		if err != nil {
 			return err
 		}

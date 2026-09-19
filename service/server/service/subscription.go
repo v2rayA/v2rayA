@@ -17,6 +17,7 @@ import (
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj/clash"
 	"github.com/v2rayA/v2rayA/kernel/touch"
@@ -265,9 +266,10 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	// serverObj.ServerObj is a pointer(interface), and shouldn't be as a key
 	link2Raw := make(map[string]*configure.ServerRaw)
 	connectedVmessInfo2CssIndex := make(map[string][]int)
+	loc := configure.NewLocator()
 	for i, cs := range css.Get() {
 		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
-			if sRaw, err := cs.LocateServerRaw(); err != nil {
+			if sRaw, err := loc.Locate(cs); err != nil {
 				return err
 			} else {
 				if sRaw.ServerObj == nil {
@@ -419,35 +421,71 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		return ReplaceOutboundConnections(subscriptionServer.Outbound, remaining)
 	}
 
-	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {
-		subscriptionServer.ID = i // Server IDs start with 1
-		sub := configure.GetSubscription(index)
-		if sub == nil {
-			return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
+	// One replacement for the whole subscription: connecting the members one
+	// by one restarted the core once per node.
+	sub := configure.GetSubscription(index)
+	if sub == nil {
+		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
+	}
+	backup := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
+	var existing []*configure.Which
+	if backup != nil {
+		existing = backup.Get()
+	}
+	members := autoSelectMembers(index, sub, existing)
+	if len(members) == len(existing) {
+		return nil
+	}
+	// What Connect did once per node: the asset check and the ip forward
+	// reconciliation, then the store, then the core.
+	if err := checkSupport(nil); err != nil {
+		return err
+	}
+	if setting := GetSetting(); setting.IpForward != ipforward.IsIpForwardOn() {
+		if e := ipforward.WriteIpForward(setting.IpForward); e != nil {
+			log.Warn("[AutoSelect] %v", e)
 		}
-		serverObj := sub.Servers[i-1].ServerObj // ServerObj IDs start with 0
-		if serverObj == nil {
-			log.Warn("[AutoSelect] Skipping server %d in subscription %d: nil ServerObj", i, index)
-			continue
-		}
-		serverName := serverObj.GetName()
-
-		// Workaround for partial SS support in v2fly and xray
-		isSupported, _ := IsSupported(subscriptionServer)
-		if !isSupported {
-			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
-			continue
-		}
-
-		err := Connect(&subscriptionServer)
-		if err == nil {
-			log.Info("[AutoSelect] Automatically selected server: %v", serverName)
-		} else {
-			log.Error("[AutoSelect] Failed to connect to server: %v", serverName)
+	}
+	if err := ReplaceOutboundConnections(subscriptionServer.Outbound, members); err != nil {
+		return err
+	}
+	// Connect started the core for a selection made while it was stopped,
+	// and dropped the selection when that failed.
+	if !v2ray.ProcessManager.Running() {
+		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			if backup != nil && backup.Len() > 0 {
+				_ = configure.OverwriteConnects(backup)
+			} else {
+				_ = configure.ClearConnects(subscriptionServer.Outbound)
+			}
 			return err
 		}
 	}
 	return nil
+}
+
+// autoSelectMembers appends every supported node of the subscription to the
+// members already in the proxy group.
+func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.Which) []configure.Which {
+	members := make([]configure.Which, 0, len(existing)+len(sub.Servers))
+	for _, connected := range existing {
+		members = append(members, *connected)
+	}
+	for i, server := range sub.Servers {
+		if server.ServerObj == nil {
+			log.Warn("[AutoSelect] Skipping server %d in subscription %d: nil ServerObj", i+1, index)
+			continue
+		}
+		serverName := server.ServerObj.GetName()
+		// Workaround for partial SS support in v2fly and xray
+		if supported, _ := isSupportedObj(server.ServerObj); !supported {
+			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
+			continue
+		}
+		members = append(members, configure.Which{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
+		log.Info("[AutoSelect] Automatically selected server: %v", serverName)
+	}
+	return members
 }
 
 func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
