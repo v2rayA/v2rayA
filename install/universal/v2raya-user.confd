@@ -1,0 +1,38 @@
+# /etc/conf.d/v2raya-user: config file for /etc/init.d/v2raya-user.<user>
+#
+# If you want to pass any options while running the v2raya daemon, you can do so here by setting the ${V2RAYA_OPT} variable.
+# e.g.: V2RAYA_OPTS="--address 0.0.0.0:2017 --v2ray-bin /usr/bin/v2raya_core --config=/home/<user>/.config/v2raya"
+#
+V2RAYA_OPTS="--log-disable-timestamp"
+
+# Note.1: Quotes is not encouraged inside the variables here.
+# Note.2: Absolute path is recommended in the options like --config or --log-file.
+#
+# Available options (`v2raya --help`):
+# -a, --address string             Listening address (default "0.0.0.0:2017")
+#     --socket string              Unix socket path for listening
+#     --baseurl string             Base URL path prefix (default "/")
+# -b, --v2ray-bin string           Executable v2ray binary path. Auto-detect if put it empty.
+# -c, --config string              v2rayA configuration directory
+#     --v2ray-confdir string       Additional v2ray config directory, files in it will be combined with config generat
+#     --tinytun-bin string         Deprecated and ignored: the TUN is built into the core. Kept so service units that
+#     --v2ray-assetsdir string     v2ray-core assets directory for searching and downloading files like geoip.dat. Thi
+#     --core-startup-timeout int   Timeout duration in seconds for starting v2ray or xray core. On devices with lower
+#     --transparent-hook string    the executable file to run in the transparent proxy life-cycle. v2rayA will pass in
+#     --core-hook string           the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --
+#     --plugin-manager string      the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --
+#     --webdir string              v2rayA web files directory. use embedded files if not specify.
+#     --ipv6-support string        Optional values: auto, on, off. Make sure your IPv6 network works fine before you t
+#     --nftables-support string    Optional values: auto, on, off. Experimental feature. Make sure you have installed
+#     --passcheckroot              Skip privilege checking. Use it only when you cannot start v2raya but confirm you h
+#     --reset-password
+#     --log-level string           Optional values: trace, debug, info, warn or error (default "info")
+#     --log-file string            The path of log file
+#     --log-max-days int           Maximum number of days to keep log files (default 3)
+#     --log-disable-color
+#     --log-disable-timestamp      Intended for use with systemd/journald to avoid duplicate timestamps in logs. This
+#     --lite                       Lite mode for non-root and non-linux users
+#     --win-envfile string         [Windows Only] Path to environment variables file to load before service starts
+#     --version
+#     --report string              Print report
+# -h, --help                       print this help menu

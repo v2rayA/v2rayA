@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/tidwall/gjson"
+	"github.com/v2fly/v2ray-core/v5/app/router/routercommon"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/files"
 	"github.com/v2rayA/v2rayA/common/httpClient"
@@ -20,6 +21,7 @@ import (
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
 type GFWList struct {
@@ -138,6 +140,21 @@ func httpGet(url string) (data string, err error) {
 	return string(b), nil
 }
 
+func installGeoSiteFile(downloadedPath, targetPath string) error {
+	data, err := os.ReadFile(downloadedPath)
+	if err != nil {
+		return err
+	}
+	var sites routercommon.GeoSiteList
+	if err := proto.Unmarshal(data, &sites); err != nil {
+		return fmt.Errorf("downloaded GFWList is not a valid geosite database: %w", err)
+	}
+	if len(sites.Entry) == 0 {
+		return fmt.Errorf("downloaded GFWList contains no geosite entries")
+	}
+	return os.Rename(downloadedPath, targetPath)
+}
+
 func UpdateLocalGFWListByCustomLink(downloadLink string) (localGFWListVersionAfterUpdate string, err error) {
 	pathSiteDat, err := asset.GetV2rayLocationAsset("LoyalsoldierSite.dat")
 	if err != nil {
@@ -156,7 +173,7 @@ func UpdateLocalGFWListByCustomLink(downloadLink string) (localGFWListVersionAft
 		return "", err
 	}
 	localGFWListVersionAfterUpdate = t.Local().Format("2006-01-02")
-	if err := os.Rename(pathSiteDat+".new", pathSiteDat); err != nil {
+	if err := installGeoSiteFile(pathSiteDat+".new", pathSiteDat); err != nil {
 		return "", err
 	}
 	log.Info("download: %v -> SUCCESS\n", downloadLink)

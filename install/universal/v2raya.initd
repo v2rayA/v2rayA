@@ -1,0 +1,24 @@
+#!/sbin/openrc-run
+# Copyright 2021 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+name="v2rayA"
+description="A web GUI client of Project V with transparent proxy"
+command="/usr/bin/v2raya"
+command_args="${V2RAYA_OPTS}"
+error_log="/var/log/v2raya/error.log"
+pidfile="/run/${RC_SVCNAME}.pid"
+command_background="yes"
+rc_ulimit="-n 30000"
+rc_cgroup_cleanup="yes"
+
+depend() {
+	need net
+	after net
+}
+
+start_pre() {
+	mkdir -p /var/log/v2raya
+
+	eend $?
+}

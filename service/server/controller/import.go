@@ -11,6 +11,11 @@ import (
 )
 
 func PostImport(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var body struct {
 		URL string `json:"url"`
 		// Kind is "server" or "subscription". Empty means the client did not
@@ -23,7 +28,7 @@ func PostImport(ctx *gin.Context) {
 		return
 	}
 
-	var which *configure.Which
+	var which *configure.NodeRef
 	if body.Which != nil {
 		b, _ := jsoniter.Marshal(body.Which)
 		err := jsoniter.Unmarshal(b, &which)

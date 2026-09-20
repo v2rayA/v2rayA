@@ -1,13 +1,13 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -19,6 +19,11 @@ func GetOutbounds(ctx *gin.Context) {
 }
 
 func PostOutbound(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		Outbound string `json:"outbound"`
 	}
@@ -41,6 +46,11 @@ func GetOutbound(ctx *gin.Context) {
 }
 
 func PutOutbound(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		Outbound string                    `json:"outbound"`
 		Setting  configure.OutboundSetting `json:"setting"`
@@ -49,17 +59,21 @@ func PutOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
-	if err := configure.SetOutboundSetting(data.Outbound, data.Setting); err != nil {
-		common.ResponseError(ctx, logError(err))
-		return
-	}
-	if v2ray.ProcessManager.Running() && configure.GetConnectedServers().Len() > 0 {
-		err := v2ray.UpdateV2RayConfig()
-		if err != nil {
-			invalidConfigErr := fmt.Errorf("invalid config: %w", err)
-			common.ResponseError(ctx, common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": err.Error()}))
+	err := service.ApplyCoreConfig(func() func() error {
+		previous := configure.GetOutboundSetting(data.Outbound)
+		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
+	}, func() error {
+		return configure.SetOutboundSetting(data.Outbound, data.Setting)
+	})
+	if err != nil {
+		var failure *service.ApplyCoreConfigError
+		if !errors.As(err, &failure) {
+			common.ResponseError(ctx, logError(err))
 			return
 		}
+		invalidConfigErr := fmt.Errorf("invalid config: %w", failure)
+		common.ResponseError(ctx, common.Coded("INVALID_CONFIG", invalidConfigErr, map[string]interface{}{"detail": failure.Error()}))
+		return
 	}
 	common.ResponseSuccess(ctx, nil)
 }
@@ -99,7 +113,7 @@ func DeleteOutbound(ctx *gin.Context) {
 	}
 
 	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {
-		if err := service.Disconnect(configure.Which{Outbound: data.Outbound}, true); err != nil {
+		if err := service.Disconnect(configure.NodeRef{Outbound: data.Outbound}, true); err != nil {
 			common.ResponseError(ctx, logError(err))
 			return
 		}
@@ -145,7 +159,7 @@ func PutOutboundConnections(ctx *gin.Context) {
 		}
 	}
 
-	whiches := make([]configure.Which, 0, len(data.Touches))
+	whiches := make([]configure.NodeRef, 0, len(data.Touches))
 	for i, w := range data.Touches {
 		rawType := w.TYPE
 		if rawType == "" {
@@ -171,7 +185,7 @@ func PutOutboundConnections(ctx *gin.Context) {
 		if typ == configure.ServerType {
 			sub = 0
 		}
-		whiches = append(whiches, configure.Which{
+		whiches = append(whiches, configure.NodeRef{
 			TYPE:     typ,
 			ID:       w.ID,
 			Sub:      sub,
@@ -197,8 +211,8 @@ func PutOutboundSelection(ctx *gin.Context) {
 	defer release()
 
 	var data struct {
-		Outbound string           `json:"outbound"`
-		Which    *configure.Which `json:"which"`
+		Outbound string             `json:"outbound"`
+		Which    *configure.NodeRef `json:"which"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
 		common.ResponseError(ctx, badRequest("outbound selection", "request body must be {\"outbound\": string, \"which\": {...} | null}"))
@@ -230,17 +244,22 @@ func PutOutboundSelection(ctx *gin.Context) {
 		}
 		link = sr.ServerObj.ExportToURL()
 	}
-	setting := configure.GetOutboundSetting(data.Outbound)
-	setting.Selected = link
-	if err := configure.SetOutboundSetting(data.Outbound, setting); err != nil {
-		common.ResponseError(ctx, logError(err))
-		return
-	}
-	if v2ray.ProcessManager.Running() && configure.GetConnectedServers().Len() > 0 {
-		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			common.ResponseError(ctx, common.Coded("INVALID_CONFIG", fmt.Errorf("invalid config: %w", err), map[string]interface{}{"detail": err.Error()}))
+	err := service.ApplyCoreConfig(func() func() error {
+		previous := configure.GetOutboundSetting(data.Outbound)
+		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
+	}, func() error {
+		setting := configure.GetOutboundSetting(data.Outbound)
+		setting.Selected = link
+		return configure.SetOutboundSetting(data.Outbound, setting)
+	})
+	if err != nil {
+		var failure *service.ApplyCoreConfigError
+		if !errors.As(err, &failure) {
+			common.ResponseError(ctx, logError(err))
 			return
 		}
+		common.ResponseError(ctx, common.Coded("INVALID_CONFIG", fmt.Errorf("invalid config: %w", failure.UpdateErr), map[string]interface{}{"detail": failure.UpdateErr.Error()}))
+		return
 	}
 	getTouch(ctx)
 }

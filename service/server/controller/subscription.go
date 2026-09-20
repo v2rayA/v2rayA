@@ -10,6 +10,12 @@ import (
 
 /*修改Remarks*/
 func PatchSubscription(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
+
 	var data struct {
 		Subscription touch.Subscription `json:"subscription"`
 	}
@@ -36,7 +42,7 @@ func PutSubscription(ctx *gin.Context) {
 	}
 	defer release()
 
-	var data configure.Which
+	var data configure.NodeRef
 	err := ctx.ShouldBindJSON(&data)
 	index := data.ID - 1
 	if err != nil || data.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {

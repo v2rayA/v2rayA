@@ -16,7 +16,7 @@ func PostConnection(ctx *gin.Context) {
 	}
 	defer release()
 
-	var which configure.Which
+	var which configure.NodeRef
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
 		common.ResponseError(ctx, badRequest("server item", "request body must be a server item with _type, id, sub and outbound"))
@@ -38,7 +38,7 @@ func DeleteConnection(ctx *gin.Context) {
 	}
 	defer release()
 
-	var which configure.Which
+	var which configure.NodeRef
 	err := ctx.ShouldBindJSON(&which)
 	if err != nil {
 		common.ResponseError(ctx, badRequest("server item", "request body must be a server item with _type, id, sub and outbound"))

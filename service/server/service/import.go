@@ -39,7 +39,7 @@ func subscriptionHost(source string) string {
 // from its scheme. Callers that know which one they hold should use
 // ImportServer or ImportSubscription instead; this wrapper only exists for
 // clients that predate the "kind" field of POST /api/import.
-func Import(url string, which *configure.Which) (err error) {
+func Import(url string, which *configure.NodeRef) (err error) {
 	log.Trace("Import: received url=%v, which=%+v", url, which)
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -48,6 +48,9 @@ func Import(url string, which *configure.Which) (err error) {
 	// "http" and "https" are deliberately absent: a bare http(s) URL has
 	// always meant a subscription here, and single HTTP proxy nodes are
 	// written as http-proxy:// or https-proxy://.
+	// "ssr" stays so an ssr:// link reaches the server importer, which
+	// answers that ShadowsocksR is not supported instead of treating the
+	// link as a subscription address.
 	supportedPrefix := []string{"vmess", "vless", "ss", "ssr", "trojan", "trojan-go", "http-proxy",
 		"https-proxy", "socks5", "http2", "juicity", "tuic", "hysteria", "hysteria2", "anytls",
 		"shadowsocks", "shadowsocksr", "hy1", "hy2", "mcore", "mcp", "plugin", "wireguard"}
@@ -87,7 +90,7 @@ func isBareHttpProxyLink(rawURL string) bool {
 // ImportServer imports one server link, or several separated by newlines,
 // or a JSON config. A non-nil which with ID > 0 replaces that server instead
 // of appending.
-func ImportServer(url string, which *configure.Which) (err error) {
+func ImportServer(url string, which *configure.NodeRef) (err error) {
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {

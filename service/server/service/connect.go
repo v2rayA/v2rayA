@@ -33,7 +33,7 @@ func StartV2ray() (err error) {
 	return v2ray.UpdateV2RayConfig()
 }
 
-func Disconnect(which configure.Which, clearOutbound bool) (err error) {
+func Disconnect(which configure.NodeRef, clearOutbound bool) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to disconnect: %w", err)
@@ -75,7 +75,7 @@ func checkAssetsExist(setting *configure.Setting) error {
 	return nil
 }
 
-func checkSupport(toAppend []*configure.Which) (err error) {
+func checkSupport(toAppend []*configure.NodeRef) (err error) {
 	setting := GetSetting()
 	if err = checkAssetsExist(setting); err != nil {
 		return err
@@ -85,7 +85,7 @@ func checkSupport(toAppend []*configure.Which) (err error) {
 	return nil
 }
 
-func Connect(which *configure.Which) (err error) {
+func Connect(which *configure.NodeRef) (err error) {
 	log.Trace("Connect: begin")
 	defer log.Trace("Connect: done")
 	defer func() {
@@ -105,7 +105,7 @@ func Connect(which *configure.Which) (err error) {
 	setting := GetSetting()
 	// checkSupport only verifies the geo assets now; the load-balancing
 	// restriction it used to report is gone, so any error it returns is fatal.
-	if err = checkSupport([]*configure.Which{which}); err != nil {
+	if err = checkSupport([]*configure.NodeRef{which}); err != nil {
 		return err
 	}
 	//configure the ip forward
@@ -147,7 +147,7 @@ func Connect(which *configure.Which) (err error) {
 
 // ReplaceOutboundConnections atomically replaces members of one outbound group.
 // It updates v2ray config once after DB changes, and rolls back on failure.
-func ReplaceOutboundConnections(outbound string, touches []configure.Which) (err error) {
+func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (err error) {
 	log.Trace("ReplaceOutboundConnections: begin")
 	defer log.Trace("ReplaceOutboundConnections: done")
 	defer func() {
@@ -161,7 +161,7 @@ func ReplaceOutboundConnections(outbound string, touches []configure.Which) (err
 	}
 
 	// Normalize outbound and deduplicate touches.
-	normalized := make([]configure.Which, 0, len(touches))
+	normalized := make([]configure.NodeRef, 0, len(touches))
 	seen := make(map[string]struct{})
 	for i, wt := range touches {
 		if wt.ID <= 0 {
@@ -200,7 +200,7 @@ func ReplaceOutboundConnections(outbound string, touches []configure.Which) (err
 	if len(normalized) == 0 {
 		err = configure.ClearConnects(outbound)
 	} else {
-		whiches := new(configure.Whiches)
+		whiches := new(configure.NodeRefs)
 		for i := range normalized {
 			whiches.Add(normalized[i])
 		}

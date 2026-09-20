@@ -13,6 +13,11 @@ func GetDomainsExcluded(ctx *gin.Context) {
 }
 
 func PutDomainsExcluded(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		DomainList string `json:"domains"`
 	}

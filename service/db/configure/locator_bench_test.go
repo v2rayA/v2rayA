@@ -24,9 +24,9 @@ func BenchmarkLocateAll(b *testing.B) {
 	const n = 1000
 	sub := seedSubscription(b, n)
 	defer RemoveSubscriptions([]int{sub})
-	whiches := make([]*Which, n)
+	whiches := make([]*NodeRef, n)
 	for i := range whiches {
-		whiches[i] = &Which{TYPE: SubscriptionServerType, ID: i + 1, Sub: sub}
+		whiches[i] = &NodeRef{TYPE: SubscriptionServerType, ID: i + 1, Sub: sub}
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -42,9 +42,9 @@ func BenchmarkLocatorAll(b *testing.B) {
 	const n = 1000
 	sub := seedSubscription(b, n)
 	defer RemoveSubscriptions([]int{sub})
-	whiches := make([]*Which, n)
+	whiches := make([]*NodeRef, n)
 	for i := range whiches {
-		whiches[i] = &Which{TYPE: SubscriptionServerType, ID: i + 1, Sub: sub}
+		whiches[i] = &NodeRef{TYPE: SubscriptionServerType, ID: i + 1, Sub: sub}
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

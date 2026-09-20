@@ -275,11 +275,7 @@ func (p *clashProxy) link() (string, error) {
 		userinfo := base64.RawURLEncoding.EncodeToString([]byte(p.Cipher + ":" + p.Password))
 		return buildLink("ss", url.User(userinfo), p.hostPort(), q, p.Name), nil
 	case "ssr":
-		b64 := func(s string) string { return base64.RawURLEncoding.EncodeToString([]byte(s)) }
-		body := fmt.Sprintf("%s:%d:%s:%s:%s:%s/?obfsparam=%s&protoparam=%s&remarks=%s",
-			p.Server, p.Port, p.Protocol, p.Cipher, p.Obfs, b64(p.Password),
-			b64(p.ObfsParam), b64(p.ProtocolParam), b64(p.Name))
-		return "ssr://" + b64(body), nil
+		return "", fmt.Errorf("ShadowsocksR is not supported")
 	case "hysteria2":
 		setIf(q, "sni", p.sni())
 		setIf(q, "obfs", p.Obfs)

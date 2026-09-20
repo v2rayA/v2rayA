@@ -61,6 +61,7 @@ func GetVersion(ctx *gin.Context) {
 		}(),
 		"hasAccounts":    configure.HasAnyAccounts(),
 		"lastKernelExit": configure.GetLastKernelExitStatus(),
+		"docker":         common.IsDocker(),
 	})
 }
 

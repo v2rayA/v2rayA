@@ -17,7 +17,7 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 	// same backing array, leaving a stale duplicate at the tail after a
 	// non-tail removal and panicking on the next touch)
 	cssRaw := configure.GetConnectedServers()
-	cssAfter := append([]*configure.Which(nil), cssRaw.Get()...)
+	cssAfter := append([]*configure.NodeRef(nil), cssRaw.Get()...)
 	subscriptionsIndexes := make([]int, 0, len(ws))
 	serversIndexes := make([]int, 0, len(ws))
 	bDeletedSubscription := false
@@ -67,20 +67,11 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 			continue
 		}
 	}
-	if err := configure.OverwriteConnects(configure.NewWhiches(cssAfter)); err != nil {
-		return err
+	if !bDeletedSubscription {
+		subscriptionsIndexes = nil
 	}
-	if bDeletedSubscription {
-		err = configure.RemoveSubscriptions(subscriptionsIndexes)
-		if err != nil {
-			return
-		}
+	if !bDeletedServer {
+		serversIndexes = nil
 	}
-	if bDeletedServer {
-		err = configure.RemoveServers(serversIndexes)
-		if err != nil {
-			return
-		}
-	}
-	return
+	return configure.RemoveNodes(subscriptionsIndexes, serversIndexes, configure.NewNodeRefs(cssAfter))
 }

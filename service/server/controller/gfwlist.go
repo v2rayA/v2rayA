@@ -9,6 +9,11 @@ import (
 )
 
 func PutGFWList(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	var data struct {
 		DownloadLink string `json:"downloadLink"`
 	}
@@ -37,6 +42,11 @@ func PutGFWList(ctx *gin.Context) {
 }
 
 func DeleteGFWList(ctx *gin.Context) {
+	release, ok := beginMutation(ctx)
+	if !ok {
+		return
+	}
+	defer release()
 	err := dat.DeleteGFWList()
 	if err != nil {
 		common.ResponseError(ctx, logError(err))

@@ -43,6 +43,22 @@ type SIP008 struct {
 	} `json:"servers"`
 }
 
+const maxSubscriptionDocumentSize int64 = 32 << 20
+
+func readSubscriptionBody(resp *http.Response) ([]byte, error) {
+	if resp.ContentLength > maxSubscriptionDocumentSize {
+		return nil, fmt.Errorf("subscription document exceeds the 32 MiB limit")
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, maxSubscriptionDocumentSize+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(b)) > maxSubscriptionDocumentSize {
+		return nil, fmt.Errorf("subscription document exceeds the 32 MiB limit")
+	}
+	return b, nil
+}
+
 func resolveSIP008(raw string) (infos []serverObj.ServerObj, sip SIP008, err error) {
 	err = jsoniter.Unmarshal([]byte(raw), &sip)
 	if err != nil {
@@ -195,7 +211,7 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 	if res.StatusCode >= 400 {
 		return nil, "", fmt.Errorf("subscription server answered %s", res.Status)
 	}
-	b, err := io.ReadAll(res.Body)
+	b, err := readSubscriptionBody(res)
 	if err != nil {
 		return nil, "", err
 	}
@@ -369,17 +385,21 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscription.Servers = infoServerRaws
 	subscription.Status = string(touch.NewUpdateStatus())
 	subscription.Info = status
-	if err := configure.SetSubscriptionAndConnects(index, subscription, configure.NewWhiches(cssAfter)); err != nil {
+	if err := configure.SetSubscriptionAndConnects(index, subscription, configure.NewNodeRefs(cssAfter)); err != nil {
 		return err
 	}
 	// A remapped connection may point at a server whose config differs from the old
 	// one; the running core keeps using the old config until it is regenerated.
 	if connectedServerChanged && v2ray.ProcessManager.Running() {
 		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			log.Warn("UpdateSubscription: failed to reload core after remapping connected servers: %v", err)
+			return subscriptionCoreApplyError(err)
 		}
 	}
 	return nil
+}
+
+func subscriptionCoreApplyError(err error) error {
+	return fmt.Errorf("subscription stored, but the core could not apply it: %w", err)
 }
 
 func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
@@ -394,7 +414,7 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 }
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
-	var subscriptionServer configure.Which
+	var subscriptionServer configure.NodeRef
 	subscriptionServer.TYPE = "subscriptionServer"
 	subscriptionServer.Sub = index // Subscription IDs start with 0
 	subscriptionServer.Outbound = "proxy"
@@ -403,7 +423,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		if connections == nil {
 			return nil
 		}
-		remaining := make([]configure.Which, 0, connections.Len())
+		remaining := make([]configure.NodeRef, 0, connections.Len())
 		var found bool
 		for _, connected := range connections.Get() {
 			if connected.TYPE == configure.SubscriptionServerType && connected.Sub == index {
@@ -425,7 +445,7 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
 	}
 	backup := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
-	var existing []*configure.Which
+	var existing []*configure.NodeRef
 	if backup != nil {
 		existing = backup.Get()
 	}
@@ -463,8 +483,8 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 
 // autoSelectMembers appends every supported node of the subscription to the
 // members already in the proxy group.
-func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.Which) []configure.Which {
-	members := make([]configure.Which, 0, len(existing)+len(sub.Servers))
+func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.NodeRef) []configure.NodeRef {
+	members := make([]configure.NodeRef, 0, len(existing)+len(sub.Servers))
 	for _, connected := range existing {
 		members = append(members, *connected)
 	}
@@ -479,7 +499,7 @@ func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*co
 			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
 			continue
 		}
-		members = append(members, configure.Which{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
+		members = append(members, configure.NodeRef{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
 		log.Info("[AutoSelect] Automatically selected server: %v", serverName)
 	}
 	return members

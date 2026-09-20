@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,26 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/v2rayA/v2rayA/common"
 )
+
+func TestGetVersionIncludesDockerFlag(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/version", nil)
+	GetVersion(ctx)
+	var response struct {
+		Data struct {
+			Docker *bool `json:"docker"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Data.Docker == nil || *response.Data.Docker != common.IsDocker() {
+		t.Fatalf("docker = %v, want %v", response.Data.Docker, common.IsDocker())
+	}
+}
 
 type versionTransport func(*http.Request) (*http.Response, error)
 

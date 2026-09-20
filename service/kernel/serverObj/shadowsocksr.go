@@ -4,16 +4,15 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
-	"net/url"
 	"strconv"
-	"strings"
-
-	"github.com/v2rayA/v2rayA/common"
 )
 
+// ShadowsocksR is no longer supported: the core has no ShadowsocksR outbound
+// and the plugin that once served one is gone. The type stays only so a
+// node stored by an earlier release still decodes, keeps its place in the
+// list (the group members point at nodes by ordinal) and can be deleted;
+// importing an ssr:// link is refused in FromLink.
 func init() {
-	FromLinkRegister("shadowsocksr", NewShadowsocksR)
-	FromLinkRegister("ssr", NewShadowsocksR)
 	EmptyRegister("shadowsocksr", func() (ServerObj, error) {
 		return new(ShadowsocksR), nil
 	})
@@ -21,6 +20,8 @@ func init() {
 		return new(ShadowsocksR), nil
 	})
 }
+
+const ssrUnsupported = "ShadowsocksR is not supported; use Shadowsocks, VMess, VLESS or Trojan instead"
 
 type ShadowsocksR struct {
 	Name       string `json:"name"`
@@ -35,98 +36,12 @@ type ShadowsocksR struct {
 	Protocol   string `json:"protocol"`
 }
 
-func NewShadowsocksR(link string) (ServerObj, error) {
-	return ParseSSRURL(link)
-}
-
-func ParseSSRURL(u string) (data *ShadowsocksR, err error) {
-	// parse attempts to parse ss:// links
-	parse := func(content string) (v ShadowsocksR, ok bool) {
-		arr := strings.Split(content, "/?")
-		if strings.Contains(content, ":") && len(arr) < 2 {
-			content += "/?remarks=&protoparam=&obfsparam="
-			arr = strings.Split(content, "/?")
-		} else if len(arr) != 2 {
-			return v, false
-		}
-		pre := strings.Split(arr[0], ":")
-		if len(pre) > 6 {
-			//if the length is more than 6, it means that the host contains the characters:,
-			//re-merge the first few groups into the host
-			pre[len(pre)-6] = strings.Join(pre[:len(pre)-5], ":")
-			pre = pre[len(pre)-6:]
-		} else if len(pre) < 6 {
-			return v, false
-		}
-		q, err := url.ParseQuery(arr[1])
-		if err != nil {
-			return v, false
-		}
-		pswd, _ := common.Base64URLDecode(pre[5])
-		add, _ := common.Base64URLDecode(pre[0])
-		remarks, _ := common.Base64URLDecode(q.Get("remarks"))
-		protoparam, _ := common.Base64URLDecode(q.Get("protoparam"))
-		obfsparam, _ := common.Base64URLDecode(q.Get("obfsparam"))
-		port, err := strconv.Atoi(pre[1])
-		if err != nil {
-			return v, false
-		}
-		v = ShadowsocksR{
-			Name:       remarks,
-			Server:     add,
-			Port:       port,
-			Password:   pswd,
-			Cipher:     pre[3],
-			Proto:      pre[2],
-			ProtoParam: protoparam,
-			Obfs:       pre[4],
-			ObfsParam:  obfsparam,
-			Protocol:   "shadowsocksr",
-		}
-		return v, true
-	}
-	content := u[6:]
-	var (
-		info ShadowsocksR
-		ok   bool
-	)
-	// try parsing the ssr:// link, if it fails, base64 decode first
-	if info, ok = parse(content); !ok {
-		// perform base64 decoding and parse again
-		content, err = common.Base64StdDecode(content)
-		if err != nil {
-			content, err = common.Base64URLDecode(content)
-			if err != nil {
-				err = fmt.Errorf("%w: ssr link payload is not base64; expected ssr://BASE64(host:port:proto:method:obfs:BASE64(password)/?...)", ErrInvalidParameter)
-				return
-			}
-		}
-		info, ok = parse(content)
-	}
-	if !ok {
-		err = fmt.Errorf("%w: ssr link payload is not host:port:proto:method:obfs:BASE64(password)/?...", ErrInvalidParameter)
-		return
-	}
-	return &info, nil
-}
-
 func (s *ShadowsocksR) Configuration(info PriorInfo) (c Configuration, err error) {
-	socks5 := url.URL{
-		Scheme: "socks5",
-		Host:   net.JoinHostPort("127.0.0.1", strconv.Itoa(info.PluginPort)),
-	}
-	chain := []string{socks5.String(), s.ExportToURL()}
-	return Configuration{
-		CoreOutbound: info.PluginObj(),
-		PluginChain:  strings.Join(chain, ","),
-		UDPSupport:   false,
-	}, nil
+	return Configuration{}, fmt.Errorf("unsupported: %s", ssrUnsupported)
 }
 
+// ExportToURL keeps the stored node shareable to a client that still speaks SSR.
 func (s *ShadowsocksR) ExportToURL() string {
-	/* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
-	// SSR links carry unpadded base64; trimming a single "=" left an invalid
-	// remainder whenever two padding characters were produced.
 	return fmt.Sprintf("ssr://%v", base64.RawURLEncoding.EncodeToString([]byte(
 		fmt.Sprintf(
 			"%v:%v:%v:%v:%v/?remarks=%v&protoparam=%v&obfsparam=%v",
@@ -142,34 +57,12 @@ func (s *ShadowsocksR) ExportToURL() string {
 	)))
 }
 
-func (s *ShadowsocksR) NeedPluginPort() bool {
-	return true
-}
+func (s *ShadowsocksR) NeedPluginPort() bool { return false }
 
-func (s *ShadowsocksR) ProtoToShow() string {
-	obfs := s.Obfs
-	if obfs == "tls1.2_ticket_auth" {
-		obfs = "tls1.2"
-	}
-	return fmt.Sprintf("SSR(%v+%v)", s.Proto, obfs)
-}
+func (s *ShadowsocksR) ProtoToShow() string { return "SSR (unsupported)" }
 
-func (s *ShadowsocksR) GetProtocol() string {
-	return s.Protocol
-}
-
-func (s *ShadowsocksR) GetHostname() string {
-	return s.Server
-}
-
-func (s *ShadowsocksR) GetPort() int {
-	return s.Port
-}
-
-func (s *ShadowsocksR) GetName() string {
-	return s.Name
-}
-
-func (s *ShadowsocksR) SetName(name string) {
-	s.Name = name
-}
+func (s *ShadowsocksR) GetProtocol() string { return s.Protocol }
+func (s *ShadowsocksR) GetHostname() string { return s.Server }
+func (s *ShadowsocksR) GetPort() int        { return s.Port }
+func (s *ShadowsocksR) GetName() string     { return s.Name }
+func (s *ShadowsocksR) SetName(name string) { s.Name = name }

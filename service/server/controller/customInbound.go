@@ -1,16 +1,17 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/RoutingA"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"regexp"
-	"strings"
+	"github.com/v2rayA/v2rayA/server/service"
 )
 
 // applyCustomInbounds stores the new list and reloads the running core with it.
@@ -18,28 +19,25 @@ import (
 // inbound stored, so every later start failed too; put the old list back and
 // bring the core up with it instead.
 func applyCustomInbounds(previous, next []configure.CustomInbound) error {
-	if err := configure.SetCustomInbounds(next); err != nil {
+	err := service.ApplyCoreConfig(func() func() error {
+		return func() error { return configure.SetCustomInbounds(previous) }
+	}, func() error {
+		return configure.SetCustomInbounds(next)
+	})
+	var failure *service.ApplyCoreConfigError
+	if !errors.As(err, &failure) {
 		return err
 	}
-	if !v2ray.ProcessManager.Running() {
-		return nil
+	if failure.RestoreStoreErr != nil {
+		log.Warn("applyCustomInbounds: failed to restore the previous inbounds: %v", failure.RestoreStoreErr)
 	}
-	err := v2ray.UpdateV2RayConfig()
-	if err == nil {
-		return nil
+	if failure.RestoreUpdateErr != nil {
+		log.Warn("applyCustomInbounds: failed to restart the core with the previous inbounds: %v", failure.RestoreUpdateErr)
 	}
-	restored := true
-	if e := configure.SetCustomInbounds(previous); e != nil {
-		restored = false
-		log.Warn("applyCustomInbounds: failed to restore the previous inbounds: %v", e)
-	} else if e := v2ray.UpdateV2RayConfig(); e != nil {
-		restored = false
-		log.Warn("applyCustomInbounds: failed to restart the core with the previous inbounds: %v", e)
+	if failure.Restored() {
+		return fmt.Errorf("the core could not restart with the new inbound, the previous ones are back: %w", failure.UpdateErr)
 	}
-	if restored {
-		return fmt.Errorf("the core could not restart with the new inbound, the previous ones are back: %w", err)
-	}
-	return fmt.Errorf("the core could not restart with the new inbound and could not be restored either: %w", err)
+	return fmt.Errorf("the core could not restart with the new inbound and could not be restored either: %w", failure.UpdateErr)
 }
 
 func GetCustomInbound(ctx *gin.Context) {

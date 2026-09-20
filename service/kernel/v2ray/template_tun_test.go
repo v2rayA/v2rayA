@@ -149,6 +149,38 @@ func TestDnsModuleListenAddressFollowsPortSharingAndUserValue(t *testing.T) {
 	}
 }
 
+func TestDnsModuleCatchAllRuleSetsDefaultUpstream(t *testing.T) {
+	previous := configure.GetDnsRulesNotNil()
+	t.Cleanup(func() {
+		if err := configure.SetDnsRules(previous); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := configure.SetDnsRules([]configure.DnsRule{
+		{Upstream: "1.1.1.1", Outbound: "direct"},
+		{Upstream: "8.8.8.8", Domain: "example.com", Outbound: "proxy"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	tmpl := baseTemplate(t, configure.NewSetting())
+	if err := tmpl.setDNS(nil); err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		DefaultUpstream string `json:"default_upstream"`
+		Upstreams       []struct {
+			ID   string `json:"id"`
+			Addr string `json:"addr"`
+		} `json:"upstreams"`
+	}
+	if err := json.Unmarshal(tmpl.DnsModuleConfig, &config); err != nil {
+		t.Fatal(err)
+	}
+	if config.DefaultUpstream != "upstream-0" || len(config.Upstreams) < 1 || config.Upstreams[0].Addr != "1.1.1.1:53" {
+		t.Fatalf("DNS config = %+v", config)
+	}
+}
+
 func TestExtraDnsListenersFollowThePrimary(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Linux listeners")

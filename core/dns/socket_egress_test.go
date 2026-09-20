@@ -1,7 +1,9 @@
 package dns
 
 import (
+	"errors"
 	"net"
+	"syscall"
 	"testing"
 )
 
@@ -9,6 +11,9 @@ func loopbackInterface(t *testing.T) net.Interface {
 	t.Helper()
 	ifaces, err := net.Interfaces()
 	if err != nil {
+		if errors.Is(err, syscall.EPERM) {
+			t.Skip("sandbox does not permit netlink interface enumeration")
+		}
 		t.Fatal(err)
 	}
 	for _, i := range ifaces {
