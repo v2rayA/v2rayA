@@ -159,6 +159,28 @@ function applyHex() {
   );
   opacity: 1;
 }
+/* while dragged, the selected part of the track waves (M3 expressive
+   slider); the wave is a mask over the same gradient and travels */
+.hue-slider.v-slider--pressed :deep(.v-slider-track__fill) {
+  height: 20px;
+  top: calc(50% - 10px);
+  border-radius: 0;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='20' viewBox='0 0 24 20'%3E%3Cpath d='M0 10 Q6 3 12 10 T24 10' fill='none' stroke='%23000' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask-size: 24px 20px;
+  mask-repeat: repeat-x;
+  mask-position: 0 0;
+  animation: hue-wave 0.6s linear infinite;
+}
+@keyframes hue-wave {
+  to {
+    mask-position: -24px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hue-slider.v-slider--pressed :deep(.v-slider-track__fill) {
+    animation: none;
+  }
+}
 .hue-hex {
   max-width: 200px;
 }
