@@ -114,6 +114,7 @@ beforeEach(() => {
       logLevel: "info",
     },
     localGFWListVersion: "",
+    localGeositeVersion: "",
   });
   vi.mocked(postV2ray).mockResolvedValue(response(true));
   vi.mocked(deleteV2ray).mockResolvedValue(response());

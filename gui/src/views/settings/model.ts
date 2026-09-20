@@ -62,6 +62,7 @@ export function useSettings() {
     () => ready.value && JSON.stringify(form) !== saved.value,
   );
   const localGFWListVersion = ref("");
+  const localGeositeVersion = ref("");
   const remoteGFWListVersion = ref("");
 
   async function load(): Promise<void> {
@@ -71,6 +72,7 @@ export function useSettings() {
         (form as Record<string, unknown>)[key] = res.setting[key];
     }
     localGFWListVersion.value = res.localGFWListVersion ?? "";
+    localGeositeVersion.value = res.localGeositeVersion ?? "";
     if (store.lite) form.transparentType = "system_proxy";
     saved.value = JSON.stringify(form);
     ready.value = true;
@@ -116,6 +118,7 @@ export function useSettings() {
     ready,
     dirty,
     localGFWListVersion,
+    localGeositeVersion,
     remoteGFWListVersion,
     load,
     loadRemoteVersion,

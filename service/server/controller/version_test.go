@@ -5,12 +5,50 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 )
+
+func TestGetSettingReportsGFWListAndGeoSiteVersionsSeparately(t *testing.T) {
+	assetDir := t.TempDir()
+	t.Setenv("XRAY_LOCATION_ASSET", assetDir)
+	date := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.Local)
+	for _, name := range []string{"LoyalsoldierSite.dat", "geosite.dat"} {
+		path := filepath.Join(assetDir, name)
+		if err := os.WriteFile(path, []byte("dat"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(path, date, date); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/setting", nil)
+	GetSetting(ctx)
+	var response struct {
+		Data struct {
+			LocalGFWListVersion string `json:"localGFWListVersion"`
+			LocalGeositeVersion string `json:"localGeositeVersion"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Data.LocalGFWListVersion != "2026-09-15" {
+		t.Errorf("localGFWListVersion = %q, want 2026-09-15", response.Data.LocalGFWListVersion)
+	}
+	if response.Data.LocalGeositeVersion != "2026-09-15" {
+		t.Errorf("localGeositeVersion = %q, want 2026-09-15", response.Data.LocalGeositeVersion)
+	}
+}
 
 func TestGetVersionIncludesDockerFlag(t *testing.T) {
 	recorder := httptest.NewRecorder()

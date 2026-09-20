@@ -31,6 +31,7 @@ beforeEach(async () => {
   vi.mocked(getSetting).mockResolvedValue({
     setting: { ...loaded },
     localGFWListVersion: "",
+    localGeositeVersion: "",
   });
   vi.mocked(putSetting).mockResolvedValue(undefined);
   wrapper = mountWithApp(SubscriptionSettings);

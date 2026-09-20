@@ -17,9 +17,15 @@ func GetSetting(ctx *gin.Context) {
 	if err == nil {
 		localGFWListVersion = t.Local().Format("2006-01-02")
 	}
+	var localGeositeVersion string
+	t, err = asset.GetGeoSiteModTime()
+	if err == nil {
+		localGeositeVersion = t.Local().Format("2006-01-02")
+	}
 	common.ResponseSuccess(ctx, gin.H{
 		"setting":             s,
 		"localGFWListVersion": localGFWListVersion,
+		"localGeositeVersion": localGeositeVersion,
 	})
 }
 

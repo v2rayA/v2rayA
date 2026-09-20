@@ -204,6 +204,16 @@ func GetGFWListModTime() (time.Time, error) {
 	return files.GetFileModTime(fullpath)
 }
 
+// GetGeoSiteModTime returns the modification time of the standard GeoSite
+// database. Unlike GetGFWListModTime, this file is not the GFWList download.
+func GetGeoSiteModTime() (time.Time, error) {
+	fullpath, err := GetV2rayLocationAsset("geosite.dat")
+	if err != nil {
+		return time.Now(), err
+	}
+	return files.GetFileModTime(fullpath)
+}
+
 func GetConfigBytes() (b []byte, err error) {
 	b, err = os.ReadFile(GetV2rayConfigPath())
 	if err != nil {

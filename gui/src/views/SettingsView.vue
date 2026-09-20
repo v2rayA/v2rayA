@@ -37,7 +37,13 @@ const { open } = useDialog();
 const store = useAppStore();
 const settings = useSettings();
 useUnsavedGuard(() => settings.dirty.value);
-const { form, ready, localGFWListVersion, remoteGFWListVersion } = settings;
+const {
+  form,
+  ready,
+  localGFWListVersion,
+  localGeositeVersion,
+  remoteGFWListVersion,
+} = settings;
 const saving = ref(false);
 const formRef = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 
@@ -138,6 +144,12 @@ const localVersionAhead = computed(
     !!remoteGFWListVersion.value &&
     dayjs(localGFWListVersion.value).isAfter(dayjs(remoteGFWListVersion.value)),
 );
+const localVersionDisplay = computed(() => {
+  if (localGFWListVersion.value) return localGFWListVersion.value;
+  if (localGeositeVersion.value)
+    return `${localGeositeVersion.value} (geosite)`;
+  return t("common.none");
+});
 const positive = (v: unknown) =>
   Number(v) >= 1 || t("configureServer.required");
 
@@ -302,7 +314,7 @@ defineExpose({ sync: () => settings.load() });
         <SettingRow
           :title="t('gfwList.title')"
           :hint="localVersionAhead ? t('setting.messages.gfwlist') : undefined"
-          :subtitle="`${t('common.latest')}: ${remoteGFWListVersion || t('common.checkRunning')}  ${t('common.local')}: ${localGFWListVersion || t('common.none')}`"
+          :subtitle="`${t('common.latest')}: ${remoteGFWListVersion || t('common.checkRunning')}  ${t('common.local')}: ${localVersionDisplay}`"
           action
           @click="openGfwList"
         />
