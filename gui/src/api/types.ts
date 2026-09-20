@@ -91,6 +91,7 @@ export type Setting = Record<string, unknown> & {
 export interface SettingResponse {
   setting: Setting;
   localGFWListVersion: string;
+  localGeositeVersion: string;
 }
 
 /** configure.Ports */
