@@ -227,7 +227,7 @@ sudo systemctl enable --now v2raya
 
 ## Поддержка
 
-Задавайте вопросы в [Discussions](https://github.com/v2rayA/v2rayA/discussions) и сообщайте об ошибках в [Issues](https://github.com/v2rayA/v2rayA/issues); с сопровождающим можно связаться по адресу <zakk@gentoozh.org>. Сайт документации недоступен; справочником служат этот файл и Discussions.
+Задавайте вопросы в [Discussions](https://github.com/v2rayA/v2rayA/discussions) и сообщайте об ошибках в [Issues](https://github.com/v2rayA/v2rayA/issues).
 
 Не используйте этот проект в противоправных целях.
 

@@ -227,7 +227,7 @@ Stop the service and back up the configuration directory before upgrading. Upgra
 
 ## Support
 
-Ask questions in the [discussions](https://github.com/v2rayA/v2rayA/discussions) and report bugs in the [issues](https://github.com/v2rayA/v2rayA/issues); the maintainer can also be reached at <zakk@gentoozh.org>. The documentation site is unavailable; this file and the discussions are the reference.
+Ask questions in the [discussions](https://github.com/v2rayA/v2rayA/discussions) and report bugs in the [issues](https://github.com/v2rayA/v2rayA/issues).
 
 Do not use this project for anything illegal.
 

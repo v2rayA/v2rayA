@@ -227,7 +227,7 @@ SQLite 数据库 `v2raya.db` 与生成的内核配置位于配置目录：Linux 
 
 ## 支持
 
-问题请到 [Discussions](https://github.com/v2rayA/v2rayA/discussions) 提问，缺陷请到 [Issues](https://github.com/v2rayA/v2rayA/issues) 报告，也可联系维护者 <zakk@gentoozh.org>。文档站目前不可用，以本文件和 Discussions 为准。
+问题请到 [Discussions](https://github.com/v2rayA/v2rayA/discussions) 提问，缺陷请到 [Issues](https://github.com/v2rayA/v2rayA/issues) 报告。
 
 不要将本项目用于不合法用途。
 
