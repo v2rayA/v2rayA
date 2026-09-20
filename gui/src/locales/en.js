@@ -54,6 +54,12 @@ export default {
     removeFromGroup: "Remove from group",
     selectAll: "Select all",
     autoUpdate: "Auto-update",
+    noSubscriptions: "No subscriptions yet",
+    noSubscriptionsHint:
+      "Import a subscription address and its nodes are kept together here, updated by hand or on a schedule.",
+    importSubscription: "Import a subscription",
+    emptyHint:
+      "Import a share link or a subscription address, or create a node by hand.",
     deleteSubscriptionNodes:
       "Subscription nodes cannot be deleted individually.",
   },

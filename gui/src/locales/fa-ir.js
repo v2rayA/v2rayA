@@ -54,6 +54,12 @@ export default {
     removeFromGroup: "حذف از گروه",
     selectAll: "انتخاب همه",
     autoUpdate: "به‌روزرسانی خودکار",
+    noSubscriptions: "هنوز اشتراکی وجود ندارد",
+    noSubscriptionsHint:
+      "نشانی اشتراک را وارد کنید؛ گره‌های آن این‌جا کنار هم نگه داشته و دستی یا زمان‌بندی‌شده به‌روز می‌شوند.",
+    importSubscription: "وارد کردن اشتراک",
+    emptyHint:
+      "پیوند اشتراک‌گذاری یا نشانی اشتراک را وارد کنید یا گره را دستی بسازید.",
     deleteSubscriptionNodes: "گره‌های اشتراک را نمی‌توان جداگانه حذف کرد.",
   },
   dashboard: {

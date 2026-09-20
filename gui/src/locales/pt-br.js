@@ -54,6 +54,12 @@ export default {
     removeFromGroup: "Remover do grupo",
     selectAll: "Selecionar todos",
     autoUpdate: "Atualização automática",
+    noSubscriptions: "Nenhuma assinatura ainda",
+    noSubscriptionsHint:
+      "Importe um endereço de assinatura; seus nós ficam agrupados aqui, atualizados manualmente ou por agenda.",
+    importSubscription: "Importar assinatura",
+    emptyHint:
+      "Importe um link de compartilhamento ou um endereço de assinatura, ou crie um nó manualmente.",
     deleteSubscriptionNodes:
       "Os nós de uma assinatura não podem ser excluídos individualmente.",
   },

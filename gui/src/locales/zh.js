@@ -52,6 +52,10 @@ export default {
     removeFromGroup: "移出分组",
     selectAll: "全选",
     autoUpdate: "自动更新",
+    noSubscriptions: "还没有订阅",
+    noSubscriptionsHint: "导入订阅地址后，它的节点归在这里，可手动或定时更新。",
+    importSubscription: "导入订阅",
+    emptyHint: "导入分享链接或订阅地址，也可以手动新建节点。",
     deleteSubscriptionNodes: "无法单独删除订阅中的节点。",
   },
   dashboard: {

@@ -54,6 +54,11 @@ export default {
     removeFromGroup: "그룹에서 제거",
     selectAll: "전체 선택",
     autoUpdate: "자동 업데이트",
+    noSubscriptions: "아직 구독이 없습니다",
+    noSubscriptionsHint:
+      "구독 주소를 가져오면 해당 노드가 여기에 함께 보관되고 수동 또는 예약으로 업데이트됩니다.",
+    importSubscription: "구독 가져오기",
+    emptyHint: "공유 링크나 구독 주소를 가져오거나 노드를 직접 만드세요.",
     deleteSubscriptionNodes: "구독 노드는 개별적으로 삭제할 수 없습니다.",
   },
   dashboard: {

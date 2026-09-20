@@ -326,9 +326,9 @@ export function useProxies() {
         await sync();
     });
   }
-  async function importNodes() {
+  async function importNodes(kind: "server" | "subscription" = "server") {
     await run(async () => {
-      if (await open<boolean>(ImportDialog, {}, { width: 480 }).result)
+      if (await open<boolean>(ImportDialog, { kind }, { width: 480 }).result)
         await sync();
     });
   }

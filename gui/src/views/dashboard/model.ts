@@ -205,9 +205,12 @@ export function useDashboard() {
 
   const { open: openDialog } = useDialog();
   /** importNodes opens the import dialog; a subscription or link added there shows at once. */
-  async function importNodes() {
-    const imported = await openDialog<boolean>(ImportDialog, {}, { width: 480 })
-      .result;
+  async function importNodes(kind: "server" | "subscription" = "server") {
+    const imported = await openDialog<boolean>(
+      ImportDialog,
+      { kind },
+      { width: 480 },
+    ).result;
     if (imported) await getTouch().then(apply).catch(report);
   }
   /** editGroup lets the user pick the group's members from every node; Save replaces the list. */

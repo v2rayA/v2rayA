@@ -512,7 +512,7 @@ defineExpose({ sync });
                 variant="text"
                 :aria-label="t('operations.import')"
                 :disabled="loading"
-                @click="importNodes"
+                @click="importNodes('subscription')"
               />
             </template>
           </v-tooltip>
