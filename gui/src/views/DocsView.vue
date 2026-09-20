@@ -218,8 +218,16 @@ watch(section, (value) => (store.docsSection = value));
   padding: 1px 5px;
   border-radius: 6px;
   background: rgb(var(--v-theme-surface-container-high));
+  /* paths and flags keep their order in RTL text */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.docs__body :deep(:not(pre) > code) {
+  white-space: nowrap;
 }
 .docs__body :deep(pre) {
+  direction: ltr;
+  text-align: start;
   margin: 0 0 16px;
   padding: 12px 16px;
   border-radius: 12px;
