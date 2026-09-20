@@ -1,71 +1,238 @@
-# v2rayA [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/v2rayA/v2raya)](https://hub.docker.com/r/mzz2017/v2raya) [![Travis (.org)](https://img.shields.io/travis/v2rayA/v2rayA?label=travis-ci%20build)](https://travis-ci.org/v2rayA/v2rayA)
+<div align="center">
 
-[**English**](https://github.com/v2rayA/v2rayA/blob/main/README.md)&nbsp;&nbsp;&nbsp;[**简体中文**](https://github.com/v2rayA/v2rayA/blob/main/README_zh.md)&nbsp;&nbsp;&nbsp;[**Русский**](https://github.com/v2rayA/v2rayA/blob/main/README_ru.md)
+<img src="gui/public/static/v2raya-icon.svg" width="96" alt="v2rayA">
 
-v2rayA — веб-клиент для собственного ядра на базе Xray с глобальным прозрачным прокси в Linux, Windows и macOS. Он поддерживает ссылки на прокси VMess, VLESS, Shadowsocks, Trojan, Hysteria2, TUIC, [Juicity](https://github.com/juicity), AnyTLS, WireGuard, SOCKS5 и HTTP(S); ShadowsocksR больше не поддерживается.
+# v2rayA
 
-Мы стремимся сделать управление как можно проще и учесть большинство сценариев использования.
+**Веб-клиент для собственного ядра на базе Xray с прозрачным прокси в Linux, Windows и macOS.**
 
-Веб-интерфейс позволяет использовать v2rayA не только на локальном компьютере, но и без труда развернуть его на маршрутизаторе или NAS.
+[English](README.md) · [简体中文](README_zh.md) · Русский
 
-Проект: https://github.com/v2rayA/v2rayA
+[Требования](#требования) • [Установка](#установка) • [Первый запуск](#первый-запуск) • [Прозрачный прокси](#прозрачный-прокси) • [Данные и обновления](#данные-и-обновления) • [Поддержка](#поддержка)
 
+</div>
 
-## Использование
+v2rayA работает как служба и управляется из браузера — на самом компьютере, на маршрутизаторе или NAS. Он импортирует подписки и ссылки VMess, VLESS, Shadowsocks, Trojan, Hysteria2, TUIC, [Juicity](https://github.com/juicity), AnyTLS, WireGuard, SOCKS5 и HTTP(S), объединяет узлы в группы, выбирает узел с наименьшей измеренной задержкой или закреплённый узел и разделяет трафик по правилам RoutingA. ShadowsocksR не поддерживается.
 
-Основные способы установки v2rayA:
+## Требования
 
-1. Из репозитория APT или AUR
-2. Docker
-3. Собственный [репозиторий scoop](https://github.com/v2rayA/v2raya-scoop) (для пользователей Windows)
-4. Собственный [репозиторий homebrew](https://github.com/v2rayA/homebrew-v2raya)
-5. Собственный [репозиторий OpenWrt](https://github.com/v2rayA/v2raya-openwrt) или официальный репозиторий OpenWrt (начиная с OpenWrt 22.03)
-6. Microsoft winget: https://winstall.app/apps/v2rayA.v2rayA
-7. Ubuntu Snap: https://snapcraft.io/v2raya
-8. Бинарный файл или установочный пакет из выпусков на GitHub
+| Компонент | Требование |
+| --- | --- |
+| Ядро | `v2raya_core` **той же версии**, что и `v2raya`, рядом с ним или в `PATH`. Пакеты и установщики ниже ставят оба файла; при ручной установке версии должны совпадать |
+| Данные правил | `geoip.dat` и `geosite.dat` в `/usr/share/v2raya` или `/usr/local/share/v2raya`. Пакеты содержат их; при ручной установке они скачиваются с GitHub при первом запуске, и при неудаче служба завершается |
+| Прозрачный прокси в Linux | root; `iptables` или `nftables` для `redirect` и `tproxy`; `/dev/net/tun` и команда `ip` из iproute2 для `tun` |
+| Windows | Windows 10 сборки 14393 или новее; права администратора для `tun`; `--lite` работает без привилегий и всё же может настроить системный прокси текущего пользователя |
+| macOS | root для `tun`; `--lite` работает без привилегий и вместо него предлагает системный прокси |
+| Браузер | актуальный Chrome, Edge, Firefox или Safari |
 
-Подробнее: [**v2rayA - Docs**](https://v2raya.org/en/docs/prologue/introduction/)
+## Установка
 
+Пакеты ниже устанавливают `v2raya` и `v2raya_core` вместе с описанием службы. Включите службу командой, указанной для платформы.
+
+<details>
+<summary><strong>Debian, Ubuntu и другие дистрибутивы с APT</strong></summary>
+
+Пакеты берутся из [репозитория Dae Universe](https://github.com/daeuniverse/repo-for-linux).
+
+```sh
+sudo apt update
+sudo apt install curl
+```
+
+APT 3.0 и новее:
+
+```sh
+sudo curl -fsSL -o /etc/apt/sources.list.d/daeuniverse.sources https://daeuniverse.pages.dev/daeuniverse.sources
+```
+
+APT версии ниже 3.0:
+
+```sh
+sudo curl -fsSL -o /etc/apt/sources.list.d/daeuniverse.list https://daeuniverse.pages.dev/daeuniverse.list
+```
+
+Затем ключ и пакет:
+
+```sh
+sudo curl -fsSL -o /usr/share/keyrings/daeuniverse-archive-goose.gpg https://daeuniverse.pages.dev/daeuniverse-archive-goose.gpg
+sudo apt update
+sudo apt install v2raya
+sudo systemctl enable --now v2raya
+```
+
+Юнит меняйте через `sudo systemctl edit --full v2raya.service`: правку установленного файла перезапишет следующее обновление.
+
+</details>
+
+<details>
+<summary><strong>Fedora, RHEL, openSUSE и другие дистрибутивы с RPM</strong></summary>
+
+Fedora, RHEL и производные:
+
+```sh
+sudo curl -fsSL -o /etc/yum.repos.d/daeuniverse.repo https://daeuniverse.pages.dev/daeuniverse.repo
+sudo dnf install v2raya
+```
+
+openSUSE:
+
+```sh
+sudo curl -fsSL -o /etc/zypp/repos.d/daeuniverse.repo https://daeuniverse.pages.dev/daeuniverse.repo
+sudo zypper install v2raya
+```
+
+Затем:
+
+```sh
+sudo systemctl enable --now v2raya
+```
+
+</details>
+
+<details>
+<summary><strong>Arch Linux</strong></summary>
+
+В AUR `v2raya` собирается из исходников, `v2raya-bin` использует готовые бинарные файлы. На странице выпусков есть и `installer_archlinux_<arch>_<version>.pkg.tar.zst` для `pacman -U`.
+
+```sh
+paru -S v2raya-bin
+sudo systemctl enable --now v2raya
+```
+
+</details>
+
+<details>
+<summary><strong>Gentoo, Alpine и другие системы с OpenRC</strong></summary>
+
+В Gentoo установите пакет из оверлея [gentoo-zh](https://github.com/gentoo-zh/overlay) и включите службу:
+
+```sh
+sudo emerge net-proxy/v2rayA
+sudo rc-update add v2raya default
+sudo rc-service v2raya start
+```
+
+В остальных системах скачайте оба бинарных файла для своей архитектуры со [страницы выпусков](https://github.com/v2rayA/v2rayA/releases) и возьмите файлы OpenRC из [`install/universal/`](install/universal/). Команды выполняются из клона репозитория; `VERSION` — номер выпуска без ведущей `v`; пример для x64:
+
+```sh
+sudo install -m755 "v2raya_linux_x64_${VERSION}" /usr/bin/v2raya
+sudo install -m755 "v2raya_core_linux_x64_${VERSION}" /usr/bin/v2raya_core
+sudo install -m755 install/universal/v2raya.initd /etc/init.d/v2raya
+sudo install -m644 install/universal/v2raya.confd /etc/conf.d/v2raya
+sudo rc-update add v2raya default
+sudo rc-service v2raya start
+```
+
+</details>
+
+<details>
+<summary><strong>Docker</strong></summary>
+
+Образ — `ghcr.io/v2raya/v2raya` (на Docker Hub — `mzz2017/v2raya`). Пример для хоста Linux: контейнер получает сеть хоста и привилегии, без которых прозрачный прокси не работает:
+
+```sh
+docker run -d --restart=always --privileged --network=host --name v2raya \
+  -e V2RAYA_LOG_FILE=/tmp/v2raya.log \
+  -v /lib/modules:/lib/modules:ro \
+  -v /etc/resolv.conf:/etc/resolv.conf \
+  -v /etc/v2raya:/etc/v2raya \
+  ghcr.io/v2raya/v2raya
+```
+
+При сети bridge опубликуйте порт 2017 и используемые входящие порты и включите общий доступ к портам в настройках, иначе входящие подключения принимаются только на loopback контейнера. Прозрачный прокси в такой схеме недоступен.
+
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+`installer_windows_inno_x64_<version>.exe` (или `arm64`) со [страницы выпусков](https://github.com/v2rayA/v2rayA/releases) устанавливает оба бинарных файла и регистрирует службу. Тот же установщик стоит за `winget install --id v2rayA.v2rayA` и за [scoop bucket](https://github.com/v2rayA/v2raya-scoop) (`scoop bucket add v2raya https://github.com/v2rayA/v2raya-scoop && scoop install v2raya-np`).
+
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+[Tap](https://github.com/v2rayA/homebrew-v2raya) устанавливает оба бинарных файла. Его служба запускает `v2raya --lite` от имени пользователя: с системным прокси, но без `tun`:
+
+```sh
+brew tap v2raya/v2raya
+brew install v2raya/v2raya/v2raya
+brew services start v2raya
+```
+
+Для `tun` остановите эту службу и запустите бинарный файл от root: `sudo "$(brew --prefix v2raya)/bin/v2raya"`.
+
+</details>
+
+<details>
+<summary><strong>OpenWrt</strong></summary>
+
+Репозиторий [v2raya-openwrt](https://github.com/v2rayA/v2raya-openwrt) и официальный репозиторий packages сейчас содержат 2.2.7.x с отдельным `xray-core`, а не описанный здесь выпуск. Пока они не обновлены, установите бинарные файлы выпуска для `mips32`, `mips32le`, `arm64` или `x64` вручную, как в следующем разделе, с собственным init-скриптом.
+
+</details>
+
+<details>
+<summary><strong>Другой Linux, без пакета</strong></summary>
+
+Скачайте `v2raya_linux_<arch>_<version>` и `v2raya_core_linux_<arch>_<version>` со [страницы выпусков](https://github.com/v2rayA/v2rayA/releases) (`x86`, `x64`, `arm64`, `armv7`, `riscv64`, `loongarch64`, `mips32`, `mips32le`, `mips64`, `mips64le`), сверьте их с соседним `.sha256.txt` и установите оба в `/usr/bin`. Для systemd:
+
+```sh
+sudo install -m644 install/universal/v2raya.service /etc/systemd/system/v2raya.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now v2raya
+```
+
+Для OpenRC используйте файлы из раздела выше. Есть и отдельно поддерживаемый [snap](https://snapcraft.io/v2raya).
+
+</details>
+
+## Первый запуск
+
+Служба слушает `0.0.0.0:2017`, поэтому на маршрутизаторе или NAS интерфейс доступен по адресу `http://<адрес-устройства>:2017`. Первая зарегистрированная учётная запись становится администратором, а регистрация не требует входа, поэтому в общей сети сначала ограничьте доступ, либо для локального использования запустите службу с `--address 127.0.0.1:2017`.
+
+Откройте интерфейс и создайте администратора. Затем мастер проведёт через импорт подписки или ссылки, добавление узлов в группу и выбор правил маршрутизации; ядро запускается кнопкой запуска на панели или кнопкой состояния вверху страницы.
+
+Когда ядро работает, укажите приложению SOCKS5 `127.0.0.1:20170` или HTTP `127.0.0.1:20171` (`20172` применяет к HTTP правила маршрутизации) либо включите прозрачный прокси на панели и выберите режим из таблицы ниже. Группа с несколькими подключёнными узлами использует узел с наименьшей измеренной задержкой; после закрепления узла весь трафик группы направляется через него. Подписки обновляются со страницы подписок или с интервалом, заданным в настройках.
+
+<img src="docs/images/screenshot.png" alt="Панель управления в светлой и тёмной темах" width="100%">
 
 ## Прозрачный прокси
 
-В Linux прозрачный прокси доступен в режимах `redirect`, `tproxy` и `tun`; в Windows и macOS — в режиме `tun` или как системный прокси.
+| Платформа | Режимы |
+| --- | --- |
+| Linux | `redirect`, `tproxy`, `tun`; с `--lite` — системный прокси в GNOME и KDE |
+| macOS | `tun`; с `--lite` — системный прокси |
+| Windows | `tun`, системный прокси |
 
-`tun` встроен в ядро: ядро открывает устройство TUN, назначает ему адрес и берёт на себя маршрут по умолчанию. Собственные соединения ядра, прямой исходящий трафик и запросы DNS-модуля к вышестоящим серверам никогда не попадают в TUN: в Linux для этого используются метки сокетов, а в Windows и macOS — привязка к физическому интерфейсу. На все DNS-запросы приложений к публичным серверам отвечает DNS-модуль ядра. v2rayA и ядро исключаются всегда; другие процессы можно исключить в настройках по имени исполняемого файла. Маршруты подключённых сетей и статические маршруты всегда обходят TUN.
+Режимы системного прокси меняют настройки прокси рабочего стола и охватывают только приложения, которые их соблюдают. Остальные режимы перехватывают трафик.
 
-Известное ограничение: в Windows и macOS приложение, которое обращается напрямую к DNS-серверу в локальной сети, по-прежнему обходит TUN. Системный DNS-резолвер направлен в TUN и этим ограничением не затронут.
+В режиме `tun` ядро открывает устройство TUN и назначает ему адрес; при включённой автоматической маршрутизации (по умолчанию) маршруты и настройку DNS устанавливает v2rayA, иначе — ваш собственный скрипт. Собственные соединения ядра, прямой исходящий трафик и запросы DNS-модуля к вышестоящим серверам не попадают в TUN (в Linux — метки сокетов, в Windows и macOS — привязка к физическому интерфейсу). На незашифрованные DNS-запросы на порт 53, попавшие в TUN, отвечает DNS-модуль ядра; зашифрованный DNS не перехватывается. v2rayA и ядро исключаются всегда; другие процессы можно исключить в настройках по имени исполняемого файла. Более специфичные маршруты подключённых сетей и статические маршруты обходят TUN.
 
-## Снимки экрана
+Известное ограничение: в Windows и macOS приложение, которое обращается напрямую к DNS-серверу в локальной сети, по-прежнему обходит TUN. Системный резолвер охвачен: Windows направляет его на шлюз TUN, macOS — на слушатель ядра на `127.0.0.1`, для которого порт 53 должен быть свободен.
 
-Панель управления: ядро, текущий узел, трафик в реальном времени, режимы прозрачного прокси и маршрутизации, задержка узлов и подписки — каждый элемент на отдельной плитке.
-
-<img src="docs/images/screenshot.png" alt="Панель управления v2rayA в светлой и тёмной темах" width="100%">
-
-Редактор RoutingA: правила можно редактировать списком с помощью редактора правил или как текст с номерами строк, подсветкой и построчной проверкой; синтаксис всегда под рукой; доступны импорт и экспорт.
+## Правила маршрутизации
 
 <img src="docs/images/routinga.png" alt="Редактор RoutingA в светлой и тёмной темах" width="100%">
 
-## Примечания
+У RoutingA два режима: список с формой для каждого правила и текст с номерами строк, подсветкой и построчной проверкой. Справка по синтаксису находится рядом с редактором. Правила можно импортировать из файла и экспортировать в файл.
 
-1. Программа не хранит пользовательские данные в облаке: все они хранятся локально.
-2. **Не используйте этот проект в противоправных целях.**
+## Данные и обновления
+
+База SQLite `v2raya.db` и сгенерированная конфигурация ядра лежат в каталоге конфигурации: `/etc/v2raya` в Linux и macOS, `%ProgramData%\SYSTEM\v2rayA` для службы Windows, каталог конфигурации пользователя при `--lite` или путь из `--config`. Журналы пишутся в `/var/log/v2raya/v2raya.log` юнитами systemd и OpenRC либо в `--log-file` / `V2RAYA_LOG_FILE`. Сетевые запросы выполняются только для обновления подписок, загрузки данных правил, измерения задержки и DNS.
+
+Перед обновлением остановите службу и сделайте резервную копию каталога конфигурации. При обновлении с версии ниже 2.4 база BoltDB переносится при первом запуске; старый файл сохраняется как `bolt.db.bak` (`bolt.db.bak.1` и далее, если это имя занято), учётные записи нужно зарегистрировать заново. Обновляйте `v2raya` и `v2raya_core` вместе: панель показывает версию ядра, а о несовпадении сообщает баннер.
+
+## Поддержка
+
+Задавайте вопросы в [Discussions](https://github.com/v2rayA/v2rayA/discussions) и сообщайте об ошибках в [Issues](https://github.com/v2rayA/v2rayA/issues).
+
+Не используйте этот проект в противоправных целях.
 
 ## Благодарности
 
-[hq450/fancyss](https://github.com/hq450/fancyss)
-
-[ToutyRater/v2ray-guide](https://github.com/ToutyRater/v2ray-guide/blob/master/routing/sitedata.md)
-
-[nadoo/glider](https://github.com/nadoo/glider)
-
-[Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
-
-[zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy/blob/master/ss-tproxy)
-
-## Динамика звёзд
-
-[![Stargazers over time](https://starchart.cc/v2rayA/v2rayA.svg)](https://starchart.cc/v2rayA/v2rayA)
+Основан [@mzz2017](https://github.com/mzz2017). Интерфейс на Material Design 3, встроенный в ядро TUN и переработка службы в 2.5 — [@Zakkaus](https://github.com/Zakkaus). Файлы OpenRC предоставлены [сообществом gentoo-zh](https://gentoozh.org). Данные маршрутизации — [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community) и [v2fly/geoip](https://github.com/v2fly/geoip), для режима GFWList — [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat); правила прозрачного прокси основаны на опыте [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) и [hq450/fancyss](https://github.com/hq450/fancyss).
 
 ## Лицензия
 
-[![License: AGPL v3-only](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[AGPL-3.0-only](LICENSE). Ядро — форк [Xray-core](https://github.com/XTLS/Xray-core) (MPL-2.0).
