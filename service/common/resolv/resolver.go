@@ -10,6 +10,10 @@ import (
 var defaultResolver *net.Resolver
 var systemResolver *net.Resolver
 
+// PreferredServers lists the user's direct DNS upstreams (host:port), tried
+// before the built-in public ones; the service sets it.
+var PreferredServers = func() []string { return nil }
+
 var dnsServers = []struct {
 	addr    string
 	network string
@@ -30,6 +34,9 @@ func init() {
 		PreferGo:     true,
 		StrictErrors: false,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			if preferred := PreferredServers(); len(preferred) > 0 {
+				return dialer.DialContext(ctx, network, preferred[rand.Intn(len(preferred))])
+			}
 			server := dnsServers[rand.Intn(len(dnsServers))]
 			address = server.addr
 			network = server.network
