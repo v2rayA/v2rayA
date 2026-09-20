@@ -6,6 +6,7 @@ import { getPorts, putPorts } from "@/api";
 import { probe } from "@/api/client";
 import { errorText } from "@/api/errors";
 import { useDialog, useNotify } from "@/composables";
+import DocsLink from "@/components/DocsLink.vue";
 import { resetSession } from "@/session";
 import { useAppStore } from "@/stores/app";
 import SharingDialog from "@/dialogs/Sharing.vue";
@@ -151,8 +152,9 @@ async function save(event: Event) {
 <template>
   <v-card tag="form" rounded="xl" @submit.prevent="save">
     <v-card-item class="px-6 pt-6 pb-2">
-      <v-card-title class="md3-headline-small pa-0">
+      <v-card-title class="md3-headline-small pa-0 d-flex align-center ga-1">
         {{ t("customAddressPort.title") }}
+        <DocsLink section="inbounds" new-tab />
       </v-card-title>
     </v-card-item>
     <v-card-text class="px-6">

@@ -2,6 +2,8 @@
 // app bar titles the current one. About lives at the bottom of the
 // settings page.
 import {
+  mdiBookOpenPageVariant,
+  mdiBookOpenPageVariantOutline,
   mdiCogOutline,
   mdiCog,
   mdiScriptTextOutline,
@@ -46,5 +48,11 @@ export const destinations: Destination[] = [
     label: "common.log",
     icon: mdiScriptTextOutline,
     activeIcon: mdiScriptText,
+  },
+  {
+    view: "docs",
+    label: "common.docs",
+    icon: mdiBookOpenPageVariantOutline,
+    activeIcon: mdiBookOpenPageVariant,
   },
 ];

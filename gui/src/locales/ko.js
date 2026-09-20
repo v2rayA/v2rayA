@@ -92,6 +92,7 @@ export default {
     outboundSetting: "프록시 그룹 설정",
     setting: "설정",
     about: "정보",
+    docs: "문서",
     loggedAs: "로그인 계정: {username}",
     checkRunning: "확인 중",
     isRunning: "실행 중",
@@ -427,7 +428,6 @@ export default {
     local: "모든 데이터는 클라우드가 아닌 로컬에 저장됩니다.",
     report: "사용 중 발견한 문제는 {discussions}에 제보할 수 있습니다.",
     discussions: "discussions",
-    docs: "문서:",
   },
   axios: {
     messages: {
@@ -441,6 +441,23 @@ export default {
     },
     urls: {
       usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
+    },
+  },
+  docs: {
+    fallback: "이 섹션은 아직 번역되지 않아 영어로 표시됩니다.",
+    sections: {
+      "quick-start": "빠른 시작",
+      "transparent-proxy": "투명 프록시",
+      routing: "라우팅 규칙",
+      inbounds: "인바운드와 공유",
+      parameters: "플래그와 환경 변수",
+      troubleshooting: "문제 해결",
+    },
+    params: {
+      flag: "플래그",
+      env: "환경 변수",
+      default: "기본값",
+      desc: "설명",
     },
   },
   routingA: {

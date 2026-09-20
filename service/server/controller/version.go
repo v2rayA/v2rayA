@@ -73,3 +73,8 @@ func GetRemoteGFWListVersion(ctx *gin.Context) {
 	}
 	common.ResponseSuccess(ctx, gin.H{"remoteGFWListVersion": g.UpdateTime.Local().Format("2006-01-02")})
 }
+
+// GetParams lists the command-line flags for the documentation page.
+func GetParams(ctx *gin.Context) {
+	common.ResponseSuccess(ctx, gin.H{"params": conf.Parameters()})
+}

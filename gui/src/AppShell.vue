@@ -7,6 +7,7 @@
 // starter resetSession() calls.
 import {
   computed,
+  defineAsyncComponent,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -54,6 +55,7 @@ import NavDrawer from "@/components/NavDrawer.vue";
 import NavRail from "@/components/NavRail.vue";
 import ShellMenus from "@/components/ShellMenus.vue";
 import { destinations } from "@/components/destinations";
+import { isSection } from "@/docs";
 import { languages } from "@/components/languages";
 import LoginDialog from "@/dialogs/Login.vue";
 import OnboardingDialog, {
@@ -73,6 +75,8 @@ import DashboardView from "@/views/DashboardView.vue";
 import LogsView from "@/views/LogsView.vue";
 import ProxiesView from "@/views/ProxiesView.vue";
 import SettingsView from "@/views/SettingsView.vue";
+// the docs and their Markdown load only when the page is opened
+const DocsView = defineAsyncComponent(() => import("@/views/DocsView.vue"));
 
 const store = useAppStore();
 const { t, locale } = useI18n();
@@ -372,11 +376,26 @@ watch(
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 const onSystemTheme = (e: MediaQueryListEvent) =>
   (store.systemDark = e.matches);
+// "#docs" or "#docs/<section>" opens the documentation: the help links in
+// the dialogs and the About page point there, in this tab or a new one.
+function openHash() {
+  const [, page, section = ""] =
+    location.hash.match(/^#(docs)(?:\/([\w-]*))?$/) ?? [];
+  if (page !== "docs") return;
+  store.docsSection = isSection(section) ? section : "";
+  store.view = "docs";
+  history.replaceState(null, "", location.pathname + location.search);
+}
 onMounted(() => {
   darkQuery.addEventListener("change", onSystemTheme);
+  window.addEventListener("hashchange", openHash);
+  openHash();
   void startSession();
 });
-onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
+onBeforeUnmount(() => {
+  darkQuery.removeEventListener("change", onSystemTheme);
+  window.removeEventListener("hashchange", openHash);
+});
 </script>
 
 <template>
@@ -496,6 +515,7 @@ onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
           ref="pageRef"
           :key="sessionSerial"
         />
+        <DocsView v-else-if="store.view === 'docs'" :key="sessionSerial" />
         <AboutView
           v-else-if="store.view === 'about'"
           ref="pageRef"

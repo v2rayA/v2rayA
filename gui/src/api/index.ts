@@ -11,6 +11,7 @@ export interface RequestOptions {
 }
 import type {
   CustomInbound,
+  Param,
   DnsRule,
   DnsRulesResponse,
   Ports,
@@ -30,6 +31,8 @@ export const postLogin = (body: { username: string; password: string }) =>
   call<{ token: string }>({ url: "login", method: "post", data: body });
 export const getVersion = () =>
   call<VersionResponse>({ url: "version", method: "get" });
+export const getParams = () =>
+  call<{ params: Param[] }>({ url: "params", method: "get" });
 
 // ---- nodes and subscriptions ---------------------------------------------
 export const getTouch = (o: RequestOptions = {}) =>

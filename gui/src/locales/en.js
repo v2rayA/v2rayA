@@ -93,6 +93,7 @@ export default {
     outboundSetting: "Proxy Group Setting",
     setting: "Setting",
     about: "About",
+    docs: "Documentation",
     loggedAs: "Logged in as {username}",
     checkRunning: "Checking",
     isRunning: "Running",
@@ -431,7 +432,6 @@ export default {
     local: "All data is stored in local instead of in the cloud.",
     report: "Problems found during use can be reported in {discussions}.",
     discussions: "discussions",
-    docs: "Documentation:",
   },
   axios: {
     messages: {
@@ -445,6 +445,24 @@ export default {
     },
     urls: {
       usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
+    },
+  },
+  docs: {
+    fallback:
+      "This section has not been translated yet; the English text is shown.",
+    sections: {
+      "quick-start": "Quick start",
+      "transparent-proxy": "Transparent proxy",
+      routing: "Routing rules",
+      inbounds: "Inbounds and sharing",
+      parameters: "Flags and environment",
+      troubleshooting: "Troubleshooting",
+    },
+    params: {
+      flag: "Flag",
+      env: "Environment variable",
+      default: "Default",
+      desc: "Description",
     },
   },
   routingA: {

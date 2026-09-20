@@ -1,7 +1,11 @@
 <script setup lang="ts">
 // About: what v2rayA is, its version, where the docs and the discussions are.
 import { useI18n } from "vue-i18n";
-import { mdiForumOutline, mdiGithub, mdiOpenInNew } from "@mdi/js";
+import {
+  mdiBookOpenPageVariantOutline,
+  mdiForumOutline,
+  mdiGithub,
+} from "@mdi/js";
 import { useAppStore } from "@/stores/app";
 
 defineOptions({ name: "AboutView" });
@@ -34,11 +38,9 @@ const repo = "https://github.com/v2rayA/v2rayA";
         >
         <v-btn
           variant="tonal"
-          href="https://v2raya.org"
-          target="_blank"
-          rel="noreferrer"
-          :prepend-icon="mdiOpenInNew"
-          >{{ t("about.docs") }} v2raya.org</v-btn
+          href="#docs"
+          :prepend-icon="mdiBookOpenPageVariantOutline"
+          >{{ t("common.docs") }}</v-btn
         >
         <v-btn
           variant="tonal"

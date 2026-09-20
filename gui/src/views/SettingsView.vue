@@ -5,6 +5,7 @@ import { useDisplay } from "vuetify";
 import dayjs from "dayjs";
 import { errorText } from "@/api/errors";
 import { useDialog, useNotify } from "@/composables";
+import DocsLink from "@/components/DocsLink.vue";
 import CustomInboundDialog from "@/dialogs/settings/CustomInbound.vue";
 import DnsDialog from "@/dialogs/settings/Dns.vue";
 import DomainsExcludedDialog from "@/dialogs/settings/DomainsExcluded.vue";
@@ -181,7 +182,10 @@ defineExpose({ sync: () => settings.load() });
     />
     <template v-else>
       <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">
-        <v-list-subheader>{{ t("setting.sections.proxy") }}</v-list-subheader>
+        <v-list-subheader>
+          {{ t("setting.sections.proxy") }}
+          <DocsLink section="transparent-proxy" />
+        </v-list-subheader>
         <SettingChoice
           v-model="form.transparent"
           :title="t('setting.transparentProxy')"
@@ -278,7 +282,10 @@ defineExpose({ sync: () => settings.load() });
       </v-list>
 
       <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">
-        <v-list-subheader>{{ t("setting.sections.traffic") }}</v-list-subheader>
+        <v-list-subheader>
+          {{ t("setting.sections.traffic") }}
+          <DocsLink section="routing" />
+        </v-list-subheader>
         <SettingChoice
           v-model="form.pacMode"
           :title="t('setting.pacMode')"
