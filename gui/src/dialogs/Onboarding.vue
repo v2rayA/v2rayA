@@ -8,6 +8,7 @@ export function shouldShowOnboarding(): boolean {
 import { onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
+  mdiBookOpenPageVariantOutline,
   mdiClose,
   mdiPower,
   mdiRoutes,
@@ -26,11 +27,12 @@ const { t } = useI18n();
 const { open } = useDialog();
 const store = useAppStore();
 const step = ref(0);
+// each step names the documentation section that goes deeper
 const steps = [
-  { key: "import", icon: mdiTrayArrowDown },
-  { key: "group", icon: mdiServerNetwork },
-  { key: "rules", icon: mdiRoutes },
-  { key: "start", icon: mdiPower },
+  { key: "import", icon: mdiTrayArrowDown, docs: "quick-start" },
+  { key: "group", icon: mdiServerNetwork, docs: "quick-start" },
+  { key: "rules", icon: mdiRoutes, docs: "routing" },
+  { key: "start", icon: mdiPower, docs: "transparent-proxy" },
 ] as const;
 
 function markSeen() {
@@ -84,6 +86,16 @@ onBeforeUnmount(markSeen);
           <p class="md3-body-medium text-on-surface-variant ma-0">
             {{ t(`onboarding.${item.key}Body`) }}
           </p>
+          <v-btn
+            variant="text"
+            size="small"
+            class="mt-2 ms-n2"
+            :prepend-icon="mdiBookOpenPageVariantOutline"
+            :href="`#docs/${item.docs}`"
+            target="_blank"
+          >
+            {{ t("common.docs") }}
+          </v-btn>
           <div v-if="index === 0" class="d-flex flex-wrap ga-2 mt-6">
             <v-btn
               variant="tonal"

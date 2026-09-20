@@ -286,12 +286,13 @@ const statusText = computed(() => {
   return labelOf(store.running);
 });
 
-/** every text the status button can carry, for its fixed width */
+/** every text the status button can carry, for its fixed width; the
+ * "waiting for network" label is long and rare, so it widens the button
+ * while it shows instead of reserving its width all the time */
 const statusLabels = computed(() => {
-  const labels = (
-    ["running", "stopped", "paused", "checking"] as Running[]
-  ).map(labelOf);
+  const labels = (["running", "stopped", "checking"] as Running[]).map(labelOf);
   labels.push(t("v2ray.stop"), t("v2ray.start"));
+  if (store.running === "paused") labels.push(labelOf("paused"));
   return [...new Set(labels)];
 });
 
