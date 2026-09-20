@@ -493,6 +493,8 @@ export default {
     resetConfirm: "Replace the current rules with the default template?",
     discard: "Discard unsaved changes?",
     insert: "Insert",
+    replace: "Replace all rules",
+    replaceConfirm: "Replace the current rules with this template?",
     lineError: "Line {line}: {message}",
     errors: {
       noArrow: "Expected a condition followed by -> and an outbound.",
@@ -526,10 +528,20 @@ export default {
         description:
           "Built-in outbounds are proxy, direct and block; default selects the fallback. Define a named SOCKS or HTTP outbound with optional user and pass.",
       },
-      examples: {
-        title: "Examples",
+      presets: {
+        title: "Templates",
         description:
-          "Insert the default template or a rule that blocks domains in the advertising list.",
+          "Rules match from top to bottom, so insert a template above the broad rules. Every template routes to proxy, direct or block; change proxy to the name of your own group where you want one.",
+        whitelist: "China direct, everything else through the proxy",
+        blacklist:
+          "Sites outside China through the proxy, everything else direct",
+        ads: "Block advertising domains",
+        streaming: "Streaming through the proxy",
+        telegram: "Telegram through the proxy",
+        ai: "AI services through the proxy",
+        cnServices:
+          "Chinese mirrors of Apple, Google, Microsoft, Steam and Bilibili direct",
+        lan: "LAN and private addresses direct",
       },
     },
     messages: ["click the button 'Help&Manual' for help"],

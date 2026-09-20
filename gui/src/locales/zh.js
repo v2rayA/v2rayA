@@ -480,6 +480,8 @@ export default {
     resetConfirm: "将当前规则替换为默认模板？",
     discard: "放弃修改？",
     insert: "插入",
+    replace: "替换全部规则",
+    replaceConfirm: "将当前规则替换为此模板？",
     lineError: "第 {line} 行：{message}",
     errors: {
       noArrow: "规则需要包含条件、-> 和出口。",
@@ -513,9 +515,19 @@ export default {
         description:
           "内置出口为 proxy、direct 和 block，default 指定未匹配规则时的出口。可定义命名的 SOCKS 或 HTTP 出口，user 和 pass 为可选认证参数。",
       },
-      examples: {
-        title: "示例",
-        description: "插入默认模板，或插入拦截广告列表中域名的规则。",
+      presets: {
+        title: "模板",
+        description:
+          "规则自上而下匹配，模板应插入在宽泛规则之前。模板只使用 proxy、direct 与 block 三个出口；需要走特定分组时，把 proxy 改成该分组的名称。",
+        whitelist: "国内直连，其余走代理",
+        blacklist: "国外站点走代理，其余直连",
+        ads: "拦截广告域名",
+        streaming: "流媒体走代理",
+        telegram: "Telegram 走代理",
+        ai: "AI 服务走代理",
+        cnServices:
+          "Apple、Google、Microsoft、Steam 的国内服务与 Bilibili 直连",
+        lan: "局域网与私有地址直连",
       },
     },
     messages: ["点击“查看帮助”按钮以获取帮助"],

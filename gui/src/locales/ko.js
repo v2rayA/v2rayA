@@ -488,6 +488,8 @@ export default {
     resetConfirm: "현재 규칙을 기본 템플릿으로 바꾸시겠습니까?",
     discard: "저장하지 않은 변경 사항을 버리시겠습니까?",
     insert: "삽입",
+    replace: "모든 규칙 바꾸기",
+    replaceConfirm: "현재 규칙을 이 템플릿으로 바꾸시겠습니까?",
     lineError: "{line}행: {message}",
     errors: {
       noArrow: "조건 뒤에 ->와 아웃바운드가 필요합니다.",
@@ -521,10 +523,19 @@ export default {
         description:
           "기본 아웃바운드는 proxy, direct, block이며 default는 일치하는 규칙이 없을 때 사용할 아웃바운드를 지정합니다. 이름이 있는 SOCKS 또는 HTTP 아웃바운드를 정의하고 user와 pass를 선택적으로 지정할 수 있습니다.",
       },
-      examples: {
-        title: "예제",
+      presets: {
+        title: "템플릿",
         description:
-          "기본 템플릿이나 광고 목록의 도메인을 차단하는 규칙을 삽입합니다.",
+          "규칙은 위에서 아래로 일치하므로 템플릿은 넓은 규칙보다 위에 삽입하세요. 모든 템플릿은 proxy, direct, block만 사용합니다. 특정 그룹으로 보내려면 proxy를 해당 그룹 이름으로 바꾸세요.",
+        whitelist: "중국은 직접 연결, 나머지는 프록시",
+        blacklist: "중국 외 사이트는 프록시, 나머지는 직접 연결",
+        ads: "광고 도메인 차단",
+        streaming: "스트리밍은 프록시",
+        telegram: "Telegram은 프록시",
+        ai: "AI 서비스는 프록시",
+        cnServices:
+          "Apple, Google, Microsoft, Steam의 중국 서비스와 Bilibili는 직접 연결",
+        lan: "LAN 및 사설 주소는 직접 연결",
       },
     },
     messages: ["도움말을 보려면 '도움말 및 설명서' 버튼을 클릭하세요"],
