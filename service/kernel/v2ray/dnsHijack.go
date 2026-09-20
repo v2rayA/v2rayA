@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -77,17 +76,6 @@ func (h *ResolvHijacker) Close() error {
 
 const HijackFlag = "# v2rayA DNS hijack"
 
-// fallbackResolver is the nameserver behind the module's: the first direct
-// port-53 upstream of the DNS rules, a public one when there is none.
-func fallbackResolver() string {
-	for _, s := range directDnsServers() {
-		if host, port, err := net.SplitHostPort(s); err == nil && port == "53" {
-			return host
-		}
-	}
-	return "119.29.29.29"
-}
-
 const (
 	symlinkMarker = "# v2rayA saved symlink: "
 	missingMarker = "# v2rayA: no resolv.conf"
@@ -116,7 +104,7 @@ func (h *ResolvHijacker) HijackResolv() error {
 		}
 	}
 	err := os.WriteFile(resolvPath,
-		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver "+fallbackResolver()+"\n"),
+		[]byte(HijackFlag+"\nnameserver 127.2.0.17\nnameserver 119.29.29.29\n"),
 		os.FileMode(0644),
 	)
 	if err != nil {
@@ -267,7 +255,7 @@ func removeResolvHijacker() {
 			// file pointing at a listener that is gone.
 			log.Warn("DNS hijack: no backup of %v to restore, writing public resolvers instead", resolvPath)
 			os.WriteFile(resolvPath,
-				[]byte(HijackFlag+"\nnameserver "+fallbackResolver()+"\n"),
+				[]byte(HijackFlag+"\nnameserver 223.6.6.6\nnameserver 119.29.29.29\n"),
 				os.FileMode(0644),
 			)
 		}
