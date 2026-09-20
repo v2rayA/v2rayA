@@ -3,17 +3,31 @@
 // brand at the top, one item per destination with the 56×32 indicator
 // pill behind the active icon and the label under it). Shown from
 // 600 dp up to 840, where the drawer takes over; the bottom bar below.
+// Above that it stands in for a folded drawer, with the menu button
+// that unfolds it at the top.
 import { useI18n } from "vue-i18n";
+import { mdiMenu } from "@mdi/js";
 import { destinations } from "./destinations";
 import { useAppStore } from "@/stores/app";
 import logo from "@/assets/img/v2raya-icon.svg";
 
+defineProps<{ foldable?: boolean }>();
+const emit = defineEmits<{ unfold: [] }>();
 const { t } = useI18n();
 const store = useAppStore();
 </script>
 
 <template>
   <v-navigation-drawer permanent :width="80" color="surface" class="rail">
+    <v-btn
+      v-if="foldable"
+      :icon="mdiMenu"
+      variant="text"
+      class="rail__menu"
+      :aria-label="t('common.menu')"
+      aria-expanded="false"
+      @click="emit('unfold')"
+    />
     <div class="rail__brand">
       <img :src="logo" alt="v2rayA" class="rail__logo" />
     </div>
@@ -47,6 +61,10 @@ const store = useAppStore();
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
+}
+.rail__menu {
+  color: rgb(var(--v-theme-on-surface-variant));
+  margin-bottom: 4px;
 }
 .rail__brand {
   height: 56px;

@@ -3,13 +3,16 @@
 // brand, the destinations, the version at the bottom. There is no top
 // app bar at this width: the page titles itself and carries the theme,
 // language and account menus; the core's state lives on the dashboard.
+// The menu button by the brand folds it to the rail.
 import { useI18n } from "vue-i18n";
+import { mdiMenu } from "@mdi/js";
 import { destinations } from "./destinations";
 import { useDialog } from "@/composables";
 import AboutDialog from "@/views/settings/AboutDialog.vue";
 import { useAppStore } from "@/stores/app";
 import logo from "@/assets/img/v2raya-icon.svg";
 
+const emit = defineEmits<{ fold: [] }>();
 const { t } = useI18n();
 const store = useAppStore();
 const { open } = useDialog();
@@ -19,6 +22,14 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
 <template>
   <v-navigation-drawer permanent :width="256" color="surface" class="drawer">
     <div class="drawer__brand">
+      <v-btn
+        :icon="mdiMenu"
+        variant="text"
+        class="drawer__menu"
+        :aria-label="t('common.menu')"
+        aria-expanded="true"
+        @click="emit('fold')"
+      />
       <img :src="logo" alt="" class="drawer__logo" />
       <span class="md3-title-large drawer__wordmark">v2rayA</span>
     </div>
@@ -53,11 +64,15 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
 </template>
 
 <style scoped>
+/* the menu button's icon sits where the rail's does, 40 dp from the edge */
 .drawer__brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 28px 28px 20px;
+  padding: 12px 16px 12px;
+}
+.drawer__menu {
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 .drawer__wordmark {
   font-weight: 500;

@@ -90,6 +90,9 @@ const compact = computed(() => width.value < 600);
 // Material's window classes: compact < 600 (bottom bar), medium and
 // expanded < 1200 (rail with an app bar), large ≥ 1200 (standard drawer)
 const expanded = computed(() => width.value >= 1200);
+// the drawer folded to the rail, remembered
+const folded = ref(localStorage.getItem("drawer") === "rail");
+watch(folded, (v) => localStorage.setItem("drawer", v ? "rail" : "open"));
 const pageTitle = computed(() =>
   t(destinations.find((d) => d.view === store.view)?.label ?? "common.about"),
 );
@@ -391,8 +394,12 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
 
 <template>
   <v-app>
-    <NavDrawer v-if="expanded" />
-    <NavRail v-else-if="!compact" />
+    <NavDrawer v-if="expanded && !folded" @fold="folded = true" />
+    <NavRail
+      v-else-if="!compact"
+      :foldable="expanded"
+      @unfold="folded = false"
+    />
 
     <v-app-bar
       v-if="!expanded"
