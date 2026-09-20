@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // The logo in a frame that changes shape on every tap: the shapes of the
 // M3 expressive set, drawn as polygons so the browser morphs one into the
-// next. At rest there is no frame; the seventh tap is back to none.
+// next. At rest there is no frame; the seventh tap is back to none. Every
+// fifth tap mirrors the layout, the way the RTL locales see it.
 import { computed, ref } from "vue";
+import { useLocale } from "vuetify";
 import logo from "@/assets/img/v2raya-icon.svg";
 
 defineProps<{ size: number }>();
@@ -26,6 +28,13 @@ const polygon = (r: (a: number) => number) =>
   ")";
 const index = ref(0);
 const clip = computed(() => polygon(shapes[index.value % shapes.length]));
+const { current, rtl, isRtl } = useLocale();
+function tap() {
+  index.value++;
+  if (index.value % 5) return;
+  rtl.value = { ...rtl.value, [current.value]: !isRtl.value };
+  document.documentElement.dir = isRtl.value ? "rtl" : "ltr";
+}
 </script>
 
 <template>
@@ -41,7 +50,7 @@ const clip = computed(() => polygon(shapes[index.value % shapes.length]));
     }"
     tabindex="-1"
     aria-hidden="true"
-    @click="index++"
+    @click="tap"
   >
     <img
       :src="logo"
