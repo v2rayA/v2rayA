@@ -223,6 +223,8 @@ watch(section, (value) => (store.docsSection = value));
   unicode-bidi: isolate;
 }
 .docs__body :deep(:not(pre) > code) {
+  /* a box, not an inline: Firefox overlaps an unbreakable LTR isolate with RTL text */
+  display: inline-block;
   white-space: nowrap;
 }
 .docs__body :deep(pre) {
