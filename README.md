@@ -21,8 +21,8 @@ v2rayA runs as a service and is used from a browser, on the machine itself or on
 | Core | `v2raya_core` of the **same version** as `v2raya`, next to it or in `PATH`. The packages and installers below ship both; a hand-installed pair must match. |
 | Rule data | `geoip.dat` and `geosite.dat` in `/usr/share/v2raya` or `/usr/local/share/v2raya`. The packages ship them; a hand install downloads them from GitHub on the first start and exits if that fails. |
 | Linux transparent proxy | root; `iptables` or `nftables` for `redirect` and `tproxy`; `/dev/net/tun` and `ip` from iproute2 for `tun` |
-| Windows | Windows 10 build 14393 or later; administrator for `tun`; `--lite` runs unprivileged and can still set the current user's system proxy |
-| macOS | root for `tun`; `--lite` runs unprivileged and offers the system proxy instead |
+| Windows | Windows 10 build 14393 or later; administrator for `tun`; started without elevation it runs in lite mode and can still set the current user's system proxy |
+| macOS | root for `tun`; started as a user it runs in lite mode with the system proxy instead |
 | Browser | a current Chrome, Edge, Firefox or Safari |
 
 ## Install
@@ -153,15 +153,16 @@ With bridge networking instead, publish port 2017 and the inbound ports you use,
 <details>
 <summary><strong>macOS</strong></summary>
 
-The [tap](https://github.com/v2rayA/homebrew-v2raya) installs both binaries. Its service runs `v2raya --lite`, as the user, with the system proxy but no `tun`:
+The [tap](https://github.com/v2rayA/homebrew-v2raya) installs both binaries. Started as root the service has the `tun` transparent proxy; started as you it runs in lite mode with the system proxy:
 
 ```sh
 brew tap v2raya/v2raya
 brew install v2raya/v2raya/v2raya
-brew services start v2raya
+sudo brew services start v2raya   # root: tun
+brew services start v2raya        # you: system proxy
 ```
 
-For `tun`, stop that service and run the binary as root instead: `sudo "$(brew --prefix v2raya)/bin/v2raya"`.
+A service started with `sudo` is stopped with `sudo brew services stop v2raya`, and Homebrew warns that the upgrade or uninstall of a root-started formula needs `sudo rm` of the paths it names.
 
 </details>
 
