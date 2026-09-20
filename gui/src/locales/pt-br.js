@@ -498,6 +498,8 @@ export default {
     resetConfirm: "Substituir as regras atuais pelo modelo padrão?",
     discard: "Descartar alterações não salvas?",
     insert: "Inserir",
+    replace: "Substituir todas as regras",
+    replaceConfirm: "Substituir as regras atuais por este modelo?",
     lineError: "Linha {line}: {message}",
     errors: {
       noArrow: "É necessário indicar uma condição seguida de -> e uma saída.",

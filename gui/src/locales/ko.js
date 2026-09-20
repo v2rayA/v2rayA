@@ -484,6 +484,8 @@ export default {
     resetConfirm: "현재 규칙을 기본 템플릿으로 바꾸시겠습니까?",
     discard: "저장하지 않은 변경 사항을 버리시겠습니까?",
     insert: "삽입",
+    replace: "모든 규칙 바꾸기",
+    replaceConfirm: "현재 규칙을 이 템플릿으로 바꾸시겠습니까?",
     lineError: "{line}행: {message}",
     errors: {
       noArrow: "조건 뒤에 ->와 아웃바운드가 필요합니다.",

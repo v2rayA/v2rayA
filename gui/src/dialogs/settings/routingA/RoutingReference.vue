@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { mdiContentCopy } from "@mdi/js";
+import { mdiContentCopy, mdiFileReplaceOutline } from "@mdi/js";
 import HighlightedCode from "./HighlightedCode.vue";
 import { presets } from "./presets";
 
 defineOptions({ name: "RoutingReference" });
 defineProps<{ disabled?: boolean }>();
-const emit = defineEmits<{ insert: [example: string] }>();
+const emit = defineEmits<{
+  insert: [example: string];
+  replace: [example: string];
+}>();
 const { t } = useI18n();
 type Example = string | { label: string; code: string };
 const codeOf = (example: Example) =>
@@ -100,19 +103,37 @@ const sections = computed<
               :text="codeOf(example)"
               class="routing-reference__code"
             />
-            <v-tooltip :text="t('routingA.insert')">
-              <template #activator="{ props: tip }">
-                <v-btn
-                  v-bind="tip"
-                  :icon="mdiContentCopy"
-                  variant="text"
-                  size="32"
-                  :aria-label="t('routingA.insert')"
-                  :disabled="disabled"
-                  @click="emit('insert', codeOf(example))"
-                />
-              </template>
-            </v-tooltip>
+            <div class="routing-reference__actions">
+              <v-tooltip :text="t('routingA.insert')">
+                <template #activator="{ props: tip }">
+                  <v-btn
+                    v-bind="tip"
+                    :icon="mdiContentCopy"
+                    variant="text"
+                    size="32"
+                    :aria-label="t('routingA.insert')"
+                    :disabled="disabled"
+                    @click="emit('insert', codeOf(example))"
+                  />
+                </template>
+              </v-tooltip>
+              <v-tooltip
+                v-if="typeof example !== 'string'"
+                :text="t('routingA.replace')"
+              >
+                <template #activator="{ props: tip }">
+                  <v-btn
+                    v-bind="tip"
+                    :icon="mdiFileReplaceOutline"
+                    variant="text"
+                    size="32"
+                    :aria-label="t('routingA.replace')"
+                    :disabled="disabled"
+                    @click="emit('replace', codeOf(example))"
+                  />
+                </template>
+              </v-tooltip>
+            </div>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -138,6 +159,11 @@ const sections = computed<
 .routing-reference__label {
   grid-column: 1 / -1;
   margin: 0;
+}
+.routing-reference__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .routing-reference__code {
   overflow: auto;

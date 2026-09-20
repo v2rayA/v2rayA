@@ -476,6 +476,8 @@ export default {
     resetConfirm: "将当前规则替换为默认模板？",
     discard: "放弃修改？",
     insert: "插入",
+    replace: "替换全部规则",
+    replaceConfirm: "将当前规则替换为此模板？",
     lineError: "第 {line} 行：{message}",
     errors: {
       noArrow: "规则需要包含条件、-> 和出口。",

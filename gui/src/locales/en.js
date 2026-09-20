@@ -489,6 +489,8 @@ export default {
     resetConfirm: "Replace the current rules with the default template?",
     discard: "Discard unsaved changes?",
     insert: "Insert",
+    replace: "Replace all rules",
+    replaceConfirm: "Replace the current rules with this template?",
     lineError: "Line {line}: {message}",
     errors: {
       noArrow: "Expected a condition followed by -> and an outbound.",

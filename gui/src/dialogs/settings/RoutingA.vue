@@ -72,6 +72,22 @@ function exportRules() {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+async function replaceWithTemplate(code: string) {
+  if (busy.value) return;
+  confirming.value = true;
+  try {
+    if (
+      await confirm({
+        message: t("routingA.replaceConfirm"),
+        confirmText: t("routingA.replace"),
+        cancelText: t("operations.cancel"),
+      })
+    )
+      routingA.value = code;
+  } finally {
+    confirming.value = false;
+  }
+}
 async function importRules(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -266,6 +282,7 @@ async function save() {
             :id="referenceId"
             :disabled="busy"
             @insert="insertExample"
+            @replace="replaceWithTemplate"
           />
         </v-expand-transition>
       </div>

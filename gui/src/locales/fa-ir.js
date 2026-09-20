@@ -486,6 +486,8 @@ export default {
     resetConfirm: "قوانین فعلی با الگوی پیش‌فرض جایگزین شوند؟",
     discard: "تغییرات ذخیره‌نشده کنار گذاشته شوند؟",
     insert: "درج",
+    replace: "جایگزینی همهٔ قوانین",
+    replaceConfirm: "قوانین فعلی با این الگو جایگزین شوند؟",
     lineError: "خط {line}: {message}",
     errors: {
       noArrow: "شرط باید با -> و یک خروجی دنبال شود.",
