@@ -123,8 +123,6 @@ sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```
 
-`v2raya-user.initd` runs a second instance as an unprivileged user. It is started through a symlink named after that user (`ln -s v2raya-user /etc/init.d/v2raya-user.<user>`) and needs its own listening and inbound ports, because the defaults are taken by the system instance.
-
 </details>
 
 <details>
@@ -233,7 +231,7 @@ Do not use this project for anything illegal.
 
 ## Credits
 
-Founded by [@mzz2017](https://github.com/mzz2017). The Material Design 3 interface, the in-core TUN and the 2.5 service rework are by [@Zakkaus](https://github.com/Zakkaus). The OpenRC files come from the [gentoo-zh community](https://gentoozh.org). Routing data from [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat); the transparent-proxy rules were learnt from [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) and [hq450/fancyss](https://github.com/hq450/fancyss).
+Founded by [@mzz2017](https://github.com/mzz2017). The Material Design 3 interface, the in-core TUN and the 2.5 service rework are by [@Zakkaus](https://github.com/Zakkaus). The OpenRC files come from the [gentoo-zh community](https://gentoozh.org). Routing data from [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community), [v2fly/geoip](https://github.com/v2fly/geoip) and, for the GFWList mode, [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat); the transparent-proxy rules were learnt from [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) and [hq450/fancyss](https://github.com/hq450/fancyss).
 
 ## License
 

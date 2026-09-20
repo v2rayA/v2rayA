@@ -123,8 +123,6 @@ sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```
 
-`v2raya-user.initd` 以普通用户运行第二个实例。它通过以用户名命名的符号链接启动（`ln -s v2raya-user /etc/init.d/v2raya-user.<user>`），并且需要单独的监听端口和入站端口，因为默认端口已被系统实例占用。
-
 </details>
 
 <details>
@@ -233,7 +231,7 @@ SQLite 数据库 `v2raya.db` 与生成的内核配置位于配置目录：Linux 
 
 ## 致谢
 
-由 [@mzz2017](https://github.com/mzz2017) 创立。Material Design 3 界面、内核内建的 TUN 与 2.5 的服务端重构由 [@Zakkaus](https://github.com/Zakkaus) 完成。OpenRC 文件来自 [Gentoo 中文社区](https://gentoozh.org)。路由数据来自 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)；透明代理规则参考了 [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) 与 [hq450/fancyss](https://github.com/hq450/fancyss)。
+由 [@mzz2017](https://github.com/mzz2017) 创立。Material Design 3 界面、内核内建的 TUN 与 2.5 的服务端重构由 [@Zakkaus](https://github.com/Zakkaus) 完成。OpenRC 文件来自 [Gentoo 中文社区](https://gentoozh.org)。路由数据来自 [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community) 与 [v2fly/geoip](https://github.com/v2fly/geoip)，GFWList 模式使用 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)。透明代理规则参考了 [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) 与 [hq450/fancyss](https://github.com/hq450/fancyss)。
 
 ## 许可证
 

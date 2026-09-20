@@ -123,8 +123,6 @@ sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```
 
-`v2raya-user.initd` запускает второй экземпляр от непривилегированного пользователя. Он запускается через символическую ссылку с именем этого пользователя (`ln -s v2raya-user /etc/init.d/v2raya-user.<user>`) и требует отдельных портов прослушивания и входящих подключений, потому что порты по умолчанию занимает системный экземпляр.
-
 </details>
 
 <details>
@@ -233,7 +231,7 @@ sudo systemctl enable --now v2raya
 
 ## Благодарности
 
-Основан [@mzz2017](https://github.com/mzz2017). Интерфейс на Material Design 3, встроенный в ядро TUN и переработка службы в 2.5 — [@Zakkaus](https://github.com/Zakkaus). Файлы OpenRC предоставлены [сообществом gentoo-zh](https://gentoozh.org). Данные маршрутизации — [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat); правила прозрачного прокси основаны на опыте [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) и [hq450/fancyss](https://github.com/hq450/fancyss).
+Основан [@mzz2017](https://github.com/mzz2017). Интерфейс на Material Design 3, встроенный в ядро TUN и переработка службы в 2.5 — [@Zakkaus](https://github.com/Zakkaus). Файлы OpenRC предоставлены [сообществом gentoo-zh](https://gentoozh.org). Данные маршрутизации — [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community) и [v2fly/geoip](https://github.com/v2fly/geoip), для режима GFWList — [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat); правила прозрачного прокси основаны на опыте [zfl9/ss-tproxy](https://github.com/zfl9/ss-tproxy) и [hq450/fancyss](https://github.com/hq450/fancyss).
 
 ## Лицензия
 
