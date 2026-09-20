@@ -121,45 +121,11 @@ jobs:
           version=$(echo $tag | sed 's/v//g')
           echo "VERSION=$version" >> $GITHUB_OUTPUT
           echo "VERSION=$version" >> $GITHUB_ENV
-      - name: Download Artifact Linux x64
+      - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
-          name: v2raya_linux_x64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Core Artifact Linux x64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_core_linux_x64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Artifact Linux arm64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_linux_arm64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Core Artifact Linux arm64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_core_linux_arm64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Artifact macOS x64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_darwin_x64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Core Artifact macOS x64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_core_darwin_x64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Artifact macOS arm64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_darwin_arm64_${{ steps.prep.outputs.VERSION }}
-          path: Downloads
-      - name: Download Core Artifact macOS arm64
-        uses: actions/download-artifact@v8
-        with:
-          name: v2raya_core_darwin_arm64_${{ steps.prep.outputs.VERSION }}
+          pattern: v2raya{,_core}_{linux,darwin}_{x64,arm64}_${{ steps.prep.outputs.VERSION }}
+          merge-multiple: true
           path: Downloads
       - name: Compress to Zip Files
         run: |
@@ -347,8 +313,7 @@ jobs:
           mkdir -p aur
           git clone https://aur.archlinux.org/v2raya.git aur/v2raya
           git clone https://aur.archlinux.org/v2raya-bin.git aur/v2raya-bin
-          cp install/aur/v2raya/.INSTALL aur/v2raya/.INSTALL
-          cp install/aur/v2raya-bin/.INSTALL aur/v2raya-bin/.INSTALL
+          rm -f aur/v2raya/.INSTALL aur/v2raya-bin/.INSTALL
           cat install/aur/v2raya/PKGBUILD | sed "s|The_Real_Version|${{ steps.prep.outputs.VERSION }}|g" > aur/v2raya/PKGBUILD
           cat install/aur/v2raya-bin/PKGBUILD | sed "s|The_Real_Version|${{ steps.prep.outputs.VERSION }}|g" > aur/v2raya-bin/PKGBUILD
       - name: Install Podman
@@ -386,11 +351,11 @@ jobs:
           sudo chown -R $(id -u):$(id -u) aur/v2raya-bin
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          cd $Current_Dir/aur/v2raya && git add .SRCINFO .INSTALL && \
-            git commit -a -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
+          cd $Current_Dir/aur/v2raya && git add -A && \
+            git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
             git push --force ssh://aur@aur.archlinux.org/v2raya.git
-          cd $Current_Dir/aur/v2raya-bin && git add .SRCINFO .INSTALL && \
-            git commit -a -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
+          cd $Current_Dir/aur/v2raya-bin && git add -A && \
+            git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
             git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
       - name: Clean Up
         run: |

@@ -1,11 +1,7 @@
 package netTools
 
 import (
-	"bytes"
-	"github.com/v2rayA/v2rayA/infra/dataStructure/trie"
 	"net"
-	"strconv"
-	"strings"
 )
 
 var intranet4 = []string{
@@ -50,8 +46,8 @@ type IPNets struct {
 }
 
 var (
-	trieIntranet4   *trie.Trie
-	trieJokernet4   *trie.Trie
+	ipnetsIntranet4 *IPNets
+	ipnetsJokernet4 *IPNets
 	ipnetsIntranet6 *IPNets
 	ipnetsJokernet6 *IPNets
 )
@@ -78,48 +74,18 @@ func (n *IPNets) Match(ip net.IP) bool {
 }
 
 func init() {
-	trieIntranet4 = New4(intranet4)
-	trieJokernet4 = New4(jokernet4)
+	ipnetsIntranet4, _ = NewIPNets(intranet4)
+	ipnetsJokernet4, _ = NewIPNets(jokernet4)
 	ipnetsIntranet6, _ = NewIPNets(intranet6)
 	ipnetsJokernet6, _ = NewIPNets(jokernet6)
 }
 
-func New4(CIDRs []string) *trie.Trie {
-	dict := make([]string, 0, len(CIDRs))
-	for _, CIDR := range CIDRs {
-		grp := strings.SplitN(CIDR, "/", 2)
-		l, _ := strconv.Atoi(grp[1])
-		arr := strings.Split(grp[0], ".")
-		var builder strings.Builder
-		for _, sec := range arr {
-			itg, _ := strconv.Atoi(sec)
-			tmp := strconv.FormatInt(int64(itg), 2)
-			builder.WriteString(strings.Repeat("0", 8-len(tmp)))
-			builder.WriteString(tmp)
-			if builder.Len() >= l {
-				break
-			}
-		}
-		dict = append(dict, builder.String()[:l])
-	}
-	return trie.New(dict)
-}
-
-func ipv4ToBin(ipv4 *[4]byte) string {
-	var buff = new(bytes.Buffer)
-	for _, b := range ipv4 {
-		tmp := strconv.FormatInt(int64(b), 2)
-		buff.WriteString(strings.Repeat("0", 8-len(tmp)) + tmp)
-	}
-	return buff.String()
-}
-
 func IsIntranet4(ipv4 *[4]byte) bool {
-	return trieIntranet4.Match(ipv4ToBin(ipv4)) != ""
+	return ipnetsIntranet4.Match(net.IP(ipv4[:]))
 }
 
 func IsJokernet4(ipv4 *[4]byte) bool {
-	return trieJokernet4.Match(ipv4ToBin(ipv4)) != ""
+	return ipnetsJokernet4.Match(net.IP(ipv4[:]))
 }
 
 func IsIntranet6(ipv6 *[16]byte) bool {
