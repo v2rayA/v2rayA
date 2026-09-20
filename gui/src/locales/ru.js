@@ -93,6 +93,7 @@ export default {
     outboundSetting: "Настройка группы прокси",
     setting: "Настройки",
     about: "О программе",
+    docs: "Документация",
     loggedAs: "Выполнен вход как {username}",
     checkRunning: "Проверка",
     isRunning: "Работает",
@@ -437,7 +438,6 @@ export default {
     report:
       "О проблемах, обнаруженных при использовании, можно сообщить в разделе {discussions}.",
     discussions: "discussions",
-    docs: "Документация:",
   },
   axios: {
     messages: {
@@ -451,6 +451,23 @@ export default {
     },
     urls: {
       usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
+    },
+  },
+  docs: {
+    fallback: "Этот раздел ещё не переведён; показан английский текст.",
+    sections: {
+      "quick-start": "Быстрый старт",
+      "transparent-proxy": "Прозрачный прокси",
+      routing: "Правила маршрутизации",
+      inbounds: "Входящие и общий доступ",
+      parameters: "Флаги и переменные окружения",
+      troubleshooting: "Устранение неполадок",
+    },
+    params: {
+      flag: "Флаг",
+      env: "Переменная окружения",
+      default: "По умолчанию",
+      desc: "Описание",
     },
   },
   routingA: {

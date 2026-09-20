@@ -40,6 +40,7 @@
     "eslint-plugin-vue": "^10.11.0",
     "happy-dom": "^20",
     "highlight.js": "^11.4.0",
+    "marked": "^17",
     "prettier": "^3.6.0",
     "sass": "^1.86.0",
     "typescript": "~5.9.3",

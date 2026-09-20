@@ -156,3 +156,12 @@ export interface TrafficMessage {
   };
 }
 export type WsMessage = { type: string; body?: unknown };
+
+/** one command-line flag of the service, from GET params */
+export interface Param {
+  flag: string;
+  short: string;
+  env: string;
+  default: string;
+  desc: string;
+}

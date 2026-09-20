@@ -92,6 +92,7 @@ export default {
     outboundSetting: "تنظیمات گروه پروکسی",
     setting: "تنظیمات",
     about: "درباره",
+    docs: "مستندات",
     loggedAs: "واردشده با حساب کاربری {username}",
     checkRunning: "در حال بررسی",
     isRunning: "در حال اجرا",
@@ -433,7 +434,6 @@ export default {
     report:
       "مشکلات مشاهده‌شده هنگام استفاده را می‌توانید در {discussions} گزارش کنید.",
     discussions: "discussions",
-    docs: "مستندات:",
   },
   axios: {
     messages: {
@@ -447,6 +447,23 @@ export default {
     },
     urls: {
       usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
+    },
+  },
+  docs: {
+    fallback: "این بخش هنوز ترجمه نشده است؛ متن انگلیسی نمایش داده می‌شود.",
+    sections: {
+      "quick-start": "شروع سریع",
+      "transparent-proxy": "پروکسی شفاف",
+      routing: "قوانین مسیریابی",
+      inbounds: "ورودی‌ها و اشتراک‌گذاری",
+      parameters: "گزینه‌ها و متغیرهای محیطی",
+      troubleshooting: "عیب‌یابی",
+    },
+    params: {
+      flag: "گزینه",
+      env: "متغیر محیطی",
+      default: "پیش‌فرض",
+      desc: "توضیح",
     },
   },
   routingA: {

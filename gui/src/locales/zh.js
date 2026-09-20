@@ -90,6 +90,7 @@ export default {
     outboundSetting: "代理分组设置",
     setting: "设置",
     about: "关于",
+    docs: "文档",
     loggedAs: "已登录为 {username}",
     checkRunning: "检测中",
     isRunning: "正在运行",
@@ -424,7 +425,6 @@ export default {
     local: "所有数据均存储在本地，不上传云端。",
     report: "在使用中如果发现任何问题，欢迎到{discussions}反馈。",
     discussions: "讨论区",
-    docs: "文档：",
   },
   axios: {
     messages: {
@@ -437,6 +437,23 @@ export default {
     },
     urls: {
       usage: "https://v2raya.org/",
+    },
+  },
+  docs: {
+    fallback: "本节尚未翻译，显示英文内容。",
+    sections: {
+      "quick-start": "快速开始",
+      "transparent-proxy": "透明代理",
+      routing: "分流规则",
+      inbounds: "入站与共享",
+      parameters: "启动参数与环境变量",
+      troubleshooting: "故障排除",
+    },
+    params: {
+      flag: "参数",
+      env: "环境变量",
+      default: "默认值",
+      desc: "说明",
     },
   },
   routingA: {

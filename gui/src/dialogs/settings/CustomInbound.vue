@@ -11,6 +11,7 @@ import {
 import type { CustomInbound } from "@/api/types";
 import { errorText } from "@/api/errors";
 import { useConfirm, useNotify } from "@/composables";
+import DocsLink from "@/components/DocsLink.vue";
 
 defineOptions({ name: "CustomInboundDialog" });
 const emit = defineEmits<{ close: [] }>();
@@ -132,8 +133,9 @@ async function remove(tag: string) {
 <template>
   <v-card tag="form" rounded="xl" novalidate @submit.prevent="add">
     <v-card-item class="px-6 pt-6 pb-2">
-      <v-card-title class="md3-headline-small pa-0">
+      <v-card-title class="md3-headline-small pa-0 d-flex align-center ga-1">
         {{ t("customInbound.title") }}
+        <DocsLink section="inbounds" new-tab />
       </v-card-title>
     </v-card-item>
     <v-card-text class="px-6">

@@ -47,3 +47,9 @@ declare module "highlight.js/lib/languages/accesslog" {
   const language: LanguageFn;
   export default language;
 }
+
+// Markdown under src/docs is compiled to an HTML string by the vite plugin.
+declare module "*.md" {
+  const html: string;
+  export default html;
+}

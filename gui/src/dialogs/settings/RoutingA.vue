@@ -318,7 +318,7 @@ async function save() {
       <v-btn
         variant="text"
         :append-icon="mdiOpenInNew"
-        href="https://github.com/v2rayA/v2rayA/wiki/RoutingA"
+        href="#docs/routing"
         target="_blank"
         rel="noopener noreferrer"
         >{{ t("operations.helpManual") }}</v-btn

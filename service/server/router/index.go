@@ -298,6 +298,7 @@ func Run() error {
 		auth.GET("dnsRules", controller.GetDnsRules)
 		auth.PUT("dnsRules", controller.PutDnsRules)
 		auth.GET("routingA", controller.GetRoutingA)
+		auth.GET("params", controller.GetParams)
 		auth.PUT("routingA", controller.PutRoutingA)
 		auth.GET("outbounds", controller.GetOutbounds)
 		auth.GET("outbound", controller.GetOutbound)
