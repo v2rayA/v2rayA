@@ -83,7 +83,7 @@ func initFunc() {
 	// the transparent proxy or as the user with the system proxy.
 	if !params.Lite && !params.PassCheckRoot && !privilege.IsRootOrAdmin() {
 		params.Lite = true
-		log.Warn("not running as root or administrator: lite mode, without transparent proxy; start as root for tun")
+		log.Warn("not running as root or administrator: lite mode, without transparent proxy. If you want tun, start as root or administrator.")
 	}
 	if params.Lite {
 		params.PassCheckRoot = true
