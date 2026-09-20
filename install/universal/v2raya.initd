@@ -11,14 +11,24 @@ pidfile="/run/${RC_SVCNAME}.pid"
 command_background="yes"
 rc_ulimit="-n 30000"
 rc_cgroup_cleanup="yes"
+# The service stops its core and removes the transparent-proxy rules on
+# SIGTERM; give it time before OpenRC escalates, or the rules stay behind.
+retry="TERM/30/KILL/5"
 
 depend() {
 	need net
-	after net
+	use dns firewall
+	after net firewall nftables iptables
 }
 
 start_pre() {
-	mkdir -p /var/log/v2raya
+	checkpath -d -m 0755 /var/log/v2raya
+	checkpath -d -m 0750 /etc/v2raya
+}
 
-	eend $?
+stop_post() {
+	# A core the service did not get to stop (it was killed) would keep the
+	# inbound ports and make the next start fail on them.
+	pkill -x v2raya_core 2>/dev/null
+	return 0
 }
