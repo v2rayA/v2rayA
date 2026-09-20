@@ -470,6 +470,33 @@ export default {
     },
   },
   routingA: {
+    title: "RoutingA rules",
+    templates: {
+      title: "Templates",
+      full: "Full rule set, replaces the current rules",
+      add: "Add rules, inserted at the cursor",
+      whitelist: "China direct, everything else through the proxy",
+      blacklist:
+        "Sites outside China through the proxy, everything else direct",
+      global: "Everything through the proxy, LAN direct",
+      minimal:
+        "Only common foreign services through the proxy, everything else direct",
+      ads: "Block advertising domains",
+      streaming:
+        "Streaming through the proxy (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
+      social: "Social media through the proxy",
+      telegram: "Telegram through the proxy",
+      ai: "AI services through the proxy",
+      dev: "Developer services through the proxy (GitHub, GitLab, Docker, npm, JetBrains, Hugging Face)",
+      cnServices:
+        "Chinese mirrors of Apple, Google, Microsoft, Steam and Bilibili direct",
+      appleMicrosoft: "Apple and Microsoft direct",
+      games: "Game platforms direct",
+      speedtest: "Speed tests direct",
+      lan: "LAN and private addresses direct",
+      bittorrent: "BitTorrent direct (needs Sniffing)",
+      quic: "Block QUIC (UDP 443)",
+    },
     export: "Export",
     import: {
       title: "Import",
@@ -520,7 +547,7 @@ export default {
       noOutbound: "An outbound is required after ->.",
     },
     reference: {
-      title: "Syntax",
+      title: "Reference",
       format: {
         title: "Rule format",
         description:
@@ -545,21 +572,6 @@ export default {
         title: "Outbounds",
         description:
           "Built-in outbounds are proxy, direct and block; default selects the fallback. Define a named SOCKS or HTTP outbound with optional user and pass.",
-      },
-      presets: {
-        title: "Templates",
-        description:
-          "Rules match from top to bottom, so insert a template above the broad rules. Every template routes to proxy, direct or block; change proxy to the name of your own group where you want one.",
-        whitelist: "China direct, everything else through the proxy",
-        blacklist:
-          "Sites outside China through the proxy, everything else direct",
-        ads: "Block advertising domains",
-        streaming: "Streaming through the proxy",
-        telegram: "Telegram through the proxy",
-        ai: "AI services through the proxy",
-        cnServices:
-          "Chinese mirrors of Apple, Google, Microsoft, Steam and Bilibili direct",
-        lan: "LAN and private addresses direct",
       },
     },
     messages: ["click the button 'Help&Manual' for help"],
