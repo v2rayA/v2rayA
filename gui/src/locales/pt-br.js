@@ -531,10 +531,19 @@ export default {
         description:
           "As saídas integradas são proxy, direct e block; default define a saída quando nenhuma regra corresponde. Defina uma saída SOCKS ou HTTP nomeada com user e pass opcionais.",
       },
-      examples: {
-        title: "Exemplos",
+      presets: {
+        title: "Modelos",
         description:
-          "Insira o modelo padrão ou uma regra que bloqueia domínios da lista de publicidade.",
+          "As regras são avaliadas de cima para baixo; insira um modelo acima das regras gerais. Todos os modelos usam apenas proxy, direct e block; troque proxy pelo nome do seu grupo onde quiser um.",
+        whitelist: "China direto, o resto pelo proxy",
+        blacklist: "Sites fora da China pelo proxy, o resto direto",
+        ads: "Bloquear domínios de publicidade",
+        streaming: "Streaming pelo proxy",
+        telegram: "Telegram pelo proxy",
+        ai: "Serviços de IA pelo proxy",
+        cnServices:
+          "Serviços chineses de Apple, Google, Microsoft, Steam e Bilibili direto",
+        lan: "Rede local e endereços privados direto",
       },
     },
     messages: ["clique no botão 'Ajuda e manual' para obter ajuda"],

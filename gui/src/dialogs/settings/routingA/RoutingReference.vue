@@ -3,13 +3,18 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { mdiContentCopy } from "@mdi/js";
 import HighlightedCode from "./HighlightedCode.vue";
-import { template } from "./template";
+import { presets } from "./presets";
 
 defineOptions({ name: "RoutingReference" });
 defineProps<{ disabled?: boolean }>();
 const emit = defineEmits<{ insert: [example: string] }>();
 const { t } = useI18n();
-const sections = computed(() => [
+type Example = string | { label: string; code: string };
+const codeOf = (example: Example) =>
+  typeof example === "string" ? example : example.code;
+const sections = computed<
+  { title: string; description: string; examples: Example[] }[]
+>(() => [
   {
     title: t("routingA.reference.format.title"),
     description: t("routingA.reference.format.description"),
@@ -52,9 +57,12 @@ const sections = computed(() => [
     ],
   },
   {
-    title: t("routingA.reference.examples.title"),
-    description: t("routingA.reference.examples.description"),
-    examples: [template, "domain(geosite: category-ads) -> block"],
+    title: t("routingA.reference.presets.title"),
+    description: t("routingA.reference.presets.description"),
+    examples: presets.map((preset) => ({
+      label: t(`routingA.reference.presets.${preset.key}`),
+      code: preset.code,
+    })),
   },
 ]);
 </script>
@@ -79,10 +87,19 @@ const sections = computed(() => [
           <p class="md3-body-small mb-4">{{ section.description }}</p>
           <div
             v-for="example in section.examples"
-            :key="example"
+            :key="codeOf(example)"
             class="routing-reference__example mb-4"
           >
-            <HighlightedCode :text="example" class="routing-reference__code" />
+            <p
+              v-if="typeof example !== 'string'"
+              class="md3-label-large routing-reference__label"
+            >
+              {{ example.label }}
+            </p>
+            <HighlightedCode
+              :text="codeOf(example)"
+              class="routing-reference__code"
+            />
             <v-tooltip :text="t('routingA.insert')">
               <template #activator="{ props: tip }">
                 <v-btn
@@ -92,7 +109,7 @@ const sections = computed(() => [
                   size="32"
                   :aria-label="t('routingA.insert')"
                   :disabled="disabled"
-                  @click="emit('insert', example)"
+                  @click="emit('insert', codeOf(example))"
                 />
               </template>
             </v-tooltip>
@@ -117,6 +134,10 @@ const sections = computed(() => [
   grid-template-columns: minmax(0, 1fr) 32px;
   align-items: start;
   gap: 8px;
+}
+.routing-reference__label {
+  grid-column: 1 / -1;
+  margin: 0;
 }
 .routing-reference__code {
   overflow: auto;
