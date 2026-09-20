@@ -72,7 +72,7 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 28px 28px 20px;
+  padding: 24px 24px 16px;
 }
 /* the version and, at the end, the button that folds the drawer */
 .drawer__foot {
@@ -95,8 +95,8 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
   opacity: 1;
 }
 .drawer__logo {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
 }
 /* Material's drawer item: 56 dp tall, label-large */
 .drawer :deep(.v-list-item) {
