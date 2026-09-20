@@ -4,7 +4,7 @@
 // pill behind the active icon and the label under it). Shown from
 // 600 dp up to 840, where the drawer takes over; the bottom bar below.
 // Above that it stands in for a folded drawer, with the menu button
-// that unfolds it at the top.
+// that unfolds it at the bottom, where the drawer's is.
 import { useI18n } from "vue-i18n";
 import { mdiMenu } from "@mdi/js";
 import { destinations } from "./destinations";
@@ -19,15 +19,6 @@ const store = useAppStore();
 
 <template>
   <v-navigation-drawer permanent :width="80" color="surface" class="rail">
-    <v-btn
-      v-if="foldable"
-      :icon="mdiMenu"
-      variant="text"
-      class="rail__menu"
-      :aria-label="t('common.menu')"
-      aria-expanded="false"
-      @click="emit('unfold')"
-    />
     <div class="rail__brand">
       <img :src="logo" alt="v2rayA" class="rail__logo" />
     </div>
@@ -52,6 +43,16 @@ const store = useAppStore();
         <span class="md3-label-medium rail__label">{{ t(d.label) }}</span>
       </v-btn>
     </nav>
+    <template v-if="foldable" #append>
+      <v-btn
+        :icon="mdiMenu"
+        variant="text"
+        class="rail__menu"
+        :aria-label="t('common.menu')"
+        aria-expanded="false"
+        @click="emit('unfold')"
+      />
+    </template>
   </v-navigation-drawer>
 </template>
 
@@ -63,8 +64,9 @@ const store = useAppStore();
   padding-top: 12px;
 }
 .rail__menu {
+  display: flex;
+  margin: 12px auto 20px;
   color: rgb(var(--v-theme-on-surface-variant));
-  margin-bottom: 4px;
 }
 .rail__brand {
   height: 56px;
