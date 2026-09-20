@@ -16,3 +16,4 @@ export { useConfirm, usePrompt } from "./useConfirm";
 export { useMessageSocket, createMessageSocket } from "./useWebSocket";
 export { useTraffic } from "./useTraffic";
 export { useOutboundGroups } from "./useOutboundGroups";
+export { useUnsavedGuard } from "./useUnsavedGuard";

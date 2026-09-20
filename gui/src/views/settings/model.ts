@@ -1,7 +1,7 @@
 // The settings page's state and its two requests, without the view: the
 // form as GET /setting returns it, saved with PUT /setting in the shape
 // the old dialog sent (integers where it parsed them).
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import {
   getRemoteGFWListVersion,
   getSetting,
@@ -57,6 +57,10 @@ export function useSettings() {
   const store = useAppStore();
   const form = reactive(defaultForm());
   const ready = ref(false);
+  const saved = ref("");
+  const dirty = computed(
+    () => ready.value && JSON.stringify(form) !== saved.value,
+  );
   const localGFWListVersion = ref("");
   const remoteGFWListVersion = ref("");
 
@@ -68,6 +72,7 @@ export function useSettings() {
     }
     localGFWListVersion.value = res.localGFWListVersion ?? "";
     if (store.lite) form.transparentType = "system_proxy";
+    saved.value = JSON.stringify(form);
     ready.value = true;
   }
 
@@ -86,6 +91,7 @@ export function useSettings() {
         putSetting(toRequest(form), { signal: control.signal }),
         () => control.abort(),
       );
+      saved.value = JSON.stringify(form);
     } catch (err) {
       // the backend restores the previous setting and keeps the core as it
       // was; the touch says which state that is, and the form goes back to
@@ -108,6 +114,7 @@ export function useSettings() {
   return {
     form,
     ready,
+    dirty,
     localGFWListVersion,
     remoteGFWListVersion,
     load,

@@ -1,5 +1,8 @@
 // @vitest-environment happy-dom
 import { describe, expect, test, vi } from "vitest";
+import { defineComponent, h } from "vue";
+import { mount } from "@vue/test-utils";
+import { useUnsavedGuard } from "./useUnsavedGuard";
 import {
   closeAllNotices,
   dismissNotice,
@@ -70,5 +73,28 @@ describe("useLoading keeps the overlay until the last handle closes", () => {
     closeAllLoadings();
     expect(loadingState.open.size).toBe(0);
     vi.restoreAllMocks();
+  });
+});
+
+describe("useUnsavedGuard asks before a reload drops edits", () => {
+  test("cancels beforeunload only while dirty, and not after unmount", () => {
+    let dirty = false;
+    const Guarded = defineComponent({
+      setup() {
+        useUnsavedGuard(() => dirty);
+        return () => h("div");
+      },
+    });
+    const wrapper = mount(Guarded);
+    const fire = () => {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    expect(fire()).toBe(false);
+    dirty = true;
+    expect(fire()).toBe(true);
+    wrapper.unmount();
+    expect(fire()).toBe(false);
   });
 });

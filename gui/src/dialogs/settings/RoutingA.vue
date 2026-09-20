@@ -11,7 +11,7 @@ import {
 } from "@mdi/js";
 import { getRoutingA, putRoutingA } from "@/api";
 import { errorText } from "@/api/errors";
-import { useConfirm, useNotify } from "@/composables";
+import { useConfirm, useNotify, useUnsavedGuard } from "@/composables";
 import RoutingEditor from "./routingA/RoutingEditor.vue";
 import RoutingReference from "./routingA/RoutingReference.vue";
 import RoutingForm from "./routingA/RoutingForm.vue";
@@ -36,6 +36,7 @@ const confirm = useConfirm();
 const notify = useNotify();
 const routingA = ref("");
 const original = ref("");
+useUnsavedGuard(() => routingA.value !== original.value);
 const loading = ref(true);
 const saving = ref(false);
 const confirming = ref(false);
