@@ -54,6 +54,12 @@ export default {
     removeFromGroup: "Удалить из группы",
     selectAll: "Выбрать все",
     autoUpdate: "Автообновление",
+    noSubscriptions: "Подписок пока нет",
+    noSubscriptionsHint:
+      "Импортируйте адрес подписки: её узлы будут храниться здесь и обновляться вручную или по расписанию.",
+    importSubscription: "Импортировать подписку",
+    emptyHint:
+      "Импортируйте ссылку или адрес подписки либо создайте узел вручную.",
     deleteSubscriptionNodes: "Узлы подписки нельзя удалять по отдельности.",
   },
   dashboard: {

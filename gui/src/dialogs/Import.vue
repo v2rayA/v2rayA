@@ -11,11 +11,15 @@ import { errorText } from "@/api/errors";
 import { useNotify } from "@/composables/useNotify";
 
 defineOptions({ name: "ImportDialog" });
+const props = defineProps<{
+  /** what the dialog opens on; server links unless told otherwise */
+  kind?: "server" | "subscription";
+}>();
 const emit = defineEmits<{ close: [imported?: boolean] }>();
 const { t } = useI18n();
 const notify = useNotify();
 
-const kind = ref<"server" | "subscription">("server");
+const kind = ref<"server" | "subscription">(props.kind ?? "server");
 const text = ref("");
 const importing = ref(false);
 const picker = ref<HTMLInputElement | null>(null);
