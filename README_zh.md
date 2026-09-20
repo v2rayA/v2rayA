@@ -21,8 +21,8 @@ v2rayA 以服务形式运行，通过浏览器操作，可部署在本机、路�
 | 内核 | 与 `v2raya` **版本相同**的 `v2raya_core`，放在同一目录或 `PATH` 中。下列软件包和安装程序都同时安装两者；手动安装时两者版本必须一致 |
 | 规则数据 | `/usr/share/v2raya` 或 `/usr/local/share/v2raya` 中的 `geoip.dat` 与 `geosite.dat`。软件包自带；手动安装时首次启动从 GitHub 下载，下载失败则退出 |
 | Linux 透明代理 | root 权限；`redirect` 与 `tproxy` 需要 `iptables` 或 `nftables`；`tun` 需要 `/dev/net/tun` 与 iproute2 的 `ip` 命令 |
-| Windows | Windows 10 build 14393 及以上；`tun` 需要管理员权限；`--lite` 以普通用户运行，仍可设置当前用户的系统代理 |
-| macOS | `tun` 需要 root 权限；`--lite` 以普通用户运行，改为提供系统代理 |
+| Windows | Windows 10 build 14393 及以上；`tun` 需要管理员权限；未提权启动时运行在 lite 模式，仍可设置当前用户的系统代理 |
+| macOS | `tun` 需要 root 权限；以普通用户启动时运行在 lite 模式，改为提供系统代理 |
 | 浏览器 | 当前版本的 Chrome、Edge、Firefox 或 Safari |
 
 ## 安装
@@ -153,15 +153,16 @@ docker run -d --restart=always --privileged --network=host --name v2raya \
 <details>
 <summary><strong>macOS</strong></summary>
 
-[tap](https://github.com/v2rayA/homebrew-v2raya) 安装两个二进制文件。它的服务以当前用户执行 `v2raya --lite`，提供系统代理，不提供 `tun`：
+[tap](https://github.com/v2rayA/homebrew-v2raya) 安装两个二进制文件。以 root 启动的服务提供 `tun` 透明代理，以当前用户启动的服务运行在 lite 模式，只提供系统代理：
 
 ```sh
 brew tap v2raya/v2raya
 brew install v2raya/v2raya/v2raya
-brew services start v2raya
+sudo brew services start v2raya   # root：tun
+brew services start v2raya        # 当前用户：系统代理
 ```
 
-需要 `tun` 时，停止该服务，改以 root 运行二进制文件：`sudo "$(brew --prefix v2raya)/bin/v2raya"`。
+用 `sudo` 启动的服务要用 `sudo brew services stop v2raya` 停止；Homebrew 会提示，以 root 启动过的 formula 在升级或卸载时需要 `sudo rm` 它列出的路径。
 
 </details>
 

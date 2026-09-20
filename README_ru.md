@@ -21,8 +21,8 @@ v2rayA работает как служба и управляется из бр�
 | Ядро | `v2raya_core` **той же версии**, что и `v2raya`, рядом с ним или в `PATH`. Пакеты и установщики ниже ставят оба файла; при ручной установке версии должны совпадать |
 | Данные правил | `geoip.dat` и `geosite.dat` в `/usr/share/v2raya` или `/usr/local/share/v2raya`. Пакеты содержат их; при ручной установке они скачиваются с GitHub при первом запуске, и при неудаче служба завершается |
 | Прозрачный прокси в Linux | root; `iptables` или `nftables` для `redirect` и `tproxy`; `/dev/net/tun` и команда `ip` из iproute2 для `tun` |
-| Windows | Windows 10 сборки 14393 или новее; права администратора для `tun`; `--lite` работает без привилегий и всё же может настроить системный прокси текущего пользователя |
-| macOS | root для `tun`; `--lite` работает без привилегий и вместо него предлагает системный прокси |
+| Windows | Windows 10 сборки 14393 или новее; права администратора для `tun`; запущенный без повышения прав, работает в режиме lite и всё же может настроить системный прокси текущего пользователя |
+| macOS | root для `tun`; запущенный от пользователя, работает в режиме lite с системным прокси |
 | Браузер | актуальный Chrome, Edge, Firefox или Safari |
 
 ## Установка
@@ -153,15 +153,16 @@ docker run -d --restart=always --privileged --network=host --name v2raya \
 <details>
 <summary><strong>macOS</strong></summary>
 
-[Tap](https://github.com/v2rayA/homebrew-v2raya) устанавливает оба бинарных файла. Его служба запускает `v2raya --lite` от имени пользователя: с системным прокси, но без `tun`:
+[Tap](https://github.com/v2rayA/homebrew-v2raya) устанавливает оба бинарных файла. Запущенная от root служба даёт прозрачный прокси `tun`; запущенная от вас — работает в режиме lite с системным прокси:
 
 ```sh
 brew tap v2raya/v2raya
 brew install v2raya/v2raya/v2raya
-brew services start v2raya
+sudo brew services start v2raya   # root: tun
+brew services start v2raya        # вы: системный прокси
 ```
 
-Для `tun` остановите эту службу и запустите бинарный файл от root: `sudo "$(brew --prefix v2raya)/bin/v2raya"`.
+Службу, запущенную через `sudo`, останавливают командой `sudo brew services stop v2raya`; Homebrew предупреждает, что обновление или удаление formula, запускавшейся от root, требует `sudo rm` перечисленных им путей.
 
 </details>
 
