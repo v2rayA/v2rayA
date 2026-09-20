@@ -1,0 +1,27 @@
+name: Stale Issues
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issues with no activity for 60 days
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          since=$(date -u -d '60 days ago' +%F)
+          gh issue list --state open --limit 100 --json number \
+            --search "updated:<$since -label:notice -label:enhancement" \
+            --jq '.[].number' |
+          while read -r n; do
+            gh issue close "$n" --reason "not planned" \
+              --comment "Closed: no activity for 60 days. Reopen or open a new issue if it still happens on the current release."
+          done
