@@ -68,7 +68,7 @@ const store = useAppStore();
 .rail__menu {
   display: flex;
   margin: 12px auto 20px;
-  color: rgb(var(--v-theme-on-surface-variant));
+  color: rgb(var(--v-theme-outline));
 }
 .rail__brand {
   height: 56px;

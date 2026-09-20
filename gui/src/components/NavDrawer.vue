@@ -82,7 +82,7 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
   padding: 12px 16px 20px;
 }
 .drawer__menu {
-  color: rgb(var(--v-theme-on-surface-variant));
+  color: rgb(var(--v-theme-outline));
 }
 .drawer__wordmark {
   font-weight: 500;
