@@ -194,10 +194,12 @@ defineExpose({ sync: () => stream.fetch() });
         <template #default="{ item, index }">
           <div class="logs__row" :class="{ 'logs__row--wrap': compact }">
             <span class="logs__number">{{ index + 1 }}</span>
+            <!-- eslint-disable vue/no-v-html -- highlight.js escapes the line before marking it up -->
             <span
               class="logs__text language-accesslog"
               v-html="highlight(item.text)"
             />
+            <!-- eslint-enable vue/no-v-html -->
           </div>
         </template>
       </v-virtual-scroll>

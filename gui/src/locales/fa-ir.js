@@ -310,7 +310,8 @@ export default {
     colServer: "سرور DNS",
     colDomains: "فهرست دامنه‌ها",
     colOutbound: "خروجی",
-    serverPlaceholder: "برای نمونه 8.8.8.8 یا https://dns.google/dns-query",
+    serverPlaceholder:
+      "برای نمونه 8.8.8.8، tls://dns.google یا https://dns.google/dns-query",
     domainsPlaceholder:
       "هر مورد در یک خط؛ برای نمونه geosite:cn\nبرای DNS جایگزین خالی بگذارید",
     addRule: "افزودن قانون",
@@ -473,6 +474,31 @@ export default {
     },
   },
   routingA: {
+    title: "قوانین RoutingA",
+    templates: {
+      title: "الگوها",
+      full: "مجموعهٔ کامل قوانین، جایگزین قوانین فعلی",
+      add: "افزودن قوانین، درج در محل مکان‌نما",
+      whitelist: "چین مستقیم، بقیه از پروکسی",
+      blacklist: "سایت‌های خارج از چین از پروکسی، بقیه مستقیم",
+      global: "همه از پروکسی، شبکهٔ محلی مستقیم",
+      minimal: "فقط سرویس‌های خارجی رایج از پروکسی، بقیه مستقیم",
+      ads: "مسدود کردن دامنه‌های تبلیغاتی",
+      streaming:
+        "پخش ویدئو و موسیقی از پروکسی (Netflix، Disney، HBO، Prime Video، YouTube، Spotify، TikTok)",
+      social: "شبکه‌های اجتماعی از پروکسی",
+      telegram: "Telegram از پروکسی",
+      ai: "سرویس‌های هوش مصنوعی از پروکسی",
+      dev: "سرویس‌های توسعه‌دهندگان از پروکسی (GitHub، GitLab، Docker، npm، JetBrains، Hugging Face)",
+      cnServices:
+        "سرویس‌های چینی Apple، Google، Microsoft، Steam و Bilibili مستقیم",
+      appleMicrosoft: "Apple و Microsoft مستقیم",
+      games: "پلتفرم‌های بازی مستقیم",
+      speedtest: "تست سرعت مستقیم",
+      lan: "شبکهٔ محلی و آدرس‌های خصوصی مستقیم",
+      bittorrent: "BitTorrent مستقیم (نیاز به Sniffing)",
+      quic: "مسدود کردن QUIC (UDP 443)",
+    },
     export: "برون‌بری",
     import: {
       title: "درون‌ریزی",
@@ -508,7 +534,6 @@ export default {
       actions: "عملیات ورودی",
       raw: "نحو ناشناخته؛ متن اصلی در ویرایشگر متنی حفظ می‌شود.",
     },
-    editor: "قوانین RoutingA",
     loading: "در حال بارگذاری قوانین",
     resetDefault: "بازگردانی پیش‌فرض",
     resetConfirm: "قوانین فعلی با الگوی پیش‌فرض جایگزین شوند؟",
@@ -548,20 +573,6 @@ export default {
         title: "خروجی‌ها",
         description:
           "خروجی‌های داخلی proxy، direct و block هستند؛ default خروجی هنگام نبود تطبیق را تعیین می‌کند. می‌توانید خروجی SOCKS یا HTTP نام‌دار با user و pass اختیاری تعریف کنید.",
-      },
-      presets: {
-        title: "الگوها",
-        description:
-          "قوانین از بالا به پایین بررسی می‌شوند؛ الگو را بالاتر از قوانین کلی درج کنید. همهٔ الگوها فقط از proxy، direct و block استفاده می‌کنند؛ هر جا گروه خاصی می‌خواهید، proxy را به نام آن گروه تغییر دهید.",
-        whitelist: "چین مستقیم، بقیه از پروکسی",
-        blacklist: "سایت‌های خارج از چین از پروکسی، بقیه مستقیم",
-        ads: "مسدود کردن دامنه‌های تبلیغاتی",
-        streaming: "پخش ویدئو و موسیقی از پروکسی",
-        telegram: "Telegram از پروکسی",
-        ai: "سرویس‌های هوش مصنوعی از پروکسی",
-        cnServices:
-          "سرویس‌های چینی Apple، Google، Microsoft، Steam و Bilibili مستقیم",
-        lan: "شبکهٔ محلی و آدرس‌های خصوصی مستقیم",
       },
     },
     messages: ["برای دریافت راهنمایی، روی دکمه «Help&Manual» کلیک کنید"],

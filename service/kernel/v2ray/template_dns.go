@@ -317,14 +317,16 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		}
 
 		// 如果是域名地址，加入 bootstrap 列表，由 v2raya-core 用系统 DNS 解析
-		if !strings.Contains(upstreamAddr, "://") {
-			host, _, err := net.SplitHostPort(addr)
-			if err != nil {
-				host = addr
+		bootHost := addr
+		if proto == "https" {
+			if u, err := url.Parse(upstreamAddr); err == nil {
+				bootHost = u.Hostname()
 			}
-			if net.ParseIP(host) == nil {
-				bootstrapList = append(bootstrapList, host)
-			}
+		} else if host, _, err := net.SplitHostPort(addr); err == nil {
+			bootHost = host
+		}
+		if bootHost != "" && net.ParseIP(bootHost) == nil {
+			bootstrapList = append(bootstrapList, bootHost)
 		}
 
 		outboundTag := rule.Outbound

@@ -3,12 +3,14 @@
 # Distributed under the terms of the GNU General Public License v2
 
 name="v2rayA"
-description="A web GUI client of Project V with transparent proxy"
+description="Web client for its own Xray-based core, with transparent proxy"
 command="/usr/bin/v2raya"
 command_args="${V2RAYA_OPTS}"
 error_log="/var/log/v2raya/error.log"
-pidfile="/run/${RC_SVCNAME}.pid"
-command_background="yes"
+# supervise-daemon restarts the service after a crash, as the systemd
+# unit's Restart=on-failure does (OpenRC's default: up to 10 times in
+# 10 s); rc_cgroup_cleanup takes a core the service left behind.
+supervisor="supervise-daemon"
 rc_ulimit="-n 30000"
 rc_cgroup_cleanup="yes"
 # The service stops its core and removes the transparent-proxy rules on
@@ -24,11 +26,4 @@ depend() {
 start_pre() {
 	checkpath -d -m 0755 /var/log/v2raya
 	checkpath -d -m 0750 /etc/v2raya
-}
-
-stop_post() {
-	# A core the service did not get to stop (it was killed) would keep the
-	# inbound ports and make the next start fail on them.
-	pkill -x v2raya_core 2>/dev/null
-	return 0
 }

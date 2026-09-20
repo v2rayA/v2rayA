@@ -2,7 +2,13 @@
 import { computed, nextTick, onMounted, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
-import { mdiClose, mdiCodeTags, mdiFormSelect, mdiOpenInNew } from "@mdi/js";
+import {
+  mdiClose,
+  mdiCodeTags,
+  mdiFormSelect,
+  mdiMenuDown,
+  mdiOpenInNew,
+} from "@mdi/js";
 import { getRoutingA, putRoutingA } from "@/api";
 import { errorText } from "@/api/errors";
 import { useConfirm, useNotify } from "@/composables";
@@ -10,10 +16,21 @@ import RoutingEditor from "./routingA/RoutingEditor.vue";
 import RoutingReference from "./routingA/RoutingReference.vue";
 import RoutingForm from "./routingA/RoutingForm.vue";
 import { template } from "./routingA/template";
+import { presets } from "./routingA/presets";
 
 defineOptions({ name: "RoutingADialog" });
 const emit = defineEmits<{ close: [saved?: boolean] }>();
 const { t } = useI18n();
+const templateGroups = computed(() => [
+  {
+    title: t("routingA.templates.full"),
+    items: presets.filter((p) => p.code.startsWith("default:")),
+  },
+  {
+    title: t("routingA.templates.add"),
+    items: presets.filter((p) => !p.code.startsWith("default:")),
+  },
+]);
 const { width } = useDisplay();
 const confirm = useConfirm();
 const notify = useNotify();
@@ -71,6 +88,13 @@ function exportRules() {
   link.download = "routingA.txt";
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+// a full rule set replaces the rules after a confirmation; a snippet is
+// inserted at the cursor
+async function useTemplate(preset: (typeof presets)[number]) {
+  if (preset.code.startsWith("default:"))
+    await replaceWithTemplate(preset.code);
+  else await insertExample(preset.code);
 }
 async function replaceWithTemplate(code: string) {
   if (busy.value) return;
@@ -195,7 +219,9 @@ async function save() {
 <template>
   <v-card>
     <v-card-item class="routing-title px-6 pt-6 pb-4">
-      <v-card-title class="md3-headline-small pa-0">RoutingA</v-card-title>
+      <v-card-title class="md3-headline-small pa-0">{{
+        t("routingA.title")
+      }}</v-card-title>
       <template #append>
         <v-btn-toggle
           v-model="view"
@@ -219,6 +245,28 @@ async function save() {
             :title="t('routingA.form.text')"
           />
         </v-btn-toggle>
+        <v-menu>
+          <template #activator="{ props: menu }">
+            <v-btn
+              v-bind="menu"
+              variant="text"
+              :append-icon="mdiMenuDown"
+              :disabled="busy"
+              >{{ t("routingA.templates.title") }}</v-btn
+            >
+          </template>
+          <v-list density="compact" min-width="280">
+            <template v-for="group in templateGroups" :key="group.title">
+              <v-list-subheader>{{ group.title }}</v-list-subheader>
+              <v-list-item
+                v-for="preset in group.items"
+                :key="preset.key"
+                :title="t(`routingA.templates.${preset.key}`)"
+                @click="useTemplate(preset)"
+              />
+            </template>
+          </v-list>
+        </v-menu>
         <v-btn
           variant="text"
           :aria-expanded="showReference"
@@ -282,7 +330,6 @@ async function save() {
             :id="referenceId"
             :disabled="busy"
             @insert="insertExample"
-            @replace="replaceWithTemplate"
           />
         </v-expand-transition>
       </div>

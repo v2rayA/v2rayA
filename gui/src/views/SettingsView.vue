@@ -293,7 +293,7 @@ defineExpose({ sync: () => settings.load() });
           :items="pacModes"
         />
         <SettingRow
-          title="RoutingA"
+          :title="t('routingA.title')"
           :subtitle="t('operations.configure')"
           action
           @click="openRoutingA"

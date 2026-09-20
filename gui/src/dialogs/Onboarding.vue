@@ -125,7 +125,7 @@ onBeforeUnmount(markSeen);
             class="mt-6"
             @click="open(RoutingADialog, {}, { width: 960 })"
           >
-            {{ t("routingA.editor") }}
+            {{ t("routingA.title") }}
           </v-btn>
         </v-window-item>
       </v-window>

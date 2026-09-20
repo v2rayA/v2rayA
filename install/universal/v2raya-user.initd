@@ -5,13 +5,12 @@
 USER="${RC_SVCNAME##*.}"
 HOME="$(eval echo ~${USER})"
 name="v2rayA for ${USER}"
-description="A web GUI client of Project V with transparent proxy"
+description="Web client for its own Xray-based core; lite mode, without transparent proxy"
 command="/usr/bin/v2raya"
 command_user="${USER}"
 command_args="--lite --log-file ${HOME}/.config/v2raya/v2raya.log ${V2RAYA_OPTS}"
 error_log="${HOME}/.config/v2raya/error.log"
-pidfile="/run/${RC_SVCNAME}.pid"
-command_background="yes"
+supervisor="supervise-daemon"
 retry="TERM/30/KILL/5"
 
 depend() {
@@ -32,5 +31,7 @@ start_pre() {
 		eerror "Instead just run /etc/init.d/v2raya directly."
 		return 1
 	fi
+	# checkpath makes one level; a fresh account has no ~/.config yet
+	checkpath -d -o "${USER}" "${HOME}/.config"
 	checkpath -d -m 0700 -o "${USER}" "${HOME}/.config/v2raya"
 }

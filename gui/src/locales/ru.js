@@ -313,7 +313,8 @@ export default {
     colServer: "DNS-сервер",
     colDomains: "Список доменов",
     colOutbound: "Исходящий трафик",
-    serverPlaceholder: "например, 8.8.8.8 или https://dns.google/dns-query",
+    serverPlaceholder:
+      "например, 8.8.8.8, tls://dns.google или https://dns.google/dns-query",
     domainsPlaceholder:
       "По одному в строке, например geosite:cn\nОставьте пустым для резервного DNS",
     addRule: "Добавить правило",
@@ -477,6 +478,32 @@ export default {
     },
   },
   routingA: {
+    title: "Правила RoutingA",
+    templates: {
+      title: "Шаблоны",
+      full: "Полный набор правил, заменяет текущие",
+      add: "Добавить правила, вставляются у курсора",
+      whitelist: "Китай напрямую, остальное через прокси",
+      blacklist: "Сайты за пределами Китая через прокси, остальное напрямую",
+      global: "Всё через прокси, локальная сеть напрямую",
+      minimal:
+        "Только распространённые зарубежные сервисы через прокси, остальное напрямую",
+      ads: "Блокировать рекламные домены",
+      streaming:
+        "Стриминг через прокси (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
+      social: "Социальные сети через прокси",
+      telegram: "Telegram через прокси",
+      ai: "Сервисы ИИ через прокси",
+      dev: "Сервисы для разработчиков через прокси (GitHub, GitLab, Docker, npm, JetBrains, Hugging Face)",
+      cnServices:
+        "Китайские зеркала Apple, Google, Microsoft, Steam и Bilibili напрямую",
+      appleMicrosoft: "Apple и Microsoft напрямую",
+      games: "Игровые платформы напрямую",
+      speedtest: "Тесты скорости напрямую",
+      lan: "Локальная сеть и частные адреса напрямую",
+      bittorrent: "BitTorrent напрямую (нужен Sniffing)",
+      quic: "Блокировать QUIC (UDP 443)",
+    },
     export: "Экспорт",
     import: {
       title: "Импорт",
@@ -513,7 +540,6 @@ export default {
       actions: "Действия с записью",
       raw: "Неизвестный синтаксис; сохранён в текстовом редакторе.",
     },
-    editor: "Правила RoutingA",
     loading: "Загрузка правил",
     resetDefault: "Восстановить по умолчанию",
     resetConfirm: "Заменить текущие правила шаблоном по умолчанию?",
@@ -553,20 +579,6 @@ export default {
         title: "Исходящие подключения",
         description:
           "Встроенные подключения: proxy, direct и block; default задаёт подключение при отсутствии совпадений. Можно определить именованное подключение SOCKS или HTTP с необязательными user и pass.",
-      },
-      presets: {
-        title: "Шаблоны",
-        description:
-          "Правила проверяются сверху вниз, поэтому вставляйте шаблон выше общих правил. Все шаблоны используют только proxy, direct и block; замените proxy на имя своей группы там, где она нужна.",
-        whitelist: "Китай напрямую, остальное через прокси",
-        blacklist: "Сайты за пределами Китая через прокси, остальное напрямую",
-        ads: "Блокировать рекламные домены",
-        streaming: "Стриминг через прокси",
-        telegram: "Telegram через прокси",
-        ai: "Сервисы ИИ через прокси",
-        cnServices:
-          "Китайские зеркала Apple, Google, Microsoft, Steam и Bilibili напрямую",
-        lan: "Локальная сеть и частные адреса напрямую",
       },
     },
     messages: ["Нажмите кнопку «Справка и руководство», чтобы получить помощь"],

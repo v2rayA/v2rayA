@@ -145,6 +145,9 @@ type UpstreamConfig struct {
 	Protocol  string `json:"protocol,omitempty"`
 	ProxyTag  string `json:"proxy_tag,omitempty"`
 	Bootstrap bool   `json:"bootstrap,omitempty"`
+	// ServerName is the hostname of a tls or https upstream, kept when
+	// bootstrap replaces the address with an IP: TLS verifies against it.
+	ServerName string `json:"server_name,omitempty"`
 }
 
 // RuleConfig holds DNS routing rule configuration.

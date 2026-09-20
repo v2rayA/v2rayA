@@ -3,6 +3,7 @@ package dns
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"sync"
 
 	"github.com/miekg/dns"
@@ -38,6 +39,11 @@ type UpstreamInstance struct {
 	Healthy bool
 	// Bootstrap indicates whether this upstream is used for bootstrap resolution.
 	Bootstrap bool
+	// ServerName is the TLS server name of a tls or https upstream.
+	ServerName string
+	// doh is the HTTP client of an https upstream, built on first use.
+	doh     *http.Client
+	dohOnce sync.Once
 }
 
 // CompositeKey returns the composite key for this instance.
@@ -55,6 +61,7 @@ type UpstreamManager struct {
 	upstreamsByID     map[string]*UpstreamInstance // ID → instance (backward compatibility)
 	proxyAddrResolver ProxyAddrResolver            // Resolver for proxy tag → SOCKS5 address (legacy)
 	dispatcher        RouteDispatcher              // xray-core internal routing dispatcher
+	bootstrapIPs      map[string]string            // upstream hostname → IP from bootstrap
 	mu                sync.RWMutex
 }
 
@@ -85,13 +92,14 @@ func NewUpstreamManager(configs []UpstreamConfig) *UpstreamManager {
 		}
 
 		instance := &UpstreamInstance{
-			ID:        id,
-			Addr:      cfg.Addr,
-			Protocol:  net,
-			ProxyTag:  proxyTag,
-			Healthy:   true,
-			Bootstrap: cfg.Bootstrap,
-			Client:    newMarkedDnsClient(net),
+			ID:         id,
+			Addr:       cfg.Addr,
+			Protocol:   net,
+			ProxyTag:   proxyTag,
+			Healthy:    true,
+			Bootstrap:  cfg.Bootstrap,
+			ServerName: cfg.ServerName,
+			Client:     newMarkedDnsClient(net),
 		}
 
 		compositeKey := instance.CompositeKey()
