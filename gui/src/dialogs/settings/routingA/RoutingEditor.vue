@@ -143,7 +143,7 @@ defineExpose({ insert });
         :value="modelValue"
         :disabled="disabled"
         :readonly="readonly"
-        :aria-label="t('routingA.editor')"
+        :aria-label="t('routingA.title')"
         :aria-describedby="errors.length ? errorId : undefined"
         class="routing-editor__input"
         dir="ltr"

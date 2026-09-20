@@ -5,7 +5,7 @@ import messages from "../locales";
 
 // Create i18n instance with options
 let locale = "en";
-let _lang = typeof localStorage === "undefined" ? "" : localStorage["_lang"];
+const _lang = typeof localStorage === "undefined" ? "" : localStorage["_lang"];
 if (_lang && _lang in messages) {
   locale = _lang;
 } else {

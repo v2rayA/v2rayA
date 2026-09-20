@@ -88,9 +88,6 @@ onMounted(sync);
         @click:clear="query = ''"
       />
       <v-spacer />
-      <v-btn variant="text" :disabled="disabled" @click="model.editRoutingA">{{
-        t("routingA.editor")
-      }}</v-btn>
       <v-btn
         variant="outlined"
         :prepend-icon="mdiPlus"

@@ -33,7 +33,6 @@ import type {
   ObservatoryMessage,
   RunningStateMessage,
   TrafficMessage,
-  Which,
   WsMessage,
 } from "@/api/types";
 import { installClientHooks } from "@/clientHooks";
@@ -61,7 +60,7 @@ import LoginDialog from "@/dialogs/Login.vue";
 import OnboardingDialog, {
   shouldShowOnboarding,
 } from "@/dialogs/Onboarding.vue";
-import { onSessionTeardown, resetSession, setSessionStarter } from "@/session";
+import { onSessionTeardown, setSessionStarter } from "@/session";
 import { setRefresher } from "@/session/refresh";
 import { useAppStore, type Running } from "@/stores/app";
 import { runningOf } from "@/views/nodes/model";
@@ -413,6 +412,7 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
         :prepend-icon="mdiPower"
         height="40"
         class="text-none"
+        :class="compact ? 'me-1' : 'me-2'"
         :disabled="toggling"
         @mouseenter="hovering = true"
         @mouseleave="hovering = false"
@@ -432,7 +432,6 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       </v-btn>
       <OutboundMenu
         :variant="compact ? 'icon' : 'chip'"
-        :class="compact ? 'ms-1' : 'mx-2'"
         @changed="pageRef?.sync?.()"
       />
       <template #append>
@@ -478,11 +477,7 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
             >
               {{ statusText }}
             </v-btn>
-            <OutboundMenu
-              variant="chip"
-              class="me-2"
-              @changed="pageRef?.sync?.()"
-            />
+            <OutboundMenu variant="chip" @changed="pageRef?.sync?.()" />
             <ShellMenus variant="icons" />
           </div>
         </div>

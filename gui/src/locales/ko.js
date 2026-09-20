@@ -470,6 +470,31 @@ export default {
     },
   },
   routingA: {
+    title: "RoutingA 규칙",
+    templates: {
+      title: "템플릿",
+      full: "전체 규칙 세트, 현재 규칙을 바꿈",
+      add: "규칙 추가, 커서 위치에 삽입",
+      whitelist: "중국은 직접 연결, 나머지는 프록시",
+      blacklist: "중국 외 사이트는 프록시, 나머지는 직접 연결",
+      global: "모두 프록시, LAN은 직접 연결",
+      minimal: "자주 쓰는 해외 서비스만 프록시, 나머지는 직접 연결",
+      ads: "광고 도메인 차단",
+      streaming:
+        "스트리밍은 프록시 (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
+      social: "소셜 미디어는 프록시",
+      telegram: "Telegram은 프록시",
+      ai: "AI 서비스는 프록시",
+      dev: "개발자 서비스는 프록시 (GitHub, GitLab, Docker, npm, JetBrains, Hugging Face)",
+      cnServices:
+        "Apple, Google, Microsoft, Steam의 중국 서비스와 Bilibili는 직접 연결",
+      appleMicrosoft: "Apple과 Microsoft는 직접 연결",
+      games: "게임 플랫폼은 직접 연결",
+      speedtest: "속도 측정은 직접 연결",
+      lan: "LAN 및 사설 주소는 직접 연결",
+      bittorrent: "BitTorrent는 직접 연결 (스니핑 필요)",
+      quic: "QUIC 차단 (UDP 443)",
+    },
     export: "내보내기",
     import: {
       title: "가져오기",
@@ -504,7 +529,6 @@ export default {
       actions: "항목 작업",
       raw: "인식할 수 없는 문법입니다. 텍스트 편집기에 원문을 보존합니다.",
     },
-    editor: "RoutingA 규칙",
     loading: "규칙 불러오는 중",
     resetDefault: "기본값 복원",
     resetConfirm: "현재 규칙을 기본 템플릿으로 바꾸시겠습니까?",
@@ -544,20 +568,6 @@ export default {
         title: "아웃바운드",
         description:
           "기본 아웃바운드는 proxy, direct, block이며 default는 일치하는 규칙이 없을 때 사용할 아웃바운드를 지정합니다. 이름이 있는 SOCKS 또는 HTTP 아웃바운드를 정의하고 user와 pass를 선택적으로 지정할 수 있습니다.",
-      },
-      presets: {
-        title: "템플릿",
-        description:
-          "규칙은 위에서 아래로 일치하므로 템플릿은 넓은 규칙보다 위에 삽입하세요. 모든 템플릿은 proxy, direct, block만 사용합니다. 특정 그룹으로 보내려면 proxy를 해당 그룹 이름으로 바꾸세요.",
-        whitelist: "중국은 직접 연결, 나머지는 프록시",
-        blacklist: "중국 외 사이트는 프록시, 나머지는 직접 연결",
-        ads: "광고 도메인 차단",
-        streaming: "스트리밍은 프록시",
-        telegram: "Telegram은 프록시",
-        ai: "AI 서비스는 프록시",
-        cnServices:
-          "Apple, Google, Microsoft, Steam의 중국 서비스와 Bilibili는 직접 연결",
-        lan: "LAN 및 사설 주소는 직접 연결",
       },
     },
     messages: ["도움말을 보려면 '도움말 및 설명서' 버튼을 클릭하세요"],

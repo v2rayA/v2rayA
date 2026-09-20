@@ -24,6 +24,7 @@ const srcDir = join(root, "src");
 const dynamicPrefixes = [
   "backend.",
   "docs.sections.",
+  "routingA.templates.",
   "log.",
   "operations.export",
   "setting.options.",
