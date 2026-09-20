@@ -20,7 +20,11 @@ $md3-font:
   Arial,
   sans-serif;
 
-.v-application {
+// dialogs, menus and tooltips render in .v-overlay-container, which sits
+// beside .v-application, not inside it, and would fall back to Vuetify's
+// Roboto stack
+.v-application,
+.v-overlay-container {
   --v-font-body: #{$md3-font};
   --v-font-heading: #{$md3-font};
   font-family: $md3-font;

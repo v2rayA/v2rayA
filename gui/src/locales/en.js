@@ -427,8 +427,12 @@ export default {
       "Core version mismatch: v2raya_core version must exactly match v2rayA version. {err}",
   },
   about: {
-    intro: "v2rayA is a web GUI client of V2Ray.",
-    local: "All data is stored in local instead of in the cloud.",
+    intro:
+      "A web client for its own Xray-based core with global transparent proxy on Linux, Windows and macOS.",
+    protocols:
+      "Speaks VMess, VLESS, Shadowsocks, Trojan, Hysteria2, TUIC, Juicity, AnyTLS, WireGuard, SOCKS5 and HTTP(S) proxy links.",
+    founded: "Founded by {'@'}mzz2017.",
+    local: "All data stays on this machine; nothing is sent to a cloud.",
     report: "Problems found during use can be reported in {discussions}.",
     discussions: "discussions",
     docs: "Documentation:",

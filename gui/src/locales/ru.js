@@ -428,8 +428,12 @@ export default {
       "Несовпадение версий ядра: версия v2raya_core должна в точности совпадать с версией v2rayA. {err}",
   },
   about: {
-    intro: "v2rayA — веб-клиент с графическим интерфейсом для V2Ray.",
-    local: "Все данные хранятся локально, а не в облаке.",
+    intro:
+      "Веб-клиент для собственного ядра на базе Xray с глобальным прозрачным прокси в Linux, Windows и macOS.",
+    protocols:
+      "Поддерживает ссылки VMess, VLESS, Shadowsocks, Trojan, Hysteria2, TUIC, Juicity, AnyTLS, WireGuard, SOCKS5 и HTTP(S).",
+    founded: "Основатель проекта — {'@'}mzz2017.",
+    local: "Все данные хранятся локально и никуда не отправляются.",
     report:
       "О проблемах, обнаруженных при использовании, можно сообщить в разделе {discussions}.",
     discussions: "discussions",

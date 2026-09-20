@@ -423,8 +423,12 @@ export default {
       "코어 버전 불일치: v2raya_core 버전은 v2rayA 버전과 정확히 일치해야 합니다. {err}",
   },
   about: {
-    intro: "v2rayA는 V2Ray의 웹 GUI 클라이언트입니다.",
-    local: "모든 데이터는 클라우드가 아닌 로컬에 저장됩니다.",
+    intro:
+      "자체 Xray 기반 코어를 사용하는 웹 클라이언트로, Linux, Windows, macOS에서 전역 투명 프록시를 제공합니다.",
+    protocols:
+      "VMess, VLESS, Shadowsocks, Trojan, Hysteria2, TUIC, Juicity, AnyTLS, WireGuard, SOCKS5, HTTP(S) 프록시 링크를 지원합니다.",
+    founded: "{'@'}mzz2017가 시작한 프로젝트입니다.",
+    local: "모든 데이터는 이 컴퓨터에만 저장되며 클라우드로 전송되지 않습니다.",
     report: "사용 중 발견한 문제는 {discussions}에 제보할 수 있습니다.",
     discussions: "discussions",
     docs: "문서:",
