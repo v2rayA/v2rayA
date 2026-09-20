@@ -432,8 +432,12 @@ export default {
       "Incompatibilidade de versão do núcleo: a versão do v2raya_core deve corresponder exatamente à versão do v2rayA. {err}",
   },
   about: {
-    intro: "v2rayA é um cliente web do V2Ray.",
-    local: "Todos os dados são armazenados localmente, não na nuvem.",
+    intro:
+      "Um cliente web com núcleo próprio baseado em Xray e proxy transparente global no Linux, Windows e macOS.",
+    protocols:
+      "Aceita links VMess, VLESS, Shadowsocks, Trojan, Hysteria2, TUIC, Juicity, AnyTLS, WireGuard, SOCKS5 e HTTP(S).",
+    founded: "Fundado por {'@'}mzz2017.",
+    local: "Todos os dados ficam nesta máquina; nada é enviado à nuvem.",
     report:
       "Problemas encontrados durante o uso podem ser relatados em {discussions}.",
     discussions: "discussões",

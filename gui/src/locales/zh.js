@@ -416,7 +416,11 @@ export default {
       "核心版本不匹配：v2raya_core 的版本必须与 v2rayA 版本完全一致。{err}",
   },
   about: {
-    intro: "v2rayA 是 V2Ray 的一个 Web 客户端。",
+    intro:
+      "自带 Xray 内核的 Web 客户端，在 Linux、Windows、macOS 上提供全局透明代理。",
+    protocols:
+      "支持 VMess、VLESS、Shadowsocks、Trojan、Hysteria2、TUIC、Juicity、AnyTLS、WireGuard、SOCKS5 与 HTTP(S) 代理节点。",
+    founded: "由 {'@'}mzz2017 创立。",
     local: "所有数据均存储在本地，不上传云端。",
     report: "在使用中如果发现任何问题，欢迎到{discussions}反馈。",
     discussions: "讨论区",

@@ -155,7 +155,7 @@ describe("settings list", () => {
     await about!.trigger("click");
     await flushPromises();
     const dialog = new DOMWrapper(document.querySelector('[role="dialog"]')!);
-    expect(dialog.text()).toContain("mzz2017 / v2rayA");
+    expect(dialog.text()).toContain("Founded by @mzz2017");
     expect(dialog.find('a[href$="/discussions"]').exists()).toBe(true);
     const close = dialog
       .findAll("button")

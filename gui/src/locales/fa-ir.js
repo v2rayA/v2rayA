@@ -423,8 +423,13 @@ export default {
       "ناسازگاری نسخه هسته: نسخه v2raya_core باید دقیقاً با نسخه v2rayA یکسان باشد. {err}",
   },
   about: {
-    intro: "v2rayA یک رابط وب برای V2Ray است.",
-    local: "همه داده‌ها به‌صورت محلی و نه در فضای ابری ذخیره می‌شوند.",
+    intro:
+      "یک رابط وب با هستهٔ اختصاصی مبتنی بر Xray و پراکسی شفاف سراسری در Linux، Windows و macOS.",
+    protocols:
+      "از پیوندهای VMess، VLESS، Shadowsocks، Trojan، Hysteria2، TUIC، Juicity، AnyTLS، WireGuard، SOCKS5 و HTTP(S) پشتیبانی می‌کند.",
+    founded: "بنیان‌گذار: {'@'}mzz2017.",
+    local:
+      "همهٔ داده‌ها روی همین دستگاه می‌مانند و به هیچ سرویس ابری فرستاده نمی‌شوند.",
     report:
       "مشکلات مشاهده‌شده هنگام استفاده را می‌توانید در {discussions} گزارش کنید.",
     discussions: "discussions",
