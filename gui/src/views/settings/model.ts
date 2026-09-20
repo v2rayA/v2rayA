@@ -88,15 +88,17 @@ export function useSettings() {
       );
     } catch (err) {
       // the backend restores the previous setting and keeps the core as it
-      // was; the touch says which state that is
-      await getTouch()
-        .then((res) =>
+      // was; the touch says which state that is, and the form goes back to
+      // what is stored so the rejected values are not resent by the next save
+      await Promise.all([
+        getTouch().then((res) =>
           store.setRunning(
             runningOf(res.running, !!res.networkPaused),
             !!res.networkPaused,
           ),
-        )
-        .catch(() => {});
+        ),
+        load(),
+      ]).catch(() => {});
       throw err;
     } finally {
       loading.close();

@@ -19,7 +19,6 @@ import VmessForm from "./forms/VmessForm.vue";
 import VlessForm from "./forms/VlessForm.vue";
 import WireguardForm from "./forms/WireguardForm.vue";
 import SsForm from "./forms/SsForm.vue";
-import SsrForm from "./forms/SsrForm.vue";
 import TrojanForm from "./forms/TrojanForm.vue";
 import JuicityForm from "./forms/JuicityForm.vue";
 import TuicForm from "./forms/TuicForm.vue";
@@ -43,7 +42,6 @@ const forms: Record<Protocol, unknown> = {
   vless: VlessForm,
   wireguard: WireguardForm,
   ss: SsForm,
-  ssr: SsrForm,
   trojan: TrojanForm,
   juicity: JuicityForm,
   tuic: TuicForm,
@@ -62,11 +60,16 @@ const activeForm = computed(() => forms[protocol.value]);
 const activeKey = computed(() => modelKey(protocol.value));
 
 onMounted(async () => {
+  // a node that could not be loaded must not be saved over from the
+  // defaults, so the dialog closes with the error
   try {
-    if (!(await editor.load()))
+    if (!(await editor.load())) {
       notify.error(t("sharing.failed", { message: t("common.fail") }));
+      emit("close");
+    }
   } catch (err) {
     notify.error(t("sharing.failed", { message: errorText(err) }));
+    emit("close");
   } finally {
     loading.value = false;
   }
@@ -128,8 +131,8 @@ async function save() {
         {{ t(readonly ? "operations.confirm" : "operations.cancel") }}
       </v-btn>
       <v-btn
-        variant="flat"
         v-if="!readonly"
+        variant="flat"
         color="primary"
         :loading="saving"
         :disabled="loading"

@@ -14,7 +14,7 @@ defineProps<{
 </script>
 
 <template>
-  <v-list-item class="setting-row" :title="title" lines="two">
+  <v-list-item class="setting-row" :title="title" lines="two" :link="action">
     <template v-if="hint || subtitle" #subtitle>
       <span class="setting-row__hint">{{ subtitle || hint }}</span>
     </template>

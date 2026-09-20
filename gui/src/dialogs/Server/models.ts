@@ -80,20 +80,6 @@ export const ssModel = () => ({
 });
 export type SsModel = ReturnType<typeof ssModel>;
 
-export const ssrModel = () => ({
-  method: "aes-128-cfb",
-  password: "",
-  server: "",
-  port: "",
-  name: "",
-  proto: "origin",
-  protoParam: "",
-  obfs: "plain",
-  obfsParam: "",
-  protocol: "ssr",
-});
-export type SsrModel = ReturnType<typeof ssrModel>;
-
 export const trojanModel = () => ({
   name: "",
   server: "",
@@ -202,12 +188,13 @@ export const wireguardModel = () => ({
   publicKey: "",
   privateKey: "",
   localAddress: "",
-  dns: "",
   mtu: "",
   allowedIPs: "",
   persistentKeepalive: "",
   preSharedKey: "",
-  endpoint: "",
+  reserved: "",
+  workers: "",
+  kernelMode: false,
 });
 export type WireguardModel = ReturnType<typeof wireguardModel>;
 
@@ -216,7 +203,6 @@ export function defaultModels() {
   return {
     v2ray: v2rayModel(),
     ss: ssModel(),
-    ssr: ssrModel(),
     trojan: trojanModel(),
     juicity: juicityModel(),
     tuic: tuicModel(),

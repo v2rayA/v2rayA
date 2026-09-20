@@ -28,3 +28,16 @@ describe("serverCodec keeps the editor's behaviour", () => {
     expect(generateShareLink({ protocol: "gopher" })).toBeNull();
   });
 });
+
+test("a wireguard link keeps workers, reserved and kernelMode through parse and generate", () => {
+  const link =
+    "wireguard://cHJpdmF0ZQ@1.2.3.4:51820?publicKey=cHVi&address=10.0.0.2%2F32&reserved=1%2C2%2C3&workers=4&kernelMode=true#wg";
+  const model = parseShareLink(link) as Record<string, unknown>;
+  expect(model.reserved).toBe("1,2,3");
+  expect(model.workers).toBe("4");
+  expect(model.kernelMode).toBe(true);
+  const out = generateShareLink(model);
+  expect(out).toContain("reserved=1%2C2%2C3");
+  expect(out).toContain("workers=4");
+  expect(out).toContain("kernelMode=true");
+});

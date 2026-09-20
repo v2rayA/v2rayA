@@ -40,7 +40,15 @@ export function createMessageSocket(handlers: {
       handlers.onOpen();
     };
     socket.onmessage = (ev) => {
-      if (ev.data) handlers.onMessage(JSON.parse(ev.data));
+      if (!ev.data) return;
+      let msg: unknown;
+      try {
+        msg = JSON.parse(ev.data);
+      } catch {
+        // a proxy's error page or a truncated frame is not a message
+        return;
+      }
+      handlers.onMessage(msg as Parameters<typeof handlers.onMessage>[0]);
     };
     socket.onclose = () => {
       socket.onmessage = null;

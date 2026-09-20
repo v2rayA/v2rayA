@@ -28,9 +28,14 @@ onMounted(async () => {
   try {
     const [dns, groups] = await Promise.all([getDnsRules(), getOutbounds()]);
     if (dns.rules?.length) {
-      rules.value = dns.rules.map((rule) => ({
-        server: rule.server || "",
-        domains: rule.domains || "",
+      // fields set outside the dialog (the DNS module's matchers) survive a
+      // save; `upstream` and `domain` are the migrated aliases of the two
+      // edited fields and the generator prefers them, so they fold into the
+      // form and are not sent back
+      rules.value = dns.rules.map(({ upstream, domain, ...rule }) => ({
+        ...rule,
+        server: (upstream as string) || rule.server || "",
+        domains: (domain as string) || rule.domains || "",
         outbound: rule.outbound || "direct",
       }));
     }

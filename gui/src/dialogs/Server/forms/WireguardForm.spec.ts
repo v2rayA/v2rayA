@@ -21,12 +21,12 @@ describe("the wireguard form", () => {
       "Public Key",
       "Private Key",
       "Address (Local)",
-      "DNS",
       "MTU",
       "Allowed IPs",
       "Persistent Keepalive",
       "Pre-shared Key",
-      "Endpoint",
+      "Reserved bytes",
+      "Workers",
     ]);
     expect(
       fields.find((c) => c.props("label") === "Address (Local)")!.get("input")
@@ -74,7 +74,9 @@ describe("the wireguard form", () => {
       props: { modelValue: model, readonly: true },
     });
     expect(
-      w.findAll("input").every((c) => c.attributes("readonly") !== undefined),
+      w
+        .findAll("input[type=text], input[type=number]")
+        .every((c) => c.attributes("readonly") !== undefined),
     ).toBe(true);
     expect(generateShareLink(model)).toBe(fixtures.wireguard.back);
     w.unmount();

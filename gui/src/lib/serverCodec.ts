@@ -199,34 +199,6 @@ export function parseShareLink(url: string): ShareForm | null {
       }
     }
     return o;
-  } else if (url.toLowerCase().startsWith("ssr://")) {
-    url = Base64.decode(url.substr(6));
-    const arr = url.split("/?");
-    const query = (arr[1] ?? "").split("&");
-    const m: ShareForm = {};
-    for (const param of query) {
-      const [key, val] = param.split("=", 2);
-      m[key] = Base64.decode(val);
-    }
-    let pre = arr[0].split(":");
-    if (pre.length > 6) {
-      //如果长度多于6，说明host中包含字符:，重新合并前几个分组到host去
-      pre[pre.length - 6] = pre.slice(0, pre.length - 5).join(":");
-      pre = pre.slice(pre.length - 6);
-    }
-    pre[5] = Base64.decode(pre[5]);
-    return {
-      method: pre[3],
-      password: pre[5],
-      server: pre[0],
-      port: pre[1],
-      name: m["remarks"],
-      proto: pre[2],
-      protoParam: m["protoparam"],
-      obfs: pre[4],
-      obfsParam: m["obfsparam"],
-      protocol: "ssr",
-    };
   } else if (
     url.toLowerCase().startsWith("trojan://") ||
     url.toLowerCase().startsWith("trojan-go://")
@@ -392,12 +364,13 @@ export function parseShareLink(url: string): ShareForm | null {
       privateKey: decodeSafe(u.username || ""),
       publicKey: u.params.publicKey || "",
       localAddress: u.params.address || "",
-      dns: u.params.dns || "",
       mtu: u.params.mtu || "",
       allowedIPs: u.params.allowedIPs || "",
       persistentKeepalive: u.params.keepAlive || "",
       preSharedKey: u.params.preSharedKey || "",
-      endpoint: u.params.endpoint || "",
+      reserved: u.params.reserved || "",
+      workers: u.params.workers || "",
+      kernelMode: u.params.kernelMode === "true",
     };
   }
   return null;
@@ -617,17 +590,6 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       tmp += srcObj.name.length ? `#${encodeURIComponent(srcObj.name)}` : "";
       return tmp;
 
-    case "ssr":
-      /* ssr://server:port:proto:method:obfs:URLBASE64(password)/?remarks=URLBASE64(remarks)&protoparam=URLBASE64(protoparam)&obfsparam=URLBASE64(obfsparam)) */
-      return `ssr://${Base64.encode(
-        `${srcObj.server}:${srcObj.port}:${srcObj.proto}:${srcObj.method}:${
-          srcObj.obfs
-        }:${Base64.encodeURI(srcObj.password)}/?remarks=${Base64.encodeURI(
-          srcObj.name,
-        )}&protoparam=${Base64.encodeURI(
-          srcObj.protoParam,
-        )}&obfsparam=${Base64.encodeURI(srcObj.obfsParam)}`,
-      )}`;
     case "trojan":
       /* trojan://password@server:port?allowInsecure=1&sni=sni#URIESCAPE(name) */
       query = {
@@ -806,6 +768,9 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       if (srcObj.persistentKeepalive)
         query.keepAlive = srcObj.persistentKeepalive;
       if (srcObj.preSharedKey) query.preSharedKey = srcObj.preSharedKey;
+      if (srcObj.reserved) query.reserved = srcObj.reserved;
+      if (srcObj.workers) query.workers = srcObj.workers;
+      if (srcObj.kernelMode) query.kernelMode = "true";
       return buildURL({
         protocol: "wireguard",
         username: srcObj.privateKey,

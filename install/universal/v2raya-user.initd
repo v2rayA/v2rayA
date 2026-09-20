@@ -12,9 +12,11 @@ command_args="--lite --log-file ${HOME}/.config/v2raya/v2raya.log ${V2RAYA_OPTS}
 error_log="${HOME}/.config/v2raya/error.log"
 pidfile="/run/${RC_SVCNAME}.pid"
 command_background="yes"
+retry="TERM/30/KILL/5"
 
 depend() {
 	need net
+	use dns
 	after net
 }
 
@@ -30,4 +32,5 @@ start_pre() {
 		eerror "Instead just run /etc/init.d/v2raya directly."
 		return 1
 	fi
+	checkpath -d -m 0700 -o "${USER}" "${HOME}/.config/v2raya"
 }

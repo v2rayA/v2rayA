@@ -201,6 +201,7 @@ onMounted(sync);
           <v-chip
             :model-value="true"
             :aria-pressed="membersOnly"
+            link
             variant="text"
             :prepend-icon="membersOnly ? mdiCheck : undefined"
             class="proxies__chip"

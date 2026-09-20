@@ -163,22 +163,6 @@
     },
     "back": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwYXNzdzByZA@1.2.3.4:8388/?plugin=simple-obfs%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com%3Bobfs-uri%3D#ss%20node"
   },
-  "ssr": {
-    "link": "ssr://MS4yLjMuNDo4Mzg4OmF1dGhfYWVzMTI4X21kNTphZXMtMjU2LWNmYjp0bHMxLjJfdGlja2V0X2F1dGg6Y0dGemMzY3djbVE9Lz9vYmZzcGFyYW09YjJKbWN5NWxlR0Z0Y0d4bExtTnZiUT09JnByb3RvcGFyYW09TVRwaFltTT0mcmVtYXJrcz1jM055SUc1dlpHVT0=",
-    "form": {
-      "method": "aes-256-cfb",
-      "password": "passw0rd",
-      "server": "1.2.3.4",
-      "port": "8388",
-      "name": "ssr node",
-      "proto": "auth_aes128_md5",
-      "protoParam": "1:abc",
-      "obfs": "tls1.2_ticket_auth",
-      "obfsParam": "obfs.example.com",
-      "protocol": "ssr"
-    },
-    "back": "ssr://MS4yLjMuNDo4Mzg4OmF1dGhfYWVzMTI4X21kNTphZXMtMjU2LWNmYjp0bHMxLjJfdGlja2V0X2F1dGg6Y0dGemMzY3djbVEvP3JlbWFya3M9YzNOeUlHNXZaR1UmcHJvdG9wYXJhbT1NVHBoWW1NJm9iZnNwYXJhbT1iMkptY3k1bGVHRnRjR3hsTG1OdmJR"
-  },
   "trojan": {
     "link": "trojan://passw0rd@1.2.3.4:443?security=tls&sni=example.com&type=ws&host=example.com&path=%2Ftr#trojan%20node",
     "form": {
@@ -302,12 +286,13 @@
       "privateKey": "PRIVATEKEY=",
       "publicKey": "PUBKEY=",
       "localAddress": "10.0.0.2/32",
-      "dns": "",
       "mtu": "1420",
       "allowedIPs": "0.0.0.0/0",
       "persistentKeepalive": "25",
       "preSharedKey": "",
-      "endpoint": ""
+      "reserved": "",
+      "workers": "",
+      "kernelMode": false
     },
     "back": "wireguard://PRIVATEKEY%3D@1.2.3.4:51820/?publicKey=PUBKEY%3D&address=10.0.0.2%2F32&mtu=1420&allowedIPs=0.0.0.0%2F0&keepAlive=25#wg node"
   }

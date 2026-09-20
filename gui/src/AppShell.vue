@@ -25,7 +25,7 @@ import {
   postV2ray,
   getTouch,
 } from "@/api";
-import { ApiError, currentSession } from "@/api/client";
+import { ApiError, backendAddress, currentSession } from "@/api/client";
 import { watchConnected } from "@/api/connect";
 import { errorText } from "@/api/errors";
 import type {
@@ -62,6 +62,7 @@ import OnboardingDialog, {
 import { onSessionTeardown, resetSession, setSessionStarter } from "@/session";
 import { setRefresher } from "@/session/refresh";
 import { useAppStore, type Running } from "@/stores/app";
+import { runningOf } from "@/views/nodes/model";
 import { vuetifyLocales } from "@/theme";
 import { schemeColors } from "@/theme/scheme";
 import logo from "@/assets/img/v2raya-icon.svg";
@@ -141,9 +142,28 @@ async function askForLogin() {
       return;
     } catch (err) {
       if (session !== currentSession()) return;
-      if (!(err instanceof ApiError) || err.kind !== "network" || attempt >= 3)
-        return;
-      await new Promise((r) => setTimeout(r, 2000));
+      const transient =
+        err instanceof ApiError &&
+        (err.kind === "network" || err.kind === "timeout");
+      if (transient && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      // a backend that is still not there leaves nothing on the page
+      // otherwise: the banner carries the retry
+      banner.show({
+        key: "login",
+        kind: "warning",
+        text: t("axios.messages.noBackendFound", { url: backendAddress() }),
+        action: {
+          label: t("operations.refresh"),
+          onClick: () => {
+            banner.withdraw("login");
+            void askForLogin();
+          },
+        },
+      });
+      return;
     }
   }
 }
@@ -262,6 +282,15 @@ const statusText = computed(() => {
   return labelOf(store.running);
 });
 
+/** every text the status button can carry, for its fixed width */
+const statusLabels = computed(() => {
+  const labels = (
+    ["running", "stopped", "paused", "checking"] as Running[]
+  ).map(labelOf);
+  labels.push(t("v2ray.stop"), t("v2ray.start"));
+  return [...new Set(labels)];
+});
+
 const toggling = ref(false);
 async function toggleRunning() {
   if (toggling.value) return;
@@ -283,7 +312,10 @@ async function toggleRunning() {
         );
         // the watcher may win the race; the confirmed state comes from a touch
         const touch = res ?? (await getTouch());
-        store.setRunning(touch.running ? "running" : "stopped");
+        store.setRunning(
+          runningOf(touch.running, touch.networkPaused),
+          touch.networkPaused,
+        );
         store.connectedServer = touch.touch.connectedServer ?? [];
         void pageRef.value?.sync?.();
       } catch (err) {
@@ -375,7 +407,17 @@ onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
         @mouseleave="hovering = false"
         @click="toggleRunning"
       >
-        {{ statusText }}
+        <!-- every label the button can show is laid out in the same cell, so
+             the width is the widest of them and the buttons beside it do not
+             move when 就绪 becomes 正在运行 or the hover text takes over -->
+        <span class="bar__status">
+          <span
+            v-for="label in statusLabels"
+            :key="label"
+            :class="{ 'bar__status-label--hidden': label !== statusText }"
+            >{{ label }}</span
+          >
+        </span>
       </v-btn>
       <OutboundMenu
         :variant="compact ? 'icon' : 'chip'"
@@ -469,6 +511,16 @@ onBeforeUnmount(() => darkQuery.removeEventListener("change", onSystemTheme));
 </template>
 
 <style scoped>
+.bar__status {
+  display: inline-grid;
+}
+.bar__status > span {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+.bar__status-label--hidden {
+  visibility: hidden;
+}
 .bar__logo {
   width: 32px;
   height: 32px;

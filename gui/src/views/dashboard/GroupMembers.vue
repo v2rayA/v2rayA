@@ -21,14 +21,16 @@ const keyOfWhich = (w: Which) =>
   `${w._type}|${w.id}|${w._type === "subscriptionServer" ? (w.sub ?? 0) : ""}`;
 const chosen = ref(new Set(props.members.map(keyOfWhich)));
 
-const rows = computed<TouchServer[]>(() =>
-  filterRows(
-    [
-      ...props.touch.servers,
-      ...props.touch.subscriptions.flatMap((s) => s.servers),
-    ],
-    query.value,
+// The touch does not carry a subscription server's index; without it every
+// subscription row would key and save as subscription 0.
+const allRows = computed<TouchServer[]>(() => [
+  ...props.touch.servers,
+  ...props.touch.subscriptions.flatMap((s, sub) =>
+    s.servers.map((row) => ({ ...row, sub })),
   ),
+]);
+const rows = computed<TouchServer[]>(() =>
+  filterRows(allRows.value, query.value),
 );
 const sourceOf = (row: TouchServer) =>
   row._type === "server"
@@ -44,13 +46,9 @@ function toggle(row: TouchServer) {
   else chosen.value.add(key);
 }
 function save() {
-  const all = [
-    ...props.touch.servers,
-    ...props.touch.subscriptions.flatMap((s) => s.servers),
-  ];
   emit(
     "close",
-    all.filter(isChosen).map((row) => ({
+    allRows.value.filter(isChosen).map((row) => ({
       ...whichOf(row),
       sub: row.sub ?? 0,
       outbound: props.outbound,

@@ -67,15 +67,6 @@ const { t } = useI18n();
     </v-col>
     <v-col cols="12" sm="6">
       <v-text-field
-        v-model="model.dns"
-        :label="t('configureServer.wireguardDns')"
-        :placeholder="t('dns.colServer')"
-        :readonly="readonly"
-        dir="ltr"
-      />
-    </v-col>
-    <v-col cols="12" sm="6">
-      <v-text-field
         v-model="model.mtu"
         type="number"
         :label="t('configureServer.wireguardMtu')"
@@ -109,13 +100,31 @@ const { t } = useI18n();
         dir="ltr"
       />
     </v-col>
-    <v-col cols="12">
+    <v-col cols="12" sm="6">
       <v-text-field
-        v-model="model.endpoint"
-        :label="t('configureServer.wireguardEndpoint')"
-        :placeholder="t('configureServer.wireguardEndpointPlaceholder')"
+        v-model="model.reserved"
+        :label="t('configureServer.wireguardReserved')"
+        placeholder="0,0,0"
         :readonly="readonly"
         dir="ltr"
+      />
+    </v-col>
+    <v-col cols="12" sm="6">
+      <v-text-field
+        v-model="model.workers"
+        type="number"
+        :label="t('configureServer.wireguardWorkers')"
+        :readonly="readonly"
+        dir="ltr"
+      />
+    </v-col>
+    <v-col cols="12">
+      <v-switch
+        v-model="model.kernelMode"
+        :label="t('configureServer.wireguardKernelMode')"
+        :readonly="readonly"
+        color="primary"
+        hide-details
       />
     </v-col>
   </v-row>
