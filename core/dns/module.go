@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/netip"
+	"net/url"
 	"sync"
 	"time"
 
@@ -83,9 +84,11 @@ func (m *DnsModule) Start() error {
 
 	// 解析 bootstrap domain — 当 DNS 上游地址是域名时，用系统 DNS 解析出 IP。
 	// 避免 DNS 模块自身依赖 DNS 的循环依赖。
+	resolvedBootstrap := map[string]string{}
 	if len(m.config.Bootstrap) > 0 {
 		log.Printf("[dns module] bootstrap: %d domains to resolve: %v", len(m.config.Bootstrap), m.config.Bootstrap)
 		resolved := m.resolveBootstrap(m.config.Bootstrap)
+		resolvedBootstrap = resolved
 		log.Printf("[dns module] bootstrap: resolved %d/%d domains", len(resolved), len(m.config.Bootstrap))
 		for domain, ip := range resolved {
 			log.Printf("[dns module] bootstrap: %s → %s", domain, ip)
@@ -95,6 +98,13 @@ func (m *DnsModule) Start() error {
 				continue
 			}
 			before := upstream.Addr
+			if upstream.Protocol == "https" {
+				// the URL stays; the dialer substitutes the resolved IP
+				if u, err := url.Parse(upstream.Addr); err == nil {
+					m.config.Upstreams[i].ServerName = u.Hostname()
+				}
+				continue
+			}
 			// 从上游地址中提取主机名
 			host, port, err := net.SplitHostPort(upstream.Addr)
 			if err != nil {
@@ -108,6 +118,7 @@ func (m *DnsModule) Start() error {
 				continue
 			}
 			if net.ParseIP(host) == nil {
+				m.config.Upstreams[i].ServerName = host
 				if ip, ok := resolved[host]; ok {
 					m.config.Upstreams[i].Addr = net.JoinHostPort(ip, port)
 					log.Printf("[dns module] bootstrap: upstream %s → %s (was %s)", upstream.ID, m.config.Upstreams[i].Addr, before)
@@ -122,6 +133,9 @@ func (m *DnsModule) Start() error {
 
 	// 为所有缺失端口的上游地址补充默认端口
 	for i, upstream := range m.config.Upstreams {
+		if upstream.Protocol == "https" {
+			continue
+		}
 		if _, _, err := net.SplitHostPort(upstream.Addr); err != nil {
 			// 没有端口号，根据协议补充
 			port := "53"
@@ -142,6 +156,7 @@ func (m *DnsModule) Start() error {
 
 	// Create the UpstreamManager.
 	m.upstreamMgr = NewUpstreamManager(m.config.Upstreams)
+	m.upstreamMgr.SetBootstrapIPs(resolvedBootstrap)
 
 	// Set xray-core internal dispatcher (if configured before Start).
 	if m.dispatcher != nil {

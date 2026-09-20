@@ -36,7 +36,7 @@
 
 ## DNS
 
-**设置 → DNS 设置**保存内核 DNS 模块遵循的规则：哪个上游回答哪些域名，查询是否直连。默认规则把私有域名交给 `127.0.0.1:53`（`localhost`，需要本机有解析器监听），`geosite:cn` 直连查询 `223.5.5.5`，其余经代理查询 `1.0.0.1`。出站为 `direct` 时直连查询；其他值都经本机的 SOCKS 入站发出，分流与 SOCKS 流量相同。域名列表为空的规则回答其他规则未命名的全部域名。上游写地址（`8.8.8.8`、`dns.google`）、`tcp://host`，或 `tls://host` 表示 DNS over TLS；不支持 DNS over HTTPS 与 QUIC，保存时会拒绝。
+**设置 → DNS 设置**保存内核 DNS 模块遵循的规则：哪个上游回答哪些域名，查询是否直连。默认规则把私有域名交给 `127.0.0.1:53`（`localhost`，需要本机有解析器监听），`geosite:cn` 直连查询 `223.5.5.5`，其余经代理查询 `1.0.0.1`。出站为 `direct` 时直连查询；其他值都经本机的 SOCKS 入站发出，分流与 SOCKS 流量相同。域名列表为空的规则回答其他规则未命名的全部域名。上游写地址（`8.8.8.8`、`dns.google`）、`tcp://host`、`tls://host`（DNS over TLS）或 `https://host/dns-query`（DNS over HTTPS）；不支持 DNS over QUIC，保存时会拒绝。
 
 ## 局域网共享
 

@@ -144,7 +144,7 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 }
 
 // CheckDnsUpstream rejects an upstream the DNS module cannot query. The
-// module speaks plain UDP and TCP and DNS over TLS; https:// (DoH) and
+// module speaks plain UDP and TCP, DNS over TLS and DNS over HTTPS;
 // quic:// (DoQ) used to be accepted here and then failed on every query.
 func CheckDnsUpstream(upstream string) error {
 	scheme, rest, found := strings.Cut(upstream, "://")
@@ -160,10 +160,15 @@ func CheckDnsUpstream(upstream string) error {
 			return fmt.Errorf("DNS upstream %q has no address after the scheme", upstream)
 		}
 		return nil
-	case "https", "quic":
-		return fmt.Errorf("DNS upstream %q: DNS over HTTPS and DNS over QUIC are not supported; use an address (8.8.8.8), tcp://host or tls://host for DNS over TLS", upstream)
+	case "https":
+		if u, err := url.Parse(upstream); err != nil || u.Hostname() == "" {
+			return fmt.Errorf("DNS upstream %q is not a URL with a host", upstream)
+		}
+		return nil
+	case "quic":
+		return fmt.Errorf("DNS upstream %q: DNS over QUIC is not supported; use an address (8.8.8.8), tls://host or https://host/dns-query", upstream)
 	default:
-		return fmt.Errorf("DNS upstream %q: unknown scheme %q; use an address, tcp:// or tls://", upstream, scheme)
+		return fmt.Errorf("DNS upstream %q: unknown scheme %q; use an address, tcp://, tls:// or https://", upstream, scheme)
 	}
 }
 
@@ -302,14 +307,16 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		}
 
 		// 如果是域名地址，加入 bootstrap 列表，由 v2raya-core 用系统 DNS 解析
-		if !strings.Contains(upstreamAddr, "://") {
-			host, _, err := net.SplitHostPort(addr)
-			if err != nil {
-				host = addr
+		bootHost := addr
+		if proto == "https" {
+			if u, err := url.Parse(upstreamAddr); err == nil {
+				bootHost = u.Hostname()
 			}
-			if net.ParseIP(host) == nil {
-				bootstrapList = append(bootstrapList, host)
-			}
+		} else if host, _, err := net.SplitHostPort(addr); err == nil {
+			bootHost = host
+		}
+		if bootHost != "" && net.ParseIP(bootHost) == nil {
+			bootstrapList = append(bootstrapList, bootHost)
 		}
 
 		outboundTag := rule.Outbound

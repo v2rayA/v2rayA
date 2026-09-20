@@ -311,7 +311,7 @@ export default {
     colDomains: "فهرست دامنه‌ها",
     colOutbound: "خروجی",
     serverPlaceholder:
-      "برای نمونه 8.8.8.8، tcp://8.8.8.8 یا tls://dns.google (DNS over TLS)",
+      "برای نمونه 8.8.8.8، tls://dns.google یا https://dns.google/dns-query",
     domainsPlaceholder:
       "هر مورد در یک خط؛ برای نمونه geosite:cn\nبرای DNS جایگزین خالی بگذارید",
     addRule: "افزودن قانون",
