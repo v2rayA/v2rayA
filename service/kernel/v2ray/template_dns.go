@@ -12,6 +12,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -143,6 +144,43 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 	return append(addrs, "127.2.0.17:53")
 }
 
+// directDnsServers lists the plain udp/tcp IP upstreams of the DNS rules
+// that go out directly, host:port. They come before any built-in public
+// resolver wherever the service or the core needs one of its own.
+func directDnsServers() []string {
+	var out []string
+	for _, rule := range configure.MigrateDnsRules(configure.GetDnsRulesNotNil()) {
+		if rule.Outbound != "" && rule.Outbound != "direct" {
+			continue
+		}
+		addr := rule.Upstream
+		if addr == "" {
+			addr = rule.Server
+		}
+		if strings.Contains(addr, "://") {
+			scheme, rest, _ := strings.Cut(addr, "://")
+			if scheme != "udp" && scheme != "tcp" {
+				continue
+			}
+			addr = rest
+		}
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			host, port = addr, "53"
+		}
+		ip := net.ParseIP(host)
+		if ip == nil || ip.IsLoopback() || ip.IsUnspecified() {
+			continue
+		}
+		out = append(out, net.JoinHostPort(host, port))
+	}
+	return common.Deduplicate(out)
+}
+
+func init() {
+	resolv.PreferredServers = directDnsServers
+}
+
 // generateDnsModuleConfig 生成新 DNS 模块的 JSON 配置，嵌入 xray JSON 配置文件。
 // v2raya-core 启动时解析此配置并启动独立 DNS 监听器，v2rayA 不参与 DNS 查询处理。
 //
@@ -163,7 +201,8 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 
 	// 读取当前系统 DNS（保存原始配置，用于 v2raya-core 的 bootstrap 解析）。
 	// 此时 /etc/resolv.conf 尚未被劫持，读取的是真实的系统 DNS。
-	bootstrapDns := getSystemDnsServers()
+	// 规则里直连的明文上游排在其后，公共 DNS 只在这些都不可用时才轮到。
+	bootstrapDns := common.Deduplicate(append(getSystemDnsServers(), directDnsServers()...))
 
 	cfg := map[string]interface{}{
 		"listener": map[string]interface{}{
@@ -421,7 +460,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	nodeDomains = common.Deduplicate(nodeDomains)
 	if len(nodeDomains) > 0 {
 		nodeUpstreamAddr := "223.5.5.5:53"
-		for _, s := range bootstrapDns {
+		for _, s := range append(directDnsServers(), bootstrapDns...) {
 			if host, _, err := net.SplitHostPort(s); err == nil {
 				if ip := net.ParseIP(host); ip != nil && !ip.IsLoopback() {
 					nodeUpstreamAddr = s
@@ -470,9 +509,18 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 // getSystemDnsServers 读取当前系统的 DNS 服务器列表（从 /etc/resolv.conf）。
 // 在劫持发生前调用，保存原始 DNS 供 v2raya-core bootstrap 使用。
 func getSystemDnsServers() []string {
-	data, err := os.ReadFile("/etc/resolv.conf")
+	data, err := os.ReadFile(resolvPath)
 	if err != nil {
 		return nil
+	}
+	// while the file is ours, the system's own resolvers are in the backup;
+	// the hijacked content would hand the module its own address
+	if strings.HasPrefix(string(data), HijackFlag) {
+		if backup, err := os.ReadFile(resolvBackupPath); err == nil {
+			data = backup
+		} else {
+			return nil
+		}
 	}
 	var servers []string
 	for _, line := range strings.Split(string(data), "\n") {
