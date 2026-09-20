@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	jsonIteratorExtra "github.com/json-iterator/go/extra"
@@ -82,14 +81,13 @@ func initConfigure() {
 			// If db.IsNewDB is false, v2raya.db already existed (from a previous
 			// migration or a previous startup), so we skip initialization.
 			if db.IsNewDB {
-				// On Windows, v2rayA v4 was never available, so there is no v4
-				// data to migrate. Calling any v4 library function here would
-				// trigger the v4 library to initialize with its Linux-default
-				// config path (/etc/v2raya), which on Windows resolves to
-				// \etc\v2raya on the current drive root and causes the library
-				// to create that directory and a boltv4.db file there.
-				// Skip the v4 migration check entirely on Windows.
-				if runtime.GOOS != "windows" && !configurev4.IsConfigureNotExists() {
+				// The v4 library parses the command line itself and opens
+				// boltv4.db under its own idea of the configuration directory,
+				// creating the file and dying when the directory is missing
+				// (/etc/v2raya as an unprivileged user, \etc\v2raya on
+				// Windows). Only ask it when a v4 database is actually here.
+				v4Path := filepath.Join(conf.GetEnvironmentConfig().Config, "boltv4.db")
+				if _, e := os.Stat(v4Path); e == nil && !configurev4.IsConfigureNotExists() {
 					// The v4 readers use boltv4.db directly. A bolt.db copy would
 					// make the next Open return ErrNeedMigration after SQLite exists.
 					log.Warn("Migrating from v4 to main")

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"runtime"
 
 	"github.com/v2rayA/v2rayA/common/netTools/ports"
 	"github.com/v2rayA/v2rayA/conf"
@@ -12,7 +11,6 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	service2 "github.com/v2rayA/v2rayA/kernel/v2ray/service"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
-	"github.com/v2rayA/v2rayA/pkg/util/privilege"
 )
 
 func checkEnvironment() {
@@ -21,23 +19,6 @@ func checkEnvironment() {
 		db.SetReadOnly()
 		config.Report()
 		os.Exit(0)
-	}
-	if !config.PassCheckRoot {
-		switch runtime.GOOS {
-		case "linux":
-			if !privilege.IsRootOrAdmin() && !config.Lite {
-				log.Fatal("Please execute this program with sudo or as a root user for the best experience.\n" +
-					"If you are sure you are root user, use the --passcheckroot parameter to skip the check.\n" +
-					"If you don't want to run as root or you are a non-linux user, use --lite please.\n" +
-					"For example:\n" +
-					"$ v2raya --lite",
-				)
-			}
-		case "windows":
-			if !privilege.IsRootOrAdmin() && !config.Lite {
-				log.Fatal("Please run v2rayA as Administrator (or SYSTEM) with elevation, or start with --lite to skip privilege checks.")
-			}
-		}
 	}
 	if config.ResetPassword {
 		fmt.Println("Config directory:", config.Config)
