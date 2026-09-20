@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -121,6 +122,9 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 	// The Control function sets the socket mark to 0x80, which iptables
 	// DNS_MARK/TP_OUT chains check and RETURN (skip), preventing the loop.
 	client := newMarkedDnsClient(protocol)
+	if protocol == "tcp-tls" && upstream.ServerName != "" {
+		client.TLSConfig = &tls.Config{ServerName: upstream.ServerName}
+	}
 
 	// Attempt the exchange with retry logic.
 	var resp *dns.Msg
@@ -128,6 +132,16 @@ func (m *UpstreamManager) exchangeDirect(upstream *UpstreamInstance, query *DnsQ
 	var err error
 
 	for attempt := 0; attempt < 2; attempt++ {
+		if protocol == "https" {
+			resp, rtt, err = m.exchangeDoH(upstream, msg, directDial)
+			if err != nil {
+				log.Printf("[dns upstream] attempt %d error: %s %s → %s: %v", attempt+1,
+					dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			break
+		}
 		if attempt > 0 {
 			log.Printf("[dns upstream] retry %d: %s %s → %s", attempt+1,
 				dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr)
@@ -572,27 +586,45 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		builder.AddECSSubnet(msg, query.ClientIP)
 	}
 
+	// The proxyTag is passed to the dispatcher, which sets session.ContextWithInbound
+	// internally (like xray-core's DNS module), so xray's routing engine
+	// determines the outbound based on routing rules.
+	dial := func(ctx context.Context, addr string) (net.Conn, error) {
+		conn, err := m.dispatcher.Dispatch(ctx, "tcp", addr, upstream.ProxyTag)
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			conn, err = m.dispatcher.Dispatch(ctx, "tcp", addr, upstream.ProxyTag)
+		}
+		return conn, err
+	}
+	if upstream.Protocol == "https" {
+		resp, rtt, err := m.exchangeDoH(upstream, msg, dial)
+		if err != nil {
+			return nil, fmt.Errorf("dns upstream: doh via dispatcher: %w", err)
+		}
+		return m.finishDispatched(upstream, query, resp, rtt)
+	}
+
 	// Pack DNS query for TCP transport.
 	packed, err := msg.Pack()
 	if err != nil {
 		return nil, fmt.Errorf("dns pack: %w", err)
 	}
 
-	// Dispatch through xray-core's routing via TCP.
-	// The proxyTag is passed to the dispatcher, which sets session.ContextWithInbound
-	// internally (like xray-core's DNS module), so xray's routing engine
-	// determines the outbound based on routing rules.
 	start := time.Now()
-	conn, err := m.dispatcher.Dispatch(context.Background(), "tcp", upstream.Addr, upstream.ProxyTag)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	conn, err := dial(ctx, upstream.Addr)
 	if err != nil {
-		log.Printf("[dns upstream] dispatcher error: %s %s → %s: %v",
-			dns.Type(uint16(query.QType)).String(), query.Name, upstream.Addr, err)
-
-		// Retry once
-		time.Sleep(100 * time.Millisecond)
-		conn, err = m.dispatcher.Dispatch(context.Background(), "tcp", upstream.Addr, upstream.ProxyTag)
-		if err != nil {
-			return nil, fmt.Errorf("dns upstream: dispatcher retry failed: %w", err)
+		return nil, fmt.Errorf("dns upstream: dispatcher retry failed: %w", err)
+	}
+	if upstream.Protocol == "tcp-tls" {
+		serverName := upstream.ServerName
+		if serverName == "" {
+			serverName, _, _ = net.SplitHostPort(upstream.Addr)
+		}
+		if conn, err = tlsOver(ctx, conn, serverName); err != nil {
+			return nil, fmt.Errorf("dns upstream: tls via dispatcher: %w", err)
 		}
 	}
 	defer conn.Close()
@@ -633,7 +665,12 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		return nil, fmt.Errorf("dns unpack: %w", err)
 	}
 
-	// Validate response.
+	return m.finishDispatched(upstream, query, dnsResp, rtt)
+}
+
+// finishDispatched validates an answer that came back through the
+// dispatcher and wraps it.
+func (m *UpstreamManager) finishDispatched(upstream *UpstreamInstance, query *DnsQuery, dnsResp *dns.Msg, rtt time.Duration) (*DnsResponse, error) {
 	if err := ValidateResponse(dnsResp); err != nil {
 		return nil, fmt.Errorf("dns upstream: invalid dispatcher response: %w", err)
 	}

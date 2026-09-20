@@ -313,7 +313,8 @@ export default {
     colServer: "DNS-сервер",
     colDomains: "Список доменов",
     colOutbound: "Исходящий трафик",
-    serverPlaceholder: "например, 8.8.8.8 или https://dns.google/dns-query",
+    serverPlaceholder:
+      "например, 8.8.8.8, tls://dns.google или https://dns.google/dns-query",
     domainsPlaceholder:
       "По одному в строке, например geosite:cn\nОставьте пустым для резервного DNS",
     addRule: "Добавить правило",

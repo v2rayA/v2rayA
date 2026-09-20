@@ -317,7 +317,8 @@ export default {
     colServer: "Servidor DNS",
     colDomains: "Lista de domínios",
     colOutbound: "Saída",
-    serverPlaceholder: "por exemplo, 8.8.8.8 ou https://dns.google/dns-query",
+    serverPlaceholder:
+      "por exemplo, 8.8.8.8, tls://dns.google ou https://dns.google/dns-query",
     domainsPlaceholder:
       "Um por linha, por exemplo, geosite:cn\nDeixe vazio para usar o DNS de fallback",
     addRule: "Adicionar regra",

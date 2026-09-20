@@ -143,6 +143,35 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 	return append(addrs, "127.2.0.17:53")
 }
 
+// CheckDnsUpstream rejects an upstream the DNS module cannot query. The
+// module speaks plain UDP and TCP, DNS over TLS and DNS over HTTPS;
+// quic:// (DoQ) used to be accepted here and then failed on every query.
+func CheckDnsUpstream(upstream string) error {
+	scheme, rest, found := strings.Cut(upstream, "://")
+	if !found {
+		if strings.TrimSpace(upstream) == "" {
+			return fmt.Errorf("DNS upstream is empty")
+		}
+		return nil
+	}
+	switch strings.ToLower(scheme) {
+	case "udp", "tcp", "tls":
+		if rest == "" {
+			return fmt.Errorf("DNS upstream %q has no address after the scheme", upstream)
+		}
+		return nil
+	case "https":
+		if u, err := url.Parse(upstream); err != nil || u.Hostname() == "" {
+			return fmt.Errorf("DNS upstream %q is not a URL with a host", upstream)
+		}
+		return nil
+	case "quic":
+		return fmt.Errorf("DNS upstream %q: DNS over QUIC is not supported; use an address (8.8.8.8), tls://host or https://host/dns-query", upstream)
+	default:
+		return fmt.Errorf("DNS upstream %q: unknown scheme %q; use an address, tcp://, tls:// or https://", upstream, scheme)
+	}
+}
+
 // generateDnsModuleConfig 生成新 DNS 模块的 JSON 配置，嵌入 xray JSON 配置文件。
 // v2raya-core 启动时解析此配置并启动独立 DNS 监听器，v2rayA 不参与 DNS 查询处理。
 //
@@ -278,14 +307,16 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		}
 
 		// 如果是域名地址，加入 bootstrap 列表，由 v2raya-core 用系统 DNS 解析
-		if !strings.Contains(upstreamAddr, "://") {
-			host, _, err := net.SplitHostPort(addr)
-			if err != nil {
-				host = addr
+		bootHost := addr
+		if proto == "https" {
+			if u, err := url.Parse(upstreamAddr); err == nil {
+				bootHost = u.Hostname()
 			}
-			if net.ParseIP(host) == nil {
-				bootstrapList = append(bootstrapList, host)
-			}
+		} else if host, _, err := net.SplitHostPort(addr); err == nil {
+			bootHost = host
+		}
+		if bootHost != "" && net.ParseIP(bootHost) == nil {
+			bootstrapList = append(bootstrapList, bootHost)
 		}
 
 		outboundTag := rule.Outbound
