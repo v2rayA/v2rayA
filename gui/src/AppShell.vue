@@ -357,10 +357,8 @@ watchEffect(() => {
   theme.themes.value.dark.colors = schemeColors(store.themeSeed, true);
 });
 watchEffect(() => {
-  theme.global.name.value = store.isDark ? "dark" : "light";
-  // the old components' dark styles key on this class
-  document.documentElement.classList.toggle("theme-dark", store.isDark);
-  document.body.classList.toggle("theme-dark", store.isDark);
+  theme.global.name.value =
+    store.themePreference === "auto" ? "system" : store.themePreference;
 });
 
 watch(
@@ -374,9 +372,6 @@ watch(
   { immediate: true },
 );
 
-const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-const onSystemTheme = (e: MediaQueryListEvent) =>
-  (store.systemDark = e.matches);
 // "#docs" or "#docs/<section>" opens the documentation: the help links in
 // the dialogs and the About page point there, in this tab or a new one.
 function openHash() {
@@ -388,15 +383,11 @@ function openHash() {
   history.replaceState(null, "", location.pathname + location.search);
 }
 onMounted(() => {
-  darkQuery.addEventListener("change", onSystemTheme);
   window.addEventListener("hashchange", openHash);
   openHash();
   void startSession();
 });
-onBeforeUnmount(() => {
-  darkQuery.removeEventListener("change", onSystemTheme);
-  window.removeEventListener("hashchange", openHash);
-});
+onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
 </script>
 
 <template>

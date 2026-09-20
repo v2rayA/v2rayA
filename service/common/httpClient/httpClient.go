@@ -3,9 +3,8 @@ package httpClient
 import (
 	"fmt"
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/db/configure"
-	proxyWithHttp2 "github.com/v2rayA/v2rayA/pkg/util/proxyWithHttp"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,15 +18,7 @@ func GetHttpClientWithProxy(proxyURL string) (client *http.Client, err error) {
 	if err != nil {
 		return
 	}
-	dialer, err := proxyWithHttp2.FromURL(u, proxyWithHttp2.Direct)
-	if err != nil {
-		return
-	}
-	httpTransport := &http.Transport{
-		Dial: dialer.Dial,
-	}
-	client = &http.Client{Transport: httpTransport}
-	return
+	return &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(u)}}, nil
 }
 
 func GetHttpClientWithv2rayAProxy() (client *http.Client, err error) {
