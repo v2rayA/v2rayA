@@ -483,31 +483,6 @@ export default {
     },
   },
   routingA: {
-    title: "Regras RoutingA",
-    templates: {
-      title: "Modelos",
-      full: "Conjunto completo, substitui as regras atuais",
-      add: "Adicionar regras, inseridas no cursor",
-      whitelist: "China direto, o resto pelo proxy",
-      blacklist: "Sites fora da China pelo proxy, o resto direto",
-      global: "Tudo pelo proxy, rede local direto",
-      minimal: "Só os serviços estrangeiros comuns pelo proxy, o resto direto",
-      ads: "Bloquear domínios de publicidade",
-      streaming:
-        "Streaming pelo proxy (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
-      social: "Redes sociais pelo proxy",
-      telegram: "Telegram pelo proxy",
-      ai: "Serviços de IA pelo proxy",
-      dev: "Serviços de desenvolvimento pelo proxy (GitHub, GitLab, Docker, npm, JetBrains, Hugging Face)",
-      cnServices:
-        "Serviços chineses de Apple, Google, Microsoft, Steam e Bilibili direto",
-      appleMicrosoft: "Apple e Microsoft direto",
-      games: "Plataformas de jogos direto",
-      speedtest: "Testes de velocidade direto",
-      lan: "Rede local e endereços privados direto",
-      bittorrent: "BitTorrent direto (precisa de Sniffing)",
-      quic: "Bloquear QUIC (UDP 443)",
-    },
     export: "Exportar",
     import: {
       title: "Importar",
@@ -546,6 +521,7 @@ export default {
       actions: "Ações da entrada",
       raw: "Sintaxe não reconhecida; preservada no editor de texto.",
     },
+    editor: "Regras RoutingA",
     loading: "Carregando regras",
     resetDefault: "Restaurar padrão",
     resetConfirm: "Substituir as regras atuais pelo modelo padrão?",
@@ -585,6 +561,20 @@ export default {
         title: "Saídas",
         description:
           "As saídas integradas são proxy, direct e block; default define a saída quando nenhuma regra corresponde. Defina uma saída SOCKS ou HTTP nomeada com user e pass opcionais.",
+      },
+      presets: {
+        title: "Modelos",
+        description:
+          "As regras são avaliadas de cima para baixo; insira um modelo acima das regras gerais. Todos os modelos usam apenas proxy, direct e block; troque proxy pelo nome do seu grupo onde quiser um.",
+        whitelist: "China direto, o resto pelo proxy",
+        blacklist: "Sites fora da China pelo proxy, o resto direto",
+        ads: "Bloquear domínios de publicidade",
+        streaming: "Streaming pelo proxy",
+        telegram: "Telegram pelo proxy",
+        ai: "Serviços de IA pelo proxy",
+        cnServices:
+          "Serviços chineses de Apple, Google, Microsoft, Steam e Bilibili direto",
+        lan: "Rede local e endereços privados direto",
       },
     },
     messages: ["clique no botão 'Ajuda e manual' para obter ajuda"],

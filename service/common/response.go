@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/v2rayA/v2rayA/infra/dataStructure/lru"
 )
 
 type Code string
@@ -33,7 +33,7 @@ func codedErrorBody(err error, coded *CodedError) gin.H {
 	return body
 }
 
-var RespCache, _ = lru.New[string, Resp](10)
+var RespCache = lru.New(lru.FixedLength, 10)
 
 const (
 	SUCCESS         = "SUCCESS"
@@ -45,12 +45,21 @@ const (
 // 当code为FAIL时，data为string类型返回给前端的消息
 func Response(ctx *gin.Context, code Code, data interface{}) (status int, body gin.H) {
 	if reqId := ctx.GetHeader(RequestIdHeader); reqId != "" {
-		if resp, ok := RespCache.Get(reqId); ok {
+		if resp := RespCache.Get(reqId); resp != nil {
+			resp, ok := resp.(Resp)
+			if !ok {
+				ctx.JSON(http.StatusInternalServerError, gin.H{
+					"code":    FAIL,
+					"message": "internal cache error",
+					"data":    nil,
+				})
+				return http.StatusInternalServerError, nil
+			}
 			ctx.JSON(resp.Status, resp.Body)
 			return resp.Status, resp.Body
 		}
 		defer func() {
-			RespCache.Add(reqId, Resp{
+			RespCache.Insert(reqId, Resp{
 				Status: status,
 				Body:   body,
 			})

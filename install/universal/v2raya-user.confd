@@ -1,11 +1,9 @@
 # /etc/conf.d/v2raya-user: config file for /etc/init.d/v2raya-user.<user>
 #
-# Options for the v2raya daemon of this user, e.g.
-#   V2RAYA_OPTS="--address 127.0.0.1:2018 --config /home/<user>/.config/v2raya"
-# Each user instance needs its own listening address and inbound ports; the
-# init script already passes --lite and the log file under the user's home.
+# If you want to pass any options while running the v2raya daemon, you can do so here by setting the ${V2RAYA_OPT} variable.
+# e.g.: V2RAYA_OPTS="--address 0.0.0.0:2017 --v2ray-bin /usr/bin/v2raya_core --config=/home/<user>/.config/v2raya"
 #
-V2RAYA_OPTS=""
+V2RAYA_OPTS="--log-disable-timestamp"
 
 # Note.1: Quotes is not encouraged inside the variables here.
 # Note.2: Absolute path is recommended in the options like --config or --log-file.
@@ -33,7 +31,7 @@ V2RAYA_OPTS=""
 #     --log-max-days int           Maximum number of days to keep log files (default 3)
 #     --log-disable-color
 #     --log-disable-timestamp      Intended for use with systemd/journald to avoid duplicate timestamps in logs. This
-#     --lite                       Lite mode: no transparent proxy, configuration under the user's directory. Implied when not started as root or administrator.
+#     --lite                       Lite mode for non-root and non-linux users
 #     --win-envfile string         [Windows Only] Path to environment variables file to load before service starts
 #     --version
 #     --report string              Print report

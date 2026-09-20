@@ -33,6 +33,7 @@ import type {
   ObservatoryMessage,
   RunningStateMessage,
   TrafficMessage,
+  Which,
   WsMessage,
 } from "@/api/types";
 import { installClientHooks } from "@/clientHooks";
@@ -60,7 +61,7 @@ import LoginDialog from "@/dialogs/Login.vue";
 import OnboardingDialog, {
   shouldShowOnboarding,
 } from "@/dialogs/Onboarding.vue";
-import { onSessionTeardown, setSessionStarter } from "@/session";
+import { onSessionTeardown, resetSession, setSessionStarter } from "@/session";
 import { setRefresher } from "@/session/refresh";
 import { useAppStore, type Running } from "@/stores/app";
 import { runningOf } from "@/views/nodes/model";
@@ -356,8 +357,10 @@ watchEffect(() => {
   theme.themes.value.dark.colors = schemeColors(store.themeSeed, true);
 });
 watchEffect(() => {
-  theme.global.name.value =
-    store.themePreference === "auto" ? "system" : store.themePreference;
+  theme.global.name.value = store.isDark ? "dark" : "light";
+  // the old components' dark styles key on this class
+  document.documentElement.classList.toggle("theme-dark", store.isDark);
+  document.body.classList.toggle("theme-dark", store.isDark);
 });
 
 watch(
@@ -371,6 +374,9 @@ watch(
   { immediate: true },
 );
 
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const onSystemTheme = (e: MediaQueryListEvent) =>
+  (store.systemDark = e.matches);
 // "#docs" or "#docs/<section>" opens the documentation: the help links in
 // the dialogs and the About page point there, in this tab or a new one.
 function openHash() {
@@ -382,11 +388,15 @@ function openHash() {
   history.replaceState(null, "", location.pathname + location.search);
 }
 onMounted(() => {
+  darkQuery.addEventListener("change", onSystemTheme);
   window.addEventListener("hashchange", openHash);
   openHash();
   void startSession();
 });
-onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
+onBeforeUnmount(() => {
+  darkQuery.removeEventListener("change", onSystemTheme);
+  window.removeEventListener("hashchange", openHash);
+});
 </script>
 
 <template>
@@ -412,7 +422,6 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
         :prepend-icon="mdiPower"
         height="40"
         class="text-none"
-        :class="compact ? 'me-1' : 'me-2'"
         :disabled="toggling"
         @mouseenter="hovering = true"
         @mouseleave="hovering = false"
@@ -432,6 +441,7 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       </v-btn>
       <OutboundMenu
         :variant="compact ? 'icon' : 'chip'"
+        :class="compact ? 'ms-1' : 'mx-2'"
         @changed="pageRef?.sync?.()"
       />
       <template #append>
@@ -477,7 +487,11 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
             >
               {{ statusText }}
             </v-btn>
-            <OutboundMenu variant="chip" @changed="pageRef?.sync?.()" />
+            <OutboundMenu
+              variant="chip"
+              class="me-2"
+              @changed="pageRef?.sync?.()"
+            />
             <ShellMenus variant="icons" />
           </div>
         </div>

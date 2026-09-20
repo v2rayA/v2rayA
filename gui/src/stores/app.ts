@@ -55,6 +55,7 @@ export const useAppStore = defineStore("app", {
     )
       ? localStorage.getItem("theme")
       : "auto") as ThemePreference,
+    systemDark: window.matchMedia("(prefers-color-scheme: dark)").matches,
     /** the seed colour the theme's palettes derive from */
     themeSeed: (() => {
       const seed = localStorage.getItem("themeSeed") ?? "";
@@ -77,6 +78,10 @@ export const useAppStore = defineStore("app", {
         return "";
       }
     },
+    isDark: (s) =>
+      s.themePreference === "auto"
+        ? s.systemDark
+        : s.themePreference === "dark",
   },
   actions: {
     setToken(token: string) {

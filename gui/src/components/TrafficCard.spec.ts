@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, test } from "vitest";
 import type { VueWrapper } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { mountWithApp } from "@/test/mount";
 import TrafficCard from "./TrafficCard.vue";
 

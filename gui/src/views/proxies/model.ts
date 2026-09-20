@@ -17,6 +17,7 @@ import {
 } from "@/composables";
 import ImportDialog from "@/dialogs/Import.vue";
 import OutboundGroupDialog from "@/dialogs/OutboundGroup.vue";
+import RoutingADialog from "@/dialogs/settings/RoutingA.vue";
 import ServerDialog from "@/dialogs/Server/index.vue";
 import SharingDialog from "@/dialogs/Sharing.vue";
 import SubscriptionDialog from "@/dialogs/Subscription.vue";
@@ -299,6 +300,9 @@ export function useProxies() {
     });
   }
   /** the splitting rules, edited in place */
+  function editRoutingA() {
+    open(RoutingADialog, {}, { width: 960 });
+  }
   /** the group's balancing: probe URL, interval and strategy */
   function groupSettings() {
     open(OutboundGroupDialog, { outbound: store.outboundName }, { width: 440 });
@@ -448,6 +452,7 @@ export function useProxies() {
     newGroup,
     removeGroup,
     groupSettings,
+    editRoutingA,
     groupList,
     newNode,
     importNodes,

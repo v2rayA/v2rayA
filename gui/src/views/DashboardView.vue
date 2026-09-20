@@ -407,9 +407,7 @@ defineExpose({ sync });
           />
         </v-radio-group>
         <div class="dashboard-actions d-flex flex-wrap ga-2">
-          <v-btn variant="text" @click="editRoutingA">{{
-            t("routingA.title")
-          }}</v-btn>
+          <v-btn variant="text" @click="editRoutingA">RoutingA</v-btn>
           <v-btn variant="text" @click="editPorts">{{
             t("customAddressPort.title")
           }}</v-btn>
