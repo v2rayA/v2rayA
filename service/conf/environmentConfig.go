@@ -11,6 +11,7 @@ import (
 	"github.com/stevenroose/gonfig"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
+	"github.com/v2rayA/v2rayA/pkg/util/privilege"
 )
 
 type Params struct {
@@ -36,7 +37,7 @@ type Params struct {
 	LogMaxDays           int64  `id:"log-max-days" default:"3" desc:"Maximum number of days to keep log files"`
 	LogDisableColor      bool   `id:"log-disable-color" ignore:"1"`
 	LogDisableTimestamp  bool   `id:"log-disable-timestamp" desc:"Intended for use with systemd/journald to avoid duplicate timestamps in logs. This flag is ignored when using the --log-file flag or the V2RAYA_LOG_FILE environment variable." ignore:"1"`
-	Lite                 bool   `id:"lite" desc:"Lite mode for non-root and non-linux users" ignore:"1"`
+	Lite                 bool   `id:"lite" desc:"Lite mode: no transparent proxy, configuration under the user's directory. Implied when not started as root or administrator." ignore:"1"`
 	WinEnvFile           string `id:"win-envfile" desc:"[Windows Only] Path to environment variables file to load before service starts"`
 	ShowVersion          bool   `id:"version" ignore:"1"`
 	PrintReport          string `id:"report" desc:"Print report" ignore:"1"`
@@ -74,6 +75,15 @@ func initFunc() {
 	if params.ShowVersion {
 		fmt.Println(Version)
 		os.Exit(0)
+	}
+	// Started without root or administrator rights, v2rayA is in lite mode
+	// whether or not --lite was given: nothing it could do as root works, and
+	// the configuration directory has to be the user's. A service definition
+	// (brew services, a user unit) can then be one file for both, as root with
+	// the transparent proxy or as the user with the system proxy.
+	if !params.Lite && !params.PassCheckRoot && !privilege.IsRootOrAdmin() {
+		params.Lite = true
+		log.Warn("not running as root or administrator: lite mode, without transparent proxy; start as root for tun")
 	}
 	if params.Lite {
 		params.PassCheckRoot = true
