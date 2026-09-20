@@ -309,7 +309,8 @@ export default {
     colServer: "DNS 서버",
     colDomains: "도메인 목록",
     colOutbound: "아웃바운드",
-    serverPlaceholder: "예: 8.8.8.8 또는 https://dns.google/dns-query",
+    serverPlaceholder:
+      "예: 8.8.8.8, tcp://8.8.8.8 또는 tls://dns.google (DNS over TLS)",
     domainsPlaceholder: "한 줄에 하나, 예: geosite:cn\n비우면 폴백 DNS 사용",
     addRule: "규칙 추가",
     rule: "규칙 {n}",

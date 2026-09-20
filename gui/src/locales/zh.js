@@ -303,7 +303,8 @@ export default {
     colServer: "DNS 服务器",
     colDomains: "域名列表",
     colOutbound: "出口",
-    serverPlaceholder: "如 8.8.8.8 或 https://dns.google/dns-query",
+    serverPlaceholder:
+      "如 8.8.8.8、tcp://8.8.8.8 或 tls://dns.google（DNS over TLS）",
     domainsPlaceholder: "每行一个，如 geosite:cn\n留空表示兜底 DNS",
     addRule: "添加规则",
     rule: "规则 {n}",

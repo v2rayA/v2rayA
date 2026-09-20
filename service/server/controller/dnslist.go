@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
@@ -38,6 +39,10 @@ func PutDnsRules(ctx *gin.Context) {
 		}
 		if upstream == "" {
 			common.ResponseError(ctx, logError(fmt.Errorf("DNS rule %d has no upstream server", i+1)))
+			return
+		}
+		if err := v2ray.CheckDnsUpstream(upstream); err != nil {
+			common.ResponseError(ctx, badRequest("DNS rules", fmt.Errorf("DNS rule %d: %w", i+1, err)))
 			return
 		}
 		// 同步新旧字段：确保 Server 和 Upstream 至少有一个有值

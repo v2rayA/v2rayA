@@ -313,7 +313,8 @@ export default {
     colServer: "DNS Server",
     colDomains: "Domain List",
     colOutbound: "Outbound",
-    serverPlaceholder: "e.g. 8.8.8.8 or https://dns.google/dns-query",
+    serverPlaceholder:
+      "e.g. 8.8.8.8, tcp://8.8.8.8 or tls://dns.google (DNS over TLS)",
     domainsPlaceholder:
       "One per line, e.g. geosite:cn\nLeave empty for fallback DNS",
     addRule: "Add Rule",

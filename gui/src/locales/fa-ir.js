@@ -310,7 +310,8 @@ export default {
     colServer: "سرور DNS",
     colDomains: "فهرست دامنه‌ها",
     colOutbound: "خروجی",
-    serverPlaceholder: "برای نمونه 8.8.8.8 یا https://dns.google/dns-query",
+    serverPlaceholder:
+      "برای نمونه 8.8.8.8، tcp://8.8.8.8 یا tls://dns.google (DNS over TLS)",
     domainsPlaceholder:
       "هر مورد در یک خط؛ برای نمونه geosite:cn\nبرای DNS جایگزین خالی بگذارید",
     addRule: "افزودن قانون",

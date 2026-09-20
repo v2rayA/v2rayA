@@ -143,6 +143,30 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 	return append(addrs, "127.2.0.17:53")
 }
 
+// CheckDnsUpstream rejects an upstream the DNS module cannot query. The
+// module speaks plain UDP and TCP and DNS over TLS; https:// (DoH) and
+// quic:// (DoQ) used to be accepted here and then failed on every query.
+func CheckDnsUpstream(upstream string) error {
+	scheme, rest, found := strings.Cut(upstream, "://")
+	if !found {
+		if strings.TrimSpace(upstream) == "" {
+			return fmt.Errorf("DNS upstream is empty")
+		}
+		return nil
+	}
+	switch strings.ToLower(scheme) {
+	case "udp", "tcp", "tls":
+		if rest == "" {
+			return fmt.Errorf("DNS upstream %q has no address after the scheme", upstream)
+		}
+		return nil
+	case "https", "quic":
+		return fmt.Errorf("DNS upstream %q: DNS over HTTPS and DNS over QUIC are not supported; use an address (8.8.8.8), tcp://host or tls://host for DNS over TLS", upstream)
+	default:
+		return fmt.Errorf("DNS upstream %q: unknown scheme %q; use an address, tcp:// or tls://", upstream, scheme)
+	}
+}
+
 // generateDnsModuleConfig 生成新 DNS 模块的 JSON 配置，嵌入 xray JSON 配置文件。
 // v2raya-core 启动时解析此配置并启动独立 DNS 监听器，v2rayA 不参与 DNS 查询处理。
 //
