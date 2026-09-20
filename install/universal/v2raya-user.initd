@@ -11,8 +11,6 @@ command_user="${USER}"
 command_args="--lite --log-file ${HOME}/.config/v2raya/v2raya.log ${V2RAYA_OPTS}"
 error_log="${HOME}/.config/v2raya/error.log"
 supervisor="supervise-daemon"
-respawn_delay=5
-respawn_max=0
 retry="TERM/30/KILL/5"
 
 depend() {
