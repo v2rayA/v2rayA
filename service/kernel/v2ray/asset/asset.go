@@ -45,10 +45,23 @@ func GetV2rayLocationAssetOverride() string {
 		return assetDir
 	}
 	if runtime.GOOS != "windows" {
-		return filepath.Join(xdg.RuntimeDir, "v2raya")
+		return runtimeAssetDir()
 	} else {
 		return conf.GetEnvironmentConfig().Config
 	}
+}
+
+// runtimeAssetDir is where the core's asset links go when nothing names a
+// directory: v2raya's subdirectory of the XDG runtime directory. A service
+// user has no session, so /run/user/<uid> does not exist and cannot be
+// created by it; then the configuration directory, which the process owns,
+// holds the links instead of the start failing on the lookup.
+func runtimeAssetDir() string {
+	dir := filepath.Join(xdg.RuntimeDir, "v2raya")
+	if err := os.MkdirAll(dir, 0700); err == nil {
+		return dir
+	}
+	return conf.GetEnvironmentConfig().Config
 }
 
 func GetV2rayLocationAsset(filename string) (string, error) {
@@ -93,10 +106,7 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 					return "", err
 				}
 			}
-			runtimepath, err := xdg.RuntimeFile(filepath.Join("v2raya", filename))
-			if err != nil {
-				return "", err
-			}
+			runtimepath := filepath.Join(runtimeAssetDir(), filename)
 			os.Remove(runtimepath)
 			err = os.Symlink(fullpath, runtimepath)
 			if err != nil {
