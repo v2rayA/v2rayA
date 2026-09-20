@@ -78,8 +78,8 @@ function tap() {
   background: rgb(var(--v-theme-primary-container));
 }
 .brand-shape img {
-  width: 58%;
-  height: 58%;
+  width: 72%;
+  height: 72%;
   transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1);
 }
 </style>
