@@ -515,7 +515,6 @@ export default {
       actions: "条目操作",
       raw: "无法识别此语法，已在文本编辑器中保留原文。",
     },
-    editor: "RoutingA 规则",
     loading: "正在加载规则",
     resetDefault: "恢复默认",
     resetConfirm: "将当前规则替换为默认模板？",

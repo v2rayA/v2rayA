@@ -532,7 +532,6 @@ export default {
       actions: "Entry actions",
       raw: "Unrecognized syntax; preserved in the text editor.",
     },
-    editor: "RoutingA rules",
     loading: "Loading rules",
     resetDefault: "Restore defaults",
     resetConfirm: "Replace the current rules with the default template?",

@@ -524,7 +524,6 @@ export default {
       actions: "항목 작업",
       raw: "인식할 수 없는 문법입니다. 텍스트 편집기에 원문을 보존합니다.",
     },
-    editor: "RoutingA 규칙",
     loading: "규칙 불러오는 중",
     resetDefault: "기본값 복원",
     resetConfirm: "현재 규칙을 기본 템플릿으로 바꾸시겠습니까?",

@@ -33,7 +33,6 @@ import type {
   ObservatoryMessage,
   RunningStateMessage,
   TrafficMessage,
-  Which,
   WsMessage,
 } from "@/api/types";
 import { installClientHooks } from "@/clientHooks";
@@ -61,7 +60,7 @@ import LoginDialog from "@/dialogs/Login.vue";
 import OnboardingDialog, {
   shouldShowOnboarding,
 } from "@/dialogs/Onboarding.vue";
-import { onSessionTeardown, resetSession, setSessionStarter } from "@/session";
+import { onSessionTeardown, setSessionStarter } from "@/session";
 import { setRefresher } from "@/session/refresh";
 import { useAppStore, type Running } from "@/stores/app";
 import { runningOf } from "@/views/nodes/model";

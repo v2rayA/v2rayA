@@ -539,7 +539,6 @@ export default {
       actions: "Ações da entrada",
       raw: "Sintaxe não reconhecida; preservada no editor de texto.",
     },
-    editor: "Regras RoutingA",
     loading: "Carregando regras",
     resetDefault: "Restaurar padrão",
     resetConfirm: "Substituir as regras atuais pelo modelo padrão?",
