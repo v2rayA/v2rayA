@@ -8,7 +8,7 @@ import { destinations } from "./destinations";
 import { useDialog } from "@/composables";
 import AboutDialog from "@/views/settings/AboutDialog.vue";
 import { useAppStore } from "@/stores/app";
-import logo from "@/assets/img/v2raya-icon.svg";
+import BrandShape from "./BrandShape.vue";
 
 const { t } = useI18n();
 const store = useAppStore();
@@ -19,7 +19,7 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
 <template>
   <v-navigation-drawer permanent :width="256" color="surface" class="drawer">
     <div class="drawer__brand">
-      <img :src="logo" alt="" class="drawer__logo" />
+      <BrandShape :size="48" />
       <span class="md3-title-large drawer__wordmark">v2rayA</span>
     </div>
     <v-list nav density="default" class="px-3 pt-2 pb-0">
@@ -57,7 +57,7 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 28px 28px 20px;
+  padding: 18px 18px 10px;
 }
 .drawer__wordmark {
   font-weight: 500;
@@ -69,10 +69,6 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
   padding: 4px 12px;
   color: rgb(var(--v-theme-outline));
   opacity: 1;
-}
-.drawer__logo {
-  width: 28px;
-  height: 28px;
 }
 /* Material's drawer item: 56 dp tall, label-large */
 .drawer :deep(.v-list-item) {

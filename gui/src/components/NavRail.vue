@@ -6,7 +6,7 @@
 import { useI18n } from "vue-i18n";
 import { destinations } from "./destinations";
 import { useAppStore } from "@/stores/app";
-import logo from "@/assets/img/v2raya-icon.svg";
+import BrandShape from "./BrandShape.vue";
 
 const { t } = useI18n();
 const store = useAppStore();
@@ -15,7 +15,7 @@ const store = useAppStore();
 <template>
   <v-navigation-drawer permanent :width="80" color="surface" class="rail">
     <div class="rail__brand">
-      <img :src="logo" alt="v2rayA" class="rail__logo" />
+      <BrandShape :size="56" />
     </div>
     <nav class="rail__items" :aria-label="t('common.menu')">
       <v-btn
@@ -54,10 +54,6 @@ const store = useAppStore();
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
-}
-.rail__logo {
-  width: 40px;
-  height: 40px;
 }
 .rail__items {
   display: flex;
