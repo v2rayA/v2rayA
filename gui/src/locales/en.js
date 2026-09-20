@@ -91,7 +91,7 @@ export default {
     nodes: "Nodes",
     menu: "Menu",
     outboundSetting: "Proxy Group Setting",
-    setting: "Setting",
+    setting: "Settings",
     about: "About",
     docs: "Documentation",
     loggedAs: "Logged in as {username}",
