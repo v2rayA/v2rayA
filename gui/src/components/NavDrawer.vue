@@ -5,7 +5,8 @@
 // language and account menus; the core's state lives on the dashboard.
 // The menu button by the version folds it to the rail.
 import { useI18n } from "vue-i18n";
-import { mdiMenu } from "@mdi/js";
+import { mdiBackburger, mdiForwardburger } from "@mdi/js";
+import { useRtl } from "vuetify";
 import { destinations } from "./destinations";
 import { useDialog } from "@/composables";
 import AboutDialog from "@/views/settings/AboutDialog.vue";
@@ -14,6 +15,7 @@ import logo from "@/assets/img/v2raya-icon.svg";
 
 const emit = defineEmits<{ fold: [] }>();
 const { t } = useI18n();
+const { isRtl } = useRtl();
 const store = useAppStore();
 const { open } = useDialog();
 const openAbout = () => open(AboutDialog, {}, { width: 640 });
@@ -53,7 +55,7 @@ const openAbout = () => open(AboutDialog, {}, { width: 640 });
           </v-tooltip>
         </v-btn>
         <v-btn
-          :icon="mdiMenu"
+          :icon="isRtl ? mdiForwardburger : mdiBackburger"
           variant="text"
           class="drawer__menu"
           :aria-label="t('common.menu')"

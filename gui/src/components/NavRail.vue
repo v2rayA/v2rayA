@@ -6,7 +6,8 @@
 // Above that it stands in for a folded drawer, with the menu button
 // that unfolds it at the bottom, where the drawer's is.
 import { useI18n } from "vue-i18n";
-import { mdiMenu } from "@mdi/js";
+import { mdiBackburger, mdiForwardburger } from "@mdi/js";
+import { useRtl } from "vuetify";
 import { destinations } from "./destinations";
 import { useAppStore } from "@/stores/app";
 import logo from "@/assets/img/v2raya-icon.svg";
@@ -14,6 +15,7 @@ import logo from "@/assets/img/v2raya-icon.svg";
 defineProps<{ foldable?: boolean }>();
 const emit = defineEmits<{ unfold: [] }>();
 const { t } = useI18n();
+const { isRtl } = useRtl();
 const store = useAppStore();
 </script>
 
@@ -45,7 +47,7 @@ const store = useAppStore();
     </nav>
     <template v-if="foldable" #append>
       <v-btn
-        :icon="mdiMenu"
+        :icon="isRtl ? mdiBackburger : mdiForwardburger"
         variant="text"
         class="rail__menu"
         :aria-label="t('common.menu')"
