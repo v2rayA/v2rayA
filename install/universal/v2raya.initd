@@ -3,12 +3,15 @@
 # Distributed under the terms of the GNU General Public License v2
 
 name="v2rayA"
-description="A web GUI client of Project V with transparent proxy"
+description="Web client for its own Xray-based core, with transparent proxy"
 command="/usr/bin/v2raya"
 command_args="${V2RAYA_OPTS}"
 error_log="/var/log/v2raya/error.log"
-pidfile="/run/${RC_SVCNAME}.pid"
-command_background="yes"
+# supervise-daemon keeps the process in its own cgroup and process group:
+# a stop takes the core with it, a crash restarts the service.
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=0
 rc_ulimit="-n 30000"
 rc_cgroup_cleanup="yes"
 # The service stops its core and removes the transparent-proxy rules on
@@ -24,11 +27,4 @@ depend() {
 start_pre() {
 	checkpath -d -m 0755 /var/log/v2raya
 	checkpath -d -m 0750 /etc/v2raya
-}
-
-stop_post() {
-	# A core the service did not get to stop (it was killed) would keep the
-	# inbound ports and make the next start fail on them.
-	pkill -x v2raya_core 2>/dev/null
-	return 0
 }
