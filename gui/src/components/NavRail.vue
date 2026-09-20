@@ -3,12 +3,19 @@
 // brand at the top, one item per destination with the 56×32 indicator
 // pill behind the active icon and the label under it). Shown from
 // 600 dp up to 840, where the drawer takes over; the bottom bar below.
+// Above that it stands in for a folded drawer, with the menu button
+// that unfolds it at the bottom, where the drawer's is.
 import { useI18n } from "vue-i18n";
+import { mdiBackburger, mdiForwardburger } from "@mdi/js";
+import { useRtl } from "vuetify";
 import { destinations } from "./destinations";
 import { useAppStore } from "@/stores/app";
 import BrandShape from "./BrandShape.vue";
 
+defineProps<{ foldable?: boolean }>();
+const emit = defineEmits<{ unfold: [] }>();
 const { t } = useI18n();
+const { isRtl } = useRtl();
 const store = useAppStore();
 </script>
 
@@ -38,6 +45,16 @@ const store = useAppStore();
         <span class="md3-label-medium rail__label">{{ t(d.label) }}</span>
       </v-btn>
     </nav>
+    <template v-if="foldable" #append>
+      <v-btn
+        :icon="isRtl ? mdiBackburger : mdiForwardburger"
+        variant="text"
+        class="rail__menu"
+        :aria-label="t('common.menu')"
+        aria-expanded="false"
+        @click="emit('unfold')"
+      />
+    </template>
   </v-navigation-drawer>
 </template>
 
@@ -47,6 +64,11 @@ const store = useAppStore();
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
+}
+.rail__menu {
+  display: flex;
+  margin: 12px auto 20px;
+  color: rgb(var(--v-theme-outline));
 }
 .rail__brand {
   height: 56px;
