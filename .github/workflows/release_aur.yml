@@ -1,0 +1,16 @@
+name: Release to AUR
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        description: "The tag to publish to AUR, e.g. v2.5.5"
+        required: true
+
+jobs:
+  aur:
+    uses: ./.github/workflows/_release_aur.yml
+    with:
+      tag: ${{ inputs.tag }}
+    secrets: inherit
