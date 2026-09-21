@@ -56,10 +56,9 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 	}
 
 	tlsCfg := &tls.Config{
-		ServerName:         sni,
-		InsecureSkipVerify: config.AllowInsecure, // #nosec G402 -- user-configurable
-		NextProtos:         []string{"h3"},
-		MinVersion:         tls.VersionTLS13,
+		ServerName: sni,
+		NextProtos: []string{"h3"},
+		MinVersion: tls.VersionTLS13,
 	}
 	if config.PinnedCertchainSha256 != "" {
 		hash, err := tlsutil.ParsePinnedChain(config.PinnedCertchainSha256)

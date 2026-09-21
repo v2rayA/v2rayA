@@ -195,7 +195,6 @@
       "sni": "example.com",
       "pinnedCertchainSha256": "",
       "cc": "bbr",
-      "allowInsecure": false,
       "protocol": "juicity"
     },
     "back": "juicity://b831381d-6324-4d53-ad4f-8cda48b30811:passw0rd@1.2.3.4:443/?congestion_control=bbr&sni=example.com#juicity node"
@@ -215,7 +214,6 @@
       "alpn": "h3",
       "cc": "bbr",
       "udpRelayMode": "native",
-      "allowInsecure": false,
       "protocol": "tuic"
     },
     "back": "tuic://b831381d-6324-4d53-ad4f-8cda48b30811:passw0rd@1.2.3.4:443/?pinnedPeerCertSha256=&verifyPeerCertByName=&congestion_control=bbr&disable_sni=false&alpn=h3&udp_relay_mode=native&sni=example.com#tuic node"
@@ -270,7 +268,6 @@
       "sni": "example.com",
       "pinnedPeerCertSha256": "",
       "verifyPeerCertByName": "",
-      "allowInsecure": false,
       "minIdleSession": "",
       "protocol": "anytls"
     },

@@ -99,13 +99,6 @@ const disableSniOptions = computed(() => [
       />
     </v-col>
     <v-col cols="12" sm="6">
-      <v-switch
-        v-model="model.allowInsecure"
-        :label="t('configureServer.allowInsecure')"
-        :readonly="readonly"
-      />
-    </v-col>
-    <v-col cols="12" sm="6">
       <v-select
         v-model="model.disableSni"
         :items="disableSniOptions"

@@ -379,7 +379,6 @@ export default {
     websocketHost: "WebSocket 域名",
     websocketPath: "WebSocket 路径",
     congestionControl: "拥塞控制",
-    allowInsecure: "允许不安全连接",
     disableSni: "禁用 SNI",
     udpRelayMode: "UDP 中继模式",
     obfsPassword: "混淆密码",

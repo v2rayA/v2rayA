@@ -394,7 +394,6 @@ export default {
     websocketHost: "Host do WebSocket",
     websocketPath: "Caminho do WebSocket",
     congestionControl: "Controle de congestionamento",
-    allowInsecure: "Permitir conexão insegura",
     disableSni: "Desativar SNI",
     udpRelayMode: "Modo de retransmissão UDP",
     obfsPassword: "Senha de obfs",

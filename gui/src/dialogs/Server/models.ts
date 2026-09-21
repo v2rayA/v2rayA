@@ -109,7 +109,6 @@ export const juicityModel = () => ({
   uuid: "",
   password: "",
   pinnedCertchainSha256: "",
-  allowInsecure: false,
   protocol: "juicity",
 });
 export type JuicityModel = ReturnType<typeof juicityModel>;
@@ -124,7 +123,6 @@ export const tuicModel = () => ({
   password: "",
   pinnedPeerCertSha256: "",
   verifyPeerCertByName: "",
-  allowInsecure: false,
   disableSni: false,
   alpn: "h3",
   udpRelayMode: "native",
@@ -174,7 +172,6 @@ export const anytlsModel = () => ({
   sni: "",
   pinnedPeerCertSha256: "",
   verifyPeerCertByName: "",
-  allowInsecure: false,
   minIdleSession: "",
   protocol: "anytls",
 });

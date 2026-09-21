@@ -390,7 +390,6 @@ export default {
     websocketHost: "WebSocket Host",
     websocketPath: "WebSocket Path",
     congestionControl: "Congestion Control",
-    allowInsecure: "Allow insecure",
     disableSni: "Disable SNI",
     udpRelayMode: "UDP Relay Mode",
     obfsPassword: "Obfs Password",

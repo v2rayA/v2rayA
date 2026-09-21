@@ -385,7 +385,6 @@ export default {
     websocketHost: "WebSocket 호스트",
     websocketPath: "WebSocket 경로",
     congestionControl: "혼잡 제어",
-    allowInsecure: "안전하지 않은 연결 허용",
     disableSni: "SNI 비활성화",
     udpRelayMode: "UDP 릴레이 모드",
     obfsPassword: "Obfs 비밀번호",

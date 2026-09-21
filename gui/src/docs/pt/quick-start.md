@@ -16,7 +16,7 @@ Execute o comando com a conta e o diretório `--config` usados pelo serviço (ta
 
 ## Importar nós
 
-Na página **Proxies**, **Importar** aceita links de compartilhamento ou uma assinatura: escolha **Link do servidor** para links `vmess://`, `vless://`, `ss://`, `trojan://`, `hysteria2://`, `tuic://`, `juicity://`, `anytls://`, `wireguard://`, `socks5://`, `http://` e `https://`, um por linha, ou uma imagem de código QR; escolha **Endereço da assinatura** para uma assinatura. Links ShadowsocksR são recusados.
+Na página **Proxies**, **Importar** aceita links de compartilhamento ou uma assinatura: escolha **Link do servidor** para links `vmess://`, `vless://`, `ss://`, `trojan://`, `hysteria2://`, `tuic://`, `juicity://`, `anytls://`, `wireguard://`, `socks5://`, `http://` e `https://`, um por linha, ou uma imagem de código QR; escolha **Endereço da assinatura** para uma assinatura. Links ShadowsocksR são recusados. `allow_insecure` em um link é ignorado: o v2rayA nunca pula a verificação do certificado; para um servidor autoassinado, fixe o SHA-256 do certificado no formulário do nó.
 
 As assinaturas mantêm seus nós agrupados e podem ser atualizadas manualmente ou por agendamento (**Configurações → Atualizar assinaturas automaticamente**). A configuração de modo ao lado determina se a atualização passa pelo proxy.
 
@@ -32,10 +32,10 @@ As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padr�
 
 Quando o núcleo está em execução, os aplicativos o acessam pelas entradas locais:
 
-| Entrada         | Endereço          | Roteamento                                          |
-| --------------- | ----------------- | --------------------------------------------------- |
-| SOCKS5          | `127.0.0.1:20170` | tudo pelo `proxy`                                   |
-| HTTP            | `127.0.0.1:20171` | tudo pelo `proxy`                                   |
+| Entrada         | Endereço          | Roteamento                                                       |
+| --------------- | ----------------- | ---------------------------------------------------------------- |
+| SOCKS5          | `127.0.0.1:20170` | tudo pelo `proxy`                                                |
+| HTTP            | `127.0.0.1:20171` | tudo pelo `proxy`                                                |
 | HTTP com regras | `127.0.0.1:20172` | a configuração **Modo de divisão de tráfego da porta de regras** |
 
 As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha uma entrada. Para atender aos aplicativos sem configurar cada um, ative o proxy transparente.
