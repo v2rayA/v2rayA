@@ -1,4 +1,4 @@
-name: Release to AUR
+name: Release to AUR (Reusable)
 
 on:
   workflow_call:
