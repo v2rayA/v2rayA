@@ -297,7 +297,7 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		}
 		iptables.SetWatcher(iptables.Tproxy)
 	case configure.TransparentRedirect:
-		if conf.GetEnvironmentConfig().RedirectRespectBoundDevice {
+		if conf.GetEnvironmentConfig().RedirectBoundDevice {
 			if err = startBoundDeviceGuard(); err != nil {
 				return fmt.Errorf("cannot enable bound-device REDIRECT bypass: %w", err)
 			}

@@ -147,7 +147,7 @@ const localVersionAhead = computed(
 const localVersionDisplay = computed(() => {
   if (localGFWListVersion.value) return localGFWListVersion.value;
   if (localGeositeVersion.value)
-    return `${localGeositeVersion.value} (geosite)`;
+    return t("gfwList.geosite", { date: localGeositeVersion.value });
   return t("common.none");
 });
 const positive = (v: unknown) =>

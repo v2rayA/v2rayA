@@ -4,25 +4,27 @@ Com o proxy transparente ativado, o tráfego chega ao núcleo sem nenhuma config
 
 ## Políticas
 
-| Política              | Tráfego pelo proxy                                                                                                                                                                                               |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Não dividir           | tudo                                                                                                                                                                                                             |
+| Política                    | Tráfego pelo proxy                                                                                                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Não dividir                 | tudo                                                                                                                                                                                                                  |
 | Proxy exceto sites da China | tudo, exceto domínios e endereços chineses (`geosite:cn`, `geoip:cn`) e endereços privados; sites fora da China, Google e endereços de Hong Kong e Macau passam pelo proxy mesmo quando uma regra chinesa corresponde |
-| Proxy apenas para GFWList | os domínios da GFWList (`gfw` e `greatfire` do arquivo de Loyalsoldier) e as faixas de endereços do Telegram; execute **Atualizar GFWList** primeiro, pois o modo é recusado sem o arquivo |
-| Igual ao da porta de regras | o modo da porta de regras, incluindo RoutingA |
+| Proxy apenas para GFWList   | os domínios da GFWList (`gfw` e `greatfire` do arquivo de Loyalsoldier) e as faixas de endereços do Telegram; execute **Atualizar GFWList** primeiro, pois o modo é recusado sem o arquivo                            |
+| Igual ao da porta de regras | o modo da porta de regras, incluindo RoutingA                                                                                                                                                                         |
 
 ## Implementações
 
-| Implementação  | Plataformas                                                  | Observações                                                                                                  |
-| -------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `redirect`     | Linux                                                        | `REDIRECT` do iptables/nftables; apenas TCP, além de DNS na porta 53 redirecionado ao módulo DNS do núcleo (porta 52353) |
-| `tproxy`       | Linux                                                        | `TPROXY` do iptables/nftables; TCP e UDP |
-| `tun`          | Linux, Windows, macOS                                        | o núcleo abre um dispositivo TUN; TCP e UDP; exclui o v2rayA e o próprio núcleo automaticamente |
-| Proxy do sistema | Windows; Linux e macOS quando não é executado como root (`--lite`) | configura o proxy do ambiente gráfico (GNOME e KDE no Linux); abrange apenas os aplicativos que as respeitam |
+| Implementação    | Plataformas                                                        | Observações                                                                                                              |
+| ---------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `redirect`       | Linux                                                              | `REDIRECT` do iptables/nftables; apenas TCP, além de DNS na porta 53 redirecionado ao módulo DNS do núcleo (porta 52353) |
+| `tproxy`         | Linux                                                              | `TPROXY` do iptables/nftables; TCP e UDP                                                                                 |
+| `tun`            | Linux, Windows, macOS                                              | o núcleo abre um dispositivo TUN; TCP e UDP; exclui o v2rayA e o próprio núcleo automaticamente                          |
+| Proxy do sistema | Windows; Linux e macOS quando não é executado como root (`--lite`) | configura o proxy do ambiente gráfico (GNOME e KDE no Linux); abrange apenas os aplicativos que as respeitam             |
 
 `redirect` e `tproxy` exigem root e `iptables` ou `nftables`; `tun` exige `/dev/net/tun` e `ip` no Linux e privilégios de administrador no Windows e no macOS.
 
 **Prefixos de interfaces excluídos** mantém o tráfego que chega pelas interfaces indicadas (bridges do Docker, túneis VPN; `docker*`, `veth*`, `wg*`, `ppp*` por padrão) fora de `redirect` e `tproxy`; o DNS dessas interfaces ainda é interceptado.
+
+`--redirect-respect-bound-device` (Linux) deixa as conexões TCP vinculadas a uma interface com `SO_BINDTODEVICE` fora do `redirect`: as verificações de conectividade do NetworkManager são conexões desse tipo e, redirecionadas, informam uma conexão limitada e mantêm os aplicativos offline. Desligado por padrão. Quando ligado, o serviço marca esses sockets com `0x80` por cgroup BPF; isso requer kernel 5.14 ou mais recente e cgroup v2, e sem eles o `redirect` não inicia.
 
 ## TUN
 

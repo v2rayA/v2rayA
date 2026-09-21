@@ -658,6 +658,7 @@ export default {
     saveFailed: "제외된 도메인 저장 실패: {message}",
   },
   gfwList: {
+    geosite: "{date} (geosite)",
     title: "GFWList 업데이트",
     messages: [
       "현재 환경에서 GitHub 접근이 어렵다면 GitHub(https://github.com/v2rayA/dist-v2ray-rules-dat)에서 최신 GFWList(geosite.dat)를 다운로드하여 서버에 업로드한 뒤, 여기에 서버 주소를 입력해 다운로드할 수 있습니다.",

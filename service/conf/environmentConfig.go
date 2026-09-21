@@ -15,8 +15,6 @@ import (
 )
 
 type Params struct {
-	RedirectRespectBoundDevice bool `id:"redirect-respect-bound-device" desc:"Experimental Linux cgroup-BPF bypass for TCP sockets bound to a device before connect. Preserves SO_MARK and adds v2rayA's 0x80 bypass bit. Requires cgroup v2 and BPF links."`
-
 	Address              string `id:"address" short:"a" default:"0.0.0.0:2017" desc:"Listening address"`
 	Socket               string `id:"socket" desc:"Unix socket path for listening"`
 	BaseUrl              string `id:"baseurl" default:"/" desc:"Base URL path prefix"`
@@ -31,6 +29,7 @@ type Params struct {
 	PluginManager        string `id:"plugin-manager" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
 	WebDir               string `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
 	IPV6Support          string `id:"ipv6-support" default:"auto" desc:"Optional values: auto, on, off. Make sure your IPv6 network works fine before you turn it on."`
+	RedirectBoundDevice  bool   `id:"redirect-respect-bound-device" desc:"[Linux Only] In redirect mode, let TCP sockets bound to a device (SO_BINDTODEVICE, as NetworkManager's connectivity checks are) bypass the proxy. Needs kernel 5.14 or later and cgroup v2 at /sys/fs/cgroup."`
 	NftablesSupport      string `id:"nftables-support" default:"auto" desc:"Optional values: auto, on, off. Experimental feature. Make sure you have installed nftables."`
 	PassCheckRoot        bool   `id:"passcheckroot" desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
 	ResetPassword        bool   `id:"reset-password" ignore:"1"`

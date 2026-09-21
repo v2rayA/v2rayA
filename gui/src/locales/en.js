@@ -666,6 +666,7 @@ export default {
     saveFailed: "Failed to save excluded domains: {message}",
   },
   gfwList: {
+    geosite: "{date} (geosite)",
     title: "Update GFWList",
     messages: [
       "If accessing GitHub is difficult in your current environment, you can download the latest GFWList（geosite.dat）from GitHub（https://github.com/v2rayA/dist-v2ray-rules-dat）, upload it to your server, and then enter your server address here to download it.",

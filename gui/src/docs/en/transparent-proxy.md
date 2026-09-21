@@ -24,6 +24,8 @@ With the transparent proxy on, traffic reaches the core without any application 
 
 **Excluded Interface Prefixes** keeps traffic arriving on the named interfaces (Docker bridges, VPN tunnels; `docker*`, `veth*`, `wg*`, `ppp*` by default) out of `redirect` and `tproxy`; their DNS is still intercepted.
 
+`--redirect-respect-bound-device` (Linux) lets TCP sockets bound to a device with `SO_BINDTODEVICE` bypass `redirect`: NetworkManager's connectivity checks are such sockets, and a redirected check reports a limited connection and keeps applications offline. Off by default. When it is on, the service marks those sockets with `0x80` through cgroup BPF; that needs kernel 5.14 or later and cgroup v2, and `redirect` fails to start when they are missing.
+
 ## TUN
 
 The core creates the TUN device and assigns its address. With **Auto Route** on, v2rayA installs the routes and points the system resolver at the core; with it off, the setup and teardown scripts under **Configure Route Script** do.
