@@ -24,7 +24,7 @@ Com o proxy transparente ativado, o tráfego chega ao núcleo sem nenhuma config
 
 **Prefixos de interfaces excluídos** mantém o tráfego que chega pelas interfaces indicadas (bridges do Docker, túneis VPN; `docker*`, `veth*`, `wg*`, `ppp*` por padrão) fora de `redirect` e `tproxy`; o DNS dessas interfaces ainda é interceptado.
 
-`--redirect-respect-bound-device` (Linux) deixa as conexões TCP vinculadas a uma interface com `SO_BINDTODEVICE` fora do `redirect`: as verificações de conectividade do NetworkManager são conexões desse tipo e, redirecionadas, informam uma conexão limitada e mantêm os aplicativos offline. O serviço marca esses sockets com `0x80` por cgroup BPF; requer kernel 5.7 ou mais recente e cgroup v2, e sem eles o `redirect` não inicia.
+`--redirect-respect-bound-device` (Linux) deixa as conexões TCP vinculadas a uma interface com `SO_BINDTODEVICE` fora do `redirect`: as verificações de conectividade do NetworkManager são conexões desse tipo e, redirecionadas, informam uma conexão limitada e mantêm os aplicativos offline. Desligado por padrão. Quando ligado, o serviço marca esses sockets com `0x80` por cgroup BPF; isso requer kernel 5.14 ou mais recente e cgroup v2, e sem eles o `redirect` não inicia.
 
 ## TUN
 

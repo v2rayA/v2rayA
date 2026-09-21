@@ -24,7 +24,7 @@
 
 **排除的网卡名前缀**让从指定网卡进入的流量（Docker 网桥、VPN 隧道；默认为 `docker*`、`veth*`、`wg*`、`ppp*`）不经过 `redirect` 与 `tproxy`，它们的 DNS 仍会被拦截。
 
-`--redirect-respect-bound-device`（Linux）让用 `SO_BINDTODEVICE` 绑定到网卡的 TCP 连接绕过 `redirect`：NetworkManager 的联网检测就是这类连接，被重定向后会报告网络受限，依赖它的应用一直离线。服务通过 cgroup BPF 给这类连接打上 `0x80` 标记；需要 5.7 及以上内核和 cgroup v2，缺少时 `redirect` 会启动失败。
+`--redirect-respect-bound-device`（Linux）让用 `SO_BINDTODEVICE` 绑定到网卡的 TCP 连接绕过 `redirect`：NetworkManager 的联网检测就是这类连接，被重定向后会报告网络受限，依赖它的应用一直离线。默认关闭。打开后，服务通过 cgroup BPF 给这类连接打上 `0x80` 标记；这需要 5.14 及以上内核和 cgroup v2，缺少时 `redirect` 会启动失败。
 
 ## TUN
 

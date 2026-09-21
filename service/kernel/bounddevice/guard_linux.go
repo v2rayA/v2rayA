@@ -42,7 +42,7 @@ type Guard struct {
 func Start(cgroup string) (*Guard, error) {
 	cookie, err := netnsCookie()
 	if errors.Is(err, unix.ENOPROTOOPT) {
-		return nil, fmt.Errorf("SO_NETNS_COOKIE is not supported: the kernel must be 5.7 or later")
+		return nil, fmt.Errorf("SO_NETNS_COOKIE is not supported: the kernel must be 5.14 or later")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("read network namespace cookie: %w", err)

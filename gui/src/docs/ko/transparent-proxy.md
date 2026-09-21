@@ -24,7 +24,7 @@
 
 **제외할 인터페이스 접두사**는 지정한 인터페이스(Docker 브리지, VPN 터널. 기본값은 `docker*`, `veth*`, `wg*`, `ppp*`)로 들어오는 트래픽이 `redirect`와 `tproxy`를 거치지 않게 합니다. 해당 트래픽의 DNS는 여전히 가로챕니다.
 
-`--redirect-respect-bound-device`(Linux)는 `SO_BINDTODEVICE`로 인터페이스에 바인딩된 TCP 연결이 `redirect`를 거치지 않게 합니다. NetworkManager의 연결 확인이 이런 연결이며, 리디렉션되면 연결이 제한됨으로 보고되어 이에 의존하는 앱이 계속 오프라인 상태가 됩니다. 서비스는 cgroup BPF로 이런 소켓에 `0x80` 마크를 붙입니다. 커널 5.7 이상과 cgroup v2가 필요하며, 없으면 `redirect`가 시작되지 않습니다.
+`--redirect-respect-bound-device`(Linux)는 `SO_BINDTODEVICE`로 인터페이스에 바인딩된 TCP 연결이 `redirect`를 거치지 않게 합니다. NetworkManager의 연결 확인이 이런 연결이며, 리디렉션되면 연결이 제한됨으로 보고되어 이에 의존하는 앱이 계속 오프라인 상태가 됩니다. 기본값은 꺼짐입니다. 켜면 서비스가 cgroup BPF로 이런 소켓에 `0x80` 마크를 붙이는데, 커널 5.14 이상과 cgroup v2가 필요하며 없으면 `redirect`가 시작되지 않습니다.
 
 ## TUN
 
