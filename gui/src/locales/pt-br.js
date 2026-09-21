@@ -33,7 +33,11 @@ export default {
     list: "Lista",
     testLatency: "Testar latência",
     chooseManually: "Escolher manualmente",
-    sources: { all: "Todos", local: "Locais" },
+    sources: {
+      all: "Todos",
+      local: "Locais",
+      subscription: "Assinatura – {name}",
+    },
     membersOnly: "Somente membros",
     members: "nenhum nó | 1 nó | {n} nós",
     source: "Origem",

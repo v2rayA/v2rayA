@@ -33,7 +33,11 @@ export default {
     list: "List",
     testLatency: "Test latency",
     chooseManually: "Choose manually",
-    sources: { all: "All", local: "Local" },
+    sources: {
+      all: "All",
+      local: "Local",
+      subscription: "Subscription – {name}",
+    },
     membersOnly: "Members only",
     members: "no nodes | 1 node | {n} nodes",
     source: "Source",

@@ -33,7 +33,7 @@ export default {
     list: "فهرست",
     testLatency: "آزمایش تأخیر",
     chooseManually: "انتخاب دستی",
-    sources: { all: "همه", local: "محلی" },
+    sources: { all: "همه", local: "محلی", subscription: "اشتراک – {name}" },
     membersOnly: "فقط اعضا",
     members: "{n} گره",
     source: "منبع",

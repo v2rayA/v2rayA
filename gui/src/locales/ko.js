@@ -33,7 +33,7 @@ export default {
     list: "목록",
     testLatency: "지연 시간 테스트",
     chooseManually: "직접 선택",
-    sources: { all: "전체", local: "로컬" },
+    sources: { all: "전체", local: "로컬", subscription: "구독 – {name}" },
     membersOnly: "구성원만",
     members: "노드 {n}개",
     source: "출처",
