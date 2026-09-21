@@ -29,10 +29,6 @@ const obfuscations = computed(() => [
   { value: "none", title: t("configureServer.noObfuscation") },
   { value: "websocket", title: "websocket" },
 ]);
-const backends = computed(() => [
-  { value: "", title: t("setting.options.backendSystemDefault") },
-  { value: "v2ray", title: t("setting.options.backendV2ray") },
-]);
 </script>
 
 <template>
@@ -188,14 +184,6 @@ const backends = computed(() => [
         />
       </v-col>
     </v-expand-transition>
-    <v-col cols="12" sm="6">
-      <v-select
-        v-model="model.backend"
-        :items="backends"
-        :label="t('setting.nodeBackend')"
-        :readonly="readonly"
-      />
-    </v-col>
   </v-row>
   <v-row dense>
     <v-col cols="12" sm="6">
