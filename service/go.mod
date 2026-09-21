@@ -5,6 +5,7 @@ go 1.26
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/beevik/ntp v0.3.0
+	github.com/cilium/ebpf v0.22.0
 	github.com/devfeel/mapper v0.7.5
 	github.com/gin-contrib/cors v1.6.0
 	github.com/gin-gonic/gin v1.9.1
@@ -41,7 +42,6 @@ require (
 	github.com/bytedance/sonic v1.11.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.1 // indirect
-	github.com/cilium/ebpf v0.22.0
 	github.com/djherbis/times v1.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
