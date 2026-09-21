@@ -17,7 +17,12 @@ import {
 import { useI18n } from "vue-i18n";
 import { useDisplay, useLocale, useTheme } from "vuetify";
 import dayjs from "dayjs";
-import { mdiDotsVertical, mdiPower } from "@mdi/js";
+import {
+  mdiBookOpenPageVariant,
+  mdiBookOpenPageVariantOutline,
+  mdiDotsVertical,
+  mdiPower,
+} from "@mdi/js";
 import {
   deleteV2ray,
   getAccount,
@@ -74,6 +79,7 @@ import DashboardView from "@/views/DashboardView.vue";
 import LogsView from "@/views/LogsView.vue";
 import ProxiesView from "@/views/ProxiesView.vue";
 import SettingsView from "@/views/SettingsView.vue";
+import SubscriptionsView from "@/views/SubscriptionsView.vue";
 // the docs and their Markdown load only when the page is opened
 const DocsView = defineAsyncComponent(() => import("@/views/DocsView.vue"));
 
@@ -84,7 +90,8 @@ const banner = useBanner();
 const traffic = useTraffic();
 const theme = useTheme();
 const vuetifyLocale = useLocale();
-// Material's window size classes: compact < 600, medium < 840, expanded
+// Material's window size classes: compact < 600, medium < 840, expanded;
+// on phones (under 440) the app bar drops the wordmark, the logo stands for it
 const { width } = useDisplay();
 const compact = computed(() => width.value < 600);
 // Material's window classes: compact < 600 (bottom bar), medium and
@@ -410,9 +417,14 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       <template v-if="compact" #prepend>
         <img :src="logo" alt="v2rayA" class="bar__logo ms-2" />
       </template>
-      <v-app-bar-title class="md3-title-large" :class="{ bar__brand: compact }">
+      <v-app-bar-title
+        v-if="!compact || width >= 440"
+        class="md3-title-large"
+        :class="{ bar__brand: compact }"
+      >
         {{ compact ? "v2rayA" : pageTitle }}
       </v-app-bar-title>
+      <v-spacer v-else />
       <v-btn
         :color="statusColor"
         variant="tonal"
@@ -443,13 +455,25 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       />
       <template #append>
         <ShellMenus v-if="!compact" variant="icons" />
-        <v-menu v-else :close-on-content-click="false">
+        <template v-else>
+          <v-btn
+            :icon="
+              store.view === 'docs'
+                ? mdiBookOpenPageVariant
+                : mdiBookOpenPageVariantOutline
+            "
+            variant="text"
+            :aria-label="t('common.docs')"
+            :aria-current="store.view === 'docs' ? 'page' : undefined"
+            @click="store.view = 'docs'"
+          />
+        </template>
+        <v-menu v-if="compact" :close-on-content-click="false">
           <template #activator="{ props: menu }">
             <v-btn
               v-bind="menu"
               :icon="mdiDotsVertical"
               variant="text"
-              class="me-1"
               :aria-label="t('common.menu')"
             />
           </template>
@@ -466,7 +490,9 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       <div
         class="page"
         :class="{
-          'page--wide': ['dashboard', 'proxies', 'nodes'].includes(store.view),
+          'page--wide': ['dashboard', 'proxies', 'subscriptions'].includes(
+            store.view,
+          ),
         }"
       >
         <div v-if="expanded" class="page__header">
@@ -496,6 +522,11 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
         />
         <ProxiesView
           v-else-if="store.view === 'proxies'"
+          ref="pageRef"
+          :key="sessionSerial"
+        />
+        <SubscriptionsView
+          v-else-if="store.view === 'subscriptions'"
           ref="pageRef"
           :key="sessionSerial"
         />

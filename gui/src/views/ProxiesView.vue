@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import {
   mdiCheck,
-  mdiChevronDown,
-  mdiChevronUp,
   mdiCogOutline,
+  mdiChevronDown,
   mdiDeleteOutline,
   mdiDotsVertical,
   mdiMagnify,
   mdiPlus,
-  mdiRss,
   mdiServerNetworkOutline,
   mdiSpeedometer,
   mdiTrayArrowDown,
@@ -22,7 +20,6 @@ import { rowKey, sameWhich, whichOf } from "./nodes/model";
 import { useProxies } from "./proxies/model";
 import NodeCard from "./proxies/NodeCard.vue";
 import NodeListItem from "./proxies/NodeListItem.vue";
-import SubscriptionCard from "./proxies/SubscriptionCard.vue";
 
 defineOptions({ name: "ProxiesView" });
 const { t } = useI18n();
@@ -41,7 +38,6 @@ const {
   busy,
   testing,
   rows,
-  subscriptions,
   members,
   groupList,
   listed,
@@ -60,13 +56,6 @@ const currentMember = computed(() => {
     ? (members.value.find((row) => sameWhich(whichOf(row), which)) ?? null)
     : null;
 });
-// the subscriptions fold away once the user has seen them
-const subscriptionsOpen = ref(
-  localStorage.getItem("proxies.subscriptions") !== "closed",
-);
-watch(subscriptionsOpen, (open) =>
-  localStorage.setItem("proxies.subscriptions", open ? "open" : "closed"),
-);
 defineExpose({ sync });
 onMounted(sync);
 </script>
@@ -119,79 +108,6 @@ onMounted(sync);
       class="bg-transparent"
     />
     <template v-else-if="!loadError || rows.length">
-      <section class="mb-6">
-        <div
-          class="d-flex align-center ga-2"
-          :class="subscriptionsOpen ? 'mb-4' : ''"
-        >
-          <v-btn
-            :icon="subscriptionsOpen ? mdiChevronUp : mdiChevronDown"
-            variant="text"
-            size="40"
-            :aria-label="t('common.subscriptions')"
-            :aria-expanded="subscriptionsOpen"
-            @click="subscriptionsOpen = !subscriptionsOpen"
-          />
-          <h2 class="md3-title-medium ma-0">
-            {{ t("common.subscriptions") }}
-            <span
-              v-if="!subscriptionsOpen"
-              class="md3-label-medium text-on-surface-variant ms-1"
-              >{{ subscriptions.length }}</span
-            >
-          </h2>
-          <v-spacer />
-          <v-btn
-            variant="text"
-            :prepend-icon="mdiCogOutline"
-            :disabled="disabled"
-            @click="model.subscriptionSettings"
-            >{{ t("proxies.autoUpdate") }}</v-btn
-          >
-        </div>
-        <v-expand-transition>
-          <div v-if="subscriptionsOpen">
-            <div v-if="subscriptions.length" class="proxies__subscriptions">
-              <SubscriptionCard
-                v-for="subscription in subscriptions"
-                :key="subscription.address"
-                :subscription="subscription"
-                :disabled="disabled"
-                @action="model.subscriptionAction(subscription, $event)"
-              />
-            </div>
-            <v-sheet
-              v-else
-              color="surface-container-low"
-              rounded="xl"
-              class="proxies__empty"
-            >
-              <v-icon
-                :icon="mdiRss"
-                size="28"
-                color="on-surface-variant"
-                class="flex-shrink-0"
-              />
-              <div class="proxies__empty-text">
-                <p class="md3-title-medium ma-0">
-                  {{ t("proxies.noSubscriptions") }}
-                </p>
-                <p class="md3-body-medium text-on-surface-variant ma-0">
-                  {{ t("proxies.noSubscriptionsHint") }}
-                </p>
-              </div>
-              <v-btn
-                variant="tonal"
-                color="primary"
-                class="flex-shrink-0"
-                :disabled="disabled"
-                @click="model.importNodes('subscription')"
-                >{{ t("proxies.importSubscription") }}</v-btn
-              >
-            </v-sheet>
-          </div>
-        </v-expand-transition>
-      </section>
       <section>
         <div class="proxies__row mb-3">
           <h2 class="md3-title-medium ma-0 me-2">
@@ -467,18 +383,6 @@ onMounted(sync);
 </template>
 
 <style scoped>
-/* no subscriptions yet: one row, icon, words and the action, wrapping when narrow */
-.proxies__empty {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 16px;
-  padding: 16px 20px;
-}
-.proxies__empty-text {
-  flex: 1 1 240px;
-  min-width: 0;
-}
 .proxies__row {
   display: flex;
   flex-wrap: wrap;
@@ -515,19 +419,10 @@ onMounted(sync);
   flex: 1 1 280px;
   max-width: 480px;
 }
-.proxies__subscriptions,
 .proxies__cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-}
-.proxies__subscriptions {
-  gap: 16px;
-}
-.proxies__cards {
   gap: 12px;
-}
-.proxies--expanded .proxies__subscriptions {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 .proxies--expanded .proxies__cards {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

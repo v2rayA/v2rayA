@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
-import { VCheckboxBtn, VProgressLinear } from "vuetify/components";
+import { VCheckboxBtn } from "vuetify/components";
 import type * as Api from "@/api";
 import { getTouch, putOutboundConnections } from "@/api";
 import { mountWithApp } from "@/test/mount";
@@ -9,11 +9,9 @@ import { useAppStore } from "@/stores/app";
 import { dialogState, closeAllDialogs } from "@/composables/useDialog";
 import ImportDialog from "@/dialogs/Import.vue";
 import ServerDialog from "@/dialogs/Server/index.vue";
-import SubscriptionSettings from "@/dialogs/SubscriptionSettings.vue";
 import ProxiesView from "./ProxiesView.vue";
 import NodeCard from "./proxies/NodeCard.vue";
 import NodeListItem from "./proxies/NodeListItem.vue";
-import SubscriptionCard from "./proxies/SubscriptionCard.vue";
 import { fixture } from "./proxies/fixture";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -46,20 +44,7 @@ afterEach(() => {
 });
 
 describe("unified proxies page", () => {
-  test("shows subscription quota and node cards, switches to a real list and remembers it", async () => {
-    expect(
-      wrapper.findAllComponents(SubscriptionCard).map((c) => c.text()),
-    ).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining("feed-0.example"),
-        expect.stringContaining("feed-1.example"),
-      ]),
-    );
-    expect(
-      wrapper
-        .findAllComponents(VProgressLinear)
-        .some((p) => p.props("modelValue") === 25),
-    ).toBe(true);
+  test("shows node cards, switches to a real list and remembers it", async () => {
     expect(wrapper.findAllComponents(NodeCard)).toHaveLength(4);
     await button("List").trigger("click");
     await flushPromises();
@@ -94,7 +79,7 @@ describe("unified proxies page", () => {
     await all.get("input").setValue(false);
     expect(wrapper.get(".proxies__batch").text()).toContain("none selected");
   });
-  test("toolbar and subscription settings open their dialogs", async () => {
+  test("toolbar buttons open their dialogs", async () => {
     await button("New node").trigger("click");
     expect(dialogState.stack.at(-1)?.component).toBe(ServerDialog);
     expect(dialogState.stack.at(-1)?.props).toEqual({ which: null });
@@ -108,10 +93,6 @@ describe("unified proxies page", () => {
     expect(dialogState.stack.at(-1)?.props).toMatchObject({
       input: { maxlength: 10 },
     });
-    closeAllDialogs();
-    await flushPromises();
-    await button("Auto-update").trigger("click");
-    expect(dialogState.stack.at(-1)?.component).toBe(SubscriptionSettings);
   });
   test("card keyboard activation toggles membership while its menu does not", async () => {
     const card = wrapper.findAllComponents(NodeCard)[0];
