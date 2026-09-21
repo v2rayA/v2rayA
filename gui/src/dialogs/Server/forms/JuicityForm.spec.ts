@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, test } from "vitest";
 import { defineComponent, h, nextTick, reactive } from "vue";
-import { VForm, VSwitch, VTextField } from "vuetify/components";
+import { VForm, VTextField } from "vuetify/components";
 import { mountWithApp } from "@/test/mount";
 import { generateShareLink, parseShareLink } from "@/lib/serverCodec";
 import { links } from "@/lib/__fixtures__/links";
@@ -26,8 +26,6 @@ describe("the juicity form", () => {
     ).toBe("example.com");
     await w.get('input[dir="ltr"]').setValue("5.6.7.8");
     expect(model.server).toBe("5.6.7.8");
-    await w.getComponent(VSwitch).get("input").setValue(true);
-    expect(model.allowInsecure).toBe(true);
     w.unmount();
   });
 
@@ -59,8 +57,6 @@ describe("the juicity form", () => {
       'input:not([type="checkbox"]):not([type="hidden"])',
     ))
       expect(input.element.readOnly).toBe(true);
-    await w.getComponent(VSwitch).get("input").trigger("click");
-    expect(model.allowInsecure).toBe(false);
     expect(generateShareLink(model)).toBe(fixtures.juicity.back);
     w.unmount();
   });

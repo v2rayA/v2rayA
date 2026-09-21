@@ -72,14 +72,6 @@ const { t } = useI18n();
       />
     </v-col>
     <v-col cols="12" sm="6">
-      <v-switch
-        v-model="model.allowInsecure"
-        :label="t('configureServer.allowInsecure')"
-        hide-details
-        :readonly="readonly"
-      />
-    </v-col>
-    <v-col cols="12" sm="6">
       <v-text-field
         v-model="model.minIdleSession"
         type="number"

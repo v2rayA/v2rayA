@@ -2,7 +2,7 @@
 import { describe, expect, test } from "vitest";
 import type { VueWrapper } from "@vue/test-utils";
 import { defineComponent, h, nextTick, reactive } from "vue";
-import { VForm, VSwitch, VTextField } from "vuetify/components";
+import { VForm, VTextField } from "vuetify/components";
 import { mountWithApp } from "@/test/mount";
 import { generateShareLink, parseShareLink } from "@/lib/serverCodec";
 import { links } from "@/lib/__fixtures__/links";
@@ -33,13 +33,9 @@ describe("the anytls form", () => {
     ]) {
       expect(field(w, label).get("input").element.value).toBe(value);
     }
-    expect(w.findComponent(VSwitch).get("input").element.checked).toBe(false);
     expect(generateShareLink(model)).toBe(fixtures.anytls.back);
     await field(w, labels.auth).get("input").setValue("new-secret");
     expect(model.auth).toBe("new-secret");
-    await w.findComponent(VSwitch).get("input").setValue(true);
-    expect(model.allowInsecure).toBe(true);
-    expect(parseShareLink(generateShareLink(model)!)?.allowInsecure).toBe(true);
     w.unmount();
   });
 
@@ -72,8 +68,6 @@ describe("the anytls form", () => {
     });
     for (const input of w.findAll('input:not([type="checkbox"])'))
       expect((input.element as HTMLInputElement).readOnly).toBe(true);
-    await w.findComponent(VSwitch).get("input").setValue(true);
-    expect(model.allowInsecure).toBe(false);
     expect(generateShareLink(model)).toBe(fixtures.anytls.back);
     w.unmount();
   });

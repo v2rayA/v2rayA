@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, test } from "vitest";
 import { defineComponent, h, nextTick, reactive } from "vue";
-import { VForm, VSelect, VSwitch, VTextField } from "vuetify/components";
+import { VForm, VSelect, VTextField } from "vuetify/components";
 import { mountWithApp } from "@/test/mount";
 import { generateShareLink, parseShareLink } from "@/lib/serverCodec";
 import { links } from "@/lib/__fixtures__/links";
@@ -102,8 +102,6 @@ describe("the tuic form", () => {
       'input:not([type="checkbox"]):not([type="hidden"])',
     ))
       expect(input.element.readOnly).toBe(true);
-    await w.getComponent(VSwitch).get("input").trigger("click");
-    expect(model.allowInsecure).toBe(false);
     expect(generateShareLink(model)).toBe(fixtures.tuic.back);
     w.unmount();
   });

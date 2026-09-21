@@ -17,12 +17,11 @@ func init() {
 }
 
 type AnyTLS struct {
-	Name          string `json:"name"`
-	Server        string `json:"server"`
-	Port          int    `json:"port"`
-	Protocol      string `json:"protocol"`
-	Link          string `json:"link"`
-	AllowInsecure bool   `json:"allowInsecure"`
+	Name     string `json:"name"`
+	Server   string `json:"server"`
+	Port     int    `json:"port"`
+	Protocol string `json:"protocol"`
+	Link     string `json:"link"`
 }
 
 func NewAnyTLS(link string) (ServerObj, error) {
@@ -39,12 +38,11 @@ func ParseAnyTLSURL(link string) (data *AnyTLS, err error) {
 		return nil, fmt.Errorf("%w: anytls link for %q has a missing or invalid port; expected anytls://password@host:port", ErrInvalidParameter, u.Hostname())
 	}
 	return &AnyTLS{
-		Name:          u.Fragment,
-		Server:        u.Hostname(),
-		Port:          port,
-		Protocol:      "anytls",
-		Link:          link,
-		AllowInsecure: u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
+		Name:     u.Fragment,
+		Server:   u.Hostname(),
+		Port:     port,
+		Protocol: "anytls",
+		Link:     link,
 	}, nil
 }
 
@@ -55,7 +53,6 @@ type anytlsSettings struct {
 	Password                         string `json:"password"`
 	SNI                              string `json:"sni,omitempty"`
 	MinIdleSessions                  int    `json:"min_idle_sessions,omitempty"`
-	AllowInsecure                    bool   `json:"allow_insecure,omitempty"`
 	PinnedPeerCertificateChainSha256 string `json:"pinned_peer_certificate_chain_sha256,omitempty"`
 	VerifyPeerCertByName             string `json:"verifyPeerCertByName,omitempty"`
 }
@@ -80,7 +77,6 @@ func (s *AnyTLS) Configuration(info PriorInfo) (c Configuration, err error) {
 		Password:                         password,
 		SNI:                              sni,
 		MinIdleSessions:                  minIdle,
-		AllowInsecure:                    s.AllowInsecure,
 		PinnedPeerCertificateChainSha256: q.Get("pinnedPeerCertSha256"),
 		VerifyPeerCertByName:             q.Get("verifyPeerCertByName"),
 	})

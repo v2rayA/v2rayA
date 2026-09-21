@@ -12,8 +12,9 @@ message ClientConfig {
   string password = 3;
   // TLS SNI override (optional)
   string sni = 4;
-  // Allow insecure TLS (skip verification)
-  bool allow_insecure = 5;
+  // 5 was allow_insecure; certificate pinning is the way to a self-signed server
+  reserved 5;
+  reserved "allow_insecure";
   // Minimum number of idle sessions to keep
   uint32 min_idle_sessions = 6;
   // Pinned peer certificate chain SHA256 hash. Accepts hex or base64.

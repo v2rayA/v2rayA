@@ -246,8 +246,6 @@ export function parseShareLink(url: string): ShareForm | null {
       sni: u.params.sni || "",
       pinnedCertchainSha256: u.params.pinned_certchain_sha256 || "",
       cc: u.params.congestion_control || "bbr",
-      allowInsecure:
-        u.params.allow_insecure === "true" || u.params.allowInsecure === "true",
       protocol: "juicity",
     };
   } else if (url.toLowerCase().startsWith("tuic://")) {
@@ -270,8 +268,6 @@ export function parseShareLink(url: string): ShareForm | null {
       alpn: u.params.alpn,
       cc: u.params.congestion_control || "bbr",
       udpRelayMode: u.params.udp_relay_mode || "native",
-      allowInsecure:
-        u.params.allow_insecure === "true" || u.params.allow_insecure === "1",
       protocol: "tuic",
     };
   } else if (
@@ -347,8 +343,6 @@ export function parseShareLink(url: string): ShareForm | null {
         u.params.verifyPeerCertByName ||
         u.params.verify_peer_cert_by_name ||
         "",
-      allowInsecure:
-        u.params.allow_insecure === "true" || u.params.allow_insecure === "1",
       minIdleSession: u.params.minIdleSession || "",
       protocol: "anytls",
     };
@@ -647,9 +641,6 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       if (srcObj.pinnedCertchainSha256 !== "") {
         query.pinned_certchain_sha256 = srcObj.pinnedCertchainSha256;
       }
-      if (srcObj.allowInsecure) {
-        query.allow_insecure = "true";
-      }
       return buildURL({
         protocol: "juicity",
         username: srcObj.uuid,
@@ -670,9 +661,6 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       };
       if (srcObj.sni !== "") {
         query.sni = srcObj.sni;
-      }
-      if (srcObj.allowInsecure) {
-        query.allow_insecure = "true";
       }
       return buildURL({
         protocol: "tuic",
@@ -742,9 +730,6 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       }
       if (srcObj.verifyPeerCertByName) {
         query.verifyPeerCertByName = srcObj.verifyPeerCertByName;
-      }
-      if (srcObj.allowInsecure) {
-        query.allow_insecure = "true";
       }
       if (srcObj.minIdleSession) {
         query.minIdleSession = srcObj.minIdleSession;

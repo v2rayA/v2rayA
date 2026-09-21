@@ -26,7 +26,6 @@ type Tuic struct {
 	Password             string `json:"password"`
 	Sni                  string `json:"sni"`
 	DisableSni           bool   `json:"disableSni"`
-	AllowInsecure        bool   `json:"allowInsecure"`
 	Alpn                 string `json:"alpn"`
 	CongestionControl    string `json:"congestionControl"`
 	UdpRelayMode         string `json:"udpRelayMode"`
@@ -72,7 +71,6 @@ func ParseTuicURL(link string) (data *Tuic, err error) {
 		Password:          password,
 		Sni:               u.Query().Get("sni"),
 		DisableSni:        u.Query().Get("disable_sni") == "true" || u.Query().Get("disable_sni") == "1",
-		AllowInsecure:     u.Query().Get("allow_insecure") == "true" || u.Query().Get("allow_insecure") == "1",
 		Alpn:              alpn,
 		CongestionControl: u.Query().Get("congestion_control"),
 		UdpRelayMode:      u.Query().Get("udp_relay_mode"),
@@ -94,7 +92,6 @@ type tuicSettings struct {
 	UdpRelayMode                     string   `json:"udp_relay_mode,omitempty"`
 	Alpn                             []string `json:"alpn,omitempty"`
 	DisableSni                       bool     `json:"disable_sni,omitempty"`
-	AllowInsecure                    bool     `json:"allow_insecure,omitempty"`
 	PinnedPeerCertificateChainSha256 string   `json:"pinned_peer_certificate_chain_sha256,omitempty"`
 	VerifyPeerCertByName             string   `json:"verifyPeerCertByName,omitempty"`
 }
@@ -114,7 +111,6 @@ func (s *Tuic) Configuration(info PriorInfo) (c Configuration, err error) {
 		UdpRelayMode:                     s.UdpRelayMode,
 		Alpn:                             alpn,
 		DisableSni:                       s.DisableSni,
-		AllowInsecure:                    s.AllowInsecure,
 		PinnedPeerCertificateChainSha256: s.PinnedPeerCertSha256,
 		VerifyPeerCertByName:             s.VerifyPeerCertByName,
 	})
@@ -144,9 +140,6 @@ func (s *Tuic) ExportToURL() string {
 	setValue(&query, "verifyPeerCertByName", s.VerifyPeerCertByName)
 	if s.DisableSni {
 		query.Set("disable_sni", "true")
-	}
-	if s.AllowInsecure {
-		query.Set("allow_insecure", "true")
 	}
 	setValue(&query, "sni", s.Sni)
 	alpn := strings.ReplaceAll(s.Alpn, " ", "")

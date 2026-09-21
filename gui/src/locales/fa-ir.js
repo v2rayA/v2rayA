@@ -383,7 +383,6 @@ export default {
     websocketHost: "میزبان WebSocket",
     websocketPath: "مسیر WebSocket",
     congestionControl: "کنترل ازدحام",
-    allowInsecure: "اجازه اتصال ناامن",
     disableSni: "غیرفعال‌سازی SNI",
     udpRelayMode: "حالت رله UDP",
     obfsPassword: "گذرواژه Obfs",
