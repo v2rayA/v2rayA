@@ -101,7 +101,7 @@ export function useProxies() {
     { value: "local", title: t("proxies.sources.local") },
     ...subscriptions.value.map((s) => ({
       value: s.address,
-      title: t("proxies.sources.subscription", { name: s.remarks || s.host }),
+      title: s.remarks || s.host,
     })),
   ]);
   const listed = computed(() =>

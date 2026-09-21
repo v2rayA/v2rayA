@@ -32,7 +32,7 @@ export default {
     list: "列表",
     testLatency: "测试延迟",
     chooseManually: "手动选择",
-    sources: { all: "全部", local: "本地", subscription: "远程订阅 – {name}" },
+    sources: { all: "全部", local: "本地" },
     membersOnly: "仅成员",
     members: "{n} 个节点",
     source: "来源",

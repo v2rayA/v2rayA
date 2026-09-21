@@ -33,11 +33,7 @@ export default {
     list: "Список",
     testLatency: "Проверить задержку",
     chooseManually: "Выбрать вручную",
-    sources: {
-      all: "Все",
-      local: "Локальные",
-      subscription: "Подписка – {name}",
-    },
+    sources: { all: "Все", local: "Локальные" },
     membersOnly: "Только участники",
     members: "{n} узел | {n} узла | {n} узлов",
     source: "Источник",
