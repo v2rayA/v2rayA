@@ -1,6 +1,6 @@
 [Unit]
 Description=v2rayA Lite Service
-Documentation=https://github.com/v2rayA/v2rayA/wiki
+Documentation=https://github.com/v2rayA/v2rayA#readme
 After=network.target network-online.target nss-lookup.target iptables.service ip6tables.service nftables.service
 Wants=network.target
 

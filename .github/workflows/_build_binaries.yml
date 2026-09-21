@@ -43,7 +43,7 @@ jobs:
       CGO_ENABLED: 0
       VERSION: ${{ inputs.version }}
       NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, SS, SSR, Trojan, Tuic and Juicity protocols"
+      DESC: "A web GUI client of Project V which supports VMess, VLESS, Shadowsocks, Trojan, TUIC, Juicity and AnyTLSs"
     steps:
       - uses: actions/checkout@v7
         with:

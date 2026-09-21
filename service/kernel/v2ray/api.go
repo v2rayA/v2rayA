@@ -77,9 +77,8 @@ func getObservatoryResponses(conn *grpc.ClientConn, observatoryTags []string) (r
 	return r, nil
 }
 
-// ObservatoryProducer monitors outbound status via gRPC API and publishes to ApiFeed.
-// This function is only compatible with v2ray-core v5+ API structure.
-// For xray-core, this function should not be called as it uses different gRPC services.
+// ObservatoryProducer monitors outbound status through the core's v2ray-compatible
+// observatory gRPC service and publishes to ApiFeed.
 func ObservatoryProducer(apiPort int, observatoryTags []string) (closeFunc func()) {
 	closed := make(chan struct{})
 	go func() {
