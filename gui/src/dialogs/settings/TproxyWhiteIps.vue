@@ -94,6 +94,9 @@ async function save() {
         rows="4"
         auto-grow
         dir="ltr"
+        @keydown.enter="
+          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
+        "
       />
       <v-alert
         type="info"

@@ -18,6 +18,7 @@ import {
 } from "@mdi/js";
 import { rowKey, sameWhich, whichOf } from "./nodes/model";
 import { useProxies } from "./proxies/model";
+import { focusInput, useHotkeys } from "@/composables";
 import NodeCard from "./proxies/NodeCard.vue";
 import NodeListItem from "./proxies/NodeListItem.vue";
 
@@ -55,6 +56,19 @@ const currentMember = computed(() => {
   return which
     ? (members.value.find((row) => sameWhich(whichOf(row), which)) ?? null)
     : null;
+});
+// Ctrl/Cmd+A selects every listed node, Escape clears (list view), "/" goes to the search
+useHotkeys((event) => {
+  const ctrl = event.ctrlKey || event.metaKey;
+  if (ctrl && event.key.toLowerCase() === "a" && view.value === "list") {
+    model.selectAll(true);
+    event.preventDefault();
+  } else if (event.key === "Escape" && selected.value.length) {
+    model.selectAll(false);
+  } else if (event.key === "/" && !ctrl) {
+    focusInput(".proxies__search");
+    event.preventDefault();
+  }
 });
 defineExpose({ sync });
 onMounted(sync);

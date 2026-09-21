@@ -53,6 +53,9 @@ async function save() {
         auto-grow
         dir="ltr"
         class="code"
+        @keydown.enter="
+          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
+        "
       />
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

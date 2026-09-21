@@ -65,6 +65,7 @@ async function remove() {
         :label="t('gfwList.formName')"
         placeholder="https://example.com/LoyalsoldierSite.dat"
         dir="ltr"
+        @keydown.enter="update"
       />
       <v-alert
         type="warning"

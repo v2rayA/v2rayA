@@ -8,6 +8,7 @@ import { useDisplay } from "vuetify";
 import { mdiMagnify, mdiTrayArrowDown } from "@mdi/js";
 import hljs from "highlight.js/lib/core";
 import accesslog from "highlight.js/lib/languages/accesslog";
+import { focusInput, useHotkeys } from "@/composables";
 import { useLogStream } from "@/composables/useLogStream";
 
 defineOptions({ name: "LogsView" });
@@ -101,6 +102,13 @@ function onKey(event: KeyboardEvent) {
 onMounted(() => {
   void stream.fetch();
   stream.start();
+});
+// "/" goes to the search
+useHotkeys((event) => {
+  if (event.key === "/" && !event.ctrlKey && !event.metaKey) {
+    focusInput(".logs__search");
+    event.preventDefault();
+  }
 });
 defineExpose({ sync: () => stream.fetch() });
 </script>

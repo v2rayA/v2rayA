@@ -94,6 +94,23 @@ describe("unified proxies page", () => {
       input: { maxlength: 10 },
     });
   });
+  test("Ctrl+A selects every listed node in the list view and Escape clears", async () => {
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "a", ctrlKey: true }),
+    );
+    await flushPromises();
+    expect(wrapper.find(".proxies__batch").exists()).toBe(false);
+    await button("List").trigger("click");
+    await flushPromises();
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "a", ctrlKey: true }),
+    );
+    await flushPromises();
+    expect(wrapper.get(".proxies__batch").text()).toContain("4 selected");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await flushPromises();
+    expect(wrapper.get(".proxies__batch").text()).toContain("none selected");
+  });
   test("card keyboard activation toggles membership while its menu does not", async () => {
     const card = wrapper.findAllComponents(NodeCard)[0];
     await card.get(".node-card").trigger("keydown", { key: "Enter" });

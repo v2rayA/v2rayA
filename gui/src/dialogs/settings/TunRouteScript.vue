@@ -81,6 +81,9 @@ function save() {
         dir="ltr"
         spellcheck="false"
         class="code"
+        @keydown.enter="
+          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
+        "
       />
       <v-textarea
         v-model="form.teardownScript"
@@ -91,6 +94,9 @@ function save() {
         dir="ltr"
         spellcheck="false"
         class="code"
+        @keydown.enter="
+          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
+        "
       />
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

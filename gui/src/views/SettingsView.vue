@@ -4,7 +4,12 @@ import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import dayjs from "dayjs";
 import { errorText } from "@/api/errors";
-import { useDialog, useNotify, useUnsavedGuard } from "@/composables";
+import {
+  useDialog,
+  useHotkeys,
+  useNotify,
+  useUnsavedGuard,
+} from "@/composables";
 import DocsLink from "@/components/DocsLink.vue";
 import CustomInboundDialog from "@/dialogs/settings/CustomInbound.vue";
 import DnsDialog from "@/dialogs/settings/Dns.vue";
@@ -50,6 +55,13 @@ const formRef = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 onMounted(() => {
   settings.load().catch((err) => notify.warning(errorText(err)));
   settings.loadRemoteVersion().catch(() => {});
+});
+// Ctrl/Cmd+S saves what changed
+useHotkeys((event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    event.preventDefault();
+    if (settings.dirty.value && !saving.value) void save();
+  }
 });
 
 // ---- the transparent proxy's implementation ---------------------------------------

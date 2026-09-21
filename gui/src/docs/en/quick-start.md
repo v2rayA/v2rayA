@@ -43,3 +43,12 @@ The ports are changed under **Settings → Address and Ports**; 0 closes an inbo
 ## Routing
 
 **Settings → Traffic splitting** picks how the rule port and the transparent proxy split traffic: proxy everything except Chinese sites, proxy only the GFWList, or your own RoutingA rules. RoutingA is described in its own section.
+
+## Keyboard
+
+- Proxies, list view: `Ctrl`+`A` selects every listed node, `Esc` clears the selection; `/` goes to the search on the Proxies and Logs pages.
+- Settings: `Ctrl`+`S` saves. RoutingA editor: `Ctrl`+`S` saves, `Tab` indents.
+- Dialogs with a text area (import, subscription, route scripts, lists): `Ctrl`+`Enter` submits; `Esc` closes any dialog.
+- Logs: `Home`, `End`, `PgUp`, `PgDn` move through the log once it has focus.
+
+On macOS `Cmd` stands for `Ctrl`.

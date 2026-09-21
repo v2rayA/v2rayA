@@ -43,3 +43,12 @@ As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha
 ## Roteamento
 
 **Configurações → Divisão de tráfego** define como a porta de regras e o proxy transparente dividem o tráfego: usar o proxy para tudo, exceto sites chineses, usar o proxy apenas para a GFWList ou usar suas próprias regras RoutingA. O RoutingA é descrito em sua própria seção.
+
+## Teclado
+
+- Página Proxies, visão em lista: `Ctrl`+`A` seleciona todos os nós listados e `Esc` limpa a seleção; `/` vai para a busca nas páginas Proxies e Registros.
+- Configurações: `Ctrl`+`S` salva. Editor RoutingA: `Ctrl`+`S` salva, `Tab` indenta.
+- Diálogos com área de texto (importar, assinatura, scripts de rota, listas): `Ctrl`+`Enter` envia; `Esc` fecha qualquer diálogo.
+- Registros: com foco, `Home`, `End`, `PgUp` e `PgDn` percorrem o registro.
+
+No macOS, `Cmd` corresponde a `Ctrl`.

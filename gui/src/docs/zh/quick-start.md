@@ -43,3 +43,12 @@ v2raya --reset-password
 ## 分流
 
 **设置 → 流量分流**决定规则端口和透明代理如何分流：国内站点直连其余走代理、只代理 GFWList，或者自己写的 RoutingA 规则。RoutingA 见单独一节。
+
+## 快捷键
+
+- 代理页列表视图：`Ctrl`+`A` 选中列出的全部节点，`Esc` 取消选择；代理页与日志页 `/` 跳到搜索框。
+- 设置页：`Ctrl`+`S` 保存。RoutingA 编辑器：`Ctrl`+`S` 保存，`Tab` 缩进。
+- 带多行文本框的对话框（导入、订阅、路由脚本、各类列表）：`Ctrl`+`Enter` 提交；`Esc` 关闭任何对话框。
+- 日志页获得焦点后 `Home`、`End`、`PgUp`、`PgDn` 翻动日志。
+
+macOS 上 `Cmd` 对应 `Ctrl`。
