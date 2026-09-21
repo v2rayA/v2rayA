@@ -14,7 +14,6 @@ import {
   mdiChartLine,
   mdiRss,
 } from "@mdi/js";
-import OutboundMenu from "@/components/OutboundMenu.vue";
 import TrafficChart from "@/components/TrafficChart.vue";
 import { useTraffic } from "@/composables/useTraffic";
 import { formatBytes, formatRate } from "@/lib/format";
@@ -232,7 +231,6 @@ defineExpose({ sync });
           <h2 class="md3-title-small flex-grow-1">
             {{ t("dashboard.inUse") }}
           </h2>
-          <OutboundMenu variant="chip" />
         </div>
         <v-skeleton-loader
           v-if="loading"
