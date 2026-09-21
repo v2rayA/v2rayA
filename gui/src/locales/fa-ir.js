@@ -662,6 +662,7 @@ export default {
     saveFailed: "ذخیره دامنه‌های مستثنا ناموفق بود: {message}",
   },
   gfwList: {
+    geosite: "{date} (geosite)",
     title: "به‌روزرسانی GFWList",
     messages: [
       "اگر دسترسی به GitHub در محیط فعلی شما دشوار است، می‌توانید جدیدترین GFWList (geosite.dat) را از GitHub (https://github.com/v2rayA/dist-v2ray-rules-dat) بارگیری کنید، آن را در سرور خود بارگذاری کنید و سپس نشانی سرور را در اینجا برای بارگیری وارد کنید.",

@@ -648,6 +648,7 @@ export default {
     saveFailed: "无法保存排除域名：{message}",
   },
   gfwList: {
+    geosite: "{date}（geosite）",
     title: "更新 GFWList",
     messages: [
       "如果当前环境访问Github困难，你可以从此处（https://github.com/v2rayA/dist-v2ray-rules-dat）手动下载最新GFWList（geosite.dat），上传到你的服务器，然后填写你的服务器链接进行下载",
