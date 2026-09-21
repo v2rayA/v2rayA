@@ -177,17 +177,17 @@ jobs:
           echo tag=${{ inputs.tag }} >> $GITHUB_OUTPUT
           sed -i "s|Realv2rayAVersion|$version|g" install/docker/docker_helper.sh
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v4
       - name: Login to GitHub container registry
-        uses: docker/login-action@v3.0.0
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to DockerHub
-        uses: docker/login-action@v3.0.0
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -195,7 +195,7 @@ jobs:
         run: |
           echo "LOWERCASE_REPOSITORY_OWNER=${GITHUB_REPOSITORY_OWNER@L}" >>${GITHUB_ENV}
       - name: Build and push
-        uses: docker/build-push-action@v5.0.0
+        uses: docker/build-push-action@v7
         with:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
@@ -233,17 +233,17 @@ jobs:
           name: web
           path: web
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.0.0
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v4
       - name: Login to GitHub container registry
-        uses: docker/login-action@v3.0.0
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to DockerHub
-        uses: docker/login-action@v3.0.0
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -251,7 +251,7 @@ jobs:
         run: |
           echo "LOWERCASE_REPOSITORY_OWNER=${GITHUB_REPOSITORY_OWNER@L}" >>${GITHUB_ENV}
       - name: Build and push
-        uses: docker/build-push-action@v5.0.0
+        uses: docker/build-push-action@v7
         with:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
