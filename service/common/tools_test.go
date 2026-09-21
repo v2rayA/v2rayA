@@ -31,16 +31,16 @@ func TestFillEmpty(t *testing.T) {
 	if err := common.FillEmpty(setting, configure.NewSetting()); err != nil {
 		t.Fatal(err)
 	}
+	if setting.Transparent != "10" || setting.Mux != 9 {
+		t.Fatalf("FillEmpty overwrote set fields: %+v", setting)
+	}
 	emptySetting := &configure.Setting{}
 	if err := common.FillEmpty(emptySetting, configure.NewSetting()); err != nil {
 		t.Fatal(err)
 	}
-	// FillEmpty deliberately leaves bool fields alone (see the note in
-	// db/configure/migrate_dns.go), so an empty Setting never equals
-	// NewSetting(); this test never compiled before the import cycle in
-	// this file was removed and its expectation predates that behaviour.
-	t.Skip("FillEmpty skips bool fields; expectation predates that behaviour")
-	if *emptySetting != *configure.NewSetting() {
-		t.Fatal()
+	// bool fields are left alone on purpose (see db/configure/migrate_dns.go)
+	defaults := configure.NewSetting()
+	if emptySetting.Transparent != defaults.Transparent || emptySetting.Mux != defaults.Mux || emptySetting.MuxOn != defaults.MuxOn {
+		t.Fatalf("FillEmpty left defaults unset: %+v", emptySetting)
 	}
 }

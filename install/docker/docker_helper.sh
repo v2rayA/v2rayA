@@ -3,19 +3,15 @@ set -x
 current_dir=$(pwd)
 case "$(arch)" in
     x86_64)
-        v2ray_arch="64"
         v2raya_arch="x64"
         ;;
     armv7l)
-        v2ray_arch="arm32-v7a"
         v2raya_arch="armv7"
         ;;
     aarch64)
-        v2ray_arch="arm64-v8a"
         v2raya_arch="arm64"
         ;;
     riscv64)
-        v2ray_arch="riscv64"
         v2raya_arch="riscv64"
         ;;
     *)

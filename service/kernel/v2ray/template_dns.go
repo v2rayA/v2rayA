@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -22,54 +21,6 @@ type Addr struct {
 	host string
 	port string
 	udp  bool
-}
-
-func parseDnsAddr(addr string) Addr {
-	// 223.5.5.5
-	if net.ParseIP(addr) != nil {
-		return Addr{
-			host: addr,
-			port: "53",
-			udp:  true,
-		}
-	}
-	// dns.google:53
-	if host, port, err := net.SplitHostPort(addr); err == nil {
-		if _, err = strconv.Atoi(port); err == nil {
-			return Addr{
-				host: host,
-				port: port,
-				udp:  true,
-			}
-		}
-	}
-	// tcp://8.8.8.8:53, https://dns.google/dns-query, quic://dns.nextdns.io
-	if strings.Contains(addr, "://") {
-		if u, err := url.Parse(addr); err == nil {
-			udp := false
-			if u.Scheme == "quic" {
-				udp = true
-			}
-			return Addr{
-				host: u.Hostname(),
-				port: u.Port(),
-				udp:  udp,
-			}
-		}
-	}
-	// dns.google, dns.pub, etc.
-	return Addr{
-		host: addr,
-		port: "53",
-		udp:  true,
-	}
-}
-
-type DnsRouting struct {
-	DirectDomains []Addr
-	ProxyDomains  []Addr
-	DirectIPs     []Addr
-	ProxyIPs      []Addr
 }
 
 // setDNS 生成新 DNS 模块的配置，嵌入 xray JSON 供 v2raya-core 读取。

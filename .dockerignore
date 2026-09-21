@@ -1,6 +1,9 @@
-**/v2rayA_*
+/v2raya
+/v2raya_core
+/v2raya.exe
+/v2raya_core.exe
 **/.idea
 **/.vscode
-**/*.test.go
+**/*_test.go
 **/.tr
 **/node_modules/**
