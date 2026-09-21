@@ -1,7 +1,7 @@
 // The destinations the drawer, the rail and the bottom bar offer; the
 // app bar titles the current one. About lives at the bottom of the
 // settings page. The bottom bar holds five, Material's limit, so on a
-// phone the docs are a button in the app bar.
+// phone the docs move to the app bar's menu.
 import {
   mdiBookOpenPageVariant,
   mdiBookOpenPageVariantOutline,

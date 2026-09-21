@@ -18,7 +18,6 @@ import { useI18n } from "vue-i18n";
 import { useDisplay, useLocale, useTheme } from "vuetify";
 import dayjs from "dayjs";
 import {
-  mdiBookOpenPageVariant,
   mdiBookOpenPageVariantOutline,
   mdiDotsVertical,
   mdiPower,
@@ -90,8 +89,7 @@ const banner = useBanner();
 const traffic = useTraffic();
 const theme = useTheme();
 const vuetifyLocale = useLocale();
-// Material's window size classes: compact < 600, medium < 840, expanded;
-// on phones (under 440) the app bar drops the wordmark, the logo stands for it
+// Material's window size classes: compact < 600, medium < 840, expanded
 const { width } = useDisplay();
 const compact = computed(() => width.value < 600);
 // Material's window classes: compact < 600 (bottom bar), medium and
@@ -417,14 +415,9 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       <template v-if="compact" #prepend>
         <img :src="logo" alt="v2rayA" class="bar__logo ms-2" />
       </template>
-      <v-app-bar-title
-        v-if="!compact || width >= 440"
-        class="md3-title-large"
-        :class="{ bar__brand: compact }"
-      >
+      <v-app-bar-title class="md3-title-large" :class="{ bar__brand: compact }">
         {{ compact ? "v2rayA" : pageTitle }}
       </v-app-bar-title>
-      <v-spacer v-else />
       <v-btn
         :color="statusColor"
         variant="tonal"
@@ -455,29 +448,24 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       />
       <template #append>
         <ShellMenus v-if="!compact" variant="icons" />
-        <template v-else>
-          <v-btn
-            :icon="
-              store.view === 'docs'
-                ? mdiBookOpenPageVariant
-                : mdiBookOpenPageVariantOutline
-            "
-            variant="text"
-            :aria-label="t('common.docs')"
-            :aria-current="store.view === 'docs' ? 'page' : undefined"
-            @click="store.view = 'docs'"
-          />
-        </template>
-        <v-menu v-if="compact" :close-on-content-click="false">
+        <v-menu v-else :close-on-content-click="false">
           <template #activator="{ props: menu }">
             <v-btn
               v-bind="menu"
               :icon="mdiDotsVertical"
               variant="text"
+              class="me-1"
               :aria-label="t('common.menu')"
             />
           </template>
           <v-list density="compact" min-width="240" class="pa-2">
+            <v-list-item
+              :prepend-icon="mdiBookOpenPageVariantOutline"
+              :title="t('common.docs')"
+              :active="store.view === 'docs'"
+              rounded="xl"
+              @click="store.view = 'docs'"
+            />
             <ShellMenus variant="list" />
           </v-list>
         </v-menu>
