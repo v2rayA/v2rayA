@@ -224,13 +224,12 @@ func ImportSubscription(url string) (err error) {
 			servers[i] = configure.ServerRaw{ServerObj: v}
 		}
 
-		// deduplicate using protocol://host:port as key since ServerRaw contains
-		// non-comparable fields. Host:port alone is not enough: the same endpoint
-		// can legitimately serve multiple protocols (e.g. vmess + trojan).
+		// Deduplicate identical share links while preserving distinct servers that
+		// happen to use the same protocol and endpoint.
 		seen := make(map[string]struct{})
 		uniqueServers := make([]configure.ServerRaw, 0, len(servers))
 		for _, s := range servers {
-			key := fmt.Sprintf("%s://%s:%d", s.ServerObj.GetProtocol(), s.ServerObj.GetHostname(), s.ServerObj.GetPort())
+			key := s.ServerObj.ExportToURL()
 			if _, ok := seen[key]; ok {
 				continue
 			}
