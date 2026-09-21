@@ -18,11 +18,11 @@ Execute o comando com a conta e o diretório `--config` usados pelo serviço (ta
 
 Na página **Proxies**, **Importar** aceita links de compartilhamento ou uma assinatura: escolha **Link do servidor** para links `vmess://`, `vless://`, `ss://`, `trojan://`, `hysteria2://`, `tuic://`, `juicity://`, `anytls://`, `wireguard://`, `socks5://`, `http://` e `https://`, um por linha, ou uma imagem de código QR; escolha **Endereço da assinatura** para uma assinatura. Links ShadowsocksR são recusados.
 
-As assinaturas mantêm seus nós agrupados e podem ser atualizadas manualmente ou por agendamento (**Configurações → Atualizar assinaturas automaticamente**). A configuração de modo ao lado determina se a atualização passa pelo proxy.
+As assinaturas têm sua própria página, **Assinaturas** (no celular, a documentação passa para o menu da barra superior para abrir espaço). Elas mantêm seus nós agrupados e podem ser atualizadas manualmente ou por agendamento (**Configurações → Atualizar assinaturas automaticamente**). A configuração de modo ao lado determina se a atualização passa pelo proxy.
 
 ## Grupos
 
-Os nós são usados por meio de grupos de proxy. O grupo `proxy` sempre existe; outros podem ser adicionados na página Proxies. Adicione um nó a um grupo pelo menu do nó ou selecionando vários nós. Um grupo com vários membros conectados usa o de menor latência medida (**Automático (menor latência)**); o menu do nó no painel fixa um membro para que o grupo use apenas ele, **Editar grupo** altera os membros, e as configurações do grupo definem o endereço e o intervalo de sondagem.
+Os nós são usados por meio de grupos de proxy. O grupo `proxy` sempre existe; outros são criados, configurados e excluídos no botão de grupos da barra superior, o único lugar para isso. Um nó entra em um grupo pelo seu menu, ou selecione vários na página Proxies e escolha o grupo em **Adicionar ao grupo**. Um grupo com vários membros conectados usa o de menor latência medida (**Automático (menor latência)**); o menu do nó no painel fixa um membro para que o grupo use apenas ele, **Adicionar nós** altera os membros, e as configurações do grupo definem o endereço e o intervalo de sondagem.
 
 As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padrão, e qualquer outro grupo pelo próprio nome assim que tiver um membro conectado.
 
@@ -32,10 +32,10 @@ As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padr�
 
 Quando o núcleo está em execução, os aplicativos o acessam pelas entradas locais:
 
-| Entrada         | Endereço          | Roteamento                                          |
-| --------------- | ----------------- | --------------------------------------------------- |
-| SOCKS5          | `127.0.0.1:20170` | tudo pelo `proxy`                                   |
-| HTTP            | `127.0.0.1:20171` | tudo pelo `proxy`                                   |
+| Entrada         | Endereço          | Roteamento                                                       |
+| --------------- | ----------------- | ---------------------------------------------------------------- |
+| SOCKS5          | `127.0.0.1:20170` | tudo pelo `proxy`                                                |
+| HTTP            | `127.0.0.1:20171` | tudo pelo `proxy`                                                |
 | HTTP com regras | `127.0.0.1:20172` | a configuração **Modo de divisão de tráfego da porta de regras** |
 
 As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha uma entrada. Para atender aos aplicativos sem configurar cada um, ative o proxy transparente.
@@ -43,3 +43,12 @@ As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha
 ## Roteamento
 
 **Configurações → Divisão de tráfego** define como a porta de regras e o proxy transparente dividem o tráfego: usar o proxy para tudo, exceto sites chineses, usar o proxy apenas para a GFWList ou usar suas próprias regras RoutingA. O RoutingA é descrito em sua própria seção.
+
+## Teclado
+
+- Página Proxies, visão em lista: `Ctrl`+`A` seleciona todos os nós listados e `Esc` limpa a seleção; `/` vai para a busca nas páginas Proxies e Registros.
+- Configurações: `Ctrl`+`S` salva. Editor RoutingA: `Ctrl`+`S` salva, `Tab` indenta.
+- Diálogos com área de texto (importar, assinatura, scripts de rota, listas): `Ctrl`+`Enter` envia; `Esc` fecha qualquer diálogo.
+- Registros: com foco, `Home`, `End`, `PgUp` e `PgDn` percorrem o registro.
+
+No macOS, `Cmd` corresponde a `Ctrl`.

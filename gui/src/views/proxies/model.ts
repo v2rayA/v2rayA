@@ -9,14 +9,8 @@ import {
 import { errorText } from "@/api/errors";
 import { copyText } from "@/lib/clipboard";
 import type { Touch, TouchSubscription, Which } from "@/api/types";
-import {
-  useConfirm,
-  useDialog,
-  useNotify,
-  useOutboundGroups,
-} from "@/composables";
+import { useConfirm, useDialog, useNotify } from "@/composables";
 import ImportDialog from "@/dialogs/Import.vue";
-import OutboundGroupDialog from "@/dialogs/OutboundGroup.vue";
 import ServerDialog from "@/dialogs/Server/index.vue";
 import SharingDialog from "@/dialogs/Sharing.vue";
 import SubscriptionDialog from "@/dialogs/Subscription.vue";
@@ -56,7 +50,6 @@ export function useProxies() {
   const notify = useNotify();
   const confirm = useConfirm();
   const { open } = useDialog();
-  const groups = useOutboundGroups();
   const query = ref("");
   const source = ref("all");
   const membersOnly = ref(false);
@@ -232,11 +225,10 @@ export function useProxies() {
     else if (selectedMember.value) await selectMember(null);
     else manualIntent.value = null;
   }
-  async function batchMembership(add: boolean) {
+  async function batchMembership(add: boolean, outbound = store.outboundName) {
     const selectedRows = selected.value;
     if (!selectedRows.length) return;
     await run(async () => {
-      const outbound = store.outboundName;
       const touches: Which[] = store.connectedServer
         .filter((w) => (w.outbound ?? "proxy") === outbound)
         .map(({ id, _type, sub }) => ({ id, _type, sub }));
@@ -296,21 +288,6 @@ export function useProxies() {
       }
       await copyText(links.join("\n"));
       notify.success(t("operations.copySelectedDone"));
-    });
-  }
-  /** the splitting rules, edited in place */
-  /** the group's balancing: probe URL, interval and strategy */
-  function groupSettings() {
-    open(OutboundGroupDialog, { outbound: store.outboundName }, { width: 440 });
-  }
-  async function removeGroup() {
-    await run(async () => {
-      if (await groups.remove(store.outboundName)) await sync();
-    });
-  }
-  async function newGroup() {
-    await run(async () => {
-      if (await groups.add()) await sync();
     });
   }
   async function newNode() {
@@ -445,9 +422,6 @@ export function useProxies() {
     testListed,
     removeRows,
     exportSelected,
-    newGroup,
-    removeGroup,
-    groupSettings,
     groupList,
     newNode,
     importNodes,

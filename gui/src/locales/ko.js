@@ -27,7 +27,6 @@ export default {
     total: "합계: {value}",
   },
   proxies: {
-    newGroup: "새 그룹",
     newNode: "새 노드",
     cards: "카드",
     list: "목록",
@@ -35,15 +34,12 @@ export default {
     chooseManually: "직접 선택",
     sources: { all: "전체", local: "로컬" },
     membersOnly: "구성원만",
-    members: "노드 {n}개",
     source: "출처",
     mode: { auto: "자동 (가장 빠른 노드)", manual: "수동" },
     inUse: "사용 중",
     groupMode: "그룹 모드",
     modeNeedsMembers:
       "노드가 두 개 이상이면 코어가 지연이 가장 낮은 노드를 자동으로 사용합니다.",
-    groupSettings: "그룹 설정",
-    deleteGroup: "그룹 삭제",
     modeHint: {
       auto: "자동: 코어가 지연이 가장 낮은 노드를 사용",
       manual: "수동: 지정한 노드만 사용",
@@ -71,7 +67,7 @@ export default {
     pinned: "고정됨",
     balanced: "자동 (멤버 {n}개)",
     switchNode: "전환",
-    editGroup: "그룹 편집",
+    editGroup: "노드 추가",
     autoFastest: "자동 (최저 지연 시간)",
     manageNodes: "노드 관리",
     emptyGroup: "이 그룹에 노드가 없습니다",

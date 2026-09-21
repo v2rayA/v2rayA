@@ -3,7 +3,7 @@
 // bottom on surface-container, one item per destination with the 64×32
 // indicator pill behind the active icon and the label under it).
 import { useI18n } from "vue-i18n";
-import { destinations } from "./destinations";
+import { barDestinations } from "./destinations";
 import { useAppStore, type View } from "@/stores/app";
 
 const { t } = useI18n();
@@ -22,7 +22,7 @@ const store = useAppStore();
     "
   >
     <v-btn
-      v-for="d in destinations"
+      v-for="d in barDestinations()"
       :key="d.view"
       :value="d.view"
       variant="text"

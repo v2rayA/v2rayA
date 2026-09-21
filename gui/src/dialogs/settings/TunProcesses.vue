@@ -47,6 +47,10 @@ const text = ref(parse(props.value).join("\n"));
         dir="ltr"
         autocomplete="off"
         spellcheck="false"
+        @keydown.enter="
+          (e: KeyboardEvent) =>
+            (e.ctrlKey || e.metaKey) && emit('close', parse(text).join(','))
+        "
       />
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

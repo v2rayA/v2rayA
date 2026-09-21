@@ -222,7 +222,7 @@ describe("dashboard", () => {
     expect(wrapper.get(".dashboard-connection").text()).toContain(
       "This group has no nodes",
     );
-    await button("Edit group").trigger("click");
+    await button("Add nodes").trigger("click");
     await flushPromises();
     const dialog = dialogs.getComponent(GroupMembersDialog);
     await dialog.findAll(".v-list-item")[0].trigger("click");

@@ -25,7 +25,13 @@ export type Running = "checking" | "running" | "stopped" | "paused";
 export type ThemePreference = "auto" | "light" | "dark";
 /** The page's destinations, in the order the rail and the bar show them. */
 export type View =
-  "dashboard" | "proxies" | "settings" | "logs" | "docs" | "about";
+  | "dashboard"
+  | "proxies"
+  | "subscriptions"
+  | "settings"
+  | "logs"
+  | "docs"
+  | "about";
 
 // One store for the session-wide state the old App.vue kept in data and
 // localStorage: what was a translated text ("正在运行") is an enum here, so

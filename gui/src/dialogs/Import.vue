@@ -100,6 +100,9 @@ function onImage(event: Event) {
         autofocus
         dir="ltr"
         :append-inner-icon="mdiQrcodeScan"
+        @keydown.enter="
+          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && submit()
+        "
         @click:append-inner="picker?.click()"
         @keydown.ctrl.enter.prevent="submit()"
       />

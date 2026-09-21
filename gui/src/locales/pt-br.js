@@ -27,7 +27,6 @@ export default {
     total: "Total: {value}",
   },
   proxies: {
-    newGroup: "Novo grupo",
     newNode: "Novo nó",
     cards: "Cartões",
     list: "Lista",
@@ -35,15 +34,12 @@ export default {
     chooseManually: "Escolher manualmente",
     sources: { all: "Todos", local: "Locais" },
     membersOnly: "Somente membros",
-    members: "nenhum nó | 1 nó | {n} nós",
     source: "Origem",
     mode: { auto: "Automático (mais rápido)", manual: "Manual" },
     inUse: "Em uso",
     groupMode: "Modo do grupo",
     modeNeedsMembers:
       "Com dois ou mais nós, o núcleo usa automaticamente o de menor latência.",
-    groupSettings: "Configurações do grupo",
-    deleteGroup: "Excluir grupo",
     modeHint: {
       auto: "Automático: o núcleo usa o nó de menor latência",
       manual: "Manual: o grupo usa o nó escolhido",
@@ -73,7 +69,7 @@ export default {
     pinned: "Fixado",
     balanced: "Automático (1 membro) | Automático ({n} membros)",
     switchNode: "Trocar",
-    editGroup: "Editar grupo",
+    editGroup: "Adicionar nós",
     autoFastest: "Automático (menor latência)",
     manageNodes: "Gerenciar nós",
     emptyGroup: "Este grupo não tem nós",
