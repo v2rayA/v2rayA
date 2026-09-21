@@ -14,15 +14,14 @@ V2RAYA_OPTS=""
 # -a, --address string             Listening address (default "0.0.0.0:2017")
 #     --socket string              Unix socket path for listening
 #     --baseurl string             Base URL path prefix (default "/")
-# -b, --v2ray-bin string           Executable v2ray binary path. Auto-detect if put it empty.
+# -b, --v2ray-bin string           Path of the v2raya_core executable. Found next to v2raya or in PATH when empty.
 # -c, --config string              v2rayA configuration directory
 #     --v2ray-confdir string       Additional v2ray config directory, files in it will be combined with config generat
-#     --tinytun-bin string         Deprecated and ignored: the TUN is built into the core. Kept so service units that
 #     --v2ray-assetsdir string     v2ray-core assets directory for searching and downloading files like geoip.dat. Thi
-#     --core-startup-timeout int   Timeout duration in seconds for starting v2ray or xray core. On devices with lower
+#     --core-startup-timeout int   Timeout duration in seconds for starting the core. On devices with lower
 #     --transparent-hook string    the executable file to run in the transparent proxy life-cycle. v2rayA will pass in
 #     --core-hook string           the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --
-#     --plugin-manager string      the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --
+#     --plugin-manager string      the executable that parses and configures nodes of protocols v2rayA does not know. v2rayA runs it with --stage=parse or --stage=configuration, --link and --v2raya-confdir.
 #     --webdir string              v2rayA web files directory. use embedded files if not specify.
 #     --ipv6-support string        Optional values: auto, on, off. Make sure your IPv6 network works fine before you t
 #     --nftables-support string    Optional values: auto, on, off. Experimental feature. Make sure you have installed

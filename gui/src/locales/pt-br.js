@@ -229,7 +229,6 @@ export default {
     concurrency: "Concorrência",
     inboundSniffing: "Inspeção de tráfego",
     tunExcludeProcesses: "Processos excluídos do TUN",
-    nodeBackend: "Backend",
     tcpFastOpen: "TCP Fast Open",
     saved: "Configurações salvas e aplicadas",
     saveFailed: "Falha ao salvar as configurações: {message}",
@@ -257,8 +256,6 @@ export default {
         "Atualizar GFWList regularmente (unidade: hora)",
       dependTransparentMode: "Segue o proxy transparente/proxy do sistema",
       leastPing: "Menor latência primeiro",
-      backendV2ray: "v2ray / xray",
-      backendSystemDefault: "Padrão do sistema",
       systemProxy: "Proxy do sistema",
       tunUnsupported: "não suportado nesta plataforma",
     },
@@ -285,7 +282,7 @@ export default {
       ssPluginImpl:
         "★default: 'transport' para simple-obfs, 'chained' para v2ray-plugin." +
         "★chained: o tráfego do shadowsocks será redirecionado para um plugin independente." +
-        "★transport: processado diretamente pela camada de transporte do núcleo v2ray/xray.",
+        "★transport: processado diretamente pela camada de transporte do núcleo.",
     },
   },
   customAddressPort: {
@@ -312,8 +309,6 @@ export default {
   },
   dns: {
     title: "Configurações de DNS",
-    help: "Ajuda sobre DNS",
-    helpTooltip: "Ver a documentação de DNS do v2fly",
     colServer: "Servidor DNS",
     colDomains: "Lista de domínios",
     colOutbound: "Saída",
@@ -435,7 +430,7 @@ export default {
   },
   version: {
     v2rayInvalid:
-      "geosite.dat, geoip.dat ou o v2ray-core podem não estar instalados corretamente",
+      "geosite.dat, geoip.dat ou o v2raya_core podem não estar instalados corretamente",
     coreVersionMismatch:
       "Incompatibilidade de versão do núcleo: a versão do v2raya_core deve corresponder exatamente à versão do v2rayA. {err}",
   },
@@ -459,9 +454,6 @@ export default {
         "Não foi possível comunicar. Se o serviço estiver em execução e as portas estiverem abertas corretamente, o navegador atual pode não permitir que sites HTTPS acessem recursos HTTP. Tente usar o Chrome ou mudar para o site HTTP alternativo.",
         "Não foi possível comunicar. O Firefox não permite que sites HTTPS acessem recursos HTTP. Tente mudar para o site HTTP alternativo.",
       ],
-    },
-    urls: {
-      usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
     },
   },
   docs: {
@@ -651,7 +643,7 @@ export default {
   tproxyWhiteIpGroups: {
     title: "Grupos de IPs na lista branca",
     messages: [
-      "O grupo de IPs selecionado ignorará o núcleo XRay/V2Ray e sairá diretamente (por Nftables/Iptables). Garanta que seu servidor DNS seja confiável e não esteja contaminado, para que os clientes possam resolver os IPs corretos.",
+      "O grupo de IPs selecionado ignorará o núcleo e sairá diretamente (por Nftables/Iptables). Garanta que seu servidor DNS seja confiável e não esteja contaminado, para que os clientes possam resolver os IPs corretos.",
       "É melhor usar este recurso quando o sistema estiver usando Nftables, pois o iptables pode apresentar problemas de desempenho ao adicionar muitos IPs.",
     ],
     formName1: "Mantenha Ctrl pressionado para selecionar vários itens.",
@@ -711,7 +703,7 @@ export default {
       warning:
         "Aviso: nomes de processos incorretos podem ignorar o tráfego inesperadamente. Adicione apenas nomes de processos confiáveis.",
       listLabel: "Nomes de processos excluídos",
-      placeholder: "v2raya, v2ray, chrome.exe",
+      placeholder: "v2raya, v2raya_core, chrome.exe",
       hint: "Aceita separadores por vírgula ou nova linha. Os valores são deduplicados ao salvar.",
     },
   },
@@ -724,7 +716,7 @@ export default {
     tagPlaceholder: "por exemplo, my-socks",
     portPlaceholder: "por exemplo, 10800",
     empty: "Nenhuma entrada personalizada",
-    hint: "Apenas os protocolos SOCKS e HTTP são compatíveis. A tag deve ser exclusiva e será usada como tag do núcleo v2ray.",
+    hint: "Apenas os protocolos SOCKS e HTTP são compatíveis. A tag deve ser exclusiva e será usada como tag de saída do núcleo.",
     fillAll: "A tag e a porta são obrigatórias",
     deleteConfirm: "Excluir a entrada {tag}?",
     outbound: "Grupo de saída associado",

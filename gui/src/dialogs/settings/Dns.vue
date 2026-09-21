@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { mdiDeleteOutline, mdiHelpCircleOutline, mdiPlus } from "@mdi/js";
+import { mdiDeleteOutline, mdiPlus } from "@mdi/js";
 import { getDnsRules, getOutbounds, putDnsRules } from "@/api";
 import type { DnsRule } from "@/api/types";
 import { errorText } from "@/api/errors";
+import DocsLink from "@/components/DocsLink.vue";
 import { useNotify } from "@/composables";
 
 defineOptions({ name: "DnsDialog" });
@@ -75,26 +76,12 @@ async function save() {
 <template>
   <v-card tag="form" rounded="xl" @submit.prevent="save">
     <v-card-item class="px-6 pt-6 pb-2">
-      <v-card-title class="md3-headline-small pa-0">
+      <v-card-title class="md3-headline-small pa-0 d-flex align-center ga-1">
         {{ t("dns.title") }}
+        <DocsLink section="transparent-proxy" new-tab />
       </v-card-title>
     </v-card-item>
     <v-card-text class="px-6">
-      <v-tooltip :text="t('dns.helpTooltip')">
-        <template #activator="{ props }">
-          <v-btn
-            v-bind="props"
-            variant="text"
-            :prepend-icon="mdiHelpCircleOutline"
-            href="https://www.v2fly.org/config/dns.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mb-4"
-          >
-            {{ t("dns.help") }}
-          </v-btn>
-        </template>
-      </v-tooltip>
       <v-skeleton-loader v-if="loading" type="article" />
       <v-alert v-else-if="loadError" type="warning" variant="tonal">
         {{ loadError }}

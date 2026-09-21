@@ -36,6 +36,9 @@ func (t *Template) SetOutboundSockopt() {
 			tmp := t.Setting.TcpFastOpen == configure.Yes
 			t.Outbounds[i].StreamSettings.Sockopt.TCPFastOpen = &tmp
 		}
+		if t.Setting.MuxOn == configure.Yes && t.Outbounds[i].Protocol == "vmess" && t.Outbounds[i].Mux == nil {
+			t.Outbounds[i].Mux = &coreObj.Mux{Enabled: true, Concurrency: t.Setting.Mux}
+		}
 		t.checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }

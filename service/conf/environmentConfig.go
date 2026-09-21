@@ -25,8 +25,8 @@ type Params struct {
 	V2rayAssetsDirectory string `id:"v2ray-assetsdir" desc:"v2ray-core assets directory for searching and downloading files like geoip.dat. This will override environment V2RAY_LOCATION_ASSET and XRAY_LOCATION_ASSET."`
 	CoreStartupTimeout   int64  `id:"core-startup-timeout" default:"15" desc:"Timeout duration in seconds for starting v2ray or xray core. On devices with lower performance, consider increasing this value."`
 	TransparentHook      string `id:"transparent-hook" desc:"the executable file to run in the transparent proxy life-cycle. v2rayA will pass in the --transparent-type (tproxy, redirect) and --stage (pre-start, post-start, pre-stop, post-stop) arguments."`
-	CoreHook             string `id:"core-hook" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
-	PluginManager        string `id:"plugin-manager" desc:"the executable file to run in the v2ray-core life-cycle. v2rayA will pass in the --stage (pre-start, post-start, pre-stop, post-stop) argument."`
+	CoreHook             string `id:"core-hook" desc:"the executable that parses and configures nodes of protocols v2rayA does not know. v2rayA runs it with --stage=parse or --stage=configuration, --link and --v2raya-confdir."`
+	PluginManager        string `id:"plugin-manager" desc:"the executable that parses and configures nodes of protocols v2rayA does not know. v2rayA runs it with --stage=parse or --stage=configuration, --link and --v2raya-confdir."`
 	WebDir               string `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
 	IPV6Support          string `id:"ipv6-support" default:"auto" desc:"Optional values: auto, on, off. Make sure your IPv6 network works fine before you turn it on."`
 	RedirectBoundDevice  bool   `id:"redirect-respect-bound-device" desc:"[Linux Only] In redirect mode, let TCP sockets bound to a device (SO_BINDTODEVICE, as NetworkManager's connectivity checks are) bypass the proxy. Needs kernel 5.14 or later and cgroup v2 at /sys/fs/cgroup."`

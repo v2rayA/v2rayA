@@ -84,7 +84,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 							Destination: probeUrl,
 							Interval:    interval.String(),
 						},
-						// Keep legacy fields for backward compatibility with older custom cores.
+						// the core's loader reads these flat fields too (core/hint/conf/loader.go)
 						ProbeURL:      probeUrl,
 						ProbeInterval: interval.String(),
 					},

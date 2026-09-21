@@ -228,7 +228,6 @@ export default {
     concurrency: "Concurrency",
     inboundSniffing: "Sniffing",
     tunExcludeProcesses: "TUN Excluded Processes",
-    nodeBackend: "Backend",
     tcpFastOpen: "TCP Fast Open",
     saved: "Settings saved and applied",
     saveFailed: "Failed to save settings: {message}",
@@ -253,8 +252,6 @@ export default {
       updateGfwlistAtIntervals: "Update GFWList Regularly (Unit: hour)",
       dependTransparentMode: "Follows Transparent Proxy/System Proxy",
       leastPing: "Least Latency First",
-      backendV2ray: "v2ray / xray",
-      backendSystemDefault: "System Default",
       systemProxy: "System Proxy",
       tunUnsupported: "not supported on this platform",
     },
@@ -283,7 +280,7 @@ export default {
       ssPluginImpl:
         "★default: 'transport' for simple-obfs, 'chained' for v2ray-plugin." +
         "★chained: shadowsocks traffic will be redirect to standalone plugin." +
-        "★transport: processed by the transport layer of v2ray/xray core directly.",
+        "★transport: processed by the transport layer of the core directly.",
     },
   },
   customAddressPort: {
@@ -308,8 +305,6 @@ export default {
   },
   dns: {
     title: "DNS Settings",
-    help: "DNS Help",
-    helpTooltip: "View v2fly DNS documentation",
     colServer: "DNS Server",
     colDomains: "Domain List",
     colOutbound: "Outbound",
@@ -430,7 +425,7 @@ export default {
   },
   version: {
     v2rayInvalid:
-      "geosite.dat, geoip.dat or v2ray-core may not be installed correctly",
+      "geosite.dat, geoip.dat or v2raya_core may not be installed correctly",
     coreVersionMismatch:
       "Core version mismatch: v2raya_core version must exactly match v2rayA version. {err}",
   },
@@ -453,9 +448,6 @@ export default {
         "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
         "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http sites.",
       ],
-    },
-    urls: {
-      usage: "https://github.com/v2rayA/v2rayA/wiki/Usage",
     },
   },
   docs: {
@@ -643,7 +635,7 @@ export default {
   tproxyWhiteIpGroups: {
     title: "White IP Groups",
     messages: [
-      "The selected IP group will bypass the XRay/V2Ray core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
+      "The selected IP group will bypass the core and go directly outbound (through Nftables/Iptables). Please ensure your DNS server is reliable and free of contamination so that clients can resolve the correct IPs.",
       "It's best to use this feature when your system is using Nftables, as iptables may experience performance issues when adding a large number of IPs.",
     ],
     formName1: "Hold down Ctrl to select multiple items.",
@@ -701,7 +693,7 @@ export default {
       warning:
         "Warning: incorrect process names may bypass traffic unexpectedly. Add only trusted process names.",
       listLabel: "Excluded Process Names",
-      placeholder: "v2raya, v2ray, chrome.exe",
+      placeholder: "v2raya, v2raya_core, chrome.exe",
       hint: "Supports comma or newline separators. Values are deduplicated when saved.",
     },
   },
@@ -714,7 +706,7 @@ export default {
     tagPlaceholder: "e.g. my-socks",
     portPlaceholder: "e.g. 10800",
     empty: "No custom inbounds",
-    hint: "Only SOCKS and HTTP protocols are supported. Tag must be unique and will be used as the v2ray core tag.",
+    hint: "Only SOCKS and HTTP protocols are supported. Tag must be unique and will be used as the core's outbound tag.",
     fillAll: "Tag and port are required",
     deleteConfirm: "Delete inbound {tag}?",
     outbound: "Bound Outbound Group",

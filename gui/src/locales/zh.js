@@ -221,7 +221,6 @@ export default {
     portSharingOn: "允许局域网的连接",
     concurrency: "最大并发数",
     tunExcludeProcesses: "TUN 自定义排除进程",
-    nodeBackend: "后端",
     tcpFastOpen: "TCP Fast Open",
     saved: "设置已保存并应用",
     saveFailed: "无法保存设置：{message}",
@@ -246,8 +245,6 @@ export default {
       updateGfwlistAtIntervals: "每隔一段时间更新 GFWList（单位：小时）",
       dependTransparentMode: "跟随透明代理/系统代理",
       leastPing: "最小时延优先",
-      backendV2ray: "v2ray / xray",
-      backendSystemDefault: "跟随系统设置",
       systemProxy: "系统代理",
       tunUnsupported: "此平台不支持",
     },
@@ -273,7 +270,7 @@ export default {
       ssPluginImpl:
         "★默认：使用 simple-obfs 时为等效传输层，v2ray-plugin 时为链式。" +
         "★链式：shadowsocks 流量会被转发至独立的插件。" +
-        "★等效传输层：直接由 v2ray/xray 核心的传输层处理。",
+        "★等效传输层：直接由内核的传输层处理。",
     },
   },
   customAddressPort: {
@@ -298,8 +295,6 @@ export default {
   },
   dns: {
     title: "DNS 设置",
-    help: "DNS 帮助",
-    helpTooltip: "查看 v2fly DNS 文档",
     colServer: "DNS 服务器",
     colDomains: "域名列表",
     colOutbound: "出口",
@@ -417,7 +412,7 @@ export default {
   },
   version: {
     v2rayInvalid:
-      "检测到 geosite.dat, geoip.dat 文件或 v2ray-core 可能未正确安装，请检查",
+      "检测到 geosite.dat、geoip.dat 文件或 v2raya_core 可能未正确安装，请检查",
     coreVersionMismatch:
       "核心版本不匹配：v2raya_core 的版本必须与 v2rayA 版本完全一致。{err}",
   },
@@ -439,9 +434,6 @@ export default {
         "无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。",
         "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。",
       ],
-    },
-    urls: {
-      usage: "https://v2raya.org/",
     },
   },
   docs: {
@@ -625,7 +617,7 @@ export default {
   tproxyWhiteIpGroups: {
     title: "直通白名单IP组",
     messages: [
-      "选中的IP组将会不经过XRay/V2Ray核心直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP",
+      "选中的 IP 组将不经过内核直接出站（通过Nftables/Iptables直接转发），请确保你的DNS服务器足够可靠无污染能使客户端能解析到正确的IP",
       "最好系统使用Nftables时使用此功能，Iptables可能在添加大量IP时存在性能问题",
     ],
     formName1: "按住Ctrl可以多选",
@@ -682,7 +674,7 @@ export default {
       warning:
         "警告：错误的进程名可能导致流量被意外直通。请仅添加你确认需要排除的进程。",
       listLabel: "排除进程名称",
-      placeholder: "v2raya, v2ray, chrome.exe",
+      placeholder: "v2raya, v2raya_core, chrome.exe",
       hint: "支持逗号或换行分隔。保存时会自动去重。",
     },
   },
@@ -695,7 +687,7 @@ export default {
     tagPlaceholder: "如 my-socks",
     portPlaceholder: "如 10800",
     empty: "暂无自定义入站",
-    hint: "入站端口仅支持 SOCKS 和 HTTP 协议，标签必须唯一，将作为 v2ray core 的 tag 使用。",
+    hint: "入站端口仅支持 SOCKS 和 HTTP 协议，标签必须唯一，将作为内核出站的 tag 使用。",
     fillAll: "请填写标签和端口",
     deleteConfirm: "确认删除入站 {tag}？",
     outbound: "绑定出口组",

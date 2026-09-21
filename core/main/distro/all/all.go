@@ -89,11 +89,13 @@ import (
 	//     (replaces github.com/xtls/xray-core/main/json)
 	//   - hint/proxy/anytls: native anytls outbound protocol handler
 	//   - hint/proxy/juicity: native juicity outbound protocol handler
+	//   - hint/proxy/tuic: native tuic outbound protocol handler
 	//   - hint/proxy/tunmips: in-core TUN inbound (tun-mips)
 	_ "github.com/v2rayA/v2raya-core/hint/app/observatory/command"
 	_ "github.com/v2rayA/v2raya-core/hint/app/observatory/multiobservatory"
 	_ "github.com/v2rayA/v2raya-core/hint/conf"
 	_ "github.com/v2rayA/v2raya-core/hint/proxy/anytls"
 	_ "github.com/v2rayA/v2raya-core/hint/proxy/juicity"
+	_ "github.com/v2rayA/v2raya-core/hint/proxy/tuic"
 	_ "github.com/v2rayA/v2raya-core/hint/proxy/tunmips"
 )
