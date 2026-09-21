@@ -4,10 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import {
   mdiCheck,
-  mdiCogOutline,
   mdiChevronDown,
-  mdiDeleteOutline,
-  mdiDotsVertical,
   mdiMagnify,
   mdiPlus,
   mdiServerNetworkOutline,
@@ -16,7 +13,7 @@ import {
   mdiViewGridOutline,
   mdiViewListOutline,
 } from "@mdi/js";
-import { rowKey, sameWhich, whichOf } from "./nodes/model";
+import { rowKey } from "./nodes/model";
 import { useProxies } from "./proxies/model";
 import { focusInput, useHotkeys } from "@/composables";
 import NodeCard from "./proxies/NodeCard.vue";
@@ -39,8 +36,6 @@ const {
   busy,
   testing,
   rows,
-  members,
-  groupList,
   listed,
   selected,
   selectedKeys,
@@ -51,12 +46,6 @@ const {
 } = model;
 const disabled = computed(() => busy.value || loading.value);
 /** the member the group routes through alone, as a row; null while balancing */
-const currentMember = computed(() => {
-  const which = model.selectedMember.value;
-  return which
-    ? (members.value.find((row) => sameWhich(whichOf(row), which)) ?? null)
-    : null;
-});
 // Ctrl/Cmd+A selects every listed node, Escape clears (list view), "/" goes to the search
 useHotkeys((event) => {
   const ctrl = event.ctrlKey || event.metaKey;
@@ -176,110 +165,6 @@ onMounted(sync);
             </v-btn>
           </v-btn-toggle>
         </div>
-        <div class="proxies__row mb-3">
-          <span class="proxies__label md3-label-large text-on-surface-variant">
-            {{ t("proxyGroup.group") }}
-          </span>
-          <v-chip-group
-            :model-value="store.outboundName"
-            mandatory
-            :disabled="disabled"
-            selected-class="proxies__chip--on"
-            @update:model-value="(v: string) => v && (store.outboundName = v)"
-          >
-            <v-chip
-              v-for="g in groupList"
-              :key="g.name"
-              :value="g.name"
-              variant="text"
-              filter
-              class="proxies__chip"
-            >
-              <span class="proxies__name">{{ g.name.toUpperCase() }}</span>
-              <span class="ms-2 md3-label-medium">
-                {{ t("proxies.members", g.count) }}
-              </span>
-            </v-chip>
-          </v-chip-group>
-          <v-btn
-            variant="text"
-            :prepend-icon="mdiPlus"
-            :disabled="disabled"
-            @click="model.newGroup"
-            >{{ t("proxies.newGroup") }}</v-btn
-          >
-          <v-spacer />
-          <v-menu>
-            <template #activator="{ props: menu }">
-              <v-chip
-                v-bind="menu"
-                variant="text"
-                class="proxies__chip"
-                :append-icon="mdiChevronDown"
-                :disabled="disabled || !members.length"
-                :aria-label="t('proxies.inUse')"
-                ><span class="text-on-surface-variant me-1"
-                  >{{ t("proxies.inUse") }}:</span
-                >
-                <span dir="auto">{{
-                  currentMember
-                    ? currentMember.name
-                    : preferred
-                      ? `${t("proxies.mode.auto")}  ${preferred.name}`
-                      : t("proxies.mode.auto")
-                }}</span></v-chip
-              >
-            </template>
-            <v-list density="compact" min-width="280">
-              <v-list-item
-                :title="t('proxies.mode.auto')"
-                :subtitle="t('proxies.modeHint.auto')"
-                :active="!currentMember"
-                role="menuitemradio"
-                :aria-checked="!currentMember"
-                @click="model.selectMember(null)"
-              />
-              <v-divider />
-              <v-list-item
-                v-for="row in members"
-                :key="rowKey(row)"
-                :title="row.name || row.address"
-                :subtitle="`${row.net}${row.pingLatency ? ' ' + row.pingLatency : ''}`"
-                :active="currentMember === row"
-                role="menuitemradio"
-                :aria-checked="currentMember === row"
-                @click="model.selectMember(row)"
-              />
-            </v-list>
-          </v-menu>
-          <v-menu>
-            <template #activator="{ props: menu }">
-              <v-btn
-                v-bind="menu"
-                :icon="mdiDotsVertical"
-                variant="text"
-                size="40"
-                :disabled="disabled"
-                :aria-label="t('common.menu')"
-              >
-                <v-icon :icon="mdiDotsVertical" size="20" />
-              </v-btn>
-            </template>
-            <v-list density="compact" min-width="220">
-              <v-list-item
-                :prepend-icon="mdiCogOutline"
-                :title="t('proxies.groupSettings')"
-                @click="model.groupSettings"
-              />
-              <v-list-item
-                v-if="store.outboundName !== 'proxy'"
-                :prepend-icon="mdiDeleteOutline"
-                :title="t('proxies.deleteGroup')"
-                @click="model.removeGroup"
-              />
-            </v-list>
-          </v-menu>
-        </div>
         <v-empty-state
           v-if="!rows.length"
           :icon="mdiServerNetworkOutline"
@@ -334,18 +219,27 @@ onMounted(sync);
                 @click="model.testRows(selected)"
                 >{{ t("proxies.testLatency") }}</v-btn
               >
-              <v-btn
-                variant="text"
-                :disabled="disabled"
-                @click="model.batchMembership(true)"
-                >{{ t("proxies.addToGroup") }}</v-btn
-              >
-              <v-btn
-                variant="text"
-                :disabled="disabled"
-                @click="model.batchMembership(false)"
-                >{{ t("proxies.removeFromGroup") }}</v-btn
-              >
+              <v-menu v-for="add in [true, false]" :key="String(add)">
+                <template #activator="{ props: menu }">
+                  <v-btn
+                    v-bind="menu"
+                    variant="text"
+                    :append-icon="mdiChevronDown"
+                    :disabled="disabled"
+                    >{{
+                      t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
+                    }}</v-btn
+                  >
+                </template>
+                <v-list density="compact" min-width="200">
+                  <v-list-item
+                    v-for="g in store.outbounds"
+                    :key="g"
+                    :title="g.toUpperCase()"
+                    @click="model.batchMembership(add, g)"
+                  />
+                </v-list>
+              </v-menu>
               <v-tooltip
                 :disabled="canDelete"
                 :text="t('proxies.deleteSubscriptionNodes')"

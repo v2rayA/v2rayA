@@ -27,7 +27,6 @@ export default {
     total: "مجموع: {value}",
   },
   proxies: {
-    newGroup: "گروه جدید",
     newNode: "گره جدید",
     cards: "کارت‌ها",
     list: "فهرست",
@@ -35,15 +34,12 @@ export default {
     chooseManually: "انتخاب دستی",
     sources: { all: "همه", local: "محلی" },
     membersOnly: "فقط اعضا",
-    members: "{n} گره",
     source: "منبع",
     mode: { auto: "خودکار (سریع‌ترین)", manual: "دستی" },
     inUse: "در حال استفاده",
     groupMode: "حالت گروه",
     modeNeedsMembers:
       "با دست‌کم دو گره، هسته به‌طور خودکار کم‌تأخیرترین را انتخاب می‌کند.",
-    groupSettings: "تنظیمات گروه",
-    deleteGroup: "حذف گروه",
     modeHint: {
       auto: "خودکار: هسته کم‌تأخیرترین گره را برمی‌گزیند",
       manual: "دستی: گروه فقط گره انتخابی را به کار می‌برد",
@@ -72,7 +68,7 @@ export default {
     pinned: "ثابت",
     balanced: "خودکار ({n} عضو)",
     switchNode: "تغییر",
-    editGroup: "ویرایش گروه",
+    editGroup: "افزودن گره‌ها",
     autoFastest: "خودکار (کمترین تأخیر)",
     manageNodes: "مدیریت گره‌ها",
     emptyGroup: "این گروه گره‌ای ندارد",

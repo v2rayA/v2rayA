@@ -27,7 +27,6 @@ export default {
     total: "Всего: {value}",
   },
   proxies: {
-    newGroup: "Новая группа",
     newNode: "Новый узел",
     cards: "Карточки",
     list: "Список",
@@ -35,15 +34,12 @@ export default {
     chooseManually: "Выбрать вручную",
     sources: { all: "Все", local: "Локальные" },
     membersOnly: "Только участники",
-    members: "{n} узел | {n} узла | {n} узлов",
     source: "Источник",
     mode: { auto: "Авто (самый быстрый)", manual: "Вручную" },
     inUse: "Используется",
     groupMode: "Режим группы",
     modeNeedsMembers:
       "Балансировка требует минимум двух узлов; ядро выбирает узел с наименьшей задержкой.",
-    groupSettings: "Настройки группы",
-    deleteGroup: "Удалить группу",
     modeHint: {
       auto: "Авто: ядро выбирает узел с наименьшей задержкой",
       manual: "Вручную: группа использует выбранный узел",
@@ -73,7 +69,7 @@ export default {
     balanced:
       "Авто ({n} участник) | Авто ({n} участника) | Авто ({n} участников)",
     switchNode: "Сменить",
-    editGroup: "Изменить группу",
+    editGroup: "Добавить узлы",
     autoFastest: "Авто (минимальная задержка)",
     manageNodes: "Управление узлами",
     emptyGroup: "В этой группе нет узлов",

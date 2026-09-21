@@ -87,12 +87,6 @@ describe("unified proxies page", () => {
     await flushPromises();
     await button("Import").trigger("click");
     expect(dialogState.stack.at(-1)?.component).toBe(ImportDialog);
-    closeAllDialogs();
-    await flushPromises();
-    await button("New group").trigger("click");
-    expect(dialogState.stack.at(-1)?.props).toMatchObject({
-      input: { maxlength: 10 },
-    });
   });
   test("Ctrl+A selects every listed node in the list view and Escape clears", async () => {
     window.dispatchEvent(

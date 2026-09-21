@@ -27,7 +27,6 @@ export default {
     total: "Total: {value}",
   },
   proxies: {
-    newGroup: "New group",
     newNode: "New node",
     cards: "Cards",
     list: "List",
@@ -35,15 +34,12 @@ export default {
     chooseManually: "Choose manually",
     sources: { all: "All", local: "Local" },
     membersOnly: "Members only",
-    members: "no nodes | 1 node | {n} nodes",
     source: "Source",
     mode: { auto: "Auto (fastest)", manual: "Manual" },
     inUse: "In use",
     groupMode: "Group mode",
     modeNeedsMembers:
       "Balancing needs at least two members; the core then routes through the one with the lowest latency.",
-    groupSettings: "Group settings",
-    deleteGroup: "Delete group",
     modeHint: {
       auto: "Auto: the core routes through the lowest latency",
       manual: "Manual: the group uses the node you pick",
@@ -73,7 +69,7 @@ export default {
     pinned: "Pinned",
     balanced: "Auto (1 member) | Auto ({n} members)",
     switchNode: "Switch",
-    editGroup: "Edit group",
+    editGroup: "Add nodes",
     autoFastest: "Auto (lowest latency)",
     manageNodes: "Manage nodes",
     emptyGroup: "This group has no nodes",
