@@ -1,0 +1,78 @@
+name: Release to AUR
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+
+jobs:
+  Release_to_AUR:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check Version
+        id: prep
+        shell: bash
+        env:
+          REF: ${{ inputs.tag }}
+        run: |
+          tag=${{ inputs.tag }}
+          version=$(echo $tag | sed 's/v//g')
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "VERSION=$version" >> $GITHUB_ENV
+      - name: Clone & Update AUR Repository
+        run: |
+          mkdir -p aur
+          git clone https://aur.archlinux.org/v2raya.git aur/v2raya
+          git clone https://aur.archlinux.org/v2raya-bin.git aur/v2raya-bin
+          rm -f aur/v2raya/.INSTALL aur/v2raya-bin/.INSTALL
+          cat install/aur/v2raya/PKGBUILD | sed "s|The_Real_Version|${{ steps.prep.outputs.VERSION }}|g" > aur/v2raya/PKGBUILD
+          cat install/aur/v2raya-bin/PKGBUILD | sed "s|The_Real_Version|${{ steps.prep.outputs.VERSION }}|g" > aur/v2raya-bin/PKGBUILD
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+      - name: Init Arch Linux Container
+        run: |
+          podman pull docker.io/archlinux:latest
+          podman run -d --rm --name archContainer -v $PWD/aur:/aur docker.io/archlinux:latest sleep infinity
+          podman exec --user root:root archContainer pacman -Syu base-devel pacman-contrib --noconfirm
+          podman exec --user root:root archContainer chown -R $(id --user):$(id --user) /aur
+      - name: Update HASH
+        run: |
+          podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya-bin && updpkgsums && makepkg --printsrcinfo > .SRCINFO"
+          podman exec --user $(id --user):$(id --user) archContainer bash -c "cd /aur/v2raya && makepkg --printsrcinfo > .SRCINFO"
+      - name: Import OpenSSH Key
+        shell: bash
+        run: |
+          [ -d ~/.ssh ] || mkdir ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOL
+          Host aur.archlinux.org
+            HostName aur.archlinux.org
+            IdentityFile ~/.ssh/id_ed25519
+          EOL
+      - name: Commit & Push to AUR
+        run: |
+          Current_Dir=$(pwd)
+          sudo chown -R $(id -u):$(id -u) aur/v2raya
+          sudo chown -R $(id -u):$(id -u) aur/v2raya-bin
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          cd $Current_Dir/aur/v2raya && git add -u && \
+            git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
+            git push --force ssh://aur@aur.archlinux.org/v2raya.git
+          cd $Current_Dir/aur/v2raya-bin && git add -u && \
+            git commit -m "Update to v${{ steps.prep.outputs.VERSION }}" && \
+            git push --force ssh://aur@aur.archlinux.org/v2raya-bin.git
+      - name: Clean Up
+        run: |
+          podman stop archContainer
