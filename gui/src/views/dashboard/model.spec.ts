@@ -80,6 +80,11 @@ function response(running = false): TouchResponse {
 let wrapper: VueWrapper;
 const button = (text: string) =>
   wrapper.findAll("button").find((item) => item.text() === text)!;
+/** menus render in the body, so their entries are found there */
+const listItem = (text: string) =>
+  [...document.body.querySelectorAll<HTMLElement>(".v-list-item")].find(
+    (item) => item.textContent?.trim() === text,
+  )!;
 const control = () =>
   wrapper
     .getComponent(".dashboard-status")
@@ -222,7 +227,7 @@ describe("dashboard", () => {
     expect(wrapper.get(".dashboard-connection").text()).toContain(
       "This group has no nodes",
     );
-    await button("Add nodes").trigger("click");
+    await button("Add or remove nodes").trigger("click");
     await flushPromises();
     const dialog = dialogs.getComponent(GroupMembersDialog);
     await dialog.findAll(".v-list-item")[0].trigger("click");
@@ -238,6 +243,27 @@ describe("dashboard", () => {
     dialogs.unmount();
   });
 
+  test("names the proxy group in view on the card and switches it from there", async () => {
+    wrapper = mountWithApp(DashboardView);
+    useAppStore().setOutbounds(["proxy", "work"]);
+    await flushPromises();
+    const card = wrapper.get(".dashboard-connection");
+    expect(card.text()).toContain("Proxy group");
+    expect(card.text()).toContain("PROXY");
+    await card
+      .findAll("button")
+      .find((b) => b.text() === "PROXY")!
+      .trigger("click");
+    await flushPromises();
+    await listItem("WORK").dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+    await flushPromises();
+    expect(useAppStore().outboundName).toBe("work");
+    expect(wrapper.get(".dashboard-connection").text()).toContain(
+      "Subscribed",
+    );
+  });
   test("prefers a pinned member, then the best alive probe, then a single member", async () => {
     const data = response();
     data.touch.servers.push(

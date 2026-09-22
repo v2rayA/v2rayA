@@ -3,8 +3,10 @@ import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import {
-  mdiCheck,
   mdiChevronDown,
+  mdiChevronRight,
+  mdiContentCopy,
+  mdiDownloadOutline,
   mdiMagnify,
   mdiPlus,
   mdiServerNetworkOutline,
@@ -23,13 +25,14 @@ defineOptions({ name: "ProxiesView" });
 const { t } = useI18n();
 const { width } = useDisplay();
 const expanded = computed(() => width.value >= 840);
+/** phones: the batch bar keeps the test button and folds the rest into a menu */
+const compact = computed(() => width.value < 600);
 const model = useProxies();
 const { store } = model;
 const {
   query,
   source,
   sources,
-  membersOnly,
   view,
   loading,
   loadError,
@@ -45,7 +48,6 @@ const {
   sync,
 } = model;
 const disabled = computed(() => busy.value || loading.value);
-/** the member the group routes through alone, as a row; null while balancing */
 // Ctrl/Cmd+A selects every listed node, Escape clears (list view), "/" goes to the search
 useHotkeys((event) => {
   const ctrl = event.ctrlKey || event.metaKey;
@@ -128,17 +130,6 @@ onMounted(sync);
             hide-details
             class="proxies__source"
           />
-          <v-chip
-            :model-value="true"
-            :aria-pressed="membersOnly"
-            link
-            variant="text"
-            :prepend-icon="membersOnly ? mdiCheck : undefined"
-            class="proxies__chip"
-            :class="{ 'proxies__chip--on': membersOnly }"
-            @click="membersOnly = !membersOnly"
-            >{{ t("proxies.membersOnly") }}</v-chip
-          >
           <v-spacer />
           <v-btn
             variant="tonal"
@@ -185,21 +176,6 @@ onMounted(sync);
           v-else-if="!listed.length"
           :title="t('proxyGroup.noMatch')"
         />
-        <div v-else-if="view === 'cards'" class="proxies__cards">
-          <NodeCard
-            v-for="row in listed"
-            :key="rowKey(row)"
-            :row="row"
-            :source="model.sourceName(row)"
-            :member="model.isMember(row)"
-            :selected="model.isSelected(row)"
-            :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
-            :disabled="disabled"
-            :testing="testing"
-            @toggle="model.toggleGroup(row)"
-            @action="model.nodeAction(row, $event)"
-          />
-        </div>
         <template v-else>
           <div class="proxies__batch mb-2">
             <v-checkbox-btn
@@ -219,51 +195,154 @@ onMounted(sync);
                 @click="model.testRows(selected)"
                 >{{ t("proxies.testLatency") }}</v-btn
               >
-              <v-menu v-for="add in [true, false]" :key="String(add)">
+              <v-menu v-if="compact">
                 <template #activator="{ props: menu }">
                   <v-btn
                     v-bind="menu"
                     variant="text"
                     :append-icon="mdiChevronDown"
                     :disabled="disabled"
-                    >{{
-                      t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
-                    }}</v-btn
+                    >{{ t("operations.moreActions") }}</v-btn
                   >
                 </template>
-                <v-list density="compact" min-width="200">
+                <v-list density="compact" min-width="240">
+                  <v-menu
+                    v-for="add in [true, false]"
+                    :key="String(add)"
+                    submenu
+                    location="end"
+                  >
+                    <template #activator="{ props: submenu }">
+                      <v-list-item
+                        v-bind="submenu"
+                        :title="
+                          t(
+                            add
+                              ? 'proxies.addToGroup'
+                              : 'proxies.removeFromGroup',
+                          )
+                        "
+                        :append-icon="mdiChevronRight"
+                        :disabled="!store.outbounds.length"
+                      />
+                    </template>
+                    <v-list density="compact" min-width="200">
+                      <v-list-item
+                        v-for="g in store.outbounds"
+                        :key="g"
+                        :title="g.toUpperCase()"
+                        @click="model.batchMembership(add, g)"
+                      />
+                    </v-list>
+                  </v-menu>
+                  <v-divider class="my-1" />
                   <v-list-item
-                    v-for="g in store.outbounds"
-                    :key="g"
-                    :title="g.toUpperCase()"
-                    @click="model.batchMembership(add, g)"
+                    :title="t('operations.delete')"
+                    :subtitle="
+                      canDelete
+                        ? undefined
+                        : t('proxies.deleteSubscriptionNodes')
+                    "
+                    :disabled="disabled || !canDelete"
+                    @click="model.removeRows(selected)"
+                  />
+                  <v-divider class="my-1" />
+                  <v-list-item
+                    :title="t('operations.exportClipboard')"
+                    :prepend-icon="mdiContentCopy"
+                    :disabled="disabled"
+                    @click="model.exportSelected('clipboard')"
+                  />
+                  <v-list-item
+                    :title="t('operations.exportTxt')"
+                    :prepend-icon="mdiDownloadOutline"
+                    :disabled="disabled"
+                    @click="model.exportSelected('file')"
                   />
                 </v-list>
               </v-menu>
-              <v-tooltip
-                :disabled="canDelete"
-                :text="t('proxies.deleteSubscriptionNodes')"
-              >
-                <template #activator="{ props }"
-                  ><span v-bind="props" :tabindex="canDelete ? undefined : 0"
-                    ><v-btn
+              <template v-else>
+                <v-menu v-for="add in [true, false]" :key="String(add)">
+                  <template #activator="{ props: menu }">
+                    <v-btn
+                      v-bind="menu"
                       variant="text"
-                      :disabled="disabled || !canDelete"
-                      @click="model.removeRows(selected)"
-                      >{{ t("operations.delete") }}</v-btn
-                    ></span
-                  ></template
+                      :append-icon="mdiChevronDown"
+                      :disabled="disabled"
+                      >{{
+                        t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
+                      }}</v-btn
+                    >
+                  </template>
+                  <v-list density="compact" min-width="200">
+                    <v-list-item
+                      v-for="g in store.outbounds"
+                      :key="g"
+                      :title="g.toUpperCase()"
+                      @click="model.batchMembership(add, g)"
+                    />
+                  </v-list>
+                </v-menu>
+                <v-tooltip
+                  :disabled="canDelete"
+                  :text="t('proxies.deleteSubscriptionNodes')"
                 >
-              </v-tooltip>
-              <v-btn
-                variant="text"
-                :disabled="disabled"
-                @click="model.exportSelected"
-                >{{ t("operations.export") }}</v-btn
-              >
+                  <template #activator="{ props }"
+                    ><span v-bind="props" :tabindex="canDelete ? undefined : 0"
+                      ><v-btn
+                        variant="text"
+                        :disabled="disabled || !canDelete"
+                        @click="model.removeRows(selected)"
+                        >{{ t("operations.delete") }}</v-btn
+                      ></span
+                    ></template
+                  >
+                </v-tooltip>
+                <v-menu>
+                  <template #activator="{ props: exportMenu }">
+                    <v-btn
+                      v-bind="exportMenu"
+                      variant="text"
+                      :append-icon="mdiChevronDown"
+                      :disabled="disabled"
+                      >{{ t("operations.export") }}</v-btn
+                    >
+                  </template>
+                  <v-list density="compact" min-width="240">
+                    <v-list-item
+                      :title="t('operations.exportClipboard')"
+                      :prepend-icon="mdiContentCopy"
+                      @click="model.exportSelected('clipboard')"
+                    />
+                    <v-list-item
+                      :title="t('operations.exportTxt')"
+                      :prepend-icon="mdiDownloadOutline"
+                      @click="model.exportSelected('file')"
+                    />
+                  </v-list>
+                </v-menu>
+              </template>
             </template>
           </div>
+          <div v-if="view === 'cards'" class="proxies__cards">
+            <NodeCard
+              v-for="row in listed"
+              :key="rowKey(row)"
+              :row="row"
+              :source="model.sourceName(row)"
+              :member="model.isMember(row)"
+              :groups="store.outbounds"
+              :member-groups="model.memberGroups(row)"
+              :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
+              :checked="selectedKeys.includes(rowKey(row))"
+              :disabled="disabled"
+              :testing="testing"
+              @check="model.selectRow(row, $event)"
+              @action="(action, group) => model.nodeAction(row, action, group)"
+            />
+          </div>
           <v-list
+            v-else
             bg-color="surface-container-low"
             rounded="xl"
             class="proxies__list"
@@ -274,14 +353,14 @@ onMounted(sync);
               :row="row"
               :source="model.sourceName(row)"
               :member="model.isMember(row)"
-              :selected="model.isSelected(row)"
+              :groups="store.outbounds"
+              :member-groups="model.memberGroups(row)"
               :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
               :checked="selectedKeys.includes(rowKey(row))"
               :disabled="disabled"
               :testing="testing"
-              @toggle="model.toggleGroup(row)"
               @check="model.selectRow(row, $event)"
-              @action="model.nodeAction(row, $event)"
+              @action="(action, group) => model.nodeAction(row, action, group)"
             />
           </v-list>
         </template>
@@ -303,15 +382,6 @@ onMounted(sync);
 .proxies__source {
   max-width: 220px;
   min-width: 160px;
-}
-/* choice chips without the outline: a quiet pill, tonal when chosen */
-.proxies__chip {
-  background: rgb(var(--v-theme-surface-container-high));
-  color: rgb(var(--v-theme-on-surface));
-}
-.proxies__chip--on {
-  background: rgb(var(--v-theme-secondary-container));
-  color: rgb(var(--v-theme-on-secondary-container));
 }
 .proxies {
   padding-bottom: 96px;

@@ -10,26 +10,22 @@ defineProps<{
   row: Row;
   source: string;
   member: boolean;
-  selected: boolean;
+  /** every proxy group, and the ones this node is a member of */
+  groups: string[];
+  memberGroups: string[];
   inUse: boolean;
   checked: boolean;
   disabled: boolean;
   testing: boolean;
 }>();
 const emit = defineEmits<{
-  toggle: [];
   check: [value: boolean];
-  action: [action: NodeAction];
+  action: [action: NodeAction, group?: string];
 }>();
 const { t } = useI18n();
 </script>
 <template>
-  <v-list-item
-    class="node-list-item"
-    :aria-pressed="member"
-    :disabled="disabled"
-    @click="emit('toggle')"
-  >
+  <v-list-item class="node-list-item" :disabled="disabled">
     <template #prepend>
       <v-checkbox-btn
         :model-value="checked"
@@ -58,12 +54,12 @@ const { t } = useI18n();
           :aria-label="t('proxies.membersOnly')"
         />
         <NodeMenu
-          :member="member"
-          :selected="selected"
+          :groups="groups"
+          :member-groups="memberGroups"
           :local="row._type === 'server'"
           :disabled="disabled"
           :testing="testing"
-          @action="emit('action', $event)"
+          @action="(action, group) => emit('action', action, group)"
         />
       </div>
     </template>

@@ -3,12 +3,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { defineComponent, h, nextTick } from "vue";
 import type { VueWrapper } from "@vue/test-utils";
 import type * as Api from "@/api";
+import type * as Download from "@/lib/download";
 import type { OutboundStatus, TouchResponse, Which } from "@/api/types";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { mountWithApp } from "@/test/mount";
-import { sameWhich } from "../nodes/model";
 import { groupMembers, useProxies } from "./model";
 import { fixture } from "./fixture";
 
@@ -17,11 +17,17 @@ const api = vi.hoisted(() => ({
   getPingLatency: vi.fn(),
   getHttpLatency: vi.fn(),
   putOutboundConnections: vi.fn(),
-  putOutboundSelection: vi.fn(),
+  getSharingAddress: vi.fn(),
 }));
+const lib = vi.hoisted(() => ({ copyText: vi.fn(), saveText: vi.fn() }));
 vi.mock("@/api", async (original) => ({
   ...(await original<typeof Api>()),
   ...api,
+}));
+vi.mock("@/lib/clipboard", () => ({ copyText: lib.copyText }));
+vi.mock("@/lib/download", async (original) => ({
+  ...(await original<typeof Download>()),
+  saveText: lib.saveText,
 }));
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -44,14 +50,6 @@ beforeEach(async () => {
       return structuredClone(response);
     },
   );
-  api.putOutboundSelection.mockImplementation(async ({ outbound, which }) => {
-    response.touch.connectedServer = response.touch.connectedServer!.map((w) =>
-      (w.outbound ?? "proxy") === outbound
-        ? { ...w, selected: !!which && sameWhich(w, which) }
-        : w,
-    );
-    return structuredClone(response);
-  });
   api.getPingLatency.mockResolvedValue({
     whiches: [
       { id: 1, _type: "subscriptionServer", sub: 0, pingLatency: "20ms" },
@@ -88,7 +86,7 @@ describe("proxy node management", () => {
     ).toEqual(["East"]);
     expect(groupMembers(touch, touch.connectedServer!, "empty")).toEqual([]);
   });
-  test("combines source, name/address/protocol search and current group membership", () => {
+  test("combines source, name/address/protocol search, ignoring group membership", () => {
     const model = getModel();
     for (const [query, names] of [
       [" NoRtH ", ["North"]],
@@ -103,15 +101,13 @@ describe("proxy node management", () => {
     model.query.value = "vless";
     model.source.value = response.touch.subscriptions[1].address;
     expect(model.listed.value.map((r) => r.name)).toEqual(["East"]);
-    model.membersOnly.value = true;
-    expect(model.listed.value).toEqual([]);
     model.source.value = "local";
     model.query.value = "";
-    expect(model.listed.value.map((r) => r.name)).toEqual(["North"]);
+    expect(model.listed.value.map((r) => r.name)).toEqual(["North", "South"]);
   });
-  test("toggles membership without replacing other members or another group", async () => {
+  test("setMembership changes one row and leaves the other members and groups alone", async () => {
     const model = getModel();
-    await model.toggleGroup(model.rows.value[1]);
+    await model.setMembership(model.rows.value[1], "media", true);
     expect(model.members.value.map((r) => r.name)).toEqual([
       "North",
       "West",
@@ -124,39 +120,31 @@ describe("proxy node management", () => {
         "other",
       ).map((r) => r.name),
     ).toEqual(["South"]);
-    await model.toggleGroup(model.rows.value[0]);
+    await model.setMembership(model.rows.value[0], "media", false);
     expect(model.members.value.map((r) => r.name)).toEqual(["West", "South"]);
   });
-  test("selects and clears a member through the selection endpoint, retaining all memberships", async () => {
+  test("adds a node to the group picked from the menu and removes it from one it is in", async () => {
     const model = getModel();
-    const before = structuredClone(response.touch.connectedServer);
-    await model.selectMember(model.rows.value[2]);
-    expect(api.putOutboundSelection).toHaveBeenLastCalledWith({
-      outbound: "media",
-      which: { _type: "subscriptionServer", id: 1, sub: 0 },
-    });
-    expect(model.isSelected(model.rows.value[2])).toBe(true);
-    expect(model.selectedMember.value?.selected).toBe(true);
-    expect(model.mode.value).toBe("manual");
-    expect(model.inUse("media")?.name).toBe("West");
-    await model.setMode("auto");
-    expect(api.putOutboundSelection).toHaveBeenLastCalledWith({
-      outbound: "media",
-      which: null,
-    });
-    expect(model.selectedMember.value).toBeUndefined();
-    expect(model.mode.value).toBe("auto");
-    expect(
-      model.store.connectedServer.map(({ selected, ...w }) => {
-        expect(selected).not.toBe(true);
-        return w;
-      }),
-    ).toEqual(before);
-    expect(api.putOutboundConnections).not.toHaveBeenCalled();
-    await model.selectMember(model.rows.value[1]);
-    expect(api.putOutboundSelection).toHaveBeenCalledTimes(2);
+    model.store.outbounds = ["proxy", "media", "other"];
+    const north = model.rows.value[0];
+    const east = model.rows.value[3];
+    expect(model.memberGroups(north)).toEqual(["media"]);
+    expect(model.memberGroups(east)).toEqual(["proxy"]);
+    await model.nodeAction(north, "addToGroup", "other");
+    expect(model.memberGroups(north)).toEqual(["media", "other"]);
+    expect(model.members.value.map((r) => r.name)).toEqual(["North", "West"]);
+    await model.nodeAction(east, "addToGroup", "other");
+    expect(model.memberGroups(east)).toEqual(["proxy", "other"]);
+    expect(model.memberGroups(north)).toEqual(["media", "other"]);
+    await model.nodeAction(north, "removeFromGroup", "media");
+    expect(model.memberGroups(north)).toEqual(["other"]);
+    expect(model.members.value.map((r) => r.name)).toEqual(["West"]);
+    // a group the node is already in, or one it is not in, changes nothing
+    await model.nodeAction(north, "addToGroup", "other");
+    await model.nodeAction(north, "removeFromGroup", "proxy");
+    expect(api.putOutboundConnections).toHaveBeenCalledTimes(3);
   });
-  test("manual mode waits for a member choice; observatory ignores dead and nonmember probes", async () => {
+  test("observatory ignores dead and nonmember probes", async () => {
     const model = getModel();
     const status = (
       which: Which,
@@ -182,13 +170,15 @@ describe("proxy node management", () => {
       20,
     );
     expect(model.inUse("media")?.name).toBe("North");
-    await model.setMode("manual");
-    expect(model.mode.value).toBe("manual");
-    expect(api.putOutboundSelection).not.toHaveBeenCalled();
+    expect(model.inUse("other")).toBeNull();
+  });
+  test("leaving the group in view clears the batch selection", async () => {
+    const model = getModel();
+    model.selectAll(true);
+    expect(model.selected.value).toHaveLength(4);
     model.store.outboundName = "other";
     await nextTick();
-    expect(model.mode.value).toBe("auto");
-    expect(model.inUse("other")).toBeNull();
+    expect(model.selected.value).toEqual([]);
   });
   test("batch add and remove each issue one full member update and preserve unselected members", async () => {
     const model = getModel();
@@ -230,6 +220,29 @@ describe("proxy node management", () => {
       { id: 1, _type: "subscriptionServer", sub: 0 },
     ]);
     expect(model.listed.value[0].pingLatency).toBe("40ms");
+  });
+  test("exports the selected nodes to the clipboard or to a timestamped TXT file", async () => {
+    const model = getModel();
+    api.getSharingAddress.mockResolvedValue({
+      sharingAddress: "vmess://north",
+    });
+    model.selectRow(model.rows.value[0], true);
+    await model.exportSelected("file");
+    expect(api.getSharingAddress).toHaveBeenCalledWith({
+      _type: "server",
+      id: 1,
+    });
+    expect(lib.saveText).toHaveBeenCalledWith(
+      expect.stringMatching(/^export-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.txt$/),
+      "vmess://north",
+    );
+    expect(lib.copyText).not.toHaveBeenCalled();
+    await model.exportSelected();
+    expect(lib.copyText).toHaveBeenCalledWith("vmess://north");
+    // nothing shareable: neither destination is written
+    api.getSharingAddress.mockResolvedValue({ sharingAddress: "" });
+    await model.exportSelected("file");
+    expect(lib.saveText).toHaveBeenCalledTimes(1);
   });
   test("drops hidden batch selection so a later delete cannot affect filtered-out rows", async () => {
     const model = getModel();
