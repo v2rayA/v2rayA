@@ -1,20 +1,31 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { mdiDotsVertical } from "@mdi/js";
+import { mdiChevronRight, mdiDotsVertical } from "@mdi/js";
 import type { NodeAction } from "./model";
 defineOptions({ name: "NodeMenu" });
 defineProps<{
-  member: boolean;
-  selected: boolean;
+  /** every proxy group the core knows, in the app bar's order */
+  groups: string[];
+  /** the groups this node is already a member of */
+  memberGroups: string[];
   local: boolean;
   disabled: boolean;
   testing: boolean;
 }>();
-const emit = defineEmits<{ action: [action: NodeAction] }>();
+const emit = defineEmits<{
+  action: [action: NodeAction, group?: string];
+}>();
 const { t } = useI18n();
+const open = ref(false);
+/** pick runs the action and closes the menu, submenu included */
+function pick(action: NodeAction, group?: string) {
+  emit("action", action, group);
+  open.value = false;
+}
 </script>
 <template>
-  <v-menu>
+  <v-menu v-model="open">
     <template #activator="{ props }">
       <v-btn
         v-bind="props"
@@ -37,29 +48,52 @@ const { t } = useI18n();
       <v-list-item
         :title="t('proxies.testLatency')"
         :disabled="testing"
-        @click="emit('action', 'test')"
+        @click="pick('test')"
       />
-      <v-list-item
-        v-if="member"
-        :title="t(selected ? 'proxies.unselect' : 'proxies.useThis')"
-        @click="emit('action', 'select')"
-      />
-      <v-list-item
-        :title="t(member ? 'proxies.removeFromGroup' : 'proxies.addToGroup')"
-        @click="emit('action', 'membership')"
-      />
-      <v-list-item
-        :title="t('operations.modify')"
-        @click="emit('action', 'edit')"
-      />
-      <v-list-item
-        :title="t('operations.share')"
-        @click="emit('action', 'share')"
-      />
+      <v-menu submenu location="end">
+        <template #activator="{ props: submenu }">
+          <v-list-item
+            v-bind="submenu"
+            :title="t('proxies.addToGroup')"
+            :append-icon="mdiChevronRight"
+            :disabled="!groups.length"
+          />
+        </template>
+        <v-list density="compact" min-width="200">
+          <v-list-item
+            v-for="group in groups"
+            :key="group"
+            :title="group.toUpperCase()"
+            :active="memberGroups.includes(group)"
+            :disabled="memberGroups.includes(group)"
+            @click="pick('addToGroup', group)"
+          />
+        </v-list>
+      </v-menu>
+      <v-menu submenu location="end">
+        <template #activator="{ props: submenu }">
+          <v-list-item
+            v-bind="submenu"
+            :title="t('proxies.removeFromGroup')"
+            :append-icon="mdiChevronRight"
+            :disabled="!memberGroups.length"
+          />
+        </template>
+        <v-list density="compact" min-width="200">
+          <v-list-item
+            v-for="group in memberGroups"
+            :key="group"
+            :title="group.toUpperCase()"
+            @click="pick('removeFromGroup', group)"
+          />
+        </v-list>
+      </v-menu>
+      <v-list-item :title="t('operations.modify')" @click="pick('edit')" />
+      <v-list-item :title="t('operations.share')" @click="pick('share')" />
       <v-list-item
         v-if="local"
         :title="t('operations.delete')"
-        @click="emit('action', 'delete')"
+        @click="pick('delete')"
       />
     </v-list>
   </v-menu>

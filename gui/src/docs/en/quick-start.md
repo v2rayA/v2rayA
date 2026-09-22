@@ -22,7 +22,7 @@ Subscriptions have their own page, **Subscriptions** (on a phone the docs move t
 
 ## Groups
 
-Nodes are used through proxy groups. The group `proxy` always exists; more are created, renamed, configured and deleted from the group button in the app bar, the only place for that. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to group**. A group with several connected members uses the one with the lowest measured latency (**Auto (lowest latency)**); the node menu on the dashboard pins one member so the group uses it alone, **Add nodes** changes the members, and the group settings set the probe address and interval.
+Nodes are used through proxy groups. The group `proxy` always exists; more are created, renamed, configured and deleted from the group button in the app bar, the only place for that. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to proxy group**. A group with several connected members uses the one with the lowest measured latency (**Auto (lowest latency)**); the node menu on the dashboard pins one member so the group uses it alone, **Add or remove nodes** changes the members, and the group settings set the probe address and interval.
 
 The routing rules name groups as outbounds: `proxy` by default, and any other group by its name once it has a connected member.
 
