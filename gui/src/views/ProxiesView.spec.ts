@@ -187,8 +187,12 @@ describe("unified proxies page", () => {
       .find((b) => b.text() === "More actions")!
       .trigger("click");
     await flushPromises();
-    expect(listItem("Add to proxy group")).toBeTruthy();
-    expect(listItem("Remove from proxy group")).toBeTruthy();
+    // on a phone the groups sit under headings instead of submenus
+    const headings = [
+      ...document.body.querySelectorAll<HTMLElement>(".v-list-subheader"),
+    ].map((h) => h.textContent?.trim());
+    expect(headings).toEqual(["Add to proxy group", "Remove from proxy group"]);
+    expect(listItem("PROXY")).toBeTruthy();
     expect(listItem("Delete")).toBeTruthy();
     expect(listItem("Export to clipboard")).toBeTruthy();
     expect(listItem("Export to TXT file")).toBeTruthy();
