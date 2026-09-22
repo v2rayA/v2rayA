@@ -29,7 +29,6 @@
         "uuid": "00000000-0000-0000-0000-000000000000",
         "password": "your-password-here",
         "sni": "example.com",
-        "allow_insecure": false,
         "congestion_control": "bbr",
         "udp_relay_mode": "native",
         "alpn": ["h3"],

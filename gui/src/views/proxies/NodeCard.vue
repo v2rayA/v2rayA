@@ -38,7 +38,6 @@ const { t } = useI18n();
         :disabled="disabled"
         class="flex-shrink-0"
         @click.stop
-        @keydown.stop
         @update:model-value="emit('check', !!$event)"
       />
       <div class="node-card__body flex-grow-1">

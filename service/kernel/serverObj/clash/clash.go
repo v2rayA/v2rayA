@@ -19,25 +19,24 @@ import (
 // clashProxy is the subset of a Clash/mihomo proxy entry that maps onto the
 // share links v2rayA already parses. Unknown keys are ignored.
 type clashProxy struct {
-	Name           string   `yaml:"name"`
-	Type           string   `yaml:"type"`
-	Server         string   `yaml:"server"`
-	Port           int      `yaml:"port"`
-	UUID           string   `yaml:"uuid"`
-	Password       string   `yaml:"password"`
-	Username       string   `yaml:"username"`
-	Cipher         string   `yaml:"cipher"`
-	AlterID        int      `yaml:"alterId"`
-	TLS            bool     `yaml:"tls"`
-	SNI            string   `yaml:"sni"`
-	ServerName     string   `yaml:"servername"`
-	SkipCertVerify bool     `yaml:"skip-cert-verify"`
-	ALPN           []string `yaml:"alpn"`
-	Fingerprint    string   `yaml:"client-fingerprint"`
-	Network        string   `yaml:"network"`
-	Flow           string   `yaml:"flow"`
-	Plugin         string   `yaml:"plugin"`
-	PluginOpts     struct {
+	Name        string   `yaml:"name"`
+	Type        string   `yaml:"type"`
+	Server      string   `yaml:"server"`
+	Port        int      `yaml:"port"`
+	UUID        string   `yaml:"uuid"`
+	Password    string   `yaml:"password"`
+	Username    string   `yaml:"username"`
+	Cipher      string   `yaml:"cipher"`
+	AlterID     int      `yaml:"alterId"`
+	TLS         bool     `yaml:"tls"`
+	SNI         string   `yaml:"sni"`
+	ServerName  string   `yaml:"servername"`
+	ALPN        []string `yaml:"alpn"`
+	Fingerprint string   `yaml:"client-fingerprint"`
+	Network     string   `yaml:"network"`
+	Flow        string   `yaml:"flow"`
+	Plugin      string   `yaml:"plugin"`
+	PluginOpts  struct {
 		Mode string `yaml:"mode"`
 		Host string `yaml:"host"`
 		Path string `yaml:"path"`
@@ -171,9 +170,6 @@ func (p *clashProxy) link() (string, error) {
 	switch p.Type {
 	case "anytls":
 		setIf(q, "sni", p.sni())
-		if p.SkipCertVerify {
-			q.Set("allow_insecure", "1")
-		}
 		return buildLink("anytls", url.User(p.Password), p.hostPort(), q, p.Name), nil
 	case "trojan":
 		setIf(q, "sni", p.sni())
@@ -288,9 +284,6 @@ func (p *clashProxy) link() (string, error) {
 		setIf(q, "alpn", strings.Join(p.ALPN, ","))
 		if p.DisableSNI {
 			q.Set("disable_sni", "true")
-		}
-		if p.SkipCertVerify {
-			q.Set("allow_insecure", "true")
 		}
 		return buildLink("tuic", url.UserPassword(p.UUID, p.Password), p.hostPort(), q, p.Name), nil
 	case "socks5", "http":

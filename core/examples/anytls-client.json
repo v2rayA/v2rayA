@@ -29,7 +29,6 @@
         "port": 443,
         "password": "your-password-here",
         "sni": "example.com",
-        "allow_insecure": false,
         "min_idle_sessions": 5
       }
     },

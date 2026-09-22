@@ -1,15 +1,17 @@
 // Page-level keyboard shortcuts: a window keydown listener for the
-// component's life, silent while a dialog is up or the user is typing;
-// only Ctrl/Cmd+S reaches the page from a text field.
+// component's life, silent while a dialog or a menu is up or the user is
+// typing; only Ctrl/Cmd+S reaches the page from a text field.
 import { onBeforeUnmount, onMounted } from "vue";
 import { dialogState } from "./useDialog";
 
 export function useHotkeys(handler: (event: KeyboardEvent) => void) {
   function onKey(event: KeyboardEvent) {
     if (event.isComposing || dialogState.stack.length) return;
-    const typing =
-      event.target instanceof HTMLElement &&
-      !!event.target.closest("input, textarea, [contenteditable]");
+    if (document.querySelector(".v-overlay--active.v-menu")) return;
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    const typing = !!target?.closest(
+      'input:not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable]',
+    );
     const save =
       (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s";
     if (typing && !save) return;

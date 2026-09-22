@@ -1,5 +1,5 @@
 // Shared node state and backend operations for the dashboard and proxies page.
-import { computed, ref, watch } from "vue";
+import { computed, getCurrentScope, onScopeDispose, ref, watch } from "vue";
 import dayjs from "dayjs";
 import {
   getHttpLatency,
@@ -85,6 +85,10 @@ export function useNodes() {
     connectedServer: [],
   });
   const ready = ref(false);
+  // a response that lands after the page is gone must not overwrite what the
+  // next page has since written to the store
+  let disposed = false;
+  if (getCurrentScope()) onScopeDispose(() => (disposed = true));
 
   const connected = computed<Which[]>(() => touch.value.connectedServer ?? []);
   /** the rows connected in the current outbound */
@@ -95,6 +99,7 @@ export function useNodes() {
       .filter((x): x is { which: Which; row: Row } => x.row !== null),
   );
   function apply(res: TouchResponse) {
+    if (disposed) return;
     const next = res.touch;
     next.subscriptions.forEach((s, i) => {
       s.status = dayjs(s.status)

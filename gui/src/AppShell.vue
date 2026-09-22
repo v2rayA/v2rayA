@@ -95,6 +95,8 @@ const compact = computed(() => width.value < 600);
 // Material's window classes: compact < 600 (bottom bar), medium and
 // expanded < 1200 (rail with an app bar), large ≥ 1200 (standard drawer)
 const expanded = computed(() => width.value >= 1200);
+// the phone's app bar menu; the docs item closes it, the rest are submenus
+const barMenu = ref(false);
 // the drawer folded to the rail, remembered
 const folded = ref(localStorage.getItem("drawer") === "rail");
 watch(folded, (v) => localStorage.setItem("drawer", v ? "rail" : "open"));
@@ -448,7 +450,7 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
       />
       <template #append>
         <ShellMenus v-if="!compact" variant="icons" />
-        <v-menu v-else :close-on-content-click="false">
+        <v-menu v-else v-model="barMenu" :close-on-content-click="false">
           <template #activator="{ props: menu }">
             <v-btn
               v-bind="menu"
@@ -464,7 +466,10 @@ onBeforeUnmount(() => window.removeEventListener("hashchange", openHash));
               :title="t('common.docs')"
               :active="store.view === 'docs'"
               rounded="xl"
-              @click="store.view = 'docs'"
+              @click="
+                store.view = 'docs';
+                barMenu = false;
+              "
             />
             <ShellMenus variant="list" />
           </v-list>

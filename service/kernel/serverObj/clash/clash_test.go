@@ -86,7 +86,7 @@ func TestResolveClash(t *testing.T) {
 
 	// the anytls link must carry what the outbound builder reads
 	link := infos[0].ExportToURL()
-	for _, s := range []string{"sni=sni.example.com", "allow_insecure=1", "anytls://pw1@"} {
+	for _, s := range []string{"sni=sni.example.com", "anytls://pw1@"} {
 		if !contains(link, s) {
 			t.Errorf("anytls link %q lacks %q", link, s)
 		}
