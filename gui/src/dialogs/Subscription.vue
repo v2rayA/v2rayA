@@ -20,6 +20,7 @@ const form = reactive({ ...props.subscription, servers: [] });
 const saving = ref(false);
 
 async function save() {
+  if (saving.value) return;
   saving.value = true;
   try {
     await patchSubscription({ subscription: form });

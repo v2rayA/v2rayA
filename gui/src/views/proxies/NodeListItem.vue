@@ -31,7 +31,6 @@ const { t } = useI18n();
         :model-value="checked"
         :aria-label="row.name"
         @click.stop
-        @keydown.stop
         @update:model-value="emit('check', !!$event)"
       />
     </template>

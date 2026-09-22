@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
 vi.mock("@/api", () => api);
 
 import { filterRows, useNodes, type Row } from "./model";
+import { useAppStore } from "@/stores/app";
 
 function row(id: number, pingLatency = ""): Row {
   return {
@@ -91,6 +92,30 @@ describe("latency testing", () => {
     const rows = nodes.touch.value.servers;
     await expect(nodes.testAll(rows, false, "Testing")).rejects.toBe(error);
     expect(rows.map((r) => r.pingLatency)).toEqual(["", ""]);
+  });
+});
+
+describe("a page that is gone", () => {
+  test("its late touch response no longer reaches the store", () => {
+    const nodes = createNodes();
+    const store = useAppStore();
+    const res = {
+      code: "SUCCESS" as const,
+      running: true,
+      networkPaused: false,
+      touch: {
+        servers: [row(1)],
+        subscriptions: [],
+        connectedServer: [
+          { id: 1, _type: "server" as const, outbound: "proxy" },
+        ],
+      },
+    };
+    scope.stop();
+    nodes.apply(res);
+    expect(store.connectedServer).toEqual([]);
+    expect(nodes.touch.value.servers).toHaveLength(2);
+    scope = effectScope();
   });
 });
 

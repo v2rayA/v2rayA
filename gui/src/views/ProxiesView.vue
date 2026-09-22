@@ -4,7 +4,6 @@ import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import {
   mdiChevronDown,
-  mdiChevronRight,
   mdiContentCopy,
   mdiDownloadOutline,
   mdiMagnify,
@@ -206,35 +205,18 @@ onMounted(sync);
                   >
                 </template>
                 <v-list density="compact" min-width="240">
-                  <v-menu
-                    v-for="add in [true, false]"
-                    :key="String(add)"
-                    submenu
-                    location="end"
-                  >
-                    <template #activator="{ props: submenu }">
-                      <v-list-item
-                        v-bind="submenu"
-                        :title="
-                          t(
-                            add
-                              ? 'proxies.addToGroup'
-                              : 'proxies.removeFromGroup',
-                          )
-                        "
-                        :append-icon="mdiChevronRight"
-                        :disabled="!store.outbounds.length"
-                      />
-                    </template>
-                    <v-list density="compact" min-width="200">
-                      <v-list-item
-                        v-for="g in store.outbounds"
-                        :key="g"
-                        :title="g.toUpperCase()"
-                        @click="model.batchMembership(add, g)"
-                      />
-                    </v-list>
-                  </v-menu>
+                  <template v-for="add in [true, false]" :key="String(add)">
+                    <v-list-subheader>{{
+                      t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
+                    }}</v-list-subheader>
+                    <v-list-item
+                      v-for="g in store.outbounds"
+                      :key="g"
+                      :title="g.toUpperCase()"
+                      class="ps-8"
+                      @click="model.batchMembership(add, g)"
+                    />
+                  </template>
                   <v-divider class="my-1" />
                   <v-list-item
                     :title="t('operations.delete')"
@@ -270,7 +252,11 @@ onMounted(sync);
                       :append-icon="mdiChevronDown"
                       :disabled="disabled"
                       >{{
-                        t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
+                        t(
+                          add
+                            ? "proxies.addToGroup"
+                            : "proxies.removeFromGroup",
+                        )
                       }}</v-btn
                     >
                   </template>

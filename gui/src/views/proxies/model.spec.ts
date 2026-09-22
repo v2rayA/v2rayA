@@ -233,7 +233,9 @@ describe("proxy node management", () => {
       id: 1,
     });
     expect(lib.saveText).toHaveBeenCalledWith(
-      expect.stringMatching(/^export-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.txt$/),
+      expect.stringMatching(
+        /^export-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.txt$/,
+      ),
       "vmess://north",
     );
     expect(lib.copyText).not.toHaveBeenCalled();

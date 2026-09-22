@@ -597,12 +597,12 @@ defineExpose({ sync });
           <p class="md3-body-medium my-4">
             {{ t("dashboard.noSubscriptions") }}
           </p>
-          <v-btn variant="text" @click="store.view = 'proxies'">{{
+          <v-btn variant="text" @click="store.view = 'subscriptions'">{{
             t("operations.import")
           }}</v-btn>
         </div>
         <div v-if="subscriptions.length > 2" class="dashboard-actions d-flex">
-          <v-btn variant="text" @click="store.view = 'proxies'">{{
+          <v-btn variant="text" @click="store.view = 'subscriptions'">{{
             t("dashboard.moreSubscriptions")
           }}</v-btn>
         </div>

@@ -47,6 +47,7 @@ onMounted(async () => {
 });
 
 async function save() {
+  if (saving.value) return;
   if (invalid.value) {
     notify.warning(t("tproxyWhiteIpGroups.invalidCustomIps"));
     return;

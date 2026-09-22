@@ -22,6 +22,7 @@ onMounted(async () => {
 });
 
 async function save() {
+  if (saving.value) return;
   saving.value = true;
   try {
     await putDomainsExcluded({ domains: domains.value });
