@@ -39,8 +39,11 @@ type Subscription struct {
 	AutoSelect bool                `json:"autoSelect"`
 }
 
+// NewUpdateStatus stamps a subscription update. RFC 3339 carries the zone, so
+// a browser in another zone than the service (a container in UTC, a router)
+// shows the moment, not one shifted by the difference.
 func NewUpdateStatus() SubscriptionStatus {
-	return SubscriptionStatus(time.Now().Local().Format("2006-1-2 15:04:05"))
+	return SubscriptionStatus(time.Now().Format(time.RFC3339))
 }
 
 /* Mapping []TouchServerRaw to []Server */
