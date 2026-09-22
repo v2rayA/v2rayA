@@ -4,7 +4,6 @@ import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import {
   mdiChevronDown,
-  mdiChevronRight,
   mdiContentCopy,
   mdiDownloadOutline,
   mdiMagnify,
