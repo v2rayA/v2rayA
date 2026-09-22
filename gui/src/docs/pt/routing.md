@@ -13,16 +13,16 @@ domain(geosite:cn) -> direct
 ip(geoip:private, geoip:cn) -> direct
 ```
 
-| Condição          | Corresponde a                                                                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Condição          | Corresponde a                                                                                                                                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `domain(...)`     | `domain:` o domínio e seus subdomínios, `full:` correspondência exata, `regexp:`, `geosite:<category>`, `ext:"file.dat:tag"`; um valor sem prefixo, como `example.com`, corresponde a qualquer domínio que contenha esse texto |
-| `ip(...)`         | um endereço, um CIDR (coloque IPv6 entre aspas: `ip("2001:db8::/32")`), `geoip:<code>`, `ext:"file.dat:tag"` |
-| `port(...)`       | portas e intervalos de destino, `port(80, 443, 1000-2000)` |
-| `sourcePort(...)` | portas de origem |
-| `network(...)`    | `tcp`, `udp` |
-| `protocol(...)`   | protocolo identificado pela inspeção: `http`, `tls`, `quic`, `bittorrent` (exige **Inspeção de tráfego** ativada) |
-| `source(...)`     | endereços e CIDRs de origem |
-| `inboundTag(...)` | a entrada pela qual a conexão chegou |
+| `ip(...)`         | um endereço, um CIDR (coloque IPv6 entre aspas: `ip("2001:db8::/32")`), `geoip:<code>`, `ext:"file.dat:tag"`                                                                                                                   |
+| `port(...)`       | portas e intervalos de destino, `port(80, 443, 1000-2000)`                                                                                                                                                                     |
+| `sourcePort(...)` | portas de origem                                                                                                                                                                                                               |
+| `network(...)`    | `tcp`, `udp`                                                                                                                                                                                                                   |
+| `protocol(...)`   | protocolo identificado pela inspeção: `http`, `tls`, `quic`, `bittorrent` (exige **Inspeção de tráfego** ativada)                                                                                                              |
+| `source(...)`     | endereços e CIDRs de origem                                                                                                                                                                                                    |
+| `inboundTag(...)` | a entrada pela qual a conexão chegou                                                                                                                                                                                           |
 
 ## Saídas
 

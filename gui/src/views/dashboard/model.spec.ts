@@ -260,9 +260,7 @@ describe("dashboard", () => {
     );
     await flushPromises();
     expect(useAppStore().outboundName).toBe("work");
-    expect(wrapper.get(".dashboard-connection").text()).toContain(
-      "Subscribed",
-    );
+    expect(wrapper.get(".dashboard-connection").text()).toContain("Subscribed");
   });
   test("prefers a pinned member, then the best alive probe, then a single member", async () => {
     const data = response();

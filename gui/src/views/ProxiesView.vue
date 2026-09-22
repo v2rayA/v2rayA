@@ -270,7 +270,11 @@ onMounted(sync);
                       :append-icon="mdiChevronDown"
                       :disabled="disabled"
                       >{{
-                        t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
+                        t(
+                          add
+                            ? "proxies.addToGroup"
+                            : "proxies.removeFromGroup",
+                        )
                       }}</v-btn
                     >
                   </template>

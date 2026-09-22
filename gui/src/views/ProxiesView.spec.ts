@@ -160,7 +160,9 @@ describe("unified proxies page", () => {
     );
     await flushPromises();
     expect(saveText).toHaveBeenCalledWith(
-      expect.stringMatching(/^export-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.txt$/),
+      expect.stringMatching(
+        /^export-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.txt$/,
+      ),
       "vmess://north",
     );
   });
@@ -180,7 +182,10 @@ describe("unified proxies page", () => {
     expect(bar.text()).toContain("More actions");
     expect(bar.text()).not.toContain("Delete");
     expect(bar.text()).not.toContain("Export");
-    await bar.findAll("button").find((b) => b.text() === "More actions")!.trigger("click");
+    await bar
+      .findAll("button")
+      .find((b) => b.text() === "More actions")!
+      .trigger("click");
     await flushPromises();
     expect(listItem("Add to proxy group")).toBeTruthy();
     expect(listItem("Remove from proxy group")).toBeTruthy();
