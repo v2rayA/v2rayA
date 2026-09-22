@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and usage help / 使用问题
+    url: https://github.com/v2rayA/v2rayA/discussions
+    about: How-to questions go to Discussions. / 使用问题请发到 Discussions。

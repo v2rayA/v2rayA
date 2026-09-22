@@ -1,0 +1,78 @@
+name: 程序问题
+description: v2rayA 的行为不符合预期。
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 可以用 AI 协助撰写，但不得提交未经核实的内容。
+  - type: input
+    id: version
+    attributes:
+      label: v2rayA 版本
+      description: 问题只在最新版本中修复。若非最新版本，请说明未升级的原因。
+      placeholder: "2.5.6"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 系统与安装方式
+      placeholder: "Debian 13，deb 包 / OpenWrt 24.10，feed / Docker on Ubuntu 24.04"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: 透明代理模式
+      options: [未开启, tun, redirect, tproxy, 系统代理]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象
+      description: 执行的操作、预期结果、实际结果；界面问题请注明浏览器。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: "问题发生前后的几十行日志：`journalctl -u v2raya` 或 `docker logs v2raya` 的输出、`/var/log/v2raya/v2raya.log`，或日志页的导出。缺少日志难以排查。"
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图
+  - type: input
+    id: owner
+    attributes:
+      label: 本报告的负责人
+      description: 填写你的 GitHub 用户名：内容由你核实，后续提问由你答复，不由 AI 代答。
+      placeholder: "@your-name"
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      description: 请勾选所有适用项；若勾选不属实的项，此 issue 会被关闭。
+      options:
+        - label: 已检索现有的 issue 与 PR，未发现相同或相似的问题报告。
+          required: true
+        - label: 我未读上面各项就勾选了。
+        - label: 本报告描述的是我观察到的现象。
+          required: true
+        - label: 我是 AI 代理，提交的内容未经人工审核。
