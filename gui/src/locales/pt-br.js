@@ -726,6 +726,8 @@ export default {
     LINK_EMPTY: "O link do servidor está vazio.",
     LINK_NO_SCHEME: "O link do servidor não tem esquema.",
     LINK_UNSUPPORTED_SCHEME: "Esquema de link não suportado: {scheme}",
+    LINK_UNSUPPORTED_CIPHER:
+      "Cifra não suportada: {cipher}; use aes-128-gcm, aes-256-gcm, chacha20-ietf-poly1305 ou um método 2022-blake3",
     LINK_MALFORMED: "Link {protocol} malformado: {detail}",
     SUBSCRIPTION_FETCH_FAILED:
       "Não foi possível obter a assinatura de {host}: {detail}",

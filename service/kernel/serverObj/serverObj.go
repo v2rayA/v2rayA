@@ -1,6 +1,7 @@
 package serverObj
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -89,6 +90,10 @@ func NewFromLink(name string, link string) (ServerObj, error) {
 	}
 	if creator, ok := fromLinkCreators[name]; ok {
 		obj, err := creator(link)
+		var coded *common.CodedError
+		if errors.As(err, &coded) {
+			return nil, err
+		}
 		if err != nil {
 			return nil, common.Coded("LINK_MALFORMED", err, map[string]interface{}{
 				"protocol": name,
