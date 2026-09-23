@@ -52,7 +52,7 @@ func (r *legacyRedirect) RemoveIPWhitelist(cidr string) {
 }
 
 func (r *legacyRedirect) GetSetupCommands() Setter {
-	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
+	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := legacySetupValues()
 	if err != nil {
 		return NewErrorSetter(err)
 	}
@@ -91,11 +91,7 @@ iptables -w 2 -t nat -A DNS_REDIRECT -p udp -j REDIRECT --to-port 52353
 	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
-	if len(whiteIpv4List) > 0 {
-		for _, v := range whiteIpv4List {
-			commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -d %s -j RETURN\n", v)
-		}
-	}
+	commands += legacyWhitelist4Marker + "\n"
 	commands += `
 iptables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345
 
@@ -111,7 +107,7 @@ iptables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
 iptables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
 iptables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 `
-	if IsIPv6Supported() {
+	if legacyIPv6Supported() {
 		commands += `
 ip6tables -w 2 -t nat -N TP_OUT
 ip6tables -w 2 -t nat -N TP_PRE
@@ -141,11 +137,7 @@ ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
 		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
-		if len(whiteIpv6List) > 0 {
-			for _, v := range whiteIpv6List {
-				commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -d %s -j RETURN\n", v)
-			}
-		}
+		commands += legacyWhitelist6Marker + "\n"
 		commands += `
 ip6tables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345
 
@@ -160,9 +152,7 @@ ip6tables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
 ip6tables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
 `
 	}
-	return Setter{
-		Cmds: withDnsModulePort(commands),
-	}
+	return newLegacyWhitelistSetter(withDnsModulePort(commands), "nat", whiteIpv4List, whiteIpv6List)
 }
 
 func (r *legacyRedirect) GetCleanCommands() Setter {
@@ -200,6 +190,9 @@ ip6tables -w 2 -t nat -F TP_RULE
 ip6tables -w 2 -t nat -X TP_RULE
 `
 	}
+	commands += `ipset destroy v2raya_white4 2>/dev/null || true
+ipset destroy v2raya_white6 2>/dev/null || true
+`
 	return Setter{
 		Cmds: withDnsModulePort(commands),
 	}

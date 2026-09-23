@@ -12,6 +12,16 @@ func IsCommandValid(command string) bool {
 	return err == nil
 }
 
+func ExecCommandWithInput(command string, args []string, input string) error {
+	cmd := exec.Command(command, args...)
+	cmd.Stdin = strings.NewReader(input)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ExecCommandWithInput: %s %s: %s: %w", command, strings.Join(args, " "), out, err)
+	}
+	return nil
+}
+
 func ExecCommands(commands string, stopWhenError bool) error {
 	lines := strings.Split(commands, "\n")
 	var e error
