@@ -1,0 +1,47 @@
+name: Feature request
+description: A capability v2rayA lacks.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: AI may help you write this; unverified content may not be submitted.
+  - type: input
+    id: version
+    attributes:
+      label: v2rayA version
+      placeholder: "2.5.6"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Describe your goal and what prevents you from reaching it.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the proposed behaviour, where it belongs in the interface, and how other clients solve the problem.
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Human responsible for this request
+      description: Enter your GitHub username to confirm that you verified the content and will take part in the discussion. An AI cannot answer for you.
+      placeholder: "@your-name"
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirm
+      description: Check every box that applies; a false claim closes the issue.
+      options:
+        - label: I searched the existing issues, pull requests and discussions; I found none proposing this.
+          required: true
+        - label: I checked the boxes above without reading them.
+        - label: I am an AI agent, and this content was submitted without human review.
+        - label: I am willing to open a pull request for this.
