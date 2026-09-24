@@ -63,7 +63,7 @@ func (t *legacyTproxy) RemoveIPWhitelist(cidr string) {
 }
 
 func (t *legacyTproxy) GetSetupCommands() Setter {
-	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
+	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := legacySetupValues()
 	if err != nil {
 		return NewErrorSetter(err)
 	}
@@ -120,11 +120,7 @@ iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 
-	if len(whiteIpv4List) > 0 {
-		for _, v := range whiteIpv4List {
-			commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
-		}
-	}
+	commands += legacyWhitelist4Marker + "\n"
 	commands += `
 iptables -w 2 -t mangle -A TP_RULE -j TP_MARK
 
@@ -136,7 +132,7 @@ iptables -w 2 -t mangle -A DNS_MARK -m mark --mark 0x80/0x80 -j RETURN
 iptables -w 2 -t mangle -A DNS_MARK -j MARK --set-xmark 0x40/0x40
 iptables -w 2 -t mangle -A DNS_MARK -j ACCEPT
 `
-	if IsIPv6Supported() {
+	if legacyIPv6Supported() {
 		commands += `
 ip -6 rule add fwmark 0x40/0xc0 table 100
 ip -6 route add local ::/0 dev lo table 100
@@ -188,11 +184,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
-		if len(whiteIpv6List) > 0 {
-			for _, v := range whiteIpv6List {
-				commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -d %s -j RETURN\n", v)
-			}
-		}
+		commands += legacyWhitelist6Marker + "\n"
 		commands += `
 ip6tables -w 2 -t mangle -A TP_RULE -j TP_MARK
 
@@ -205,9 +197,7 @@ ip6tables -w 2 -t mangle -A DNS_MARK -j MARK --set-xmark 0x40/0x40
 ip6tables -w 2 -t mangle -A DNS_MARK -j ACCEPT
 `
 	}
-	return Setter{
-		Cmds: withDnsModulePort(commands),
-	}
+	return newLegacyWhitelistSetter(withDnsModulePort(commands), "mangle", whiteIpv4List, whiteIpv6List)
 }
 
 func (t *legacyTproxy) GetCleanCommands() Setter {
@@ -255,7 +245,10 @@ ip6tables -w 2 -t mangle -D OUTPUT -p tcp --dport 53 -j DNS_MARK
 ip6tables -w 2 -t mangle -X DNS_MARK
 `
 	}
-	commands += "conntrack -D --mark 0x40 2>/dev/null || true\n"
+	commands += `conntrack -D --mark 0x40 2>/dev/null || true
+ipset destroy v2raya_white4 2>/dev/null || true
+ipset destroy v2raya_white6 2>/dev/null || true
+`
 	return Setter{
 		Cmds: withDnsModulePort(commands),
 	}
