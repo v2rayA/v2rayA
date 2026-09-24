@@ -715,6 +715,8 @@ export default {
     LINK_EMPTY: "Server link is empty.",
     LINK_NO_SCHEME: "Server link has no scheme.",
     LINK_UNSUPPORTED_SCHEME: "Unsupported link scheme: {scheme}",
+    LINK_UNSUPPORTED_CIPHER:
+      "Cipher {cipher} is not supported; use aes-128-gcm, aes-256-gcm, chacha20-ietf-poly1305 or a 2022-blake3 method",
     LINK_MALFORMED: "Malformed {protocol} link: {detail}",
     SUBSCRIPTION_FETCH_FAILED:
       "Could not fetch the subscription from {host}: {detail}",

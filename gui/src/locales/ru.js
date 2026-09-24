@@ -723,6 +723,8 @@ export default {
     LINK_EMPTY: "Ссылка на сервер пуста.",
     LINK_NO_SCHEME: "В ссылке на сервер отсутствует схема.",
     LINK_UNSUPPORTED_SCHEME: "Неподдерживаемая схема ссылки: {scheme}",
+    LINK_UNSUPPORTED_CIPHER:
+      "Неподдерживаемый шифр: {cipher}; используйте aes-128-gcm, aes-256-gcm, chacha20-ietf-poly1305 или метод 2022-blake3",
     LINK_MALFORMED: "Некорректная ссылка протокола {protocol}: {detail}",
     SUBSCRIPTION_FETCH_FAILED:
       "Не удалось получить подписку по адресу {host}: {detail}",

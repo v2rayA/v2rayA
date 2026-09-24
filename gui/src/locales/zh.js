@@ -698,6 +698,8 @@ export default {
     LINK_EMPTY: "节点链接为空。",
     LINK_NO_SCHEME: "节点链接缺少协议。",
     LINK_UNSUPPORTED_SCHEME: "不支持的链接协议：{scheme}",
+    LINK_UNSUPPORTED_CIPHER:
+      "不支持的加密方式：{cipher}。请改用 aes-128-gcm、aes-256-gcm、chacha20-ietf-poly1305 或 2022-blake3 系列",
     LINK_MALFORMED: "格式错误的 {protocol} 链接：{detail}",
     SUBSCRIPTION_FETCH_FAILED: "无法从 {host} 获取订阅：{detail}",
     SUBSCRIPTION_EMPTY: "订阅中没有节点。",

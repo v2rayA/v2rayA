@@ -118,7 +118,25 @@ func ParseSSURL(u string) (data *Shadowsocks, err error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: ss link payload is not method:password@host:port; expected ss://BASE64(method:password)@host:port or ss://method:password@host:port", ErrInvalidParameter)
 	}
+	if !ssCipherSupported(v.Cipher) {
+		return nil, common.Coded("LINK_UNSUPPORTED_CIPHER", fmt.Errorf("cipher %q is not supported by the core; use aes-128-gcm, aes-256-gcm, chacha20-ietf-poly1305, xchacha20-ietf-poly1305 or a 2022-blake3 method", v.Cipher), map[string]interface{}{"cipher": v.Cipher})
+	}
 	return v, nil
+}
+
+// ssCipherSupported lists what xray-core's shadowsocks outbound accepts
+// (infra/conf/shadowsocks.go): the AEAD ciphers and SS2022. The stream ciphers
+// (rc4-md5, aes-*-cfb, chacha20-ietf) and none/plain fail at core start.
+func ssCipherSupported(cipher string) bool {
+	switch cipher {
+	case "aes-128-gcm", "aes-256-gcm",
+		"chacha20-poly1305", "chacha20-ietf-poly1305",
+		"xchacha20-poly1305", "xchacha20-ietf-poly1305",
+		"aead_aes_128_gcm", "aead_aes_256_gcm", "aead_chacha20_poly1305", "aead_xchacha20_poly1305",
+		"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305":
+		return true
+	}
+	return false
 }
 
 func (s *Shadowsocks) ConfigurationMC(info PriorInfo) (c Configuration, err error) {

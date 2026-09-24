@@ -708,6 +708,8 @@ export default {
     LINK_EMPTY: "서버 링크 비어 있음.",
     LINK_NO_SCHEME: "서버 링크에 스킴 없음.",
     LINK_UNSUPPORTED_SCHEME: "지원되지 않는 링크 스킴: {scheme}",
+    LINK_UNSUPPORTED_CIPHER:
+      "지원되지 않는 암호화 방식: {cipher}. aes-128-gcm, aes-256-gcm, chacha20-ietf-poly1305 또는 2022-blake3 방식을 사용하세요",
     LINK_MALFORMED: "잘못된 {protocol} 링크: {detail}",
     SUBSCRIPTION_FETCH_FAILED: "{host}에서 구독 가져오기 실패: {detail}",
     SUBSCRIPTION_EMPTY: "구독에 서버 없음.",

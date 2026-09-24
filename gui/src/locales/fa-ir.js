@@ -713,6 +713,8 @@ export default {
     LINK_EMPTY: "پیوند سرور خالی است.",
     LINK_NO_SCHEME: "پیوند سرور فاقد scheme است.",
     LINK_UNSUPPORTED_SCHEME: "طرح پیوند پشتیبانی نمی‌شود: {scheme}",
+    LINK_UNSUPPORTED_CIPHER:
+      "رمزنگاری پشتیبانی نمی‌شود: {cipher}؛ از aes-128-gcm، aes-256-gcm، chacha20-ietf-poly1305 یا روش‌های 2022-blake3 استفاده کنید",
     LINK_MALFORMED: "پیوند {protocol} ساختار نادرستی دارد: {detail}",
     SUBSCRIPTION_FETCH_FAILED: "دریافت اشتراک از {host} ناموفق بود: {detail}",
     SUBSCRIPTION_EMPTY: "اشتراک شامل هیچ سروری نیست.",

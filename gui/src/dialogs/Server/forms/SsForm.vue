@@ -15,8 +15,7 @@ const methods = [
   "aes-256-gcm",
   "chacha20-poly1305",
   "chacha20-ietf-poly1305",
-  "plain",
-  "none",
+  "xchacha20-ietf-poly1305",
 ];
 const plugins = computed(() => [
   { value: "", title: t("setting.options.off") },

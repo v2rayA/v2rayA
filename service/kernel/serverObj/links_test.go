@@ -302,3 +302,18 @@ func TestVmessNumericPortAndAid(t *testing.T) {
 		t.Fatalf("port = %d", obj.GetPort())
 	}
 }
+
+func TestSSRejectsCiphersTheCoreRefuses(t *testing.T) {
+	for _, m := range []string{"rc4-md5", "aes-128-cfb", "aes-256-cfb", "chacha20-ietf", "none", "plain"} {
+		link := "ss://" + base64.RawURLEncoding.EncodeToString([]byte(m+":pw")) + "@1.2.3.4:8388#n"
+		if _, err := NewFromLink("ss", link); err == nil || !strings.Contains(err.Error(), "not supported by the core") {
+			t.Errorf("%s: err = %v", m, err)
+		}
+	}
+	for _, m := range []string{"aes-128-gcm", "chacha20-ietf-poly1305", "2022-blake3-aes-128-gcm"} {
+		link := "ss://" + base64.RawURLEncoding.EncodeToString([]byte(m+":pw")) + "@1.2.3.4:8388#n"
+		if _, err := NewFromLink("ss", link); err != nil {
+			t.Errorf("%s: %v", m, err)
+		}
+	}
+}
