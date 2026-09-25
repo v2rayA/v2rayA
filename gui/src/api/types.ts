@@ -43,6 +43,7 @@ export interface TouchSubscription {
   updateMode?: "disabled" | "on_start" | "at_interval" | "interval_failsafe";
   updateIntervalMinutes?: number;
   failureIntervalMinutes?: number;
+  allowDirectRecovery?: boolean;
 }
 
 /** touch.Touch */

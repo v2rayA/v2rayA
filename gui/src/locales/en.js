@@ -132,11 +132,15 @@ export default {
     },
     updateModeHelp: {
       disabled: "The subscription changes only when you update it manually.",
-      onStart: "Updates the subscription once whenever v2rayA starts.",
+      onStart:
+        "Updates once whenever v2rayA starts and once immediately when you change the address or update policy.",
       interval: "Updates on startup and then at the configured interval.",
       intervalFailsafe:
         "Updates on startup and at the regular interval. If every server becomes unavailable, retries at the failure interval until one works.",
     },
+    allowDirectRecovery: "Ignore subscription download routing during recovery",
+    recoveryRouteHelp:
+      "Allows a direct download if recovery through the configured proxy fails. Manual and regular updates keep their selected route. Direct attempts are logged; your network can see the subscription service address.",
     updateIntervalMinutes: "Regular interval (minutes)",
     regularHelp: "Required. Enter a whole number of minutes, at least 1.",
     failureIntervalMinutes: "Failure retry (minutes)",

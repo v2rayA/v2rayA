@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/tidwall/gjson"
@@ -122,6 +123,49 @@ func TestBoltImportMigratesAllSubscriptionUpdateModes(t *testing.T) {
 
 func assertSubscriptionPolicy(t *testing.T, database *sql.DB, mode string, minutes, autoSelect int) {
 	assertSubscriptionPolicyValues(t, database, mode, minutes, 1, autoSelect)
+	var direct bool
+	if err := database.QueryRow("SELECT allow_direct_recovery FROM subscriptions").Scan(&direct); err != nil {
+		t.Fatal(err)
+	}
+	if direct {
+		t.Fatal("legacy migration enabled direct downloads without consent")
+	}
+}
+
+func TestDirectRecoveryMigrationDoesNotChangeExistingPolicy(t *testing.T) {
+	database, err := sql.Open(sqliteDriverName, ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	database.SetMaxOpenConns(1)
+	oldSchema := strings.Replace(schemaSQL, "    allow_direct_recovery INTEGER NOT NULL DEFAULT 0,\n", "", 1)
+	if _, err := database.Exec(oldSchema); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Exec("INSERT INTO subscriptions (address, update_mode, update_interval_minutes, failure_interval_minutes) VALUES ('https://example.test/sub', 'interval_failsafe', 10, 2)"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Exec("INSERT INTO system_config (key, value) VALUES (?, '1')", subscriptionUpdateMigrationKey); err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateSchema(database); err != nil {
+		t.Fatal(err)
+	}
+	assertSubscriptionPolicyValues(t, database, "interval_failsafe", 10, 2, 0)
+	var allowed bool
+	if err := database.QueryRow("SELECT allow_direct_recovery FROM subscriptions").Scan(&allowed); err != nil || allowed {
+		t.Fatalf("upgrade opted in to direct recovery: allowed=%v err=%v", allowed, err)
+	}
+	if _, err := database.Exec("UPDATE subscriptions SET allow_direct_recovery = 1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateSchema(database); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.QueryRow("SELECT allow_direct_recovery FROM subscriptions").Scan(&allowed); err != nil || !allowed {
+		t.Fatalf("restart reset explicit consent: allowed=%v err=%v", allowed, err)
+	}
 }
 
 func assertSubscriptionPolicyValues(t *testing.T, database *sql.DB, mode string, minutes, failure, autoSelect int) {

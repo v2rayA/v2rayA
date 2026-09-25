@@ -132,11 +132,16 @@ export default {
     },
     updateModeHelp: {
       disabled: "A assinatura muda apenas quando você a atualiza manualmente.",
-      onStart: "Atualiza a assinatura uma vez sempre que o v2rayA inicia.",
+      onStart:
+        "Atualiza uma vez a cada início do v2rayA e imediatamente ao alterar o endereço ou a política de atualização.",
       interval: "Atualiza ao iniciar e depois no intervalo configurado.",
       intervalFailsafe:
         "Atualiza ao iniciar e no intervalo regular. Se todos os servidores da assinatura ficarem indisponíveis, repete no intervalo de falha até que um funcione.",
     },
+    allowDirectRecovery:
+      "Ignorar a rota de download da assinatura durante a recuperação",
+    recoveryRouteHelp:
+      "Permite download direto se a recuperação pelo proxy configurado falhar. Atualizações manuais e regulares mantêm a rota escolhida. Tentativas diretas são registradas; a rede pode ver o endereço do serviço de assinatura.",
     updateIntervalMinutes: "Intervalo regular (minutos)",
     regularHelp:
       "Obrigatório. Digite um número inteiro de minutos, no mínimo 1.",
