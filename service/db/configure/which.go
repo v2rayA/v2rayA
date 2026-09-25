@@ -1,6 +1,7 @@
 package configure
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -237,6 +238,13 @@ func (w *NodeRef) EqualTo(another NodeRef) (ok bool) {
 	}
 }
 func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
+	return w.PingWithDialer(loc, timeout, &net.Dialer{Timeout: timeout})
+}
+
+// PingWithDialer lets callers select how both DNS and the TCP connection
+// leave the host. The dashboard uses this to keep transparent interception
+// installed while its own probe sockets bypass it.
+func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.Dialer) (err error) {
 	if w.TYPE == SubscriptionType {
 		return fmt.Errorf("you cannot ping a subscription")
 	}
@@ -248,7 +256,13 @@ func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 	host := tsr.ServerObj.GetHostname()
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		hosts, err = resolv.LookupHost(host)
+		if dialer.Resolver == nil {
+			hosts, err = resolv.LookupHost(host)
+		} else {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			hosts, err = dialer.Resolver.LookupHost(ctx, host)
+			cancel()
+		}
 		if err != nil || len(hosts) <= 0 {
 			if err != nil {
 				w.Latency = err.Error()
@@ -260,7 +274,7 @@ func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 		host = hosts[0]
 	}
 	t := time.Now()
-	conn, e := net.DialTimeout("tcp", net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort())), timeout)
+	conn, e := dialer.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort())))
 	if e == nil {
 		_ = conn.Close()
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
