@@ -141,7 +141,7 @@ func TestSubscriptionPatchWithoutPolicyKeepsPolicy(t *testing.T) {
 	if err := configure.SetSubscription(0, sub); err != nil {
 		t.Fatal(err)
 	}
-	request := touch.Subscription{ID: 1, Address: sub.Address, Remarks: "cached client", AutoSelect: sub.AutoSelect}
+	request := touch.Subscription{ID: 1, Address: sub.Address, Remarks: "cached client"}
 	if err := ModifySubscriptionRemark(request); err != nil {
 		t.Fatal(err)
 	}
@@ -177,5 +177,99 @@ func TestFailsafeProbeCannotMutateStoredNode(t *testing.T) {
 	a.step(context.Background())
 	if got := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL(); got != want {
 		t.Fatalf("probe mutated stored node: %q != %q", got, want)
+	}
+}
+
+func TestAutomaticGroupUsesWholeCatalogWithoutMutatingIt(t *testing.T) {
+	resetSubscription(t)
+	raw, err := ResolveURL("vless://00000000-0000-0000-0000-000000000001@example.com:443?type=raw&security=none#raw")
+	if err != nil {
+		t.Fatal(err)
+	}
+	grpc, err := ResolveURL("vless://00000000-0000-0000-0000-000000000002@example.net:443?type=grpc&security=none#grpc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sub := configure.GetSubscription(0)
+	sub.Servers = []configure.ServerRaw{{ServerObj: raw}, {ServerObj: grpc}}
+	if err := configure.SetSubscription(0, sub); err != nil {
+		t.Fatal(err)
+	}
+	serverIndex := configure.GetLenServers()
+	standalone := &configure.ServerRaw{ServerObj: testServer(t, 10009)}
+	if err := configure.AppendServers([]*configure.ServerRaw{standalone}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.RemoveServers([]int{serverIndex}) })
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd, setting.ProbeInterval = true, "300s"
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	wantRaw := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL()
+	wantGRPC := configure.GetSubscription(0).Servers[1].ServerObj.ExportToURL()
+
+	a := newAutomation()
+	now := time.Unix(2000, 0)
+	a.now = func() time.Time { return now }
+	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		for _, node := range nodes {
+			if v, ok := node.(*serverObj.V2Ray); ok {
+				v.Net = "tcp"
+				v.Path = "GunService"
+			}
+		}
+		return make([]subscriptionProbeResult, len(nodes))
+	}
+	var applied []configure.NodeRef
+	a.applyGroup = func(_ string, refs []configure.NodeRef) error {
+		applied = append([]configure.NodeRef(nil), refs...)
+		return nil
+	}
+	a.step(context.Background())
+	if len(applied) != 3 {
+		t.Fatalf("automatic group received %d members; want standalone and two subscription nodes", len(applied))
+	}
+	stored := configure.GetSubscription(0)
+	if got := stored.Servers[0].ServerObj.ExportToURL(); got != wantRaw {
+		t.Fatalf("raw probe mutated catalog: %q != %q", got, wantRaw)
+	}
+	if got := stored.Servers[1].ServerObj.ExportToURL(); got != wantGRPC {
+		t.Fatalf("gRPC probe mutated catalog: %q != %q", got, wantGRPC)
+	}
+	if got := a.groups["proxy"].next.Sub(now); got != 300*time.Second {
+		t.Fatalf("next group check = %s; want 300s", got)
+	}
+}
+
+func TestAutomaticGroupApplyFailureUsesBackoff(t *testing.T) {
+	resetSubscription(t)
+	if err := configure.ClearConnects("proxy"); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd, setting.ProbeInterval = true, "1s"
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	now := time.Unix(3000, 0)
+	a.now = func() time.Time { return now }
+	probes := 0
+	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		probes++
+		return make([]subscriptionProbeResult, len(nodes))
+	}
+	a.applyGroup = func(string, []configure.NodeRef) error { return errors.New("injected apply failure") }
+	a.step(context.Background())
+	now = now.Add(29 * time.Second)
+	a.step(context.Background())
+	if probes != 1 {
+		t.Fatalf("apply failure retried early: %d probes", probes)
+	}
+	now = now.Add(time.Second)
+	a.step(context.Background())
+	if probes != 2 {
+		t.Fatalf("apply failure did not retry after backoff: %d probes", probes)
 	}
 }

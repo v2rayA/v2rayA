@@ -149,9 +149,6 @@ export default {
     remarks: "Observações",
     numberServers: "Número de servidores",
     subscription: "Assinatura",
-    autoSelect:
-      "Conectar automaticamente a novos servidores da assinatura após uma atualização automática",
-    autoSelectLabel: "Seleção automática",
     updated: "Assinatura atualizada",
     saved: "Assinatura salva",
     saveFailed: "Falha ao salvar a assinatura: {message}",
@@ -593,6 +590,11 @@ export default {
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Adicionar servidores disponíveis automaticamente",
+    autoAddHelp:
+      "Mantém servidores disponíveis de toda a lista de Proxies, incluindo todas as assinaturas.",
+    autoAddDetails:
+      "Verifica após mudanças na lista e a cada intervalo de teste. Remove membros indisponíveis. Um grupo vazio bloqueia seu tráfego.",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',

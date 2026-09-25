@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
-import { VSelect, VSwitch } from "vuetify/components";
+import { VSelect } from "vuetify/components";
 import type * as Api from "@/api";
 import { patchSubscription } from "@/api";
 import { mountWithApp } from "@/test/mount";
@@ -26,7 +26,6 @@ const subscription = {
   address: "https://example.test/sub",
   remarks: "keep",
   servers: [],
-  autoSelect: false,
   updateMode: "disabled" as const,
   updateIntervalMinutes: 0,
   failureIntervalMinutes: 1,
@@ -37,7 +36,7 @@ test("offers four modes and only shows fields required by the mode", async () =>
   const mode = wrapper.findComponent(VSelect);
   expect(mode.props("items")).toHaveLength(4);
   expect(wrapper.findAll('input[type="number"]')).toHaveLength(0);
-  expect(wrapper.findAllComponents(VSwitch)).toHaveLength(1);
+  expect(wrapper.text()).not.toContain("Automatically connect to new servers");
 
   mode.vm.$emit("update:modelValue", "at_interval");
   await flushPromises();

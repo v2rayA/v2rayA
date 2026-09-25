@@ -65,3 +65,9 @@ Each subscription has its own update mode:
 Failed or empty downloads keep the saved server list. A failure retry does not postpone the regular schedule, and a slow pass never overlaps another pass. On Linux, recovery downloads use marked sockets so transparent proxying cannot route them back into a failed proxy. This bypass is not guaranteed for TUN mode on macOS or Windows. Candidate checks may start temporary core processes, but automatic updates do not start a manually stopped main core.
 
 On upgrade, the previous global **update on start** mode is assigned to every existing subscription as **On service start**. The previous interval mode becomes **At an interval** with the same interval converted from hours to minutes. Fail-safe recovery is never enabled during migration; select it explicitly where needed.
+
+## Automatic proxy-group membership
+
+Enable **Automatically add available servers** in a proxy group's settings to manage that group's members from the entire **Proxies** catalog, including local servers and every subscription. The group is checked after catalog changes and at its probe interval; a newly enabled automatic group defaults to `300s`. Available servers are added and unavailable servers are removed. While enabled, the automatic worker owns the member list. Turning it off preserves the last result and restores manual editing.
+
+If no server is available, only traffic assigned to that group is sent to a blocking outbound. Other groups and direct routes keep working, and transparent interception remains active, so the outage cannot silently bypass the proxy. On upgrade, the old per-subscription auto-select option enables automatic membership for `PROXY` when at least one subscription used it.

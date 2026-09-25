@@ -37,15 +37,20 @@ func TestSQLiteSubscriptionUpdatePolicyMigration(t *testing.T) {
 			if err := MigrateSchema(database); err != nil {
 				t.Fatal(err)
 			}
-			assertSubscriptionPolicy(t, database, test.want, test.minutes, 1)
+			assertSubscriptionPolicy(t, database, test.want, test.minutes, 0)
+			assertAutomaticProxySetting(t, database, true, "300s")
 
-			if _, err := database.Exec("UPDATE subscriptions SET update_mode='interval_failsafe', update_interval_minutes=11, failure_interval_minutes=2"); err != nil {
+			if _, err := database.Exec(`
+				UPDATE subscriptions SET update_mode='interval_failsafe', update_interval_minutes=11, failure_interval_minutes=2;
+				UPDATE system_config SET value='{"probeURL":"https://example.test/check","probeInterval":"90s","type":"leastping","autoAdd":false}' WHERE key='outbound.proxy:setting'
+			`); err != nil {
 				t.Fatal(err)
 			}
 			if err := MigrateSchema(database); err != nil {
 				t.Fatal(err)
 			}
-			assertSubscriptionPolicyValues(t, database, "interval_failsafe", 11, 2, 1)
+			assertSubscriptionPolicyValues(t, database, "interval_failsafe", 11, 2, 0)
+			assertAutomaticProxySetting(t, database, false, "90s")
 		})
 	}
 }
@@ -98,6 +103,9 @@ func TestBoltImportMigratesAllSubscriptionUpdateModes(t *testing.T) {
 			if err := migrateSubscriptionUpdatePolicy(tx); err != nil {
 				t.Fatal(err)
 			}
+			if err := migrateAutoSelectToAutomaticGroup(tx); err != nil {
+				t.Fatal(err)
+			}
 			if err := tx.Commit(); err != nil {
 				t.Fatal(err)
 			}
@@ -108,7 +116,8 @@ func TestBoltImportMigratesAllSubscriptionUpdateModes(t *testing.T) {
 			} else if legacy == "auto_update_at_intervals" {
 				want, minutes = "at_interval", 420
 			}
-			assertSubscriptionPolicy(t, database, want, minutes, 1)
+			assertSubscriptionPolicy(t, database, want, minutes, 0)
+			assertAutomaticProxySetting(t, database, true, "300s")
 			var setting string
 			if err := database.QueryRow("SELECT value FROM system_config WHERE key='system:setting'").Scan(&setting); err != nil {
 				t.Fatal(err)
@@ -117,6 +126,41 @@ func TestBoltImportMigratesAllSubscriptionUpdateModes(t *testing.T) {
 				t.Fatalf("legacy mode was not reset: %q", got)
 			}
 		})
+	}
+}
+
+func TestAutoSelectMigrationLeavesManualProxyAloneWhenUnused(t *testing.T) {
+	database, err := sql.Open(sqliteDriverName, ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	database.SetMaxOpenConns(1)
+	if _, err := database.Exec(`
+		CREATE TABLE system_config (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+		CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, address TEXT, remarks TEXT, auto_select INTEGER);
+		INSERT INTO subscriptions VALUES (1, 'https://example.test/sub', '', 0);
+		INSERT INTO system_config VALUES ('outbound.proxy:setting', '{"probeURL":"https://example.test/check","probeInterval":"60s","type":"leastping"}')
+	`); err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateSchema(database); err != nil {
+		t.Fatal(err)
+	}
+	assertAutomaticProxySetting(t, database, false, "60s")
+}
+
+func assertAutomaticProxySetting(t *testing.T, database *sql.DB, enabled bool, interval string) {
+	t.Helper()
+	var setting string
+	if err := database.QueryRow("SELECT value FROM system_config WHERE key='outbound.proxy:setting'").Scan(&setting); err != nil {
+		t.Fatal(err)
+	}
+	if got := gjson.Get(setting, "autoAdd").Bool(); got != enabled {
+		t.Fatalf("autoAdd = %v; want %v (%s)", got, enabled, setting)
+	}
+	if got := gjson.Get(setting, "probeInterval").String(); got != interval {
+		t.Fatalf("probeInterval = %q; want %q (%s)", got, interval, setting)
 	}
 }
 

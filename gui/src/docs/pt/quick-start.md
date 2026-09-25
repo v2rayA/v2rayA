@@ -65,3 +65,9 @@ Cada assinatura tem seu próprio modo de atualização:
 Downloads com erro ou vazios preservam a lista de servidores salva. Uma tentativa de recuperação não adia a programação regular, e uma execução demorada nunca ocorre em paralelo com a próxima. No Linux, os downloads de recuperação usam conexões marcadas para que o proxy transparente não os encaminhe de volta ao proxy com falha. Esse desvio não é garantido no modo TUN do macOS ou Windows. As verificações podem iniciar processos temporários do núcleo, mas a atualização automática não inicia o núcleo principal que o usuário parou manualmente.
 
 Na atualização, o modo global antigo **ao iniciar** é atribuído a todas as assinaturas existentes como **Ao iniciar o serviço**. O modo antigo por intervalo passa a **Em um intervalo**, com as horas convertidas em minutos. A recuperação de falha nunca é ativada pela migração; selecione-a manualmente onde for necessária.
+
+## Associação automática do grupo de proxy
+
+Ative **Adicionar servidores disponíveis automaticamente** nas configurações de um grupo para gerenciar seus membros usando toda a lista de **Proxies**, incluindo servidores locais e todas as assinaturas. A verificação ocorre após mudanças no catálogo e no intervalo do grupo; um grupo automático recém-ativado usa `300s` por padrão. Servidores disponíveis são adicionados e indisponíveis são removidos. Enquanto a opção estiver ativa, o processo automático controla a lista. Ao desativá-la, o último resultado é preservado e a edição manual volta a funcionar.
+
+Se nenhum servidor estiver disponível, somente o tráfego atribuído a esse grupo usa uma saída de bloqueio. Outros grupos e rotas diretas continuam funcionando, e a interceptação transparente permanece ativa, evitando que a falha provoque acesso direto silencioso. Na atualização, a antiga seleção automática por assinatura ativa a associação automática do grupo `PROXY` quando pelo menos uma assinatura a utilizava.

@@ -19,7 +19,6 @@ import (
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj/clash"
 	"github.com/v2rayA/v2rayA/kernel/touch"
@@ -334,7 +333,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 				copy.ID = 0
 			}
 			if copy.ID == 0 {
-				if disconnect {
+				if disconnect || configure.GetOutboundSetting(ref.Outbound).AutoAdd {
 					affected = true
 					continue
 				}
@@ -436,7 +435,6 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 		return fmt.Errorf("unknown subscription update mode %q", mode)
 	}
 	raw.Remarks, raw.Address = subscription.Remarks, subscription.Address
-	raw.AutoSelect = subscription.AutoSelect
 	raw.UpdateMode, raw.UpdateIntervalMinutes, raw.FailureIntervalMinutes = mode, regular, failure
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
@@ -446,80 +444,4 @@ func subscriptionHTTPClient() *http.Client {
 		return directSubscriptionClient()
 	}
 	return httpClient.GetHttpClientAutomatically()
-}
-
-func SelectServersFromSubscription(index int, shouldDisconnect bool) error {
-	const outbound = "proxy"
-	if shouldDisconnect {
-		connections := configure.GetConnectedServersByOutbound(outbound)
-		if connections == nil {
-			return nil
-		}
-		remaining := make([]configure.NodeRef, 0, connections.Len())
-		found := false
-		for _, connected := range connections.Get() {
-			if connected.TYPE == configure.SubscriptionServerType && connected.Sub == index {
-				found = true
-				continue
-			}
-			remaining = append(remaining, *connected)
-		}
-		if !found {
-			return nil
-		}
-		return ReplaceOutboundConnections(outbound, remaining)
-	}
-
-	sub := configure.GetSubscription(index)
-	if sub == nil {
-		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
-	}
-	backup := configure.GetConnectedServersByOutbound(outbound)
-	var existing []*configure.NodeRef
-	if backup != nil {
-		existing = backup.Get()
-	}
-	members := autoSelectMembers(index, sub, existing)
-	if len(members) == len(existing) {
-		return nil
-	}
-	if err := checkSupport(nil); err != nil {
-		return err
-	}
-	if setting := GetSetting(); setting.IpForward != ipforward.IsIpForwardOn() {
-		if err := ipforward.WriteIpForward(setting.IpForward); err != nil {
-			log.Warn("[AutoSelect] %v", err)
-		}
-	}
-	if err := ReplaceOutboundConnections(outbound, members); err != nil {
-		return err
-	}
-	if !v2ray.ProcessManager.Running() {
-		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			if backup != nil && backup.Len() > 0 {
-				_ = configure.OverwriteConnects(backup)
-			} else {
-				_ = configure.ClearConnects(outbound)
-			}
-			return err
-		}
-	}
-	return nil
-}
-
-func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.NodeRef) []configure.NodeRef {
-	members := make([]configure.NodeRef, 0, len(existing)+len(sub.Servers))
-	for _, connected := range existing {
-		members = append(members, *connected)
-	}
-	for i, server := range sub.Servers {
-		if server.ServerObj == nil {
-			continue
-		}
-		if supported, _ := isSupportedObj(server.ServerObj); !supported {
-			continue
-		}
-		members = append(members, configure.NodeRef{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
-	}
-	return members
 }

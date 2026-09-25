@@ -146,8 +146,6 @@ export default {
     remarks: "별칭",
     numberServers: "서버 수",
     subscription: "구독",
-    autoSelect: "구독 자동 업데이트 후 새 서버에 자동으로 연결",
-    autoSelectLabel: "자동 선택",
     updated: "구독 업데이트됨",
     saved: "구독 저장됨",
     saveFailed: "구독 저장 실패: {message}",
@@ -577,6 +575,11 @@ export default {
     saveFailed: "RoutingA 저장 실패: {message}",
   },
   outbound: {
+    autoAdd: "사용 가능한 서버 자동 추가",
+    autoAddHelp:
+      "모든 구독을 포함한 전체 프록시 목록에서 사용 가능한 서버로 그룹을 구성합니다.",
+    autoAddDetails:
+      "목록 변경 후 및 검사 간격마다 확인합니다. 불가능한 구성원을 제거하며 빈 그룹은 해당 트래픽을 차단합니다.",
     addMessage: "추가할 프록시 그룹 이름을 입력하세요:",
     deleteMessage:
       '프록시 그룹 "{outboundName}"을(를) 삭제하시겠습니까? 해당 그룹의 노드 연결이 해제됩니다. 이 작업은 취소할 수 없습니다.',

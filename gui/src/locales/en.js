@@ -148,9 +148,6 @@ export default {
     remarks: "Remarks",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect:
-      "Automatically connect to new servers from the subscription after an automatic update of the subscription",
-    autoSelectLabel: "Auto-select",
     updated: "Subscription updated",
     saved: "Subscription saved",
     saveFailed: "Failed to save subscription: {message}",
@@ -585,6 +582,11 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Automatically add available servers",
+    autoAddHelp:
+      "Keeps available servers from the entire Proxies list, including all subscriptions.",
+    autoAddDetails:
+      "Checks after catalog updates and at the probe interval. Removes unavailable members. An empty group blocks its traffic.",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',

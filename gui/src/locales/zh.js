@@ -144,8 +144,6 @@ export default {
     remarks: "别名",
     numberServers: "节点数",
     subscription: "订阅",
-    autoSelect: "自动更新订阅后，自动连接该订阅中的新节点",
-    autoSelectLabel: "自动选择",
     updated: "订阅已更新",
     saved: "订阅已保存",
     saveFailed: "无法保存订阅：{message}",
@@ -568,6 +566,10 @@ export default {
     saveFailed: "无法保存 RoutingA：{message}",
   },
   outbound: {
+    autoAdd: "自动添加可用服务器",
+    autoAddHelp: "从代理页面的完整列表（包括所有订阅）中保留可用服务器。",
+    autoAddDetails:
+      "在列表更新后和每个探测周期检查，移除不可用成员。空组阻止其流量。",
     addMessage: "请输入你想要添加的代理分组名称：",
     deleteMessage:
       '确定删除代理分组 "{outboundName}"？其中的节点将断开，此操作不可撤销。',

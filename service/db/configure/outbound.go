@@ -11,6 +11,7 @@ const (
 )
 
 type OutboundSetting struct {
+	AutoAdd       bool            `json:"autoAdd"`
 	ProbeURL      string          `json:"probeURL"`
 	ProbeInterval string          `json:"probeInterval"`
 	Type          ObservatoryType `json:"type"`
@@ -19,6 +20,15 @@ type OutboundSetting struct {
 	// that matches no member is ignored, so a removed or renamed node
 	// falls back to balancing instead of breaking the group.
 	Selected string `json:"selected,omitempty"`
+}
+
+func HasAutomaticGroup() bool {
+	for _, name := range GetOutbounds() {
+		if GetOutboundSetting(name).AutoAdd {
+			return true
+		}
+	}
+	return false
 }
 
 // DefaultOutboundSetting returns an OutboundSetting with default values.

@@ -119,6 +119,9 @@ func MigrateSchema(db *sql.DB) error {
 	if err := migrateSubscriptionUpdatePolicy(tx); err != nil {
 		return err
 	}
+	if err := migrateAutoSelectToAutomaticGroup(tx); err != nil {
+		return err
+	}
 	return tx.Commit()
 }
 

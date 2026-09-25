@@ -51,6 +51,7 @@ func resetSubscription(t *testing.T) *configure.SubscriptionRaw {
 		}
 		_ = configure.SetRunning(false)
 		_ = configure.SetLastKernelExitStatus(configure.LastKernelExitStopped)
+		_ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting())
 	})
 	for _, out := range configure.GetOutbounds() {
 		if err := configure.ClearConnects(out); err != nil {
@@ -104,6 +105,35 @@ func TestSubscriptionDownloadFailuresPreserveState(t *testing.T) {
 				t.Fatal("download failure changed state")
 			}
 		})
+	}
+}
+
+func TestAutomaticGroupDropsEveryRemovedSubscriptionReference(t *testing.T) {
+	old := resetSubscription(t)
+	old.Servers = []configure.ServerRaw{
+		{ServerObj: namedTestServer(t, 11001, "old-one")},
+		{ServerObj: namedTestServer(t, 11002, "old-two")},
+	}
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd = true
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	refs := configure.NewNodeRefs(nil)
+	refs.Add(configure.NodeRef{TYPE: configure.SubscriptionServerType, Sub: 0, ID: 1, Outbound: "proxy"})
+	refs.Add(configure.NodeRef{TYPE: configure.SubscriptionServerType, Sub: 0, ID: 2, Outbound: "proxy"})
+	if err := configure.OverwriteConnects(refs); err != nil {
+		t.Fatal(err)
+	}
+	newNodes := []serverObj.ServerObj{namedTestServer(t, 12001, "replacement")}
+	if err := storeSubscriptionUpdate(0, old, newNodes, "", false); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetConnectedServersByOutbound("proxy"); got != nil && got.Len() != 0 {
+		t.Fatalf("automatic group retained stale references: %+v", got.Get())
 	}
 }
 

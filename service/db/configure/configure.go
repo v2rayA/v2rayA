@@ -179,6 +179,9 @@ func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
 	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
 		outboundRefs := make(map[string][]*NodeRef)
+		for _, ref := range GetConnectedServers().Get() {
+			outboundRefs[ref.Outbound] = nil
+		}
 		for _, ref := range ws.Get() {
 			outboundRefs[ref.Outbound] = append(outboundRefs[ref.Outbound], ref)
 		}

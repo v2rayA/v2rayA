@@ -38,7 +38,6 @@ function createNodes() {
         address: "https://example/sub",
         status: "2026-09-19",
         info: "",
-        autoSelect: false,
         servers: [{ ...row(1), _type: "subscriptionServer", sub: 0 }],
       },
     ],

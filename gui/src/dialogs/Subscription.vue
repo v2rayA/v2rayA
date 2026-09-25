@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Subscription refresh policy and the existing PROXY auto-selection option.
+// Subscription refresh policy.
 import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { patchSubscription } from "@/api";
@@ -135,11 +135,6 @@ async function save() {
             persistent-hint
           />
         </div>
-        <v-switch
-          v-model="form.autoSelect"
-          :label="t('subscription.autoSelect')"
-          hide-details
-        />
       </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

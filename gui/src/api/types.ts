@@ -39,7 +39,6 @@ export interface TouchSubscription {
   status: string;
   info: string;
   servers: TouchServer[];
-  autoSelect: boolean;
   updateMode?: "disabled" | "on_start" | "at_interval" | "interval_failsafe";
   updateIntervalMinutes?: number;
   failureIntervalMinutes?: number;
