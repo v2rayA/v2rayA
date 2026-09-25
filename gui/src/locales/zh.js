@@ -119,18 +119,18 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
-    alwaysFirst: "始终使用第一个服务器",
-    selectionHelp:
-      "关闭：选择可用服务器并保留现有组负载均衡。开启：使用列表首项，即使不可用。",
-    monitor: "自动恢复失败的连接",
-    monitorHelp: "持续失败一分钟后更新订阅并重试。默认关闭；尊重手动停止。",
+    autoUpdate: "自动更新订阅",
+    autoUpdateHelp: "仅更新服务器列表。请在代理组中设置自动添加节点。",
+    updateIntervalMinutes: "定时更新（分钟）",
+    regularHelp: "必填。0 表示禁用定时更新。",
+    failureIntervalMinutes: "故障重试（分钟）",
+    failureHelp: "必填，至少 1 分钟。所有服务器不可用时更新；任一服务器恢复后停止重试。",
+    intervalInvalid: "请输入 {minimum} 到 525600 之间的整数。",
 
     settingsTitle: "订阅更新",
     remarks: "别名",
     numberServers: "节点数",
     subscription: "订阅",
-    autoSelect: "订阅自动更新后自动连接其中的新节点",
-    autoSelectLabel: "自动选择",
     updated: "订阅已更新",
     saved: "订阅已保存",
     saveFailed: "无法保存订阅：{message}",
@@ -553,6 +553,9 @@ export default {
     saveFailed: "无法保存 RoutingA：{message}",
   },
   outbound: {
+    autoAdd: "自动添加可用服务器",
+    autoAddHelp: "从代理页面的完整列表（包括所有订阅）中保留可用服务器。",
+    autoAddDetails: "在列表更新后和每个探测周期检查，移除不可用成员。空组阻止其流量。",
     addMessage: "请输入你想要添加的代理分组名称：",
     deleteMessage:
       '确定删除代理分组 "{outboundName}"？其中的节点将断开，此操作不可撤销。',

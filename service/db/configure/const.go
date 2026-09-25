@@ -65,7 +65,7 @@ const (
 
 const (
 	DefaultProbeURL      = "https://www.gstatic.com/generate_204"
-	DefaultProbeInterval = "60s"
+	DefaultProbeInterval = "300s"
 	DefaultOutboundType  = "leastping"
 	DefaultOutboundName  = "proxy"
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -30,14 +31,18 @@ type CoreProcessManager struct {
 	// transparentOn records whether this process installed transparent proxy
 	// rules. Shutdown asks for the teardown twice — once in pre_run and once
 	// through Stop — which ran the user's pre-stop and post-stop hooks twice.
-	transparentOn atomic.Bool
+	transparentOn         atomic.Bool
+	retainingInterception atomic.Bool
+	retainedSetting       *configure.Setting
 }
 
 var ProcessManager CoreProcessManager
 
 func (m *CoreProcessManager) beforeStop(p *Process) {
 	hostMu.Lock()
-	m.checkAndStopTransparentProxy(p.template.Setting)
+	if !m.retainingInterception.Load() {
+		m.checkAndStopTransparentProxy(p.template.Setting)
+	}
 	hostMu.Unlock()
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
@@ -236,7 +241,14 @@ func (m *CoreProcessManager) afterStop(p *Process) {
 func (m *CoreProcessManager) Stop(saveRunning bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.retainingInterception.Store(false)
 	if m.p == nil {
+		if m.retainedSetting != nil {
+			hostMu.Lock()
+			m.checkAndStopTransparentProxy(m.retainedSetting)
+			hostMu.Unlock()
+			m.retainedSetting = nil
+		}
 		return
 	}
 	if saveRunning {
@@ -364,10 +376,12 @@ func (m *CoreProcessManager) mutateHost(p *Process, generation uint64, mutate fu
 	return errors.Join(err, m.checkProcessOwner(p, generation))
 }
 
-func (m *CoreProcessManager) afterStart(p *Process, generation uint64) (err error) {
+func (m *CoreProcessManager) afterStart(p *Process, generation uint64, retained bool) (err error) {
 	t := p.template
-	if err = m.setupTransparentProxy(p, generation, t.Setting, t); err != nil {
-		return err
+	if !retained {
+		if err = m.setupTransparentProxy(p, generation, t.Setting, t); err != nil {
+			return err
+		}
 	}
 	m.startConnectivityMonitor(p, generation)
 	if err := m.checkProcessOwner(p, generation); err != nil {
@@ -390,6 +404,10 @@ func (m *CoreProcessManager) afterStart(p *Process, generation uint64) (err erro
 }
 
 func (m *CoreProcessManager) Start(t *Template) (err error) {
+	return m.start(t, false)
+}
+
+func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 	m.startMu.Lock()
 	defer m.startMu.Unlock()
 	// Phase 1 (pre-lock): lightweight checks that do not depend on whether a
@@ -406,13 +424,26 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TUN,
 	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
+	previous := m.retainedSetting
+	if m.p != nil {
+		previous = m.p.template.Setting
+	}
+	retained := preserve && m.transparentOn.Load() && canRetainInterception(previous, t.Setting)
+	if preserve {
+		log.Debug("[Groups] Keep transparent interception during reload: %v", retained)
+	}
+	if retained {
+		m.retainedSetting = previous
+	}
+	m.retainingInterception.Store(retained)
+	defer m.retainingInterception.Store(false)
 	m.stop(true)
 	// A marker left by a start that never committed is torn down first. A
 	// teardown that fails is logged, not fatal: refusing every later start
 	// would leave that state behind with no service to fix it.
 	if state, err := configure.GetHostState(); err != nil {
 		log.Warn("read pending host state: %v", err)
-	} else if state != nil {
+	} else if state != nil && !retained {
 		if err := RecoverHostState(state); err != nil {
 			log.Warn("recover pending host state: %v", err)
 		}
@@ -450,7 +481,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 				// records that it happened
 				m.stop(true)
 				err = errors.Join(err, configure.SetHostState(nil))
-			} else if m.generation == generation && m.p == nil {
+			} else if m.generation == generation && m.p == nil && !retained {
 				state, recoveryErr := configure.GetHostState()
 				if recoveryErr == nil && state != nil {
 					recoveryErr = RecoverHostState(state)
@@ -468,7 +499,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 
 	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
 	// TUN routes), connectivity monitor, and post-start hook.
-	if err = m.afterStart(process, generation); err != nil {
+	if err = m.afterStart(process, generation, retained); err != nil {
 		return err
 	}
 	m.mu.Lock()
@@ -485,6 +516,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	if err = configure.SetHostState(nil); err != nil {
 		return err
 	}
+	m.retainedSetting = nil
 	if !testing {
 		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
 	}
@@ -502,4 +534,15 @@ func (m *CoreProcessManager) Process() *Process {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.p
+}
+
+func canRetainInterception(before, after *configure.Setting) bool {
+	if before == nil || after == nil || !reflect.DeepEqual(before, after) || !IsTransparentOn(after) {
+		return false
+	}
+	// TUN interfaces belong to the core and cannot survive its restart.
+	// User hooks may own additional host state, so do not bypass them.
+	env := conf.GetEnvironmentConfig()
+	return env.TransparentHook == "" && env.CoreHook == "" &&
+		(after.TransparentType == configure.TransparentTproxy || after.TransparentType == configure.TransparentRedirect)
 }

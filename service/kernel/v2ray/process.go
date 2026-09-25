@@ -378,7 +378,7 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 	if err != nil {
 		return nil, err
 	}
-	if len(serverObjs) == 0 {
+	if len(serverObjs) == 0 && !configure.HasAutomaticGroup() {
 		return nil, NoConnectedServerErr
 	}
 	var pluginPorts map[int]int
@@ -398,6 +398,13 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 }
 
 func UpdateV2RayConfig() (err error) {
+	return updateV2RayConfig(false)
+}
+
+// Membership changes do not change interception ports or host settings.
+func UpdateGroupConfig() error { return updateV2RayConfig(true) }
+
+func updateV2RayConfig(preserve bool) (err error) {
 	tmpl, err := NewTemplateFromConnectedServers(nil)
 	if err != nil {
 		if errors.Is(err, NoConnectedServerErr) {
@@ -407,7 +414,7 @@ func UpdateV2RayConfig() (err error) {
 		}
 		return err
 	}
-	err = ProcessManager.Start(tmpl)
+	err = ProcessManager.start(tmpl, preserve)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -20,14 +19,6 @@ func TestSubscriptionBodyOverLimitIsRejected(t *testing.T) {
 	})}
 	if _, _, err := ResolveSubscriptionWithClient("https://example.test/subscription", client); err == nil || !strings.Contains(err.Error(), "32 MiB") {
 		t.Fatalf("error = %v, want size limit", err)
-	}
-}
-
-func TestSubscriptionCoreApplyErrorWrapsCause(t *testing.T) {
-	cause := errors.New("reload failed")
-	err := subscriptionCoreApplyError(cause)
-	if !errors.Is(err, cause) || !strings.HasPrefix(err.Error(), "subscription stored, but the core could not apply it:") {
-		t.Fatalf("error = %v", err)
 	}
 }
 

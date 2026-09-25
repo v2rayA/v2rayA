@@ -123,20 +123,19 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
-    alwaysFirst: "Sempre usar o primeiro servidor",
-    selectionHelp:
-      "Desativado: seleciona um servidor funcional e mantém o balanceamento do grupo. Ativado: segue a primeira entrada, mesmo indisponível.",
-    monitor: "Recuperar conexões automaticamente",
-    monitorHelp:
-      "Após um minuto de falhas, atualiza a assinatura e tenta novamente. Desativado por padrão; respeita a parada manual.",
+    autoUpdate: "Atualizar assinatura automaticamente",
+    autoUpdateHelp:
+      "Atualiza apenas a lista de servidores. Configure a inclusão automática no grupo de proxies.",
+    updateIntervalMinutes: "Intervalo regular (minutos)",
+    regularHelp: "Obrigatório. 0 desativa atualizações regulares.",
+    failureIntervalMinutes: "Repetir na falha (minutos)",
+    failureHelp: "Obrigatório, mínimo de 1 minuto. Atualiza enquanto todos os servidores estão indisponíveis; para quando um funcionar.",
+    intervalInvalid: "Insira um inteiro de {minimum} a 525600.",
 
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
     numberServers: "Número de servidores",
     subscription: "Assinatura",
-    autoSelect:
-      "Conectar automaticamente aos novos servidores da assinatura após uma atualização automática",
-    autoSelectLabel: "Seleção automática",
     updated: "Assinatura atualizada",
     saved: "Assinatura salva",
     saveFailed: "Falha ao salvar a assinatura: {message}",
@@ -578,6 +577,9 @@ export default {
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Adicionar servidores disponíveis automaticamente",
+    autoAddHelp: "Mantém servidores disponíveis de toda a lista de Proxies, incluindo todas as assinaturas.",
+    autoAddDetails: "Verifica após mudanças na lista e a cada intervalo de teste. Remove membros indisponíveis. Um grupo vazio bloqueia seu tráfego.",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',

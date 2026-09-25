@@ -121,19 +121,19 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
-    alwaysFirst: "항상 첫 번째 서버 사용",
-    selectionHelp:
-      "끄기: 작동하는 서버를 선택하고 기존 그룹 분산을 유지합니다. 켜기: 사용할 수 없어도 첫 항목을 사용합니다.",
-    monitor: "실패한 연결 자동 복구",
-    monitorHelp:
-      "1분 동안 실패하면 구독을 갱신하고 재시도합니다. 기본값은 꺼짐이며 수동 중지를 유지합니다.",
+    autoUpdate: "구독 자동 업데이트",
+    autoUpdateHelp:
+      "서버 목록만 업데이트합니다. 자동 구성원 추가는 프록시 그룹에서 설정하세요.",
+    updateIntervalMinutes: "정기 간격 (분)",
+    regularHelp: "필수입니다. 0은 정기 업데이트를 끕니다.",
+    failureIntervalMinutes: "실패 재시도 (분)",
+    failureHelp: "필수, 최소 1분. 모든 서버가 불가능할 때 갱신하며 하나가 복구되면 재시도를 중지합니다.",
+    intervalInvalid: "{minimum}부터 525600까지의 정수를 입력하세요.",
 
     settingsTitle: "구독 업데이트",
     remarks: "별칭",
     numberServers: "서버 수",
     subscription: "구독",
-    autoSelect: "구독이 자동 업데이트된 후 구독의 새 서버에 자동으로 연결",
-    autoSelectLabel: "자동 선택",
     updated: "구독 업데이트됨",
     saved: "구독 저장됨",
     saveFailed: "구독 저장 실패: {message}",
@@ -563,6 +563,9 @@ export default {
     saveFailed: "RoutingA 저장 실패: {message}",
   },
   outbound: {
+    autoAdd: "사용 가능한 서버 자동 추가",
+    autoAddHelp: "모든 구독을 포함한 전체 프록시 목록에서 사용 가능한 서버로 그룹을 구성합니다.",
+    autoAddDetails: "목록 변경 후 및 검사 간격마다 확인합니다. 불가능한 구성원을 제거하며 빈 그룹은 해당 트래픽을 차단합니다.",
     addMessage: "추가할 프록시 그룹 이름을 입력하세요:",
     deleteMessage:
       '프록시 그룹 "{outboundName}"을(를) 삭제하시겠습니까? 해당 그룹의 노드 연결이 해제됩니다. 이 작업은 취소할 수 없습니다.',

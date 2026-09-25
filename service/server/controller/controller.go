@@ -26,7 +26,7 @@ func beginMutation(ctx *gin.Context) (release func(), ok bool) {
 	defer timer.Stop()
 	select {
 	case mutation <- struct{}{}:
-		service.CancelSubscriptionRecovery()
+		service.CancelAutomation()
 		for !service.ConfigurationMu.TryLock() {
 			select {
 			case <-timer.C:

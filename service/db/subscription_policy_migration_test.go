@@ -18,24 +18,24 @@ func TestSubscriptionPolicySchemaUpgrade(t *testing.T) {
 	if err := MigrateSchema(database); err != nil {
 		t.Fatal(err)
 	}
-	var monitor, first int
+	var enabled, regular, failure int
 	var address, remarks string
-	if err := database.QueryRow("SELECT address, remarks, monitor, prefer_first FROM subscriptions WHERE id=7").Scan(&address, &remarks, &monitor, &first); err != nil {
+	if err := database.QueryRow("SELECT address, remarks, auto_update, update_interval_minutes, failure_interval_minutes FROM subscriptions WHERE id=7").Scan(&address, &remarks, &enabled, &regular, &failure); err != nil {
 		t.Fatal(err)
 	}
-	if monitor != 0 || first != 0 || address != "https://example.test/sub" || remarks != "keep me" {
-		t.Fatalf("migration changed existing subscription: %s %s %d %d", address, remarks, monitor, first)
+	if enabled != 0 || regular != 0 || failure != 1 || address != "https://example.test/sub" || remarks != "keep me" {
+		t.Fatalf("migration changed existing subscription: %s %s %d %d", address, remarks, regular, failure)
 	}
-	if _, err := database.Exec("UPDATE subscriptions SET monitor=1, prefer_first=1 WHERE id=7"); err != nil {
+	if _, err := database.Exec("UPDATE subscriptions SET auto_update=1, update_interval_minutes=120, failure_interval_minutes=2 WHERE id=7"); err != nil {
 		t.Fatal(err)
 	}
 	if err := MigrateSchema(database); err != nil {
 		t.Fatal(err)
 	}
-	if err := database.QueryRow("SELECT monitor, prefer_first FROM subscriptions WHERE id=7").Scan(&monitor, &first); err != nil {
+	if err := database.QueryRow("SELECT auto_update, update_interval_minutes, failure_interval_minutes FROM subscriptions WHERE id=7").Scan(&enabled, &regular, &failure); err != nil {
 		t.Fatal(err)
 	}
-	if monitor != 1 || first != 1 {
+	if enabled != 1 || regular != 120 || failure != 2 {
 		t.Fatal("repeated migration reset saved policies")
 	}
 }
@@ -61,22 +61,18 @@ func TestBoltSubscriptionPolicyMigration(t *testing.T) {
 	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
-	rows, err := database.Query("SELECT monitor, prefer_first, auto_select FROM subscriptions ORDER BY sort")
+	rows, err := database.Query("SELECT auto_update, update_interval_minutes, failure_interval_minutes FROM subscriptions ORDER BY sort")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer rows.Close()
-	for i := 0; rows.Next(); i++ {
+	for rows.Next() {
 		var monitor, first, auto int
 		if err := rows.Scan(&monitor, &first, &auto); err != nil {
 			t.Fatal(err)
 		}
-		expected := 0
-		if i == 0 {
-			expected = 1
-		}
-		if monitor != expected || first != expected || auto != expected {
-			t.Fatalf("subscription %d: policy lost or default enabled: %d %d %d", i, monitor, first, auto)
+		if monitor != 0 || first != 0 || auto != 1 {
+			t.Fatalf("legacy flags enabled new automation: %d %d %d", monitor, first, auto)
 		}
 	}
 	if err := rows.Err(); err != nil {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/v2rayA/v2rayA/conf"
@@ -12,53 +11,8 @@ import (
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
-func updateSubscriptions() {
-	subs := configure.GetSubscriptions()
-	lenSubs := len(subs)
-	control := make(chan struct{}, 2) // concurrency limit: update 2 subscriptions at a time
-	wg := new(sync.WaitGroup)
-	for i := 0; i < lenSubs; i++ {
-		wg.Add(1)
-		go func(i int) {
-			control <- struct{}{}
-			defer wg.Done()
-			defer func() { <-control }()
-			runSubscriptionUpdate(i, func() {
-				service.ConfigurationMu.Lock()
-				defer service.ConfigurationMu.Unlock()
-				err := service.UpdateSubscription(i, false)
-				if err != nil {
-					log.Info("[AutoUpdate] Subscriptions: Failed to update subscription -- ID: %d, err: %v", i, err)
-				} else {
-					log.Info("[AutoUpdate] Subscriptions: Complete updating subscription -- ID: %d, Address: %s", i, subs[i].Address)
-				}
-			})
-		}(i)
-	}
-	wg.Wait()
-	service.ConfigurationMu.Lock()
-	defer service.ConfigurationMu.Unlock()
-	err2 := service.AutoSelectServersFromSubscriptions(false)
-	if err2 != nil {
-		log.Error("[AutoSelect] Failed to auto-select servers from subscriptions -- err: %v", err2)
-	}
-
-}
-
-func runSubscriptionUpdate(index int, update func()) (panicked bool) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			log.Error("[AutoUpdate] subscription %d: panic: %v", index, recovered)
-			panicked = true
-		}
-	}()
-	update()
-	return false
-}
-
 func initUpdatingTicker() {
 	conf.TickerUpdateGFWList = time.NewTicker(24 * time.Hour * 365 * 100)
-	conf.TickerUpdateSubscription = time.NewTicker(24 * time.Hour * 365 * 100)
 	go func() {
 		for range conf.TickerUpdateGFWList.C {
 			version, err := dat.CheckAndUpdateGFWList("")
@@ -68,11 +22,6 @@ func initUpdatingTicker() {
 			case err != nil:
 				log.Info("[AutoUpdate] GFWList: %v", err)
 			}
-		}
-	}()
-	go func() {
-		for range conf.TickerUpdateSubscription.C {
-			updateSubscriptions()
 		}
 	}()
 }
@@ -110,15 +59,6 @@ func checkUpdate() {
 		}
 	}
 
-	// check for subscription updates
-	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdate ||
-		setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-
-		if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-			conf.TickerUpdateSubscription.Reset(configure.IntervalHours(setting.SubscriptionAutoUpdateIntervalHour))
-		}
-		go updateSubscriptions()
-	}
 	// check for server updates
 	go func() {
 		f := func() {

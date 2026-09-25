@@ -57,8 +57,9 @@ func resetSubscription(t *testing.T) *configure.SubscriptionRaw {
 			t.Fatal(err)
 		}
 	}
+	_ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting())
 	cfg := configure.New()
-	sub := &configure.SubscriptionRaw{Address: "http://subscription.invalid", AutoSelect: false,
+	sub := &configure.SubscriptionRaw{Address: "http://subscription.invalid", FailureIntervalMinutes: 1,
 		Servers: []configure.ServerRaw{{ServerObj: testServer(t, 10001)}}}
 	cfg.Subscriptions = []*configure.SubscriptionRaw{sub}
 	if err := configure.SetConfigure(cfg); err != nil {
@@ -68,99 +69,6 @@ func resetSubscription(t *testing.T) *configure.SubscriptionRaw {
 		t.Fatal(err)
 	}
 	return sub
-}
-
-func TestSubscriptionWaitsAndChoosesFastestHealthy(t *testing.T) {
-	old := resetSubscription(t)
-	before := configure.GetConnectedServers()
-	servers := []serverObj.ServerObj{testServer(t, 10002), testServer(t, 10003), testServer(t, 10004)}
-	probe := func(got []serverObj.ServerObj, url string) []subscriptionProbeResult {
-		if len(got) != 3 || url != configure.GetOutboundSetting("proxy").ProbeURL {
-			t.Fatalf("unexpected probe input: %d %s", len(got), url)
-		}
-		if !reflect.DeepEqual(before, configure.GetConnectedServers()) {
-			t.Fatal("selection changed before probe finished")
-		}
-		if !reflect.DeepEqual(old, configure.GetSubscription(0)) {
-			t.Fatal("subscription changed before probe finished")
-		}
-		return []subscriptionProbeResult{{err: errors.New("closed")}, {latency: 40 * time.Millisecond}, {latency: 10 * time.Millisecond}}
-	}
-	if err := updateSubscriptionWithProbe(0, old, servers, "updated", probe); err != nil {
-		t.Fatal(err)
-	}
-	w := configure.GetConnectedServersByOutbound("proxy").Get()
-	if len(w) != 1 || w[0].ID != 3 || w[0].Sub != 0 {
-		t.Fatalf("wrong selection: %+v", w)
-	}
-	sub := configure.GetSubscription(0)
-	if sub.Info != "updated" || sub.Servers[0].Latency != "UNAVAILABLE" || sub.Servers[2].Latency != "10ms" {
-		t.Fatalf("wrong result: %+v", sub)
-	}
-}
-
-func TestSubscriptionAllDeadPreservesState(t *testing.T) {
-	old := resetSubscription(t)
-	before := configure.GetConnectedServers()
-	err := updateSubscriptionWithProbe(0, old, []serverObj.ServerObj{testServer(t, 10002)}, "changed", func([]serverObj.ServerObj, string) []subscriptionProbeResult {
-		return []subscriptionProbeResult{{err: errors.New("timeout")}}
-	})
-	if err == nil {
-		t.Fatal("expected failure")
-	}
-	if !reflect.DeepEqual(old, configure.GetSubscription(0)) || !reflect.DeepEqual(before, configure.GetConnectedServers()) {
-		t.Fatal("failed probe changed state")
-	}
-}
-
-func TestSubscriptionPreservesOtherOutboundsAndRemaps(t *testing.T) {
-	old := resetSubscription(t)
-	if err := configure.AddOutbound("other"); err != nil {
-		t.Fatal(err)
-	}
-	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.SubscriptionServerType, Sub: 0, ID: 1, Outbound: "other"}); err != nil {
-		t.Fatal(err)
-	}
-	servers := []serverObj.ServerObj{testServer(t, 10002)}
-	if err := updateSubscriptionWithProbe(0, old, servers, "", func([]serverObj.ServerObj, string) []subscriptionProbeResult {
-		return []subscriptionProbeResult{{latency: time.Millisecond}}
-	}); err != nil {
-		t.Fatal(err)
-	}
-	w := configure.GetConnectedServersByOutbound("other").Get()
-	if len(w) != 1 || w[0].ID != 2 {
-		t.Fatalf("other outbound lost: %+v", w)
-	}
-	raw, err := w[0].LocateServerRaw()
-	if err != nil || raw.ServerObj.ExportToURL() != old.Servers[0].ServerObj.ExportToURL() {
-		t.Fatal("other outbound changed server")
-	}
-}
-
-func TestSubscriptionDoesNotStealOtherSubscription(t *testing.T) {
-	sub := resetSubscription(t)
-	sub.AutoSelect = true
-	if err := configure.SetSubscription(0, sub); err != nil {
-		t.Fatal(err)
-	}
-	if err := configure.AppendSubscriptions([]*configure.SubscriptionRaw{{AutoSelect: true}}); err != nil {
-		t.Fatal(err)
-	}
-	if !subscriptionOwnsProxy(0) || subscriptionOwnsProxy(1) {
-		t.Fatal("active subscription ownership lost")
-	}
-	if err := configure.ClearConnects("proxy"); err != nil {
-		t.Fatal(err)
-	}
-	if !subscriptionOwnsProxy(0) || subscriptionOwnsProxy(1) {
-		t.Fatal("unconnected selection is not deterministic")
-	}
-	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.ServerType, ID: 1, Outbound: "proxy"}); err != nil {
-		t.Fatal(err)
-	}
-	if subscriptionOwnsProxy(0) || subscriptionOwnsProxy(1) {
-		t.Fatal("manual server would be replaced")
-	}
 }
 
 func TestSubscriptionDownloadFailuresPreserveState(t *testing.T) {
@@ -291,19 +199,4 @@ func TestProbeWithCurrentCore(t *testing.T) {
 			t.Fatalf("unbounded blackhole: %v", err)
 		}
 	})
-}
-
-func TestRecoveryPreservesGroupMembers(t *testing.T) {
-	old := resetSubscription(t)
-	old.AutoSelect = true
-	nodes := []serverObj.ServerObj{testServer(t, 10002), testServer(t, 10003), testServer(t, 10004)}
-	if err := updateSubscriptionWithProbe(0, old, nodes, "", func([]serverObj.ServerObj, string) []subscriptionProbeResult {
-		return []subscriptionProbeResult{{err: errors.New("dead")}, {latency: time.Millisecond}, {latency: 2 * time.Millisecond}}
-	}); err != nil {
-		t.Fatal(err)
-	}
-	refs := configure.GetConnectedServersByOutbound("proxy").Get()
-	if len(refs) != 3 || refs[0].ID != 2 {
-		t.Fatalf("group not preserved: %+v", refs)
-	}
 }

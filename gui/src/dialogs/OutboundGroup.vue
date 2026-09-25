@@ -15,7 +15,8 @@ const { t } = useI18n();
 const notify = useNotify();
 const setting = reactive<OutboundSetting>({
   probeURL: "",
-  probeInterval: "",
+  probeInterval: "300s",
+  autoAdd: false,
   type: "leastping",
 });
 const form = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
@@ -59,6 +60,17 @@ async function save() {
     </v-card-item>
     <v-card-text class="px-6">
       <v-form ref="form" @submit.prevent="save">
+        <v-switch
+          v-model="setting.autoAdd"
+          :label="t('outbound.autoAdd')"
+          hide-details
+        />
+        <p class="md3-body-large mb-2">
+          {{ t("outbound.autoAddHelp") }}
+        </p>
+        <p class="md3-body-small text-on-surface-variant mb-4">
+          {{ t("outbound.autoAddDetails") }}
+        </p>
         <v-text-field
           v-model="setting.probeURL"
           :label="t('outbound.probeUrl')"

@@ -13,18 +13,18 @@ type ServerRaw struct {
 }
 
 type SubscriptionRaw struct {
-	Monitor     bool        `json:"monitor"`
-	PreferFirst bool        `json:"preferFirst"`
-	Remarks     string      `json:"remarks,omitempty"`
-	Address     string      `json:"address"`
-	Status      string      `json:"status"` //update time, error info, etc.
-	Servers     []ServerRaw `json:"servers"`
-	Info        string      `json:"info"` // maybe include some info from provider
-	AutoSelect  bool        `json:"autoSelect"`
+	AutoUpdate             bool        `json:"autoUpdate"`
+	UpdateIntervalMinutes  int         `json:"updateIntervalMinutes"`
+	FailureIntervalMinutes int         `json:"failureIntervalMinutes"`
+	Remarks                string      `json:"remarks,omitempty"`
+	Address                string      `json:"address"`
+	Status                 string      `json:"status"` //update time, error info, etc.
+	Servers                []ServerRaw `json:"servers"`
+	Info                   string      `json:"info"` // maybe include some info from provider
 }
 
 func Bytes2SubscriptionRaw(b []byte) (*SubscriptionRaw, error) {
-	var s SubscriptionRaw
+	s := SubscriptionRaw{FailureIntervalMinutes: 1}
 	rawList := gjson.GetBytes(b, "servers").Array()
 	for _, raw := range rawList {
 		var obj serverObj.ServerObj

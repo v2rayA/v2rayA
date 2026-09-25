@@ -1,7 +1,5 @@
 <script setup lang="ts">
-// Edit a subscription: its address, remarks and whether new nodes are
-// connected automatically after an update. Saves with PATCH
-// /subscription and resolves true.
+// Subscription refresh policy; group membership is configured separately.
 import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { patchSubscription } from "@/api";
@@ -17,15 +15,27 @@ const notify = useNotify();
 
 // the old page sent the row with its servers emptied
 const form = reactive({
-  monitor: false,
-  preferFirst: false,
+  autoUpdate: false,
+  updateIntervalMinutes: 0,
+  failureIntervalMinutes: 1,
   ...props.subscription,
   servers: [],
 });
 const saving = ref(false);
+const validation = ref<{ validate(): Promise<{ valid: boolean }> } | null>(
+  null,
+);
+const intervalRule = (minimum: number) => (v: unknown) =>
+  (v !== "" &&
+    v !== null &&
+    Number.isInteger(Number(v)) &&
+    Number(v) >= minimum &&
+    Number(v) <= 525600) ||
+  t("subscription.intervalInvalid", { minimum });
 
 async function save() {
   if (saving.value) return;
+  if (!(await validation.value?.validate())?.valid) return;
   saving.value = true;
   try {
     await patchSubscription({ subscription: form });
@@ -47,34 +57,58 @@ async function save() {
       </v-card-title>
     </v-card-item>
     <v-card-text class="px-6">
-      <v-textarea
-        v-model="form.address"
-        :label="t('subscription.subscription')"
-        rows="2"
-        auto-grow
-        dir="ltr"
-        @keydown.enter="
-          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
-        "
-      />
-      <v-text-field v-model="form.remarks" :label="t('subscription.remarks')" />
-      <v-switch
-        v-model="form.autoSelect"
-        :label="t('subscription.autoSelect')"
-        hide-details
-      />
-      <v-switch
-        v-model="form.preferFirst"
-        :label="t('subscription.alwaysFirst')"
-        :hint="t('subscription.selectionHelp')"
-        persistent-hint
-      />
-      <v-switch
-        v-model="form.monitor"
-        :label="t('subscription.monitor')"
-        :hint="t('subscription.monitorHelp')"
-        persistent-hint
-      />
+      <v-form ref="validation" @submit.prevent="save">
+        <v-textarea
+          v-model="form.address"
+          :label="t('subscription.subscription')"
+          rows="2"
+          auto-grow
+          dir="ltr"
+          @keydown.enter="
+            (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
+          "
+        />
+        <v-text-field
+          v-model="form.remarks"
+          :label="t('subscription.remarks')"
+        />
+        <v-switch
+          v-model="form.autoUpdate"
+          :label="t('subscription.autoUpdate')"
+          hide-details
+        />
+        <p class="md3-body-large mb-4">
+          {{ t("subscription.autoUpdateHelp") }}
+        </p>
+        <template v-if="form.autoUpdate">
+          <v-text-field
+            v-model.number="form.updateIntervalMinutes"
+            type="number"
+            min="0"
+            max="525600"
+            step="1"
+            :label="t('subscription.updateIntervalMinutes')"
+            :rules="[intervalRule(0)]"
+            hide-details="auto"
+          />
+          <p class="md3-body-small text-on-surface-variant mt-2 mb-4">
+            {{ t("subscription.regularHelp") }}
+          </p>
+          <v-text-field
+            v-model.number="form.failureIntervalMinutes"
+            type="number"
+            min="1"
+            max="525600"
+            step="1"
+            :label="t('subscription.failureIntervalMinutes')"
+            :rules="[intervalRule(1)]"
+            hide-details="auto"
+          />
+          <p class="md3-body-small text-on-surface-variant mt-2">
+            {{ t("subscription.failureHelp") }}
+          </p>
+        </template>
+      </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">
       <v-spacer />

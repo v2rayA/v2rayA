@@ -123,20 +123,19 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
-    alwaysFirst: "Always use the first server",
-    selectionHelp:
-      "Off: select a working server and retain existing group balancing. On: follow the first entry, even when unavailable.",
-    monitor: "Recover failed connections automatically",
-    monitorHelp:
-      "After one minute of failures, refresh the subscription and retry. Disabled by default; respects manual stops.",
+    autoUpdate: "Automatically update subscription",
+    autoUpdateHelp:
+      "Updates the server list only. Configure automatic membership in the proxy group.",
+    updateIntervalMinutes: "Regular interval (minutes)",
+    regularHelp: "Required. 0 disables regular updates.",
+    failureIntervalMinutes: "Failure retry (minutes)",
+    failureHelp: "Required, at least 1 minute. Refreshes while all servers are unavailable; stops retrying when one works.",
+    intervalInvalid: "Enter a whole number from {minimum} to 525600.",
 
     settingsTitle: "Subscription updates",
     remarks: "Remarks",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect:
-      "Automatically connect to new servers from the subscription after an automatic update of the subscription",
-    autoSelectLabel: "Auto-select",
     updated: "Subscription updated",
     saved: "Subscription saved",
     saveFailed: "Failed to save subscription: {message}",
@@ -571,6 +570,9 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Automatically add available servers",
+    autoAddHelp: "Keeps available servers from the entire Proxies list, including all subscriptions.",
+    autoAddDetails: "Checks after catalog updates and at the probe interval. Removes unavailable members. An empty group blocks its traffic.",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',

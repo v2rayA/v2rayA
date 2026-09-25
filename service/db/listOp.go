@@ -69,9 +69,9 @@ func setSubscription(tx *sql.Tx, index int, parsed gjson.Result) error {
 	remarks := parsed.Get("remarks").String()
 	status := parsed.Get("status").String()
 	info := parsed.Get("info").String()
-	autoSelect := 0
-	if parsed.Get("autoSelect").Bool() {
-		autoSelect = 1
+	autoUpdate := 0
+	if parsed.Get("autoUpdate").Bool() {
+		autoUpdate = 1
 	}
 
 	// The first statement writes, so the transaction takes the write lock
@@ -79,8 +79,8 @@ func setSubscription(tx *sql.Tx, index int, parsed gjson.Result) error {
 	// another connection's commit may have made stale (SQLITE_BUSY_SNAPSHOT).
 	var subID int64
 	err := tx.QueryRow(
-		"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, monitor = ?, prefer_first = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ? RETURNING id",
-		address, remarks, status, info, autoSelect, parsed.Get("monitor").Bool(), parsed.Get("preferFirst").Bool(), index,
+		"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_update = ?, update_interval_minutes = ?, failure_interval_minutes = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ? RETURNING id",
+		address, remarks, status, info, autoUpdate, parsed.Get("updateIntervalMinutes").Int(), max(1, parsed.Get("failureIntervalMinutes").Int()), index,
 	).Scan(&subID)
 	if err == sql.ErrNoRows {
 		return fmt.Errorf("ListSet: subscription at index %d not found", index)
@@ -136,10 +136,10 @@ func SubscriptionsGet(index int) ([]byte, error) {
 	db := GetDB()
 	var subID int64
 	var address, remarks, status, info string
-	var autoSelectInt, monitorInt, firstInt int
+	var autoUpdateInt, regularInt, failureInt int
 	err := db.QueryRow(
-		"SELECT id, address, remarks, status, info, auto_select, monitor, prefer_first FROM subscriptions WHERE sort = ?", index,
-	).Scan(&subID, &address, &remarks, &status, &info, &autoSelectInt, &monitorInt, &firstInt)
+		"SELECT id, address, remarks, status, info, auto_update, update_interval_minutes, failure_interval_minutes FROM subscriptions WHERE sort = ?", index,
+	).Scan(&subID, &address, &remarks, &status, &info, &autoUpdateInt, &regularInt, &failureInt)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("ListGet: can't get element from an empty list")
 	}
@@ -166,7 +166,7 @@ func SubscriptionsGet(index int) ([]byte, error) {
 		servers = append(servers, s)
 	}
 
-	return subscriptionJSON(remarks, address, status, info, servers, autoSelectInt != 0, monitorInt != 0, firstInt != 0)
+	return subscriptionJSON(remarks, address, status, info, servers, autoUpdateInt != 0, regularInt, failureInt)
 }
 
 // ListAppend appends values to a list.
@@ -230,14 +230,14 @@ func SubscriptionsAppend(val interface{}) (err error) {
 			remarks := item.Get("remarks").String()
 			status := item.Get("status").String()
 			info := item.Get("info").String()
-			autoSelect := 0
-			if item.Get("autoSelect").Bool() {
-				autoSelect = 1
+			autoUpdate := 0
+			if item.Get("autoUpdate").Bool() {
+				autoUpdate = 1
 			}
 
 			res, err := db.Exec(
-				"INSERT INTO subscriptions (address, remarks, status, info, auto_select, monitor, prefer_first, sort) VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM subscriptions))",
-				address, remarks, status, info, autoSelect, item.Get("monitor").Bool(), item.Get("preferFirst").Bool(),
+				"INSERT INTO subscriptions (address, remarks, status, info, auto_update, update_interval_minutes, failure_interval_minutes, sort) VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM subscriptions))",
+				address, remarks, status, info, autoUpdate, item.Get("updateIntervalMinutes").Int(), max(1, item.Get("failureIntervalMinutes").Int()),
 			)
 			if err != nil {
 				return err
@@ -291,7 +291,7 @@ func ServersGetAll() (list [][]byte, err error) {
 
 func SubscriptionsGetAll() (list [][]byte, err error) {
 	db := GetDB()
-	rows, err := db.Query("SELECT id, address, remarks, status, info, auto_select, monitor, prefer_first FROM subscriptions ORDER BY sort")
+	rows, err := db.Query("SELECT id, address, remarks, status, info, auto_update, update_interval_minutes, failure_interval_minutes FROM subscriptions ORDER BY sort")
 	if err != nil {
 		return nil, err
 	}
@@ -300,8 +300,8 @@ func SubscriptionsGetAll() (list [][]byte, err error) {
 	for rows.Next() {
 		var id int64
 		var address, remarks, status, info string
-		var autoSelectInt, monitorInt, firstInt int
-		if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoSelectInt, &monitorInt, &firstInt); err != nil {
+		var autoUpdateInt, regularInt, failureInt int
+		if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoUpdateInt, &regularInt, &failureInt); err != nil {
 			return nil, err
 		}
 
@@ -324,7 +324,7 @@ func SubscriptionsGetAll() (list [][]byte, err error) {
 		}
 		serverRows.Close()
 
-		result, err := subscriptionJSON(remarks, address, status, info, servers, autoSelectInt != 0, monitorInt != 0, firstInt != 0)
+		result, err := subscriptionJSON(remarks, address, status, info, servers, autoUpdateInt != 0, regularInt, failureInt)
 		if err != nil {
 			return nil, err
 		}
@@ -462,23 +462,23 @@ func SubscriptionsLen() (length int, err error) {
 // server rows are already JSON; the scalar columns are user- or
 // provider-supplied text and must be escaped, otherwise a remark with a
 // quote made the whole subscription unreadable.
-func subscriptionJSON(remarks, address, status, info string, servers []string, autoSelect bool, policy ...bool) ([]byte, error) {
-	monitor, first := false, false
-	if len(policy) == 2 {
-		monitor, first = policy[0], policy[1]
+func subscriptionJSON(remarks, address, status, info string, servers []string, autoUpdate bool, intervals ...int) ([]byte, error) {
+	regular, failure := 0, 1
+	if len(intervals) == 2 {
+		regular, failure = intervals[0], intervals[1]
 	}
 	raw := make([]jsoniter.RawMessage, 0, len(servers))
 	for _, s := range servers {
 		raw = append(raw, jsoniter.RawMessage(s))
 	}
 	return jsoniter.Marshal(struct {
-		Remarks     string                `json:"remarks"`
-		Address     string                `json:"address"`
-		Status      string                `json:"status"`
-		Info        string                `json:"info"`
-		Servers     []jsoniter.RawMessage `json:"servers"`
-		AutoSelect  bool                  `json:"autoSelect"`
-		Monitor     bool                  `json:"monitor"`
-		PreferFirst bool                  `json:"preferFirst"`
-	}{remarks, address, status, info, raw, autoSelect, monitor, first})
+		Remarks                string                `json:"remarks"`
+		Address                string                `json:"address"`
+		Status                 string                `json:"status"`
+		Info                   string                `json:"info"`
+		Servers                []jsoniter.RawMessage `json:"servers"`
+		AutoUpdate             bool                  `json:"autoUpdate"`
+		UpdateIntervalMinutes  int                   `json:"updateIntervalMinutes"`
+		FailureIntervalMinutes int                   `json:"failureIntervalMinutes"`
+	}{remarks, address, status, info, raw, autoUpdate, regular, failure})
 }

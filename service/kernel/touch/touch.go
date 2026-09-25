@@ -28,17 +28,17 @@ type Server struct {
 	PingLatency string              `json:"pingLatency"`
 }
 type Subscription struct {
-	Monitor     bool                `json:"monitor"`
-	PreferFirst bool                `json:"preferFirst"`
-	Remarks     string              `json:"remarks,omitempty"`
-	ID          int                 `json:"id"`
-	TYPE        configure.TouchType `json:"_type"`
-	Host        string              `json:"host"`
-	Address     string              `json:"address"`
-	Status      SubscriptionStatus  `json:"status"`
-	Info        string              `json:"info"`
-	Servers     []Server            `json:"servers"`
-	AutoSelect  bool                `json:"autoSelect"`
+	AutoUpdate             bool                `json:"autoUpdate"`
+	UpdateIntervalMinutes  *int                `json:"updateIntervalMinutes"`
+	FailureIntervalMinutes *int                `json:"failureIntervalMinutes"`
+	Remarks                string              `json:"remarks,omitempty"`
+	ID                     int                 `json:"id"`
+	TYPE                   configure.TouchType `json:"_type"`
+	Host                   string              `json:"host"`
+	Address                string              `json:"address"`
+	Status                 SubscriptionStatus  `json:"status"`
+	Info                   string              `json:"info"`
+	Servers                []Server            `json:"servers"`
 }
 
 // NewUpdateStatus stamps a subscription update. RFC 3339 carries the zone, so
@@ -93,16 +93,16 @@ func GenerateTouch() (t Touch) {
 			}
 		}
 		t.Subscriptions[i] = Subscription{
-			Remarks:     v.Remarks,
-			ID:          i + 1,
-			Host:        u.Host,
-			Address:     v.Address,
-			Status:      SubscriptionStatus(v.Status),
-			Servers:     serverRawsToServers(v.Servers),
-			Info:        v.Info,
-			AutoSelect:  v.AutoSelect,
-			Monitor:     v.Monitor,
-			PreferFirst: v.PreferFirst,
+			Remarks:                v.Remarks,
+			AutoUpdate:             v.AutoUpdate,
+			UpdateIntervalMinutes:  &v.UpdateIntervalMinutes,
+			FailureIntervalMinutes: &v.FailureIntervalMinutes,
+			ID:                     i + 1,
+			Host:                   u.Host,
+			Address:                v.Address,
+			Status:                 SubscriptionStatus(v.Status),
+			Servers:                serverRawsToServers(v.Servers),
+			Info:                   v.Info,
 		}
 	}
 	t.ConnectedServers = configure.GetConnectedServers().ToWhiches()

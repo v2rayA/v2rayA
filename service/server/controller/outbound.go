@@ -59,7 +59,11 @@ func PutOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
-	err := service.ApplyCoreConfig(func() func() error {
+	if err := service.ValidateOutboundSetting(data.Setting); err != nil {
+		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))
+		return
+	}
+	err := service.ApplyGroupConfig(func() func() error {
 		previous := configure.GetOutboundSetting(data.Outbound)
 		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
 	}, func() error {
@@ -244,7 +248,7 @@ func PutOutboundSelection(ctx *gin.Context) {
 		}
 		link = sr.ServerObj.ExportToURL()
 	}
-	err := service.ApplyCoreConfig(func() func() error {
+	err := service.ApplyGroupConfig(func() func() error {
 		previous := configure.GetOutboundSetting(data.Outbound)
 		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
 	}, func() error {

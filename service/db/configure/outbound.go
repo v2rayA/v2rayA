@@ -11,6 +11,7 @@ const (
 )
 
 type OutboundSetting struct {
+	AutoAdd       bool            `json:"autoAdd"`
 	ProbeURL      string          `json:"probeURL"`
 	ProbeInterval string          `json:"probeInterval"`
 	Type          ObservatoryType `json:"type"`
@@ -28,4 +29,13 @@ func DefaultOutboundSetting() OutboundSetting {
 		ProbeInterval: DefaultProbeInterval,
 		Type:          ObservatoryType(DefaultOutboundType),
 	}
+}
+
+func HasAutomaticGroup() bool {
+	for _, name := range GetOutbounds() {
+		if GetOutboundSetting(name).AutoAdd {
+			return true
+		}
+	}
+	return false
 }

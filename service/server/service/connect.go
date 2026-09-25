@@ -29,7 +29,7 @@ func StartV2ray() (err error) {
 			log.Warn("Connect: %v", e)
 		}
 	}
-	if css := configure.GetConnectedServers(); css.Len() == 0 {
+	if css := configure.GetConnectedServers(); css.Len() == 0 && !configure.HasAutomaticGroup() {
 		return common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no server is selected; select at least one server first"), nil)
 	}
 	return v2ray.UpdateV2RayConfig()
@@ -104,9 +104,6 @@ func Connect(which *configure.NodeRef) (err error) {
 	if _, err = which.LocateServerRaw(); err != nil {
 		return err
 	}
-	if err := validateSubscriptionPolicy(*which); err != nil {
-		return err
-	}
 	setting := GetSetting()
 	// checkSupport only verifies the geo assets now; the load-balancing
 	// restriction it used to report is gone, so any error it returns is fatal.
@@ -170,9 +167,6 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 	seen := make(map[string]struct{})
 	for i, wt := range touches {
 		wt.Outbound = outbound
-		if err := validateSubscriptionPolicy(wt); err != nil {
-			return err
-		}
 		if wt.ID <= 0 {
 			return fmt.Errorf("invalid touch id at index %d: %d", i, wt.ID)
 		}
@@ -221,21 +215,12 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 	}
 
 	if v2ray.ProcessManager.Running() {
-		if err = v2ray.UpdateV2RayConfig(); err != nil {
+		if err = v2ray.UpdateGroupConfig(); err != nil {
 			restore()
-			_ = v2ray.UpdateV2RayConfig()
+			_ = v2ray.UpdateGroupConfig()
 			return err
 		}
 	}
 
-	return nil
-}
-
-func validateSubscriptionPolicy(ref configure.NodeRef) error {
-	if ref.Outbound == "proxy" && ref.TYPE == configure.SubscriptionServerType {
-		if sub := configure.GetSubscription(ref.Sub); sub != nil && sub.PreferFirst && ref.ID != 1 {
-			return fmt.Errorf("this subscription is configured to use only its first server")
-		}
-	}
 	return nil
 }

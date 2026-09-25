@@ -53,9 +53,43 @@ v2raya --reset-password
 
 macOS에서는 `Cmd`가 `Ctrl`을 대신합니다.
 
+## Automatic groups and subscription updates
 
-### 항상 첫 번째 서버 사용
+Enable **Automatically add available servers** in a proxy group's settings to
+check every server in Proxies, including standalone nodes and all subscriptions.
+The group keeps only servers that complete an HTTP(S) request through their VPN
+connection. A listening TCP port or an ICMP response is not enough.
 
-끄기: 작동하는 서버를 선택하고 기존 그룹 분산을 유지합니다. 켜기: 사용할 수 없어도 첫 항목을 사용합니다.
+The first scan runs when enabled, then after catalog changes and at the group's
+probe interval. The default for new groups is **300s**; saved intervals are
+preserved. Turning the switch off keeps the current members and returns control
+to manual editing. The group's existing Auto/least-ping mode chooses the server.
+Subscription updates do not select a server or populate manual groups.
 
-실패한 연결 자동 복구: 1분 동안 실패하면 구독을 갱신하고 재시도합니다. 기본값은 꺼짐이며 수동 중지를 유지합니다.
+Enable **Automatically update subscription** for each subscription that should
+refresh itself. Both minute fields are required:
+
+- **Regular update interval:** 0 disables regular downloads; a positive whole
+  number schedules unconditional updates.
+- **Retry interval when all servers are unavailable:** at least 1 minute. If no
+  saved candidate is reachable, refresh at this interval until one works.
+  Failed or empty downloads retain the saved list. A failed subscription retries
+  independently of healthy subscriptions in the same group.
+
+Candidate health is checked after subscription/catalog changes and every 300
+seconds for enabled subscription updates. Each automatic group uses its own
+probe URL and interval. Timers start when enabled or the service starts.
+Retries do not postpone unconditional updates. No background action starts a
+manually stopped main core; temporary candidate probes can still run.
+
+An empty automatic group has a blocking outbound. Traffic assigned to that group
+is rejected instead of falling back to another group or direct access. Explicit
+direct routes and other groups retain their own policy. On OpenWrt TPROXY and
+Redirect, membership reloads retain existing interception when network settings
+are unchanged and no custom hooks are installed. This is not a system-wide kill
+switch for power loss, service termination, custom hooks, or TUN teardown.
+
+Upgrading from the earlier Resilient recovery policy preserves accounts,
+subscriptions, nodes and saved group members. Old first-server, auto-connect,
+recovery and global subscription schedule flags no longer run. The new switches
+default off: enable the desired group and subscription policies explicitly.

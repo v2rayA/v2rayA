@@ -39,9 +39,9 @@ export interface TouchSubscription {
   status: string;
   info: string;
   servers: TouchServer[];
-  autoSelect: boolean;
-  monitor?: boolean;
-  preferFirst?: boolean;
+  autoUpdate?: boolean;
+  updateIntervalMinutes?: number;
+  failureIntervalMinutes?: number;
 }
 
 /** touch.Touch */

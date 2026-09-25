@@ -226,7 +226,9 @@ async function announceVersion() {
 }
 
 function onMessage(msg: WsMessage) {
-  if (msg.type === "observatory") {
+  if (msg.type === "catalog_changed") {
+    void pageRef.value?.sync?.();
+  } else if (msg.type === "observatory") {
     const { body } = msg as ObservatoryMessage;
     if (body?.outboundName)
       store.observatory[body.outboundName] = body.outboundStatus ?? [];

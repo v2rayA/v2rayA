@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     remarks TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
-    auto_select INTEGER NOT NULL DEFAULT 0,
-    monitor INTEGER NOT NULL DEFAULT 0,
-    prefer_first INTEGER NOT NULL DEFAULT 0,
+    auto_update INTEGER NOT NULL DEFAULT 0,
+    update_interval_minutes INTEGER NOT NULL DEFAULT 0,
+    failure_interval_minutes INTEGER NOT NULL DEFAULT 1,
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -91,24 +91,16 @@ func MigrateSchema(db *sql.DB) error {
 		}
 	}
 
-	// Check if auto_select column exists (added after initial schema)
-	err = db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'auto_select'").Scan(&count)
-	if err != nil {
-		return fmt.Errorf("failed to check for auto_select column: %w", err)
-	}
-	if count == 0 {
-		log.Info("Adding auto_select column to subscriptions table")
-		if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN auto_select INTEGER NOT NULL DEFAULT 0"); err != nil {
-			return fmt.Errorf("failed to add auto_select column: %w", err)
-		}
-	}
-
-	for _, column := range []string{"monitor", "prefer_first"} {
+	for _, column := range []string{"auto_update", "update_interval_minutes", "failure_interval_minutes"} {
 		if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = ?", column).Scan(&count); err != nil {
 			return err
 		}
 		if count == 0 {
-			if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN " + column + " INTEGER NOT NULL DEFAULT 0"); err != nil {
+			defaultValue := "0"
+			if column == "failure_interval_minutes" {
+				defaultValue = "1"
+			}
+			if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN " + column + " INTEGER NOT NULL DEFAULT " + defaultValue); err != nil {
 				return err
 			}
 		}

@@ -16,40 +16,15 @@ QEMU's `10.0.2.2` gateway. Each script creates temporary VLESS servers using a
 host-compatible Xray executable and sends real requests through the guest.
 No real subscription or VPN credentials are used.
 
-```sh
-python3 tests/openwrt/policy.py --disposable-vm \
-  --xray /path/to/host/xray --ssh-key /path/to/test/key --output /tmp/policy-results
-# Stop the service, preserve the first test database and start with a fresh one.
-python3 tests/openwrt/groups.py --disposable-vm \
-  --xray /path/to/host/xray --ssh-key /path/to/test/key --output /tmp/group-results
-```
+Run the current group/timer suite:
 
-The policy suite covers dead first entries, subscription reorder, an empty list,
-all nodes down, unavailable subscription downloads, immediate recovery retries,
-private monitoring with public proxy listeners disabled, unexpected core death,
-manual stop and persisted settings. It uses the real one-minute failure window.
-The group suite includes a closed port, wrong VLESS UUID, a blackhole, slow and
-fast working servers; it verifies actual traffic after the fastest disappears,
-all-dead preservation, recovery, restart and nftables TPROXY.
+    python3 tests/openwrt/automation.py --disposable-vm --xray /path/to/host/xray --ssh-key /path/to/test/key --output /tmp/automation-results
 
-`results.json` contains completed assertions only. An exception or nonzero exit
-means the suite did not pass, even if some earlier assertions succeeded.
+See [AUTOMATION.md](AUTOMATION.md) for the direct-escape trap and assertions.
+The superseded first-entry/recovery tests are available in Git history.
 
-## Recovery ownership
-
-Automatic recovery operates when the `proxy` outbound belongs entirely to one
-subscription. Existing group balancing is retained; first-entry mode restricts
-that subscription to its first node. A group mixing subscriptions or standalone
-nodes is not automatically taken over. Manual stop, disabled monitoring and
-changed selections cancel recovery. The two switches default to off and survive
-both SQLite schema upgrades and migration from the earlier Bolt database.
-
-One worker checks the active route every ten seconds. After a continuous minute
-of failures it refreshes the subscription and probes candidates with at most two
-extra core processes. If no candidate works, it retries once immediately, then
-waits 5/10/20/30 seconds between unsuccessful rounds. A failed fetch can use saved
-candidates. Failed selection keeps the prior configuration; applying an invalid
-core configuration rolls back both the database and the running configuration.
+results.json contains completed assertions only. A nonzero exit means the suite
+did not pass, even if some earlier assertions succeeded.
 
 ## OpenWrt defaults and upgrades
 

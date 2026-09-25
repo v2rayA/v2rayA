@@ -80,6 +80,9 @@ func probeSubscriptionServerWithContext(parent context.Context, server serverObj
 		return 0, err
 	}
 	tmpl.Inbounds[0].Listen = "127.0.0.1"
+	// Candidate connections must not be intercepted by the main group's
+	// transparent proxy, especially while that group is empty and blocking.
+	tmpl.SetOutboundSockopt()
 	tmpl.Routing.DomainStrategy = "AsIs"
 	tmpl.Log = &coreObj.Log{Access: "none", Error: "none", Loglevel: "none"}
 	file, err := os.CreateTemp("", "v2raya-subscription-*.json")
