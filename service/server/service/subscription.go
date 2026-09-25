@@ -2,8 +2,10 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"github.com/v2rayA/v2rayA/conf"
 	"io"
 	"net"
 	"net/http"
@@ -186,6 +188,10 @@ func trapBOM(fileBytes []byte) []byte {
 	return trimmedBytes
 }
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+	return resolveSubscriptionWithContext(context.Background(), source, client)
+}
+
+func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
 	defer func() {
 		if err != nil {
 			var coded *common.CodedError
@@ -203,7 +209,17 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		c.Timeout = 30 * time.Second
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
+	res, err := c.Do(req)
+	if err != nil && ctx.Err() == nil {
+		direct := *http.DefaultClient
+		direct.Timeout = c.Timeout
+		res, err = direct.Do(req)
+	}
 	if err != nil {
 		return nil, "", err
 	}
@@ -275,6 +291,15 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	if err != nil {
 		log.Warn("Subscription fetch failed: %v", err)
 		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)
+	}
+	if subscriptionOwnsProxy(index) {
+		subscriptionScanMu.Lock()
+		defer subscriptionScanMu.Unlock()
+		err := updateSubscriptionWithProbe(index, subscription, subscriptionInfos, status, probeSubscription)
+		if err != nil {
+			requestSubscriptionRecovery()
+		}
+		return err
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -409,8 +434,26 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
+	changed := raw.PreferFirst != subscription.PreferFirst || raw.Monitor != subscription.Monitor
 	raw.AutoSelect = subscription.AutoSelect
-	return configure.SetSubscription(subscription.ID-1, raw)
+	raw.PreferFirst = subscription.PreferFirst
+	raw.Monitor = subscription.Monitor
+	if err := configure.SetSubscription(subscription.ID-1, raw); err != nil {
+		return err
+	}
+	if changed && subscriptionOwnsProxy(subscription.ID-1) {
+		nodes := make([]serverObj.ServerObj, len(raw.Servers))
+		for i := range raw.Servers {
+			nodes[i] = raw.Servers[i].ServerObj
+		}
+		err := applySubscriptionSelection(subscription.ID-1, raw, nodes, raw.Info, policyProbe(raw.PreferFirst, probeSubscription), true)
+		if errors.Is(err, ErrNoReachableSubscriptionServer) {
+			requestSubscriptionRecovery()
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
@@ -489,6 +532,9 @@ func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*co
 		members = append(members, *connected)
 	}
 	for i, server := range sub.Servers {
+		if sub.PreferFirst && i > 0 {
+			break
+		}
 		if server.ServerObj == nil {
 			log.Warn("[AutoSelect] Skipping server %d in subscription %d: nil ServerObj", i+1, index)
 			continue

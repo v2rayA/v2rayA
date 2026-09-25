@@ -121,6 +121,13 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    alwaysFirst: "항상 첫 번째 서버 사용",
+    selectionHelp:
+      "끄기: 작동하는 서버를 선택하고 기존 그룹 분산을 유지합니다. 켜기: 사용할 수 없어도 첫 항목을 사용합니다.",
+    monitor: "실패한 연결 자동 복구",
+    monitorHelp:
+      "1분 동안 실패하면 구독을 갱신하고 재시도합니다. 기본값은 꺼짐이며 수동 중지를 유지합니다.",
+
     settingsTitle: "구독 업데이트",
     remarks: "별칭",
     numberServers: "서버 수",

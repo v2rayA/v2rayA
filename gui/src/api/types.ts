@@ -40,6 +40,8 @@ export interface TouchSubscription {
   info: string;
   servers: TouchServer[];
   autoSelect: boolean;
+  monitor?: boolean;
+  preferFirst?: boolean;
 }
 
 /** touch.Touch */

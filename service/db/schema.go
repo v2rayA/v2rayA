@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
     auto_select INTEGER NOT NULL DEFAULT 0,
+    monitor INTEGER NOT NULL DEFAULT 0,
+    prefer_first INTEGER NOT NULL DEFAULT 0,
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -101,6 +103,16 @@ func MigrateSchema(db *sql.DB) error {
 		}
 	}
 
+	for _, column := range []string{"monitor", "prefer_first"} {
+		if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = ?", column).Scan(&count); err != nil {
+			return err
+		}
+		if count == 0 {
+			if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN " + column + " INTEGER NOT NULL DEFAULT 0"); err != nil {
+				return err
+			}
+		}
+	}
 	return migrateLegacyOutboundTables(db)
 }
 

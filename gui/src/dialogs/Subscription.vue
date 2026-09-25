@@ -16,7 +16,12 @@ const { t } = useI18n();
 const notify = useNotify();
 
 // the old page sent the row with its servers emptied
-const form = reactive({ ...props.subscription, servers: [] });
+const form = reactive({
+  monitor: false,
+  preferFirst: false,
+  ...props.subscription,
+  servers: [],
+});
 const saving = ref(false);
 
 async function save() {
@@ -57,6 +62,18 @@ async function save() {
         v-model="form.autoSelect"
         :label="t('subscription.autoSelect')"
         hide-details
+      />
+      <v-switch
+        v-model="form.preferFirst"
+        :label="t('subscription.alwaysFirst')"
+        :hint="t('subscription.selectionHelp')"
+        persistent-hint
+      />
+      <v-switch
+        v-model="form.monitor"
+        :label="t('subscription.monitor')"
+        :hint="t('subscription.monitorHelp')"
+        persistent-hint
       />
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

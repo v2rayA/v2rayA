@@ -47,7 +47,9 @@ func recoverPendingHostState() {
 
 func run() error {
 	recoverPendingHostState()
+	stopMonitor := service.StartSubscriptionMonitor()
 	cleanup := func() {
+		stopMonitor()
 		fmt.Println("Quitting...")
 		v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 		v2ray.ProcessManager.Stop(false)

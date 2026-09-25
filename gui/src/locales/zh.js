@@ -119,6 +119,12 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    alwaysFirst: "始终使用第一个服务器",
+    selectionHelp:
+      "关闭：选择可用服务器并保留现有组负载均衡。开启：使用列表首项，即使不可用。",
+    monitor: "自动恢复失败的连接",
+    monitorHelp: "持续失败一分钟后更新订阅并重试。默认关闭；尊重手动停止。",
+
     settingsTitle: "订阅更新",
     remarks: "别名",
     numberServers: "节点数",

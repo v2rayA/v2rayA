@@ -16,10 +16,11 @@ import (
 )
 
 type Template struct {
-	Log       *coreObj.Log             `json:"log,omitempty"`
-	Inbounds  []coreObj.Inbound        `json:"inbounds"`
-	Outbounds []coreObj.OutboundObject `json:"outbounds"`
-	Routing   struct {
+	SubscriptionMonitorPort int                      `json:"-"`
+	Log                     *coreObj.Log             `json:"log,omitempty"`
+	Inbounds                []coreObj.Inbound        `json:"inbounds"`
+	Outbounds               []coreObj.OutboundObject `json:"outbounds"`
+	Routing                 struct {
 		DomainStrategy string                `json:"domainStrategy"`
 		DomainMatcher  string                `json:"domainMatcher,omitempty"`
 		Rules          []coreObj.RoutingRule `json:"rules"`
@@ -148,6 +149,10 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 
 	// add spare tire outbound routing. Fix: https://github.com/v2rayA/v2rayA/issues/447
 	t.Routing.Rules = append(t.Routing.Rules, coreObj.RoutingRule{Type: "field", Port: "0-65535", OutboundTag: "proxy"})
+
+	if err = t.appendSubscriptionMonitor(); err != nil {
+		return nil, err
+	}
 
 	// Set group routing. This should be put in the end of routing setters.
 	t.setGroupRouting()

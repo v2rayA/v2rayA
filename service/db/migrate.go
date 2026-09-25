@@ -347,8 +347,8 @@ func migrateSubscriptions(data []byte, tx *sql.Tx) error {
 	}
 
 	subStmt, err := tx.Prepare(`
-		INSERT INTO subscriptions (address, remarks, status, info, auto_select, sort)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO subscriptions (address, remarks, status, info, auto_select, monitor, prefer_first, sort)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return err
@@ -374,7 +374,7 @@ func migrateSubscriptions(data []byte, tx *sql.Tx) error {
 			autoSelect = 1
 		}
 
-		res, err := subStmt.Exec(address, remarks, status, info, autoSelect, i)
+		res, err := subStmt.Exec(address, remarks, status, info, autoSelect, r.Get("monitor").Bool(), r.Get("preferFirst").Bool(), i)
 		if err != nil {
 			return fmt.Errorf("failed to insert subscription %d: %w", i, err)
 		}

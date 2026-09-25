@@ -52,3 +52,10 @@ The ports are changed under **Settings → Address and Ports**; 0 closes an inbo
 - Logs: `Home`, `End`, `PgUp`, `PgDn` move through the log once it has focus.
 
 On macOS `Cmd` stands for `Ctrl`.
+
+
+### Always use the first server
+
+Off: select a working server and retain existing group balancing. On: follow the first entry, even when unavailable.
+
+Recover failed connections automatically: After one minute of failures, refresh the subscription and retry. Disabled by default; respects manual stops.

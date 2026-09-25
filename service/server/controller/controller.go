@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/server/service"
 )
 
 var (
@@ -25,7 +26,20 @@ func beginMutation(ctx *gin.Context) (release func(), ok bool) {
 	defer timer.Stop()
 	select {
 	case mutation <- struct{}{}:
-		return func() { <-mutation }, true
+		service.CancelSubscriptionRecovery()
+		for !service.ConfigurationMu.TryLock() {
+			select {
+			case <-timer.C:
+				<-mutation
+				common.ResponseError(ctx, processingErr)
+				return nil, false
+			case <-ctx.Request.Context().Done():
+				<-mutation
+				return nil, false
+			case <-time.After(10 * time.Millisecond):
+			}
+		}
+		return func() { service.ConfigurationMu.Unlock(); <-mutation }, true
 	case <-timer.C:
 		common.ResponseError(ctx, processingErr)
 		return nil, false

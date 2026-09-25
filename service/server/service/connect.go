@@ -13,6 +13,8 @@ import (
 
 func StopV2ray() (err error) {
 	v2ray.ProcessManager.Stop(true)
+	_ = configure.SetRunning(false)
+	_ = configure.SetLastKernelExitStatus(configure.LastKernelExitStopped)
 	return nil
 }
 func StartV2ray() (err error) {
@@ -102,6 +104,9 @@ func Connect(which *configure.NodeRef) (err error) {
 	if _, err = which.LocateServerRaw(); err != nil {
 		return err
 	}
+	if err := validateSubscriptionPolicy(*which); err != nil {
+		return err
+	}
 	setting := GetSetting()
 	// checkSupport only verifies the geo assets now; the load-balancing
 	// restriction it used to report is gone, so any error it returns is fatal.
@@ -164,6 +169,10 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 	normalized := make([]configure.NodeRef, 0, len(touches))
 	seen := make(map[string]struct{})
 	for i, wt := range touches {
+		wt.Outbound = outbound
+		if err := validateSubscriptionPolicy(wt); err != nil {
+			return err
+		}
 		if wt.ID <= 0 {
 			return fmt.Errorf("invalid touch id at index %d: %d", i, wt.ID)
 		}
@@ -219,5 +228,14 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 		}
 	}
 
+	return nil
+}
+
+func validateSubscriptionPolicy(ref configure.NodeRef) error {
+	if ref.Outbound == "proxy" && ref.TYPE == configure.SubscriptionServerType {
+		if sub := configure.GetSubscription(ref.Sub); sub != nil && sub.PreferFirst && ref.ID != 1 {
+			return fmt.Errorf("this subscription is configured to use only its first server")
+		}
+	}
 	return nil
 }

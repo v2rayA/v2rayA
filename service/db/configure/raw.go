@@ -13,12 +13,14 @@ type ServerRaw struct {
 }
 
 type SubscriptionRaw struct {
-	Remarks string      `json:"remarks,omitempty"`
-	Address string      `json:"address"`
-	Status  string      `json:"status"` //update time, error info, etc.
-	Servers []ServerRaw `json:"servers"`
-	Info    string      `json:"info"` // maybe include some info from provider
-	AutoSelect bool     `json:"autoSelect"`
+	Monitor     bool        `json:"monitor"`
+	PreferFirst bool        `json:"preferFirst"`
+	Remarks     string      `json:"remarks,omitempty"`
+	Address     string      `json:"address"`
+	Status      string      `json:"status"` //update time, error info, etc.
+	Servers     []ServerRaw `json:"servers"`
+	Info        string      `json:"info"` // maybe include some info from provider
+	AutoSelect  bool        `json:"autoSelect"`
 }
 
 func Bytes2SubscriptionRaw(b []byte) (*SubscriptionRaw, error) {

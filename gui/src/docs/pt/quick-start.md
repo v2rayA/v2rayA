@@ -52,3 +52,10 @@ As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha
 - Registros: com foco, `Home`, `End`, `PgUp` e `PgDn` percorrem o registro.
 
 No macOS, `Cmd` corresponde a `Ctrl`.
+
+
+### Sempre usar o primeiro servidor
+
+Desativado: seleciona um servidor funcional e mantém o balanceamento do grupo. Ativado: segue a primeira entrada, mesmo indisponível.
+
+Recuperar conexões automaticamente: Após um minuto de falhas, atualiza a assinatura e tenta novamente. Desativado por padrão; respeita a parada manual.

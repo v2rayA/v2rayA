@@ -64,7 +64,7 @@ func NewSetting() (setting *Setting) {
 		IpForward:                          ipforward.IsIpForwardOn(),
 		PortSharing:                        false,
 		TransparentType:                    TransparentRedirect,
-		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
+		TproxyExcludedInterfaces:           defaultTproxyExcludedInterfaces(common.IsOpenWrt()),
 		TunAutoRoute:                       true,
 		// 新 DNS 模块默认值
 		DnsListenAddr:    "0.0.0.0:52353",
@@ -117,4 +117,11 @@ func (s *Setting) DnsModulePort() string {
 		}
 	}
 	return "52353"
+}
+
+func defaultTproxyExcludedInterfaces(openwrt bool) string {
+	if openwrt {
+		return "docker*,veth*,wg*,ppp*"
+	}
+	return "docker*,veth*,wg*,ppp*,br-*"
 }

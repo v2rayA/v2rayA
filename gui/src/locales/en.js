@@ -123,6 +123,13 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    alwaysFirst: "Always use the first server",
+    selectionHelp:
+      "Off: select a working server and retain existing group balancing. On: follow the first entry, even when unavailable.",
+    monitor: "Recover failed connections automatically",
+    monitorHelp:
+      "After one minute of failures, refresh the subscription and retry. Disabled by default; respects manual stops.",
+
     settingsTitle: "Subscription updates",
     remarks: "Remarks",
     numberServers: "Number of Servers",

@@ -123,6 +123,13 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    alwaysFirst: "Sempre usar o primeiro servidor",
+    selectionHelp:
+      "Desativado: seleciona um servidor funcional e mantém o balanceamento do grupo. Ativado: segue a primeira entrada, mesmo indisponível.",
+    monitor: "Recuperar conexões automaticamente",
+    monitorHelp:
+      "Após um minuto de falhas, atualiza a assinatura e tenta novamente. Desativado por padrão; respeita a parada manual.",
+
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
     numberServers: "Número de servidores",
