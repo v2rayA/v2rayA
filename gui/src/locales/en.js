@@ -60,7 +60,12 @@ export default {
     timeLastUpdate: "Datetime of Last Update",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect: "Automatically connect to new servers from the subscription after an automatic update of the subscription",
+    autoSelect: "Select this subscription automatically when no server is selected",
+    firstServer: "Always use the first server",
+    workingServer: "Connect to a working server",
+    selectionHelp: "Off: keep the first entry, even if it fails. Monitoring may refresh the list but will not switch to another entry. On: choose the fastest working server. Applies to this subscription's active connection when saved.",
+    monitor: "Recover failed connections automatically",
+    monitorHelp: "After the active connection fails for one minute, refresh this subscription and find a working server. Keep retrying if none works. Manual disconnects are respected.",
   },
   operations: {
     name: "Operations",

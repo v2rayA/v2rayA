@@ -111,6 +111,11 @@ func Connect(which *configure.Which) (err error) {
 	if which == nil {
 		return fmt.Errorf("which can not be nil")
 	}
+	if which.Outbound == "proxy" && which.TYPE == configure.SubscriptionServerType && which.ID != 1 {
+		if sub := configure.GetSubscription(which.Sub); sub != nil && sub.PreferFirst {
+			return fmt.Errorf("this subscription is set to always use its first server; change Server Selection first")
+		}
+	}
 	setting := GetSetting()
 	if err = checkSupport([]*configure.Which{which}); err != nil {
 		if !errors.Is(err, V2OnlyFeatureError) {

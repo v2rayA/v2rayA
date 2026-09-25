@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -16,8 +17,10 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/core/serverObj"
 	"github.com/v2rayA/v2rayA/core/touch"
+	"github.com/v2rayA/v2rayA/core/v2ray"
 	"github.com/v2rayA/v2rayA/core/v2ray/where"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -147,16 +150,34 @@ func trapBOM(fileBytes []byte) []byte {
 	return trimmedBytes
 }
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+	return resolveSubscriptionWithContext(context.Background(), source, client)
+}
+
+func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
 	c := *client
 	if c.Timeout < 30*time.Second {
 		c.Timeout = 30 * time.Second
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(client, source)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%v WebRequestHelper", conf.Version))
+	res, err := c.Do(req)
+	if err != nil {
+		// Retain the direct fallback without losing the download timeout.
+		direct := *http.DefaultClient
+		direct.Timeout = c.Timeout
+		res, err = direct.Do(req)
+	}
 	if err != nil {
 		return
 	}
 	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return nil, "", fmt.Errorf("subscription returned HTTP %d", res.StatusCode)
+	}
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, "", err
@@ -202,6 +223,9 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 	subscriptions := configure.GetSubscriptions()
+	if index < 0 || index >= len(subscriptions) {
+		return fmt.Errorf("subscription index out of range")
+	}
 	addr := subscriptions[index].Address
 	c := httpClient.GetHttpClientAutomatically()
 	resolv.CheckResolvConf()
@@ -210,6 +234,26 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		reason := "failed to resolve subscription address: " + err.Error()
 		log.Warn("UpdateSubscription: %v: %v", err, subscriptionInfos)
 		return fmt.Errorf("UpdateSubscription: %v", reason)
+	}
+	if len(subscriptionInfos) == 0 {
+		return fmt.Errorf("subscription contains no usable servers; previous configuration kept")
+	}
+	if subscriptionOwnsProxy(index) {
+		variant, _, e := where.GetV2rayServiceVersion()
+		if e != nil {
+			return e
+		}
+		if variant == where.Xray && subscriptionOwnsProxy(index) {
+			if !subscriptionScanMu.TryLock() {
+				return fmt.Errorf("another subscription scan is running")
+			}
+			defer subscriptionScanMu.Unlock()
+			err = updateSubscriptionWithProbe(index, &subscriptions[index], subscriptionInfos, status, probeSubscription)
+			if errors.Is(err, ErrNoReachableSubscriptionServer) && subscriptions[index].Monitor {
+				requestSubscriptionRecovery()
+			}
+			return err
+		}
 	}
 	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
 	css := configure.GetConnectedServers()
@@ -272,10 +316,48 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	if raw == nil {
 		return fmt.Errorf("failed to find the corresponding subscription")
 	}
+	previous := *raw
+	policyChanged := raw.PreferFirst != subscription.PreferFirst
+	raw.PreferFirst = subscription.PreferFirst
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
-	return configure.SetSubscription(subscription.ID-1, raw)
+	monitorChanged := raw.Monitor != subscription.Monitor
+	raw.Monitor = subscription.Monitor
+	if err = configure.SetSubscription(subscription.ID-1, raw); err != nil {
+		return err
+	}
+	if policyChanged && subscriptionOwnsProxy(subscription.ID-1) && len(configure.GetConnectedServersByOutbound("proxy").Get()) > 0 {
+		servers := make([]serverObj.ServerObj, len(raw.Servers))
+		for i := range raw.Servers {
+			servers[i] = raw.Servers[i].ServerObj
+		}
+		if !subscriptionScanMu.TryLock() {
+			_ = configure.SetSubscription(subscription.ID-1, &previous)
+			return fmt.Errorf("another subscription scan is finishing; retry the setting change")
+		}
+		err = updateSubscriptionWithProbe(subscription.ID-1, raw, servers, raw.Info, probeSubscription)
+		subscriptionScanMu.Unlock()
+		if errors.Is(err, ErrNoReachableSubscriptionServer) {
+			// Saving policy must remain possible during a complete outage.
+			// Selection stays unchanged until a candidate actually succeeds.
+			if raw.Monitor {
+				requestSubscriptionRecovery()
+			}
+			err = nil
+		}
+		if err != nil {
+			_ = configure.SetSubscription(subscription.ID-1, &previous)
+			return err
+		}
+	}
+	if monitorChanged && subscriptionOwnsProxy(subscription.ID-1) && v2ray.ProcessManager.Running() {
+		if err = v2ray.UpdateV2RayConfig(); err != nil {
+			_ = configure.SetSubscription(subscription.ID-1, &previous)
+			return errors.Join(err, v2ray.UpdateV2RayConfig())
+		}
+	}
+	return nil
 }
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
@@ -286,6 +368,20 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	variant, _, err := where.GetV2rayServiceVersion()
 	if err != nil {
 		log.Warn("Could not figure out if the server is running xray or v2ray -- err: %v", err)
+	}
+	if variant == where.Xray {
+		if shouldDisconnect || !subscriptionOwnsProxy(index) {
+			return nil
+		}
+		sub := configure.GetSubscription(index)
+		if sub == nil {
+			return fmt.Errorf("subscription index out of range")
+		}
+		servers := make([]serverObj.ServerObj, len(sub.Servers))
+		for i := range sub.Servers {
+			servers[i] = sub.Servers[i].ServerObj
+		}
+		return updateSubscriptionWithProbe(index, sub, servers, sub.Info, probeSubscription)
 	}
 
 	for i := 1; i < configure.GetLenSubscriptionServers(index)+1; i++ {

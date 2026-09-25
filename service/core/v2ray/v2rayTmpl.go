@@ -51,14 +51,15 @@ type Template struct {
 	MultiObservatory *coreObj.MultiObservatory `json:"multiObservatory,omitempty"`
 	API              *coreObj.APIObject        `json:"api,omitempty"`
 
-	Variant               where.Variant       `json:"-"`
-	CoreVersion           string              `json:"-"`
-	Plugins               []plugin.Server     `json:"-"`
-	OutboundTags          []string            `json:"-"`
-	ApiCloses             []func()            `json:"-"`
-	ApiPort               int                 `json:"-"`
-	Setting               *configure.Setting  `json:"-"`
-	PluginManagerInfoList []PluginManagerInfo `json:"-"`
+	Variant                 where.Variant       `json:"-"`
+	CoreVersion             string              `json:"-"`
+	Plugins                 []plugin.Server     `json:"-"`
+	OutboundTags            []string            `json:"-"`
+	ApiCloses               []func()            `json:"-"`
+	ApiPort                 int                 `json:"-"`
+	SubscriptionMonitorPort int                 `json:"-"`
+	Setting                 *configure.Setting  `json:"-"`
+	PluginManagerInfoList   []PluginManagerInfo `json:"-"`
 }
 
 type PluginManagerInfo struct {
@@ -1661,6 +1662,9 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 
 	//set inbound listening address and routing
 	t.setDualStack()
+	if err = t.appendSubscriptionMonitor(); err != nil {
+		return nil, err
+	}
 
 	if IsTransparentOn(t.Setting) {
 		switch t.Setting.TransparentType {

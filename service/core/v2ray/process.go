@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -29,8 +30,11 @@ type Process struct {
 	// mutex protect the proc
 	mutex          sync.Mutex
 	proc           *os.Process
+	procDone       chan struct{}
+	closing        atomic.Bool
 	procCancel     func() // cancel func for proc and pluginManagers
 	pluginManagers []*os.Process
+	pluginDone     []chan struct{}
 	template       *Template
 	tag2WhichIndex map[string]int
 }
@@ -38,7 +42,7 @@ type Process struct {
 func NewProcess(tmpl *Template,
 	prestart func() error, poststart func() error,
 	postUnexpectedStop func(p *Process),
-) (*Process, error) {
+) (_ *Process, err error) {
 	process := &Process{
 		template: tmpl,
 	}
@@ -51,7 +55,7 @@ func NewProcess(tmpl *Template,
 		}
 		process.tag2WhichIndex = tag2WhichIndex
 	}
-	err := WriteV2rayConfig(tmpl.ToConfigBytes())
+	err = WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +64,10 @@ func NewProcess(tmpl *Template,
 	}
 	go tmpl.ServePlugins()
 	pCtx, cancel := context.WithCancel(context.Background())
+	process.procCancel = cancel
 	defer func() {
 		if err != nil {
-			cancel()
+			_ = process.Close()
 		}
 	}()
 	// start PluginManagers
@@ -77,25 +82,20 @@ func NewProcess(tmpl *Template,
 			}
 			proc, err := RunWithLog(pCtx, pm, arguments, "", os.Environ())
 			if err != nil {
-				// clean
-				for _, pm := range process.pluginManagers {
-					_ = pm.Kill()
-				}
-				process.pluginManagers = nil
 				return nil, fmt.Errorf("executing PluginManager [state: run, link: %v]: %w", v.Link, err)
 			}
-			process.pluginManagers = append(process.pluginManagers, proc)
+			process.pluginManagers = append(process.pluginManagers, proc.Process)
+			done := make(chan struct{})
+			process.pluginDone = append(process.pluginDone, done)
+			go func() {
+				_ = proc.Wait()
+				close(done)
+			}()
 		}
 	}
-	defer func() {
-		if err != nil {
-			_ = tmpl.Close()
-		}
-	}()
 	if tmpl.API == nil {
 		log.Fatal("unexpected tmpl.API == nil")
 	}
-	process.procCancel = cancel
 	if err = prestart(); err != nil {
 		return nil, err
 	}
@@ -103,19 +103,20 @@ func NewProcess(tmpl *Template,
 	if err != nil {
 		return nil, err
 	}
-	if err = poststart(); err != nil {
-		return nil, err
-	}
-	process.proc = proc
-	var unexpectedExiting bool
+	process.proc = proc.Process
+	process.procDone = make(chan struct{})
+	var unexpectedExiting atomic.Bool
 	go func() {
-		p, e := proc.Wait()
-		if process.procCancel == nil {
+		e := proc.Wait()
+		close(process.procDone)
+		if process.closing.Load() {
 			// canceled by v2rayA
 			return
 		}
+		unexpectedExiting.Store(true)
 		defer postUnexpectedStop(process)
 		var t []string
+		p := proc.ProcessState
 		if p != nil {
 			if p.Success() {
 				return
@@ -126,8 +127,10 @@ func NewProcess(tmpl *Template,
 			t = append(t, e.Error())
 		}
 		log.Warn("v2ray-core: %v", strings.Join(t, ": "))
-		unexpectedExiting = true
 	}()
+	if err = poststart(); err != nil {
+		return nil, err
+	}
 	// ports to check
 	portList := []string{strconv.Itoa(tmpl.ApiPort)}
 	for _, plu := range tmpl.Plugins {
@@ -147,7 +150,7 @@ func NewProcess(tmpl *Template,
 			i++
 			continue
 		}
-		if unexpectedExiting {
+		if unexpectedExiting.Load() {
 			if log.Log.GetLevel() > log.ParseLevel("info") {
 				log.Error("some critical information may lost due to your log level")
 			}
@@ -155,7 +158,7 @@ func NewProcess(tmpl *Template,
 		}
 		if time.Since(startTime) > startTimeOut {
 			log.Info("Attempting to terminate timed-out process with SIGTERM")
-			_ = proc.Signal(syscall.SIGTERM)
+			_ = proc.Process.Signal(syscall.SIGTERM)
 			return nil, fmt.Errorf("timeout: check the log for more information")
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -199,34 +202,44 @@ func (p *Process) Close() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	if p.procCancel != nil {
+		p.closing.Store(true)
 		p.procCancel()
 		p.procCancel = nil
+		if p.proc != nil {
+			// Cancellation alone is asynchronous. Do not let v2rayA exit or
+			// restart the core until the old process has released its ports.
+			_ = p.proc.Kill()
+			<-p.procDone
+		}
+		for i, manager := range p.pluginManagers {
+			_ = manager.Kill()
+			<-p.pluginDone[i]
+		}
 		err := p.template.Close()
 		if err != nil {
 			return err
 		}
 		return nil
-	} else {
-		_, err := p.proc.Wait()
-		return err
 	}
+	return nil
 }
 
-func RunWithLog(ctx context.Context, name string, argv []string, dir string, env []string) (*os.Process, error) {
+func RunWithLog(ctx context.Context, name string, argv []string, dir string, env []string) (*exec.Cmd, error) {
 	cmd := exec.CommandContext(ctx, name)
 	cmd.Args = argv
 	cmd.Dir = dir
 	cmd.Env = env
 	cmd.Stdout = logWriter
 	cmd.Stderr = logWriter
+	cmd.WaitDelay = time.Second
 	err := cmd.Start()
 	if err != nil {
 		return nil, err
 	}
-	return cmd.Process, nil
+	return cmd, nil
 }
 
-func StartCoreProcess(ctx context.Context) (*os.Process, error) {
+func StartCoreProcess(ctx context.Context) (*exec.Cmd, error) {
 	v2rayBinPath, err := where.GetV2rayBinPath()
 	if err != nil {
 		return nil, err

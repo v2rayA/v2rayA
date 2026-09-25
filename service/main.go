@@ -25,7 +25,6 @@ func main() {
 		checkTProxySupportability()
 	}
 	initConfigure()
-	checkUpdate()
 	hello()
 	if err := run(); err != nil {
 		log.Fatal("main: %v", err)

@@ -21,6 +21,7 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/server/reqCache"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 	"github.com/v2rayA/v2rayA/server/controller"
+	"github.com/v2rayA/v2rayA/server/service"
 	"github.com/vearutop/statigz"
 )
 
@@ -163,6 +164,19 @@ func Run() error {
 		},
 		jwt.JWTAuth(false),
 		reqCache.ReqCache,
+		func(ctx *gin.Context) {
+			if ctx.Request.Method == http.MethodGet && ctx.FullPath() != "/api/httpLatency" && ctx.FullPath() != "/api/pingLatency" {
+				return
+			}
+			service.CancelSubscriptionRecovery()
+			if !service.ConfigurationMu.TryLock() {
+				common.ResponseError(ctx, fmt.Errorf("the last request is being processed"))
+				ctx.Abort()
+				return
+			}
+			defer service.ConfigurationMu.Unlock()
+			ctx.Next()
+		},
 	)
 	{
 		auth.POST("import", controller.PostImport)

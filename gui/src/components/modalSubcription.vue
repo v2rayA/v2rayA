@@ -17,12 +17,24 @@
           :placeholder="$t('subscription.remarks')"
         />
       </b-field>
-      <b-field label="AUTO-SELECT">
+      <b-field label="AUTO-CONNECT">
         <b-checkbox
 	  v-model="which.autoSelect"
 	  >{{ $t("subscription.autoSelect") }}
 	</b-checkbox>
       </b-field>
+      <b-field label="SERVER SELECTION">
+        <b-switch :value="!which.preferFirst" @input="$set(which, 'preferFirst', !$event)">
+          {{ $t(which.preferFirst ? "subscription.firstServer" : "subscription.workingServer") }}
+        </b-switch>
+      </b-field>
+      <p class="help">{{ $t("subscription.selectionHelp") }}</p>
+      <b-field label="MONITORING">
+        <b-switch v-model="which.monitor">
+          {{ $t("subscription.monitor") }}
+        </b-switch>
+      </b-field>
+      <p class="help">{{ $t("subscription.monitorHelp") }}</p>
     </section>
     <footer class="modal-card-foot flex-end">
       <button class="button" type="button" @click="$parent.close()">

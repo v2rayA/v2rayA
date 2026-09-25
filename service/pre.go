@@ -222,13 +222,28 @@ func hello() {
 }
 
 func updateSubscriptions() {
+	service.ConfigurationMu.Lock()
+	defer service.ConfigurationMu.Unlock()
 	subs := configure.GetSubscriptions()
+	variant, _, err := where.GetV2rayServiceVersion()
+	if err != nil {
+		log.Error("[AutoUpdate] Cannot determine core version: %v", err)
+		return
+	}
+	if variant == where.Xray {
+		for i := range subs {
+			if err := service.UpdateSubscription(i, false); err != nil {
+				log.Warn("[AutoUpdate] Subscription %d: %v", i+1, err)
+			}
+		}
+		return
+	}
 	lenSubs := len(subs)
 	control := make(chan struct{}, 2) //并发限制同时更新2个订阅
 	// Disconnect from subscriptions before auto-selecting servers from them
 	// to limit the number of connected servers and avoid hitting the limit
 	shouldDisconnect := true
-	err := service.AutoSelectServersFromSubscriptions(shouldDisconnect)
+	err = service.AutoSelectServersFromSubscriptions(shouldDisconnect)
 	if err != nil {
 		log.Error("[AutoSelect] Failed to disconnect servers from subscriptions -- err: %v", err)
 	}
@@ -347,6 +362,9 @@ func run() (err error) {
 	} else {
 		log.Info("the core was not running the last time v2rayA exited")
 	}
+	// Start scheduled work after restoring the core, so startup cannot race a subscription update.
+	checkUpdate()
+	stopMonitor := service.StartSubscriptionMonitor()
 	//w := configure.GetConnectedServers()
 	//log.Println(err, ", which:", w)
 	//_ = configure.ClearConnected()
@@ -366,6 +384,7 @@ func run() (err error) {
 		log.Fatal("run: %v", err)
 	}
 	fmt.Println("Quitting...")
+	stopMonitor()
 	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 	v2ray.ProcessManager.Stop(false)
 	_ = db.DB().Close()
