@@ -74,3 +74,24 @@ func TestPreservedReloadNewProcessFailureTearsInterceptionDownOnce(t *testing.T)
 		t.Fatal("transparent interception remained marked active")
 	}
 }
+
+func TestPausedReloadDoesNotRetainMissingInterception(t *testing.T) {
+	setting := *configure.NewSetting()
+	setting.Transparent, setting.TransparentType = configure.TransparentProxy, configure.TransparentTproxy
+	wantErr := errors.New("stop before starting a core")
+	manager := CoreProcessManager{networkPaused: true, retainedSetting: &setting}
+	manager.transparentOn.Store(true)
+	manager.newProcess = func(*Template, func() error, func() error, func(*Process)) (*Process, error) {
+		if manager.retainingInterception.Load() {
+			t.Error("paused reload retained interception that the connectivity monitor removed")
+		}
+		return nil, wantErr
+	}
+	env := conf.GetEnvironmentConfig()
+	previous := *env
+	env.Lite, env.TransparentHook, env.CoreHook = false, "", ""
+	t.Cleanup(func() { *env = previous })
+	if err := manager.start(&Template{Setting: &setting}, true); !errors.Is(err, wantErr) {
+		t.Fatalf("start error = %v; want %v", err, wantErr)
+	}
+}

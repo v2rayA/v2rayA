@@ -29,8 +29,8 @@ func TestSQLiteSubscriptionUpdatePolicyMigration(t *testing.T) {
 			database.SetMaxOpenConns(1)
 			if _, err := database.Exec(`
 				CREATE TABLE system_config (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-				CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, address TEXT, remarks TEXT, auto_select INTEGER);
-				INSERT INTO subscriptions VALUES (7, 'https://example.test/sub', 'keep me', 1);
+				CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, address TEXT, remarks TEXT, auto_select INTEGER, sort INTEGER);
+				INSERT INTO subscriptions VALUES (7, 'https://example.test/sub', 'keep me', 1, 0);
 				INSERT INTO system_config VALUES ('system:setting', ?)
 			`, `{"subscriptionAutoUpdateMode":"`+test.legacy+`","subscriptionAutoUpdateIntervalHour":7}`); err != nil {
 				t.Fatal(err)
@@ -139,8 +139,8 @@ func TestAutoSelectMigrationLeavesManualProxyAloneWhenUnused(t *testing.T) {
 	database.SetMaxOpenConns(1)
 	if _, err := database.Exec(`
 		CREATE TABLE system_config (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-		CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, address TEXT, remarks TEXT, auto_select INTEGER);
-		INSERT INTO subscriptions VALUES (1, 'https://example.test/sub', '', 0);
+		CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, address TEXT, remarks TEXT, auto_select INTEGER, sort INTEGER);
+		INSERT INTO subscriptions VALUES (1, 'https://example.test/sub', '', 0, 0);
 		INSERT INTO system_config VALUES ('outbound.proxy:setting', '{"probeURL":"https://example.test/check","probeInterval":"60s","type":"leastping"}')
 	`); err != nil {
 		t.Fatal(err)

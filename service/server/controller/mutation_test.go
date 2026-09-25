@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/server/service"
 )
 
 func codeOf(t *testing.T, recorder *httptest.ResponseRecorder) (common.Code, string) {
@@ -35,6 +36,36 @@ func TestTouchAnswersDuringAMutation(t *testing.T) {
 	GetTouch(ctx)
 	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
 		t.Fatalf("touch during a mutation answered %s", recorder.Body.String())
+	}
+}
+
+func TestAutomationReloadKeepsReadsAvailableAndBoundsEditWait(t *testing.T) {
+	previous := mutationWait
+	mutationWait = 20 * time.Millisecond
+	t.Cleanup(func() { mutationWait = previous })
+	service.ConfigurationMu.Lock()
+	defer service.ConfigurationMu.Unlock()
+
+	read := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(read)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/touch", nil)
+	GetTouch(ctx)
+	if code, _ := codeOf(t, read); code != common.SUCCESS {
+		t.Fatalf("read blocked by automation: %s", read.Body.String())
+	}
+
+	edit := httptest.NewRecorder()
+	ctx, _ = gin.CreateTestContext(edit)
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/connection", nil)
+	if release, ok := beginMutation(ctx); ok {
+		release()
+		t.Fatal("editing entered while automation owned configuration")
+	}
+	if _, code := codeOf(t, edit); code != "REQUEST_IN_PROGRESS" {
+		t.Fatalf("editing during reload: %s", edit.Body.String())
+	}
+	if len(mutation) != 0 {
+		t.Fatal("timed-out edit retained the mutation turn")
 	}
 }
 

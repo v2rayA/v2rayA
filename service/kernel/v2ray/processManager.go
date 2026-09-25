@@ -446,7 +446,7 @@ func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 	if m.p != nil {
 		previous = m.p.template.Setting
 	}
-	retained := preserve && m.transparentOn.Load() && canRetainInterception(previous, t.Setting)
+	retained := preserve && !m.networkPaused && m.transparentOn.Load() && canRetainInterception(previous, t.Setting)
 	if preserve {
 		log.Debug("[Groups] Keep transparent interception during reload: %v", retained)
 	}
