@@ -127,10 +127,10 @@ func stopTunCore() {
 	}
 }
 
-// tunEgressInterfaceIfTun names the physical interface for socket binding
+// TunEgressInterfaceIfTun names the physical interface for socket binding
 // when the built-in TUN is the active transparent proxy; empty otherwise
 // and on Linux, where the socket mark does the job.
-func tunEgressInterfaceIfTun(setting *configure.Setting) string {
+func TunEgressInterfaceIfTun(setting *configure.Setting) string {
 	if setting.TransparentType != configure.TransparentTun || !IsTransparentOn(setting) {
 		return ""
 	}

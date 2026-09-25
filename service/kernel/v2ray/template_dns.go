@@ -203,7 +203,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		"bootstrap_dns": bootstrapDns,
 		// The module's own upstream sockets bind here on Windows and macOS,
 		// where there is no socket mark to keep them out of the TUN.
-		"egress_interface": tunEgressInterfaceIfTun(setting),
+		"egress_interface": TunEgressInterfaceIfTun(setting),
 		"upstreams":        make([]map[string]interface{}, 0),
 		"rules":            make([]map[string]interface{}, 0),
 	}
