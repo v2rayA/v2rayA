@@ -202,7 +202,7 @@ export default {
     autoUpdateGfwlist: "自动更新 GFWList",
     preferModeWhenUpdate: "解析订阅链接/更新时优先使用",
     tproxyExcludedInterfaces: "排除的网卡名前缀",
-    tproxyExcludedInterfacesPlaceholder: "docker*、veth*、wg*、ppp*、br-*",
+    tproxyExcludedInterfacesPlaceholder: "docker*、veth*、wg*、ppp*",
     tunAutoRoute: "自动路由",
     ipForwardOn: "开启 IP 转发",
     portSharingOn: "允许局域网的连接",
@@ -243,7 +243,7 @@ export default {
       transparentType:
         "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun: 由核心打开 TUN 设备并接管默认路由；支持 Linux、Windows、macOS 与 UDP，自动排除 v2rayA 与核心自身，并可按进程名排除其他进程。Windows 与 macOS 上直接查询局域网 DNS 的应用仍会绕过它。",
       tproxyExcludedInterfaces:
-        "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
+        "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*。多个前缀用逗号隔开。 OpenWrt 默认代理 LAN 网桥流量；在此添加 br-* 会排除这些网桥。",
       tunAutoRoute:
         "开启时，v2rayA 自行安装路由与 DNS 设置。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
       tunExcludeProcesses:
