@@ -34,6 +34,9 @@ func StartV2ray() (err error) {
 }
 
 func Disconnect(which configure.NodeRef, clearOutbound bool) (err error) {
+	if which.Outbound == "" {
+		which.Outbound = configure.DefaultOutboundName
+	}
 	if configure.GetOutboundSetting(which.Outbound).AutoAdd {
 		return fmt.Errorf("group %q manages its membership automatically; turn automatic membership off before editing it", which.Outbound)
 	}
@@ -98,6 +101,9 @@ func Connect(which *configure.NodeRef) (err error) {
 	}()
 	if which == nil {
 		return fmt.Errorf("no server was given to connect to")
+	}
+	if which.Outbound == "" {
+		which.Outbound = configure.DefaultOutboundName
 	}
 	if configure.GetOutboundSetting(which.Outbound).AutoAdd {
 		return fmt.Errorf("group %q manages its membership automatically; turn automatic membership off before editing it", which.Outbound)
