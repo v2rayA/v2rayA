@@ -14,6 +14,7 @@ import subprocess
 import threading
 import time
 import urllib.request
+import urllib.parse
 import uuid
 
 from fixtures import Node, Proxy, Subscription, free_port
@@ -90,13 +91,21 @@ def main():
     def group(enabled):
         api('outbound',{'outbound':'proxy','setting':{'autoAdd':enabled,'probeURL':'http://198.18.0.1/check','probeInterval':'10s','type':'leastping'}},'PUT')
     def refresh(index=0):api('subscription',{'_type':'subscription','id':index+1},'PUT')
+    def latency_checks(healthy=False):
+        whiches=urllib.parse.quote(json.dumps([{'_type':'server','id':1}]))
+        for _ in range(3):
+            result=api('pingLatency?whiches='+whiches)
+            if healthy:assert result['whiches'][0]['pingLatency'].endswith('ms'),result
+        result=api('httpLatency?whiches='+whiches+'&testUrl='+urllib.parse.quote('http://198.18.0.1/check'))
+        if healthy:assert result['whiches'][0]['pingLatency'].endswith('ms'),result
+        assert api('touch')['running'], 'latency check stopped the main core'
     stop_traffic=threading.Event()
     traffic_errors=[]
     def router_traffic():
         while not stop_traffic.is_set():
             try:
                 output=ssh('curl -s --max-time 1 http://198.18.0.1/traffic || true',5)
-                if 'DIRECT' in output:traffic_errors.append(output)
+                if 'DIRECT' in output:traffic_errors.append({'time':time.time(),'response':output})
             except subprocess.SubprocessError: pass
             stop_traffic.wait(.05)
     thread=None
@@ -124,6 +133,9 @@ def main():
         assert ssh('curl -fsS --max-time 10 http://198.18.0.1/traffic').strip()=='fast'
         base_direct=direct.requests
         thread=threading.Thread(target=router_traffic,daemon=True);thread.start()
+        latency_checks(True)
+        assert not traffic_errors and direct.requests==base_direct,(traffic_errors,direct.requests,base_direct)
+        record('dashboard TCP and HTTP latency checks retain interception')
         fast.stop();wait(lambda:len(members())==2);wait(lambda:traffic()=='backup')
         record('later healthy subscription replaces fastest failed member')
         backup.stop();standalone.stop();wait(lambda:len(members())==0)
@@ -131,11 +143,12 @@ def main():
         config=json.loads(ssh('cat /etc/v2raya/config.json'))
         assert any(o['tag']=='proxy' and o['protocol']=='blackhole' for o in config['outbounds'])
         assert 'v2raya' in ssh('nft list table inet v2raya')
+        latency_checks()
         assert not traffic_errors and direct.requests==base_direct,(traffic_errors,direct.requests,base_direct)
         record('empty group uses blackhole, retains TPROXY and never reaches direct trap through reloads')
         fast.start();wait(lambda:len(members())==1);wait(lambda:traffic()=='fast')
         assert not traffic_errors and direct.requests==base_direct
-        record('empty group recovers automatically without starting or changing a manual group')
+        record('empty group recovers automatically from the retained catalog')
         group(False);before=members();backup.start();time.sleep(13)
         assert members()==before
         record('disabling auto membership preserves members and suppresses scans')

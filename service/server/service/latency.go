@@ -29,13 +29,9 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	var whiches = configure.NewWhiches(which)
 	// Deduplicate whiches to Ping
 	which = whiches.GetNonDuplicated()
-	// Temporarily disable transparent proxy
-	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
-	defer func() {
-		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
-			err = fmt.Errorf("could not restore the transparent proxy after the ping test: %w (ping result: %v)", e, err)
-		}
-	}()
+	// The dashboard probes on arrival. Removing interception even briefly
+	// here lets unrelated user traffic escape whenever the page is opened.
+	dialer := httpClient.DirectDialer(timeout)
 	// Multi-threaded asynchronous ping
 	loc := configure.NewLocator()
 	wg := new(sync.WaitGroup)
@@ -45,7 +41,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 		wg.Add(1)
 		go func(i int) {
-			_ = which[i].Ping(loc, timeout)
+			_ = which[i].PingWithDialer(loc, timeout, dialer)
 			wg.Done()
 		}(i)
 	}
@@ -243,10 +239,10 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	tmpl.SetOutboundSockopt()
 	v2ray.ProcessManager.SetLatencyTesting(true)
 	handedOver = true
-	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
+	if err := v2ray.ProcessManager.StartPreservingInterception(tmpl); err != nil {
 		v2ray.ProcessManager.SetLatencyTesting(false)
-		if v2rayRunning && configure.GetConnectedServers() != nil {
-			if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
+		if v2rayRunning {
+			if restoreErr := v2ray.UpdateGroupConfig(); restoreErr != nil {
 				return nil, fmt.Errorf("%v; cannot restart v2ray-core: %w", err, restoreErr)
 			}
 		}
@@ -274,8 +270,8 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	wg.Wait()
 	v2ray.ProcessManager.SetLatencyTesting(false)
-	if v2rayRunning && configure.GetConnectedServers() != nil {
-		err := v2ray.UpdateV2RayConfig()
+	if v2rayRunning {
+		err := v2ray.UpdateGroupConfig()
 		if err != nil {
 			return which, fmt.Errorf("cannot restart v2ray-core: %w", err)
 		}

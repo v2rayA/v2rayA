@@ -407,6 +407,10 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	return m.start(t, false)
 }
 
+func (m *CoreProcessManager) StartPreservingInterception(t *Template) error {
+	return m.start(t, true)
+}
+
 func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 	m.startMu.Lock()
 	defer m.startMu.Unlock()

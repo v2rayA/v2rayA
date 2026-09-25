@@ -6,6 +6,11 @@ subscriptions and loopback VLESS fixtures, never a real subscription token.
 The independent DNAT trap is first verified with the proxy stopped. Continuous
 router-originated requests then run during membership changes. Any direct
 response or trap request fails the test, including brief reload windows.
+It explicitly runs the dashboard's TCP and HTTP latency checks while the group
+is healthy and empty. The legacy TCP check removed interception for every ping,
+including the dashboard's automatic check on arrival; this made earlier runs
+without a browser look safe. TCP probes now use marked sockets, and HTTP tests
+retain interception while adding/removing their temporary core inbounds.
 
 The suite covers all catalog sources, authenticated reachability, all-dead
 blackhole membership, recovery, disabling automatic membership, required minute

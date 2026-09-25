@@ -13,13 +13,13 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Only subscription downloads use this exception. User traffic assigned to
-// an empty group remains blocked; refreshing its provider must not depend on it.
-func DirectSubscriptionClient() *http.Client {
+// Service-owned probes and subscription downloads must not depend on the
+// group they are repairing. This dialer is never used for forwarded traffic.
+func DirectDialer(timeout time.Duration) *net.Dialer {
 	if !v2ray.IsTransparentOn(configure.GetSettingNotNil()) {
-		return http.DefaultClient
+		return &net.Dialer{Timeout: timeout}
 	}
-	dialer := &net.Dialer{Timeout: 10 * time.Second, Control: func(_, _ string, c syscall.RawConn) error {
+	dialer := &net.Dialer{Timeout: timeout, Control: func(_, _ string, c syscall.RawConn) error {
 		var markErr error
 		if err := c.Control(func(fd uintptr) { markErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_MARK, 0x80) }); err != nil {
 			return err
@@ -33,9 +33,16 @@ func DirectSubscriptionClient() *http.Client {
 		}
 		return dnsDialer.DialContext(ctx, network, address)
 	}}
+	return dialer
+}
+
+func DirectSubscriptionClient() *http.Client {
+	if !v2ray.IsTransparentOn(configure.GetSettingNotNil()) {
+		return http.DefaultClient
+	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
-	transport.DialContext = dialer.DialContext
+	transport.DialContext = DirectDialer(10 * time.Second).DialContext
 	// Do not accumulate idle transports on a long-running router.
 	transport.DisableKeepAlives = true
 	return &http.Client{Transport: transport, Timeout: 30 * time.Second}
