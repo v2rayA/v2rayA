@@ -94,6 +94,9 @@ func New(ctx context.Context, config *Config) (*MultiObservatory, error) {
 		pingCfg := &burst.HealthPingConfig{
 			Destination: obs.GetProbeUrl(),
 			Interval:    obs.GetProbeInterval(),
+			// Burst multiplies the interval by its sample count (10 by default).
+			// Each legacy observer interval represents one fresh health check.
+			SamplingCount: 1,
 		}
 		// Keep legacy 10s probing behavior when interval isn't configured.
 		if pingCfg.Interval == 0 {
