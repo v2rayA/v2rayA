@@ -52,3 +52,16 @@ The ports are changed under **Settings → Address and Ports**; 0 closes an inbo
 - Logs: `Home`, `End`, `PgUp`, `PgDn` move through the log once it has focus.
 
 On macOS `Cmd` stands for `Ctrl`.
+
+## Automatic subscription updates
+
+Each subscription has its own update mode:
+
+- **Disabled:** update only when requested manually.
+- **On service start:** update once whenever v2rayA starts.
+- **At an interval:** update on startup and then after the configured number of minutes.
+- **At an interval with fail-safe recovery:** use the regular schedule and also check the saved servers at the failure interval. When none works, refresh at that interval until at least one becomes available.
+
+Failed or empty downloads keep the saved server list. A failure retry does not postpone the regular schedule, and a slow pass never overlaps another pass. On Linux, recovery downloads use marked sockets so transparent proxying cannot route them back into a failed proxy. This bypass is not guaranteed for TUN mode on macOS or Windows. Candidate checks may start temporary core processes, but automatic updates do not start a manually stopped main core.
+
+On upgrade, the previous global **update on start** mode is assigned to every existing subscription as **On service start**. The previous interval mode becomes **At an interval** with the same interval converted from hours to minutes. Fail-safe recovery is never enabled during migration; select it explicitly where needed.

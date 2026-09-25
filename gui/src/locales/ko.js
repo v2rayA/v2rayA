@@ -121,11 +121,32 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    updateMode: "구독 자동 업데이트",
+    updateModes: {
+      disabled: "사용 안 함",
+      onStart: "서비스 시작 시",
+      interval: "주기적으로",
+      intervalFailsafe: "주기적 업데이트 및 장애 복구",
+    },
+    updateModeHelp: {
+      disabled: "수동으로 업데이트할 때만 구독이 변경됩니다.",
+      onStart: "v2rayA가 시작될 때마다 구독을 한 번 업데이트합니다.",
+      interval: "시작할 때 한 번 업데이트한 뒤 설정된 주기로 업데이트합니다.",
+      intervalFailsafe:
+        "시작 시와 정기 주기에 업데이트합니다. 구독의 모든 서버가 사용할 수 없으면 하나가 복구될 때까지 장애 주기로 다시 시도합니다.",
+    },
+    updateIntervalMinutes: "정기 간격 (분)",
+    regularHelp: "필수입니다. 1 이상의 정수(분)를 입력하세요.",
+    failureIntervalMinutes: "실패 재시도 (분)",
+    failureHelp:
+      "필수, 최소 1분. 모든 서버가 불가능할 때 갱신하며 하나가 복구되면 재시도를 중지합니다.",
+    intervalInvalid: "{minimum}부터 525600까지의 정수를 입력하세요.",
+
     settingsTitle: "구독 업데이트",
     remarks: "별칭",
     numberServers: "서버 수",
     subscription: "구독",
-    autoSelect: "구독이 자동 업데이트된 후 구독의 새 서버에 자동으로 연결",
+    autoSelect: "구독 자동 업데이트 후 새 서버에 자동으로 연결",
     autoSelectLabel: "자동 선택",
     updated: "구독 업데이트됨",
     saved: "구독 저장됨",
