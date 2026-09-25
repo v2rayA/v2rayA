@@ -3,7 +3,6 @@
 package httpClient
 
 import (
-	"context"
 	"net"
 	"syscall"
 	"time"
@@ -29,17 +28,6 @@ func DirectDialer(timeout time.Duration, mark bool) *net.Dialer {
 		}
 		return markErr
 	}
-	// DNS must use the same mark, otherwise resolving a node can still enter
-	// the transparent proxy that the probe is checking.
-	dnsDialer := *dialer
-	dialer.Resolver = &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			if preferred := resolv.PreferredServers(); len(preferred) > 0 {
-				address = preferred[0]
-			}
-			return dnsDialer.DialContext(ctx, network, address)
-		},
-	}
+	dialer.Resolver = resolv.DirectResolver(dialer)
 	return dialer
 }

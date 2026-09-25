@@ -29,33 +29,58 @@ var dnsServers = []struct {
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	dialer := net.Dialer{Timeout: 1000 * time.Millisecond}
-	defaultResolver = &net.Resolver{
+	defaultResolver, systemResolver = newResolvers(&net.Dialer{Timeout: time.Second})
+}
+
+func newResolvers(dialer *net.Dialer) (fallback, system *net.Resolver) {
+	// DNS upstream addresses must not recurse through the probe's resolver.
+	dnsDialer := *dialer
+	dnsDialer.Resolver = nil
+	fallback = &net.Resolver{
 		PreferGo:     true,
 		StrictErrors: false,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			if preferred := PreferredServers(); len(preferred) > 0 {
-				return dialer.DialContext(ctx, network, preferred[rand.Intn(len(preferred))])
+				return dnsDialer.DialContext(ctx, network, preferred[rand.Intn(len(preferred))])
 			}
 			server := dnsServers[rand.Intn(len(dnsServers))]
 			address = server.addr
 			network = server.network
-			return dialer.DialContext(ctx, network, address)
+			return dnsDialer.DialContext(ctx, network, address)
 		},
 	}
-	systemResolver = &net.Resolver{
+	system = &net.Resolver{
 		PreferGo:     true,
 		StrictErrors: false,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			return dialer.DialContext(ctx, network, address)
+			return dnsDialer.DialContext(ctx, network, address)
 		},
 	}
+	return fallback, system
 }
 
 func LookupHost(host string) (addrs []string, err error) {
+	return lookupHost(host, systemResolver, defaultResolver)
+}
+
+// DirectResolver uses the configured direct upstreams, or the built-in
+// public servers, with the caller's socket policy.
+func DirectResolver(dialer *net.Dialer) *net.Resolver {
+	fallback, _ := newResolvers(dialer)
+	return fallback
+}
+
+// LookupHostWithDialer preserves the system-DNS recheck and fallback while
+// applying the caller's socket policy to every DNS connection.
+func LookupHostWithDialer(host string, dialer *net.Dialer) ([]string, error) {
+	fallback, system := newResolvers(dialer)
+	return lookupHost(host, system, fallback)
+}
+
+func lookupHost(host string, system, fallback *net.Resolver) (addrs []string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	addrs, err = systemResolver.LookupHost(ctx, host)
+	addrs, err = system.LookupHost(ctx, host)
 	lookupAgain := len(addrs) == 0 || err != nil
 	if !lookupAgain {
 		for _, addr := range addrs {
@@ -68,7 +93,7 @@ func LookupHost(host string) (addrs []string, err error) {
 	if lookupAgain {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		return defaultResolver.LookupHost(ctx, host)
+		return fallback.LookupHost(ctx, host)
 	}
 	return addrs, err
 }

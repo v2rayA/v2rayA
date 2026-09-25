@@ -362,7 +362,7 @@ func (t *Template) checkAndSetMark(o *coreObj.OutboundObject, mark int) {
 	o.StreamSettings.Sockopt.Mark = &mark
 	// Where the mark means nothing to the kernel, the TUN needs the
 	// core's sockets pinned to the physical interface instead.
-	if iface := tunEgressInterfaceIfTun(t.Setting); iface != "" {
+	if iface := TunEgressInterfaceIfTun(t.Setting); iface != "" {
 		o.StreamSettings.Sockopt.Interface = iface
 	}
 }

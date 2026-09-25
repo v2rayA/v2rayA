@@ -1,7 +1,6 @@
 package configure
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -256,13 +255,7 @@ func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.
 	host := tsr.ServerObj.GetHostname()
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		if dialer.Resolver == nil {
-			hosts, err = resolv.LookupHost(host)
-		} else {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			hosts, err = dialer.Resolver.LookupHost(ctx, host)
-			cancel()
-		}
+		hosts, err = resolv.LookupHostWithDialer(host, dialer)
 		if err != nil || len(hosts) <= 0 {
 			if err != nil {
 				w.Latency = err.Error()

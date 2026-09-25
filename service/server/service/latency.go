@@ -30,8 +30,9 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	// Deduplicate whiches to Ping
 	which = whiches.GetNonDuplicated()
 	// Do not remove interception for a dashboard probe: unrelated traffic
-	// could otherwise escape directly during this window. Mark only the
-	// service-owned sockets so they bypass v2rayA's TPROXY rules on Linux.
+	// could otherwise escape directly during this window. Only the probe's
+	// TCP and DNS sockets bypass interception: marked on Linux, bound to
+	// the physical egress interface for macOS and Windows TUN.
 	dialer := httpClient.DirectDialer(timeout, v2ray.IsTransparentOn(configure.GetSettingNotNil()))
 	// Multi-threaded asynchronous ping
 	loc := configure.NewLocator()
