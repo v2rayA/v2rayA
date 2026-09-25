@@ -123,12 +123,39 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    updateMode: "Atualização automática da assinatura",
+    updateModes: {
+      disabled: "Desativada",
+      onStart: "Ao iniciar o serviço",
+      interval: "Em um intervalo",
+      intervalFailsafe: "Em um intervalo com recuperação de falha",
+    },
+    updateModeHelp: {
+      disabled: "A assinatura muda apenas quando você a atualiza manualmente.",
+      onStart:
+        "Atualiza uma vez a cada início do v2rayA e imediatamente ao alterar o endereço ou a política de atualização.",
+      interval: "Atualiza ao iniciar e depois no intervalo configurado.",
+      intervalFailsafe:
+        "Atualiza ao iniciar e no intervalo regular. Se todos os servidores da assinatura ficarem indisponíveis, repete no intervalo de falha até que um funcione.",
+    },
+    allowDirectRecovery:
+      "Ignorar a rota de download da assinatura durante a recuperação",
+    recoveryRouteHelp:
+      "Permite download direto se a recuperação pelo proxy configurado falhar. Atualizações manuais e regulares mantêm a rota escolhida. Tentativas diretas são registradas; a rede pode ver o endereço do serviço de assinatura.",
+    updateIntervalMinutes: "Intervalo regular (minutos)",
+    regularHelp:
+      "Obrigatório. Digite um número inteiro de minutos, no mínimo 1.",
+    failureIntervalMinutes: "Repetir na falha (minutos)",
+    failureHelp:
+      "Obrigatório, mínimo de 1 minuto. Atualiza enquanto todos os servidores estão indisponíveis; para quando um funcionar.",
+    intervalInvalid: "Insira um inteiro de {minimum} a 525600.",
+
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
     numberServers: "Número de servidores",
     subscription: "Assinatura",
     autoSelect:
-      "Conectar automaticamente aos novos servidores da assinatura após uma atualização automática",
+      "Conectar automaticamente a novos servidores da assinatura após uma atualização automática",
     autoSelectLabel: "Seleção automática",
     updated: "Assinatura atualizada",
     saved: "Assinatura salva",

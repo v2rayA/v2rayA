@@ -52,3 +52,22 @@ The ports are changed under **Settings → Address and Ports**; 0 closes an inbo
 - Logs: `Home`, `End`, `PgUp`, `PgDn` move through the log once it has focus.
 
 On macOS `Cmd` stands for `Ctrl`.
+
+## Automatic subscription updates
+
+Each subscription has its own update mode:
+
+- **Disabled:** update only when requested manually.
+- **On service start:** update once whenever v2rayA starts.
+- **At an interval:** update on startup and then after the configured number of minutes.
+- **At an interval with fail-safe recovery:** use the regular schedule and also check the saved servers at the failure interval. When none works, refresh at that interval until at least one becomes available.
+
+Failed or empty downloads keep the saved server list. A failure retry does not postpone the regular schedule, and a slow pass never overlaps another pass. On Linux, permitted recovery downloads outside the proxy use marked sockets so transparent proxying cannot route them back into a failed proxy. This bypass is not guaranteed for TUN mode on macOS or Windows. Candidate checks may start temporary core processes. With the legacy **Auto-select** option disabled, automatic updates leave a manually stopped main core stopped. In this release, enabling legacy **Auto-select** can still start the main core after an update; automatic group membership in the follow-up change removes this legacy behavior.
+
+On upgrade, the previous global **update on start** mode is assigned to every existing subscription as **On service start**. The previous interval mode becomes **At an interval** with the same interval converted from hours to minutes. Fail-safe recovery is never enabled during migration; select it explicitly where needed.
+
+An enabled schedule restarts immediately when the subscription address, update mode or intervals change. In particular, selecting **On service start** while v2rayA is running performs one update immediately, then waits until the next service start. Changing only the remarks does not reset the schedule.
+
+Manual imports, manual updates and scheduled updates follow **Mode when updating subscriptions**, including when the main core is stopped. They never silently switch from proxy/PAC to direct. Only a fail-safe recovery attempt after an all-server outage can retry directly if the configured download route fails. Every such bypass is logged; the network can see the subscription service address. This requires the separate **Ignore subscription download routing during recovery** switch, which defaults to off for new and upgraded subscriptions. With it off, recovery keeps retrying through the configured proxy/PAC. With it on, the exception applies only to the subscription download, not to other traffic.
+
+Plugin-managed candidates cannot be checked safely by the isolated probe worker. If any saved candidate cannot be probed, its health is unknown: fail-safe recovery is suspended for that subscription and a warning is logged once until the catalog becomes probeable again. Regular updates continue. Cancelling a health check or recovery request leaves a future deadline, so a dashboard latency test does not disable recovery.

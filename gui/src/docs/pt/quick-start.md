@@ -52,3 +52,22 @@ As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha
 - Registros: com foco, `Home`, `End`, `PgUp` e `PgDn` percorrem o registro.
 
 No macOS, `Cmd` corresponde a `Ctrl`.
+
+## Atualização automática de assinaturas
+
+Cada assinatura tem seu próprio modo de atualização:
+
+- **Desativada:** atualizar somente quando solicitado manualmente.
+- **Ao iniciar o serviço:** atualizar uma vez sempre que o v2rayA iniciar.
+- **Em um intervalo:** atualizar ao iniciar e depois do número de minutos configurado.
+- **Em um intervalo com recuperação de falha:** seguir a programação regular e também verificar os servidores salvos no intervalo de falha. Quando nenhum funcionar, atualizar a assinatura nesse intervalo até que pelo menos um fique disponível.
+
+Downloads com erro ou vazios preservam a lista de servidores salva. Uma tentativa de recuperação não adia a programação regular, e uma execução demorada nunca ocorre em paralelo com a próxima. No Linux, os downloads de recuperação autorizados fora do proxy usam conexões marcadas para que o proxy transparente não os encaminhe de volta ao proxy com falha. Esse desvio não é garantido no modo TUN do macOS ou Windows. As verificações podem iniciar núcleos temporários. Com a opção antiga **Seleção automática** desativada, as atualizações mantêm o núcleo principal parado manualmente. Nesta versão, ativar essa opção antiga ainda pode iniciar o núcleo após uma atualização; a mudança posterior de membros automáticos do grupo remove esse comportamento.
+
+Na atualização, o modo global antigo **ao iniciar** é atribuído a todas as assinaturas existentes como **Ao iniciar o serviço**. O modo antigo por intervalo passa a **Em um intervalo**, com as horas convertidas em minutos. A recuperação de falha nunca é ativada pela migração; selecione-a manualmente onde for necessária.
+
+Alterar o endereço, o modo ou os intervalos reinicia imediatamente uma programação ativa. Selecionar **Ao iniciar o serviço** com o v2rayA em execução atualiza uma vez imediatamente e depois aguarda o próximo início do serviço. Alterar apenas as observações não reinicia a programação.
+
+Importações, atualizações manuais e programadas seguem o **Modo ao atualizar assinaturas**, mesmo com o núcleo parado. Nunca passam silenciosamente de proxy/PAC para conexão direta. Somente uma tentativa de recuperação após a falha de todos os servidores pode repetir diretamente se a rota de download falhar. Cada desvio é registrado; a rede pode ver o endereço do serviço de assinatura. Isso exige a opção separada **Ignorar a rota de download da assinatura durante a recuperação**, desativada por padrão para assinaturas novas e atualizadas. Sem ela, a recuperação continua tentando pelo proxy/PAC configurado. Com ela, a exceção vale apenas para baixar a assinatura, não para outro tráfego.
+
+Candidatos gerenciados por plugins não podem ser verificados com segurança pelo processo isolado. Se algum candidato salvo não puder ser verificado, a saúde é desconhecida: a recuperação da assinatura é suspensa e um aviso é registrado uma vez até que o catálogo possa ser verificado novamente. As atualizações regulares continuam. Cancelar uma verificação ou download de recuperação preserva um prazo futuro; o teste de latência do painel não desativa a recuperação.

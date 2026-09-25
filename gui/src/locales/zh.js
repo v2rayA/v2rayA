@@ -119,11 +119,36 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    updateMode: "自动更新订阅",
+    updateModes: {
+      disabled: "关闭",
+      onStart: "服务启动时",
+      interval: "按间隔",
+      intervalFailsafe: "按间隔并启用故障恢复",
+    },
+    updateModeHelp: {
+      disabled: "仅在手动更新时更改订阅。",
+      onStart:
+        "每次 v2rayA 启动时更新一次；修改订阅地址或更新策略后也会立即更新一次。",
+      interval: "启动时更新一次，之后按设定的间隔更新。",
+      intervalFailsafe:
+        "启动时及按固定间隔更新。如果该订阅的所有服务器都不可用，则按故障间隔重试，直到至少一个恢复可用。",
+    },
+    allowDirectRecovery: "故障恢复时忽略订阅下载路由规则",
+    recoveryRouteHelp:
+      "若通过指定代理恢复失败，允许直接下载。手动及定时更新仍使用所选路径。直接下载会记录日志，网络可以看到订阅服务地址。",
+    updateIntervalMinutes: "定时更新（分钟）",
+    regularHelp: "必填。请输入不小于 1 的整数分钟数。",
+    failureIntervalMinutes: "故障重试（分钟）",
+    failureHelp:
+      "必填，至少 1 分钟。所有服务器不可用时更新；任一服务器恢复后停止重试。",
+    intervalInvalid: "请输入 {minimum} 到 525600 之间的整数。",
+
     settingsTitle: "订阅更新",
     remarks: "别名",
     numberServers: "节点数",
     subscription: "订阅",
-    autoSelect: "订阅自动更新后自动连接其中的新节点",
+    autoSelect: "自动更新订阅后，自动连接该订阅中的新节点",
     autoSelectLabel: "自动选择",
     updated: "订阅已更新",
     saved: "订阅已保存",

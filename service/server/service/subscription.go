@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
@@ -41,6 +43,10 @@ type SIP008 struct {
 		Remarks    string `json:"remarks"`
 		ID         string `json:"id"`
 	} `json:"servers"`
+}
+
+var directSubscriptionClient = func() *http.Client {
+	return httpClient.DirectSubscriptionClient(v2ray.IsTransparentOn(configure.GetSettingNotNil()))
 }
 
 const maxSubscriptionDocumentSize int64 = 32 << 20
@@ -186,6 +192,10 @@ func trapBOM(fileBytes []byte) []byte {
 	return trimmedBytes
 }
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+	return resolveSubscriptionWithContext(context.Background(), source, client)
+}
+
+func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
 	defer func() {
 		if err != nil {
 			var coded *common.CodedError
@@ -203,7 +213,12 @@ func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []
 		c.Timeout = 30 * time.Second
 	}
 
-	res, err := httpClient.HttpGetUsingSpecificClient(&c, source)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
+	res, err := c.Do(req)
 	if err != nil {
 		return nil, "", err
 	}
@@ -269,129 +284,85 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
 	}
 	addr := subscription.Address
-	c := httpClient.GetHttpClientAutomatically()
+	c, err := subscriptionHTTPClient()
+	if err != nil {
+		return err
+	}
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
 		log.Warn("Subscription fetch failed: %v", err)
 		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)
 	}
-	infoServerRaws := make([]configure.ServerRaw, len(subscriptionInfos))
-	css := configure.GetConnectedServers()
-	cssAfter := css.Get()
-	// serverObj.ServerObj is a pointer(interface), and shouldn't be as a key
-	link2Raw := make(map[string]*configure.ServerRaw)
-	connectedVmessInfo2CssIndex := make(map[string][]int)
-	loc := configure.NewLocator()
-	for i, cs := range css.Get() {
-		if cs.TYPE == configure.SubscriptionServerType && cs.Sub == index {
-			if sRaw, err := loc.Locate(cs); err != nil {
-				return err
-			} else {
-				if sRaw.ServerObj == nil {
-					log.Warn("UpdateSubscription: skipping connected server with nil ServerObj (Sub=%d, ID=%d)", cs.Sub, cs.ID)
-					continue
-				}
-				link := sRaw.ServerObj.ExportToURL()
-				link2Raw[link] = sRaw
-				connectedVmessInfo2CssIndex[link] = append(connectedVmessInfo2CssIndex[link], i)
-			}
-		}
+	return storeSubscriptionUpdate(index, subscription, subscriptionInfos, status, disconnectIfNecessary)
+}
+
+func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []serverObj.ServerObj, info string, disconnect bool) error {
+	next := *old
+	next.Servers = make([]configure.ServerRaw, len(nodes))
+	for i, node := range nodes {
+		next.Servers[i].ServerObj = node
 	}
-	// Replace list with new one, and find one with the same server value as the current connection, set it as Connected; if none, disconnect
-	for i, info := range subscriptionInfos {
-		infoServerRaw := configure.ServerRaw{
-			ServerObj: info,
-		}
-		link := infoServerRaw.ServerObj.ExportToURL()
-		if cssIndexes, ok := connectedVmessInfo2CssIndex[link]; ok {
-			for _, cssIndex := range cssIndexes {
-				cssAfter[cssIndex].ID = i + 1
-			}
-			delete(connectedVmessInfo2CssIndex, link)
-		}
-		infoServerRaws[i] = infoServerRaw
-	}
-	// Fallback: subscription providers often rename nodes (traffic/expiry counters in
-	// names) while keeping the same endpoint. Remap remaining connected servers to new
-	// servers with the same protocol, hostname and port.
-	looseKey := func(obj serverObj.ServerObj) string {
-		return obj.GetProtocol() + "://" + net.JoinHostPort(obj.GetHostname(), strconv.Itoa(obj.GetPort()))
-	}
-	loose2Index := make(map[string]int)
-	for i, info := range subscriptionInfos {
-		k := looseKey(info)
-		if _, ok := loose2Index[k]; !ok {
-			loose2Index[k] = i
-		}
-	}
-	var connectedServerChanged bool
-	for link, cssIndexes := range connectedVmessInfo2CssIndex {
-		if i, ok := loose2Index[looseKey(link2Raw[link].ServerObj)]; ok {
-			for _, cssIndex := range cssIndexes {
-				cssAfter[cssIndex].ID = i + 1
-			}
-			connectedServerChanged = true
-			log.Info("UpdateSubscription: remapped connected server %v to %v by endpoint match",
-				link2Raw[link].ServerObj.GetName(), subscriptionInfos[i].GetName())
-			delete(connectedVmessInfo2CssIndex, link)
-		}
-	}
-	// Last fallback: some providers keep node names stable but rotate IPs, which
-	// defeats the endpoint match. Remap by name, but only when the name maps to
-	// exactly one server on each side to avoid connecting to a different node.
-	name2Index := make(map[string]int)
-	nameCount := make(map[string]int)
-	for i, info := range subscriptionInfos {
-		nameCount[info.GetName()]++
-		name2Index[info.GetName()] = i
-	}
-	oldNameCount := make(map[string]int)
-	for link := range connectedVmessInfo2CssIndex {
-		oldNameCount[link2Raw[link].ServerObj.GetName()]++
-	}
-	for link, cssIndexes := range connectedVmessInfo2CssIndex {
-		name := link2Raw[link].ServerObj.GetName()
-		if nameCount[name] != 1 || oldNameCount[name] != 1 {
+	next.Status, next.Info = string(touch.NewUpdateStatus()), info
+	previous := configure.GetConnectedServers()
+	affected := false
+	updated := configure.NewNodeRefs(nil)
+	previousRefs := previous.Get()
+	mappedIDs := map[int]int{}
+	exactMatches := map[int]bool{}
+	fallbackClaims := map[int]int{}
+	for _, ref := range previousRefs {
+		if ref.TYPE != configure.SubscriptionServerType || ref.Sub != index || ref.ID <= 0 || ref.ID > len(old.Servers) {
 			continue
 		}
-		i := name2Index[name]
-		for _, cssIndex := range cssIndexes {
-			cssAfter[cssIndex].ID = i + 1
+		if _, seen := mappedIDs[ref.ID]; seen {
+			continue
 		}
-		connectedServerChanged = true
-		log.Info("UpdateSubscription: remapped connected server %v (%v -> %v) by unique name match",
-			name, link2Raw[link].ServerObj.GetHostname(), subscriptionInfos[i].GetHostname())
-		delete(connectedVmessInfo2CssIndex, link)
+		mappedIDs[ref.ID], exactMatches[ref.ID] = remapSubscriptionNodeDetailed(old.Servers[ref.ID-1].ServerObj, nodes)
+		if mappedIDs[ref.ID] != 0 && !exactMatches[ref.ID] {
+			fallbackClaims[mappedIDs[ref.ID]]++
+		}
 	}
-	for link, cssIndexes := range connectedVmessInfo2CssIndex {
-		for _, cssIndex := range cssIndexes {
-			if disconnectIfNecessary {
-				err = Disconnect(*css.Get()[cssIndex], false)
-				if err != nil {
-					return fmt.Errorf("could not disconnect the server that left the subscription: %w", err)
+	retainedIDs := map[int]int{}
+	for _, ref := range previousRefs {
+		copy := *ref
+		if ref.TYPE == configure.SubscriptionServerType && ref.Sub == index {
+			if ref.ID <= 0 || ref.ID > len(old.Servers) {
+				return fmt.Errorf("invalid connected server reference")
+			}
+			raw := old.Servers[ref.ID-1]
+			copy.ID = mappedIDs[ref.ID]
+			if !exactMatches[ref.ID] && fallbackClaims[copy.ID] > 1 {
+				copy.ID = 0
+			}
+			if copy.ID == 0 {
+				if disconnect {
+					affected = true
+					continue
 				}
-			} else {
-				// Append previously connected node
-				infoServerRaws = append(infoServerRaws, *link2Raw[link])
-				cssAfter[cssIndex].ID = len(infoServerRaws)
+				copy.ID = retainedIDs[ref.ID]
+				if copy.ID == 0 {
+					next.Servers = append(next.Servers, raw)
+					copy.ID = len(next.Servers)
+					retainedIDs[ref.ID] = copy.ID
+				}
+			}
+			if copy.ID != ref.ID || next.Servers[copy.ID-1].ServerObj.ExportToURL() != raw.ServerObj.ExportToURL() {
+				affected = true
 			}
 		}
+		updated.Add(copy)
 	}
-	subscription = configure.GetSubscription(index)
-	if subscription == nil {
-		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
+	if !affected {
+		return configure.SetSubscriptionAndConnects(index, &next, updated)
 	}
-	subscription.Servers = infoServerRaws
-	subscription.Status = string(touch.NewUpdateStatus())
-	subscription.Info = status
-	if err := configure.SetSubscriptionAndConnects(index, subscription, configure.NewNodeRefs(cssAfter)); err != nil {
+	if err := configure.SetSubscriptionAndConnects(index, &next, updated); err != nil {
 		return err
 	}
-	// A remapped connection may point at a server whose config differs from the old
-	// one; the running core keeps using the old config until it is regenerated.
-	if connectedServerChanged && v2ray.ProcessManager.Running() {
+	if v2ray.ProcessManager.Running() {
 		if err := v2ray.UpdateV2RayConfig(); err != nil {
+			_ = configure.SetSubscriptionAndConnects(index, old, previous)
+			_ = v2ray.UpdateV2RayConfig()
 			return subscriptionCoreApplyError(err)
 		}
 	}
@@ -402,29 +373,105 @@ func subscriptionCoreApplyError(err error) error {
 	return fmt.Errorf("subscription stored, but the core could not apply it: %w", err)
 }
 
-func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
+// Prefer full identity; accept a renamed/rotated endpoint only when its match
+// is unambiguous. In particular, two accounts on one endpoint are not interchangeable.
+func remapSubscriptionNodeDetailed(old serverObj.ServerObj, nodes []serverObj.ServerObj) (int, bool) {
+	if old == nil {
+		return 0, false
+	}
+	for i, node := range nodes {
+		if node.ExportToURL() == old.ExportToURL() {
+			return i + 1, true
+		}
+	}
+	for _, match := range []func(serverObj.ServerObj) bool{
+		func(n serverObj.ServerObj) bool {
+			return n.GetProtocol() == old.GetProtocol() && n.GetHostname() == old.GetHostname() && n.GetPort() == old.GetPort()
+		},
+		func(n serverObj.ServerObj) bool {
+			return old.GetName() != "" && n.GetName() == old.GetName() && n.GetProtocol() == old.GetProtocol()
+		},
+	} {
+		found := 0
+		for i, node := range nodes {
+			if match(node) {
+				if found != 0 {
+					found = -1
+					break
+				}
+				found = i + 1
+			}
+		}
+		if found > 0 {
+			return found, false
+		}
+	}
+	return 0, false
+}
+
+func ModifySubscriptionRemark(subscription touch.Subscription) error {
 	raw := configure.GetSubscription(subscription.ID - 1)
 	if raw == nil {
-		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d does not exist; reload the page", subscription.ID), map[string]interface{}{"id": subscription.ID})
+		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription does not exist"), nil)
 	}
-	raw.Remarks = subscription.Remarks
-	raw.Address = subscription.Address
+	mode := raw.UpdateMode
+	if subscription.UpdateMode != nil {
+		mode = *subscription.UpdateMode
+	}
+	regular, failure := raw.UpdateIntervalMinutes, raw.FailureIntervalMinutes
+	if subscription.UpdateIntervalMinutes != nil {
+		regular = *subscription.UpdateIntervalMinutes
+	}
+	if subscription.FailureIntervalMinutes != nil {
+		failure = *subscription.FailureIntervalMinutes
+	}
+	if failure == 0 && mode != configure.SubscriptionUpdateIntervalFailsafe {
+		failure = 1
+	}
+	switch mode {
+	case configure.SubscriptionUpdateDisabled, configure.SubscriptionUpdateOnStart:
+	case configure.SubscriptionUpdateAtInterval:
+		if (subscription.UpdateMode != nil && subscription.UpdateIntervalMinutes == nil) || regular < 1 || regular > 525600 {
+			return fmt.Errorf("update interval must be 1–525600 minutes")
+		}
+	case configure.SubscriptionUpdateIntervalFailsafe:
+		if (subscription.UpdateMode != nil && (subscription.UpdateIntervalMinutes == nil || subscription.FailureIntervalMinutes == nil)) || regular < 1 || regular > 525600 || failure < 1 || failure > 525600 {
+			return fmt.Errorf("regular and failure intervals must be 1–525600 minutes")
+		}
+	default:
+		return fmt.Errorf("unknown subscription update mode %q", mode)
+	}
+	raw.Remarks, raw.Address = subscription.Remarks, subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
+	raw.UpdateMode, raw.UpdateIntervalMinutes, raw.FailureIntervalMinutes = mode, regular, failure
+	if subscription.AllowDirectRecovery != nil {
+		raw.AllowDirectRecovery = *subscription.AllowDirectRecovery
+	}
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 
-func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {
-	var subscriptionServer configure.NodeRef
-	subscriptionServer.TYPE = "subscriptionServer"
-	subscriptionServer.Sub = index // Subscription IDs start with 0
-	subscriptionServer.Outbound = "proxy"
+func subscriptionHTTPClient() (*http.Client, error) {
+	// Do not use the automatic client: it silently selects a direct route
+	// when the main core is stopped or transparent proxying is enabled.
+	switch configure.GetSettingNotNil().ProxyModeWhenSubscribe {
+	case configure.ProxyModeProxy:
+		return httpClient.GetHttpClientWithv2rayAProxy()
+	case configure.ProxyModePac:
+		return httpClient.GetHttpClientWithv2rayAPac()
+	default:
+		return directSubscriptionClient(), nil
+	}
+}
+
+func SelectServersFromSubscription(index int, shouldDisconnect bool) error {
+	const outbound = "proxy"
 	if shouldDisconnect {
-		connections := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
+		connections := configure.GetConnectedServersByOutbound(outbound)
 		if connections == nil {
 			return nil
 		}
 		remaining := make([]configure.NodeRef, 0, connections.Len())
-		var found bool
+		found := false
 		for _, connected := range connections.Get() {
 			if connected.TYPE == configure.SubscriptionServerType && connected.Sub == index {
 				found = true
@@ -435,16 +482,14 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 		if !found {
 			return nil
 		}
-		return ReplaceOutboundConnections(subscriptionServer.Outbound, remaining)
+		return ReplaceOutboundConnections(outbound, remaining)
 	}
 
-	// One replacement for the whole subscription: connecting the members one
-	// by one restarted the core once per node.
 	sub := configure.GetSubscription(index)
 	if sub == nil {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists", index+1), map[string]interface{}{"id": index + 1})
 	}
-	backup := configure.GetConnectedServersByOutbound(subscriptionServer.Outbound)
+	backup := configure.GetConnectedServersByOutbound(outbound)
 	var existing []*configure.NodeRef
 	if backup != nil {
 		existing = backup.Get()
@@ -453,27 +498,23 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	if len(members) == len(existing) {
 		return nil
 	}
-	// What Connect did once per node: the asset check and the ip forward
-	// reconciliation, then the store, then the core.
 	if err := checkSupport(nil); err != nil {
 		return err
 	}
 	if setting := GetSetting(); setting.IpForward != ipforward.IsIpForwardOn() {
-		if e := ipforward.WriteIpForward(setting.IpForward); e != nil {
-			log.Warn("[AutoSelect] %v", e)
+		if err := ipforward.WriteIpForward(setting.IpForward); err != nil {
+			log.Warn("[AutoSelect] %v", err)
 		}
 	}
-	if err := ReplaceOutboundConnections(subscriptionServer.Outbound, members); err != nil {
+	if err := ReplaceOutboundConnections(outbound, members); err != nil {
 		return err
 	}
-	// Connect started the core for a selection made while it was stopped,
-	// and dropped the selection when that failed.
 	if !v2ray.ProcessManager.Running() {
 		if err := v2ray.UpdateV2RayConfig(); err != nil {
 			if backup != nil && backup.Len() > 0 {
 				_ = configure.OverwriteConnects(backup)
 			} else {
-				_ = configure.ClearConnects(subscriptionServer.Outbound)
+				_ = configure.ClearConnects(outbound)
 			}
 			return err
 		}
@@ -481,8 +522,6 @@ func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error)
 	return nil
 }
 
-// autoSelectMembers appends every supported node of the subscription to the
-// members already in the proxy group.
 func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*configure.NodeRef) []configure.NodeRef {
 	members := make([]configure.NodeRef, 0, len(existing)+len(sub.Servers))
 	for _, connected := range existing {
@@ -490,45 +529,12 @@ func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*co
 	}
 	for i, server := range sub.Servers {
 		if server.ServerObj == nil {
-			log.Warn("[AutoSelect] Skipping server %d in subscription %d: nil ServerObj", i+1, index)
 			continue
 		}
-		serverName := server.ServerObj.GetName()
-		// Workaround for partial SS support in v2fly and xray
 		if supported, _ := isSupportedObj(server.ServerObj); !supported {
-			log.Info("[AutoSelect] Skipping unsupported server %v", serverName)
 			continue
 		}
 		members = append(members, configure.NodeRef{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
-		log.Info("[AutoSelect] Automatically selected server: %v", serverName)
 	}
 	return members
-}
-
-func AutoSelectServersFromSubscriptions(shouldDisconnect bool) (err error) {
-	for i := 0; i < configure.GetLenSubscriptions(); i++ {
-		subscription := configure.GetSubscription(i)
-		if subscription == nil {
-			log.Warn("[AutoSelect] Failed to read subscription at index %d, skipping", i)
-			continue
-		}
-		if subscription.AutoSelect {
-			if shouldDisconnect {
-				log.Info("[AutoSelect] Automatically disconnecting servers from subscription: %v", subscription.Address)
-				err := SelectServersFromSubscription(i, true)
-				if err != nil {
-					log.Error("[AutoSelect] Failed to disconnect servers from subscription: %v", subscription.Address)
-					return err
-				}
-			} else {
-				log.Info("[AutoSelect] Automatically selecting servers from subscription: %v", subscription.Address)
-				err := SelectServersFromSubscription(i, false)
-				if err != nil {
-					log.Error("[AutoSelect] Failed to select servers from subscription: %v", subscription.Address)
-					return err
-				}
-			}
-		}
-	}
-	return nil
 }

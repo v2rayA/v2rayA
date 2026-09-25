@@ -6,6 +6,8 @@ import (
 	"net"
 	"reflect"
 	"strings"
+	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -121,6 +123,44 @@ func TestPingRefusedPortIsNotLatency(t *testing.T) {
 	}
 	if strings.HasSuffix(w.Latency, "ms") || w.Latency == "" {
 		t.Fatalf("refused port reported as %q", w.Latency)
+	}
+}
+
+func TestPingUsesProvidedDialer(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	accepted := make(chan struct{})
+	go func() {
+		conn, err := listener.Accept()
+		if err == nil {
+			conn.Close()
+			close(accepted)
+		}
+	}()
+	index := GetLenServers()
+	port := listener.Addr().(*net.TCPAddr).Port
+	if err := AppendServers([]*ServerRaw{{ServerObj: &serverObj.SOCKS{Server: "127.0.0.1", Port: port, Protocol: "socks5"}}}); err != nil {
+		t.Fatal(err)
+	}
+	defer RemoveServers([]int{index})
+	var controlled atomic.Bool
+	dialer := &net.Dialer{Timeout: time.Second, Control: func(_, _ string, _ syscall.RawConn) error {
+		controlled.Store(true)
+		return nil
+	}}
+	w := &Which{NodeRef: NodeRef{TYPE: ServerType, ID: index + 1}}
+	if err := w.PingWithDialer(NewLocator(), time.Second, dialer); err != nil {
+		t.Fatal(err)
+	}
+	<-accepted
+	if !controlled.Load() {
+		t.Fatal("provided dialer was not used")
+	}
+	if !strings.HasSuffix(w.Latency, "ms") {
+		t.Fatalf("latency = %q, want milliseconds", w.Latency)
 	}
 }
 

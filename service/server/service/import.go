@@ -10,7 +10,6 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
@@ -207,13 +206,17 @@ func ImportSubscription(url string) (err error) {
 				source = u.String()
 			}
 		}
-		c := httpClient.GetHttpClientAutomatically()
+		client, e := subscriptionHTTPClient()
+		if e != nil {
+			return e
+		}
+		c := *client
 		c.Timeout = 90 * time.Second
 		// assign, do not redeclare: a shadowed err here made the
 		// AppendSubscriptions failure below vanish behind a nil return
 		var infos []serverObj.ServerObj
 		var status string
-		infos, status, err = ResolveSubscriptionWithClient(source, c)
+		infos, status, err = ResolveSubscriptionWithClient(source, &c)
 		if err != nil {
 			return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(source), err)
 		}
