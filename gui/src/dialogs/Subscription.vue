@@ -18,6 +18,7 @@ const form = reactive({
   updateMode: "disabled" as NonNullable<TouchSubscription["updateMode"]>,
   updateIntervalMinutes: 0,
   failureIntervalMinutes: 1,
+  allowDirectRecovery: false,
   ...props.subscription,
   servers: [],
 });
@@ -134,6 +135,16 @@ async function save() {
             :hint="t('subscription.failureHelp')"
             persistent-hint
           />
+        </div>
+        <div v-if="needsFailureInterval">
+          <v-switch
+            v-model="form.allowDirectRecovery"
+            :label="t('subscription.allowDirectRecovery')"
+            hide-details
+          />
+          <p class="md3-body-small text-medium-emphasis mb-4">
+            {{ t("subscription.recoveryRouteHelp") }}
+          </p>
         </div>
         <v-switch
           v-model="form.autoSelect"

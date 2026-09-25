@@ -5,11 +5,10 @@ import (
 )
 
 var (
-	Version                  = "debug"
-	FoundNew                 = false
-	RemoteVersion            = ""
-	TickerUpdateGFWList      *time.Ticker
-	TickerUpdateSubscription *time.Ticker
+	Version             = "debug"
+	FoundNew            = false
+	RemoteVersion       = ""
+	TickerUpdateGFWList *time.Ticker
 )
 
 func IsDebug() bool {

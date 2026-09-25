@@ -17,6 +17,7 @@ type SubscriptionRaw struct {
 	UpdateMode             SubscriptionUpdateMode `json:"updateMode"`
 	UpdateIntervalMinutes  int                    `json:"updateIntervalMinutes"`
 	FailureIntervalMinutes int                    `json:"failureIntervalMinutes"`
+	AllowDirectRecovery    bool                   `json:"allowDirectRecovery"`
 	Remarks                string                 `json:"remarks,omitempty"`
 	Address                string                 `json:"address"`
 	Status                 string                 `json:"status"` //update time, error info, etc.

@@ -128,11 +128,15 @@ export default {
     },
     updateModeHelp: {
       disabled: "仅在手动更新时更改订阅。",
-      onStart: "每次 v2rayA 启动时更新一次订阅。",
+      onStart:
+        "每次 v2rayA 启动时更新一次；修改订阅地址或更新策略后也会立即更新一次。",
       interval: "启动时更新一次，之后按设定的间隔更新。",
       intervalFailsafe:
         "启动时及按固定间隔更新。如果该订阅的所有服务器都不可用，则按故障间隔重试，直到至少一个恢复可用。",
     },
+    allowDirectRecovery: "故障恢复时忽略订阅下载路由规则",
+    recoveryRouteHelp:
+      "若通过指定代理恢复失败，允许直接下载。手动及定时更新仍使用所选路径。直接下载会记录日志，网络可以看到订阅服务地址。",
     updateIntervalMinutes: "定时更新（分钟）",
     regularHelp: "必填。请输入不小于 1 的整数分钟数。",
     failureIntervalMinutes: "故障重试（分钟）",

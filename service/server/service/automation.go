@@ -37,9 +37,10 @@ func NotifyAutomation() {
 type subscriptionSchedule struct {
 	signature                         string
 	nextUpdate, nextHealth, nextRetry time.Time
+	warnedUnprobeable                 bool
 }
 
-type subscriptionFetcher func(context.Context, string) ([]serverObj.ServerObj, string, error)
+type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, string, error)
 
 type automation struct {
 	subscriptions map[int64]*subscriptionSchedule
@@ -59,17 +60,28 @@ func newAutomation() *automation {
 
 func subscriptionPolicySignature(sub *configure.SubscriptionRaw) string {
 	b, _ := json.Marshal(struct {
-		ID       int64
-		Address  string
-		Mode     configure.SubscriptionUpdateMode
-		Regular  int
-		Failsafe int
-	}{sub.DatabaseID, sub.Address, sub.UpdateMode, sub.UpdateIntervalMinutes, sub.FailureIntervalMinutes})
+		ID          int64
+		Address     string
+		Mode        configure.SubscriptionUpdateMode
+		Regular     int
+		AllowDirect bool
+		Failsafe    int
+	}{sub.DatabaseID, sub.Address, sub.UpdateMode, sub.UpdateIntervalMinutes, sub.AllowDirectRecovery, sub.FailureIntervalMinutes})
 	return string(b)
 }
 
-func fetchSubscriptionForAutomation(ctx context.Context, address string) ([]serverObj.ServerObj, string, error) {
-	return resolveSubscriptionWithContext(ctx, address, subscriptionHTTPClient())
+func fetchSubscriptionForAutomation(ctx context.Context, address string, allowDirectFallback bool) ([]serverObj.ServerObj, string, error) {
+	client, err := subscriptionHTTPClient()
+	var nodes []serverObj.ServerObj
+	var info string
+	if err == nil {
+		nodes, info, err = resolveSubscriptionWithContext(ctx, address, client)
+	}
+	if err != nil && allowDirectFallback && ctx.Err() == nil && configure.GetSettingNotNil().ProxyModeWhenSubscribe != configure.ProxyModeDirect {
+		log.Warn("[Subscriptions] Fail-safe recovery for %s: configured download route failed; retrying directly", subscriptionHost(address))
+		return resolveSubscriptionWithContext(ctx, address, directSubscriptionClient())
+	}
+	return nodes, info, err
 }
 
 func findSubscriptionByDatabaseID(id int64) (int, *configure.SubscriptionRaw) {
@@ -133,6 +145,24 @@ func isIntervalMode(mode configure.SubscriptionUpdateMode) bool {
 	return mode == configure.SubscriptionUpdateAtInterval || mode == configure.SubscriptionUpdateIntervalFailsafe
 }
 
+func (a *automation) subscriptionUnavailable(ctx context.Context, sub *configure.SubscriptionRaw, probeURL string, state *subscriptionSchedule) (bool, error) {
+	nodes := cloneProbeNodes(subscriptionNodes(sub))
+	for _, node := range nodes {
+		if node == nil {
+			if !state.warnedUnprobeable {
+				log.Warn("[Subscriptions] Subscription %d contains candidates that cannot be probed in isolation; fail-safe recovery is suspended, regular updates remain enabled", sub.DatabaseID)
+				state.warnedUnprobeable = true
+			}
+			// An unsupported probe is unknown health, not evidence that every
+			// candidate is down. Do not repeatedly download plugin subscriptions.
+			return false, ctx.Err()
+		}
+	}
+	state.warnedUnprobeable = false
+	results := a.probe(ctx, nodes, probeURL)
+	return !anyHealthy(results), ctx.Err()
+}
+
 func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw, probeURL string) error {
 	now := a.now()
 	signature := subscriptionPolicySignature(sub)
@@ -145,12 +175,15 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 	regularDue := !state.nextUpdate.IsZero() && !now.Before(state.nextUpdate)
 	retryDue := !state.nextRetry.IsZero() && !now.Before(state.nextRetry)
 	healthDue := !state.nextHealth.IsZero() && !now.Before(state.nextHealth)
+	interval := time.Duration(sub.FailureIntervalMinutes) * time.Minute
 	if healthDue && !regularDue && !retryDue {
-		results := a.probe(ctx, cloneProbeNodes(subscriptionNodes(sub)), probeURL)
-		if err := ctx.Err(); err != nil {
+		state.nextHealth = now.Add(interval)
+		unavailable, err := a.subscriptionUnavailable(ctx, sub, probeURL, state)
+		if err != nil {
+			state.nextHealth = a.now().Add(interval)
 			return err
 		}
-		if anyHealthy(results) {
+		if !unavailable {
 			state.nextHealth = a.now().Add(time.Duration(sub.FailureIntervalMinutes) * time.Minute)
 			return nil
 		}
@@ -161,7 +194,24 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 	if !regularDue && !retryDue {
 		return nil
 	}
-	nodes, info, err := a.fetch(ctx, sub.Address)
+	if sub.UpdateMode == configure.SubscriptionUpdateIntervalFailsafe {
+		// Reserve a retry before cancellable work; a dashboard mutation must
+		// not consume the only deadline that can resume recovery.
+		state.nextHealth = time.Time{}
+		state.nextRetry = a.now().Add(interval)
+		if regularDue {
+			state.nextUpdate = a.now().Add(time.Duration(sub.UpdateIntervalMinutes) * time.Minute)
+		}
+		defer func() {
+			if ctx.Err() != nil {
+				state.nextRetry = a.now().Add(interval)
+				if regularDue {
+					state.nextUpdate = a.now().Add(time.Duration(sub.UpdateIntervalMinutes) * time.Minute)
+				}
+			}
+		}()
+	}
+	nodes, info, err := a.fetch(ctx, sub.Address, retryDue && sub.AllowDirectRecovery)
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -189,13 +239,12 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 		state.nextHealth, state.nextRetry = time.Time{}, time.Time{}
 		return nil
 	}
-	results := a.probe(ctx, cloneProbeNodes(subscriptionNodes(sub)), probeURL)
-	if err := ctx.Err(); err != nil {
+	unavailable, err := a.subscriptionUnavailable(ctx, sub, probeURL, state)
+	if err != nil {
 		return err
 	}
 	state.nextHealth, state.nextRetry = time.Time{}, time.Time{}
-	interval := time.Duration(sub.FailureIntervalMinutes) * time.Minute
-	if anyHealthy(results) {
+	if !unavailable {
 		state.nextHealth = a.now().Add(interval)
 	} else {
 		state.nextRetry = a.now().Add(interval)
@@ -246,7 +295,7 @@ func (a *automation) step(parent context.Context) time.Time {
 		active[sub.DatabaseID] = true
 		if err := a.process(ctx, sub, probeURL); err != nil {
 			if ctx.Err() != nil {
-				return time.Time{}
+				return a.nextDeadline()
 			}
 			log.Warn("[Subscriptions] automation failed for %d: %v", sub.DatabaseID, err)
 		}

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -143,21 +145,117 @@ func TestSubscriptionNameFallbackDoesNotCollapseTwoSelections(t *testing.T) {
 	}
 }
 
+func TestSubscriptionRemapsOneNodeInMultipleGroups(t *testing.T) {
+	for _, rotated := range []bool{false, true} {
+		t.Run(fmt.Sprintf("rotated=%v", rotated), func(t *testing.T) {
+			old := resetSubscription(t)
+			const secondGroup = "second"
+			if err := configure.AddOutbound(secondGroup); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = configure.RemoveOutbound(secondGroup) })
+			if err := configure.AddConnect(configure.NodeRef{TYPE: configure.SubscriptionServerType, Sub: 0, ID: 1, Outbound: secondGroup}); err != nil {
+				t.Fatal(err)
+			}
+			name := "unrelated"
+			if rotated {
+				name = old.Servers[0].ServerObj.GetName()
+			}
+			replacement := namedTestServer(t, 10002, name)
+			if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{replacement}, "", false); err != nil {
+				t.Fatal(err)
+			}
+			wantID, wantNodes := 2, 2
+			if rotated {
+				wantID, wantNodes = 1, 1
+			}
+			if got := len(configure.GetSubscription(0).Servers); got != wantNodes {
+				t.Fatalf("stored %d nodes, want %d", got, wantNodes)
+			}
+			for _, group := range []string{"proxy", secondGroup} {
+				refs := configure.GetConnectedServersByOutbound(group).Get()
+				if len(refs) != 1 || refs[0].ID != wantID {
+					t.Fatalf("%s references = %+v, want ID %d", group, refs, wantID)
+				}
+			}
+		})
+	}
+}
+
 type subscriptionRoundTripper func(*http.Request) (*http.Response, error)
 
 func (f subscriptionRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	return f(r)
 }
 
-func TestSubscriptionDownloadFallbackKeepsTimeout(t *testing.T) {
-	original := http.DefaultClient
+func TestSubscriptionDownloadsRespectProxyMode(t *testing.T) {
+	for _, mode := range []configure.ProxyMode{configure.ProxyModeProxy, configure.ProxyModePac} {
+		for _, transparent := range []configure.TransparentMode{configure.TransparentClose, configure.TransparentProxy} {
+			t.Run(fmt.Sprintf("%s/transparent=%s", mode, transparent), func(t *testing.T) {
+				old := resetSubscription(t)
+				listener, err := net.Listen("tcp", "127.0.0.1:0")
+				if err != nil {
+					t.Fatal(err)
+				}
+				port := listener.Addr().(*net.TCPAddr).Port
+				listener.Close()
+				if err := configure.SetPorts(&configure.Ports{Socks5: port, HttpWithPac: port}); err != nil {
+					t.Fatal(err)
+				}
+				setting := configure.GetSettingNotNil()
+				setting.ProxyModeWhenSubscribe, setting.Transparent = mode, transparent
+				if err := configure.SetSetting(setting); err != nil {
+					t.Fatal(err)
+				}
+				var directRequests atomic.Int32
+				provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					directRequests.Add(1)
+					fmt.Fprint(w, base64.StdEncoding.EncodeToString([]byte("http-proxy://127.0.0.1:1234#test")))
+				}))
+				defer provider.Close()
+				old.Address = provider.URL
+				old.AllowDirectRecovery = true
+				if err := configure.SetSubscription(0, old); err != nil {
+					t.Fatal(err)
+				}
+				if err := UpdateSubscription(0, false); err == nil {
+					t.Fatal("manual update bypassed the failed proxy")
+				}
+				if err := ImportSubscription(provider.URL); err == nil {
+					t.Fatal("import bypassed the failed proxy")
+				}
+				if _, _, err := fetchSubscriptionForAutomation(context.Background(), provider.URL, false); err == nil {
+					t.Fatal("scheduled update bypassed the failed proxy")
+				}
+				if got := directRequests.Load(); got != 0 {
+					t.Fatalf("non-recovery downloads made %d direct requests", got)
+				}
+			})
+		}
+	}
+}
+
+func TestSubscriptionRecoveryFallbackKeepsTimeout(t *testing.T) {
+	resetSubscription(t)
+	setting := configure.GetSettingNotNil()
+	setting.ProxyModeWhenSubscribe = configure.ProxyModeProxy
+	if err := configure.SetSetting(setting); err != nil {
+		t.Fatal(err)
+	}
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := listener.Addr().(*net.TCPAddr).Port
+	listener.Close()
+	if err := configure.SetPorts(&configure.Ports{Socks5: port}); err != nil {
+		t.Fatal(err)
+	}
 	originalDirect := directSubscriptionClient
-	defer func() {
-		http.DefaultClient = original
-		directSubscriptionClient = originalDirect
-	}()
-	checkRequest := func(r *http.Request) {
-		t.Helper()
+	t.Cleanup(func() { directSubscriptionClient = originalDirect })
+	fallbackAttempts := 0
+	client := &http.Client{Transport: subscriptionRoundTripper(func(r *http.Request) (*http.Response, error) {
+		fallbackAttempts++
 		deadline, ok := r.Context().Deadline()
 		if !ok || time.Until(deadline) > 30*time.Second {
 			t.Fatal("download attempt has no bounded timeout")
@@ -165,26 +263,21 @@ func TestSubscriptionDownloadFallbackKeepsTimeout(t *testing.T) {
 		if !strings.Contains(r.UserAgent(), "WebRequestHelper") {
 			t.Fatal("missing subscription user agent")
 		}
-	}
-	firstAttempts, fallbackAttempts := 0, 0
-	client := &http.Client{Transport: subscriptionRoundTripper(func(r *http.Request) (*http.Response, error) {
-		checkRequest(r)
-		firstAttempts++
-		return nil, errors.New("selected proxy unavailable")
-	})}
-	http.DefaultClient = &http.Client{Transport: subscriptionRoundTripper(func(r *http.Request) (*http.Response, error) {
-		checkRequest(r)
-		fallbackAttempts++
 		body := base64.StdEncoding.EncodeToString([]byte("http-proxy://127.0.0.1:1234#fallback"))
 		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})}
-	directSubscriptionClient = func() *http.Client { return http.DefaultClient }
-	servers, _, err := ResolveSubscriptionWithClient("http://subscription.invalid", client)
-	if err != nil || len(servers) != 1 || firstAttempts != 1 || fallbackAttempts != 1 {
-		t.Fatalf("fallback failed: %v, %d servers, attempts %d/%d", err, len(servers), firstAttempts, fallbackAttempts)
+	directSubscriptionClient = func() *http.Client { return client }
+	servers, _, err := fetchSubscriptionForAutomation(context.Background(), "http://subscription.invalid", true)
+	if err != nil || len(servers) != 1 || fallbackAttempts != 1 {
+		t.Fatalf("fallback failed: %v, %d servers, attempts %d", err, len(servers), fallbackAttempts)
 	}
-	if client.Timeout != 0 || http.DefaultClient.Timeout != 0 {
+	if client.Timeout != 0 {
 		t.Fatal("download modified a shared HTTP client")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, _, err := fetchSubscriptionForAutomation(ctx, "http://subscription.invalid", true); !errors.Is(err, context.Canceled) || fallbackAttempts != 1 {
+		t.Fatalf("cancelled fetch retried: %v, attempts %d", err, fallbackAttempts)
 	}
 }
 

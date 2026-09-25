@@ -130,11 +130,15 @@ export default {
     },
     updateModeHelp: {
       disabled: "수동으로 업데이트할 때만 구독이 변경됩니다.",
-      onStart: "v2rayA가 시작될 때마다 구독을 한 번 업데이트합니다.",
+      onStart:
+        "v2rayA가 시작될 때마다 한 번, 주소나 업데이트 정책을 변경하면 즉시 한 번 업데이트합니다.",
       interval: "시작할 때 한 번 업데이트한 뒤 설정된 주기로 업데이트합니다.",
       intervalFailsafe:
         "시작 시와 정기 주기에 업데이트합니다. 구독의 모든 서버가 사용할 수 없으면 하나가 복구될 때까지 장애 주기로 다시 시도합니다.",
     },
+    allowDirectRecovery: "장애 복구 중 구독 다운로드 경로 규칙 무시",
+    recoveryRouteHelp:
+      "설정된 프록시를 통한 복구가 실패하면 직접 다운로드를 허용합니다. 수동 및 정기 업데이트 경로는 유지됩니다. 직접 시도는 기록되며 네트워크에 구독 서비스 주소가 노출됩니다.",
     updateIntervalMinutes: "정기 간격 (분)",
     regularHelp: "필수입니다. 1 이상의 정수(분)를 입력하세요.",
     failureIntervalMinutes: "실패 재시도 (분)",

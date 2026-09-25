@@ -219,11 +219,6 @@ func resolveSubscriptionWithContext(ctx context.Context, source string, client *
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
 	res, err := c.Do(req)
-	if err != nil && ctx.Err() == nil {
-		direct := *directSubscriptionClient()
-		direct.Timeout = c.Timeout
-		res, err = direct.Do(req)
-	}
 	if err != nil {
 		return nil, "", err
 	}
@@ -289,7 +284,10 @@ func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
 	}
 	addr := subscription.Address
-	c := subscriptionHTTPClient()
+	c, err := subscriptionHTTPClient()
+	if err != nil {
+		return err
+	}
 	resolv.CheckResolvConf()
 	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
 	if err != nil {
@@ -310,27 +308,31 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 	affected := false
 	updated := configure.NewNodeRefs(nil)
 	previousRefs := previous.Get()
-	mappedIDs := make([]int, len(previousRefs))
-	exactMatches := make([]bool, len(previousRefs))
+	mappedIDs := map[int]int{}
+	exactMatches := map[int]bool{}
 	fallbackClaims := map[int]int{}
-	for i, ref := range previousRefs {
+	for _, ref := range previousRefs {
 		if ref.TYPE != configure.SubscriptionServerType || ref.Sub != index || ref.ID <= 0 || ref.ID > len(old.Servers) {
 			continue
 		}
-		mappedIDs[i], exactMatches[i] = remapSubscriptionNodeDetailed(old.Servers[ref.ID-1].ServerObj, nodes)
-		if mappedIDs[i] != 0 && !exactMatches[i] {
-			fallbackClaims[mappedIDs[i]]++
+		if _, seen := mappedIDs[ref.ID]; seen {
+			continue
+		}
+		mappedIDs[ref.ID], exactMatches[ref.ID] = remapSubscriptionNodeDetailed(old.Servers[ref.ID-1].ServerObj, nodes)
+		if mappedIDs[ref.ID] != 0 && !exactMatches[ref.ID] {
+			fallbackClaims[mappedIDs[ref.ID]]++
 		}
 	}
-	for refIndex, ref := range previousRefs {
+	retainedIDs := map[int]int{}
+	for _, ref := range previousRefs {
 		copy := *ref
 		if ref.TYPE == configure.SubscriptionServerType && ref.Sub == index {
 			if ref.ID <= 0 || ref.ID > len(old.Servers) {
 				return fmt.Errorf("invalid connected server reference")
 			}
 			raw := old.Servers[ref.ID-1]
-			copy.ID = mappedIDs[refIndex]
-			if !exactMatches[refIndex] && fallbackClaims[copy.ID] > 1 {
+			copy.ID = mappedIDs[ref.ID]
+			if !exactMatches[ref.ID] && fallbackClaims[copy.ID] > 1 {
 				copy.ID = 0
 			}
 			if copy.ID == 0 {
@@ -338,8 +340,12 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 					affected = true
 					continue
 				}
-				next.Servers = append(next.Servers, raw)
-				copy.ID = len(next.Servers)
+				copy.ID = retainedIDs[ref.ID]
+				if copy.ID == 0 {
+					next.Servers = append(next.Servers, raw)
+					copy.ID = len(next.Servers)
+					retainedIDs[ref.ID] = copy.ID
+				}
 			}
 			if copy.ID != ref.ID || next.Servers[copy.ID-1].ServerObj.ExportToURL() != raw.ServerObj.ExportToURL() {
 				affected = true
@@ -438,14 +444,23 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 	raw.Remarks, raw.Address = subscription.Remarks, subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
 	raw.UpdateMode, raw.UpdateIntervalMinutes, raw.FailureIntervalMinutes = mode, regular, failure
+	if subscription.AllowDirectRecovery != nil {
+		raw.AllowDirectRecovery = *subscription.AllowDirectRecovery
+	}
 	return configure.SetSubscription(subscription.ID-1, raw)
 }
 
-func subscriptionHTTPClient() *http.Client {
-	if configure.GetSettingNotNil().ProxyModeWhenSubscribe == configure.ProxyModeDirect {
-		return directSubscriptionClient()
+func subscriptionHTTPClient() (*http.Client, error) {
+	// Do not use the automatic client: it silently selects a direct route
+	// when the main core is stopped or transparent proxying is enabled.
+	switch configure.GetSettingNotNil().ProxyModeWhenSubscribe {
+	case configure.ProxyModeProxy:
+		return httpClient.GetHttpClientWithv2rayAProxy()
+	case configure.ProxyModePac:
+		return httpClient.GetHttpClientWithv2rayAPac()
+	default:
+		return directSubscriptionClient(), nil
 	}
-	return httpClient.GetHttpClientAutomatically()
 }
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) error {

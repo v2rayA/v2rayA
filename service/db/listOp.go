@@ -83,8 +83,8 @@ func setSubscription(tx *sql.Tx, index int, parsed gjson.Result) error {
 	// another connection's commit may have made stale (SQLITE_BUSY_SNAPSHOT).
 	var subID int64
 	err := tx.QueryRow(
-		"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, update_mode = ?, update_interval_minutes = ?, failure_interval_minutes = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ? RETURNING id",
-		address, remarks, status, info, autoSelect, updateMode, parsed.Get("updateIntervalMinutes").Int(), max(1, parsed.Get("failureIntervalMinutes").Int()), index,
+		"UPDATE subscriptions SET address = ?, remarks = ?, status = ?, info = ?, auto_select = ?, update_mode = ?, update_interval_minutes = ?, failure_interval_minutes = ?, allow_direct_recovery = ?, updated_at = CURRENT_TIMESTAMP WHERE sort = ? RETURNING id",
+		address, remarks, status, info, autoSelect, updateMode, parsed.Get("updateIntervalMinutes").Int(), max(1, parsed.Get("failureIntervalMinutes").Int()), parsed.Get("allowDirectRecovery").Bool(), index,
 	).Scan(&subID)
 	if err == sql.ErrNoRows {
 		return fmt.Errorf("ListSet: subscription at index %d not found", index)
@@ -141,10 +141,11 @@ func SubscriptionsGet(index int) ([]byte, error) {
 	var subID int64
 	var address, remarks, status, info string
 	var autoSelectInt, regularInt, failureInt int
+	var allowDirectRecovery bool
 	var updateMode string
 	err := db.QueryRow(
-		"SELECT id, address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes FROM subscriptions WHERE sort = ?", index,
-	).Scan(&subID, &address, &remarks, &status, &info, &autoSelectInt, &updateMode, &regularInt, &failureInt)
+		"SELECT id, address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes, allow_direct_recovery FROM subscriptions WHERE sort = ?", index,
+	).Scan(&subID, &address, &remarks, &status, &info, &autoSelectInt, &updateMode, &regularInt, &failureInt, &allowDirectRecovery)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("ListGet: can't get element from an empty list")
 	}
@@ -171,7 +172,7 @@ func SubscriptionsGet(index int) ([]byte, error) {
 		servers = append(servers, s)
 	}
 
-	return subscriptionJSON(subID, remarks, address, status, info, servers, autoSelectInt != 0, updateMode, regularInt, failureInt)
+	return subscriptionJSON(subID, remarks, address, status, info, servers, autoSelectInt != 0, updateMode, regularInt, failureInt, allowDirectRecovery)
 }
 
 // ListAppend appends values to a list.
@@ -245,8 +246,8 @@ func SubscriptionsAppend(val interface{}) (err error) {
 			}
 
 			res, err := db.Exec(
-				"INSERT INTO subscriptions (address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM subscriptions))",
-				address, remarks, status, info, autoSelect, updateMode, item.Get("updateIntervalMinutes").Int(), max(1, item.Get("failureIntervalMinutes").Int()),
+				"INSERT INTO subscriptions (address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes, allow_direct_recovery, sort) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort), -1) + 1 FROM subscriptions))",
+				address, remarks, status, info, autoSelect, updateMode, item.Get("updateIntervalMinutes").Int(), max(1, item.Get("failureIntervalMinutes").Int()), item.Get("allowDirectRecovery").Bool(),
 			)
 			if err != nil {
 				return err
@@ -300,7 +301,7 @@ func ServersGetAll() (list [][]byte, err error) {
 
 func SubscriptionsGetAll() (list [][]byte, err error) {
 	db := GetDB()
-	rows, err := db.Query("SELECT id, address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes FROM subscriptions ORDER BY sort")
+	rows, err := db.Query("SELECT id, address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes, allow_direct_recovery FROM subscriptions ORDER BY sort")
 	if err != nil {
 		return nil, err
 	}
@@ -310,8 +311,9 @@ func SubscriptionsGetAll() (list [][]byte, err error) {
 		var id int64
 		var address, remarks, status, info string
 		var autoSelectInt, regularInt, failureInt int
+		var allowDirectRecovery bool
 		var updateMode string
-		if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoSelectInt, &updateMode, &regularInt, &failureInt); err != nil {
+		if err := rows.Scan(&id, &address, &remarks, &status, &info, &autoSelectInt, &updateMode, &regularInt, &failureInt, &allowDirectRecovery); err != nil {
 			return nil, err
 		}
 
@@ -334,7 +336,7 @@ func SubscriptionsGetAll() (list [][]byte, err error) {
 		}
 		serverRows.Close()
 
-		result, err := subscriptionJSON(id, remarks, address, status, info, servers, autoSelectInt != 0, updateMode, regularInt, failureInt)
+		result, err := subscriptionJSON(id, remarks, address, status, info, servers, autoSelectInt != 0, updateMode, regularInt, failureInt, allowDirectRecovery)
 		if err != nil {
 			return nil, err
 		}
@@ -472,7 +474,7 @@ func SubscriptionsLen() (length int, err error) {
 // server rows are already JSON; the scalar columns are user- or
 // provider-supplied text and must be escaped, otherwise a remark with a
 // quote made the whole subscription unreadable.
-func subscriptionJSON(databaseID int64, remarks, address, status, info string, servers []string, autoSelect bool, updateMode string, regular, failure int) ([]byte, error) {
+func subscriptionJSON(databaseID int64, remarks, address, status, info string, servers []string, autoSelect bool, updateMode string, regular, failure int, allowDirectRecovery bool) ([]byte, error) {
 	raw := make([]jsoniter.RawMessage, 0, len(servers))
 	for _, s := range servers {
 		raw = append(raw, jsoniter.RawMessage(s))
@@ -488,5 +490,6 @@ func subscriptionJSON(databaseID int64, remarks, address, status, info string, s
 		UpdateMode             string                `json:"updateMode"`
 		UpdateIntervalMinutes  int                   `json:"updateIntervalMinutes"`
 		FailureIntervalMinutes int                   `json:"failureIntervalMinutes"`
-	}{databaseID, remarks, address, status, info, raw, autoSelect, updateMode, regular, failure})
+		AllowDirectRecovery    bool                  `json:"allowDirectRecovery"`
+	}{databaseID, remarks, address, status, info, raw, autoSelect, updateMode, regular, failure, allowDirectRecovery})
 }

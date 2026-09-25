@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     update_mode TEXT NOT NULL DEFAULT 'disabled',
     update_interval_minutes INTEGER NOT NULL DEFAULT 0,
     failure_interval_minutes INTEGER NOT NULL DEFAULT 1,
+    allow_direct_recovery INTEGER NOT NULL DEFAULT 0,
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -97,6 +98,7 @@ func MigrateSchema(db *sql.DB) error {
 		{"update_mode", "TEXT NOT NULL DEFAULT 'disabled'"},
 		{"update_interval_minutes", "INTEGER NOT NULL DEFAULT 0"},
 		{"failure_interval_minutes", "INTEGER NOT NULL DEFAULT 1"},
+		{"allow_direct_recovery", "INTEGER NOT NULL DEFAULT 0"},
 	}
 	for _, column := range columns {
 		if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = ?", column.name).Scan(&count); err != nil {
