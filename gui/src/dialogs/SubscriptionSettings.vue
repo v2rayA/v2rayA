@@ -3,12 +3,8 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { errorText } from "@/api/errors";
 import { useNotify } from "@/composables";
-import { required } from "@/dialogs/Server/forms/parts/rules";
 import { useSettings } from "@/views/settings/model";
-import {
-  subscriptionUpdateModes,
-  updateProxyModes,
-} from "@/views/settings/options";
+import { updateProxyModes } from "@/views/settings/options";
 
 defineOptions({ name: "SubscriptionSettingsDialog" });
 const emit = defineEmits<{ close: [saved?: boolean] }>();
@@ -21,7 +17,6 @@ const validation = ref<{ validate(): Promise<{ valid: boolean }> } | null>(
 );
 const saving = ref(false);
 const loadError = ref("");
-const modes = computed(() => subscriptionUpdateModes(t));
 const proxyModes = computed(() =>
   updateProxyModes(t, form.transparent === "close"),
 );
@@ -71,30 +66,6 @@ async function save() {
         :disabled="!ready || saving"
         @submit.prevent="save"
       >
-        <v-select
-          v-model="form.subscriptionAutoUpdateMode"
-          :label="t('setting.autoUpdateSub')"
-          :items="modes"
-        />
-        <v-expand-transition>
-          <v-text-field
-            v-if="
-              form.subscriptionAutoUpdateMode === 'auto_update_at_intervals'
-            "
-            v-model.number="form.subscriptionAutoUpdateIntervalHour"
-            type="number"
-            min="1"
-            step="1"
-            dir="ltr"
-            :label="t('setting.options.updateSubAtIntervals')"
-            :rules="[
-              required,
-              (v) =>
-                (Number.isInteger(Number(v)) && Number(v) >= 1) ||
-                t('configureServer.required'),
-            ]"
-          />
-        </v-expand-transition>
         <v-select
           v-model="form.proxyModeWhenSubscribe"
           :label="t('setting.preferModeWhenUpdate')"

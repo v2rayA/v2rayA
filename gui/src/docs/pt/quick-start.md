@@ -52,3 +52,16 @@ As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha
 - Registros: com foco, `Home`, `End`, `PgUp` e `PgDn` percorrem o registro.
 
 No macOS, `Cmd` corresponde a `Ctrl`.
+
+## Atualização automática de assinaturas
+
+Cada assinatura tem seu próprio modo de atualização:
+
+- **Desativada:** atualizar somente quando solicitado manualmente.
+- **Ao iniciar o serviço:** atualizar uma vez sempre que o v2rayA iniciar.
+- **Em um intervalo:** atualizar ao iniciar e depois do número de minutos configurado.
+- **Em um intervalo com recuperação de falha:** seguir a programação regular e também verificar os servidores salvos no intervalo de falha. Quando nenhum funcionar, atualizar a assinatura nesse intervalo até que pelo menos um fique disponível.
+
+Downloads com erro ou vazios preservam a lista de servidores salva. Uma tentativa de recuperação não adia a programação regular, e uma execução demorada nunca ocorre em paralelo com a próxima. No Linux, os downloads de recuperação usam conexões marcadas para que o proxy transparente não os encaminhe de volta ao proxy com falha. Esse desvio não é garantido no modo TUN do macOS ou Windows. As verificações podem iniciar processos temporários do núcleo, mas a atualização automática não inicia o núcleo principal que o usuário parou manualmente.
+
+Na atualização, o modo global antigo **ao iniciar** é atribuído a todas as assinaturas existentes como **Ao iniciar o serviço**. O modo antigo por intervalo passa a **Em um intervalo**, com as horas convertidas em minutos. A recuperação de falha nunca é ativada pela migração; selecione-a manualmente onde for necessária.
