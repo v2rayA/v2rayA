@@ -131,6 +131,10 @@ func MigrateFromBoltDB() error {
 		_ = tx.Rollback()
 		return fmt.Errorf("failed to migrate subscription update policy: %w", err)
 	}
+	if err := migrateAutoSelectToAutomaticGroup(tx); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("failed to migrate subscription auto-select: %w", err)
+	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {

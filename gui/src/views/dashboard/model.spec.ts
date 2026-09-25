@@ -69,7 +69,6 @@ function response(running = false): TouchResponse {
           address: "https://subscription.example",
           status: "",
           info: "",
-          autoSelect: false,
           servers: [{ ...server("Subscribed"), _type: "subscriptionServer" }],
         },
       ],

@@ -33,6 +33,14 @@ func (e *ApplyCoreConfigError) Restored() bool {
 }
 
 func ApplyCoreConfig(snapshot func() (restore func() error), store func() error) error {
+	return applyCoreConfig(snapshot, store, v2ray.UpdateV2RayConfig)
+}
+
+func ApplyGroupConfig(snapshot func() (restore func() error), store func() error) error {
+	return applyCoreConfig(snapshot, store, v2ray.UpdateGroupConfig)
+}
+
+func applyCoreConfig(snapshot func() (restore func() error), store func() error, update func() error) error {
 	restore := snapshot()
 	if err := store(); err != nil {
 		return err
@@ -40,13 +48,13 @@ func ApplyCoreConfig(snapshot func() (restore func() error), store func() error)
 	if !v2ray.ProcessManager.Running() {
 		return nil
 	}
-	updateErr := v2ray.UpdateV2RayConfig()
+	updateErr := update()
 	if updateErr == nil {
 		return nil
 	}
 	failure := &ApplyCoreConfigError{UpdateErr: updateErr}
 	if failure.RestoreStoreErr = restore(); failure.RestoreStoreErr == nil {
-		failure.RestoreUpdateErr = v2ray.UpdateV2RayConfig()
+		failure.RestoreUpdateErr = update()
 	}
 	return failure
 }

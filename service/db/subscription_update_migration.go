@@ -14,6 +14,7 @@ const subscriptionUpdateMigrationKey = "migration:subscription_update_policy_v1"
 type subscriptionPolicyStore interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Query(query string, args ...interface{}) (*sql.Rows, error)
 }
 
 func migrateSubscriptionUpdatePolicy(store subscriptionPolicyStore) error {

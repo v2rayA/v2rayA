@@ -13,7 +13,6 @@ const subscription: TouchSubscription = {
   status: "2026-09-19T12:00:00Z",
   info: "Used 1 GiB / 10 GiB · Expires 2026-10-01",
   servers: [],
-  autoSelect: false,
 };
 const adapter = client.defaults.adapter;
 afterEach(() => {

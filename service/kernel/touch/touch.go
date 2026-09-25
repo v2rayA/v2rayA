@@ -32,7 +32,6 @@ type Subscription struct {
 	UpdateIntervalMinutes  *int                              `json:"updateIntervalMinutes"`
 	FailureIntervalMinutes *int                              `json:"failureIntervalMinutes"`
 	AllowDirectRecovery    *bool                             `json:"allowDirectRecovery,omitempty"`
-	AutoSelect             bool                              `json:"autoSelect"`
 	Remarks                string                            `json:"remarks,omitempty"`
 	ID                     int                               `json:"id"`
 	TYPE                   configure.TouchType               `json:"_type"`
@@ -101,7 +100,6 @@ func GenerateTouch() (t Touch) {
 			UpdateIntervalMinutes:  &v.UpdateIntervalMinutes,
 			FailureIntervalMinutes: &v.FailureIntervalMinutes,
 			AllowDirectRecovery:    &v.AllowDirectRecovery,
-			AutoSelect:             v.AutoSelect,
 			ID:                     i + 1,
 			Host:                   u.Host,
 			Address:                v.Address,

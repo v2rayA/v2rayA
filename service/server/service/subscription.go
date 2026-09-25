@@ -19,7 +19,6 @@ import (
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/ipforward"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj/clash"
 	"github.com/v2rayA/v2rayA/kernel/touch"
@@ -360,7 +359,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 				copy.ID = 0
 			}
 			if copy.ID == 0 {
-				if disconnect {
+				if disconnect || configure.GetOutboundSetting(ref.Outbound).AutoAdd {
 					affected = true
 					continue
 				}
@@ -466,7 +465,6 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 		return fmt.Errorf("unknown subscription update mode %q", mode)
 	}
 	raw.Remarks, raw.Address = subscription.Remarks, subscription.Address
-	raw.AutoSelect = subscription.AutoSelect
 	raw.UpdateMode, raw.UpdateIntervalMinutes, raw.FailureIntervalMinutes = mode, regular, failure
 	if subscription.AllowDirectRecovery != nil {
 		raw.AllowDirectRecovery = *subscription.AllowDirectRecovery
