@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
-import { VSwitch, VTextField } from "vuetify/components";
+import { VSelect, VSwitch, VTextField } from "vuetify/components";
 import type * as Api from "@/api";
 import { getOutbound, putOutbound } from "@/api";
 import { mountWithApp } from "@/test/mount";
@@ -57,6 +57,38 @@ test("enabling automatic membership uses the five-minute default and saves the g
       probeURL: "https://www.gstatic.com/generate_204",
       probeInterval: "300s",
       type: "leastping",
+    },
+  });
+});
+
+test("offers four connection strategies and saves keep-current", async () => {
+  const select = wrapper.getComponent(VSelect);
+  expect(select.props("label")).toBe("Connection Strategy");
+  expect(select.props("items")).toEqual([
+    { value: "leastping", title: "Lowest latency" },
+    { value: "keepcurrent", title: "Keep current until failure" },
+    { value: "roundrobin", title: "Round robin" },
+    { value: "random", title: "Random" },
+  ]);
+
+  select.vm.$emit("update:modelValue", "keepcurrent");
+  await flushPromises();
+  const details = wrapper.findAll(".md3-body-small").at(-1)!;
+  expect(details.classes()).toContain("text-on-surface-variant");
+  expect(details.text()).toContain("healthy current server");
+
+  await wrapper
+    .findAll("button")
+    .find((button) => button.text() === "Save")!
+    .trigger("click");
+  await flushPromises();
+  expect(putOutbound).toHaveBeenCalledWith({
+    outbound: "proxy",
+    setting: {
+      autoAdd: false,
+      probeURL: "https://www.gstatic.com/generate_204",
+      probeInterval: "60s",
+      type: "keepcurrent",
     },
   });
 });

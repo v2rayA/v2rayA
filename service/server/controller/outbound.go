@@ -47,9 +47,27 @@ func PostOutbound(ctx *gin.Context) {
 
 func GetOutbound(ctx *gin.Context) {
 	setting := configure.GetOutboundSetting(ctx.Query("outbound"))
+	setting.StickyCurrent = ""
 	common.ResponseSuccess(ctx, gin.H{
 		"setting": setting,
 	})
+}
+
+func initialStickyCurrent(outbound, selected string) string {
+	if selected != "" {
+		return configure.NodeFingerprint(selected)
+	}
+	members := configure.GetConnectedServersByOutbound(outbound)
+	if members == nil {
+		return ""
+	}
+	for _, member := range members.Get() {
+		located, err := member.LocateServerRaw()
+		if err == nil && located.ServerObj != nil {
+			return configure.NodeFingerprint(located.ServerObj.ExportToURL())
+		}
+	}
+	return ""
 }
 
 func PutOutbound(ctx *gin.Context) {
@@ -79,6 +97,11 @@ func PutOutbound(ctx *gin.Context) {
 	}
 	if next.AutoAdd && !previous.AutoAdd && next.ProbeInterval == configure.DefaultProbeInterval {
 		next.ProbeInterval = "300s"
+	}
+	if next.Type == configure.KeepCurrent && previous.Type != configure.KeepCurrent {
+		next.StickyCurrent = initialStickyCurrent(data.Outbound, previous.Selected)
+	} else if next.Type != configure.KeepCurrent {
+		next.StickyCurrent = ""
 	}
 	if err := service.ValidateOutboundSetting(next); err != nil {
 		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))

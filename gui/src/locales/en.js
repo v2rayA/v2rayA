@@ -598,7 +598,25 @@ export default {
     settingSaveFailed: "Failed to save proxy group settings: {message}",
     probeUrl: "Probe URL",
     probeInterval: "Probe Interval",
-    type: "Type",
+    strategy: "Connection Strategy",
+    strategyHelp:
+      "Controls how new connections are assigned among group members. If none is available, the group blocks its traffic.",
+    strategies: {
+      leastPing: "Lowest latency",
+      keepCurrent: "Keep current until failure",
+      roundRobin: "Round robin",
+      random: "Random",
+    },
+    strategyDetails: {
+      leastping:
+        "Continuously uses probe results to prefer the healthy server with the lowest measured latency.",
+      keepcurrent:
+        "Keeps the healthy current server. After it fails, selects the first reachable member in stable group order. A recovered old server does not take traffic back.",
+      roundrobin:
+        "Distributes new connections across healthy group members in turn.",
+      random:
+        "Chooses a healthy group member randomly for each new connection.",
+    },
   },
   proxyGroup: {
     searchNodes: "Search nodes...",

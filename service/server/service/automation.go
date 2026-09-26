@@ -60,6 +60,7 @@ type automation struct {
 	probe         func(context.Context, []serverObj.ServerObj, string) []subscriptionProbeResult
 	fetch         subscriptionFetcher
 	applyGroup    func(string, []configure.NodeRef) error
+	applyState    func(string, configure.OutboundSetting, []configure.NodeRef, bool) error
 }
 
 func newAutomation() *automation {
@@ -70,7 +71,57 @@ func newAutomation() *automation {
 		probe:         probeSubscriptionWithContext,
 		fetch:         fetchSubscriptionForAutomation,
 		applyGroup:    replaceManagedOutboundConnections,
+		applyState:    applyManagedGroupState,
 	}
+}
+
+func writeGroupMembers(outbound string, members []configure.NodeRef) error {
+	if len(members) == 0 {
+		return configure.ClearConnects(outbound)
+	}
+	refs := new(configure.NodeRefs)
+	for i := range members {
+		member := members[i]
+		member.Outbound = outbound
+		refs.Add(member)
+	}
+	return configure.OverwriteConnects(refs)
+}
+
+// applyManagedGroupState changes the worker-owned strategy state and, for an
+// automatic group, its membership before one preserved-interception reload.
+func applyManagedGroupState(outbound string, next configure.OutboundSetting, members []configure.NodeRef, replaceMembers bool) error {
+	previousSetting := configure.GetOutboundSetting(outbound)
+	previousMembers := configure.GetConnectedServersByOutbound(outbound)
+	restoreMembers := func() error {
+		if previousMembers == nil || previousMembers.Len() == 0 {
+			return configure.ClearConnects(outbound)
+		}
+		return configure.OverwriteConnects(previousMembers)
+	}
+	return ApplyGroupConfig(func() func() error {
+		return func() error {
+			if replaceMembers {
+				if err := restoreMembers(); err != nil {
+					return err
+				}
+			}
+			return configure.SetOutboundSetting(outbound, previousSetting)
+		}
+	}, func() error {
+		if replaceMembers {
+			if err := writeGroupMembers(outbound, members); err != nil {
+				return err
+			}
+		}
+		if err := configure.SetOutboundSetting(outbound, next); err != nil {
+			if replaceMembers {
+				_ = restoreMembers()
+			}
+			return err
+		}
+		return nil
+	})
 }
 
 func ValidateOutboundSetting(setting configure.OutboundSetting) error {
@@ -82,7 +133,9 @@ func ValidateOutboundSetting(setting configure.OutboundSetting) error {
 	if err != nil || interval < time.Second || interval > 365*24*time.Hour {
 		return fmt.Errorf("probe interval must be between 1 second and 365 days")
 	}
-	if setting.Type != configure.LeastPing {
+	switch setting.Type {
+	case configure.LeastPing, configure.KeepCurrent, configure.RoundRobin, configure.Random:
+	default:
 		return fmt.Errorf("unsupported group type")
 	}
 	return nil
@@ -269,6 +322,27 @@ func automaticGroupCandidates() []groupCandidate {
 	return candidates
 }
 
+func connectedGroupCandidates(name string) []groupCandidate {
+	refs := configure.GetConnectedServersByOutbound(name)
+	if refs == nil {
+		return nil
+	}
+	candidates := make([]groupCandidate, 0, refs.Len())
+	for _, rawRef := range refs.Get() {
+		ref := *rawRef
+		located, err := ref.LocateServerRaw()
+		if err != nil || located.ServerObj == nil {
+			continue
+		}
+		candidates = append(candidates, groupCandidate{
+			ref:      ref,
+			node:     located.ServerObj,
+			identity: fmt.Sprintf("%s/%d/%d/%s", ref.TYPE, ref.Sub, ref.ID, located.ServerObj.ExportToURL()),
+		})
+	}
+	return candidates
+}
+
 func automaticGroupSignature(setting configure.OutboundSetting, candidates []groupCandidate) string {
 	identities := make([]string, len(candidates))
 	for i := range candidates {
@@ -279,8 +353,9 @@ func automaticGroupSignature(setting configure.OutboundSetting, candidates []gro
 		ProbeURL      string
 		ProbeInterval string
 		Type          configure.ObservatoryType
+		Selected      string
 		Candidates    []string
-	}{setting.AutoAdd, setting.ProbeURL, setting.ProbeInterval, setting.Type, identities})
+	}{setting.AutoAdd, setting.ProbeURL, setting.ProbeInterval, setting.Type, setting.Selected, identities})
 	return string(b)
 }
 
@@ -300,7 +375,7 @@ func sameMembers(current []*configure.NodeRef, desired []configure.NodeRef) bool
 	return true
 }
 
-func (a *automation) processAutomaticGroup(ctx context.Context, name string, setting configure.OutboundSetting, candidates []groupCandidate, probe func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error)) {
+func (a *automation) processGroup(ctx context.Context, name string, setting configure.OutboundSetting, candidates []groupCandidate, probe func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error)) {
 	signature := automaticGroupSignature(setting, candidates)
 	state := a.groups[name]
 	now := a.now()
@@ -325,8 +400,12 @@ func (a *automation) processAutomaticGroup(ctx context.Context, name string, set
 	results, err := probe(nodes, setting.ProbeURL)
 	if err == nil {
 		members := make([]configure.NodeRef, 0, len(candidates))
+		healthy := make(map[string]bool, len(candidates))
 		for i, result := range results {
 			if result.err == nil {
+				if candidates[i].node != nil {
+					healthy[configure.NodeFingerprint(candidates[i].node.ExportToURL())] = true
+				}
 				ref := candidates[i].ref
 				ref.Outbound = name
 				members = append(members, ref)
@@ -337,12 +416,37 @@ func (a *automation) processAutomaticGroup(ctx context.Context, name string, set
 			err = ctx.Err()
 		} else {
 			currentSetting := configure.GetOutboundSetting(name)
-			currentCandidates := automaticGroupCandidates()
+			currentCandidates := connectedGroupCandidates(name)
+			if currentSetting.AutoAdd {
+				currentCandidates = automaticGroupCandidates()
+			}
 			if automaticGroupSignature(currentSetting, currentCandidates) != signature {
 				err = fmt.Errorf("catalog or group setting changed during membership check")
-			} else if !sameMembers(configure.GetConnectedServersByOutbound(name).Get(), members) {
-				err = a.applyGroup(name, members)
-				if err == nil {
+			} else {
+				nextSetting := currentSetting
+				stickyChanged := false
+				if currentSetting.Type == configure.KeepCurrent && currentSetting.Selected == "" {
+					nextCurrent := currentSetting.StickyCurrent
+					if !healthy[nextCurrent] {
+						nextCurrent = ""
+						for i, result := range results {
+							if result.err == nil && candidates[i].node != nil {
+								nextCurrent = configure.NodeFingerprint(candidates[i].node.ExportToURL())
+								break
+							}
+						}
+					}
+					stickyChanged = nextCurrent != currentSetting.StickyCurrent
+					nextSetting.StickyCurrent = nextCurrent
+				}
+				membershipChanged := currentSetting.AutoAdd && !sameMembers(configure.GetConnectedServersByOutbound(name).Get(), members)
+				switch {
+				case stickyChanged || (membershipChanged && currentSetting.Type == configure.KeepCurrent):
+					err = a.applyState(name, nextSetting, members, currentSetting.AutoAdd)
+				case membershipChanged:
+					err = a.applyGroup(name, members)
+				}
+				if err == nil && (stickyChanged || membershipChanged) {
 					log.Info("[Groups] %s: %d/%d candidates available", name, len(members), len(candidates))
 					v2ray.ApiFeed.ProductMessage("catalog_changed", nil)
 				}
@@ -440,15 +544,20 @@ func (a *automation) step(parent context.Context) time.Time {
 	}
 
 	ConfigurationMu.Lock()
-	candidates := automaticGroupCandidates()
+	catalogCandidates := automaticGroupCandidates()
 	groups := make(map[string]configure.OutboundSetting)
+	groupCandidates := make(map[string][]groupCandidate)
 	for _, name := range configure.GetOutbounds() {
-		groups[name] = configure.GetOutboundSetting(name)
+		setting := configure.GetOutboundSetting(name)
+		groups[name] = setting
+		if !setting.AutoAdd && setting.Type == configure.KeepCurrent {
+			groupCandidates[name] = connectedGroupCandidates(name)
+		}
 	}
 	ConfigurationMu.Unlock()
 	activeGroups := map[string]bool{}
 	for name, setting := range groups {
-		if !setting.AutoAdd {
+		if !setting.AutoAdd && setting.Type != configure.KeepCurrent {
 			continue
 		}
 		activeGroups[name] = true
@@ -456,7 +565,11 @@ func (a *automation) step(parent context.Context) time.Time {
 			log.Warn("[Groups] %s: invalid automatic membership setting: %v", name, err)
 			continue
 		}
-		a.processAutomaticGroup(ctx, name, setting, candidates, probe)
+		candidates := groupCandidates[name]
+		if setting.AutoAdd {
+			candidates = catalogCandidates
+		}
+		a.processGroup(ctx, name, setting, candidates, probe)
 		if ctx.Err() != nil {
 			return time.Time{}
 		}

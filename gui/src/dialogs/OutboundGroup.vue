@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// One outbound group's settings: the probe URL and interval the load
-// balancer uses, and its type. Resolves true after a save.
-import { onMounted, reactive, ref } from "vue";
+// One outbound group's membership checks and connection strategy. Resolves
+// true after a save.
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { getOutbound, putOutbound, type OutboundSetting } from "@/api";
 import { errorText } from "@/api/errors";
@@ -22,6 +22,15 @@ const setting = reactive<OutboundSetting>({
 const wasAutomatic = ref(false);
 const form = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 const saving = ref(false);
+const strategyItems = computed(() => [
+  { value: "leastping", title: t("outbound.strategies.leastPing") },
+  { value: "keepcurrent", title: t("outbound.strategies.keepCurrent") },
+  { value: "roundrobin", title: t("outbound.strategies.roundRobin") },
+  { value: "random", title: t("outbound.strategies.random") },
+]);
+const strategyDetails = computed(() =>
+  t(`outbound.strategyDetails.${setting.type}`),
+);
 
 onMounted(async () => {
   try {
@@ -95,11 +104,15 @@ function setAutomatic(enabled: boolean | null) {
         />
         <v-select
           v-model="setting.type"
-          :items="[
-            { value: 'leastping', title: t('setting.options.leastPing') },
-          ]"
-          :label="t('outbound.type')"
+          :items="strategyItems"
+          :label="t('outbound.strategy')"
         />
+        <p class="md3-body-large mb-2">
+          {{ t("outbound.strategyHelp") }}
+        </p>
+        <p class="md3-body-small text-on-surface-variant mb-0">
+          {{ strategyDetails }}
+        </p>
       </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

@@ -341,7 +341,8 @@ func (t *Template) resolveOutbounds(
 	// Keep every automatic group routable even while no candidate is healthy.
 	// Its own traffic is blocked; unrelated groups and direct routing remain intact.
 	for _, name := range configure.GetOutbounds() {
-		if configure.GetOutboundSetting(name).AutoAdd && len(serverData.OutboundName2ServerObjs[name]) == 0 {
+		groupSetting := configure.GetOutboundSetting(name)
+		if (groupSetting.AutoAdd || groupSetting.Type == configure.KeepCurrent) && len(serverData.OutboundName2ServerObjs[name]) == 0 {
 			blocked := coreObj.OutboundObject{Tag: name, Protocol: "blackhole"}
 			if name == configure.DefaultOutboundName {
 				t.Outbounds = append([]coreObj.OutboundObject{blocked}, t.Outbounds...)

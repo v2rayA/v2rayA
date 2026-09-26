@@ -581,7 +581,22 @@ export default {
     settingSaveFailed: "无法保存代理分组设置：{message}",
     probeUrl: "探测 URL",
     probeInterval: "探测间隔",
-    type: "类型",
+    strategy: "连接策略",
+    strategyHelp:
+      "控制如何在组成员之间分配新连接。如果没有可用服务器，该组会阻止自己的流量。",
+    strategies: {
+      leastPing: "最低延迟",
+      keepCurrent: "保持当前服务器直到故障",
+      roundRobin: "轮询",
+      random: "随机",
+    },
+    strategyDetails: {
+      leastping: "持续使用探测结果，优先选择测得延迟最低的可用服务器。",
+      keepcurrent:
+        "当前服务器可用时继续使用它；故障后按稳定的组顺序选择第一个可用成员。旧服务器恢复后不会自动抢回流量。",
+      roundrobin: "依次把新连接分配给可用的组成员。",
+      random: "为每个新连接随机选择一个可用的组成员。",
+    },
   },
   proxyGroup: {
     searchNodes: "搜索节点...",

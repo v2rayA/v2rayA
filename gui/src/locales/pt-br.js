@@ -607,7 +607,25 @@ export default {
       "Falha ao salvar as configurações do grupo de proxy: {message}",
     probeUrl: "URL de sondagem",
     probeInterval: "Intervalo de sondagem",
-    type: "Tipo",
+    strategy: "Estratégia de conexão",
+    strategyHelp:
+      "Controla como novas conexões são distribuídas entre os membros do grupo. Se nenhum estiver disponível, o grupo bloqueia seu tráfego.",
+    strategies: {
+      leastPing: "Menor latência",
+      keepCurrent: "Manter atual até falhar",
+      roundRobin: "Alternância sequencial",
+      random: "Aleatório",
+    },
+    strategyDetails: {
+      leastping:
+        "Usa continuamente os resultados da sondagem para preferir o servidor disponível com a menor latência medida.",
+      keepcurrent:
+        "Mantém o servidor atual enquanto estiver disponível. Após uma falha, escolhe o primeiro membro acessível na ordem estável do grupo. Um servidor antigo recuperado não retoma o tráfego.",
+      roundrobin:
+        "Distribui novas conexões em sequência entre os membros disponíveis do grupo.",
+      random:
+        "Escolhe aleatoriamente um membro disponível do grupo para cada nova conexão.",
+    },
   },
   proxyGroup: {
     searchNodes: "Pesquisar nós...",

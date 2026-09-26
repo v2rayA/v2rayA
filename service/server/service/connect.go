@@ -27,7 +27,7 @@ func StartV2ray() (err error) {
 			log.Warn("Connect: %v", e)
 		}
 	}
-	if css := configure.GetConnectedServers(); css.Len() == 0 && !configure.HasAutomaticGroup() {
+	if css := configure.GetConnectedServers(); css.Len() == 0 && !configure.HasFailClosedGroup() {
 		return common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no server is selected; select at least one server first"), nil)
 	}
 	return v2ray.UpdateV2RayConfig()

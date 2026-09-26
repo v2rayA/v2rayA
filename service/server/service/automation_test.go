@@ -285,7 +285,7 @@ func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		setting := configure.DefaultOutboundSetting()
 		setting.AutoAdd, setting.ProbeInterval = true, "300s"
-		a.processAutomaticGroup(ctx, "proxy", setting, nil, func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error) {
+		a.processGroup(ctx, "proxy", setting, nil, func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error) {
 			now = now.Add(10 * time.Minute)
 			if cancelled {
 				cancel()
@@ -297,5 +297,188 @@ func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 		if got := a.groups["proxy"].next.Sub(now); got != 300*time.Second {
 			t.Fatalf("cancelled=%v: backoff after failure=%s, want 300s", cancelled, got)
 		}
+	}
+}
+
+func TestValidateOutboundSettingAcceptsSupportedStrategies(t *testing.T) {
+	for _, strategy := range []configure.ObservatoryType{
+		configure.LeastPing,
+		configure.KeepCurrent,
+		configure.RoundRobin,
+		configure.Random,
+	} {
+		setting := configure.DefaultOutboundSetting()
+		setting.Type = strategy
+		if err := ValidateOutboundSetting(setting); err != nil {
+			t.Fatalf("strategy %q was rejected: %v", strategy, err)
+		}
+	}
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = "unsupported"
+	if err := ValidateOutboundSetting(setting); err == nil {
+		t.Fatal("unsupported strategy was accepted")
+	}
+}
+
+func prepareManualStickyGroup(t *testing.T) []serverObj.ServerObj {
+	t.Helper()
+	resetSubscription(t)
+	nodes := []serverObj.ServerObj{testServer(t, 12001), testServer(t, 12002)}
+	sub := configure.GetSubscription(0)
+	sub.Servers = []configure.ServerRaw{{ServerObj: nodes[0]}, {ServerObj: nodes[1]}}
+	if err := configure.SetSubscription(0, sub); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.ClearConnects("proxy"); err != nil {
+		t.Fatal(err)
+	}
+	for id := range nodes {
+		if err := configure.AddConnect(configure.NodeRef{
+			TYPE: configure.SubscriptionServerType, Sub: 0, ID: id + 1, Outbound: "proxy",
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	setting := configure.DefaultOutboundSetting()
+	setting.Type, setting.ProbeInterval = configure.KeepCurrent, "300s"
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	return nodes
+}
+
+func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	healthy := map[string]bool{
+		nodes[0].ExportToURL(): true,
+		nodes[1].ExportToURL(): true,
+	}
+	now := time.Unix(6000, 0)
+	a := newAutomation()
+	a.now = func() time.Time { return now }
+	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		results := make([]subscriptionProbeResult, len(candidates))
+		for i, candidate := range candidates {
+			if !healthy[candidate.ExportToURL()] {
+				results[i].err = errors.New("unavailable")
+			}
+		}
+		return results
+	}
+	updates := 0
+	a.applyState = func(outbound string, next configure.OutboundSetting, _ []configure.NodeRef, replaceMembers bool) error {
+		updates++
+		if outbound != "proxy" || replaceMembers {
+			t.Fatalf("manual sticky update used outbound=%q replaceMembers=%v", outbound, replaceMembers)
+		}
+		return configure.SetOutboundSetting(outbound, next)
+	}
+
+	a.step(context.Background())
+	first := configure.NodeFingerprint(nodes[0].ExportToURL())
+	second := configure.NodeFingerprint(nodes[1].ExportToURL())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != first {
+		t.Fatalf("initial current = %q; want first healthy node %q", got, first)
+	}
+
+	// A healthy current node is retained even when another candidate is healthy.
+	now = now.Add(300 * time.Second)
+	a.step(context.Background())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != first || updates != 1 {
+		t.Fatalf("healthy current changed: current=%q updates=%d", got, updates)
+	}
+
+	// Failure moves to the first healthy backup in stable group order.
+	healthy[nodes[0].ExportToURL()] = false
+	now = now.Add(300 * time.Second)
+	a.step(context.Background())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != second {
+		t.Fatalf("failed current did not switch to backup: got %q, want %q", got, second)
+	}
+
+	// Recovery of the old node must not take ownership back from a healthy current.
+	healthy[nodes[0].ExportToURL()] = true
+	now = now.Add(300 * time.Second)
+	a.step(context.Background())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != second || updates != 2 {
+		t.Fatalf("recovered old node reclaimed traffic: current=%q updates=%d", got, updates)
+	}
+
+	// No healthy candidate clears the internal selection. Config generation then
+	// emits the group's blackhole instead of allowing direct fallback.
+	healthy[nodes[0].ExportToURL()] = false
+	healthy[nodes[1].ExportToURL()] = false
+	now = now.Add(300 * time.Second)
+	a.step(context.Background())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != "" {
+		t.Fatalf("all-failed group retained current %q", got)
+	}
+	if got := configure.GetConnectedServersByOutbound("proxy").Len(); got != 2 {
+		t.Fatalf("manual membership changed during health checks: %d members", got)
+	}
+}
+
+func TestKeepCurrentManualPinOverridesWorkerChoice(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Selected = nodes[0].ExportToURL()
+	setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		results := make([]subscriptionProbeResult, len(candidates))
+		results[1].err = errors.New("unavailable")
+		return results
+	}
+	a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
+		t.Fatal("worker changed sticky state while a manual pin was active")
+		return nil
+	}
+	a.step(context.Background())
+	if got := configure.GetOutboundSetting("proxy"); got.Selected != setting.Selected || got.StickyCurrent != setting.StickyCurrent {
+		t.Fatalf("manual pin or internal state changed: %+v", got)
+	}
+}
+
+func TestAutomaticKeepCurrentAppliesMembershipAndChoiceTogether(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	setting := configure.GetOutboundSetting("proxy")
+	setting.AutoAdd = true
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		results := make([]subscriptionProbeResult, len(candidates))
+		for i, candidate := range candidates {
+			if candidate.ExportToURL() == nodes[0].ExportToURL() {
+				results[i].err = errors.New("unavailable")
+			}
+		}
+		return results
+	}
+	calls := 0
+	a.applyState = func(outbound string, next configure.OutboundSetting, members []configure.NodeRef, replaceMembers bool) error {
+		calls++
+		if outbound != "proxy" || !replaceMembers {
+			t.Fatalf("automatic sticky update used outbound=%q replaceMembers=%v", outbound, replaceMembers)
+		}
+		if len(members) != 1 || members[0].ID != 2 {
+			t.Fatalf("healthy membership = %+v; want only second node", members)
+		}
+		if want := configure.NodeFingerprint(nodes[1].ExportToURL()); next.StickyCurrent != want {
+			t.Fatalf("sticky current = %q; want %q", next.StickyCurrent, want)
+		}
+		return nil
+	}
+	a.applyGroup = func(string, []configure.NodeRef) error {
+		t.Fatal("membership and sticky choice were applied in separate reloads")
+		return nil
+	}
+	a.step(context.Background())
+	if calls != 1 {
+		t.Fatalf("combined state updates = %d; want 1", calls)
 	}
 }

@@ -93,9 +93,10 @@ type PingConfig struct {
 	HTTPMethod    string `json:"httpMethod,omitempty"`
 }
 type Balancer struct {
-	Tag      string           `json:"tag"`
-	Selector []string         `json:"selector"`
-	Strategy BalancerStrategy `json:"strategy"`
+	Tag         string           `json:"tag"`
+	Selector    []string         `json:"selector"`
+	Strategy    BalancerStrategy `json:"strategy"`
+	FallbackTag string           `json:"fallbackTag,omitempty"`
 }
 type BalancerStrategy struct {
 	Type     string            `json:"type"`

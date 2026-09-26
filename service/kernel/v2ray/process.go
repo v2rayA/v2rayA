@@ -338,8 +338,8 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 			OutboundName: cs.Outbound,
 		})
 	}
-	serverInfos = applySelection(serverInfos, func(outbound string) string {
-		return configure.GetOutboundSetting(outbound).Selected
+	serverInfos = applySelection(serverInfos, func(outbound string) configure.OutboundSetting {
+		return configure.GetOutboundSetting(outbound)
 	})
 	serverObjs := make([]serverObj.ServerObj, 0, len(serverInfos))
 	for _, info := range serverInfos {
@@ -348,23 +348,44 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 	return serverObjs, serverInfos, nil
 }
 
-// applySelection keeps, for a group whose setting selects one member, only
-// that member; a selection matching no member leaves the group balanced.
-func applySelection(serverInfos []serverInfo, selectedOf func(outbound string) string) []serverInfo {
-	selected := make(map[string]string)
-	matched := make(map[string]bool)
+// applySelection applies a manual pin first. Without a pin, KeepCurrent keeps
+// only the worker-owned member. A missing KeepCurrent member leaves the group
+// empty so resolveOutbounds installs its fail-closed blackhole.
+func applySelection(serverInfos []serverInfo, settingOf func(outbound string) configure.OutboundSetting) []serverInfo {
+	settings := make(map[string]configure.OutboundSetting)
+	manualMatched := make(map[string]bool)
+	stickyMatched := make(map[string]bool)
 	for _, info := range serverInfos {
-		if _, ok := selected[info.OutboundName]; !ok {
-			selected[info.OutboundName] = selectedOf(info.OutboundName)
+		setting, ok := settings[info.OutboundName]
+		if !ok {
+			setting = settingOf(info.OutboundName)
+			settings[info.OutboundName] = setting
 		}
-		link := selected[info.OutboundName]
-		if link != "" && info.Info.ExportToURL() == link {
-			matched[info.OutboundName] = true
+		link := info.Info.ExportToURL()
+		if setting.Selected != "" && link == setting.Selected {
+			manualMatched[info.OutboundName] = true
+		}
+		if setting.Type == configure.KeepCurrent && setting.StickyCurrent != "" && configure.NodeFingerprint(link) == setting.StickyCurrent {
+			stickyMatched[info.OutboundName] = true
 		}
 	}
 	kept := serverInfos[:0]
+	keptChoice := make(map[string]bool)
 	for _, info := range serverInfos {
-		if matched[info.OutboundName] && info.Info.ExportToURL() != selected[info.OutboundName] {
+		setting := settings[info.OutboundName]
+		link := info.Info.ExportToURL()
+		if manualMatched[info.OutboundName] {
+			if link == setting.Selected && !keptChoice[info.OutboundName] {
+				kept = append(kept, info)
+				keptChoice[info.OutboundName] = true
+			}
+			continue
+		}
+		if setting.Type == configure.KeepCurrent {
+			if stickyMatched[info.OutboundName] && configure.NodeFingerprint(link) == setting.StickyCurrent && !keptChoice[info.OutboundName] {
+				kept = append(kept, info)
+				keptChoice[info.OutboundName] = true
+			}
 			continue
 		}
 		kept = append(kept, info)
@@ -378,7 +399,7 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 	if err != nil {
 		return nil, err
 	}
-	if len(serverObjs) == 0 && !configure.HasAutomaticGroup() {
+	if len(serverObjs) == 0 && !configure.HasFailClosedGroup() {
 		return nil, NoConnectedServerErr
 	}
 	var pluginPorts map[int]int
