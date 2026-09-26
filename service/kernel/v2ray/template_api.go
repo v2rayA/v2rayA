@@ -66,7 +66,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			})
 
 			switch strings.ToLower(strategy.String()) {
-			case "leastping", "random", "roundrobin":
+			case "leastping", "roundrobin":
 				probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
 				if _, err := url.Parse(probeUrl); err != nil {
 					log.Warn("observatory: %v", err)

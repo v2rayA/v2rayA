@@ -613,11 +613,13 @@ export default {
     strategy: "Estratégia de conexão",
     strategyHelp:
       "Controla como novas conexões são distribuídas entre os membros do grupo. Se nenhum estiver disponível, o grupo bloqueia seu tráfego.",
+    strategyHelpAction: "Sobre as estratégias de conexão",
     strategies: {
       leastPing: "Menor latência",
       keepCurrent: "Manter atual até falhar",
       roundRobin: "Alternância sequencial",
       random: "Aleatório",
+      firstAvailable: "Primeiro disponível",
     },
     strategyDetails: {
       leastping:
@@ -627,7 +629,9 @@ export default {
       roundrobin:
         "Distribui novas conexões em sequência entre os membros disponíveis do grupo.",
       random:
-        "Escolhe aleatoriamente um membro disponível do grupo para cada nova conexão.",
+        "Escolhe um servidor aleatório abaixo de 250 ms. Se a faixa estiver vazia, amplia para 500 ms e depois em passos de 250 ms até o tempo limite da sondagem.",
+      firstavailable:
+        "Escolhe o primeiro servidor acessível na ordem estável do grupo a cada verificação.",
     },
   },
   proxyGroup: {

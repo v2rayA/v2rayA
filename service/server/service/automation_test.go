@@ -334,6 +334,7 @@ func TestValidateOutboundSettingAcceptsSupportedStrategies(t *testing.T) {
 		configure.KeepCurrent,
 		configure.RoundRobin,
 		configure.Random,
+		configure.FirstAvailable,
 	} {
 		setting := configure.DefaultOutboundSetting()
 		setting.Type = strategy
@@ -345,6 +346,70 @@ func TestValidateOutboundSettingAcceptsSupportedStrategies(t *testing.T) {
 	setting.Type = "unsupported"
 	if err := ValidateOutboundSetting(setting); err == nil {
 		t.Fatal("unsupported strategy was accepted")
+	}
+}
+
+func TestRandomStrategyUsesLowestNonEmptyLatencyBucket(t *testing.T) {
+	nodes := []serverObj.ServerObj{
+		testServer(t, 13001),
+		testServer(t, 13002),
+		testServer(t, 13003),
+		testServer(t, 13004),
+	}
+	candidates := make([]groupCandidate, len(nodes))
+	for i, node := range nodes {
+		candidates[i] = groupCandidate{node: node}
+	}
+	results := []subscriptionProbeResult{
+		{latency: 250 * time.Millisecond},
+		{latency: 100 * time.Millisecond},
+		{latency: 200 * time.Millisecond},
+		{latency: 800 * time.Millisecond},
+	}
+	got := selectedGroupCandidate(configure.Random, "", candidates, results, func(size int) int {
+		if size != 2 {
+			t.Fatalf("eligible random bucket size = %d; want 2", size)
+		}
+		return 1
+	})
+	if want := configure.NodeFingerprint(nodes[2].ExportToURL()); got != want {
+		t.Fatalf("random choice = %q; want second member of <250 ms bucket %q", got, want)
+	}
+
+	results = []subscriptionProbeResult{
+		{latency: 300 * time.Millisecond},
+		{latency: 450 * time.Millisecond},
+		{latency: 600 * time.Millisecond},
+		{err: errors.New("timeout")},
+	}
+	got = selectedGroupCandidate(configure.Random, "", candidates, results, func(size int) int {
+		if size != 2 {
+			t.Fatalf("eligible fallback bucket size = %d; want 2", size)
+		}
+		return 0
+	})
+	if want := configure.NodeFingerprint(nodes[0].ExportToURL()); got != want {
+		t.Fatalf("random fallback choice = %q; want member of <500 ms bucket %q", got, want)
+	}
+}
+
+func TestFirstAvailableUsesStableGroupOrder(t *testing.T) {
+	nodes := []serverObj.ServerObj{testServer(t, 13101), testServer(t, 13102), testServer(t, 13103)}
+	candidates := make([]groupCandidate, len(nodes))
+	for i, node := range nodes {
+		candidates[i] = groupCandidate{node: node}
+	}
+	results := []subscriptionProbeResult{
+		{err: errors.New("unavailable")},
+		{latency: 900 * time.Millisecond},
+		{latency: 50 * time.Millisecond},
+	}
+	got := selectedGroupCandidate(configure.FirstAvailable, "", candidates, results, func(int) int {
+		t.Fatal("first-available called the random chooser")
+		return 0
+	})
+	if want := configure.NodeFingerprint(nodes[1].ExportToURL()); got != want {
+		t.Fatalf("first available = %q; want stable second member %q", got, want)
 	}
 }
 

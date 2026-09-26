@@ -67,7 +67,7 @@ test("enabling automatic membership uses the five-minute default and saves the g
   });
 });
 
-test("offers four connection strategies and saves keep-current", async () => {
+test("offers connection strategies, explains them on demand, and saves keep-current", async () => {
   const select = wrapper.getComponent(VSelect);
   expect(select.props("label")).toBe("Connection Strategy");
   expect(select.props("items")).toEqual([
@@ -75,13 +75,15 @@ test("offers four connection strategies and saves keep-current", async () => {
     { value: "keepcurrent", title: "Keep current until failure" },
     { value: "roundrobin", title: "Round robin" },
     { value: "random", title: "Random" },
+    { value: "firstavailable", title: "First available" },
   ]);
 
   select.vm.$emit("update:modelValue", "keepcurrent");
   await flushPromises();
-  const details = wrapper
-    .findAll(".md3-body-small")
-    .find((paragraph) => paragraph.text().includes("healthy current server"))!;
+  const help = wrapper.get('[aria-label="About connection strategies"]');
+  expect(help.attributes("aria-expanded")).toBe("false");
+  await help.trigger("click");
+  const details = wrapper.get("#strategy-help");
   expect(details.classes()).toContain("text-on-surface-variant");
   expect(details.text()).toContain("healthy current server");
 

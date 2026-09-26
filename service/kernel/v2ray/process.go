@@ -348,8 +348,8 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 	return serverObjs, serverInfos, nil
 }
 
-// applySelection applies a manual pin first. Without a pin, KeepCurrent keeps
-// only the worker-owned member. A missing KeepCurrent member leaves the group
+// applySelection applies a manual pin first. Without a pin, worker-selected
+// strategies keep only their chosen member. A missing chosen member leaves the group
 // empty so resolveOutbounds installs its fail-closed blackhole.
 func applySelection(serverInfos []serverInfo, settingOf func(outbound string) configure.OutboundSetting) []serverInfo {
 	settings := make(map[string]configure.OutboundSetting)
@@ -365,7 +365,7 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 		if setting.Selected != "" && link == setting.Selected {
 			manualMatched[info.OutboundName] = true
 		}
-		if setting.Type == configure.KeepCurrent && setting.StickyCurrent != "" && configure.NodeFingerprint(link) == setting.StickyCurrent {
+		if configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.NodeFingerprint(link) == setting.StickyCurrent {
 			stickyMatched[info.OutboundName] = true
 		}
 	}
@@ -381,7 +381,7 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 			}
 			continue
 		}
-		if setting.Type == configure.KeepCurrent {
+		if configure.UsesWorkerSelection(setting.Type) {
 			if stickyMatched[info.OutboundName] && configure.NodeFingerprint(link) == setting.StickyCurrent && !keptChoice[info.OutboundName] {
 				kept = append(kept, info)
 				keptChoice[info.OutboundName] = true

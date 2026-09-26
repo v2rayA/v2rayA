@@ -24,6 +24,8 @@ As assinaturas têm sua própria página, **Assinaturas** (no celular, a documen
 
 Os nós são usados por meio de grupos de proxy. O grupo `proxy` sempre existe; outros são criados, configurados e excluídos no botão de grupos da barra superior, o único lugar para isso. Um nó entra em um grupo pelo seu menu, ou selecione vários na página Proxies e escolha o grupo em **Adicionar ao grupo de proxy**. Um grupo com vários membros conectados usa o de menor latência medida (**Automático (menor latência)**); o menu do nó no painel fixa um membro para que o grupo use apenas ele, **Adicionar ou remover nós** altera os membros, e as configurações do grupo definem o endereço e o intervalo de sondagem.
 
+As estratégias são **Menor latência**, **Manter atual até falhar**, **Alternância sequencial**, **Aleatório** e **Primeiro disponível**. Aleatório escolhe um servidor da primeira faixa de latência não vazia: abaixo de 250 ms, depois 500 ms e então em passos de 250 ms até o tempo limite. Primeiro disponível escolhe o primeiro servidor funcional na ordem estável do grupo. A escolha é atualizada no intervalo e preservada entre reinicializações. O botão de interrogação ao lado da estratégia mostra a descrição da opção selecionada.
+
 As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padrão, e qualquer outro grupo pelo próprio nome assim que tiver um membro conectado.
 
 ## Iniciar o núcleo

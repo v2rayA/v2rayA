@@ -98,9 +98,13 @@ func PutOutbound(ctx *gin.Context) {
 	if next.AutoAdd && !previous.AutoAdd && next.ProbeInterval == configure.DefaultProbeInterval {
 		next.ProbeInterval = "300s"
 	}
-	if next.Type == configure.KeepCurrent && previous.Type != configure.KeepCurrent {
-		next.StickyCurrent = initialStickyCurrent(data.Outbound, previous.Selected)
-	} else if next.Type != configure.KeepCurrent {
+	if next.Type != previous.Type {
+		if next.Type == configure.KeepCurrent {
+			next.StickyCurrent = initialStickyCurrent(data.Outbound, previous.Selected)
+		} else {
+			next.StickyCurrent = ""
+		}
+	} else if !configure.UsesWorkerSelection(next.Type) {
 		next.StickyCurrent = ""
 	}
 	if err := service.ValidateOutboundSetting(next); err != nil {

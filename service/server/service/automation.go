@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"sync"
 	"time"
@@ -107,6 +108,7 @@ type automation struct {
 	applyGroup    func(string, []configure.NodeRef) error
 	applyState    func(string, configure.OutboundSetting, []configure.NodeRef, bool) error
 	groupErrors   map[string]error
+	choose        func(int) int
 }
 
 func newAutomation() *automation {
@@ -119,6 +121,7 @@ func newAutomation() *automation {
 		applyGroup:    replaceManagedOutboundConnections,
 		applyState:    applyManagedGroupState,
 		groupErrors:   map[string]error{},
+		choose:        rand.Intn,
 	}
 }
 
@@ -181,7 +184,7 @@ func ValidateOutboundSetting(setting configure.OutboundSetting) error {
 		return fmt.Errorf("probe interval must be between 1 second and 365 days")
 	}
 	switch setting.Type {
-	case configure.LeastPing, configure.KeepCurrent, configure.RoundRobin, configure.Random:
+	case configure.LeastPing, configure.KeepCurrent, configure.RoundRobin, configure.Random, configure.FirstAvailable:
 	default:
 		return fmt.Errorf("unsupported group type")
 	}
@@ -422,6 +425,41 @@ func sameMembers(current []*configure.NodeRef, desired []configure.NodeRef) bool
 	return true
 }
 
+const randomLatencyStep = 250 * time.Millisecond
+
+func selectedGroupCandidate(strategy configure.ObservatoryType, current string, candidates []groupCandidate, results []subscriptionProbeResult, choose func(int) int) string {
+	if strategy == configure.KeepCurrent && current != "" {
+		for i, candidate := range candidates {
+			if i < len(results) && results[i].err == nil && candidate.node != nil && configure.NodeFingerprint(candidate.node.ExportToURL()) == current {
+				return current
+			}
+		}
+	}
+	eligible := make([]int, 0, len(candidates))
+	bestBucket := int64(-1)
+	for i, candidate := range candidates {
+		if i >= len(results) || results[i].err != nil || candidate.node == nil {
+			continue
+		}
+		if strategy == configure.FirstAvailable || strategy == configure.KeepCurrent {
+			return configure.NodeFingerprint(candidate.node.ExportToURL())
+		}
+		bucket := int64(results[i].latency / randomLatencyStep)
+		if bestBucket < 0 || bucket < bestBucket {
+			bestBucket = bucket
+			eligible = eligible[:0]
+		}
+		if bucket == bestBucket {
+			eligible = append(eligible, i)
+		}
+	}
+	if len(eligible) == 0 {
+		return ""
+	}
+	index := eligible[choose(len(eligible))]
+	return configure.NodeFingerprint(candidates[index].node.ExportToURL())
+}
+
 func (a *automation) processGroup(ctx context.Context, name string, setting configure.OutboundSetting, candidates []groupCandidate, probe func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error)) {
 	signature := automaticGroupSignature(setting, candidates)
 	state := a.groups[name]
@@ -447,12 +485,8 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 	results, err := probe(nodes, setting.ProbeURL)
 	if err == nil {
 		members := make([]configure.NodeRef, 0, len(candidates))
-		healthy := make(map[string]bool, len(candidates))
 		for i, result := range results {
 			if result.err == nil {
-				if candidates[i].node != nil {
-					healthy[configure.NodeFingerprint(candidates[i].node.ExportToURL())] = true
-				}
 				ref := candidates[i].ref
 				ref.Outbound = name
 				members = append(members, ref)
@@ -472,23 +506,14 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 			} else {
 				nextSetting := currentSetting
 				stickyChanged := false
-				if currentSetting.Type == configure.KeepCurrent && currentSetting.Selected == "" {
-					nextCurrent := currentSetting.StickyCurrent
-					if !healthy[nextCurrent] {
-						nextCurrent = ""
-						for i, result := range results {
-							if result.err == nil && candidates[i].node != nil {
-								nextCurrent = configure.NodeFingerprint(candidates[i].node.ExportToURL())
-								break
-							}
-						}
-					}
+				if configure.UsesWorkerSelection(currentSetting.Type) && currentSetting.Selected == "" {
+					nextCurrent := selectedGroupCandidate(currentSetting.Type, currentSetting.StickyCurrent, candidates, results, a.choose)
 					stickyChanged = nextCurrent != currentSetting.StickyCurrent
 					nextSetting.StickyCurrent = nextCurrent
 				}
 				membershipChanged := currentSetting.AutoAdd && !sameMembers(configure.GetConnectedServersByOutbound(name).Get(), members)
 				switch {
-				case stickyChanged || (membershipChanged && currentSetting.Type == configure.KeepCurrent):
+				case stickyChanged || (membershipChanged && configure.UsesWorkerSelection(currentSetting.Type)):
 					err = a.applyState(name, nextSetting, members, currentSetting.AutoAdd)
 				case membershipChanged:
 					err = a.applyGroup(name, members)
@@ -627,14 +652,14 @@ func (a *automation) step(parent context.Context) time.Time {
 	for _, name := range configure.GetOutbounds() {
 		setting := configure.GetOutboundSetting(name)
 		groups[name] = setting
-		if !setting.AutoAdd && setting.Type == configure.KeepCurrent {
+		if !setting.AutoAdd && configure.UsesWorkerSelection(setting.Type) {
 			groupCandidates[name] = connectedGroupCandidates(name)
 		}
 	}
 	ConfigurationMu.Unlock()
 	activeGroups := map[string]bool{}
 	for name, setting := range groups {
-		if !setting.AutoAdd && setting.Type != configure.KeepCurrent {
+		if !setting.AutoAdd && !configure.UsesWorkerSelection(setting.Type) {
 			continue
 		}
 		activeGroups[name] = true

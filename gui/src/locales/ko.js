@@ -597,11 +597,13 @@ export default {
     strategy: "연결 전략",
     strategyHelp:
       "새 연결을 그룹 구성원에게 배분하는 방법을 정합니다. 사용 가능한 서버가 없으면 이 그룹의 트래픽을 차단합니다.",
+    strategyHelpAction: "연결 전략 설명",
     strategies: {
       leastPing: "최저 지연",
       keepCurrent: "장애 전까지 현재 서버 유지",
       roundRobin: "순차 분배",
       random: "무작위",
+      firstAvailable: "첫 번째 사용 가능",
     },
     strategyDetails: {
       leastping:
@@ -609,7 +611,10 @@ export default {
       keepcurrent:
         "현재 서버가 정상이면 계속 사용합니다. 장애가 발생하면 안정된 그룹 순서에서 첫 번째 사용 가능한 구성원을 선택합니다. 이전 서버가 복구되어도 트래픽을 다시 가져가지 않습니다.",
       roundrobin: "새 연결을 사용 가능한 그룹 구성원에게 차례대로 배분합니다.",
-      random: "새 연결마다 사용 가능한 그룹 구성원을 무작위로 선택합니다.",
+      random:
+        "지연 시간이 250ms 미만인 서버 중 하나를 무작위로 선택합니다. 없으면 500ms로 넓히고 검사 제한 시간까지 250ms씩 늘립니다.",
+      firstavailable:
+        "검사할 때마다 안정된 그룹 순서에서 첫 번째 사용 가능한 서버를 선택합니다.",
     },
   },
   proxyGroup: {

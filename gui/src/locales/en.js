@@ -604,11 +604,13 @@ export default {
     strategy: "Connection Strategy",
     strategyHelp:
       "Controls how new connections are assigned among group members. If none is available, the group blocks its traffic.",
+    strategyHelpAction: "About connection strategies",
     strategies: {
       leastPing: "Lowest latency",
       keepCurrent: "Keep current until failure",
       roundRobin: "Round robin",
       random: "Random",
+      firstAvailable: "First available",
     },
     strategyDetails: {
       leastping:
@@ -618,7 +620,9 @@ export default {
       roundrobin:
         "Distributes new connections across healthy group members in turn.",
       random:
-        "Chooses a healthy group member randomly for each new connection.",
+        "Chooses one random server below 250 ms. If that bucket is empty, expands to 500 ms and then in 250 ms steps up to the probe timeout.",
+      firstavailable:
+        "Chooses the first reachable server in stable group order on every check.",
     },
   },
   proxyGroup: {

@@ -56,3 +56,19 @@ func TestApplySelectionKeepsStickyCurrentAndFailsClosedWhenItDisappears(t *testi
 		t.Fatalf("missing sticky selection did not fail closed: %+v", kept)
 	}
 }
+
+func TestApplySelectionUsesWorkerChoiceForRandomAndFirstAvailable(t *testing.T) {
+	for _, strategy := range []configure.ObservatoryType{configure.Random, configure.FirstAvailable} {
+		t.Run(strategy.String(), func(t *testing.T) {
+			infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b")}
+			setting := configure.OutboundSetting{
+				Type:          strategy,
+				StickyCurrent: configure.NodeFingerprint(infos[1].Info.ExportToURL()),
+			}
+			kept := applySelection(infos, func(string) configure.OutboundSetting { return setting })
+			if len(kept) != 1 || kept[0].Info.GetName() != "b" {
+				t.Fatalf("worker selection kept %+v; want b", kept)
+			}
+		})
+	}
+}

@@ -24,6 +24,16 @@ func TestEmptyManagedProxyBlocksOnlyItsOwnTraffic(t *testing.T) {
 			setting.Type = configure.KeepCurrent
 			return setting
 		}()},
+		{name: "random bucket", setting: func() configure.OutboundSetting {
+			setting := configure.DefaultOutboundSetting()
+			setting.Type = configure.Random
+			return setting
+		}()},
+		{name: "first available", setting: func() configure.OutboundSetting {
+			setting := configure.DefaultOutboundSetting()
+			setting.Type = configure.FirstAvailable
+			return setting
+		}()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			old := configure.GetOutboundSetting(configure.DefaultOutboundName)
@@ -69,7 +79,6 @@ func TestNativeGroupStrategiesFailClosed(t *testing.T) {
 	for _, strategy := range []configure.ObservatoryType{
 		configure.LeastPing,
 		configure.RoundRobin,
-		configure.Random,
 	} {
 		t.Run(strategy.String(), func(t *testing.T) {
 			setting := configure.DefaultOutboundSetting()

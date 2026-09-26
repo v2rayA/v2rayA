@@ -12,11 +12,21 @@ func (t ObservatoryType) String() string {
 }
 
 const (
-	LeastPing   ObservatoryType = "leastping"
-	KeepCurrent ObservatoryType = "keepcurrent"
-	RoundRobin  ObservatoryType = "roundrobin"
-	Random      ObservatoryType = "random"
+	LeastPing      ObservatoryType = "leastping"
+	KeepCurrent    ObservatoryType = "keepcurrent"
+	RoundRobin     ObservatoryType = "roundrobin"
+	Random         ObservatoryType = "random"
+	FirstAvailable ObservatoryType = "firstavailable"
 )
+
+func UsesWorkerSelection(strategy ObservatoryType) bool {
+	switch strategy {
+	case KeepCurrent, Random, FirstAvailable:
+		return true
+	default:
+		return false
+	}
+}
 
 type OutboundSetting struct {
 	AutoAdd       bool            `json:"autoAdd"`
@@ -28,7 +38,8 @@ type OutboundSetting struct {
 	// that matches no member is ignored, so a removed or renamed node
 	// falls back to balancing instead of breaking the group.
 	Selected string `json:"selected,omitempty"`
-	// StickyCurrent is worker-owned state for KeepCurrent. It stores a hash
+	// StickyCurrent is worker-owned state for strategies that select one
+	// member. It stores a hash
 	// instead of a share link so the internal choice does not duplicate node
 	// credentials in API responses or logs.
 	StickyCurrent string `json:"stickyCurrent,omitempty"`
@@ -53,7 +64,7 @@ func HasAutomaticGroup() bool {
 func HasFailClosedGroup() bool {
 	for _, name := range GetOutbounds() {
 		setting := GetOutboundSetting(name)
-		if setting.AutoAdd || setting.Type == KeepCurrent {
+		if setting.AutoAdd || UsesWorkerSelection(setting.Type) {
 			return true
 		}
 	}

@@ -3,6 +3,7 @@
 // true after a save.
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { mdiHelpCircleOutline } from "@mdi/js";
 import {
   getOutbound,
   postOutboundRefresh,
@@ -28,11 +29,13 @@ const wasAutomatic = ref(false);
 const form = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 const saving = ref(false);
 const refreshing = ref(false);
+const strategyHelpOpen = ref(false);
 const strategyItems = computed(() => [
   { value: "leastping", title: t("outbound.strategies.leastPing") },
   { value: "keepcurrent", title: t("outbound.strategies.keepCurrent") },
   { value: "roundrobin", title: t("outbound.strategies.roundRobin") },
   { value: "random", title: t("outbound.strategies.random") },
+  { value: "firstavailable", title: t("outbound.strategies.firstAvailable") },
 ]);
 const strategyDetails = computed(() =>
   t(`outbound.strategyDetails.${setting.type}`),
@@ -104,17 +107,33 @@ function setAutomatic(enabled: boolean | null) {
     </v-card-item>
     <v-card-text class="px-6">
       <v-form ref="form" @submit.prevent="save">
-        <v-select
-          v-model="setting.type"
-          :items="strategyItems"
-          :label="t('outbound.strategy')"
-        />
-        <p class="md3-body-large mb-2">
-          {{ t("outbound.strategyHelp") }}
-        </p>
-        <p class="md3-body-small text-on-surface-variant mb-4">
-          {{ strategyDetails }}
-        </p>
+        <div class="d-flex align-start ga-1">
+          <v-select
+            v-model="setting.type"
+            :items="strategyItems"
+            :label="t('outbound.strategy')"
+            class="flex-grow-1"
+          />
+          <v-btn
+            :icon="mdiHelpCircleOutline"
+            variant="text"
+            class="mt-1"
+            :aria-label="t('outbound.strategyHelpAction')"
+            :aria-expanded="strategyHelpOpen"
+            aria-controls="strategy-help"
+            @click="strategyHelpOpen = !strategyHelpOpen"
+          />
+        </div>
+        <v-expand-transition>
+          <div
+            v-show="strategyHelpOpen"
+            id="strategy-help"
+            class="strategy-help text-on-surface-variant mb-4"
+          >
+            <p class="md3-body-small mb-2">{{ t("outbound.strategyHelp") }}</p>
+            <p class="md3-body-small mb-0">{{ strategyDetails }}</p>
+          </div>
+        </v-expand-transition>
         <v-text-field
           v-model="setting.probeURL"
           :label="t('outbound.probeUrl')"
