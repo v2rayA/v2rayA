@@ -121,12 +121,31 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    updateMode: "구독 자동 업데이트",
+    updateModes: {
+      disabled: "사용 안 함",
+      onStart: "서비스 시작 시",
+      interval: "주기적으로",
+      intervalFailsafe: "주기적 업데이트 및 장애 복구",
+    },
+    updateModeHelp: {
+      disabled: "수동으로 업데이트할 때만 구독이 변경됩니다.",
+      onStart: "v2rayA가 시작될 때마다 구독을 한 번 업데이트합니다.",
+      interval: "시작할 때 한 번 업데이트한 뒤 설정된 주기로 업데이트합니다.",
+      intervalFailsafe:
+        "시작 시와 정기 주기에 업데이트합니다. 구독의 모든 서버가 사용할 수 없으면 하나가 복구될 때까지 장애 주기로 다시 시도합니다.",
+    },
+    updateIntervalMinutes: "정기 간격 (분)",
+    regularHelp: "필수입니다. 1 이상의 정수(분)를 입력하세요.",
+    failureIntervalMinutes: "실패 재시도 (분)",
+    failureHelp:
+      "필수, 최소 1분. 모든 서버가 불가능할 때 갱신하며 하나가 복구되면 재시도를 중지합니다.",
+    intervalInvalid: "{minimum}부터 525600까지의 정수를 입력하세요.",
+
     settingsTitle: "구독 업데이트",
     remarks: "별칭",
     numberServers: "서버 수",
     subscription: "구독",
-    autoSelect: "구독이 자동 업데이트된 후 구독의 새 서버에 자동으로 연결",
-    autoSelectLabel: "자동 선택",
     updated: "구독 업데이트됨",
     saved: "구독 저장됨",
     saveFailed: "구독 저장 실패: {message}",
@@ -556,6 +575,11 @@ export default {
     saveFailed: "RoutingA 저장 실패: {message}",
   },
   outbound: {
+    autoAdd: "사용 가능한 서버 자동 추가",
+    autoAddHelp:
+      "모든 구독을 포함한 전체 프록시 목록에서 사용 가능한 서버로 그룹을 구성합니다.",
+    autoAddDetails:
+      "목록 변경 후 및 검사 간격마다 확인합니다. 불가능한 구성원을 제거하며 빈 그룹은 해당 트래픽을 차단합니다.",
     addMessage: "추가할 프록시 그룹 이름을 입력하세요:",
     deleteMessage:
       '프록시 그룹 "{outboundName}"을(를) 삭제하시겠습니까? 해당 그룹의 노드 연결이 해제됩니다. 이 작업은 취소할 수 없습니다.',
@@ -567,7 +591,23 @@ export default {
     settingSaveFailed: "프록시 그룹 설정 저장 실패: {message}",
     probeUrl: "탐색 URL",
     probeInterval: "탐색 간격",
-    type: "유형",
+    strategy: "연결 전략",
+    strategyHelp:
+      "새 연결을 그룹 구성원에게 배분하는 방법을 정합니다. 사용 가능한 서버가 없으면 이 그룹의 트래픽을 차단합니다.",
+    strategies: {
+      leastPing: "최저 지연",
+      keepCurrent: "장애 전까지 현재 서버 유지",
+      roundRobin: "순차 분배",
+      random: "무작위",
+    },
+    strategyDetails: {
+      leastping:
+        "검사 결과를 계속 사용해 측정 지연이 가장 낮은 사용 가능한 서버를 우선합니다.",
+      keepcurrent:
+        "현재 서버가 정상이면 계속 사용합니다. 장애가 발생하면 안정된 그룹 순서에서 첫 번째 사용 가능한 구성원을 선택합니다. 이전 서버가 복구되어도 트래픽을 다시 가져가지 않습니다.",
+      roundrobin: "새 연결을 사용 가능한 그룹 구성원에게 차례대로 배분합니다.",
+      random: "새 연결마다 사용 가능한 그룹 구성원을 무작위로 선택합니다.",
+    },
   },
   proxyGroup: {
     searchNodes: "노드 검색...",

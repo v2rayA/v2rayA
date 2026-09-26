@@ -107,6 +107,9 @@ export function useDashboard() {
         ];
       }),
   );
+  const groupAutomatic = computed(() =>
+    store.automaticOutbounds.includes(store.outboundName),
+  );
   const nodeInUse = computed(() => {
     const pinned = members.value.find((member) => member.which.selected);
     if (pinned) return pinned;
@@ -215,7 +218,7 @@ export function useDashboard() {
   }
   /** editGroup lets the user pick the group's members from every node; Save replaces the list. */
   async function editGroup() {
-    if (!touch.value) return;
+    if (!touch.value || groupAutomatic.value) return;
     const outbound = store.outboundName;
     const touches = await openDialog<Which[]>(
       GroupMembersDialog,
@@ -444,6 +447,7 @@ export function useDashboard() {
     busy,
     error,
     members,
+    groupAutomatic,
     nodeInUse,
     editPorts,
     editRoutingA,

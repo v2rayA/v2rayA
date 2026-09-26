@@ -98,8 +98,12 @@ export const deleteV2ray = () =>
 
 // ---- outbound groups ---------------------------------------------------------
 export const getOutbounds = () =>
-  call<{ outbounds: string[] }>({ url: "outbounds", method: "get" });
+  call<{ outbounds: string[]; automaticOutbounds?: string[] }>({
+    url: "outbounds",
+    method: "get",
+  });
 export interface OutboundSetting {
+  autoAdd?: boolean;
   probeURL: string;
   probeInterval: string;
   type: string;

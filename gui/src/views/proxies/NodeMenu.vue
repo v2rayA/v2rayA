@@ -8,6 +8,7 @@ defineOptions({ name: "NodeMenu" });
 defineProps<{
   /** every proxy group the core knows, in the app bar's order */
   groups: string[];
+  automaticGroups: string[];
   /** the groups this node is already a member of */
   memberGroups: string[];
   local: boolean;
@@ -61,7 +62,9 @@ function pick(action: NodeAction, group?: string) {
           :key="'add-' + group"
           :title="group.toUpperCase()"
           :active="memberGroups.includes(group)"
-          :disabled="memberGroups.includes(group)"
+          :disabled="
+            memberGroups.includes(group) || automaticGroups.includes(group)
+          "
           class="ps-8"
           @click="pick('addToGroup', group)"
         />
@@ -73,6 +76,7 @@ function pick(action: NodeAction, group?: string) {
             v-for="group in memberGroups"
             :key="'remove-' + group"
             :title="group.toUpperCase()"
+            :disabled="automaticGroups.includes(group)"
             class="ps-8"
             @click="pick('removeFromGroup', group)"
           />
@@ -86,7 +90,9 @@ function pick(action: NodeAction, group?: string) {
               v-bind="submenu"
               :title="t('proxies.addToGroup')"
               :append-icon="mdiChevronRight"
-              :disabled="!groups.length"
+              :disabled="
+                !groups.some((group) => !automaticGroups.includes(group))
+              "
             />
           </template>
           <v-list density="compact" min-width="200">
@@ -95,7 +101,9 @@ function pick(action: NodeAction, group?: string) {
               :key="group"
               :title="group.toUpperCase()"
               :active="memberGroups.includes(group)"
-              :disabled="memberGroups.includes(group)"
+              :disabled="
+                memberGroups.includes(group) || automaticGroups.includes(group)
+              "
               @click="pick('addToGroup', group)"
             />
           </v-list>
@@ -106,7 +114,9 @@ function pick(action: NodeAction, group?: string) {
               v-bind="submenu"
               :title="t('proxies.removeFromGroup')"
               :append-icon="mdiChevronRight"
-              :disabled="!memberGroups.length"
+              :disabled="
+                !memberGroups.some((group) => !automaticGroups.includes(group))
+              "
             />
           </template>
           <v-list density="compact" min-width="200">
@@ -114,6 +124,7 @@ function pick(action: NodeAction, group?: string) {
               v-for="group in memberGroups"
               :key="group"
               :title="group.toUpperCase()"
+              :disabled="automaticGroups.includes(group)"
               @click="pick('removeFromGroup', group)"
             />
           </v-list>

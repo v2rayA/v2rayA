@@ -123,13 +123,32 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    updateMode: "Atualização automática da assinatura",
+    updateModes: {
+      disabled: "Desativada",
+      onStart: "Ao iniciar o serviço",
+      interval: "Em um intervalo",
+      intervalFailsafe: "Em um intervalo com recuperação de falha",
+    },
+    updateModeHelp: {
+      disabled: "A assinatura muda apenas quando você a atualiza manualmente.",
+      onStart: "Atualiza a assinatura uma vez sempre que o v2rayA inicia.",
+      interval: "Atualiza ao iniciar e depois no intervalo configurado.",
+      intervalFailsafe:
+        "Atualiza ao iniciar e no intervalo regular. Se todos os servidores da assinatura ficarem indisponíveis, repete no intervalo de falha até que um funcione.",
+    },
+    updateIntervalMinutes: "Intervalo regular (minutos)",
+    regularHelp:
+      "Obrigatório. Digite um número inteiro de minutos, no mínimo 1.",
+    failureIntervalMinutes: "Repetir na falha (minutos)",
+    failureHelp:
+      "Obrigatório, mínimo de 1 minuto. Atualiza enquanto todos os servidores estão indisponíveis; para quando um funcionar.",
+    intervalInvalid: "Insira um inteiro de {minimum} a 525600.",
+
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
     numberServers: "Número de servidores",
     subscription: "Assinatura",
-    autoSelect:
-      "Conectar automaticamente aos novos servidores da assinatura após uma atualização automática",
-    autoSelectLabel: "Seleção automática",
     updated: "Assinatura atualizada",
     saved: "Assinatura salva",
     saveFailed: "Falha ao salvar a assinatura: {message}",
@@ -571,6 +590,11 @@ export default {
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Adicionar servidores disponíveis automaticamente",
+    autoAddHelp:
+      "Mantém servidores disponíveis de toda a lista de Proxies, incluindo todas as assinaturas.",
+    autoAddDetails:
+      "Verifica após mudanças na lista e a cada intervalo de teste. Remove membros indisponíveis. Um grupo vazio bloqueia seu tráfego.",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',
@@ -583,7 +607,25 @@ export default {
       "Falha ao salvar as configurações do grupo de proxy: {message}",
     probeUrl: "URL de sondagem",
     probeInterval: "Intervalo de sondagem",
-    type: "Tipo",
+    strategy: "Estratégia de conexão",
+    strategyHelp:
+      "Controla como novas conexões são distribuídas entre os membros do grupo. Se nenhum estiver disponível, o grupo bloqueia seu tráfego.",
+    strategies: {
+      leastPing: "Menor latência",
+      keepCurrent: "Manter atual até falhar",
+      roundRobin: "Alternância sequencial",
+      random: "Aleatório",
+    },
+    strategyDetails: {
+      leastping:
+        "Usa continuamente os resultados da sondagem para preferir o servidor disponível com a menor latência medida.",
+      keepcurrent:
+        "Mantém o servidor atual enquanto estiver disponível. Após uma falha, escolhe o primeiro membro acessível na ordem estável do grupo. Um servidor antigo recuperado não retoma o tráfego.",
+      roundrobin:
+        "Distribui novas conexões em sequência entre os membros disponíveis do grupo.",
+      random:
+        "Escolhe aleatoriamente um membro disponível do grupo para cada nova conexão.",
+    },
   },
   proxyGroup: {
     searchNodes: "Pesquisar nós...",

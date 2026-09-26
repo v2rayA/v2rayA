@@ -76,29 +76,6 @@ func TestHttpLatencyDropsSubscriptions(t *testing.T) {
 	}
 }
 
-func TestAutoSelectMembersKeepsGroupAndSkipsUnsupported(t *testing.T) {
-	existing := []*configure.NodeRef{{TYPE: configure.ServerType, ID: 1, Outbound: "proxy"}}
-	sub := &configure.SubscriptionRaw{Servers: []configure.ServerRaw{
-		{ServerObj: &serverObj.SOCKS{Server: "127.0.0.1", Port: 1080, Protocol: "socks5", Name: "first"}},
-		{},
-		{ServerObj: &serverObj.SOCKS{Server: "127.0.0.1", Port: 1081, Protocol: "socks5", Name: "third"}},
-	}}
-	got := autoSelectMembers(4, sub, existing)
-	want := []configure.NodeRef{
-		{TYPE: configure.ServerType, ID: 1, Outbound: "proxy"},
-		{TYPE: configure.SubscriptionServerType, ID: 1, Sub: 4, Outbound: "proxy"},
-		{TYPE: configure.SubscriptionServerType, ID: 3, Sub: 4, Outbound: "proxy"},
-	}
-	if len(got) != len(want) {
-		t.Fatalf("got %+v, want %+v", got, want)
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("member %d: got %+v, want %+v", i, got[i], want[i])
-		}
-	}
-}
-
 func TestSupportCheckLeavesNoProducerBehind(t *testing.T) {
 	obj := &serverObj.SOCKS{Server: "127.0.0.1", Port: 1080, Protocol: "socks5", Name: "probe"}
 	if _, err := isSupportedObj(obj); err != nil {

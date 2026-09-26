@@ -13,8 +13,15 @@ import (
 
 func GetOutbounds(ctx *gin.Context) {
 	outbounds := configure.GetOutbounds()
+	automatic := make([]string, 0, len(outbounds))
+	for _, outbound := range outbounds {
+		if configure.GetOutboundSetting(outbound).AutoAdd {
+			automatic = append(automatic, outbound)
+		}
+	}
 	common.ResponseSuccess(ctx, gin.H{
-		"outbounds": outbounds,
+		"outbounds":          outbounds,
+		"automaticOutbounds": automatic,
 	})
 }
 
@@ -40,9 +47,27 @@ func PostOutbound(ctx *gin.Context) {
 
 func GetOutbound(ctx *gin.Context) {
 	setting := configure.GetOutboundSetting(ctx.Query("outbound"))
+	setting.StickyCurrent = ""
 	common.ResponseSuccess(ctx, gin.H{
 		"setting": setting,
 	})
+}
+
+func initialStickyCurrent(outbound, selected string) string {
+	if selected != "" {
+		return configure.NodeFingerprint(selected)
+	}
+	members := configure.GetConnectedServersByOutbound(outbound)
+	if members == nil {
+		return ""
+	}
+	for _, member := range members.Get() {
+		located, err := member.LocateServerRaw()
+		if err == nil && located.ServerObj != nil {
+			return configure.NodeFingerprint(located.ServerObj.ExportToURL())
+		}
+	}
+	return ""
 }
 
 func PutOutbound(ctx *gin.Context) {
@@ -52,18 +77,40 @@ func PutOutbound(ctx *gin.Context) {
 	}
 	defer release()
 	var data struct {
-		Outbound string                    `json:"outbound"`
-		Setting  configure.OutboundSetting `json:"setting"`
+		Outbound string `json:"outbound"`
+		Setting  struct {
+			AutoAdd       *bool                     `json:"autoAdd"`
+			ProbeURL      string                    `json:"probeURL"`
+			ProbeInterval string                    `json:"probeInterval"`
+			Type          configure.ObservatoryType `json:"type"`
+		} `json:"setting"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
 		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
-	err := service.ApplyCoreConfig(func() func() error {
-		previous := configure.GetOutboundSetting(data.Outbound)
+	previous := configure.GetOutboundSetting(data.Outbound)
+	next := previous
+	next.ProbeURL, next.ProbeInterval, next.Type = data.Setting.ProbeURL, data.Setting.ProbeInterval, data.Setting.Type
+	if data.Setting.AutoAdd != nil {
+		next.AutoAdd = *data.Setting.AutoAdd
+	}
+	if next.AutoAdd && !previous.AutoAdd && next.ProbeInterval == configure.DefaultProbeInterval {
+		next.ProbeInterval = "300s"
+	}
+	if next.Type == configure.KeepCurrent && previous.Type != configure.KeepCurrent {
+		next.StickyCurrent = initialStickyCurrent(data.Outbound, previous.Selected)
+	} else if next.Type != configure.KeepCurrent {
+		next.StickyCurrent = ""
+	}
+	if err := service.ValidateOutboundSetting(next); err != nil {
+		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))
+		return
+	}
+	err := service.ApplyGroupConfig(func() func() error {
 		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
 	}, func() error {
-		return configure.SetOutboundSetting(data.Outbound, data.Setting)
+		return configure.SetOutboundSetting(data.Outbound, next)
 	})
 	if err != nil {
 		var failure *service.ApplyCoreConfigError
@@ -96,7 +143,6 @@ func DeleteOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, logError("outbound \"proxy\" cannot be deleted"))
 		return
 	}
-
 	// Check if any custom inbound is bound to this outbound group
 	boundInbounds := configure.GetCustomInboundsByOutbound(data.Outbound)
 	if len(boundInbounds) > 0 {
@@ -111,14 +157,30 @@ func DeleteOutbound(ctx *gin.Context) {
 		)))
 		return
 	}
+	setting := configure.GetOutboundSetting(data.Outbound)
+	automatic := setting.AutoAdd
+	if automatic {
+		manual := setting
+		manual.AutoAdd = false
+		if err := configure.SetOutboundSetting(data.Outbound, manual); err != nil {
+			common.ResponseError(ctx, logError(err))
+			return
+		}
+	}
 
 	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {
 		if err := service.Disconnect(configure.NodeRef{Outbound: data.Outbound}, true); err != nil {
+			if automatic {
+				_ = configure.SetOutboundSetting(data.Outbound, setting)
+			}
 			common.ResponseError(ctx, logError(err))
 			return
 		}
 	}
 	if err := configure.RemoveOutbound(data.Outbound); err != nil {
+		if automatic {
+			_ = configure.SetOutboundSetting(data.Outbound, setting)
+		}
 		common.ResponseError(ctx, logError(err))
 		return
 	}
@@ -144,6 +206,10 @@ func PutOutboundConnections(ctx *gin.Context) {
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		common.ResponseError(ctx, badRequest("outbound connections", "request body must be {\"outbound\": string, \"touches\": [...]}"))
+		return
+	}
+	if configure.GetOutboundSetting(data.Outbound).AutoAdd {
+		common.ResponseError(ctx, common.Coded("AUTOMATIC_GROUP", fmt.Errorf("group %q manages its membership automatically; turn automatic membership off before editing it", data.Outbound), nil))
 		return
 	}
 
@@ -244,7 +310,7 @@ func PutOutboundSelection(ctx *gin.Context) {
 		}
 		link = sr.ServerObj.ExportToURL()
 	}
-	err := service.ApplyCoreConfig(func() func() error {
+	err := service.ApplyGroupConfig(func() func() error {
 		previous := configure.GetOutboundSetting(data.Outbound)
 		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
 	}, func() error {

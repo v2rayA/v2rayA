@@ -123,13 +123,31 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    updateMode: "Automatic subscription update",
+    updateModes: {
+      disabled: "Disabled",
+      onStart: "On service start",
+      interval: "At an interval",
+      intervalFailsafe: "At an interval with fail-safe recovery",
+    },
+    updateModeHelp: {
+      disabled: "The subscription changes only when you update it manually.",
+      onStart: "Updates the subscription once whenever v2rayA starts.",
+      interval: "Updates on startup and then at the configured interval.",
+      intervalFailsafe:
+        "Updates on startup and at the regular interval. If every server becomes unavailable, retries at the failure interval until one works.",
+    },
+    updateIntervalMinutes: "Regular interval (minutes)",
+    regularHelp: "Required. Enter a whole number of minutes, at least 1.",
+    failureIntervalMinutes: "Failure retry (minutes)",
+    failureHelp:
+      "Required, at least 1 minute. Refreshes while all servers are unavailable; stops retrying when one works.",
+    intervalInvalid: "Enter a whole number from {minimum} to 525600.",
+
     settingsTitle: "Subscription updates",
     remarks: "Remarks",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect:
-      "Automatically connect to new servers from the subscription after an automatic update of the subscription",
-    autoSelectLabel: "Auto-select",
     updated: "Subscription updated",
     saved: "Subscription saved",
     saveFailed: "Failed to save subscription: {message}",
@@ -564,6 +582,11 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Automatically add available servers",
+    autoAddHelp:
+      "Keeps available servers from the entire Proxies list, including all subscriptions.",
+    autoAddDetails:
+      "Checks after catalog updates and at the probe interval. Removes unavailable members. An empty group blocks its traffic.",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',
@@ -575,7 +598,25 @@ export default {
     settingSaveFailed: "Failed to save proxy group settings: {message}",
     probeUrl: "Probe URL",
     probeInterval: "Probe Interval",
-    type: "Type",
+    strategy: "Connection Strategy",
+    strategyHelp:
+      "Controls how new connections are assigned among group members. If none is available, the group blocks its traffic.",
+    strategies: {
+      leastPing: "Lowest latency",
+      keepCurrent: "Keep current until failure",
+      roundRobin: "Round robin",
+      random: "Random",
+    },
+    strategyDetails: {
+      leastping:
+        "Continuously uses probe results to prefer the healthy server with the lowest measured latency.",
+      keepcurrent:
+        "Keeps the healthy current server. After it fails, selects the first reachable member in stable group order. A recovered old server does not take traffic back.",
+      roundrobin:
+        "Distributes new connections across healthy group members in turn.",
+      random:
+        "Chooses a healthy group member randomly for each new connection.",
+    },
   },
   proxyGroup: {
     searchNodes: "Search nodes...",

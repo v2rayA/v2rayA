@@ -119,12 +119,31 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    updateMode: "自动更新订阅",
+    updateModes: {
+      disabled: "关闭",
+      onStart: "服务启动时",
+      interval: "按间隔",
+      intervalFailsafe: "按间隔并启用故障恢复",
+    },
+    updateModeHelp: {
+      disabled: "仅在手动更新时更改订阅。",
+      onStart: "每次 v2rayA 启动时更新一次订阅。",
+      interval: "启动时更新一次，之后按设定的间隔更新。",
+      intervalFailsafe:
+        "启动时及按固定间隔更新。如果该订阅的所有服务器都不可用，则按故障间隔重试，直到至少一个恢复可用。",
+    },
+    updateIntervalMinutes: "定时更新（分钟）",
+    regularHelp: "必填。请输入不小于 1 的整数分钟数。",
+    failureIntervalMinutes: "故障重试（分钟）",
+    failureHelp:
+      "必填，至少 1 分钟。所有服务器不可用时更新；任一服务器恢复后停止重试。",
+    intervalInvalid: "请输入 {minimum} 到 525600 之间的整数。",
+
     settingsTitle: "订阅更新",
     remarks: "别名",
     numberServers: "节点数",
     subscription: "订阅",
-    autoSelect: "订阅自动更新后自动连接其中的新节点",
-    autoSelectLabel: "自动选择",
     updated: "订阅已更新",
     saved: "订阅已保存",
     saveFailed: "无法保存订阅：{message}",
@@ -547,6 +566,10 @@ export default {
     saveFailed: "无法保存 RoutingA：{message}",
   },
   outbound: {
+    autoAdd: "自动添加可用服务器",
+    autoAddHelp: "从代理页面的完整列表（包括所有订阅）中保留可用服务器。",
+    autoAddDetails:
+      "在列表更新后和每个探测周期检查，移除不可用成员。空组阻止其流量。",
     addMessage: "请输入你想要添加的代理分组名称：",
     deleteMessage:
       '确定删除代理分组 "{outboundName}"？其中的节点将断开，此操作不可撤销。',
@@ -558,7 +581,22 @@ export default {
     settingSaveFailed: "无法保存代理分组设置：{message}",
     probeUrl: "探测 URL",
     probeInterval: "探测间隔",
-    type: "类型",
+    strategy: "连接策略",
+    strategyHelp:
+      "控制如何在组成员之间分配新连接。如果没有可用服务器，该组会阻止自己的流量。",
+    strategies: {
+      leastPing: "最低延迟",
+      keepCurrent: "保持当前服务器直到故障",
+      roundRobin: "轮询",
+      random: "随机",
+    },
+    strategyDetails: {
+      leastping: "持续使用探测结果，优先选择测得延迟最低的可用服务器。",
+      keepcurrent:
+        "当前服务器可用时继续使用它；故障后按稳定的组顺序选择第一个可用成员。旧服务器恢复后不会自动抢回流量。",
+      roundrobin: "依次把新连接分配给可用的组成员。",
+      random: "为每个新连接随机选择一个可用的组成员。",
+    },
   },
   proxyGroup: {
     searchNodes: "搜索节点...",

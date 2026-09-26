@@ -20,7 +20,6 @@ export function fixture(): TouchResponse {
         address: `https://feed-${id}.example`,
         status: "2026-09-19T00:00:00Z",
         info: "Used 1.00 GiB / 4.00 GiB · Expires 2026-12-31",
-        autoSelect: false,
         servers: [
           {
             ...server(1, id === 0 ? "West" : "East", "vless"),

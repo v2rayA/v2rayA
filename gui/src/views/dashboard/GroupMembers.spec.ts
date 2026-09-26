@@ -22,7 +22,6 @@ const touch: Touch = {
       address: "https://a",
       status: "",
       info: "",
-      autoSelect: false,
       servers: [node(1, "a1"), node(2, "a2")],
     },
     {
@@ -32,7 +31,6 @@ const touch: Touch = {
       address: "https://b",
       status: "",
       info: "",
-      autoSelect: false,
       servers: [node(1, "b1"), node(2, "b2")],
     },
   ],
