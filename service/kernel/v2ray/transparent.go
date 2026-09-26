@@ -189,6 +189,7 @@ func dnsRedirectDeleteCommands() string {
 	}
 	slices.Sort(ports)
 	var b strings.Builder
+	b.WriteString("nft delete table inet v2raya_dns 2>/dev/null || true\n")
 	for _, port := range ports {
 		for _, bin := range []string{"iptables", "ip6tables"} {
 			for _, chain := range []string{"PREROUTING", "OUTPUT"} {
@@ -344,7 +345,14 @@ ip6tables -w 2 -t nat -I OUTPUT -m mark --mark 0x80/0x80 -j RETURN
 ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 `
 		}
-		iptables.Setter{Cmds: dnsRedirect}.Run(false)
+		dnsSetter := iptables.Setter{Cmds: dnsRedirect}
+		if iptables.IsNft() {
+			// OpenWrt nftables installations need not provide iptables NAT.
+			dnsSetter = iptables.NftDNSRedirect(dnsPort, iptables.IsIPv6Supported())
+		}
+		if err = dnsSetter.Run(true); err != nil {
+			return fmt.Errorf("could not redirect DNS to the DNS module: %w", err)
+		}
 
 		if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost {
 			if e != nil {
