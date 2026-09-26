@@ -570,6 +570,9 @@ export default {
     autoAddHelp: "从代理页面的完整列表（包括所有订阅）中保留可用服务器。",
     autoAddDetails:
       "在列表更新后和每个探测周期检查，移除不可用成员。空组阻止其流量。",
+    updateMembers: "更新服务器列表",
+    membersUpdated: "分组服务器列表已更新",
+    membersUpdateFailed: "更新分组服务器列表失败：{message}",
     addMessage: "请输入你想要添加的代理分组名称：",
     deleteMessage:
       '确定删除代理分组 "{outboundName}"？其中的节点将断开，此操作不可撤销。',

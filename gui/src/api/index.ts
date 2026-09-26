@@ -120,6 +120,13 @@ export const postOutbound = (
   body: Record<string, unknown>,
   o: RequestOptions = {},
 ) => call<unknown>({ url: "outbound", method: "post", data: body, ...o });
+export const postOutboundRefresh = (outbound: string) =>
+  call<unknown>({
+    url: "outboundRefresh",
+    method: "post",
+    data: { outbound },
+    timeout: timeouts.none,
+  });
 export const putOutbound = (body: {
   outbound: string;
   setting: OutboundSetting;

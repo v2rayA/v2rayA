@@ -9,6 +9,11 @@ import (
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
+var (
+	refreshAutomaticGroups = service.RefreshAutomaticGroups
+	startV2ray             = service.StartV2ray
+)
+
 func PostConnection(ctx *gin.Context) {
 	release, ok := beginMutation(ctx)
 	if !ok {
@@ -53,13 +58,19 @@ func DeleteConnection(ctx *gin.Context) {
 }
 
 func PostV2ray(ctx *gin.Context) {
+	// A manual start must build the core from a freshly checked automatic
+	// membership list, rather than waiting for the group's next interval.
+	if err := refreshAutomaticGroups(ctx.Request.Context(), ""); err != nil {
+		common.ResponseError(ctx, logError(fmt.Errorf("failed to refresh automatic groups: %w", err)))
+		return
+	}
 	release, ok := beginMutation(ctx)
 	if !ok {
 		return
 	}
 	defer release()
 
-	err := service.StartV2ray()
+	err := startV2ray()
 	if err != nil {
 		common.ResponseError(ctx, logError(fmt.Errorf("failed to start v2ray-core: %w", err)))
 		return

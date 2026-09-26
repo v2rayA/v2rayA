@@ -125,6 +125,21 @@ func PutOutbound(ctx *gin.Context) {
 	common.ResponseSuccess(ctx, nil)
 }
 
+func PostOutboundRefresh(ctx *gin.Context) {
+	var data struct {
+		Outbound string `json:"outbound"`
+	}
+	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
+		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
+		return
+	}
+	if err := refreshAutomaticGroups(ctx.Request.Context(), data.Outbound); err != nil {
+		common.ResponseError(ctx, logError(err))
+		return
+	}
+	common.ResponseSuccess(ctx, nil)
+}
+
 func DeleteOutbound(ctx *gin.Context) {
 	release, ok := beginMutation(ctx)
 	if !ok {

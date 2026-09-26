@@ -3,7 +3,12 @@
 // true after a save.
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { getOutbound, putOutbound, type OutboundSetting } from "@/api";
+import {
+  getOutbound,
+  postOutboundRefresh,
+  putOutbound,
+  type OutboundSetting,
+} from "@/api";
 import { errorText } from "@/api/errors";
 import { useNotify } from "@/composables";
 import { required } from "@/dialogs/Server/forms/parts/rules";
@@ -22,6 +27,7 @@ const setting = reactive<OutboundSetting>({
 const wasAutomatic = ref(false);
 const form = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 const saving = ref(false);
+const refreshing = ref(false);
 const strategyItems = computed(() => [
   { value: "leastping", title: t("outbound.strategies.leastPing") },
   { value: "keepcurrent", title: t("outbound.strategies.keepCurrent") },
@@ -58,6 +64,26 @@ async function save() {
   }
 }
 
+async function refreshMembers() {
+  const check = await form.value?.validate();
+  if (check && !check.valid) return;
+  refreshing.value = true;
+  try {
+    // The enabled switch and edited probe settings must be in force for this
+    // pass, even when the dialog's Save button has not been pressed yet.
+    await putOutbound({ outbound: props.outbound, setting: { ...setting } });
+    await postOutboundRefresh(props.outbound);
+    wasAutomatic.value = true;
+    notify.success(t("outbound.membersUpdated"));
+  } catch (err) {
+    notify.warning(
+      t("outbound.membersUpdateFailed", { message: errorText(err) }),
+    );
+  } finally {
+    refreshing.value = false;
+  }
+}
+
 function setAutomatic(enabled: boolean | null) {
   setting.autoAdd = !!enabled;
   if (enabled && !wasAutomatic.value && setting.probeInterval === "60s") {
@@ -78,17 +104,16 @@ function setAutomatic(enabled: boolean | null) {
     </v-card-item>
     <v-card-text class="px-6">
       <v-form ref="form" @submit.prevent="save">
-        <v-switch
-          :model-value="setting.autoAdd"
-          :label="t('outbound.autoAdd')"
-          hide-details
-          @update:model-value="setAutomatic"
+        <v-select
+          v-model="setting.type"
+          :items="strategyItems"
+          :label="t('outbound.strategy')"
         />
         <p class="md3-body-large mb-2">
-          {{ t("outbound.autoAddHelp") }}
+          {{ t("outbound.strategyHelp") }}
         </p>
         <p class="md3-body-small text-on-surface-variant mb-4">
-          {{ t("outbound.autoAddDetails") }}
+          {{ strategyDetails }}
         </p>
         <v-text-field
           v-model="setting.probeURL"
@@ -102,17 +127,28 @@ function setAutomatic(enabled: boolean | null) {
           :rules="[required]"
           dir="ltr"
         />
-        <v-select
-          v-model="setting.type"
-          :items="strategyItems"
-          :label="t('outbound.strategy')"
+        <v-switch
+          :model-value="setting.autoAdd"
+          :label="t('outbound.autoAdd')"
+          hide-details
+          @update:model-value="setAutomatic"
         />
         <p class="md3-body-large mb-2">
-          {{ t("outbound.strategyHelp") }}
+          {{ t("outbound.autoAddHelp") }}
         </p>
-        <p class="md3-body-small text-on-surface-variant mb-0">
-          {{ strategyDetails }}
+        <p class="md3-body-small text-on-surface-variant mb-4">
+          {{ t("outbound.autoAddDetails") }}
         </p>
+        <v-btn
+          block
+          variant="outlined"
+          class="mb-2"
+          :disabled="!setting.autoAdd"
+          :loading="refreshing"
+          @click="refreshMembers"
+        >
+          {{ t("outbound.updateMembers") }}
+        </v-btn>
       </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

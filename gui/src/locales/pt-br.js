@@ -595,6 +595,9 @@ export default {
       "Mantém servidores disponíveis de toda a lista de Proxies, incluindo todas as assinaturas.",
     autoAddDetails:
       "Verifica após mudanças na lista e a cada intervalo de teste. Remove membros indisponíveis. Um grupo vazio bloqueia seu tráfego.",
+    updateMembers: "Atualizar lista de servidores",
+    membersUpdated: "Lista de servidores do grupo atualizada",
+    membersUpdateFailed: "Falha ao atualizar a lista de servidores do grupo: {message}",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',

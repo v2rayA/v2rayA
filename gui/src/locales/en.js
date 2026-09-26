@@ -587,6 +587,9 @@ export default {
       "Keeps available servers from the entire Proxies list, including all subscriptions.",
     autoAddDetails:
       "Checks after catalog updates and at the probe interval. Removes unavailable members. An empty group blocks its traffic.",
+    updateMembers: "Update server list",
+    membersUpdated: "Group server list updated",
+    membersUpdateFailed: "Failed to update group server list: {message}",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',

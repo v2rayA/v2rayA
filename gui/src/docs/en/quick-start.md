@@ -72,7 +72,7 @@ On upgrade, the previous global **update on start** mode is assigned to every ex
 
 ## Automatic proxy-group membership
 
-Enable **Automatically add available servers** in a proxy group's settings to manage that group's members from the entire **Proxies** catalog, including local servers and every subscription. The group is checked after catalog changes and at its probe interval; a newly enabled automatic group defaults to `300s`. Available servers are added and unavailable servers are removed. While enabled, the automatic worker owns the member list. Turning it off preserves the last result and restores manual editing.
+Enable **Automatically add available servers** in a proxy group's settings to manage that group's members from the entire **Proxies** catalog, including local servers and every subscription. The group is checked after catalog changes and at its probe interval; a newly enabled automatic group defaults to `300s`. Available servers are added and unavailable servers are removed. While enabled, the automatic worker owns the member list. **Update server list** runs the check immediately, and manually starting the core refreshes every automatic group before the core starts. Turning the option off preserves the last result and restores manual editing.
 
 If no server is available, traffic assigned to that group is blocked. An empty automatic `PROXY` remains the default proxy outbound: global and rule-port traffic that previously fell through to another group is blocked too. Explicit rules for another group or `direct` keep working. Transparent interception remains active during a membership reload; if the replacement core cannot start, interception is removed so the router is not trapped behind a dead process.
 

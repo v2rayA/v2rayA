@@ -277,6 +277,34 @@ func TestAutomaticGroupApplyFailureUsesBackoff(t *testing.T) {
 	}
 }
 
+func TestForcedAutomaticGroupRefreshIgnoresFutureSchedule(t *testing.T) {
+	resetSubscription(t)
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd, setting.ProbeInterval = true, "300s"
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.now = func() time.Time { return time.Unix(4000, 0) }
+	probes := 0
+	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		probes++
+		return make([]subscriptionProbeResult, len(nodes))
+	}
+	a.applyGroup = func(string, []configure.NodeRef) error { return nil }
+
+	a.step(context.Background())
+	if probes != 1 {
+		t.Fatalf("initial probes = %d; want 1", probes)
+	}
+	if err := a.forceGroups(context.Background(), "proxy"); err != nil {
+		t.Fatal(err)
+	}
+	if probes != 2 {
+		t.Fatalf("forced refresh probes = %d; want 2", probes)
+	}
+}
+
 func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 	for _, cancelled := range []bool{false, true} {
 		a := newAutomation()

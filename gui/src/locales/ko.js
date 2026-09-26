@@ -580,6 +580,9 @@ export default {
       "모든 구독을 포함한 전체 프록시 목록에서 사용 가능한 서버로 그룹을 구성합니다.",
     autoAddDetails:
       "목록 변경 후 및 검사 간격마다 확인합니다. 불가능한 구성원을 제거하며 빈 그룹은 해당 트래픽을 차단합니다.",
+    updateMembers: "서버 목록 업데이트",
+    membersUpdated: "그룹 서버 목록이 업데이트되었습니다",
+    membersUpdateFailed: "그룹 서버 목록을 업데이트하지 못했습니다: {message}",
     addMessage: "추가할 프록시 그룹 이름을 입력하세요:",
     deleteMessage:
       '프록시 그룹 "{outboundName}"을(를) 삭제하시겠습니까? 해당 그룹의 노드 연결이 해제됩니다. 이 작업은 취소할 수 없습니다.',

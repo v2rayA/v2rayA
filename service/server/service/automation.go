@@ -18,7 +18,13 @@ var (
 	automationCancelMu sync.Mutex
 	automationCancel   context.CancelFunc
 	automationWake     = make(chan struct{}, 1)
+	automationRefresh  = make(chan groupRefreshRequest)
 )
+
+type groupRefreshRequest struct {
+	name string
+	done chan error
+}
 
 func CancelAutomation() {
 	automationCancelMu.Lock()
@@ -32,6 +38,45 @@ func NotifyAutomation() {
 	select {
 	case automationWake <- struct{}{}:
 	default:
+	}
+}
+
+// RefreshAutomaticGroups asks the single automation worker to probe automatic
+// group membership immediately. An empty name refreshes every automatic group.
+// Waiting for that worker keeps scheduled and user-requested passes serialized.
+func RefreshAutomaticGroups(ctx context.Context, name string) error {
+	ConfigurationMu.Lock()
+	hasAutomatic := false
+	found := name == ""
+	for _, outbound := range configure.GetOutbounds() {
+		if !configure.GetOutboundSetting(outbound).AutoAdd {
+			continue
+		}
+		hasAutomatic = true
+		if name == outbound {
+			found = true
+			break
+		}
+	}
+	ConfigurationMu.Unlock()
+	if !found {
+		return fmt.Errorf("group %q does not manage its membership automatically", name)
+	}
+	if !hasAutomatic {
+		return nil
+	}
+
+	request := groupRefreshRequest{name: name, done: make(chan error, 1)}
+	select {
+	case automationRefresh <- request:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	select {
+	case err := <-request.done:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
@@ -61,6 +106,7 @@ type automation struct {
 	fetch         subscriptionFetcher
 	applyGroup    func(string, []configure.NodeRef) error
 	applyState    func(string, configure.OutboundSetting, []configure.NodeRef, bool) error
+	groupErrors   map[string]error
 }
 
 func newAutomation() *automation {
@@ -72,6 +118,7 @@ func newAutomation() *automation {
 		fetch:         fetchSubscriptionForAutomation,
 		applyGroup:    replaceManagedOutboundConnections,
 		applyState:    applyManagedGroupState,
+		groupErrors:   map[string]error{},
 	}
 }
 
@@ -455,13 +502,43 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 		ConfigurationMu.Unlock()
 	}
 	if err != nil {
+		a.groupErrors[name] = err
 		state.next = a.now().Add(backoff)
 		if ctx.Err() == nil {
 			log.Warn("[Groups] %s: automatic membership failed: %v", name, err)
 		}
 		return
 	}
+	delete(a.groupErrors, name)
 	state.next = a.now().Add(interval)
+}
+
+func (a *automation) forceGroups(ctx context.Context, name string) error {
+	ConfigurationMu.Lock()
+	forced := make([]string, 0)
+	for _, outbound := range configure.GetOutbounds() {
+		if !configure.GetOutboundSetting(outbound).AutoAdd || (name != "" && outbound != name) {
+			continue
+		}
+		forced = append(forced, outbound)
+		if state := a.groups[outbound]; state != nil {
+			state.next = time.Time{}
+		}
+	}
+	ConfigurationMu.Unlock()
+	if name != "" && len(forced) == 0 {
+		return fmt.Errorf("group %q does not manage its membership automatically", name)
+	}
+	a.step(ctx)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	for _, outbound := range forced {
+		if err := a.groupErrors[outbound]; err != nil {
+			return fmt.Errorf("refresh group %q: %w", outbound, err)
+		}
+	}
+	return nil
 }
 
 // step runs due jobs serially. If a pass takes longer than its interval, a
@@ -613,6 +690,11 @@ func StartAutomation() func() {
 				if timer != nil {
 					timer.Stop()
 				}
+			case request := <-automationRefresh:
+				if timer != nil {
+					timer.Stop()
+				}
+				request.done <- worker.forceGroups(ctx, request.name)
 			case <-timerC:
 			}
 		}

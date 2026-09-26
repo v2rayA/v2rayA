@@ -3,13 +3,14 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
 import { VSelect, VSwitch, VTextField } from "vuetify/components";
 import type * as Api from "@/api";
-import { getOutbound, putOutbound } from "@/api";
+import { getOutbound, postOutboundRefresh, putOutbound } from "@/api";
 import { mountWithApp } from "@/test/mount";
 import OutboundGroup from "./OutboundGroup.vue";
 
 vi.mock("@/api", async (original) => ({
   ...(await original<typeof Api>()),
   getOutbound: vi.fn(),
+  postOutboundRefresh: vi.fn(),
   putOutbound: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ beforeEach(async () => {
     },
   });
   vi.mocked(putOutbound).mockResolvedValue(undefined);
+  vi.mocked(postOutboundRefresh).mockResolvedValue(undefined);
   wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
   await flushPromises();
 });
@@ -38,12 +40,16 @@ test("enabling automatic membership uses the five-minute default and saves the g
     .findAllComponents(VTextField)
     .find((field) => field.props("label") === "Probe Interval");
   expect(interval?.props("modelValue")).toBe("300s");
-  expect(wrapper.find(".md3-body-large").text()).toContain(
-    "entire Proxies list",
-  );
-  expect(wrapper.find(".md3-body-small").classes()).toContain(
-    "text-on-surface-variant",
-  );
+  const automaticHelp = wrapper
+    .findAll(".md3-body-large")
+    .find((paragraph) => paragraph.text().includes("entire Proxies list"));
+  expect(automaticHelp?.exists()).toBe(true);
+  expect(
+    wrapper
+      .findAll(".md3-body-small")
+      .find((paragraph) => paragraph.text().includes("catalog updates"))
+      ?.classes(),
+  ).toContain("text-on-surface-variant");
 
   await wrapper
     .findAll("button")
@@ -73,7 +79,9 @@ test("offers four connection strategies and saves keep-current", async () => {
 
   select.vm.$emit("update:modelValue", "keepcurrent");
   await flushPromises();
-  const details = wrapper.findAll(".md3-body-small").at(-1)!;
+  const details = wrapper
+    .findAll(".md3-body-small")
+    .find((paragraph) => paragraph.text().includes("healthy current server"))!;
   expect(details.classes()).toContain("text-on-surface-variant");
   expect(details.text()).toContain("healthy current server");
 
@@ -91,4 +99,42 @@ test("offers four connection strategies and saves keep-current", async () => {
       type: "keepcurrent",
     },
   });
+});
+
+test("orders fields and refreshes membership with the edited policy", async () => {
+  const html = wrapper.html();
+  const labels = [
+    "Connection Strategy",
+    "Probe URL",
+    "Probe Interval",
+    "Automatically add available servers",
+  ];
+  expect(labels.every((label) => html.includes(label))).toBe(true);
+  expect(labels.map((label) => html.indexOf(label))).toEqual(
+    [...labels]
+      .map((label) => html.indexOf(label))
+      .sort((left, right) => left - right),
+  );
+
+  const refresh = () =>
+    wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Update server list")!;
+  expect(refresh().attributes("disabled")).toBeDefined();
+  wrapper.getComponent(VSwitch).vm.$emit("update:modelValue", true);
+  await flushPromises();
+  expect(refresh().attributes("disabled")).toBeUndefined();
+
+  await refresh().trigger("click");
+  await flushPromises();
+  expect(putOutbound).toHaveBeenCalledWith({
+    outbound: "proxy",
+    setting: {
+      autoAdd: true,
+      probeURL: "https://www.gstatic.com/generate_204",
+      probeInterval: "300s",
+      type: "leastping",
+    },
+  });
+  expect(postOutboundRefresh).toHaveBeenCalledWith("proxy");
 });
