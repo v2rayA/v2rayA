@@ -12,8 +12,15 @@ on:
 
 jobs:
   call_copr:
+    if: github.repository == 'v2rayA/v2rayA'
     runs-on: ubuntu-latest
     steps:
-      - name: curl
+      - name: Trigger COPR build
+        env:
+          COPR_HOOK_URL: ${{ secrets.COPR_HOOK_URL }}
         run: |
-          curl -X POST ${{ secrets.COPR_HOOK_URL }}
+          if [ -z "$COPR_HOOK_URL" ]; then
+            echo "::error::COPR_HOOK_URL is not configured"
+            exit 1
+          fi
+          curl --fail --silent --show-error --retry 3 --request POST "$COPR_HOOK_URL"
