@@ -462,6 +462,33 @@ func TestRandomStrategyUsesLowestNonEmptyLatencyBucket(t *testing.T) {
 	}
 }
 
+func TestRandomStrategyKeepsHealthySelectionBetweenChecks(t *testing.T) {
+	nodes := []serverObj.ServerObj{testServer(t, 13011), testServer(t, 13012)}
+	candidates := []groupCandidate{{node: nodes[0]}, {node: nodes[1]}}
+	current := configure.NodeFingerprint(nodes[1].ExportToURL())
+	results := []subscriptionProbeResult{
+		{latency: 10 * time.Millisecond, throughput: 200 * 1024, speedMeasured: true},
+		{latency: 80 * time.Millisecond, throughput: 200 * 1024, speedMeasured: true},
+	}
+	got := selectedGroupCandidate(configure.Random, current, candidates, results, func(int) int {
+		t.Fatal("healthy random selection was redrawn")
+		return 0
+	})
+	if got != current {
+		t.Fatalf("healthy random selection changed from %q to %q", current, got)
+	}
+	results[1].err = errors.New("URL check failed")
+	got = selectedGroupCandidate(configure.Random, current, candidates, results, func(size int) int {
+		if size != 1 {
+			t.Fatalf("failover chooser saw %d candidates, want one", size)
+		}
+		return 0
+	})
+	if want := configure.NodeFingerprint(nodes[0].ExportToURL()); got != want {
+		t.Fatalf("failed random selection = %q, want %q", got, want)
+	}
+}
+
 func TestLeastPingIgnoresSlowLowLatencyCandidate(t *testing.T) {
 	nodes := []serverObj.ServerObj{testServer(t, 13201), testServer(t, 13202), testServer(t, 13203)}
 	candidates := make([]groupCandidate, len(nodes))

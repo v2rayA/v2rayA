@@ -467,7 +467,7 @@ func eligibleProbeResults(results []subscriptionProbeResult) []bool {
 
 func selectedGroupCandidate(strategy configure.ObservatoryType, current string, candidates []groupCandidate, results []subscriptionProbeResult, choose func(int) int) string {
 	usable := eligibleProbeResults(results)
-	if strategy == configure.KeepCurrent && current != "" {
+	if (strategy == configure.KeepCurrent || strategy == configure.Random) && current != "" {
 		for i, candidate := range candidates {
 			if i < len(usable) && usable[i] && candidate.node != nil && configure.NodeFingerprint(candidate.node.ExportToURL()) == current {
 				return current
@@ -510,10 +510,10 @@ func selectedGroupCandidate(strategy configure.ObservatoryType, current string, 
 
 // A single throughput sample can be slow because the speed-test host or the
 // path to it is congested while the configured health URL still works. Give a
-// healthy Keep Current node one more scheduled check before treating measured
+// healthy retained node one more scheduled check before treating measured
 // low speed as failure. A failed health URL still causes immediate failover.
-func keepCurrentThroughOneSlowProbe(state *groupSchedule, setting configure.OutboundSetting, candidates []groupCandidate, results []subscriptionProbeResult) {
-	if setting.Type != configure.KeepCurrent || setting.StickyCurrent == "" {
+func keepSelectedThroughOneSlowProbe(state *groupSchedule, setting configure.OutboundSetting, candidates []groupCandidate, results []subscriptionProbeResult) {
+	if (setting.Type != configure.KeepCurrent && setting.Type != configure.Random) || setting.StickyCurrent == "" {
 		state.slowCurrent, state.slowCurrentRuns = "", 0
 		return
 	}
@@ -568,7 +568,7 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 	}
 	results, err := probe(nodes, setting.ProbeURL)
 	if err == nil {
-		keepCurrentThroughOneSlowProbe(state, setting, candidates, results)
+		keepSelectedThroughOneSlowProbe(state, setting, candidates, results)
 		usable := eligibleProbeResults(results)
 		members := make([]configure.NodeRef, 0, len(candidates))
 		eligibleFingerprints := make([]string, 0, len(candidates))

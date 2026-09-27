@@ -633,7 +633,7 @@ export default {
       roundrobin:
         "Distributes new connections in turn across URL-reachable, speed-eligible members.",
       random:
-        "Among speed-eligible servers, randomly chooses below 250 ms, then 500 ms, then in 250 ms steps up to the URL-check timeout.",
+        "Chooses a random speed-eligible server below 250 ms, then 500 ms and later buckets. Keeps that server while healthy; chooses again only after failure.",
       firstavailable:
         "Chooses the first speed-eligible, URL-reachable server in stable group order.",
     },

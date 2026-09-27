@@ -168,3 +168,24 @@ test("orders fields and refreshes membership with the edited policy", async () =
   });
   expect(postOutboundRefresh).toHaveBeenCalledWith("proxy");
 });
+
+test("stops showing refresh progress when the group request finishes", async () => {
+  let finish!: () => void;
+  vi.mocked(postOutboundRefresh).mockReturnValue(
+    new Promise<void>((resolve) => {
+      finish = resolve;
+    }),
+  );
+  wrapper.getComponent(VSwitch).vm.$emit("update:modelValue", true);
+  await flushPromises();
+  const refresh = () =>
+    wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Update server list")!;
+  await refresh().trigger("click");
+  await flushPromises();
+  expect(refresh().classes()).toContain("v-btn--loading");
+  finish();
+  await flushPromises();
+  expect(refresh().classes()).not.toContain("v-btn--loading");
+});

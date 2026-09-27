@@ -643,7 +643,7 @@ export default {
       roundrobin:
         "Distribui novas conexões em sequência entre membros aprovados nos testes de URL e velocidade.",
       random:
-        "Entre os servidores aprovados na velocidade, escolhe aleatoriamente abaixo de 250 ms, depois 500 ms e em passos de 250 ms até o limite da URL.",
+        "Escolhe aleatoriamente um servidor aprovado abaixo de 250 ms, depois 500 ms e faixas seguintes. Mantém o servidor enquanto funcionar; sorteia novamente após falha.",
       firstavailable:
         "Escolhe o primeiro servidor na ordem estável que passa nos testes de URL e velocidade.",
     },
