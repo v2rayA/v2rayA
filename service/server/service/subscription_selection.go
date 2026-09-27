@@ -8,6 +8,8 @@ import (
 var ConfigurationMu sync.Mutex
 
 type subscriptionProbeResult struct {
-	latency time.Duration
-	err     error
+	latency       time.Duration
+	throughput    int64
+	speedMeasured bool
+	err           error
 }

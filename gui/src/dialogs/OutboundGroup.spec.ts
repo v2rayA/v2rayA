@@ -85,7 +85,8 @@ test("offers connection strategies, explains them on demand, and saves keep-curr
   await help.trigger("click");
   const details = wrapper.get("#strategy-help");
   expect(details.classes()).toContain("text-on-surface-variant");
-  expect(details.text()).toContain("healthy current server");
+  expect(details.text()).toContain("100 KiB/s");
+  expect(details.text()).toContain("speed-eligible server");
 
   await wrapper
     .findAll("button")

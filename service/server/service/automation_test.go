@@ -202,6 +202,7 @@ func TestAutomaticGroupUsesWholeCatalogWithoutMutatingIt(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = configure.RemoveServers([]int{serverIndex}) })
 	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.RoundRobin
 	setting.AutoAdd, setting.ProbeInterval = true, "300s"
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
@@ -248,6 +249,7 @@ func TestAutomaticGroupApplyFailureUsesBackoff(t *testing.T) {
 		t.Fatal(err)
 	}
 	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.RoundRobin
 	setting.AutoAdd, setting.ProbeInterval = true, "1s"
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
@@ -280,6 +282,7 @@ func TestAutomaticGroupApplyFailureUsesBackoff(t *testing.T) {
 func TestForcedAutomaticGroupRefreshIgnoresFutureSchedule(t *testing.T) {
 	resetSubscription(t)
 	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.RoundRobin
 	setting.AutoAdd, setting.ProbeInterval = true, "300s"
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
@@ -312,6 +315,7 @@ func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 		a.now = func() time.Time { return now }
 		ctx, cancel := context.WithCancel(context.Background())
 		setting := configure.DefaultOutboundSetting()
+		setting.Type = configure.RoundRobin
 		setting.AutoAdd, setting.ProbeInterval = true, "300s"
 		a.processGroup(ctx, "proxy", setting, nil, func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error) {
 			now = now.Add(10 * time.Minute)
@@ -390,6 +394,48 @@ func TestRandomStrategyUsesLowestNonEmptyLatencyBucket(t *testing.T) {
 	})
 	if want := configure.NodeFingerprint(nodes[0].ExportToURL()); got != want {
 		t.Fatalf("random fallback choice = %q; want member of <500 ms bucket %q", got, want)
+	}
+}
+
+func TestLeastPingIgnoresSlowLowLatencyCandidate(t *testing.T) {
+	nodes := []serverObj.ServerObj{testServer(t, 13201), testServer(t, 13202), testServer(t, 13203)}
+	candidates := make([]groupCandidate, len(nodes))
+	for i, node := range nodes {
+		candidates[i] = groupCandidate{node: node}
+	}
+	results := []subscriptionProbeResult{
+		{latency: 10 * time.Millisecond, throughput: 50 * 1024, speedMeasured: true},
+		{latency: 80 * time.Millisecond, throughput: 140 * 1024, speedMeasured: true},
+		{latency: 120 * time.Millisecond, throughput: 180 * 1024, speedMeasured: true},
+	}
+	got := selectedGroupCandidate(configure.LeastPing, "", candidates, results, func(int) int {
+		t.Fatal("least-ping called the random chooser")
+		return 0
+	})
+	if want := configure.NodeFingerprint(nodes[1].ExportToURL()); got != want {
+		t.Fatalf("least-ping choice = %q; want lowest latency above 100 KiB/s %q", got, want)
+	}
+}
+
+func TestAllSlowCandidatesFallBackToFastest(t *testing.T) {
+	nodes := []serverObj.ServerObj{testServer(t, 13301), testServer(t, 13302), testServer(t, 13303)}
+	candidates := make([]groupCandidate, len(nodes))
+	for i, node := range nodes {
+		candidates[i] = groupCandidate{node: node}
+	}
+	results := []subscriptionProbeResult{
+		{latency: 10 * time.Millisecond, throughput: 20 * 1024, speedMeasured: true},
+		{latency: 100 * time.Millisecond, throughput: 90 * 1024, speedMeasured: true},
+		{latency: 50 * time.Millisecond, throughput: 60 * 1024, speedMeasured: true},
+	}
+	current := configure.NodeFingerprint(nodes[0].ExportToURL())
+	got := selectedGroupCandidate(configure.KeepCurrent, current, candidates, results, func(int) int { return 0 })
+	if want := configure.NodeFingerprint(nodes[1].ExportToURL()); got != want {
+		t.Fatalf("all-slow fallback = %q; want fastest candidate %q", got, want)
+	}
+	eligible := eligibleProbeResults(results)
+	if eligible[0] || !eligible[1] || eligible[2] {
+		t.Fatalf("all-slow eligible set = %+v; want only fastest", eligible)
 	}
 }
 
@@ -532,6 +578,35 @@ func TestKeepCurrentManualPinOverridesWorkerChoice(t *testing.T) {
 	a.step(context.Background())
 	if got := configure.GetOutboundSetting("proxy"); got.Selected != setting.Selected || got.StickyCurrent != setting.StickyCurrent {
 		t.Fatalf("manual pin or internal state changed: %+v", got)
+	}
+}
+
+func TestRoundRobinWorkerFiltersSlowMembers(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Type, setting.StickyCurrent = configure.RoundRobin, ""
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		return []subscriptionProbeResult{
+			{latency: 10 * time.Millisecond, throughput: 40 * 1024, speedMeasured: true},
+			{latency: 80 * time.Millisecond, throughput: 160 * 1024, speedMeasured: true},
+		}
+	}
+	calls := 0
+	a.applyState = func(outbound string, next configure.OutboundSetting, _ []configure.NodeRef, replaceMembers bool) error {
+		calls++
+		want := configure.NodeFingerprint(nodes[1].ExportToURL())
+		if outbound != "proxy" || replaceMembers || next.EligibleMembers != want {
+			t.Fatalf("round-robin filter update = outbound %q replace=%v eligible=%v", outbound, replaceMembers, next.EligibleMembers)
+		}
+		return configure.SetOutboundSetting(outbound, next)
+	}
+	a.step(context.Background())
+	if calls != 1 {
+		t.Fatalf("round-robin filter updates = %d; want 1", calls)
 	}
 }
 

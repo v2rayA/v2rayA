@@ -1,6 +1,7 @@
 package v2ray
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -42,7 +43,7 @@ func TestApplySelectionKeepsStickyCurrentAndFailsClosedWhenItDisappears(t *testi
 			Type:          configure.KeepCurrent,
 			StickyCurrent: configure.NodeFingerprint(infos[1].Info.ExportToURL()),
 		},
-		"other": {Type: configure.LeastPing},
+		"other": {},
 	}
 	settingOf := func(outbound string) configure.OutboundSetting { return settings[outbound] }
 	kept := applySelection(append([]serverInfo(nil), infos...), settingOf)
@@ -57,8 +58,23 @@ func TestApplySelectionKeepsStickyCurrentAndFailsClosedWhenItDisappears(t *testi
 	}
 }
 
-func TestApplySelectionUsesWorkerChoiceForRandomAndFirstAvailable(t *testing.T) {
-	for _, strategy := range []configure.ObservatoryType{configure.Random, configure.FirstAvailable} {
+func TestApplySelectionFiltersRoundRobinByMeasuredSpeed(t *testing.T) {
+	infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b"), socksInfo("proxy", "c")}
+	setting := configure.OutboundSetting{
+		Type: configure.RoundRobin,
+		EligibleMembers: strings.Join([]string{
+			configure.NodeFingerprint(infos[1].Info.ExportToURL()),
+			configure.NodeFingerprint(infos[2].Info.ExportToURL()),
+		}, " "),
+	}
+	kept := applySelection(infos, func(string) configure.OutboundSetting { return setting })
+	if len(kept) != 2 || kept[0].Info.GetName() != "b" || kept[1].Info.GetName() != "c" {
+		t.Fatalf("round-robin speed filter kept %+v; want b and c", kept)
+	}
+}
+
+func TestApplySelectionUsesWorkerChoice(t *testing.T) {
+	for _, strategy := range []configure.ObservatoryType{configure.LeastPing, configure.Random, configure.FirstAvailable} {
 		t.Run(strategy.String(), func(t *testing.T) {
 			infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b")}
 			setting := configure.OutboundSetting{

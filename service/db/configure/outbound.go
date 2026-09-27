@@ -21,11 +21,15 @@ const (
 
 func UsesWorkerSelection(strategy ObservatoryType) bool {
 	switch strategy {
-	case KeepCurrent, Random, FirstAvailable:
+	case LeastPing, KeepCurrent, Random, FirstAvailable:
 		return true
 	default:
 		return false
 	}
+}
+
+func UsesWorkerProbe(strategy ObservatoryType) bool {
+	return UsesWorkerSelection(strategy) || strategy == RoundRobin
 }
 
 type OutboundSetting struct {
@@ -43,6 +47,9 @@ type OutboundSetting struct {
 	// instead of a share link so the internal choice does not duplicate node
 	// credentials in API responses or logs.
 	StickyCurrent string `json:"stickyCurrent,omitempty"`
+	// EligibleMembers contains worker-measured fingerprints for strategies
+	// that still balance multiple nodes in the core.
+	EligibleMembers string `json:"eligibleMembers,omitempty"`
 }
 
 func NodeFingerprint(link string) string {
@@ -64,7 +71,7 @@ func HasAutomaticGroup() bool {
 func HasFailClosedGroup() bool {
 	for _, name := range GetOutbounds() {
 		setting := GetOutboundSetting(name)
-		if setting.AutoAdd || UsesWorkerSelection(setting.Type) {
+		if setting.AutoAdd || UsesWorkerProbe(setting.Type) {
 			return true
 		}
 	}

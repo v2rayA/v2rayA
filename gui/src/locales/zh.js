@@ -569,7 +569,7 @@ export default {
     autoAdd: "自动添加可用服务器",
     autoAddHelp: "从代理页面的完整列表（包括所有订阅）中保留可用服务器。",
     autoAddDetails:
-      "在列表更新后和每个探测周期检查，移除不可用成员。空组阻止其流量。",
+      "在列表更新后和每个探测周期检查，仅保留通过 URL 与速度检查的成员；若全部较慢，则保留最快的可达成员。",
     updateMembers: "更新服务器列表",
     membersUpdated: "分组服务器列表已更新",
     membersUpdateFailed: "更新分组服务器列表失败：{message}",
@@ -586,7 +586,7 @@ export default {
     probeInterval: "探测间隔",
     strategy: "连接策略",
     strategyHelp:
-      "控制如何在组成员之间分配新连接。如果没有可用服务器，该组会阻止自己的流量。",
+      "同时检查配置的 URL 并下载 256 KiB 速度样本。有更快服务器时会跳过低于 100 KiB/s 的服务器；若全部更慢，则使用最快的可达服务器。",
     strategyHelpAction: "连接策略说明",
     strategies: {
       leastPing: "最低延迟",
@@ -596,13 +596,13 @@ export default {
       firstAvailable: "第一个可用服务器",
     },
     strategyDetails: {
-      leastping: "持续使用探测结果，优先选择测得延迟最低的可用服务器。",
+      leastping: "在通过速度检查的服务器中选择 URL 检查延迟最低的服务器。",
       keepcurrent:
-        "当前服务器可用时继续使用它；故障后按稳定的组顺序选择第一个可用成员。旧服务器恢复后不会自动抢回流量。",
-      roundrobin: "依次把新连接分配给可用的组成员。",
+        "当前服务器通过 URL 与速度检查时继续使用；失败后按稳定的组顺序选择第一个合格成员。",
+      roundrobin: "依次把新连接分配给通过 URL 与速度检查的组成员。",
       random:
-        "在延迟低于 250 毫秒的服务器中随机选择一个；如果该区间为空，则扩大到 500 毫秒，之后每次增加 250 毫秒，直到探测超时。",
-      firstavailable: "每次检查都按稳定的组顺序选择第一个可用服务器。",
+        "在通过速度检查的服务器中随机选择 URL 延迟低于 250 毫秒的服务器；没有时扩大到 500 毫秒，之后每次增加 250 毫秒直到超时。",
+      firstavailable: "按稳定的组顺序选择第一个通过 URL 与速度检查的服务器。",
     },
   },
   proxyGroup: {

@@ -594,7 +594,7 @@ export default {
     autoAddHelp:
       "Mantém servidores disponíveis de toda a lista de Proxies, incluindo todas as assinaturas.",
     autoAddDetails:
-      "Verifica após mudanças na lista e a cada intervalo de teste. Remove membros indisponíveis. Um grupo vazio bloqueia seu tráfego.",
+      "Verifica após mudanças na lista e a cada intervalo. Mantém membros aprovados nos testes de URL e velocidade; se todos forem lentos, mantém o mais rápido acessível.",
     updateMembers: "Atualizar lista de servidores",
     membersUpdated: "Lista de servidores do grupo atualizada",
     membersUpdateFailed: "Falha ao atualizar a lista de servidores do grupo: {message}",
@@ -612,7 +612,7 @@ export default {
     probeInterval: "Intervalo de sondagem",
     strategy: "Estratégia de conexão",
     strategyHelp:
-      "Controla como novas conexões são distribuídas entre os membros do grupo. Se nenhum estiver disponível, o grupo bloqueia seu tráfego.",
+      "Testa a URL configurada e baixa uma amostra de 256 KiB ao mesmo tempo. Servidores abaixo de 100 KiB/s são ignorados enquanto houver um mais rápido; se todos forem lentos, usa o acessível mais rápido.",
     strategyHelpAction: "Sobre as estratégias de conexão",
     strategies: {
       leastPing: "Menor latência",
@@ -623,15 +623,15 @@ export default {
     },
     strategyDetails: {
       leastping:
-        "Usa continuamente os resultados da sondagem para preferir o servidor disponível com a menor latência medida.",
+        "Escolhe a menor latência da URL entre os servidores aprovados no teste de velocidade.",
       keepcurrent:
-        "Mantém o servidor atual enquanto estiver disponível. Após uma falha, escolhe o primeiro membro acessível na ordem estável do grupo. Um servidor antigo recuperado não retoma o tráfego.",
+        "Mantém o servidor atual enquanto ele passa nos testes de URL e velocidade. Após falhar, escolhe o primeiro membro aprovado na ordem estável.",
       roundrobin:
-        "Distribui novas conexões em sequência entre os membros disponíveis do grupo.",
+        "Distribui novas conexões em sequência entre membros aprovados nos testes de URL e velocidade.",
       random:
-        "Escolhe um servidor aleatório abaixo de 250 ms. Se a faixa estiver vazia, amplia para 500 ms e depois em passos de 250 ms até o tempo limite da sondagem.",
+        "Entre os servidores aprovados na velocidade, escolhe aleatoriamente abaixo de 250 ms, depois 500 ms e em passos de 250 ms até o limite da URL.",
       firstavailable:
-        "Escolhe o primeiro servidor acessível na ordem estável do grupo a cada verificação.",
+        "Escolhe o primeiro servidor na ordem estável que passa nos testes de URL e velocidade.",
     },
   },
   proxyGroup: {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -427,10 +428,36 @@ func sameMembers(current []*configure.NodeRef, desired []configure.NodeRef) bool
 
 const randomLatencyStep = 250 * time.Millisecond
 
+// eligibleProbeResults prefers every reachable node that meets the minimum
+// throughput. If none meet it, the single fastest reachable node remains as a
+// fallback so a slow connection is still better than a disconnected group.
+func eligibleProbeResults(results []subscriptionProbeResult) []bool {
+	eligible := make([]bool, len(results))
+	fastCount := 0
+	fastest := -1
+	for i, result := range results {
+		if result.err != nil {
+			continue
+		}
+		if fastest < 0 || result.throughput > results[fastest].throughput {
+			fastest = i
+		}
+		if !result.speedMeasured || result.throughput >= subscriptionMinSpeed {
+			eligible[i] = true
+			fastCount++
+		}
+	}
+	if fastCount == 0 && fastest >= 0 {
+		eligible[fastest] = true
+	}
+	return eligible
+}
+
 func selectedGroupCandidate(strategy configure.ObservatoryType, current string, candidates []groupCandidate, results []subscriptionProbeResult, choose func(int) int) string {
+	usable := eligibleProbeResults(results)
 	if strategy == configure.KeepCurrent && current != "" {
 		for i, candidate := range candidates {
-			if i < len(results) && results[i].err == nil && candidate.node != nil && configure.NodeFingerprint(candidate.node.ExportToURL()) == current {
+			if i < len(usable) && usable[i] && candidate.node != nil && configure.NodeFingerprint(candidate.node.ExportToURL()) == current {
 				return current
 			}
 		}
@@ -438,7 +465,13 @@ func selectedGroupCandidate(strategy configure.ObservatoryType, current string, 
 	eligible := make([]int, 0, len(candidates))
 	bestBucket := int64(-1)
 	for i, candidate := range candidates {
-		if i >= len(results) || results[i].err != nil || candidate.node == nil {
+		if i >= len(results) || !usable[i] || candidate.node == nil {
+			continue
+		}
+		if strategy == configure.LeastPing {
+			if len(eligible) == 0 || results[i].latency < results[eligible[0]].latency {
+				eligible = []int{i}
+			}
 			continue
 		}
 		if strategy == configure.FirstAvailable || strategy == configure.KeepCurrent {
@@ -455,6 +488,9 @@ func selectedGroupCandidate(strategy configure.ObservatoryType, current string, 
 	}
 	if len(eligible) == 0 {
 		return ""
+	}
+	if strategy == configure.LeastPing {
+		return configure.NodeFingerprint(candidates[eligible[0]].node.ExportToURL())
 	}
 	index := eligible[choose(len(eligible))]
 	return configure.NodeFingerprint(candidates[index].node.ExportToURL())
@@ -484,12 +520,17 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 	}
 	results, err := probe(nodes, setting.ProbeURL)
 	if err == nil {
+		usable := eligibleProbeResults(results)
 		members := make([]configure.NodeRef, 0, len(candidates))
+		eligibleFingerprints := make([]string, 0, len(candidates))
 		for i, result := range results {
-			if result.err == nil {
+			if result.err == nil && usable[i] {
 				ref := candidates[i].ref
 				ref.Outbound = name
 				members = append(members, ref)
+				if candidates[i].node != nil {
+					eligibleFingerprints = append(eligibleFingerprints, configure.NodeFingerprint(candidates[i].node.ExportToURL()))
+				}
 			}
 		}
 		ConfigurationMu.Lock()
@@ -511,14 +552,20 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 					stickyChanged = nextCurrent != currentSetting.StickyCurrent
 					nextSetting.StickyCurrent = nextCurrent
 				}
+				eligibleChanged := false
+				if currentSetting.Type == configure.RoundRobin && !currentSetting.AutoAdd {
+					eligibleMembers := strings.Join(eligibleFingerprints, " ")
+					eligibleChanged = currentSetting.EligibleMembers != eligibleMembers
+					nextSetting.EligibleMembers = eligibleMembers
+				}
 				membershipChanged := currentSetting.AutoAdd && !sameMembers(configure.GetConnectedServersByOutbound(name).Get(), members)
 				switch {
-				case stickyChanged || (membershipChanged && configure.UsesWorkerSelection(currentSetting.Type)):
+				case stickyChanged || eligibleChanged || (membershipChanged && configure.UsesWorkerSelection(currentSetting.Type)):
 					err = a.applyState(name, nextSetting, members, currentSetting.AutoAdd)
 				case membershipChanged:
 					err = a.applyGroup(name, members)
 				}
-				if err == nil && (stickyChanged || membershipChanged) {
+				if err == nil && (stickyChanged || eligibleChanged || membershipChanged) {
 					log.Info("[Groups] %s: %d/%d candidates available", name, len(members), len(candidates))
 					v2ray.ApiFeed.ProductMessage("catalog_changed", nil)
 				}
@@ -652,14 +699,14 @@ func (a *automation) step(parent context.Context) time.Time {
 	for _, name := range configure.GetOutbounds() {
 		setting := configure.GetOutboundSetting(name)
 		groups[name] = setting
-		if !setting.AutoAdd && configure.UsesWorkerSelection(setting.Type) {
+		if !setting.AutoAdd && configure.UsesWorkerProbe(setting.Type) {
 			groupCandidates[name] = connectedGroupCandidates(name)
 		}
 	}
 	ConfigurationMu.Unlock()
 	activeGroups := map[string]bool{}
 	for name, setting := range groups {
-		if !setting.AutoAdd && !configure.UsesWorkerSelection(setting.Type) {
+		if !setting.AutoAdd && !configure.UsesWorkerProbe(setting.Type) {
 			continue
 		}
 		activeGroups[name] = true

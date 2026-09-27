@@ -24,6 +24,11 @@ func TestEmptyManagedProxyBlocksOnlyItsOwnTraffic(t *testing.T) {
 			setting.Type = configure.KeepCurrent
 			return setting
 		}()},
+		{name: "least latency", setting: func() configure.OutboundSetting {
+			setting := configure.DefaultOutboundSetting()
+			setting.Type = configure.LeastPing
+			return setting
+		}()},
 		{name: "random bucket", setting: func() configure.OutboundSetting {
 			setting := configure.DefaultOutboundSetting()
 			setting.Type = configure.Random
@@ -64,7 +69,7 @@ func TestEmptyManagedProxyBlocksOnlyItsOwnTraffic(t *testing.T) {
 	}
 }
 
-func TestNativeGroupStrategiesFailClosed(t *testing.T) {
+func TestGroupStrategiesUseExpectedCoreStrategy(t *testing.T) {
 	oldSetting := configure.GetOutboundSetting(configure.DefaultOutboundName)
 	oldPorts := *configure.GetPortsNotNil()
 	t.Cleanup(func() {
@@ -76,13 +81,17 @@ func TestNativeGroupStrategiesFailClosed(t *testing.T) {
 	if err := configure.SetPorts(&ports); err != nil {
 		t.Fatal(err)
 	}
-	for _, strategy := range []configure.ObservatoryType{
-		configure.LeastPing,
-		configure.RoundRobin,
+	for _, tc := range []struct {
+		strategy        configure.ObservatoryType
+		coreStrategy    configure.ObservatoryType
+		wantObservatory bool
+	}{
+		{strategy: configure.LeastPing, coreStrategy: configure.Random},
+		{strategy: configure.RoundRobin, coreStrategy: configure.RoundRobin, wantObservatory: true},
 	} {
-		t.Run(strategy.String(), func(t *testing.T) {
+		t.Run(tc.strategy.String(), func(t *testing.T) {
 			setting := configure.DefaultOutboundSetting()
-			setting.Type = strategy
+			setting.Type = tc.strategy
 			if err := configure.SetOutboundSetting(configure.DefaultOutboundName, setting); err != nil {
 				t.Fatal(err)
 			}
@@ -102,11 +111,12 @@ func TestNativeGroupStrategiesFailClosed(t *testing.T) {
 				t.Fatalf("balancers = %+v", tmpl.Routing.Balancers)
 			}
 			balancer := tmpl.Routing.Balancers[0]
-			if balancer.Strategy.Type != strategy.String() || balancer.FallbackTag != "block" {
-				t.Fatalf("strategy %q generated %+v", strategy, balancer)
+			if balancer.Strategy.Type != tc.coreStrategy.String() || balancer.FallbackTag != "block" {
+				t.Fatalf("strategy %q generated %+v", tc.strategy, balancer)
 			}
-			if tmpl.MultiObservatory == nil || len(tmpl.MultiObservatory.Observers) != 1 {
-				t.Fatalf("strategy %q has no matching observer: %+v", strategy, tmpl.MultiObservatory)
+			gotObservatory := tmpl.MultiObservatory != nil && len(tmpl.MultiObservatory.Observers) == 1
+			if gotObservatory != tc.wantObservatory {
+				t.Fatalf("strategy %q observatory=%v, want %v", tc.strategy, gotObservatory, tc.wantObservatory)
 			}
 		})
 	}

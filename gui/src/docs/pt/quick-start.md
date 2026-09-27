@@ -26,6 +26,8 @@ Os nós são usados por meio de grupos de proxy. O grupo `proxy` sempre existe; 
 
 As estratégias são **Menor latência**, **Manter atual até falhar**, **Alternância sequencial**, **Aleatório** e **Primeiro disponível**. Aleatório escolhe um servidor da primeira faixa de latência não vazia: abaixo de 250 ms, depois 500 ms e então em passos de 250 ms até o tempo limite. Primeiro disponível escolhe o primeiro servidor funcional na ordem estável do grupo. A escolha é atualizada no intervalo e preservada entre reinicializações. O botão de interrogação ao lado da estratégia mostra a descrição da opção selecionada.
 
+Cada candidato executa o teste da URL configurada e baixa uma amostra de 256 KiB ao mesmo tempo. Servidores abaixo de 100 KiB/s são excluídos enquanto houver um mais rápido. Se todos os servidores acessíveis forem lentos, o mais rápido medido será usado.
+
 As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padrão, e qualquer outro grupo pelo próprio nome assim que tiver um membro conectado.
 
 ## Iniciar o núcleo

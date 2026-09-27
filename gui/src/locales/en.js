@@ -586,7 +586,7 @@ export default {
     autoAddHelp:
       "Keeps available servers from the entire Proxies list, including all subscriptions.",
     autoAddDetails:
-      "Checks after catalog updates and at the probe interval. Removes unavailable members. An empty group blocks its traffic.",
+      "Checks after catalog updates and at the probe interval. Keeps URL-reachable, speed-eligible members and falls back to the fastest reachable member if all are slow.",
     updateMembers: "Update server list",
     membersUpdated: "Group server list updated",
     membersUpdateFailed: "Failed to update group server list: {message}",
@@ -603,7 +603,7 @@ export default {
     probeInterval: "Probe Interval",
     strategy: "Connection Strategy",
     strategyHelp:
-      "Controls how new connections are assigned among group members. If none is available, the group blocks its traffic.",
+      "Runs the configured URL check and a 256 KiB speed sample at the same time. Servers below 100 KiB/s are skipped while a faster server exists; if all are slower, the fastest reachable server is used.",
     strategyHelpAction: "About connection strategies",
     strategies: {
       leastPing: "Lowest latency",
@@ -614,15 +614,15 @@ export default {
     },
     strategyDetails: {
       leastping:
-        "Continuously uses probe results to prefer the healthy server with the lowest measured latency.",
+        "Chooses the lowest URL-check latency among speed-eligible servers.",
       keepcurrent:
-        "Keeps the healthy current server. After it fails, selects the first reachable member in stable group order. A recovered old server does not take traffic back.",
+        "Keeps the current speed-eligible server. After its URL check fails or its speed is excluded, selects the first eligible member in stable group order.",
       roundrobin:
-        "Distributes new connections across healthy group members in turn.",
+        "Distributes new connections in turn across URL-reachable, speed-eligible members.",
       random:
-        "Chooses one random server below 250 ms. If that bucket is empty, expands to 500 ms and then in 250 ms steps up to the probe timeout.",
+        "Among speed-eligible servers, randomly chooses below 250 ms, then 500 ms, then in 250 ms steps up to the URL-check timeout.",
       firstavailable:
-        "Chooses the first reachable server in stable group order on every check.",
+        "Chooses the first speed-eligible, URL-reachable server in stable group order.",
     },
   },
   proxyGroup: {

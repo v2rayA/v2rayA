@@ -349,8 +349,9 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 }
 
 // applySelection applies a manual pin first. Without a pin, worker-selected
-// strategies keep only their chosen member. A missing chosen member leaves the group
-// empty so resolveOutbounds installs its fail-closed blackhole.
+// strategies keep only their chosen member, while worker-filtered strategies
+// keep every measured eligible member. A missing choice leaves the group empty
+// so resolveOutbounds installs its fail-closed blackhole.
 func applySelection(serverInfos []serverInfo, settingOf func(outbound string) configure.OutboundSetting) []serverInfo {
 	settings := make(map[string]configure.OutboundSetting)
 	manualMatched := make(map[string]bool)
@@ -385,6 +386,16 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 			if stickyMatched[info.OutboundName] && configure.NodeFingerprint(link) == setting.StickyCurrent && !keptChoice[info.OutboundName] {
 				kept = append(kept, info)
 				keptChoice[info.OutboundName] = true
+			}
+			continue
+		}
+		if setting.Type == configure.RoundRobin && !setting.AutoAdd {
+			fingerprint := configure.NodeFingerprint(link)
+			for _, eligible := range strings.Fields(setting.EligibleMembers) {
+				if eligible == fingerprint {
+					kept = append(kept, info)
+					break
+				}
 			}
 			continue
 		}
