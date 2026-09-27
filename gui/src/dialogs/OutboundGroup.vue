@@ -24,6 +24,7 @@ const setting = reactive<OutboundSetting>({
   probeInterval: "300s",
   autoAdd: false,
   type: "leastping",
+  selected: "",
 });
 const wasAutomatic = ref(false);
 const form = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
@@ -31,15 +32,27 @@ const saving = ref(false);
 const refreshing = ref(false);
 const strategyHelpOpen = ref(false);
 const strategyItems = computed(() => [
+  { value: "fixed", title: t("outbound.strategies.fixed") },
   { value: "leastping", title: t("outbound.strategies.leastPing") },
   { value: "keepcurrent", title: t("outbound.strategies.keepCurrent") },
   { value: "roundrobin", title: t("outbound.strategies.roundRobin") },
   { value: "random", title: t("outbound.strategies.random") },
   { value: "firstavailable", title: t("outbound.strategies.firstAvailable") },
 ]);
+const isFixed = computed(() => setting.type === "fixed");
+const fixedReady = computed(() => !isFixed.value || !!setting.selected);
 const strategyDetails = computed(() =>
   t(`outbound.strategyDetails.${setting.type}`),
 );
+
+function writableSetting(): OutboundSetting {
+  return {
+    autoAdd: setting.autoAdd,
+    probeURL: setting.probeURL,
+    probeInterval: setting.probeInterval,
+    type: setting.type,
+  };
+}
 
 onMounted(async () => {
   try {
@@ -51,11 +64,15 @@ onMounted(async () => {
 });
 
 async function save() {
+  if (!fixedReady.value) {
+    notify.warning(t("outbound.fixedRequiresServer"));
+    return;
+  }
   const check = await form.value?.validate();
   if (check && !check.valid) return;
   saving.value = true;
   try {
-    await putOutbound({ outbound: props.outbound, setting: { ...setting } });
+    await putOutbound({ outbound: props.outbound, setting: writableSetting() });
     notify.success(t("outbound.settingSaved"));
     emit("close", true);
   } catch (err) {
@@ -74,7 +91,7 @@ async function refreshMembers() {
   try {
     // The enabled switch and edited probe settings must be in force for this
     // pass, even when the dialog's Save button has not been pressed yet.
-    await putOutbound({ outbound: props.outbound, setting: { ...setting } });
+    await putOutbound({ outbound: props.outbound, setting: writableSetting() });
     await postOutboundRefresh(props.outbound);
     wasAutomatic.value = true;
     notify.success(t("outbound.membersUpdated"));
@@ -93,6 +110,11 @@ function setAutomatic(enabled: boolean | null) {
     setting.probeInterval = "300s";
   }
 }
+
+function setStrategy(type: OutboundSetting["type"]) {
+  setting.type = type;
+  if (type === "fixed") setting.autoAdd = false;
+}
 </script>
 
 <template>
@@ -109,10 +131,11 @@ function setAutomatic(enabled: boolean | null) {
       <v-form ref="form" @submit.prevent="save">
         <div class="d-flex align-start ga-1">
           <v-select
-            v-model="setting.type"
+            :model-value="setting.type"
             :items="strategyItems"
             :label="t('outbound.strategy')"
             class="flex-grow-1"
+            @update:model-value="setStrategy"
           />
           <v-btn
             :icon="mdiHelpCircleOutline"
@@ -134,35 +157,54 @@ function setAutomatic(enabled: boolean | null) {
             <p class="md3-body-small mb-0">{{ strategyDetails }}</p>
           </div>
         </v-expand-transition>
+        <v-alert
+          v-if="isFixed"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+        >
+          {{
+            fixedReady
+              ? t("outbound.fixedServerSelected")
+              : t("outbound.fixedRequiresServer")
+          }}
+        </v-alert>
         <v-text-field
           v-model="setting.probeURL"
           :label="t('outbound.probeUrl')"
           :rules="[required]"
+          :disabled="isFixed"
           dir="ltr"
         />
         <v-text-field
           v-model="setting.probeInterval"
           :label="t('outbound.probeInterval')"
           :rules="[required]"
+          :disabled="isFixed"
           dir="ltr"
         />
         <v-switch
           :model-value="setting.autoAdd"
           :label="t('outbound.autoAdd')"
+          :disabled="isFixed"
           hide-details
           @update:model-value="setAutomatic"
         />
-        <p class="md3-body-large mb-2">
+        <p class="md3-body-large mb-2" :class="{ 'text-disabled': isFixed }">
           {{ t("outbound.autoAddHelp") }}
         </p>
-        <p class="md3-body-small text-on-surface-variant mb-4">
+        <p
+          class="md3-body-small text-on-surface-variant mb-4"
+          :class="{ 'text-disabled': isFixed }"
+        >
           {{ t("outbound.autoAddDetails") }}
         </p>
         <v-btn
           block
           variant="outlined"
           class="mb-2"
-          :disabled="!setting.autoAdd"
+          :disabled="isFixed || !setting.autoAdd"
           :loading="refreshing"
           @click="refreshMembers"
         >
@@ -175,9 +217,14 @@ function setAutomatic(enabled: boolean | null) {
       <v-btn variant="text" @click="emit('close')">{{
         t("operations.cancel")
       }}</v-btn>
-      <v-btn variant="flat" color="primary" :loading="saving" @click="save">{{
-        t("operations.save")
-      }}</v-btn>
+      <v-btn
+        variant="flat"
+        color="primary"
+        :loading="saving"
+        :disabled="!fixedReady"
+        @click="save"
+        >{{ t("operations.save") }}</v-btn
+      >
     </v-card-actions>
   </v-card>
 </template>

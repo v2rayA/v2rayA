@@ -52,7 +52,12 @@ export default {
     moreMembers: "其他 {n} 个",
     inUse: "当前节点",
     pinned: "已指定",
+    pinnedUnavailable: "固定服务器不可用",
+    pinnedFailover: "已指定（故障时切换）",
     balanced: "自动（{n} 个成员）",
+    autoFilled: "{automatic}，自动填充",
+    auto: "自动",
+    chooseServer: "选择服务器",
     switchNode: "选择节点",
     proxyGroup: "代理组",
     editGroup: "增删节点",
@@ -588,7 +593,11 @@ export default {
     strategyHelp:
       "同时检查配置的 URL 并下载 256 KiB 速度样本。有更快服务器时会跳过低于 100 KiB/s 的服务器；若全部更慢，则使用最快的可达服务器。",
     strategyHelpAction: "连接策略说明",
+    configureSelected: "配置所选代理组",
+    fixedRequiresServer: "请先在“代理组”卡片中选择一个具体服务器。",
+    fixedServerSelected: "“代理组”卡片中固定的服务器不会自动切换。",
     strategies: {
+      fixed: "不切换",
       leastPing: "最低延迟",
       keepCurrent: "保持当前服务器直到故障",
       roundRobin: "轮询",
@@ -596,6 +605,7 @@ export default {
       firstAvailable: "第一个可用服务器",
     },
     strategyDetails: {
+      fixed: "始终使用固定服务器，并禁用自动检查和自动填充。",
       leastping: "在通过速度检查的服务器中选择 URL 检查延迟最低的服务器。",
       keepcurrent:
         "当前服务器通过 URL 与速度检查时继续使用；失败后按稳定的组顺序选择第一个合格成员。",

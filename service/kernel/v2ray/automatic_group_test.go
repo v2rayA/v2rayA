@@ -87,6 +87,7 @@ func TestGroupStrategiesUseExpectedCoreStrategy(t *testing.T) {
 		wantObservatory bool
 	}{
 		{strategy: configure.LeastPing, coreStrategy: configure.Random},
+		{strategy: configure.Fixed, coreStrategy: configure.Random},
 		{strategy: configure.RoundRobin, coreStrategy: configure.RoundRobin, wantObservatory: true},
 	} {
 		t.Run(tc.strategy.String(), func(t *testing.T) {

@@ -212,6 +212,30 @@ func TestPutOutboundDefaultsNewAutomaticGroupToFiveMinutes(t *testing.T) {
 	}
 }
 
+func TestPutOutboundFixedPreservesSelectedServer(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	previous.Type = configure.Fixed
+	previous.Selected = "http-proxy://server.example:8080"
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://next.example/ping","probeInterval":"45s","type":"fixed"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("fixed strategy update failed: %s", recorder.Body.String())
+	}
+	got := configure.GetOutboundSetting("proxy")
+	if got.Selected != previous.Selected || got.Type != configure.Fixed || got.AutoAdd {
+		t.Fatalf("fixed strategy update = %+v; want selected server preserved", got)
+	}
+}
+
 func TestPutOutboundInitializesAndHidesKeepCurrentState(t *testing.T) {
 	previousSetting := configure.GetOutboundSetting("proxy")
 	previousMembers := configure.GetConnectedServersByOutbound("proxy")
@@ -305,5 +329,24 @@ func TestPutOutboundConnectionsRejectsAutomaticGroupEdits(t *testing.T) {
 	}
 	if response.Code != common.FAIL {
 		t.Fatalf("automatic group accepted manual membership edit: %s", recorder.Body.String())
+	}
+}
+
+func TestSelectionSettingMovesBetweenFixedAndAutomatic(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	previous.AutoAdd = true
+	previous.StickyCurrent = "old-worker-choice"
+	fixed := selectionSetting(previous, "socks5://server.example:1080")
+	if fixed.Type != configure.Fixed || fixed.AutoAdd || fixed.Selected == "" || fixed.StickyCurrent != "" {
+		t.Fatalf("fixed selection = %+v", fixed)
+	}
+
+	automatic := selectionSetting(fixed, "")
+	if automatic.Type != configure.LeastPing || automatic.Selected != "" {
+		t.Fatalf("automatic selection = %+v", automatic)
+	}
+	want := configure.NodeFingerprint(fixed.Selected)
+	if automatic.StickyCurrent != want {
+		t.Fatalf("automatic handoff current = %q; want %q", automatic.StickyCurrent, want)
 	}
 }

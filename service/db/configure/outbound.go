@@ -17,6 +17,7 @@ const (
 	RoundRobin     ObservatoryType = "roundrobin"
 	Random         ObservatoryType = "random"
 	FirstAvailable ObservatoryType = "firstavailable"
+	Fixed          ObservatoryType = "fixed"
 )
 
 func UsesWorkerSelection(strategy ObservatoryType) bool {
@@ -37,10 +38,8 @@ type OutboundSetting struct {
 	ProbeURL      string          `json:"probeURL"`
 	ProbeInterval string          `json:"probeInterval"`
 	Type          ObservatoryType `json:"type"`
-	// Selected is the share link of the member the group routes through
-	// alone; empty means every member, balanced by the observatory. A link
-	// that matches no member is ignored, so a removed or renamed node
-	// falls back to balancing instead of breaking the group.
+	// Selected is the share link of the member a Fixed group routes through.
+	// A link that matches no member leaves that group empty and fail-closed.
 	Selected string `json:"selected,omitempty"`
 	// StickyCurrent is worker-owned state for strategies that select one
 	// member. It stores a hash
@@ -71,7 +70,7 @@ func HasAutomaticGroup() bool {
 func HasFailClosedGroup() bool {
 	for _, name := range GetOutbounds() {
 		setting := GetOutboundSetting(name)
-		if setting.AutoAdd || UsesWorkerProbe(setting.Type) {
+		if setting.AutoAdd || UsesWorkerProbe(setting.Type) || setting.Type == Fixed {
 			return true
 		}
 	}

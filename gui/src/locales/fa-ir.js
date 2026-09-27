@@ -55,7 +55,12 @@ export default {
     moreMembers: "{n} مورد دیگر",
     inUse: "گره در حال استفاده",
     pinned: "ثابت",
+    pinnedUnavailable: "سرور ثابت‌شده در دسترس نیست",
+    pinnedFailover: "ثابت (هنگام خرابی جابه‌جا می‌شود)",
     balanced: "خودکار ({n} عضو)",
+    autoFilled: "{automatic}، تکمیل خودکار",
+    auto: "خودکار",
+    chooseServer: "انتخاب سرور",
     switchNode: "تغییر",
     proxyGroup: "گروه پروکسی",
     editGroup: "افزودن یا حذف گره‌ها",
@@ -601,7 +606,13 @@ export default {
     strategyHelp:
       "آزمون URL و دریافت نمونهٔ سرعت ۲۵۶ KiB را هم‌زمان اجرا می‌کند. تا وقتی سرور سریع‌تری هست، سرورهای زیر ۱۰۰ KiB/s کنار گذاشته می‌شوند؛ اگر همه کند باشند، سریع‌ترین سرور در دسترس استفاده می‌شود.",
     strategyHelpAction: "دربارهٔ راهبردهای اتصال",
+    configureSelected: "پیکربندی گروه پروکسی انتخاب‌شده",
+    fixedRequiresServer:
+      "ابتدا یک سرور مشخص را در کارت گروه پروکسی انتخاب کنید.",
+    fixedServerSelected:
+      "سرور ثابت‌شده در کارت گروه پروکسی به‌طور خودکار عوض نمی‌شود.",
     strategies: {
+      fixed: "جابه‌جا نشود",
       leastPing: "کمترین تأخیر",
       keepCurrent: "حفظ سرور فعلی تا خرابی",
       roundRobin: "چرخشی",
@@ -609,6 +620,8 @@ export default {
       firstAvailable: "اولین سرور در دسترس",
     },
     strategyDetails: {
+      fixed:
+        "همیشه از سرور ثابت‌شده استفاده می‌کند و بررسی و تکمیل خودکار را غیرفعال می‌کند.",
       leastping:
         "از میان سرورهای پذیرفته‌شده در آزمون سرعت، کمترین تأخیر URL را انتخاب می‌کند.",
       keepcurrent:

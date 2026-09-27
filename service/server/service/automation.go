@@ -186,6 +186,13 @@ func ValidateOutboundSetting(setting configure.OutboundSetting) error {
 	}
 	switch setting.Type {
 	case configure.LeastPing, configure.KeepCurrent, configure.RoundRobin, configure.Random, configure.FirstAvailable:
+	case configure.Fixed:
+		if setting.Selected == "" {
+			return fmt.Errorf("fixed group requires a selected server")
+		}
+		if setting.AutoAdd {
+			return fmt.Errorf("fixed group cannot manage membership automatically")
+		}
 	default:
 		return fmt.Errorf("unsupported group type")
 	}

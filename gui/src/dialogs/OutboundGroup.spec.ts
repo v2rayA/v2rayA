@@ -71,6 +71,7 @@ test("offers connection strategies, explains them on demand, and saves keep-curr
   const select = wrapper.getComponent(VSelect);
   expect(select.props("label")).toBe("Connection Strategy");
   expect(select.props("items")).toEqual([
+    { value: "fixed", title: "Don't switch" },
     { value: "leastping", title: "Lowest latency" },
     { value: "keepcurrent", title: "Keep current until failure" },
     { value: "roundrobin", title: "Round robin" },
@@ -102,6 +103,32 @@ test("offers connection strategies, explains them on demand, and saves keep-curr
       type: "keepcurrent",
     },
   });
+});
+
+test("requires a pinned server for don't-switch and disables automatic controls", async () => {
+  const select = wrapper.getComponent(VSelect);
+  select.vm.$emit("update:modelValue", "fixed");
+  await flushPromises();
+
+  expect(wrapper.text()).toContain(
+    "Choose a server from the Proxy group card before using Don't switch.",
+  );
+  expect(
+    wrapper
+      .findAllComponents(VTextField)
+      .filter((field) =>
+        ["Probe URL", "Probe Interval"].includes(field.props("label") ?? ""),
+      )
+      .every((field) => field.props("disabled") === true),
+  ).toBe(true);
+  expect(wrapper.getComponent(VSwitch).props("disabled")).toBe(true);
+  expect(
+    wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Save")!
+      .attributes("disabled"),
+  ).toBeDefined();
+  expect(putOutbound).not.toHaveBeenCalled();
 });
 
 test("orders fields and refreshes membership with the edited policy", async () => {

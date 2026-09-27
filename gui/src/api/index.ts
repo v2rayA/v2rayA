@@ -81,7 +81,7 @@ export const putOutboundConnections = (body: {
     method: "put",
     data: body,
   });
-/** the member a group routes through alone; null returns it to balancing */
+/** pins one member and selects fixed mode; null returns fixed mode to lowest latency */
 export const putOutboundSelection = (body: {
   outbound: string;
   which: Which | null;
@@ -102,11 +102,18 @@ export const getOutbounds = () =>
     url: "outbounds",
     method: "get",
   });
+export type OutboundStrategy =
+  | "leastping"
+  | "keepcurrent"
+  | "roundrobin"
+  | "random"
+  | "firstavailable"
+  | "fixed";
 export interface OutboundSetting {
   autoAdd?: boolean;
   probeURL: string;
   probeInterval: string;
-  type: string;
+  type: OutboundStrategy;
   /** the share link of the member routed through alone; empty balances */
   selected?: string;
 }

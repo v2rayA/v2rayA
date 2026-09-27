@@ -28,6 +28,7 @@ const { open: openDialog } = useDialog();
 const open = ref(false);
 
 async function settings(outbound: string) {
+  store.outboundName = outbound;
   open.value = false;
   const saved = await openDialog<boolean>(
     OutboundGroupDialog,

@@ -54,7 +54,12 @@ export default {
     moreMembers: "{n}개 더 보기",
     inUse: "사용 중인 노드",
     pinned: "고정됨",
+    pinnedUnavailable: "고정한 서버를 사용할 수 없음",
+    pinnedFailover: "고정됨(장애 시 전환)",
     balanced: "자동 (멤버 {n}개)",
+    autoFilled: "{automatic}, 자동 채우기",
+    auto: "자동",
+    chooseServer: "서버 선택",
     switchNode: "전환",
     proxyGroup: "프록시 그룹",
     editGroup: "노드 추가/삭제",
@@ -598,7 +603,12 @@ export default {
     strategyHelp:
       "설정된 URL 검사와 256 KiB 속도 샘플 다운로드를 동시에 실행합니다. 더 빠른 서버가 있으면 100 KiB/s 미만 서버를 제외하고, 모두 느리면 접근 가능한 서버 중 가장 빠른 서버를 사용합니다.",
     strategyHelpAction: "연결 전략 설명",
+    configureSelected: "선택한 프록시 그룹 설정",
+    fixedRequiresServer: "먼저 프록시 그룹 카드에서 서버 하나를 선택하세요.",
+    fixedServerSelected:
+      "프록시 그룹 카드에 고정한 서버는 자동으로 전환되지 않습니다.",
     strategies: {
+      fixed: "전환하지 않음",
       leastPing: "최저 지연",
       keepCurrent: "장애 전까지 현재 서버 유지",
       roundRobin: "순차 분배",
@@ -606,11 +616,13 @@ export default {
       firstAvailable: "첫 번째 사용 가능",
     },
     strategyDetails: {
+      fixed: "고정한 서버만 사용하고 자동 검사와 자동 채우기를 끕니다.",
       leastping:
         "속도 검사를 통과한 서버 중 URL 검사 지연이 가장 낮은 서버를 선택합니다.",
       keepcurrent:
         "현재 서버가 URL과 속도 검사를 통과하는 동안 유지합니다. 실패하면 안정된 그룹 순서에서 첫 번째 적합한 구성원을 선택합니다.",
-      roundrobin: "URL과 속도 검사를 통과한 그룹 구성원에게 새 연결을 차례대로 배분합니다.",
+      roundrobin:
+        "URL과 속도 검사를 통과한 그룹 구성원에게 새 연결을 차례대로 배분합니다.",
       random:
         "속도 검사를 통과한 서버 중 URL 지연이 250ms 미만인 서버를 무작위로 선택하고, 없으면 500ms부터 제한 시간까지 250ms씩 넓힙니다.",
       firstavailable:

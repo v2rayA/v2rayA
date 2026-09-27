@@ -15,6 +15,8 @@ export interface Which {
   outbound?: string;
   /** in a touch's connectedServer: the member its group routes through alone */
   selected?: boolean;
+  /** the member currently chosen by a worker-owned one-node strategy */
+  active?: boolean;
 }
 
 /** touch.Server; `sub` and `connected` are the page's own marks on a row */

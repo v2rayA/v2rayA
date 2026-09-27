@@ -70,6 +70,28 @@ func initialStickyCurrent(outbound, selected string) string {
 	return ""
 }
 
+func selectionSetting(previous configure.OutboundSetting, link string) configure.OutboundSetting {
+	next := previous
+	if link != "" {
+		next.Type = configure.Fixed
+		next.AutoAdd = false
+		next.Selected = link
+		next.StickyCurrent = ""
+		next.EligibleMembers = ""
+		return next
+	}
+	selected := next.Selected
+	next.Selected = ""
+	if next.Type == configure.Fixed {
+		next.Type = configure.LeastPing
+		next.StickyCurrent = ""
+		if selected != "" {
+			next.StickyCurrent = configure.NodeFingerprint(selected)
+		}
+	}
+	return next
+}
+
 func PutOutbound(ctx *gin.Context) {
 	release, ok := beginMutation(ctx)
 	if !ok {
@@ -98,14 +120,28 @@ func PutOutbound(ctx *gin.Context) {
 	if next.AutoAdd && !previous.AutoAdd && next.ProbeInterval == configure.DefaultProbeInterval {
 		next.ProbeInterval = "300s"
 	}
-	if next.Type != previous.Type {
-		if next.Type == configure.KeepCurrent {
-			next.StickyCurrent = initialStickyCurrent(data.Outbound, previous.Selected)
-		} else {
+	if next.Type == configure.Fixed {
+		next.AutoAdd = false
+		// The settings dialog edits the policy only. The dedicated selection
+		// endpoint remains the sole place that can change the pinned server.
+		next.Selected = previous.Selected
+		next.StickyCurrent = ""
+		next.EligibleMembers = ""
+	} else {
+		selected := previous.Selected
+		next.Selected = ""
+		if next.Type != previous.Type {
+			next.StickyCurrent = ""
+			if configure.UsesWorkerSelection(next.Type) {
+				if selected != "" {
+					next.StickyCurrent = configure.NodeFingerprint(selected)
+				} else if next.Type == configure.KeepCurrent {
+					next.StickyCurrent = initialStickyCurrent(data.Outbound, "")
+				}
+			}
+		} else if !configure.UsesWorkerSelection(next.Type) {
 			next.StickyCurrent = ""
 		}
-	} else if !configure.UsesWorkerSelection(next.Type) {
-		next.StickyCurrent = ""
 	}
 	if err := service.ValidateOutboundSetting(next); err != nil {
 		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))
@@ -285,9 +321,9 @@ func PutOutboundConnections(ctx *gin.Context) {
 	getTouch(ctx)
 }
 
-// PutOutboundSelection chooses the member a group routes through alone, or
-// returns the group to balancing when `which` is null. The member must be
-// connected in that group.
+// PutOutboundSelection chooses the member a group routes through alone and
+// switches to Fixed, or returns a Fixed group to LeastPing when `which` is
+// null. The member must be connected in that group.
 func PutOutboundSelection(ctx *gin.Context) {
 	release, ok := beginMutation(ctx)
 	if !ok {
@@ -329,13 +365,16 @@ func PutOutboundSelection(ctx *gin.Context) {
 		}
 		link = sr.ServerObj.ExportToURL()
 	}
+	previous := configure.GetOutboundSetting(data.Outbound)
+	next := selectionSetting(previous, link)
+	if err := service.ValidateOutboundSetting(next); err != nil {
+		common.ResponseError(ctx, badRequest("outbound selection", err.Error()))
+		return
+	}
 	err := service.ApplyGroupConfig(func() func() error {
-		previous := configure.GetOutboundSetting(data.Outbound)
 		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
 	}, func() error {
-		setting := configure.GetOutboundSetting(data.Outbound)
-		setting.Selected = link
-		return configure.SetOutboundSetting(data.Outbound, setting)
+		return configure.SetOutboundSetting(data.Outbound, next)
 	})
 	if err != nil {
 		var failure *service.ApplyCoreConfigError

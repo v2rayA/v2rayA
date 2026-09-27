@@ -56,7 +56,12 @@ export default {
     moreMembers: "1 more | {n} more",
     inUse: "Node in use",
     pinned: "Pinned",
+    pinnedUnavailable: "Pinned server unavailable",
+    pinnedFailover: "Pinned (switches on failure)",
     balanced: "Auto (1 member) | Auto ({n} members)",
+    autoFilled: "{automatic}, automatic membership",
+    auto: "Auto",
+    chooseServer: "Choose server",
     switchNode: "Switch",
     proxyGroup: "Proxy group",
     editGroup: "Add or remove nodes",
@@ -605,7 +610,13 @@ export default {
     strategyHelp:
       "Runs the configured URL check and a 256 KiB speed sample at the same time. Servers below 100 KiB/s are skipped while a faster server exists; if all are slower, the fastest reachable server is used.",
     strategyHelpAction: "About connection strategies",
+    configureSelected: "Configure selected proxy group",
+    fixedRequiresServer:
+      "Choose a server from the Proxy group card before using Don't switch.",
+    fixedServerSelected:
+      "The server pinned on the Proxy group card will not be switched automatically.",
     strategies: {
+      fixed: "Don't switch",
       leastPing: "Lowest latency",
       keepCurrent: "Keep current until failure",
       roundRobin: "Round robin",
@@ -613,6 +624,8 @@ export default {
       firstAvailable: "First available",
     },
     strategyDetails: {
+      fixed:
+        "Always uses the pinned server and disables automatic checks and membership.",
       leastping:
         "Chooses the lowest URL-check latency among speed-eligible servers.",
       keepcurrent:

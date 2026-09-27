@@ -43,7 +43,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 
 			strategy := serverData.OutboundName2Setting[outbound].Type
 			coreStrategy := strategy
-			if configure.UsesWorkerSelection(strategy) {
+			if configure.UsesWorkerSelection(strategy) || strategy == configure.Fixed {
 				// The service already reduced these groups to its selected node.
 				// Keep the core on a native one-node strategy and avoid starting a
 				// second observer with different health semantics.

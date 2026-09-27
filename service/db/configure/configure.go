@@ -542,6 +542,14 @@ func GetOutboundSetting(outbound string) (setting OutboundSetting) {
 	if err != nil {
 		return DefaultOutboundSetting()
 	}
+	// Older releases stored a manual pin beside whichever automatic strategy
+	// was selected. Treat that persisted pin as the explicit fixed policy.
+	if setting.Selected != "" && setting.Type != Fixed {
+		setting.Type = Fixed
+		setting.AutoAdd = false
+		setting.StickyCurrent = ""
+		setting.EligibleMembers = ""
+	}
 	return setting
 }
 

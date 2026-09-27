@@ -58,6 +58,20 @@ func TestApplySelectionKeepsStickyCurrentAndFailsClosedWhenItDisappears(t *testi
 	}
 }
 
+func TestApplySelectionFixedGroupFailsClosedWhenItsMemberDisappears(t *testing.T) {
+	infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b"), socksInfo("other", "c")}
+	setting := configure.OutboundSetting{Type: configure.Fixed, Selected: "socks5://gone:1080"}
+	kept := applySelection(infos, func(outbound string) configure.OutboundSetting {
+		if outbound == "proxy" {
+			return setting
+		}
+		return configure.OutboundSetting{}
+	})
+	if len(kept) != 1 || kept[0].Info.GetName() != "c" {
+		t.Fatalf("missing fixed member kept %+v; want unrelated c only", kept)
+	}
+}
+
 func TestApplySelectionFiltersRoundRobinByMeasuredSpeed(t *testing.T) {
 	infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b"), socksInfo("proxy", "c")}
 	setting := configure.OutboundSetting{

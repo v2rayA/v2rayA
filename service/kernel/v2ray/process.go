@@ -382,6 +382,11 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 			}
 			continue
 		}
+		if setting.Type == configure.Fixed {
+			// A removed fixed member fails closed instead of making the group
+			// silently balance across whatever nodes remain.
+			continue
+		}
 		if configure.UsesWorkerSelection(setting.Type) {
 			if stickyMatched[info.OutboundName] && configure.NodeFingerprint(link) == setting.StickyCurrent && !keptChoice[info.OutboundName] {
 				kept = append(kept, info)

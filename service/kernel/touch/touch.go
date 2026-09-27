@@ -121,22 +121,22 @@ func GenerateTouch() (t Touch) {
 	return
 }
 
-// markSelected flags the member each group routes through alone, when its
-// setting names one that is still a member.
+// markSelected flags both an explicit fixed member and the current member of
+// a worker-owned one-node strategy.
 func markSelected(connected []*configure.Which, loc *configure.Locator) {
-	selected := make(map[string]string)
+	settings := make(map[string]configure.OutboundSetting)
 	for _, w := range connected {
-		if _, ok := selected[w.Outbound]; !ok {
-			selected[w.Outbound] = configure.GetOutboundSetting(w.Outbound).Selected
-		}
-		link := selected[w.Outbound]
-		if link == "" {
-			continue
+		setting, ok := settings[w.Outbound]
+		if !ok {
+			setting = configure.GetOutboundSetting(w.Outbound)
+			settings[w.Outbound] = setting
 		}
 		sr, err := loc.Locate(&w.NodeRef)
 		if err != nil || sr.ServerObj == nil {
 			continue
 		}
-		w.Selected = sr.ServerObj.ExportToURL() == link
+		link := sr.ServerObj.ExportToURL()
+		w.Selected = setting.Selected != "" && link == setting.Selected
+		w.Active = w.Selected || (configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.NodeFingerprint(link) == setting.StickyCurrent)
 	}
 }

@@ -5,6 +5,8 @@ import type { VueWrapper } from "@vue/test-utils";
 import type * as api from "@/api";
 import {
   deleteV2ray,
+  getOutbound,
+  getOutbounds,
   getSetting,
   getTouch,
   postV2ray,
@@ -29,6 +31,8 @@ import DashboardView from "../DashboardView.vue";
 vi.mock("@/api", async (original) => ({
   ...(await original<typeof api>()),
   getTouch: vi.fn(),
+  getOutbound: vi.fn(),
+  getOutbounds: vi.fn(),
   getSetting: vi.fn(),
   postV2ray: vi.fn(),
   deleteV2ray: vi.fn(),
@@ -110,6 +114,19 @@ beforeEach(() => {
   // result arranges it after the mount
   vi.mocked(getPingLatency).mockResolvedValue({ whiches: [] });
   vi.mocked(getTouch).mockResolvedValue(response());
+  vi.mocked(getOutbound).mockResolvedValue({
+    setting: {
+      autoAdd: false,
+      probeURL: "https://www.gstatic.com/generate_204",
+      probeInterval: "300s",
+      type: "leastping",
+      selected: "",
+    },
+  });
+  vi.mocked(getOutbounds).mockResolvedValue({
+    outbounds: ["proxy", "work"],
+    automaticOutbounds: [],
+  });
   vi.mocked(getSetting).mockResolvedValue({
     setting: {
       transparent: "close",
@@ -321,13 +338,41 @@ describe("dashboard", () => {
   });
 
   test("chooses a member and returns to automatic routing through the picker", async () => {
-    wrapper = mountWithApp(DashboardView);
-    await flushPromises();
     const pinned = response();
     pinned.touch.connectedServer![0].selected = true;
     vi.mocked(putOutboundSelection)
       .mockResolvedValueOnce(pinned)
       .mockResolvedValueOnce(response());
+    vi.mocked(getOutbound)
+      .mockResolvedValueOnce({
+        setting: {
+          autoAdd: false,
+          probeURL: "https://www.gstatic.com/generate_204",
+          probeInterval: "300s",
+          type: "leastping",
+          selected: "",
+        },
+      })
+      .mockResolvedValueOnce({
+        setting: {
+          autoAdd: false,
+          probeURL: "https://www.gstatic.com/generate_204",
+          probeInterval: "300s",
+          type: "fixed",
+          selected: "http-proxy://selected",
+        },
+      })
+      .mockResolvedValueOnce({
+        setting: {
+          autoAdd: false,
+          probeURL: "https://www.gstatic.com/generate_204",
+          probeInterval: "300s",
+          type: "leastping",
+          selected: "",
+        },
+      });
+    wrapper = mountWithApp(DashboardView);
+    await flushPromises();
     const menuItem = async (index: number) => {
       await wrapper
         .get(".dashboard-connection .dashboard-node-name")
@@ -349,6 +394,42 @@ describe("dashboard", () => {
       which: null,
     });
     expect(wrapper.get(".dashboard-connection").text()).not.toContain("Pinned");
+  });
+
+  test("labels keep-current and automatic membership without hiding the active server", async () => {
+    const data = response();
+    data.touch.connectedServer![0].active = true;
+    vi.mocked(getTouch).mockResolvedValue(data);
+    vi.mocked(getOutbound).mockResolvedValue({
+      setting: {
+        autoAdd: false,
+        probeURL: "https://www.gstatic.com/generate_204",
+        probeInterval: "300s",
+        type: "keepcurrent",
+        selected: "",
+      },
+    });
+    wrapper = mountWithApp(DashboardView);
+    await flushPromises();
+    expect(wrapper.get(".dashboard-connection").text()).toContain("Standalone");
+    expect(wrapper.get(".dashboard-mode-chip").text()).toBe(
+      "Pinned (switches on failure)",
+    );
+
+    vi.mocked(getOutbound).mockResolvedValue({
+      setting: {
+        autoAdd: true,
+        probeURL: "https://www.gstatic.com/generate_204",
+        probeInterval: "300s",
+        type: "random",
+        selected: "",
+      },
+    });
+    await (wrapper.vm as unknown as { sync(): Promise<void> }).sync();
+    await flushPromises();
+    expect(wrapper.get(".dashboard-mode-chip").text()).toBe(
+      "Auto (1 member), automatic membership",
+    );
   });
 
   test("autosaves the whole form from a quick control", async () => {

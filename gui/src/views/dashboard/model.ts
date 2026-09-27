@@ -1,15 +1,18 @@
-import { computed, onMounted, ref, shallowRef } from "vue";
+import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
 import "@/plugins/dayjs";
 import {
   deleteV2ray,
+  getOutbound,
+  getOutbounds,
   getPingLatency,
   getTouch,
   postV2ray,
   putOutboundConnections,
   putOutboundSelection,
   putSubscription,
+  type OutboundSetting,
 } from "@/api";
 import { watchConnected } from "@/api/connect";
 import { errorText } from "@/api/errors";
@@ -24,6 +27,7 @@ import { openLoading, useConfirm, useDialog, useNotify } from "@/composables";
 import ImportDialog from "@/dialogs/Import.vue";
 import SharingDialog from "@/dialogs/Sharing.vue";
 import SubscriptionDialog from "@/dialogs/Subscription.vue";
+import OutboundGroupDialog from "@/dialogs/OutboundGroup.vue";
 import PortsDialog from "@/dialogs/settings/Ports.vue";
 import RoutingADialog from "@/dialogs/settings/RoutingA.vue";
 import GroupMembersDialog from "./GroupMembers.vue";
@@ -67,6 +71,13 @@ export function useDashboard() {
   const selecting = ref(false);
   const testing = ref<string>();
   const measured = ref(new Map<string, string>());
+  const groupSetting = ref<OutboundSetting>({
+    probeURL: "",
+    probeInterval: "300s",
+    autoAdd: false,
+    type: "leastping",
+    selected: "",
+  });
   const updating = ref<number>();
   const updatingAll = ref(false);
   const members = computed<DashboardMember[]>(() =>
@@ -107,12 +118,12 @@ export function useDashboard() {
         ];
       }),
   );
-  const groupAutomatic = computed(() =>
-    store.automaticOutbounds.includes(store.outboundName),
-  );
+  const groupAutomatic = computed(() => !!groupSetting.value.autoAdd);
   const nodeInUse = computed(() => {
     const pinned = members.value.find((member) => member.which.selected);
-    if (pinned) return pinned;
+    if (pinned || groupSetting.value.type === "fixed") return pinned;
+    const active = members.value.find((member) => member.which.active);
+    if (active) return active;
     let best: DashboardMember | undefined;
     for (const member of members.value) {
       if (
@@ -243,6 +254,19 @@ export function useDashboard() {
       overlay.close();
     }
   }
+  /** editGroupSettings opens the policy for the group named on this card. */
+  async function editGroupSettings() {
+    const outbound = store.outboundName;
+    const saved = await openDialog<boolean>(
+      OutboundGroupDialog,
+      { outbound },
+      { width: 440 },
+    ).result;
+    if (!saved) return;
+    const groups = await getOutbounds().catch(() => null);
+    if (groups) store.setOutbounds(groups.outbounds, groups.automaticOutbounds);
+    await sync();
+  }
   /** editRoutingA opens the RoutingA editor. */
   function editRoutingA() {
     openDialog(RoutingADialog, {}, { width: 960 });
@@ -252,10 +276,31 @@ export function useDashboard() {
     openDialog(PortsDialog, {}, { width: 520 });
   }
 
-  /** sync reloads the touch; the shell calls it when the socket reopens. */
-  async function sync() {
-    await getTouch().then(apply).catch(report);
+  async function loadGroupSetting(outbound = store.outboundName) {
+    try {
+      const response = await getOutbound(outbound);
+      if (store.outboundName === outbound)
+        groupSetting.value = response.setting;
+    } catch (err) {
+      report(err);
+    }
   }
+
+  /** sync reloads the touch and the selected group's policy. */
+  async function sync() {
+    await Promise.all([
+      getTouch().then(apply).catch(report),
+      loadGroupSetting(),
+    ]);
+  }
+
+  watch(
+    () => store.outboundName,
+    () => {
+      measured.value.clear();
+      void sync();
+    },
+  );
 
   onMounted(async () => {
     await Promise.all([sync(), loadQuick()]);
@@ -290,6 +335,10 @@ export function useDashboard() {
     selecting.value = true;
     try {
       apply(await putOutboundSelection({ outbound, which }));
+      const groups = await getOutbounds().catch(() => null);
+      if (groups)
+        store.setOutbounds(groups.outbounds, groups.automaticOutbounds);
+      await loadGroupSetting(outbound);
       return true;
     } catch (err) {
       notify.warning(errorText(err));
@@ -448,10 +497,12 @@ export function useDashboard() {
     error,
     members,
     groupAutomatic,
+    groupSetting,
     nodeInUse,
     editPorts,
     editRoutingA,
     editGroup,
+    editGroupSettings,
     importNodes,
     subscriptions,
     quick: settings.form,

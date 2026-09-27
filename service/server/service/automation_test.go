@@ -346,6 +346,16 @@ func TestValidateOutboundSettingAcceptsSupportedStrategies(t *testing.T) {
 			t.Fatalf("strategy %q was rejected: %v", strategy, err)
 		}
 	}
+	fixed := configure.DefaultOutboundSetting()
+	fixed.Type = configure.Fixed
+	fixed.Selected = "socks5://server.example:1080"
+	if err := ValidateOutboundSetting(fixed); err != nil {
+		t.Fatalf("fixed strategy was rejected: %v", err)
+	}
+	fixed.Selected = ""
+	if err := ValidateOutboundSetting(fixed); err == nil {
+		t.Fatal("fixed strategy without a selected server was accepted")
+	}
 	setting := configure.DefaultOutboundSetting()
 	setting.Type = "unsupported"
 	if err := ValidateOutboundSetting(setting); err == nil {
@@ -557,7 +567,7 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 	}
 }
 
-func TestKeepCurrentManualPinOverridesWorkerChoice(t *testing.T) {
+func TestLegacyManualPinBecomesFixedAndStopsWorker(t *testing.T) {
 	nodes := prepareManualStickyGroup(t)
 	setting := configure.GetOutboundSetting("proxy")
 	setting.Selected = nodes[0].ExportToURL()
@@ -576,8 +586,8 @@ func TestKeepCurrentManualPinOverridesWorkerChoice(t *testing.T) {
 		return nil
 	}
 	a.step(context.Background())
-	if got := configure.GetOutboundSetting("proxy"); got.Selected != setting.Selected || got.StickyCurrent != setting.StickyCurrent {
-		t.Fatalf("manual pin or internal state changed: %+v", got)
+	if got := configure.GetOutboundSetting("proxy"); got.Type != configure.Fixed || got.Selected != setting.Selected || got.StickyCurrent != "" {
+		t.Fatalf("legacy manual pin was not normalized to fixed: %+v", got)
 	}
 }
 

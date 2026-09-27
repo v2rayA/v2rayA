@@ -56,7 +56,12 @@ export default {
     moreMembers: "Mais 1 | Mais {n}",
     inUse: "Nó em uso",
     pinned: "Fixado",
+    pinnedUnavailable: "Servidor fixado indisponível",
+    pinnedFailover: "Fixado (troca em caso de falha)",
     balanced: "Automático (1 membro) | Automático ({n} membros)",
+    autoFilled: "{automatic}, preenchimento automático",
+    auto: "Automático",
+    chooseServer: "Escolher servidor",
     switchNode: "Trocar",
     proxyGroup: "Grupo de proxy",
     editGroup: "Adicionar ou remover nós",
@@ -597,7 +602,8 @@ export default {
       "Verifica após mudanças na lista e a cada intervalo. Mantém membros aprovados nos testes de URL e velocidade; se todos forem lentos, mantém o mais rápido acessível.",
     updateMembers: "Atualizar lista de servidores",
     membersUpdated: "Lista de servidores do grupo atualizada",
-    membersUpdateFailed: "Falha ao atualizar a lista de servidores do grupo: {message}",
+    membersUpdateFailed:
+      "Falha ao atualizar a lista de servidores do grupo: {message}",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',
@@ -614,7 +620,13 @@ export default {
     strategyHelp:
       "Testa a URL configurada e baixa uma amostra de 256 KiB ao mesmo tempo. Servidores abaixo de 100 KiB/s são ignorados enquanto houver um mais rápido; se todos forem lentos, usa o acessível mais rápido.",
     strategyHelpAction: "Sobre as estratégias de conexão",
+    configureSelected: "Configurar o grupo de proxy selecionado",
+    fixedRequiresServer:
+      "Escolha primeiro um servidor específico no cartão Grupo de proxy.",
+    fixedServerSelected:
+      "O servidor fixado no cartão Grupo de proxy não será trocado automaticamente.",
     strategies: {
+      fixed: "Não trocar",
       leastPing: "Menor latência",
       keepCurrent: "Manter atual até falhar",
       roundRobin: "Alternância sequencial",
@@ -622,6 +634,8 @@ export default {
       firstAvailable: "Primeiro disponível",
     },
     strategyDetails: {
+      fixed:
+        "Sempre usa o servidor fixado e desativa verificações e preenchimento automáticos.",
       leastping:
         "Escolhe a menor latência da URL entre os servidores aprovados no teste de velocidade.",
       keepcurrent:
