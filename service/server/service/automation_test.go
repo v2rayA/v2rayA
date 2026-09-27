@@ -321,7 +321,7 @@ func TestForcedGroupRefreshDoesNotWaitForSubscriptionDownload(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := newAutomation()
-	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(context.Context, string) ([]serverObj.ServerObj, string, error) {
 		t.Fatal("manual group refresh downloaded a subscription")
 		return nil, "", nil
 	}
