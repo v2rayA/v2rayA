@@ -130,6 +130,21 @@ func PutOutbound(ctx *gin.Context) {
 	} else {
 		selected := previous.Selected
 		next.Selected = ""
+		if next.Type == configure.RoundRobin && !next.AutoAdd {
+			// Keep the route that was serving traffic while the worker measures
+			// the remaining members. An empty eligibility list would produce an
+			// unroutable group during this first core reload.
+			switch {
+			case previous.EligibleMembers != "":
+				next.EligibleMembers = previous.EligibleMembers
+			case selected != "":
+				next.EligibleMembers = configure.NodeFingerprint(selected)
+			case previous.StickyCurrent != "":
+				next.EligibleMembers = previous.StickyCurrent
+			default:
+				next.EligibleMembers = initialStickyCurrent(data.Outbound, "")
+			}
+		}
 		if next.Type != previous.Type {
 			next.StickyCurrent = ""
 			if configure.UsesWorkerSelection(next.Type) {

@@ -601,23 +601,31 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 					stickyChanged = nextCurrent != currentSetting.StickyCurrent
 					nextSetting.StickyCurrent = nextCurrent
 				}
-				eligibleChanged := false
-				if currentSetting.Type == configure.RoundRobin && !currentSetting.AutoAdd {
-					eligibleMembers := strings.Join(eligibleFingerprints, " ")
-					eligibleChanged = currentSetting.EligibleMembers != eligibleMembers
-					nextSetting.EligibleMembers = eligibleMembers
-				}
+				// Cache measured members for every strategy. Switching to round
+				// robin can then use the already verified set in its first reload,
+				// instead of restarting the core again after a second probe.
+				eligibleMembers := strings.Join(eligibleFingerprints, " ")
+				eligibleChanged := currentSetting.EligibleMembers != eligibleMembers
+				nextSetting.EligibleMembers = eligibleMembers
 				membershipChanged := currentSetting.AutoAdd && !sameMembers(configure.GetConnectedServersByOutbound(name).Get(), members)
 				switch {
-				case stickyChanged || eligibleChanged:
+				case stickyChanged || (eligibleChanged && currentSetting.Type == configure.RoundRobin && !currentSetting.AutoAdd):
 					err = a.applyState(name, nextSetting, members, currentSetting.AutoAdd)
 				case membershipChanged && configure.UsesWorkerSelection(currentSetting.Type):
 					// The running core contains only the worker-selected node. If
 					// that choice is unchanged, the other members affect the next
 					// probe, not the current routing config.
 					err = a.applyMembers(name, members)
+					if err == nil && eligibleChanged {
+						err = configure.SetOutboundSetting(name, nextSetting)
+					}
 				case membershipChanged:
 					err = a.applyGroup(name, members)
+					if err == nil && eligibleChanged {
+						err = configure.SetOutboundSetting(name, nextSetting)
+					}
+				case eligibleChanged:
+					err = configure.SetOutboundSetting(name, nextSetting)
 				}
 				if err == nil && (stickyChanged || eligibleChanged || membershipChanged) {
 					log.Info("[Groups] %s: %d/%d candidates available", name, len(members), len(candidates))

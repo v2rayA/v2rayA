@@ -827,6 +827,33 @@ func TestRoundRobinWorkerFiltersSlowMembers(t *testing.T) {
 	}
 }
 
+func TestWorkerCachesEligibleMembersWithoutReload(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Type = configure.KeepCurrent
+	setting.StickyCurrent = configure.NodeFingerprint(nodes[0].ExportToURL())
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		return []subscriptionProbeResult{
+			{throughput: 200 * 1024, speedMeasured: true},
+			{throughput: 180 * 1024, speedMeasured: true},
+		}
+	}
+	a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
+		t.Fatal("caching healthy members restarted the core")
+		return nil
+	}
+	a.step(context.Background())
+	want := configure.NodeFingerprint(nodes[0].ExportToURL()) + " " + configure.NodeFingerprint(nodes[1].ExportToURL())
+	got := configure.GetOutboundSetting("proxy")
+	if got.StickyCurrent != setting.StickyCurrent || got.EligibleMembers != want {
+		t.Fatalf("cached group state = %+v, want unchanged route and eligible %q", got, want)
+	}
+}
+
 func TestAutomaticKeepCurrentAppliesMembershipAndChoiceTogether(t *testing.T) {
 	nodes := prepareManualStickyGroup(t)
 	setting := configure.GetOutboundSetting("proxy")

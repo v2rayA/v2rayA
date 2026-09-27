@@ -342,7 +342,7 @@ func (t *Template) resolveOutbounds(
 	// Its own traffic is blocked; unrelated groups and direct routing remain intact.
 	for _, name := range configure.GetOutbounds() {
 		groupSetting := configure.GetOutboundSetting(name)
-		if (groupSetting.AutoAdd || configure.UsesWorkerSelection(groupSetting.Type)) && len(serverData.OutboundName2ServerObjs[name]) == 0 {
+		if (groupSetting.AutoAdd || configure.UsesWorkerProbe(groupSetting.Type) || groupSetting.Type == configure.Fixed) && len(serverData.OutboundName2ServerObjs[name]) == 0 {
 			blocked := coreObj.OutboundObject{Tag: name, Protocol: "blackhole"}
 			if name == configure.DefaultOutboundName {
 				t.Outbounds = append([]coreObj.OutboundObject{blocked}, t.Outbounds...)

@@ -39,6 +39,11 @@ func TestEmptyManagedProxyBlocksOnlyItsOwnTraffic(t *testing.T) {
 			setting.Type = configure.FirstAvailable
 			return setting
 		}()},
+		{name: "round robin", setting: func() configure.OutboundSetting {
+			setting := configure.DefaultOutboundSetting()
+			setting.Type = configure.RoundRobin
+			return setting
+		}()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			old := configure.GetOutboundSetting(configure.DefaultOutboundName)

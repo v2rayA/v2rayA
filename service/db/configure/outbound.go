@@ -46,8 +46,8 @@ type OutboundSetting struct {
 	// instead of a share link so the internal choice does not duplicate node
 	// credentials in API responses or logs.
 	StickyCurrent string `json:"stickyCurrent,omitempty"`
-	// EligibleMembers contains worker-measured fingerprints for strategies
-	// that still balance multiple nodes in the core.
+	// EligibleMembers caches worker-measured healthy fingerprints for every
+	// automatic strategy. RoundRobin uses them to balance multiple nodes.
 	EligibleMembers string `json:"eligibleMembers,omitempty"`
 }
 

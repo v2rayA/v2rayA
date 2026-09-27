@@ -288,6 +288,55 @@ func TestWorkerPolicyChangesKeepTheSelectedServer(t *testing.T) {
 	}
 }
 
+func TestRoundRobinBootstrapsFromCurrentWorkerSelection(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	current := configure.NodeFingerprint("socks5://selected.example:1080")
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.Random
+	setting.StickyCurrent = current
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"roundrobin"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("round-robin transition failed: %s", recorder.Body.String())
+	}
+	got := configure.GetOutboundSetting("proxy")
+	if got.Type != configure.RoundRobin || got.EligibleMembers != current {
+		t.Fatalf("round-robin bootstrap = %+v; want current member eligible", got)
+	}
+}
+
+func TestRoundRobinStartsWithCachedHealthyMembers(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	first := configure.NodeFingerprint("socks5://first.example:1080")
+	second := configure.NodeFingerprint("socks5://second.example:1080")
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.Random
+	setting.StickyCurrent = first
+	setting.EligibleMembers = first + " " + second
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"roundrobin"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("round-robin transition failed: %s", recorder.Body.String())
+	}
+	if got := configure.GetOutboundSetting("proxy").EligibleMembers; got != setting.EligibleMembers {
+		t.Fatalf("round-robin discarded measured members %q; want %q", got, setting.EligibleMembers)
+	}
+}
+
 func TestPutOutboundInitializesAndHidesKeepCurrentState(t *testing.T) {
 	previousSetting := configure.GetOutboundSetting("proxy")
 	previousMembers := configure.GetConnectedServersByOutbound("proxy")
