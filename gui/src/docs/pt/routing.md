@@ -44,6 +44,8 @@ Nomes que existem apenas nas compilações de Loyalsoldier (`gfw`, `apple-cn`, `
 
 O modo de lista edita cada regra com um formulário; o modo de texto mostra números de linha, realce de sintaxe e uma verificação por linha. A referência ao lado do editor insere exemplos na posição do cursor, e sua seção **Modelos** contém conjuntos completos de regras para as políticas comuns: insira um antes de suas próprias regras ou substitua todo o conjunto de regras por ele. As regras são importadas e exportadas como um arquivo de texto.
 
+O modelo para a Rússia encaminha `geosite:category-ru` diretamente, exceto pelos domínios de exceção listados antes dessa regra; todo o restante usa o proxy. Ele é uma cópia incorporada do [routinga-russia](https://github.com/wywywywycloud/routinga-russia), não uma lista atualizada automaticamente, e requer um `geosite.dat` com `category-ru`.
+
 Salvar recarrega um núcleo em execução com as novas regras; quando o núcleo as rejeita, o v2rayA restaura as regras anteriores e mostra o erro do núcleo, que indica o texto problemático. Um núcleo parado adota as regras na próxima inicialização.
 
 ## Entradas personalizadas

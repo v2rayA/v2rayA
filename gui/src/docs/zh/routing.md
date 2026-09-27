@@ -44,6 +44,8 @@ domain(domain: corp.example) -> office
 
 列表模式用表单编辑每条规则；文本模式提供行号、着色和逐行检查。编辑器旁的语法参考可把示例插入到光标处，其中**模板**一节是常见策略的完整规则集：插入到自己的规则之前，或者用它替换整个规则集。规则可导入导出为文本文件。
 
+俄罗斯模板让 `geosite:category-ru` 直连，但排在它前面的例外域名走代理；其余流量也走代理。此模板是 [routinga-russia](https://github.com/wywywywycloud/routinga-russia) 的内置快照，不会自动更新，并且需要包含 `category-ru` 的 `geosite.dat`。
+
 保存后运行中的内核以新规则重新加载；内核拒绝规则时 v2rayA 恢复原规则并显示内核的错误，错误信息指出出错的内容。已停止的内核在下次启动时读取新规则。
 
 ## 自定义入站
