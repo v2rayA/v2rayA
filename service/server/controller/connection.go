@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"context"
 	"fmt"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -10,8 +13,16 @@ import (
 )
 
 var (
-	refreshAutomaticGroups = service.RefreshAutomaticGroups
-	startV2ray             = service.StartV2ray
+	refreshAutomaticGroups   = service.RefreshAutomaticGroups
+	startV2ray               = service.StartV2ray
+	needsInitialGroupRefresh = func() bool {
+		for _, name := range configure.GetOutbounds() {
+			if configure.GetOutboundSetting(name).AutoAdd && configure.GetConnectedServersByOutbound(name).Len() == 0 {
+				return true
+			}
+		}
+		return false
+	}
 )
 
 func PostConnection(ctx *gin.Context) {
@@ -58,11 +69,14 @@ func DeleteConnection(ctx *gin.Context) {
 }
 
 func PostV2ray(ctx *gin.Context) {
-	// A manual start must build the core from a freshly checked automatic
-	// membership list, rather than waiting for the group's next interval.
-	if err := refreshAutomaticGroups(ctx.Request.Context(), ""); err != nil {
-		common.ResponseError(ctx, logError(fmt.Errorf("failed to refresh automatic groups: %w", err)))
-		return
+	// An empty automatic group needs its first members before the core starts.
+	// Existing members let us start immediately while checking them in the background.
+	initialRefresh := needsInitialGroupRefresh()
+	if initialRefresh {
+		if err := refreshAutomaticGroups(ctx.Request.Context(), ""); err != nil {
+			common.ResponseError(ctx, logError(fmt.Errorf("failed to refresh automatic groups: %w", err)))
+			return
+		}
 	}
 	release, ok := beginMutation(ctx)
 	if !ok {
@@ -76,6 +90,15 @@ func PostV2ray(ctx *gin.Context) {
 		return
 	}
 	getTouch(ctx)
+	if !initialRefresh {
+		go func() {
+			refreshCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+			if err := refreshAutomaticGroups(refreshCtx, ""); err != nil {
+				log.Warn("failed to refresh automatic groups after manual start: %v", err)
+			}
+		}()
+	}
 }
 
 func DeleteV2ray(ctx *gin.Context) {
