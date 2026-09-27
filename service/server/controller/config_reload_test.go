@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -236,6 +237,57 @@ func TestPutOutboundFixedPreservesSelectedServer(t *testing.T) {
 	}
 }
 
+func TestKeepCurrentInheritsTheWorkerSelectedServer(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.LeastPing
+	setting.StickyCurrent = configure.NodeFingerprint("socks5://selected.example:1080")
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"keepcurrent"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("keep-current update failed: %s", recorder.Body.String())
+	}
+	got := configure.GetOutboundSetting("proxy")
+	if got.Type != configure.KeepCurrent || got.StickyCurrent != setting.StickyCurrent {
+		t.Fatalf("keep-current chose %q instead of active %q", got.StickyCurrent, setting.StickyCurrent)
+	}
+}
+
+func TestWorkerPolicyChangesKeepTheSelectedServer(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	current := configure.NodeFingerprint("socks5://selected.example:1080")
+	for _, nextType := range []configure.ObservatoryType{
+		configure.Random, configure.FirstAvailable, configure.KeepCurrent,
+	} {
+		setting := configure.DefaultOutboundSetting()
+		setting.Type = configure.LeastPing
+		setting.StickyCurrent = current
+		if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+			t.Fatal(err)
+		}
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		body := fmt.Sprintf(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":%q}}`, nextType)
+		ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		PutOutbound(ctx)
+		if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+			t.Fatalf("change to %s failed: %s", nextType, recorder.Body.String())
+		}
+		if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != current {
+			t.Fatalf("change to %s replaced current %q with %q", nextType, current, got)
+		}
+	}
+}
+
 func TestPutOutboundInitializesAndHidesKeepCurrentState(t *testing.T) {
 	previousSetting := configure.GetOutboundSetting("proxy")
 	previousMembers := configure.GetConnectedServersByOutbound("proxy")
@@ -302,8 +354,8 @@ func TestPutOutboundInitializesAndHidesKeepCurrentState(t *testing.T) {
 	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
 		t.Fatalf("random strategy update failed: %s", recorder.Body.String())
 	}
-	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != "" {
-		t.Fatalf("leaving keep-current retained internal state %q", got)
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != want {
+		t.Fatalf("changing automatic strategy lost the active node: got %q, want %q", got, want)
 	}
 }
 

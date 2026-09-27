@@ -412,6 +412,8 @@ describe("dashboard", () => {
     wrapper = mountWithApp(DashboardView);
     await flushPromises();
     expect(wrapper.get(".dashboard-connection").text()).toContain("Standalone");
+    expect(wrapper.get(".dashboard-node-name").text()).toBe("Auto");
+    expect(wrapper.get(".dashboard-connection").text()).toContain("Node in use: Standalone");
     expect(wrapper.get(".dashboard-mode-chip").text()).toBe(
       "Pinned (switches on failure)",
     );

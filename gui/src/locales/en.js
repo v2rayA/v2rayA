@@ -629,7 +629,7 @@ export default {
       leastping:
         "Chooses the lowest URL-check latency among speed-eligible servers.",
       keepcurrent:
-        "Keeps the current speed-eligible server. After its URL check fails or its speed is excluded, selects the first eligible member in stable group order.",
+        "Keeps the current server while its URL check succeeds. A failed URL check switches immediately; speed below 100 KiB/s must be confirmed by a second check before switching to the first eligible member.",
       roundrobin:
         "Distributes new connections in turn across URL-reachable, speed-eligible members.",
       random:

@@ -308,6 +308,61 @@ func TestForcedAutomaticGroupRefreshIgnoresFutureSchedule(t *testing.T) {
 	}
 }
 
+func TestForcedGroupRefreshDoesNotWaitForSubscriptionDownload(t *testing.T) {
+	resetSubscription(t)
+	sub := configure.GetSubscription(0)
+	sub.UpdateMode = configure.SubscriptionUpdateAtInterval
+	if err := configure.SetSubscription(0, sub); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd = true
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, string, error) {
+		t.Fatal("manual group refresh downloaded a subscription")
+		return nil, "", nil
+	}
+	probes := 0
+	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		probes++
+		return make([]subscriptionProbeResult, len(nodes))
+	}
+	a.applyGroup = func(string, []configure.NodeRef) error { return nil }
+	if err := a.forceGroups(context.Background(), "proxy"); err != nil {
+		t.Fatal(err)
+	}
+	if probes != 1 {
+		t.Fatalf("manual group refresh made %d probe passes, want one", probes)
+	}
+}
+
+func TestSubscriptionCatalogChangeWakesAutomaticGroupsWithoutExistingMembers(t *testing.T) {
+	resetSubscription(t)
+	if err := configure.ClearConnects("proxy"); err != nil {
+		t.Fatal(err)
+	}
+	for {
+		select {
+		case <-automationWake:
+		default:
+			goto drained
+		}
+	}
+drained:
+	old := configure.GetSubscription(0)
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{testServer(t, 12403)}, "", false); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-automationWake:
+	default:
+		t.Fatal("new catalog server did not wake automatic group checks")
+	}
+}
+
 func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 	for _, cancelled := range []bool{false, true} {
 		a := newAutomation()
@@ -564,6 +619,131 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 	}
 	if got := configure.GetConnectedServersByOutbound("proxy").Len(); got != 2 {
 		t.Fatalf("manual membership changed during health checks: %d members", got)
+	}
+}
+
+func TestKeepCurrentConfirmsLowSpeedBeforeFailover(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	setting := configure.GetOutboundSetting("proxy")
+	setting.AutoAdd = true
+	setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Unix(7000, 0)
+	a := newAutomation()
+	a.now = func() time.Time { return now }
+	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		if len(candidates) != 2 {
+			t.Fatalf("got %d candidates, want two", len(candidates))
+		}
+		return []subscriptionProbeResult{
+			{throughput: 200 * 1024, speedMeasured: true},
+			{throughput: 50 * 1024, speedMeasured: true},
+		}
+	}
+	updates := 0
+	a.applyState = func(_ string, next configure.OutboundSetting, members []configure.NodeRef, _ bool) error {
+		updates++
+		if len(members) != 1 || next.StickyCurrent != configure.NodeFingerprint(nodes[0].ExportToURL()) {
+			t.Fatalf("confirmed slow-node failover = %+v, members=%+v", next, members)
+		}
+		return configure.SetOutboundSetting("proxy", next)
+	}
+	a.applyMembers = func(string, []configure.NodeRef) error {
+		t.Fatal("one slow sample changed group membership")
+		return nil
+	}
+	a.step(context.Background())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != setting.StickyCurrent || updates != 0 {
+		t.Fatalf("single slow sample switched current: %q, updates=%d", got, updates)
+	}
+	now = now.Add(300 * time.Second)
+	a.step(context.Background())
+	if updates != 1 {
+		t.Fatalf("confirmed low speed caused %d failovers, want one", updates)
+	}
+}
+
+func TestKeepCurrentMembershipChangeDoesNotReloadSelectedNode(t *testing.T) {
+	nodes := prepareManualStickyGroup(t)
+	setting := configure.GetOutboundSetting("proxy")
+	setting.AutoAdd = true
+	setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	a := newAutomation()
+	a.probe = func(_ context.Context, _ []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+		return []subscriptionProbeResult{{err: errors.New("backup unavailable")}, {throughput: 200 * 1024, speedMeasured: true}}
+	}
+	a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
+		t.Fatal("unchanged current node restarted the core")
+		return nil
+	}
+	a.applyGroup = func(string, []configure.NodeRef) error {
+		t.Fatal("unchanged current node restarted the group")
+		return nil
+	}
+	changes := 0
+	a.applyMembers = func(_ string, members []configure.NodeRef) error {
+		changes++
+		if len(members) != 1 || members[0].ID != 2 {
+			t.Fatalf("membership = %+v, want only the current second node", members)
+		}
+		return nil
+	}
+	a.step(context.Background())
+	if changes != 1 {
+		t.Fatalf("membership-only changes = %d, want one", changes)
+	}
+}
+
+func TestAutomaticStrategiesKeepTheRunningNodeWhenOnlyMembershipChanges(t *testing.T) {
+	for _, strategy := range []configure.ObservatoryType{
+		configure.LeastPing, configure.KeepCurrent, configure.Random, configure.FirstAvailable,
+	} {
+		t.Run(string(strategy), func(t *testing.T) {
+			nodes := prepareManualStickyGroup(t)
+			setting := configure.GetOutboundSetting("proxy")
+			setting.Type = strategy
+			setting.AutoAdd = true
+			setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
+			if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+				t.Fatal(err)
+			}
+			now := time.Unix(8000, 0)
+			a := newAutomation()
+			a.now = func() time.Time { return now }
+			a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
+				if len(candidates) != 2 {
+					t.Fatalf("got %d catalog candidates, want two", len(candidates))
+				}
+				return []subscriptionProbeResult{
+					{err: errors.New("backup unavailable")},
+					{latency: 50 * time.Millisecond, throughput: 200 * 1024, speedMeasured: true},
+				}
+			}
+			a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
+				t.Fatal("membership-only refresh restarted the running core")
+				return nil
+			}
+			a.applyGroup = func(string, []configure.NodeRef) error {
+				t.Fatal("membership-only refresh reloaded the group")
+				return nil
+			}
+			changes := 0
+			a.applyMembers = func(outbound string, members []configure.NodeRef) error {
+				changes++
+				return writeGroupMembers(outbound, members)
+			}
+			a.step(context.Background())
+			now = now.Add(300 * time.Second)
+			a.step(context.Background())
+			if changes != 1 || configure.GetOutboundSetting("proxy").StickyCurrent != setting.StickyCurrent {
+				t.Fatalf("membership changes=%d, current=%q; want one write and retained node", changes, configure.GetOutboundSetting("proxy").StickyCurrent)
+			}
+		})
 	}
 }
 

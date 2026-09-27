@@ -135,7 +135,11 @@ func PutOutbound(ctx *gin.Context) {
 			if configure.UsesWorkerSelection(next.Type) {
 				if selected != "" {
 					next.StickyCurrent = configure.NodeFingerprint(selected)
-				} else if next.Type == configure.KeepCurrent {
+				} else if configure.UsesWorkerSelection(previous.Type) && previous.StickyCurrent != "" {
+					// Keep traffic on the currently working route until the new
+					// strategy's probe decides whether it should change.
+					next.StickyCurrent = previous.StickyCurrent
+				} else {
 					next.StickyCurrent = initialStickyCurrent(data.Outbound, "")
 				}
 			}
@@ -145,6 +149,18 @@ func PutOutbound(ctx *gin.Context) {
 	}
 	if err := service.ValidateOutboundSetting(next); err != nil {
 		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))
+		return
+	}
+	if configure.UsesWorkerSelection(previous.Type) && configure.UsesWorkerSelection(next.Type) &&
+		previous.Selected == "" && next.Selected == "" && previous.StickyCurrent == next.StickyCurrent {
+		// Only the worker policy changed. The running core still routes to
+		// the same single node, so a reload would briefly interrupt traffic.
+		err := configure.SetOutboundSetting(data.Outbound, next)
+		if err != nil {
+			common.ResponseError(ctx, logError(err))
+			return
+		}
+		common.ResponseSuccess(ctx, nil)
 		return
 	}
 	err := service.ApplyGroupConfig(func() func() error {

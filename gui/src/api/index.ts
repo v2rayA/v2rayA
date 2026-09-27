@@ -132,7 +132,8 @@ export const postOutboundRefresh = (outbound: string) =>
     url: "outboundRefresh",
     method: "post",
     data: { outbound },
-    timeout: timeouts.none,
+    // A cancelled browser request also cancels the server's probe pass.
+    timeout: 120_000,
   });
 export const putOutbound = (body: {
   outbound: string;

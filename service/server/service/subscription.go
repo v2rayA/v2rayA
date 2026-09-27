@@ -307,6 +307,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 	next.Status, next.Info = string(touch.NewUpdateStatus()), info
 	previous := configure.GetConnectedServers()
 	affected := false
+	coreAffected := false
 	updated := configure.NewNodeRefs(nil)
 	previousRefs := previous.Get()
 	mappedIDs := make([]int, len(previousRefs))
@@ -335,6 +336,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			if copy.ID == 0 {
 				if disconnect || configure.GetOutboundSetting(ref.Outbound).AutoAdd {
 					affected = true
+					coreAffected = coreAffected || !configure.UsesWorkerSelection(configure.GetOutboundSetting(ref.Outbound).Type)
 					continue
 				}
 				next.Servers = append(next.Servers, raw)
@@ -342,15 +344,29 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			}
 			if copy.ID != ref.ID || next.Servers[copy.ID-1].ServerObj.ExportToURL() != raw.ServerObj.ExportToURL() {
 				affected = true
+				coreAffected = coreAffected || !configure.UsesWorkerSelection(configure.GetOutboundSetting(ref.Outbound).Type)
 			}
 		}
 		updated.Add(copy)
 	}
 	if !affected {
-		return configure.SetSubscriptionAndConnects(index, &next, updated)
+		if err := configure.SetSubscriptionAndConnects(index, &next, updated); err != nil {
+			return err
+		}
+		// New catalog nodes can become automatic group members even when this
+		// subscription had no connected references before the update.
+		NotifyAutomation()
+		return nil
 	}
 	if err := configure.SetSubscriptionAndConnects(index, &next, updated); err != nil {
 		return err
+	}
+	if !coreAffected {
+		// Worker-selected groups route through one saved node. Their worker
+		// will inspect the new catalog and reload only if that choice must
+		// change; a reference renumbering alone must not stop the core.
+		NotifyAutomation()
+		return nil
 	}
 	if v2ray.ProcessManager.Running() {
 		if err := v2ray.UpdateV2RayConfig(); err != nil {
@@ -359,6 +375,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			return subscriptionCoreApplyError(err)
 		}
 	}
+	NotifyAutomation()
 	return nil
 }
 

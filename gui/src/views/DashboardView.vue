@@ -298,11 +298,11 @@ defineExpose({ sync });
                 :aria-label="t('dashboard.switchNode')"
               >
                 <span class="md3-title-medium dashboard-wrap" dir="auto">{{
-                  nodeInUse
-                    ? nodeInUse.row.name || nodeInUse.row.address
-                    : groupSetting.type === "fixed"
-                      ? t("dashboard.pinnedUnavailable")
-                      : t("dashboard.auto")
+                  groupSetting.type !== "fixed"
+                    ? t("dashboard.auto")
+                    : nodeInUse
+                      ? nodeInUse.row.name || nodeInUse.row.address
+                      : t("dashboard.pinnedUnavailable")
                 }}</span>
               </v-btn>
             </template>
@@ -333,6 +333,14 @@ defineExpose({ sync });
               </v-list-item>
             </v-list>
           </v-menu>
+          <p
+            v-if="groupSetting.type !== 'fixed' && nodeInUse"
+            class="md3-body-small text-on-surface-variant dashboard-wrap mb-1"
+            dir="auto"
+          >
+            {{ t("dashboard.inUse") }}:
+            {{ nodeInUse.row.name || nodeInUse.row.address }}
+          </p>
           <div class="d-flex align-center flex-wrap ga-2 mb-3">
             <span
               v-if="nodeInUse"

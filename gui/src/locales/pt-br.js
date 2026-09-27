@@ -639,7 +639,7 @@ export default {
       leastping:
         "Escolhe a menor latência da URL entre os servidores aprovados no teste de velocidade.",
       keepcurrent:
-        "Mantém o servidor atual enquanto ele passa nos testes de URL e velocidade. Após falhar, escolhe o primeiro membro aprovado na ordem estável.",
+        "Mantém o servidor atual enquanto a URL responde. Falha na URL troca imediatamente; velocidade abaixo de 100 KiB/s exige uma segunda confirmação antes de escolher o primeiro membro apto.",
       roundrobin:
         "Distribui novas conexões em sequência entre membros aprovados nos testes de URL e velocidade.",
       random:

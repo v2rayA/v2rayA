@@ -87,7 +87,7 @@ test("offers connection strategies, explains them on demand, and saves keep-curr
   const details = wrapper.get("#strategy-help");
   expect(details.classes()).toContain("text-on-surface-variant");
   expect(details.text()).toContain("100 KiB/s");
-  expect(details.text()).toContain("speed-eligible server");
+  expect(details.text()).toContain("confirmed by a second check");
 
   await wrapper
     .findAll("button")
