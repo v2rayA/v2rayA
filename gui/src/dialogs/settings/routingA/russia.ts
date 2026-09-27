@@ -19,5 +19,5 @@ domain(geosite: category-ru) -> direct
 domain(domain: 1018213540.rsc.cdn77.org, domain: bitrix.info) -> direct
 
 # Local hostnames.
-domain(domain: localhost, domain: local, domain: localdomain, domain: lan, domain: home.arpa) -> direct
-domain(domain: internal) -> direct`;
+domain(geosite:private)->direct
+ip(geoip:private)->direct`;
