@@ -278,13 +278,24 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 	return
 }
 
+// SubscriptionFetchOptions controls routing for one subscription download.
+type SubscriptionFetchOptions struct {
+	// BypassProxy uses a direct client without changing the saved download route.
+	BypassProxy bool
+}
+
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
+	return UpdateSubscriptionWithOptions(index, disconnectIfNecessary, SubscriptionFetchOptions{})
+}
+
+// UpdateSubscriptionWithOptions updates a subscription with one-shot download options.
+func UpdateSubscriptionWithOptions(index int, disconnectIfNecessary bool, options SubscriptionFetchOptions) (err error) {
 	subscription := configure.GetSubscription(index)
 	if subscription == nil {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
 	}
 	addr := subscription.Address
-	c, err := subscriptionHTTPClient()
+	c, err := subscriptionHTTPClientWithOptions(options)
 	if err != nil {
 		return err
 	}
@@ -537,4 +548,11 @@ func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*co
 		members = append(members, configure.NodeRef{TYPE: configure.SubscriptionServerType, ID: i + 1, Sub: index, Outbound: "proxy"})
 	}
 	return members
+}
+
+func subscriptionHTTPClientWithOptions(options SubscriptionFetchOptions) (*http.Client, error) {
+	if options.BypassProxy {
+		return directSubscriptionClient(), nil
+	}
+	return subscriptionHTTPClient()
 }

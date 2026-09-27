@@ -147,6 +147,7 @@ export default {
     failureHelp:
       "Required, at least 1 minute. Refreshes while all servers are unavailable; stops retrying when one works.",
     intervalInvalid: "Enter a whole number from {minimum} to 525600.",
+    coreStoppedDirect: "The core is stopped. Update without the proxy?",
 
     settingsTitle: "Subscription updates",
     remarks: "Remarks",

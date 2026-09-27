@@ -145,6 +145,8 @@ export default {
     failureHelp:
       "필수, 최소 1분. 모든 서버가 불가능할 때 갱신하며 하나가 복구되면 재시도를 중지합니다.",
     intervalInvalid: "{minimum}부터 525600까지의 정수를 입력하세요.",
+    coreStoppedDirect:
+      "코어가 중지되었습니다. 프록시를 거치지 않고 업데이트하시겠습니까?",
 
     settingsTitle: "구독 업데이트",
     remarks: "별칭",

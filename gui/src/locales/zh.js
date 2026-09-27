@@ -143,6 +143,7 @@ export default {
     failureHelp:
       "必填，至少 1 分钟。所有服务器不可用时更新；任一服务器恢复后停止重试。",
     intervalInvalid: "请输入 {minimum} 到 525600 之间的整数。",
+    coreStoppedDirect: "核心已停止。是否绕过代理更新？",
 
     settingsTitle: "订阅更新",
     remarks: "别名",

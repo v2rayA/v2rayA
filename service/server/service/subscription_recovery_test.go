@@ -213,6 +213,9 @@ func TestSubscriptionDownloadsRespectProxyMode(t *testing.T) {
 					fmt.Fprint(w, base64.StdEncoding.EncodeToString([]byte("http-proxy://127.0.0.1:1234#test")))
 				}))
 				defer provider.Close()
+				originalDirect := directSubscriptionClient
+				directSubscriptionClient = func() *http.Client { return provider.Client() }
+				t.Cleanup(func() { directSubscriptionClient = originalDirect })
 				old.Address = provider.URL
 				old.AllowDirectRecovery = true
 				if err := configure.SetSubscription(0, old); err != nil {
@@ -229,6 +232,28 @@ func TestSubscriptionDownloadsRespectProxyMode(t *testing.T) {
 				}
 				if got := directRequests.Load(); got != 0 {
 					t.Fatalf("non-recovery downloads made %d direct requests", got)
+				}
+				options := SubscriptionFetchOptions{BypassProxy: true}
+				if err := UpdateSubscriptionWithOptions(0, false, options); err != nil {
+					t.Fatalf("confirmed direct update failed: %v", err)
+				}
+				if err := ImportSubscriptionWithOptions(provider.URL, options); err != nil {
+					t.Fatalf("confirmed direct import failed: %v", err)
+				}
+				if got := directRequests.Load(); got != 2 {
+					t.Fatalf("confirmed direct downloads made %d requests, want 2", got)
+				}
+				if got := configure.GetSettingNotNil().ProxyModeWhenSubscribe; got != mode {
+					t.Fatalf("confirmed direct downloads changed route to %q, want %q", got, mode)
+				}
+				if err := UpdateSubscription(0, false); err == nil {
+					t.Fatal("one-shot bypass changed the saved subscription route")
+				}
+				if err := ImportSubscription(provider.URL); err == nil {
+					t.Fatal("one-shot bypass affected a later import")
+				}
+				if got := directRequests.Load(); got != 2 {
+					t.Fatalf("later configured-route downloads made %d direct requests, want 2", got)
 				}
 			})
 		}

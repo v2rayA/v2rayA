@@ -20,7 +20,13 @@ import type {
   TouchServer,
   Which,
 } from "@/api/types";
-import { openLoading, useConfirm, useDialog, useNotify } from "@/composables";
+import {
+  openLoading,
+  useConfirm,
+  useDialog,
+  useNotify,
+  useSubscriptionBypass,
+} from "@/composables";
 import ImportDialog from "@/dialogs/Import.vue";
 import SharingDialog from "@/dialogs/Sharing.vue";
 import SubscriptionDialog from "@/dialogs/Subscription.vue";
@@ -57,6 +63,7 @@ export function useDashboard() {
   const store = useAppStore();
   const { t, locale } = useI18n();
   const notify = useNotify();
+  const subscriptionBypass = useSubscriptionBypass();
   const settings = useSettings();
   const touch = shallowRef<Touch>();
   const loading = ref(true);
@@ -329,10 +336,12 @@ export function useDashboard() {
     }
   }
 
-  async function refreshSubscription(id: number) {
+  async function refreshSubscription(id: number, bypassProxy = false) {
     updating.value = id;
     try {
-      apply(await putSubscription({ _type: "subscription", id }));
+      apply(
+        await putSubscription({ _type: "subscription", id }, bypassProxy),
+      );
       measured.value.clear();
     } catch (err) {
       notify.warning(errorText(err));
@@ -390,14 +399,28 @@ export function useDashboard() {
 
   async function updateSubscription(id: number) {
     if (subscriptionsBusy.value) return;
-    await refreshSubscription(id);
+    updating.value = id;
+    try {
+      const bypassProxy = await subscriptionBypass();
+      if (bypassProxy === null) return;
+      await refreshSubscription(id, bypassProxy);
+    } catch (err) {
+      notify.warning(errorText(err));
+    } finally {
+      updating.value = undefined;
+    }
   }
 
   async function updateAll() {
     if (subscriptionsBusy.value) return;
     updatingAll.value = true;
     try {
-      for (const { id } of subscriptions.value) await refreshSubscription(id);
+      const bypassProxy = await subscriptionBypass();
+      if (bypassProxy === null) return;
+      for (const { id } of subscriptions.value)
+        await refreshSubscription(id, bypassProxy);
+    } catch (err) {
+      notify.warning(errorText(err));
     } finally {
       updatingAll.value = false;
     }

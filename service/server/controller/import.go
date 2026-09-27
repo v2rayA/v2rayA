@@ -22,6 +22,8 @@ func PostImport(ctx *gin.Context) {
 		// say, and the scheme of URL decides.
 		Kind  string      `json:"kind"`
 		Which interface{} `json:"which"`
+		// BypassProxy selects a direct route for this one subscription fetch.
+		BypassProxy bool `json:"bypassProxy"`
 	}
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		common.ResponseError(ctx, badRequest("import", fmt.Sprintf("request body must be a JSON object with \"url\" (string) and optional \"kind\" and \"which\": %v", err)))
@@ -43,9 +45,9 @@ func PostImport(ctx *gin.Context) {
 	case "server":
 		err = service.ImportServer(body.URL, which)
 	case "subscription":
-		err = service.ImportSubscription(body.URL)
+		err = service.ImportSubscriptionWithOptions(body.URL, service.SubscriptionFetchOptions{BypassProxy: body.BypassProxy})
 	case "":
-		err = service.Import(body.URL, which)
+		err = service.ImportWithOptions(body.URL, which, service.SubscriptionFetchOptions{BypassProxy: body.BypassProxy})
 	default:
 		common.ResponseError(ctx, common.Coded("INVALID_KIND", logError(fmt.Sprintf("kind %q is not valid; expected \"server\" or \"subscription\"", body.Kind)), map[string]interface{}{"kind": body.Kind}))
 		return
