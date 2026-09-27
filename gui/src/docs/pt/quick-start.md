@@ -16,7 +16,7 @@ Execute o comando com a conta e o diretório `--config` usados pelo serviço (ta
 
 ## Importar nós
 
-Na página **Proxies**, **Importar** aceita links de compartilhamento ou uma assinatura: escolha **Link do servidor** para links `vmess://`, `vless://`, `ss://`, `trojan://`, `hysteria2://`, `tuic://`, `juicity://`, `anytls://`, `wireguard://`, `socks5://`, `http://` e `https://`, um por linha, ou uma imagem de código QR; escolha **Endereço da assinatura** para uma assinatura. Links ShadowsocksR são recusados, assim como links Shadowsocks com cifra de fluxo (`rc4-md5`, `aes-*-cfb`, `chacha20-ietf`) ou `none`: o núcleo aceita apenas as cifras AEAD e os métodos 2022-blake3. `allow_insecure` em um link é ignorado: o v2rayA nunca pula a verificação do certificado; para um servidor autoassinado, fixe o SHA-256 do certificado no formulário do nó.
+Somente um núcleo de teste por vez. O ping TCP ordena os candidatos; a URL e uma amostra completa de 256 KiB verificam pelo menos 100 KiB/s. Sem servidor adequado, o grupo bloqueia o tráfego.
 
 As assinaturas têm sua própria página, **Assinaturas** (no celular, a documentação passa para o menu da barra superior para abrir espaço). Elas mantêm seus nós agrupados e podem ser atualizadas manualmente ou por agendamento (**Configurações → Atualizar assinaturas automaticamente**). A configuração de modo ao lado determina se a atualização passa pelo proxy.
 
@@ -24,9 +24,9 @@ As assinaturas têm sua própria página, **Assinaturas** (no celular, a documen
 
 Os nós são usados por meio de grupos de proxy. O grupo `proxy` sempre existe; outros são criados, configurados e excluídos no botão de grupos da barra superior, o único lugar para isso. Um nó entra em um grupo pelo seu menu, ou selecione vários na página Proxies e escolha o grupo em **Adicionar ao grupo de proxy**. Um grupo com vários membros conectados usa o de menor latência medida (**Automático (menor latência)**); o menu do nó no painel fixa um membro para que o grupo use apenas ele, **Adicionar ou remover nós** altera os membros, e as configurações do grupo definem o endereço e o intervalo de sondagem.
 
-As estratégias são **Não trocar**, **Menor latência**, **Manter atual até falhar**, **Alternância sequencial**, **Aleatório** e **Primeiro disponível**. Não trocar exige um servidor fixado e desativa testes e preenchimento automático. Escolher um servidor no painel o fixa e ativa Não trocar. Escolher **Automático** remove a fixação e usa Menor latência; qualquer estratégia automática também remove a fixação. Manter atual até falhar mostra o servidor atual como fixado com troca em caso de falha. Aleatório escolhe um servidor da primeira faixa de latência não vazia: abaixo de 250 ms, depois 500 ms e então em passos de 250 ms até o tempo limite. Primeiro disponível escolhe o primeiro servidor funcional na ordem estável do grupo. A escolha é atualizada no intervalo e preservada entre reinicializações. O botão de interrogação ao lado da estratégia mostra a descrição da opção selecionada.
+Mede o ping de todos e testa a velocidade em ordem crescente de latência TCP, parando no primeiro adequado. Testa apenas o servidor atual. Se a URL falhar ou a velocidade ficar abaixo de 100 KiB/s, busca outro por latência TCP e velocidade. Testa os membros sequencialmente e alterna novas conexões entre os aprovados nos testes de URL e velocidade. Mede o ping, embaralha os candidatos acessíveis e testa um por vez até encontrar velocidade suficiente.
 
-Cada candidato executa o teste da URL configurada e baixa uma amostra de 256 KiB ao mesmo tempo. Servidores abaixo de 100 KiB/s são excluídos enquanto houver um mais rápido. Se todos os servidores acessíveis forem lentos, o mais rápido medido será usado.
+Somente um núcleo de teste por vez. O ping TCP ordena os candidatos; a URL e uma amostra completa de 256 KiB verificam pelo menos 100 KiB/s. Sem servidor adequado, o grupo bloqueia o tráfego.
 
 As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padrão, e qualquer outro grupo pelo próprio nome assim que tiver um membro conectado.
 
@@ -72,12 +72,14 @@ Na atualização, o modo global antigo **ao iniciar** é atribuído a todas as a
 
 ## Associação automática do grupo de proxy
 
-Ative **Adicionar servidores disponíveis automaticamente** nas configurações de um grupo para gerenciar seus membros usando toda a lista de **Proxies**, incluindo servidores locais e todas as assinaturas. A verificação ocorre após mudanças no catálogo e no intervalo do grupo; um grupo automático recém-ativado usa `300s` por padrão. Servidores disponíveis são adicionados e indisponíveis são removidos. Enquanto a opção estiver ativa, o processo automático controla a lista. **Atualizar lista de servidores** executa a verificação imediatamente, e iniciar o núcleo manualmente atualiza todos os grupos automáticos antes da inicialização. Ao desativá-la, o último resultado é preservado e a edição manual volta a funcionar.
+Adiciona todos os servidores de Proxies e assinaturas, inclusive os indisponíveis. Atualizar membros não mede ping ou velocidade nem inicia um núcleo de teste.
 
-Se nenhum servidor estiver disponível, o tráfego atribuído ao grupo será bloqueado. Um `PROXY` automático vazio continua sendo a saída de proxy padrão: o tráfego global e da porta de regras que antes passava para outro grupo também será bloqueado. Regras explícitas para outro grupo ou `direct` continuam funcionando. A interceptação é mantida durante a troca de membros; se o novo núcleo não iniciar, ela é removida para não prender o roteador atrás de um processo inoperante.
+Somente um núcleo de teste por vez. O ping TCP ordena os candidatos; a URL e uma amostra completa de 256 KiB verificam pelo menos 100 KiB/s. Sem servidor adequado, o grupo bloqueia o tráfego.
 
-Nós que dependem de plugins externos não podem ser verificados isoladamente e são excluídos dos grupos automáticos. Use um grupo manual para eles. Ainda é possível excluir servidores e assinaturas com a associação automática ativa; as referências aos nós excluídos são removidas de todos os grupos.
+- Mede o ping de todos e testa a velocidade em ordem crescente de latência TCP, parando no primeiro adequado.
 
-Na atualização, a seleção automática antiga só ativa a associação automática de `PROXY` se ao menos uma assinatura a utilizava e todos os membros atuais pertencem a essas assinaturas, ou se o grupo está vazio. Se houver servidores independentes ou nós de outras assinaturas, `PROXY` continua manual e preserva as seleções. As opções antigas são retiradas nos dois casos, e o registro explica como ativar **Adicionar servidores disponíveis automaticamente**. A migração ocorre uma vez e não altera escolhas posteriores.
+- Em cada intervalo configurado, testa apenas o servidor atual e sua velocidade. Se a URL falhar ou a velocidade ficar abaixo de 100 KiB/s, busca outro por latência TCP e velocidade.
 
-A verificação não mantém o bloqueio de configuração e usa no máximo dois núcleos temporários. A aplicação dos membros e a reinicialização do núcleo principal mantêm esse bloqueio. Uma edição espera até cinco segundos e pode retornar `REQUEST_IN_PROGRESS` durante uma reinicialização lenta; tente novamente após ela terminar. As páginas de leitura permanecem disponíveis.
+- Testa os membros sequencialmente e alterna novas conexões entre os aprovados nos testes de URL e velocidade.
+
+- Mede o ping, embaralha os candidatos acessíveis e testa um por vez até encontrar velocidade suficiente.

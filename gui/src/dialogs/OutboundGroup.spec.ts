@@ -42,12 +42,12 @@ test("enabling automatic membership uses the five-minute default and saves the g
   expect(interval?.props("modelValue")).toBe("300s");
   const automaticHelp = wrapper
     .findAll(".md3-body-large")
-    .find((paragraph) => paragraph.text().includes("entire Proxies list"));
+    .find((paragraph) => paragraph.text().includes("every server from Proxies"));
   expect(automaticHelp?.exists()).toBe(true);
   expect(
     wrapper
       .findAll(".md3-body-small")
-      .find((paragraph) => paragraph.text().includes("catalog updates"))
+      .find((paragraph) => paragraph.text().includes("Membership updates"))
       ?.classes(),
   ).toContain("text-on-surface-variant");
 
@@ -76,7 +76,6 @@ test("offers connection strategies, explains them on demand, and saves keep-curr
     { value: "keepcurrent", title: "Keep current until failure" },
     { value: "roundrobin", title: "Round robin" },
     { value: "random", title: "Random" },
-    { value: "firstavailable", title: "First available" },
   ]);
 
   select.vm.$emit("update:modelValue", "keepcurrent");
@@ -87,7 +86,7 @@ test("offers connection strategies, explains them on demand, and saves keep-curr
   const details = wrapper.get("#strategy-help");
   expect(details.classes()).toContain("text-on-surface-variant");
   expect(details.text()).toContain("100 KiB/s");
-  expect(details.text()).toContain("confirmed by a second check");
+  expect(details.text()).toContain("TCP latency and speed");
 
   await wrapper
     .findAll("button")
@@ -131,45 +130,27 @@ test("requires a pinned server for don't-switch and disables automatic controls"
   expect(putOutbound).not.toHaveBeenCalled();
 });
 
-test("orders fields and refreshes membership with the edited policy", async () => {
-  const html = wrapper.html();
-  const labels = [
-    "Connection Strategy",
-    "Probe URL",
-    "Probe Interval",
-    "Automatically add available servers",
-  ];
-  expect(labels.every((label) => html.includes(label))).toBe(true);
-  expect(labels.map((label) => html.indexOf(label))).toEqual(
-    [...labels]
-      .map((label) => html.indexOf(label))
-      .sort((left, right) => left - right),
-  );
-
-  const refresh = () =>
-    wrapper
-      .findAll("button")
-      .find((button) => button.text() === "Update server list")!;
+test("membership refresh requires saved automatic policy and never writes settings", async () => {
+  const refresh = () => wrapper.findAll("button").find((button) => button.text() === "Update server list")!;
   expect(refresh().attributes("disabled")).toBeDefined();
   wrapper.getComponent(VSwitch).vm.$emit("update:modelValue", true);
   await flushPromises();
-  expect(refresh().attributes("disabled")).toBeUndefined();
-
+  expect(refresh().attributes("disabled")).toBeDefined();
+  wrapper.unmount();
+  vi.mocked(getOutbound).mockResolvedValue({ setting: { autoAdd: true, probeURL: "https://www.gstatic.com/generate_204", probeInterval: "300s", type: "leastping" } });
+  wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
+  await flushPromises();
   await refresh().trigger("click");
   await flushPromises();
-  expect(putOutbound).toHaveBeenCalledWith({
-    outbound: "proxy",
-    setting: {
-      autoAdd: true,
-      probeURL: "https://www.gstatic.com/generate_204",
-      probeInterval: "300s",
-      type: "leastping",
-    },
-  });
+  expect(putOutbound).not.toHaveBeenCalled();
   expect(postOutboundRefresh).toHaveBeenCalledWith("proxy");
 });
 
 test("stops showing refresh progress when the group request finishes", async () => {
+  wrapper.unmount();
+  vi.mocked(getOutbound).mockResolvedValue({ setting: { autoAdd: true, probeURL: "https://www.gstatic.com/generate_204", probeInterval: "300s", type: "leastping" } });
+  wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
+  await flushPromises();
   let finish!: () => void;
   vi.mocked(postOutboundRefresh).mockReturnValue(
     new Promise<void>((resolve) => {

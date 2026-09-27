@@ -12,17 +12,16 @@ func (t ObservatoryType) String() string {
 }
 
 const (
-	LeastPing      ObservatoryType = "leastping"
-	KeepCurrent    ObservatoryType = "keepcurrent"
-	RoundRobin     ObservatoryType = "roundrobin"
-	Random         ObservatoryType = "random"
-	FirstAvailable ObservatoryType = "firstavailable"
-	Fixed          ObservatoryType = "fixed"
+	LeastPing   ObservatoryType = "leastping"
+	KeepCurrent ObservatoryType = "keepcurrent"
+	RoundRobin  ObservatoryType = "roundrobin"
+	Random      ObservatoryType = "random"
+	Fixed       ObservatoryType = "fixed"
 )
 
 func UsesWorkerSelection(strategy ObservatoryType) bool {
 	switch strategy {
-	case LeastPing, KeepCurrent, Random, FirstAvailable:
+	case LeastPing, KeepCurrent, Random:
 		return true
 	default:
 		return false

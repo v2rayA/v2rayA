@@ -125,7 +125,6 @@ const strategyLocaleKey = computed(
       keepcurrent: "keepCurrent",
       roundrobin: "roundRobin",
       random: "random",
-      firstavailable: "firstAvailable",
     })[groupSetting.value.type] ?? "leastPing",
 );
 const strategyName = computed(() =>

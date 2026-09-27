@@ -29,14 +29,9 @@ func TestEmptyManagedProxyBlocksOnlyItsOwnTraffic(t *testing.T) {
 			setting.Type = configure.LeastPing
 			return setting
 		}()},
-		{name: "random bucket", setting: func() configure.OutboundSetting {
+		{name: "random", setting: func() configure.OutboundSetting {
 			setting := configure.DefaultOutboundSetting()
 			setting.Type = configure.Random
-			return setting
-		}()},
-		{name: "first available", setting: func() configure.OutboundSetting {
-			setting := configure.DefaultOutboundSetting()
-			setting.Type = configure.FirstAvailable
 			return setting
 		}()},
 		{name: "round robin", setting: func() configure.OutboundSetting {

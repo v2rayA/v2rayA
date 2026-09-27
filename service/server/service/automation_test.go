@@ -19,7 +19,7 @@ func testAutomation(t *testing.T, mode configure.SubscriptionUpdateMode, regular
 	if err := configure.SetSubscription(0, sub); err != nil {
 		t.Fatal(err)
 	}
-	a := newAutomation()
+	a := newTestAutomation()
 	now := time.Unix(1000, 0)
 	a.now = func() time.Time { return now }
 	requests := 0
@@ -29,7 +29,7 @@ func testAutomation(t *testing.T, mode configure.SubscriptionUpdateMode, regular
 		return []serverObj.ServerObj{testServer(t, 10001)}, "", nil
 	}
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		results := make([]subscriptionProbeResult, len(nodes))
+		results := healthyTestResults(len(nodes))
 		if !healthy {
 			for i := range results {
 				results[i].err = errors.New("unavailable")
@@ -104,7 +104,7 @@ func TestSubscriptionScheduleUsesDatabaseIDAndPolicyFieldsOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	second = configure.GetSubscription(1)
-	a := newAutomation()
+	a := newTestAutomation()
 	now := time.Unix(1000, 0)
 	a.now = func() time.Time { return now }
 	requests := map[int]bool{}
@@ -164,7 +164,7 @@ func TestFailsafeProbeCannotMutateStoredNode(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL()
-	a := newAutomation()
+	a := newTestAutomation()
 	a.fetch = func(context.Context, string) ([]serverObj.ServerObj, string, error) {
 		return []serverObj.ServerObj{node}, "", nil
 	}
@@ -172,7 +172,7 @@ func TestFailsafeProbeCannotMutateStoredNode(t *testing.T) {
 		if v, ok := nodes[0].(*serverObj.V2Ray); ok {
 			v.Net = "tcp"
 		}
-		return make([]subscriptionProbeResult, len(nodes))
+		return healthyTestResults(len(nodes))
 	}
 	a.step(context.Background())
 	if got := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL(); got != want {
@@ -210,7 +210,7 @@ func TestAutomaticGroupUsesWholeCatalogWithoutMutatingIt(t *testing.T) {
 	wantRaw := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL()
 	wantGRPC := configure.GetSubscription(0).Servers[1].ServerObj.ExportToURL()
 
-	a := newAutomation()
+	a := newTestAutomation()
 	now := time.Unix(2000, 0)
 	a.now = func() time.Time { return now }
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
@@ -220,10 +220,10 @@ func TestAutomaticGroupUsesWholeCatalogWithoutMutatingIt(t *testing.T) {
 				v.Path = "GunService"
 			}
 		}
-		return make([]subscriptionProbeResult, len(nodes))
+		return healthyTestResults(len(nodes))
 	}
 	var applied []configure.NodeRef
-	a.applyGroup = func(_ string, refs []configure.NodeRef) error {
+	a.applyMembers = func(_ string, refs []configure.NodeRef) error {
 		applied = append([]configure.NodeRef(nil), refs...)
 		return nil
 	}
@@ -254,15 +254,15 @@ func TestAutomaticGroupApplyFailureUsesBackoff(t *testing.T) {
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
 	}
-	a := newAutomation()
+	a := newTestAutomation()
 	now := time.Unix(3000, 0)
 	a.now = func() time.Time { return now }
 	probes := 0
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
 		probes++
-		return make([]subscriptionProbeResult, len(nodes))
+		return healthyTestResults(len(nodes))
 	}
-	a.applyGroup = func(string, []configure.NodeRef) error {
+	a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
 		now = now.Add(5 * time.Minute)
 		return errors.New("injected slow apply failure")
 	}
@@ -287,12 +287,12 @@ func TestForcedAutomaticGroupRefreshIgnoresFutureSchedule(t *testing.T) {
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
 	}
-	a := newAutomation()
+	a := newTestAutomation()
 	a.now = func() time.Time { return time.Unix(4000, 0) }
 	probes := 0
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
 		probes++
-		return make([]subscriptionProbeResult, len(nodes))
+		return healthyTestResults(len(nodes))
 	}
 	a.applyGroup = func(string, []configure.NodeRef) error { return nil }
 
@@ -303,8 +303,8 @@ func TestForcedAutomaticGroupRefreshIgnoresFutureSchedule(t *testing.T) {
 	if err := a.forceGroups(context.Background(), "proxy"); err != nil {
 		t.Fatal(err)
 	}
-	if probes != 2 {
-		t.Fatalf("forced refresh probes = %d; want 2", probes)
+	if probes != 1 {
+		t.Fatalf("membership refresh unexpectedly probed: %d", probes)
 	}
 }
 
@@ -320,7 +320,7 @@ func TestForcedGroupRefreshDoesNotWaitForSubscriptionDownload(t *testing.T) {
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
 	}
-	a := newAutomation()
+	a := newTestAutomation()
 	a.fetch = func(context.Context, string) ([]serverObj.ServerObj, string, error) {
 		t.Fatal("manual group refresh downloaded a subscription")
 		return nil, "", nil
@@ -328,14 +328,14 @@ func TestForcedGroupRefreshDoesNotWaitForSubscriptionDownload(t *testing.T) {
 	probes := 0
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
 		probes++
-		return make([]subscriptionProbeResult, len(nodes))
+		return healthyTestResults(len(nodes))
 	}
 	a.applyGroup = func(string, []configure.NodeRef) error { return nil }
 	if err := a.forceGroups(context.Background(), "proxy"); err != nil {
 		t.Fatal(err)
 	}
-	if probes != 1 {
-		t.Fatalf("manual group refresh made %d probe passes, want one", probes)
+	if probes != 0 {
+		t.Fatalf("manual group refresh made %d probe passes, want zero", probes)
 	}
 }
 
@@ -365,14 +365,15 @@ drained:
 
 func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 	for _, cancelled := range []bool{false, true} {
-		a := newAutomation()
+		a := newTestAutomation()
 		now := time.Unix(5000, 0)
+		started := now
 		a.now = func() time.Time { return now }
 		ctx, cancel := context.WithCancel(context.Background())
 		setting := configure.DefaultOutboundSetting()
 		setting.Type = configure.RoundRobin
 		setting.AutoAdd, setting.ProbeInterval = true, "300s"
-		a.processGroup(ctx, "proxy", setting, nil, func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error) {
+		a.processGroup(ctx, "proxy", setting, []groupCandidate{{node: testServer(t, 12345)}}, func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error) {
 			now = now.Add(10 * time.Minute)
 			if cancelled {
 				cancel()
@@ -381,6 +382,9 @@ func TestAutomaticGroupSlowProbeFailureUsesCompletionTime(t *testing.T) {
 			return nil, errors.New("probe failed")
 		})
 		cancel()
+		if now.Sub(started) != 10*time.Minute {
+			t.Fatal("probe was not executed")
+		}
 		if got := a.groups["proxy"].next.Sub(now); got != 300*time.Second {
 			t.Fatalf("cancelled=%v: backoff after failure=%s, want 300s", cancelled, got)
 		}
@@ -393,7 +397,6 @@ func TestValidateOutboundSettingAcceptsSupportedStrategies(t *testing.T) {
 		configure.KeepCurrent,
 		configure.RoundRobin,
 		configure.Random,
-		configure.FirstAvailable,
 	} {
 		setting := configure.DefaultOutboundSetting()
 		setting.Type = strategy
@@ -415,139 +418,6 @@ func TestValidateOutboundSettingAcceptsSupportedStrategies(t *testing.T) {
 	setting.Type = "unsupported"
 	if err := ValidateOutboundSetting(setting); err == nil {
 		t.Fatal("unsupported strategy was accepted")
-	}
-}
-
-func TestRandomStrategyUsesLowestNonEmptyLatencyBucket(t *testing.T) {
-	nodes := []serverObj.ServerObj{
-		testServer(t, 13001),
-		testServer(t, 13002),
-		testServer(t, 13003),
-		testServer(t, 13004),
-	}
-	candidates := make([]groupCandidate, len(nodes))
-	for i, node := range nodes {
-		candidates[i] = groupCandidate{node: node}
-	}
-	results := []subscriptionProbeResult{
-		{latency: 250 * time.Millisecond},
-		{latency: 100 * time.Millisecond},
-		{latency: 200 * time.Millisecond},
-		{latency: 800 * time.Millisecond},
-	}
-	got := selectedGroupCandidate(configure.Random, "", candidates, results, func(size int) int {
-		if size != 2 {
-			t.Fatalf("eligible random bucket size = %d; want 2", size)
-		}
-		return 1
-	})
-	if want := configure.NodeFingerprint(nodes[2].ExportToURL()); got != want {
-		t.Fatalf("random choice = %q; want second member of <250 ms bucket %q", got, want)
-	}
-
-	results = []subscriptionProbeResult{
-		{latency: 300 * time.Millisecond},
-		{latency: 450 * time.Millisecond},
-		{latency: 600 * time.Millisecond},
-		{err: errors.New("timeout")},
-	}
-	got = selectedGroupCandidate(configure.Random, "", candidates, results, func(size int) int {
-		if size != 2 {
-			t.Fatalf("eligible fallback bucket size = %d; want 2", size)
-		}
-		return 0
-	})
-	if want := configure.NodeFingerprint(nodes[0].ExportToURL()); got != want {
-		t.Fatalf("random fallback choice = %q; want member of <500 ms bucket %q", got, want)
-	}
-}
-
-func TestRandomStrategyKeepsHealthySelectionBetweenChecks(t *testing.T) {
-	nodes := []serverObj.ServerObj{testServer(t, 13011), testServer(t, 13012)}
-	candidates := []groupCandidate{{node: nodes[0]}, {node: nodes[1]}}
-	current := configure.NodeFingerprint(nodes[1].ExportToURL())
-	results := []subscriptionProbeResult{
-		{latency: 10 * time.Millisecond, throughput: 200 * 1024, speedMeasured: true},
-		{latency: 80 * time.Millisecond, throughput: 200 * 1024, speedMeasured: true},
-	}
-	got := selectedGroupCandidate(configure.Random, current, candidates, results, func(int) int {
-		t.Fatal("healthy random selection was redrawn")
-		return 0
-	})
-	if got != current {
-		t.Fatalf("healthy random selection changed from %q to %q", current, got)
-	}
-	results[1].err = errors.New("URL check failed")
-	got = selectedGroupCandidate(configure.Random, current, candidates, results, func(size int) int {
-		if size != 1 {
-			t.Fatalf("failover chooser saw %d candidates, want one", size)
-		}
-		return 0
-	})
-	if want := configure.NodeFingerprint(nodes[0].ExportToURL()); got != want {
-		t.Fatalf("failed random selection = %q, want %q", got, want)
-	}
-}
-
-func TestLeastPingIgnoresSlowLowLatencyCandidate(t *testing.T) {
-	nodes := []serverObj.ServerObj{testServer(t, 13201), testServer(t, 13202), testServer(t, 13203)}
-	candidates := make([]groupCandidate, len(nodes))
-	for i, node := range nodes {
-		candidates[i] = groupCandidate{node: node}
-	}
-	results := []subscriptionProbeResult{
-		{latency: 10 * time.Millisecond, throughput: 50 * 1024, speedMeasured: true},
-		{latency: 80 * time.Millisecond, throughput: 140 * 1024, speedMeasured: true},
-		{latency: 120 * time.Millisecond, throughput: 180 * 1024, speedMeasured: true},
-	}
-	got := selectedGroupCandidate(configure.LeastPing, "", candidates, results, func(int) int {
-		t.Fatal("least-ping called the random chooser")
-		return 0
-	})
-	if want := configure.NodeFingerprint(nodes[1].ExportToURL()); got != want {
-		t.Fatalf("least-ping choice = %q; want lowest latency above 100 KiB/s %q", got, want)
-	}
-}
-
-func TestAllSlowCandidatesFallBackToFastest(t *testing.T) {
-	nodes := []serverObj.ServerObj{testServer(t, 13301), testServer(t, 13302), testServer(t, 13303)}
-	candidates := make([]groupCandidate, len(nodes))
-	for i, node := range nodes {
-		candidates[i] = groupCandidate{node: node}
-	}
-	results := []subscriptionProbeResult{
-		{latency: 10 * time.Millisecond, throughput: 20 * 1024, speedMeasured: true},
-		{latency: 100 * time.Millisecond, throughput: 90 * 1024, speedMeasured: true},
-		{latency: 50 * time.Millisecond, throughput: 60 * 1024, speedMeasured: true},
-	}
-	current := configure.NodeFingerprint(nodes[0].ExportToURL())
-	got := selectedGroupCandidate(configure.KeepCurrent, current, candidates, results, func(int) int { return 0 })
-	if want := configure.NodeFingerprint(nodes[1].ExportToURL()); got != want {
-		t.Fatalf("all-slow fallback = %q; want fastest candidate %q", got, want)
-	}
-	eligible := eligibleProbeResults(results)
-	if eligible[0] || !eligible[1] || eligible[2] {
-		t.Fatalf("all-slow eligible set = %+v; want only fastest", eligible)
-	}
-}
-
-func TestFirstAvailableUsesStableGroupOrder(t *testing.T) {
-	nodes := []serverObj.ServerObj{testServer(t, 13101), testServer(t, 13102), testServer(t, 13103)}
-	candidates := make([]groupCandidate, len(nodes))
-	for i, node := range nodes {
-		candidates[i] = groupCandidate{node: node}
-	}
-	results := []subscriptionProbeResult{
-		{err: errors.New("unavailable")},
-		{latency: 900 * time.Millisecond},
-		{latency: 50 * time.Millisecond},
-	}
-	got := selectedGroupCandidate(configure.FirstAvailable, "", candidates, results, func(int) int {
-		t.Fatal("first-available called the random chooser")
-		return 0
-	})
-	if want := configure.NodeFingerprint(nodes[1].ExportToURL()); got != want {
-		t.Fatalf("first available = %q; want stable second member %q", got, want)
 	}
 }
 
@@ -585,10 +455,10 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 		nodes[1].ExportToURL(): true,
 	}
 	now := time.Unix(6000, 0)
-	a := newAutomation()
+	a := newTestAutomation()
 	a.now = func() time.Time { return now }
 	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		results := make([]subscriptionProbeResult, len(candidates))
+		results := healthyTestResults(len(candidates))
 		for i, candidate := range candidates {
 			if !healthy[candidate.ExportToURL()] {
 				results[i].err = errors.New("unavailable")
@@ -649,131 +519,6 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 	}
 }
 
-func TestKeepCurrentConfirmsLowSpeedBeforeFailover(t *testing.T) {
-	nodes := prepareManualStickyGroup(t)
-	setting := configure.GetOutboundSetting("proxy")
-	setting.AutoAdd = true
-	setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
-	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
-		t.Fatal(err)
-	}
-	now := time.Unix(7000, 0)
-	a := newAutomation()
-	a.now = func() time.Time { return now }
-	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		if len(candidates) != 2 {
-			t.Fatalf("got %d candidates, want two", len(candidates))
-		}
-		return []subscriptionProbeResult{
-			{throughput: 200 * 1024, speedMeasured: true},
-			{throughput: 50 * 1024, speedMeasured: true},
-		}
-	}
-	updates := 0
-	a.applyState = func(_ string, next configure.OutboundSetting, members []configure.NodeRef, _ bool) error {
-		updates++
-		if len(members) != 1 || next.StickyCurrent != configure.NodeFingerprint(nodes[0].ExportToURL()) {
-			t.Fatalf("confirmed slow-node failover = %+v, members=%+v", next, members)
-		}
-		return configure.SetOutboundSetting("proxy", next)
-	}
-	a.applyMembers = func(string, []configure.NodeRef) error {
-		t.Fatal("one slow sample changed group membership")
-		return nil
-	}
-	a.step(context.Background())
-	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != setting.StickyCurrent || updates != 0 {
-		t.Fatalf("single slow sample switched current: %q, updates=%d", got, updates)
-	}
-	now = now.Add(300 * time.Second)
-	a.step(context.Background())
-	if updates != 1 {
-		t.Fatalf("confirmed low speed caused %d failovers, want one", updates)
-	}
-}
-
-func TestKeepCurrentMembershipChangeDoesNotReloadSelectedNode(t *testing.T) {
-	nodes := prepareManualStickyGroup(t)
-	setting := configure.GetOutboundSetting("proxy")
-	setting.AutoAdd = true
-	setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
-	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
-		t.Fatal(err)
-	}
-	a := newAutomation()
-	a.probe = func(_ context.Context, _ []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		return []subscriptionProbeResult{{err: errors.New("backup unavailable")}, {throughput: 200 * 1024, speedMeasured: true}}
-	}
-	a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
-		t.Fatal("unchanged current node restarted the core")
-		return nil
-	}
-	a.applyGroup = func(string, []configure.NodeRef) error {
-		t.Fatal("unchanged current node restarted the group")
-		return nil
-	}
-	changes := 0
-	a.applyMembers = func(_ string, members []configure.NodeRef) error {
-		changes++
-		if len(members) != 1 || members[0].ID != 2 {
-			t.Fatalf("membership = %+v, want only the current second node", members)
-		}
-		return nil
-	}
-	a.step(context.Background())
-	if changes != 1 {
-		t.Fatalf("membership-only changes = %d, want one", changes)
-	}
-}
-
-func TestAutomaticStrategiesKeepTheRunningNodeWhenOnlyMembershipChanges(t *testing.T) {
-	for _, strategy := range []configure.ObservatoryType{
-		configure.LeastPing, configure.KeepCurrent, configure.Random, configure.FirstAvailable,
-	} {
-		t.Run(string(strategy), func(t *testing.T) {
-			nodes := prepareManualStickyGroup(t)
-			setting := configure.GetOutboundSetting("proxy")
-			setting.Type = strategy
-			setting.AutoAdd = true
-			setting.StickyCurrent = configure.NodeFingerprint(nodes[1].ExportToURL())
-			if err := configure.SetOutboundSetting("proxy", setting); err != nil {
-				t.Fatal(err)
-			}
-			now := time.Unix(8000, 0)
-			a := newAutomation()
-			a.now = func() time.Time { return now }
-			a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-				if len(candidates) != 2 {
-					t.Fatalf("got %d catalog candidates, want two", len(candidates))
-				}
-				return []subscriptionProbeResult{
-					{err: errors.New("backup unavailable")},
-					{latency: 50 * time.Millisecond, throughput: 200 * 1024, speedMeasured: true},
-				}
-			}
-			a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
-				t.Fatal("membership-only refresh restarted the running core")
-				return nil
-			}
-			a.applyGroup = func(string, []configure.NodeRef) error {
-				t.Fatal("membership-only refresh reloaded the group")
-				return nil
-			}
-			changes := 0
-			a.applyMembers = func(outbound string, members []configure.NodeRef) error {
-				changes++
-				return writeGroupMembers(outbound, members)
-			}
-			a.step(context.Background())
-			now = now.Add(300 * time.Second)
-			a.step(context.Background())
-			if changes != 1 || configure.GetOutboundSetting("proxy").StickyCurrent != setting.StickyCurrent {
-				t.Fatalf("membership changes=%d, current=%q; want one write and retained node", changes, configure.GetOutboundSetting("proxy").StickyCurrent)
-			}
-		})
-	}
-}
-
 func TestLegacyManualPinBecomesFixedAndStopsWorker(t *testing.T) {
 	nodes := prepareManualStickyGroup(t)
 	setting := configure.GetOutboundSetting("proxy")
@@ -782,9 +527,9 @@ func TestLegacyManualPinBecomesFixedAndStopsWorker(t *testing.T) {
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
 	}
-	a := newAutomation()
+	a := newTestAutomation()
 	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		results := make([]subscriptionProbeResult, len(candidates))
+		results := healthyTestResults(len(candidates))
 		results[1].err = errors.New("unavailable")
 		return results
 	}
@@ -805,12 +550,13 @@ func TestRoundRobinWorkerFiltersSlowMembers(t *testing.T) {
 	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
 		t.Fatal(err)
 	}
-	a := newAutomation()
+	a := newTestAutomation()
 	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		return []subscriptionProbeResult{
-			{latency: 10 * time.Millisecond, throughput: 40 * 1024, speedMeasured: true},
-			{latency: 80 * time.Millisecond, throughput: 160 * 1024, speedMeasured: true},
+		r := healthyTestResults(len(candidates))
+		if candidates[0].ExportToURL() == nodes[0].ExportToURL() {
+			r[0].throughput = 40 * 1024
 		}
+		return r
 	}
 	calls := 0
 	a.applyState = func(outbound string, next configure.OutboundSetting, _ []configure.NodeRef, replaceMembers bool) error {
@@ -827,70 +573,22 @@ func TestRoundRobinWorkerFiltersSlowMembers(t *testing.T) {
 	}
 }
 
-func TestWorkerCachesEligibleMembersWithoutReload(t *testing.T) {
-	nodes := prepareManualStickyGroup(t)
-	setting := configure.GetOutboundSetting("proxy")
-	setting.Type = configure.KeepCurrent
-	setting.StickyCurrent = configure.NodeFingerprint(nodes[0].ExportToURL())
-	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
-		t.Fatal(err)
-	}
+func newTestAutomation() *automation {
 	a := newAutomation()
-	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		return []subscriptionProbeResult{
-			{throughput: 200 * 1024, speedMeasured: true},
-			{throughput: 180 * 1024, speedMeasured: true},
+	a.ping = func(_ context.Context, nodes []serverObj.ServerObj) []subscriptionProbeResult {
+		r := healthyTestResults(len(nodes))
+		for i := range r {
+			r[i].latency = time.Duration(i+1) * time.Millisecond
 		}
+		return r
 	}
-	a.applyState = func(string, configure.OutboundSetting, []configure.NodeRef, bool) error {
-		t.Fatal("caching healthy members restarted the core")
-		return nil
-	}
-	a.step(context.Background())
-	want := configure.NodeFingerprint(nodes[0].ExportToURL()) + " " + configure.NodeFingerprint(nodes[1].ExportToURL())
-	got := configure.GetOutboundSetting("proxy")
-	if got.StickyCurrent != setting.StickyCurrent || got.EligibleMembers != want {
-		t.Fatalf("cached group state = %+v, want unchanged route and eligible %q", got, want)
-	}
+	return a
 }
-
-func TestAutomaticKeepCurrentAppliesMembershipAndChoiceTogether(t *testing.T) {
-	nodes := prepareManualStickyGroup(t)
-	setting := configure.GetOutboundSetting("proxy")
-	setting.AutoAdd = true
-	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
-		t.Fatal(err)
+func healthyTestResults(n int) []subscriptionProbeResult {
+	r := make([]subscriptionProbeResult, n)
+	for i := range r {
+		r[i].speedMeasured = true
+		r[i].throughput = subscriptionMinSpeed * 2
 	}
-	a := newAutomation()
-	a.probe = func(_ context.Context, candidates []serverObj.ServerObj, _ string) []subscriptionProbeResult {
-		results := make([]subscriptionProbeResult, len(candidates))
-		for i, candidate := range candidates {
-			if candidate.ExportToURL() == nodes[0].ExportToURL() {
-				results[i].err = errors.New("unavailable")
-			}
-		}
-		return results
-	}
-	calls := 0
-	a.applyState = func(outbound string, next configure.OutboundSetting, members []configure.NodeRef, replaceMembers bool) error {
-		calls++
-		if outbound != "proxy" || !replaceMembers {
-			t.Fatalf("automatic sticky update used outbound=%q replaceMembers=%v", outbound, replaceMembers)
-		}
-		if len(members) != 1 || members[0].ID != 2 {
-			t.Fatalf("healthy membership = %+v; want only second node", members)
-		}
-		if want := configure.NodeFingerprint(nodes[1].ExportToURL()); next.StickyCurrent != want {
-			t.Fatalf("sticky current = %q; want %q", next.StickyCurrent, want)
-		}
-		return nil
-	}
-	a.applyGroup = func(string, []configure.NodeRef) error {
-		t.Fatal("membership and sticky choice were applied in separate reloads")
-		return nil
-	}
-	a.step(context.Background())
-	if calls != 1 {
-		t.Fatalf("combined state updates = %d; want 1", calls)
-	}
+	return r
 }

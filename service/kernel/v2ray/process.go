@@ -394,7 +394,7 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 			}
 			continue
 		}
-		if setting.Type == configure.RoundRobin && !setting.AutoAdd {
+		if setting.Type == configure.RoundRobin {
 			fingerprint := configure.NodeFingerprint(link)
 			for _, eligible := range strings.Fields(setting.EligibleMembers) {
 				if eligible == fingerprint {

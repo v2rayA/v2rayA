@@ -37,7 +37,6 @@ const strategyItems = computed(() => [
   { value: "keepcurrent", title: t("outbound.strategies.keepCurrent") },
   { value: "roundrobin", title: t("outbound.strategies.roundRobin") },
   { value: "random", title: t("outbound.strategies.random") },
-  { value: "firstavailable", title: t("outbound.strategies.firstAvailable") },
 ]);
 const isFixed = computed(() => setting.type === "fixed");
 const fixedReady = computed(() => !isFixed.value || !!setting.selected);
@@ -89,9 +88,6 @@ async function refreshMembers() {
   if (check && !check.valid) return;
   refreshing.value = true;
   try {
-    // The enabled switch and edited probe settings must be in force for this
-    // pass, even when the dialog's Save button has not been pressed yet.
-    await putOutbound({ outbound: props.outbound, setting: writableSetting() });
     await postOutboundRefresh(props.outbound);
     wasAutomatic.value = true;
     notify.success(t("outbound.membersUpdated"));
@@ -204,7 +200,7 @@ function setStrategy(type: OutboundSetting["type"]) {
           block
           variant="outlined"
           class="mb-2"
-          :disabled="isFixed || !setting.autoAdd"
+          :disabled="isFixed || !setting.autoAdd || !wasAutomatic"
           :loading="refreshing"
           @click="refreshMembers"
         >

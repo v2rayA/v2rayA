@@ -587,11 +587,11 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
-    autoAdd: "Automatically add available servers",
+    autoAdd: "Automatically add all servers",
     autoAddHelp:
-      "Keeps available servers from the entire Proxies list, including all subscriptions.",
+      "Adds every server from Proxies and subscriptions, including unavailable servers.",
     autoAddDetails:
-      "Checks after catalog updates and at the probe interval. Keeps URL-reachable, speed-eligible members and falls back to the fastest reachable member if all are slow.",
+      "Membership updates do not ping, test speed or start a probe core.",
     updateMembers: "Update server list",
     membersUpdated: "Group server list updated",
     membersUpdateFailed: "Failed to update group server list: {message}",
@@ -608,7 +608,7 @@ export default {
     probeInterval: "Probe Interval",
     strategy: "Connection Strategy",
     strategyHelp:
-      "Runs the configured URL check and a 256 KiB speed sample at the same time. Servers below 100 KiB/s are skipped while a faster server exists; if all are slower, the fastest reachable server is used.",
+      "One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.",
     strategyHelpAction: "About connection strategies",
     configureSelected: "Configure selected proxy group",
     fixedRequiresServer:
@@ -621,21 +621,18 @@ export default {
       keepCurrent: "Keep current until failure",
       roundRobin: "Round robin",
       random: "Random",
-      firstAvailable: "First available",
     },
     strategyDetails: {
       fixed:
         "Always uses the pinned server and disables automatic checks and membership.",
       leastping:
-        "Chooses the lowest URL-check latency among speed-eligible servers.",
+        "Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server.",
       keepcurrent:
-        "Keeps the current server while its URL check succeeds. A failed URL check switches immediately; speed below 100 KiB/s must be confirmed by a second check before switching to the first eligible member.",
+        "At every configured check interval, checks only the current server and its speed. On URL failure or speed below 100 KiB/s, selects a replacement by TCP latency and speed.",
       roundrobin:
-        "Distributes new connections in turn across URL-reachable, speed-eligible members.",
+        "Checks members sequentially and rotates new connections among servers passing URL and speed checks.",
       random:
-        "Chooses a random speed-eligible server below 250 ms, then 500 ms and later buckets. Keeps that server while healthy; chooses again only after failure.",
-      firstavailable:
-        "Chooses the first speed-eligible, URL-reachable server in stable group order.",
+        "Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.",
     },
   },
   proxyGroup: {

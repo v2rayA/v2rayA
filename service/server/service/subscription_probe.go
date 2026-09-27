@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/v2rayA/v2rayA/conf"
@@ -36,23 +35,9 @@ func probeSubscription(servers []serverObj.ServerObj, probeURL string) []subscri
 func probeSubscriptionWithContext(ctx context.Context, servers []serverObj.ServerObj, probeURL string) []subscriptionProbeResult {
 	servers = cloneProbeNodes(servers)
 	results := make([]subscriptionProbeResult, len(servers))
-	// Limit extra core processes on routers; still wait for the entire subscription.
-	jobs := make(chan int)
-	var wg sync.WaitGroup
-	for worker := 0; worker < 2; worker++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := range jobs {
-				results[i] = probeSubscriptionServerMeasurementWithContext(ctx, servers[i], probeURL, subscriptionProbeTimeout)
-			}
-		}()
-	}
 	for i := range servers {
-		jobs <- i
+		results[i] = probeSubscriptionServerMeasurementWithContext(ctx, servers[i], probeURL, subscriptionProbeTimeout)
 	}
-	close(jobs)
-	wg.Wait()
 	return results
 }
 
@@ -87,6 +72,11 @@ func probeSubscriptionServerWithContext(parent context.Context, server serverObj
 }
 
 func probeSubscriptionServerMeasurementWithContext(parent context.Context, server serverObj.ServerObj, probeURL string, timeout time.Duration) subscriptionProbeResult {
+	if err := acquireProbeCore(parent); err != nil {
+		return subscriptionProbeResult{err: err}
+	}
+	defer releaseProbeCore()
+
 	if err := parent.Err(); err != nil {
 		return subscriptionProbeResult{err: err}
 	}
@@ -193,8 +183,8 @@ type concurrentProbeResult struct {
 
 // probeHTTPWithClient checks the configured reachability URL and a bounded
 // throughput sample concurrently. The configured URL determines reachability;
-// an unavailable speed sample remains unknown so it cannot disconnect every
-// otherwise reachable candidate.
+// an unavailable speed sample remains unknown. Group selection rejects unknown
+// speed, while subscription recovery uses URL reachability alone.
 func probeHTTPWithClient(ctx context.Context, client *http.Client, probeURL, speedURL string) subscriptionProbeResult {
 	probeCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -266,6 +256,9 @@ func probeThroughput(ctx context.Context, client *http.Client, speedURL string) 
 	throughput := probeSpeed(bytesRead, elapsed)
 	if err != nil && bytesRead == 0 {
 		return 0, fmt.Errorf("speed probe downloaded no data: %w", err)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("incomplete speed sample: %w", err)
 	}
 	return throughput, nil
 }

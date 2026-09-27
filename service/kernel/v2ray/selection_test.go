@@ -75,7 +75,8 @@ func TestApplySelectionFixedGroupFailsClosedWhenItsMemberDisappears(t *testing.T
 func TestApplySelectionFiltersRoundRobinByMeasuredSpeed(t *testing.T) {
 	infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b"), socksInfo("proxy", "c")}
 	setting := configure.OutboundSetting{
-		Type: configure.RoundRobin,
+		Type:    configure.RoundRobin,
+		AutoAdd: true,
 		EligibleMembers: strings.Join([]string{
 			configure.NodeFingerprint(infos[1].Info.ExportToURL()),
 			configure.NodeFingerprint(infos[2].Info.ExportToURL()),
@@ -88,7 +89,7 @@ func TestApplySelectionFiltersRoundRobinByMeasuredSpeed(t *testing.T) {
 }
 
 func TestApplySelectionUsesWorkerChoice(t *testing.T) {
-	for _, strategy := range []configure.ObservatoryType{configure.LeastPing, configure.Random, configure.FirstAvailable} {
+	for _, strategy := range []configure.ObservatoryType{configure.LeastPing, configure.Random} {
 		t.Run(strategy.String(), func(t *testing.T) {
 			infos := []serverInfo{socksInfo("proxy", "a"), socksInfo("proxy", "b")}
 			setting := configure.OutboundSetting{

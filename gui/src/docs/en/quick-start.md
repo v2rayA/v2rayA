@@ -16,7 +16,7 @@ Run it with the account and the `--config` directory the service uses (`--lite` 
 
 ## Import nodes
 
-On the **Proxies** page, **Import** takes share links or a subscription: choose **Server link** for `vmess://`, `vless://`, `ss://`, `trojan://`, `hysteria2://`, `tuic://`, `juicity://`, `anytls://`, `wireguard://`, `socks5://`, `http://` and `https://` links, one per line, or a QR code image; choose **Subscription address** for a subscription. ShadowsocksR links are refused, and so are Shadowsocks links with a stream cipher (`rc4-md5`, `aes-*-cfb`, `chacha20-ietf`) or `none`: the core accepts the AEAD ciphers and the 2022-blake3 methods only. `allow_insecure` in a link is ignored: v2rayA never skips certificate verification; for a self-signed server, pin its certificate SHA-256 in the node's form.
+One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.
 
 Subscriptions have their own page, **Subscriptions** (on a phone the docs move to the app bar's menu to make room for it). They keep their nodes together and can be updated by hand or on a schedule (**Settings → Automatically Update Subscriptions**). The mode setting next to it decides whether the update goes through the proxy.
 
@@ -24,9 +24,9 @@ Subscriptions have their own page, **Subscriptions** (on a phone the docs move t
 
 Nodes are used through proxy groups. The group `proxy` always exists; more are created and deleted from the group button in the app bar. The selected group's settings open from the cog there or from the **Proxy group** dashboard card. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to proxy group**. **Add or remove nodes** changes the members, and the group settings set the probe address, interval and connection strategy.
 
-The strategies are **Don't switch**, **Lowest latency**, **Keep current until failure**, **Round robin**, **Random** and **First available**. Don't switch requires one pinned server and disables probes and automatic membership. Lowest latency continually prefers the reachable member with the best probe result. Keep current retains its healthy server, moves to the first reachable member in stable group order only after a failure, and does not return to an older server when it recovers. Round robin distributes new connections among reachable members. Random chooses one server from the first non-empty latency bucket: below 250 ms, then below 500 ms, and then in 250 ms steps up to the probe timeout. First available chooses the first working member in stable group order. Worker-owned choices are saved across restarts and refreshed at the probe interval. Choosing a server on the dashboard pins it and changes the strategy to Don't switch. Choosing **Auto** clears the pin and uses Lowest latency; selecting any automatic strategy also clears the pin. Use the question-mark button beside **Connection strategy** for the selected strategy's description.
+Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server. Checks only the current server. On URL failure or speed below 100 KiB/s, selects a replacement by TCP latency and speed. Checks members sequentially and rotates new connections among servers passing URL and speed checks. Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.
 
-Each candidate runs the configured URL check and a concurrent 256 KiB speed sample. Servers below 100 KiB/s are excluded while a faster server exists. If every reachable server is slower, the fastest measured server is kept as a fallback.
+One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.
 
 Every strategy fails closed: if no member is available, traffic assigned to that group is sent to a blackhole instead of going directly. **Automatically add available servers** controls only the member list; the connection strategy is independent and also applies to manually managed groups.
 
@@ -74,12 +74,16 @@ On upgrade, the previous global **update on start** mode is assigned to every ex
 
 ## Automatic proxy-group membership
 
-Enable **Automatically add available servers** in a proxy group's settings to manage that group's members from the entire **Proxies** catalog, including local servers and every subscription. The group is checked after catalog changes and at its probe interval; a newly enabled automatic group defaults to `300s`. Available servers are added and unavailable servers are removed. While enabled, the automatic worker owns the member list. **Update server list** runs the check immediately, and manually starting the core refreshes every automatic group before the core starts. Turning the option off preserves the last result and restores manual editing.
+Adds every server from Proxies and subscriptions, including unavailable servers. Membership updates do not ping, test speed or start a probe core.
 
-If no server is available, traffic assigned to that group is blocked. An empty automatic `PROXY` remains the default proxy outbound: global and rule-port traffic that previously fell through to another group is blocked too. Explicit rules for another group or `direct` keep working. Transparent interception remains active during a membership reload; if the replacement core cannot start, interception is removed so the router is not trapped behind a dead process.
+One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.
 
-Plugin-managed nodes cannot be checked in isolation and are excluded from automatic groups. Use a manual group for these nodes. Deleting a server or subscription remains possible while automatic membership is enabled; references to deleted nodes are removed from every group.
+- Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server.
 
-On upgrade, legacy subscription auto-select enables automatic membership for `PROXY` only if at least one subscription used it and every current `PROXY` member belongs to those subscriptions (or the group is empty). If there are standalone members or members from other subscriptions, `PROXY` stays manual and its selections are preserved. The old flags are retired in both cases; the log explains how to enable **Automatically add available servers** explicitly. The migration runs once and never overrides a later choice.
+- At every configured check interval, checks only the current server and its speed. On URL failure or speed below 100 KiB/s, selects a replacement by TCP latency and speed.
 
-Probing runs outside the configuration lock, with at most two temporary cores. Applying a changed membership and reloading the main core still holds that lock. An editing request waits up to five seconds and may return `REQUEST_IN_PROGRESS` during a slow reload; retry after the reload finishes. Read-only pages remain available.
+- Checks members sequentially and rotates new connections among servers passing URL and speed checks.
+
+- Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.
+
+On upgrade, legacy subscription auto-select enables automatic membership for `PROXY` only if at least one subscription used it and every current `PROXY` member belongs to those subscriptions (or the group is empty). If there are standalone members or members from other subscriptions, `PROXY` stays manual and its selections are preserved. The old flags are retired in both cases; the log explains how to enable **Automatically add all servers** explicitly. The migration runs once and never overrides a later choice.

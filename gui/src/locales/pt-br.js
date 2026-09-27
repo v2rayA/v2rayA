@@ -595,11 +595,11 @@ export default {
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
-    autoAdd: "Adicionar servidores disponíveis automaticamente",
+    autoAdd: "Adicionar todos os servidores automaticamente",
     autoAddHelp:
-      "Mantém servidores disponíveis de toda a lista de Proxies, incluindo todas as assinaturas.",
+      "Adiciona todos os servidores de Proxies e assinaturas, inclusive os indisponíveis.",
     autoAddDetails:
-      "Verifica após mudanças na lista e a cada intervalo. Mantém membros aprovados nos testes de URL e velocidade; se todos forem lentos, mantém o mais rápido acessível.",
+      "Atualizar membros não mede ping ou velocidade nem inicia um núcleo de teste.",
     updateMembers: "Atualizar lista de servidores",
     membersUpdated: "Lista de servidores do grupo atualizada",
     membersUpdateFailed:
@@ -618,7 +618,7 @@ export default {
     probeInterval: "Intervalo de sondagem",
     strategy: "Estratégia de conexão",
     strategyHelp:
-      "Testa a URL configurada e baixa uma amostra de 256 KiB ao mesmo tempo. Servidores abaixo de 100 KiB/s são ignorados enquanto houver um mais rápido; se todos forem lentos, usa o acessível mais rápido.",
+      "Somente um núcleo de teste por vez. O ping TCP ordena os candidatos; a URL e uma amostra completa de 256 KiB verificam pelo menos 100 KiB/s. Sem servidor adequado, o grupo bloqueia o tráfego.",
     strategyHelpAction: "Sobre as estratégias de conexão",
     configureSelected: "Configurar o grupo de proxy selecionado",
     fixedRequiresServer:
@@ -631,21 +631,18 @@ export default {
       keepCurrent: "Manter atual até falhar",
       roundRobin: "Alternância sequencial",
       random: "Aleatório",
-      firstAvailable: "Primeiro disponível",
     },
     strategyDetails: {
       fixed:
         "Sempre usa o servidor fixado e desativa verificações e preenchimento automáticos.",
       leastping:
-        "Escolhe a menor latência da URL entre os servidores aprovados no teste de velocidade.",
+        "Mede o ping de todos e testa a velocidade em ordem crescente de latência TCP, parando no primeiro adequado.",
       keepcurrent:
-        "Mantém o servidor atual enquanto a URL responde. Falha na URL troca imediatamente; velocidade abaixo de 100 KiB/s exige uma segunda confirmação antes de escolher o primeiro membro apto.",
+        "Em cada intervalo configurado, testa apenas o servidor atual e sua velocidade. Se a URL falhar ou a velocidade ficar abaixo de 100 KiB/s, busca outro por latência TCP e velocidade.",
       roundrobin:
-        "Distribui novas conexões em sequência entre membros aprovados nos testes de URL e velocidade.",
+        "Testa os membros sequencialmente e alterna novas conexões entre os aprovados nos testes de URL e velocidade.",
       random:
-        "Escolhe aleatoriamente um servidor aprovado abaixo de 250 ms, depois 500 ms e faixas seguintes. Mantém o servidor enquanto funcionar; sorteia novamente após falha.",
-      firstavailable:
-        "Escolhe o primeiro servidor na ordem estável que passa nos testes de URL e velocidade.",
+        "Mede o ping, embaralha os candidatos acessíveis e testa um por vez até encontrar velocidade suficiente.",
     },
   },
   proxyGroup: {

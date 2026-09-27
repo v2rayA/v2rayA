@@ -149,7 +149,9 @@ func TestPutOutboundRestoresAfterReloadFailure(t *testing.T) {
 	previous := configure.OutboundSetting{
 		ProbeURL:      "https://previous.example/ping",
 		ProbeInterval: "30s",
-		Type:          configure.LeastPing,
+		// A worker-only policy edit intentionally avoids reloading the core.
+		// Change from round-robin so this test exercises the reload path.
+		Type: configure.RoundRobin,
 	}
 	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
 		t.Fatal(err)
@@ -265,7 +267,7 @@ func TestWorkerPolicyChangesKeepTheSelectedServer(t *testing.T) {
 	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
 	current := configure.NodeFingerprint("socks5://selected.example:1080")
 	for _, nextType := range []configure.ObservatoryType{
-		configure.Random, configure.FirstAvailable, configure.KeepCurrent,
+		configure.Random, configure.LeastPing, configure.KeepCurrent,
 	} {
 		setting := configure.DefaultOutboundSetting()
 		setting.Type = configure.LeastPing

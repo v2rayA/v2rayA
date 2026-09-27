@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -103,6 +104,10 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 }
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
+	if err := acquireProbeCore(context.Background()); err != nil {
+		return nil, err
+	}
+	defer releaseProbeCore()
 	if customTestUrl != "" {
 		testURL, err := url.Parse(customTestUrl)
 		if err != nil || (testURL.Scheme != "http" && testURL.Scheme != "https") || testURL.Hostname() == "" {

@@ -571,10 +571,10 @@ export default {
     saveFailed: "无法保存 RoutingA：{message}",
   },
   outbound: {
-    autoAdd: "自动添加可用服务器",
-    autoAddHelp: "从代理页面的完整列表（包括所有订阅）中保留可用服务器。",
+    autoAdd: "自动添加所有服务器",
+    autoAddHelp: "添加代理列表和订阅中的所有服务器，包括不可用的服务器。",
     autoAddDetails:
-      "在列表更新后和每个探测周期检查，仅保留通过 URL 与速度检查的成员；若全部较慢，则保留最快的可达成员。",
+      "更新成员不会测延迟、测速或启动检测核心。",
     updateMembers: "更新服务器列表",
     membersUpdated: "分组服务器列表已更新",
     membersUpdateFailed: "更新分组服务器列表失败：{message}",
@@ -591,7 +591,7 @@ export default {
     probeInterval: "探测间隔",
     strategy: "连接策略",
     strategyHelp:
-      "同时检查配置的 URL 并下载 256 KiB 速度样本。有更快服务器时会跳过低于 100 KiB/s 的服务器；若全部更慢，则使用最快的可达服务器。",
+      "最多同时运行一个检测核心。TCP 延迟决定顺序；URL 和完整的 256 KiB 样本验证至少 100 KiB/s。无合格服务器时阻断组流量。",
     strategyHelpAction: "连接策略说明",
     configureSelected: "配置所选代理组",
     fixedRequiresServer: "请先在“代理组”卡片中选择一个具体服务器。",
@@ -602,17 +602,15 @@ export default {
       keepCurrent: "保持当前服务器直到故障",
       roundRobin: "轮询",
       random: "随机",
-      firstAvailable: "第一个可用服务器",
     },
     strategyDetails: {
       fixed: "始终使用固定服务器，并禁用自动检查和自动填充。",
-      leastping: "在通过速度检查的服务器中选择 URL 检查延迟最低的服务器。",
+      leastping: "测量所有服务器的 TCP 延迟，按延迟顺序逐个测速，找到首个合格服务器即停止。",
       keepcurrent:
-        "当前服务器通过 URL 检查时继续使用；URL 检查失败会立即切换，速度低于 100 KiB/s 需在第二次检查中确认后才切换到第一个合格成员。",
-      roundrobin: "依次把新连接分配给通过 URL 与速度检查的组成员。",
+        "每个设定的检测周期只检查当前服务器及其速度。URL 失败或速度低于 100 KiB/s 时，按 TCP 延迟和速度选择替代服务器。",
+      roundrobin: "逐个检查成员，在通过 URL 和速度检测的服务器之间轮流分配新连接。",
       random:
-        "在通过速度检查的服务器中随机选择延迟低于 250 毫秒的成员，没有则扩大到 500 毫秒及更高区间。服务器健康时保持连接，仅在故障后重新选择。",
-      firstavailable: "按稳定的组顺序选择第一个通过 URL 与速度检查的服务器。",
+        "测量延迟后随机排列可达服务器，逐个测速，直到找到合格服务器。",
     },
   },
   proxyGroup: {
