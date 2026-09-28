@@ -3,8 +3,11 @@ package coreObj
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"testing"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestPinnedPeerCertSha256Hex(t *testing.T) {
@@ -86,5 +89,77 @@ func TestPinnedPeerCertSha256HexNormalizesURLSafe(t *testing.T) {
 	want, _ := PinnedPeerCertSha256Hex("YAeLpzeMUkvQyVF5zpGov2ZMfdNfnfqkFHEf+w4EA+c=")
 	if got != want {
 		t.Fatalf("URL-safe pin must normalize to the same hex, got %q want %q", got, want)
+	}
+}
+
+func TestXHTTPRangeConfigMarshalJSON(t *testing.T) {
+	cases := []struct {
+		name string
+		in   XHTTPRangeConfig
+		want string
+	}{
+		{"single value", XHTTPRangeConfig{From: 123, To: 123}, "123"},
+		{"range", XHTTPRangeConfig{From: 123, To: 456}, `"123-456"`},
+		{"zero", XHTTPRangeConfig{}, "0"},
+		{"negative range", XHTTPRangeConfig{From: -1919, To: -810}, `"-1919--810"`},
+	}
+	for _, c := range cases {
+		got, err := jsoniter.Marshal(c.in)
+		if err != nil {
+			t.Fatalf("%s: unexpected error: %v", c.name, err)
+		}
+		if string(got) != c.want {
+			t.Errorf("%s: expected %s, got %s", c.name, c.want, got)
+		}
+	}
+}
+
+func TestXHTTPSettingsRangeJSONShape(t *testing.T) {
+	s := XHTTPSettings{
+		Path:          "/path",
+		XPaddingBytes: &XHTTPRangeConfig{From: 123, To: 456},
+		Xmux: &XHTTPXmux{
+			MaxConcurrency:   &XHTTPRangeConfig{From: 8, To: 8},
+			HKeepAlivePeriod: 30,
+		},
+	}
+	got, err := jsoniter.Marshal(s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := `{"path":"/path","xPaddingBytes":"123-456","xmux":{"maxConcurrency":8,"hKeepAlivePeriod":30}}`
+	if string(got) != want {
+		t.Errorf("expected %s, got %s", want, got)
+	}
+}
+
+func TestXHTTPRangeConfigUnmarshalJSON(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want XHTTPRangeConfig
+	}{
+		{"plain int", "123", XHTTPRangeConfig{From: 123, To: 123}},
+		{"range string", `"123-456"`, XHTTPRangeConfig{From: 123, To: 456}},
+		{"number string", `"123"`, XHTTPRangeConfig{From: 123, To: 123}},
+		{"negative range", `"-1919--810"`, XHTTPRangeConfig{From: -1919, To: -810}},
+	}
+	for _, c := range cases {
+		var got XHTTPRangeConfig
+		if err := json.Unmarshal([]byte(c.in), &got); err != nil {
+			t.Fatalf("%s: unexpected error: %v", c.name, err)
+		}
+		if got != c.want {
+			t.Errorf("%s: expected %+v, got %+v", c.name, c.want, got)
+		}
+	}
+}
+
+func TestXHTTPRangeConfigUnmarshalJSONInvalid(t *testing.T) {
+	for _, in := range []string{`"abc"`, `{"from":1,"to":2}`, "true"} {
+		var got XHTTPRangeConfig
+		if err := json.Unmarshal([]byte(in), &got); err == nil {
+			t.Errorf("%s: expected error, got %+v", in, got)
+		}
 	}
 }
