@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -558,7 +559,7 @@ func (m *UpstreamManager) ExchangeRaw(upstream *UpstreamInstance, msg *dns.Msg) 
 // exchangeViaDispatcher sends a DNS query through xray-core's internal routing
 // dispatcher. It uses the RouteDispatcher to create a connection through
 // xray-core's routing engine (like xray-core's traditional DNS module does),
-// then performs DNS-over-TCP on that connection.
+// then exchanges DNS using the configured transport on that connection.
 //
 // This replaces the external SOCKS5 proxy approach with v2raya-core's built-in
 // routing logic, supporting any outbound type (VMESS, VLESS, Trojan, etc.).
@@ -605,6 +606,45 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		return m.finishDispatched(upstream, query, resp, rtt)
 	}
 
+	if upstream.Protocol == "udp" || upstream.Protocol == "" {
+		started := time.Now()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		conn, err := m.dispatcher.Dispatch(ctx, "udp", upstream.Addr, upstream.ProxyTag)
+		if err == nil {
+			var closeOnce sync.Once
+			closeConn := func() { closeOnce.Do(func() { _ = conn.Close() }) }
+			stop := context.AfterFunc(ctx, closeConn)
+			defer stop()
+			defer closeConn()
+			packed, packErr := msg.Pack()
+			if packErr != nil {
+				return nil, packErr
+			}
+			_, err = conn.Write(packed)
+			if err == nil {
+				packet := make([]byte, 65535)
+				n, readErr := conn.Read(packet)
+				err = readErr
+				if err == nil {
+					response := new(dns.Msg)
+					if err = response.Unpack(packet[:n]); err != nil {
+						return nil, fmt.Errorf("dns unpack via UDP dispatcher: %w", err)
+					}
+					if response.Id != msg.Id {
+						return nil, fmt.Errorf("dns dispatcher response ID mismatch")
+					}
+					if !response.Truncated {
+						return m.finishDispatched(upstream, query, response, time.Since(started))
+					}
+				}
+			}
+		}
+		// UDP rejection or truncation may use TCP, but stays on the same proxy.
+		fallback := UpstreamInstance{ID: upstream.ID, Addr: upstream.Addr, Protocol: "tcp", ProxyTag: upstream.ProxyTag, ServerName: upstream.ServerName}
+		return m.exchangeViaDispatcher(&fallback, query)
+	}
+
 	// Pack DNS query for TCP transport.
 	packed, err := msg.Pack()
 	if err != nil {
@@ -627,7 +667,11 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 			return nil, fmt.Errorf("dns upstream: tls via dispatcher: %w", err)
 		}
 	}
-	defer conn.Close()
+	var closeOnce sync.Once
+	closeConn := func() { closeOnce.Do(func() { _ = conn.Close() }) }
+	stop := context.AfterFunc(ctx, closeConn)
+	defer stop()
+	defer closeConn()
 
 	// DNS over TCP: prepend 2-byte length prefix.
 	tcpMsg := make([]byte, 2+len(packed))
