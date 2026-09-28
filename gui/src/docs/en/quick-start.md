@@ -80,10 +80,14 @@ One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB
 
 - Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server.
 
-- At every configured check interval, checks only the current server and its speed. On URL failure or speed below 100 KiB/s, selects a replacement by TCP latency and speed.
+- Checks current reachability at each interval. Three consecutive failures trigger a replacement ranked by TCP latency and a complete speed sample of at least 100 KiB/s. Low or unknown speed alone does not evict a reachable current server.
 
 - Checks members sequentially and rotates new connections among servers passing URL and speed checks.
 
 - Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.
 
 On upgrade, legacy subscription auto-select enables automatic membership for `PROXY` only if at least one subscription used it and every current `PROXY` member belongs to those subscriptions (or the group is empty). If there are standalone members or members from other subscriptions, `PROXY` stays manual and its selections are preserved. The old flags are retired in both cases; the log explains how to enable **Automatically add all servers** explicitly. The migration runs once and never overrides a later choice.
+
+Reordering or renaming nodes keeps connections intact. A real membership or connection change re-evaluates the selected strategy without changing its mode. During TPROXY/REDIRECT switches, interception stays installed, including when restarting fails.
+
+A manual pin pauses automatic selection without changing the strategy or membership. Clear the pin on the Proxy group card to resume the same strategy.

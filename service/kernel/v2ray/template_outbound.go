@@ -288,7 +288,7 @@ func (t *Template) resolveOutbounds(
 		}
 		if usedByBalancer {
 			// the v2ray outbound is shared by balancers
-			outboundTag := GroupWrapper(obj.GetName())
+			outboundTag := GroupWrapper(configure.NodeFingerprint(obj.ExportToURL()))
 			c, err := obj.Configuration(serverObj.PriorInfo{
 				Variant:     t.Variant,
 				CoreVersion: t.CoreVersion,

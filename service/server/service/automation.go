@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/url"
@@ -19,19 +21,24 @@ import (
 
 var (
 	automationCancelMu sync.Mutex
-	automationCancel   context.CancelFunc
+	automationCancels  = map[*automation]context.CancelFunc{}
 	automationWake     = make(chan struct{}, 1)
+	subscriptionWake   = make(chan struct{}, 1)
 )
 
 func CancelAutomation() {
 	automationCancelMu.Lock()
 	defer automationCancelMu.Unlock()
-	if automationCancel != nil {
-		automationCancel()
+	for _, cancel := range automationCancels {
+		cancel()
 	}
 }
 
 func NotifyAutomation() {
+	select {
+	case subscriptionWake <- struct{}{}:
+	default:
+	}
 	select {
 	case automationWake <- struct{}{}:
 	default:
@@ -49,7 +56,11 @@ type subscriptionSchedule struct {
 	warnedUnprobeable                 bool
 }
 
+var errGroupSuspect = errors.New("current node failure awaits confirmation")
+
 type groupSchedule struct {
+	failures  int
+	current   string
 	signature string
 	next      time.Time
 }
@@ -63,17 +74,18 @@ type groupCandidate struct {
 type subscriptionFetcher func(context.Context, string) ([]serverObj.ServerObj, string, error)
 
 type automation struct {
-	subscriptions map[int64]*subscriptionSchedule
-	groups        map[string]*groupSchedule
-	now           func() time.Time
-	probe         func(context.Context, []serverObj.ServerObj, string) []subscriptionProbeResult
-	ping          func(context.Context, []serverObj.ServerObj) []subscriptionProbeResult
-	fetch         subscriptionFetcher
-	applyGroup    func(string, []configure.NodeRef) error
-	applyMembers  func(string, []configure.NodeRef) error
-	applyState    func(string, configure.OutboundSetting, []configure.NodeRef, bool) error
-	groupErrors   map[string]error
-	choose        func(int) int
+	subscriptionsOnly, groupsOnly bool
+	subscriptions                 map[int64]*subscriptionSchedule
+	groups                        map[string]*groupSchedule
+	now                           func() time.Time
+	probe                         func(context.Context, []serverObj.ServerObj, string) []subscriptionProbeResult
+	ping                          func(context.Context, []serverObj.ServerObj) []subscriptionProbeResult
+	fetch                         subscriptionFetcher
+	applyGroup                    func(string, []configure.NodeRef) error
+	applyMembers                  func(string, []configure.NodeRef) error
+	applyState                    func(string, configure.OutboundSetting, []configure.NodeRef, bool) error
+	groupErrors                   map[string]error
+	choose                        func(int) int
 }
 
 func newAutomation() *automation {
@@ -418,17 +430,32 @@ func connectedGroupCandidates(name string) []groupCandidate {
 func automaticGroupSignature(setting configure.OutboundSetting, candidates []groupCandidate) string {
 	identities := make([]string, len(candidates))
 	for i := range candidates {
-		identities[i] = candidates[i].identity
+		if candidates[i].node != nil {
+			identities[i] = configure.NodeFingerprint(candidates[i].node.ExportToURL())
+		}
 	}
+	sort.Strings(identities)
 	b, _ := json.Marshal(struct {
 		AutoAdd       bool
 		ProbeURL      string
 		ProbeInterval string
 		Type          configure.ObservatoryType
 		Selected      string
+		Invalidated   bool
 		Candidates    []string
-	}{setting.AutoAdd, setting.ProbeURL, setting.ProbeInterval, setting.Type, setting.Selected, identities})
+	}{setting.AutoAdd, setting.ProbeURL, setting.ProbeInterval, setting.Type, setting.Selected, setting.SelectionInvalidated, identities})
 	return string(b)
+}
+
+func groupCatalogRevision(candidates []groupCandidate) string {
+	identities := make([]string, 0, len(candidates))
+	for _, candidate := range candidates {
+		if candidate.node != nil {
+			identities = append(identities, configure.NodeFingerprint(candidate.node.ExportToURL()))
+		}
+	}
+	sort.Strings(identities)
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(identities, "\n"))))
 }
 
 func sameMembers(current []*configure.NodeRef, desired []configure.NodeRef) bool {
@@ -450,13 +477,17 @@ func sameMembers(current []*configure.NodeRef, desired []configure.NodeRef) bool
 func eligibleProbeResults(results []subscriptionProbeResult) []bool {
 	eligible := make([]bool, len(results))
 	for i, result := range results {
-		eligible[i] = result.err == nil && result.speedMeasured && result.throughput >= subscriptionMinSpeed
+		eligible[i] = result.err == nil && (result.currentHealthy || (result.speedMeasured && result.throughput >= subscriptionMinSpeed))
 	}
 	return eligible
 }
 
 // Probe only as far as the strategy needs. TCP ordering does not start a core.
 func (a *automation) selectGroup(ctx context.Context, setting configure.OutboundSetting, candidates []groupCandidate, probe func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error)) ([]subscriptionProbeResult, error) {
+	return a.selectGroupWithState(ctx, setting, candidates, probe, nil)
+}
+
+func (a *automation) selectGroupWithState(ctx context.Context, setting configure.OutboundSetting, candidates []groupCandidate, probe func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error), state *groupSchedule) ([]subscriptionProbeResult, error) {
 	results := make([]subscriptionProbeResult, len(candidates))
 	nodes := make([]serverObj.ServerObj, len(candidates))
 	for i := range candidates {
@@ -481,10 +512,27 @@ func (a *automation) selectGroup(ctx context.Context, setting configure.Outbound
 	}
 	if setting.Type == configure.KeepCurrent {
 		for i, node := range nodes {
-			if node != nil && configure.NodeFingerprint(node.ExportToURL()) == setting.StickyCurrent {
-				ok, err := check(i)
-				if err != nil || ok {
+			if node != nil && configure.MatchesNodeFingerprint(setting.StickyCurrent, node.ExportToURL()) {
+				_, err := check(i)
+				if err != nil {
 					return results, err
+				}
+				if results[i].err == nil {
+					results[i].currentHealthy = true
+					if state != nil {
+						state.failures = 0
+					}
+					return results, nil
+				}
+				if state != nil {
+					if state.current != setting.StickyCurrent {
+						state.failures = 0
+						state.current = setting.StickyCurrent
+					}
+					state.failures++
+					if state.failures < 3 {
+						return nil, errGroupSuspect
+					}
 				}
 				break
 			}
@@ -548,14 +596,8 @@ func (a *automation) syncGroupMembers(name string, candidates []groupCandidate) 
 }
 
 func (a *automation) processGroup(ctx context.Context, name string, setting configure.OutboundSetting, candidates []groupCandidate, probe func([]serverObj.ServerObj, string) ([]subscriptionProbeResult, error)) {
-	if setting.AutoAdd {
-		ConfigurationMu.Lock()
-		err := a.syncGroupMembers(name, candidates)
-		ConfigurationMu.Unlock()
-		if err != nil {
-			a.groupErrors[name] = err
-			return
-		}
+	if setting.Selected != "" {
+		return
 	}
 	signature := automaticGroupSignature(setting, candidates)
 	state := a.groups[name]
@@ -574,7 +616,20 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 	backoff := max(interval, 30*time.Second)
 	state.signature = signature
 
-	results, err := a.selectGroup(ctx, setting, candidates, probe)
+	revision := groupCatalogRevision(candidates)
+	selection := setting
+	if setting.SelectionInvalidated || (setting.CatalogRevision != "" && setting.CatalogRevision != revision) {
+		// A real catalog change re-evaluates keep-current using least-ping's
+		// speed-qualified search, without changing the configured strategy.
+		selection.StickyCurrent = ""
+		state.failures = 0
+	}
+	results, err := a.selectGroupWithState(ctx, selection, candidates, probe, state)
+	if errors.Is(err, errGroupSuspect) {
+		state.next = a.now().Add(3 * time.Second)
+		log.Info("[Groups] %s: current node failed reachability check %d/3; retaining route", name, state.failures)
+		return
+	}
 	if err == nil {
 		usable := eligibleProbeResults(results)
 		members := make([]configure.NodeRef, 0, len(candidates))
@@ -602,6 +657,8 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 				err = fmt.Errorf("catalog or group setting changed during membership check")
 			} else {
 				nextSetting := currentSetting
+				nextSetting.CatalogRevision = revision
+				nextSetting.SelectionInvalidated = false
 				stickyChanged := false
 				if configure.UsesWorkerSelection(currentSetting.Type) && currentSetting.Selected == "" {
 					nextCurrent := selectedGroupCandidate(candidates, results)
@@ -615,13 +672,13 @@ func (a *automation) processGroup(ctx context.Context, name string, setting conf
 				eligibleChanged := currentSetting.EligibleMembers != eligibleMembers
 				nextSetting.EligibleMembers = eligibleMembers
 				switch {
-				case stickyChanged || (eligibleChanged && currentSetting.Type == configure.RoundRobin):
+				case stickyChanged || (eligibleChanged && currentSetting.Type == configure.RoundRobin) || nextSetting.CatalogRevision != currentSetting.CatalogRevision || currentSetting.SelectionInvalidated:
 					err = a.applyState(name, nextSetting, nil, false)
-				case eligibleChanged:
+				case eligibleChanged || nextSetting.CatalogRevision != currentSetting.CatalogRevision:
 					err = configure.SetOutboundSetting(name, nextSetting)
 				}
 				if err == nil && (stickyChanged || eligibleChanged) {
-					log.Info("[Groups] %s: %d/%d candidates available", name, len(members), len(candidates))
+					log.Info("[Groups] %s: strategy=%s current=%s next=%s catalog=%s available=%d/%d", name, currentSetting.Type, currentSetting.StickyCurrent, nextSetting.StickyCurrent, revision, len(members), len(candidates))
 					v2ray.ApiFeed.ProductMessage("catalog_changed", nil)
 				}
 			}
@@ -669,12 +726,12 @@ func (a *automation) forceGroups(ctx context.Context, name string) error {
 func (a *automation) step(parent context.Context) time.Time {
 	ctx, cancel := context.WithCancel(parent)
 	automationCancelMu.Lock()
-	automationCancel = cancel
+	automationCancels[a] = cancel
 	automationCancelMu.Unlock()
 	defer func() {
 		cancel()
 		automationCancelMu.Lock()
-		automationCancel = nil
+		delete(automationCancels, a)
 		automationCancelMu.Unlock()
 	}()
 
@@ -687,6 +744,9 @@ func (a *automation) step(parent context.Context) time.Time {
 	}
 	active := map[int64]bool{}
 	for index := range subs {
+		if a.groupsOnly {
+			break
+		}
 		sub := &subs[index]
 		if sub.UpdateMode == configure.SubscriptionUpdateDisabled {
 			continue
@@ -705,6 +765,9 @@ func (a *automation) step(parent context.Context) time.Time {
 		}
 	}
 
+	if a.subscriptionsOnly {
+		return a.nextDeadline()
+	}
 	cache := map[string]subscriptionProbeResult{}
 	probe := func(nodes []serverObj.ServerObj, probeURL string) ([]subscriptionProbeResult, error) {
 		keys := make([]string, len(nodes))
@@ -748,6 +811,14 @@ func (a *automation) step(parent context.Context) time.Time {
 	groupCandidates := make(map[string][]groupCandidate)
 	for _, name := range configure.GetOutbounds() {
 		setting := configure.GetOutboundSetting(name)
+		if setting.AutoAdd {
+			// Snapshot and synchronize under the same lock: the independent
+			// subscription worker may otherwise renumber these references.
+			if err := a.syncGroupMembers(name, catalogCandidates); err != nil {
+				a.groupErrors[name] = err
+				continue
+			}
+		}
 		groups[name] = setting
 		if !setting.AutoAdd && configure.UsesWorkerProbe(setting.Type) {
 			groupCandidates[name] = connectedGroupCandidates(name)
@@ -783,38 +854,42 @@ func (a *automation) step(parent context.Context) time.Time {
 
 func StartAutomation() func() {
 	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
+	var workers sync.WaitGroup
+	for _, subscriptionsOnly := range []bool{false, true} {
 		worker := newAutomation()
-		for {
-			next := worker.step(ctx)
-			if ctx.Err() != nil {
-				return
-			}
-			var timer *time.Timer
-			var timerC <-chan time.Time
-			if !next.IsZero() {
-				delay := time.Until(next)
-				if delay < 0 {
-					delay = 0
-				}
-				timer = time.NewTimer(delay)
-				timerC = timer.C
-			}
-			select {
-			case <-ctx.Done():
-				if timer != nil {
-					timer.Stop()
-				}
-				return
-			case <-automationWake:
-				if timer != nil {
-					timer.Stop()
-				}
-			case <-timerC:
-			}
+		worker.subscriptionsOnly, worker.groupsOnly = subscriptionsOnly, !subscriptionsOnly
+		wake := automationWake
+		if subscriptionsOnly {
+			wake = subscriptionWake
 		}
-	}()
-	return func() { cancel(); <-done }
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for {
+				next := worker.step(ctx)
+				if ctx.Err() != nil {
+					return
+				}
+				var timer *time.Timer
+				var timerC <-chan time.Time
+				if !next.IsZero() {
+					timer = time.NewTimer(max(time.Until(next), 0))
+					timerC = timer.C
+				}
+				select {
+				case <-ctx.Done():
+					if timer != nil {
+						timer.Stop()
+					}
+					return
+				case <-wake:
+					if timer != nil {
+						timer.Stop()
+					}
+				case <-timerC:
+				}
+			}
+		}()
+	}
+	return func() { cancel(); workers.Wait() }
 }

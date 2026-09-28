@@ -123,7 +123,7 @@ func TestGroupStrategiesUseExpectedCoreStrategy(t *testing.T) {
 	}
 }
 
-func TestPreservedReloadNewProcessFailureTearsInterceptionDownOnce(t *testing.T) {
+func TestPreservedReloadFailureKeepsInterceptionUntilExplicitStop(t *testing.T) {
 	setting := *configure.NewSetting()
 	setting.Transparent = configure.TransparentProxy
 	setting.TransparentType = configure.TransparentTproxy
@@ -149,15 +149,15 @@ func TestPreservedReloadNewProcessFailureTearsInterceptionDownOnce(t *testing.T)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("start error = %v; want %v", err, wantErr)
 	}
-	if teardowns != 1 {
-		t.Fatalf("transparent teardown count = %d; want 1", teardowns)
+
+	if teardowns != 0 || manager.retainedSetting == nil || !manager.transparentOn.Load() {
+		t.Fatal("failed reload opened the transparent path")
 	}
-	if manager.retainedSetting != nil {
-		t.Fatal("retained setting survived failed reload")
+	manager.Stop(true)
+	if teardowns != 1 || manager.retainedSetting != nil || manager.transparentOn.Load() {
+		t.Fatal("explicit stop did not release retained interception exactly once")
 	}
-	if manager.transparentOn.Load() {
-		t.Fatal("transparent interception remained marked active")
-	}
+
 }
 
 func TestPausedReloadDoesNotRetainMissingInterception(t *testing.T) {

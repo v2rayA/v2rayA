@@ -615,6 +615,8 @@ export default {
       "Choose a server from the Proxy group card before using Don't switch.",
     fixedServerSelected:
       "The server pinned on the Proxy group card will not be switched automatically.",
+    stabilityHelp: "Reordering or renaming nodes keeps connections intact. A real membership or connection change re-evaluates the selected strategy without changing its mode. During TPROXY/REDIRECT switches, interception stays installed, including when restarting fails.",
+    manualOverrideHelp: "A manual pin pauses automatic selection without changing the strategy or membership. Clear the pin on the Proxy group card to resume the same strategy.",
     strategies: {
       fixed: "Don't switch",
       leastPing: "Lowest latency",
@@ -628,7 +630,7 @@ export default {
       leastping:
         "Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server.",
       keepcurrent:
-        "At every configured check interval, checks only the current server and its speed. On URL failure or speed below 100 KiB/s, selects a replacement by TCP latency and speed.",
+        "Checks current reachability at each interval. Three consecutive failures trigger a replacement ranked by TCP latency and a complete speed sample of at least 100 KiB/s. Low or unknown speed alone does not evict a reachable current server.",
       roundrobin:
         "Checks members sequentially and rotates new connections among servers passing URL and speed checks.",
       random:

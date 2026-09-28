@@ -130,8 +130,11 @@ const strategyLocaleKey = computed(
 const strategyName = computed(() =>
   t(`outbound.strategies.${strategyLocaleKey.value}`),
 );
+const hasManualSelection = computed(
+  () => !!groupSetting.value.selected || groupSetting.value.type === "fixed",
+);
 const selectionValue = computed(() =>
-  groupSetting.value.type === "fixed"
+  hasManualSelection.value
     ? (members.value.find((m) => m.which.selected)?.key ?? "missing")
     : "auto",
 );
@@ -139,10 +142,8 @@ const selectionItems = computed(() => [
   {
     value: "auto",
     title: t("dashboard.auto"),
-    subtitle:
-      groupSetting.value.type === "fixed"
-        ? t("outbound.strategies.leastPing")
-        : strategyName.value,
+    subtitle: strategyName.value,
+    disabled: groupSetting.value.type === "fixed",
   },
   ...members.value.map((m) => ({
     value: m.key,
@@ -151,7 +152,7 @@ const selectionItems = computed(() => [
   })),
 ]);
 const connectionMode = computed(() => {
-  if (groupSetting.value.type === "fixed") return t("dashboard.pinned");
+  if (hasManualSelection.value) return t("dashboard.pinned");
   if (groupSetting.value.type === "keepcurrent")
     return t("dashboard.pinnedFailover");
   const automatic = t("dashboard.balanced", members.value.length);
@@ -297,7 +298,7 @@ defineExpose({ sync });
                 :aria-label="t('dashboard.switchNode')"
               >
                 <span class="md3-title-medium dashboard-wrap" dir="auto">{{
-                  groupSetting.type !== "fixed"
+                  !hasManualSelection
                     ? t("dashboard.auto")
                     : nodeInUse
                       ? nodeInUse.row.name || nodeInUse.row.address
@@ -314,6 +315,7 @@ defineExpose({ sync });
                 :key="item.value"
                 :title="item.title"
                 :subtitle="item.subtitle || undefined"
+                :disabled="'disabled' in item && item.disabled"
                 :active="item.value === selectionValue"
                 role="menuitemradio"
                 :aria-checked="item.value === selectionValue"

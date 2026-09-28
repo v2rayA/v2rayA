@@ -176,7 +176,7 @@ func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 	return db.SubscriptionsSet(index, subscription, nil)
 }
 
-func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
+func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs, settings ...map[string]OutboundSetting) error {
 	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
 		outboundRefs := make(map[string][]*NodeRef)
 		for _, ref := range GetConnectedServers().Get() {
@@ -188,6 +188,13 @@ func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *No
 		for outbound, touches := range outboundRefs {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "connectedServers", &NodeRefs{Touches: touches}); err != nil {
 				return err
+			}
+		}
+		for _, changes := range settings {
+			for outbound, setting := range changes {
+				if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "setting", setting); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
@@ -545,14 +552,7 @@ func GetOutboundSetting(outbound string) (setting OutboundSetting) {
 	if setting.Type == "firstavailable" {
 		setting.Type = LeastPing
 	}
-	// Older releases stored a manual pin beside whichever automatic strategy
-	// was selected. Treat that persisted pin as the explicit fixed policy.
-	if setting.Selected != "" && setting.Type != Fixed {
-		setting.Type = Fixed
-		setting.AutoAdd = false
-		setting.StickyCurrent = ""
-		setting.EligibleMembers = ""
-	}
+
 	return setting
 }
 

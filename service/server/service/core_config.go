@@ -37,7 +37,18 @@ func ApplyCoreConfig(snapshot func() (restore func() error), store func() error)
 }
 
 func ApplyGroupConfig(snapshot func() (restore func() error), store func() error) error {
-	return applyCoreConfig(snapshot, store, v2ray.UpdateGroupConfig)
+	attempted := false
+	return applyCoreConfig(snapshot, store, func() error {
+		after, err := v2ray.ActiveGroupSignature()
+		if err != nil {
+			return err
+		}
+		if v2ray.ProcessManager.GroupConfigMatches(after) && !attempted {
+			return nil
+		}
+		attempted = true
+		return v2ray.UpdateGroupConfig()
+	})
 }
 
 func applyCoreConfig(snapshot func() (restore func() error), store func() error, update func() error) error {
@@ -45,7 +56,7 @@ func applyCoreConfig(snapshot func() (restore func() error), store func() error,
 	if err := store(); err != nil {
 		return err
 	}
-	if !v2ray.ProcessManager.Running() {
+	if !v2ray.ProcessManager.Running() && !v2ray.ProcessManager.InterceptionRetained() {
 		return nil
 	}
 	updateErr := update()

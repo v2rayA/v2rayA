@@ -136,7 +136,7 @@ func markSelected(connected []*configure.Which, loc *configure.Locator) {
 			continue
 		}
 		link := sr.ServerObj.ExportToURL()
-		w.Selected = setting.Selected != "" && link == setting.Selected
-		w.Active = w.Selected || (configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.NodeFingerprint(link) == setting.StickyCurrent)
+		w.Selected = setting.Selected != "" && configure.NodeFingerprint(link) == configure.NodeFingerprint(setting.Selected)
+		w.Active = w.Selected || (setting.Selected == "" && configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.MatchesNodeFingerprint(setting.StickyCurrent, link))
 	}
 }

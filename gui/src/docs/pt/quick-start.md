@@ -78,8 +78,12 @@ Somente um núcleo de teste por vez. O ping TCP ordena os candidatos; a URL e um
 
 - Mede o ping de todos e testa a velocidade em ordem crescente de latência TCP, parando no primeiro adequado.
 
-- Em cada intervalo configurado, testa apenas o servidor atual e sua velocidade. Se a URL falhar ou a velocidade ficar abaixo de 100 KiB/s, busca outro por latência TCP e velocidade.
+- Verifica a disponibilidade do servidor atual a cada intervalo. Após três falhas consecutivas, escolhe um substituto por latência TCP e uma amostra completa de pelo menos 100 KiB/s. Velocidade baixa ou desconhecida, por si só, não exclui um servidor acessível.
 
 - Testa os membros sequencialmente e alterna novas conexões entre os aprovados nos testes de URL e velocidade.
 
 - Mede o ping, embaralha os candidatos acessíveis e testa um por vez até encontrar velocidade suficiente.
+
+Reordenar ou renomear nós preserva as conexões. Uma mudança real dos membros ou da conexão refaz a seleção pela mesma estratégia, sem alterar o modo. A interceptação permanece durante trocas TPROXY/REDIRECT, inclusive se a reinicialização falhar.
+
+Fixar um servidor pausa a seleção automática sem alterar a estratégia ou os membros. Remova a fixação no cartão do grupo para retomar a mesma estratégia.

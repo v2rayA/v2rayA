@@ -34,13 +34,14 @@ type Template struct {
 	// DnsModuleConfig 是新 DNS 模块的配置，由 v2raya-core 启动时解析并启动 DNS 监听器。
 	DnsModuleConfig json.RawMessage `json:"dns_module,omitempty"`
 
-	Variant       where.Variant          `json:"-"`
-	CoreVersion   string                 `json:"-"`
-	OutboundTags  []string               `json:"-"`
-	ApiCloses     []func()               `json:"-"`
-	ApiPort       int                    `json:"-"`
-	Setting       *configure.Setting     `json:"-"`
-	serverInfoMap map[string]*serverInfo `json:"-"` // outbound tag -> server info
+	Variant        where.Variant          `json:"-"`
+	CoreVersion    string                 `json:"-"`
+	OutboundTags   []string               `json:"-"`
+	ApiCloses      []func()               `json:"-"`
+	ApiPort        int                    `json:"-"`
+	Setting        *configure.Setting     `json:"-"`
+	serverInfoMap  map[string]*serverInfo `json:"-"` // outbound tag -> server info
+	groupSignature string
 }
 
 func (t *Template) Close() error {
@@ -67,6 +68,7 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	}
 	tmplJson.Variant, tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
 	t = &tmplJson
+	t.groupSignature = groupSignature(serverInfos)
 	t.Setting = setting
 	// log
 	logLevel := setting.LogLevel

@@ -62,8 +62,8 @@ func (m *CoreProcessManager) beforeStop(p *Process) {
 	}
 }
 
-// cleanupRetainedInterceptionLocked is called with m.mu held after a
-// preserved reload fails before the replacement core commits.
+// cleanupRetainedInterceptionLocked releases protection on an explicit stop.
+// A failed preserved reload leaves it installed for rollback or retry.
 func (m *CoreProcessManager) cleanupRetainedInterceptionLocked() {
 	if m.retainedSetting == nil {
 		return
@@ -322,6 +322,10 @@ func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 		m.stop(false)
 		return
 	}
+	if m.retainedSetting != nil {
+		previous := m.retainingInterception.Swap(true)
+		defer m.retainingInterception.Store(previous)
+	}
 	m.stop(true)
 	// Override the default status (Stop() would have saved "running" or "stopped")
 	// to record the abnormal exit so the startup code can warn the user.
@@ -442,11 +446,17 @@ func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TUN,
 	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
+	preserve = preserve || m.retainedSetting != nil
 	previous := m.retainedSetting
 	if m.p != nil {
 		previous = m.p.template.Setting
 	}
 	retained := preserve && !m.networkPaused && m.transparentOn.Load() && canRetainInterception(previous, t.Setting)
+	if preserve && m.transparentOn.Load() && !m.networkPaused && !retained {
+		m.mu.Unlock()
+		_ = t.Close()
+		return fmt.Errorf("cannot switch this group while preserving transparent interception")
+	}
 	if preserve {
 		log.Debug("[Groups] Keep transparent interception during reload: %v", retained)
 	}
@@ -483,9 +493,8 @@ func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 		return nil // afterStart executed post-lock in Phase 3
 	}, m.handleUnexpectedStop)
 	if err != nil {
-		if retained {
-			m.cleanupRetainedInterceptionLocked()
-		}
+		// Leave interception installed on failure. Rollback/retry may restore
+		// the core; only an explicit stop is allowed to remove these rules.
 		m.mu.Unlock()
 		return err
 	}
@@ -518,9 +527,7 @@ func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 				}
 				err = errors.Join(err, recoveryErr)
 			}
-			if retained {
-				m.cleanupRetainedInterceptionLocked()
-			}
+
 		}
 	}()
 	if err != nil {
@@ -557,9 +564,19 @@ func canRetainInterception(before, after *configure.Setting) bool {
 	if before == nil || after == nil || !reflect.DeepEqual(before, after) || !IsTransparentOn(after) {
 		return false
 	}
-	env := conf.GetEnvironmentConfig()
-	return env.TransparentHook == "" && env.CoreHook == "" &&
-		(after.TransparentType == configure.TransparentTproxy || after.TransparentType == configure.TransparentRedirect)
+	return after.TransparentType == configure.TransparentTproxy || after.TransparentType == configure.TransparentRedirect
+}
+
+func (m *CoreProcessManager) GroupConfigMatches(signature string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.p != nil && m.p.template.groupSignature == signature
+}
+
+func (m *CoreProcessManager) InterceptionRetained() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.retainedSetting != nil
 }
 
 // Running reports if v2ray-core is running.

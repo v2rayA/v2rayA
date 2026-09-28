@@ -48,6 +48,8 @@ func PostOutbound(ctx *gin.Context) {
 func GetOutbound(ctx *gin.Context) {
 	setting := configure.GetOutboundSetting(ctx.Query("outbound"))
 	setting.StickyCurrent = ""
+	setting.CatalogRevision = ""
+	setting.SelectionInvalidated = false
 	common.ResponseSuccess(ctx, gin.H{
 		"setting": setting,
 	})
@@ -72,22 +74,9 @@ func initialStickyCurrent(outbound, selected string) string {
 
 func selectionSetting(previous configure.OutboundSetting, link string) configure.OutboundSetting {
 	next := previous
-	if link != "" {
-		next.Type = configure.Fixed
-		next.AutoAdd = false
-		next.Selected = link
-		next.StickyCurrent = ""
-		next.EligibleMembers = ""
-		return next
-	}
-	selected := next.Selected
-	next.Selected = ""
-	if next.Type == configure.Fixed {
-		next.Type = configure.LeastPing
-		next.StickyCurrent = ""
-		if selected != "" {
-			next.StickyCurrent = configure.NodeFingerprint(selected)
-		}
+	next.Selected = link
+	if link == "" && previous.Selected != "" && configure.UsesWorkerSelection(next.Type) {
+		next.StickyCurrent = configure.NodeFingerprint(previous.Selected)
 	}
 	return next
 }
@@ -145,7 +134,7 @@ func PutOutbound(ctx *gin.Context) {
 				next.EligibleMembers = initialStickyCurrent(data.Outbound, "")
 			}
 		}
-		if next.Type != previous.Type {
+		if next.Type != previous.Type || selected != "" {
 			next.StickyCurrent = ""
 			if configure.UsesWorkerSelection(next.Type) {
 				if selected != "" {

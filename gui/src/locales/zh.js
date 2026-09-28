@@ -596,6 +596,8 @@ export default {
     configureSelected: "配置所选代理组",
     fixedRequiresServer: "请先在“代理组”卡片中选择一个具体服务器。",
     fixedServerSelected: "“代理组”卡片中固定的服务器不会自动切换。",
+    stabilityHelp: "节点重新排序或重命名不会中断连接。成员或连接参数实际变化时，按原策略重新选择，模式保持不变。TPROXY/REDIRECT 切换期间保留流量拦截，重启失败时也不会撤销。",
+    manualOverrideHelp: "手动固定节点会暂停自动选择，但保留策略和成员设置。在代理组卡片上取消固定即可恢复原策略。",
     strategies: {
       fixed: "不切换",
       leastPing: "最低延迟",
@@ -607,7 +609,7 @@ export default {
       fixed: "始终使用固定服务器，并禁用自动检查和自动填充。",
       leastping: "测量所有服务器的 TCP 延迟，按延迟顺序逐个测速，找到首个合格服务器即停止。",
       keepcurrent:
-        "每个设定的检测周期只检查当前服务器及其速度。URL 失败或速度低于 100 KiB/s 时，按 TCP 延迟和速度选择替代服务器。",
+        "按间隔检查当前服务器的连通性。连续三次失败后，按 TCP 延迟和不低于 100 KiB/s 的完整测速选择替代节点。仅速度偏低或未知不会淘汰仍可连接的当前节点。",
       roundrobin: "逐个检查成员，在通过 URL 和速度检测的服务器之间轮流分配新连接。",
       random:
         "测量延迟后随机排列可达服务器，逐个测速，直到找到合格服务器。",

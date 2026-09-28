@@ -91,7 +91,7 @@ func TestSelectionOrdersPingThenStopsAtFirstFastNode(t *testing.T) {
 	}
 }
 
-func TestKeepCurrentOnlyChecksCurrentUntilSlow(t *testing.T) {
+func TestKeepCurrentRetainsReachableSlowCurrent(t *testing.T) {
 	a := newTestAutomation()
 	nodes := []serverObj.ServerObj{testServer(t, 14101), testServer(t, 14102)}
 	candidates := []groupCandidate{{node: nodes[0]}, {node: nodes[1]}}
@@ -124,7 +124,7 @@ func TestKeepCurrentOnlyChecksCurrentUntilSlow(t *testing.T) {
 	if _, err := a.selectGroup(context.Background(), setting, candidates, probe); err != nil {
 		t.Fatal(err)
 	}
-	if pings != 1 || !reflect.DeepEqual(order, []int{14102, 14101}) {
+	if pings != 0 || !reflect.DeepEqual(order, []int{14102}) {
 		t.Fatalf("slow failover: %v %d", order, pings)
 	}
 }

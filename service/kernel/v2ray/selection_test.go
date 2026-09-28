@@ -24,8 +24,8 @@ func TestApplySelection(t *testing.T) {
 		names = append(names, info.Info.GetName())
 	}
 	// proxy keeps its selected member alone; other's selection matches no
-	// member, so the group stays balanced
-	want := []string{"b", "c", "d"}
+	// member, so that group must fail closed.
+	want := []string{"b"}
 	if len(names) != len(want) {
 		t.Fatalf("kept %v, want %v", names, want)
 	}

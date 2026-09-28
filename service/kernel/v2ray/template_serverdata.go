@@ -34,7 +34,7 @@ func NewServerData(serverInfos []serverInfo) (serverData *ServerData) {
 	link2ServerInfos := make(map[string][]*serverInfo)
 	link2ServerObj := make(map[string]serverObj.ServerObj)
 	for i, info := range serverInfos {
-		link := info.Info.ExportToURL()
+		link := configure.NodeFingerprint(info.Info.ExportToURL())
 		link2ServerObj[link] = info.Info
 		link2ServerInfos[link] = append(link2ServerInfos[link], &serverInfos[i])
 	}

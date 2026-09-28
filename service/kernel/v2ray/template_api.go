@@ -57,7 +57,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			var selector []string
 
 			for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
-				selector = append(selector, GroupWrapper(vi.GetName()))
+				selector = append(selector, GroupWrapper(configure.NodeFingerprint(vi.ExportToURL())))
 			}
 
 			t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{

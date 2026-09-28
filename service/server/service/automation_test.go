@@ -492,6 +492,13 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 	// Failure moves to the first healthy backup in stable group order.
 	healthy[nodes[0].ExportToURL()] = false
 	now = now.Add(300 * time.Second)
+	for range 2 {
+		a.step(context.Background())
+		if configure.GetOutboundSetting("proxy").StickyCurrent != first {
+			t.Fatal("switched before confirmation")
+		}
+		now = now.Add(3 * time.Second)
+	}
 	a.step(context.Background())
 	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != second {
 		t.Fatalf("failed current did not switch to backup: got %q, want %q", got, second)
@@ -510,7 +517,10 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 	healthy[nodes[0].ExportToURL()] = false
 	healthy[nodes[1].ExportToURL()] = false
 	now = now.Add(300 * time.Second)
-	a.step(context.Background())
+	for range 3 {
+		a.step(context.Background())
+		now = now.Add(3 * time.Second)
+	}
 	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != "" {
 		t.Fatalf("all-failed group retained current %q", got)
 	}
@@ -519,7 +529,7 @@ func TestKeepCurrentChangesOnlyAfterFailureAndFailsClosed(t *testing.T) {
 	}
 }
 
-func TestLegacyManualPinBecomesFixedAndStopsWorker(t *testing.T) {
+func TestManualPinPreservesPolicyAndStopsWorker(t *testing.T) {
 	nodes := prepareManualStickyGroup(t)
 	setting := configure.GetOutboundSetting("proxy")
 	setting.Selected = nodes[0].ExportToURL()
@@ -538,7 +548,7 @@ func TestLegacyManualPinBecomesFixedAndStopsWorker(t *testing.T) {
 		return nil
 	}
 	a.step(context.Background())
-	if got := configure.GetOutboundSetting("proxy"); got.Type != configure.Fixed || got.Selected != setting.Selected || got.StickyCurrent != "" {
+	if got := configure.GetOutboundSetting("proxy"); got.Type != setting.Type || got.Selected != setting.Selected || got.StickyCurrent != setting.StickyCurrent {
 		t.Fatalf("legacy manual pin was not normalized to fixed: %+v", got)
 	}
 }

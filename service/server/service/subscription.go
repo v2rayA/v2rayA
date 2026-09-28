@@ -308,6 +308,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 	previous := configure.GetConnectedServers()
 	affected := false
 	coreAffected := false
+	changedGroups := map[string]bool{}
 	updated := configure.NewNodeRefs(nil)
 	previousRefs := previous.Get()
 	mappedIDs := make([]int, len(previousRefs))
@@ -335,8 +336,9 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			}
 			if copy.ID == 0 {
 				if disconnect || configure.GetOutboundSetting(ref.Outbound).AutoAdd {
+					changedGroups[ref.Outbound] = true
 					affected = true
-					coreAffected = coreAffected || !configure.UsesWorkerSelection(configure.GetOutboundSetting(ref.Outbound).Type)
+					coreAffected = coreAffected || (!configure.UsesWorkerSelection(configure.GetOutboundSetting(ref.Outbound).Type) || configure.GetOutboundSetting(ref.Outbound).Selected != "")
 					continue
 				}
 				next.Servers = append(next.Servers, raw)
@@ -344,13 +346,35 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			}
 			if copy.ID != ref.ID || next.Servers[copy.ID-1].ServerObj.ExportToURL() != raw.ServerObj.ExportToURL() {
 				affected = true
-				coreAffected = coreAffected || !configure.UsesWorkerSelection(configure.GetOutboundSetting(ref.Outbound).Type)
+				coreAffected = coreAffected || (!configure.UsesWorkerSelection(configure.GetOutboundSetting(ref.Outbound).Type) || configure.GetOutboundSetting(ref.Outbound).Selected != "")
+			}
+			if configure.NodeFingerprint(next.Servers[copy.ID-1].ServerObj.ExportToURL()) != configure.NodeFingerprint(raw.ServerObj.ExportToURL()) {
+				changedGroups[ref.Outbound] = true
 			}
 		}
 		updated.Add(copy)
 	}
+	// Persist invalidation with the catalog, even if multiple updates occur
+	// before a worker finishes. Returning to an older catalog is still a change.
+	previousSettings, nextSettings := map[string]configure.OutboundSetting{}, map[string]configure.OutboundSetting{}
+	oldCandidates, newCandidates := []groupCandidate{}, []groupCandidate{}
+	for _, raw := range old.Servers {
+		oldCandidates = append(oldCandidates, groupCandidate{node: raw.ServerObj})
+	}
+	for _, raw := range next.Servers {
+		newCandidates = append(newCandidates, groupCandidate{node: raw.ServerObj})
+	}
+	catalogChanged := groupCatalogRevision(oldCandidates) != groupCatalogRevision(newCandidates)
+	for _, name := range configure.GetOutbounds() {
+		setting := configure.GetOutboundSetting(name)
+		if changedGroups[name] || (setting.AutoAdd && catalogChanged) {
+			previousSettings[name] = setting
+			setting.SelectionInvalidated = true
+			nextSettings[name] = setting
+		}
+	}
 	if !affected {
-		if err := configure.SetSubscriptionAndConnects(index, &next, updated); err != nil {
+		if err := configure.SetSubscriptionAndConnects(index, &next, updated, nextSettings); err != nil {
 			return err
 		}
 		// New catalog nodes can become automatic group members even when this
@@ -358,7 +382,7 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 		NotifyAutomation()
 		return nil
 	}
-	if err := configure.SetSubscriptionAndConnects(index, &next, updated); err != nil {
+	if err := configure.SetSubscriptionAndConnects(index, &next, updated, nextSettings); err != nil {
 		return err
 	}
 	if !coreAffected {
@@ -368,10 +392,18 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 		NotifyAutomation()
 		return nil
 	}
-	if v2ray.ProcessManager.Running() {
-		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			_ = configure.SetSubscriptionAndConnects(index, old, previous)
-			_ = v2ray.UpdateV2RayConfig()
+	if v2ray.ProcessManager.Running() || v2ray.ProcessManager.InterceptionRetained() {
+		after, err := v2ray.ActiveGroupSignature()
+		if err != nil {
+			return err
+		}
+		if v2ray.ProcessManager.GroupConfigMatches(after) {
+			NotifyAutomation()
+			return nil
+		}
+		if err := v2ray.UpdateGroupConfig(); err != nil {
+			_ = configure.SetSubscriptionAndConnects(index, old, previous, previousSettings)
+			_ = v2ray.UpdateGroupConfig()
 			return subscriptionCoreApplyError(err)
 		}
 	}
@@ -390,7 +422,7 @@ func remapSubscriptionNodeDetailed(old serverObj.ServerObj, nodes []serverObj.Se
 		return 0, false
 	}
 	for i, node := range nodes {
-		if node.ExportToURL() == old.ExportToURL() {
+		if configure.NodeFingerprint(node.ExportToURL()) == configure.NodeFingerprint(old.ExportToURL()) {
 			return i + 1, true
 		}
 	}

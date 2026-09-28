@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -354,7 +355,6 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 // so resolveOutbounds installs its fail-closed blackhole.
 func applySelection(serverInfos []serverInfo, settingOf func(outbound string) configure.OutboundSetting) []serverInfo {
 	settings := make(map[string]configure.OutboundSetting)
-	manualMatched := make(map[string]bool)
 	stickyMatched := make(map[string]bool)
 	for _, info := range serverInfos {
 		setting, ok := settings[info.OutboundName]
@@ -363,10 +363,7 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 			settings[info.OutboundName] = setting
 		}
 		link := info.Info.ExportToURL()
-		if setting.Selected != "" && link == setting.Selected {
-			manualMatched[info.OutboundName] = true
-		}
-		if configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.NodeFingerprint(link) == setting.StickyCurrent {
+		if configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.MatchesNodeFingerprint(setting.StickyCurrent, link) {
 			stickyMatched[info.OutboundName] = true
 		}
 	}
@@ -375,8 +372,8 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 	for _, info := range serverInfos {
 		setting := settings[info.OutboundName]
 		link := info.Info.ExportToURL()
-		if manualMatched[info.OutboundName] {
-			if link == setting.Selected && !keptChoice[info.OutboundName] {
+		if setting.Selected != "" {
+			if configure.NodeFingerprint(link) == configure.NodeFingerprint(setting.Selected) && !keptChoice[info.OutboundName] {
 				kept = append(kept, info)
 				keptChoice[info.OutboundName] = true
 			}
@@ -388,16 +385,15 @@ func applySelection(serverInfos []serverInfo, settingOf func(outbound string) co
 			continue
 		}
 		if configure.UsesWorkerSelection(setting.Type) {
-			if stickyMatched[info.OutboundName] && configure.NodeFingerprint(link) == setting.StickyCurrent && !keptChoice[info.OutboundName] {
+			if stickyMatched[info.OutboundName] && configure.MatchesNodeFingerprint(setting.StickyCurrent, link) && !keptChoice[info.OutboundName] {
 				kept = append(kept, info)
 				keptChoice[info.OutboundName] = true
 			}
 			continue
 		}
 		if setting.Type == configure.RoundRobin {
-			fingerprint := configure.NodeFingerprint(link)
 			for _, eligible := range strings.Fields(setting.EligibleMembers) {
-				if eligible == fingerprint {
+				if configure.MatchesNodeFingerprint(eligible, link) {
 					kept = append(kept, info)
 					break
 				}
@@ -432,6 +428,28 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 		return nil, err
 	}
 	return tmpl, nil
+}
+
+// ActiveGroupSignature excludes catalog order, display metadata and generated ports.
+func ActiveGroupSignature() (string, error) {
+	_, infos, err := getConnectedServerObjs()
+	if err != nil {
+		return "", err
+	}
+	return groupSignature(infos), nil
+}
+
+func groupSignature(infos []serverInfo) string {
+	identities := make([]string, 0, len(infos))
+	for _, info := range infos {
+		mode := "single"
+		if configure.GetOutboundSetting(info.OutboundName).Type == configure.RoundRobin {
+			mode = "roundrobin"
+		}
+		identities = append(identities, info.OutboundName+":"+mode+":"+configure.NodeFingerprint(info.Info.ExportToURL()))
+	}
+	sort.Strings(identities)
+	return strings.Join(identities, "\n")
 }
 
 func UpdateV2RayConfig() (err error) {

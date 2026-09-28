@@ -150,9 +150,19 @@ function setStrategy(type: OutboundSetting["type"]) {
             class="strategy-help text-on-surface-variant mb-4"
           >
             <p class="md3-body-small mb-2">{{ t("outbound.strategyHelp") }}</p>
-            <p class="md3-body-small mb-0">{{ strategyDetails }}</p>
+            <p class="md3-body-small mb-2">{{ strategyDetails }}</p>
+            <p class="md3-body-small mb-0">{{ t("outbound.stabilityHelp") }}</p>
           </div>
         </v-expand-transition>
+        <v-alert
+          v-if="setting.selected && !isFixed"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+        >
+          {{ t("outbound.manualOverrideHelp") }}
+        </v-alert>
         <v-alert
           v-if="isFixed"
           type="info"

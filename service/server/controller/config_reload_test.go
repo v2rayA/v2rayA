@@ -435,21 +435,18 @@ func TestPutOutboundConnectionsRejectsAutomaticGroupEdits(t *testing.T) {
 	}
 }
 
-func TestSelectionSettingMovesBetweenFixedAndAutomatic(t *testing.T) {
-	previous := configure.DefaultOutboundSetting()
-	previous.AutoAdd = true
-	previous.StickyCurrent = "old-worker-choice"
-	fixed := selectionSetting(previous, "socks5://server.example:1080")
-	if fixed.Type != configure.Fixed || fixed.AutoAdd || fixed.Selected == "" || fixed.StickyCurrent != "" {
-		t.Fatalf("fixed selection = %+v", fixed)
-	}
-
-	automatic := selectionSetting(fixed, "")
-	if automatic.Type != configure.LeastPing || automatic.Selected != "" {
-		t.Fatalf("automatic selection = %+v", automatic)
-	}
-	want := configure.NodeFingerprint(fixed.Selected)
-	if automatic.StickyCurrent != want {
-		t.Fatalf("automatic handoff current = %q; want %q", automatic.StickyCurrent, want)
+func TestSelectionPreservesEveryAutomaticPolicy(t *testing.T) {
+	for _, mode := range []configure.ObservatoryType{configure.KeepCurrent, configure.LeastPing, configure.Random, configure.RoundRobin} {
+		previous := configure.DefaultOutboundSetting()
+		previous.Type, previous.AutoAdd = mode, true
+		previous.StickyCurrent = "old-worker-choice"
+		pinned := selectionSetting(previous, "socks5://server.example:1080")
+		if pinned.Type != mode || !pinned.AutoAdd || pinned.Selected == "" {
+			t.Fatalf("pin changed policy: %+v", pinned)
+		}
+		unpinned := selectionSetting(pinned, "")
+		if unpinned.Type != mode || !unpinned.AutoAdd || unpinned.Selected != "" {
+			t.Fatalf("unpin changed policy: %+v", unpinned)
+		}
 	}
 }
