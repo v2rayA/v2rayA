@@ -46,6 +46,8 @@ The list mode edits each rule with a form; the text mode shows line numbers, col
 
 The Russia template sends `geosite:category-ru` directly, except for its listed proxy-first domains; everything else uses the proxy. It is a bundled snapshot of [routinga-russia](https://github.com/wywywywycloud/routinga-russia), not a live-updating list, and requires a `geosite.dat` containing `category-ru`.
 
+Russian IP addresses (`geoip:ru`) and private hostnames and IP addresses (`geosite:private`, `geoip:private`) also go directly; the proxy exceptions take precedence.
+
 Saving reloads a running core with the new rules; when the core rejects them, v2rayA puts the previous rules back and shows the core's error, which names the offending text. A stopped core takes the rules on its next start.
 
 ## Custom inbounds

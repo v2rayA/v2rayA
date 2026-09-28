@@ -46,6 +46,8 @@ Loyalsoldier 빌드에만 있는 이름(`gfw`, `apple-cn`, `google-cn`, `geoip:t
 
 러시아 템플릿은 `geosite:category-ru`를 직접 연결하지만, 그보다 앞에 있는 예외 도메인과 나머지 트래픽은 프록시를 사용합니다. [routinga-russia](https://github.com/wywywywycloud/routinga-russia)의 내장 스냅샷이므로 자동 갱신되지 않으며, `category-ru`가 포함된 `geosite.dat`가 필요합니다.
 
+러시아 IP 주소(`geoip:ru`)와 로컬 호스트 이름 및 IP 주소(`geosite:private`, `geoip:private`)도 직접 연결하며, 프록시 예외 규칙이 우선합니다.
+
 저장하면 실행 중인 코어가 새 규칙을 다시 불러옵니다. 코어가 규칙을 거부하면 v2rayA는 이전 규칙으로 되돌리고 문제가 된 텍스트가 명시된 코어 오류를 표시합니다. 중지된 코어는 다음 시작 시 규칙을 적용합니다.
 
 ## 사용자 지정 인바운드

@@ -46,6 +46,8 @@ O modo de lista edita cada regra com um formulário; o modo de texto mostra núm
 
 O modelo para a Rússia encaminha `geosite:category-ru` diretamente, exceto pelos domínios de exceção listados antes dessa regra; todo o restante usa o proxy. Ele é uma cópia incorporada do [routinga-russia](https://github.com/wywywywycloud/routinga-russia), não uma lista atualizada automaticamente, e requer um `geosite.dat` com `category-ru`.
 
+Os endereços IP russos (`geoip:ru`) e os nomes e endereços IP privados (`geosite:private`, `geoip:private`) também usam conexão direta; as exceções de proxy têm prioridade.
+
 Salvar recarrega um núcleo em execução com as novas regras; quando o núcleo as rejeita, o v2rayA restaura as regras anteriores e mostra o erro do núcleo, que indica o texto problemático. Um núcleo parado adota as regras na próxima inicialização.
 
 ## Entradas personalizadas
