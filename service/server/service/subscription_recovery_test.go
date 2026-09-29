@@ -18,6 +18,7 @@ import (
 
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 func testServer(t *testing.T, port int) serverObj.ServerObj {
@@ -358,4 +359,52 @@ func TestProbeWithCurrentCore(t *testing.T) {
 			t.Fatalf("unbounded blackhole: %v", err)
 		}
 	})
+}
+
+func TestConsentedBypassLogsIDAndHost(t *testing.T) {
+	old := resetSubscription(t)
+	setting := configure.GetSettingNotNil()
+	setting.ProxyModeWhenSubscribe = configure.ProxyModeProxy
+	if err := configure.SetSetting(setting); err != nil {
+		t.Fatal(err)
+	}
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		fmt.Fprint(w, base64.StdEncoding.EncodeToString([]byte("http-proxy://127.0.0.1:1234#test")))
+	}))
+	defer provider.Close()
+	originalDirect := directSubscriptionClient
+	directSubscriptionClient = func() *http.Client { return provider.Client() }
+	t.Cleanup(func() { directSubscriptionClient = originalDirect })
+	old.Address = provider.URL
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	_ = log.Log.SetLogger("memory", "")
+	log.SetLogLevel("info")
+	t.Cleanup(func() { log.SetLogLevel("warning") })
+	_, start := log.ReadMemory(1 << 60)
+	options := SubscriptionFetchOptions{BypassProxy: true}
+	if err := UpdateSubscriptionWithOptions(0, false, options); err != nil {
+		t.Fatalf("confirmed direct update failed: %v", err)
+	}
+	if err := ImportSubscriptionWithOptions(provider.URL, options); err != nil {
+		t.Fatalf("confirmed direct import failed: %v", err)
+	}
+	tail := ""
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		data, _ := log.ReadMemory(start)
+		tail = string(data)
+		if strings.Contains(tail, "subscription 1 from 127.0.0.1") &&
+			strings.Contains(tail, "manual import from 127.0.0.1") {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("consented bypass not logged with ID and host, tail:\n%s", tail)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	if strings.Contains(tail, provider.URL) {
+		t.Fatalf("log leaks the full subscription address:\n%s", tail)
+	}
 }

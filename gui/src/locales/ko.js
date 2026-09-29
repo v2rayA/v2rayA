@@ -147,6 +147,8 @@ export default {
     intervalInvalid: "{minimum}부터 525600까지의 정수를 입력하세요.",
     coreStoppedDirect:
       "코어가 중지되었습니다. 프록시를 거치지 않고 업데이트하시겠습니까?",
+    coreStoppedDirectAll:
+      "코어가 중지되었습니다. 모든 구독을 프록시를 거치지 않고 업데이트하시겠습니까?",
 
     settingsTitle: "구독 업데이트",
     remarks: "별칭",

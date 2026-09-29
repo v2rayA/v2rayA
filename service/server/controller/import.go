@@ -23,6 +23,8 @@ func PostImport(ctx *gin.Context) {
 		Kind  string      `json:"kind"`
 		Which interface{} `json:"which"`
 		// BypassProxy selects a direct route for this one subscription fetch.
+		// It records the user's consent to go direct; the server does not
+		// check that the proxy route is actually unavailable.
 		BypassProxy bool `json:"bypassProxy"`
 	}
 	if err := ctx.ShouldBindJSON(&body); err != nil {

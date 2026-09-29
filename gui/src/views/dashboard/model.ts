@@ -415,7 +415,7 @@ export function useDashboard() {
     if (subscriptionsBusy.value) return;
     updatingAll.value = true;
     try {
-      const bypassProxy = await subscriptionBypass();
+      const bypassProxy = await subscriptionBypass(true);
       if (bypassProxy === null) return;
       for (const { id } of subscriptions.value)
         await refreshSubscription(id, bypassProxy);

@@ -216,7 +216,10 @@ func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions)
 				source = u.String()
 			}
 		}
-		client, e := subscriptionHTTPClientWithOptions(options)
+		client, e := subscriptionHTTPClientWithOptions(SubscriptionFetchOptions{
+			BypassProxy: options.BypassProxy,
+			Host:        subscriptionHost(source),
+		})
 		if e != nil {
 			return e
 		}

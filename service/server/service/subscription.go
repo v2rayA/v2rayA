@@ -281,7 +281,16 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 // SubscriptionFetchOptions controls routing for one subscription download.
 type SubscriptionFetchOptions struct {
 	// BypassProxy uses a direct client without changing the saved download route.
+	// It is a one-request user consent: callers must only set it after the user
+	// confirmed a direct download (the GUI asks when the proxy route is
+	// unavailable), and the server does not verify that itself. The flag only
+	// selects the direct route the user could also choose in settings.
 	BypassProxy bool
+	// SubscriptionID is the 1-based subscription ID shown to the user, used for
+	// logging consented bypasses. It is 0 for manual imports, which have no ID yet.
+	SubscriptionID int
+	// Host is the subscription host for logging; the full address is never logged.
+	Host string
 }
 
 func UpdateSubscription(index int, disconnectIfNecessary bool) (err error) {
@@ -295,7 +304,11 @@ func UpdateSubscriptionWithOptions(index int, disconnectIfNecessary bool, option
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d no longer exists; reload the page", index+1), map[string]interface{}{"id": index + 1})
 	}
 	addr := subscription.Address
-	c, err := subscriptionHTTPClientWithOptions(options)
+	c, err := subscriptionHTTPClientWithOptions(SubscriptionFetchOptions{
+		BypassProxy:    options.BypassProxy,
+		SubscriptionID: index + 1,
+		Host:           subscriptionHost(addr),
+	})
 	if err != nil {
 		return err
 	}
@@ -552,6 +565,11 @@ func autoSelectMembers(index int, sub *configure.SubscriptionRaw, existing []*co
 
 func subscriptionHTTPClientWithOptions(options SubscriptionFetchOptions) (*http.Client, error) {
 	if options.BypassProxy {
+		if options.SubscriptionID > 0 {
+			log.Info("[Subscriptions] Consented direct download for subscription %d from %s", options.SubscriptionID, options.Host)
+		} else {
+			log.Info("[Subscriptions] Consented direct download for manual import from %s", options.Host)
+		}
 		return directSubscriptionClient(), nil
 	}
 	return subscriptionHTTPClient()

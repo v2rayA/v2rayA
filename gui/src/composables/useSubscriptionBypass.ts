@@ -9,12 +9,14 @@ export function useSubscriptionBypass() {
   const confirm = useConfirm();
   const { t } = useI18n();
 
-  return async (): Promise<boolean | null> => {
+  return async (all = false): Promise<boolean | null> => {
     if (store.running !== "stopped") return false;
     const mode = (await getSetting()).setting.proxyModeWhenSubscribe;
     if (mode !== "proxy" && mode !== "pac") return false;
     return (await confirm({
-      message: t("subscription.coreStoppedDirect"),
+      message: all
+        ? t("subscription.coreStoppedDirectAll")
+        : t("subscription.coreStoppedDirect"),
       confirmText: t("operations.yes"),
       cancelText: t("operations.no"),
     }))

@@ -448,6 +448,9 @@ describe("dashboard", () => {
     await flushPromises();
     expect(putSubscription).not.toHaveBeenCalled();
     expect(dialogState.stack).toHaveLength(1);
+    expect(dialogState.stack[0].props).toMatchObject({
+      message: "The core is stopped. Update all subscriptions without the proxy?",
+    });
 
     closeDialog(dialogState.stack[0].id, true);
     await flushPromises();

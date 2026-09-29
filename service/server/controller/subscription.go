@@ -44,6 +44,9 @@ func PutSubscription(ctx *gin.Context) {
 
 	var data struct {
 		configure.NodeRef
+		// BypassProxy selects a direct route for this one subscription fetch.
+		// It records the user's consent to go direct; the server does not
+		// check that the proxy route is actually unavailable.
 		BypassProxy bool `json:"bypassProxy"`
 	}
 	err := ctx.ShouldBindJSON(&data)

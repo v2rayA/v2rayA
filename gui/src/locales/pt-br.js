@@ -150,6 +150,8 @@ export default {
       "Obrigatório, mínimo de 1 minuto. Atualiza enquanto todos os servidores estão indisponíveis; para quando um funcionar.",
     intervalInvalid: "Insira um inteiro de {minimum} a 525600.",
     coreStoppedDirect: "O núcleo está parado. Atualizar sem o proxy?",
+    coreStoppedDirectAll:
+      "O núcleo está parado. Atualizar todas as assinaturas sem o proxy?",
 
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",

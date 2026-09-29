@@ -16,7 +16,7 @@ vi.mock("@/api", async (original) => ({
 }));
 
 let wrapper: VueWrapper;
-let chooseBypass: () => Promise<boolean | null>;
+let chooseBypass: (all?: boolean) => Promise<boolean | null>;
 
 const Probe = defineComponent({
   setup() {
@@ -103,5 +103,23 @@ describe("useSubscriptionBypass", () => {
     closeDialog(dialogState.stack.at(-1)!.id, false);
 
     await expect(result).resolves.toBeNull();
+  });
+
+  test("words the confirmation for every subscription when asked for all", async () => {
+    useAppStore().setRunning("stopped");
+    vi.mocked(getSetting).mockResolvedValue(setting("proxy"));
+
+    const result = chooseBypass(true);
+    await flushPromises();
+    const dialog = dialogState.stack.at(-1)!;
+    expect(dialog.component).toBe(ConfirmDialog);
+    expect(dialog.props).toMatchObject({
+      message: "The core is stopped. Update all subscriptions without the proxy?",
+      confirmText: "Yes",
+      cancelText: "No",
+    });
+
+    closeDialog(dialog.id, true);
+    await expect(result).resolves.toBe(true);
   });
 });
