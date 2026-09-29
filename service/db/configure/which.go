@@ -1,7 +1,6 @@
 package configure
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -256,13 +255,7 @@ func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.
 	host := tsr.ServerObj.GetHostname()
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		if dialer.Resolver == nil {
-			hosts, err = resolv.LookupHost(host)
-		} else {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			hosts, err = dialer.Resolver.LookupHost(ctx, host)
-			cancel()
-		}
+		hosts, err = resolv.LookupHostWithDialer(host, dialer)
 		if err != nil || len(hosts) <= 0 {
 			if err != nil {
 				w.Latency = err.Error()
@@ -273,15 +266,24 @@ func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.
 		}
 		host = hosts[0]
 	}
+	addr := net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort()))
 	t := time.Now()
-	conn, e := dialer.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort())))
+	conn, e := dialer.Dial("tcp", addr)
 	if e == nil {
 		_ = conn.Close()
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
-	} else {
-		log.Debug("Ping: %v", e)
-		w.Latency = "TIMEOUT"
+		return
 	}
+	// A node whose server speaks QUIC listens on UDP only, and the refused TCP
+	// dial says nothing about it: ask its UDP port before calling it unreachable.
+	roundTrip, probeErr := pingUDP(dialer, host, tsr.ServerObj.GetPort(), timeout)
+	if probeErr == nil {
+		log.Debug("Ping: TCP to %v failed (%v), QUIC round trip %v", addr, e, roundTrip)
+		w.Latency = fmt.Sprintf("%.0fms", roundTrip.Seconds()*1000)
+		return
+	}
+	log.Debug("Ping: %v", e)
+	w.Latency = "TIMEOUT"
 	return
 }
 

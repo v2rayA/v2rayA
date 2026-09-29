@@ -17,6 +17,7 @@ import en from "@/locales/en";
 import RoutingA from "./RoutingA.vue";
 import RuleDialog from "./routingA/RuleDialog.vue";
 import { template } from "./routingA/template";
+import { russia } from "./routingA/russia";
 
 const api = vi.hoisted(() => ({ getRoutingA: vi.fn(), putRoutingA: vi.fn() }));
 vi.mock("@/api", () => api);
@@ -48,6 +49,21 @@ afterEach(() => {
 });
 
 describe("RoutingA dialog", () => {
+  test("offers the Russia rule set as a confirmed replacement", async () => {
+    const wrapper = mountWithApp(RoutingA);
+    await flushPromises();
+    await button(wrapper, en.routingA.templates.title).trigger("click");
+    await flushPromises();
+    const option = [...document.querySelectorAll(".v-list-item")].find((item) =>
+      item.textContent?.includes(en.routingA.templates.russia),
+    );
+    expect(option).toBeDefined();
+    option!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushPromises();
+    await respond(true);
+    expect((await textView(wrapper)).element.value).toBe(russia);
+  });
+
   test("loads, highlights and saves rules verbatim without confirming comments", async () => {
     const wrapper = mountWithApp(RoutingA);
     await flushPromises();

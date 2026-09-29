@@ -13,7 +13,7 @@ The service log is the first place to look: `/var/log/v2raya/v2raya.log` under t
 
 ## Nothing connects
 
-- The dashboard shows the group and its members' latency. `TIMEOUT` means the TCP connection to the server failed from this machine; try another node or check the subscription.
+- The dashboard shows the group and its members' latency. Nodes are probed over TCP, and over UDP with a QUIC packet when TCP fails, so servers that listen on UDP only (juicity, tuic, hysteria2) are measured too; `TIMEOUT` means neither probe reached the server from this machine. Try another node or check the subscription.
 - Test one inbound directly: `curl -x socks5h://127.0.0.1:20170 https://example.com`. If that works and the transparent proxy does not, look at the transparent proxy setup, the DNS rules and the group the transparent proxy routes to before blaming the node.
 - With `redirect` or `tproxy`, Docker or a firewall may have replaced the iptables rules; stop and start the core to reinstall them.
 - On Windows and macOS, an application that asks a LAN resolver directly for DNS bypasses the TUN.
