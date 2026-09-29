@@ -13,7 +13,7 @@ Consulte primeiro o registro do serviço: `/var/log/v2raya/v2raya.log` quando ex
 
 ## Nada se conecta
 
-- O painel mostra o grupo e a latência de seus membros. `TIMEOUT` significa que a conexão TCP desta máquina com o servidor falhou; tente outro nó ou verifique a assinatura.
+- O painel mostra o grupo e a latência de seus membros. Cada nó é sondado primeiro por TCP e, se falhar, por um pacote QUIC sobre UDP, de modo que servidores que só escutam UDP (juicity, tuic, hysteria2) também são medidos; `TIMEOUT` significa que nenhuma das sondagens alcançou o servidor desta máquina; tente outro nó ou verifique a assinatura.
 - Teste uma entrada diretamente: `curl -x socks5h://127.0.0.1:20170 https://example.com`. Se funcionar, mas o proxy transparente não, verifique a configuração do proxy transparente, as regras de DNS e o grupo para o qual o proxy transparente roteia antes de atribuir o problema ao nó.
 - Com `redirect` ou `tproxy`, o Docker ou um firewall pode ter substituído as regras do iptables; pare e inicie o núcleo para reinstalá-las.
 - No Windows e no macOS, um aplicativo que consulta DNS diretamente em um resolvedor da rede local não passa pelo TUN.
