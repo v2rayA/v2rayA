@@ -25,7 +25,7 @@ describe("the rule templates", () => {
     const rules = presets.find((p) => p.key === "russia")!.code;
     expect(rules.indexOf("domain: abook-club.ru")).toBeGreaterThan(0);
     expect(rules.indexOf("domain: abook-club.ru")).toBeLessThan(
-      rules.indexOf("geosite: category-ru"),
+      rules.indexOf("geosite:category-ru"),
     );
     expect(rules).toContain("default: proxy");
   });

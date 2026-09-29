@@ -1,7 +1,7 @@
 // Adapted from https://github.com/wywywywycloud/routinga-russia/blob/48a94f5734c525b11a1c6092eae9745b2a13017e/routinga-ru.txt
 // Keep proxy exceptions above direct rules: the first match wins.
-// Copyright (c) 2026 wywywywycloud. MIT license: see LICENSE-russia.txt.
-export const russia = `# Google and YouTube: explicit exceptions for .ru domains
+export const russia = `default: proxy
+# Google and YouTube: explicit exceptions for .ru domains
 domain(domain: google.ru, domain: youtube.ru) -> proxy
 
 # Service domains across all regions
@@ -54,7 +54,4 @@ domain(domain: 1018213540.rsc.cdn77.org, domain: bitrix.info) -> direct
 
 # Route local hostnames and private IP addresses directly
 domain(geosite:private) -> direct
-ip(geoip:private) -> direct
-
-# Route all remaining traffic through the proxy
-default: proxy`;
+ip(geoip:private) -> direct`;
