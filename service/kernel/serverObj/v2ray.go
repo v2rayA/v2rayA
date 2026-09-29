@@ -108,6 +108,116 @@ func setIntQuery(q *url.Values, key string, val int) {
 	}
 }
 
+// parse3XuiXHTTPRange parses a range the way the core does (a plain integer
+// or an "a-b" string); ok is false for an empty or unparseable value.
+func parse3XuiXHTTPRange(value string) (from, to int, ok bool) {
+	if value == "" {
+		return 0, 0, false
+	}
+	from, to, err := coreObj.ParseRangeString(value)
+	if err != nil {
+		return 0, 0, false
+	}
+	return from, to, true
+}
+
+// apply3XuiXHTTPParams fills the XHTTP fields from the parameter scheme
+// 3x-ui uses for its share links: a top-level "mode" instead of "xhttpMode",
+// a snake_case "x_padding_bytes", and the remaining settings packed into an
+// "extra" JSON blob that carries the core's own field names — the ranges,
+// the xmux settings, and the headers, noGRPCHeader, noSSEHeader and
+// uplinkHTTPMethod scalars. Each field is filled only when v2rayA's own
+// parameters (read first) left it unset, so a link carrying both styles
+// keeps the v2rayA values. Fields the blob carries that v2rayA does not
+// model (xPaddingHeader, xPaddingKey, xPaddingObfsMode) are left to the
+// core defaults.
+func apply3XuiXHTTPParams(data *V2Ray, q url.Values) {
+	if data.XHTTPMode == "auto" {
+		if mode := q.Get("mode"); mode != "" {
+			data.XHTTPMode = mode
+		}
+	}
+	if data.XPaddingBytesFrom == 0 && data.XPaddingBytesTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(q.Get("x_padding_bytes")); ok {
+			data.XPaddingBytesFrom, data.XPaddingBytesTo = from, to
+		}
+	}
+	extra := q.Get("extra")
+	if extra == "" {
+		return
+	}
+	get := func(path string) string { return gjson.Get(extra, path).String() }
+	if data.ScMaxEachPostBytesFrom == 0 && data.ScMaxEachPostBytesTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("scMaxEachPostBytes")); ok {
+			data.ScMaxEachPostBytesFrom, data.ScMaxEachPostBytesTo = from, to
+		}
+	}
+	if data.ScMinPostsIntervalFrom == 0 && data.ScMinPostsIntervalTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("scMinPostsIntervalMs")); ok {
+			data.ScMinPostsIntervalFrom, data.ScMinPostsIntervalTo = from, to
+		}
+	}
+	if data.ScMaxBufferedPosts == 0 {
+		if v, _, ok := parse3XuiXHTTPRange(get("scMaxBufferedPosts")); ok && v > 0 {
+			data.ScMaxBufferedPosts = v
+		}
+	}
+	if data.ScStreamUpServerFrom == 0 && data.ScStreamUpServerTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("scStreamUpServerSecs")); ok {
+			data.ScStreamUpServerFrom, data.ScStreamUpServerTo = from, to
+		}
+	}
+	if data.XPaddingBytesFrom == 0 && data.XPaddingBytesTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xPaddingBytes")); ok {
+			data.XPaddingBytesFrom, data.XPaddingBytesTo = from, to
+		}
+	}
+	if data.XmuxMaxConcurFrom == 0 && data.XmuxMaxConcurTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.maxConcurrency")); ok {
+			data.XmuxMaxConcurFrom, data.XmuxMaxConcurTo = from, to
+		}
+	}
+	if data.XmuxMaxConnFrom == 0 && data.XmuxMaxConnTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.maxConnections")); ok {
+			data.XmuxMaxConnFrom, data.XmuxMaxConnTo = from, to
+		}
+	}
+	if data.XmuxCMaxReuseFrom == 0 && data.XmuxCMaxReuseTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.cMaxReuseTimes")); ok {
+			data.XmuxCMaxReuseFrom, data.XmuxCMaxReuseTo = from, to
+		}
+	}
+	if data.XmuxHMaxReqFrom == 0 && data.XmuxHMaxReqTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.hMaxRequestTimes")); ok {
+			data.XmuxHMaxReqFrom, data.XmuxHMaxReqTo = from, to
+		}
+	}
+	if data.XmuxHMaxReusableFrom == 0 && data.XmuxHMaxReusableTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.hMaxReusableSecs")); ok {
+			data.XmuxHMaxReusableFrom, data.XmuxHMaxReusableTo = from, to
+		}
+	}
+	if data.XmuxHKeepAlive == 0 {
+		if v, _, ok := parse3XuiXHTTPRange(get("xmux.hKeepAlivePeriod")); ok && v > 0 {
+			data.XmuxHKeepAlive = int64(v)
+		}
+	}
+	if data.XHTTPHeaders == "" {
+		if h := gjson.Get(extra, "headers"); len(h.Map()) > 0 {
+			data.XHTTPHeaders = h.Raw
+		}
+	}
+	if !data.NoGRPCHeader {
+		data.NoGRPCHeader = gjson.Get(extra, "noGRPCHeader").Bool()
+	}
+	if !data.NoSSEHeader {
+		data.NoSSEHeader = gjson.Get(extra, "noSSEHeader").Bool()
+	}
+	if data.UplinkHTTPMethod == "" {
+		data.UplinkHTTPMethod = get("uplinkHTTPMethod")
+	}
+}
+
 func NewV2Ray(link string) (ServerObj, error) {
 	if strings.HasPrefix(link, "vmess://") {
 		return ParseVmessURL(link)
@@ -199,6 +309,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		data.XmuxHMaxReusableFrom = queryInt(u, "xmuxHMaxReusableFrom")
 		data.XmuxHMaxReusableTo = queryInt(u, "xmuxHMaxReusableTo")
 		data.XmuxHKeepAlive = int64(queryInt(u, "xmuxHKeepAlive"))
+		apply3XuiXHTTPParams(data, u.Query())
 	}
 	data.MaxEarlyData = u.Query().Get("maxEarlyData")
 	data.EarlyDataHeaderName = u.Query().Get("earlyDataHeaderName")

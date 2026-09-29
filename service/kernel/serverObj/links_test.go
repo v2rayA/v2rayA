@@ -317,3 +317,116 @@ func TestSSRejectsCiphersTheCoreRefuses(t *testing.T) {
 		}
 	}
 }
+
+// 3x-ui packs the XHTTP tuning of its vless share links into a top-level
+// "mode", a snake_case "x_padding_bytes" and an "extra" JSON blob that
+// carries the core's own field names.
+func TestVlessXHTTPFrom3xUILink(t *testing.T) {
+	extra := `{"mode":"packet-up","scMaxEachPostBytes":"5120","xPaddingBytes":"200-1500","xPaddingHeader":"Referer","xPaddingKey":"x_padding","xPaddingObfsMode":true,"noGRPCHeader":true,"uplinkHTTPMethod":"POST","headers":{"User-Agent":"3x-ui-test"},"xmux":{"cMaxReuseTimes":"64-128","hKeepAlivePeriod":10,"hMaxRequestTimes":"300-600","hMaxReusableSecs":"900-1800","maxConcurrency":"5","maxConnections":0}}`
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&extra=" +
+		url.QueryEscape(extra) +
+		"&fp=chrome&host=example.com&mode=packet-up&path=%2Fx&pbk=S0tF&security=reality&sid=abcd&sni=example.com&spx=%2Faa&type=xhttp&x_padding_bytes=200-1500#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatalf("3x-ui link rejected: %v", err)
+	}
+	v, ok := obj.(*V2Ray)
+	if !ok {
+		t.Fatalf("not a *V2Ray: %T", obj)
+	}
+	if v.XHTTPMode != "packet-up" {
+		t.Errorf("XHTTPMode = %q, want packet-up", v.XHTTPMode)
+	}
+	if v.ScMaxEachPostBytesFrom != 5120 || v.ScMaxEachPostBytesTo != 5120 {
+		t.Errorf("ScMaxEachPostBytes = %d-%d, want 5120-5120", v.ScMaxEachPostBytesFrom, v.ScMaxEachPostBytesTo)
+	}
+	if v.XPaddingBytesFrom != 200 || v.XPaddingBytesTo != 1500 {
+		t.Errorf("XPaddingBytes = %d-%d, want 200-1500", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if v.XmuxMaxConcurFrom != 5 || v.XmuxMaxConcurTo != 5 {
+		t.Errorf("xmux.maxConcurrency = %d-%d, want 5-5", v.XmuxMaxConcurFrom, v.XmuxMaxConcurTo)
+	}
+	if v.XmuxMaxConnFrom != 0 || v.XmuxMaxConnTo != 0 {
+		t.Errorf("xmux.maxConnections = %d-%d, want unset (0)", v.XmuxMaxConnFrom, v.XmuxMaxConnTo)
+	}
+	if v.XmuxCMaxReuseFrom != 64 || v.XmuxCMaxReuseTo != 128 {
+		t.Errorf("xmux.cMaxReuseTimes = %d-%d, want 64-128", v.XmuxCMaxReuseFrom, v.XmuxCMaxReuseTo)
+	}
+	if v.XmuxHMaxReqFrom != 300 || v.XmuxHMaxReqTo != 600 {
+		t.Errorf("xmux.hMaxRequestTimes = %d-%d, want 300-600", v.XmuxHMaxReqFrom, v.XmuxHMaxReqTo)
+	}
+	if v.XmuxHMaxReusableFrom != 900 || v.XmuxHMaxReusableTo != 1800 {
+		t.Errorf("xmux.hMaxReusableSecs = %d-%d, want 900-1800", v.XmuxHMaxReusableFrom, v.XmuxHMaxReusableTo)
+	}
+	if v.XmuxHKeepAlive != 10 {
+		t.Errorf("xmux.hKeepAlivePeriod = %d, want 10", v.XmuxHKeepAlive)
+	}
+	if !v.NoGRPCHeader {
+		t.Error("noGRPCHeader = false, want true")
+	}
+	if v.NoSSEHeader {
+		t.Error("noSSEHeader = true, want false (absent from the blob)")
+	}
+	if v.UplinkHTTPMethod != "POST" {
+		t.Errorf("uplinkHTTPMethod = %q, want POST", v.UplinkHTTPMethod)
+	}
+	if v.XHTTPHeaders != `{"User-Agent":"3x-ui-test"}` {
+		t.Errorf("XHTTPHeaders = %q, want the blob's headers object", v.XHTTPHeaders)
+	}
+	if v.Host != "example.com" || v.Path != "/x" || v.SNI != "example.com" || v.PublicKey != "S0tF" {
+		t.Errorf("basic fields lost: %+v", v)
+	}
+	// the parsed values must reach the generated core config in the
+	// shorthand the core accepts
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"mode":"packet-up"`, `"xPaddingBytes":"200-1500"`, `"scMaxEachPostBytes":5120`, `"maxConcurrency":5`, `"cMaxReuseTimes":"64-128"`, `"hMaxRequestTimes":"300-600"`, `"hMaxReusableSecs":"900-1800"`, `"hKeepAlivePeriod":10`, `"noGRPCHeader":true`, `"uplinkHTTPMethod":"POST"`, `"User-Agent":"3x-ui-test"`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("generated config lacks %s: %s", want, b)
+		}
+	}
+	if strings.Contains(string(b), "maxConnections") {
+		t.Errorf("a 0 maxConnections must stay unset: %s", b)
+	}
+}
+
+// a link carrying both styles keeps the v2rayA parameters.
+func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
+	extra := `{"mode":"packet-up","xPaddingBytes":"200-1500","noGRPCHeader":false,"noSSEHeader":false,"uplinkHTTPMethod":"POST","headers":{"X-Foreign":"2"},"xmux":{"maxConcurrency":"5"}}`
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?extra=" +
+		url.QueryEscape(extra) +
+		"&mode=packet-up&type=xhttp&xhttpMode=stream-up&x_padding_bytes=200-1500&xPaddingBytesFrom=7&xPaddingBytesTo=9&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=8" +
+		"&noGRPCHeader=true&noSSEHeader=true&uplinkHTTPMethod=PUT&xhttpHeaders=" + url.QueryEscape(`{"X-Own":"1"}`)
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := obj.(*V2Ray)
+	if v.XHTTPMode != "stream-up" {
+		t.Errorf("XHTTPMode = %q, want stream-up", v.XHTTPMode)
+	}
+	if v.XPaddingBytesFrom != 7 || v.XPaddingBytesTo != 9 {
+		t.Errorf("XPaddingBytes = %d-%d, want 7-9", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if v.XmuxMaxConcurFrom != 8 || v.XmuxMaxConcurTo != 8 {
+		t.Errorf("xmux.maxConcurrency = %d-%d, want 8-8", v.XmuxMaxConcurFrom, v.XmuxMaxConcurTo)
+	}
+	if !v.NoGRPCHeader {
+		t.Error("NoGRPCHeader = false, want true (own param must win over the blob's false)")
+	}
+	if !v.NoSSEHeader {
+		t.Error("NoSSEHeader = false, want true")
+	}
+	if v.UplinkHTTPMethod != "PUT" {
+		t.Errorf("UplinkHTTPMethod = %q, want PUT", v.UplinkHTTPMethod)
+	}
+	if v.XHTTPHeaders != `{"X-Own":"1"}` {
+		t.Errorf("XHTTPHeaders = %q, want the own parameter's JSON", v.XHTTPHeaders)
+	}
+}

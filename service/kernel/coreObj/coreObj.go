@@ -402,7 +402,7 @@ func (r XHTTPRangeConfig) MarshalJSON() ([]byte, error) {
 func (r *XHTTPRangeConfig) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err == nil {
-		from, to, err := parseRangeString(str)
+		from, to, err := ParseRangeString(str)
 		if err != nil {
 			return err
 		}
@@ -417,9 +417,11 @@ func (r *XHTTPRangeConfig) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("invalid integer range %s: expected an integer or a string of form \"a-b\"", data)
 }
 
-// parseRangeString mirrors xray-core's ParseRangeString, which supports
-// negative endpoints such as "-114-514" and "-1919--810".
-func parseRangeString(str string) (int, int, error) {
+// ParseRangeString mirrors xray-core's ParseRangeString, which supports
+// negative endpoints such as "-114-514" and "-1919--810". Links from other
+// clients (3x-ui packs its XHTTP ranges here) send the values in these same
+// two forms, so they parse with the same rules.
+func ParseRangeString(str string) (int, int, error) {
 	if value, err := strconv.Atoi(str); err == nil {
 		return value, value, nil
 	}
