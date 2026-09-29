@@ -27,13 +27,11 @@ const (
 
 // pingUDP measures a round trip to a QUIC server at host:port. It fails when no
 // Version Negotiation comes back within timeout, which is also what a server
-// that is not there, or is not QUIC, does.
-func pingUDP(host string, port int, timeout time.Duration) (time.Duration, error) {
-	addr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(host, strconv.Itoa(port)))
-	if err != nil {
-		return 0, err
-	}
-	conn, err := net.DialUDP("udp", nil, addr)
+// that is not there, or is not QUIC, does. The datagram leaves through the
+// probe's dialer: an unmarked, unbound socket would enter the transparent
+// interception the probe exists to stay out of, and measure the local stack.
+func pingUDP(dialer *net.Dialer, host string, port int, timeout time.Duration) (time.Duration, error) {
+	conn, err := dialer.Dial("udp", net.JoinHostPort(host, strconv.Itoa(port)))
 	if err != nil {
 		return 0, err
 	}

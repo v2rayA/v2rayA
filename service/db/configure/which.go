@@ -237,6 +237,13 @@ func (w *NodeRef) EqualTo(another NodeRef) (ok bool) {
 	}
 }
 func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
+	return w.PingWithDialer(loc, timeout, &net.Dialer{Timeout: timeout})
+}
+
+// PingWithDialer lets callers select how both DNS and the TCP connection
+// leave the host. The dashboard uses this to keep transparent interception
+// installed while its own probe sockets bypass it.
+func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.Dialer) (err error) {
 	if w.TYPE == SubscriptionType {
 		return fmt.Errorf("you cannot ping a subscription")
 	}
@@ -248,7 +255,7 @@ func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 	host := tsr.ServerObj.GetHostname()
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		hosts, err = resolv.LookupHost(host)
+		hosts, err = resolv.LookupHostWithDialer(host, dialer)
 		if err != nil || len(hosts) <= 0 {
 			if err != nil {
 				w.Latency = err.Error()
@@ -261,7 +268,7 @@ func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 	}
 	addr := net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort()))
 	t := time.Now()
-	conn, e := net.DialTimeout("tcp", addr, timeout)
+	conn, e := dialer.Dial("tcp", addr)
 	if e == nil {
 		_ = conn.Close()
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
@@ -269,7 +276,7 @@ func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 	}
 	// A node whose server speaks QUIC listens on UDP only, and the refused TCP
 	// dial says nothing about it: ask its UDP port before calling it unreachable.
-	roundTrip, probeErr := pingUDP(host, tsr.ServerObj.GetPort(), timeout)
+	roundTrip, probeErr := pingUDP(dialer, host, tsr.ServerObj.GetPort(), timeout)
 	if probeErr == nil {
 		log.Debug("Ping: TCP to %v failed (%v), QUIC round trip %v", addr, e, roundTrip)
 		w.Latency = fmt.Sprintf("%.0fms", roundTrip.Seconds()*1000)

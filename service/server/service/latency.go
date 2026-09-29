@@ -29,13 +29,11 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	var whiches = configure.NewWhiches(which)
 	// Deduplicate whiches to Ping
 	which = whiches.GetNonDuplicated()
-	// Temporarily disable transparent proxy
-	v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
-	defer func() {
-		if e := v2ray.ProcessManager.CheckAndSetupTransparentProxy(true, nil, v2ray.ProcessManager.GetRunningTemplate()); e != nil {
-			err = fmt.Errorf("could not restore the transparent proxy after the ping test: %w (ping result: %v)", e, err)
-		}
-	}()
+	// Do not remove interception for a dashboard probe: unrelated traffic
+	// could otherwise escape directly during this window. Only the probe's
+	// TCP and DNS sockets bypass interception: marked on Linux, bound to
+	// the physical egress interface for macOS and Windows TUN.
+	dialer := httpClient.DirectDialer(timeout, v2ray.IsTransparentOn(configure.GetSettingNotNil()))
 	// Multi-threaded asynchronous ping
 	loc := configure.NewLocator()
 	wg := new(sync.WaitGroup)
@@ -45,7 +43,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 		wg.Add(1)
 		go func(i int) {
-			_ = which[i].Ping(loc, timeout)
+			_ = which[i].PingWithDialer(loc, timeout, dialer)
 			wg.Done()
 		}(i)
 	}
