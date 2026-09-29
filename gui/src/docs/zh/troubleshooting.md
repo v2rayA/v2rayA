@@ -13,7 +13,7 @@
 
 ## 无法连接
 
-- 仪表板显示分组及成员延迟。`TIMEOUT` 表示本机到该服务器的 TCP 连接失败；换一个节点或检查订阅。
+- 仪表板显示分组及成员延迟。节点先按 TCP 探测，TCP 不通时再用 QUIC 报文按 UDP 探测，因此只监听 UDP 的服务器（juicity、tuic、hysteria2）也能测出延迟；`TIMEOUT` 表示两种探测都没能到达该服务器；换一个节点或检查订阅。
 - 直接测试一个入站：`curl -x socks5h://127.0.0.1:20170 https://example.com`。入站可用而透明代理不可用时，先查透明代理的配置、DNS 规则和透明代理所走的分组，再怀疑节点。
 - 使用 `redirect` 或 `tproxy` 时，Docker 或防火墙可能改写了 iptables 规则；停止再启动内核可重新安装。
 - Windows 与 macOS 上直接向局域网 DNS 查询的应用会绕过 TUN。
