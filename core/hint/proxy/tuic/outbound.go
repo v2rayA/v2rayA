@@ -24,6 +24,7 @@ import (
 	"github.com/xtls/xray-core/common/task"
 	"github.com/xtls/xray-core/transport"
 	"github.com/xtls/xray-core/transport/internet"
+	"github.com/xtls/xray-core/transport/internet/stat"
 
 	"github.com/v2rayA/v2raya-core/hint/tlsutil"
 )
@@ -117,13 +118,17 @@ func (d xrayDialer) DialContext(ctx context.Context, network, addr string) (outb
 	}
 	// QUIC-based protocols assert the underlay conn to netproxy.PacketConn,
 	// whose ReadFrom/WriteTo signatures differ from net.PacketConn. xray's UDP
-	// dial returns *internet.PacketConnWrapper, so adapt it here.
+	// dial returns *internet.PacketConnWrapper, so adapt it here. With outbound
+	// traffic counters on, xray hands back a *stat.CounterConnection around it,
+	// which embeds net.Conn and therefore hides ReadFrom and WriteTo; unwrap it
+	// or the QUIC stack below never sees a packet conn.
 	if destination.Network == xray_net.Network_UDP {
-		if pc, ok := conn.(net.PacketConn); ok {
+		underlay := stat.TryUnwrapStatsConn(conn)
+		if pc, ok := underlay.(net.PacketConn); ok {
 			return &packetConnAdapter{conn: conn, pc: pc}, nil
 		}
 		conn.Close()
-		return nil, fmt.Errorf("tuic: UDP dial returned %T, which is not a net.PacketConn", conn)
+		return nil, fmt.Errorf("tuic: UDP dial returned %T, which is not a net.PacketConn", underlay)
 	}
 	return conn, nil
 }

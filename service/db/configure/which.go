@@ -266,15 +266,24 @@ func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.
 		}
 		host = hosts[0]
 	}
+	addr := net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort()))
 	t := time.Now()
-	conn, e := dialer.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(tsr.ServerObj.GetPort())))
+	conn, e := dialer.Dial("tcp", addr)
 	if e == nil {
 		_ = conn.Close()
 		w.Latency = fmt.Sprintf("%.0fms", time.Since(t).Seconds()*1000)
-	} else {
-		log.Debug("Ping: %v", e)
-		w.Latency = "TIMEOUT"
+		return
 	}
+	// A node whose server speaks QUIC listens on UDP only, and the refused TCP
+	// dial says nothing about it: ask its UDP port before calling it unreachable.
+	roundTrip, probeErr := pingUDP(host, tsr.ServerObj.GetPort(), timeout)
+	if probeErr == nil {
+		log.Debug("Ping: TCP to %v failed (%v), QUIC round trip %v", addr, e, roundTrip)
+		w.Latency = fmt.Sprintf("%.0fms", roundTrip.Seconds()*1000)
+		return
+	}
+	log.Debug("Ping: %v", e)
+	w.Latency = "TIMEOUT"
 	return
 }
 
