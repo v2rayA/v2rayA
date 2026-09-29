@@ -207,10 +207,10 @@ func apply3XuiXHTTPParams(data *V2Ray, q url.Values) {
 			data.XHTTPHeaders = h.Raw
 		}
 	}
-	if !data.NoGRPCHeader {
+	if !q.Has("noGRPCHeader") {
 		data.NoGRPCHeader = gjson.Get(extra, "noGRPCHeader").Bool()
 	}
-	if !data.NoSSEHeader {
+	if !q.Has("noSSEHeader") {
 		data.NoSSEHeader = gjson.Get(extra, "noSSEHeader").Bool()
 	}
 	if data.UplinkHTTPMethod == "" {

@@ -398,11 +398,11 @@ func TestVlessXHTTPFrom3xUILink(t *testing.T) {
 
 // a link carrying both styles keeps the v2rayA parameters.
 func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
-	extra := `{"mode":"packet-up","xPaddingBytes":"200-1500","noGRPCHeader":false,"noSSEHeader":false,"uplinkHTTPMethod":"POST","headers":{"X-Foreign":"2"},"xmux":{"maxConcurrency":"5"}}`
+	extra := `{"mode":"packet-up","xPaddingBytes":"200-1500","noGRPCHeader":true,"noSSEHeader":true,"uplinkHTTPMethod":"POST","headers":{"X-Foreign":"2"},"xmux":{"maxConcurrency":"5"}}`
 	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?extra=" +
 		url.QueryEscape(extra) +
 		"&mode=packet-up&type=xhttp&xhttpMode=stream-up&x_padding_bytes=200-1500&xPaddingBytesFrom=7&xPaddingBytesTo=9&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=8" +
-		"&noGRPCHeader=true&noSSEHeader=true&uplinkHTTPMethod=PUT&xhttpHeaders=" + url.QueryEscape(`{"X-Own":"1"}`)
+		"&noGRPCHeader=false&noSSEHeader=false&uplinkHTTPMethod=PUT&xhttpHeaders=" + url.QueryEscape(`{"X-Own":"1"}`)
 	obj, err := NewFromLink("vless", link)
 	if err != nil {
 		t.Fatal(err)
@@ -417,11 +417,11 @@ func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
 	if v.XmuxMaxConcurFrom != 8 || v.XmuxMaxConcurTo != 8 {
 		t.Errorf("xmux.maxConcurrency = %d-%d, want 8-8", v.XmuxMaxConcurFrom, v.XmuxMaxConcurTo)
 	}
-	if !v.NoGRPCHeader {
-		t.Error("NoGRPCHeader = false, want true (own param must win over the blob's false)")
+	if v.NoGRPCHeader {
+		t.Error("NoGRPCHeader = true, want false (an explicit own false must win over the blob's true)")
 	}
-	if !v.NoSSEHeader {
-		t.Error("NoSSEHeader = false, want true")
+	if v.NoSSEHeader {
+		t.Error("NoSSEHeader = true, want false (an explicit own false must win over the blob's true)")
 	}
 	if v.UplinkHTTPMethod != "PUT" {
 		t.Errorf("UplinkHTTPMethod = %q, want PUT", v.UplinkHTTPMethod)
