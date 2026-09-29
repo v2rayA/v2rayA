@@ -37,7 +37,12 @@ func NotifyAutomation() {
 type subscriptionSchedule struct {
 	signature                         string
 	nextUpdate, nextHealth, nextRetry time.Time
-	warnedUnprobeable                 bool
+	// retryFromOutage records that the reserved nextRetry was armed by an
+	// actual all-unavailable health result. A retry reserved before a regular
+	// fetch, or re-armed after its cancellation, must not grant the direct
+	// fallback: no outage was detected for it.
+	retryFromOutage             bool
+	warnedUnprobeable           bool
 }
 
 type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, string, error)
@@ -188,6 +193,7 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 			return nil
 		}
 		retryDue = true
+		state.retryFromOutage = true
 		state.nextHealth = time.Time{}
 	}
 
@@ -196,7 +202,11 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 	}
 	if sub.UpdateMode == configure.SubscriptionUpdateIntervalFailsafe {
 		// Reserve a retry before cancellable work; a dashboard mutation must
-		// not consume the only deadline that can resume recovery.
+		// not consume the only deadline that can resume recovery. The
+		// reservation never touches retryFromOutage: only an actual
+		// all-unavailable health result arms the direct fallback, and a
+		// cancelled regular fetch therefore never promotes itself into a
+		// direct recovery attempt when its retry is re-armed below.
 		state.nextHealth = time.Time{}
 		state.nextRetry = a.now().Add(interval)
 		if regularDue {
@@ -211,7 +221,7 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 			}
 		}()
 	}
-	nodes, info, err := a.fetch(ctx, sub.Address, retryDue && sub.AllowDirectRecovery)
+	nodes, info, err := a.fetch(ctx, sub.Address, retryDue && state.retryFromOutage && sub.AllowDirectRecovery)
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -237,6 +247,7 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 	}
 	if sub.UpdateMode != configure.SubscriptionUpdateIntervalFailsafe {
 		state.nextHealth, state.nextRetry = time.Time{}, time.Time{}
+		state.retryFromOutage = false
 		return nil
 	}
 	unavailable, err := a.subscriptionUnavailable(ctx, sub, probeURL, state)
@@ -244,10 +255,12 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 		return err
 	}
 	state.nextHealth, state.nextRetry = time.Time{}, time.Time{}
+	state.retryFromOutage = false
 	if !unavailable {
 		state.nextHealth = a.now().Add(interval)
 	} else {
 		state.nextRetry = a.now().Add(interval)
+		state.retryFromOutage = true
 	}
 	return nil
 }

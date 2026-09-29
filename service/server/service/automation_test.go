@@ -335,3 +335,34 @@ func TestSwitchingToOnStartUpdatesOnceImmediately(t *testing.T) {
 		t.Fatalf("on-start after policy edit: requests=%d, next=%v", *requests, a.nextDeadline())
 	}
 }
+
+func TestCancelledRegularFetchDoesNotGainDirectPermission(t *testing.T) {
+	a, _, _ := testAutomation(t, configure.SubscriptionUpdateIntervalFailsafe, 10, 1)
+	sub := configure.GetSubscription(0)
+	sub.AllowDirectRecovery = true
+	if err := configure.SetSubscription(0, sub); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Unix(1000, 0)
+	a.now = func() time.Time { return now }
+	var direct []bool
+	a.fetch = func(_ context.Context, _ string, allow bool) ([]serverObj.ServerObj, string, error) {
+		direct = append(direct, allow)
+		return []serverObj.ServerObj{testServer(t, 10001)}, "", nil
+	}
+	// A dashboard mutation cancels the regular fetch mid-flight, like
+	// CancelAutomation does for a latency test.
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+	a.step(cancelled)
+	// The re-armed retry is due while the regular deadline is not; no outage
+	// was detected, so neither fetch may carry direct permission.
+	now = now.Add(2 * time.Minute)
+	a.step(context.Background())
+	if len(direct) != 2 {
+		t.Fatalf("fetches=%d, want the regular fetch and its reserved retry", len(direct))
+	}
+	if direct[0] || direct[1] {
+		t.Fatalf("direct permission=%v, want no direct fetch without a detected outage", direct)
+	}
+}
