@@ -276,7 +276,7 @@ func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.
 	}
 	// A node whose server speaks QUIC listens on UDP only, and the refused TCP
 	// dial says nothing about it: ask its UDP port before calling it unreachable.
-	roundTrip, probeErr := pingUDP(host, tsr.ServerObj.GetPort(), timeout)
+	roundTrip, probeErr := pingUDP(dialer, host, tsr.ServerObj.GetPort(), timeout)
 	if probeErr == nil {
 		log.Debug("Ping: TCP to %v failed (%v), QUIC round trip %v", addr, e, roundTrip)
 		w.Latency = fmt.Sprintf("%.0fms", roundTrip.Seconds()*1000)
