@@ -82,3 +82,5 @@ Plugin-managed nodes cannot be checked in isolation and are excluded from automa
 On upgrade, legacy subscription auto-select enables automatic membership for `PROXY` only if at least one subscription used it and every current `PROXY` member belongs to those subscriptions (or the group is empty). If there are standalone members or members from other subscriptions, `PROXY` stays manual and its selections are preserved. The old flags are retired in both cases; the log explains how to enable **Automatically add available servers** explicitly. The migration runs once and never overrides a later choice.
 
 Probing runs outside the configuration lock, with at most two temporary cores. Applying a changed membership and reloading the main core still holds that lock. An editing request waits up to five seconds and may return `REQUEST_IN_PROGRESS` during a slow reload; retry after the reload finishes. Read-only pages remain available.
+
+The group **Type** selects Xray's native `leastping`, `leastload`, `roundrobin`, or `random` balancing strategy. It works with both manual and automatic membership; changing the type does not change which servers belong to the group.

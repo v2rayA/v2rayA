@@ -367,6 +367,23 @@ func TestCancelledRegularFetchDoesNotGainDirectPermission(t *testing.T) {
 	}
 }
 
+func TestNativeGroupStrategiesValidate(t *testing.T) {
+	for _, strategy := range []configure.ObservatoryType{
+		configure.LeastPing, configure.LeastLoad, configure.RoundRobin, configure.Random,
+	} {
+		setting := configure.DefaultOutboundSetting()
+		setting.Type = strategy
+		if err := ValidateOutboundSetting(setting); err != nil {
+			t.Errorf("%s: %v", strategy, err)
+		}
+	}
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = "unknown"
+	if err := ValidateOutboundSetting(setting); err == nil {
+		t.Fatal("unknown strategy accepted")
+	}
+}
+
 func TestAutomaticGroupUsesWholeCatalogWithoutMutatingIt(t *testing.T) {
 	resetSubscription(t)
 	raw, err := ResolveURL("vless://00000000-0000-0000-0000-000000000001@example.com:443?type=raw&security=none#raw")

@@ -608,6 +608,11 @@ export default {
     probeUrl: "Probe URL",
     probeInterval: "Probe Interval",
     type: "Type",
+    strategies: {
+      leastLoad: "Least load",
+      roundRobin: "Round robin",
+      random: "Random",
+    },
   },
   proxyGroup: {
     searchNodes: "Search nodes...",

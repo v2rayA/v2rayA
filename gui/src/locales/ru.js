@@ -611,6 +611,11 @@ export default {
     probeUrl: "URL проверки",
     probeInterval: "Интервал проверки",
     type: "Тип",
+    strategies: {
+      leastLoad: "Наименьшая нагрузка",
+      roundRobin: "По очереди",
+      random: "Случайно",
+    },
   },
   proxyGroup: {
     searchNodes: "Поиск узлов...",

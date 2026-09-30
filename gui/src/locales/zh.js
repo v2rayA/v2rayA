@@ -589,6 +589,11 @@ export default {
     probeUrl: "探测 URL",
     probeInterval: "探测间隔",
     type: "类型",
+    strategies: {
+      leastLoad: "最低负载",
+      roundRobin: "轮流选择",
+      random: "随机选择",
+    },
   },
   proxyGroup: {
     searchNodes: "搜索节点...",

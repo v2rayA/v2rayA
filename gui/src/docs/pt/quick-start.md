@@ -82,3 +82,5 @@ Nós que dependem de plugins externos não podem ser verificados isoladamente e 
 Na atualização, a seleção automática antiga só ativa a associação automática de `PROXY` se ao menos uma assinatura a utilizava e todos os membros atuais pertencem a essas assinaturas, ou se o grupo está vazio. Se houver servidores independentes ou nós de outras assinaturas, `PROXY` continua manual e preserva as seleções. As opções antigas são retiradas nos dois casos, e o registro explica como ativar **Adicionar servidores disponíveis automaticamente**. A migração ocorre uma vez e não altera escolhas posteriores.
 
 A verificação não mantém o bloqueio de configuração e usa no máximo dois núcleos temporários. A aplicação dos membros e a reinicialização do núcleo principal mantêm esse bloqueio. Uma edição espera até cinco segundos e pode retornar `REQUEST_IN_PROGRESS` durante uma reinicialização lenta; tente novamente após ela terminar. As páginas de leitura permanecem disponíveis.
+
+O **Tipo** do grupo escolhe a estratégia nativa do Xray: `leastping`, `leastload`, `roundrobin` ou `random`. Ela funciona com membros manuais ou automáticos; mudar o tipo não altera os membros.

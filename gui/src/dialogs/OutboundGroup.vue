@@ -97,6 +97,9 @@ function setAutomatic(enabled: boolean | null) {
           v-model="setting.type"
           :items="[
             { value: 'leastping', title: t('setting.options.leastPing') },
+            { value: 'leastload', title: t('outbound.strategies.leastLoad') },
+            { value: 'roundrobin', title: t('outbound.strategies.roundRobin') },
+            { value: 'random', title: t('outbound.strategies.random') },
           ]"
           :label="t('outbound.type')"
         />

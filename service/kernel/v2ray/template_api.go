@@ -3,7 +3,6 @@ package v2ray
 import (
 	"net"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/go-leo/slicex"
@@ -41,7 +40,6 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 				continue
 			}
 
-			//TODO: random, leastload
 			strategy := serverData.OutboundName2Setting[outbound].Type
 			interval, err := time.ParseDuration(serverData.OutboundName2Setting[outbound].ProbeInterval)
 			if err != nil {
@@ -55,8 +53,9 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			}
 
 			t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
-				Tag:      outbound,
-				Selector: selector,
+				Tag:         outbound,
+				Selector:    selector,
+				FallbackTag: "block",
 				Strategy: coreObj.BalancerStrategy{
 					Type: strategy.String(),
 					Settings: &coreObj.StrategySettings{
@@ -65,7 +64,7 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 				},
 			})
 
-			if strings.ToLower(strategy.String()) == "leastping" {
+			if strategy == configure.LeastPing || strategy == configure.LeastLoad || strategy == configure.RoundRobin || strategy == configure.Random {
 				probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
 				if _, err := url.Parse(probeUrl); err != nil {
 					log.Warn("observatory: %v", err)

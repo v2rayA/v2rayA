@@ -601,6 +601,11 @@ export default {
     probeUrl: "탐색 URL",
     probeInterval: "탐색 간격",
     type: "유형",
+    strategies: {
+      leastLoad: "최소 부하",
+      roundRobin: "순차 선택",
+      random: "무작위 선택",
+    },
   },
   proxyGroup: {
     searchNodes: "노드 검색...",

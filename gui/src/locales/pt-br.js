@@ -617,6 +617,11 @@ export default {
     probeUrl: "URL de sondagem",
     probeInterval: "Intervalo de sondagem",
     type: "Tipo",
+    strategies: {
+      leastLoad: "Menor carga",
+      roundRobin: "Rodízio",
+      random: "Aleatório",
+    },
   },
   proxyGroup: {
     searchNodes: "Pesquisar nós...",

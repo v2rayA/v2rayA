@@ -603,6 +603,11 @@ export default {
     probeUrl: "نشانی آزمون",
     probeInterval: "فاصله آزمون",
     type: "نوع",
+    strategies: {
+      leastLoad: "کمترین بار",
+      roundRobin: "چرخشی",
+      random: "تصادفی",
+    },
   },
   proxyGroup: {
     searchNodes: "جست‌وجوی گره‌ها...",

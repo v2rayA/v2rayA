@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
-import { VSwitch, VTextField } from "vuetify/components";
+import { VSelect, VSwitch, VTextField } from "vuetify/components";
 import type * as Api from "@/api";
 import { getOutbound, putOutbound } from "@/api";
 import { mountWithApp } from "@/test/mount";
@@ -29,6 +29,16 @@ beforeEach(async () => {
   await flushPromises();
 });
 afterEach(() => wrapper.unmount());
+
+test("offers only Xray's four native group strategies", () => {
+  const strategies = wrapper.getComponent(VSelect).props("items") ?? [];
+  expect(strategies.map((item: { value: string }) => item.value)).toEqual([
+    "leastping",
+    "leastload",
+    "roundrobin",
+    "random",
+  ]);
+});
 
 test("enabling automatic membership uses the five-minute default and saves the group policy", async () => {
   const toggle = wrapper.getComponent(VSwitch);
