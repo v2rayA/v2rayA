@@ -263,6 +263,17 @@ func waitForTransparentDNS(tmpl *Template) {
 	}
 }
 
+func runDNSRedirect(setter iptables.Setter, nft bool, cleanLegacy func()) error {
+	if err := setter.Run(nft); err != nil {
+		if nft {
+			return err
+		}
+		cleanLegacy()
+		log.Warn("could not install legacy DNS redirect rules: %v", err)
+	}
+	return nil
+}
+
 func writeTransparentProxyRules(tmpl *Template) (err error) {
 	defer func() {
 		if err != nil {
@@ -350,8 +361,8 @@ ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 			// OpenWrt nftables installations need not provide iptables NAT.
 			dnsSetter = iptables.NftDNSRedirect(dnsPort, iptables.IsIPv6Supported())
 		}
-		if err = dnsSetter.Run(true); err != nil {
-			return fmt.Errorf("could not redirect DNS to the DNS module: %w", err)
+		if e := runDNSRedirect(dnsSetter, iptables.IsNft(), cleanDnsRedirectRules); e != nil {
+			return fmt.Errorf("could not redirect DNS to the DNS module: %w", e)
 		}
 
 		if couldListenLocalhost, e := CouldLocalDnsListen(); couldListenLocalhost {

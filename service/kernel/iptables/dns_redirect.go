@@ -4,6 +4,7 @@ import "fmt"
 
 // NftDNSRedirect installs NAT independently of the transparent proxy's mangle
 // hooks. A DNS_MARK accept verdict does not translate the destination port.
+// Incoming DNS is handled by the transparent proxy's existing prerouting chain.
 func NftDNSRedirect(port string, ipv6 bool) Setter {
 	family := "ipv4"
 	if ipv6 {
@@ -15,14 +16,15 @@ func NftDNSRedirect(port string, ipv6 bool) Setter {
         meta mark & 0x80 == 0x80 return
         meta nfproto %s meta l4proto { tcp, udp } th dport 53 redirect to :%s
     }
-    chain prerouting {
-        type nat hook prerouting priority dstnat - 1; policy accept;
-        meta mark & 0x80 == 0x80 return
-        meta nfproto %s meta l4proto { tcp, udp } th dport 53 redirect to :%s
-    }
 }
-`, family, port, family, port)
+`, family, port)
 	return Setter{PreFunc: func() error {
-		return executeCommandWithInput("nft", []string{"-f", "-"}, rules)
+		// A previous process may have died before removing its table.
+		_ = executeCommands("nft delete table inet v2raya_dns 2>/dev/null || true", false)
+		if err := executeCommandWithInput("nft", []string{"-f", "-"}, rules); err != nil {
+			_ = executeCommands("nft delete table inet v2raya_dns 2>/dev/null || true", false)
+			return err
+		}
+		return nil
 	}}
 }
