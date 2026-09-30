@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/v2rayA/v2rayA/conf"
@@ -23,6 +22,9 @@ import (
 
 const subscriptionProbeTimeout = 5 * time.Second
 
+// The slot is held until the temporary core has exited and been reaped.
+var probeCoreSlot = make(chan struct{}, 1)
+
 func probeSubscription(servers []serverObj.ServerObj, probeURL string) []subscriptionProbeResult {
 	return probeSubscriptionWithContext(context.Background(), servers, probeURL)
 }
@@ -30,23 +32,9 @@ func probeSubscription(servers []serverObj.ServerObj, probeURL string) []subscri
 func probeSubscriptionWithContext(ctx context.Context, servers []serverObj.ServerObj, probeURL string) []subscriptionProbeResult {
 	servers = cloneProbeNodes(servers)
 	results := make([]subscriptionProbeResult, len(servers))
-	// Limit extra core processes on routers; still wait for the entire subscription.
-	jobs := make(chan int)
-	var wg sync.WaitGroup
-	for worker := 0; worker < 2; worker++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := range jobs {
-				results[i].latency, results[i].err = probeSubscriptionServerWithContext(ctx, servers[i], probeURL, subscriptionProbeTimeout)
-			}
-		}()
-	}
 	for i := range servers {
-		jobs <- i
+		results[i].latency, results[i].err = probeSubscriptionServerWithContext(ctx, servers[i], probeURL, subscriptionProbeTimeout)
 	}
-	close(jobs)
-	wg.Wait()
 	return results
 }
 
@@ -125,6 +113,12 @@ func probeSubscriptionServerWithContext(parent context.Context, server serverObj
 	}
 	ctx, cancel := context.WithTimeout(parent, startupTimeout+timeout)
 	defer cancel()
+	select {
+	case probeCoreSlot <- struct{}{}:
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	}
+	defer func() { <-probeCoreSlot }()
 	cmd := exec.CommandContext(ctx, bin, "run", "--config="+file.Name())
 	cmd.Env = append(os.Environ(), "XRAY_LOCATION_ASSET="+asset.GetV2rayLocationAssetOverride(), "V2RAY_CONF_GEOLOADER=memconservative")
 	listener.Close()

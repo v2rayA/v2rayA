@@ -12,6 +12,7 @@ import (
 )
 
 func StopV2ray() (err error) {
+	PauseAutomation()
 	v2ray.ProcessManager.Stop(true)
 	return nil
 }
@@ -30,7 +31,11 @@ func StartV2ray() (err error) {
 	if css := configure.GetConnectedServers(); css.Len() == 0 && !configure.HasAutomaticGroup() {
 		return common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no server is selected; select at least one server first"), nil)
 	}
-	return v2ray.UpdateV2RayConfig()
+	if err = v2ray.UpdateV2RayConfig(); err != nil {
+		return err
+	}
+	ResumeAutomation()
+	return nil
 }
 
 func Disconnect(which configure.NodeRef, clearOutbound bool) (err error) {

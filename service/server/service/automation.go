@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -18,7 +19,25 @@ var (
 	automationCancelMu sync.Mutex
 	automationCancel   context.CancelFunc
 	automationWake     = make(chan struct{}, 1)
+	automationEnabled  atomic.Bool
 )
+
+func init() {
+	automationEnabled.Store(true)
+}
+
+func PauseAutomation() {
+	automationEnabled.Store(false)
+	CancelAutomation()
+	// A stopped core must not leave a temporary probe core behind.
+	probeCoreSlot <- struct{}{}
+	<-probeCoreSlot
+}
+
+func ResumeAutomation() {
+	automationEnabled.Store(true)
+	NotifyAutomation()
+}
 
 func CancelAutomation() {
 	automationCancelMu.Lock()
@@ -42,8 +61,8 @@ type subscriptionSchedule struct {
 	// actual all-unavailable health result. A retry reserved before a regular
 	// fetch, or re-armed after its cancellation, must not grant the direct
 	// fallback: no outage was detected for it.
-	retryFromOutage             bool
-	warnedUnprobeable           bool
+	retryFromOutage   bool
+	warnedUnprobeable bool
 }
 
 type groupSchedule struct {
@@ -426,6 +445,9 @@ func (a *automation) processAutomaticGroup(ctx context.Context, name string, set
 // second pass is never started in parallel; the next deadline starts at the
 // completion time.
 func (a *automation) step(parent context.Context) time.Time {
+	if !automationEnabled.Load() {
+		return time.Time{}
+	}
 	ctx, cancel := context.WithCancel(parent)
 	automationCancelMu.Lock()
 	automationCancel = cancel
@@ -436,6 +458,9 @@ func (a *automation) step(parent context.Context) time.Time {
 		automationCancel = nil
 		automationCancelMu.Unlock()
 	}()
+	if !automationEnabled.Load() {
+		return time.Time{}
+	}
 
 	ConfigurationMu.Lock()
 	subs := configure.GetSubscriptions()
@@ -532,6 +557,7 @@ func (a *automation) step(parent context.Context) time.Time {
 }
 
 func StartAutomation() func() {
+	automationEnabled.Store(true)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
