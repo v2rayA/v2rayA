@@ -359,6 +359,7 @@ export default {
     mode: "Modo",
     uplinkHttpMethod: "Método HTTP de uplink",
     uplinkDefault: "Padrão (POST)",
+    coreDefault: "Padrão ({value})",
     rangeFrom: "De",
     rangeTo: "Até",
     customHeaders: "Cabeçalhos personalizados",

@@ -353,6 +353,7 @@ export default {
     mode: "حالت",
     uplinkHttpMethod: "روش HTTP لینک بالارونده",
     uplinkDefault: "پیش‌فرض (POST)",
+    coreDefault: "پیش‌فرض ({value})",
     rangeFrom: "از",
     rangeTo: "تا",
     customHeaders: "سربرگ‌های سفارشی",

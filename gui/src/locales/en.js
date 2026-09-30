@@ -355,6 +355,7 @@ export default {
     mode: "Mode",
     uplinkHttpMethod: "Uplink HTTP Method",
     uplinkDefault: "Default (POST)",
+    coreDefault: "Default ({value})",
     rangeFrom: "From",
     rangeTo: "To",
     customHeaders: "Custom Headers",

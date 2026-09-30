@@ -346,6 +346,7 @@ export default {
     mode: "模式",
     uplinkHttpMethod: "上行 HTTP 方法",
     uplinkDefault: "默认（POST）",
+    coreDefault: "默认（{value}）",
     rangeFrom: "起始",
     rangeTo: "结束",
     customHeaders: "自定义请求头",

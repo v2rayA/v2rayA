@@ -351,6 +351,7 @@ export default {
     mode: "모드",
     uplinkHttpMethod: "업링크 HTTP 메서드",
     uplinkDefault: "기본값 (POST)",
+    coreDefault: "기본값 ({value})",
     rangeFrom: "시작",
     rangeTo: "끝",
     customHeaders: "사용자 지정 헤더",
