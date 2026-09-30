@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
-import { VSelect } from "vuetify/components";
+import { VSelect, VSwitch } from "vuetify/components";
 import type * as Api from "@/api";
 import type { TouchSubscription } from "@/api/types";
 import { patchSubscription } from "@/api";
