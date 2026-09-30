@@ -463,6 +463,11 @@ type XHTTPSettings struct {
 	Mode                 string            `json:"mode,omitempty"`
 	Headers              map[string]string `json:"headers,omitempty"`
 	XPaddingBytes        *XHTTPRangeConfig `json:"xPaddingBytes,omitempty"`
+	XPaddingObfsMode     bool              `json:"xPaddingObfsMode,omitempty"`
+	XPaddingKey          string            `json:"xPaddingKey,omitempty"`
+	XPaddingHeader       string            `json:"xPaddingHeader,omitempty"`
+	XPaddingPlacement    string            `json:"xPaddingPlacement,omitempty"`
+	XPaddingMethod       string            `json:"xPaddingMethod,omitempty"`
 	NoGRPCHeader         bool              `json:"noGRPCHeader,omitempty"`
 	NoSSEHeader          bool              `json:"noSSEHeader,omitempty"`
 	ScMaxEachPostBytes   *XHTTPRangeConfig `json:"scMaxEachPostBytes,omitempty"`

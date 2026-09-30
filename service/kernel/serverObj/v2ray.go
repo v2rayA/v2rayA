@@ -66,6 +66,11 @@ type V2Ray struct {
 	ScStreamUpServerTo     int    `json:"scStreamUpServerTo,omitempty"`
 	XPaddingBytesFrom      int    `json:"xPaddingBytesFrom,omitempty"`
 	XPaddingBytesTo        int    `json:"xPaddingBytesTo,omitempty"`
+	XPaddingObfsMode       bool   `json:"xPaddingObfsMode,omitempty"`
+	XPaddingKey            string `json:"xPaddingKey,omitempty"`
+	XPaddingHeader         string `json:"xPaddingHeader,omitempty"`
+	XPaddingPlacement      string `json:"xPaddingPlacement,omitempty"`
+	XPaddingMethod         string `json:"xPaddingMethod,omitempty"`
 	XmuxMaxConcurFrom      int    `json:"xmuxMaxConcurFrom,omitempty"`
 	XmuxMaxConcurTo        int    `json:"xmuxMaxConcurTo,omitempty"`
 	XmuxMaxConnFrom        int    `json:"xmuxMaxConnFrom,omitempty"`
@@ -125,12 +130,10 @@ func parse3XuiXHTTPRange(value string) (from, to int, ok bool) {
 // 3x-ui uses for its share links: a top-level "mode" instead of "xhttpMode",
 // a snake_case "x_padding_bytes", and the remaining settings packed into an
 // "extra" JSON blob that carries the core's own field names — the ranges,
-// the xmux settings, and the headers, noGRPCHeader, noSSEHeader and
+// the xmux settings, and the headers, padding, noGRPCHeader, noSSEHeader and
 // uplinkHTTPMethod scalars. Each field is filled only when v2rayA's own
 // parameters (read first) left it unset, so a link carrying both styles
-// keeps the v2rayA values. Fields the blob carries that v2rayA does not
-// model (xPaddingHeader, xPaddingKey, xPaddingObfsMode) are left to the
-// core defaults.
+// keeps the v2rayA values.
 func apply3XuiXHTTPParams(data *V2Ray, q url.Values) {
 	if data.XHTTPMode == "auto" {
 		if mode := q.Get("mode"); mode != "" {
@@ -171,6 +174,21 @@ func apply3XuiXHTTPParams(data *V2Ray, q url.Values) {
 		if from, to, ok := parse3XuiXHTTPRange(get("xPaddingBytes")); ok {
 			data.XPaddingBytesFrom, data.XPaddingBytesTo = from, to
 		}
+	}
+	if !q.Has("xPaddingObfsMode") {
+		data.XPaddingObfsMode = gjson.Get(extra, "xPaddingObfsMode").Bool()
+	}
+	if data.XPaddingKey == "" {
+		data.XPaddingKey = get("xPaddingKey")
+	}
+	if data.XPaddingHeader == "" {
+		data.XPaddingHeader = get("xPaddingHeader")
+	}
+	if data.XPaddingPlacement == "" {
+		data.XPaddingPlacement = get("xPaddingPlacement")
+	}
+	if data.XPaddingMethod == "" {
+		data.XPaddingMethod = get("xPaddingMethod")
 	}
 	if data.XmuxMaxConcurFrom == 0 && data.XmuxMaxConcurTo == 0 {
 		if from, to, ok := parse3XuiXHTTPRange(get("xmux.maxConcurrency")); ok {
@@ -298,6 +316,11 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		data.ScStreamUpServerTo = queryInt(u, "scStreamUpServerTo")
 		data.XPaddingBytesFrom = queryInt(u, "xPaddingBytesFrom")
 		data.XPaddingBytesTo = queryInt(u, "xPaddingBytesTo")
+		data.XPaddingObfsMode = u.Query().Get("xPaddingObfsMode") == "true"
+		data.XPaddingKey = u.Query().Get("xPaddingKey")
+		data.XPaddingHeader = u.Query().Get("xPaddingHeader")
+		data.XPaddingPlacement = u.Query().Get("xPaddingPlacement")
+		data.XPaddingMethod = u.Query().Get("xPaddingMethod")
 		data.XmuxMaxConcurFrom = queryInt(u, "xmuxMaxConcurFrom")
 		data.XmuxMaxConcurTo = queryInt(u, "xmuxMaxConcurTo")
 		data.XmuxMaxConnFrom = queryInt(u, "xmuxMaxConnFrom")
@@ -683,12 +706,17 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 		case "xhttp":
 			xs := &coreObj.XHTTPSettings{
-				Path:             v.Path,
-				Host:             v.Host,
-				Mode:             v.XHTTPMode,
-				NoGRPCHeader:     v.NoGRPCHeader,
-				NoSSEHeader:      v.NoSSEHeader,
-				UplinkHTTPMethod: v.UplinkHTTPMethod,
+				Path:              v.Path,
+				Host:              v.Host,
+				Mode:              v.XHTTPMode,
+				NoGRPCHeader:      v.NoGRPCHeader,
+				NoSSEHeader:       v.NoSSEHeader,
+				XPaddingObfsMode:  v.XPaddingObfsMode,
+				XPaddingKey:       v.XPaddingKey,
+				XPaddingHeader:    v.XPaddingHeader,
+				XPaddingPlacement: v.XPaddingPlacement,
+				XPaddingMethod:    v.XPaddingMethod,
+				UplinkHTTPMethod:  v.UplinkHTTPMethod,
 			}
 			// Parse custom headers
 			if v.XHTTPHeaders != "" {
@@ -876,6 +904,13 @@ func (v *V2Ray) ExportToURL() string {
 			setIntQuery(&query, "scStreamUpServerTo", v.ScStreamUpServerTo)
 			setIntQuery(&query, "xPaddingBytesFrom", v.XPaddingBytesFrom)
 			setIntQuery(&query, "xPaddingBytesTo", v.XPaddingBytesTo)
+			if v.XPaddingObfsMode {
+				setValue(&query, "xPaddingObfsMode", "true")
+			}
+			setValue(&query, "xPaddingKey", v.XPaddingKey)
+			setValue(&query, "xPaddingHeader", v.XPaddingHeader)
+			setValue(&query, "xPaddingPlacement", v.XPaddingPlacement)
+			setValue(&query, "xPaddingMethod", v.XPaddingMethod)
 			setIntQuery(&query, "xmuxMaxConcurFrom", v.XmuxMaxConcurFrom)
 			setIntQuery(&query, "xmuxMaxConcurTo", v.XmuxMaxConcurTo)
 			setIntQuery(&query, "xmuxMaxConnFrom", v.XmuxMaxConnFrom)

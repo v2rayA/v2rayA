@@ -322,7 +322,7 @@ func TestSSRejectsCiphersTheCoreRefuses(t *testing.T) {
 // "mode", a snake_case "x_padding_bytes" and an "extra" JSON blob that
 // carries the core's own field names.
 func TestVlessXHTTPFrom3xUILink(t *testing.T) {
-	extra := `{"mode":"packet-up","scMaxEachPostBytes":"5120","xPaddingBytes":"200-1500","xPaddingHeader":"Referer","xPaddingKey":"x_padding","xPaddingObfsMode":true,"noGRPCHeader":true,"uplinkHTTPMethod":"POST","headers":{"User-Agent":"3x-ui-test"},"xmux":{"cMaxReuseTimes":"64-128","hKeepAlivePeriod":10,"hMaxRequestTimes":"300-600","hMaxReusableSecs":"900-1800","maxConcurrency":"5","maxConnections":0}}`
+	extra := `{"mode":"packet-up","scMaxEachPostBytes":"5120","xPaddingBytes":"200-1500","xPaddingHeader":"Referer","xPaddingKey":"x_padding","xPaddingObfsMode":true,"xPaddingPlacement":"cookie","xPaddingMethod":"tokenish","noGRPCHeader":true,"uplinkHTTPMethod":"POST","headers":{"User-Agent":"3x-ui-test"},"xmux":{"cMaxReuseTimes":"64-128","hKeepAlivePeriod":10,"hMaxRequestTimes":"300-600","hMaxReusableSecs":"900-1800","maxConcurrency":"5","maxConnections":0}}`
 	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&extra=" +
 		url.QueryEscape(extra) +
 		"&fp=chrome&host=example.com&mode=packet-up&path=%2Fx&pbk=S0tF&security=reality&sid=abcd&sni=example.com&spx=%2Faa&type=xhttp&x_padding_bytes=200-1500#node"
@@ -342,6 +342,21 @@ func TestVlessXHTTPFrom3xUILink(t *testing.T) {
 	}
 	if v.XPaddingBytesFrom != 200 || v.XPaddingBytesTo != 1500 {
 		t.Errorf("XPaddingBytes = %d-%d, want 200-1500", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if !v.XPaddingObfsMode {
+		t.Error("XPaddingObfsMode = false, want true")
+	}
+	if v.XPaddingKey != "x_padding" {
+		t.Errorf("XPaddingKey = %q, want x_padding", v.XPaddingKey)
+	}
+	if v.XPaddingHeader != "Referer" {
+		t.Errorf("XPaddingHeader = %q, want Referer", v.XPaddingHeader)
+	}
+	if v.XPaddingPlacement != "cookie" {
+		t.Errorf("XPaddingPlacement = %q, want cookie", v.XPaddingPlacement)
+	}
+	if v.XPaddingMethod != "tokenish" {
+		t.Errorf("XPaddingMethod = %q, want tokenish", v.XPaddingMethod)
 	}
 	if v.XmuxMaxConcurFrom != 5 || v.XmuxMaxConcurTo != 5 {
 		t.Errorf("xmux.maxConcurrency = %d-%d, want 5-5", v.XmuxMaxConcurFrom, v.XmuxMaxConcurTo)
@@ -386,7 +401,7 @@ func TestVlessXHTTPFrom3xUILink(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}
-	for _, want := range []string{`"mode":"packet-up"`, `"xPaddingBytes":"200-1500"`, `"scMaxEachPostBytes":5120`, `"maxConcurrency":5`, `"cMaxReuseTimes":"64-128"`, `"hMaxRequestTimes":"300-600"`, `"hMaxReusableSecs":"900-1800"`, `"hKeepAlivePeriod":10`, `"noGRPCHeader":true`, `"uplinkHTTPMethod":"POST"`, `"User-Agent":"3x-ui-test"`} {
+	for _, want := range []string{`"mode":"packet-up"`, `"xPaddingBytes":"200-1500"`, `"xPaddingObfsMode":true`, `"xPaddingKey":"x_padding"`, `"xPaddingHeader":"Referer"`, `"xPaddingPlacement":"cookie"`, `"xPaddingMethod":"tokenish"`, `"scMaxEachPostBytes":5120`, `"maxConcurrency":5`, `"cMaxReuseTimes":"64-128"`, `"hMaxRequestTimes":"300-600"`, `"hMaxReusableSecs":"900-1800"`, `"hKeepAlivePeriod":10`, `"noGRPCHeader":true`, `"uplinkHTTPMethod":"POST"`, `"User-Agent":"3x-ui-test"`} {
 		if !strings.Contains(string(b), want) {
 			t.Errorf("generated config lacks %s: %s", want, b)
 		}
@@ -398,11 +413,11 @@ func TestVlessXHTTPFrom3xUILink(t *testing.T) {
 
 // a link carrying both styles keeps the v2rayA parameters.
 func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
-	extra := `{"mode":"packet-up","xPaddingBytes":"200-1500","noGRPCHeader":true,"noSSEHeader":true,"uplinkHTTPMethod":"POST","headers":{"X-Foreign":"2"},"xmux":{"maxConcurrency":"5"}}`
+	extra := `{"mode":"packet-up","xPaddingBytes":"200-1500","xPaddingObfsMode":true,"xPaddingHeader":"Foreign","noGRPCHeader":true,"noSSEHeader":true,"uplinkHTTPMethod":"POST","headers":{"X-Foreign":"2"},"xmux":{"maxConcurrency":"5"}}`
 	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?extra=" +
 		url.QueryEscape(extra) +
 		"&mode=packet-up&type=xhttp&xhttpMode=stream-up&x_padding_bytes=200-1500&xPaddingBytesFrom=7&xPaddingBytesTo=9&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=8" +
-		"&noGRPCHeader=false&noSSEHeader=false&uplinkHTTPMethod=PUT&xhttpHeaders=" + url.QueryEscape(`{"X-Own":"1"}`)
+		"&noGRPCHeader=false&noSSEHeader=false&xPaddingObfsMode=false&xPaddingHeader=Own&uplinkHTTPMethod=PUT&xhttpHeaders=" + url.QueryEscape(`{"X-Own":"1"}`)
 	obj, err := NewFromLink("vless", link)
 	if err != nil {
 		t.Fatal(err)
@@ -422,6 +437,12 @@ func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
 	}
 	if v.NoSSEHeader {
 		t.Error("NoSSEHeader = true, want false (an explicit own false must win over the blob's true)")
+	}
+	if v.XPaddingObfsMode {
+		t.Error("XPaddingObfsMode = true, want false (an explicit own false must win over the blob's true)")
+	}
+	if v.XPaddingHeader != "Own" {
+		t.Errorf("XPaddingHeader = %q, want Own (own param must win over the blob)", v.XPaddingHeader)
 	}
 	if v.UplinkHTTPMethod != "PUT" {
 		t.Errorf("UplinkHTTPMethod = %q, want PUT", v.UplinkHTTPMethod)
