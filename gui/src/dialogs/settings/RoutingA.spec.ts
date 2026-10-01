@@ -19,7 +19,11 @@ import RuleDialog from "./routingA/RuleDialog.vue";
 import { template } from "./routingA/template";
 import { russia } from "./routingA/russia";
 
-const api = vi.hoisted(() => ({ getRoutingA: vi.fn(), putRoutingA: vi.fn() }));
+const api = vi.hoisted(() => ({
+  getRoutingA: vi.fn(),
+  putRoutingA: vi.fn(),
+  importRoutingAFromURL: vi.fn(),
+}));
 vi.mock("@/api", () => api);
 const rules = "default: direct\n# inbound(http, 8080)\n";
 const button = (wrapper: Pick<VueWrapper, "findAll">, label: string) =>
@@ -40,6 +44,7 @@ beforeEach(() => {
   localStorage.clear();
   api.getRoutingA.mockReset().mockResolvedValue({ routingA: rules });
   api.putRoutingA.mockReset().mockResolvedValue(null);
+  api.importRoutingAFromURL.mockReset();
 });
 afterEach(() => {
   closeAllDialogs();
@@ -49,6 +54,78 @@ afterEach(() => {
 });
 
 describe("RoutingA dialog", () => {
+  test("imports URL rules, previews them read-only, and saves the update schedule", async () => {
+    const imported = "default: proxy\n";
+    api.importRoutingAFromURL.mockResolvedValue({ routingA: imported });
+    const wrapper = mountWithApp(RoutingA);
+    await flushPromises();
+    await button(wrapper, en.routingA.urlImport.title).trigger("click");
+    await wrapper
+      .get('input[type="url"]')
+      .setValue("https://example.com/rules.txt");
+    await button(wrapper, en.routingA.urlImport.import).trigger("click");
+    await flushPromises();
+    expect(api.importRoutingAFromURL).toHaveBeenCalledWith({
+      url: "https://example.com/rules.txt",
+      directUpdate: false,
+      intervalHours: 24,
+    });
+    const editor = wrapper.get("textarea");
+    expect(editor.element.value).toBe(imported);
+    expect(editor.attributes("readonly")).toBeDefined();
+    expect(wrapper.find(".routing-editor--source").exists()).toBe(true);
+    await button(wrapper, en.operations.save).trigger("click");
+    await flushPromises();
+    expect(api.putRoutingA).toHaveBeenCalledWith({
+      routingA: imported,
+      source: {
+        url: "https://example.com/rules.txt",
+        directUpdate: false,
+        intervalHours: 24,
+      },
+    });
+  });
+
+  test("keeps the prior rules and shows a fetch error when URL import fails", async () => {
+    api.importRoutingAFromURL.mockRejectedValue(
+      new Error("invalid RoutingA rules"),
+    );
+    const wrapper = mountWithApp(RoutingA);
+    await flushPromises();
+    await button(wrapper, en.routingA.urlImport.title).trigger("click");
+    await wrapper.get('input[type="url"]').setValue("https://example.com/page");
+    await button(wrapper, en.routingA.urlImport.import).trigger("click");
+    await flushPromises();
+    expect(wrapper.get("textarea").element.value).toBe(rules);
+    expect(wrapper.get('[data-testid="routing-error"]').text()).toContain(
+      "invalid RoutingA rules",
+    );
+    expect(api.putRoutingA).not.toHaveBeenCalled();
+  });
+
+  test("shows import progress until validation finishes", async () => {
+    let finish!: (result: { routingA: string }) => void;
+    api.importRoutingAFromURL.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const wrapper = mountWithApp(RoutingA);
+    await flushPromises();
+    await button(wrapper, en.routingA.urlImport.title).trigger("click");
+    await wrapper.get('input[type="url"]').setValue("https://example.com/rules.txt");
+    await button(wrapper, en.routingA.urlImport.import).trigger("click");
+    expect(button(wrapper, en.routingA.urlImport.import).classes()).toContain(
+      "v-btn--loading",
+    );
+    expect(button(wrapper, en.operations.save).attributes("disabled")).toBeDefined();
+    finish({ routingA: "default: proxy\n" });
+    await flushPromises();
+    expect(button(wrapper, en.routingA.urlImport.import).classes()).not.toContain(
+      "v-btn--loading",
+    );
+  });
+
   test("offers the Russia rule set as a confirmed replacement", async () => {
     const wrapper = mountWithApp(RoutingA);
     await flushPromises();

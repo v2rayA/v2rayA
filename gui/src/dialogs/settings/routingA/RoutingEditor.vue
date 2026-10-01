@@ -9,6 +9,7 @@ const props = defineProps<{
   modelValue: string;
   disabled?: boolean;
   readonly?: boolean;
+  sourcePreview?: boolean;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: string]; save: [] }>();
 const { t } = useI18n();
@@ -110,6 +111,7 @@ defineExpose({ insert });
 <template>
   <v-sheet
     class="routing-editor"
+    :class="{ 'routing-editor--source': sourcePreview }"
     rounded="lg"
     color="surface-container-lowest"
     dir="ltr"
@@ -187,6 +189,12 @@ defineExpose({ insert });
 .routing-editor:focus-within {
   border-color: rgb(var(--v-theme-primary));
   box-shadow: inset 0 0 0 1px rgb(var(--v-theme-primary));
+}
+.routing-editor--source {
+  background: rgb(var(--v-theme-surface-container)) !important;
+}
+.routing-editor--source .routing-editor__input {
+  cursor: text;
 }
 .routing-editor__gutter {
   overflow: hidden;

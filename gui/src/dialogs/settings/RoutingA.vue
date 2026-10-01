@@ -8,8 +8,15 @@ import {
   mdiFormSelect,
   mdiMenuDown,
   mdiOpenInNew,
+  mdiLinkVariant,
+  mdiHelpCircleOutline,
 } from "@mdi/js";
-import { getRoutingA, putRoutingA } from "@/api";
+import {
+  getRoutingA,
+  importRoutingAFromURL,
+  putRoutingA,
+  type RoutingASource,
+} from "@/api";
 import { errorText } from "@/api/errors";
 import { useConfirm, useNotify, useUnsavedGuard } from "@/composables";
 import RoutingEditor from "./routingA/RoutingEditor.vue";
@@ -36,7 +43,27 @@ const confirm = useConfirm();
 const notify = useNotify();
 const routingA = ref("");
 const original = ref("");
-useUnsavedGuard(() => routingA.value !== original.value);
+const url = ref("");
+const directUpdate = ref(false);
+const intervalHours = ref(24);
+const validatedURL = ref("");
+const originalSource = ref<RoutingASource>({
+  url: "",
+  directUpdate: false,
+  intervalHours: 24,
+});
+const importing = ref(false);
+const instructions = ref(false);
+const source = computed<RoutingASource>(() => ({
+  url: view.value === "url" ? url.value.trim() : "",
+  directUpdate: directUpdate.value,
+  intervalHours: Number(intervalHours.value),
+}));
+useUnsavedGuard(
+  () =>
+    routingA.value !== original.value ||
+    JSON.stringify(source.value) !== JSON.stringify(originalSource.value),
+);
 const loading = ref(true);
 const saving = ref(false);
 const confirming = ref(false);
@@ -46,7 +73,7 @@ const editor = ref<InstanceType<typeof RoutingEditor>>();
 const referenceId = useId();
 const wide = computed(() => width.value >= 840);
 const referencePreference = ref<string | null>(null);
-const view = ref<"form" | "text">("form");
+const view = ref<"form" | "text" | "url">("form");
 const picker = ref<HTMLInputElement>();
 try {
   referencePreference.value = localStorage.getItem("routingA.reference");
@@ -62,7 +89,9 @@ const showReference = computed(() =>
 const hasInboundDef = computed(() =>
   routingA.value.split("\n").some((line) => /^\s*inbound\s*\(/.test(line)),
 );
-const busy = computed(() => loading.value || saving.value || confirming.value);
+const busy = computed(
+  () => loading.value || saving.value || confirming.value || importing.value,
+);
 watch(routingA, () => {
   backendError.value = "";
   warningDismissed.value = false;
@@ -135,6 +164,20 @@ async function importRules(event: Event) {
     confirming.value = false;
   }
 }
+async function importFromURL() {
+  if (busy.value || !url.value.trim()) return;
+  importing.value = true;
+  backendError.value = "";
+  try {
+    const result = await importRoutingAFromURL(source.value);
+    routingA.value = result.routingA;
+    validatedURL.value = url.value.trim();
+  } catch (err) {
+    backendError.value = errorText(err);
+  } finally {
+    importing.value = false;
+  }
+}
 function toggleReference() {
   referencePreference.value = String(!showReference.value);
   try {
@@ -147,6 +190,16 @@ onMounted(async () => {
   try {
     const res = await getRoutingA();
     routingA.value = original.value = res.routingA;
+    const saved = res.source ?? {
+      url: "",
+      directUpdate: false,
+      intervalHours: 24,
+    };
+    originalSource.value = saved;
+    url.value = validatedURL.value = saved.url;
+    directUpdate.value = saved.directUpdate;
+    intervalHours.value = saved.intervalHours;
+    if (saved.url) view.value = "url";
   } catch (err) {
     notify.warning(errorText(err));
     emit("close");
@@ -159,7 +212,9 @@ async function close() {
   confirming.value = true;
   try {
     if (
-      routingA.value !== original.value &&
+      (routingA.value !== original.value ||
+        JSON.stringify(source.value) !==
+          JSON.stringify(originalSource.value)) &&
       !(await confirm({
         message: t("routingA.discard"),
         confirmText: t("operations.confirm"),
@@ -190,6 +245,16 @@ async function reset() {
 }
 async function save() {
   if (busy.value) return;
+  if (
+    view.value === "url" &&
+    (url.value.trim() !== validatedURL.value ||
+      !Number.isInteger(Number(intervalHours.value)) ||
+      Number(intervalHours.value) < 1 ||
+      Number(intervalHours.value) > 8760)
+  ) {
+    backendError.value = t("routingA.urlImport.importFirst");
+    return;
+  }
   saving.value = true;
   try {
     if (
@@ -201,7 +266,11 @@ async function save() {
       }))
     )
       return;
-    const res = await putRoutingA({ routingA: routingA.value });
+    const res = await putRoutingA(
+      view.value === "url" || originalSource.value.url
+        ? { routingA: routingA.value, source: source.value }
+        : { routingA: routingA.value },
+    );
     if (res && typeof res === "object" && "warning" in res && res.warning) {
       notify.warning(t("routingA.savedWithWarning", { warning: res.warning }), {
         timeout: 8000,
@@ -218,7 +287,7 @@ async function save() {
 </script>
 
 <template>
-  <v-card>
+  <v-card class="routing-card">
     <v-card-item class="routing-title px-6 pt-6 pb-4">
       <v-card-title class="md3-headline-small pa-0">{{
         t("routingA.title")
@@ -245,6 +314,9 @@ async function save() {
             :aria-label="t('routingA.form.text')"
             :title="t('routingA.form.text')"
           />
+          <v-btn value="url" :prepend-icon="mdiLinkVariant" :disabled="busy">{{
+            t("routingA.urlImport.title")
+          }}</v-btn>
         </v-btn-toggle>
         <v-menu>
           <template #activator="{ props: menu }">
@@ -291,6 +363,65 @@ async function save() {
       </template>
     </v-card-item>
     <v-card-text class="px-6">
+      <template v-if="view === 'url'">
+        <div class="routing-url-row mb-3">
+          <v-text-field
+            v-model="url"
+            type="url"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            :label="t('routingA.urlImport.url')"
+            :disabled="busy"
+            @update:model-value="backendError = ''"
+            @keydown.enter="importFromURL"
+          />
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="importing"
+            :disabled="busy || !url.trim()"
+            @click="importFromURL"
+            >{{ t("routingA.urlImport.import") }}</v-btn
+          >
+        </div>
+        <div class="routing-url-options mb-4">
+          <v-switch
+            v-model="directUpdate"
+            color="primary"
+            hide-details
+            :label="t('routingA.urlImport.direct')"
+            :disabled="busy"
+          />
+          <v-tooltip :text="t('routingA.urlImport.directHelp')">
+            <template #activator="{ props: tip }">
+              <v-btn
+                v-bind="tip"
+                :icon="mdiHelpCircleOutline"
+                variant="text"
+                size="small"
+                :aria-label="t('routingA.urlImport.directHelp')"
+              />
+            </template>
+          </v-tooltip>
+          <v-text-field
+            v-model.number="intervalHours"
+            type="number"
+            min="1"
+            max="8760"
+            step="1"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="routing-url-interval"
+            :label="t('routingA.urlImport.interval')"
+            :disabled="busy"
+          />
+          <v-btn variant="text" @click="instructions = true">{{
+            t("routingA.urlImport.instructions")
+          }}</v-btn>
+        </div>
+      </template>
       <v-alert
         v-if="hasInboundDef && !warningDismissed"
         type="warning"
@@ -322,7 +453,8 @@ async function save() {
           ref="editor"
           v-model="routingA"
           :disabled="loading"
-          :readonly="saving || confirming"
+          :readonly="saving || confirming || view === 'url'"
+          :source-preview="view === 'url'"
           @save="save"
         />
         <v-expand-transition>
@@ -379,15 +511,36 @@ async function save() {
         color="primary"
         variant="flat"
         :loading="saving"
-        :disabled="loading || confirming"
+        :disabled="
+          loading ||
+          confirming ||
+          importing ||
+          (view === 'url' && url.trim() !== validatedURL)
+        "
         @click="save"
         >{{ t("operations.save") }}</v-btn
       >
     </v-card-actions>
+    <v-dialog v-model="instructions" max-width="520">
+      <v-card :title="t('routingA.urlImport.instructions')">
+        <v-card-text>{{
+          t("routingA.urlImport.instructionsText")
+        }}</v-card-text>
+        <v-card-actions
+          ><v-spacer /><v-btn variant="text" @click="instructions = false">{{
+            t("operations.close")
+          }}</v-btn></v-card-actions
+        >
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
 <style scoped>
+.routing-card {
+  max-height: 95vh;
+  overflow-y: auto;
+}
 .routing-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -402,15 +555,53 @@ async function save() {
   overflow-wrap: anywhere;
   font-family: ui-monospace, "Cascadia Mono", "Fira Mono", Menlo, monospace;
 }
-@media (max-width: 599px) {
+.routing-url-row,
+.routing-url-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.routing-url-row :deep(.v-input) {
+  flex: 1 1 320px;
+}
+.routing-url-options :deep(.v-switch) {
+  flex: 0 1 auto;
+}
+.routing-url-interval {
+  flex: 0 0 160px;
+}
+@media (max-width: 839px) {
+  .routing-card {
+    max-height: 90vh;
+  }
+  .routing-card :deep(.v-card-text) {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
   .routing-title {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
   .routing-title :deep(.v-card-item__append) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
     padding-inline-start: 0;
-    margin-inline-start: auto;
+    margin-inline-start: 0;
+  }
+  .routing-title :deep(.v-card-item__content) {
+    flex: 1 1 100%;
+  }
+  .routing-layout :deep(.routing-editor) {
+    height: 40vh;
+    min-height: 220px;
+    max-height: none;
   }
 }
 </style>

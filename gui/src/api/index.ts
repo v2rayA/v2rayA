@@ -140,9 +140,25 @@ export const postCustomInbound = (body: CustomInbound) =>
 export const deleteCustomInbound = (body: { tag: string }) =>
   call<unknown>({ url: "customInbound", method: "delete", data: body });
 export const getRoutingA = () =>
-  call<{ routingA: string }>({ url: "routingA", method: "get" });
-export const putRoutingA = (body: { routingA: string }) =>
-  call<unknown>({ url: "routingA", method: "put", data: body });
+  call<{ routingA: string; source: RoutingASource }>({
+    url: "routingA",
+    method: "get",
+  });
+export interface RoutingASource {
+  url: string;
+  directUpdate: boolean;
+  intervalHours: number;
+}
+export const importRoutingAFromURL = (source: RoutingASource) =>
+  call<{ routingA: string }>({
+    url: "routingA/import",
+    method: "post",
+    data: source,
+  });
+export const putRoutingA = (body: {
+  routingA: string;
+  source?: RoutingASource;
+}) => call<unknown>({ url: "routingA", method: "put", data: body });
 export const getDnsRules = () =>
   call<DnsRulesResponse>({ url: "dnsRules", method: "get" });
 export const putDnsRules = (body: DnsRule[]) =>
