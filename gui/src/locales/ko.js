@@ -301,6 +301,7 @@ export default {
   },
   configureServer: {
     required: "필수",
+    minValue: "{value} 이상이어야 합니다",
     title: "서버 구성",
     titleReadonly: "서버",
     servername: "서버 이름",

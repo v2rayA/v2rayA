@@ -10,6 +10,7 @@ import { useNotify } from "@/composables/useNotify";
 import type { V2rayModel } from "../../models";
 import HeaderList from "./HeaderList.vue";
 import RangeField from "./RangeField.vue";
+import { minValue } from "./rules";
 
 defineProps<{ readonly?: boolean }>();
 const model = defineModel<V2rayModel>({ required: true });
@@ -105,6 +106,21 @@ const xhttpRanges = [
     to: "xmuxHMaxReusableTo",
   },
 ] as const;
+
+// The generated config drops a non-positive scMaxEachPostBytes and a
+// negative xPaddingBytes (the core emits error on both), so the form keeps to
+// the same bounds; negative values of the other ranges are tolerated by
+// the core and stay allowed.
+function xhttpRangeMin(
+  label: (typeof xhttpRanges)[number]["label"],
+): number | undefined {
+  if (label === "scMaxEachPostBytes") {
+    return 1;
+  }
+  if (label === "xPaddingBytes") {
+    return 0;
+  }
+}
 
 const net = computed(() => model.value.net);
 const showsHost = computed(
@@ -289,6 +305,7 @@ function onXPaddingObfsMode() {
           v-model:from="model[r.from]"
           v-model:to="model[r.to]"
           :label="r.label"
+          :min="xhttpRangeMin(r.label)"
           :readonly="readonly"
         />
       </v-col>
@@ -296,6 +313,8 @@ function onXPaddingObfsMode() {
         <v-text-field
           v-model="model.scMaxBufferedPosts"
           type="number"
+          min="0"
+          :rules="[minValue(0)]"
           label="scMaxBufferedPosts"
           :readonly="readonly"
         />

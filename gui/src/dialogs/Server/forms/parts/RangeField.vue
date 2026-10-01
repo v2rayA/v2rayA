@@ -1,9 +1,11 @@
 <script setup lang="ts">
 // A from–to pair of numbers under one label, the way the xhttp options
-// are written ("scMaxEachPostBytes 1000-2000").
+// are written ("scMaxEachPostBytes 1000-2000"). `min` bounds both ends with a
+// rule, since the input's min attribute alone does not validate.
 import { useI18n } from "vue-i18n";
+import { minValue } from "./rules";
 
-defineProps<{ label: string; readonly?: boolean }>();
+defineProps<{ label: string; readonly?: boolean; min?: number }>();
 const from = defineModel<string>("from", { required: true });
 const to = defineModel<string>("to", { required: true });
 const { t } = useI18n();
@@ -16,6 +18,8 @@ const { t } = useI18n();
       <v-text-field
         v-model="from"
         type="number"
+        :min="min"
+        :rules="min !== undefined ? [minValue(min)] : undefined"
         :label="t('configureServer.rangeFrom')"
         :readonly="readonly"
         hide-details="auto"
@@ -23,6 +27,8 @@ const { t } = useI18n();
       <v-text-field
         v-model="to"
         type="number"
+        :min="min"
+        :rules="min !== undefined ? [minValue(min)] : undefined"
         :label="t('configureServer.rangeTo')"
         :readonly="readonly"
         hide-details="auto"

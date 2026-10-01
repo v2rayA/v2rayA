@@ -303,6 +303,7 @@ export default {
   },
   configureServer: {
     required: "الزامی",
+    minValue: "باید حداقل {value} باشد",
     title: "پیکربندی سرور",
     titleReadonly: "سرور",
     servername: "نام سرور",

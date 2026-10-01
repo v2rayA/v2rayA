@@ -305,6 +305,7 @@ export default {
   },
   configureServer: {
     required: "Required",
+    minValue: "Must be at least {value}",
     title: "Configure Server",
     titleReadonly: "Server",
     servername: "Servername",

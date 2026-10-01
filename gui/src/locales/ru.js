@@ -305,6 +305,7 @@ export default {
   },
   configureServer: {
     required: "Обязательно",
+    minValue: "Не меньше {value}",
     title: "Настройка сервера",
     titleReadonly: "Сервер",
     servername: "Имя сервера",

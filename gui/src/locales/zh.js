@@ -296,6 +296,7 @@ export default {
   },
   configureServer: {
     required: "必填",
+    minValue: "不能小于 {value}",
     title: "配置节点",
     titleReadonly: "节点",
     servername: "节点名称",
