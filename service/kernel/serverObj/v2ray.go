@@ -725,21 +725,29 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					xs.Headers = hdrs
 				}
 			}
-			// Range configs
-			if v.ScMaxEachPostBytesFrom != 0 || v.ScMaxEachPostBytesTo != 0 {
-				xs.ScMaxEachPostBytes = &coreObj.XHTTPRangeConfig{From: int32(v.ScMaxEachPostBytesFrom), To: int32(v.ScMaxEachPostBytesTo)}
+			// Range configs. The core panics on a non-positive
+			// scMaxEachPostBytes, a negative scMaxBufferedPosts (channel
+			// size) and a negative xPaddingBytes (repeat count); emit those
+			// only when the core accepts them, and let its defaults apply
+			// otherwise. The bounds are checked on the int32 the core
+			// receives, since the model keeps 64-bit values and a link value
+			// out of int32 range would truncate negative. Negative values of
+			// the other fields mean nothing to the core (a skipped sleep, a
+			// disabled limit) and pass through.
+			if from, to := int32(v.ScMaxEachPostBytesFrom), int32(v.ScMaxEachPostBytesTo); min(from, to) > 0 {
+				xs.ScMaxEachPostBytes = &coreObj.XHTTPRangeConfig{From: from, To: to}
 			}
 			if v.ScMinPostsIntervalFrom != 0 || v.ScMinPostsIntervalTo != 0 {
 				xs.ScMinPostsIntervalMs = &coreObj.XHTTPRangeConfig{From: int32(v.ScMinPostsIntervalFrom), To: int32(v.ScMinPostsIntervalTo)}
 			}
-			if v.ScMaxBufferedPosts != 0 {
+			if v.ScMaxBufferedPosts > 0 {
 				xs.ScMaxBufferedPosts = int64(v.ScMaxBufferedPosts)
 			}
 			if v.ScStreamUpServerFrom != 0 || v.ScStreamUpServerTo != 0 {
 				xs.ScStreamUpServerSecs = &coreObj.XHTTPRangeConfig{From: int32(v.ScStreamUpServerFrom), To: int32(v.ScStreamUpServerTo)}
 			}
-			if v.XPaddingBytesFrom != 0 || v.XPaddingBytesTo != 0 {
-				xs.XPaddingBytes = &coreObj.XHTTPRangeConfig{From: int32(v.XPaddingBytesFrom), To: int32(v.XPaddingBytesTo)}
+			if from, to := int32(v.XPaddingBytesFrom), int32(v.XPaddingBytesTo); (from != 0 || to != 0) && min(from, to) >= 0 {
+				xs.XPaddingBytes = &coreObj.XHTTPRangeConfig{From: from, To: to}
 			}
 			// Xmux
 			xmux := &coreObj.XHTTPXmux{HKeepAlivePeriod: v.XmuxHKeepAlive}

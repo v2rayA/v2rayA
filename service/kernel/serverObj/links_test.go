@@ -451,3 +451,90 @@ func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
 		t.Errorf("XHTTPHeaders = %q, want the own parameter's JSON", v.XHTTPHeaders)
 	}
 }
+
+// the core panics on a scMaxEachPostBytes with a non-positive minimum, a
+// negative scMaxBufferedPosts and a negative xPaddingBytes, so such values
+// must not reach the generated config; they stay visible in the model.
+func TestVlessXHTTPNegativeRangesDoNotReachConfig(t *testing.T) {
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&type=xhttp&xhttpMode=packet-up" +
+		"&xPaddingBytesFrom=-200&xPaddingBytesTo=1500&scMaxEachPostBytesFrom=-5&scMaxEachPostBytesTo=10&scMaxBufferedPosts=-3#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := obj.(*V2Ray)
+	if v.XPaddingBytesFrom != -200 || v.XPaddingBytesTo != 1500 {
+		t.Errorf("XPaddingBytes = %d-%d, want -200-1500 (the model keeps the value)", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if v.ScMaxEachPostBytesFrom != -5 || v.ScMaxEachPostBytesTo != 10 {
+		t.Errorf("ScMaxEachPostBytes = %d-%d, want -5-10 (the model keeps the value)", v.ScMaxEachPostBytesFrom, v.ScMaxEachPostBytesTo)
+	}
+	if v.ScMaxBufferedPosts != -3 {
+		t.Errorf("ScMaxBufferedPosts = %d, want -3 (the model keeps the value)", v.ScMaxBufferedPosts)
+	}
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, absent := range []string{`"xPaddingBytes"`, `"scMaxEachPostBytes"`, `"scMaxBufferedPosts"`} {
+		if strings.Contains(string(b), absent) {
+			t.Errorf("generated config carries a value the core refuses, %s: %s", absent, b)
+		}
+	}
+}
+
+// a zero minimum is what the core accepts for xPaddingBytes (no padding), so
+// it must still reach the config.
+func TestVlessXHTTPZeroMinimumPaddingIsEmitted(t *testing.T) {
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&type=xhttp&xhttpMode=packet-up&xPaddingBytesFrom=0&xPaddingBytesTo=100#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(b), `"xPaddingBytes":"0-100"`) {
+		t.Errorf("generated config lacks the 0-100 padding range: %s", b)
+	}
+}
+
+// a link value above the int32 max truncates to a negative endpoint when the
+// config is built, which the core panics on; the bound must be checked on the
+// truncated value, so an out-of-int32 value must not reach the config.
+func TestVlessXHTTPInt32OverflowRangesDoNotReachConfig(t *testing.T) {
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&type=xhttp&xhttpMode=packet-up" +
+		"&xPaddingBytesFrom=3000000000&xPaddingBytesTo=1500" +
+		"&scMaxEachPostBytesFrom=3000000000&scMaxEachPostBytesTo=10#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := obj.(*V2Ray)
+	if v.ScMaxEachPostBytesFrom != 3000000000 || v.XPaddingBytesFrom != 3000000000 {
+		t.Errorf("model = %d-%d / %d-%d, want the 64-bit link values kept",
+			v.ScMaxEachPostBytesFrom, v.ScMaxEachPostBytesTo, v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, absent := range []string{`"xPaddingBytes"`, `"scMaxEachPostBytes"`} {
+		if strings.Contains(string(b), absent) {
+			t.Errorf("generated config carries a value the core refuses, %s: %s", absent, b)
+		}
+	}
+}
