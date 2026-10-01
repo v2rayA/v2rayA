@@ -4,7 +4,8 @@ import "fmt"
 
 // NftDNSRedirect installs NAT independently of the transparent proxy's mangle
 // hooks. A DNS_MARK accept verdict does not translate the destination port.
-// Incoming DNS is handled by the transparent proxy's existing prerouting chain.
+// Incoming DNS uses the transparent proxy's existing prerouting chain in
+// TPROXY/Redirect mode, or the core's DNS relay when routed through the TUN.
 func NftDNSRedirect(port string, ipv6 bool) Setter {
 	family := "ipv4"
 	if ipv6 {

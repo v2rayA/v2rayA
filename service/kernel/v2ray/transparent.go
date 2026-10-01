@@ -263,13 +263,31 @@ func waitForTransparentDNS(tmpl *Template) {
 	}
 }
 
-func runDNSRedirect(setter iptables.Setter, nft bool, cleanLegacy func()) error {
-	if err := setter.Run(nft); err != nil {
-		if nft {
+func dnsRedirectPolicy(goos string, setting *configure.Setting) (install, required bool) {
+	if goos != "linux" {
+		return false, false
+	}
+	switch setting.TransparentType {
+	case configure.TransparentTproxy, configure.TransparentRedirect:
+		return true, true
+	case configure.TransparentTun:
+		return setting.TunAutoRoute, false
+	case configure.TransparentSystemProxy:
+		return true, false
+	default:
+		return false, false
+	}
+}
+
+func runDNSRedirect(setter iptables.Setter, nft, required bool, cleanLegacy func()) error {
+	if err := setter.Run(nft && required); err != nil {
+		if nft && required {
 			return err
 		}
-		cleanLegacy()
-		log.Warn("could not install legacy DNS redirect rules: %v", err)
+		if !nft {
+			cleanLegacy()
+		}
+		log.Warn("could not install DNS redirect rules: %v", err)
 	}
 	return nil
 }
@@ -326,8 +344,8 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 		return fmt.Errorf("unknown transparent proxy mode %q; expected tproxy, redirect, system_proxy, or tun", setting.TransparentType)
 	}
 
-	// 无论哪种透明代理模式，都用 nat 表的 REDIRECT 将 DNS 流量（:53）转到 DNS 模块（:52353）。
-	// 同时拦截 OUTPUT（本地进程）和 PREROUTING（LAN 设备）的 DNS 查询。
+	// Linux 上用 nat REDIRECT 将本地 DNS 流量送到 DNS 模块。legacy iptables 还拦截
+	// PREROUTING；nft 的入站 DNS 由透明代理链或 TUN 内的 DNS relay 处理。
 	// TPROXY 模式对回环（loopback）流量的 TPROXY 拦截不可靠，而 REDIRECT 在 OUTPUT 链上稳定。
 	//
 	// IMPORTANT (fix): mark 0x80 豁免规则必须排在 REDIRECT 规则之前，否则 v2raya-core
@@ -335,7 +353,8 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 	// :52353，形成无限回环（内存雪崩直至 OOM）。iptables 按顺序匹配：
 	//   - REDIRECT 用 -A（追加到链尾），确保在 mark 豁免之后
 	//   - mark 豁免用 -I（插入到链首），确保最先匹配
-	if ShouldLocalDnsListen() {
+	installDNS, requireDNS := dnsRedirectPolicy(runtime.GOOS, setting)
+	if installDNS && ShouldLocalDnsListen() {
 		dnsPort := dnsModulePort(setting)
 		rememberDnsRedirectPort(dnsPort)
 		dnsRedirect := `
@@ -361,7 +380,7 @@ ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 			// OpenWrt nftables installations need not provide iptables NAT.
 			dnsSetter = iptables.NftDNSRedirect(dnsPort, iptables.IsIPv6Supported())
 		}
-		if e := runDNSRedirect(dnsSetter, iptables.IsNft(), cleanDnsRedirectRules); e != nil {
+		if e := runDNSRedirect(dnsSetter, iptables.IsNft(), requireDNS, cleanDnsRedirectRules); e != nil {
 			return fmt.Errorf("could not redirect DNS to the DNS module: %w", e)
 		}
 
