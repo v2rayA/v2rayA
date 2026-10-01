@@ -317,3 +317,224 @@ func TestSSRejectsCiphersTheCoreRefuses(t *testing.T) {
 		}
 	}
 }
+
+// 3x-ui packs the XHTTP tuning of its vless share links into a top-level
+// "mode", a snake_case "x_padding_bytes" and an "extra" JSON blob that
+// carries the core's own field names.
+func TestVlessXHTTPFrom3xUILink(t *testing.T) {
+	extra := `{"mode":"packet-up","scMaxEachPostBytes":"5120","xPaddingBytes":"200-1500","xPaddingHeader":"Referer","xPaddingKey":"x_padding","xPaddingObfsMode":true,"xPaddingPlacement":"cookie","xPaddingMethod":"tokenish","noGRPCHeader":true,"uplinkHTTPMethod":"POST","headers":{"User-Agent":"3x-ui-test"},"xmux":{"cMaxReuseTimes":"64-128","hKeepAlivePeriod":10,"hMaxRequestTimes":"300-600","hMaxReusableSecs":"900-1800","maxConcurrency":"5","maxConnections":0}}`
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&extra=" +
+		url.QueryEscape(extra) +
+		"&fp=chrome&host=example.com&mode=packet-up&path=%2Fx&pbk=S0tF&security=reality&sid=abcd&sni=example.com&spx=%2Faa&type=xhttp&x_padding_bytes=200-1500#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatalf("3x-ui link rejected: %v", err)
+	}
+	v, ok := obj.(*V2Ray)
+	if !ok {
+		t.Fatalf("not a *V2Ray: %T", obj)
+	}
+	if v.XHTTPMode != "packet-up" {
+		t.Errorf("XHTTPMode = %q, want packet-up", v.XHTTPMode)
+	}
+	if v.ScMaxEachPostBytesFrom != 5120 || v.ScMaxEachPostBytesTo != 5120 {
+		t.Errorf("ScMaxEachPostBytes = %d-%d, want 5120-5120", v.ScMaxEachPostBytesFrom, v.ScMaxEachPostBytesTo)
+	}
+	if v.XPaddingBytesFrom != 200 || v.XPaddingBytesTo != 1500 {
+		t.Errorf("XPaddingBytes = %d-%d, want 200-1500", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if !v.XPaddingObfsMode {
+		t.Error("XPaddingObfsMode = false, want true")
+	}
+	if v.XPaddingKey != "x_padding" {
+		t.Errorf("XPaddingKey = %q, want x_padding", v.XPaddingKey)
+	}
+	if v.XPaddingHeader != "Referer" {
+		t.Errorf("XPaddingHeader = %q, want Referer", v.XPaddingHeader)
+	}
+	if v.XPaddingPlacement != "cookie" {
+		t.Errorf("XPaddingPlacement = %q, want cookie", v.XPaddingPlacement)
+	}
+	if v.XPaddingMethod != "tokenish" {
+		t.Errorf("XPaddingMethod = %q, want tokenish", v.XPaddingMethod)
+	}
+	if v.XmuxMaxConcurFrom != 5 || v.XmuxMaxConcurTo != 5 {
+		t.Errorf("xmux.maxConcurrency = %d-%d, want 5-5", v.XmuxMaxConcurFrom, v.XmuxMaxConcurTo)
+	}
+	if v.XmuxMaxConnFrom != 0 || v.XmuxMaxConnTo != 0 {
+		t.Errorf("xmux.maxConnections = %d-%d, want unset (0)", v.XmuxMaxConnFrom, v.XmuxMaxConnTo)
+	}
+	if v.XmuxCMaxReuseFrom != 64 || v.XmuxCMaxReuseTo != 128 {
+		t.Errorf("xmux.cMaxReuseTimes = %d-%d, want 64-128", v.XmuxCMaxReuseFrom, v.XmuxCMaxReuseTo)
+	}
+	if v.XmuxHMaxReqFrom != 300 || v.XmuxHMaxReqTo != 600 {
+		t.Errorf("xmux.hMaxRequestTimes = %d-%d, want 300-600", v.XmuxHMaxReqFrom, v.XmuxHMaxReqTo)
+	}
+	if v.XmuxHMaxReusableFrom != 900 || v.XmuxHMaxReusableTo != 1800 {
+		t.Errorf("xmux.hMaxReusableSecs = %d-%d, want 900-1800", v.XmuxHMaxReusableFrom, v.XmuxHMaxReusableTo)
+	}
+	if v.XmuxHKeepAlive != 10 {
+		t.Errorf("xmux.hKeepAlivePeriod = %d, want 10", v.XmuxHKeepAlive)
+	}
+	if !v.NoGRPCHeader {
+		t.Error("noGRPCHeader = false, want true")
+	}
+	if v.NoSSEHeader {
+		t.Error("noSSEHeader = true, want false (absent from the blob)")
+	}
+	if v.UplinkHTTPMethod != "POST" {
+		t.Errorf("uplinkHTTPMethod = %q, want POST", v.UplinkHTTPMethod)
+	}
+	if v.XHTTPHeaders != `{"User-Agent":"3x-ui-test"}` {
+		t.Errorf("XHTTPHeaders = %q, want the blob's headers object", v.XHTTPHeaders)
+	}
+	if v.Host != "example.com" || v.Path != "/x" || v.SNI != "example.com" || v.PublicKey != "S0tF" {
+		t.Errorf("basic fields lost: %+v", v)
+	}
+	// the parsed values must reach the generated core config in the
+	// shorthand the core accepts
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"mode":"packet-up"`, `"xPaddingBytes":"200-1500"`, `"xPaddingObfsMode":true`, `"xPaddingKey":"x_padding"`, `"xPaddingHeader":"Referer"`, `"xPaddingPlacement":"cookie"`, `"xPaddingMethod":"tokenish"`, `"scMaxEachPostBytes":5120`, `"maxConcurrency":5`, `"cMaxReuseTimes":"64-128"`, `"hMaxRequestTimes":"300-600"`, `"hMaxReusableSecs":"900-1800"`, `"hKeepAlivePeriod":10`, `"noGRPCHeader":true`, `"uplinkHTTPMethod":"POST"`, `"User-Agent":"3x-ui-test"`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("generated config lacks %s: %s", want, b)
+		}
+	}
+	if strings.Contains(string(b), "maxConnections") {
+		t.Errorf("a 0 maxConnections must stay unset: %s", b)
+	}
+}
+
+// a link carrying both styles keeps the v2rayA parameters.
+func TestVlessXHTTPPrefersOwnParamsOver3xUI(t *testing.T) {
+	extra := `{"mode":"packet-up","xPaddingBytes":"200-1500","xPaddingObfsMode":true,"xPaddingHeader":"Foreign","noGRPCHeader":true,"noSSEHeader":true,"uplinkHTTPMethod":"POST","headers":{"X-Foreign":"2"},"xmux":{"maxConcurrency":"5"}}`
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?extra=" +
+		url.QueryEscape(extra) +
+		"&mode=packet-up&type=xhttp&xhttpMode=stream-up&x_padding_bytes=200-1500&xPaddingBytesFrom=7&xPaddingBytesTo=9&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=8" +
+		"&noGRPCHeader=false&noSSEHeader=false&xPaddingObfsMode=false&xPaddingHeader=Own&uplinkHTTPMethod=PUT&xhttpHeaders=" + url.QueryEscape(`{"X-Own":"1"}`)
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := obj.(*V2Ray)
+	if v.XHTTPMode != "stream-up" {
+		t.Errorf("XHTTPMode = %q, want stream-up", v.XHTTPMode)
+	}
+	if v.XPaddingBytesFrom != 7 || v.XPaddingBytesTo != 9 {
+		t.Errorf("XPaddingBytes = %d-%d, want 7-9", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if v.XmuxMaxConcurFrom != 8 || v.XmuxMaxConcurTo != 8 {
+		t.Errorf("xmux.maxConcurrency = %d-%d, want 8-8", v.XmuxMaxConcurFrom, v.XmuxMaxConcurTo)
+	}
+	if v.NoGRPCHeader {
+		t.Error("NoGRPCHeader = true, want false (an explicit own false must win over the blob's true)")
+	}
+	if v.NoSSEHeader {
+		t.Error("NoSSEHeader = true, want false (an explicit own false must win over the blob's true)")
+	}
+	if v.XPaddingObfsMode {
+		t.Error("XPaddingObfsMode = true, want false (an explicit own false must win over the blob's true)")
+	}
+	if v.XPaddingHeader != "Own" {
+		t.Errorf("XPaddingHeader = %q, want Own (own param must win over the blob)", v.XPaddingHeader)
+	}
+	if v.UplinkHTTPMethod != "PUT" {
+		t.Errorf("UplinkHTTPMethod = %q, want PUT", v.UplinkHTTPMethod)
+	}
+	if v.XHTTPHeaders != `{"X-Own":"1"}` {
+		t.Errorf("XHTTPHeaders = %q, want the own parameter's JSON", v.XHTTPHeaders)
+	}
+}
+
+// the core panics on a scMaxEachPostBytes with a non-positive minimum, a
+// negative scMaxBufferedPosts and a negative xPaddingBytes, so such values
+// must not reach the generated config; they stay visible in the model.
+func TestVlessXHTTPNegativeRangesDoNotReachConfig(t *testing.T) {
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&type=xhttp&xhttpMode=packet-up" +
+		"&xPaddingBytesFrom=-200&xPaddingBytesTo=1500&scMaxEachPostBytesFrom=-5&scMaxEachPostBytesTo=10&scMaxBufferedPosts=-3#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := obj.(*V2Ray)
+	if v.XPaddingBytesFrom != -200 || v.XPaddingBytesTo != 1500 {
+		t.Errorf("XPaddingBytes = %d-%d, want -200-1500 (the model keeps the value)", v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	if v.ScMaxEachPostBytesFrom != -5 || v.ScMaxEachPostBytesTo != 10 {
+		t.Errorf("ScMaxEachPostBytes = %d-%d, want -5-10 (the model keeps the value)", v.ScMaxEachPostBytesFrom, v.ScMaxEachPostBytesTo)
+	}
+	if v.ScMaxBufferedPosts != -3 {
+		t.Errorf("ScMaxBufferedPosts = %d, want -3 (the model keeps the value)", v.ScMaxBufferedPosts)
+	}
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, absent := range []string{`"xPaddingBytes"`, `"scMaxEachPostBytes"`, `"scMaxBufferedPosts"`} {
+		if strings.Contains(string(b), absent) {
+			t.Errorf("generated config carries a value the core refuses, %s: %s", absent, b)
+		}
+	}
+}
+
+// a zero minimum is what the core accepts for xPaddingBytes (no padding), so
+// it must still reach the config.
+func TestVlessXHTTPZeroMinimumPaddingIsEmitted(t *testing.T) {
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&type=xhttp&xhttpMode=packet-up&xPaddingBytesFrom=0&xPaddingBytesTo=100#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(b), `"xPaddingBytes":"0-100"`) {
+		t.Errorf("generated config lacks the 0-100 padding range: %s", b)
+	}
+}
+
+// a link value above the int32 max truncates to a negative endpoint when the
+// config is built, which the core panics on; the bound must be checked on the
+// truncated value, so an out-of-int32 value must not reach the config.
+func TestVlessXHTTPInt32OverflowRangesDoNotReachConfig(t *testing.T) {
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&type=xhttp&xhttpMode=packet-up" +
+		"&xPaddingBytesFrom=3000000000&xPaddingBytesTo=1500" +
+		"&scMaxEachPostBytesFrom=3000000000&scMaxEachPostBytesTo=10#node"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := obj.(*V2Ray)
+	if v.ScMaxEachPostBytesFrom != 3000000000 || v.XPaddingBytesFrom != 3000000000 {
+		t.Errorf("model = %d-%d / %d-%d, want the 64-bit link values kept",
+			v.ScMaxEachPostBytesFrom, v.ScMaxEachPostBytesTo, v.XPaddingBytesFrom, v.XPaddingBytesTo)
+	}
+	cfg, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatalf("Configuration: %v", err)
+	}
+	b, err := json.Marshal(cfg.CoreOutbound.StreamSettings.XHTTPSettings)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, absent := range []string{`"xPaddingBytes"`, `"scMaxEachPostBytes"`} {
+		if strings.Contains(string(b), absent) {
+			t.Errorf("generated config carries a value the core refuses, %s: %s", absent, b)
+		}
+	}
+}

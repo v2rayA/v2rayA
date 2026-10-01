@@ -66,6 +66,11 @@ type V2Ray struct {
 	ScStreamUpServerTo     int    `json:"scStreamUpServerTo,omitempty"`
 	XPaddingBytesFrom      int    `json:"xPaddingBytesFrom,omitempty"`
 	XPaddingBytesTo        int    `json:"xPaddingBytesTo,omitempty"`
+	XPaddingObfsMode       bool   `json:"xPaddingObfsMode,omitempty"`
+	XPaddingKey            string `json:"xPaddingKey,omitempty"`
+	XPaddingHeader         string `json:"xPaddingHeader,omitempty"`
+	XPaddingPlacement      string `json:"xPaddingPlacement,omitempty"`
+	XPaddingMethod         string `json:"xPaddingMethod,omitempty"`
 	XmuxMaxConcurFrom      int    `json:"xmuxMaxConcurFrom,omitempty"`
 	XmuxMaxConcurTo        int    `json:"xmuxMaxConcurTo,omitempty"`
 	XmuxMaxConnFrom        int    `json:"xmuxMaxConnFrom,omitempty"`
@@ -105,6 +110,129 @@ func queryInt(u *url.URL, key string) int {
 func setIntQuery(q *url.Values, key string, val int) {
 	if val != 0 {
 		q.Set(key, strconv.Itoa(val))
+	}
+}
+
+// parse3XuiXHTTPRange parses a range the way the core does (a plain integer
+// or an "a-b" string); ok is false for an empty or unparseable value.
+func parse3XuiXHTTPRange(value string) (from, to int, ok bool) {
+	if value == "" {
+		return 0, 0, false
+	}
+	from, to, err := coreObj.ParseRangeString(value)
+	if err != nil {
+		return 0, 0, false
+	}
+	return from, to, true
+}
+
+// apply3XuiXHTTPParams fills the XHTTP fields from the parameter scheme
+// 3x-ui uses for its share links: a top-level "mode" instead of "xhttpMode",
+// a snake_case "x_padding_bytes", and the remaining settings packed into an
+// "extra" JSON blob that carries the core's own field names — the ranges,
+// the xmux settings, and the headers, padding, noGRPCHeader, noSSEHeader and
+// uplinkHTTPMethod scalars. Each field is filled only when v2rayA's own
+// parameters (read first) left it unset, so a link carrying both styles
+// keeps the v2rayA values.
+func apply3XuiXHTTPParams(data *V2Ray, q url.Values) {
+	if data.XHTTPMode == "auto" {
+		if mode := q.Get("mode"); mode != "" {
+			data.XHTTPMode = mode
+		}
+	}
+	if data.XPaddingBytesFrom == 0 && data.XPaddingBytesTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(q.Get("x_padding_bytes")); ok {
+			data.XPaddingBytesFrom, data.XPaddingBytesTo = from, to
+		}
+	}
+	extra := q.Get("extra")
+	if extra == "" {
+		return
+	}
+	get := func(path string) string { return gjson.Get(extra, path).String() }
+	if data.ScMaxEachPostBytesFrom == 0 && data.ScMaxEachPostBytesTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("scMaxEachPostBytes")); ok {
+			data.ScMaxEachPostBytesFrom, data.ScMaxEachPostBytesTo = from, to
+		}
+	}
+	if data.ScMinPostsIntervalFrom == 0 && data.ScMinPostsIntervalTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("scMinPostsIntervalMs")); ok {
+			data.ScMinPostsIntervalFrom, data.ScMinPostsIntervalTo = from, to
+		}
+	}
+	if data.ScMaxBufferedPosts == 0 {
+		if v, _, ok := parse3XuiXHTTPRange(get("scMaxBufferedPosts")); ok && v > 0 {
+			data.ScMaxBufferedPosts = v
+		}
+	}
+	if data.ScStreamUpServerFrom == 0 && data.ScStreamUpServerTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("scStreamUpServerSecs")); ok {
+			data.ScStreamUpServerFrom, data.ScStreamUpServerTo = from, to
+		}
+	}
+	if data.XPaddingBytesFrom == 0 && data.XPaddingBytesTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xPaddingBytes")); ok {
+			data.XPaddingBytesFrom, data.XPaddingBytesTo = from, to
+		}
+	}
+	if !q.Has("xPaddingObfsMode") {
+		data.XPaddingObfsMode = gjson.Get(extra, "xPaddingObfsMode").Bool()
+	}
+	if data.XPaddingKey == "" {
+		data.XPaddingKey = get("xPaddingKey")
+	}
+	if data.XPaddingHeader == "" {
+		data.XPaddingHeader = get("xPaddingHeader")
+	}
+	if data.XPaddingPlacement == "" {
+		data.XPaddingPlacement = get("xPaddingPlacement")
+	}
+	if data.XPaddingMethod == "" {
+		data.XPaddingMethod = get("xPaddingMethod")
+	}
+	if data.XmuxMaxConcurFrom == 0 && data.XmuxMaxConcurTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.maxConcurrency")); ok {
+			data.XmuxMaxConcurFrom, data.XmuxMaxConcurTo = from, to
+		}
+	}
+	if data.XmuxMaxConnFrom == 0 && data.XmuxMaxConnTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.maxConnections")); ok {
+			data.XmuxMaxConnFrom, data.XmuxMaxConnTo = from, to
+		}
+	}
+	if data.XmuxCMaxReuseFrom == 0 && data.XmuxCMaxReuseTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.cMaxReuseTimes")); ok {
+			data.XmuxCMaxReuseFrom, data.XmuxCMaxReuseTo = from, to
+		}
+	}
+	if data.XmuxHMaxReqFrom == 0 && data.XmuxHMaxReqTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.hMaxRequestTimes")); ok {
+			data.XmuxHMaxReqFrom, data.XmuxHMaxReqTo = from, to
+		}
+	}
+	if data.XmuxHMaxReusableFrom == 0 && data.XmuxHMaxReusableTo == 0 {
+		if from, to, ok := parse3XuiXHTTPRange(get("xmux.hMaxReusableSecs")); ok {
+			data.XmuxHMaxReusableFrom, data.XmuxHMaxReusableTo = from, to
+		}
+	}
+	if data.XmuxHKeepAlive == 0 {
+		if v, _, ok := parse3XuiXHTTPRange(get("xmux.hKeepAlivePeriod")); ok && v > 0 {
+			data.XmuxHKeepAlive = int64(v)
+		}
+	}
+	if data.XHTTPHeaders == "" {
+		if h := gjson.Get(extra, "headers"); len(h.Map()) > 0 {
+			data.XHTTPHeaders = h.Raw
+		}
+	}
+	if !q.Has("noGRPCHeader") {
+		data.NoGRPCHeader = gjson.Get(extra, "noGRPCHeader").Bool()
+	}
+	if !q.Has("noSSEHeader") {
+		data.NoSSEHeader = gjson.Get(extra, "noSSEHeader").Bool()
+	}
+	if data.UplinkHTTPMethod == "" {
+		data.UplinkHTTPMethod = get("uplinkHTTPMethod")
 	}
 }
 
@@ -188,6 +316,11 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		data.ScStreamUpServerTo = queryInt(u, "scStreamUpServerTo")
 		data.XPaddingBytesFrom = queryInt(u, "xPaddingBytesFrom")
 		data.XPaddingBytesTo = queryInt(u, "xPaddingBytesTo")
+		data.XPaddingObfsMode = u.Query().Get("xPaddingObfsMode") == "true"
+		data.XPaddingKey = u.Query().Get("xPaddingKey")
+		data.XPaddingHeader = u.Query().Get("xPaddingHeader")
+		data.XPaddingPlacement = u.Query().Get("xPaddingPlacement")
+		data.XPaddingMethod = u.Query().Get("xPaddingMethod")
 		data.XmuxMaxConcurFrom = queryInt(u, "xmuxMaxConcurFrom")
 		data.XmuxMaxConcurTo = queryInt(u, "xmuxMaxConcurTo")
 		data.XmuxMaxConnFrom = queryInt(u, "xmuxMaxConnFrom")
@@ -199,6 +332,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		data.XmuxHMaxReusableFrom = queryInt(u, "xmuxHMaxReusableFrom")
 		data.XmuxHMaxReusableTo = queryInt(u, "xmuxHMaxReusableTo")
 		data.XmuxHKeepAlive = int64(queryInt(u, "xmuxHKeepAlive"))
+		apply3XuiXHTTPParams(data, u.Query())
 	}
 	data.MaxEarlyData = u.Query().Get("maxEarlyData")
 	data.EarlyDataHeaderName = u.Query().Get("earlyDataHeaderName")
@@ -572,12 +706,17 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			}
 		case "xhttp":
 			xs := &coreObj.XHTTPSettings{
-				Path:             v.Path,
-				Host:             v.Host,
-				Mode:             v.XHTTPMode,
-				NoGRPCHeader:     v.NoGRPCHeader,
-				NoSSEHeader:      v.NoSSEHeader,
-				UplinkHTTPMethod: v.UplinkHTTPMethod,
+				Path:              v.Path,
+				Host:              v.Host,
+				Mode:              v.XHTTPMode,
+				NoGRPCHeader:      v.NoGRPCHeader,
+				NoSSEHeader:       v.NoSSEHeader,
+				XPaddingObfsMode:  v.XPaddingObfsMode,
+				XPaddingKey:       v.XPaddingKey,
+				XPaddingHeader:    v.XPaddingHeader,
+				XPaddingPlacement: v.XPaddingPlacement,
+				XPaddingMethod:    v.XPaddingMethod,
+				UplinkHTTPMethod:  v.UplinkHTTPMethod,
 			}
 			// Parse custom headers
 			if v.XHTTPHeaders != "" {
@@ -586,21 +725,29 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					xs.Headers = hdrs
 				}
 			}
-			// Range configs
-			if v.ScMaxEachPostBytesFrom != 0 || v.ScMaxEachPostBytesTo != 0 {
-				xs.ScMaxEachPostBytes = &coreObj.XHTTPRangeConfig{From: int32(v.ScMaxEachPostBytesFrom), To: int32(v.ScMaxEachPostBytesTo)}
+			// Range configs. The core panics on a non-positive
+			// scMaxEachPostBytes, a negative scMaxBufferedPosts (channel
+			// size) and a negative xPaddingBytes (repeat count); emit those
+			// only when the core accepts them, and let its defaults apply
+			// otherwise. The bounds are checked on the int32 the core
+			// receives, since the model keeps 64-bit values and a link value
+			// out of int32 range would truncate negative. Negative values of
+			// the other fields mean nothing to the core (a skipped sleep, a
+			// disabled limit) and pass through.
+			if from, to := int32(v.ScMaxEachPostBytesFrom), int32(v.ScMaxEachPostBytesTo); min(from, to) > 0 {
+				xs.ScMaxEachPostBytes = &coreObj.XHTTPRangeConfig{From: from, To: to}
 			}
 			if v.ScMinPostsIntervalFrom != 0 || v.ScMinPostsIntervalTo != 0 {
 				xs.ScMinPostsIntervalMs = &coreObj.XHTTPRangeConfig{From: int32(v.ScMinPostsIntervalFrom), To: int32(v.ScMinPostsIntervalTo)}
 			}
-			if v.ScMaxBufferedPosts != 0 {
+			if v.ScMaxBufferedPosts > 0 {
 				xs.ScMaxBufferedPosts = int64(v.ScMaxBufferedPosts)
 			}
 			if v.ScStreamUpServerFrom != 0 || v.ScStreamUpServerTo != 0 {
 				xs.ScStreamUpServerSecs = &coreObj.XHTTPRangeConfig{From: int32(v.ScStreamUpServerFrom), To: int32(v.ScStreamUpServerTo)}
 			}
-			if v.XPaddingBytesFrom != 0 || v.XPaddingBytesTo != 0 {
-				xs.XPaddingBytes = &coreObj.XHTTPRangeConfig{From: int32(v.XPaddingBytesFrom), To: int32(v.XPaddingBytesTo)}
+			if from, to := int32(v.XPaddingBytesFrom), int32(v.XPaddingBytesTo); (from != 0 || to != 0) && min(from, to) >= 0 {
+				xs.XPaddingBytes = &coreObj.XHTTPRangeConfig{From: from, To: to}
 			}
 			// Xmux
 			xmux := &coreObj.XHTTPXmux{HKeepAlivePeriod: v.XmuxHKeepAlive}
@@ -765,6 +912,13 @@ func (v *V2Ray) ExportToURL() string {
 			setIntQuery(&query, "scStreamUpServerTo", v.ScStreamUpServerTo)
 			setIntQuery(&query, "xPaddingBytesFrom", v.XPaddingBytesFrom)
 			setIntQuery(&query, "xPaddingBytesTo", v.XPaddingBytesTo)
+			if v.XPaddingObfsMode {
+				setValue(&query, "xPaddingObfsMode", "true")
+			}
+			setValue(&query, "xPaddingKey", v.XPaddingKey)
+			setValue(&query, "xPaddingHeader", v.XPaddingHeader)
+			setValue(&query, "xPaddingPlacement", v.XPaddingPlacement)
+			setValue(&query, "xPaddingMethod", v.XPaddingMethod)
 			setIntQuery(&query, "xmuxMaxConcurFrom", v.XmuxMaxConcurFrom)
 			setIntQuery(&query, "xmuxMaxConcurTo", v.XmuxMaxConcurTo)
 			setIntQuery(&query, "xmuxMaxConnFrom", v.XmuxMaxConnFrom)

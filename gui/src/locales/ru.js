@@ -305,6 +305,7 @@ export default {
   },
   configureServer: {
     required: "Обязательно",
+    minValue: "Не меньше {value}",
     title: "Настройка сервера",
     titleReadonly: "Сервер",
     servername: "Имя сервера",
@@ -355,6 +356,7 @@ export default {
     mode: "Режим",
     uplinkHttpMethod: "Метод HTTP для исходящего соединения",
     uplinkDefault: "По умолчанию (POST)",
+    coreDefault: "По умолчанию ({value})",
     rangeFrom: "От",
     rangeTo: "До",
     customHeaders: "Пользовательские заголовки",

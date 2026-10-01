@@ -309,6 +309,7 @@ export default {
   },
   configureServer: {
     required: "Obrigatório",
+    minValue: "Deve ser pelo menos {value}",
     title: "Configurar servidor",
     titleReadonly: "Servidor",
     servername: "Nome do servidor",
@@ -359,6 +360,7 @@ export default {
     mode: "Modo",
     uplinkHttpMethod: "Método HTTP de uplink",
     uplinkDefault: "Padrão (POST)",
+    coreDefault: "Padrão ({value})",
     rangeFrom: "De",
     rangeTo: "Até",
     customHeaders: "Cabeçalhos personalizados",

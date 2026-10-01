@@ -301,6 +301,7 @@ export default {
   },
   configureServer: {
     required: "필수",
+    minValue: "{value} 이상이어야 합니다",
     title: "서버 구성",
     titleReadonly: "서버",
     servername: "서버 이름",
@@ -351,6 +352,7 @@ export default {
     mode: "모드",
     uplinkHttpMethod: "업링크 HTTP 메서드",
     uplinkDefault: "기본값 (POST)",
+    coreDefault: "기본값 ({value})",
     rangeFrom: "시작",
     rangeTo: "끝",
     customHeaders: "사용자 지정 헤더",

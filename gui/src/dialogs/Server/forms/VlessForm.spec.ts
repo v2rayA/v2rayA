@@ -13,6 +13,12 @@ import VlessForm from "./VlessForm.vue";
 const labels = (w: { findAll(s: string): { text(): string }[] }) =>
   w.findAll(".v-label").map((l) => l.text());
 
+const createWrappedComponent = (model: V2rayModel) =>
+  defineComponent({
+    setup: () => () =>
+      h(VForm, null, () => h(VlessForm, { modelValue: model })),
+  });
+
 describe("the vless form", () => {
   test("shows the reality link, preserves its round trip and edits in place", async () => {
     const model = reactive(parseShareLink(links.vless) as V2rayModel);
@@ -68,10 +74,7 @@ describe("the vless form", () => {
 
   test("rejects each missing required identity field", async () => {
     const model = reactive({ ...v2rayModel(), protocol: "vless" });
-    const Wrapped = defineComponent({
-      setup: () => () =>
-        h(VForm, null, () => h(VlessForm, { modelValue: model })),
-    });
+    const Wrapped = createWrappedComponent(model);
     const w = mountWithApp(Wrapped);
     const form = w.findComponent(VForm);
     expect((await form.vm.validate()).valid).toBe(false);
@@ -81,6 +84,32 @@ describe("the vless form", () => {
     model.add = "example.com";
     model.port = "443";
     model.id = "b831381d-6324-4d53-ad4f-8cda48b30811";
+    await nextTick();
+    expect((await form.vm.validate()).valid).toBe(true);
+    w.unmount();
+  });
+
+  test("rejects xhttp range values below the core's bounds", async () => {
+    const model = reactive({ ...v2rayModel(), protocol: "vless" });
+    const Wrapped = createWrappedComponent(model);
+    const w = mountWithApp(Wrapped);
+    const form = w.findComponent(VForm);
+    model.add = "example.com";
+    model.port = "443";
+    model.id = "b831381d-6324-4d53-ad4f-8cda48b30811";
+    model.net = "xhttp";
+    await nextTick();
+    model.scMaxEachPostBytesFrom = "0";
+    model.xPaddingBytesFrom = "-1";
+    model.scMaxBufferedPosts = "-2";
+    await nextTick();
+    expect((await form.vm.validate()).valid).toBe(false);
+    expect(
+      w.findAll(".v-input--error").map((c) => c.find(".v-label").text()),
+    ).toEqual(["From", "From", "scMaxBufferedPosts"]);
+    model.scMaxEachPostBytesFrom = "1000";
+    model.xPaddingBytesFrom = "0";
+    model.scMaxBufferedPosts = "";
     await nextTick();
     expect((await form.vm.validate()).valid).toBe(true);
     w.unmount();

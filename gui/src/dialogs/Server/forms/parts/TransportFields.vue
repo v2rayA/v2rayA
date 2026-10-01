@@ -10,6 +10,7 @@ import { useNotify } from "@/composables/useNotify";
 import type { V2rayModel } from "../../models";
 import HeaderList from "./HeaderList.vue";
 import RangeField from "./RangeField.vue";
+import { minValue } from "./rules";
 
 defineProps<{ readonly?: boolean }>();
 const model = defineModel<V2rayModel>({ required: true });
@@ -46,6 +47,21 @@ const uplinkMethods = computed(() => [
   { value: "POST", title: "POST" },
   { value: "PUT", title: "PUT" },
   { value: "PATCH", title: "PATCH" },
+]);
+const xPaddingPlacements = computed(() => [
+  {
+    value: "",
+    title: t("configureServer.coreDefault", { value: "queryInHeader" }),
+  },
+  { value: "cookie", title: "cookie" },
+  { value: "header", title: "header" },
+  { value: "query", title: "query" },
+  { value: "queryInHeader", title: "queryInHeader" },
+]);
+const xPaddingMethods = computed(() => [
+  { value: "", title: t("configureServer.coreDefault", { value: "repeat-x" }) },
+  { value: "repeat-x", title: "repeat-x" },
+  { value: "tokenish", title: "tokenish" },
 ]);
 const xhttpRanges = [
   {
@@ -91,6 +107,21 @@ const xhttpRanges = [
   },
 ] as const;
 
+// The generated config drops a non-positive scMaxEachPostBytes and a
+// negative xPaddingBytes (the core emits error on both), so the form keeps to
+// the same bounds; negative values of the other ranges are tolerated by
+// the core and stay allowed.
+function xhttpRangeMin(
+  label: (typeof xhttpRanges)[number]["label"],
+): number | undefined {
+  if (label === "scMaxEachPostBytes") {
+    return 1;
+  }
+  if (label === "xPaddingBytes") {
+    return 0;
+  }
+}
+
 const net = computed(() => model.value.net);
 const showsHost = computed(
   () =>
@@ -110,6 +141,15 @@ function onNetwork() {
   if (model.value.tls === "none" && net.value === "grpc") {
     notify.warning(t("setting.messages.grpcShouldWithTls"));
     model.value.tls = "tls";
+  }
+}
+
+function onXPaddingObfsMode() {
+  if (!model.value.xPaddingObfsMode) {
+    model.value.xPaddingPlacement = "";
+    model.value.xPaddingKey = "";
+    model.value.xPaddingHeader = "";
+    model.value.xPaddingMethod = "";
   }
 }
 </script>
@@ -265,6 +305,7 @@ function onNetwork() {
           v-model:from="model[r.from]"
           v-model:to="model[r.to]"
           :label="r.label"
+          :min="xhttpRangeMin(r.label)"
           :readonly="readonly"
         />
       </v-col>
@@ -272,6 +313,8 @@ function onNetwork() {
         <v-text-field
           v-model="model.scMaxBufferedPosts"
           type="number"
+          min="0"
+          :rules="[minValue(0)]"
           label="scMaxBufferedPosts"
           :readonly="readonly"
         />
@@ -284,6 +327,46 @@ function onNetwork() {
           :readonly="readonly"
         />
       </v-col>
+      <v-col cols="12" sm="6">
+        <v-switch
+          v-model="model.xPaddingObfsMode"
+          label="xPaddingObfsMode"
+          :readonly="readonly"
+          @update:model-value="onXPaddingObfsMode"
+        />
+      </v-col>
+      <template v-if="model.xPaddingObfsMode">
+        <v-col cols="12" sm="6">
+          <v-text-field
+            v-model="model.xPaddingKey"
+            label="xPaddingKey"
+            :readonly="readonly"
+          />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-text-field
+            v-model="model.xPaddingHeader"
+            label="xPaddingHeader"
+            :readonly="readonly"
+          />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-select
+            v-model="model.xPaddingPlacement"
+            :items="xPaddingPlacements"
+            label="xPaddingPlacement"
+            :readonly="readonly"
+          />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-select
+            v-model="model.xPaddingMethod"
+            :items="xPaddingMethods"
+            label="xPaddingMethod"
+            :readonly="readonly"
+          />
+        </v-col>
+      </template>
       <v-col cols="12">
         <HeaderList v-model="model.xhttpHeaders" :readonly="readonly" />
       </v-col>

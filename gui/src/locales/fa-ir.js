@@ -303,6 +303,7 @@ export default {
   },
   configureServer: {
     required: "الزامی",
+    minValue: "باید حداقل {value} باشد",
     title: "پیکربندی سرور",
     titleReadonly: "سرور",
     servername: "نام سرور",
@@ -353,6 +354,7 @@ export default {
     mode: "حالت",
     uplinkHttpMethod: "روش HTTP لینک بالارونده",
     uplinkDefault: "پیش‌فرض (POST)",
+    coreDefault: "پیش‌فرض ({value})",
     rangeFrom: "از",
     rangeTo: "تا",
     customHeaders: "سربرگ‌های سفارشی",

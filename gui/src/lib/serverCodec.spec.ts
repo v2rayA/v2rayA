@@ -29,6 +29,36 @@ describe("serverCodec keeps the editor's behaviour", () => {
   });
 });
 
+test("a vless xhttp link keeps the core's padding fields through parse and generate", () => {
+  const link =
+    "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&security=tls&sni=example.com&type=xhttp&path=%2Fx&xhttpMode=packet-up&xPaddingObfsMode=true&xPaddingKey=pk&xPaddingHeader=Referer&xPaddingPlacement=cookie&xPaddingMethod=tokenish";
+  const fields = [
+    "xPaddingObfsMode",
+    "xPaddingKey",
+    "xPaddingHeader",
+    "xPaddingPlacement",
+    "xPaddingMethod",
+  ] as const;
+  const model = parseShareLink(link) as Record<string, unknown>;
+  expect(fields.map((f) => model[f])).toEqual([
+    true,
+    "pk",
+    "Referer",
+    "cookie",
+    "tokenish",
+  ]);
+  const out = generateShareLink(model);
+  for (const f of fields) expect(out).toContain(`${f}=${model[f]}`);
+  const again = parseShareLink(out!) as Record<string, unknown>;
+  expect(fields.map((f) => again[f])).toEqual([
+    true,
+    "pk",
+    "Referer",
+    "cookie",
+    "tokenish",
+  ]);
+});
+
 test("a wireguard link keeps workers, reserved and kernelMode through parse and generate", () => {
   const link =
     "wireguard://cHJpdmF0ZQ@1.2.3.4:51820?publicKey=cHVi&address=10.0.0.2%2F32&reserved=1%2C2%2C3&workers=4&kernelMode=true#wg";

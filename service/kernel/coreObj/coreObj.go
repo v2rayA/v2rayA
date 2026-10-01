@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -385,6 +386,68 @@ type XHTTPRangeConfig struct {
 	To   int32 `json:"to,omitempty"`
 }
 
+// MarshalJSON emits the shorthand xray-core accepts for splithttp range
+// fields: a plain integer when From equals To, an "a-b" string otherwise.
+// The core's Int32Range unmarshaler rejects the object form this struct
+// would otherwise serialize to, so the default marshaling must not be used.
+func (r XHTTPRangeConfig) MarshalJSON() ([]byte, error) {
+	if r.From == r.To {
+		return []byte(strconv.FormatInt(int64(r.From), 10)), nil
+	}
+	return json.Marshal(fmt.Sprintf("%d-%d", r.From, r.To))
+}
+
+// UnmarshalJSON accepts the plain-integer and "a-b" string forms the core
+// accepts, so generated configs round-trip.
+func (r *XHTTPRangeConfig) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		from, to, err := ParseRangeString(str)
+		if err != nil {
+			return err
+		}
+		r.From, r.To = int32(from), int32(to)
+		return nil
+	}
+	var num int32
+	if err := json.Unmarshal(data, &num); err == nil {
+		r.From, r.To = num, num
+		return nil
+	}
+	return fmt.Errorf("invalid integer range %s: expected an integer or a string of form \"a-b\"", data)
+}
+
+// ParseRangeString mirrors xray-core's ParseRangeString, which supports
+// negative endpoints such as "-114-514" and "-1919--810". Links from other
+// clients (3x-ui packs its XHTTP ranges here) send the values in these same
+// two forms, so they parse with the same rules.
+func ParseRangeString(str string) (int, int, error) {
+	if value, err := strconv.Atoi(str); err == nil {
+		return value, value, nil
+	}
+	if str == "" {
+		return 0, 0, nil
+	}
+	var pair []string
+	if strings.HasPrefix(str, "-") {
+		parts := strings.SplitN(str, "-", 3)
+		if len(parts) < 3 {
+			return 0, 0, fmt.Errorf("invalid range string: %s", str)
+		}
+		pair = []string{parts[0] + "-" + parts[1], parts[2]}
+	} else {
+		pair = strings.SplitN(str, "-", 2)
+	}
+	if len(pair) == 2 {
+		left, err := strconv.Atoi(pair[0])
+		right, err2 := strconv.Atoi(pair[1])
+		if err == nil && err2 == nil {
+			return left, right, nil
+		}
+	}
+	return 0, 0, fmt.Errorf("invalid range string: %s", str)
+}
+
 type XHTTPXmux struct {
 	MaxConcurrency   *XHTTPRangeConfig `json:"maxConcurrency,omitempty"`
 	MaxConnections   *XHTTPRangeConfig `json:"maxConnections,omitempty"`
@@ -400,6 +463,11 @@ type XHTTPSettings struct {
 	Mode                 string            `json:"mode,omitempty"`
 	Headers              map[string]string `json:"headers,omitempty"`
 	XPaddingBytes        *XHTTPRangeConfig `json:"xPaddingBytes,omitempty"`
+	XPaddingObfsMode     bool              `json:"xPaddingObfsMode,omitempty"`
+	XPaddingKey          string            `json:"xPaddingKey,omitempty"`
+	XPaddingHeader       string            `json:"xPaddingHeader,omitempty"`
+	XPaddingPlacement    string            `json:"xPaddingPlacement,omitempty"`
+	XPaddingMethod       string            `json:"xPaddingMethod,omitempty"`
 	NoGRPCHeader         bool              `json:"noGRPCHeader,omitempty"`
 	NoSSEHeader          bool              `json:"noSSEHeader,omitempty"`
 	ScMaxEachPostBytes   *XHTTPRangeConfig `json:"scMaxEachPostBytes,omitempty"`
