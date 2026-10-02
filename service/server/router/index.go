@@ -303,6 +303,7 @@ func Run() error {
 		auth.GET("outbounds", controller.GetOutbounds)
 		auth.GET("outbound", controller.GetOutbound)
 		auth.POST("outbound", controller.PostOutbound)
+		auth.POST("outboundRefresh", controller.PostOutboundRefresh)
 		auth.PUT("outbound", controller.PutOutbound)
 		auth.PUT("outboundConnections", controller.PutOutboundConnections)
 		auth.PUT("outboundSelection", controller.PutOutboundSelection)

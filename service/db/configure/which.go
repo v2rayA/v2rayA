@@ -204,6 +204,8 @@ type Which struct {
 	Link    string //optional
 	// Selected marks, in a touch, the member the group routes through alone.
 	Selected bool `json:"selected,omitempty"`
+	// Active marks the worker-selected member of an automatic one-node strategy.
+	Active bool `json:"active,omitempty"`
 }
 
 func (w Which) MarshalJSON() ([]byte, error) {
@@ -215,7 +217,8 @@ func (w Which) MarshalJSON() ([]byte, error) {
 		Link     string    `json:"Link"`
 		Outbound string    `json:"outbound"`
 		Selected bool      `json:"selected,omitempty"`
-	}{w.TYPE, w.ID, w.Sub, w.Latency, w.Link, w.Outbound, w.Selected})
+		Active   bool      `json:"active,omitempty"`
+	}{w.TYPE, w.ID, w.Sub, w.Latency, w.Link, w.Outbound, w.Selected, w.Active})
 }
 
 func (w *NodeRef) EqualTo(another NodeRef) (ok bool) {

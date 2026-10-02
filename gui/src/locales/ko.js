@@ -54,7 +54,12 @@ export default {
     moreMembers: "{n}개 더 보기",
     inUse: "사용 중인 노드",
     pinned: "고정됨",
+    pinnedUnavailable: "고정한 서버를 사용할 수 없음",
+    pinnedFailover: "고정됨(장애 시 전환)",
     balanced: "자동 (멤버 {n}개)",
+    autoFilled: "{automatic}, 자동 채우기",
+    auto: "자동",
+    chooseServer: "서버 선택",
     switchNode: "전환",
     proxyGroup: "프록시 그룹",
     editGroup: "노드 추가/삭제",
@@ -121,12 +126,31 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    updateMode: "구독 자동 업데이트",
+    updateModes: {
+      disabled: "사용 안 함",
+      onStart: "서비스 시작 시",
+      interval: "주기적으로",
+      intervalFailsafe: "주기적 업데이트 및 장애 복구",
+    },
+    updateModeHelp: {
+      disabled: "수동으로 업데이트할 때만 구독이 변경됩니다.",
+      onStart: "v2rayA가 시작될 때마다 구독을 한 번 업데이트합니다.",
+      interval: "시작할 때 한 번 업데이트한 뒤 설정된 주기로 업데이트합니다.",
+      intervalFailsafe:
+        "시작 시와 정기 주기에 업데이트합니다. 구독의 모든 서버가 사용할 수 없으면 하나가 복구될 때까지 장애 주기로 다시 시도합니다.",
+    },
+    updateIntervalMinutes: "정기 간격 (분)",
+    regularHelp: "필수입니다. 1 이상의 정수(분)를 입력하세요.",
+    failureIntervalMinutes: "실패 재시도 (분)",
+    failureHelp:
+      "필수, 최소 1분. 모든 서버가 불가능할 때 갱신하며 하나가 복구되면 재시도를 중지합니다.",
+    intervalInvalid: "{minimum}부터 525600까지의 정수를 입력하세요.",
+
     settingsTitle: "구독 업데이트",
     remarks: "별칭",
     numberServers: "서버 수",
     subscription: "구독",
-    autoSelect: "구독이 자동 업데이트된 후 구독의 새 서버에 자동으로 연결",
-    autoSelectLabel: "자동 선택",
     updated: "구독 업데이트됨",
     saved: "구독 저장됨",
     saveFailed: "구독 저장 실패: {message}",
@@ -559,6 +583,14 @@ export default {
     saveFailed: "RoutingA 저장 실패: {message}",
   },
   outbound: {
+    autoAdd: "모든 서버 자동 추가",
+    autoAddHelp:
+      "사용할 수 없는 서버를 포함해 프록시와 구독의 모든 서버를 추가합니다.",
+    autoAddDetails:
+      "목록 갱신은 핑, 속도 측정, 검사 코어 실행을 하지 않습니다.",
+    updateMembers: "서버 목록 업데이트",
+    membersUpdated: "그룹 서버 목록이 업데이트되었습니다",
+    membersUpdateFailed: "그룹 서버 목록을 업데이트하지 못했습니다: {message}",
     addMessage: "추가할 프록시 그룹 이름을 입력하세요:",
     deleteMessage:
       '프록시 그룹 "{outboundName}"을(를) 삭제하시겠습니까? 해당 그룹의 노드 연결이 해제됩니다. 이 작업은 취소할 수 없습니다.',
@@ -570,7 +602,34 @@ export default {
     settingSaveFailed: "프록시 그룹 설정 저장 실패: {message}",
     probeUrl: "탐색 URL",
     probeInterval: "탐색 간격",
-    type: "유형",
+    strategy: "연결 전략",
+    strategyHelp:
+      "검사 코어는 한 번에 하나만 실행합니다. TCP 지연으로 순서를 정하고 URL과 전체 256 KiB 샘플로 100 KiB/s 이상을 확인합니다. 적합한 서버가 없으면 트래픽을 차단합니다.",
+    strategyHelpAction: "연결 전략 설명",
+    configureSelected: "선택한 프록시 그룹 설정",
+    fixedRequiresServer: "먼저 프록시 그룹 카드에서 서버 하나를 선택하세요.",
+    fixedServerSelected:
+      "프록시 그룹 카드에 고정한 서버는 자동으로 전환되지 않습니다.",
+    stabilityHelp: "노드 순서나 이름 변경은 연결을 끊지 않습니다. 구성원이나 연결 설정이 실제로 바뀌면 모드를 유지한 채 기존 전략으로 다시 선택합니다. TPROXY/REDIRECT 전환 중에는 재시작이 실패해도 트래픽 가로채기를 유지합니다.",
+    manualOverrideHelp: "수동 고정은 전략과 구성원을 유지하면서 자동 선택을 일시 중지합니다. 프록시 그룹 카드에서 고정을 해제하면 같은 전략을 재개합니다.",
+    strategies: {
+      fixed: "전환하지 않음",
+      leastPing: "최저 지연",
+      keepCurrent: "장애 전까지 현재 서버 유지",
+      roundRobin: "순차 분배",
+      random: "무작위",
+    },
+    strategyDetails: {
+      fixed: "고정한 서버만 사용하고 자동 검사와 자동 채우기를 끕니다.",
+      leastping:
+        "모든 서버의 TCP 지연을 측정하고 낮은 순서로 속도를 검사하여 적합한 첫 서버를 선택합니다.",
+      keepcurrent:
+        "설정 간격마다 현재 서버의 연결 가능 여부를 확인합니다. 세 번 연속 실패하면 TCP 지연 순서와 최소 100 KiB/s의 전체 속도 측정으로 대체 서버를 선택합니다. 속도가 낮거나 알 수 없다는 이유만으로 연결 가능한 현재 서버를 제외하지 않습니다.",
+      roundrobin:
+        "서버를 순차 검사하고 URL 및 속도 검사를 통과한 서버에 새 연결을 순서대로 배분합니다.",
+      random:
+        "핑 후 도달 가능한 서버를 무작위로 섞어 속도 검사를 하나씩 수행합니다.",
+    },
   },
   proxyGroup: {
     searchNodes: "노드 검색...",

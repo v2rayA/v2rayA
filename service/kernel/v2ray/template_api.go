@@ -41,8 +41,14 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 				continue
 			}
 
-			//TODO: random, leastload
 			strategy := serverData.OutboundName2Setting[outbound].Type
+			coreStrategy := strategy
+			if configure.UsesWorkerSelection(strategy) || strategy == configure.Fixed {
+				// The service already reduced these groups to its selected node.
+				// Keep the core on a native one-node strategy and avoid starting a
+				// second observer with different health semantics.
+				coreStrategy = configure.Random
+			}
 			interval, err := time.ParseDuration(serverData.OutboundName2Setting[outbound].ProbeInterval)
 			if err != nil {
 				log.Warn("observatory: %v", err)
@@ -51,21 +57,23 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			var selector []string
 
 			for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
-				selector = append(selector, GroupWrapper(vi.GetName()))
+				selector = append(selector, GroupWrapper(configure.NodeFingerprint(vi.ExportToURL())))
 			}
 
 			t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
-				Tag:      outbound,
-				Selector: selector,
+				Tag:         outbound,
+				Selector:    selector,
+				FallbackTag: "block",
 				Strategy: coreObj.BalancerStrategy{
-					Type: strategy.String(),
+					Type: coreStrategy.String(),
 					Settings: &coreObj.StrategySettings{
 						ObserverTag: outbound,
 					},
 				},
 			})
 
-			if strings.ToLower(strategy.String()) == "leastping" {
+			switch strings.ToLower(coreStrategy.String()) {
+			case "leastping", "roundrobin":
 				probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
 				if _, err := url.Parse(probeUrl); err != nil {
 					log.Warn("observatory: %v", err)

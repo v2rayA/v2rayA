@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -148,7 +149,9 @@ func TestPutOutboundRestoresAfterReloadFailure(t *testing.T) {
 	previous := configure.OutboundSetting{
 		ProbeURL:      "https://previous.example/ping",
 		ProbeInterval: "30s",
-		Type:          configure.LeastPing,
+		// A worker-only policy edit intentionally avoids reloading the core.
+		// Change from round-robin so this test exercises the reload path.
+		Type: configure.RoundRobin,
 	}
 	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
 		t.Fatal(err)
@@ -171,5 +174,279 @@ func TestPutOutboundRestoresAfterReloadFailure(t *testing.T) {
 	}
 	if got := configure.GetOutboundSetting("proxy"); got != previous {
 		t.Fatalf("outbound setting was not restored: %+v, want %+v", got, previous)
+	}
+}
+
+func TestPutOutboundFromCachedClientPreservesAutomaticMembership(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	previous.AutoAdd = true
+	previous.ProbeInterval = "300s"
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://next.example/ping","probeInterval":"45s","type":"leastping"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	if got := configure.GetOutboundSetting("proxy"); !got.AutoAdd || got.ProbeInterval != "45s" {
+		t.Fatalf("cached client changed automatic membership: %+v", got)
+	}
+}
+
+func TestPutOutboundDefaultsNewAutomaticGroupToFiveMinutes(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"autoAdd":true,"probeURL":"https://next.example/ping","probeInterval":"60s","type":"leastping"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	if got := configure.GetOutboundSetting("proxy"); !got.AutoAdd || got.ProbeInterval != "300s" {
+		t.Fatalf("new automatic group setting = %+v; want autoAdd with 300s", got)
+	}
+}
+
+func TestPutOutboundFixedPreservesSelectedServer(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	previous.Type = configure.Fixed
+	previous.Selected = "http-proxy://server.example:8080"
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://next.example/ping","probeInterval":"45s","type":"fixed"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("fixed strategy update failed: %s", recorder.Body.String())
+	}
+	got := configure.GetOutboundSetting("proxy")
+	if got.Selected != previous.Selected || got.Type != configure.Fixed || got.AutoAdd {
+		t.Fatalf("fixed strategy update = %+v; want selected server preserved", got)
+	}
+}
+
+func TestKeepCurrentInheritsTheWorkerSelectedServer(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.LeastPing
+	setting.StickyCurrent = configure.NodeFingerprint("socks5://selected.example:1080")
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"keepcurrent"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("keep-current update failed: %s", recorder.Body.String())
+	}
+	got := configure.GetOutboundSetting("proxy")
+	if got.Type != configure.KeepCurrent || got.StickyCurrent != setting.StickyCurrent {
+		t.Fatalf("keep-current chose %q instead of active %q", got.StickyCurrent, setting.StickyCurrent)
+	}
+}
+
+func TestWorkerPolicyChangesKeepTheSelectedServer(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	current := configure.NodeFingerprint("socks5://selected.example:1080")
+	for _, nextType := range []configure.ObservatoryType{
+		configure.Random, configure.LeastPing, configure.KeepCurrent,
+	} {
+		setting := configure.DefaultOutboundSetting()
+		setting.Type = configure.LeastPing
+		setting.StickyCurrent = current
+		if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+			t.Fatal(err)
+		}
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		body := fmt.Sprintf(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":%q}}`, nextType)
+		ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		PutOutbound(ctx)
+		if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+			t.Fatalf("change to %s failed: %s", nextType, recorder.Body.String())
+		}
+		if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != current {
+			t.Fatalf("change to %s replaced current %q with %q", nextType, current, got)
+		}
+	}
+}
+
+func TestRoundRobinBootstrapsFromCurrentWorkerSelection(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	current := configure.NodeFingerprint("socks5://selected.example:1080")
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.Random
+	setting.StickyCurrent = current
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"roundrobin"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("round-robin transition failed: %s", recorder.Body.String())
+	}
+	got := configure.GetOutboundSetting("proxy")
+	if got.Type != configure.RoundRobin || got.EligibleMembers != current {
+		t.Fatalf("round-robin bootstrap = %+v; want current member eligible", got)
+	}
+}
+
+func TestRoundRobinStartsWithCachedHealthyMembers(t *testing.T) {
+	previous := configure.GetOutboundSetting("proxy")
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", previous) })
+	first := configure.NodeFingerprint("socks5://first.example:1080")
+	second := configure.NodeFingerprint("socks5://second.example:1080")
+	setting := configure.DefaultOutboundSetting()
+	setting.Type = configure.Random
+	setting.StickyCurrent = first
+	setting.EligibleMembers = first + " " + second
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"roundrobin"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("round-robin transition failed: %s", recorder.Body.String())
+	}
+	if got := configure.GetOutboundSetting("proxy").EligibleMembers; got != setting.EligibleMembers {
+		t.Fatalf("round-robin discarded measured members %q; want %q", got, setting.EligibleMembers)
+	}
+}
+
+func TestPutOutboundInitializesAndHidesKeepCurrentState(t *testing.T) {
+	previousSetting := configure.GetOutboundSetting("proxy")
+	previousMembers := configure.GetConnectedServersByOutbound("proxy")
+	serverIndex := configure.GetLenServers()
+	node, err := service.ResolveURL("http-proxy://127.0.0.1:19090#sticky-current")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.AppendServers([]*configure.ServerRaw{{ServerObj: node}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = configure.ClearConnects("proxy")
+		_ = configure.RemoveServers([]int{serverIndex})
+		if previousMembers != nil && previousMembers.Len() > 0 {
+			_ = configure.OverwriteConnects(previousMembers)
+		}
+		_ = configure.SetOutboundSetting("proxy", previousSetting)
+	})
+	if err := configure.ClearConnects("proxy"); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.ServerType, ID: serverIndex + 1, Outbound: "proxy"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()); err != nil {
+		t.Fatal(err)
+	}
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"keepcurrent"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("keep-current update failed: %s", recorder.Body.String())
+	}
+	want := configure.NodeFingerprint(node.ExportToURL())
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != want {
+		t.Fatalf("initial sticky current = %q; want %q", got, want)
+	}
+
+	response := httptest.NewRecorder()
+	ctx, _ = gin.CreateTestContext(response)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/outbound?outbound=proxy", nil)
+	GetOutbound(ctx)
+	var body struct {
+		Data struct {
+			Setting configure.OutboundSetting `json:"setting"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Data.Setting.StickyCurrent != "" {
+		t.Fatalf("internal sticky state leaked through API: %q", body.Data.Setting.StickyCurrent)
+	}
+
+	recorder = httptest.NewRecorder()
+	ctx, _ = gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://www.gstatic.com/generate_204","probeInterval":"300s","type":"random"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutOutbound(ctx)
+	if code, _ := codeOf(t, recorder); code != common.SUCCESS {
+		t.Fatalf("random strategy update failed: %s", recorder.Body.String())
+	}
+	if got := configure.GetOutboundSetting("proxy").StickyCurrent; got != want {
+		t.Fatalf("changing automatic strategy lost the active node: got %q, want %q", got, want)
+	}
+}
+
+func TestPutOutboundConnectionsRejectsAutomaticGroupEdits(t *testing.T) {
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd = true
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outboundConnections", strings.NewReader(`{"outbound":"proxy","touches":[]}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutboundConnections(ctx)
+
+	var response struct {
+		Code common.Code `json:"code"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != common.FAIL {
+		t.Fatalf("automatic group accepted manual membership edit: %s", recorder.Body.String())
+	}
+}
+
+func TestSelectionPreservesEveryAutomaticPolicy(t *testing.T) {
+	for _, mode := range []configure.ObservatoryType{configure.KeepCurrent, configure.LeastPing, configure.Random, configure.RoundRobin} {
+		previous := configure.DefaultOutboundSetting()
+		previous.Type, previous.AutoAdd = mode, true
+		previous.StickyCurrent = "old-worker-choice"
+		pinned := selectionSetting(previous, "socks5://server.example:1080")
+		if pinned.Type != mode || !pinned.AutoAdd || pinned.Selected == "" {
+			t.Fatalf("pin changed policy: %+v", pinned)
+		}
+		unpinned := selectionSetting(pinned, "")
+		if unpinned.Type != mode || !unpinned.AutoAdd || unpinned.Selected != "" {
+			t.Fatalf("unpin changed policy: %+v", unpinned)
+		}
 	}
 }

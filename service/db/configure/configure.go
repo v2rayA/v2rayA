@@ -176,15 +176,25 @@ func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 	return db.SubscriptionsSet(index, subscription, nil)
 }
 
-func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
+func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs, settings ...map[string]OutboundSetting) error {
 	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
 		outboundRefs := make(map[string][]*NodeRef)
+		for _, ref := range GetConnectedServers().Get() {
+			outboundRefs[ref.Outbound] = nil
+		}
 		for _, ref := range ws.Get() {
 			outboundRefs[ref.Outbound] = append(outboundRefs[ref.Outbound], ref)
 		}
 		for outbound, touches := range outboundRefs {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "connectedServers", &NodeRefs{Touches: touches}); err != nil {
 				return err
+			}
+		}
+		for _, changes := range settings {
+			for outbound, setting := range changes {
+				if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "setting", setting); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
@@ -446,8 +456,14 @@ func (ws *NodeRefs) byOutbound() map[string]*NodeRefs {
 // RemoveNodes deletes subscriptions and servers by ordinal together with
 // the connected lists already renumbered for the deletion, atomically.
 func RemoveNodes(subscriptions, servers []int, connected *NodeRefs) error {
+	groups := connected.byOutbound()
+	for _, out := range GetOutbounds() {
+		if groups[out] == nil {
+			groups[out] = NewNodeRefs(nil)
+		}
+	}
 	return db.RemoveTx(subscriptions, servers, func(tx *sql.Tx) error {
-		for out, refs := range connected.byOutbound() {
+		for out, refs := range groups {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", out), "connectedServers", refs); err != nil {
 				return err
 			}
@@ -533,6 +549,10 @@ func GetOutboundSetting(outbound string) (setting OutboundSetting) {
 	if err != nil {
 		return DefaultOutboundSetting()
 	}
+	if setting.Type == "firstavailable" {
+		setting.Type = LeastPing
+	}
+
 	return setting
 }
 

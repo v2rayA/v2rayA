@@ -140,6 +140,10 @@ func initConfigure() {
 		}
 	}
 
+	if err := configure.MigrateNodeFingerprints(); err != nil {
+		log.Fatal("migrate group node identities: %v", err)
+	}
+
 	if len(configure.GetTproxyWhiteIpGroups().CountryCodes) == 0 {
 		configure.SetTproxyWhiteIpGroups([]string{"PRIVATE"}, []string{})
 	}

@@ -16,13 +16,19 @@ Run it with the account and the `--config` directory the service uses (`--lite` 
 
 ## Import nodes
 
-On the **Proxies** page, **Import** takes share links or a subscription: choose **Server link** for `vmess://`, `vless://`, `ss://`, `trojan://`, `hysteria2://`, `tuic://`, `juicity://`, `anytls://`, `wireguard://`, `socks5://`, `http://` and `https://` links, one per line, or a QR code image; choose **Subscription address** for a subscription. ShadowsocksR links are refused, and so are Shadowsocks links with a stream cipher (`rc4-md5`, `aes-*-cfb`, `chacha20-ietf`) or `none`: the core accepts the AEAD ciphers and the 2022-blake3 methods only. `allow_insecure` in a link is ignored: v2rayA never skips certificate verification; for a self-signed server, pin its certificate SHA-256 in the node's form.
+One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.
 
 Subscriptions have their own page, **Subscriptions** (on a phone the docs move to the app bar's menu to make room for it). They keep their nodes together and can be updated by hand or on a schedule (**Settings → Automatically Update Subscriptions**). The mode setting next to it decides whether the update goes through the proxy.
 
 ## Groups
 
-Nodes are used through proxy groups. The group `proxy` always exists; more are created, renamed, configured and deleted from the group button in the app bar, the only place for that. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to proxy group**. A group with several connected members uses the one with the lowest measured latency (**Auto (lowest latency)**); the node menu on the dashboard pins one member so the group uses it alone, **Add or remove nodes** changes the members, and the group settings set the probe address and interval.
+Nodes are used through proxy groups. The group `proxy` always exists; more are created and deleted from the group button in the app bar. The selected group's settings open from the cog there or from the **Proxy group** dashboard card. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to proxy group**. **Add or remove nodes** changes the members, and the group settings set the probe address, interval and connection strategy.
+
+Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server. Checks only the current server. On URL failure or speed below 100 KiB/s, selects a replacement by TCP latency and speed. Checks members sequentially and rotates new connections among servers passing URL and speed checks. Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.
+
+One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.
+
+Every strategy fails closed: if no member is available, traffic assigned to that group is sent to a blackhole instead of going directly. **Automatically add available servers** controls only the member list; the connection strategy is independent and also applies to manually managed groups.
 
 The routing rules name groups as outbounds: `proxy` by default, and any other group by its name once it has a connected member.
 
@@ -52,3 +58,36 @@ The ports are changed under **Settings → Address and Ports**; 0 closes an inbo
 - Logs: `Home`, `End`, `PgUp`, `PgDn` move through the log once it has focus.
 
 On macOS `Cmd` stands for `Ctrl`.
+
+## Automatic subscription updates
+
+Each subscription has its own update mode:
+
+- **Disabled:** update only when requested manually.
+- **On service start:** update once whenever v2rayA starts.
+- **At an interval:** update on startup and then after the configured number of minutes.
+- **At an interval with fail-safe recovery:** use the regular schedule and also check the saved servers at the failure interval. When none works, refresh at that interval until at least one becomes available.
+
+Failed or empty downloads keep the saved server list. A failure retry does not postpone the regular schedule, and a slow pass never overlaps another pass. On Linux, recovery downloads use marked sockets so transparent proxying cannot route them back into a failed proxy. This bypass is not guaranteed for TUN mode on macOS or Windows. Candidate checks may start temporary core processes, but automatic updates do not start a manually stopped main core.
+
+On upgrade, the previous global **update on start** mode is assigned to every existing subscription as **On service start**. The previous interval mode becomes **At an interval** with the same interval converted from hours to minutes. Fail-safe recovery is never enabled during migration; select it explicitly where needed.
+
+## Automatic proxy-group membership
+
+Adds every server from Proxies and subscriptions, including unavailable servers. Membership updates do not ping, test speed or start a probe core.
+
+One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.
+
+- Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server.
+
+- Checks current reachability at each interval. Three consecutive failures trigger a replacement ranked by TCP latency and a complete speed sample of at least 100 KiB/s. Low or unknown speed alone does not evict a reachable current server.
+
+- Checks members sequentially and rotates new connections among servers passing URL and speed checks.
+
+- Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.
+
+On upgrade, legacy subscription auto-select enables automatic membership for `PROXY` only if at least one subscription used it and every current `PROXY` member belongs to those subscriptions (or the group is empty). If there are standalone members or members from other subscriptions, `PROXY` stays manual and its selections are preserved. The old flags are retired in both cases; the log explains how to enable **Automatically add all servers** explicitly. The migration runs once and never overrides a later choice.
+
+Reordering or renaming nodes keeps connections intact. A real membership or connection change re-evaluates the selected strategy without changing its mode. During TPROXY/REDIRECT switches, interception stays installed, including when restarting fails.
+
+A manual pin pauses automatic selection without changing the strategy or membership. Clear the pin on the Proxy group card to resume the same strategy.

@@ -27,13 +27,19 @@ func StartV2ray() (err error) {
 			log.Warn("Connect: %v", e)
 		}
 	}
-	if css := configure.GetConnectedServers(); css.Len() == 0 {
+	if css := configure.GetConnectedServers(); css.Len() == 0 && !configure.HasFailClosedGroup() {
 		return common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no server is selected; select at least one server first"), nil)
 	}
 	return v2ray.UpdateV2RayConfig()
 }
 
 func Disconnect(which configure.NodeRef, clearOutbound bool) (err error) {
+	if which.Outbound == "" {
+		which.Outbound = configure.DefaultOutboundName
+	}
+	if configure.GetOutboundSetting(which.Outbound).AutoAdd {
+		return fmt.Errorf("group %q manages its membership automatically; turn automatic membership off before editing it", which.Outbound)
+	}
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to disconnect: %w", err)
@@ -96,6 +102,12 @@ func Connect(which *configure.NodeRef) (err error) {
 	if which == nil {
 		return fmt.Errorf("no server was given to connect to")
 	}
+	if which.Outbound == "" {
+		which.Outbound = configure.DefaultOutboundName
+	}
+	if configure.GetOutboundSetting(which.Outbound).AutoAdd {
+		return fmt.Errorf("group %q manages its membership automatically; turn automatic membership off before editing it", which.Outbound)
+	}
 	// Reject a malformed or stale selection before it is stored: AddConnect
 	// below persists it, and a stored entry that cannot be located makes
 	// every later connect and core start fail with the same error.
@@ -147,7 +159,15 @@ func Connect(which *configure.NodeRef) (err error) {
 
 // ReplaceOutboundConnections atomically replaces members of one outbound group.
 // It updates v2ray config once after DB changes, and rolls back on failure.
-func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (err error) {
+func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) error {
+	return replaceOutboundConnections(outbound, touches, false)
+}
+
+func replaceManagedOutboundConnections(outbound string, touches []configure.NodeRef) error {
+	return replaceOutboundConnections(outbound, touches, true)
+}
+
+func replaceOutboundConnections(outbound string, touches []configure.NodeRef, managed bool) (err error) {
 	log.Trace("ReplaceOutboundConnections: begin")
 	defer log.Trace("ReplaceOutboundConnections: done")
 	defer func() {
@@ -159,11 +179,18 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 	if outbound == "" {
 		outbound = "proxy"
 	}
+	if configure.GetOutboundSetting(outbound).AutoAdd != managed {
+		if managed {
+			return fmt.Errorf("group %q is no longer automatic", outbound)
+		}
+		return fmt.Errorf("group %q manages its membership automatically; turn automatic membership off before editing it", outbound)
+	}
 
 	// Normalize outbound and deduplicate touches.
 	normalized := make([]configure.NodeRef, 0, len(touches))
 	seen := make(map[string]struct{})
 	for i, wt := range touches {
+		wt.Outbound = outbound
 		if wt.ID <= 0 {
 			return fmt.Errorf("invalid touch id at index %d: %d", i, wt.ID)
 		}
@@ -212,9 +239,9 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 	}
 
 	if v2ray.ProcessManager.Running() {
-		if err = v2ray.UpdateV2RayConfig(); err != nil {
+		if err = v2ray.UpdateGroupConfig(); err != nil {
 			restore()
-			_ = v2ray.UpdateV2RayConfig()
+			_ = v2ray.UpdateGroupConfig()
 			return err
 		}
 	}

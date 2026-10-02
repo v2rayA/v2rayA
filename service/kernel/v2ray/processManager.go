@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -30,14 +31,20 @@ type CoreProcessManager struct {
 	// transparentOn records whether this process installed transparent proxy
 	// rules. Shutdown asks for the teardown twice — once in pre_run and once
 	// through Stop — which ran the user's pre-stop and post-stop hooks twice.
-	transparentOn atomic.Bool
+	transparentOn         atomic.Bool
+	retainingInterception atomic.Bool
+	retainedSetting       *configure.Setting
+	newProcess            func(*Template, func() error, func() error, func(*Process)) (*Process, error)
+	retainedTeardown      func(*configure.Setting)
 }
 
 var ProcessManager CoreProcessManager
 
 func (m *CoreProcessManager) beforeStop(p *Process) {
 	hostMu.Lock()
-	m.checkAndStopTransparentProxy(p.template.Setting)
+	if !m.retainingInterception.Load() {
+		m.checkAndStopTransparentProxy(p.template.Setting)
+	}
 	hostMu.Unlock()
 
 	if corehook := conf.GetEnvironmentConfig().CoreHook; corehook != "" {
@@ -53,6 +60,22 @@ func (m *CoreProcessManager) beforeStop(p *Process) {
 			return
 		}
 	}
+}
+
+// cleanupRetainedInterceptionLocked releases protection on an explicit stop.
+// A failed preserved reload leaves it installed for rollback or retry.
+func (m *CoreProcessManager) cleanupRetainedInterceptionLocked() {
+	if m.retainedSetting == nil {
+		return
+	}
+	hostMu.Lock()
+	if m.retainedTeardown != nil {
+		m.retainedTeardown(m.retainedSetting)
+	} else {
+		m.checkAndStopTransparentProxy(m.retainedSetting)
+	}
+	hostMu.Unlock()
+	m.retainedSetting = nil
 }
 
 func (m *CoreProcessManager) GetRunningTemplate() *Template {
@@ -236,7 +259,9 @@ func (m *CoreProcessManager) afterStop(p *Process) {
 func (m *CoreProcessManager) Stop(saveRunning bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.retainingInterception.Store(false)
 	if m.p == nil {
+		m.cleanupRetainedInterceptionLocked()
 		return
 	}
 	if saveRunning {
@@ -248,6 +273,7 @@ func (m *CoreProcessManager) Stop(saveRunning bool) {
 		defer func() { _ = configure.SetLastKernelExitStatus(configure.LastKernelExitRunning) }()
 	}
 	m.stop(saveRunning)
+	m.retainedSetting = nil
 }
 
 func (m *CoreProcessManager) stop(saveRunning bool) {
@@ -295,6 +321,10 @@ func (m *CoreProcessManager) handleUnexpectedStop(p *Process) {
 		// restores the core instead of reporting a crash
 		m.stop(false)
 		return
+	}
+	if m.retainedSetting != nil {
+		previous := m.retainingInterception.Swap(true)
+		defer m.retainingInterception.Store(previous)
 	}
 	m.stop(true)
 	// Override the default status (Stop() would have saved "running" or "stopped")
@@ -364,10 +394,12 @@ func (m *CoreProcessManager) mutateHost(p *Process, generation uint64, mutate fu
 	return errors.Join(err, m.checkProcessOwner(p, generation))
 }
 
-func (m *CoreProcessManager) afterStart(p *Process, generation uint64) (err error) {
+func (m *CoreProcessManager) afterStart(p *Process, generation uint64, retained bool) (err error) {
 	t := p.template
-	if err = m.setupTransparentProxy(p, generation, t.Setting, t); err != nil {
-		return err
+	if !retained {
+		if err = m.setupTransparentProxy(p, generation, t.Setting, t); err != nil {
+			return err
+		}
 	}
 	m.startConnectivityMonitor(p, generation)
 	if err := m.checkProcessOwner(p, generation); err != nil {
@@ -390,6 +422,14 @@ func (m *CoreProcessManager) afterStart(p *Process, generation uint64) (err erro
 }
 
 func (m *CoreProcessManager) Start(t *Template) (err error) {
+	return m.start(t, false)
+}
+
+func (m *CoreProcessManager) StartPreservingInterception(t *Template) error {
+	return m.start(t, true)
+}
+
+func (m *CoreProcessManager) start(t *Template, preserve bool) (err error) {
 	m.startMu.Lock()
 	defer m.startMu.Unlock()
 	// Phase 1 (pre-lock): lightweight checks that do not depend on whether a
@@ -406,28 +446,55 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	// afterStart is deferred to Phase 3 so that heavy operations (DNS, TUN,
 	// transparent-proxy hooks) do not block while the lock is held.
 	m.mu.Lock()
+	preserve = preserve || m.retainedSetting != nil
+	previous := m.retainedSetting
+	if m.p != nil {
+		previous = m.p.template.Setting
+	}
+	retained := preserve && !m.networkPaused && m.transparentOn.Load() && canRetainInterception(previous, t.Setting)
+	if preserve && m.transparentOn.Load() && !m.networkPaused && !retained {
+		m.mu.Unlock()
+		_ = t.Close()
+		return fmt.Errorf("cannot switch this group while preserving transparent interception")
+	}
+	if preserve {
+		log.Debug("[Groups] Keep transparent interception during reload: %v", retained)
+	}
+	if retained {
+		m.retainedSetting = previous
+	}
+	m.retainingInterception.Store(retained)
+	defer m.retainingInterception.Store(false)
 	m.stop(true)
 	// A marker left by a start that never committed is torn down first. A
 	// teardown that fails is logged, not fatal: refusing every later start
 	// would leave that state behind with no service to fix it.
-	if state, err := configure.GetHostState(); err != nil {
-		log.Warn("read pending host state: %v", err)
-	} else if state != nil {
-		if err := RecoverHostState(state); err != nil {
-			log.Warn("recover pending host state: %v", err)
-		}
-		if err := configure.SetHostState(nil); err != nil {
-			log.Warn("clear pending host state: %v", err)
+	if !retained {
+		if state, err := configure.GetHostState(); err != nil {
+			log.Warn("read pending host state: %v", err)
+		} else if state != nil {
+			if err := RecoverHostState(state); err != nil {
+				log.Warn("recover pending host state: %v", err)
+			}
+			if err := configure.SetHostState(nil); err != nil {
+				log.Warn("clear pending host state: %v", err)
+			}
 		}
 	}
 	m.generation++
 	generation := m.generation
-	process, err := NewProcess(t, func() error {
+	newProcess := m.newProcess
+	if newProcess == nil {
+		newProcess = NewProcess
+	}
+	process, err := newProcess(t, func() error {
 		return m.runPreStartHook()
 	}, func() error {
 		return nil // afterStart executed post-lock in Phase 3
 	}, m.handleUnexpectedStop)
 	if err != nil {
+		// Leave interception installed on failure. Rollback/retry may restore
+		// the core; only an explicit stop is allowed to remove these rules.
 		m.mu.Unlock()
 		return err
 	}
@@ -450,7 +517,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 				// records that it happened
 				m.stop(true)
 				err = errors.Join(err, configure.SetHostState(nil))
-			} else if m.generation == generation && m.p == nil {
+			} else if m.generation == generation && m.p == nil && !retained {
 				state, recoveryErr := configure.GetHostState()
 				if recoveryErr == nil && state != nil {
 					recoveryErr = RecoverHostState(state)
@@ -460,6 +527,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 				}
 				err = errors.Join(err, recoveryErr)
 			}
+
 		}
 	}()
 	if err != nil {
@@ -468,7 +536,7 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 
 	// Phase 3 (post-lock): heavy operations — transparent proxy setup (DNS,
 	// TUN routes), connectivity monitor, and post-start hook.
-	if err = m.afterStart(process, generation); err != nil {
+	if err = m.afterStart(process, generation, retained); err != nil {
 		return err
 	}
 	m.mu.Lock()
@@ -485,10 +553,30 @@ func (m *CoreProcessManager) Start(t *Template) (err error) {
 	if err = configure.SetHostState(nil); err != nil {
 		return err
 	}
+	m.retainedSetting = nil
 	if !testing {
 		ApiFeed.ProductMessage("running_state", map[string]interface{}{"running": true, "networkPaused": false})
 	}
 	return nil
+}
+
+func canRetainInterception(before, after *configure.Setting) bool {
+	if before == nil || after == nil || !reflect.DeepEqual(before, after) || !IsTransparentOn(after) {
+		return false
+	}
+	return after.TransparentType == configure.TransparentTproxy || after.TransparentType == configure.TransparentRedirect
+}
+
+func (m *CoreProcessManager) GroupConfigMatches(signature string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.p != nil && m.p.template.groupSignature == signature
+}
+
+func (m *CoreProcessManager) InterceptionRetained() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.retainedSetting != nil
 }
 
 // Running reports if v2ray-core is running.

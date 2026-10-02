@@ -52,7 +52,12 @@ export default {
     moreMembers: "其他 {n} 个",
     inUse: "当前节点",
     pinned: "已指定",
+    pinnedUnavailable: "固定服务器不可用",
+    pinnedFailover: "已指定（故障时切换）",
     balanced: "自动（{n} 个成员）",
+    autoFilled: "{automatic}，自动填充",
+    auto: "自动",
+    chooseServer: "选择服务器",
     switchNode: "选择节点",
     proxyGroup: "代理组",
     editGroup: "增删节点",
@@ -119,12 +124,31 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    updateMode: "自动更新订阅",
+    updateModes: {
+      disabled: "关闭",
+      onStart: "服务启动时",
+      interval: "按间隔",
+      intervalFailsafe: "按间隔并启用故障恢复",
+    },
+    updateModeHelp: {
+      disabled: "仅在手动更新时更改订阅。",
+      onStart: "每次 v2rayA 启动时更新一次订阅。",
+      interval: "启动时更新一次，之后按设定的间隔更新。",
+      intervalFailsafe:
+        "启动时及按固定间隔更新。如果该订阅的所有服务器都不可用，则按故障间隔重试，直到至少一个恢复可用。",
+    },
+    updateIntervalMinutes: "定时更新（分钟）",
+    regularHelp: "必填。请输入不小于 1 的整数分钟数。",
+    failureIntervalMinutes: "故障重试（分钟）",
+    failureHelp:
+      "必填，至少 1 分钟。所有服务器不可用时更新；任一服务器恢复后停止重试。",
+    intervalInvalid: "请输入 {minimum} 到 525600 之间的整数。",
+
     settingsTitle: "订阅更新",
     remarks: "别名",
     numberServers: "节点数",
     subscription: "订阅",
-    autoSelect: "订阅自动更新后自动连接其中的新节点",
-    autoSelectLabel: "自动选择",
     updated: "订阅已更新",
     saved: "订阅已保存",
     saveFailed: "无法保存订阅：{message}",
@@ -550,6 +574,13 @@ export default {
     saveFailed: "无法保存 RoutingA：{message}",
   },
   outbound: {
+    autoAdd: "自动添加所有服务器",
+    autoAddHelp: "添加代理列表和订阅中的所有服务器，包括不可用的服务器。",
+    autoAddDetails:
+      "更新成员不会测延迟、测速或启动检测核心。",
+    updateMembers: "更新服务器列表",
+    membersUpdated: "分组服务器列表已更新",
+    membersUpdateFailed: "更新分组服务器列表失败：{message}",
     addMessage: "请输入你想要添加的代理分组名称：",
     deleteMessage:
       '确定删除代理分组 "{outboundName}"？其中的节点将断开，此操作不可撤销。',
@@ -561,7 +592,31 @@ export default {
     settingSaveFailed: "无法保存代理分组设置：{message}",
     probeUrl: "探测 URL",
     probeInterval: "探测间隔",
-    type: "类型",
+    strategy: "连接策略",
+    strategyHelp:
+      "最多同时运行一个检测核心。TCP 延迟决定顺序；URL 和完整的 256 KiB 样本验证至少 100 KiB/s。无合格服务器时阻断组流量。",
+    strategyHelpAction: "连接策略说明",
+    configureSelected: "配置所选代理组",
+    fixedRequiresServer: "请先在“代理组”卡片中选择一个具体服务器。",
+    fixedServerSelected: "“代理组”卡片中固定的服务器不会自动切换。",
+    stabilityHelp: "节点重新排序或重命名不会中断连接。成员或连接参数实际变化时，按原策略重新选择，模式保持不变。TPROXY/REDIRECT 切换期间保留流量拦截，重启失败时也不会撤销。",
+    manualOverrideHelp: "手动固定节点会暂停自动选择，但保留策略和成员设置。在代理组卡片上取消固定即可恢复原策略。",
+    strategies: {
+      fixed: "不切换",
+      leastPing: "最低延迟",
+      keepCurrent: "保持当前服务器直到故障",
+      roundRobin: "轮询",
+      random: "随机",
+    },
+    strategyDetails: {
+      fixed: "始终使用固定服务器，并禁用自动检查和自动填充。",
+      leastping: "测量所有服务器的 TCP 延迟，按延迟顺序逐个测速，找到首个合格服务器即停止。",
+      keepcurrent:
+        "按间隔检查当前服务器的连通性。连续三次失败后，按 TCP 延迟和不低于 100 KiB/s 的完整测速选择替代节点。仅速度偏低或未知不会淘汰仍可连接的当前节点。",
+      roundrobin: "逐个检查成员，在通过 URL 和速度检测的服务器之间轮流分配新连接。",
+      random:
+        "测量延迟后随机排列可达服务器，逐个测速，直到找到合格服务器。",
+    },
   },
   proxyGroup: {
     searchNodes: "搜索节点...",

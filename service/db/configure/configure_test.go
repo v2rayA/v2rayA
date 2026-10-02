@@ -56,7 +56,11 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 		Sub:      index,
 		Outbound: outbound,
 	}}}
-	if err := SetSubscriptionAndConnects(index+1, subscription, replacement); err == nil {
+	previousSetting := GetOutboundSetting(outbound)
+	invalidated := previousSetting
+	invalidated.SelectionInvalidated = true
+	changes := map[string]OutboundSetting{outbound: invalidated}
+	if err := SetSubscriptionAndConnects(index+1, subscription, replacement, changes); err == nil {
 		t.Fatal("updating a missing subscription succeeded")
 	}
 
@@ -64,12 +68,18 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 	if got == nil || got.Len() != 1 || *got.Get()[0] != *initial.Get()[0] {
 		t.Fatalf("connections changed after rollback: %+v", got)
 	}
+	if GetOutboundSetting(outbound) != previousSetting {
+		t.Fatal("failed subscription transaction invalidated group")
+	}
 
-	if err := SetSubscriptionAndConnects(index, subscription, replacement); err != nil {
+	if err := SetSubscriptionAndConnects(index, subscription, replacement, changes); err != nil {
 		t.Fatalf("replace subscription and connections: %v", err)
 	}
 	got = GetConnectedServersByOutbound(outbound)
 	if got == nil || got.Len() != 1 || *got.Get()[0] != *replacement.Get()[0] {
 		t.Fatalf("connections were not committed with subscription: %+v", got)
+	}
+	if !GetOutboundSetting(outbound).SelectionInvalidated {
+		t.Fatal("catalog commit lost selection invalidation")
 	}
 }

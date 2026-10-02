@@ -15,6 +15,8 @@ export interface Which {
   outbound?: string;
   /** in a touch's connectedServer: the member its group routes through alone */
   selected?: boolean;
+  /** the member currently chosen by a worker-owned one-node strategy */
+  active?: boolean;
 }
 
 /** touch.Server; `sub` and `connected` are the page's own marks on a row */
@@ -39,7 +41,9 @@ export interface TouchSubscription {
   status: string;
   info: string;
   servers: TouchServer[];
-  autoSelect: boolean;
+  updateMode?: "disabled" | "on_start" | "at_interval" | "interval_failsafe";
+  updateIntervalMinutes?: number;
+  failureIntervalMinutes?: number;
 }
 
 /** touch.Touch */

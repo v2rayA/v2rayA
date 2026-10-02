@@ -81,7 +81,7 @@ export const putOutboundConnections = (body: {
     method: "put",
     data: body,
   });
-/** the member a group routes through alone; null returns it to balancing */
+/** pins one member and selects fixed mode; null returns fixed mode to lowest latency */
 export const putOutboundSelection = (body: {
   outbound: string;
   which: Which | null;
@@ -98,11 +98,21 @@ export const deleteV2ray = () =>
 
 // ---- outbound groups ---------------------------------------------------------
 export const getOutbounds = () =>
-  call<{ outbounds: string[] }>({ url: "outbounds", method: "get" });
+  call<{ outbounds: string[]; automaticOutbounds?: string[] }>({
+    url: "outbounds",
+    method: "get",
+  });
+export type OutboundStrategy =
+  | "leastping"
+  | "keepcurrent"
+  | "roundrobin"
+  | "random"
+  | "fixed";
 export interface OutboundSetting {
+  autoAdd?: boolean;
   probeURL: string;
   probeInterval: string;
-  type: string;
+  type: OutboundStrategy;
   /** the share link of the member routed through alone; empty balances */
   selected?: string;
 }
@@ -116,6 +126,14 @@ export const postOutbound = (
   body: Record<string, unknown>,
   o: RequestOptions = {},
 ) => call<unknown>({ url: "outbound", method: "post", data: body, ...o });
+export const postOutboundRefresh = (outbound: string) =>
+  call<unknown>({
+    url: "outboundRefresh",
+    method: "post",
+    data: { outbound },
+    // A cancelled browser request also cancels the server's probe pass.
+    timeout: 120_000,
+  });
 export const putOutbound = (body: {
   outbound: string;
   setting: OutboundSetting;

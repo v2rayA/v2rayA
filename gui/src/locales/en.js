@@ -56,7 +56,12 @@ export default {
     moreMembers: "1 more | {n} more",
     inUse: "Node in use",
     pinned: "Pinned",
+    pinnedUnavailable: "Pinned server unavailable",
+    pinnedFailover: "Pinned (switches on failure)",
     balanced: "Auto (1 member) | Auto ({n} members)",
+    autoFilled: "{automatic}, automatic membership",
+    auto: "Auto",
+    chooseServer: "Choose server",
     switchNode: "Switch",
     proxyGroup: "Proxy group",
     editGroup: "Add or remove nodes",
@@ -123,13 +128,31 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    updateMode: "Automatic subscription update",
+    updateModes: {
+      disabled: "Disabled",
+      onStart: "On service start",
+      interval: "At an interval",
+      intervalFailsafe: "At an interval with fail-safe recovery",
+    },
+    updateModeHelp: {
+      disabled: "The subscription changes only when you update it manually.",
+      onStart: "Updates the subscription once whenever v2rayA starts.",
+      interval: "Updates on startup and then at the configured interval.",
+      intervalFailsafe:
+        "Updates on startup and at the regular interval. If every server becomes unavailable, retries at the failure interval until one works.",
+    },
+    updateIntervalMinutes: "Regular interval (minutes)",
+    regularHelp: "Required. Enter a whole number of minutes, at least 1.",
+    failureIntervalMinutes: "Failure retry (minutes)",
+    failureHelp:
+      "Required, at least 1 minute. Refreshes while all servers are unavailable; stops retrying when one works.",
+    intervalInvalid: "Enter a whole number from {minimum} to 525600.",
+
     settingsTitle: "Subscription updates",
     remarks: "Remarks",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect:
-      "Automatically connect to new servers from the subscription after an automatic update of the subscription",
-    autoSelectLabel: "Auto-select",
     updated: "Subscription updated",
     saved: "Subscription saved",
     saveFailed: "Failed to save subscription: {message}",
@@ -568,6 +591,14 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Automatically add all servers",
+    autoAddHelp:
+      "Adds every server from Proxies and subscriptions, including unavailable servers.",
+    autoAddDetails:
+      "Membership updates do not ping, test speed or start a probe core.",
+    updateMembers: "Update server list",
+    membersUpdated: "Group server list updated",
+    membersUpdateFailed: "Failed to update group server list: {message}",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',
@@ -579,7 +610,36 @@ export default {
     settingSaveFailed: "Failed to save proxy group settings: {message}",
     probeUrl: "Probe URL",
     probeInterval: "Probe Interval",
-    type: "Type",
+    strategy: "Connection Strategy",
+    strategyHelp:
+      "One probe core at a time. TCP ping orders candidates; URL and a complete 256 KiB sample verify at least 100 KiB/s. No suitable server means the group blocks traffic.",
+    strategyHelpAction: "About connection strategies",
+    configureSelected: "Configure selected proxy group",
+    fixedRequiresServer:
+      "Choose a server from the Proxy group card before using Don't switch.",
+    fixedServerSelected:
+      "The server pinned on the Proxy group card will not be switched automatically.",
+    stabilityHelp: "Reordering or renaming nodes keeps connections intact. A real membership or connection change re-evaluates the selected strategy without changing its mode. During TPROXY/REDIRECT switches, interception stays installed, including when restarting fails.",
+    manualOverrideHelp: "A manual pin pauses automatic selection without changing the strategy or membership. Clear the pin on the Proxy group card to resume the same strategy.",
+    strategies: {
+      fixed: "Don't switch",
+      leastPing: "Lowest latency",
+      keepCurrent: "Keep current until failure",
+      roundRobin: "Round robin",
+      random: "Random",
+    },
+    strategyDetails: {
+      fixed:
+        "Always uses the pinned server and disables automatic checks and membership.",
+      leastping:
+        "Pings all servers, then checks speed in ascending TCP latency order. Stops at the first suitable server.",
+      keepcurrent:
+        "Checks current reachability at each interval. Three consecutive failures trigger a replacement ranked by TCP latency and a complete speed sample of at least 100 KiB/s. Low or unknown speed alone does not evict a reachable current server.",
+      roundrobin:
+        "Checks members sequentially and rotates new connections among servers passing URL and speed checks.",
+      random:
+        "Pings servers, shuffles reachable candidates and checks them one at a time until one passes the speed test.",
+    },
   },
   proxyGroup: {
     searchNodes: "Search nodes...",

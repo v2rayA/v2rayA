@@ -28,15 +28,17 @@ type Server struct {
 	PingLatency string              `json:"pingLatency"`
 }
 type Subscription struct {
-	Remarks    string              `json:"remarks,omitempty"`
-	ID         int                 `json:"id"`
-	TYPE       configure.TouchType `json:"_type"`
-	Host       string              `json:"host"`
-	Address    string              `json:"address"`
-	Status     SubscriptionStatus  `json:"status"`
-	Info       string              `json:"info"`
-	Servers    []Server            `json:"servers"`
-	AutoSelect bool                `json:"autoSelect"`
+	UpdateMode             *configure.SubscriptionUpdateMode `json:"updateMode,omitempty"`
+	UpdateIntervalMinutes  *int                              `json:"updateIntervalMinutes"`
+	FailureIntervalMinutes *int                              `json:"failureIntervalMinutes"`
+	Remarks                string                            `json:"remarks,omitempty"`
+	ID                     int                               `json:"id"`
+	TYPE                   configure.TouchType               `json:"_type"`
+	Host                   string                            `json:"host"`
+	Address                string                            `json:"address"`
+	Status                 SubscriptionStatus                `json:"status"`
+	Info                   string                            `json:"info"`
+	Servers                []Server                          `json:"servers"`
 }
 
 // NewUpdateStatus stamps a subscription update. RFC 3339 carries the zone, so
@@ -74,6 +76,7 @@ func GenerateTouch() (t Touch) {
 	subscriptions := configure.GetSubscriptions()
 	t.Subscriptions = make([]Subscription, len(subscriptions))
 	for i, v := range subscriptions {
+		updateMode := v.UpdateMode
 		u, err := url.Parse(v.Address)
 		if err != nil {
 			// it may is OOCv1
@@ -91,14 +94,16 @@ func GenerateTouch() (t Touch) {
 			}
 		}
 		t.Subscriptions[i] = Subscription{
-			Remarks:    v.Remarks,
-			ID:         i + 1,
-			Host:       u.Host,
-			Address:    v.Address,
-			Status:     SubscriptionStatus(v.Status),
-			Servers:    serverRawsToServers(v.Servers),
-			Info:       v.Info,
-			AutoSelect: v.AutoSelect,
+			Remarks:                v.Remarks,
+			UpdateMode:             &updateMode,
+			UpdateIntervalMinutes:  &v.UpdateIntervalMinutes,
+			FailureIntervalMinutes: &v.FailureIntervalMinutes,
+			ID:                     i + 1,
+			Host:                   u.Host,
+			Address:                v.Address,
+			Status:                 SubscriptionStatus(v.Status),
+			Servers:                serverRawsToServers(v.Servers),
+			Info:                   v.Info,
 		}
 	}
 	t.ConnectedServers = configure.GetConnectedServers().ToWhiches()
@@ -116,22 +121,22 @@ func GenerateTouch() (t Touch) {
 	return
 }
 
-// markSelected flags the member each group routes through alone, when its
-// setting names one that is still a member.
+// markSelected flags both an explicit fixed member and the current member of
+// a worker-owned one-node strategy.
 func markSelected(connected []*configure.Which, loc *configure.Locator) {
-	selected := make(map[string]string)
+	settings := make(map[string]configure.OutboundSetting)
 	for _, w := range connected {
-		if _, ok := selected[w.Outbound]; !ok {
-			selected[w.Outbound] = configure.GetOutboundSetting(w.Outbound).Selected
-		}
-		link := selected[w.Outbound]
-		if link == "" {
-			continue
+		setting, ok := settings[w.Outbound]
+		if !ok {
+			setting = configure.GetOutboundSetting(w.Outbound)
+			settings[w.Outbound] = setting
 		}
 		sr, err := loc.Locate(&w.NodeRef)
 		if err != nil || sr.ServerObj == nil {
 			continue
 		}
-		w.Selected = sr.ServerObj.ExportToURL() == link
+		link := sr.ServerObj.ExportToURL()
+		w.Selected = setting.Selected != "" && configure.NodeFingerprint(link) == configure.NodeFingerprint(setting.Selected)
+		w.Active = w.Selected || (setting.Selected == "" && configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.MatchesNodeFingerprint(setting.StickyCurrent, link))
 	}
 }

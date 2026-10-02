@@ -56,7 +56,12 @@ export default {
     moreMembers: "Mais 1 | Mais {n}",
     inUse: "Nó em uso",
     pinned: "Fixado",
+    pinnedUnavailable: "Servidor fixado indisponível",
+    pinnedFailover: "Fixado (troca em caso de falha)",
     balanced: "Automático (1 membro) | Automático ({n} membros)",
+    autoFilled: "{automatic}, preenchimento automático",
+    auto: "Automático",
+    chooseServer: "Escolher servidor",
     switchNode: "Trocar",
     proxyGroup: "Grupo de proxy",
     editGroup: "Adicionar ou remover nós",
@@ -123,13 +128,32 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    updateMode: "Atualização automática da assinatura",
+    updateModes: {
+      disabled: "Desativada",
+      onStart: "Ao iniciar o serviço",
+      interval: "Em um intervalo",
+      intervalFailsafe: "Em um intervalo com recuperação de falha",
+    },
+    updateModeHelp: {
+      disabled: "A assinatura muda apenas quando você a atualiza manualmente.",
+      onStart: "Atualiza a assinatura uma vez sempre que o v2rayA inicia.",
+      interval: "Atualiza ao iniciar e depois no intervalo configurado.",
+      intervalFailsafe:
+        "Atualiza ao iniciar e no intervalo regular. Se todos os servidores da assinatura ficarem indisponíveis, repete no intervalo de falha até que um funcione.",
+    },
+    updateIntervalMinutes: "Intervalo regular (minutos)",
+    regularHelp:
+      "Obrigatório. Digite um número inteiro de minutos, no mínimo 1.",
+    failureIntervalMinutes: "Repetir na falha (minutos)",
+    failureHelp:
+      "Obrigatório, mínimo de 1 minuto. Atualiza enquanto todos os servidores estão indisponíveis; para quando um funcionar.",
+    intervalInvalid: "Insira um inteiro de {minimum} a 525600.",
+
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
     numberServers: "Número de servidores",
     subscription: "Assinatura",
-    autoSelect:
-      "Conectar automaticamente aos novos servidores da assinatura após uma atualização automática",
-    autoSelectLabel: "Seleção automática",
     updated: "Assinatura atualizada",
     saved: "Assinatura salva",
     saveFailed: "Falha ao salvar a assinatura: {message}",
@@ -574,6 +598,15 @@ export default {
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Adicionar todos os servidores automaticamente",
+    autoAddHelp:
+      "Adiciona todos os servidores de Proxies e assinaturas, inclusive os indisponíveis.",
+    autoAddDetails:
+      "Atualizar membros não mede ping ou velocidade nem inicia um núcleo de teste.",
+    updateMembers: "Atualizar lista de servidores",
+    membersUpdated: "Lista de servidores do grupo atualizada",
+    membersUpdateFailed:
+      "Falha ao atualizar a lista de servidores do grupo: {message}",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',
@@ -586,7 +619,36 @@ export default {
       "Falha ao salvar as configurações do grupo de proxy: {message}",
     probeUrl: "URL de sondagem",
     probeInterval: "Intervalo de sondagem",
-    type: "Tipo",
+    strategy: "Estratégia de conexão",
+    strategyHelp:
+      "Somente um núcleo de teste por vez. O ping TCP ordena os candidatos; a URL e uma amostra completa de 256 KiB verificam pelo menos 100 KiB/s. Sem servidor adequado, o grupo bloqueia o tráfego.",
+    strategyHelpAction: "Sobre as estratégias de conexão",
+    configureSelected: "Configurar o grupo de proxy selecionado",
+    fixedRequiresServer:
+      "Escolha primeiro um servidor específico no cartão Grupo de proxy.",
+    fixedServerSelected:
+      "O servidor fixado no cartão Grupo de proxy não será trocado automaticamente.",
+    stabilityHelp: "Reordenar ou renomear nós preserva as conexões. Uma mudança real dos membros ou da conexão refaz a seleção pela mesma estratégia, sem alterar o modo. A interceptação permanece durante trocas TPROXY/REDIRECT, inclusive se a reinicialização falhar.",
+    manualOverrideHelp: "Fixar um servidor pausa a seleção automática sem alterar a estratégia ou os membros. Remova a fixação no cartão do grupo para retomar a mesma estratégia.",
+    strategies: {
+      fixed: "Não trocar",
+      leastPing: "Menor latência",
+      keepCurrent: "Manter atual até falhar",
+      roundRobin: "Alternância sequencial",
+      random: "Aleatório",
+    },
+    strategyDetails: {
+      fixed:
+        "Sempre usa o servidor fixado e desativa verificações e preenchimento automáticos.",
+      leastping:
+        "Mede o ping de todos e testa a velocidade em ordem crescente de latência TCP, parando no primeiro adequado.",
+      keepcurrent:
+        "Verifica a disponibilidade do servidor atual a cada intervalo. Após três falhas consecutivas, escolhe um substituto por latência TCP e uma amostra completa de pelo menos 100 KiB/s. Velocidade baixa ou desconhecida, por si só, não exclui um servidor acessível.",
+      roundrobin:
+        "Testa os membros sequencialmente e alterna novas conexões entre os aprovados nos testes de URL e velocidade.",
+      random:
+        "Mede o ping, embaralha os candidatos acessíveis e testa um por vez até encontrar velocidade suficiente.",
+    },
   },
   proxyGroup: {
     searchNodes: "Pesquisar nós...",

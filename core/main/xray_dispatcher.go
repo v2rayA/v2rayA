@@ -82,8 +82,9 @@ func (a *xrayDispatcherAdapter) Dispatch(ctx context.Context, network, addr, pro
 	}
 
 	// Wrap the transport link into a standard net.Conn.
-	return cnc.NewConnection(
-		cnc.ConnectionInputMulti(link.Writer),
-		cnc.ConnectionOutputMulti(link.Reader),
-	), nil
+	output := cnc.ConnectionOutputMulti(link.Reader)
+	if dest.Network == xnet.Network_UDP {
+		output = cnc.ConnectionOutputMultiUDP(link.Reader)
+	}
+	return cnc.NewConnection(cnc.ConnectionInputMulti(link.Writer), output), nil
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -338,8 +339,8 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 			OutboundName: cs.Outbound,
 		})
 	}
-	serverInfos = applySelection(serverInfos, func(outbound string) string {
-		return configure.GetOutboundSetting(outbound).Selected
+	serverInfos = applySelection(serverInfos, func(outbound string) configure.OutboundSetting {
+		return configure.GetOutboundSetting(outbound)
 	})
 	serverObjs := make([]serverObj.ServerObj, 0, len(serverInfos))
 	for _, info := range serverInfos {
@@ -348,23 +349,55 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 	return serverObjs, serverInfos, nil
 }
 
-// applySelection keeps, for a group whose setting selects one member, only
-// that member; a selection matching no member leaves the group balanced.
-func applySelection(serverInfos []serverInfo, selectedOf func(outbound string) string) []serverInfo {
-	selected := make(map[string]string)
-	matched := make(map[string]bool)
+// applySelection applies a manual pin first. Without a pin, worker-selected
+// strategies keep only their chosen member, while worker-filtered strategies
+// keep every measured eligible member. A missing choice leaves the group empty
+// so resolveOutbounds installs its fail-closed blackhole.
+func applySelection(serverInfos []serverInfo, settingOf func(outbound string) configure.OutboundSetting) []serverInfo {
+	settings := make(map[string]configure.OutboundSetting)
+	stickyMatched := make(map[string]bool)
 	for _, info := range serverInfos {
-		if _, ok := selected[info.OutboundName]; !ok {
-			selected[info.OutboundName] = selectedOf(info.OutboundName)
+		setting, ok := settings[info.OutboundName]
+		if !ok {
+			setting = settingOf(info.OutboundName)
+			settings[info.OutboundName] = setting
 		}
-		link := selected[info.OutboundName]
-		if link != "" && info.Info.ExportToURL() == link {
-			matched[info.OutboundName] = true
+		link := info.Info.ExportToURL()
+		if configure.UsesWorkerSelection(setting.Type) && setting.StickyCurrent != "" && configure.MatchesNodeFingerprint(setting.StickyCurrent, link) {
+			stickyMatched[info.OutboundName] = true
 		}
 	}
 	kept := serverInfos[:0]
+	keptChoice := make(map[string]bool)
 	for _, info := range serverInfos {
-		if matched[info.OutboundName] && info.Info.ExportToURL() != selected[info.OutboundName] {
+		setting := settings[info.OutboundName]
+		link := info.Info.ExportToURL()
+		if setting.Selected != "" {
+			if configure.NodeFingerprint(link) == configure.NodeFingerprint(setting.Selected) && !keptChoice[info.OutboundName] {
+				kept = append(kept, info)
+				keptChoice[info.OutboundName] = true
+			}
+			continue
+		}
+		if setting.Type == configure.Fixed {
+			// A removed fixed member fails closed instead of making the group
+			// silently balance across whatever nodes remain.
+			continue
+		}
+		if configure.UsesWorkerSelection(setting.Type) {
+			if stickyMatched[info.OutboundName] && configure.MatchesNodeFingerprint(setting.StickyCurrent, link) && !keptChoice[info.OutboundName] {
+				kept = append(kept, info)
+				keptChoice[info.OutboundName] = true
+			}
+			continue
+		}
+		if setting.Type == configure.RoundRobin {
+			for _, eligible := range strings.Fields(setting.EligibleMembers) {
+				if configure.MatchesNodeFingerprint(eligible, link) {
+					kept = append(kept, info)
+					break
+				}
+			}
 			continue
 		}
 		kept = append(kept, info)
@@ -378,7 +411,7 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 	if err != nil {
 		return nil, err
 	}
-	if len(serverObjs) == 0 {
+	if len(serverObjs) == 0 && !configure.HasFailClosedGroup() {
 		return nil, NoConnectedServerErr
 	}
 	var pluginPorts map[int]int
@@ -397,7 +430,39 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 	return tmpl, nil
 }
 
+// ActiveGroupSignature excludes catalog order, display metadata and generated ports.
+func ActiveGroupSignature() (string, error) {
+	_, infos, err := getConnectedServerObjs()
+	if err != nil {
+		return "", err
+	}
+	return groupSignature(infos), nil
+}
+
+func groupSignature(infos []serverInfo) string {
+	identities := make([]string, 0, len(infos))
+	for _, info := range infos {
+		mode := "single"
+		if configure.GetOutboundSetting(info.OutboundName).Type == configure.RoundRobin {
+			mode = "roundrobin"
+		}
+		identities = append(identities, info.OutboundName+":"+mode+":"+configure.NodeFingerprint(info.Info.ExportToURL()))
+	}
+	sort.Strings(identities)
+	return strings.Join(identities, "\n")
+}
+
 func UpdateV2RayConfig() (err error) {
+	return updateV2RayConfig(false)
+}
+
+// UpdateGroupConfig keeps packet interception in place when only group
+// membership or selection changes.
+func UpdateGroupConfig() error {
+	return updateV2RayConfig(true)
+}
+
+func updateV2RayConfig(preserveInterception bool) (err error) {
 	tmpl, err := NewTemplateFromConnectedServers(nil)
 	if err != nil {
 		if errors.Is(err, NoConnectedServerErr) {
@@ -407,7 +472,7 @@ func UpdateV2RayConfig() (err error) {
 		}
 		return err
 	}
-	err = ProcessManager.Start(tmpl)
+	err = ProcessManager.start(tmpl, preserveInterception)
 	if err != nil {
 		return err
 	}

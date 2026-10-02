@@ -13,6 +13,8 @@ import {
   mdiRoutes,
   mdiChartLine,
   mdiRss,
+  mdiCogOutline,
+  mdiPin,
 } from "@mdi/js";
 import OutboundMenu from "@/components/OutboundMenu.vue";
 import TrafficChart from "@/components/TrafficChart.vue";
@@ -43,6 +45,8 @@ const {
   busy,
   error,
   members,
+  groupAutomatic,
+  groupSetting,
   nodeInUse,
   stateLabel,
   canToggle,
@@ -53,6 +57,7 @@ const {
   editPorts,
   editRoutingA,
   editGroup,
+  editGroupSettings,
   importNodes,
   subscriptions,
   selecting,
@@ -112,17 +117,49 @@ const slowest = computed(() =>
 );
 
 // the node picker: "auto" or one member's key; picking calls selectNode
-const selectionValue = computed(
-  () => members.value.find((m) => m.which.selected)?.key ?? "auto",
+const strategyLocaleKey = computed(
+  () =>
+    ({
+      fixed: "fixed",
+      leastping: "leastPing",
+      keepcurrent: "keepCurrent",
+      roundrobin: "roundRobin",
+      random: "random",
+    })[groupSetting.value.type] ?? "leastPing",
+);
+const strategyName = computed(() =>
+  t(`outbound.strategies.${strategyLocaleKey.value}`),
+);
+const hasManualSelection = computed(
+  () => !!groupSetting.value.selected || groupSetting.value.type === "fixed",
+);
+const selectionValue = computed(() =>
+  hasManualSelection.value
+    ? (members.value.find((m) => m.which.selected)?.key ?? "missing")
+    : "auto",
 );
 const selectionItems = computed(() => [
-  { value: "auto", title: t("dashboard.autoFastest"), subtitle: "" },
+  {
+    value: "auto",
+    title: t("dashboard.auto"),
+    subtitle: strategyName.value,
+    disabled: groupSetting.value.type === "fixed",
+  },
   ...members.value.map((m) => ({
     value: m.key,
     title: m.row.name || m.row.address,
     subtitle: `${m.row.net}  ${m.latency}`,
   })),
 ]);
+const connectionMode = computed(() => {
+  if (hasManualSelection.value) return t("dashboard.pinned");
+  if (groupSetting.value.type === "keepcurrent")
+    return t("dashboard.pinnedFailover");
+  const automatic = t("dashboard.balanced", members.value.length);
+  return groupSetting.value.autoAdd
+    ? t("dashboard.autoFilled", { automatic })
+    : automatic;
+});
 function pick(value: string) {
   const outbound = store.outboundName;
   const member = members.value.find((m) => m.key === value);
@@ -229,8 +266,17 @@ defineExpose({ sync });
             size="20"
             color="on-surface-variant"
           />
-          <h2 class="md3-title-small">{{ t("dashboard.proxyGroup") }}</h2>
+          <h2 class="md3-title-small flex-grow-1">
+            {{ t("dashboard.proxyGroup") }}
+          </h2>
           <OutboundMenu variant="chip" @changed="sync" />
+          <v-btn
+            :icon="mdiCogOutline"
+            variant="text"
+            size="40"
+            :aria-label="t('outbound.configureSelected')"
+            @click="editGroupSettings"
+          />
         </div>
         <v-skeleton-loader
           v-if="loading"
@@ -238,6 +284,9 @@ defineExpose({ sync });
           class="bg-transparent"
         />
         <template v-else-if="members.length">
+          <p class="md3-label-medium text-on-surface-variant mb-1">
+            {{ t("dashboard.chooseServer") }}
+          </p>
           <v-menu>
             <template #activator="{ props: menu }">
               <v-btn
@@ -249,25 +298,50 @@ defineExpose({ sync });
                 :aria-label="t('dashboard.switchNode')"
               >
                 <span class="md3-title-medium dashboard-wrap" dir="auto">{{
-                  nodeInUse
-                    ? nodeInUse.row.name || nodeInUse.row.address
-                    : t("dashboard.autoFastest")
+                  !hasManualSelection
+                    ? t("dashboard.auto")
+                    : nodeInUse
+                      ? nodeInUse.row.name || nodeInUse.row.address
+                      : t("dashboard.pinnedUnavailable")
                 }}</span>
               </v-btn>
             </template>
             <v-list density="compact" min-width="280">
+              <v-list-subheader>{{
+                t("dashboard.chooseServer")
+              }}</v-list-subheader>
               <v-list-item
                 v-for="item in selectionItems"
                 :key="item.value"
                 :title="item.title"
                 :subtitle="item.subtitle || undefined"
+                :disabled="'disabled' in item && item.disabled"
                 :active="item.value === selectionValue"
                 role="menuitemradio"
                 :aria-checked="item.value === selectionValue"
                 @click="pick(item.value)"
-              />
+              >
+                <template #append>
+                  <v-icon
+                    v-if="
+                      item.value !== 'auto' && item.value === selectionValue
+                    "
+                    :icon="mdiPin"
+                    color="primary"
+                    :aria-label="t('dashboard.pinned')"
+                  />
+                </template>
+              </v-list-item>
             </v-list>
           </v-menu>
+          <p
+            v-if="groupSetting.type !== 'fixed' && nodeInUse"
+            class="md3-body-small text-on-surface-variant dashboard-wrap mb-1"
+            dir="auto"
+          >
+            {{ t("dashboard.inUse") }}:
+            {{ nodeInUse.row.name || nodeInUse.row.address }}
+          </p>
           <div class="d-flex align-center flex-wrap ga-2 mb-3">
             <span
               v-if="nodeInUse"
@@ -282,27 +356,25 @@ defineExpose({ sync });
               >{{ nodeInUse.latency }}</span
             >
             <v-chip
-              v-if="nodeInUse?.which.selected"
+              v-if="members.length"
               size="small"
               variant="tonal"
-              >{{ t("dashboard.pinned") }}</v-chip
-            >
-            <v-chip
-              v-else-if="members.length >= 2"
-              size="small"
-              variant="tonal"
-              >{{ t("dashboard.balanced", members.length) }}</v-chip
+              class="dashboard-mode-chip"
+              >{{ connectionMode }}</v-chip
             >
           </div>
           <div class="dashboard-actions d-flex justify-end">
-            <v-btn variant="text" @click="editGroup">{{
-              t("dashboard.editGroup")
-            }}</v-btn>
+            <v-btn
+              variant="text"
+              :disabled="groupAutomatic"
+              @click="editGroup"
+              >{{ t("dashboard.editGroup") }}</v-btn
+            >
           </div>
         </template>
         <template v-else>
           <p class="md3-body-medium mb-4">{{ t("dashboard.emptyGroup") }}</p>
-          <v-btn variant="text" @click="editGroup">{{
+          <v-btn variant="text" :disabled="groupAutomatic" @click="editGroup">{{
             t("dashboard.editGroup")
           }}</v-btn>
         </template>
@@ -709,5 +781,14 @@ defineExpose({ sync });
   flex-shrink: 0;
   border-radius: 50%;
   background: rgb(var(--v-theme-primary));
+}
+.dashboard-mode-chip {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  white-space: normal;
+}
+.dashboard-mode-chip :deep(.v-chip__content) {
+  white-space: normal;
 }
 </style>
