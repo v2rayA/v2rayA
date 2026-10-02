@@ -203,7 +203,7 @@ export default {
     autoUpdateGfwlist: "GFWList 자동 업데이트",
     preferModeWhenUpdate: "구독 및 GFWList 업데이트 시 모드",
     tproxyExcludedInterfaces: "제외할 인터페이스 접두사",
-    tproxyExcludedInterfacesPlaceholder: "docker*, veth*, wg*, ppp*, br-*",
+    tproxyExcludedInterfacesPlaceholder: "docker*, veth*, wg*, ppp*",
     tunAutoRoute: "자동 라우트",
     ipForwardOn: "IP 포워딩",
     portSharingOn: "포트 공유",
@@ -247,7 +247,7 @@ export default {
       transparentType:
         "★tproxy: UDP를 지원하지만 Docker는 지원하지 않습니다. ★redirect: Docker에 적합하지만 UDP를 지원하지 않으며 DNS 오염 방지를 위해 로컬 포트 53을 사용합니다. ★tun: 코어가 TUN 장치를 열고 기본 라우트를 가져갑니다. Linux, Windows, macOS와 UDP를 지원하며 v2rayA와 코어를 자동으로 제외하고 다른 프로세스를 이름으로 제외할 수 있습니다. Windows와 macOS에서는 LAN DNS에 직접 질의하는 애플리케이션이 여전히 우회합니다.",
       tproxyExcludedInterfaces:
-        "투명 프록시를 거치지 않을 네트워크 인터페이스 접두사를 설정합니다. 와일드카드 *를 지원합니다(iptables 모드에서는 자동으로 +로 변환). 예: docker*, veth*, wg*, ppp*, br-*. 여러 접두사는 쉼표로 구분하세요.",
+        "투명 프록시를 거치지 않을 네트워크 인터페이스 접두사를 설정합니다. 와일드카드 *를 지원합니다(iptables 모드에서는 자동으로 +로 변환). 예: docker*, veth*, wg*, ppp*. 여러 접두사는 쉼표로 구분하세요. OpenWrt에서는 기본적으로 LAN 브리지 트래픽도 프록시를 거칩니다. 여기에 br-*를 추가하면 제외됩니다.",
       tunAutoRoute:
         "활성화하면 v2rayA가 라우트와 DNS 설정을 직접 설치합니다. 비활성화하면 라우팅을 직접 구성할 시작/종료 스크립트를 제공해야 합니다.",
       tunExcludeProcesses:

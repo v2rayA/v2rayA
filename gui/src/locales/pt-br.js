@@ -207,7 +207,7 @@ export default {
     autoUpdateGfwlist: "Atualizar GFWList automaticamente",
     preferModeWhenUpdate: "Modo ao atualizar assinaturas e GFWList",
     tproxyExcludedInterfaces: "Prefixos de interfaces excluídos",
-    tproxyExcludedInterfacesPlaceholder: "docker*, veth*, wg*, ppp*, br-*",
+    tproxyExcludedInterfacesPlaceholder: "docker*, veth*, wg*, ppp*",
     tunAutoRoute: "Rota automática",
     ipForwardOn: "Encaminhamento de IP",
     portSharingOn: "Compartilhamento de portas",
@@ -254,7 +254,7 @@ export default {
       transparentType:
         "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP e precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
       tproxyExcludedInterfaces:
-        "Defina os prefixos das interfaces de rede que não devem passar pelo proxy transparente. O curinga * é aceito (convertido automaticamente em + no modo iptables). Por exemplo: docker*, veth*, wg*, ppp*, br-*. Separe vários prefixos com vírgulas.",
+        "Defina os prefixos das interfaces de rede que não devem passar pelo proxy transparente. O curinga * é aceito (convertido automaticamente em + no modo iptables). Por exemplo: docker*, veth*, wg*, ppp*. Separe vários prefixos com vírgulas. No OpenWrt, as pontes LAN passam pelo proxy por padrão; adicionar br-* aqui as exclui.",
       tunAutoRoute:
         "Quando ativado, o v2rayA instala as rotas e as configurações de DNS por conta própria. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
       tunExcludeProcesses:

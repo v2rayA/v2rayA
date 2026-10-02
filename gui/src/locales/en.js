@@ -206,7 +206,7 @@ export default {
     autoUpdateGfwlist: "Automatically Update GFWList",
     preferModeWhenUpdate: "Mode when Update Subscriptions and GFWList",
     tproxyExcludedInterfaces: "Excluded Interface Prefixes",
-    tproxyExcludedInterfacesPlaceholder: "docker*, veth*, wg*, ppp*, br-*",
+    tproxyExcludedInterfacesPlaceholder: "docker*, veth*, wg*, ppp*",
     tunAutoRoute: "Auto Route",
     ipForwardOn: "IP Forward",
     portSharingOn: "Port Sharing",
@@ -250,7 +250,7 @@ export default {
       transparentType:
         "★tproxy: supports UDP, but not docker. ★redirect: friendly for docker, but does not support UDP and needs local port 53 for DNS anti-pollution. ★tun: the core opens a TUN device and takes the default route; works on Linux, Windows and macOS, supports UDP, excludes v2rayA and the core by itself and lets you exclude other processes by name. On Windows and macOS, applications that query a LAN resolver directly still bypass it.",
       tproxyExcludedInterfaces:
-        "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*, br-*. Use commas to separate multiple prefixes.",
+        "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*. Use commas to separate multiple prefixes. On OpenWrt, LAN bridges are included by default; adding br-* here excludes them.",
       tunAutoRoute:
         "When enabled, v2rayA installs the routes and DNS settings itself. When disabled, you must provide setup/teardown scripts that configure routing yourself.",
       tunExcludeProcesses:
