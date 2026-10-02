@@ -47,7 +47,9 @@ func recoverPendingHostState() {
 
 func run() error {
 	recoverPendingHostState()
+	stopAutomation := func() {}
 	cleanup := func() {
+		stopAutomation()
 		fmt.Println("Quitting...")
 		v2ray.ProcessManager.CheckAndStopTransparentProxy(nil)
 		v2ray.ProcessManager.Stop(false)
@@ -98,6 +100,7 @@ func run() error {
 			log.Error("failed to start v2ray-core: %v", err)
 		}
 	}
+	stopAutomation = service.StartAutomation()
 	//w := configure.GetConnectedServers()
 	//log.Println(err, ", which:", w)
 	//_ = configure.ClearConnected()

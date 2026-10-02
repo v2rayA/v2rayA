@@ -123,13 +123,38 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    updateMode: "Automatic subscription update",
+    updateModes: {
+      disabled: "Disabled",
+      onStart: "On service start",
+      interval: "At an interval",
+      intervalFailsafe: "At an interval with fail-safe recovery",
+    },
+    updateModeHelp: {
+      disabled: "The subscription changes only when you update it manually.",
+      onStart:
+        "Updates once whenever v2rayA starts and once immediately when you change the address or update policy.",
+      interval: "Updates on startup and then at the configured interval.",
+      intervalFailsafe:
+        "Updates on startup and at the regular interval. If every server becomes unavailable, retries at the failure interval until one works.",
+    },
+    allowDirectRecovery: "Ignore subscription download routing during recovery",
+    recoveryRouteHelp:
+      "Allows a direct download if recovery through the configured proxy fails. Manual and regular updates keep their selected route. Direct attempts are logged; your network can see the subscription service address.",
+    updateIntervalMinutes: "Regular interval (minutes)",
+    regularHelp: "Required. Enter a whole number of minutes, at least 1.",
+    failureIntervalMinutes: "Failure retry (minutes)",
+    failureHelp:
+      "Required, at least 1 minute. Refreshes while all servers are unavailable; stops retrying when one works.",
+    intervalInvalid: "Enter a whole number from {minimum} to 525600.",
+    coreStoppedDirect: "The core is stopped. Update without the proxy?",
+    coreStoppedDirectAll:
+      "The core is stopped. Update all subscriptions without the proxy?",
+
     settingsTitle: "Subscription updates",
     remarks: "Remarks",
     numberServers: "Number of Servers",
     subscription: "Subscription",
-    autoSelect:
-      "Automatically connect to new servers from the subscription after an automatic update of the subscription",
-    autoSelectLabel: "Auto-select",
     updated: "Subscription updated",
     saved: "Subscription saved",
     saveFailed: "Failed to save subscription: {message}",
@@ -568,6 +593,11 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Automatically add available servers",
+    autoAddHelp:
+      "Keeps available servers from the entire Proxies list, including all subscriptions.",
+    autoAddDetails:
+      "Checks after catalog updates and at the probe interval. Removes unavailable members. An empty group blocks its traffic.",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',

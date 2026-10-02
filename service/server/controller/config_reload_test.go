@@ -173,3 +173,66 @@ func TestPutOutboundRestoresAfterReloadFailure(t *testing.T) {
 		t.Fatalf("outbound setting was not restored: %+v, want %+v", got, previous)
 	}
 }
+
+func TestPutOutboundFromCachedClientPreservesAutomaticMembership(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	previous.AutoAdd = true
+	previous.ProbeInterval = "300s"
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"probeURL":"https://next.example/ping","probeInterval":"45s","type":"leastping"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	if got := configure.GetOutboundSetting("proxy"); !got.AutoAdd || got.ProbeInterval != "45s" {
+		t.Fatalf("cached client changed automatic membership: %+v", got)
+	}
+}
+
+func TestPutOutboundDefaultsNewAutomaticGroupToFiveMinutes(t *testing.T) {
+	previous := configure.DefaultOutboundSetting()
+	if err := configure.SetOutboundSetting("proxy", previous); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outbound", strings.NewReader(`{"outbound":"proxy","setting":{"autoAdd":true,"probeURL":"https://next.example/ping","probeInterval":"60s","type":"leastping"}}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutbound(ctx)
+
+	if got := configure.GetOutboundSetting("proxy"); !got.AutoAdd || got.ProbeInterval != "300s" {
+		t.Fatalf("new automatic group setting = %+v; want autoAdd with 300s", got)
+	}
+}
+
+func TestPutOutboundConnectionsRejectsAutomaticGroupEdits(t *testing.T) {
+	setting := configure.DefaultOutboundSetting()
+	setting.AutoAdd = true
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.SetOutboundSetting("proxy", configure.DefaultOutboundSetting()) })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/outboundConnections", strings.NewReader(`{"outbound":"proxy","touches":[]}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	PutOutboundConnections(ctx)
+
+	var response struct {
+		Code common.Code `json:"code"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != common.FAIL {
+		t.Fatalf("automatic group accepted manual membership edit: %s", recorder.Body.String())
+	}
+}

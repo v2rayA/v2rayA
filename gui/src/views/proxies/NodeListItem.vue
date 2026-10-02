@@ -12,6 +12,7 @@ defineProps<{
   member: boolean;
   /** every proxy group, and the ones this node is a member of */
   groups: string[];
+  automaticGroups: string[];
   memberGroups: string[];
   inUse: boolean;
   checked: boolean;
@@ -54,6 +55,7 @@ const { t } = useI18n();
         />
         <NodeMenu
           :groups="groups"
+          :automatic-groups="automaticGroups"
           :member-groups="memberGroups"
           :local="row._type === 'server'"
           :disabled="disabled"

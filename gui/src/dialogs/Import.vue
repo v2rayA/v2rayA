@@ -9,6 +9,7 @@ import { postImport } from "@/api";
 import { ApiError } from "@/api/client";
 import { errorText } from "@/api/errors";
 import { useNotify } from "@/composables/useNotify";
+import { useSubscriptionBypass } from "@/composables/useSubscriptionBypass";
 
 defineOptions({ name: "ImportDialog" });
 const props = defineProps<{
@@ -18,6 +19,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [imported?: boolean] }>();
 const { t } = useI18n();
 const notify = useNotify();
+const subscriptionBypass = useSubscriptionBypass();
 
 const kind = ref<"server" | "subscription">(props.kind ?? "server");
 const text = ref("");
@@ -28,7 +30,14 @@ async function submit(url = text.value.trim()) {
   if (!url || importing.value) return;
   importing.value = true;
   try {
-    await postImport({ url, kind: kind.value });
+    const bypassProxy =
+      kind.value === "subscription" ? await subscriptionBypass() : false;
+    if (bypassProxy === null) return;
+    await postImport({
+      url,
+      kind: kind.value,
+      ...(bypassProxy ? { bypassProxy: true } : {}),
+    });
     notify.success(t("import.success"));
     emit("close", true);
   } catch (err) {

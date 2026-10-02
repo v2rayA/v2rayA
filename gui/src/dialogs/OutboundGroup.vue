@@ -15,15 +15,18 @@ const { t } = useI18n();
 const notify = useNotify();
 const setting = reactive<OutboundSetting>({
   probeURL: "",
-  probeInterval: "",
+  probeInterval: "300s",
+  autoAdd: false,
   type: "leastping",
 });
+const wasAutomatic = ref(false);
 const form = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 const saving = ref(false);
 
 onMounted(async () => {
   try {
     Object.assign(setting, (await getOutbound(props.outbound)).setting);
+    wasAutomatic.value = !!setting.autoAdd;
   } catch (err) {
     notify.warning(errorText(err));
   }
@@ -45,6 +48,13 @@ async function save() {
     saving.value = false;
   }
 }
+
+function setAutomatic(enabled: boolean | null) {
+  setting.autoAdd = !!enabled;
+  if (enabled && !wasAutomatic.value && setting.probeInterval === "60s") {
+    setting.probeInterval = "300s";
+  }
+}
 </script>
 
 <template>
@@ -59,6 +69,18 @@ async function save() {
     </v-card-item>
     <v-card-text class="px-6">
       <v-form ref="form" @submit.prevent="save">
+        <v-switch
+          :model-value="setting.autoAdd"
+          :label="t('outbound.autoAdd')"
+          hide-details
+          @update:model-value="setAutomatic"
+        />
+        <p class="md3-body-large mb-2">
+          {{ t("outbound.autoAddHelp") }}
+        </p>
+        <p class="md3-body-small text-on-surface-variant mb-4">
+          {{ t("outbound.autoAddDetails") }}
+        </p>
         <v-text-field
           v-model="setting.probeURL"
           :label="t('outbound.probeUrl')"
