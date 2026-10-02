@@ -240,6 +240,13 @@ function onMessage(msg: WsMessage) {
       paused ? "paused" : body.running ? "running" : "stopped",
       paused,
     );
+  } else if (msg.type === "catalog_changed") {
+    void pageRef.value?.sync?.();
+    void getOutbounds()
+      .then((response) =>
+        store.setOutbounds(response.outbounds, response.automaticOutbounds),
+      )
+      .catch(() => {});
   }
 }
 
@@ -256,7 +263,7 @@ async function startSession() {
   });
   void getOutbounds()
     .then((r) => {
-      store.setOutbounds(r.outbounds);
+      store.setOutbounds(r.outbounds, r.automaticOutbounds);
       if (shouldShowOnboarding())
         openDialog(OnboardingDialog, {}, { width: 560 });
     })

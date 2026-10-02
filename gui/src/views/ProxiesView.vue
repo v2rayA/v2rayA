@@ -213,6 +213,7 @@ onMounted(sync);
                       v-for="g in store.outbounds"
                       :key="g"
                       :title="g.toUpperCase()"
+                      :disabled="store.automaticOutbounds.includes(g)"
                       class="ps-8"
                       @click="model.batchMembership(add, g)"
                     />
@@ -265,6 +266,7 @@ onMounted(sync);
                       v-for="g in store.outbounds"
                       :key="g"
                       :title="g.toUpperCase()"
+                      :disabled="store.automaticOutbounds.includes(g)"
                       @click="model.batchMembership(add, g)"
                     />
                   </v-list>
@@ -318,6 +320,7 @@ onMounted(sync);
               :source="model.sourceName(row)"
               :member="model.isMember(row)"
               :groups="store.outbounds"
+              :automatic-groups="store.automaticOutbounds"
               :member-groups="model.memberGroups(row)"
               :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
               :checked="selectedKeys.includes(rowKey(row))"
@@ -340,6 +343,7 @@ onMounted(sync);
               :source="model.sourceName(row)"
               :member="model.isMember(row)"
               :groups="store.outbounds"
+              :automatic-groups="store.automaticOutbounds"
               :member-groups="model.memberGroups(row)"
               :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
               :checked="selectedKeys.includes(rowKey(row))"

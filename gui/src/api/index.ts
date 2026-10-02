@@ -42,7 +42,12 @@ export const deleteTouch = (touches: Which[]) =>
 // The editor sends `which: null` for a new node, as the old page did; the
 // key stays in the body. Saving one node has no time limit, a batch has.
 export const postImport = (
-  body: { url: string; kind?: string; which?: Which | null },
+  body: {
+    url: string;
+    kind?: string;
+    which?: Which | null;
+    bypassProxy?: boolean;
+  },
   timeout: number = timeouts.import,
 ) =>
   call<TouchResponse>({ url: "import", method: "post", data: body, timeout });
@@ -52,8 +57,12 @@ export const getSharingAddress = (touch: Which) =>
     method: "get",
     params: { touch },
   });
-export const putSubscription = (which: Which) =>
-  call<TouchResponse>({ url: "subscription", method: "put", data: which });
+export const putSubscription = (which: Which, bypassProxy = false) =>
+  call<TouchResponse>({
+    url: "subscription",
+    method: "put",
+    data: bypassProxy ? { ...which, bypassProxy: true } : which,
+  });
 export const patchSubscription = (body: Record<string, unknown>) =>
   call<TouchResponse>({ url: "subscription", method: "patch", data: body });
 export const getPingLatency = (whiches: Which[]) =>
@@ -98,8 +107,12 @@ export const deleteV2ray = () =>
 
 // ---- outbound groups ---------------------------------------------------------
 export const getOutbounds = () =>
-  call<{ outbounds: string[] }>({ url: "outbounds", method: "get" });
+  call<{ outbounds: string[]; automaticOutbounds?: string[] }>({
+    url: "outbounds",
+    method: "get",
+  });
 export interface OutboundSetting {
+  autoAdd?: boolean;
   probeURL: string;
   probeInterval: string;
   type: string;

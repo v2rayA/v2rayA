@@ -43,6 +43,7 @@ const {
   busy,
   error,
   members,
+  groupAutomatic,
   nodeInUse,
   stateLabel,
   canToggle,
@@ -295,14 +296,17 @@ defineExpose({ sync });
             >
           </div>
           <div class="dashboard-actions d-flex justify-end">
-            <v-btn variant="text" @click="editGroup">{{
-              t("dashboard.editGroup")
-            }}</v-btn>
+            <v-btn
+              variant="text"
+              :disabled="groupAutomatic"
+              @click="editGroup"
+              >{{ t("dashboard.editGroup") }}</v-btn
+            >
           </div>
         </template>
         <template v-else>
           <p class="md3-body-medium mb-4">{{ t("dashboard.emptyGroup") }}</p>
-          <v-btn variant="text" @click="editGroup">{{
+          <v-btn variant="text" :disabled="groupAutomatic" @click="editGroup">{{
             t("dashboard.editGroup")
           }}</v-btn>
         </template>

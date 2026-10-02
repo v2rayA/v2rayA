@@ -2,6 +2,7 @@ package configure
 
 type (
 	AutoUpdateMode          string
+	SubscriptionUpdateMode  string
 	ProxyMode               string
 	RulePortMode            string
 	PacRuleType             string
@@ -33,6 +34,11 @@ const (
 	NotAutoUpdate         = AutoUpdateMode("none")
 	AutoUpdate            = AutoUpdateMode("auto_update")
 	AutoUpdateAtIntervals = AutoUpdateMode("auto_update_at_intervals")
+
+	SubscriptionUpdateDisabled         = SubscriptionUpdateMode("disabled")
+	SubscriptionUpdateOnStart          = SubscriptionUpdateMode("on_start")
+	SubscriptionUpdateAtInterval       = SubscriptionUpdateMode("at_interval")
+	SubscriptionUpdateIntervalFailsafe = SubscriptionUpdateMode("interval_failsafe")
 
 	ProxyModeDirect = ProxyMode("direct")
 	ProxyModePac    = ProxyMode("pac")

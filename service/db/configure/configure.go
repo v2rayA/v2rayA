@@ -179,6 +179,9 @@ func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
 	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
 		outboundRefs := make(map[string][]*NodeRef)
+		for _, ref := range GetConnectedServers().Get() {
+			outboundRefs[ref.Outbound] = nil
+		}
 		for _, ref := range ws.Get() {
 			outboundRefs[ref.Outbound] = append(outboundRefs[ref.Outbound], ref)
 		}
@@ -446,8 +449,14 @@ func (ws *NodeRefs) byOutbound() map[string]*NodeRefs {
 // RemoveNodes deletes subscriptions and servers by ordinal together with
 // the connected lists already renumbered for the deletion, atomically.
 func RemoveNodes(subscriptions, servers []int, connected *NodeRefs) error {
+	groups := connected.byOutbound()
+	for _, out := range GetOutbounds() {
+		if groups[out] == nil {
+			groups[out] = NewNodeRefs(nil)
+		}
+	}
 	return db.RemoveTx(subscriptions, servers, func(tx *sql.Tx) error {
-		for out, refs := range connected.byOutbound() {
+		for out, refs := range groups {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", out), "connectedServers", refs); err != nil {
 				return err
 			}

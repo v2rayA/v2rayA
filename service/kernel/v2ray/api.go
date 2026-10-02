@@ -24,6 +24,7 @@ var (
 		"observatory",
 		"running_state",
 		"traffic",
+		"catalog_changed",
 	}
 	ApiFeed *Feed
 )

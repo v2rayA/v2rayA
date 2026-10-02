@@ -52,3 +52,35 @@ As portas são alteradas em **Configurações → Endereços e portas**; 0 fecha
 - Registros: com foco, `Home`, `End`, `PgUp` e `PgDn` percorrem o registro.
 
 No macOS, `Cmd` corresponde a `Ctrl`.
+
+## Atualização automática de assinaturas
+
+Cada assinatura tem seu próprio modo de atualização:
+
+- **Desativada:** atualizar somente quando solicitado manualmente.
+- **Ao iniciar o serviço:** atualizar uma vez sempre que o v2rayA iniciar.
+- **Em um intervalo:** atualizar ao iniciar e depois do número de minutos configurado.
+- **Em um intervalo com recuperação de falha:** seguir a programação regular e também verificar os servidores salvos no intervalo de falha. Quando nenhum funcionar, atualizar a assinatura nesse intervalo até que pelo menos um fique disponível.
+
+Downloads com erro ou vazios preservam a lista de servidores salva. Uma tentativa de recuperação não adia a programação regular, e uma execução demorada nunca ocorre em paralelo com a próxima. No Linux, os downloads de recuperação autorizados fora do proxy usam conexões marcadas para que o proxy transparente não os encaminhe de volta ao proxy com falha. Esse desvio não é garantido no modo TUN do macOS ou Windows. As verificações podem iniciar núcleos temporários. Com a opção antiga **Seleção automática** desativada, as atualizações mantêm o núcleo principal parado manualmente. Nesta versão, ativar essa opção antiga ainda pode iniciar o núcleo após uma atualização; a mudança posterior de membros automáticos do grupo remove esse comportamento.
+
+Na atualização, o modo global antigo **ao iniciar** é atribuído a todas as assinaturas existentes como **Ao iniciar o serviço**. O modo antigo por intervalo passa a **Em um intervalo**, com as horas convertidas em minutos. A recuperação de falha nunca é ativada pela migração; selecione-a manualmente onde for necessária.
+
+Alterar o endereço, o modo ou os intervalos reinicia imediatamente uma programação ativa. Selecionar **Ao iniciar o serviço** com o v2rayA em execução atualiza uma vez imediatamente e depois aguarda o próximo início do serviço. Alterar apenas as observações não reinicia a programação.
+
+Importações e atualizações manuais ou programadas seguem o **Modo ao atualizar assinaturas**; a rota proxy/PAC salva nunca muda silenciosamente. Se proxy/PAC estiver selecionado enquanto o núcleo estiver parado, uma importação ou atualização manual perguntará se deve ignorar o proxy e baixar diretamente somente nessa solicitação; recusar cancela a solicitação. As atualizações programadas mantêm a rota configurada. Somente uma tentativa de recuperação após a falha de todos os servidores pode repetir diretamente se a rota de download falhar. Cada desvio é registrado; a rede pode ver o endereço do serviço de assinatura. Isso exige a opção separada **Ignorar a rota de download da assinatura durante a recuperação**, desativada por padrão para assinaturas novas e atualizadas. Sem ela, a recuperação continua tentando pelo proxy/PAC configurado. Com ela, a exceção vale apenas para baixar a assinatura, não para outro tráfego.
+
+Candidatos gerenciados por plugins não podem ser verificados com segurança pelo processo isolado. Se algum candidato salvo não puder ser verificado, a saúde é desconhecida: a recuperação da assinatura é suspensa e um aviso é registrado uma vez até que o catálogo possa ser verificado novamente. As atualizações regulares continuam. Cancelar uma verificação ou download de recuperação preserva um prazo futuro; o teste de latência do painel não desativa a recuperação.
+## Associação automática do grupo de proxy
+
+Ative **Adicionar servidores disponíveis automaticamente** nas configurações de um grupo para gerenciar seus membros usando toda a lista de **Proxies**, incluindo servidores locais e todas as assinaturas. A verificação ocorre após mudanças no catálogo e no intervalo do grupo; um grupo automático recém-ativado usa `300s` por padrão. Servidores disponíveis são adicionados e indisponíveis são removidos. Enquanto a opção estiver ativa, o processo automático controla a lista. Ao desativá-la, o último resultado é preservado e a edição manual volta a funcionar.
+
+Se nenhum servidor estiver disponível, o tráfego atribuído ao grupo será bloqueado. Um `PROXY` automático vazio continua sendo a saída de proxy padrão: o tráfego global e da porta de regras que antes passava para outro grupo também será bloqueado. Regras explícitas para outro grupo ou `direct` continuam funcionando. A interceptação é mantida durante a troca de membros; se o novo núcleo não iniciar, ela é removida para não prender o roteador atrás de um processo inoperante.
+
+Nós que dependem de plugins externos não podem ser verificados isoladamente e são excluídos dos grupos automáticos. Use um grupo manual para eles. Ainda é possível excluir servidores e assinaturas com a associação automática ativa; as referências aos nós excluídos são removidas de todos os grupos.
+
+Na atualização, a seleção automática antiga só ativa a associação automática de `PROXY` se ao menos uma assinatura a utilizava e todos os membros atuais pertencem a essas assinaturas, ou se o grupo está vazio. Se houver servidores independentes ou nós de outras assinaturas, `PROXY` continua manual e preserva as seleções. As opções antigas são retiradas nos dois casos, e o registro explica como ativar **Adicionar servidores disponíveis automaticamente**. A migração ocorre uma vez e não altera escolhas posteriores.
+
+A verificação não mantém o bloqueio de configuração e usa no máximo dois núcleos temporários. A aplicação dos membros e a reinicialização do núcleo principal mantêm esse bloqueio. Uma edição espera até cinco segundos e pode retornar `REQUEST_IN_PROGRESS` durante uma reinicialização lenta; tente novamente após ela terminar. As páginas de leitura permanecem disponíveis.
+
+O **Tipo** do grupo escolhe a estratégia nativa do Xray: `leastping`, `leastload`, `roundrobin` ou `random`. Ela funciona com membros manuais ou automáticos; mudar o tipo não altera os membros.
