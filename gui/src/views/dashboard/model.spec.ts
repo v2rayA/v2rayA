@@ -19,7 +19,11 @@ import { watchConnected } from "@/api/connect";
 import type { TouchResponse, TouchServer } from "@/api/types";
 import { loadingState } from "@/composables/useLoading";
 import { closeAllNotices, noticeState } from "@/composables/useNotify";
-import { closeAllDialogs } from "@/composables/useDialog";
+import {
+  closeAllDialogs,
+  closeDialog,
+  dialogState,
+} from "@/composables/useDialog";
 import DialogHost from "@/components/hosts/DialogHost.vue";
 import GroupMembersDialog from "./GroupMembers.vue";
 import { useAppStore } from "@/stores/app";
@@ -414,6 +418,72 @@ describe("dashboard", () => {
       { _type: "subscription", id: 2 },
     ]);
     expect(noticeState.current?.text).toContain("Subscription unavailable");
+    expect(button("Update all").attributes("disabled")).toBeUndefined();
+  });
+
+  test("asks once and bypasses the proxy for every subscription in Update all", async () => {
+    const data = response();
+    data.touch.subscriptions.push({
+      ...data.touch.subscriptions[0],
+      id: 2,
+      host: "second.example",
+    });
+    vi.mocked(getTouch).mockResolvedValue(data);
+    vi.mocked(getSetting).mockResolvedValue({
+      setting: {
+        transparent: "close",
+        transparentType: "tproxy",
+        pacMode: "routingA",
+        logLevel: "info",
+        proxyModeWhenSubscribe: "proxy",
+      },
+      localGFWListVersion: "",
+      localGeositeVersion: "",
+    });
+    vi.mocked(putSubscription).mockResolvedValue(data);
+    wrapper = mountWithApp(DashboardView);
+    await flushPromises();
+
+    await button("Update all").trigger("click");
+    await flushPromises();
+    expect(putSubscription).not.toHaveBeenCalled();
+    expect(dialogState.stack).toHaveLength(1);
+    expect(dialogState.stack[0].props).toMatchObject({
+      message: "The core is stopped. Update all subscriptions without the proxy?",
+    });
+
+    closeDialog(dialogState.stack[0].id, true);
+    await flushPromises();
+
+    expect(vi.mocked(putSubscription).mock.calls).toEqual([
+      [{ _type: "subscription", id: 1 }, true],
+      [{ _type: "subscription", id: 2 }, true],
+    ]);
+    expect(dialogState.stack).toHaveLength(0);
+  });
+
+  test("reports a failed bypass check and does not start Update all", async () => {
+    vi.mocked(getSetting)
+      .mockResolvedValueOnce({
+        setting: {
+          transparent: "close",
+          transparentType: "tproxy",
+          pacMode: "routingA",
+          logLevel: "info",
+        },
+        localGFWListVersion: "",
+        localGeositeVersion: "",
+      })
+      .mockRejectedValueOnce(new Error("settings unavailable"));
+    wrapper = mountWithApp(DashboardView);
+    await flushPromises();
+
+    await button("Update all").trigger("click");
+    await flushPromises();
+
+    expect(noticeState.current?.text).toContain("settings unavailable");
+    expect(putSubscription).not.toHaveBeenCalled();
+    expect(dialogState.stack).toHaveLength(0);
     expect(button("Update all").attributes("disabled")).toBeUndefined();
   });
 });

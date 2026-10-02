@@ -5,7 +5,12 @@ import { errorText } from "@/api/errors";
 import { copyText } from "@/lib/clipboard";
 import { exportName, saveText } from "@/lib/download";
 import type { Touch, TouchSubscription, Which } from "@/api/types";
-import { useConfirm, useDialog, useNotify } from "@/composables";
+import {
+  useConfirm,
+  useDialog,
+  useNotify,
+  useSubscriptionBypass,
+} from "@/composables";
 import ImportDialog from "@/dialogs/Import.vue";
 import ServerDialog from "@/dialogs/Server/index.vue";
 import SharingDialog from "@/dialogs/Sharing.vue";
@@ -45,6 +50,7 @@ export function useProxies() {
   const { t } = useI18n();
   const notify = useNotify();
   const confirm = useConfirm();
+  const subscriptionBypass = useSubscriptionBypass();
   const { open } = useDialog();
   const query = ref("");
   const source = ref("all");
@@ -325,7 +331,9 @@ export function useProxies() {
         return;
       }
       if (action === "update") {
-        await subscriptionsModel.update(subscription);
+        const bypassProxy = await subscriptionBypass();
+        if (bypassProxy === null) return;
+        await subscriptionsModel.update(subscription, bypassProxy);
         notify.success(t("subscription.updated"));
       }
       if (

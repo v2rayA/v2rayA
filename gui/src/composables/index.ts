@@ -18,3 +18,4 @@ export { useTraffic } from "./useTraffic";
 export { useOutboundGroups } from "./useOutboundGroups";
 export { useUnsavedGuard } from "./useUnsavedGuard";
 export { useHotkeys, focusInput } from "./useHotkeys";
+export { useSubscriptionBypass } from "./useSubscriptionBypass";

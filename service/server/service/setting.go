@@ -86,10 +86,5 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 	} else {
 		conf.TickerUpdateGFWList.Reset(24 * time.Hour * 365 * 100)
 	}
-	if setting.SubscriptionAutoUpdateMode == configure.AutoUpdateAtIntervals {
-		conf.TickerUpdateSubscription.Reset(configure.IntervalHours(setting.SubscriptionAutoUpdateIntervalHour))
-	} else {
-		conf.TickerUpdateSubscription.Reset(24 * time.Hour * 365 * 100)
-	}
 	return
 }

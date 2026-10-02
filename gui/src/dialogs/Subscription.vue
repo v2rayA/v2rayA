@@ -1,8 +1,6 @@
 <script setup lang="ts">
-// Edit a subscription: its address, remarks and whether new nodes are
-// connected automatically after an update. Saves with PATCH
-// /subscription and resolves true.
-import { reactive, ref } from "vue";
+// Subscription refresh policy and the existing PROXY auto-selection option.
+import { computed, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { patchSubscription } from "@/api";
 import { errorText } from "@/api/errors";
@@ -16,11 +14,58 @@ const { t } = useI18n();
 const notify = useNotify();
 
 // the old page sent the row with its servers emptied
-const form = reactive({ ...props.subscription, servers: [] });
+const form = reactive({
+  updateMode: "disabled" as NonNullable<TouchSubscription["updateMode"]>,
+  updateIntervalMinutes: 0,
+  failureIntervalMinutes: 1,
+  allowDirectRecovery: false,
+  ...props.subscription,
+  servers: [],
+});
+const updateModes = computed(() => [
+  { value: "disabled", title: t("subscription.updateModes.disabled") },
+  { value: "on_start", title: t("subscription.updateModes.onStart") },
+  { value: "at_interval", title: t("subscription.updateModes.interval") },
+  {
+    value: "interval_failsafe",
+    title: t("subscription.updateModes.intervalFailsafe"),
+  },
+]);
+const needsRegularInterval = computed(
+  () =>
+    form.updateMode === "at_interval" ||
+    form.updateMode === "interval_failsafe",
+);
+const needsFailureInterval = computed(
+  () => form.updateMode === "interval_failsafe",
+);
+const updateModeHelp = computed(() => {
+  switch (form.updateMode) {
+    case "on_start":
+      return t("subscription.updateModeHelp.onStart");
+    case "at_interval":
+      return t("subscription.updateModeHelp.interval");
+    case "interval_failsafe":
+      return t("subscription.updateModeHelp.intervalFailsafe");
+    default:
+      return t("subscription.updateModeHelp.disabled");
+  }
+});
 const saving = ref(false);
+const validation = ref<{ validate(): Promise<{ valid: boolean }> } | null>(
+  null,
+);
+const intervalRule = (minimum: number) => (v: unknown) =>
+  (v !== "" &&
+    v !== null &&
+    Number.isInteger(Number(v)) &&
+    Number(v) >= minimum &&
+    Number(v) <= 525600) ||
+  t("subscription.intervalInvalid", { minimum });
 
 async function save() {
   if (saving.value) return;
+  if (!(await validation.value?.validate())?.valid) return;
   saving.value = true;
   try {
     await patchSubscription({ subscription: form });
@@ -42,22 +87,71 @@ async function save() {
       </v-card-title>
     </v-card-item>
     <v-card-text class="px-6">
-      <v-textarea
-        v-model="form.address"
-        :label="t('subscription.subscription')"
-        rows="2"
-        auto-grow
-        dir="ltr"
-        @keydown.enter="
-          (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
-        "
-      />
-      <v-text-field v-model="form.remarks" :label="t('subscription.remarks')" />
-      <v-switch
-        v-model="form.autoSelect"
-        :label="t('subscription.autoSelect')"
-        hide-details
-      />
+      <v-form ref="validation" @submit.prevent="save">
+        <v-textarea
+          v-model="form.address"
+          :label="t('subscription.subscription')"
+          rows="2"
+          auto-grow
+          dir="ltr"
+          @keydown.enter="
+            (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
+          "
+        />
+        <v-text-field
+          v-model="form.remarks"
+          :label="t('subscription.remarks')"
+        />
+        <v-select
+          v-model="form.updateMode"
+          :items="updateModes"
+          :label="t('subscription.updateMode')"
+        />
+        <p class="md3-body-large mb-4">
+          {{ updateModeHelp }}
+        </p>
+        <div v-if="needsRegularInterval" style="padding-bottom: 28px">
+          <v-text-field
+            v-model.number="form.updateIntervalMinutes"
+            type="number"
+            min="1"
+            max="525600"
+            step="1"
+            :label="t('subscription.updateIntervalMinutes')"
+            :rules="[intervalRule(1)]"
+            :hint="t('subscription.regularHelp')"
+            persistent-hint
+          />
+        </div>
+        <div v-if="needsFailureInterval" style="padding-bottom: 16px">
+          <v-text-field
+            v-model.number="form.failureIntervalMinutes"
+            type="number"
+            min="1"
+            max="525600"
+            step="1"
+            :label="t('subscription.failureIntervalMinutes')"
+            :rules="[intervalRule(1)]"
+            :hint="t('subscription.failureHelp')"
+            persistent-hint
+          />
+        </div>
+        <div v-if="needsFailureInterval">
+          <v-switch
+            v-model="form.allowDirectRecovery"
+            :label="t('subscription.allowDirectRecovery')"
+            hide-details
+          />
+          <p class="md3-body-small text-medium-emphasis mb-4">
+            {{ t("subscription.recoveryRouteHelp") }}
+          </p>
+        </div>
+        <v-switch
+          v-model="form.autoSelect"
+          :label="t('subscription.autoSelect')"
+          hide-details
+        />
+      </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">
       <v-spacer />
