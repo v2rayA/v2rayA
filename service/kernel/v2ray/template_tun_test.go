@@ -207,6 +207,9 @@ func TestDnsRedirectCommandsUseTheModulePort(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = configure.SetSetting(configure.NewSetting()) })
 	del := dnsRedirectDeleteCommands()
+	if !strings.Contains(del, "nft delete table inet v2raya_dns") {
+		t.Fatal("cleanup must remove native DNS NAT on stop and recovery")
+	}
 	if !strings.Contains(del, "--to-port 5353") || !strings.Contains(del, "--to-port 52353") {
 		t.Fatalf("delete commands must cover the configured and the default port:\n%s", del)
 	}
