@@ -489,6 +489,20 @@ export default {
       title: "Import",
       confirm: "Replace the current rules with the imported file?",
     },
+    urlImport: {
+      title: "Import from URL",
+      url: "Raw rules URL",
+      import: "Import",
+      direct: "Always update without proxy",
+      directHelp:
+        "When off, URL updates use the rule port and require the core to be running. When on, they bypass the proxy.",
+      interval: "Update every (hours)",
+      instructions: "Instructions",
+      instructionsText:
+        "Enter an HTTP or HTTPS link to a raw text file containing RoutingA syntax. HTML pages, downloads and invalid rules are rejected. Import the file, review the read-only preview, then save. The source is checked automatically at the chosen interval.",
+      importFirst:
+        "Import a valid URL and enter an update interval between 1 and 8760 hours before saving.",
+    },
     form: {
       title: "Form",
       text: "Text",

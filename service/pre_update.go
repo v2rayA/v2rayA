@@ -79,6 +79,27 @@ func initUpdatingTicker() {
 			updateSubscriptions()
 		}
 	}()
+	go func() {
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+		var previous configure.RoutingASource
+		var lastAttempt time.Time
+		for range ticker.C {
+			source := configure.GetRoutingASource()
+			if source.URL == "" {
+				previous = source
+				continue
+			}
+			if source == previous && time.Since(lastAttempt) < configure.IntervalHours(source.IntervalHours) {
+				continue
+			}
+			previous = source
+			lastAttempt = time.Now()
+			if err := service.UpdateRoutingAFromSource(); err != nil {
+				log.Warn("[AutoUpdate] RoutingA: %v", err)
+			}
+		}
+	}()
 }
 
 func checkUpdate() {

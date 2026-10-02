@@ -472,6 +472,19 @@ export default {
       title: "导入",
       confirm: "将当前规则替换为导入文件的内容？",
     },
+    urlImport: {
+      title: "从 URL 导入",
+      url: "原始规则文件 URL",
+      import: "导入",
+      direct: "始终绕过代理更新",
+      directHelp:
+        "关闭时，URL 更新通过规则端口，且需要运行内核；开启时绕过代理。",
+      interval: "更新间隔（小时）",
+      instructions: "说明",
+      instructionsText:
+        "输入包含 RoutingA 语法的原始文本文件的 HTTP 或 HTTPS 链接。HTML 页面、下载文件和无效规则会被拒绝。导入后检查只读预览并保存；系统会按指定间隔自动更新。",
+      importFirst: "保存前请导入有效 URL，并设置 1 至 8760 小时的更新间隔。",
+    },
     form: {
       title: "表单",
       text: "文本",
