@@ -481,6 +481,20 @@ export default {
       title: "가져오기",
       confirm: "현재 규칙을 가져온 파일의 내용으로 바꾸시겠습니까?",
     },
+    urlImport: {
+      title: "URL에서 가져오기",
+      url: "원본 규칙 파일 URL",
+      import: "가져오기",
+      direct: "항상 프록시를 거치지 않고 업데이트",
+      directHelp:
+        "끄면 URL 업데이트가 규칙 포트를 사용하며 코어가 실행 중이어야 합니다. 켜면 프록시를 우회합니다.",
+      interval: "업데이트 간격(시간)",
+      instructions: "안내",
+      instructionsText:
+        "RoutingA 구문이 담긴 원본 텍스트 파일의 HTTP 또는 HTTPS 링크를 입력하세요. HTML 페이지, 다운로드 및 잘못된 규칙은 거부됩니다. 가져온 뒤 읽기 전용 미리보기를 확인하고 저장하세요. 지정한 간격으로 자동 업데이트됩니다.",
+      importFirst:
+        "저장하기 전에 유효한 URL을 가져오고 업데이트 간격을 1~8760시간으로 설정하세요.",
+    },
     form: {
       title: "양식",
       text: "텍스트",

@@ -493,6 +493,20 @@ export default {
       confirm:
         "Substituir as regras atuais pelo conteúdo do arquivo importado?",
     },
+    urlImport: {
+      title: "Importar de URL",
+      url: "URL do arquivo bruto de regras",
+      import: "Importar",
+      direct: "Sempre atualizar sem proxy",
+      directHelp:
+        "Desativado: as atualizações pela URL usam a porta de regras e exigem que o núcleo esteja em execução. Ativado: ignoram o proxy.",
+      interval: "Intervalo (horas)",
+      instructions: "Instruções",
+      instructionsText:
+        "Informe um link HTTP ou HTTPS para um arquivo de texto bruto com sintaxe RoutingA. Páginas HTML, downloads e regras inválidas são rejeitados. Importe, confira a prévia somente leitura e salve. A fonte é atualizada automaticamente no intervalo escolhido.",
+      importFirst:
+        "Antes de salvar, importe uma URL válida e defina um intervalo de 1 a 8760 horas.",
+    },
     form: {
       title: "Formulário",
       text: "Texto",

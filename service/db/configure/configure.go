@@ -78,6 +78,7 @@ type Configure struct {
 	Ports               Ports               `json:"ports"`
 	DnsRules            []DnsRule           `json:"dnsRules"`
 	RoutingA            *string             `json:"routingA"`
+	RoutingASource      RoutingASource      `json:"routingASource"`
 	DomainsExcluded     *string             `json:"domainsExcluded"`
 	TproxyWhiteIpGroups TproxyWhiteIpGroups `json:"tproxyWhiteIpGroups"`
 }
@@ -143,6 +144,9 @@ func SetConfigure(cfg *Configure) error {
 		return err
 	}
 	if err := SetRoutingA(cfg.RoutingA); err != nil {
+		return err
+	}
+	if err := SetRoutingASource(cfg.RoutingASource); err != nil {
 		return err
 	}
 	if cfg.DnsRules != nil {
