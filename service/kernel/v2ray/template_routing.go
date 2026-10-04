@@ -496,8 +496,18 @@ func (t *Template) setTransparentRouting() (err error) {
 	return nil
 }
 func (t *Template) AppendDokodemoTProxy(tproxy string, port int, tag string) {
+	// Follow the "Allow connections from LAN" (PortSharing) toggle, the same way
+	// the socks/http inbounds and dns-in already do. Redirected/forwarded traffic
+	// (e.g. docker bridge containers, which the PREROUTING transparent rules
+	// REDIRECT to the bridge interface address) can only reach the inbound when
+	// it listens on 0.0.0.0; since v2.4 the loopback-only default broke those
+	// flows entirely.
+	listenAddr := "127.0.0.1"
+	if t.Setting != nil && t.Setting.PortSharing {
+		listenAddr = "0.0.0.0"
+	}
 	dokodemo := coreObj.Inbound{
-		Listen:   "127.0.0.1",
+		Listen:   listenAddr,
 		Port:     port,
 		Protocol: "dokodemo-door",
 		Sniffing: coreObj.Sniffing{
