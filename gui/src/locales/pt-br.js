@@ -1,7 +1,6 @@
 export default {
   nodeDns: {
     title: "DNS para resolução de nós",
-    hint: "Usado apenas enquanto a interceptação de DNS estiver ativa, para conexões de nós e testes de latência TCP/HTTP. As categorias indicam a origem; as consultas DNS dos nós são sempre diretas.",
     unavailable:
       "A origem salva não está mais disponível. Atualize e selecione outro endpoint ou automático.",
     refresh: "Atualizar opções de DNS",

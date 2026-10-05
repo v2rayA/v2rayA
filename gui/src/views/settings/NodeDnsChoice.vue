@@ -99,9 +99,6 @@ const unavailable = computed(
         @click="$emit('refresh')"
       />
     </div>
-    <p class="md3-body-small text-on-surface-variant mt-2 mb-0">
-      {{ t("nodeDns.hint") }}
-    </p>
     <v-alert v-if="error" type="error" variant="tonal" class="mt-2">
       {{ t("nodeDns.loadFailed", { message: errorText(error) }) }}
       <v-btn variant="text" @click="$emit('refresh')">

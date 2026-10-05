@@ -56,8 +56,9 @@ The rules say which upstream answers which domains, and whether the query goes o
 
 Saving writes the rules and the mode as two requests, and the dialog reports which of them the service accepted. A refusal after the rules were stored is named as such, so the retry sends only what is still missing.
 
+**Node resolution DNS**, next to DNS Settings, selects the global resolver for proxy node server names. It always applies to new node connections and TCP/HTTP latency tests, regardless of DNS hijacking. IP node addresses need no DNS query. Website names, subscription servers and DNS upstream bootstrap keep their existing resolvers.
 
-**Node resolution DNS**, next to DNS Settings, selects the global resolver for proxy node server names. It applies to new node connections and TCP/HTTP latency tests only while DNS hijacking is active. You can save it in advance; with DNS hijacking off, system resolution keeps its existing behavior. IP node addresses need no DNS query. Website names, subscription servers and DNS upstream bootstrap keep their existing resolvers.
+Node connections and TCP/HTTP latency tests wait for the built-in DNS module to serve queries. They query its local listener; the module uses the selected upstream directly or returns a cached result. Node lookups do not use the system resolver. A startup timeout, cancellation or core exit stops the lookup. An upstream failure is reported as a DNS query error and does not trigger a fallback. When the core is stopped, latency tests start a temporary core with the selected DNS configuration and stop it after testing.
 
 The dropdown lists IP-based UDP, TCP, DoT and DoH endpoints from DNS rules, the original system configuration, and the built-in fallback list. On Linux, system DNS comes from `/etc/resolv.conf` or its original backup while DNS hijacking is active. Categories show the source: **direct group**, **localhost DNS**, **proxy group**, **fallback DNS**. Every node DNS query goes directly, even for a proxy-group source. DoT/DoH certificates are verified. The options indicate valid current sources, not tested network reachability.
 

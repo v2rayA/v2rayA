@@ -1,7 +1,6 @@
 export default {
   nodeDns: {
     title: "Node resolution DNS",
-    hint: "Used only while DNS hijacking is active, for node connections and TCP/HTTP latency tests. Categories show the source; node DNS queries always go directly.",
     unavailable:
       "The saved source is no longer available. Refresh and select another endpoint or auto.",
     refresh: "Refresh DNS options",

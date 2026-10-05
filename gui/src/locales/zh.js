@@ -1,7 +1,6 @@
 export default {
   nodeDns: {
     title: "节点解析 DNS",
-    hint: "仅在 DNS 劫持生效时用于节点连接及 TCP/HTTP 测速。分类表示来源，节点 DNS 查询始终直连。",
     unavailable: "已保存的来源已失效，请刷新并选择其他端点或自动。",
     refresh: "刷新 DNS 选项",
     loadFailed: "无法加载 DNS 选项：{message}",

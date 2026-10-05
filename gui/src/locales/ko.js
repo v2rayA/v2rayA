@@ -1,7 +1,6 @@
 export default {
   nodeDns: {
     title: "노드 이름 확인 DNS",
-    hint: "DNS 가로채기가 활성화된 동안에만 노드 연결 및 TCP/HTTP 지연 시간 테스트에 사용됩니다. 분류는 출처를 나타내며 노드 DNS 질의는 항상 직접 전송됩니다.",
     unavailable:
       "저장된 출처를 더 이상 사용할 수 없습니다. 새로고침 후 다른 엔드포인트 또는 자동을 선택하세요.",
     refresh: "DNS 옵션 새로고침",
