@@ -119,7 +119,7 @@ describe("the DNS settings dialog", () => {
       stored[1],
     ]);
     expect(api.putSetting).not.toHaveBeenCalled();
-    expect(w.emitted("close")).toEqual([[]]);
+    expect(w.emitted("close")).toEqual([[true]]);
   });
 
   test("opens on the stored mode and sends it as the only field when it changes", async () => {
@@ -138,7 +138,7 @@ describe("the DNS settings dialog", () => {
     expect(api.putSetting).toHaveBeenCalledExactlyOnceWith({
       dnsMode: "service",
     });
-    expect(w.emitted("close")).toEqual([[]]);
+    expect(w.emitted("close")).toEqual([[true]]);
   });
 
   test("reads a mode a service that predates it answers through the opt-out", async () => {
@@ -244,7 +244,7 @@ describe("the DNS settings dialog", () => {
       { ...stored[0], server: "1.1.1.1" },
       stored[1],
     ]);
-    expect(w.emitted("close")).toEqual([[]]);
+    expect(w.emitted("close")).toEqual([[true]]);
   });
 
   test("saves edits in order, omits blank servers and preserves nonblank whitespace", async () => {

@@ -1,4 +1,19 @@
 export default {
+  nodeDns: {
+    title: "节点解析 DNS",
+    hint: "仅在 DNS 劫持生效时用于节点连接及 TCP/HTTP 测速。分类表示来源，节点 DNS 查询始终直连。",
+    unavailable: "已保存的来源已失效，请刷新并选择其他端点或自动。",
+    refresh: "刷新 DNS 选项",
+    loadFailed: "无法加载 DNS 选项：{message}",
+    systemReadFailed: "部分系统 DNS 来源读取失败，其他有效选项仍可使用。",
+    categories: {
+      auto: "自动",
+      direct: "直连分组",
+      localhost: "本地 DNS",
+      proxy: "代理分组",
+      fallback: "备用 DNS",
+    },
+  },
   onboarding: {
     title: "使用教程",
     importTitle: "导入节点",
@@ -716,6 +731,8 @@ export default {
   pinnedPeerCertSha256: "固定证书 SHA256",
   verifyPeerCertByName: "证书验证域名",
   backend: {
+    NODE_DNS_INVALID:
+      "节点 DNS 来源已失效，请刷新或选择其他端点或自动后再应用设置或 DNS 规则。",
     NO_SERVER_SELECTED: "未选择节点，请先连接一个节点。",
     CORE_START_FAILED: "无法启动 v2raya_core：{detail}",
     CORE_NOT_FOUND: "未找到 v2raya_core。",

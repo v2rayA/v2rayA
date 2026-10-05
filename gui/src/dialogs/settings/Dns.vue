@@ -19,7 +19,7 @@ import {
 } from "./dnsModel";
 
 defineOptions({ name: "DnsDialog" });
-const emit = defineEmits<{ close: [] }>();
+const emit = defineEmits<{ close: [changed?: boolean] }>();
 const { t } = useI18n();
 const notify = useNotify();
 const mode = ref<DnsMode>("hijack");
@@ -103,7 +103,7 @@ async function save() {
     });
     if (result.status === "saved") {
       notify.success(t("dns.saved"));
-      emit("close");
+      emit("close", true);
       return;
     }
     if (result.status === "partial") {

@@ -14,6 +14,7 @@ import type {
   Param,
   DnsRule,
   DnsRulesResponse,
+  NodeDnsOptionsResponse,
   Ports,
   Setting,
   SettingResponse,
@@ -161,6 +162,8 @@ export const putRoutingA = (body: {
   routingA: string;
   source?: RoutingASource;
 }) => call<unknown>({ url: "routingA", method: "put", data: body });
+export const getNodeDnsOptions = () =>
+  call<NodeDnsOptionsResponse>({ url: "nodeDnsOptions", method: "get" });
 export const getDnsRules = () =>
   call<DnsRulesResponse>({ url: "dnsRules", method: "get" });
 export const putDnsRules = (body: DnsRule[]) =>

@@ -32,6 +32,7 @@ import {
 import AboutDialog from "./settings/AboutDialog.vue";
 import SettingChoice from "./settings/SettingChoice.vue";
 import SettingRow from "./settings/SettingRow.vue";
+import NodeDnsChoice from "./settings/NodeDnsChoice.vue";
 
 defineOptions({ name: "SettingsView" });
 const { t } = useI18n();
@@ -40,7 +41,7 @@ const compact = computed(() => width.value < 600);
 const notify = useNotify();
 const { open } = useDialog();
 const store = useAppStore();
-const settings = useSettings();
+const settings = useSettings({ nodeDns: true });
 useUnsavedGuard(() => settings.dirty.value);
 const {
   form,
@@ -177,7 +178,10 @@ async function openGfwList() {
 }
 const openDomains = () => open(DomainsExcludedDialog, {}, { width: 520 });
 const openRoutingA = () => open(RoutingADialog, {}, { width: 960 });
-const openDns = () => open(DnsDialog, {}, { width: 640 });
+async function openDns() {
+  const changed = await open<boolean>(DnsDialog, {}, { width: 640 }).result;
+  if (changed) await settings.loadNodeDnsOptions();
+}
 const openPorts = () => open(PortsDialog, {}, { width: 520 });
 const openInbounds = () => open(CustomInboundDialog, {}, { width: 640 });
 const openAbout = () => open(AboutDialog, {}, { width: 840 });
@@ -439,6 +443,15 @@ defineExpose({ sync: () => settings.load() });
           :subtitle="t('dns.colServer')"
           action
           @click="openDns"
+        />
+        <NodeDnsChoice
+          v-model="form.nodeDns"
+          :options="settings.nodeDnsOptions.value"
+          :warnings="settings.nodeDnsWarnings.value"
+          :error="settings.nodeDnsError.value"
+          :loading="settings.nodeDnsLoading.value"
+          :loaded="settings.nodeDnsLoaded.value"
+          @refresh="settings.loadNodeDnsOptions()"
         />
         <SettingRow
           :title="t('common.about')"

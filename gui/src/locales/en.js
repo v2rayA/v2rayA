@@ -1,4 +1,21 @@
 export default {
+  nodeDns: {
+    title: "Node resolution DNS",
+    hint: "Used only while DNS hijacking is active, for node connections and TCP/HTTP latency tests. Categories show the source; node DNS queries always go directly.",
+    unavailable:
+      "The saved source is no longer available. Refresh and select another endpoint or auto.",
+    refresh: "Refresh DNS options",
+    loadFailed: "Could not load DNS options: {message}",
+    systemReadFailed:
+      "Could not read some system DNS sources. Other valid options are still available.",
+    categories: {
+      auto: "auto",
+      direct: "direct group",
+      localhost: "localhost DNS",
+      proxy: "proxy group",
+      fallback: "fallback DNS",
+    },
+  },
   onboarding: {
     title: "Quick tutorial",
     importTitle: "Import nodes",
@@ -737,6 +754,8 @@ export default {
   pinnedPeerCertSha256: "Pinned Certificate SHA256",
   verifyPeerCertByName: "Verify Peer Cert By Name",
   backend: {
+    NODE_DNS_INVALID:
+      "The node DNS source is no longer available. Refresh or choose another endpoint or auto before applying settings or DNS rules.",
     NO_SERVER_SELECTED: "No server is selected. Connect a server first.",
     CORE_START_FAILED: "Failed to start v2raya_core: {detail}",
     CORE_NOT_FOUND: "v2raya_core was not found.",

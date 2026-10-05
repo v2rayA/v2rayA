@@ -7,11 +7,12 @@ import { computed, reactive, ref } from "vue";
 import {
   getRemoteGFWListVersion,
   getSetting,
+  getNodeDnsOptions,
   getTouch,
   putSetting,
 } from "@/api";
 import { watchConnected } from "@/api/connect";
-import type { Setting } from "@/api/types";
+import type { Setting, NodeDnsOption } from "@/api/types";
 import { openLoading } from "@/composables/useLoading";
 import { useAppStore } from "@/stores/app";
 import { runningOf } from "@/views/nodes/model";
@@ -40,6 +41,7 @@ export const defaultForm = () => ({
   routeOnly: false,
   muxOn: "no",
   mux: 8,
+  nodeDns: "auto",
 });
 export type SettingForm = ReturnType<typeof defaultForm>;
 
@@ -55,7 +57,7 @@ export function toRequest(form: SettingForm): Setting {
   } as Setting;
 }
 
-export function useSettings() {
+export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
   const store = useAppStore();
   const form = reactive(defaultForm());
   const ready = ref(false);
@@ -66,6 +68,29 @@ export function useSettings() {
   const localGFWListVersion = ref("");
   const localGeositeVersion = ref("");
   const remoteGFWListVersion = ref("");
+  const nodeDnsOptions = ref<NodeDnsOption[]>([]);
+  const nodeDnsWarnings = ref<string[]>([]);
+  const nodeDnsError = ref<unknown>(null);
+  const nodeDnsLoading = ref(false);
+  const nodeDnsLoaded = ref(false);
+  let nodeDnsRequest = 0;
+
+  async function loadNodeDnsOptions(): Promise<void> {
+    const request = ++nodeDnsRequest;
+    nodeDnsLoading.value = true;
+    nodeDnsError.value = null;
+    try {
+      const result = await getNodeDnsOptions();
+      if (request !== nodeDnsRequest) return;
+      nodeDnsOptions.value = result.options;
+      nodeDnsWarnings.value = result.warnings ?? [];
+      nodeDnsLoaded.value = true;
+    } catch (err) {
+      if (request === nodeDnsRequest) nodeDnsError.value = err;
+    } finally {
+      if (request === nodeDnsRequest) nodeDnsLoading.value = false;
+    }
+  }
 
   async function load(): Promise<void> {
     const res = await getSetting();
@@ -78,6 +103,7 @@ export function useSettings() {
     if (store.lite) form.transparentType = "system_proxy";
     saved.value = JSON.stringify(form);
     ready.value = true;
+    if (nodeDns) await loadNodeDnsOptions();
   }
 
   async function loadRemoteVersion(): Promise<void> {
@@ -90,12 +116,15 @@ export function useSettings() {
   async function save(): Promise<void> {
     const loading = openLoading();
     const control = new AbortController();
+    const submitted = toRequest(form);
+    const submittedForm = JSON.stringify(form);
     try {
       await watchConnected(
-        putSetting(toRequest(form), { signal: control.signal }),
+        putSetting(submitted, { signal: control.signal }),
         () => control.abort(),
       );
-      saved.value = JSON.stringify(form);
+      saved.value = submittedForm;
+      if (nodeDns) await loadNodeDnsOptions();
     } catch (err) {
       // the backend restores the previous setting and keeps the core as it
       // was; the touch says which state that is, and the form goes back to
@@ -117,6 +146,12 @@ export function useSettings() {
 
   return {
     form,
+    nodeDnsOptions,
+    nodeDnsWarnings,
+    nodeDnsError,
+    nodeDnsLoading,
+    nodeDnsLoaded,
+    loadNodeDnsOptions,
     ready,
     dirty,
     localGFWListVersion,

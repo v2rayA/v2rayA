@@ -56,6 +56,13 @@ The rules say which upstream answers which domains, and whether the query goes o
 
 Saving writes the rules and the mode as two requests, and the dialog reports which of them the service accepted. A refusal after the rules were stored is named as such, so the retry sends only what is still missing.
 
+
+**Node resolution DNS**, next to DNS Settings, selects the global resolver for proxy node server names. It applies to new node connections and TCP/HTTP latency tests only while DNS hijacking is active. You can save it in advance; with DNS hijacking off, system resolution keeps its existing behavior. IP node addresses need no DNS query. Website names, subscription servers and DNS upstream bootstrap keep their existing resolvers.
+
+The dropdown lists IP-based UDP, TCP, DoT and DoH endpoints from DNS rules, the original system configuration, and the built-in fallback list. On Linux, system DNS comes from `/etc/resolv.conf` or its original backup while DNS hijacking is active. Categories show the source: **direct group**, **localhost DNS**, **proxy group**, **fallback DNS**. Every node DNS query goes directly, even for a proxy-group source. DoT/DoH certificates are verified. The options indicate valid current sources, not tested network reachability.
+
+**auto** chooses the first endpoint in the first nonempty group: direct → localhost → fallback, after duplicate sources are removed. Its label shows the selected IP; the tooltip shows the full URL. A failed query reports a DNS error without switching endpoints. Refresh reloads sources. Saving settings or DNS rules refreshes the list; a saved source that disappears stays in the form with a warning, and applying settings or rules that would invalidate it is refused. Choose another endpoint or auto first. DNS cache and prefetch still apply; changed results affect later connections, while existing connections keep their current IP.
+
 ## Sharing with the LAN
 
 **Port Sharing** makes the SOCKS, HTTP and custom inbounds listen on all interfaces instead of `127.0.0.1`, so other devices can use this machine as their proxy; the API port stays on loopback. To route their traffic through the transparent proxy as well, use `redirect`, `tproxy` or `tun`, turn on **IP Forward**, keep the interface they arrive on out of the excluded prefixes, and point their default gateway at this machine; the system proxy modes cannot do this.

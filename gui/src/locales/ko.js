@@ -1,4 +1,21 @@
 export default {
+  nodeDns: {
+    title: "노드 이름 확인 DNS",
+    hint: "DNS 가로채기가 활성화된 동안에만 노드 연결 및 TCP/HTTP 지연 시간 테스트에 사용됩니다. 분류는 출처를 나타내며 노드 DNS 질의는 항상 직접 전송됩니다.",
+    unavailable:
+      "저장된 출처를 더 이상 사용할 수 없습니다. 새로고침 후 다른 엔드포인트 또는 자동을 선택하세요.",
+    refresh: "DNS 옵션 새로고침",
+    loadFailed: "DNS 옵션을 불러오지 못했습니다: {message}",
+    systemReadFailed:
+      "일부 시스템 DNS 출처를 읽지 못했습니다. 다른 유효한 옵션은 계속 사용할 수 있습니다.",
+    categories: {
+      auto: "자동",
+      direct: "직접 연결 그룹",
+      localhost: "로컬 DNS",
+      proxy: "프록시 그룹",
+      fallback: "대체 DNS",
+    },
+  },
   onboarding: {
     title: "사용 안내",
     importTitle: "노드 가져오기",
@@ -728,6 +745,8 @@ export default {
   pinnedPeerCertSha256: "고정 피어 인증서 SHA256",
   verifyPeerCertByName: "이름으로 피어 인증서 확인",
   backend: {
+    NODE_DNS_INVALID:
+      "노드 DNS 출처를 더 이상 사용할 수 없습니다. 설정이나 DNS 규칙을 적용하기 전에 새로고침하거나 다른 엔드포인트 또는 자동을 선택하세요.",
     NO_SERVER_SELECTED: "선택된 서버 없음. 먼저 서버에 연결하세요.",
     CORE_START_FAILED: "v2raya_core 시작 실패: {detail}",
     CORE_NOT_FOUND: "v2raya_core를 찾을 수 없음.",

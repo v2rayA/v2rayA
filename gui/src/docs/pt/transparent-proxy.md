@@ -56,6 +56,13 @@ As regras dizem qual servidor upstream responde por quais domínios e se a consu
 
 Salvar grava as regras e o modo em duas requisições, e a caixa de diálogo informa qual delas o serviço aceitou. Uma recusa depois de as regras terem sido gravadas é dita como tal, para que a nova tentativa envie apenas o que falta.
 
+
+**DNS para resolução de nós**, ao lado das configurações de DNS, seleciona o resolvedor global dos nomes de servidores dos nós de proxy. Só se aplica a novas conexões e testes de latência TCP/HTTP enquanto a interceptação de DNS estiver ativa. Pode ser salvo antecipadamente; com a interceptação desligada, a resolução do sistema mantém o comportamento atual. Nós com endereço IP não precisam de consulta DNS. Nomes de sites, servidores de assinatura e bootstrap dos upstreams de DNS mantêm seus mecanismos existentes.
+
+A lista contém endpoints UDP, TCP, DoT e DoH com host IP das regras DNS, da configuração original do sistema e da lista alternativa interna. No Linux, o DNS do sistema é lido de `/etc/resolv.conf` ou do backup original durante o sequestro de DNS. As categorias indicam a origem: **grupo direto**, **DNS local**, **grupo de proxy**, **DNS alternativo**. Todas as consultas DNS dos nós são diretas, mesmo quando a origem é um grupo de proxy. Certificados DoT/DoH são verificados. As opções indicam origens válidas, não conectividade já testada.
+
+**automático** escolhe o primeiro endpoint do primeiro grupo não vazio, na ordem direto → local → alternativo, após remover origens duplicadas. O rótulo mostra o IP e a dica mostra a URL completa. Uma consulta que falha retorna erro DNS sem mudar de endpoint. Atualizar e salvar configurações ou regras DNS recarregam as origens. Uma origem salva que desaparece permanece no formulário com aviso; alterações que a invalidariam são recusadas. Escolha outro endpoint ou automático primeiro. Cache e pré-busca de DNS continuam ativos; resultados novos afetam conexões futuras, enquanto conexões existentes mantêm seu IP.
+
 ## Compartilhamento com a rede local
 
 **Compartilhamento de portas** faz as entradas SOCKS, HTTP e personalizadas escutarem em todas as interfaces em vez de `127.0.0.1`, para que outros dispositivos possam usar esta máquina como proxy; a porta da API permanece no loopback. Para rotear o tráfego desses dispositivos também pelo proxy transparente, use `redirect`, `tproxy` ou `tun`, ative **Encaminhamento de IP**, mantenha a interface pela qual o tráfego chega fora dos prefixos excluídos e direcione o gateway padrão dos dispositivos para esta máquina; os modos de proxy do sistema não podem fazer isso.

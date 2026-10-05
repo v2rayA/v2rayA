@@ -1,4 +1,21 @@
 export default {
+  nodeDns: {
+    title: "DNS para resolução de nós",
+    hint: "Usado apenas enquanto a interceptação de DNS estiver ativa, para conexões de nós e testes de latência TCP/HTTP. As categorias indicam a origem; as consultas DNS dos nós são sempre diretas.",
+    unavailable:
+      "A origem salva não está mais disponível. Atualize e selecione outro endpoint ou automático.",
+    refresh: "Atualizar opções de DNS",
+    loadFailed: "Não foi possível carregar as opções de DNS: {message}",
+    systemReadFailed:
+      "Não foi possível ler algumas origens de DNS do sistema. As outras opções válidas continuam disponíveis.",
+    categories: {
+      auto: "automático",
+      direct: "grupo direto",
+      localhost: "DNS local",
+      proxy: "grupo de proxy",
+      fallback: "DNS alternativo",
+    },
+  },
   onboarding: {
     title: "Tutorial rápido",
     importTitle: "Importar nós",
@@ -746,6 +763,8 @@ export default {
   pinnedPeerCertSha256: "SHA256 do certificado fixado",
   verifyPeerCertByName: "Verificar certificado do peer pelo nome",
   backend: {
+    NODE_DNS_INVALID:
+      "A origem do DNS de nós não está mais disponível. Atualize ou escolha outro endpoint ou automático antes de aplicar configurações ou regras de DNS.",
     NO_SERVER_SELECTED:
       "Nenhum servidor selecionado. Conecte um servidor primeiro.",
     CORE_START_FAILED: "Falha ao iniciar o v2raya_core: {detail}",
