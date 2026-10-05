@@ -17,6 +17,7 @@ import (
 
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
@@ -372,7 +373,7 @@ func applySelection(serverInfos []serverInfo, selectedOf func(outbound string) s
 	return kept
 }
 
-func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template, err error) {
+func NewTemplateFromConnectedServers(setting *configure.Setting, nodeDNS ...*resolv.IPDNSEndpoint) (tmpl *Template, err error) {
 	//read the database and convert to the v2ray-core template
 	serverObjs, serverInfos, err := getConnectedServerObjs()
 	if err != nil {
@@ -390,15 +391,15 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 			serverInfos[i].PluginPort = port
 		}
 	}
-	tmpl, err = NewTemplate(serverInfos, setting)
+	tmpl, err = NewTemplate(serverInfos, setting, nodeDNS...)
 	if err != nil {
 		return nil, err
 	}
 	return tmpl, nil
 }
 
-func UpdateV2RayConfig() (err error) {
-	tmpl, err := NewTemplateFromConnectedServers(nil)
+func UpdateV2RayConfig(nodeDNS ...*resolv.IPDNSEndpoint) (err error) {
+	tmpl, err := NewTemplateFromConnectedServers(nil, nodeDNS...)
 	if err != nil {
 		if errors.Is(err, NoConnectedServerErr) {
 			//no servers are selected, which means to stop the v2ray-core

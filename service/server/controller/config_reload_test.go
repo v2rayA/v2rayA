@@ -173,3 +173,80 @@ func TestPutOutboundRestoresAfterReloadFailure(t *testing.T) {
 		t.Fatalf("outbound setting was not restored: %+v, want %+v", got, previous)
 	}
 }
+
+func TestNodeDNSRevalidatesSourcesBeforeMutations(t *testing.T) {
+	oldGFW, oldSubscription := conf.TickerUpdateGFWList, conf.TickerUpdateSubscription
+	conf.TickerUpdateGFWList = time.NewTicker(time.Hour)
+	conf.TickerUpdateSubscription = time.NewTicker(time.Hour)
+	t.Cleanup(func() {
+		conf.TickerUpdateGFWList.Stop()
+		conf.TickerUpdateSubscription.Stop()
+		conf.TickerUpdateGFWList, conf.TickerUpdateSubscription = oldGFW, oldSubscription
+	})
+	previousSetting, previousRules := configure.GetSettingNotNil(), configure.GetDnsRulesNotNil()
+	t.Cleanup(func() { _ = configure.SetSetting(previousSetting); _ = configure.SetDnsRules(previousRules) })
+	setting := configure.NewSetting()
+	setting.NodeDns = "tls://192.0.2.53:853"
+	if err := configure.SetSetting(setting); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.SetDnsRules([]configure.DnsRule{{Server: "tls://192.0.2.53", Outbound: "custom"}}); err != nil {
+		t.Fatal(err)
+	}
+	options := v2ray.CollectNodeDNSOptions(setting, configure.GetDnsRulesNotNil())
+	if _, err := options.Select(setting.NodeDns); err != nil {
+		t.Fatal(err)
+	}
+	request := func(body, path string, handler gin.HandlerFunc) string {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		ctx.Request = httptest.NewRequest(http.MethodPut, path, strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		handler(ctx)
+		return recorder.Body.String()
+	}
+	// A DNS rule edit may not remove the currently selected source.
+	response := request(`[{"server":"8.8.8.8","outbound":"direct"}]`, "/dnsRules", PutDnsRules)
+	if !strings.Contains(response, "NODE_DNS_INVALID") {
+		t.Fatalf("stale rule change accepted: %s", response)
+	}
+	if configure.GetDnsRulesNotNil()[0].Server != "tls://192.0.2.53" {
+		t.Fatal("rejected rules persisted")
+	}
+	// The candidate list can become obsolete before a settings submission.
+	if err := configure.SetDnsRules([]configure.DnsRule{{Server: "8.8.8.8", Outbound: "direct"}}); err != nil {
+		t.Fatal(err)
+	}
+	response = request(`{"nodeDns":"tls://192.0.2.53:853"}`, "/setting", PutSetting)
+	if !strings.Contains(response, "NODE_DNS_INVALID") {
+		t.Fatalf("stale settings accepted: %s", response)
+	}
+	response = request(`{"nodeDns":"auto"}`, "/setting", PutSetting)
+	if strings.Contains(response, "NODE_DNS_INVALID") || configure.GetSettingNotNil().NodeDns != "auto" {
+		t.Fatalf("auto not saved: %s", response)
+	}
+	// Old clients preserve an explicit choice, and input is canonicalized.
+	response = request(`{"nodeDns":"tcp://8.8.8.8"}`, "/setting", PutSetting)
+	if !strings.Contains(response, "NODE_DNS_INVALID") {
+		t.Fatal("wrong protocol accepted")
+	}
+	response = request(`{"nodeDns":"8.8.8.8"}`, "/setting", PutSetting)
+	if configure.GetSettingNotNil().NodeDns != "udp://8.8.8.8:53" {
+		t.Fatalf("not normalized: %s", response)
+	}
+	response = request(`{"logLevel":"debug"}`, "/setting", PutSetting)
+	if configure.GetSettingNotNil().NodeDns != "udp://8.8.8.8:53" {
+		t.Fatalf("old client overwrote selection: %s", response)
+	}
+	// Proposed listener settings are checked before storing anything.
+	response = request(`{"dnsListenAddr":"8.8.8.8:53"}`, "/setting", PutSetting)
+	if !strings.Contains(response, "NODE_DNS_INVALID") || configure.GetSettingNotNil().DnsListenAddr == "8.8.8.8:53" {
+		t.Fatalf("self-referencing selection accepted: %s", response)
+	}
+	// Another source for the same endpoint permits removing the first rule.
+	response = request(`[{"server":"8.8.8.8","outbound":"proxy"}]`, "/dnsRules", PutDnsRules)
+	if configure.GetDnsRulesNotNil()[0].Outbound != "proxy" {
+		t.Fatalf("surviving source rejected: %s", response)
+	}
+}

@@ -48,7 +48,7 @@ func TestMarkedDialerBindsEgressInterface(t *testing.T) {
 	}
 	lo := loopbackInterface(t)
 	SetEgressInterface(lo.Name)
-	if idx := boundIf(); idx != lo.Index {
-		t.Fatalf("bound to %d, want %d", idx, lo.Index)
+	if idx := boundIf(); idx != 0 {
+		t.Fatalf("local DNS socket bound to physical interface %d", idx)
 	}
 }

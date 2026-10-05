@@ -48,3 +48,25 @@ func isIPv6Address(network, address string) bool {
 	}
 	return strings.HasSuffix(network, "6")
 }
+
+func isLocalDNSAddress(address string) bool {
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	if ip.IsLoopback() {
+		return true
+	}
+	addrs, _ := net.InterfaceAddrs()
+	for _, addr := range addrs {
+		local, _, _ := net.ParseCIDR(addr.String())
+		if local.Equal(ip) {
+			return true
+		}
+	}
+	return false
+}

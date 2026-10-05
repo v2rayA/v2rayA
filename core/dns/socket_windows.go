@@ -28,6 +28,9 @@ func setSocketMark(fd uintptr) error {
 // IP_UNICAST_IF wants the index in network byte order; IPV6_UNICAST_IF
 // wants host order.
 func markFd(network, address string, c syscall.RawConn) error {
+	if isLocalDNSAddress(address) {
+		return nil
+	}
 	idx, ok := egressInterfaceIndex()
 	if !ok {
 		return nil

@@ -9,6 +9,7 @@ import (
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/ipforward"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
@@ -26,11 +27,21 @@ func GetSetting() *configure.Setting {
 }
 
 func UpdateSetting(setting *configure.Setting) (err error) {
+	if setting.NodeDns == "" {
+		setting.NodeDns = "auto"
+	}
 	if setting.LogLevel == "" {
 		setting.LogLevel = conf.GetEnvironmentConfig().LogLevel
 	}
 	if (setting.Transparent == configure.TransparentGfwlist || setting.RulePortMode == configure.GfwlistMode) && !asset.DoesV2rayAssetExist("LoyalsoldierSite.dat") {
 		return asset.GFWListMissingError()
+	}
+	endpoint, err := v2ray.SelectNodeDNS(setting, configure.GetDnsRulesNotNil())
+	if err != nil {
+		return err
+	}
+	if setting.NodeDns != "auto" {
+		setting.NodeDns = endpoint.URL
 	}
 	previousIpForward := ipforward.IsIpForwardOn()
 	ipForwardChanged := false
@@ -61,7 +72,7 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 		}
 		log.SetLogLevel(setting.LogLevel)
 		return nil
-	})
+	}, endpoint)
 	if err != nil {
 		var failure *ApplyCoreConfigError
 		if !errors.As(err, &failure) {

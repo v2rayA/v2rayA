@@ -68,12 +68,18 @@ func PutDnsRules(ctx *gin.Context) {
 	// 执行迁移以确保新字段有默认值
 	migrated := configure.MigrateDnsRules(rules)
 
-	err := service.ApplyCoreConfig(func() func() error {
+	endpoint, err := v2ray.SelectNodeDNS(configure.GetSettingNotNil(), migrated)
+	if err != nil {
+		common.ResponseError(ctx, logError(err))
+		return
+	}
+
+	err = service.ApplyCoreConfig(func() func() error {
 		previous := configure.GetDnsRulesNotNil()
 		return func() error { return configure.SetDnsRules(previous) }
 	}, func() error {
 		return configure.SetDnsRules(migrated)
-	})
+	}, endpoint)
 	if err != nil {
 		var failure *service.ApplyCoreConfigError
 		if errors.As(err, &failure) {
@@ -109,4 +115,8 @@ func GetDnsRules(ctx *gin.Context) {
 		Listener:     listener,
 		Rules:        migrated,
 	})
+}
+
+func GetNodeDNSOptions(ctx *gin.Context) {
+	common.ResponseSuccess(ctx, v2ray.CollectNodeDNSOptions(service.GetSetting(), configure.GetDnsRulesNotNil()))
 }

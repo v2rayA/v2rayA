@@ -243,7 +243,11 @@ func (w *Which) Ping(loc *Locator, timeout time.Duration) (err error) {
 // PingWithDialer lets callers select how both DNS and the TCP connection
 // leave the host. The dashboard uses this to keep transparent interception
 // installed while its own probe sockets bypass it.
-func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.Dialer) (err error) {
+func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.Dialer) error {
+	return w.PingWithLookup(loc, timeout, dialer, func(host string) ([]string, error) { return resolv.LookupHostWithDialer(host, dialer) })
+}
+
+func (w *Which) PingWithLookup(loc *Locator, timeout time.Duration, dialer *net.Dialer, lookup func(string) ([]string, error)) (err error) {
 	if w.TYPE == SubscriptionType {
 		return fmt.Errorf("you cannot ping a subscription")
 	}
@@ -255,7 +259,7 @@ func (w *Which) PingWithDialer(loc *Locator, timeout time.Duration, dialer *net.
 	host := tsr.ServerObj.GetHostname()
 	if net.ParseIP(host) == nil {
 		var hosts []string
-		hosts, err = resolv.LookupHostWithDialer(host, dialer)
+		hosts, err = lookup(host)
 		if err != nil || len(hosts) <= 0 {
 			if err != nil {
 				w.Latency = err.Error()

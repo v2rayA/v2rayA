@@ -60,3 +60,16 @@ func TestIsIPv6Address(t *testing.T) {
 		}
 	}
 }
+
+func TestLocalDNSAddress(t *testing.T) {
+	for _, tc := range []struct {
+		address string
+		want    bool
+	}{
+		{"127.0.0.53:53", true}, {"[::1]:853", true}, {"192.0.2.1:53", false}, {"dns.example:853", false},
+	} {
+		if got := isLocalDNSAddress(tc.address); got != tc.want {
+			t.Errorf("%s: %v", tc.address, got)
+		}
+	}
+}

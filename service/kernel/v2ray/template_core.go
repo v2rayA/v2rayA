@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/coreObj"
@@ -32,7 +33,8 @@ type Template struct {
 	Stats            *struct{}                 `json:"stats,omitempty"`
 	Policy           *coreObj.Policy           `json:"policy,omitempty"`
 	// DnsModuleConfig 是新 DNS 模块的配置，由 v2raya-core 启动时解析并启动 DNS 监听器。
-	DnsModuleConfig json.RawMessage `json:"dns_module,omitempty"`
+	DnsModuleConfig json.RawMessage       `json:"dns_module,omitempty"`
+	NodeDNS         *resolv.IPDNSEndpoint `json:"-"`
 
 	Variant       where.Variant          `json:"-"`
 	CoreVersion   string                 `json:"-"`
@@ -50,7 +52,7 @@ func (t *Template) Close() error {
 	return nil
 }
 
-func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Template, err error) {
+func NewTemplate(serverInfos []serverInfo, setting *configure.Setting, nodeDNS ...*resolv.IPDNSEndpoint) (t *Template, err error) {
 	serverData := NewServerData(serverInfos)
 	if setting != nil {
 		setting.FillEmpty()
@@ -68,6 +70,9 @@ func NewTemplate(serverInfos []serverInfo, setting *configure.Setting) (t *Templ
 	tmplJson.Variant, tmplJson.CoreVersion, _ = where.GetV2rayServiceVersion()
 	t = &tmplJson
 	t.Setting = setting
+	if len(nodeDNS) > 0 {
+		t.NodeDNS = nodeDNS[0]
+	}
 	// log
 	logLevel := setting.LogLevel
 	if logLevel == "" {

@@ -55,7 +55,10 @@ func dnsServiceEnabled(setting *configure.Setting) bool {
 //
 // 不依赖 xray 的 dns-in/dns-out，DNS 模块直接查询上游并返回结果。
 func ShouldLocalDnsListen() bool {
-	setting := configure.GetSettingNotNil()
+	return shouldLocalDnsListen(configure.GetSettingNotNil())
+}
+
+func shouldLocalDnsListen(setting *configure.Setting) bool {
 	if setting.Transparent == configure.TransparentClose {
 		return false
 	}

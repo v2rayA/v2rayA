@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,6 +35,10 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	// TCP and DNS sockets bypass interception: marked on Linux, bound to
 	// the physical egress interface for macOS and Windows TUN.
 	dialer := httpClient.DirectDialer(timeout, v2ray.IsTransparentOn(configure.GetSettingNotNil()))
+	lookup, _, err := nodeLookup(dialer)
+	if err != nil {
+		return nil, err
+	}
 	// Multi-threaded asynchronous ping
 	loc := configure.NewLocator()
 	wg := new(sync.WaitGroup)
@@ -43,7 +48,7 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 		}
 		wg.Add(1)
 		go func(i int) {
-			_ = which[i].PingWithDialer(loc, timeout, dialer)
+			_ = which[i].PingWithLookup(loc, timeout, dialer, lookup)
 			wg.Done()
 		}(i)
 	}
@@ -56,7 +61,8 @@ func Ping(which []*configure.Which, timeout time.Duration) (_ []*configure.Which
 	return which, nil
 }
 
-func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
+func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj, lookup func(string) ([]string, error)) map[string]error {
+	failures := make(map[string]error)
 	// entries whose server could not be located are left nil by the caller
 	located := vms[:0:0]
 	for _, v := range vms {
@@ -75,8 +81,10 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 	var mu sync.Mutex
 	var limit = make(chan struct{}, concurrency)
 	var wg = sync.WaitGroup{}
+	seen := make(map[string]bool)
 	for _, v := range vms {
-		if net.ParseIP(v.GetHostname()) == nil {
+		if net.ParseIP(v.GetHostname()) == nil && !seen[v.GetHostname()] {
+			seen[v.GetHostname()] = true
 			wg.Add(1)
 			go func(addr string) {
 				limit <- struct{}{}
@@ -84,13 +92,22 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 					wg.Done()
 					<-limit
 				}()
-				ips, err := resolv.LookupHost(addr)
+				mu.Lock()
+				delete(tmpl.DNS.Hosts, addr)
+				mu.Unlock()
+				ips, err := lookup(addr)
 				if err != nil {
+					mu.Lock()
+					failures[addr] = err
+					mu.Unlock()
 					return
 				}
 				if len(ips) > 0 {
 					ips = v2ray.FilterIPs(ips)
 					if len(ips) == 0 {
+						mu.Lock()
+						failures[addr] = fmt.Errorf("node DNS %s: no usable IP addresses", addr)
+						mu.Unlock()
 						return
 					}
 					mu.Lock()
@@ -101,6 +118,7 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 		}
 	}
 	wg.Wait()
+	return failures
 }
 
 func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
@@ -119,6 +137,14 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	}
 	if len(which) == 0 {
 		return which, nil
+	}
+	dialer := httpClient.DirectDialer(timeout, v2ray.IsTransparentOn(configure.GetSettingNotNil()))
+	lookup, endpoint, lookupErr := nodeLookup(dialer)
+	if lookupErr != nil {
+		return nil, lookupErr
+	}
+	if endpoint == nil {
+		lookup = resolv.LookupHost
 	}
 	v2rayRunning := v2ray.ProcessManager.Running()
 	wg := new(sync.WaitGroup)
@@ -140,7 +166,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		err  error
 	)
 	if v2rayRunning {
-		tmpl, err = v2ray.NewTemplateFromConnectedServers(nil)
+		tmpl, err = v2ray.NewTemplateFromConnectedServers(nil, endpoint)
 		if err != nil {
 			if !errors.Is(err, v2ray.NoConnectedServerErr) {
 				log.Warn("NewTemplateFromConnectedServers: %v", err)
@@ -237,7 +263,22 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	toClose = nil
 	time.Sleep(30 * time.Millisecond)
 	tmpl.Routing.DomainStrategy = "AsIs"
-	addHosts(tmpl, vms)
+	if endpoint != nil {
+		tmpl.NodeDNS = endpoint
+		if err := tmpl.AddNodeDNSDomains(vms); err != nil {
+			return nil, err
+		}
+	}
+	failures := addHosts(tmpl, vms, lookup)
+	if endpoint != nil {
+		for i, v := range vms {
+			if v != nil {
+				if err := failures[v.GetHostname()]; err != nil {
+					which[i].Latency = err.Error()
+				}
+			}
+		}
+	}
 	tmpl.SetOutboundSockopt()
 	v2ray.ProcessManager.SetLatencyTesting(true)
 	handedOver = true
@@ -367,4 +408,22 @@ func isSupportedObj(obj serverObj.ServerObj) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+func nodeLookup(dialer *net.Dialer) (func(string) ([]string, error), *resolv.IPDNSEndpoint, error) {
+	if !v2ray.DNSHijackActive() {
+		return func(host string) ([]string, error) { return resolv.LookupHostWithDialer(host, dialer) }, nil, nil
+	}
+	setting := configure.GetSettingNotNil()
+	endpoint, err := v2ray.SelectNodeDNS(setting, configure.GetDnsRulesNotNil())
+	if err != nil {
+		return nil, nil, err
+	}
+	dnsDialer := dialer
+	// A physical-interface binding cannot deliver to a resolver on this host.
+	// Linux keeps the mark even for local sockets to bypass OUTPUT interception.
+	if runtime.GOOS != "linux" && resolv.IsLocalIP(endpoint.IP) {
+		dnsDialer = &net.Dialer{Timeout: dialer.Timeout}
+	}
+	return func(host string) ([]string, error) { return resolv.LookupNode(host, endpoint, dnsDialer) }, endpoint, nil
 }

@@ -19,6 +19,9 @@ func setSocketMark(fd uintptr) error {
 
 // markFd binds the socket to the configured egress interface, if any.
 func markFd(network, address string, c syscall.RawConn) error {
+	if isLocalDNSAddress(address) {
+		return nil
+	}
 	idx, ok := egressInterfaceIndex()
 	if !ok {
 		return nil
