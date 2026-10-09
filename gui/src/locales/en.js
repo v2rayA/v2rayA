@@ -248,13 +248,13 @@ export default {
       transparentProxy:
         "If transparent proxy on, no extra configure needed and all TCP traffic will pass through the v2rayA. Providing proxy service to other computers and docker as the gateway should make option 'Share in LAN' on.",
       transparentType:
-        "★tproxy: supports UDP, but not docker. ★redirect: friendly for docker, but does not support UDP and needs local port 53 for DNS anti-pollution. ★tun: the core opens a TUN device and takes the default route; works on Linux, Windows and macOS, supports UDP, excludes v2rayA and the core by itself and lets you exclude other processes by name. On Windows and macOS, applications that query a LAN resolver directly still bypass it.",
+        "★tproxy: supports UDP, but not docker. ★redirect: friendly for docker, but does not support UDP; when DNS interception is on, it also uses local port 53 for DNS anti-pollution. ★tun: the core opens a TUN device and takes the default route; works on Linux, Windows and macOS, supports UDP, excludes v2rayA and the core by itself and lets you exclude other processes by name. On Windows and macOS, applications that query a LAN resolver directly still bypass it.",
       tproxyExcludedInterfaces:
         "Set the network interface prefixes that should not pass through the transparent proxy. Wildcard * is supported (automatically converted to + in iptables mode). For example: docker*, veth*, wg*, ppp*, br-*. Use commas to separate multiple prefixes.",
       tunAutoRoute:
-        "When enabled, v2rayA installs the routes and DNS settings itself. When disabled, you must provide setup/teardown scripts that configure routing yourself.",
+        "When enabled, v2rayA installs the routes itself and changes the system DNS settings when DNS interception is on. When disabled, you must provide setup/teardown scripts that configure routing yourself.",
       tunExcludeProcesses:
-        "Process names whose traffic bypasses the proxy, one per line, e.g. chrome.exe or firefox. v2rayA and the core are always excluded. A process is identified by the executable name of the socket owner; a socket that closed before the lookup, or a port reused by another process, cannot be attributed. Their DNS queries are still answered by the core's DNS module.",
+        "Process names whose traffic bypasses the proxy, one per line, e.g. chrome.exe or firefox. v2rayA and the core are always excluded. A process is identified by the executable name of the socket owner; a socket that closed before the lookup, or a port reused by another process, cannot be attributed. When DNS interception is on, their queries are still answered by the core's DNS module.",
       pacMode: `Here you can set the splitting traffic rule of the rule port. By default, "Rule of Splitting Traffic" port is 20172 and HTTP protocol.`,
       tcpFastOpen:
         "Simplify TCP handshake process to speed up connection establishment. Risk of emphasizing characteristics of packets exists. It may cause failed to connect if your system does not support it.",
@@ -290,6 +290,22 @@ export default {
   },
   dns: {
     title: "DNS Settings",
+    mode: "DNS Mode",
+    modeOff: "Off",
+    modeService: "Service Only",
+    modeHijack: "Service and Interception",
+    modeOffHelp:
+      "No DNS module runs and no query is redirected to one. The rules below are kept and apply again once the mode is on.",
+    modeServiceHelp:
+      "The DNS module runs on its own address, but the system resolvers, the firewall DNS rules and the TUN relay are left alone. Use it when another program already points DNS at v2rayA.",
+    modeHijackHelp:
+      "The DNS module runs and v2rayA points the system's queries at it: the resolver is changed, port 53 is diverted and the rules below apply. Encrypted DNS is not intercepted.",
+    offKeepsRules:
+      "{n} saved rules are kept and apply again when the mode is on.",
+    saved: "DNS settings saved and applied",
+    saveFailed: "Failed to save DNS settings: {message}",
+    modeSaveFailed:
+      "The DNS rules were saved, but the DNS mode was not: {message}",
     colServer: "DNS Server",
     colDomains: "Domain List",
     colOutbound: "Outbound",
@@ -301,7 +317,6 @@ export default {
     rule: "Rule {n}",
     resetDefault: "Reset to Defaults",
     errNoRules: "At least one rule needs a DNS server",
-    saveFailed: "Failed to save DNS rules: {message}",
   },
   configureServer: {
     required: "Required",

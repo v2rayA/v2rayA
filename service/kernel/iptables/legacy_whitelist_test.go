@@ -262,7 +262,7 @@ func TestLegacySetupPlacesSetRulesAtWhitelistPosition(t *testing.T) {
 	}{
 		{
 			name:    "tproxy",
-			setter:  (&legacyTproxy{}).GetSetupCommands(),
+			setter:  (&legacyTproxy{}).GetSetupCommands(true),
 			table:   "mangle",
 			before4: "iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN",
 			after4:  "iptables -w 2 -t mangle -A TP_RULE -j TP_MARK",
@@ -271,7 +271,7 @@ func TestLegacySetupPlacesSetRulesAtWhitelistPosition(t *testing.T) {
 		},
 		{
 			name:    "redirect",
-			setter:  (&legacyRedirect{}).GetSetupCommands(),
+			setter:  (&legacyRedirect{}).GetSetupCommands(true),
 			table:   "nat",
 			before4: "iptables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN",
 			after4:  "iptables -w 2 -t nat -A TP_RULE -p tcp -j REDIRECT --to-ports 52345",

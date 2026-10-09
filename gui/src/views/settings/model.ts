@@ -1,6 +1,8 @@
 // The settings page's state and its two requests, without the view: the
 // form as GET /setting returns it, saved with PUT /setting in the shape
-// the old dialog sent (integers where it parsed them).
+// the old dialog sent (integers where it parsed them). The DNS mode is not
+// one of its fields: the DNS settings dialog owns that decision, and a copy
+// held here would put a stale mode back the next time anything is saved.
 import { computed, reactive, ref } from "vue";
 import {
   getRemoteGFWListVersion,

@@ -58,12 +58,25 @@ func MigrateDnsRules(oldRules []DnsRule) []DnsRule {
 
 // MigrateSetting 将旧设置配置迁移到新格式，为缺失的新 DNS 配置字段填充默认值。
 // 该函数只填充零值字段，不会覆盖用户已显式设置的字段。
-//
-// 布尔字段的特殊处理：
-//   - FillEmpty() 跳过布尔字段，因此旧配置中缺失的布尔字段会保持 false
-//   - 本函数使用 gjson 检测原始 JSON 中是否存在该字段
-//   - 仅当字段不存在于原始 JSON 时才设置默认值 true
 func MigrateSetting(setting *Setting) {
+	// DNS interception keeps the historical behaviour when the field is absent.
+	if setting.DnsHijack == "" {
+		setting.DnsHijack = Yes
+	}
+	// The mode supersedes the opt-out, so an absent one is written out from
+	// it once; after this the stored mode is what every reader uses.
+	if setting.DnsMode == "" {
+		setting.DnsMode = ResolveDnsMode(setting)
+	}
+	// The opt-out then mirrors the mode, so the two cannot disagree: a client
+	// that only knows dnsHijack must read the decision that is in force,
+	// rather than one the runtime ignores.
+	if setting.DnsMode == DnsModeHijack {
+		setting.DnsHijack = Yes
+	} else {
+		setting.DnsHijack = No
+	}
+
 	// 监听地址默认值
 	if setting.DnsListenAddr == "" {
 		setting.DnsListenAddr = "0.0.0.0:52353"

@@ -245,13 +245,13 @@ export default {
       transparentProxy:
         "투명 프록시를 켜면 추가 설정 없이 모든 TCP 트래픽이 v2rayA를 통과합니다. 다른 컴퓨터와 Docker에 게이트웨이로 프록시 서비스를 제공하려면 'LAN에서 공유' 옵션을 켜세요.",
       transparentType:
-        "★tproxy: UDP를 지원하지만 Docker는 지원하지 않습니다. ★redirect: Docker에 적합하지만 UDP를 지원하지 않으며 DNS 오염 방지를 위해 로컬 포트 53을 사용합니다. ★tun: 코어가 TUN 장치를 열고 기본 라우트를 가져갑니다. Linux, Windows, macOS와 UDP를 지원하며 v2rayA와 코어를 자동으로 제외하고 다른 프로세스를 이름으로 제외할 수 있습니다. Windows와 macOS에서는 LAN DNS에 직접 질의하는 애플리케이션이 여전히 우회합니다.",
+        "★tproxy: UDP를 지원하지만 Docker는 지원하지 않습니다. ★redirect: Docker에 적합하지만 UDP를 지원하지 않습니다. DNS 가로채기가 켜져 있을 때 DNS 오염 방지를 위해 로컬 포트 53을 사용합니다. ★tun: 코어가 TUN 장치를 열고 기본 라우트를 가져갑니다. Linux, Windows, macOS와 UDP를 지원하며 v2rayA와 코어를 자동으로 제외하고 다른 프로세스를 이름으로 제외할 수 있습니다. Windows와 macOS에서는 LAN DNS에 직접 질의하는 애플리케이션이 여전히 우회합니다.",
       tproxyExcludedInterfaces:
         "투명 프록시를 거치지 않을 네트워크 인터페이스 접두사를 설정합니다. 와일드카드 *를 지원합니다(iptables 모드에서는 자동으로 +로 변환). 예: docker*, veth*, wg*, ppp*, br-*. 여러 접두사는 쉼표로 구분하세요.",
       tunAutoRoute:
-        "활성화하면 v2rayA가 라우트와 DNS 설정을 직접 설치합니다. 비활성화하면 라우팅을 직접 구성할 시작/종료 스크립트를 제공해야 합니다.",
+        "활성화하면 v2rayA가 라우트를 직접 설치하고 DNS 가로채기가 켜져 있을 때 시스템 DNS 설정을 변경합니다. 비활성화하면 라우팅을 직접 구성할 시작/종료 스크립트를 제공해야 합니다.",
       tunExcludeProcesses:
-        "트래픽이 프록시를 우회할 프로세스 이름을 한 줄에 하나씩 입력합니다. 예: chrome.exe 또는 firefox. v2rayA와 코어는 항상 제외됩니다. 소켓 소유자의 실행 파일 이름으로 식별하므로, 조회 전에 닫힌 소켓이나 다른 프로세스가 재사용한 포트는 식별할 수 없습니다. 제외된 프로세스의 DNS 질의는 여전히 코어의 DNS 모듈이 응답합니다.",
+        "트래픽이 프록시를 우회할 프로세스 이름을 한 줄에 하나씩 입력합니다. 예: chrome.exe 또는 firefox. v2rayA와 코어는 항상 제외됩니다. 소켓 소유자의 실행 파일 이름으로 식별하므로, 조회 전에 닫힌 소켓이나 다른 프로세스가 재사용한 포트는 식별할 수 없습니다. DNS 가로채기가 켜져 있으면 제외된 프로세스의 질의는 여전히 코어의 DNS 모듈이 응답합니다.",
       pacMode: `여기에서 규칙 포트의 트래픽 분할 규칙을 설정할 수 있습니다. 기본적으로 "트래픽 분할 규칙" 포트는 20172이며 HTTP 프로토콜입니다.`,
       tcpFastOpen:
         "TCP 핸드셰이크를 단순화하여 연결 수립을 빠르게 합니다. 패킷 특성이 강조될 위험이 있으며 시스템이 지원하지 않으면 연결에 실패할 수 있습니다.",
@@ -287,6 +287,21 @@ export default {
   },
   dns: {
     title: "DNS 설정",
+    mode: "DNS 모드",
+    modeOff: "끄기",
+    modeService: "서비스만",
+    modeHijack: "서비스 및 가로채기",
+    modeOffHelp:
+      "DNS 모듈을 실행하지 않고 어떤 질의도 그것으로 보내지 않습니다. 아래 규칙은 그대로 보관되며 모드를 켜면 다시 적용됩니다.",
+    modeServiceHelp:
+      "DNS 모듈이 자체 주소에서 실행되지만 시스템 리졸버, 방화벽의 DNS 규칙, TUN 중계는 건드리지 않습니다. 다른 프로그램이 이미 DNS를 v2rayA로 보내고 있을 때 사용하세요.",
+    modeHijackHelp:
+      "DNS 모듈이 실행되고 v2rayA가 시스템 질의를 그것으로 보냅니다. 리졸버가 바뀌고 53번 포트가 전달되며 아래 규칙이 적용됩니다. 암호화된 DNS는 가로채지 않습니다.",
+    offKeepsRules: "저장된 규칙 {n}개는 보관되며 모드를 켜면 다시 적용됩니다.",
+    saved: "DNS 설정이 저장되고 적용되었습니다",
+    saveFailed: "DNS 설정 저장 실패: {message}",
+    modeSaveFailed:
+      "DNS 규칙은 저장되었지만 DNS 모드는 저장하지 못했습니다: {message}",
     colServer: "DNS 서버",
     colDomains: "도메인 목록",
     colOutbound: "아웃바운드",
@@ -297,7 +312,6 @@ export default {
     rule: "규칙 {n}",
     resetDefault: "기본값으로 재설정",
     errNoRules: "DNS 서버가 있는 규칙이 하나 이상 필요합니다",
-    saveFailed: "DNS 규칙 저장 실패: {message}",
   },
   configureServer: {
     required: "필수",

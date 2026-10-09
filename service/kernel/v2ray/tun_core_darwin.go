@@ -161,7 +161,7 @@ func tunFindDevice() (string, error) {
 	}
 }
 
-func tunRoutesUp(_ *Template, nodeIPs []string) error {
+func tunRoutesUp(tmpl *Template, nodeIPs []string) error {
 	dev, err := tunFindDevice()
 	if err != nil {
 		return err
@@ -250,34 +250,37 @@ func tunRoutesUp(_ *Template, nodeIPs []string) error {
 	// queries to the service's interface (en0), and a reply that arrives
 	// through the utun is dropped for such a socket, so every lookup waits
 	// out a 30-second timeout. Loopback delivery has no such scope. The
-	// previous resolvers are kept for stop.
-	out, err := run("networksetup", "-listallnetworkservices")
-	if err != nil {
-		tunRoutesDown()
-		return err
-	}
-	tunState.dns = make(map[string][]string)
-	for _, svc := range strings.Split(out, "\n")[1:] {
-		svc = strings.TrimSpace(svc)
-		if svc == "" || strings.HasPrefix(svc, "*") {
-			continue
+	// previous resolvers are kept for stop. With DNS interception off the
+	// system's own resolvers stay in place.
+	if dnsInterceptionEnabled(tmpl.Setting) {
+		out, err := run("networksetup", "-listallnetworkservices")
+		if err != nil {
+			tunRoutesDown()
+			return err
 		}
-		prev, _ := run("networksetup", "-getdnsservers", svc)
-		var before []string
-		for _, l := range strings.Split(prev, "\n") {
-			if l = strings.TrimSpace(l); l != "" && !strings.Contains(l, " ") {
-				before = append(before, l)
+		tunState.dns = make(map[string][]string)
+		for _, svc := range strings.Split(out, "\n")[1:] {
+			svc = strings.TrimSpace(svc)
+			if svc == "" || strings.HasPrefix(svc, "*") {
+				continue
 			}
+			prev, _ := run("networksetup", "-getdnsservers", svc)
+			var before []string
+			for _, l := range strings.Split(prev, "\n") {
+				if l = strings.TrimSpace(l); l != "" && !strings.Contains(l, " ") {
+					before = append(before, l)
+				}
+			}
+			if _, err := run("networksetup", "-setdnsservers", svc, "127.0.0.1"); err != nil {
+				log.Warn("tun: %v", err)
+				continue
+			}
+			tunState.dns[svc] = before
 		}
-		if _, err := run("networksetup", "-setdnsservers", svc, "127.0.0.1"); err != nil {
-			log.Warn("tun: %v", err)
-			continue
-		}
-		tunState.dns[svc] = before
-	}
-	if data, err := json.Marshal(tunState.dns); err == nil {
-		if err := os.WriteFile(tunDNSBackupPath(), data, 0o600); err != nil {
-			log.Warn("tun: cannot save the DNS backup: %v", err)
+		if data, err := json.Marshal(tunState.dns); err == nil {
+			if err := os.WriteFile(tunDNSBackupPath(), data, 0o600); err != nil {
+				log.Warn("tun: cannot save the DNS backup: %v", err)
+			}
 		}
 	}
 	log.Info("tun: routes and DNS installed for %s", dev)

@@ -22,6 +22,27 @@ var (
 	DnsPortOccupied       = fmt.Errorf("dns port 53 is occupied")
 )
 
+// dnsInterceptionEnabled answers whether the system's own DNS is redirected
+// to the DNS module. It keeps the opt-out compatible with old settings: a
+// stored dnsMode decides, and a setting without one derives from dnsHijack,
+// where an absent or "default" value retains the historical behaviour.
+func dnsInterceptionEnabled(setting *configure.Setting) bool {
+	if setting == nil {
+		setting = configure.GetSettingNotNil()
+	}
+	return setting.DnsInterceptionEnabled()
+}
+
+// dnsServiceEnabled answers the other half: whether the DNS module runs at
+// all. Service mode starts it on its own address without touching anything
+// else, so it is deliberately not the same predicate as the interception.
+func dnsServiceEnabled(setting *configure.Setting) bool {
+	if setting == nil {
+		setting = configure.GetSettingNotNil()
+	}
+	return setting.DnsServiceEnabled()
+}
+
 // ShouldLocalDnsListen 在透明代理启用时返回 true，
 // 表示需要劫持 /etc/resolv.conf 将系统 DNS 指向 127.2.0.17:53，
 // 使 DNS 流量可以被 iptables/nftables 规则捕获后重定向到 52353。
@@ -41,7 +62,7 @@ func ShouldLocalDnsListen() bool {
 	if conf.GetEnvironmentConfig().Lite {
 		return false
 	}
-	return true
+	return dnsInterceptionEnabled(setting)
 }
 
 var couldListenCache struct {

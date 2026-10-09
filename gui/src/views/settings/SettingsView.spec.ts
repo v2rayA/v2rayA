@@ -3,7 +3,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DOMWrapper, flushPromises, type VueWrapper } from "@vue/test-utils";
 import { defineComponent, h } from "vue";
 import { VApp, VMain } from "vuetify/components";
-import { getRemoteGFWListVersion, getSetting, putSetting } from "@/api";
+import {
+  getDnsRules,
+  getOutbounds,
+  getRemoteGFWListVersion,
+  getSetting,
+  putSetting,
+} from "@/api";
 import type { Setting, VersionResponse } from "@/api/types";
 import DialogHost from "@/components/hosts/DialogHost.vue";
 import { closeAllDialogs } from "@/composables/useDialog";
@@ -15,6 +21,9 @@ vi.mock("@/api", () => ({
   getSetting: vi.fn(),
   getRemoteGFWListVersion: vi.fn(),
   putSetting: vi.fn(),
+  getDnsRules: vi.fn(),
+  getOutbounds: vi.fn(),
+  putDnsRules: vi.fn(),
 }));
 
 const loaded: Setting = {
@@ -46,7 +55,8 @@ const loaded: Setting = {
 let wrapper: VueWrapper;
 beforeEach(() => {
   vi.mocked(getSetting).mockResolvedValue({
-    setting: { ...loaded },
+    // the DNS mode is the service's, and the settings page never sends it back
+    setting: { ...loaded, dnsMode: "service" },
     localGFWListVersion: "2026-09-15",
     localGeositeVersion: "",
   });
@@ -54,6 +64,8 @@ beforeEach(() => {
     remoteGFWListVersion: "2026-09-15",
   });
   vi.mocked(putSetting).mockResolvedValue(undefined);
+  vi.mocked(getDnsRules).mockResolvedValue({ rules: [] });
+  vi.mocked(getOutbounds).mockResolvedValue({ outbounds: ["proxy"] });
 });
 afterEach(() => {
   closeAllDialogs();
@@ -146,6 +158,35 @@ describe("settings list", () => {
     await wrapper.get('button[type="submit"]').trigger("click");
     await flushPromises();
     expect(putSetting).toHaveBeenCalledOnce();
+  });
+
+  test("leaves the DNS mode to the DNS settings dialog", async () => {
+    await mountPage();
+    // the proxy section carries no DNS decision of its own; only the row that
+    // opens the dialog mentions DNS
+    expect(wrapper.findAll('button[aria-label*="DNS"]')).toHaveLength(0);
+    const row = wrapper
+      .findAll(".v-list-item")
+      .find((item) => item.text().startsWith("DNS Settings"));
+    expect(row).toBeDefined();
+    await row!.trigger("click");
+    await flushPromises();
+    const dialog = new DOMWrapper(document.querySelector('[role="dialog"]')!);
+    expect(
+      dialog.findAllComponents({ name: "VSelect" })[0].props("modelValue"),
+    ).toBe("service");
+    closeAllDialogs();
+    await toggle("Port Sharing", true);
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    // a stale mode here would put back the decision the dialog has moved
+    expect(putSetting).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ portSharing: true }),
+      { signal: expect.any(AbortSignal) },
+    );
+    const body = vi.mocked(putSetting).mock.calls[0][0];
+    expect(body).not.toHaveProperty("dnsMode");
+    expect(body).not.toHaveProperty("dnsHijack");
   });
 
   test("opens the existing About content as a dismissible dialog", async () => {

@@ -22,6 +22,8 @@ type Setting struct {
 	Mux                                int             `json:"mux"`
 	InboundSniffing                    InboundSniffing `json:"inboundSniffing"`
 	Transparent                        TransparentMode `json:"transparent"`
+	DnsHijack                          DefaultYesNo    `json:"dnsHijack"`
+	DnsMode                            DnsMode         `json:"dnsMode"`
 	IpForward                          bool            `json:"ipforward"`
 	RouteOnly                          bool            `json:"routeOnly"`
 	PortSharing                        bool            `json:"portSharing"`
@@ -61,6 +63,7 @@ func NewSetting() (setting *Setting) {
 		Mux:                                8,
 		InboundSniffing:                    "http,tls,quic",
 		Transparent:                        TransparentClose,
+		DnsHijack:                          Yes,
 		IpForward:                          ipforward.IsIpForwardOn(),
 		PortSharing:                        false,
 		TransparentType:                    TransparentRedirect,

@@ -153,6 +153,28 @@ func TestDNSHijackLeavesLocalResolversAlone(t *testing.T) {
 	}
 }
 
+// Without a dnsTarget the user opted out of DNS interception: port 53 is
+// ordinary traffic and reaches the dispatcher, where the routing rules send
+// it out directly.
+func TestNoDNSTargetLeavesPort53ToTheDispatcher(t *testing.T) {
+	d := newFakeDispatcher()
+	f := newForwarder(context.Background(), d)
+	if f.dns != nil {
+		t.Fatal("a relay exists without a dns target")
+	}
+	h := f.handlers()
+
+	h.UDP(Flow{
+		Source:      netip.MustParseAddrPort("10.0.85.2:40002"),
+		Destination: netip.MustParseAddrPort("8.8.8.8:53"),
+	}, []byte("q"), func([]byte, netip.AddrPort) error { return nil })
+	call := d.next(t)
+	if call.dest.Port != 53 {
+		t.Fatalf("dispatched to %v", call.dest)
+	}
+	close(d.hold)
+}
+
 // A client advertising a 64 KiB EDNS buffer must not be answered with a
 // datagram larger than the hijack's reply buffer; the advertised size is
 // capped on the way to the module, everything else is passed as is.

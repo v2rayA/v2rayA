@@ -12,7 +12,7 @@ import (
 type redirect interface {
 	AddIPWhitelist(cidr string)
 	RemoveIPWhitelist(cidr string)
-	GetSetupCommands() Setter
+	GetSetupCommands(dnsHijack bool) Setter
 	GetCleanCommands() Setter
 }
 
@@ -51,7 +51,7 @@ func (r *legacyRedirect) RemoveIPWhitelist(cidr string) {
 	cmds.ExecCommands(commands, false)
 }
 
-func (r *legacyRedirect) GetSetupCommands() Setter {
+func (r *legacyRedirect) GetSetupCommands(dnsHijack bool) Setter {
 	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := legacySetupValues()
 	if err != nil {
 		return NewErrorSetter(err)
@@ -61,7 +61,7 @@ func (r *legacyRedirect) GetSetupCommands() Setter {
 iptables -w 2 -t nat -N TP_OUT
 iptables -w 2 -t nat -N TP_PRE
 iptables -w 2 -t nat -N TP_RULE
-iptables -w 2 -t nat -N DNS_REDIRECT
+` + legacyDnsRedirectChain("iptables", dnsHijack) + `
 iptables -w 2 -t nat -A TP_RULE -d 0.0.0.0/32 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 10.0.0.0/8 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 100.64.0.0/10 -j RETURN
@@ -79,11 +79,7 @@ iptables -w 2 -t nat -A TP_RULE -d 203.0.113.0/24 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 224.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -d 240.0.0.0/4 -j RETURN
 iptables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
-# DNS 重定向到新 DNS 模块端口 52353（必须在通用 REDIRECT 规则之前）
-iptables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
-iptables -w 2 -t nat -A DNS_REDIRECT -p tcp -j REDIRECT --to-port 52353
-iptables -w 2 -t nat -A DNS_REDIRECT -p udp -j REDIRECT --to-port 52353
-`
+` + legacyDnsRedirectChainRules("iptables", dnsHijack) + legacyDnsBypass("iptables", dnsHijack)
 	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
@@ -99,23 +95,13 @@ iptables -w 2 -t nat -I PREROUTING -p tcp -j TP_PRE
 iptables -w 2 -t nat -I OUTPUT -p tcp -j TP_OUT
 iptables -w 2 -t nat -A TP_PRE -j TP_RULE
 iptables -w 2 -t nat -A TP_OUT -j TP_RULE
-# DNS 跳转在 TP_PRE/TP_OUT 之后插入：-I 总是插到链首，后插入者排在前面，
-# 因此 DNS 规则实际位于通用透明代理规则之前（否则本机/局域网 TCP DNS 会
-# 先命中 TP_OUT/TP_PRE 被重定向到 52345，绕过 DNS 模块）。
-iptables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j DNS_REDIRECT
-iptables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
-iptables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
-iptables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
-`
+` + legacyDnsRedirectHooks("iptables", dnsHijack)
 	if legacyIPv6Supported() {
 		commands += `
 ip6tables -w 2 -t nat -N TP_OUT
 ip6tables -w 2 -t nat -N TP_PRE
 ip6tables -w 2 -t nat -N TP_RULE
-ip6tables -w 2 -t nat -N DNS_REDIRECT
-ip6tables -w 2 -t nat -A DNS_REDIRECT -m mark --mark 0x80/0x80 -j RETURN
-ip6tables -w 2 -t nat -A DNS_REDIRECT -p tcp -j REDIRECT --to-port 52353
-ip6tables -w 2 -t nat -A DNS_REDIRECT -p udp -j REDIRECT --to-port 52353
+` + legacyDnsRedirectChain("ip6tables", dnsHijack) + legacyDnsRedirectChainRules("ip6tables", dnsHijack) + `
 ip6tables -w 2 -t nat -A TP_RULE -d ::/128 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ::1/128 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d 64:ff9b::/96 -j RETURN
@@ -129,7 +115,7 @@ ip6tables -w 2 -t nat -A TP_RULE -d fc00::/7 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d fe80::/10 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -d ff00::/8 -j RETURN
 ip6tables -w 2 -t nat -A TP_RULE -m mark --mark 0x80/0x80 -j RETURN
-`
+` + legacyDnsBypass("ip6tables", dnsHijack)
 		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t nat -A TP_RULE -i %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
@@ -145,12 +131,7 @@ ip6tables -w 2 -t nat -I PREROUTING -p tcp -j TP_PRE
 ip6tables -w 2 -t nat -I OUTPUT -p tcp -j TP_OUT
 ip6tables -w 2 -t nat -A TP_PRE -j TP_RULE
 ip6tables -w 2 -t nat -A TP_OUT -j TP_RULE
-# DNS 跳转最后插入（-I 后到者居首），确保排在 TP_PRE/TP_OUT 之前
-ip6tables -w 2 -t nat -I PREROUTING -p udp --dport 53 -j DNS_REDIRECT
-ip6tables -w 2 -t nat -I PREROUTING -p tcp --dport 53 -j DNS_REDIRECT
-ip6tables -w 2 -t nat -I OUTPUT -p udp --dport 53 -j DNS_REDIRECT
-ip6tables -w 2 -t nat -I OUTPUT -p tcp --dport 53 -j DNS_REDIRECT
-`
+` + legacyDnsRedirectHooks("ip6tables", dnsHijack)
 	}
 	return newLegacyWhitelistSetter(withDnsModulePort(commands), "nat", whiteIpv4List, whiteIpv6List)
 }
@@ -214,7 +195,7 @@ func (t *nftRedirect) RemoveIPWhitelist(cidr string) {
 	cmds.ExecCommands(command, false)
 }
 
-func (r *nftRedirect) GetSetupCommands() Setter {
+func (r *nftRedirect) GetSetupCommands(dnsHijack bool) Setter {
 	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
 	if err != nil {
 		return NewErrorSetter(err)
@@ -286,18 +267,14 @@ table inet v2raya {
         auto-merge
     }
 
-    chain dns_redirect {
-        meta mark & 0x80 == 0x80 return
-        meta l4proto { tcp, udp } th dport 53 redirect to :52353
-    }
-
+` + nftRedirectChain(dnsHijack) + `
     chain tp_rule {
         ip daddr @whitelist return
         ip daddr @local_ips return
         ip6 daddr @whitelist6 return
         ip6 daddr @local_ips6 return
         meta mark & 0x80 == 0x80 return
-`
+` + nftRedirectBypass(dnsHijack)
 	for _, v := range excludedInterfaces {
 		table += fmt.Sprintf("        iifname \"%s\" return\n", v)
 	}
@@ -310,15 +287,13 @@ table inet v2raya {
 
     chain tp_pre {
         type nat hook prerouting priority dstnat - 5
-        # DNS 重定向到 52353（优先于通用透明代理）
-        meta nfproto { ipv4, ipv6 } meta l4proto { tcp, udp } th dport 53 jump dns_redirect
+` + nftRedirectHook(dnsHijack) + `
         meta nfproto { ipv4, ipv6 } meta l4proto tcp jump tp_rule
     }
 
     chain tp_out {
         type nat hook output priority -105
-        # DNS 重定向到 52353（优先于通用透明代理）
-        meta nfproto { ipv4, ipv6 } meta l4proto { tcp, udp } th dport 53 jump dns_redirect
+` + nftRedirectHook(dnsHijack) + `
         meta nfproto { ipv4, ipv6 } meta l4proto tcp jump tp_rule
     }
 }

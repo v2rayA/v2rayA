@@ -128,7 +128,9 @@ export const deleteOutbound = (
 // ---- settings ------------------------------------------------------------------
 export const getSetting = () =>
   call<SettingResponse>({ url: "setting", method: "get" });
-export const putSetting = (setting: Setting, o: RequestOptions = {}) =>
+// The service decodes the body over the stored setting, so a caller that owns
+// one decision may send only that field; the rest keeps its stored value.
+export const putSetting = (setting: Partial<Setting>, o: RequestOptions = {}) =>
   call<unknown>({ url: "setting", method: "put", data: setting, ...o });
 export const getPorts = () => call<Ports>({ url: "ports", method: "get" });
 export const putPorts = (ports: Ports) =>
