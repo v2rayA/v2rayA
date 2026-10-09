@@ -15,7 +15,6 @@ import (
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
-	"github.com/v2rayA/v2rayA/kernel/coreObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 )
@@ -146,15 +145,14 @@ func TestReplaceOutboundConnectionsWritesTheGroupOnce(t *testing.T) {
 	}
 }
 
-func TestNodeHostsRefreshAndDNSFailures(t *testing.T) {
-	tmpl := &v2ray.Template{DNS: &coreObj.DNS{Hosts: coreObj.Hosts{"node.example": []string{"192.0.2.1"}, "failed.example": []string{"192.0.2.2"}}}}
+func TestNodeHostsDeduplicationAndDNSFailures(t *testing.T) {
 	servers := []serverObj.ServerObj{
 		&serverObj.SOCKS{Server: "node.example"}, &serverObj.SOCKS{Server: "node.example"},
 		&serverObj.SOCKS{Server: "failed.example"}, &serverObj.SOCKS{Server: "192.0.2.3"}, nil,
 	}
 	var calls atomic.Int32
 	failure := errors.New("node DNS failed.example: SERVFAIL")
-	failures := addHosts(tmpl, servers, func(host string) ([]string, error) {
+	hosts, failures := resolveNodeHosts(servers, func(host string) ([]string, error) {
 		calls.Add(1)
 		if host == "failed.example" {
 			return nil, failure
@@ -167,10 +165,10 @@ func TestNodeHostsRefreshAndDNSFailures(t *testing.T) {
 	if failures["failed.example"] != failure {
 		t.Fatal("DNS failure not reported")
 	}
-	if _, exists := tmpl.DNS.Hosts["failed.example"]; exists {
-		t.Fatal("old host cache bypasses failed new DNS selection")
+	if _, exists := hosts["failed.example"]; exists {
+		t.Fatal("failed node has an address")
 	}
-	if !reflect.DeepEqual(tmpl.DNS.Hosts["node.example"], []string{"198.51.100.1"}) {
-		t.Fatalf("old host cache retained: %v", tmpl.DNS.Hosts)
+	if !reflect.DeepEqual(hosts["node.example"], []string{"198.51.100.1"}) {
+		t.Fatalf("wrong resolved addresses: %v", hosts)
 	}
 }

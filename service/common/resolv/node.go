@@ -1,14 +1,9 @@
 package resolv
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -16,63 +11,26 @@ import (
 	"github.com/miekg/dns"
 )
 
-// LookupNode queries only this endpoint, preserving the caller's socket policy.
-// A failed query never falls through to the service's general-purpose resolver.
-func LookupNode(host string, endpoint *IPDNSEndpoint, dialer *net.Dialer) ([]string, error) {
-	return lookupNode(host, endpoint, dialer, nil)
-}
+// nodeQueryOption scopes service/QUIC queries to rule-node and the current module.
+const nodeQueryOption = 65002
 
-func lookupNode(host string, endpoint *IPDNSEndpoint, dialer *net.Dialer, roots *x509.CertPool) ([]string, error) {
+// LookupNode queries the local module without consulting the system resolver.
+func LookupNode(ctx context.Context, host, address, token string, dialer *net.Dialer) ([]string, error) {
 	if ip := net.ParseIP(host); ip != nil {
 		return []string{ip.String()}, nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	d := *dialer
 	d.Resolver = nil
-	transport := &http.Transport{DialContext: d.DialContext, TLSClientConfig: &tls.Config{ServerName: endpoint.IP.String(), RootCAs: roots}, ForceAttemptHTTP2: true}
-	defer transport.CloseIdleConnections()
-	client := &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	exchange := func(msg *dns.Msg) (*dns.Msg, error) {
-		if endpoint.Scheme != "https" {
-			c := &dns.Client{Net: endpoint.Protocol(), Dialer: &d, Timeout: 3 * time.Second, UDPSize: 4096, TLSConfig: &tls.Config{ServerName: endpoint.IP.String(), RootCAs: roots}}
-			resp, _, err := c.ExchangeContext(ctx, msg, endpoint.Address())
-			if err == nil && resp.Truncated && endpoint.Scheme == "udp" {
-				c.Net = "tcp"
-				resp, _, err = c.ExchangeContext(ctx, msg, endpoint.Address())
-			}
-			return resp, err
+		c := &dns.Client{Net: "udp", Dialer: &d, Timeout: 3 * time.Second, UDPSize: 4096}
+		resp, _, err := c.ExchangeContext(ctx, msg, address)
+		if err == nil && resp.Truncated {
+			c.Net = "tcp"
+			resp, _, err = c.ExchangeContext(ctx, msg, address)
 		}
-		packet, err := msg.Pack()
-		if err != nil {
-			return nil, err
-		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint.URL, bytes.NewReader(packet))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Content-Type", "application/dns-message")
-		req.Header.Set("Accept", "application/dns-message")
-		resp, err := client.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("DoH: HTTP %d", resp.StatusCode)
-		}
-		if strings.Split(resp.Header.Get("Content-Type"), ";")[0] != "application/dns-message" {
-			return nil, fmt.Errorf("DoH: invalid content type")
-		}
-		body, err := io.ReadAll(io.LimitReader(resp.Body, dns.MaxMsgSize+1))
-		if err != nil {
-			return nil, err
-		}
-		if len(body) > dns.MaxMsgSize {
-			return nil, fmt.Errorf("DoH response too large")
-		}
-		answer := new(dns.Msg)
-		return answer, answer.Unpack(body)
+		return resp, err
 	}
 	var results [2][]string
 	var failures [2]error
@@ -85,6 +43,8 @@ func lookupNode(host string, endpoint *IPDNSEndpoint, dialer *net.Dialer, roots 
 			for depth := 0; depth < 8; depth++ {
 				msg := new(dns.Msg)
 				msg.SetQuestion(name, qt)
+				msg.SetEdns0(4096, false)
+				msg.IsEdns0().Option = append(msg.IsEdns0().Option, &dns.EDNS0_LOCAL{Code: nodeQueryOption, Data: []byte(token)})
 				resp, err := exchange(msg)
 				if err != nil {
 					failures[i] = err
@@ -137,6 +97,9 @@ func lookupNode(host string, endpoint *IPDNSEndpoint, dialer *net.Dialer, roots 
 		}(i, qt)
 	}
 	wg.Wait()
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("node DNS %s: %w", host, err)
+	}
 	out := append(results[0], results[1]...)
 	if len(out) > 0 {
 		return out, nil

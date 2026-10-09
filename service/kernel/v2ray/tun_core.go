@@ -2,7 +2,6 @@ package v2ray
 
 import (
 	"errors"
-	"net"
 	"os"
 	"strconv"
 	"sync"
@@ -40,14 +39,12 @@ func tunDnsTarget(setting *configure.Setting) string {
 	if !dnsInterceptionEnabled(setting) {
 		return ""
 	}
-	host, port, err := net.SplitHostPort(dnsModuleListenAddr(setting))
+	address := dnsModuleListenAddr(setting)
+	target, err := localDNSAddress(address)
 	if err != nil {
-		return "127.0.0.1:52353"
+		return address
 	}
-	if ip := net.ParseIP(host); ip == nil || ip.IsUnspecified() {
-		host = "127.0.0.1"
-	}
-	return net.JoinHostPort(host, port)
+	return target
 }
 
 // dnsModulePort is the port the DNS module listens on, which the DNS
@@ -107,7 +104,11 @@ func startTunCore(tmpl *Template) error {
 		tunTeardown = setting.TunTeardownScript
 		return nil
 	}
-	return tunRoutesUp(tmpl, collectNodeIPs(tmpl))
+	ips, err := collectNodeIPs(tmpl)
+	if err != nil {
+		return err
+	}
+	return tunRoutesUp(tmpl, ips)
 }
 
 // stopTunCore removes what startTunCore installed. It runs before the core

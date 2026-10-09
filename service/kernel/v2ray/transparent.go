@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/miekg/dns"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -252,26 +251,6 @@ func deleteTransparentProxyRules() {
 	}
 }
 
-func waitForTransparentDNS(tmpl *Template) {
-	if tmpl == nil || tmpl.DnsModuleConfig == nil {
-		return
-	}
-	// Only the interception points the transparent rules at the module;
-	// service mode leaves the relay empty, so there is nothing to wait for.
-	dnsAddr := tunDnsTarget(tmpl.Setting)
-	if dnsAddr == "" {
-		return
-	}
-	if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
-		// The probe resolves a name, so a dead or slow upstream fails it
-		// even though the listener is up. Waiting is worth it when DNS is
-		// healthy, but it must not be the reason the core cannot start.
-		log.Warn("DNS module did not answer on %s yet, applying transparent proxy rules anyway: %v", dnsAddr, err)
-	} else {
-		log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
-	}
-}
-
 func dnsRedirectPolicy(goos string, setting *configure.Setting) (install, required bool) {
 	if goos != "linux" || !dnsInterceptionEnabled(setting) {
 		return false, false
@@ -431,26 +410,4 @@ func IsTransparentOn(setting *configure.Setting) bool {
 		return false
 	}
 	return true
-}
-
-// waitForDnsPort polls the DNS module's listening port until it's ready or a timeout expires.
-// This ensures the v2raya-core DNS module is accepting queries before we apply firewall rules.
-func waitForDnsPort(addr string, timeout time.Duration) error {
-	deadline := time.Now().Add(timeout)
-	request := new(dns.Msg)
-	request.SetQuestion("localhost.", dns.TypeA)
-	client := &dns.Client{
-		Net:     "udp",
-		Timeout: 500 * time.Millisecond,
-	}
-	for time.Now().Before(deadline) {
-		if remaining := time.Until(deadline); remaining < client.Timeout {
-			client.Timeout = remaining
-		}
-		if _, _, err := client.Exchange(request, addr); err == nil {
-			return nil
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-	return fmt.Errorf("dns port %s not reachable within %v", addr, timeout)
 }

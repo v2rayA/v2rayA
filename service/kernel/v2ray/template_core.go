@@ -35,6 +35,7 @@ type Template struct {
 	// DnsModuleConfig 是新 DNS 模块的配置，由 v2raya-core 启动时解析并启动 DNS 监听器。
 	DnsModuleConfig json.RawMessage       `json:"dns_module,omitempty"`
 	NodeDNS         *resolv.IPDNSEndpoint `json:"-"`
+	process         *Process
 
 	Variant       where.Variant          `json:"-"`
 	CoreVersion   string                 `json:"-"`

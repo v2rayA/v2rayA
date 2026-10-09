@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"testing"
 
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 )
 
@@ -115,6 +115,13 @@ func TestNodeDNSLatencyConfigPreservesProtocolAndPriority(t *testing.T) {
 			if !reflect.DeepEqual(cfg.Rules[0].Domains, []string{"new-node.example"}) {
 				t.Fatalf("wrong node domains: %+v", cfg.Rules)
 			}
+			if len(tmpl.DNS.Servers) != 2 {
+				t.Fatalf("unexpected Xray DNS servers: %+v", tmpl.DNS.Servers)
+			}
+			node := tmpl.DNS.Servers[0].(coreObj.DnsServer)
+			if node.Address != "tcp+local://"+dnsModuleListenAddr(tmpl.Setting) || !node.FinalQuery || !node.SkipFallback || !node.DisableCache || !reflect.DeepEqual(node.Domains, []string{"full:new-node.example"}) {
+				t.Fatalf("Xray does not query the module exclusively for nodes: %+v", node)
+			}
 			if servers[0].GetHostname() != "new-node.example" || net.ParseIP(servers[1].GetHostname()) == nil {
 				t.Fatal("server address rewritten")
 			}
@@ -122,50 +129,33 @@ func TestNodeDNSLatencyConfigPreservesProtocolAndPriority(t *testing.T) {
 	}
 }
 
-func TestNodeDNSOnlyAppliesToPlannedTakeover(t *testing.T) {
-	if runtime.GOOS != "linux" {
-		t.Skip("Linux DNS redirect policy")
-	}
+func TestNodeDNSAppliesWithoutTakeover(t *testing.T) {
 	env := conf.GetEnvironmentConfig()
 	wasLite := env.Lite
-	env.Lite = false
 	t.Cleanup(func() { env.Lite = wasLite })
 	selected, _ := resolv.ParseIPDNS("tls://192.0.2.53")
-	for _, active := range []bool{false, true} {
-		setting := configure.NewSetting()
-		setting.TransparentType = configure.TransparentRedirect
-		if active {
-			setting.Transparent = configure.TransparentProxy
+	for _, lite := range []bool{false, true} {
+		env.Lite = lite
+		for _, transparent := range []configure.TransparentMode{configure.TransparentClose, configure.TransparentProxy} {
+			setting := configure.NewSetting()
+			setting.Transparent = transparent
+			setting.TransparentType = configure.TransparentTun
+			setting.TunAutoRoute = false
+			tmpl := &Template{Setting: setting, NodeDNS: selected}
+			if err := tmpl.generateDnsModuleConfig(nil); err != nil {
+				t.Fatal(err)
+			}
+			var cfg struct {
+				Upstreams []struct{ ID, Addr, Protocol, ProxyTag string }
+			}
+			if err := json.Unmarshal(tmpl.DnsModuleConfig, &cfg); err != nil {
+				t.Fatal(err)
+			}
+			node := cfg.Upstreams[0]
+			if node.ID != "upstream-node" || node.Addr != selected.Address() || node.Protocol != "tcp-tls" {
+				t.Fatalf("lite=%v transparent=%v: selected endpoint lost: %+v", lite, transparent, cfg)
+			}
 		}
-		tmpl := &Template{Setting: setting, NodeDNS: selected}
-		if err := tmpl.generateDnsModuleConfig([]serverInfo{{Info: &serverObj.V2Ray{Add: "node.example"}}}); err != nil {
-			t.Fatal(err)
-		}
-		var cfg struct {
-			Upstreams []struct{ ID, Addr, Protocol string }
-		}
-		if err := json.Unmarshal(tmpl.DnsModuleConfig, &cfg); err != nil {
-			t.Fatal(err)
-		}
-		node := cfg.Upstreams[0]
-		if active && (node.Addr != selected.Address() || node.Protocol != "tcp-tls") {
-			t.Fatalf("selected endpoint lost: %+v", node)
-		}
-		if !active && node.Addr == selected.Address() {
-			t.Fatal("node setting applied outside takeover")
-		}
-	}
-	setting := configure.NewSetting()
-	setting.Transparent = configure.TransparentProxy
-	setting.TransparentType = configure.TransparentTun
-	setting.TunAutoRoute = false
-	if PlannedDNSHijack(setting) {
-		t.Fatal("manual TUN assumes DNS takeover")
-	}
-	env.Lite = true
-	setting.TransparentType = configure.TransparentSystemProxy
-	if PlannedDNSHijack(setting) {
-		t.Fatal("lite system proxy assumes DNS takeover")
 	}
 }
 

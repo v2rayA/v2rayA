@@ -1,14 +1,19 @@
 package v2ray
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
 	"runtime"
+	"time"
 
+	"github.com/miekg/dns"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/resolv"
+	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/coreObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
 )
 
@@ -145,29 +150,6 @@ func SelectNodeDNS(setting *configure.Setting, rules []configure.DnsRule) (*reso
 	return CollectNodeDNSOptions(setting, rules).Select(setting.NodeDns)
 }
 
-// PlannedDNSHijack follows the policy that the next generation will apply.
-// Latency tasks instead use DNSHijackActive, which records successful setup.
-func PlannedDNSHijack(setting *configure.Setting) bool {
-	if !IsTransparentOn(setting) {
-		return false
-	}
-	if setting.TransparentType == configure.TransparentTun && runtime.GOOS != "linux" {
-		if !setting.TunAutoRoute {
-			return false
-		}
-		if runtime.GOOS == "darwin" {
-			endpoint, _ := resolv.ParseIPDNS("127.0.0.1:53")
-			listeners := append([]string{dnsModuleListenAddr(setting)}, dnsModuleExtraListenAddrs(setting)...)
-			return isOwnDNS(endpoint, listeners)
-		}
-		return true
-	}
-	install, _ := dnsRedirectPolicy(runtime.GOOS, setting)
-	return install && shouldLocalDnsListen(setting)
-}
-
-func DNSHijackActive() bool { return ProcessManager.Running() && dnsHijackActive.Load() }
-
 // AddNodeDNSDomains extends the temporary latency configuration to every
 // tested node, including nodes absent from the normal connected set.
 func (t *Template) AddNodeDNSDomains(servers []serverObj.ServerObj) error {
@@ -225,10 +207,40 @@ func (t *Template) AddNodeDNSDomains(servers []serverObj.ServerObj) error {
 	}
 	cfg["rules"], cfg["upstreams"] = rules, upstreams
 	raw, err := json.Marshal(cfg)
-	if err == nil {
-		t.DnsModuleConfig = raw
+	if err != nil {
+		return err
 	}
-	return err
+	t.DnsModuleConfig = raw
+	return t.setNodeDNS(common.Deduplicate(domains))
+}
+
+func (t *Template) setNodeDNS(domains []string) error {
+	if len(domains) == 0 {
+		return nil
+	}
+	address, err := localDNSAddress(dnsModuleListenAddr(t.Setting))
+	if err != nil {
+		return err
+	}
+	if t.DNS == nil {
+		t.DNS = &coreObj.DNS{Servers: []interface{}{"localhost"}}
+	}
+	var matches []string
+	for _, domain := range domains {
+		matches = append(matches, "full:"+domain)
+		delete(t.DNS.Hosts, domain)
+	}
+	// Local TCP avoids proxy routing. FinalQuery prevents a failed node
+	// lookup from falling through to the system resolver; caching stays in the module.
+	server := coreObj.DnsServer{Address: "tcp+local://" + address, Domains: matches, SkipFallback: true, FinalQuery: true, DisableCache: true}
+	if len(t.DNS.Servers) > 0 {
+		if previous, ok := t.DNS.Servers[0].(coreObj.DnsServer); ok && previous.Address == server.Address && previous.FinalQuery {
+			t.DNS.Servers[0] = server
+			return nil
+		}
+	}
+	t.DNS.Servers = append([]interface{}{server}, t.DNS.Servers...)
+	return nil
 }
 
 func moduleOwnsDNSListener(address string) bool {
@@ -249,4 +261,122 @@ func tunDNSListeners(setting *configure.Setting) []string {
 		return nil
 	}
 	return []string{net.JoinHostPort(tunGateway4, "53"), net.JoinHostPort(tunGateway6, "53")}
+}
+
+func localDNSAddress(address string) (string, error) {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return "", fmt.Errorf("node DNS listener: %w", err)
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return "", fmt.Errorf("node DNS listener must use an IP address")
+	}
+	if ip.IsUnspecified() {
+		if ip.To4() != nil {
+			host = "127.0.0.1"
+		} else {
+			host = "::1"
+		}
+	}
+	return net.JoinHostPort(host, port), nil
+}
+
+func (p *Process) NodeDNSEndpoint() *resolv.IPDNSEndpoint {
+	if p == nil || p.template == nil {
+		return nil
+	}
+	return p.template.NodeDNS
+}
+
+func (p *Process) dnsContext(ctx context.Context) (context.Context, context.CancelFunc, error) {
+	if p == nil || p.ctx == nil {
+		return nil, nil, fmt.Errorf("node DNS: core has not started")
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	stop := context.AfterFunc(p.ctx, cancel)
+	if p.ctx.Err() != nil {
+		cancel()
+	}
+	return ctx, func() { stop(); cancel() }, nil
+}
+
+// WaitDNSReady verifies both transports against this process's configuration.
+// The reserved TXT reply never contacts an upstream, even when it is offline.
+func (p *Process) WaitDNSReady(ctx context.Context, dialers ...*net.Dialer) error {
+	ctx, cancel, err := p.dnsContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer cancel()
+	ctx, deadlineCancel := context.WithTimeout(ctx, time.Duration(conf.GetEnvironmentConfig().CoreStartupTimeout)*time.Second)
+	defer deadlineCancel()
+	if p.dnsToken == "" {
+		return fmt.Errorf("node DNS: no module in this configuration")
+	}
+	dialer := &net.Dialer{Timeout: 200 * time.Millisecond}
+	if len(dialers) > 0 && dialers[0] != nil {
+		dialer = dialers[0]
+	}
+	request := new(dns.Msg)
+	request.SetQuestion("_v2raya-ready.invalid.", dns.TypeTXT)
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		ready := true
+		for _, network := range []string{"udp", "tcp"} {
+			client := &dns.Client{Net: network, Timeout: 200 * time.Millisecond, Dialer: dialer}
+			response, _, queryErr := client.ExchangeContext(ctx, request, p.dnsAddress)
+			matched := false
+			if queryErr == nil && response != nil && response.Rcode == dns.RcodeSuccess {
+				for _, rr := range response.Answer {
+					if txt, ok := rr.(*dns.TXT); ok && len(txt.Txt) == 1 && txt.Txt[0] == p.dnsToken {
+						matched = true
+					}
+				}
+			}
+			if !matched {
+				ready = false
+				break
+			}
+		}
+		if ready && ctx.Err() == nil {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			if p.ctx.Err() != nil {
+				return fmt.Errorf("node DNS: core exited or stopped while waiting for module readiness")
+			}
+			return fmt.Errorf("node DNS: waiting for module readiness: %w", ctx.Err())
+		case <-ticker.C:
+		}
+	}
+}
+
+func (p *Process) LookupNode(ctx context.Context, host string, dialer *net.Dialer) ([]string, error) {
+	if ip := net.ParseIP(host); ip != nil {
+		return []string{ip.String()}, nil
+	}
+	ctx, cancel, err := p.dnsContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cancel()
+	if dialer == nil {
+		dialer = &net.Dialer{Timeout: 3 * time.Second}
+	}
+	// A local DNS query must not be bound to the physical TUN egress.
+	// Linux retains the caller's mark to bypass OUTPUT interception.
+	if runtime.GOOS != "linux" {
+		dialer = &net.Dialer{Timeout: dialer.Timeout}
+	}
+	if err := p.WaitDNSReady(ctx, dialer); err != nil {
+		return nil, err
+	}
+	ips, err := resolv.LookupNode(ctx, host, p.dnsAddress, p.dnsToken, dialer)
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("node DNS %s: core stopped or query cancelled: %w", host, ctx.Err())
+	}
+	return ips, err
 }

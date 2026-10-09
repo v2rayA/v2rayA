@@ -39,6 +39,13 @@ func (t *Template) SetOutboundSockopt() {
 		if t.Setting.MuxOn == configure.Yes && t.Outbounds[i].Protocol == "vmess" && t.Outbounds[i].Mux == nil {
 			t.Outbounds[i].Mux = &coreObj.Mux{Enabled: true, Concurrency: t.Setting.Mux}
 		}
+		if t.NodeDNS != nil && t.Outbounds[i].Protocol != "freedom" {
+			// ForceIP stops a failed node lookup from falling back to system DNS.
+			t.Outbounds[i].StreamSettings.Sockopt.DomainStrategy = "ForceIP"
+			if !iptables.IsIPv6Supported() {
+				t.Outbounds[i].StreamSettings.Sockopt.DomainStrategy = "ForceIPv4"
+			}
+		}
 		t.checkAndSetMark(&t.Outbounds[i], mark)
 	}
 }

@@ -1,13 +1,9 @@
 package resolv
 
 import (
-	"crypto/tls"
-	"crypto/x509"
+	"context"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -40,89 +36,65 @@ func nodeAnswer(msg *dns.Msg) *dns.Msg {
 	return answer
 }
 
-func TestLookupNodeTransports(t *testing.T) {
-	// The same local certificate verifies IP identity for DoT and DoH.
-	certServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/dns-query" || r.URL.RawQuery != "test=1" || r.Method != "POST" {
-			t.Errorf("wrong DoH endpoint: %s", r.URL)
+func TestLookupNodeLocalModule(t *testing.T) {
+	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	address := listener.Addr().String()
+	pc, err := net.ListenPacket("udp4", address)
+	if err != nil {
+		listener.Close()
+		t.Fatal(err)
+	}
+	var truncated atomic.Bool
+	handler := dns.HandlerFunc(func(w dns.ResponseWriter, msg *dns.Msg) {
+		opt := msg.IsEdns0()
+		if opt == nil || len(opt.Option) != 1 {
+			t.Error("missing module identity")
+		} else if local, ok := opt.Option[0].(*dns.EDNS0_LOCAL); !ok || local.Code != 65002 || string(local.Data) != "current" {
+			t.Error("wrong module identity")
 		}
-		packet, err := io.ReadAll(r.Body)
-		if err != nil {
-			t.Error(err)
-			return
+		answer := nodeAnswer(msg)
+		if _, udp := w.RemoteAddr().(*net.UDPAddr); udp && truncated.Load() {
+			answer.Answer = nil
+			answer.Truncated = true
 		}
-		msg := new(dns.Msg)
-		if err := msg.Unpack(packet); err != nil {
-			t.Error(err)
-			return
+		_ = w.WriteMsg(answer)
+	})
+	for _, server := range []*dns.Server{{PacketConn: pc, Handler: handler}, {Listener: listener, Handler: handler}} {
+		ready := make(chan struct{})
+		server.NotifyStartedFunc = func() { close(ready) }
+		go server.ActivateAndServe()
+		<-ready
+		defer server.Shutdown()
+	}
+	var sockets atomic.Int32
+	dialer := &net.Dialer{Timeout: time.Second, Control: func(_, destination string, _ syscall.RawConn) error {
+		if destination != address {
+			t.Errorf("query left local module: %s", destination)
 		}
-		packet, _ = nodeAnswer(msg).Pack()
-		w.Header().Set("Content-Type", "application/dns-message")
-		w.Write(packet)
-	}))
-	defer certServer.Close()
-	roots := x509.NewCertPool()
-	roots.AddCert(certServer.Certificate())
-	for _, scheme := range []string{"udp", "tcp", "tls", "https"} {
-		t.Run(scheme, func(t *testing.T) {
-			endpointURL := certServer.URL + "/dns-query?test=1"
-			var count atomic.Int32
-			if scheme != "https" {
-				server := &dns.Server{Handler: dns.HandlerFunc(func(w dns.ResponseWriter, msg *dns.Msg) { count.Add(1); w.WriteMsg(nodeAnswer(msg)) })}
-				if scheme == "udp" {
-					pc, err := net.ListenPacket("udp4", "127.0.0.1:0")
-					if err != nil {
-						t.Fatal(err)
-					}
-					server.PacketConn = pc
-					endpointURL = "udp://" + pc.LocalAddr().String()
-				} else {
-					listener, err := net.Listen("tcp4", "127.0.0.1:0")
-					if err != nil {
-						t.Fatal(err)
-					}
-					if scheme == "tls" {
-						listener = tls.NewListener(listener, certServer.TLS)
-					}
-					server.Listener = listener
-					endpointURL = scheme + "://" + listener.Addr().String()
-				}
-				server.NotifyStartedFunc = func() {}
-				started := make(chan struct{})
-				server.NotifyStartedFunc = func() { close(started) }
-				go server.ActivateAndServe()
-				<-started
-				defer server.Shutdown()
-			}
-			endpoint, err := ParseIPDNS(endpointURL)
-			if err != nil {
-				t.Fatal(err)
-			}
-			var sockets atomic.Int32
-			dialer := &net.Dialer{Timeout: time.Second, Control: func(_, address string, _ syscall.RawConn) error {
-				if address != endpoint.Address() {
-					t.Errorf("query left selected endpoint: %s", address)
-				}
-				sockets.Add(1)
-				return nil
-			}}
-			ips, err := lookupNode("node.invalid", endpoint, dialer, roots)
-			if err != nil || !reflect.DeepEqual(ips, []string{"192.0.2.1", "2001:db8::1"}) || sockets.Load() == 0 {
-				t.Fatalf("got %v %v, sockets %d", ips, err, sockets.Load())
-			}
-			before := sockets.Load()
-			ips, err = lookupNode("203.0.113.1", endpoint, dialer, roots)
-			if err != nil || !reflect.DeepEqual(ips, []string{"203.0.113.1"}) || sockets.Load() != before {
-				t.Fatal("IP node performed DNS query")
-			}
-			if _, err := lookupNode("failed.invalid", endpoint, dialer, roots); err == nil || !strings.Contains(err.Error(), "SERVFAIL") {
-				t.Fatalf("query failure hidden: %v", err)
-			}
-			if scheme == "tls" || scheme == "https" {
-				if _, err := LookupNode("node.invalid", endpoint, dialer); err == nil {
-					t.Fatal("untrusted TLS certificate accepted")
-				}
-			}
-		})
+		sockets.Add(1)
+		return nil
+	}}
+	for _, fallback := range []bool{false, true} {
+		truncated.Store(fallback)
+		ips, err := LookupNode(context.Background(), "node.invalid", address, "current", dialer)
+		if err != nil || !reflect.DeepEqual(ips, []string{"192.0.2.1", "2001:db8::1"}) {
+			t.Fatalf("got %v %v", ips, err)
+		}
+	}
+	before := sockets.Load()
+	if ips, err := LookupNode(context.Background(), "203.0.113.1", address, "current", dialer); err != nil || !reflect.DeepEqual(ips, []string{"203.0.113.1"}) || sockets.Load() != before {
+		t.Fatal("IP node performed DNS query")
+	}
+	truncated.Store(false)
+	if _, err := LookupNode(context.Background(), "failed.invalid", address, "current", dialer); err == nil || !strings.Contains(err.Error(), "SERVFAIL") {
+		t.Fatalf("query failure hidden: %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := LookupNode(ctx, "node.invalid", address, "current", dialer); err == nil {
+		t.Fatal("cancelled query succeeded")
 	}
 }

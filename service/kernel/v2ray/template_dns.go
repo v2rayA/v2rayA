@@ -444,52 +444,34 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		}
 	}
 	nodeDomains = common.Deduplicate(nodeDomains)
-	if len(nodeDomains) > 0 {
-		var endpoint *resolv.IPDNSEndpoint
-		if PlannedDNSHijack(setting) {
-			endpoint = t.NodeDNS
+	endpoint := t.NodeDNS
+	if endpoint == nil {
+		var err error
+		endpoint, err = SelectNodeDNS(setting, rules)
+		if err != nil {
+			return err
 		}
-		if PlannedDNSHijack(setting) && endpoint == nil {
-			var err error
-			endpoint, err = SelectNodeDNS(setting, rules)
-			if err != nil {
-				return err
-			}
-			t.NodeDNS = endpoint
-		}
-		if endpoint == nil {
-			// Outside DNS takeover retain the previous node upstream behavior.
-			address := "223.5.5.5:53"
-			for _, s := range append(directDnsServers(), bootstrapDns...) {
-				if host, _, err := net.SplitHostPort(s); err == nil {
-					if ip := net.ParseIP(host); ip != nil && !ip.IsLoopback() {
-						address = s
-						break
-					}
-				}
-			}
-			endpoint, _ = resolv.ParseIPDNS(address)
-		}
-		// 不能 append 到末尾：模块以最后一个非 bootstrap 上游作为默认上游
-		upstreams = append([]map[string]interface{}{{
-			"id":          "upstream-node",
-			"addr":        endpoint.UpstreamAddress(),
-			"protocol":    endpoint.Protocol(),
-			"server_name": endpoint.IP.String(),
-			"proxy_tag":   "direct",
-			"bootstrap":   false,
-		}}, upstreams...)
-		rulesList = append([]map[string]interface{}{{
-			"id":            "rule-node",
-			"upstream":      "upstream-node",
-			"action":        "route",
-			"policy":        "single",
-			"domain":        nil,
-			"domain_suffix": nodeDomains,
-			"ip":            nil,
-			"client_ip":     nil,
-		}}, rulesList...)
+		t.NodeDNS = endpoint
 	}
+	// 不能 append 到末尾：模块以最后一个非 bootstrap 上游作为默认上游
+	upstreams = append([]map[string]interface{}{{
+		"id":          "upstream-node",
+		"addr":        endpoint.UpstreamAddress(),
+		"protocol":    endpoint.Protocol(),
+		"server_name": endpoint.IP.String(),
+		"proxy_tag":   "direct",
+		"bootstrap":   false,
+	}}, upstreams...)
+	rulesList = append([]map[string]interface{}{{
+		"id":            "rule-node",
+		"upstream":      "upstream-node",
+		"action":        "route",
+		"policy":        "single",
+		"domain":        nil,
+		"domain_suffix": nodeDomains,
+		"ip":            nil,
+		"client_ip":     nil,
+	}}, rulesList...)
 
 	cfg["upstreams"] = upstreams
 	cfg["rules"] = rulesList
@@ -506,7 +488,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	}
 	t.DnsModuleConfig = json.RawMessage(raw)
 
-	return nil
+	return t.setNodeDNS(nodeDomains)
 }
 
 // getSystemDnsServers 读取当前系统的 DNS 服务器列表（从 /etc/resolv.conf）。

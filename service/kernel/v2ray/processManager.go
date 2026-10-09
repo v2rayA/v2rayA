@@ -141,7 +141,9 @@ func (m *CoreProcessManager) setupTransparentProxy(p *Process, generation uint64
 		if err = m.mutateHost(p, generation, func() error { return runHook("pre-start") }); err != nil {
 			return err
 		}
-		waitForTransparentDNS(tmpl)
+		if err = p.WaitDNSReady(p.ctx); err != nil {
+			return err
+		}
 		if err = m.checkProcessOwner(p, generation); err != nil {
 			return err
 		}
@@ -366,6 +368,14 @@ func (m *CoreProcessManager) mutateHost(p *Process, generation uint64, mutate fu
 
 func (m *CoreProcessManager) afterStart(p *Process, generation uint64) (err error) {
 	t := p.template
+	if p.dnsToken != "" {
+		if err = p.WaitDNSReady(p.ctx); err != nil {
+			return err
+		}
+		if err = p.waitCoreAPI(p.ctx); err != nil {
+			return err
+		}
+	}
 	if err = m.setupTransparentProxy(p, generation, t.Setting, t); err != nil {
 		return err
 	}

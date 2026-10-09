@@ -168,6 +168,9 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 		}
 	}
 
+	if result.RuleID == "rule-node" && upstream == nil {
+		return nil, fmt.Errorf("node DNS upstream is unavailable")
+	}
 	// If no upstream found, or no router matched, use first available upstream.
 	if upstream == nil && upstreamMgr != nil {
 		// Try to find a non-bootstrap upstream.
@@ -283,6 +286,9 @@ func (h *DnsHandler) handleRoute(ctx context.Context, query *DnsQuery, module *D
 	}
 
 	if resp == nil {
+		if result.RuleID == "rule-node" {
+			return nil, fmt.Errorf("node DNS upstream returned no response")
+		}
 		log.Printf("[dns] empty response for %s %s", QTypeToString(query.QType), query.Name)
 		return h.buildStubResponse(query), nil
 	}

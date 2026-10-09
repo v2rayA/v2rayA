@@ -79,8 +79,7 @@ func executeRun(cmd *base.Command, args []string) {
 	// 获取配置文件路径（需要在 xray 加载配置之前读取，因为 xray 会处理掉自定义字段）
 	configFiles := getConfigFilePath(true)
 
-	// 先启动 xray-core，使其路由引擎（dispatcher）可用。
-	// DNS 模块在 xray 之后启动，以便使用 xray 的路由分流走内部逻辑（类似原始 xray DNS 模块）。
+	// 构建 xray-core 即可取得 dispatcher；后台探测在 DNS 就绪后启动。
 	server, err := startXrayFromFiles(configFiles)
 	if err != nil {
 		fmt.Println("Failed to start:", err)
@@ -92,14 +91,16 @@ func executeRun(cmd *base.Command, args []string) {
 		os.Exit(0)
 	}
 
-	if err := server.Start(); err != nil {
-		fmt.Println("Failed to start:", err)
-		os.Exit(-1)
-	}
-
-	// xray 启动后，获取路由 dispatcher 并启动 DNS 模块（如配置了 dns_module）
+	// Initialize DNS before Xray starts its background node probes.
 	if err := startDnsModuleWithXray(configFiles, server); err != nil {
+		_ = server.Close()
 		fmt.Println("Failed to start DNS module:", err)
+		os.Exit(23)
+	}
+	if err := server.Start(); err != nil {
+		stopDnsModule()
+		_ = server.Close()
+		fmt.Println("Failed to start:", err)
 		os.Exit(23)
 	}
 
