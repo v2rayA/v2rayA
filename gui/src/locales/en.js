@@ -311,11 +311,11 @@ export default {
     modeService: "Service Only",
     modeHijack: "Service and Interception",
     modeOffHelp:
-      "No DNS module runs and no query is redirected to one. The rules below are kept and apply again once the mode is on.",
+      "No DNS module runs and no query is redirected to one. The rules below are kept and apply again once the mode is on. Node domains do not use built-in DNS.",
     modeServiceHelp:
-      "The DNS module runs on its own address, but the system resolvers, the firewall DNS rules and the TUN relay are left alone. Use it when another program already points DNS at v2rayA.",
+      "The DNS module runs on its own address, but the system resolvers, the firewall DNS rules and the TUN relay are left alone. Use it when another program already points DNS at v2rayA. Node domains use built-in DNS.",
     modeHijackHelp:
-      "The DNS module runs and v2rayA points the system's queries at it: the resolver is changed, port 53 is diverted and the rules below apply. Encrypted DNS is not intercepted.",
+      "The DNS module runs and v2rayA points the system's queries at it: the resolver is changed, port 53 is diverted and the rules below apply. Encrypted DNS is not intercepted. Node domains use built-in DNS.",
     offKeepsRules:
       "{n} saved rules are kept and apply again when the mode is on.",
     saved: "DNS settings saved and applied",

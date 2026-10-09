@@ -301,11 +301,11 @@ export default {
     modeService: "仅服务",
     modeHijack: "服务与接管",
     modeOffHelp:
-      "不启动 DNS 模块，也不把任何查询导向它。下方的规则会保留，模式重新开启后继续生效。",
+      "不启动 DNS 模块，也不把任何查询导向它。下方的规则会保留，模式重新开启后继续生效。节点域名不由内置 DNS 解析。",
     modeServiceHelp:
-      "DNS 模块在自己的地址上运行，但不改动系统解析器、防火墙的 DNS 规则，也不做 TUN 中继。当已有其他程序把 DNS 指向 v2rayA 时使用。",
+      "DNS 模块在自己的地址上运行，但不改动系统解析器、防火墙的 DNS 规则，也不做 TUN 中继。当已有其他程序把 DNS 指向 v2rayA 时使用。节点域名由内置 DNS 解析。",
     modeHijackHelp:
-      "DNS 模块运行，并把系统查询指向它：改写解析器、导流 53 端口，下方规则随之生效。加密 DNS 不会被接管。",
+      "DNS 模块运行，并把系统查询指向它：改写解析器、导流 53 端口，下方规则随之生效。加密 DNS 不会被接管。节点域名由内置 DNS 解析。",
     offKeepsRules: "已保存的 {n} 条规则会保留，模式开启后继续生效。",
     saved: "DNS 设置已保存并应用",
     saveFailed: "无法保存 DNS 设置：{message}",
