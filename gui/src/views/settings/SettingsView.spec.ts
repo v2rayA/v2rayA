@@ -273,15 +273,17 @@ describe("node DNS selection", () => {
     );
   });
 
-  test("shows auto IP, translates sources and refreshes after saving", async () => {
+  test("shows auto URL, translates sources and refreshes after saving", async () => {
     await mountPage();
     const select = wrapper
       .findAllComponents({ name: "VSelect" })
       .find((v) => v.props("label") === "Node resolution DNS")!;
-    expect(select.text()).toContain("223.5.5.5");
-    expect(select.text()).toContain("(auto)");
+    expect(select.text().replace(/\s+/g, " ")).toContain(
+      "udp://223.5.5.5:53 (auto)",
+    );
     expect(select.props("items")).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({ title: "udp://223.5.5.5:53 (auto)" }),
         expect.objectContaining({ title: "udp://223.5.5.5:53 (direct group)" }),
       ]),
     );
@@ -294,6 +296,24 @@ describe("node DNS selection", () => {
       expect.anything(),
     );
     expect(getNodeDnsOptions).toHaveBeenCalledTimes(2);
+  });
+
+  test("keeps the full IPv6 DoH URL for auto without saving the endpoint", async () => {
+    const url = "https://[2001:db8::53]:443/dns-query?profile=node";
+    vi.mocked(getNodeDnsOptions).mockResolvedValue({
+      options: [{ value: "auto", url, category: "auto" }],
+    });
+    await mountPage();
+    expect(wrapper.get(".node-dns").text().replace(/\s+/g, " ")).toContain(
+      `${url} (auto)`,
+    );
+    await choose("Log Level", "Debug");
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).toHaveBeenCalledWith(
+      expect.objectContaining({ nodeDns: "auto" }),
+      expect.anything(),
+    );
   });
 
   test("restores the saved selection after a rejected apply", async () => {

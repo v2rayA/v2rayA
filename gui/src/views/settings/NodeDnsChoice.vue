@@ -22,17 +22,12 @@ const categories = computed(() => ({
   proxy: t("nodeDns.categories.proxy"),
   fallback: t("nodeDns.categories.fallback"),
 }));
-function address(option: NodeDnsOption): string {
-  return option.value === "auto"
-    ? new URL(option.url).hostname.replace(/^\[|\]$/g, "")
-    : option.url;
-}
 const items = computed(() =>
   props.options.map((option) => ({
     ...option,
-    address: address(option),
+    address: option.url,
     categoryText: categories.value[option.category],
-    title: `${address(option)} (${categories.value[option.category]})`,
+    title: `${option.url} (${categories.value[option.category]})`,
   })),
 );
 const selection = computed(
