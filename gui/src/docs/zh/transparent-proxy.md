@@ -15,24 +15,28 @@
 
 | 实现       | 平台                                                     | 说明                                                                                             |
 | ---------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `redirect` | Linux                                                    | iptables/nftables `REDIRECT`；只有 TCP，另把 53 端口的 DNS 重定向到内核的 DNS 模块（52353 端口） |
+| `redirect` | Linux                                                    | iptables/nftables `REDIRECT`；只有 TCP；开启 **DNS 接管**时，另把 53 端口的 DNS 重定向到内核的 DNS 模块（52353 端口） |
 | `tproxy`   | Linux                                                    | iptables/nftables `TPROXY`；TCP 与 UDP                                                           |
 | `tun`      | Linux、Windows、macOS                                    | 内核打开 TUN 设备；TCP 与 UDP；自动排除 v2rayA 与内核自身                                        |
 | 系统代理   | Windows；Linux 与 macOS 在非 root 运行（`--lite`）时可用 | 修改桌面的代理设置（Linux 上为 GNOME 与 KDE）；只覆盖遵守该设置的应用                            |
 
 `redirect` 与 `tproxy` 需要 root 和 `iptables` 或 `nftables`；`tun` 在 Linux 上需要 `/dev/net/tun` 与 `ip` 命令，在 Windows 与 macOS 上需要管理员权限。
 
-**排除的网卡名前缀**让从指定网卡进入的流量（Docker 网桥、VPN 隧道；默认为 `docker*`、`veth*`、`wg*`、`ppp*`）不经过 `redirect` 与 `tproxy`，它们的 DNS 仍会被拦截。
+**排除的网卡名前缀**让从指定网卡进入的流量（Docker 网桥、VPN 隧道；默认为 `docker*`、`veth*`、`wg*`、`ppp*`）不经过 `redirect` 与 `tproxy`，只有开启 **DNS 接管**时，它们的 DNS 才会被拦截。
+
+**DNS 接管**决定 v2rayA 是否接管 DNS。开启时的行为即本页其余部分描述的。关闭时系统解析器设置不被改动（Linux 上包括 `/etc/resolv.conf`），内核的 DNS 模块不启动，下方的 DNS 规则也不生效：`redirect`、`tproxy` 与系统代理让 53 端口的明文 TCP/UDP 直通而不被导向 DNS 模块，`tun` 则让它直连发出。加密 DNS 本来就不被拦截，无需为此关闭。
 
 `--redirect-respect-bound-device`（Linux）让用 `SO_BINDTODEVICE` 绑定到网卡的 TCP 连接绕过 `redirect`：NetworkManager 的联网检测就是这类连接，被重定向后会报告网络受限，依赖它的应用一直离线。默认关闭。打开后，服务通过 cgroup BPF 给这类连接打上 `0x80` 标记；这需要 5.14 及以上内核和 cgroup v2，缺少时 `redirect` 会启动失败。
 
 ## TUN
 
-内核创建 TUN 设备并配置地址。**自动路由**开启时由 v2rayA 安装路由并把系统解析器指向内核；关闭时由**配置路由脚本**里的安装与卸载脚本完成。
+内核创建 TUN 设备并配置地址。**自动路由**开启时由 v2rayA 安装路由；开启 **DNS 接管**时还会把系统解析器指向内核；关闭时由**配置路由脚本**里的安装与卸载脚本完成。
 
-不会进入 TUN 的流量：内核自己的连接、`direct` 出站与 DNS 模块的上游查询（Linux 通过套接字标记，Windows 与 macOS 通过绑定物理网卡）。v2rayA 与内核始终被排除；**TUN 自定义排除进程**按可执行文件名排除更多进程，每行一个，只对能识别出所属进程的连接生效，这些进程的 DNS 仍由内核的 DNS 模块回答。比默认路由更精确的路由（直连网段、静态路由）同样不经过 TUN。
+不会进入 TUN 的流量：内核自己的连接、`direct` 出站与 DNS 模块的上游查询（Linux 通过套接字标记，Windows 与 macOS 通过绑定物理网卡）。v2rayA 与内核始终被排除；**TUN 自定义排除进程**按可执行文件名排除更多进程，每行一个，只对能识别出所属进程的连接生效；开启 **DNS 接管**时，这些进程的 DNS 仍由内核的 DNS 模块回答。比默认路由更精确的路由（直连网段、静态路由）同样不经过 TUN。
 
-到达 TUN 的 53 端口明文 DNS 由内核的 DNS 模块按 DNS 规则回答；加密 DNS 不被拦截。Windows 上系统解析器指向 TUN 网关，macOS 上指向内核在 `127.0.0.1` 的监听，后者要求 53 端口空闲。
+开启 **DNS 接管**时，到达 TUN 的 53 端口明文 DNS 由内核的 DNS 模块按 DNS 规则回答；加密 DNS 不被拦截。此时 Windows 上系统解析器指向 TUN 网关，macOS 上指向内核在 `127.0.0.1` 的监听，后者要求 53 端口空闲。
+
+**DNS 接管**关闭时 TUN 不建立该中继，两个平台的系统解析器也都不修改；仍然进入 TUN 的查询从设备直连发出。**自动路由**关闭、由路由脚本接管网络配置时同样如此：v2rayA 不修改解析器设置，DNS 也归脚本负责。
 
 已知限制：Windows 与 macOS 上直接向局域网 DNS 查询的应用仍会绕过 TUN。
 

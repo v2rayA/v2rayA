@@ -17,7 +17,7 @@ var (
 type tproxy interface {
 	AddIPWhitelist(cidr string)
 	RemoveIPWhitelist(cidr string)
-	GetSetupCommands() Setter
+	GetSetupCommands(dnsHijack bool) Setter
 	GetCleanCommands() Setter
 }
 
@@ -62,7 +62,7 @@ func (t *legacyTproxy) RemoveIPWhitelist(cidr string) {
 	cmds.ExecCommands(commands, false)
 }
 
-func (t *legacyTproxy) GetSetupCommands() Setter {
+func (t *legacyTproxy) GetSetupCommands(dnsHijack bool) Setter {
 	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := legacySetupValues()
 	if err != nil {
 		return NewErrorSetter(err)
@@ -75,16 +75,10 @@ ip route add local 0.0.0.0/0 dev lo table 100
 iptables -w 2 -t mangle -N TP_OUT
 iptables -w 2 -t mangle -N TP_PRE
 iptables -w 2 -t mangle -N TP_RULE
+` + legacyDnsEarlyBypass("iptables", dnsHijack) + `
 iptables -w 2 -t mangle -N TP_MARK
-iptables -w 2 -t mangle -N DNS_MARK
-
-# DNS 规则必须在透明代理规则之前插入（环路保护）
-iptables -w 2 -t mangle -I OUTPUT -p udp --dport 53 -j DNS_MARK
-iptables -w 2 -t mangle -I OUTPUT -p tcp --dport 53 -j DNS_MARK
+` + legacyDnsMarkChain("iptables", dnsHijack) + legacyDnsMarkHooks("iptables", dnsHijack) + `
 iptables -w 2 -t mangle -I OUTPUT -j TP_OUT
-# DNS 规则必须在透明代理规则之前插入
-iptables -w 2 -t mangle -I PREROUTING -p udp --dport 53 -j DNS_MARK
-iptables -w 2 -t mangle -I PREROUTING -p tcp --dport 53 -j DNS_MARK
 iptables -w 2 -t mangle -I PREROUTING -j TP_PRE
 
 iptables -w 2 -t mangle -A TP_OUT -m mark --mark 0x80/0x80 -j RETURN
@@ -94,13 +88,7 @@ iptables -w 2 -t mangle -A TP_OUT -p udp -m addrtype --src-type LOCAL ! --dst-ty
 iptables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 0x40/0xc0 -j RETURN
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 iptables -w 2 -t mangle -A TP_PRE -p udp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
-# 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
-# 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
-iptables -w 2 -t mangle -A TP_PRE -p tcp --dport 52353 -j RETURN
-iptables -w 2 -t mangle -A TP_PRE -p udp --dport 52353 -j RETURN
-# DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
-iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip 127.2.0.17
-iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip 127.2.0.17
+` + legacyDnsLoopbackReturn("iptables", dnsHijack) + legacyDnsTproxyToModule("iptables", dnsHijack, "127.2.0.17") + `
 # 通用 TPROXY 规则
 iptables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 52345 --on-ip 127.0.0.1
 iptables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 52345 --on-ip 127.0.0.1
@@ -114,9 +102,7 @@ iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 	for _, v := range excludedInterfaces {
 		commands += fmt.Sprintf("iptables -w 2 -t mangle -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 	}
-	commands += `
-iptables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
-iptables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
+	commands += legacyDnsRuleMark("iptables", dnsHijack) + `
 iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 
@@ -127,11 +113,7 @@ iptables -w 2 -t mangle -A TP_RULE -j TP_MARK
 iptables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-xmark 0x40/0x40
 iptables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 0x40/0x40
 iptables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
-# DNS_MARK 链：环路保护 + 标记 DNS 流量
-iptables -w 2 -t mangle -A DNS_MARK -m mark --mark 0x80/0x80 -j RETURN
-iptables -w 2 -t mangle -A DNS_MARK -j MARK --set-xmark 0x40/0x40
-iptables -w 2 -t mangle -A DNS_MARK -j ACCEPT
-`
+` + legacyDnsMarkChainRules("iptables", dnsHijack)
 	if legacyIPv6Supported() {
 		commands += `
 ip -6 rule add fwmark 0x40/0xc0 table 100
@@ -140,16 +122,10 @@ ip -6 route add local ::/0 dev lo table 100
 ip6tables -w 2 -t mangle -N TP_OUT
 ip6tables -w 2 -t mangle -N TP_PRE
 ip6tables -w 2 -t mangle -N TP_RULE
+` + legacyDnsEarlyBypass("ip6tables", dnsHijack) + `
 ip6tables -w 2 -t mangle -N TP_MARK
-ip6tables -w 2 -t mangle -N DNS_MARK
-
-# IPv6 DNS 规则必须在透明代理规则之前插入
-ip6tables -w 2 -t mangle -I OUTPUT -p udp --dport 53 -j DNS_MARK
-ip6tables -w 2 -t mangle -I OUTPUT -p tcp --dport 53 -j DNS_MARK
+` + legacyDnsMarkChain("ip6tables", dnsHijack) + legacyDnsMarkHooks("ip6tables", dnsHijack) + `
 ip6tables -w 2 -t mangle -I OUTPUT -j TP_OUT
-# IPv6 DNS 规则必须在透明代理规则之前插入
-ip6tables -w 2 -t mangle -I PREROUTING -p udp --dport 53 -j DNS_MARK
-ip6tables -w 2 -t mangle -I PREROUTING -p tcp --dport 53 -j DNS_MARK
 ip6tables -w 2 -t mangle -I PREROUTING -j TP_PRE
 
 ip6tables -w 2 -t mangle -A TP_OUT -m mark --mark 0x80/0x80 -j RETURN
@@ -159,13 +135,7 @@ ip6tables -w 2 -t mangle -A TP_OUT -p udp -m addrtype --src-type LOCAL ! --dst-t
 ip6tables -w 2 -t mangle -A TP_PRE -i lo -m mark ! --mark 0x40/0xc0 -j RETURN
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m addrtype ! --src-type LOCAL ! --dst-type LOCAL -j TP_RULE
-# 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
-# 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
-ip6tables -w 2 -t mangle -A TP_PRE -p tcp --dport 52353 -j RETURN
-ip6tables -w 2 -t mangle -A TP_PRE -p udp --dport 52353 -j RETURN
-# DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
-ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip ::1
-ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 --dport 53 -j TPROXY --on-port 52353 --on-ip ::1
+` + legacyDnsLoopbackReturn("ip6tables", dnsHijack) + legacyDnsTproxyToModule("ip6tables", dnsHijack, "::1") + `
 # 通用 TPROXY 规则
 ip6tables -w 2 -t mangle -A TP_PRE -p tcp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 52345 --on-ip ::1
 ip6tables -w 2 -t mangle -A TP_PRE -p udp -m mark --mark 0x40/0xc0 -j TPROXY --on-port 52345 --on-ip ::1
@@ -179,9 +149,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 		for _, v := range excludedInterfaces {
 			commands += fmt.Sprintf("ip6tables -w 2 -t mangle -A TP_RULE -o %s -j RETURN\n", strings.ReplaceAll(v, "*", "+"))
 		}
-		commands += `
-ip6tables -w 2 -t mangle -A TP_RULE -p udp --dport 53 -j TP_MARK
-ip6tables -w 2 -t mangle -A TP_RULE -p tcp --dport 53 -j TP_MARK
+		commands += legacyDnsRuleMark("ip6tables", dnsHijack) + `
 ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
 `
 		commands += legacyWhitelist6Marker + "\n"
@@ -191,11 +159,7 @@ ip6tables -w 2 -t mangle -A TP_RULE -j TP_MARK
 ip6tables -w 2 -t mangle -A TP_MARK -p tcp -m tcp --syn -j MARK --set-xmark 0x40/0x40
 ip6tables -w 2 -t mangle -A TP_MARK -p udp -m conntrack --ctstate NEW -j MARK --set-xmark 0x40/0x40
 ip6tables -w 2 -t mangle -A TP_MARK -j CONNMARK --save-mark
-# IPv6 DNS_MARK 链：环路保护 + 标记 DNS 流量
-ip6tables -w 2 -t mangle -A DNS_MARK -m mark --mark 0x80/0x80 -j RETURN
-ip6tables -w 2 -t mangle -A DNS_MARK -j MARK --set-xmark 0x40/0x40
-ip6tables -w 2 -t mangle -A DNS_MARK -j ACCEPT
-`
+` + legacyDnsMarkChainRules("ip6tables", dnsHijack)
 	}
 	return newLegacyWhitelistSetter(withDnsModulePort(commands), "mangle", whiteIpv4List, whiteIpv6List)
 }
@@ -270,7 +234,7 @@ func (t *nftTproxy) RemoveIPWhitelist(cidr string) {
 	cmds.ExecCommands(command, false)
 }
 
-func (t *nftTproxy) GetSetupCommands() Setter {
+func (t *nftTproxy) GetSetupCommands(dnsHijack bool) Setter {
 	excludedInterfaces, whiteIpv4List, whiteIpv6List, err := getTproxySetupValues()
 	if err != nil {
 		return NewErrorSetter(err)
@@ -333,39 +297,27 @@ func (t *nftTproxy) GetSetupCommands() Setter {
     chain tp_pre {
         iifname "lo" mark & 0xc0 != 0x40 return
         meta l4proto { tcp, udp } fib saddr type != local fib daddr type != local jump tp_rule
-        # 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
-        # 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
-        meta l4proto { tcp, udp } th dport 52353 return
-        # DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
-        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 tproxy ip to 127.2.0.17:52353
-        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 tproxy ip6 to [::1]:52353
+` + nftDnsTproxyToModule(dnsHijack) + `
         # 通用 TPROXY 规则
         meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip to 127.0.0.1:52345
         meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip6 to [::1]:52345
     }
 
-    chain dns_mark {
-        meta mark & 0x80 == 0x80 return
-        meta mark set mark | 0x40
-        accept
-    }
-
+` + nftDnsMarkChain(dnsHijack) + `
     chain output {
         type route hook output priority mangle - 5; policy accept;
-        # DNS 规则必须在透明代理规则之前匹配
-        meta nfproto { ipv4, ipv6 } meta l4proto { tcp, udp } th dport 53 jump dns_mark
+` + nftDnsMarkHooks(dnsHijack) + `
         meta nfproto { ipv4, ipv6 } jump tp_out
     }
 
     chain prerouting {
         type filter hook prerouting priority mangle - 5; policy accept;
-        # DNS 规则必须在透明代理规则之前匹配
-        meta nfproto { ipv4, ipv6 } meta l4proto { tcp, udp } th dport 53 jump dns_mark
+` + nftDnsMarkHooks(dnsHijack) + `
         meta nfproto { ipv4, ipv6 } jump tp_pre
     }
 
     chain tp_rule {
-        meta mark set ct mark
+` + nftDnsEarlyBypass(dnsHijack) + `        meta mark set ct mark
         meta mark & 0xc0 == 0x40 return
 `
 	for _, v := range excludedInterfaces {
@@ -400,9 +352,15 @@ func (t *nftTproxy) GetSetupCommands() Setter {
     }
 }
 `
+	// Port 53 is marked for the DNS module while interception is on. With the
+	// opt-out it is already returned at the start of tp_rule, before a stale
+	// conntrack mark can reach the generic TPROXY rule.
+	dnsPortRule := "        meta l4proto { tcp, udp } th dport 53 jump tp_mark\n"
+	if !dnsHijack {
+		dnsPortRule = ""
+	}
 	table = strings.ReplaceAll(table, "# anti-pollution", `
-        meta l4proto { tcp, udp } th dport 53 jump tp_mark
-        meta mark & 0xc0 == 0x40 return
+`+dnsPortRule+`        meta mark & 0xc0 == 0x40 return
 		`)
 
 	if !IsIPv6Supported() {

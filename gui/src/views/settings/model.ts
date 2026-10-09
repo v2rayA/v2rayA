@@ -32,6 +32,7 @@ export const defaultForm = () => ({
   subscriptionAutoUpdateMode: "none",
   subscriptionAutoUpdateIntervalHour: 0,
   proxyModeWhenSubscribe: "direct",
+  dnsHijack: "yes",
   tcpFastOpen: "default",
   logLevel: "info",
   inboundSniffing: "disable",

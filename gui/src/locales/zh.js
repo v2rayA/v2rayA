@@ -206,6 +206,7 @@ export default {
     tunAutoRoute: "自动路由",
     ipForwardOn: "开启 IP 转发",
     portSharingOn: "允许局域网的连接",
+    dnsHijack: "DNS 接管",
     concurrency: "最大并发数",
     tunExcludeProcesses: "TUN 自定义排除进程",
     tcpFastOpen: "TCP Fast Open",
@@ -241,13 +242,15 @@ export default {
       transparentProxy:
         "全局代理开启后，无需经过额外设置，任何TCP流量均会经过V2RayA。另外，如需作为网关使得连接本机的其他主机或docker也享受代理，请勾选“开启局域网共享”。",
       transparentType:
-        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp，需要占用本地53端口以应对dns污染。★tun: 由核心打开 TUN 设备并接管默认路由；支持 Linux、Windows、macOS 与 UDP，自动排除 v2rayA 与核心自身，并可按进程名排除其他进程。Windows 与 macOS 上直接查询局域网 DNS 的应用仍会绕过它。",
+        "★tproxy: 支持udp，不支持docker。★redirect: docker友好，不支持udp；开启 DNS 接管时，还需要占用本地53端口以应对dns污染。★tun: 由核心打开 TUN 设备并接管默认路由；支持 Linux、Windows、macOS 与 UDP，自动排除 v2rayA 与核心自身，并可按进程名排除其他进程。Windows 与 macOS 上直接查询局域网 DNS 的应用仍会绕过它。",
       tproxyExcludedInterfaces:
         "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
       tunAutoRoute:
-        "开启时，v2rayA 自行安装路由与 DNS 设置。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
+        "开启时，v2rayA 自行安装路由；开启 DNS 接管时还会设置系统 DNS。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
+      dnsHijack:
+        "开启时由 v2rayA 接管 DNS：把系统解析器指向自身的 DNS 模块，并将 53 端口的明文 DNS 导向该模块，下方的 DNS 设置随之生效。关闭时系统保留自己的解析器设置，明文 DNS 也不会被劫持——仍然进入 TUN 的查询直连发出。加密 DNS 两种情况下都不会被接管。",
       tunExcludeProcesses:
-        "流量直连的进程名，一行一个，例如：chrome.exe、firefox。v2rayA 与核心始终排除。按 socket 属主的可执行文件名识别；查找前已关闭的 socket 或被其他进程复用的端口无法归属。被排除进程的 DNS 查询仍由核心 DNS 模块回答。",
+        "流量直连的进程名，一行一个，例如：chrome.exe、firefox。v2rayA 与核心始终排除。按 socket 属主的可执行文件名识别；查找前已关闭的 socket 或被其他进程复用的端口无法归属。开启 DNS 接管时，被排除进程的查询仍由核心 DNS 模块回答。",
       pacMode:
         "该选项设置规则分流端口所使用的路由模式。默认情况下规则分流端口为20172，HTTP协议。",
       tcpFastOpen:

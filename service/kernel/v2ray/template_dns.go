@@ -26,6 +26,10 @@ type Addr struct {
 // setDNS 生成新 DNS 模块的配置，嵌入 xray JSON 供 v2raya-core 读取。
 // v2raya-core 启动时解析此配置并启动独立 DNS 监听器，v2rayA 不参与 DNS 查询处理。
 func (t *Template) setDNS(serverInfos []serverInfo) error {
+	if !dnsHijackEnabled(t.Setting) {
+		t.DnsModuleConfig = nil
+		return nil
+	}
 	return t.generateDnsModuleConfig(serverInfos)
 }
 
@@ -64,7 +68,7 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 	// 127.2.0.17. Nothing sends to either on Windows.
 	switch runtime.GOOS {
 	case "darwin":
-		if setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting) {
+		if setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting) && dnsHijackEnabled(setting) {
 			// The system resolver is pointed at loopback in tun mode. If
 			// another resolver already owns the port, leave it to that one
 			// rather than start a core that cannot bind.

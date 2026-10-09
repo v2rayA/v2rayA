@@ -136,9 +136,35 @@ func TestWrongDirectionIsRejectedNotDropped(t *testing.T) {
 }
 
 func TestTunMipsMissingRequiredFieldFails(t *testing.T) {
-	doc := strings.Replace(string(tunMipsJSON("")), `"dnsTarget": "127.0.0.1:52353",`, "", 1)
+	doc := strings.Replace(string(tunMipsJSON("")), `"address4": "10.0.85.2/30",`, "", 1)
 	_, err := xray_core.LoadConfig("json", strings.NewReader(doc))
-	if err == nil || !strings.Contains(err.Error(), "dnsTarget") {
+	if err == nil || !strings.Contains(err.Error(), "address4") {
+		t.Fatalf("err = %v, want an address4 complaint", err)
+	}
+}
+
+// An empty dnsTarget is the service's way of saying DNS interception is off:
+// the inbound starts with no relay and port 53 is routed like any other
+// traffic, so the document must load.
+func TestTunMipsWithoutDnsTargetIsAccepted(t *testing.T) {
+	doc := strings.Replace(string(tunMipsJSON("")), `"dnsTarget": "127.0.0.1:52353",`, `"dnsTarget": "",`, 1)
+	cfg := loadBothWays(t, []byte(doc))
+	ib := findInbound(t, cfg, "transparent")
+	proxy, err := ib.ProxySettings.GetInstance()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tc, ok := proxy.(*hint_tunmips.Config)
+	if !ok {
+		t.Fatalf("proxy settings are %T", proxy)
+	}
+	if tc.DnsTarget != "" {
+		t.Fatalf("dnsTarget = %q, want empty", tc.DnsTarget)
+	}
+	// A malformed target is still an error; only the empty one is opt-out.
+	bad := strings.Replace(string(tunMipsJSON("")), `"dnsTarget": "127.0.0.1:52353"`, `"dnsTarget": "not-an-address"`, 1)
+	if _, err := xray_core.LoadConfig("json", strings.NewReader(bad)); err == nil ||
+		!strings.Contains(err.Error(), "dnsTarget") {
 		t.Fatalf("err = %v, want a dnsTarget complaint", err)
 	}
 }

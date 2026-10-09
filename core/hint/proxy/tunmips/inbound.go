@@ -57,11 +57,10 @@ func newHandler(ctx context.Context, config *Config) (*Handler, error) {
 			return nil, errors.New("tun-mips: address6 must be an IPv6 prefix, got ", fmt.Sprintf("%q", config.Address6))
 		}
 	}
-	if config.DnsTarget == "" {
-		return nil, errors.New("tun-mips: dnsTarget is required")
-	}
-	if _, err := netip.ParseAddrPort(config.DnsTarget); err != nil {
-		return nil, errors.New("tun-mips: dnsTarget must be host:port, got ", fmt.Sprintf("%q", config.DnsTarget))
+	if config.DnsTarget != "" {
+		if _, err := netip.ParseAddrPort(config.DnsTarget); err != nil {
+			return nil, errors.New("tun-mips: dnsTarget must be host:port, got ", fmt.Sprintf("%q", config.DnsTarget))
+		}
 	}
 	return h, nil
 }
@@ -104,7 +103,11 @@ func (h *Handler) Start() error {
 	fwd.sniffing = h.sniff
 	fwd.userLevel = h.config.UserLevel
 	fwd.uplink, fwd.downlink = h.uplink, h.downlnk
-	fwd.dns = newDNSHijack(h.config.DnsTarget)
+	// No dnsTarget means the user opted out of DNS interception: no relay,
+	// and port 53 is routed by the ordinary rules.
+	if h.config.DnsTarget != "" {
+		fwd.dns = newDNSHijack(h.config.DnsTarget)
+	}
 	selfPids := append([]uint32{uint32(os.Getpid())}, h.config.SelfPids...)
 	fwd.excl = newExclusion(h.config.ExcludeProcesses, selfPids)
 	fwd.directTag = h.config.DirectTag

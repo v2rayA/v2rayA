@@ -34,15 +34,16 @@ func NewErrorSetter(err error) Setter {
 	}}
 }
 
-type proxySetter interface {
-	GetSetupCommands() Setter
-	GetCleanCommands() Setter
+// SetWatcher needs the whitelist half of a setup command set only: the rule
+// text itself is built per run, because the DNS interception opt-out changes
+// what those rules contain.
+type ipWhitelistSetter interface {
 	AddIPWhitelist(cidr string)
 	RemoveIPWhitelist(cidr string)
 }
 
 // watch interface changes and add specific IPs to whitelist on iptables
-func SetWatcher(setter proxySetter) {
+func SetWatcher(setter ipWhitelistSetter) {
 	if watcher != nil {
 		watcher.Close()
 	}

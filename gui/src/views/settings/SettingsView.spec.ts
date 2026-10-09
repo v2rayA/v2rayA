@@ -35,6 +35,7 @@ const loaded: Setting = {
   subscriptionAutoUpdateMode: "auto_update_at_intervals",
   subscriptionAutoUpdateIntervalHour: 12,
   proxyModeWhenSubscribe: "direct",
+  dnsHijack: "yes",
   tcpFastOpen: "default",
   logLevel: "info",
   inboundSniffing: "http,tls",
@@ -95,6 +96,13 @@ async function toggle(label: string, value: boolean) {
   await flushPromises();
 }
 
+/** a row leaves through a transition, so the next tick has to pass too */
+async function settle() {
+  await flushPromises();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
+}
+
 describe("settings list", () => {
   test("edits settings through the list and preserves the save request contract", async () => {
     await mountPage();
@@ -146,6 +154,29 @@ describe("settings list", () => {
     await wrapper.get('button[type="submit"]').trigger("click");
     await flushPromises();
     expect(putSetting).toHaveBeenCalledOnce();
+  });
+
+  test("shows the DNS interception choice only while a transparent proxy runs", async () => {
+    await mountPage();
+    expect(
+      wrapper.find('button[aria-label^="DNS Interception:"]').exists(),
+    ).toBe(true);
+    await choose("Transparent Proxy/System Proxy", "Off");
+    await settle();
+    expect(
+      wrapper.find('button[aria-label^="DNS Interception:"]').exists(),
+    ).toBe(false);
+  });
+
+  test("turns the DNS interception off through the choice", async () => {
+    await mountPage();
+    await choose("DNS Interception", "Off");
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ dnsHijack: "no" }),
+      { signal: expect.any(AbortSignal) },
+    );
   });
 
   test("opens the existing About content as a dismissible dialog", async () => {

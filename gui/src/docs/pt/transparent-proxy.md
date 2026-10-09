@@ -15,24 +15,28 @@ Com o proxy transparente ativado, o tráfego chega ao núcleo sem nenhuma config
 
 | Implementação    | Plataformas                                                        | Observações                                                                                                              |
 | ---------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `redirect`       | Linux                                                              | `REDIRECT` do iptables/nftables; apenas TCP, além de DNS na porta 53 redirecionado ao módulo DNS do núcleo (porta 52353) |
+| `redirect`       | Linux                                                              | `REDIRECT` do iptables/nftables; apenas TCP, além de DNS na porta 53 redirecionado ao módulo DNS do núcleo (porta 52353) quando a **Interceptação de DNS** está ativada |
 | `tproxy`         | Linux                                                              | `TPROXY` do iptables/nftables; TCP e UDP                                                                                 |
 | `tun`            | Linux, Windows, macOS                                              | o núcleo abre um dispositivo TUN; TCP e UDP; exclui o v2rayA e o próprio núcleo automaticamente                          |
 | Proxy do sistema | Windows; Linux e macOS quando não é executado como root (`--lite`) | configura o proxy do ambiente gráfico (GNOME e KDE no Linux); abrange apenas os aplicativos que as respeitam             |
 
 `redirect` e `tproxy` exigem root e `iptables` ou `nftables`; `tun` exige `/dev/net/tun` e `ip` no Linux e privilégios de administrador no Windows e no macOS.
 
-**Prefixos de interfaces excluídos** mantém o tráfego que chega pelas interfaces indicadas (bridges do Docker, túneis VPN; `docker*`, `veth*`, `wg*`, `ppp*` por padrão) fora de `redirect` e `tproxy`; o DNS dessas interfaces ainda é interceptado.
+**Prefixos de interfaces excluídos** mantém o tráfego que chega pelas interfaces indicadas (bridges do Docker, túneis VPN; `docker*`, `veth*`, `wg*`, `ppp*` por padrão) fora de `redirect` e `tproxy`; o DNS dessas interfaces só é interceptado quando a **Interceptação de DNS** está ativada.
+
+**Interceptação de DNS** decide se o v2rayA assume o DNS de alguma forma. Ligada, o comportamento é o que o resto desta página descreve. Desligada, as configurações do resolvedor do sistema não são alteradas, incluindo `/etc/resolv.conf` no Linux; o módulo DNS do núcleo não é iniciado e as regras de DNS abaixo não têm efeito: `redirect`, `tproxy` e o proxy de sistema deixam o TCP/UDP simples na porta 53 passar em vez de desviá-lo, e o `tun` o envia direto. DNS criptografado não é interceptado de qualquer forma, não é preciso desligar por causa dele.
 
 `--redirect-respect-bound-device` (Linux) deixa as conexões TCP vinculadas a uma interface com `SO_BINDTODEVICE` fora do `redirect`: as verificações de conectividade do NetworkManager são conexões desse tipo e, redirecionadas, informam uma conexão limitada e mantêm os aplicativos offline. Desligado por padrão. Quando ligado, o serviço marca esses sockets com `0x80` por cgroup BPF; isso requer kernel 5.14 ou mais recente e cgroup v2, e sem eles o `redirect` não inicia.
 
 ## TUN
 
-O núcleo cria o dispositivo TUN e atribui seu endereço. Com **Rota automática** ativada, o v2rayA instala as rotas e direciona o resolvedor do sistema para o núcleo; com ela desativada, os scripts de configuração e remoção em **Configurar script de rota** fazem isso.
+O núcleo cria o dispositivo TUN e atribui seu endereço. Com **Rota automática** ativada, o v2rayA instala as rotas e, quando a **Interceptação de DNS** está ativada, direciona o resolvedor do sistema para o núcleo; com ela desativada, os scripts de configuração e remoção em **Configurar script de rota** fazem isso.
 
-Nunca entram no TUN: as conexões do próprio núcleo, a saída `direct` e as consultas do módulo DNS aos servidores upstream (por marca de socket no Linux, por vinculação à interface física no Windows e no macOS). O v2rayA e o núcleo são sempre excluídos; **Processos excluídos do TUN** exclui outros pelo nome do executável, um por linha, para conexões cujo processo responsável pode ser identificado; o DNS desses processos ainda vai para o módulo DNS do núcleo. Rotas mais específicas que a padrão (redes conectadas, rotas estáticas) também não passam pelo TUN.
+Nunca entram no TUN: as conexões do próprio núcleo, a saída `direct` e as consultas do módulo DNS aos servidores upstream (por marca de socket no Linux, por vinculação à interface física no Windows e no macOS). O v2rayA e o núcleo são sempre excluídos; **Processos excluídos do TUN** exclui outros pelo nome do executável, um por linha, para conexões cujo processo responsável pode ser identificado; quando a **Interceptação de DNS** está ativada, o DNS desses processos ainda vai para o módulo DNS do núcleo. Rotas mais específicas que a padrão (redes conectadas, rotas estáticas) também não passam pelo TUN.
 
-O DNS sem criptografia na porta 53 que chega ao TUN é respondido pelo módulo DNS do núcleo de acordo com as regras de DNS; o DNS criptografado não é interceptado. No Windows, o resolvedor do sistema é direcionado para o gateway do TUN; no macOS, para o serviço do núcleo que escuta em `127.0.0.1`, que precisa da porta 53 livre.
+Com a **Interceptação de DNS** ativada, o DNS sem criptografia na porta 53 que chega ao TUN é respondido pelo módulo DNS do núcleo de acordo com as regras de DNS; o DNS criptografado não é interceptado. Nesse caso, no Windows, o resolvedor do sistema é direcionado para o gateway do TUN; no macOS, para o serviço do núcleo que escuta em `127.0.0.1`, que precisa da porta 53 livre.
+
+Com a **Interceptação de DNS** desligada o TUN não monta esse relay e o resolvedor do sistema não é alterado em nenhuma das duas plataformas; uma consulta que ainda chegar sai direto do dispositivo. O mesmo vale com a **Rota automática** desligada e o script de rota no comando da rede: o v2rayA não muda a configuração do resolvedor, então o DNS também cabe ao script.
 
 Limitação conhecida: no Windows e no macOS, um aplicativo que consulta diretamente um resolvedor da rede local ainda não passa pelo TUN.
 

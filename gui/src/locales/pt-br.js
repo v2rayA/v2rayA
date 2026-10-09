@@ -211,6 +211,7 @@ export default {
     tunAutoRoute: "Rota automática",
     ipForwardOn: "Encaminhamento de IP",
     portSharingOn: "Compartilhamento de portas",
+    dnsHijack: "Interceptação de DNS",
     concurrency: "Concorrência",
     inboundSniffing: "Inspeção de tráfego",
     tunExcludeProcesses: "Processos excluídos do TUN",
@@ -252,13 +253,15 @@ export default {
       transparentProxy:
         "Com o proxy transparente ativado, nenhuma configuração extra é necessária e todo o tráfego TCP passará pelo v2rayA. Para fornecer proxy a outros computadores e ao Docker pelo gateway, ative a opção 'Compartilhar na LAN'.",
       transparentType:
-        "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP e precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
+        "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP; quando a Interceptação de DNS está ativada, também precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
       tproxyExcludedInterfaces:
         "Defina os prefixos das interfaces de rede que não devem passar pelo proxy transparente. O curinga * é aceito (convertido automaticamente em + no modo iptables). Por exemplo: docker*, veth*, wg*, ppp*, br-*. Separe vários prefixos com vírgulas.",
       tunAutoRoute:
-        "Quando ativado, o v2rayA instala as rotas e as configurações de DNS por conta própria. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
+        "Quando ativado, o v2rayA instala as rotas por conta própria e altera as configurações de DNS do sistema quando a Interceptação de DNS está ativada. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
+      dnsHijack:
+        "Quando ativado, o v2rayA assume o DNS: aponta o resolvedor do sistema para o próprio módulo DNS do núcleo e envia a porta 53 para ele, e as configurações de DNS abaixo passam a valer. Quando desativado, o sistema mantém suas próprias configurações de resolução e o DNS em texto claro não é desviado — as consultas que ainda chegam à TUN saem diretamente. DNS criptografado não é interceptado de qualquer forma.",
       tunExcludeProcesses:
-        "Nomes de processos cujo tráfego não passa pelo proxy, um por linha, por exemplo chrome.exe ou firefox. O v2rayA e o núcleo são sempre excluídos. O processo é identificado pelo nome do executável dono do socket; um socket fechado antes da consulta ou uma porta reutilizada por outro processo não podem ser atribuídos. As consultas DNS desses processos continuam sendo respondidas pelo módulo DNS do núcleo.",
+        "Nomes de processos cujo tráfego não passa pelo proxy, um por linha, por exemplo chrome.exe ou firefox. O v2rayA e o núcleo são sempre excluídos. O processo é identificado pelo nome do executável dono do socket; um socket fechado antes da consulta ou uma porta reutilizada por outro processo não podem ser atribuídos. Quando a Interceptação de DNS está ativada, as consultas desses processos continuam sendo respondidas pelo módulo DNS do núcleo.",
       pacMode: `Aqui você pode definir a regra de divisão de tráfego da porta de regras. Por padrão, a porta da "Regra de divisão de tráfego" é 20172 e usa o protocolo HTTP.`,
       tcpFastOpen:
         "Simplifica o handshake TCP para acelerar o estabelecimento da conexão. Isso pode destacar as características dos pacotes e causar falha na conexão se o sistema não for compatível.",

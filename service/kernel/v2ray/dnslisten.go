@@ -22,6 +22,15 @@ var (
 	DnsPortOccupied       = fmt.Errorf("dns port 53 is occupied")
 )
 
+// dnsHijackEnabled keeps the DNS interception opt-out compatible with old
+// settings: an absent or "default" value retains the historical behaviour.
+func dnsHijackEnabled(setting *configure.Setting) bool {
+	if setting == nil {
+		setting = configure.GetSettingNotNil()
+	}
+	return setting.DnsHijack != configure.No
+}
+
 // ShouldLocalDnsListen 在透明代理启用时返回 true，
 // 表示需要劫持 /etc/resolv.conf 将系统 DNS 指向 127.2.0.17:53，
 // 使 DNS 流量可以被 iptables/nftables 规则捕获后重定向到 52353。
@@ -41,7 +50,7 @@ func ShouldLocalDnsListen() bool {
 	if conf.GetEnvironmentConfig().Lite {
 		return false
 	}
-	return true
+	return dnsHijackEnabled(setting)
 }
 
 var couldListenCache struct {

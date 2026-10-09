@@ -30,7 +30,11 @@ var (
 	tunHalfRoutes6 = []netip.Prefix{netip.MustParsePrefix("::/1"), netip.MustParsePrefix("8000::/1")}
 )
 
-var tunLUID winipcfg.LUID
+var (
+	tunLUID           winipcfg.LUID
+	tunDNS4Configured bool
+	tunDNS6Configured bool
+)
 
 func tunInstalled() bool { return tunLUID != 0 }
 
@@ -107,7 +111,7 @@ func physicalDefault(family winipcfg.AddressFamily) (winipcfg.LUID, netip.Addr, 
 	return best.InterfaceLUID, best.NextHop.Addr(), true
 }
 
-func tunRoutesUp(_ *Template, nodeIPs []string) error {
+func tunRoutesUp(tmpl *Template, nodeIPs []string) error {
 	// Without a physical default route the core's sockets were not bound
 	// to an interface, and the /1 routes would send the core's own
 	// connections back into its device, each one spawning the next.
@@ -162,6 +166,8 @@ func tunRoutesUp(_ *Template, nodeIPs []string) error {
 		return fmt.Errorf("tun: adapter LUID: %w", err)
 	}
 	tunLUID = luid
+	tunDNS4Configured = false
+	tunDNS6Configured = false
 	gw4, gw6 := netip.MustParseAddr(tunGateway4), netip.MustParseAddr(tunGateway6)
 	for _, p := range tunHalfRoutes4 {
 		if err := luid.AddRoute(p, gw4, 0); err != nil {
@@ -181,14 +187,20 @@ func tunRoutesUp(_ *Template, nodeIPs []string) error {
 	}
 	// The system resolver asks the TUN's gateway address, whose queries the
 	// core intercepts; the lowest interface metric makes it the first
-	// resolver tried.
-	if err := luid.SetDNS(windows.AF_INET, []netip.Addr{gw4}, nil); err != nil {
-		tunRoutesDown()
-		return fmt.Errorf("tun: set DNS: %w", err)
-	}
-	if tunIPv6Enabled() {
-		if err := luid.SetDNS(windows.AF_INET6, []netip.Addr{gw6}, nil); err != nil {
-			log.Warn("tun: set IPv6 DNS: %v", err)
+	// resolver tried. With DNS interception off the resolver is left alone,
+	// and the queries that still reach the TUN are routed directly.
+	if dnsHijackEnabled(tmpl.Setting) {
+		if err := luid.SetDNS(windows.AF_INET, []netip.Addr{gw4}, nil); err != nil {
+			tunRoutesDown()
+			return fmt.Errorf("tun: set DNS: %w", err)
+		}
+		tunDNS4Configured = true
+		if tunIPv6Enabled() {
+			if err := luid.SetDNS(windows.AF_INET6, []netip.Addr{gw6}, nil); err != nil {
+				log.Warn("tun: set IPv6 DNS: %v", err)
+			} else {
+				tunDNS6Configured = true
+			}
 		}
 	}
 	for _, family := range []winipcfg.AddressFamily{windows.AF_INET, windows.AF_INET6} {
@@ -212,6 +224,8 @@ func tunRoutesDown() {
 	}
 	tunNodeRoutes = nil
 	if tunLUID == 0 {
+		tunDNS4Configured = false
+		tunDNS6Configured = false
 		return
 	}
 	gw4, gw6 := netip.MustParseAddr(tunGateway4), netip.MustParseAddr(tunGateway6)
@@ -221,8 +235,14 @@ func tunRoutesDown() {
 	for _, p := range tunHalfRoutes6 {
 		_ = tunLUID.DeleteRoute(p, gw6)
 	}
-	_ = tunLUID.FlushDNS(windows.AF_INET)
-	_ = tunLUID.FlushDNS(windows.AF_INET6)
+	if tunDNS4Configured {
+		_ = tunLUID.FlushDNS(windows.AF_INET)
+	}
+	if tunDNS6Configured {
+		_ = tunLUID.FlushDNS(windows.AF_INET6)
+	}
+	tunDNS4Configured = false
+	tunDNS6Configured = false
 	tunLUID = 0
 }
 

@@ -35,6 +35,33 @@ func TestDNSRedirectPolicyByPlatformAndMode(t *testing.T) {
 	}
 }
 
+// With the opt-out on no platform installs the DNS REDIRECT rules; there is
+// no DNS module for them to feed.
+func TestDNSRedirectPolicyIsOffWithoutHijack(t *testing.T) {
+	for _, tc := range []struct {
+		goos      string
+		mode      configure.TransparentType
+		autoRoute bool
+	}{
+		{"linux", configure.TransparentTproxy, false},
+		{"linux", configure.TransparentRedirect, false},
+		{"linux", configure.TransparentSystemProxy, false},
+		{"linux", configure.TransparentTun, true},
+		{"linux", configure.TransparentTun, false},
+		{"darwin", configure.TransparentTun, true},
+		{"windows", configure.TransparentTun, true},
+	} {
+		setting := &configure.Setting{
+			TransparentType: tc.mode,
+			TunAutoRoute:    tc.autoRoute,
+			DnsHijack:       configure.No,
+		}
+		if install, required := dnsRedirectPolicy(tc.goos, setting); install || required {
+			t.Fatalf("%s %s: install=%v required=%v, want neither", tc.goos, tc.mode, install, required)
+		}
+	}
+}
+
 func TestRunDNSRedirectKeepsLegacyStartupBestEffort(t *testing.T) {
 	want := errors.New("legacy NAT command failed")
 	steps, cleaned := 0, false

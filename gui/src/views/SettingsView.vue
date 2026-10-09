@@ -127,6 +127,10 @@ const onOffDefault = computed(() => [
   { value: "yes", title: t("setting.options.on") },
   { value: "no", title: t("setting.options.off") },
 ]);
+const onOff = computed(() => [
+  { value: "yes", title: t("setting.options.on") },
+  { value: "no", title: t("setting.options.off") },
+]);
 const logLevels = computed(() =>
   ["trace", "debug", "info", "warn", "error"].map((v) => ({
     value: v,
@@ -304,6 +308,15 @@ defineExpose({ sync: () => settings.load() });
             hide-details
           />
         </SettingRow>
+        <v-expand-transition>
+          <SettingChoice
+            v-if="transparentOn"
+            v-model="form.dnsHijack"
+            :title="t('setting.dnsHijack')"
+            :hint="t('setting.messages.dnsHijack')"
+            :items="onOff"
+          />
+        </v-expand-transition>
       </v-list>
 
       <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">

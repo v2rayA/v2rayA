@@ -9,7 +9,9 @@ import (
 // ConfigJSON is the "settings" object of a tun-mips inbound as the service
 // writes it. Required fields are checked here so a missing one fails to
 // load instead of silently becoming a zero value; the optional ones default
-// to "no IPv6", "no exclusions" and "direct".
+// to "no IPv6", "no exclusions" and "direct". An empty dnsTarget means the
+// user opted out of DNS interception: no relay is created and port 53 is
+// routed like any other traffic.
 type ConfigJSON struct {
 	Name             string   `json:"name"`
 	MTU              uint32   `json:"mtu"`
@@ -38,8 +40,10 @@ func (c *ConfigJSON) Build() (*Config, error) {
 			return nil, errors.New("tun-mips: address6 must be an IPv6 prefix or empty")
 		}
 	}
-	if _, err := netip.ParseAddrPort(c.DnsTarget); err != nil {
-		return nil, errors.New("tun-mips: dnsTarget must be host:port")
+	if c.DnsTarget != "" {
+		if _, err := netip.ParseAddrPort(c.DnsTarget); err != nil {
+			return nil, errors.New("tun-mips: dnsTarget must be host:port or empty")
+		}
 	}
 	return &Config{
 		Name:             c.Name,
