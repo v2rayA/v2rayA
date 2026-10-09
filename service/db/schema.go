@@ -199,5 +199,12 @@ func migrateLegacyOutboundTables(db *sql.DB) error {
 		}
 		log.Warn("Recovered the setting of outbound %q from the first SQLite migration", name)
 	}
+
+	// Drop obsolete legacy tables so stale foreign keys (e.g. outbound_connections.server_id -> servers.id)
+	// do not cause "FOREIGN KEY constraint failed (787)" when deleting servers.
+	if _, err := db.Exec("DROP TABLE IF EXISTS outbound_connections; DROP TABLE IF EXISTS outbound_settings;"); err != nil {
+		return fmt.Errorf("failed to drop legacy outbound tables: %w", err)
+	}
+
 	return nil
 }
