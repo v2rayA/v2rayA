@@ -16,6 +16,7 @@ import type { Setting, NodeDnsOption } from "@/api/types";
 import { openLoading } from "@/composables/useLoading";
 import { useAppStore } from "@/stores/app";
 import { runningOf } from "@/views/nodes/model";
+import { resolveDnsMode } from "@/dialogs/settings/dnsModel";
 
 export const defaultForm = () => ({
   transparent: "close",
@@ -73,18 +74,24 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
   const nodeDnsError = ref<unknown>(null);
   const nodeDnsLoading = ref(false);
   const nodeDnsLoaded = ref(false);
+  const nodeDnsEnabled = ref(false);
   let nodeDnsRequest = 0;
 
-  async function loadNodeDnsOptions(): Promise<void> {
+  async function loadNodeDnsOptions(refreshMode = false): Promise<void> {
     const request = ++nodeDnsRequest;
     nodeDnsLoading.value = true;
     nodeDnsError.value = null;
     try {
-      const result = await getNodeDnsOptions();
+      const [result, setting] = await Promise.all([
+        getNodeDnsOptions(),
+        refreshMode ? getSetting() : null,
+      ]);
       if (request !== nodeDnsRequest) return;
       nodeDnsOptions.value = result.options;
       nodeDnsWarnings.value = result.warnings ?? [];
       nodeDnsLoaded.value = true;
+      if (setting)
+        nodeDnsEnabled.value = resolveDnsMode(setting.setting) !== "off";
     } catch (err) {
       if (request === nodeDnsRequest) nodeDnsError.value = err;
     } finally {
@@ -94,6 +101,7 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
 
   async function load(): Promise<void> {
     const res = await getSetting();
+    nodeDnsEnabled.value = resolveDnsMode(res.setting) !== "off";
     for (const key of Object.keys(form) as (keyof SettingForm)[]) {
       if (key in res.setting)
         (form as Record<string, unknown>)[key] = res.setting[key];
@@ -124,7 +132,7 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
         () => control.abort(),
       );
       saved.value = submittedForm;
-      if (nodeDns) await loadNodeDnsOptions();
+      if (nodeDns) await loadNodeDnsOptions(true);
     } catch (err) {
       // the backend restores the previous setting and keeps the core as it
       // was; the touch says which state that is, and the form goes back to
@@ -151,6 +159,7 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
     nodeDnsError,
     nodeDnsLoading,
     nodeDnsLoaded,
+    nodeDnsEnabled,
     loadNodeDnsOptions,
     ready,
     dirty,

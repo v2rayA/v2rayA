@@ -180,7 +180,7 @@ const openDomains = () => open(DomainsExcludedDialog, {}, { width: 520 });
 const openRoutingA = () => open(RoutingADialog, {}, { width: 960 });
 async function openDns() {
   const changed = await open<boolean>(DnsDialog, {}, { width: 640 }).result;
-  if (changed) await settings.loadNodeDnsOptions();
+  if (changed) await settings.loadNodeDnsOptions(true);
 }
 const openPorts = () => open(PortsDialog, {}, { width: 520 });
 const openInbounds = () => open(CustomInboundDialog, {}, { width: 640 });
@@ -451,7 +451,8 @@ defineExpose({ sync: () => settings.load() });
           :error="settings.nodeDnsError.value"
           :loading="settings.nodeDnsLoading.value"
           :loaded="settings.nodeDnsLoaded.value"
-          @refresh="settings.loadNodeDnsOptions()"
+          :disabled="!settings.nodeDnsEnabled.value"
+          @refresh="settings.loadNodeDnsOptions(true)"
         />
         <SettingRow
           :title="t('common.about')"

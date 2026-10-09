@@ -12,6 +12,7 @@ const props = defineProps<{
   error: unknown;
   loading: boolean;
   loaded: boolean;
+  disabled: boolean;
 }>();
 defineEmits<{ refresh: [] }>();
 const { t } = useI18n();
@@ -40,6 +41,7 @@ const selection = computed(
 );
 const unavailable = computed(
   () =>
+    !props.disabled &&
     props.loaded &&
     !props.error &&
     !props.loading &&
@@ -56,7 +58,7 @@ const unavailable = computed(
         :label="t('nodeDns.title')"
         :items="items"
         :loading="loading"
-        :disabled="loading || !!error"
+        :disabled="disabled || loading || !!error"
         :error-messages="unavailable ? t('nodeDns.unavailable') : []"
         :rules="[() => !unavailable || t('nodeDns.unavailable')]"
         hide-details="auto"
@@ -90,13 +92,14 @@ const unavailable = computed(
         :icon="mdiRefresh"
         :aria-label="t('nodeDns.refresh')"
         :loading="loading"
+        :disabled="disabled"
         variant="text"
         @click="$emit('refresh')"
       />
     </div>
     <v-alert v-if="error" type="error" variant="tonal" class="mt-2">
       {{ t("nodeDns.loadFailed", { message: errorText(error) }) }}
-      <v-btn variant="text" @click="$emit('refresh')">
+      <v-btn variant="text" :disabled="disabled" @click="$emit('refresh')">
         {{ t("nodeDns.refresh") }}
       </v-btn>
     </v-alert>
