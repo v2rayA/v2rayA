@@ -147,9 +147,13 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	setting := configure.GetSettingNotNil()
 	bypass := v2ray.ProcessManager.Running() && v2ray.IsTransparentOn(setting) && setting.TransparentType != configure.TransparentSystemProxy
 	dialer := httpClient.DirectDialer(timeout, bypass)
-	endpoint, err := v2ray.SelectNodeDNS(setting, configure.GetDnsRulesNotNil())
-	if err != nil {
-		return nil, err
+	var endpoint *resolv.IPDNSEndpoint
+	var err error
+	if setting.DnsServiceEnabled() {
+		endpoint, err = v2ray.SelectNodeDNS(setting, configure.GetDnsRulesNotNil())
+		if err != nil {
+			return nil, err
+		}
 	}
 	v2rayRunning := v2ray.ProcessManager.Running()
 	wg := new(sync.WaitGroup)
@@ -270,6 +274,22 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 			}
 		}
 	}
+	var failures map[string]error
+	if endpoint == nil {
+		var hosts coreObj.Hosts
+		hosts, failures = resolveNodeHosts(vms, func(host string) ([]string, error) {
+			return resolv.LookupHostWithDialer(host, dialer)
+		})
+		if tmpl.DNS == nil {
+			tmpl.DNS = &coreObj.DNS{Servers: []interface{}{"localhost"}}
+		}
+		if tmpl.DNS.Hosts == nil {
+			tmpl.DNS.Hosts = make(coreObj.Hosts)
+		}
+		for host, ips := range hosts {
+			tmpl.DNS.Hosts[host] = ips
+		}
+	}
 	tmpl.SetOutboundSockopt()
 	v2ray.ProcessManager.SetLatencyTesting(true)
 	handedOver = true
@@ -282,11 +302,13 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		return nil, err
 	}
-	p := v2ray.ProcessManager.Process()
-	// Warm the module cache and report DNS errors before timing proxy requests.
-	_, failures := resolveNodeHosts(vms, func(host string) ([]string, error) {
-		return p.LookupNode(context.Background(), host, dialer)
-	})
+	if endpoint != nil {
+		p := v2ray.ProcessManager.Process()
+		// Warm the module cache and report DNS errors before timing proxy requests.
+		_, failures = resolveNodeHosts(vms, func(host string) ([]string, error) {
+			return p.LookupNode(context.Background(), host, dialer)
+		})
+	}
 	for i, v := range vms {
 		if v != nil {
 			if err := failures[v.GetHostname()]; err != nil {
@@ -428,6 +450,11 @@ func newLatencyTemplate(endpoint *resolv.IPDNSEndpoint) *v2ray.Template {
 }
 
 func nodeLookup(dialer *net.Dialer) (func(string) ([]string, error), func(), error) {
+	if !configure.GetSettingNotNil().DnsServiceEnabled() {
+		return func(host string) ([]string, error) {
+			return resolv.LookupHostWithDialer(host, dialer)
+		}, func() {}, nil
+	}
 	p := v2ray.ProcessManager.Process()
 	closeDNS := func() {}
 	if p == nil {

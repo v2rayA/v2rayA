@@ -29,6 +29,7 @@ type Addr struct {
 func (t *Template) setDNS(serverInfos []serverInfo) error {
 	if !dnsServiceEnabled(t.Setting) {
 		t.DnsModuleConfig = nil
+		t.NodeDNS = nil
 		return nil
 	}
 	return t.generateDnsModuleConfig(serverInfos)

@@ -141,8 +141,10 @@ func (m *CoreProcessManager) setupTransparentProxy(p *Process, generation uint64
 		if err = m.mutateHost(p, generation, func() error { return runHook("pre-start") }); err != nil {
 			return err
 		}
-		if err = p.WaitDNSReady(p.ctx); err != nil {
-			return err
+		if p.dnsToken != "" {
+			if err = p.WaitDNSReady(p.ctx); err != nil {
+				return err
+			}
 		}
 		if err = m.checkProcessOwner(p, generation); err != nil {
 			return err

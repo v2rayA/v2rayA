@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -18,6 +19,18 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/coreObj"
 )
+
+func TestNodeDNSOffUsesSystemResolverWithoutModule(t *testing.T) {
+	setting := configure.NewSetting()
+	setting.DnsMode = configure.DnsModeOff
+	p := &Process{template: &Template{Setting: setting}}
+	blocked := errors.New("system DNS socket blocked by test")
+	dialer := &net.Dialer{Control: func(string, string, syscall.RawConn) error { return blocked }}
+	_, err := p.LookupNode(context.Background(), "node.example.invalid", dialer)
+	if err == nil || !strings.Contains(err.Error(), blocked.Error()) {
+		t.Fatalf("off mode did not use the system resolver: %v", err)
+	}
+}
 
 func TestNodeDNSWaitsForCurrentModule(t *testing.T) {
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")

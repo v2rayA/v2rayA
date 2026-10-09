@@ -159,6 +159,27 @@ func TestNodeDNSAppliesWithoutTakeover(t *testing.T) {
 	}
 }
 
+func TestNodeDNSOffDoesNotConfigureModule(t *testing.T) {
+	setting := configure.NewSetting()
+	setting.DnsMode = configure.DnsModeOff
+	endpoint, _ := resolv.ParseIPDNS("tls://192.0.2.53")
+	tmpl := &Template{Setting: setting, NodeDNS: endpoint}
+	servers := []serverObj.ServerObj{&serverObj.V2Ray{Add: "node.example"}}
+	if err := tmpl.setDNS([]serverInfo{{Info: servers[0]}}); err != nil {
+		t.Fatal(err)
+	}
+	if tmpl.DnsModuleConfig != nil || tmpl.NodeDNS != nil || tmpl.DNS != nil {
+		t.Fatal("off mode configured node DNS")
+	}
+	tmpl.NodeDNS = endpoint
+	if err := tmpl.AddNodeDNSDomains(servers); err != nil {
+		t.Fatal(err)
+	}
+	if tmpl.DnsModuleConfig != nil || tmpl.NodeDNS != nil || tmpl.DNS != nil {
+		t.Fatal("latency configuration enabled DNS in off mode")
+	}
+}
+
 func TestNodeDNSSystemSource(t *testing.T) {
 	original := "nameserver 127.0.0.53\nnameserver 2001:db8::53\n"
 	for _, tc := range []struct {

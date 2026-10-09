@@ -10,6 +10,7 @@ import {
   getSetting,
   getTouch,
   getNodeDnsOptions,
+  putDnsRules,
   putSetting,
 } from "@/api";
 import type { Setting, VersionResponse } from "@/api/types";
@@ -247,6 +248,31 @@ describe("settings list", () => {
 
 // Node DNS sources refresh independently of the unsaved settings form.
 describe("node DNS selection", () => {
+  test("refreshes sources after DNS rules save without discarding settings edits", async () => {
+    await mountPage();
+    await choose("Log Level", "Debug");
+    const row = wrapper
+      .findAll(".v-list-item")
+      .find((item) => item.text().startsWith("DNS Settings"))!;
+    await row.trigger("click");
+    await flushPromises();
+    const dialog = new DOMWrapper(document.querySelector('[role="dialog"]')!);
+    await dialog
+      .findAll<HTMLInputElement>(".v-text-field:not(.v-select) input")[0]
+      .setValue("1.1.1.1");
+    await dialog.get("form").trigger("submit");
+    await flushPromises();
+    expect(putDnsRules).toHaveBeenCalledOnce();
+    expect(getNodeDnsOptions).toHaveBeenCalledTimes(2);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).toHaveBeenCalledWith(
+      expect.objectContaining({ logLevel: "debug" }),
+      expect.anything(),
+    );
+  });
+
   test("shows auto IP, translates sources and refreshes after saving", async () => {
     await mountPage();
     const select = wrapper

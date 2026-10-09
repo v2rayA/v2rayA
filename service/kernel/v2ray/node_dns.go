@@ -153,6 +153,9 @@ func SelectNodeDNS(setting *configure.Setting, rules []configure.DnsRule) (*reso
 // AddNodeDNSDomains extends the temporary latency configuration to every
 // tested node, including nodes absent from the normal connected set.
 func (t *Template) AddNodeDNSDomains(servers []serverObj.ServerObj) error {
+	if !dnsServiceEnabled(t.Setting) {
+		return t.setDNS(nil)
+	}
 	if t.NodeDNS == nil {
 		return fmt.Errorf("node DNS endpoint is missing")
 	}
@@ -358,14 +361,17 @@ func (p *Process) LookupNode(ctx context.Context, host string, dialer *net.Diale
 	if ip := net.ParseIP(host); ip != nil {
 		return []string{ip.String()}, nil
 	}
+	if dialer == nil {
+		dialer = &net.Dialer{Timeout: 3 * time.Second}
+	}
+	if p != nil && p.template != nil && !dnsServiceEnabled(p.template.Setting) {
+		return resolv.LookupHostWithDialer(host, dialer)
+	}
 	ctx, cancel, err := p.dnsContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer cancel()
-	if dialer == nil {
-		dialer = &net.Dialer{Timeout: 3 * time.Second}
-	}
 	// A local DNS query must not be bound to the physical TUN egress.
 	// Linux retains the caller's mark to bypass OUTPUT interception.
 	if runtime.GOOS != "linux" {

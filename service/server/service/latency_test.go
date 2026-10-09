@@ -3,12 +3,14 @@ package service
 import (
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
 	"runtime"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -170,5 +172,30 @@ func TestNodeHostsDeduplicationAndDNSFailures(t *testing.T) {
 	}
 	if !reflect.DeepEqual(hosts["node.example"], []string{"198.51.100.1"}) {
 		t.Fatalf("wrong resolved addresses: %v", hosts)
+	}
+}
+
+func TestNodeLookupOffDoesNotStartCore(t *testing.T) {
+	previous := configure.GetSettingNotNil()
+	t.Cleanup(func() { _ = configure.SetSetting(previous) })
+	setting := configure.NewSetting()
+	setting.DnsMode = configure.DnsModeOff
+	setting.NodeDns = "tls://192.0.2.53:853"
+	if err := configure.SetSetting(setting); err != nil {
+		t.Fatal(err)
+	}
+	wasRunning := v2ray.ProcessManager.Running()
+	blocked := errors.New("system DNS socket blocked by test")
+	dialer := &net.Dialer{Control: func(string, string, syscall.RawConn) error { return blocked }}
+	lookup, closeDNS, err := nodeLookup(dialer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer closeDNS()
+	if _, err := lookup("node.example.invalid"); err == nil || !strings.Contains(err.Error(), blocked.Error()) {
+		t.Fatalf("off mode did not use system DNS: %v", err)
+	}
+	if v2ray.ProcessManager.Running() != wasRunning {
+		t.Fatal("off-mode TCP probe changed the core's running state")
 	}
 }
