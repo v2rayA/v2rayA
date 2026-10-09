@@ -26,7 +26,7 @@ type Addr struct {
 // setDNS 生成新 DNS 模块的配置，嵌入 xray JSON 供 v2raya-core 读取。
 // v2raya-core 启动时解析此配置并启动独立 DNS 监听器，v2rayA 不参与 DNS 查询处理。
 func (t *Template) setDNS(serverInfos []serverInfo) error {
-	if !dnsHijackEnabled(t.Setting) {
+	if !dnsServiceEnabled(t.Setting) {
 		t.DnsModuleConfig = nil
 		return nil
 	}
@@ -56,6 +56,13 @@ func dnsModuleListenAddr(setting *configure.Setting) string {
 // to the wildcard address would make the bind fail and the core exit.
 func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 	addrs := []string{}
+	// Every extra address here exists to catch a query that a REDIRECT rule
+	// or a hijacked resolver sends to it. Service mode leaves the firewall
+	// and the resolvers alone, so the module keeps only its configured
+	// address there.
+	if !dnsInterceptionEnabled(setting) {
+		return addrs
+	}
 	// The ip6tables REDIRECT sends an application's IPv6 DNS query to ::1,
 	// which a loopback IPv4 primary listener does not cover. A wildcard
 	// primary listener is dual-stack already and a second bind would fail.
@@ -68,7 +75,7 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 	// 127.2.0.17. Nothing sends to either on Windows.
 	switch runtime.GOOS {
 	case "darwin":
-		if setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting) && dnsHijackEnabled(setting) {
+		if setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting) {
 			// The system resolver is pointed at loopback in tun mode. If
 			// another resolver already owns the port, leave it to that one
 			// rather than start a core that cannot bind.

@@ -252,7 +252,7 @@ func tunRoutesUp(tmpl *Template, nodeIPs []string) error {
 	// out a 30-second timeout. Loopback delivery has no such scope. The
 	// previous resolvers are kept for stop. With DNS interception off the
 	// system's own resolvers stay in place.
-	if dnsHijackEnabled(tmpl.Setting) {
+	if dnsInterceptionEnabled(tmpl.Setting) {
 		out, err := run("networksetup", "-listallnetworkservices")
 		if err != nil {
 			tunRoutesDown()

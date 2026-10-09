@@ -63,6 +63,19 @@ func MigrateSetting(setting *Setting) {
 	if setting.DnsHijack == "" {
 		setting.DnsHijack = Yes
 	}
+	// The mode supersedes the opt-out, so an absent one is written out from
+	// it once; after this the stored mode is what every reader uses.
+	if setting.DnsMode == "" {
+		setting.DnsMode = ResolveDnsMode(setting)
+	}
+	// The opt-out then mirrors the mode, so the two cannot disagree: a client
+	// that only knows dnsHijack must read the decision that is in force,
+	// rather than one the runtime ignores.
+	if setting.DnsMode == DnsModeHijack {
+		setting.DnsHijack = Yes
+	} else {
+		setting.DnsHijack = No
+	}
 
 	// 监听地址默认值
 	if setting.DnsListenAddr == "" {

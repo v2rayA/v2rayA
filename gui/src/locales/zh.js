@@ -206,7 +206,6 @@ export default {
     tunAutoRoute: "自动路由",
     ipForwardOn: "开启 IP 转发",
     portSharingOn: "允许局域网的连接",
-    dnsHijack: "DNS 接管",
     concurrency: "最大并发数",
     tunExcludeProcesses: "TUN 自定义排除进程",
     tcpFastOpen: "TCP Fast Open",
@@ -247,8 +246,6 @@ export default {
         "设置不经过透明代理的网卡前缀。支持通配符 * (iptables模式下会自动转换为 +)。例如: docker*, veth*, wg*, ppp*, br-*。多个前缀用逗号隔开。",
       tunAutoRoute:
         "开启时，v2rayA 自行安装路由；开启 DNS 接管时还会设置系统 DNS。关闭时，需要提供自定义的启动/停止脚本手动配置路由。",
-      dnsHijack:
-        "开启时由 v2rayA 接管 DNS：把系统解析器指向自身的 DNS 模块，并将 53 端口的明文 DNS 导向该模块，下方的 DNS 设置随之生效。关闭时系统保留自己的解析器设置，明文 DNS 也不会被劫持——仍然进入 TUN 的查询直连发出。加密 DNS 两种情况下都不会被接管。",
       tunExcludeProcesses:
         "流量直连的进程名，一行一个，例如：chrome.exe、firefox。v2rayA 与核心始终排除。按 socket 属主的可执行文件名识别；查找前已关闭的 socket 或被其他进程复用的端口无法归属。开启 DNS 接管时，被排除进程的查询仍由核心 DNS 模块回答。",
       pacMode:
@@ -285,6 +282,20 @@ export default {
   },
   dns: {
     title: "DNS 设置",
+    mode: "DNS 模式",
+    modeOff: "关闭",
+    modeService: "仅服务",
+    modeHijack: "服务与接管",
+    modeOffHelp:
+      "不启动 DNS 模块，也不把任何查询导向它。下方的规则会保留，模式重新开启后继续生效。",
+    modeServiceHelp:
+      "DNS 模块在自己的地址上运行，但不改动系统解析器、防火墙的 DNS 规则，也不做 TUN 中继。当已有其他程序把 DNS 指向 v2rayA 时使用。",
+    modeHijackHelp:
+      "DNS 模块运行，并把系统查询指向它：改写解析器、导流 53 端口，下方规则随之生效。加密 DNS 不会被接管。",
+    offKeepsRules: "已保存的 {n} 条规则会保留，模式开启后继续生效。",
+    saved: "DNS 设置已保存并应用",
+    saveFailed: "无法保存 DNS 设置：{message}",
+    modeSaveFailed: "DNS 规则已保存，但 DNS 模式未能保存：{message}",
     colServer: "DNS 服务器",
     colDomains: "域名列表",
     colOutbound: "出口",
@@ -295,7 +306,6 @@ export default {
     rule: "规则 {n}",
     resetDefault: "恢复默认",
     errNoRules: "至少一条规则需要填写 DNS 服务器",
-    saveFailed: "无法保存 DNS 规则：{message}",
   },
   configureServer: {
     required: "必填",

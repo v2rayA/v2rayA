@@ -37,7 +37,7 @@ func TunSupported() bool { return tunSupported }
 // empty when DNS interception is off, and the core then leaves port 53 to the
 // normal routing rules instead of relaying it.
 func tunDnsTarget(setting *configure.Setting) string {
-	if !dnsHijackEnabled(setting) {
+	if !dnsInterceptionEnabled(setting) {
 		return ""
 	}
 	host, port, err := net.SplitHostPort(dnsModuleListenAddr(setting))

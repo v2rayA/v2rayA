@@ -15,34 +15,46 @@ With the transparent proxy on, traffic reaches the core without any application 
 
 | Implementation | Platforms                                                    | Notes                                                                                                        |
 | -------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `redirect`     | Linux                                                        | iptables/nftables `REDIRECT`; TCP only, plus DNS on port 53 redirected to the core's DNS module (port 52353) when **DNS Interception** is on |
+| `redirect`     | Linux                                                        | iptables/nftables `REDIRECT`; TCP only, plus DNS on port 53 redirected to the core's DNS module (port 52353) in the *service and interception* mode             |
 | `tproxy`       | Linux                                                        | iptables/nftables `TPROXY`; TCP and UDP                                                                      |
 | `tun`          | Linux, Windows, macOS                                        | the core opens a TUN device; TCP and UDP; excludes v2rayA and the core by itself                             |
 | System proxy   | Windows; Linux and macOS when not running as root (`--lite`) | sets the desktop's proxy settings (GNOME and KDE on Linux); only applications that honour them are covered   |
 
 `redirect` and `tproxy` need root and `iptables` or `nftables`; `tun` needs `/dev/net/tun` and `ip` on Linux and administrator rights on Windows and macOS.
 
-**Excluded Interface Prefixes** keeps traffic arriving on the named interfaces (Docker bridges, VPN tunnels; `docker*`, `veth*`, `wg*`, `ppp*` by default) out of `redirect` and `tproxy`; their DNS is still intercepted when **DNS Interception** is on.
-
-**DNS Interception** decides whether v2rayA takes DNS over at all. With it on, the behaviour is what the rest of this page describes. With it off, system resolver settings are left alone, including `/etc/resolv.conf` on Linux; the core's DNS module does not start and the DNS rules below have no effect: `redirect`, `tproxy` and the system proxy let plain TCP/UDP 53 pass through instead of diverting it, and `tun` sends it out directly. There is no need to turn it off for encrypted DNS, which is never sent to the DNS module.
+**Excluded Interface Prefixes** keeps traffic arriving on the named interfaces (Docker bridges, VPN tunnels; `docker*`, `veth*`, `wg*`, `ppp*` by default) out of `redirect` and `tproxy`; their DNS is still intercepted in the *service and interception* mode.
 
 `--redirect-respect-bound-device` (Linux) lets TCP sockets bound to a device with `SO_BINDTODEVICE` bypass `redirect`: NetworkManager's connectivity checks are such sockets, and a redirected check reports a limited connection and keeps applications offline. Off by default. When it is on, the service marks those sockets with `0x80` through cgroup BPF; that needs kernel 5.14 or later and cgroup v2, and `redirect` fails to start when they are missing.
 
 ## TUN
 
-The core creates the TUN device and assigns its address. With **Auto Route** on, v2rayA installs the routes and, when **DNS Interception** is on, points the system resolver at the core; with it off, the setup and teardown scripts under **Configure Route Script** do.
+The core creates the TUN device and assigns its address. With **Auto Route** on, v2rayA installs the routes and, in the *service and interception* mode, points the system resolver at the core; with it off, the setup and teardown scripts under **Configure Route Script** do.
 
-What never enters the TUN: the core's own connections, the `direct` outbound and the DNS module's upstream queries (by socket mark on Linux, by binding to the physical interface on Windows and macOS). v2rayA and the core are always excluded; **TUN Excluded Processes** excludes more by executable name, one per line, for connections whose owning process can be identified; when **DNS Interception** is on, their DNS still goes to the core's DNS module. Routes more specific than the default (connected networks, static routes) bypass the TUN as well.
+What never enters the TUN: the core's own connections, the `direct` outbound and the DNS module's upstream queries (by socket mark on Linux, by binding to the physical interface on Windows and macOS). v2rayA and the core are always excluded; **TUN Excluded Processes** excludes more by executable name, one per line, for connections whose owning process can be identified; in the *service and interception* mode their DNS still goes to the core's DNS module. Routes more specific than the default (connected networks, static routes) bypass the TUN as well.
 
-With **DNS Interception** on, plain DNS on port 53 that reaches the TUN is answered by the core's DNS module according to the DNS rules; encrypted DNS is not intercepted. On Windows the system resolver is pointed at the TUN gateway, on macOS at the core's listener on `127.0.0.1`, which needs port 53 free.
+In the *service and interception* mode, plain DNS on port 53 that reaches the TUN is answered by the core's DNS module according to the DNS rules; encrypted DNS is not intercepted. On Windows the system resolver is pointed at the TUN gateway, on macOS at the core's listener on `127.0.0.1`, which needs port 53 free.
 
-With **DNS Interception** off the TUN builds no such relay and neither platform's system resolver is changed; a query that still arrives is routed directly out of the device. With **Auto Route** off and the route script in charge, the same holds: v2rayA installs no resolver setting, so the script owns DNS as well.
+In the other two modes the TUN builds no such relay and neither platform's system resolver is changed; a query that still arrives is routed directly out of the device. With **Auto Route** off and the route script in charge, the same holds: v2rayA installs no resolver setting, so the script owns DNS as well.
 
 Known limitation: on Windows and macOS an application that queries a LAN resolver directly still bypasses the TUN.
 
 ## DNS
 
-**Settings → DNS Settings** holds the rules the core's DNS module follows: which upstream answers which domains, and whether the query goes out directly. The defaults send private names to `127.0.0.1:53` (`localhost`, which needs a resolver listening there), `geosite:cn` to `223.5.5.5` directly, and everything else to `1.0.0.1` through the proxy. An outbound of `direct` queries directly; any other value sends the query through the local SOCKS inbound, so it is routed like SOCKS traffic. The rule with an empty domain list answers every domain no other rule names. An upstream is an address (`8.8.8.8`, `dns.google`), `tcp://host`, `tls://host` for DNS over TLS or `https://host/dns-query` for DNS over HTTPS; DNS over QUIC is not supported and is refused on save.
+**Settings → DNS Settings** holds the mode and the rules the core's DNS module follows.
+
+| Mode                    | DNS module | System queries                                                                                  |
+| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| Off                     | not running | untouched                                                                                          |
+| Service only            | running    | untouched: the resolvers, the firewall DNS rules and the TUN relay are left alone               |
+| Service and interception | running    | redirected to it: the resolver is repointed and port 53 is diverted                              |
+
+The mode decides two separate things — whether the module runs, and whether the system's queries are sent to it — which the *service only* mode answers differently. `Off` and *service only* both let plain TCP/UDP 53 pass through `redirect`, `tproxy` and the system proxy, and send it straight out of `tun`; there is no need to leave interception for encrypted DNS, which is never sent to the module. Choose *service only* when another program already points DNS at v2rayA, and `Off` when nothing should answer DNS for you at all.
+
+The rules say which upstream answers which domains, and whether the query goes out directly. The defaults send private names to `127.0.0.1:53` (`localhost`, which needs a resolver listening there), `geosite:cn` to `223.5.5.5` directly, and everything else to `1.0.0.1` through the proxy. An outbound of `direct` queries directly; any other value sends the query through the local SOCKS inbound, so it is routed like SOCKS traffic. The rule with an empty domain list answers every domain no other rule names. An upstream is an address (`8.8.8.8`, `dns.google`), `tcp://host`, `tls://host` for DNS over TLS or `https://host/dns-query` for DNS over HTTPS; DNS over QUIC is not supported and is refused on save.
+
+`Off` hides the rules and keeps them: nothing would read them, and dropping them would make switching the mode back on a different configuration.
+
+Saving writes the rules and the mode as two requests, and the dialog reports which of them the service accepted. A refusal after the rules were stored is named as such, so the retry sends only what is still missing.
 
 ## Sharing with the LAN
 

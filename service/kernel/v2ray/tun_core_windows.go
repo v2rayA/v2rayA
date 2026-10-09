@@ -189,7 +189,7 @@ func tunRoutesUp(tmpl *Template, nodeIPs []string) error {
 	// core intercepts; the lowest interface metric makes it the first
 	// resolver tried. With DNS interception off the resolver is left alone,
 	// and the queries that still reach the TUN are routed directly.
-	if dnsHijackEnabled(tmpl.Setting) {
+	if dnsInterceptionEnabled(tmpl.Setting) {
 		if err := luid.SetDNS(windows.AF_INET, []netip.Addr{gw4}, nil); err != nil {
 			tunRoutesDown()
 			return fmt.Errorf("tun: set DNS: %w", err)

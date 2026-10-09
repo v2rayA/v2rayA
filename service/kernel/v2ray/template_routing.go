@@ -470,7 +470,7 @@ func (t *Template) setTransparentRouting() (err error) {
 	// directly instead of joining the transparent proxy chain, which would
 	// send it to a proxy's port 53. The rule goes first so it wins over the
 	// mode's own rules.
-	if t.Setting.TransparentType == configure.TransparentTun && !dnsHijackEnabled(t.Setting) {
+	if t.Setting.TransparentType == configure.TransparentTun && !dnsInterceptionEnabled(t.Setting) {
 		t.Routing.Rules = append([]coreObj.RoutingRule{{
 			Type:        "field",
 			InboundTag:  []string{"transparent"},

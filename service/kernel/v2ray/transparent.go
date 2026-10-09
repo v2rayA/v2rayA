@@ -250,21 +250,27 @@ func deleteTransparentProxyRules() {
 }
 
 func waitForTransparentDNS(tmpl *Template) {
-	if tmpl != nil && tmpl.DnsModuleConfig != nil {
-		dnsAddr := tunDnsTarget(tmpl.Setting)
-		if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
-			// The probe resolves a name, so a dead or slow upstream fails it
-			// even though the listener is up. Waiting is worth it when DNS is
-			// healthy, but it must not be the reason the core cannot start.
-			log.Warn("DNS module did not answer on %s yet, applying transparent proxy rules anyway: %v", dnsAddr, err)
-		} else {
-			log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
-		}
+	if tmpl == nil || tmpl.DnsModuleConfig == nil {
+		return
+	}
+	// Only the interception points the transparent rules at the module;
+	// service mode leaves the relay empty, so there is nothing to wait for.
+	dnsAddr := tunDnsTarget(tmpl.Setting)
+	if dnsAddr == "" {
+		return
+	}
+	if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
+		// The probe resolves a name, so a dead or slow upstream fails it
+		// even though the listener is up. Waiting is worth it when DNS is
+		// healthy, but it must not be the reason the core cannot start.
+		log.Warn("DNS module did not answer on %s yet, applying transparent proxy rules anyway: %v", dnsAddr, err)
+	} else {
+		log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
 	}
 }
 
 func dnsRedirectPolicy(goos string, setting *configure.Setting) (install, required bool) {
-	if goos != "linux" || !dnsHijackEnabled(setting) {
+	if goos != "linux" || !dnsInterceptionEnabled(setting) {
 		return false, false
 	}
 	switch setting.TransparentType {
@@ -319,7 +325,7 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			return nil
 		}
 	case configure.TransparentTproxy:
-		if err = iptables.Tproxy.GetSetupCommands(dnsHijackEnabled(setting)).Run(true); err != nil {
+		if err = iptables.Tproxy.GetSetupCommands(dnsInterceptionEnabled(setting)).Run(true); err != nil {
 			if strings.Contains(err.Error(), "TPROXY") && strings.Contains(err.Error(), "No chain") {
 				err = fmt.Errorf("the kernel has no xt_TPROXY module; load it or switch transparent proxy to redirect mode")
 			}
@@ -332,7 +338,7 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 				return fmt.Errorf("cannot enable bound-device REDIRECT bypass: %w", err)
 			}
 		}
-		if err = iptables.Redirect.GetSetupCommands(dnsHijackEnabled(setting)).Run(true); err != nil {
+		if err = iptables.Redirect.GetSetupCommands(dnsInterceptionEnabled(setting)).Run(true); err != nil {
 			return fmt.Errorf("could not set up transparent proxy in redirect mode: %w", err)
 		}
 		iptables.SetWatcher(iptables.Redirect)

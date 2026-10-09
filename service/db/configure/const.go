@@ -12,6 +12,7 @@ type (
 	TransparentMode         string
 	TransparentType         string
 	InboundSniffing         string
+	DnsMode                 string
 )
 
 const (
@@ -61,6 +62,15 @@ const (
 	InboundSniffingDisable     = InboundSniffing("disable")
 	InboundSniffingHttpTLS     = InboundSniffing("http,tls")
 	InboundSniffingHttpTlsQuic = InboundSniffing("http,tls,quic")
+
+	// DnsModeOff runs no DNS module and intercepts nothing.
+	DnsModeOff = DnsMode("off")
+	// DnsModeService runs the DNS module on its own address without touching
+	// the resolvers, the firewall or the TUN relay.
+	DnsModeService = DnsMode("service")
+	// DnsModeHijack runs the DNS module and points the system's queries at
+	// it. It is the historical behaviour.
+	DnsModeHijack = DnsMode("hijack")
 )
 
 const (

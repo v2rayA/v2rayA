@@ -211,7 +211,6 @@ export default {
     tunAutoRoute: "Rota automática",
     ipForwardOn: "Encaminhamento de IP",
     portSharingOn: "Compartilhamento de portas",
-    dnsHijack: "Interceptação de DNS",
     concurrency: "Concorrência",
     inboundSniffing: "Inspeção de tráfego",
     tunExcludeProcesses: "Processos excluídos do TUN",
@@ -253,15 +252,13 @@ export default {
       transparentProxy:
         "Com o proxy transparente ativado, nenhuma configuração extra é necessária e todo o tráfego TCP passará pelo v2rayA. Para fornecer proxy a outros computadores e ao Docker pelo gateway, ative a opção 'Compartilhar na LAN'.",
       transparentType:
-        "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP; quando a Interceptação de DNS está ativada, também precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
+        "★tproxy: suporta UDP, mas não Docker. ★redirect: compatível com Docker, mas não suporta UDP; quando a interceptação de DNS está ativada, também precisa ocupar a porta local 53 para evitar a poluição do DNS. ★tun: o núcleo abre um dispositivo TUN e assume a rota padrão; funciona em Linux, Windows e macOS, suporta UDP, exclui o v2rayA e o núcleo automaticamente e permite excluir outros processos pelo nome. No Windows e no macOS, aplicativos que consultam diretamente um resolvedor da rede local ainda o ignoram.",
       tproxyExcludedInterfaces:
         "Defina os prefixos das interfaces de rede que não devem passar pelo proxy transparente. O curinga * é aceito (convertido automaticamente em + no modo iptables). Por exemplo: docker*, veth*, wg*, ppp*, br-*. Separe vários prefixos com vírgulas.",
       tunAutoRoute:
-        "Quando ativado, o v2rayA instala as rotas por conta própria e altera as configurações de DNS do sistema quando a Interceptação de DNS está ativada. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
-      dnsHijack:
-        "Quando ativado, o v2rayA assume o DNS: aponta o resolvedor do sistema para o próprio módulo DNS do núcleo e envia a porta 53 para ele, e as configurações de DNS abaixo passam a valer. Quando desativado, o sistema mantém suas próprias configurações de resolução e o DNS em texto claro não é desviado — as consultas que ainda chegam à TUN saem diretamente. DNS criptografado não é interceptado de qualquer forma.",
+        "Quando ativado, o v2rayA instala as rotas por conta própria e altera as configurações de DNS do sistema quando a interceptação de DNS está ativada. Quando desativado, você deverá fornecer scripts de configuração e remoção que configurem o roteamento.",
       tunExcludeProcesses:
-        "Nomes de processos cujo tráfego não passa pelo proxy, um por linha, por exemplo chrome.exe ou firefox. O v2rayA e o núcleo são sempre excluídos. O processo é identificado pelo nome do executável dono do socket; um socket fechado antes da consulta ou uma porta reutilizada por outro processo não podem ser atribuídos. Quando a Interceptação de DNS está ativada, as consultas desses processos continuam sendo respondidas pelo módulo DNS do núcleo.",
+        "Nomes de processos cujo tráfego não passa pelo proxy, um por linha, por exemplo chrome.exe ou firefox. O v2rayA e o núcleo são sempre excluídos. O processo é identificado pelo nome do executável dono do socket; um socket fechado antes da consulta ou uma porta reutilizada por outro processo não podem ser atribuídos. Quando a interceptação de DNS está ativada, as consultas desses processos continuam sendo respondidas pelo módulo DNS do núcleo.",
       pacMode: `Aqui você pode definir a regra de divisão de tráfego da porta de regras. Por padrão, a porta da "Regra de divisão de tráfego" é 20172 e usa o protocolo HTTP.`,
       tcpFastOpen:
         "Simplifica o handshake TCP para acelerar o estabelecimento da conexão. Isso pode destacar as características dos pacotes e causar falha na conexão se o sistema não for compatível.",
@@ -297,6 +294,22 @@ export default {
   },
   dns: {
     title: "Configurações de DNS",
+    mode: "Modo do DNS",
+    modeOff: "Desligado",
+    modeService: "Somente serviço",
+    modeHijack: "Serviço e interceptação",
+    modeOffHelp:
+      "Nenhum módulo de DNS é executado e nenhuma consulta é direcionada a ele. As regras abaixo ficam guardadas e voltam a valer quando o modo é ligado.",
+    modeServiceHelp:
+      "O módulo de DNS é executado no próprio endereço, mas os resolvedores do sistema, as regras de DNS do firewall e o encaminhamento da TUN não são alterados. Use quando outro programa já aponta o DNS para o v2rayA.",
+    modeHijackHelp:
+      "O módulo de DNS é executado e o v2rayA aponta as consultas do sistema para ele: o resolvedor muda, a porta 53 é desviada e as regras abaixo valem. DNS criptografado não é interceptado.",
+    offKeepsRules:
+      "As {n} regras salvas ficam guardadas e voltam a valer quando o modo é ligado.",
+    saved: "Configurações de DNS salvas e aplicadas",
+    saveFailed: "Falha ao salvar as configurações de DNS: {message}",
+    modeSaveFailed:
+      "As regras de DNS foram salvas, mas o modo do DNS não: {message}",
     colServer: "Servidor DNS",
     colDomains: "Lista de domínios",
     colOutbound: "Saída",
@@ -308,7 +321,6 @@ export default {
     rule: "Regra {n}",
     resetDefault: "Restaurar padrões",
     errNoRules: "Pelo menos uma regra precisa de um servidor DNS",
-    saveFailed: "Falha ao salvar as regras de DNS: {message}",
   },
   configureServer: {
     required: "Obrigatório",

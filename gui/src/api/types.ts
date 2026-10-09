@@ -79,12 +79,22 @@ export interface VersionResponse {
   docker?: boolean;
 }
 
+/** configure.DnsMode — whether the DNS module runs, and whether the system's queries reach it */
+export type DnsMode = "off" | "service" | "hijack";
+
 /** configure.Setting — kept as the backend's own keys; the settings dialog owns the full list. */
 export type Setting = Record<string, unknown> & {
   transparent: string;
   transparentType: string;
   pacMode: string;
   logLevel: string;
+  /**
+   * the mode as the wire carries it: a value this build does not know is
+   * resolved, never trusted, and dnsHijack carries the decision when a
+   * service predates the mode
+   */
+  dnsMode?: string;
+  dnsHijack?: string;
 };
 
 /** GET /setting */

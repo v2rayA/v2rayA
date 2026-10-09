@@ -35,7 +35,7 @@ func TestTunInboundHasNoDnsTargetWhenHijackIsOff(t *testing.T) {
 func TestDnsHijackZeroValueKeepsInterception(t *testing.T) {
 	setting := tunSetting()
 	setting.DnsHijack = ""
-	if !dnsHijackEnabled(setting) {
+	if !dnsInterceptionEnabled(setting) {
 		t.Fatal("an unset dnsHijack must keep DNS interception on")
 	}
 	if got := tunDnsTarget(setting); got != "127.0.0.1:52353" {
