@@ -60,3 +60,24 @@ func GetDnsRulesNotNil() []DnsRule {
 func SetDnsRules(rules []DnsRule) error {
 	return db.Set("system", "dnsRules", rules)
 }
+
+// SetDnsSettings keeps rule changes and their selected node resolver in one
+// transaction, including when restoring a rejected core configuration.
+func SetDnsSettings(rules []DnsRule, setting *Setting) error {
+	tx, err := db.GetDB().Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if rules != nil {
+		if err = db.SetTx(tx, "system", "dnsRules", rules); err != nil {
+			return err
+		}
+	}
+	if setting != nil {
+		if err = db.SetTx(tx, "system", "setting", setting); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}

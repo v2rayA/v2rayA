@@ -15,6 +15,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/coreObj"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
 type NodeDNSOption struct {
@@ -148,6 +149,25 @@ func (options NodeDNSOptions) Select(value string) (*resolv.IPDNSEndpoint, error
 
 func SelectNodeDNS(setting *configure.Setting, rules []configure.DnsRule) (*resolv.IPDNSEndpoint, error) {
 	return CollectNodeDNSOptions(setting, rules).Select(setting.NodeDns)
+}
+
+// SelectNodeDNSForStart recovers a stored source that disappeared between
+// runs. Settings submissions still use SelectNodeDNS to reject invalid edits.
+func SelectNodeDNSForStart(setting *configure.Setting, rules []configure.DnsRule) (*resolv.IPDNSEndpoint, error) {
+	if !setting.DnsServiceEnabled() {
+		return nil, nil
+	}
+	options := CollectNodeDNSOptions(setting, rules)
+	endpoint, err := options.Select(setting.NodeDns)
+	if err == nil || setting.NodeDns == "" || setting.NodeDns == "auto" {
+		return endpoint, err
+	}
+	endpoint, autoErr := options.Select("auto")
+	if autoErr != nil {
+		return nil, fmt.Errorf("%w; automatic node DNS is also unavailable: %v", err, autoErr)
+	}
+	log.Warn("node DNS source %s is no longer available; using auto (%s), saved selection is unchanged", setting.NodeDns, endpoint.URL)
+	return endpoint, nil
 }
 
 // AddNodeDNSDomains extends the temporary latency configuration to every

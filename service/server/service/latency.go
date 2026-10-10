@@ -150,7 +150,7 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	var endpoint *resolv.IPDNSEndpoint
 	var err error
 	if setting.DnsServiceEnabled() {
-		endpoint, err = v2ray.SelectNodeDNS(setting, configure.GetDnsRulesNotNil())
+		endpoint, err = v2ray.SelectNodeDNSForStart(setting, configure.GetDnsRulesNotNil())
 		if err != nil {
 			return nil, err
 		}
@@ -458,7 +458,7 @@ func nodeLookup(dialer *net.Dialer) (func(string) ([]string, error), func(), err
 	p := v2ray.ProcessManager.Process()
 	closeDNS := func() {}
 	if p == nil {
-		endpoint, err := v2ray.SelectNodeDNS(configure.GetSettingNotNil(), configure.GetDnsRulesNotNil())
+		endpoint, err := v2ray.SelectNodeDNSForStart(configure.GetSettingNotNil(), configure.GetDnsRulesNotNil())
 		if err != nil {
 			return nil, nil, err
 		}

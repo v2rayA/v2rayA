@@ -227,3 +227,59 @@ func TestNodeDNSSystemSource(t *testing.T) {
 		})
 	}
 }
+
+func TestNodeDNSStartFallsBackWithoutChangingSelection(t *testing.T) {
+	previous := configure.GetSettingNotNil()
+	t.Cleanup(func() { _ = configure.SetSetting(previous) })
+	dir := t.TempDir()
+	path := filepath.Join(dir, "resolv.conf")
+	withPaths(t, path, filepath.Join(dir, "backup"))
+	if err := os.WriteFile(path, []byte("nameserver 192.0.2.54\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	rules := []configure.DnsRule{{Server: "localhost", Outbound: "direct"}}
+	setting := configure.NewSetting()
+	setting.DnsMode = configure.DnsModeService
+	setting.NodeDns = "udp://192.0.2.53:53"
+	setting.LogLevel = "debug"
+	if err := configure.SetSetting(setting); err != nil {
+		t.Fatal(err)
+	}
+	setting = configure.GetSettingNotNil()
+	snapshot := *setting
+	if _, err := SelectNodeDNS(setting, rules); err == nil {
+		t.Fatal("settings validation accepted a removed source")
+	}
+	endpoint, err := SelectNodeDNSForStart(setting, rules)
+	if err != nil || endpoint.URL != "udp://192.0.2.54:53" {
+		t.Fatalf("startup did not use the new system source: %v, %v", endpoint, err)
+	}
+	stored := configure.GetSettingNotNil()
+	if !reflect.DeepEqual(setting, &snapshot) || !reflect.DeepEqual(stored, &snapshot) {
+		t.Fatalf("startup changed the saved selection: %+v", stored)
+	}
+	if err := os.WriteFile(path, []byte("nameserver 192.0.2.55\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	endpoint, err = SelectNodeDNSForStart(stored, rules)
+	if err != nil || endpoint.URL != "udp://192.0.2.55:53" || stored.NodeDns != "udp://192.0.2.53:53" {
+		t.Fatalf("auto did not follow the next system change: %v, %v", endpoint, err)
+	}
+	// A surviving source from another category still permits the explicit URL.
+	endpoint, err = SelectNodeDNSForStart(stored, []configure.DnsRule{{Server: "192.0.2.53", Outbound: "proxy"}})
+	if err != nil || endpoint.URL != stored.NodeDns {
+		t.Fatalf("surviving explicit source was replaced: %v, %v", endpoint, err)
+	}
+	if err := os.WriteFile(path, []byte("nameserver 192.0.2.53\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	endpoint, err = SelectNodeDNSForStart(stored, rules)
+	if err != nil || endpoint.URL != stored.NodeDns || !reflect.DeepEqual(configure.GetSettingNotNil(), stored) {
+		t.Fatalf("returning explicit source was not restored: %v, %v", endpoint, err)
+	}
+	stored.DnsMode = configure.DnsModeOff
+	endpoint, err = SelectNodeDNSForStart(stored, rules)
+	if err != nil || endpoint != nil || stored.NodeDns != "udp://192.0.2.53:53" {
+		t.Fatal("off mode changed the unused selection")
+	}
+}

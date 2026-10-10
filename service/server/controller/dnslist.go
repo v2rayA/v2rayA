@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
@@ -18,17 +21,54 @@ type DnsConfigResponse struct {
 	Rules        []configure.DnsRule `json:"rules"`
 }
 
-// PutDnsRules 处理 PUT /api/dns 请求，保存 DNS 规则配置。
-// 支持新格式和旧格式请求，向后兼容。
+type dnsSettingsRequest struct {
+	Rules   *[]configure.DnsRule `json:"rules"`
+	DnsMode *configure.DnsMode   `json:"dnsMode"`
+	NodeDns *string              `json:"nodeDns"`
+}
+
+// PutDnsRules accepts the legacy rules array or the DNS dialog's combined
+// changes, so replacing a selected source needs only one validation and reload.
 func PutDnsRules(ctx *gin.Context) {
 	release, ok := beginMutation(ctx)
 	if !ok {
 		return
 	}
 	defer release()
+	raw, err := ctx.GetRawData()
+	if err != nil {
+		common.ResponseError(ctx, badRequest("DNS settings", err))
+		return
+	}
+	raw = bytes.TrimSpace(raw)
+	previousSetting := configure.GetSettingNotNil()
+	data := *previousSetting
 	var rules []configure.DnsRule
-	if err := ctx.ShouldBindJSON(&rules); err != nil {
-		common.ResponseError(ctx, badRequest("DNS rules", fmt.Errorf("request body must be a JSON array of DNS rules: %w", err)))
+	combined := len(raw) > 0 && raw[0] == '{'
+	writeSetting := false
+	if combined {
+		var input dnsSettingsRequest
+		if err = json.Unmarshal(raw, &input); err == nil {
+			if input.DnsMode != nil {
+				data.DnsMode = *input.DnsMode
+				writeSetting = true
+			}
+			err = configure.ValidateDnsMode(data.DnsMode)
+			if data.DnsServiceEnabled() {
+				if input.Rules != nil {
+					rules = *input.Rules
+				}
+				if input.NodeDns != nil {
+					data.NodeDns = *input.NodeDns
+					writeSetting = true
+				}
+			}
+		}
+	} else {
+		err = json.Unmarshal(raw, &rules)
+	}
+	if err != nil {
+		common.ResponseError(ctx, badRequest("DNS settings", err))
 		return
 	}
 	for i, rule := range rules {
@@ -65,20 +105,42 @@ func PutDnsRules(ctx *gin.Context) {
 		rules[i] = rule
 	}
 
-	// 执行迁移以确保新字段有默认值
-	migrated := configure.MigrateDnsRules(rules)
-
-	endpoint, err := v2ray.SelectNodeDNS(configure.GetSettingNotNil(), migrated)
-	if err != nil {
-		common.ResponseError(ctx, logError(err))
-		return
+	var migrated []configure.DnsRule
+	if rules != nil {
+		migrated = configure.MigrateDnsRules(rules)
 	}
-
+	proposed := migrated
+	if proposed == nil {
+		proposed = configure.GetDnsRulesNotNil()
+	}
+	var endpoint *resolv.IPDNSEndpoint
+	if !combined || data.DnsServiceEnabled() {
+		endpoint, err = v2ray.SelectNodeDNS(&data, proposed)
+		if err != nil {
+			common.ResponseError(ctx, logError(err))
+			return
+		}
+		if writeSetting && data.NodeDns != "" && data.NodeDns != "auto" {
+			data.NodeDns = endpoint.URL
+		}
+	}
+	var setting *configure.Setting
+	if writeSetting {
+		configure.MigrateSetting(&data)
+		setting = &data
+	}
 	err = service.ApplyCoreConfig(func() func() error {
-		previous := configure.GetDnsRulesNotNil()
-		return func() error { return configure.SetDnsRules(previous) }
+		var previousRules []configure.DnsRule
+		if migrated != nil {
+			previousRules = configure.GetDnsRulesNotNil()
+		}
+		var restoreSetting *configure.Setting
+		if writeSetting {
+			restoreSetting = previousSetting
+		}
+		return func() error { return configure.SetDnsSettings(previousRules, restoreSetting) }
 	}, func() error {
-		return configure.SetDnsRules(migrated)
+		return configure.SetDnsSettings(migrated, setting)
 	}, endpoint)
 	if err != nil {
 		var failure *service.ApplyCoreConfigError
@@ -119,4 +181,16 @@ func GetDnsRules(ctx *gin.Context) {
 
 func GetNodeDNSOptions(ctx *gin.Context) {
 	common.ResponseSuccess(ctx, v2ray.CollectNodeDNSOptions(service.GetSetting(), configure.GetDnsRulesNotNil()))
+}
+
+// PostNodeDNSOptions previews sources from unsaved rules without mutating them.
+func PostNodeDNSOptions(ctx *gin.Context) {
+	var input struct {
+		Rules []configure.DnsRule `json:"rules"`
+	}
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		common.ResponseError(ctx, badRequest("DNS rules", err))
+		return
+	}
+	common.ResponseSuccess(ctx, v2ray.CollectNodeDNSOptions(service.GetSetting(), input.Rules))
 }

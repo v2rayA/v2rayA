@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { Setting } from "@/api/types";
 
-const api = vi.hoisted(() => ({ putDnsRules: vi.fn(), putSetting: vi.fn() }));
+const api = vi.hoisted(() => ({ putDnsRules: vi.fn() }));
 vi.mock("@/api", () => api);
 
 import { resolveDnsMode, saveDnsSettings } from "./dnsModel";
@@ -38,90 +38,52 @@ describe("the mode a service stores", () => {
 
 describe("saving the DNS dialog", () => {
   const rules = [{ server: "1.1.1.1", domains: "", outbound: "direct" }];
+  const input = {
+    mode: "service" as const,
+    storedMode: "hijack" as const,
+    rules,
+    rulesDirty: true,
+    nodeDns: "udp://1.1.1.1:53",
+    storedNodeDns: "auto",
+  };
+  beforeEach(() => api.putDnsRules.mockReset().mockResolvedValue({}));
 
-  beforeEach(() => {
-    api.putDnsRules.mockReset().mockResolvedValue({});
-    api.putSetting.mockReset().mockResolvedValue({});
-  });
-
-  test("writes only what changed", async () => {
-    expect(
-      await saveDnsSettings({
-        mode: "hijack",
-        storedMode: "hijack",
-        rules,
-        rulesDirty: false,
-      }),
-    ).toEqual({ status: "saved", rules: false, mode: false });
-    expect(api.putDnsRules).not.toHaveBeenCalled();
-    expect(api.putSetting).not.toHaveBeenCalled();
-  });
-
-  test("stores the rules before the mode that activates them", async () => {
-    const order: string[] = [];
-    api.putDnsRules.mockImplementation(async () => void order.push("rules"));
-    api.putSetting.mockImplementation(async () => void order.push("mode"));
-    expect(
-      await saveDnsSettings({
-        mode: "service",
-        storedMode: "hijack",
-        rules,
-        rulesDirty: true,
-      }),
-    ).toEqual({ status: "saved", rules: true, mode: true });
-    expect(api.putSetting).toHaveBeenCalledExactlyOnceWith({
+  test("saves rules, mode and the new node source in one request", async () => {
+    expect(await saveDnsSettings(input)).toEqual({ status: "saved" });
+    expect(api.putDnsRules).toHaveBeenCalledExactlyOnceWith({
+      rules,
       dnsMode: "service",
+      nodeDns: input.nodeDns,
     });
-    expect(order).toEqual(["rules", "mode"]);
   });
-
-  // dropping them would make switching the mode back on a different
-  // configuration, and nothing would have read them in the meantime
-  test("keeps the rules an off mode puts out of reach", async () => {
-    expect(
-      await saveDnsSettings({
-        mode: "off",
-        storedMode: "hijack",
-        rules,
-        rulesDirty: true,
-      }),
-    ).toEqual({ status: "saved", rules: false, mode: true });
+  test("writes nothing when nothing changed", async () => {
+    await saveDnsSettings({
+      ...input,
+      storedMode: "service",
+      rulesDirty: false,
+      storedNodeDns: input.nodeDns,
+    });
     expect(api.putDnsRules).not.toHaveBeenCalled();
-    expect(api.putSetting).toHaveBeenCalledExactlyOnceWith({ dnsMode: "off" });
   });
-
-  test("stores nothing and keeps the form as it was when the rules are refused", async () => {
+  test("keeps hidden rules and node edits out of an off-mode save", async () => {
+    await saveDnsSettings({ ...input, mode: "off" });
+    expect(api.putDnsRules).toHaveBeenCalledExactlyOnceWith({ dnsMode: "off" });
+  });
+  test("saves only the node source if that is the only edit", async () => {
+    await saveDnsSettings({
+      ...input,
+      storedMode: "service",
+      rulesDirty: false,
+    });
+    expect(api.putDnsRules).toHaveBeenCalledExactlyOnceWith({
+      nodeDns: input.nodeDns,
+    });
+  });
+  test("reports a refused combined save without partial success", async () => {
     api.putDnsRules.mockRejectedValueOnce(new Error("bad upstream"));
-    const result = await saveDnsSettings({
-      mode: "service",
-      storedMode: "hijack",
-      rules,
-      rulesDirty: true,
+    expect(await saveDnsSettings(input)).toEqual({
+      status: "failed",
+      error: "bad upstream",
     });
-    expect(result.status).toBe("failed");
-    expect(api.putSetting).not.toHaveBeenCalled();
-  });
-
-  test("reports the half that landed so the retry owes only the mode", async () => {
-    api.putSetting.mockRejectedValueOnce(new Error("mode refused"));
-    const result = await saveDnsSettings({
-      mode: "service",
-      storedMode: "hijack",
-      rules,
-      rulesDirty: true,
-    });
-    expect(result).toEqual({ status: "partial", error: "mode refused" });
-  });
-
-  test("reports a refused mode on its own as nothing stored", async () => {
-    api.putSetting.mockRejectedValueOnce(new Error("mode refused"));
-    expect(
-      await saveDnsSettings({
-        mode: "off",
-        storedMode: "hijack",
-        rules,
-        rulesDirty: false,
-      }),
-    ).toEqual({ status: "failed", error: "mode refused" });
   });
 });

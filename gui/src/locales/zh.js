@@ -2,6 +2,7 @@ export default {
   nodeDns: {
     title: "节点解析 DNS",
     unavailable: "已保存的来源已失效，请刷新并选择其他端点或自动。",
+    resetToAuto: "节点 DNS 来源 {address} 已消失，使用自动。",
     refresh: "刷新 DNS 选项",
     loadFailed: "无法加载 DNS 选项：{message}",
     systemReadFailed: "部分系统 DNS 来源读取失败，其他有效选项仍可使用。",
@@ -309,7 +310,6 @@ export default {
     offKeepsRules: "已保存的 {n} 条规则会保留，模式开启后继续生效。",
     saved: "DNS 设置已保存并应用",
     saveFailed: "无法保存 DNS 设置：{message}",
-    modeSaveFailed: "DNS 规则已保存，但 DNS 模式未能保存：{message}",
     colServer: "DNS 服务器",
     colDomains: "域名列表",
     colOutbound: "出口",

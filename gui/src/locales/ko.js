@@ -3,6 +3,8 @@ export default {
     title: "노드 이름 확인 DNS",
     unavailable:
       "저장된 출처를 더 이상 사용할 수 없습니다. 새로고침 후 다른 엔드포인트 또는 자동을 선택하세요.",
+    resetToAuto:
+      "노드 DNS 출처 {address}이(가) 목록에서 사라져 자동을 사용합니다.",
     refresh: "DNS 옵션 새로고침",
     loadFailed: "DNS 옵션을 불러오지 못했습니다: {message}",
     systemReadFailed:
@@ -316,8 +318,6 @@ export default {
     offKeepsRules: "저장된 규칙 {n}개는 보관되며 모드를 켜면 다시 적용됩니다.",
     saved: "DNS 설정이 저장되고 적용되었습니다",
     saveFailed: "DNS 설정 저장 실패: {message}",
-    modeSaveFailed:
-      "DNS 규칙은 저장되었지만 DNS 모드는 저장하지 못했습니다: {message}",
     colServer: "DNS 서버",
     colDomains: "도메인 목록",
     colOutbound: "아웃바운드",

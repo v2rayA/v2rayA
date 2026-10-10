@@ -445,6 +445,16 @@ func NewTemplateFromConnectedServers(setting *configure.Setting, nodeDNS ...*res
 }
 
 func UpdateV2RayConfig(nodeDNS ...*resolv.IPDNSEndpoint) (err error) {
+	if len(nodeDNS) == 0 {
+		setting := configure.GetSettingNotNil()
+		if setting.DnsServiceEnabled() {
+			endpoint, err := SelectNodeDNSForStart(setting, configure.GetDnsRulesNotNil())
+			if err != nil {
+				return err
+			}
+			nodeDNS = []*resolv.IPDNSEndpoint{endpoint}
+		}
+	}
 	tmpl, err := NewTemplateFromConnectedServers(nil, nodeDNS...)
 	if err != nil {
 		if errors.Is(err, NoConnectedServerErr) {

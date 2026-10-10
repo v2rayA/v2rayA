@@ -9,7 +9,7 @@ import {
   getRemoteGFWListVersion,
   getSetting,
   getTouch,
-  getNodeDnsOptions,
+  postNodeDnsOptions,
   putDnsRules,
   putSetting,
 } from "@/api";
@@ -23,7 +23,7 @@ import SettingsView from "../SettingsView.vue";
 vi.mock("@/api", () => ({
   getSetting: vi.fn(),
   getTouch: vi.fn(),
-  getNodeDnsOptions: vi.fn(),
+  postNodeDnsOptions: vi.fn(),
   getRemoteGFWListVersion: vi.fn(),
   putSetting: vi.fn(),
   getDnsRules: vi.fn(),
@@ -55,7 +55,6 @@ const loaded: Setting = {
   routeOnly: true,
   muxOn: "yes",
   mux: 8,
-  nodeDns: "auto",
 };
 
 let wrapper: VueWrapper;
@@ -65,7 +64,7 @@ beforeEach(() => {
     networkPaused: false,
     touch: { servers: [], subscriptions: [], connectedServer: [] },
   });
-  vi.mocked(getNodeDnsOptions).mockResolvedValue({
+  vi.mocked(postNodeDnsOptions).mockResolvedValue({
     options: [
       { value: "auto", url: "udp://223.5.5.5:53", category: "auto" },
       {
@@ -85,6 +84,7 @@ beforeEach(() => {
     remoteGFWListVersion: "2026-09-15",
   });
   vi.mocked(putSetting).mockResolvedValue(undefined);
+  vi.mocked(putDnsRules).mockResolvedValue(undefined);
   vi.mocked(getDnsRules).mockResolvedValue({ rules: [] });
   vi.mocked(getOutbounds).mockResolvedValue({ outbounds: ["proxy"] });
 });
@@ -183,7 +183,7 @@ describe("settings list", () => {
 
   test("leaves the DNS mode to the DNS settings dialog", async () => {
     await mountPage();
-    // The DNS mode belongs to the dialog; the node DNS refresh is independent.
+    // DNS settings are owned by the dialog.
     expect(
       wrapper.findAll('button.setting-choice[aria-label*="DNS"]'),
     ).toHaveLength(0);
@@ -197,6 +197,18 @@ describe("settings list", () => {
     expect(
       dialog.findAllComponents({ name: "VSelect" })[0].props("modelValue"),
     ).toBe("service");
+    expect(wrapper.find(".node-dns").exists()).toBe(false);
+    expect(dialog.find(".node-dns").exists()).toBe(true);
+    await dialog
+      .findAllComponents({ name: "VSelect" })[0]
+      .vm.$emit("update:modelValue", "hijack");
+    const save = dialog
+      .findAll("button")
+      .find((button) => button.text() === "Save")!;
+    await save.trigger("click");
+    await dialog.get("form").trigger("submit");
+    await flushPromises();
+    expect(putDnsRules).toHaveBeenCalledWith({ dnsMode: "hijack" });
     closeAllDialogs();
     await toggle("Port Sharing", true);
     await wrapper.get('button[type="submit"]').trigger("click");
@@ -209,6 +221,7 @@ describe("settings list", () => {
     const body = vi.mocked(putSetting).mock.calls[0][0];
     expect(body).not.toHaveProperty("dnsMode");
     expect(body).not.toHaveProperty("dnsHijack");
+    expect(body).not.toHaveProperty("nodeDns");
   });
 
   test("opens the existing About content as a dismissible dialog", async () => {
@@ -243,218 +256,5 @@ describe("settings list", () => {
     expect(wrapper.text()).not.toContain(
       "Based on modified time of file which sometimes is after latest version online.",
     );
-  });
-});
-
-// Node DNS sources refresh independently of the unsaved settings form.
-describe("node DNS selection", () => {
-  test.each([
-    ["off", true],
-    ["service", false],
-    ["hijack", false],
-  ])("disables node DNS controls in %s mode: %s", async (dnsMode, disabled) => {
-    vi.mocked(getSetting).mockResolvedValue({
-      setting: { ...loaded, dnsMode } as Setting,
-      localGFWListVersion: "",
-      localGeositeVersion: "",
-    });
-    await mountPage();
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    expect(select.props("disabled")).toBe(disabled);
-    expect(select.props("modelValue")).toBe("auto");
-    expect(
-      wrapper.get<HTMLButtonElement>('button[aria-label="Refresh DNS options"]')
-        .element.disabled,
-    ).toBe(disabled);
-  });
-
-  test("updates node controls after mode saves without losing settings edits", async () => {
-    await mountPage();
-    await choose("Log Level", "Debug");
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    select.vm.$emit("update:modelValue", "udp://223.5.5.5:53");
-    await flushPromises();
-    for (const dnsMode of ["off", "service"]) {
-      await wrapper
-        .findAll(".v-list-item")
-        .find((item) => item.text().startsWith("DNS Settings"))!
-        .trigger("click");
-      await flushPromises();
-      const dialog = wrapper.findComponent({ name: "DnsDialog" });
-      dialog
-        .findAllComponents({ name: "VSelect" })[0]
-        .vm.$emit("update:modelValue", dnsMode);
-      await flushPromises();
-      vi.mocked(getSetting).mockResolvedValue({
-        setting: { ...loaded, dnsMode } as Setting,
-        localGFWListVersion: "",
-        localGeositeVersion: "",
-      });
-      await dialog.get("form").trigger("submit");
-      await flushPromises();
-      expect(document.querySelector('[role="dialog"]')).toBeNull();
-      expect(select.props("disabled")).toBe(dnsMode === "off");
-      expect(select.props("modelValue")).toBe("udp://223.5.5.5:53");
-      expect(
-        wrapper.find('button[aria-label="Log Level: Debug"]').exists(),
-      ).toBe(true);
-    }
-    await wrapper.get('button[type="submit"]').trigger("click");
-    await flushPromises();
-    expect(putSetting).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        logLevel: "debug",
-        nodeDns: "udp://223.5.5.5:53",
-      }),
-      expect.anything(),
-    );
-    expect(vi.mocked(putSetting).mock.lastCall![0]).not.toHaveProperty(
-      "dnsMode",
-    );
-  });
-
-  test("disables selection until a failed mode refresh can be retried", async () => {
-    await mountPage();
-    vi.mocked(getSetting).mockRejectedValueOnce(new Error("mode unavailable"));
-    await wrapper
-      .get('button[aria-label="Refresh DNS options"]')
-      .trigger("click");
-    await flushPromises();
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    expect(select.props("disabled")).toBe(true);
-    expect(wrapper.text()).toContain("mode unavailable");
-    await wrapper
-      .get('button[aria-label="Refresh DNS options"]')
-      .trigger("click");
-    await flushPromises();
-    expect(select.props("disabled")).toBe(false);
-    expect(select.props("modelValue")).toBe("auto");
-  });
-
-  test("refreshes sources after DNS rules save without discarding settings edits", async () => {
-    await mountPage();
-    await choose("Log Level", "Debug");
-    const row = wrapper
-      .findAll(".v-list-item")
-      .find((item) => item.text().startsWith("DNS Settings"))!;
-    await row.trigger("click");
-    await flushPromises();
-    const dialog = new DOMWrapper(document.querySelector('[role="dialog"]')!);
-    await dialog
-      .findAll<HTMLInputElement>(".v-text-field:not(.v-select) input")[0]
-      .setValue("1.1.1.1");
-    await dialog.get("form").trigger("submit");
-    await flushPromises();
-    expect(putDnsRules).toHaveBeenCalledOnce();
-    expect(getNodeDnsOptions).toHaveBeenCalledTimes(2);
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
-    await wrapper.get('button[type="submit"]').trigger("click");
-    await flushPromises();
-    expect(putSetting).toHaveBeenCalledWith(
-      expect.objectContaining({ logLevel: "debug" }),
-      expect.anything(),
-    );
-  });
-
-  test("shows auto URL, translates sources and refreshes after saving", async () => {
-    await mountPage();
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    expect(select.text().replace(/\s+/g, " ")).toContain(
-      "udp://223.5.5.5:53 (auto)",
-    );
-    expect(select.props("items")).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ title: "udp://223.5.5.5:53 (auto)" }),
-        expect.objectContaining({ title: "udp://223.5.5.5:53 (direct group)" }),
-      ]),
-    );
-    select.vm.$emit("update:modelValue", "udp://223.5.5.5:53");
-    await flushPromises();
-    await wrapper.get('button[type="submit"]').trigger("click");
-    await flushPromises();
-    expect(putSetting).toHaveBeenCalledWith(
-      expect.objectContaining({ nodeDns: "udp://223.5.5.5:53" }),
-      expect.anything(),
-    );
-    expect(getNodeDnsOptions).toHaveBeenCalledTimes(2);
-  });
-
-  test("keeps the full IPv6 DoH URL for auto without saving the endpoint", async () => {
-    const url = "https://[2001:db8::53]:443/dns-query?profile=node";
-    vi.mocked(getNodeDnsOptions).mockResolvedValue({
-      options: [{ value: "auto", url, category: "auto" }],
-    });
-    await mountPage();
-    expect(wrapper.get(".node-dns").text().replace(/\s+/g, " ")).toContain(
-      `${url} (auto)`,
-    );
-    await choose("Log Level", "Debug");
-    await wrapper.get('button[type="submit"]').trigger("click");
-    await flushPromises();
-    expect(putSetting).toHaveBeenCalledWith(
-      expect.objectContaining({ nodeDns: "auto" }),
-      expect.anything(),
-    );
-  });
-
-  test("restores the saved selection after a rejected apply", async () => {
-    await mountPage();
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    select.vm.$emit("update:modelValue", "udp://223.5.5.5:53");
-    vi.mocked(putSetting).mockRejectedValueOnce(new Error("rejected"));
-    await wrapper.get('button[type="submit"]').trigger("click");
-    await flushPromises();
-    expect(select.props("modelValue")).toBe("auto");
-    expect(getSetting).toHaveBeenCalledTimes(2);
-    expect(getNodeDnsOptions).toHaveBeenCalledTimes(2);
-  });
-
-  test("keeps a vanished selection outside the refreshed options", async () => {
-    vi.mocked(getSetting).mockResolvedValue({
-      setting: { ...loaded, nodeDns: "tls://192.0.2.53:853" },
-      localGFWListVersion: "",
-      localGeositeVersion: "",
-    });
-    await mountPage();
-    expect(wrapper.text()).toContain("The saved source is no longer available");
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    expect(select.props("modelValue")).toBe("tls://192.0.2.53:853");
-    expect(select.props("items")).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ value: "tls://192.0.2.53:853" }),
-      ]),
-    );
-    await wrapper.get('button[type="submit"]').trigger("click");
-    await flushPromises();
-    expect(putSetting).not.toHaveBeenCalled();
-  });
-
-  test("reports loading failure and retries without altering the form", async () => {
-    vi.mocked(getNodeDnsOptions).mockRejectedValueOnce(new Error("offline"));
-    await mountPage();
-    expect(wrapper.text()).toContain("Could not load DNS options: offline");
-    const select = wrapper
-      .findAllComponents({ name: "VSelect" })
-      .find((v) => v.props("label") === "Node resolution DNS")!;
-    expect(select.props("disabled")).toBe(true);
-    await wrapper
-      .get('button[aria-label="Refresh DNS options"]')
-      .trigger("click");
-    await flushPromises();
-    expect(select.props("disabled")).toBe(false);
-    expect(select.props("modelValue")).toBe("auto");
-    expect(wrapper.text()).not.toContain("Could not load DNS options");
   });
 });

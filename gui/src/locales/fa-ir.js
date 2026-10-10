@@ -3,6 +3,8 @@ export default {
     title: "DNS برای نام سرور گره",
     unavailable:
       "منبع ذخیره‌شده دیگر در دسترس نیست. تازه‌سازی کنید و نقطهٔ پایانی دیگری یا حالت خودکار را انتخاب کنید.",
+    resetToAuto:
+      "منبع DNS گره {address} دیگر در فهرست نیست. از حالت خودکار استفاده می‌شود.",
     refresh: "تازه‌سازی گزینه‌های DNS",
     loadFailed: "بارگیری گزینه‌های DNS ناموفق بود: {message}",
     systemReadFailed:
@@ -318,7 +320,6 @@ export default {
       "{n} قانون ذخیره‌شده نگه داشته می‌شود و با روشن شدن حالت دوباره اعمال می‌گردد.",
     saved: "تنظیمات DNS ذخیره و اعمال شد",
     saveFailed: "ذخیره تنظیمات DNS ناموفق بود: {message}",
-    modeSaveFailed: "قوانین DNS ذخیره شد، اما حالت DNS ذخیره نشد: {message}",
     colServer: "سرور DNS",
     colDomains: "فهرست دامنه‌ها",
     colOutbound: "خروجی",

@@ -1,22 +1,20 @@
 // The settings page's state and its two requests, without the view: the
 // form as GET /setting returns it, saved with PUT /setting in the shape
-// the old dialog sent (integers where it parsed them). The DNS mode is not
-// one of its fields: the DNS settings dialog owns that decision, and a copy
-// held here would put a stale mode back the next time anything is saved.
+// the old dialog sent (integers where it parsed them). The DNS dialog owns
+// the mode and node resolver; holding copies here would put stale choices
+// back the next time anything else is saved.
 import { computed, reactive, ref } from "vue";
 import {
   getRemoteGFWListVersion,
   getSetting,
-  getNodeDnsOptions,
   getTouch,
   putSetting,
 } from "@/api";
 import { watchConnected } from "@/api/connect";
-import type { Setting, NodeDnsOption } from "@/api/types";
+import type { Setting } from "@/api/types";
 import { openLoading } from "@/composables/useLoading";
 import { useAppStore } from "@/stores/app";
 import { runningOf } from "@/views/nodes/model";
-import { resolveDnsMode } from "@/dialogs/settings/dnsModel";
 
 export const defaultForm = () => ({
   transparent: "close",
@@ -42,7 +40,6 @@ export const defaultForm = () => ({
   routeOnly: false,
   muxOn: "no",
   mux: 8,
-  nodeDns: "auto",
 });
 export type SettingForm = ReturnType<typeof defaultForm>;
 
@@ -58,7 +55,7 @@ export function toRequest(form: SettingForm): Setting {
   } as Setting;
 }
 
-export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
+export function useSettings() {
   const store = useAppStore();
   const form = reactive(defaultForm());
   const ready = ref(false);
@@ -69,39 +66,8 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
   const localGFWListVersion = ref("");
   const localGeositeVersion = ref("");
   const remoteGFWListVersion = ref("");
-  const nodeDnsOptions = ref<NodeDnsOption[]>([]);
-  const nodeDnsWarnings = ref<string[]>([]);
-  const nodeDnsError = ref<unknown>(null);
-  const nodeDnsLoading = ref(false);
-  const nodeDnsLoaded = ref(false);
-  const nodeDnsEnabled = ref(false);
-  let nodeDnsRequest = 0;
-
-  async function loadNodeDnsOptions(refreshMode = false): Promise<void> {
-    const request = ++nodeDnsRequest;
-    nodeDnsLoading.value = true;
-    nodeDnsError.value = null;
-    try {
-      const [result, setting] = await Promise.all([
-        getNodeDnsOptions(),
-        refreshMode ? getSetting() : null,
-      ]);
-      if (request !== nodeDnsRequest) return;
-      nodeDnsOptions.value = result.options;
-      nodeDnsWarnings.value = result.warnings ?? [];
-      nodeDnsLoaded.value = true;
-      if (setting)
-        nodeDnsEnabled.value = resolveDnsMode(setting.setting) !== "off";
-    } catch (err) {
-      if (request === nodeDnsRequest) nodeDnsError.value = err;
-    } finally {
-      if (request === nodeDnsRequest) nodeDnsLoading.value = false;
-    }
-  }
-
   async function load(): Promise<void> {
     const res = await getSetting();
-    nodeDnsEnabled.value = resolveDnsMode(res.setting) !== "off";
     for (const key of Object.keys(form) as (keyof SettingForm)[]) {
       if (key in res.setting)
         (form as Record<string, unknown>)[key] = res.setting[key];
@@ -111,7 +77,6 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
     if (store.lite) form.transparentType = "system_proxy";
     saved.value = JSON.stringify(form);
     ready.value = true;
-    if (nodeDns) await loadNodeDnsOptions();
   }
 
   async function loadRemoteVersion(): Promise<void> {
@@ -132,7 +97,6 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
         () => control.abort(),
       );
       saved.value = submittedForm;
-      if (nodeDns) await loadNodeDnsOptions(true);
     } catch (err) {
       // the backend restores the previous setting and keeps the core as it
       // was; the touch says which state that is, and the form goes back to
@@ -154,13 +118,6 @@ export function useSettings({ nodeDns = false }: { nodeDns?: boolean } = {}) {
 
   return {
     form,
-    nodeDnsOptions,
-    nodeDnsWarnings,
-    nodeDnsError,
-    nodeDnsLoading,
-    nodeDnsLoaded,
-    nodeDnsEnabled,
-    loadNodeDnsOptions,
     ready,
     dirty,
     localGFWListVersion,

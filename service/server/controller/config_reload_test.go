@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
+	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/coreObj"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
@@ -248,5 +249,88 @@ func TestNodeDNSRevalidatesSourcesBeforeMutations(t *testing.T) {
 	response = request(`[{"server":"8.8.8.8","outbound":"proxy"}]`, "/dnsRules", PutDnsRules)
 	if configure.GetDnsRulesNotNil()[0].Outbound != "proxy" {
 		t.Fatalf("surviving source rejected: %s", response)
+	}
+}
+
+func TestDnsDialogCombinedSave(t *testing.T) {
+	previousSetting, previousRules := configure.GetSettingNotNil(), configure.GetDnsRulesNotNil()
+	t.Cleanup(func() { _ = configure.SetDnsSettings(previousRules, previousSetting) })
+	setting := configure.NewSetting()
+	setting.DnsMode = configure.DnsModeService
+	setting.NodeDns = "tls://192.0.2.53:853"
+	setting.LogLevel = "debug"
+	rules := []configure.DnsRule{{Server: "tls://192.0.2.53", Outbound: "direct"}}
+	if err := configure.SetDnsSettings(rules, setting); err != nil {
+		t.Fatal(err)
+	}
+	request := func(body string, handler gin.HandlerFunc) string {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		ctx.Request = httptest.NewRequest(http.MethodPut, "/dnsRules", strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		handler(ctx)
+		return recorder.Body.String()
+	}
+	setting = configure.GetSettingNotNil()
+	response := request(`{"rules":[{"server":"tcp://192.0.2.54","outbound":"direct"}]}`, PostNodeDNSOptions)
+	if !strings.Contains(response, "tcp://192.0.2.54:53") || !reflect.DeepEqual(configure.GetDnsRulesNotNil(), rules) || !reflect.DeepEqual(configure.GetSettingNotNil(), setting) {
+		t.Fatalf("preview did not preserve configuration: %s", response)
+	}
+	response = request(`{"rules":[{"server":"tcp://192.0.2.54","outbound":"direct"}],"dnsMode":"hijack","nodeDns":"tls://192.0.2.53:853"}`, PutDnsRules)
+	if !strings.Contains(response, "NODE_DNS_INVALID") || !reflect.DeepEqual(configure.GetDnsRulesNotNil(), rules) || !reflect.DeepEqual(configure.GetSettingNotNil(), setting) {
+		t.Fatalf("invalid replacement changed configuration: %s", response)
+	}
+	response = request(`{"rules":[{"server":"tcp://192.0.2.54","outbound":"direct"}],"dnsMode":"hijack","nodeDns":"tcp://192.0.2.54","logLevel":"error"}`, PutDnsRules)
+	got := configure.GetSettingNotNil()
+	if got.NodeDns != "tcp://192.0.2.54:53" || got.DnsMode != configure.DnsModeHijack || got.DnsHijack != configure.Yes || got.LogLevel != "debug" || configure.GetDnsRulesNotNil()[0].Server != "tcp://192.0.2.54" {
+		t.Fatalf("combined replacement failed: %s, %+v", response, got)
+	}
+	// Turning the module off must remain possible even if the saved source
+	// disappeared. Hidden edits must not replace the retained configuration.
+	if err := configure.SetDnsRules(rules); err != nil {
+		t.Fatal(err)
+	}
+	response = request(`{"dnsMode":"off","nodeDns":"auto","rules":[{"server":"bad://address"}]}`, PutDnsRules)
+	got = configure.GetSettingNotNil()
+	if got.DnsMode != configure.DnsModeOff || got.DnsHijack != configure.No || got.NodeDns != "tcp://192.0.2.54:53" || !reflect.DeepEqual(configure.GetDnsRulesNotNil(), rules) {
+		t.Fatalf("off changed hidden configuration: %s, %+v", response, got)
+	}
+	response = request(`{"dnsMode":"servic"}`, PutDnsRules)
+	if configure.GetSettingNotNil().DnsMode != configure.DnsModeOff || !strings.Contains(response, "unknown dnsMode") {
+		t.Fatalf("unknown mode accepted: %s", response)
+	}
+}
+
+func TestDnsDialogRestoresRulesAndSettingAfterReloadFailure(t *testing.T) {
+	previousSetting, previousRules := configure.GetSettingNotNil(), configure.GetDnsRulesNotNil()
+	t.Cleanup(func() { _ = configure.SetDnsSettings(previousRules, previousSetting) })
+	runningCoreWithInvalidConnection(t)
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/dnsRules", strings.NewReader(`{"rules":[{"server":"192.0.2.54","outbound":"direct"}],"dnsMode":"service","nodeDns":"192.0.2.54"}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutDnsRules(ctx)
+	if !reflect.DeepEqual(configure.GetDnsRulesNotNil(), previousRules) || !reflect.DeepEqual(configure.GetSettingNotNil(), previousSetting) || !strings.Contains(recorder.Body.String(), `"code":"FAIL"`) {
+		t.Fatalf("combined reload failure did not restore configuration: %s", recorder.Body.String())
+	}
+}
+
+func TestDnsDialogStorageFailureKeepsBothValues(t *testing.T) {
+	previousSetting, previousRules := configure.GetSettingNotNil(), configure.GetDnsRulesNotNil()
+	// Reject the second write, after the transaction has written new rules.
+	_, err := db.GetDB().Exec(`CREATE TRIGGER reject_dns_setting BEFORE INSERT ON system_config
+		WHEN NEW.key = 'system:setting' BEGIN SELECT RAISE(ABORT, 'settings write rejected'); END`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _, _ = db.GetDB().Exec("DROP TRIGGER reject_dns_setting") })
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPut, "/dnsRules", strings.NewReader(`{"rules":[{"server":"192.0.2.54","outbound":"direct"}],"dnsMode":"service","nodeDns":"192.0.2.54"}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	PutDnsRules(ctx)
+	if !reflect.DeepEqual(configure.GetDnsRulesNotNil(), previousRules) || !reflect.DeepEqual(configure.GetSettingNotNil(), previousSetting) || !strings.Contains(recorder.Body.String(), "settings write rejected") {
+		t.Fatalf("failed transaction changed configuration: %s", recorder.Body.String())
 	}
 }

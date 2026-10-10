@@ -13,6 +13,7 @@ const props = defineProps<{
   loading: boolean;
   loaded: boolean;
   disabled: boolean;
+  fallbackFrom: string;
 }>();
 defineEmits<{ refresh: [] }>();
 const { t } = useI18n();
@@ -41,7 +42,6 @@ const selection = computed(
 );
 const unavailable = computed(
   () =>
-    !props.disabled &&
     props.loaded &&
     !props.error &&
     !props.loading &&
@@ -97,6 +97,14 @@ const unavailable = computed(
         @click="$emit('refresh')"
       />
     </div>
+    <v-alert
+      v-if="fallbackFrom"
+      type="warning"
+      variant="tonal"
+      class="mt-2 node-dns__fallback"
+    >
+      {{ t("nodeDns.resetToAuto", { address: fallbackFrom }) }}
+    </v-alert>
     <v-alert v-if="error" type="error" variant="tonal" class="mt-2">
       {{ t("nodeDns.loadFailed", { message: errorText(error) }) }}
       <v-btn variant="text" :disabled="disabled" @click="$emit('refresh')">

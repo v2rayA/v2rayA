@@ -3,6 +3,7 @@ export default {
     title: "Node resolution DNS",
     unavailable:
       "The saved source is no longer available. Refresh and select another endpoint or auto.",
+    resetToAuto: "Node DNS {address} is no longer in the sources. Using auto.",
     refresh: "Refresh DNS options",
     loadFailed: "Could not load DNS options: {message}",
     systemReadFailed:
@@ -320,8 +321,6 @@ export default {
       "{n} saved rules are kept and apply again when the mode is on.",
     saved: "DNS settings saved and applied",
     saveFailed: "Failed to save DNS settings: {message}",
-    modeSaveFailed:
-      "The DNS rules were saved, but the DNS mode was not: {message}",
     colServer: "DNS Server",
     colDomains: "Domain List",
     colOutbound: "Outbound",

@@ -136,6 +136,12 @@ export interface DnsRule {
   [extra: string]: unknown;
 }
 
+export interface DnsSettingsRequest {
+  rules?: DnsRule[];
+  dnsMode?: DnsMode;
+  nodeDns?: string;
+}
+
 export interface DnsRulesResponse {
   rules?: Partial<DnsRule>[] | null;
 }

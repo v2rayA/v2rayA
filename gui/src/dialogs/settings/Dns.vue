@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { mdiDeleteOutline, mdiPlus } from "@mdi/js";
-import { getDnsRules, getOutbounds, getSetting } from "@/api";
-import type { DnsMode, DnsRule } from "@/api/types";
+import {
+  getDnsRules,
+  getOutbounds,
+  getSetting,
+  postNodeDnsOptions,
+} from "@/api";
+import type { DnsMode, DnsRule, NodeDnsOption } from "@/api/types";
 import { errorText } from "@/api/errors";
+import NodeDnsChoice from "./NodeDnsChoice.vue";
 import DocsLink from "@/components/DocsLink.vue";
 import { useNotify } from "@/composables";
 import {
@@ -23,11 +29,36 @@ const emit = defineEmits<{ close: [changed?: boolean] }>();
 const { t } = useI18n();
 const notify = useNotify();
 const mode = ref<DnsMode>("hijack");
-/** what the service holds; the mode control returns to it after a refusal */
+/** what the service holds before this edit */
 const storedMode = ref<DnsMode>("hijack");
 const rules = ref<DnsRule[]>(cloneDnsRules(defaultDnsRules));
 /** what the service holds, as the dialog folds it into the form */
 const storedRules = ref<DnsRule[]>(cloneDnsRules(defaultDnsRules));
+const nodeDns = ref("auto");
+const storedNodeDns = ref("auto");
+const nodeDnsOptions = ref<NodeDnsOption[]>([]);
+const nodeDnsWarnings = ref<string[]>([]);
+const nodeDnsError = ref<unknown>(null);
+const nodeDnsLoading = ref(false);
+const nodeDnsLoaded = ref(false);
+const nodeDnsFallbackFrom = computed(() =>
+  nodeDnsLoaded.value &&
+  !nodeDnsError.value &&
+  nodeDns.value !== "auto" &&
+  !nodeDnsOptions.value.some((option) => option.value === nodeDns.value) &&
+  nodeDnsOptions.value.some((option) => option.value === "auto")
+    ? nodeDns.value
+    : "",
+);
+// Keep the explicit edit until the user saves or chooses another source.
+const displayedNodeDns = computed({
+  get: () => (nodeDnsFallbackFrom.value ? "auto" : nodeDns.value),
+  set: (value: string) => {
+    nodeDns.value = value;
+  },
+});
+let nodeDnsRequest = 0;
+let previewTimer: ReturnType<typeof setTimeout> | undefined;
 const outbounds = ref(["proxy"]);
 const choices = computed(() => [...new Set(["direct", ...outbounds.value])]);
 const modeItems = computed(() => dnsModeItems(t));
@@ -45,7 +76,9 @@ const rulesChanged = computed(
 // never part of what this dialog owes the service.
 const dirty = computed(
   () =>
-    mode.value !== storedMode.value || (!modeOff.value && rulesChanged.value),
+    mode.value !== storedMode.value ||
+    (!modeOff.value &&
+      (rulesChanged.value || displayedNodeDns.value !== storedNodeDns.value)),
 );
 
 onMounted(async () => {
@@ -58,6 +91,7 @@ onMounted(async () => {
     storedRules.value = normalizeDnsRules(dns.rules);
     rules.value = cloneDnsRules(storedRules.value);
     mode.value = storedMode.value = resolveDnsMode(setting.setting);
+    nodeDns.value = storedNodeDns.value = setting.setting.nodeDns || "auto";
     outbounds.value = groups.outbounds;
     loaded.value = true;
   } catch (err) {
@@ -72,16 +106,48 @@ function resetDefault() {
   rules.value = cloneDnsRules(defaultDnsRules);
 }
 
-/** the mode the service ends up holding, read back after it refused one */
-async function readStoredMode(): Promise<void> {
+async function loadNodeDnsOptions() {
+  clearTimeout(previewTimer);
+  const request = ++nodeDnsRequest;
+  nodeDnsLoading.value = true;
+  nodeDnsError.value = null;
   try {
-    storedMode.value = resolveDnsMode((await getSetting()).setting);
-    mode.value = storedMode.value;
-  } catch {
-    // the refusal is what the notice reports; leaving the choice as the user
-    // left it is better than closing the dialog over a failed read
+    const result = await postNodeDnsOptions({
+      rules: dnsRulesPayload(rules.value),
+    });
+    if (request !== nodeDnsRequest) return;
+    nodeDnsOptions.value = result.options;
+    nodeDnsWarnings.value = result.warnings ?? [];
+    nodeDnsLoaded.value = true;
+  } catch (err) {
+    if (request === nodeDnsRequest) nodeDnsError.value = err;
+  } finally {
+    if (request === nodeDnsRequest) nodeDnsLoading.value = false;
   }
 }
+
+watch(
+  () => [
+    loaded.value,
+    modeOff.value,
+    JSON.stringify(dnsRulesPayload(rules.value)),
+  ],
+  () => {
+    clearTimeout(previewTimer);
+    ++nodeDnsRequest;
+    if (!loaded.value || modeOff.value) return;
+    nodeDnsLoading.value = true;
+    // Avoid a request for every keystroke, while excluding stale responses
+    // as soon as the edited rules change.
+    if (!nodeDnsLoaded.value) void loadNodeDnsOptions();
+    else previewTimer = setTimeout(() => void loadNodeDnsOptions(), 250);
+  },
+  { flush: "sync" },
+);
+onBeforeUnmount(() => {
+  clearTimeout(previewTimer);
+  ++nodeDnsRequest;
+});
 
 async function save() {
   if (!loaded.value || saving.value || !dirty.value) return;
@@ -95,21 +161,32 @@ async function save() {
   }
   saving.value = true;
   try {
+    if (!modeOff.value) {
+      await loadNodeDnsOptions();
+      if (nodeDnsError.value) {
+        notify.warning(errorText(nodeDnsError.value));
+        return;
+      }
+      if (
+        !nodeDnsOptions.value.some(
+          (option) => option.value === displayedNodeDns.value,
+        )
+      ) {
+        notify.warning(t("nodeDns.unavailable"));
+        return;
+      }
+    }
     const result = await saveDnsSettings({
       mode: mode.value,
       storedMode: storedMode.value,
       rules: rules.value,
       rulesDirty: rulesChanged.value,
+      nodeDns: displayedNodeDns.value,
+      storedNodeDns: storedNodeDns.value,
     });
     if (result.status === "saved") {
       notify.success(t("dns.saved"));
       emit("close", true);
-      return;
-    }
-    if (result.status === "partial") {
-      storedRules.value = cloneDnsRules(rules.value);
-      await readStoredMode();
-      notify.warning(t("dns.modeSaveFailed", { message: result.error }));
       return;
     }
     notify.warning(t("dns.saveFailed", { message: result.error }));
@@ -245,6 +322,19 @@ async function save() {
                 {{ t("dns.resetDefault") }}
               </v-btn>
             </div>
+            <v-sheet color="surface-container-low" rounded="lg" class="mt-4">
+              <NodeDnsChoice
+                v-model="displayedNodeDns"
+                :options="nodeDnsOptions"
+                :warnings="nodeDnsWarnings"
+                :error="nodeDnsError"
+                :loading="nodeDnsLoading"
+                :loaded="nodeDnsLoaded"
+                :disabled="saving"
+                :fallback-from="nodeDnsFallbackFrom"
+                @refresh="loadNodeDnsOptions"
+              />
+            </v-sheet>
           </div>
         </v-expand-transition>
       </template>

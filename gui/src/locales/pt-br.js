@@ -3,6 +3,8 @@ export default {
     title: "DNS para resolução de nós",
     unavailable:
       "A origem salva não está mais disponível. Atualize e selecione outro endpoint ou automático.",
+    resetToAuto:
+      "A origem DNS dos nós {address} não está mais na lista. Usando automático.",
     refresh: "Atualizar opções de DNS",
     loadFailed: "Não foi possível carregar as opções de DNS: {message}",
     systemReadFailed:
@@ -324,8 +326,6 @@ export default {
       "As {n} regras salvas ficam guardadas e voltam a valer quando o modo é ligado.",
     saved: "Configurações de DNS salvas e aplicadas",
     saveFailed: "Falha ao salvar as configurações de DNS: {message}",
-    modeSaveFailed:
-      "As regras de DNS foram salvas, mas o modo do DNS não: {message}",
     colServer: "Servidor DNS",
     colDomains: "Lista de domínios",
     colOutbound: "Saída",

@@ -1,35 +1,33 @@
 // @vitest-environment happy-dom
 import { expect, test, vi } from "vitest";
 import { defineComponent, h } from "vue";
-import { getSetting, getNodeDnsOptions, putSetting } from "@/api";
+import { getSetting, putSetting } from "@/api";
 import { mountWithApp } from "@/test/mount";
 import { defaultForm, useSettings } from "./model";
 
 vi.mock("@/api", () => ({
   getSetting: vi.fn(),
-  getNodeDnsOptions: vi.fn(),
   putSetting: vi.fn(),
 }));
 
-test("refreshing DNS options preserves edits made during an apply", async () => {
+test("applying settings preserves edits made during the request", async () => {
   vi.mocked(getSetting).mockResolvedValue({
     setting: defaultForm(),
     localGFWListVersion: "",
     localGeositeVersion: "",
   });
-  vi.mocked(getNodeDnsOptions).mockResolvedValue({ options: [] });
   let settings!: ReturnType<typeof useSettings>;
   const wrapper = mountWithApp(
     defineComponent({
       setup() {
-        settings = useSettings({ nodeDns: true });
+        settings = useSettings();
         return () => h("div");
       },
     }),
   );
   try {
     await settings.load();
-    settings.form.nodeDns = "udp://223.5.5.5:53";
+    settings.form.logLevel = "debug";
     expect(settings.dirty.value).toBe(true);
     let complete!: () => void;
     vi.mocked(putSetting).mockReturnValueOnce(
@@ -38,12 +36,11 @@ test("refreshing DNS options preserves edits made during an apply", async () => 
       }),
     );
     const saving = settings.save();
-    settings.form.nodeDns = "auto";
+    settings.form.logLevel = "warn";
     complete();
     await saving;
-    expect(settings.form.nodeDns).toBe("auto");
+    expect(settings.form.logLevel).toBe("warn");
     expect(settings.dirty.value).toBe(true);
-    expect(getNodeDnsOptions).toHaveBeenCalledTimes(2);
   } finally {
     wrapper.unmount();
   }
