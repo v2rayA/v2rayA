@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/kernel/v2ray"
 )
 
@@ -32,7 +33,7 @@ func (e *ApplyCoreConfigError) Restored() bool {
 	return e.RestoreStoreErr == nil && e.RestoreUpdateErr == nil
 }
 
-func ApplyCoreConfig(snapshot func() (restore func() error), store func() error) error {
+func ApplyCoreConfig(snapshot func() (restore func() error), store func() error, nodeDNS ...*resolv.IPDNSEndpoint) error {
 	restore := snapshot()
 	if err := store(); err != nil {
 		return err
@@ -40,7 +41,7 @@ func ApplyCoreConfig(snapshot func() (restore func() error), store func() error)
 	if !v2ray.ProcessManager.Running() {
 		return nil
 	}
-	updateErr := v2ray.UpdateV2RayConfig()
+	updateErr := v2ray.UpdateV2RayConfig(nodeDNS...)
 	if updateErr == nil {
 		return nil
 	}

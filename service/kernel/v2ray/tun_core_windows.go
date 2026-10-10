@@ -38,6 +38,12 @@ var (
 
 func tunInstalled() bool { return tunLUID != 0 }
 
+func tunSystemDNSActive(tmpl *Template) bool {
+	tunMu.Lock()
+	defer tunMu.Unlock()
+	return tunInstalled()
+}
+
 // tunIPv6Enabled follows the same ipv6-support setting the Linux rules do.
 func tunIPv6Enabled() bool { return iptables.IsIPv6Supported() }
 

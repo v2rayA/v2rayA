@@ -80,7 +80,7 @@ func (r *Router) Route(query *DnsQuery) *RouteResult {
 		matchers := r.matchers[i]
 
 		// Check if all matcher groups match (AND across groups, OR within each group).
-		if MatchAll(matchers, query) {
+		if (query.Node && rule.ID == "rule-node") || (!query.Node && (rule.ID != "rule-node" || len(matchers) > 0) && MatchAll(matchers, query)) {
 			// Rule matched — determine upstream address.
 			upstreamAddr := r.upstreamMap[rule.Upstream]
 
@@ -110,6 +110,9 @@ func (r *Router) Route(query *DnsQuery) *RouteResult {
 		}
 	}
 
+	if query.Node {
+		return &RouteResult{Action: "reject", RuleID: "rule-node"}
+	}
 	// No rule matched — use default upstream.
 	dnsLogf("[dns router] no rule matched for %s %d → using default upstream %s",
 		query.Name, query.QType, r.defaultUpstream)

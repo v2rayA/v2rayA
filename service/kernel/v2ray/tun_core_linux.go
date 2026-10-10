@@ -49,6 +49,8 @@ var tunUndo []string
 
 func tunInstalled() bool { return len(tunUndo) > 0 }
 
+func tunSystemDNSActive(tmpl *Template) bool { return false }
+
 func tunIPv6Enabled() bool { return iptables.IsIPv6Supported() }
 
 func tunEgressInterface() string { return "" }

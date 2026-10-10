@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/miekg/dns"
@@ -25,6 +26,8 @@ type serverPair struct {
 	tcp *dns.Server
 }
 
+const nodeQueryOption = 65002
+
 // DnsListener listens for DNS queries on one or more addresses (UDP + TCP per address).
 type DnsListener struct {
 	config  *DnsListenerConfig
@@ -33,6 +36,7 @@ type DnsListener struct {
 	wg      sync.WaitGroup
 	ctx     context.Context
 	cancel  context.CancelFunc
+	ready   atomic.Bool
 }
 
 // NewDnsListener creates a new DnsListener with the given config and handler.
@@ -55,6 +59,7 @@ func (l *DnsListener) Start() error {
 		return fmt.Errorf("dns listener: invalid config: %w", err)
 	}
 
+	l.ready.Store(false)
 	l.ctx, l.cancel = context.WithCancel(context.Background())
 
 	// Collect all listen addresses (primary + extras).
@@ -106,29 +111,57 @@ func (l *DnsListener) startPair(addr string) (*serverPair, error) {
 		WriteTimeout: timeout,
 	}
 
+	udpReady, tcpReady := make(chan struct{}), make(chan struct{})
+	failed := make(chan error, 2)
+	udpSrv.NotifyStartedFunc = func() { close(udpReady) }
+	tcpSrv.NotifyStartedFunc = func() { close(tcpReady) }
 	l.wg.Add(1)
 	go func() {
 		defer l.wg.Done()
 		log.Printf("[dns] UDP listener starting on %s", addr)
-		if err := udpSrv.ActivateAndServe(); err != nil {
+		err := udpSrv.ActivateAndServe()
+		l.ready.Store(false)
+		l.cancel()
+		if err != nil {
 			log.Printf("[dns] UDP listener stopped: %v", err)
 		}
+		failed <- fmt.Errorf("UDP listener stopped: %v", err)
 	}()
 
 	l.wg.Add(1)
 	go func() {
 		defer l.wg.Done()
 		log.Printf("[dns] TCP listener starting on %s", addr)
-		if err := tcpSrv.ActivateAndServe(); err != nil {
+		err := tcpSrv.ActivateAndServe()
+		l.ready.Store(false)
+		l.cancel()
+		if err != nil {
 			log.Printf("[dns] TCP listener stopped: %v", err)
 		}
+		failed <- fmt.Errorf("TCP listener stopped: %v", err)
 	}()
 
+	startupCtx, startupCancel := context.WithTimeout(l.ctx, timeout)
+	defer startupCancel()
+	for _, started := range []<-chan struct{}{udpReady, tcpReady} {
+		var err error
+		select {
+		case <-started:
+			continue
+		case err = <-failed:
+		case <-startupCtx.Done():
+			err = startupCtx.Err()
+		}
+		_ = udpConn.Close()
+		_ = tcpListener.Close()
+		return nil, fmt.Errorf("activate DNS listener: %w", err)
+	}
 	return &serverPair{udp: udpSrv, tcp: tcpSrv}, nil
 }
 
 // Stop gracefully shuts down all listeners.
 func (l *DnsListener) Stop() error {
+	l.ready.Store(false)
 	if l.cancel != nil {
 		l.cancel()
 	}
@@ -169,6 +202,17 @@ func (l *DnsListener) handlePacket(w dns.ResponseWriter, msg *dns.Msg) {
 	}
 
 	q := msg.Question[0]
+	if q.Name == "_v2raya-ready.invalid." && q.Qtype == dns.TypeTXT {
+		reply := new(dns.Msg)
+		reply.SetReply(msg)
+		if l.ready.Load() {
+			reply.Answer = []dns.RR{&dns.TXT{Hdr: dns.RR_Header{Name: q.Name, Rrtype: dns.TypeTXT, Class: dns.ClassINET}, Txt: []string{l.config.ReadinessToken}}}
+		} else {
+			reply.Rcode = dns.RcodeServerFailure
+		}
+		_ = w.WriteMsg(reply)
+		return
+	}
 	clientAddr := w.RemoteAddr()
 
 	// A query carrying this process's own token has been sent back to us by an
@@ -182,7 +226,22 @@ func (l *DnsListener) handlePacket(w dns.ResponseWriter, msg *dns.Msg) {
 		return
 	}
 
+	node := false
+	if opt := msg.IsEdns0(); opt != nil {
+		for _, option := range opt.Option {
+			if local, ok := option.(*dns.EDNS0_LOCAL); ok && local.Code == nodeQueryOption {
+				if !l.ready.Load() || l.config.ReadinessToken == "" || string(local.Data) != l.config.ReadinessToken {
+					reply := new(dns.Msg)
+					reply.SetRcode(msg, dns.RcodeRefused)
+					_ = w.WriteMsg(reply)
+					return
+				}
+				node = true
+			}
+		}
+	}
 	query := &DnsQuery{
+		Node:  node,
 		Name:  q.Name,
 		QType: QueryType(q.Qtype),
 	}

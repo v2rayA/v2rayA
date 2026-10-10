@@ -77,6 +77,9 @@ func MigrateSetting(setting *Setting) {
 		setting.DnsHijack = No
 	}
 
+	if setting.NodeDns == "" {
+		setting.NodeDns = "auto"
+	}
 	// 监听地址默认值
 	if setting.DnsListenAddr == "" {
 		setting.DnsListenAddr = "0.0.0.0:52353"

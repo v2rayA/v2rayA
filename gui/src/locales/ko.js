@@ -1,4 +1,22 @@
 export default {
+  nodeDns: {
+    title: "노드 이름 확인 DNS",
+    unavailable:
+      "저장된 출처를 더 이상 사용할 수 없습니다. 새로고침 후 다른 엔드포인트 또는 자동을 선택하세요.",
+    resetToAuto:
+      "노드 DNS 출처 {address}이(가) 목록에서 사라져 자동을 사용합니다.",
+    refresh: "DNS 옵션 새로고침",
+    loadFailed: "DNS 옵션을 불러오지 못했습니다: {message}",
+    systemReadFailed:
+      "일부 시스템 DNS 출처를 읽지 못했습니다. 다른 유효한 옵션은 계속 사용할 수 있습니다.",
+    categories: {
+      auto: "자동",
+      direct: "직접 연결 그룹",
+      localhost: "로컬 DNS",
+      proxy: "프록시 그룹",
+      fallback: "대체 DNS",
+    },
+  },
   onboarding: {
     title: "사용 안내",
     importTitle: "노드 가져오기",
@@ -292,16 +310,14 @@ export default {
     modeService: "서비스만",
     modeHijack: "서비스 및 가로채기",
     modeOffHelp:
-      "DNS 모듈을 실행하지 않고 어떤 질의도 그것으로 보내지 않습니다. 아래 규칙은 그대로 보관되며 모드를 켜면 다시 적용됩니다.",
+      "DNS 모듈을 실행하지 않고 어떤 질의도 그것으로 보내지 않습니다. 아래 규칙은 그대로 보관되며 모드를 켜면 다시 적용됩니다. 노드 도메인은 내장 DNS로 확인하지 않습니다.",
     modeServiceHelp:
-      "DNS 모듈이 자체 주소에서 실행되지만 시스템 리졸버, 방화벽의 DNS 규칙, TUN 중계는 건드리지 않습니다. 다른 프로그램이 이미 DNS를 v2rayA로 보내고 있을 때 사용하세요.",
+      "DNS 모듈이 자체 주소에서 실행되지만 시스템 리졸버, 방화벽의 DNS 규칙, TUN 중계는 건드리지 않습니다. 다른 프로그램이 이미 DNS를 v2rayA로 보내고 있을 때 사용하세요. 노드 도메인은 내장 DNS로 확인합니다.",
     modeHijackHelp:
-      "DNS 모듈이 실행되고 v2rayA가 시스템 질의를 그것으로 보냅니다. 리졸버가 바뀌고 53번 포트가 전달되며 아래 규칙이 적용됩니다. 암호화된 DNS는 가로채지 않습니다.",
+      "DNS 모듈이 실행되고 v2rayA가 시스템 질의를 그것으로 보냅니다. 리졸버가 바뀌고 53번 포트가 전달되며 아래 규칙이 적용됩니다. 암호화된 DNS는 가로채지 않습니다. 노드 도메인은 내장 DNS로 확인합니다.",
     offKeepsRules: "저장된 규칙 {n}개는 보관되며 모드를 켜면 다시 적용됩니다.",
     saved: "DNS 설정이 저장되고 적용되었습니다",
     saveFailed: "DNS 설정 저장 실패: {message}",
-    modeSaveFailed:
-      "DNS 규칙은 저장되었지만 DNS 모드는 저장하지 못했습니다: {message}",
     colServer: "DNS 서버",
     colDomains: "도메인 목록",
     colOutbound: "아웃바운드",
@@ -728,6 +744,8 @@ export default {
   pinnedPeerCertSha256: "고정 피어 인증서 SHA256",
   verifyPeerCertByName: "이름으로 피어 인증서 확인",
   backend: {
+    NODE_DNS_INVALID:
+      "노드 DNS 출처를 더 이상 사용할 수 없습니다. 설정이나 DNS 규칙을 적용하기 전에 새로고침하거나 다른 엔드포인트 또는 자동을 선택하세요.",
     NO_SERVER_SELECTED: "선택된 서버 없음. 먼저 서버에 연결하세요.",
     CORE_START_FAILED: "v2raya_core 시작 실패: {detail}",
     CORE_NOT_FOUND: "v2raya_core를 찾을 수 없음.",

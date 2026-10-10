@@ -38,6 +38,7 @@ type Setting struct {
 	SsBackend                          string          `json:"ssBackend"`
 	TrojanBackend                      string          `json:"trojanBackend"`
 	// 新 DNS 模块监听配置
+	NodeDns       string `json:"nodeDns"`
 	DnsListenAddr string `json:"dnsListenAddr"` // 监听地址，默认 "0.0.0.0:52353"
 
 	// DNS 缓存配置
@@ -70,6 +71,7 @@ func NewSetting() (setting *Setting) {
 		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
 		TunAutoRoute:                       true,
 		// 新 DNS 模块默认值
+		NodeDns:          "auto",
 		DnsListenAddr:    "0.0.0.0:52353",
 		DnsCacheEnabled:  true,
 		DnsCacheSize:     4096,

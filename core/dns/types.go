@@ -52,6 +52,7 @@ func (q *QueryType) UnmarshalJSON(data []byte) error {
 
 // DnsQuery represents a normalized DNS query request.
 type DnsQuery struct {
+	Node bool
 	// Name is the queried domain name (e.g. "www.example.com").
 	Name string
 	// QType is the DNS query type (A, AAAA, etc.).
@@ -92,6 +93,7 @@ type DnsResponse struct {
 
 // DnsListenerConfig holds configuration for the DNS listener.
 type DnsListenerConfig struct {
+	ReadinessToken string `json:"readiness_token,omitempty"`
 	// ListenAddr is the primary listening address, default "0.0.0.0:52353".
 	ListenAddr string `json:"listen_addr"`
 	// ExtraListenAddrs is a list of additional addresses to listen on.

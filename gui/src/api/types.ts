@@ -95,6 +95,7 @@ export type Setting = Record<string, unknown> & {
    */
   dnsMode?: string;
   dnsHijack?: string;
+  nodeDns?: string;
 };
 
 /** GET /setting */
@@ -133,6 +134,12 @@ export interface DnsRule {
   outbound: string;
   // matchers the DNS module reads and only the API sets; kept on save
   [extra: string]: unknown;
+}
+
+export interface DnsSettingsRequest {
+  rules?: DnsRule[];
+  dnsMode?: DnsMode;
+  nodeDns?: string;
 }
 
 export interface DnsRulesResponse {
@@ -175,4 +182,14 @@ export interface Param {
   env: string;
   default: string;
   desc: string;
+}
+
+export interface NodeDnsOption {
+  value: string;
+  url: string;
+  category: "auto" | "direct" | "localhost" | "proxy" | "fallback";
+}
+export interface NodeDnsOptionsResponse {
+  options: NodeDnsOption[];
+  warnings?: string[];
 }

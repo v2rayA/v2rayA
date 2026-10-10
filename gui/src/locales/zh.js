@@ -1,4 +1,19 @@
 export default {
+  nodeDns: {
+    title: "节点解析 DNS",
+    unavailable: "已保存的来源已失效，请刷新并选择其他端点或自动。",
+    resetToAuto: "节点 DNS 来源 {address} 已消失，使用自动。",
+    refresh: "刷新 DNS 选项",
+    loadFailed: "无法加载 DNS 选项：{message}",
+    systemReadFailed: "部分系统 DNS 来源读取失败，其他有效选项仍可使用。",
+    categories: {
+      auto: "自动",
+      direct: "直连分组",
+      localhost: "本地 DNS",
+      proxy: "代理分组",
+      fallback: "备用 DNS",
+    },
+  },
   onboarding: {
     title: "使用教程",
     importTitle: "导入节点",
@@ -287,15 +302,14 @@ export default {
     modeService: "仅服务",
     modeHijack: "服务与接管",
     modeOffHelp:
-      "不启动 DNS 模块，也不把任何查询导向它。下方的规则会保留，模式重新开启后继续生效。",
+      "不启动 DNS 模块，也不把任何查询导向它。下方的规则会保留，模式重新开启后继续生效。节点域名不由内置 DNS 解析。",
     modeServiceHelp:
-      "DNS 模块在自己的地址上运行，但不改动系统解析器、防火墙的 DNS 规则，也不做 TUN 中继。当已有其他程序把 DNS 指向 v2rayA 时使用。",
+      "DNS 模块在自己的地址上运行，但不改动系统解析器、防火墙的 DNS 规则，也不做 TUN 中继。当已有其他程序把 DNS 指向 v2rayA 时使用。节点域名由内置 DNS 解析。",
     modeHijackHelp:
-      "DNS 模块运行，并把系统查询指向它：改写解析器、导流 53 端口，下方规则随之生效。加密 DNS 不会被接管。",
+      "DNS 模块运行，并把系统查询指向它：改写解析器、导流 53 端口，下方规则随之生效。加密 DNS 不会被接管。节点域名由内置 DNS 解析。",
     offKeepsRules: "已保存的 {n} 条规则会保留，模式开启后继续生效。",
     saved: "DNS 设置已保存并应用",
     saveFailed: "无法保存 DNS 设置：{message}",
-    modeSaveFailed: "DNS 规则已保存，但 DNS 模式未能保存：{message}",
     colServer: "DNS 服务器",
     colDomains: "域名列表",
     colOutbound: "出口",
@@ -716,6 +730,8 @@ export default {
   pinnedPeerCertSha256: "固定证书 SHA256",
   verifyPeerCertByName: "证书验证域名",
   backend: {
+    NODE_DNS_INVALID:
+      "节点 DNS 来源已失效，请刷新或选择其他端点或自动后再应用设置或 DNS 规则。",
     NO_SERVER_SELECTED: "未选择节点，请先连接一个节点。",
     CORE_START_FAILED: "无法启动 v2raya_core：{detail}",
     CORE_NOT_FOUND: "未找到 v2raya_core。",

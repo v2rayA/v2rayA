@@ -2,6 +2,9 @@ package v2ray
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -12,11 +15,11 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
@@ -37,6 +40,9 @@ type Process struct {
 	tag2WhichIndex map[string]int
 	done           chan struct{}
 	expectedStop   atomic.Bool
+	ctx            context.Context
+	dnsToken       string
+	dnsAddress     string
 }
 
 func NewProcess(tmpl *Template,
@@ -77,6 +83,37 @@ func NewProcess(tmpl *Template,
 		}
 		process.tag2WhichIndex = tag2WhichIndex
 	}
+	if len(tmpl.DnsModuleConfig) > 0 {
+		var cfg map[string]interface{}
+		if err = json.Unmarshal(tmpl.DnsModuleConfig, &cfg); err != nil {
+			return nil, err
+		}
+		token := make([]byte, 16)
+		if _, err = rand.Read(token); err != nil {
+			return nil, err
+		}
+		process.dnsToken = hex.EncodeToString(token)
+		listener, ok := cfg["listener"].(map[string]interface{})
+		if !ok {
+			err = fmt.Errorf("DNS module listener configuration is missing")
+			return nil, err
+		}
+		address, ok := listener["listen_addr"].(string)
+		if !ok {
+			err = fmt.Errorf("DNS module listen address is missing")
+			return nil, err
+		}
+		listener["readiness_token"] = process.dnsToken
+		process.dnsAddress, err = localDNSAddress(address)
+		if err != nil {
+			return nil, err
+		}
+		tmpl.DnsModuleConfig, err = json.Marshal(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+	tmpl.process = process
 	err = WriteV2rayConfig(tmpl.ToConfigBytes())
 	if err != nil {
 		return nil, err
@@ -85,6 +122,7 @@ func NewProcess(tmpl *Template,
 		return nil, err
 	}
 	pCtx, cancel := context.WithCancel(context.Background())
+	process.ctx = pCtx
 	defer func() {
 		if err != nil {
 			cancel()
@@ -110,10 +148,10 @@ func NewProcess(tmpl *Template,
 		return nil, err
 	}
 	process.proc = proc
-	var unexpectedExiting atomic.Bool
 	go func() {
-		defer close(process.done)
 		p, e := proc.Wait()
+		close(process.done)
+		cancel()
 		if process.expectedStop.Load() {
 			// canceled by v2rayA
 			return
@@ -130,33 +168,42 @@ func NewProcess(tmpl *Template,
 			t = append(t, e.Error())
 		}
 		log.Warn("v2ray-core: %v", strings.Join(t, ": "))
-		unexpectedExiting.Store(true)
 	}()
-	// ports to check
-	portList := []string{strconv.Itoa(tmpl.ApiPort)}
-	log.Trace("portList for connectivity test: %+v", portList)
-	startTime := time.Now()
-	startTimeOut := time.Duration(conf.GetEnvironmentConfig().CoreStartupTimeout) * time.Second
-	for i := 0; i < len(portList); {
-		conn, err := net.Dial("tcp", net.JoinHostPort("127.0.0.1", portList[i]))
-		if err == nil {
-			conn.Close()
-			i++
-			continue
+	// Module startup waits run after the manager publishes this process,
+	// so Stop can cancel startup without waiting for the manager's lock.
+	if process.dnsToken == "" {
+		if err = process.waitCoreAPI(pCtx); err != nil {
+			return nil, err
 		}
-		if unexpectedExiting.Load() {
-			return nil, common.Coded("CORE_START_FAILED", fmt.Errorf("v2raya_core exited right after starting; the reason is in the v2rayA log"), map[string]interface{}{"detail": "v2raya_core exited right after starting; the reason is in the v2rayA log"})
-		}
-		if time.Since(startTime) > startTimeOut {
-			log.Info("Attempting to terminate timed-out process with SIGTERM")
-			_ = proc.Signal(syscall.SIGTERM)
-			err := fmt.Errorf("v2raya_core did not open its API port within %d s (--core-startup-timeout); the reason is in the v2rayA log", int(startTimeOut/time.Second))
-			return nil, common.Coded("CORE_START_FAILED", err, map[string]interface{}{"detail": err.Error()})
-		}
-		time.Sleep(100 * time.Millisecond)
 	}
-	log.Trace("Cost of waiting for v2ray-core: %v", time.Since(startTime).String())
+
 	return process, nil
+}
+
+func (p *Process) waitCoreAPI(ctx context.Context) error {
+	timeout := time.Duration(conf.GetEnvironmentConfig().CoreStartupTimeout) * time.Second
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	address := net.JoinHostPort("127.0.0.1", strconv.Itoa(p.template.ApiPort))
+	dialer := &net.Dialer{Timeout: 100 * time.Millisecond}
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		conn, err := dialer.DialContext(ctx, "tcp", address)
+		if err == nil {
+			_ = conn.Close()
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			detail := fmt.Sprintf("v2raya_core did not open its API port within %d s (--core-startup-timeout); the reason is in the v2rayA log", int(timeout/time.Second))
+			if p.ctx.Err() != nil {
+				detail = "v2raya_core exited right after starting; the reason is in the v2rayA log"
+			}
+			return common.Coded("CORE_START_FAILED", fmt.Errorf("%s", detail), map[string]interface{}{"detail": detail})
+		case <-ticker.C:
+		}
+	}
 }
 
 type logInfoWriter struct {
@@ -372,7 +419,7 @@ func applySelection(serverInfos []serverInfo, selectedOf func(outbound string) s
 	return kept
 }
 
-func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template, err error) {
+func NewTemplateFromConnectedServers(setting *configure.Setting, nodeDNS ...*resolv.IPDNSEndpoint) (tmpl *Template, err error) {
 	//read the database and convert to the v2ray-core template
 	serverObjs, serverInfos, err := getConnectedServerObjs()
 	if err != nil {
@@ -390,15 +437,25 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 			serverInfos[i].PluginPort = port
 		}
 	}
-	tmpl, err = NewTemplate(serverInfos, setting)
+	tmpl, err = NewTemplate(serverInfos, setting, nodeDNS...)
 	if err != nil {
 		return nil, err
 	}
 	return tmpl, nil
 }
 
-func UpdateV2RayConfig() (err error) {
-	tmpl, err := NewTemplateFromConnectedServers(nil)
+func UpdateV2RayConfig(nodeDNS ...*resolv.IPDNSEndpoint) (err error) {
+	if len(nodeDNS) == 0 {
+		setting := configure.GetSettingNotNil()
+		if setting.DnsServiceEnabled() {
+			endpoint, err := SelectNodeDNSForStart(setting, configure.GetDnsRulesNotNil())
+			if err != nil {
+				return err
+			}
+			nodeDNS = []*resolv.IPDNSEndpoint{endpoint}
+		}
+	}
+	tmpl, err := NewTemplateFromConnectedServers(nil, nodeDNS...)
 	if err != nil {
 		if errors.Is(err, NoConnectedServerErr) {
 			//no servers are selected, which means to stop the v2ray-core

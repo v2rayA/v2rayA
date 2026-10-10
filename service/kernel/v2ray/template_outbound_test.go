@@ -21,7 +21,10 @@ func TestBalancedSnapshotNodeIPs(t *testing.T) {
 	if _, _, err := tmpl.resolveOutbounds(data); err != nil {
 		t.Fatal(err)
 	}
-	ips := collectNodeIPs(tmpl)
+	ips, err := collectNodeIPs(tmpl)
+	if err != nil {
+		t.Fatal(err)
+	}
 	sort.Strings(ips)
 	if want := []string{"192.0.2.1", "192.0.2.2"}; !reflect.DeepEqual(ips, want) {
 		t.Fatalf("snapshot bypass IPs: %v, want %v", ips, want)

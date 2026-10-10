@@ -1,4 +1,21 @@
 export default {
+  nodeDns: {
+    title: "Node resolution DNS",
+    unavailable:
+      "The saved source is no longer available. Refresh and select another endpoint or auto.",
+    resetToAuto: "Node DNS {address} is no longer in the sources. Using auto.",
+    refresh: "Refresh DNS options",
+    loadFailed: "Could not load DNS options: {message}",
+    systemReadFailed:
+      "Could not read some system DNS sources. Other valid options are still available.",
+    categories: {
+      auto: "auto",
+      direct: "direct group",
+      localhost: "localhost DNS",
+      proxy: "proxy group",
+      fallback: "fallback DNS",
+    },
+  },
   onboarding: {
     title: "Quick tutorial",
     importTitle: "Import nodes",
@@ -295,17 +312,15 @@ export default {
     modeService: "Service Only",
     modeHijack: "Service and Interception",
     modeOffHelp:
-      "No DNS module runs and no query is redirected to one. The rules below are kept and apply again once the mode is on.",
+      "No DNS module runs and no query is redirected to one. The rules below are kept and apply again once the mode is on. Node domains do not use built-in DNS.",
     modeServiceHelp:
-      "The DNS module runs on its own address, but the system resolvers, the firewall DNS rules and the TUN relay are left alone. Use it when another program already points DNS at v2rayA.",
+      "The DNS module runs on its own address, but the system resolvers, the firewall DNS rules and the TUN relay are left alone. Use it when another program already points DNS at v2rayA. Node domains use built-in DNS.",
     modeHijackHelp:
-      "The DNS module runs and v2rayA points the system's queries at it: the resolver is changed, port 53 is diverted and the rules below apply. Encrypted DNS is not intercepted.",
+      "The DNS module runs and v2rayA points the system's queries at it: the resolver is changed, port 53 is diverted and the rules below apply. Encrypted DNS is not intercepted. Node domains use built-in DNS.",
     offKeepsRules:
       "{n} saved rules are kept and apply again when the mode is on.",
     saved: "DNS settings saved and applied",
     saveFailed: "Failed to save DNS settings: {message}",
-    modeSaveFailed:
-      "The DNS rules were saved, but the DNS mode was not: {message}",
     colServer: "DNS Server",
     colDomains: "Domain List",
     colOutbound: "Outbound",
@@ -737,6 +752,8 @@ export default {
   pinnedPeerCertSha256: "Pinned Certificate SHA256",
   verifyPeerCertByName: "Verify Peer Cert By Name",
   backend: {
+    NODE_DNS_INVALID:
+      "The node DNS source is no longer available. Refresh or choose another endpoint or auto before applying settings or DNS rules.",
     NO_SERVER_SELECTED: "No server is selected. Connect a server first.",
     CORE_START_FAILED: "Failed to start v2raya_core: {detail}",
     CORE_NOT_FOUND: "v2raya_core was not found.",

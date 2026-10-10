@@ -293,11 +293,12 @@ type GrpcSettings struct {
 	InitialWindowsSize  int    `json:"initial_windows_size,omitempty"`
 }
 type Sockopt struct {
-	Mark        *int    `json:"mark,omitempty"`
-	Interface   string  `json:"interface,omitempty"`
-	Tos         *int    `json:"tos,omitempty"`
-	TCPFastOpen *bool   `json:"tcpFastOpen,omitempty"`
-	Tproxy      *string `json:"tproxy,omitempty"`
+	DomainStrategy string  `json:"domainStrategy,omitempty"`
+	Mark           *int    `json:"mark,omitempty"`
+	Interface      string  `json:"interface,omitempty"`
+	Tos            *int    `json:"tos,omitempty"`
+	TCPFastOpen    *bool   `json:"tcpFastOpen,omitempty"`
+	Tproxy         *string `json:"tproxy,omitempty"`
 }
 type Mux struct {
 	Enabled     bool `json:"enabled"`
@@ -512,6 +513,8 @@ type DnsServer struct {
 	Port         int      `json:"port,omitempty"`
 	Domains      []string `json:"domains,omitempty"`
 	SkipFallback bool     `json:"skipFallback,omitempty"`
+	FinalQuery   bool     `json:"finalQuery,omitempty"`
+	DisableCache bool     `json:"disableCache,omitempty"`
 }
 type Policy struct {
 	Levels struct {

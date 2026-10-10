@@ -14,6 +14,8 @@ import type {
   Param,
   DnsRule,
   DnsRulesResponse,
+  DnsSettingsRequest,
+  NodeDnsOptionsResponse,
   Ports,
   Setting,
   SettingResponse,
@@ -161,9 +163,17 @@ export const putRoutingA = (body: {
   routingA: string;
   source?: RoutingASource;
 }) => call<unknown>({ url: "routingA", method: "put", data: body });
+export const getNodeDnsOptions = () =>
+  call<NodeDnsOptionsResponse>({ url: "nodeDnsOptions", method: "get" });
 export const getDnsRules = () =>
   call<DnsRulesResponse>({ url: "dnsRules", method: "get" });
-export const putDnsRules = (body: DnsRule[]) =>
+export const postNodeDnsOptions = (body: { rules: DnsRule[] }) =>
+  call<NodeDnsOptionsResponse>({
+    url: "nodeDnsOptions",
+    method: "post",
+    data: body,
+  });
+export const putDnsRules = (body: DnsRule[] | DnsSettingsRequest) =>
   call<unknown>({ url: "dnsRules", method: "put", data: body });
 export const getDomainsExcluded = () =>
   call<{ domains: string }>({ url: "domainsExcluded", method: "get" });

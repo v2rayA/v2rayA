@@ -32,7 +32,7 @@ import (
 type Client struct {
 	config     *ClientConfig
 	dialer     outbound_netproxy.Dialer
-	newDialer  func(internet.Dialer) (outbound_netproxy.Dialer, error)
+	newDialer  func(context.Context, internet.Dialer) (outbound_netproxy.Dialer, error)
 	dialerOnce sync.Once
 	dialerErr  error
 }
@@ -77,9 +77,22 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 		congestion = "bbr"
 	}
 
-	newDialer := func(dialer internet.Dialer) (outbound_netproxy.Dialer, error) {
+	newDialer := func(ctx context.Context, dialer internet.Dialer) (outbound_netproxy.Dialer, error) {
+		host, port, err := net.SplitHostPort(config.Address)
+		if err != nil {
+			return nil, err
+		}
+		address := config.Address
+		if net.ParseIP(host) == nil {
+			// The library resolves ProxyAddress itself; supply an IP from Xray DNS.
+			ips, err := internet.LookupForIP(host, internet.DomainStrategy_FORCE_IP, nil)
+			if err != nil {
+				return nil, err
+			}
+			address = net.JoinHostPort(ips[0].String(), port)
+		}
 		return outbound_protocol.NewDialer("juicity", xrayDialer{dialer: dialer}, outbound_protocol.Header{
-			ProxyAddress: config.Address,
+			ProxyAddress: address,
 			Feature1:     congestion,
 			TlsConfig:    tlsCfg,
 			User:         config.Uuid,
@@ -184,7 +197,7 @@ func xrayDestination(network, addr string) (xray_net.Destination, error) {
 // Process implements proxy.Outbound.
 func (c *Client) Process(ctx context.Context, link *transport.Link, dialer internet.Dialer) error {
 	c.dialerOnce.Do(func() {
-		c.dialer, c.dialerErr = c.newDialer(dialer)
+		c.dialer, c.dialerErr = c.newDialer(ctx, dialer)
 	})
 	if c.dialerErr != nil {
 		return errors.New("juicity: failed to create dialer").Base(c.dialerErr)

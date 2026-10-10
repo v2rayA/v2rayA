@@ -1,6 +1,8 @@
 package v2ray
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -212,16 +214,6 @@ func runTunRouteScript(stage, script string) error {
 // TinyTun configuration carried them as skip_ips; the route installers
 // take them from here.
 
-func resolveHostToIPs(hostname string) ([]string, error) {
-	if ip := net.ParseIP(hostname); ip != nil {
-		return []string{ip.String()}, nil
-	}
-	addrs, err := net.LookupHost(hostname)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve %v: %w", hostname, err)
-	}
-	return addrs, nil
-}
 func isResolvableHost(host string) bool {
 	if host == "" {
 		return false
@@ -239,7 +231,7 @@ func isResolvableHost(host string) bool {
 	}
 	return true
 }
-func collectNodeIPs(tmpl *Template) []string {
+func collectNodeIPs(tmpl *Template) ([]string, error) {
 	// First pass: gather all unique, resolvable hostnames.
 	seenHost := make(map[string]struct{})
 	var hostnames []string
@@ -274,22 +266,34 @@ func collectNodeIPs(tmpl *Template) []string {
 	}
 
 	if len(hostnames) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// Second pass: resolve all hostnames concurrently.
 	var (
-		wg     sync.WaitGroup
-		mu     sync.Mutex
-		seenIP = make(map[string]struct{})
-		result []string
+		wg       sync.WaitGroup
+		mu       sync.Mutex
+		seenIP   = make(map[string]struct{})
+		result   []string
+		failures []error
 	)
 	for _, hostname := range hostnames {
 		wg.Add(1)
 		go func(host string) {
 			defer wg.Done()
-			ips, err := resolveHostToIPs(host)
+			var ips []string
+			var err error
+			if ip := net.ParseIP(host); ip != nil {
+				ips = []string{ip.String()}
+			} else if tmpl.process == nil {
+				err = fmt.Errorf("node DNS: core has not started")
+			} else {
+				ips, err = tmpl.process.LookupNode(context.Background(), host, nil)
+			}
 			if err != nil {
+				mu.Lock()
+				failures = append(failures, err)
+				mu.Unlock()
 				log.Warn("tun: failed to resolve node hostname %v: %v", host, err)
 				return
 			}
@@ -305,5 +309,8 @@ func collectNodeIPs(tmpl *Template) []string {
 		}(hostname)
 	}
 	wg.Wait()
-	return result
+	if len(failures) > 0 {
+		return nil, errors.Join(failures...)
+	}
+	return result, nil
 }

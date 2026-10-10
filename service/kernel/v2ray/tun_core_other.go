@@ -20,6 +20,8 @@ func tunRoutesDown() {}
 
 func tunInstalled() bool { return false }
 
+func tunSystemDNSActive(tmpl *Template) bool { return false }
+
 func tunCleanupResidual() {}
 
 // tunEgressInterface is the physical interface outbound sockets bind to on

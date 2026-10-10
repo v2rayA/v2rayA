@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/miekg/dns"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -21,6 +21,7 @@ import (
 
 // hostMu serializes host changes with teardown across process generations.
 var hostMu sync.Mutex
+var dnsHijackActive atomic.Bool
 
 // RecoverHostState restores a pending startup's host changes without runtime state.
 func RecoverHostState(state *configure.HostState) error {
@@ -220,6 +221,7 @@ ip6tables -w 2 -t nat -D PREROUTING -m mark --mark 0x80/0x80 -j RETURN 2>/dev/nu
 }
 
 func deleteTransparentProxyRulesKeepSystemProxy() {
+	dnsHijackActive.Store(false)
 	stopTunCore()
 	iptables.CloseWatcher()
 	if !conf.GetEnvironmentConfig().Lite {
@@ -249,26 +251,6 @@ func deleteTransparentProxyRules() {
 	}
 }
 
-func waitForTransparentDNS(tmpl *Template) {
-	if tmpl == nil || tmpl.DnsModuleConfig == nil {
-		return
-	}
-	// Only the interception points the transparent rules at the module;
-	// service mode leaves the relay empty, so there is nothing to wait for.
-	dnsAddr := tunDnsTarget(tmpl.Setting)
-	if dnsAddr == "" {
-		return
-	}
-	if err := waitForDnsPort(dnsAddr, 5*time.Second); err != nil {
-		// The probe resolves a name, so a dead or slow upstream fails it
-		// even though the listener is up. Waiting is worth it when DNS is
-		// healthy, but it must not be the reason the core cannot start.
-		log.Warn("DNS module did not answer on %s yet, applying transparent proxy rules anyway: %v", dnsAddr, err)
-	} else {
-		log.Trace("DNS module is ready on %s, setting up transparent proxy rules", dnsAddr)
-	}
-}
-
 func dnsRedirectPolicy(goos string, setting *configure.Setting) (install, required bool) {
 	if goos != "linux" || !dnsInterceptionEnabled(setting) {
 		return false, false
@@ -294,7 +276,9 @@ func runDNSRedirect(setter iptables.Setter, nft, required bool, cleanLegacy func
 			cleanLegacy()
 		}
 		log.Warn("could not install DNS redirect rules: %v", err)
+		return nil
 	}
+	dnsHijackActive.Store(true)
 	return nil
 }
 
@@ -318,6 +302,9 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 			return fmt.Errorf("could not set up transparent proxy in tun mode: %w", err)
 		}
 		if runtime.GOOS != "linux" || !setting.TunAutoRoute {
+			if runtime.GOOS != "linux" && setting.TunAutoRoute {
+				dnsHijackActive.Store(tunSystemDNSActive(tmpl))
+			}
 			// DNS is handled by the system-resolver setting on the TUN
 			// interface; the REDIRECT rules and resolv.conf below are Linux.
 			// With automatic routing off the user owns the network setup,
@@ -363,7 +350,7 @@ func writeTransparentProxyRules(tmpl *Template) (err error) {
 	// hijack below additionally needs the transparent proxy to be on and the
 	// process to be able to change the system resolver at all.
 	installDNS, requireDNS := dnsRedirectPolicy(runtime.GOOS, setting)
-	if installDNS && ShouldLocalDnsListen() {
+	if installDNS && shouldLocalDnsListen(setting) {
 		dnsPort := dnsModulePort(setting)
 		rememberDnsRedirectPort(dnsPort)
 		dnsRedirect := `
@@ -398,6 +385,11 @@ ip6tables -w 2 -t nat -I PREROUTING -m mark --mark 0x80/0x80 -j RETURN
 				log.Warn("only listen at 127.2.0.17: %v", e)
 			}
 			resetResolvHijacker()
+			// The resolver can reach the module's port-53 listener even when
+			// optional REDIRECT setup failed (automatic TUN/system proxy).
+			if data, err := os.ReadFile(resolvPath); err == nil && strings.HasPrefix(string(data), HijackFlag) && strings.Contains(string(data), "nameserver 127.2.0.17") && moduleOwnsDNSListener("127.2.0.17:53") {
+				dnsHijackActive.Store(true)
+			}
 		} else {
 			log.Warn("writeTransparentProxyRules: %v", e)
 		}
@@ -418,26 +410,4 @@ func IsTransparentOn(setting *configure.Setting) bool {
 		return false
 	}
 	return true
-}
-
-// waitForDnsPort polls the DNS module's listening port until it's ready or a timeout expires.
-// This ensures the v2raya-core DNS module is accepting queries before we apply firewall rules.
-func waitForDnsPort(addr string, timeout time.Duration) error {
-	deadline := time.Now().Add(timeout)
-	request := new(dns.Msg)
-	request.SetQuestion("localhost.", dns.TypeA)
-	client := &dns.Client{
-		Net:     "udp",
-		Timeout: 500 * time.Millisecond,
-	}
-	for time.Now().Before(deadline) {
-		if remaining := time.Until(deadline); remaining < client.Timeout {
-			client.Timeout = remaining
-		}
-		if _, _, err := client.Exchange(request, addr); err == nil {
-			return nil
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-	return fmt.Errorf("dns port %s not reachable within %v", addr, timeout)
 }

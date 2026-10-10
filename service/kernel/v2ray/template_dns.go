@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -28,6 +29,7 @@ type Addr struct {
 func (t *Template) setDNS(serverInfos []serverInfo) error {
 	if !dnsServiceEnabled(t.Setting) {
 		t.DnsModuleConfig = nil
+		t.NodeDNS = nil
 		return nil
 	}
 	return t.generateDnsModuleConfig(serverInfos)
@@ -79,7 +81,7 @@ func dnsModuleExtraListenAddrs(setting *configure.Setting) []string {
 			// The system resolver is pointed at loopback in tun mode. If
 			// another resolver already owns the port, leave it to that one
 			// rather than start a core that cannot bind.
-			if err := probeListen("127.0.0.1:53"); err != nil {
+			if err := probeListen("127.0.0.1:53"); err != nil && !moduleOwnsDNSListener("127.0.0.1:53") {
 				log.Warn("DNS module will not listen on 127.0.0.1:53, the system resolver keeps using whatever answers there: %v", err)
 				return addrs
 			}
@@ -144,26 +146,14 @@ func directDnsServers() []string {
 		if rule.Outbound != "" && rule.Outbound != "direct" {
 			continue
 		}
-		addr := rule.Upstream
-		if addr == "" {
-			addr = rule.Server
-		}
-		if strings.Contains(addr, "://") {
-			scheme, rest, _ := strings.Cut(addr, "://")
-			if scheme != "udp" && scheme != "tcp" {
-				continue
-			}
-			addr = rest
-		}
-		host, port, err := net.SplitHostPort(addr)
-		if err != nil {
-			host, port = addr, "53"
-		}
-		ip := net.ParseIP(host)
-		if ip == nil || ip.IsLoopback() || ip.IsUnspecified() {
+		if rule.Action != "route" {
 			continue
 		}
-		out = append(out, net.JoinHostPort(host, port))
+		endpoint, err := resolv.ParseIPDNS(rule.Upstream)
+		if err != nil || (endpoint.Scheme != "udp" && endpoint.Scheme != "tcp") || endpoint.IP.IsLoopback() {
+			continue
+		}
+		out = append(out, endpoint.Address())
 	}
 	return common.Deduplicate(out)
 }
@@ -191,7 +181,7 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	}
 
 	// 读取当前系统 DNS（保存原始配置，用于 v2raya-core 的 bootstrap 解析）。
-	// 此时 /etc/resolv.conf 尚未被劫持，读取的是真实的系统 DNS。
+	// 已劫持时从原始备份读取，避免把模块自身地址作为上游。
 	// 规则里直连的明文上游排在其后，公共 DNS 只在这些都不可用时才轮到。
 	bootstrapDns := common.Deduplicate(append(getSystemDnsServers(), directDnsServers()...))
 
@@ -305,6 +295,10 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 					addr = net.JoinHostPort(addr, "53")
 				}
 			}
+		}
+
+		if endpoint, err := resolv.ParseIPDNS(upstreamAddr); err == nil {
+			addr, proto = endpoint.UpstreamAddress(), endpoint.Protocol()
 		}
 
 		// 如果是域名地址，加入 bootstrap 列表，由 v2raya-core 用系统 DNS 解析
@@ -451,35 +445,34 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 		}
 	}
 	nodeDomains = common.Deduplicate(nodeDomains)
-	if len(nodeDomains) > 0 {
-		nodeUpstreamAddr := "223.5.5.5:53"
-		for _, s := range append(directDnsServers(), bootstrapDns...) {
-			if host, _, err := net.SplitHostPort(s); err == nil {
-				if ip := net.ParseIP(host); ip != nil && !ip.IsLoopback() {
-					nodeUpstreamAddr = s
-					break
-				}
-			}
+	endpoint := t.NodeDNS
+	if endpoint == nil {
+		var err error
+		endpoint, err = SelectNodeDNS(setting, rules)
+		if err != nil {
+			return err
 		}
-		// 不能 append 到末尾：模块以最后一个非 bootstrap 上游作为默认上游
-		upstreams = append([]map[string]interface{}{{
-			"id":        "upstream-node",
-			"addr":      nodeUpstreamAddr,
-			"protocol":  "udp",
-			"proxy_tag": "direct",
-			"bootstrap": false,
-		}}, upstreams...)
-		rulesList = append([]map[string]interface{}{{
-			"id":            "rule-node",
-			"upstream":      "upstream-node",
-			"action":        "route",
-			"policy":        "single",
-			"domain":        nil,
-			"domain_suffix": nodeDomains,
-			"ip":            nil,
-			"client_ip":     nil,
-		}}, rulesList...)
+		t.NodeDNS = endpoint
 	}
+	// 不能 append 到末尾：模块以最后一个非 bootstrap 上游作为默认上游
+	upstreams = append([]map[string]interface{}{{
+		"id":          "upstream-node",
+		"addr":        endpoint.UpstreamAddress(),
+		"protocol":    endpoint.Protocol(),
+		"server_name": endpoint.IP.String(),
+		"proxy_tag":   "direct",
+		"bootstrap":   false,
+	}}, upstreams...)
+	rulesList = append([]map[string]interface{}{{
+		"id":            "rule-node",
+		"upstream":      "upstream-node",
+		"action":        "route",
+		"policy":        "single",
+		"domain":        nil,
+		"domain_suffix": nodeDomains,
+		"ip":            nil,
+		"client_ip":     nil,
+	}}, rulesList...)
 
 	cfg["upstreams"] = upstreams
 	cfg["rules"] = rulesList
@@ -496,39 +489,59 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	}
 	t.DnsModuleConfig = json.RawMessage(raw)
 
-	return nil
+	return t.setNodeDNS(nodeDomains)
 }
 
 // getSystemDnsServers 读取当前系统的 DNS 服务器列表（从 /etc/resolv.conf）。
 // 在劫持发生前调用，保存原始 DNS 供 v2raya-core bootstrap 使用。
 func getSystemDnsServers() []string {
-	data, err := os.ReadFile(resolvPath)
+	servers, _ := readOriginalResolv(resolvPath, resolvBackupPath)
+	return servers
+}
+
+func readOriginalResolv(path, backup string) ([]string, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	// while the file is ours, the system's own resolvers are in the backup;
-	// the hijacked content would hand the module its own address
 	if strings.HasPrefix(string(data), HijackFlag) {
-		if backup, err := os.ReadFile(resolvBackupPath); err == nil {
-			data = backup
-		} else {
-			return nil
+		data, err = os.ReadFile(backup)
+		if err != nil {
+			return nil, err
 		}
+		content := strings.TrimSpace(string(data))
+		switch {
+		case strings.HasPrefix(content, symlinkMarker):
+			target := strings.TrimSpace(strings.TrimPrefix(content, symlinkMarker))
+			if target == "" {
+				return nil, fmt.Errorf("empty resolver symlink backup")
+			}
+			if !filepath.IsAbs(target) {
+				target = filepath.Join(filepath.Dir(path), target)
+			}
+			data, err = os.ReadFile(target)
+			if err != nil {
+				return nil, err
+			}
+		case content == missingMarker || content == emptyMarker:
+			return nil, nil
+		case content == "":
+			return nil, fmt.Errorf("empty resolver backup")
+		}
+	}
+	if strings.HasPrefix(string(data), HijackFlag) {
+		return nil, fmt.Errorf("resolver backup is hijacked")
 	}
 	var servers []string
 	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "nameserver") {
-			parts := strings.Fields(line)
-			if len(parts) >= 2 {
-				ip := parts[1]
-				if net.ParseIP(ip) != nil {
-					servers = append(servers, net.JoinHostPort(ip, "53"))
-				}
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && fields[0] == "nameserver" {
+			if ip := net.ParseIP(fields[1]); ip != nil {
+				servers = append(servers, net.JoinHostPort(ip.String(), "53"))
 			}
 		}
 	}
-	return servers
+	return common.Deduplicate(servers), nil
 }
 
 // probeListen reports whether both the UDP and the TCP side of addr can be

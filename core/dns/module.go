@@ -226,6 +226,7 @@ func (m *DnsModule) Start() error {
 	}
 
 	m.healthy = true
+	m.listener.ready.Store(true)
 	log.Printf("[dns module] started successfully: %s", m.config.String())
 	return nil
 }

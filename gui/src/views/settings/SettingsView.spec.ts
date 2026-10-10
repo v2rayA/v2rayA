@@ -8,6 +8,9 @@ import {
   getOutbounds,
   getRemoteGFWListVersion,
   getSetting,
+  getTouch,
+  postNodeDnsOptions,
+  putDnsRules,
   putSetting,
 } from "@/api";
 import type { Setting, VersionResponse } from "@/api/types";
@@ -19,6 +22,8 @@ import SettingsView from "../SettingsView.vue";
 
 vi.mock("@/api", () => ({
   getSetting: vi.fn(),
+  getTouch: vi.fn(),
+  postNodeDnsOptions: vi.fn(),
   getRemoteGFWListVersion: vi.fn(),
   putSetting: vi.fn(),
   getDnsRules: vi.fn(),
@@ -54,6 +59,21 @@ const loaded: Setting = {
 
 let wrapper: VueWrapper;
 beforeEach(() => {
+  vi.mocked(getTouch).mockResolvedValue({
+    running: false,
+    networkPaused: false,
+    touch: { servers: [], subscriptions: [], connectedServer: [] },
+  });
+  vi.mocked(postNodeDnsOptions).mockResolvedValue({
+    options: [
+      { value: "auto", url: "udp://223.5.5.5:53", category: "auto" },
+      {
+        value: "udp://223.5.5.5:53",
+        url: "udp://223.5.5.5:53",
+        category: "direct",
+      },
+    ],
+  });
   vi.mocked(getSetting).mockResolvedValue({
     // the DNS mode is the service's, and the settings page never sends it back
     setting: { ...loaded, dnsMode: "service" },
@@ -64,6 +84,7 @@ beforeEach(() => {
     remoteGFWListVersion: "2026-09-15",
   });
   vi.mocked(putSetting).mockResolvedValue(undefined);
+  vi.mocked(putDnsRules).mockResolvedValue(undefined);
   vi.mocked(getDnsRules).mockResolvedValue({ rules: [] });
   vi.mocked(getOutbounds).mockResolvedValue({ outbounds: ["proxy"] });
 });
@@ -162,9 +183,10 @@ describe("settings list", () => {
 
   test("leaves the DNS mode to the DNS settings dialog", async () => {
     await mountPage();
-    // the proxy section carries no DNS decision of its own; only the row that
-    // opens the dialog mentions DNS
-    expect(wrapper.findAll('button[aria-label*="DNS"]')).toHaveLength(0);
+    // DNS settings are owned by the dialog.
+    expect(
+      wrapper.findAll('button.setting-choice[aria-label*="DNS"]'),
+    ).toHaveLength(0);
     const row = wrapper
       .findAll(".v-list-item")
       .find((item) => item.text().startsWith("DNS Settings"));
@@ -175,6 +197,18 @@ describe("settings list", () => {
     expect(
       dialog.findAllComponents({ name: "VSelect" })[0].props("modelValue"),
     ).toBe("service");
+    expect(wrapper.find(".node-dns").exists()).toBe(false);
+    expect(dialog.find(".node-dns").exists()).toBe(true);
+    await dialog
+      .findAllComponents({ name: "VSelect" })[0]
+      .vm.$emit("update:modelValue", "hijack");
+    const save = dialog
+      .findAll("button")
+      .find((button) => button.text() === "Save")!;
+    await save.trigger("click");
+    await dialog.get("form").trigger("submit");
+    await flushPromises();
+    expect(putDnsRules).toHaveBeenCalledWith({ dnsMode: "hijack" });
     closeAllDialogs();
     await toggle("Port Sharing", true);
     await wrapper.get('button[type="submit"]').trigger("click");
@@ -187,6 +221,7 @@ describe("settings list", () => {
     const body = vi.mocked(putSetting).mock.calls[0][0];
     expect(body).not.toHaveProperty("dnsMode");
     expect(body).not.toHaveProperty("dnsHijack");
+    expect(body).not.toHaveProperty("nodeDns");
   });
 
   test("opens the existing About content as a dismissible dialog", async () => {

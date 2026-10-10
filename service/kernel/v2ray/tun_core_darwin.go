@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/conf"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
@@ -40,6 +41,13 @@ var tunState struct {
 func tunIPv6Enabled() bool { return iptables.IsIPv6Supported() }
 
 func tunInstalled() bool { return tunState.device != "" }
+
+func tunSystemDNSActive(tmpl *Template) bool {
+	tunMu.Lock()
+	defer tunMu.Unlock()
+	endpoint, _ := resolv.ParseIPDNS("127.0.0.1:53")
+	return len(tunState.dns) > 0 && isOwnDNS(endpoint, runningDNSListeners(tmpl))
+}
 
 func tunDevicePresent() bool {
 	dev, err := tunFindDeviceOnce()

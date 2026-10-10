@@ -1,8 +1,8 @@
 // The settings page's state and its two requests, without the view: the
 // form as GET /setting returns it, saved with PUT /setting in the shape
-// the old dialog sent (integers where it parsed them). The DNS mode is not
-// one of its fields: the DNS settings dialog owns that decision, and a copy
-// held here would put a stale mode back the next time anything is saved.
+// the old dialog sent (integers where it parsed them). The DNS dialog owns
+// the mode and node resolver; holding copies here would put stale choices
+// back the next time anything else is saved.
 import { computed, reactive, ref } from "vue";
 import {
   getRemoteGFWListVersion,
@@ -66,7 +66,6 @@ export function useSettings() {
   const localGFWListVersion = ref("");
   const localGeositeVersion = ref("");
   const remoteGFWListVersion = ref("");
-
   async function load(): Promise<void> {
     const res = await getSetting();
     for (const key of Object.keys(form) as (keyof SettingForm)[]) {
@@ -90,12 +89,14 @@ export function useSettings() {
   async function save(): Promise<void> {
     const loading = openLoading();
     const control = new AbortController();
+    const submitted = toRequest(form);
+    const submittedForm = JSON.stringify(form);
     try {
       await watchConnected(
-        putSetting(toRequest(form), { signal: control.signal }),
+        putSetting(submitted, { signal: control.signal }),
         () => control.abort(),
       );
-      saved.value = JSON.stringify(form);
+      saved.value = submittedForm;
     } catch (err) {
       // the backend restores the previous setting and keeps the core as it
       // was; the touch says which state that is, and the form goes back to

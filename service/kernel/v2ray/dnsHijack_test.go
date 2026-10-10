@@ -4,6 +4,7 @@ import (
 	"github.com/v2rayA/v2rayA/db/configure"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -176,4 +177,45 @@ func TestBackupAndRestoreEmptyResolv(t *testing.T) {
 	if b, err := os.ReadFile(resolv); err != nil || len(b) != 0 {
 		t.Fatalf("got %q (err %v), want an empty file", b, err)
 	}
+}
+
+func TestReadOriginalResolv(t *testing.T) {
+	dir := t.TempDir()
+	path, backup := filepath.Join(dir, "resolv.conf"), filepath.Join(dir, "backup")
+	write := func(path, content string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	original := "nameserver 127.0.0.53\nnameserver 2001:db8::53\nnameserver invalid\n# nameserver 8.8.8.8\n"
+	want := []string{"127.0.0.53:53", "[2001:db8::53]:53"}
+	check := func(want []string, fails bool) {
+		t.Helper()
+		found, err := readOriginalResolv(path, backup)
+		if (err != nil) != fails || !reflect.DeepEqual(found, want) {
+			t.Fatalf("got %v %v; want %v error=%v", found, err, want, fails)
+		}
+	}
+	write(path, original)
+	check(want, false)
+	write(backup, original)
+	write(path, HijackFlag+"\nnameserver 127.2.0.17\nnameserver 223.5.5.5\n")
+	check(want, false)
+	target := filepath.Join(dir, "real.conf")
+	write(target, original)
+	write(backup, symlinkMarker+"real.conf\n")
+	check(want, false)
+	write(backup, symlinkMarker+target+"\n")
+	check(want, false)
+	write(backup, missingMarker+"\n")
+	check(nil, false)
+	write(backup, emptyMarker+"\n")
+	check(nil, false)
+	write(backup, "")
+	check(nil, true)
+	write(backup, symlinkMarker+"missing\n")
+	check(nil, true)
+	write(backup, HijackFlag+"\nnameserver 127.2.0.17\n")
+	check(nil, true)
 }

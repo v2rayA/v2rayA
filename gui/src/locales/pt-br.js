@@ -1,4 +1,22 @@
 export default {
+  nodeDns: {
+    title: "DNS para resolução de nós",
+    unavailable:
+      "A origem salva não está mais disponível. Atualize e selecione outro endpoint ou automático.",
+    resetToAuto:
+      "A origem DNS dos nós {address} não está mais na lista. Usando automático.",
+    refresh: "Atualizar opções de DNS",
+    loadFailed: "Não foi possível carregar as opções de DNS: {message}",
+    systemReadFailed:
+      "Não foi possível ler algumas origens de DNS do sistema. As outras opções válidas continuam disponíveis.",
+    categories: {
+      auto: "automático",
+      direct: "grupo direto",
+      localhost: "DNS local",
+      proxy: "grupo de proxy",
+      fallback: "DNS alternativo",
+    },
+  },
   onboarding: {
     title: "Tutorial rápido",
     importTitle: "Importar nós",
@@ -299,17 +317,15 @@ export default {
     modeService: "Somente serviço",
     modeHijack: "Serviço e interceptação",
     modeOffHelp:
-      "Nenhum módulo de DNS é executado e nenhuma consulta é direcionada a ele. As regras abaixo ficam guardadas e voltam a valer quando o modo é ligado.",
+      "Nenhum módulo de DNS é executado e nenhuma consulta é direcionada a ele. As regras abaixo ficam guardadas e voltam a valer quando o modo é ligado. Os domínios dos nós não usam o DNS interno.",
     modeServiceHelp:
-      "O módulo de DNS é executado no próprio endereço, mas os resolvedores do sistema, as regras de DNS do firewall e o encaminhamento da TUN não são alterados. Use quando outro programa já aponta o DNS para o v2rayA.",
+      "O módulo de DNS é executado no próprio endereço, mas os resolvedores do sistema, as regras de DNS do firewall e o encaminhamento da TUN não são alterados. Use quando outro programa já aponta o DNS para o v2rayA. Os domínios dos nós usam o DNS interno.",
     modeHijackHelp:
-      "O módulo de DNS é executado e o v2rayA aponta as consultas do sistema para ele: o resolvedor muda, a porta 53 é desviada e as regras abaixo valem. DNS criptografado não é interceptado.",
+      "O módulo de DNS é executado e o v2rayA aponta as consultas do sistema para ele: o resolvedor muda, a porta 53 é desviada e as regras abaixo valem. DNS criptografado não é interceptado. Os domínios dos nós usam o DNS interno.",
     offKeepsRules:
       "As {n} regras salvas ficam guardadas e voltam a valer quando o modo é ligado.",
     saved: "Configurações de DNS salvas e aplicadas",
     saveFailed: "Falha ao salvar as configurações de DNS: {message}",
-    modeSaveFailed:
-      "As regras de DNS foram salvas, mas o modo do DNS não: {message}",
     colServer: "Servidor DNS",
     colDomains: "Lista de domínios",
     colOutbound: "Saída",
@@ -746,6 +762,8 @@ export default {
   pinnedPeerCertSha256: "SHA256 do certificado fixado",
   verifyPeerCertByName: "Verificar certificado do peer pelo nome",
   backend: {
+    NODE_DNS_INVALID:
+      "A origem do DNS de nós não está mais disponível. Atualize ou escolha outro endpoint ou automático antes de aplicar configurações ou regras de DNS.",
     NO_SERVER_SELECTED:
       "Nenhum servidor selecionado. Conecte um servidor primeiro.",
     CORE_START_FAILED: "Falha ao iniciar o v2raya_core: {detail}",
