@@ -3,15 +3,10 @@ package iptables
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/v2rayA/v2rayA/common/cmds"
 	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
-)
-
-var (
-	TproxyNotSkipBr string
 )
 
 type tproxy interface {
@@ -39,9 +34,6 @@ func (t *legacyTproxy) AddIPWhitelist(cidr string) {
 	// avoid duplication
 	t.RemoveIPWhitelist(cidr)
 	pos := 7
-	if notSkip, _ := strconv.ParseBool(TproxyNotSkipBr); notSkip {
-		pos--
-	}
 
 	var commands string
 	commands = fmt.Sprintf(`iptables -w 2 -t mangle -I TP_RULE %v -d %s -j RETURN`, pos, cidr)
