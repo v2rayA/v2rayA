@@ -233,17 +233,18 @@ func deleteTransparentProxyRulesKeepSystemProxy() {
 	time.Sleep(30 * time.Millisecond)
 }
 
+// deleteTransparentProxyRules undoes whatever writeTransparentProxyRules set
+// up, including the system proxy.
+//
+// Whether a saved original exists or not is iptables.SystemProxy's decision:
+// GetCleanCommands restores the snapshot when there is one and falls back to
+// disabling ProxyEnable when there is not. Skipping the call here whenever no
+// snapshot existed therefore skipped the very fallback that makes the
+// transparent modes mutually exclusive -- the system proxy kept pointing at
+// 52345, a port only the system_proxy mode listens on, so after switching back
+// to tun every proxy-using application sat in SYN_SENT with no way out.
 func deleteTransparentProxyRules() {
 	deleteTransparentProxyRulesKeepSystemProxy()
-	var snapshot interface{}
-	found, err := configure.GetSystemProxySnapshot(&snapshot)
-	if err != nil {
-		log.Warn("read original system proxy: %v", err)
-		return
-	}
-	if !found {
-		return
-	}
 	if err := iptables.SystemProxy.GetCleanCommands().Run(true); err != nil {
 		log.Warn("restore system proxy: %v", err)
 	}
