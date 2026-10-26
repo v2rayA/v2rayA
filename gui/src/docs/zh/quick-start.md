@@ -16,6 +16,8 @@ v2raya --reset-password
 
 ## 导入节点
 
+VLESS 链接中的 `encryption` 参数以及 TLS 的 `ech` 参数会在导入、编辑和分享时保留。如果旧版本导入时已丢失这些参数，请更新订阅或重新导入原始链接。
+
 在**代理**页点**导入**，先选类型：**节点链接**用于 `vmess://`、`vless://`、`ss://`、`trojan://`、`hysteria2://`、`tuic://`、`juicity://`、`anytls://`、`wireguard://`、`socks5://`、`http://`、`https://` 链接（每行一条）或二维码图片，**订阅地址**用于订阅。ShadowsocksR 链接会被拒绝；使用流式加密（`rc4-md5`、`aes-*-cfb`、`chacha20-ietf`）或 `none` 的 Shadowsocks 链接同样被拒绝，内核只接受 AEAD 加密与 2022-blake3 系列。链接里的 `allow_insecure` 会被忽略：v2rayA 不跳过证书校验，自签名服务器请在节点表单里填入证书的 SHA-256 指纹。
 
 订阅有自己的页面**订阅**（手机上文档入口移到顶栏菜单，给它腾出位置）。订阅的节点归在一起，可手动更新，也可按计划更新（**设置 → 自动更新订阅**）。旁边的模式选项决定更新是否经过代理。

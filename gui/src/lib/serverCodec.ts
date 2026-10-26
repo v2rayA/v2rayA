@@ -52,6 +52,8 @@ export function parseShareLink(url: string): ShareForm | null {
       add: u.host,
       port: u.port,
       id: decodeSafe(u.username),
+      encryption: u.params.encryption || "none",
+      echConfigList: u.params.ech || "",
       flow: u.params.flow || "",
       net: u.params.type || "tcp",
       type: u.params.headerType || "none",
@@ -387,6 +389,7 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       query = {
         type: srcObj.net,
         flow: srcObj.flow || "",
+        encryption: srcObj.encryption || "none",
         security: srcObj.tls,
         fp: srcObj.fp || "",
         path: srcObj.path,
@@ -398,6 +401,9 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       };
       if (srcObj.alpn !== "") {
         query.alpn = srcObj.alpn;
+      }
+      if (srcObj.tls === "tls" && srcObj.echConfigList) {
+        query.ech = srcObj.echConfigList;
       }
       if (srcObj.net === "ws") {
         if (srcObj.maxEarlyData) {

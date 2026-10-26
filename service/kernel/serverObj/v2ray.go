@@ -36,6 +36,7 @@ type V2Ray struct {
 	ID                     string `json:"id"`
 	Aid                    string `json:"aid"`
 	Security               string `json:"scy"`
+	Encryption             string `json:"encryption,omitempty"`
 	Net                    string `json:"net"`
 	Type                   string `json:"type"`
 	Host                   string `json:"host"`
@@ -48,6 +49,7 @@ type V2Ray struct {
 	SpiderX                string `json:"spx,omitempty"`
 	Flow                   string `json:"flow,omitempty"`
 	Alpn                   string `json:"alpn,omitempty"`
+	ECHConfigList          string `json:"echConfigList,omitempty"`
 	PinnedPeerCertSha256   string `json:"pinnedPeerCertSha256,omitempty"`
 	VerifyPeerCertByName   string `json:"verifyPeerCertByName,omitempty"`
 	Key                    string `json:"key,omitempty"`
@@ -258,6 +260,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Add:                  u.Hostname(),
 		Port:                 u.Port(),
 		ID:                   u.User.Username(),
+		Encryption:           u.Query().Get("encryption"),
 		Aid:                  u.Query().Get("aid"),
 		Net:                  u.Query().Get("type"),
 		Type:                 u.Query().Get("headerType"),
@@ -271,6 +274,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		SpiderX:              u.Query().Get("spx"),
 		Flow:                 u.Query().Get("flow"),
 		Alpn:                 u.Query().Get("alpn"),
+		ECHConfigList:        u.Query().Get("ech"),
 		PinnedPeerCertSha256: u.Query().Get("pinnedPeerCertSha256"),
 		VerifyPeerCertByName: u.Query().Get("verifyPeerCertByName"),
 		Key:                  u.Query().Get("key"),
@@ -543,9 +547,9 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 				},
 			}
 		case "vless":
-			security := v.Security
-			if security == "" {
-				security = "auto"
+			encryption := v.Encryption
+			if encryption == "" {
+				encryption = "none"
 			}
 			core.Settings.Vnext = []coreObj.Vnext{
 				{
@@ -554,7 +558,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 					Users: []coreObj.User{
 						{
 							ID:         id,
-							Encryption: "none",
+							Encryption: encryption,
 						},
 					},
 				},
@@ -785,6 +789,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			core.StreamSettings.TLSSettings = &coreObj.TLSSettings{
 				PinnedPeerCertSha256: pins,
 				VerifyPeerCertByName: v.VerifyPeerCertByName,
+				ECHConfigList:        v.ECHConfigList,
 			}
 			// SNI
 			if v.SNI != "" {
@@ -857,6 +862,7 @@ func (v *V2Ray) ExportToURL() string {
 		var query = make(url.Values)
 		setValue(&query, "type", v.Net)
 		setValue(&query, "security", v.TLS)
+		setValue(&query, "encryption", v.Encryption)
 		switch strings.ToLower(v.Net) {
 		case "websocket", "ws", "http", "h2":
 			setValue(&query, "path", v.Path)
@@ -940,6 +946,9 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "pinnedPeerCertSha256", v.PinnedPeerCertSha256)
 			setValue(&query, "verifyPeerCertByName", v.VerifyPeerCertByName)
 			setValue(&query, "fp", v.Fingerprint)
+			if strings.EqualFold(v.TLS, "tls") {
+				setValue(&query, "ech", v.ECHConfigList)
+			}
 			if v.TLS == "reality" {
 				setValue(&query, "pbk", v.PublicKey)
 				setValue(&query, "sid", v.ShortId)
