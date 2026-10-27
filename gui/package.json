@@ -38,7 +38,7 @@
     "eslint": "^10.11.0",
     "eslint-plugin-prettier": "^5.5.0",
     "eslint-plugin-vue": "^10.11.0",
-    "happy-dom": "^20",
+    "happy-dom": "^21",
     "highlight.js": "^11.4.0",
     "marked": "^17",
     "prettier": "^3.6.0",
