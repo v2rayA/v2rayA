@@ -81,9 +81,11 @@
       "healthCheckTimeout": "",
       "permitWithoutStream": false,
       "initialWindowsSize": "",
-      "protocol": "vless"
+      "protocol": "vless",
+      "encryption": "none",
+      "echConfigList": ""
     },
-    "back": "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443/?type=tcp&flow=xtls-rprx-vision&security=reality&fp=chrome&path=&host=&headerType=none&sni=example.com&pinnedPeerCertSha256=&verifyPeerCertByName=&pbk=PUBLICKEY&sid=abcd1234&spx=%2F#vless node"
+    "back": "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443/?type=tcp&flow=xtls-rprx-vision&encryption=none&security=reality&fp=chrome&path=&host=&headerType=none&sni=example.com&pinnedPeerCertSha256=&verifyPeerCertByName=&pbk=PUBLICKEY&sid=abcd1234&spx=%2F#vless node"
   },
   "vlessXhttp": {
     "link": "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&security=tls&sni=example.com&type=xhttp&path=%2Fx&xhttpMode=packet-up&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=16&xhttpHeaders=%7B%22X-A%22%3A%22b%22%7D#vless%20xhttp",
@@ -149,9 +151,11 @@
       "healthCheckTimeout": "",
       "permitWithoutStream": false,
       "initialWindowsSize": "",
-      "protocol": "vless"
+      "protocol": "vless",
+      "encryption": "none",
+      "echConfigList": ""
     },
-    "back": "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443/?type=xhttp&flow=&security=tls&fp=&path=%2Fx&host=&headerType=none&sni=example.com&pinnedPeerCertSha256=&verifyPeerCertByName=&xhttpMode=packet-up&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=16&xhttpHeaders=%7B%22X-A%22%3A%22b%22%7D#vless xhttp"
+    "back": "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443/?type=xhttp&flow=&encryption=none&security=tls&fp=&path=%2Fx&host=&headerType=none&sni=example.com&pinnedPeerCertSha256=&verifyPeerCertByName=&xhttpMode=packet-up&xmuxMaxConcurFrom=8&xmuxMaxConcurTo=16&xhttpHeaders=%7B%22X-A%22%3A%22b%22%7D#vless xhttp"
   },
   "ss": {
     "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwYXNzdzByZA==@1.2.3.4:8388?plugin=obfs-local%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#ss%20node",
