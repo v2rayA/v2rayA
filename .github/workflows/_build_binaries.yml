@@ -20,10 +20,6 @@ jobs:
           # Linux, other architectures
           - { goos: linux, goarch: "386" }
           - { goos: linux, goarch: riscv64 }
-          # - { goos: linux, goarch: mips64 }
-          # - { goos: linux, goarch: mips64le }
-          # - { goos: linux, goarch: mipsle }
-          # - { goos: linux, goarch: mips }
           - { goos: linux, goarch: loong64 }
           # Linux armv7
           - { goos: linux, goarch: arm, goarm: "7" }
@@ -62,16 +58,6 @@ jobs:
             service/go.mod
             service/go.sum
           go-version: "1.27"
-      - name: Install MIPS/Loong64 Cross Compilers
-        if: ${{ matrix.goos == 'linux' && (startsWith(matrix.goarch, 'mips') || matrix.goarch == 'loong64') }}
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc-mips-linux-gnu \
-            gcc-mipsel-linux-gnu \
-            gcc-mips64-linux-gnuabi64 \
-            gcc-mips64el-linux-gnuabi64
       - name: Build v2rayA Binary
         id: build_binary
         shell: bash
@@ -82,31 +68,9 @@ jobs:
           ext=""
           [ "${{ matrix.goos }}" = "windows" ] && ext=".exe"
           cgo_enabled=0
-          cc=""
-          if [ "${{ matrix.goos }}" = "linux" ]; then
-            case "${{ matrix.goarch }}" in
-              mips)
-                cgo_enabled=1
-                cc="mips-linux-gnu-gcc"
-                ;;
-              mipsle)
-                cgo_enabled=1
-                cc="mipsel-linux-gnu-gcc"
-                ;;
-              mips64)
-                cgo_enabled=1
-                cc="mips64-linux-gnuabi64-gcc"
-                ;;
-              mips64le)
-                cgo_enabled=1
-                cc="mips64el-linux-gnuabi64-gcc"
-                ;;
-            esac
-          fi
-
           cd service
           GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" \
-            CGO_ENABLED="$cgo_enabled" CC="$cc" \
+            CGO_ENABLED="$cgo_enabled" \
             go build -trimpath \
             -o ../v2raya_binaries/v2raya_${filename}_${{ inputs.version }}${ext} \
             -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${{ inputs.version }} -s -w" \
