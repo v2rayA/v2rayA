@@ -283,6 +283,8 @@ type RealitySettings struct {
 	PublicKey   string `json:"publicKey,omitempty"`
 	ShortID     string `json:"shortId,omitempty"`
 	SpiderX     string `json:"spiderX,omitempty"`
+	// Mldsa65Verify is the server's ML-DSA-65 public key (share-link "pqv").
+	Mldsa65Verify string `json:"mldsa65Verify,omitempty"`
 }
 type GrpcSettings struct {
 	ServiceName         string `json:"serviceName"`
