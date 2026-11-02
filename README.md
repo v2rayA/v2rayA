@@ -112,6 +112,14 @@ sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```
 
+On Alpine, take `installer_alpine_linux_x64_${VERSION}.apk` from the [releases](https://github.com/v2rayA/v2rayA/releases), with the architecture part of the name changed to match the machine. The archive carries the OpenRC script and `/etc/conf.d/v2raya`; it is not signed with a key in Alpine's trust store, hence `--allow-untrusted`:
+
+```sh
+sudo apk add --allow-untrusted ./installer_alpine_linux_x64_${VERSION}.apk
+sudo rc-update add v2raya default
+sudo rc-service v2raya start
+```
+
 Elsewhere, download the two binaries for the architecture from the [releases](https://github.com/v2rayA/v2rayA/releases) and use the OpenRC files from [`install/universal/`](install/universal/). Run this from a checkout of the repository, with `VERSION` set to the release number without the leading `v`; the example is for x64:
 
 ```sh

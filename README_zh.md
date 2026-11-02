@@ -112,6 +112,14 @@ sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```
 
+在 Alpine 上，从[发布页](https://github.com/v2rayA/v2rayA/releases)取 `installer_alpine_linux_x64_${VERSION}.apk`，文件名中的架构部分按机器改成对应值。包内包含 OpenRC 脚本与 `/etc/conf.d/v2raya`；该包未用 Alpine 信任库中的密钥签名，因此需要 `--allow-untrusted`：
+
+```sh
+sudo apk add --allow-untrusted ./installer_alpine_linux_x64_${VERSION}.apk
+sudo rc-update add v2raya default
+sudo rc-service v2raya start
+```
+
 其他系统从[发布页](https://github.com/v2rayA/v2rayA/releases)下载对应架构的两个二进制文件，并使用 [`install/universal/`](install/universal/) 中的 OpenRC 文件。以下命令在仓库检出目录中执行，`VERSION` 为不带前缀 `v` 的版本号，示例为 x64：
 
 ```sh
