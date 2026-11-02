@@ -1040,35 +1040,35 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/retry/-/retry-0.4.3.tgz#c2b9d2e374ee62c586d3adbea87199b1d7a7a6ba"
   integrity sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==
 
-"@intlify/core-base@11.4.12":
-  version "11.4.12"
-  resolved "https://registry.yarnpkg.com/@intlify/core-base/-/core-base-11.4.12.tgz#c6ebd1af7a17a76174ca570bcb806e074605df4d"
-  integrity sha512-tvYUWgMJmk+UvLFa7ck8uRQ9m19tTI9B2e01KCAjBV7+HN2zFLnnORvMO85hM1P8DIw4MTvot1ZSBUdoR+F6jA==
+"@intlify/core-base@11.4.14":
+  version "11.4.14"
+  resolved "https://registry.yarnpkg.com/@intlify/core-base/-/core-base-11.4.14.tgz#cc0d78768846336c0f9611640fc35c2854622617"
+  integrity sha512-Lox+qRGBLnEYfNz4iajqKpw1zuvSAWl4PtzEk654bEM+0NT1GBy9AbOecxzSh7krsyqn9mGKhgmvtuyBsqS6oQ==
   dependencies:
-    "@intlify/devtools-types" "11.4.12"
-    "@intlify/message-compiler" "11.4.12"
-    "@intlify/shared" "11.4.12"
+    "@intlify/devtools-types" "11.4.14"
+    "@intlify/message-compiler" "11.4.14"
+    "@intlify/shared" "11.4.14"
 
-"@intlify/devtools-types@11.4.12":
-  version "11.4.12"
-  resolved "https://registry.yarnpkg.com/@intlify/devtools-types/-/devtools-types-11.4.12.tgz#d3971204d2d16934dfd31e894981d30be599a34b"
-  integrity sha512-Ctkcs8DQItaEL9HHdkyasFFcZFP59iBvZmrjiA7b72JFq/JlI6c6GPQHN7oEwbYTo8rndPMqNY7SX71aPm4MkA==
+"@intlify/devtools-types@11.4.14":
+  version "11.4.14"
+  resolved "https://registry.yarnpkg.com/@intlify/devtools-types/-/devtools-types-11.4.14.tgz#15ef2fc0b1ae1b3971e47530cbe53f0ac976072e"
+  integrity sha512-EQHRYveQg6yHQ51kePfsFyaW2WW+0hk3FdVxSpLDyuKtqFtsRFoyQR2QzASZPmY767ujs9ipuxc2DiGJARkuiQ==
   dependencies:
-    "@intlify/core-base" "11.4.12"
-    "@intlify/shared" "11.4.12"
+    "@intlify/core-base" "11.4.14"
+    "@intlify/shared" "11.4.14"
 
-"@intlify/message-compiler@11.4.12":
-  version "11.4.12"
-  resolved "https://registry.yarnpkg.com/@intlify/message-compiler/-/message-compiler-11.4.12.tgz#381dd1b3c57bae498cd20eb5a44ef98cf198c096"
-  integrity sha512-kBczk9r44fdBYnkC5tXRWa/UaA+e9NglXE3cX7jPnDd2nHzoFHYrKGfIbn8JFZpMA9omexZZo2WxOpTvlHdjsw==
+"@intlify/message-compiler@11.4.14":
+  version "11.4.14"
+  resolved "https://registry.yarnpkg.com/@intlify/message-compiler/-/message-compiler-11.4.14.tgz#b3bb748739c4401b45cd706927affed6f6b96eff"
+  integrity sha512-y79GatHfMhN672Vooxw0v6mgX/vclFHggO1ENL6aH/QubLXiV529WXu/+FhVUbYF+HLTeDDkQpmnpfvSJddBCg==
   dependencies:
-    "@intlify/shared" "11.4.12"
+    "@intlify/shared" "11.4.14"
     source-map-js "^1.0.2"
 
-"@intlify/shared@11.4.12":
-  version "11.4.12"
-  resolved "https://registry.yarnpkg.com/@intlify/shared/-/shared-11.4.12.tgz#3df4c8d6e20ec11d5cdf14c9a8c63eb935005d7d"
-  integrity sha512-ojfehaXMFrGFcSnK3cJPaMxlrSXT8FwZUG9H4i+WKX4OFD4Yl1WKdTmfwoC0REnwIfTrnt1QhRtd8kwi/te6bQ==
+"@intlify/shared@11.4.14":
+  version "11.4.14"
+  resolved "https://registry.yarnpkg.com/@intlify/shared/-/shared-11.4.14.tgz#3383bf240c6a1cb7c885bd837867455163a2c689"
+  integrity sha512-f8zSlPs4+Yd9za3CPQfW9OHxAJBOeRQzB/hhOhkbGA7hlqWk0W0bUtSV/LmyrGNwdl8JriBnFtJqZyF140bjGg==
 
 "@isaacs/cliui@^9.0.0":
   version "9.0.0"
@@ -4612,14 +4612,14 @@ vue-eslint-parser@^10.3.0, vue-eslint-parser@^10.4.0:
     esquery "^1.6.0"
     semver "^7.6.3"
 
-vue-i18n@^11.4.12:
-  version "11.4.12"
-  resolved "https://registry.yarnpkg.com/vue-i18n/-/vue-i18n-11.4.12.tgz#a157749cf52b5b5ad89a98850823bcbf97f45511"
-  integrity sha512-yvArvvo3ErLKFNlQrZUGmRkxL/ctM5xFYtE9FxTKiE/PalWP1bnTopBgbSRGLluYEyYSNl1Pt8l2J7zVavbXww==
+vue-i18n@^11.4.14:
+  version "11.4.14"
+  resolved "https://registry.yarnpkg.com/vue-i18n/-/vue-i18n-11.4.14.tgz#2a878a16ab54a0c1a6d0a90c2efec6c87796b036"
+  integrity sha512-oRFZtQjRDRQtfxu7tFlsZlnCa5gPkg/KX89kJDKdC9bz4GIYgo3cAMaD0XFeUx/WHuKoVbDMRTIo9Hvg67HnPw==
   dependencies:
-    "@intlify/core-base" "11.4.12"
-    "@intlify/devtools-types" "11.4.12"
-    "@intlify/shared" "11.4.12"
+    "@intlify/core-base" "11.4.14"
+    "@intlify/devtools-types" "11.4.14"
+    "@intlify/shared" "11.4.14"
     "@vue/devtools-api" "^6.5.0"
 
 vue-tsc@^3.3.11:
