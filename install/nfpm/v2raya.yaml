@@ -1,0 +1,98 @@
+# Every Linux package of a release is built from this file. The paths are
+# relative to the repository root, where the packaging job runs: the binaries
+# and the rule data are staged in ./pkg beforehand, see
+# .github/workflows/_build_linux_packages.yml.
+#
+#   PACKAGE_ARCH=amd64 PACKAGE_VERSION=2.5.10 nfpm package -f install/nfpm/v2raya.yaml -p deb
+#
+# The rule data ships as regular files so that no distribution package for it
+# is needed; v2rayA reads /usr/share/v2raya before anywhere else.
+name: "v2raya"
+arch: "${PACKAGE_ARCH}"
+platform: "linux"
+version: "${PACKAGE_VERSION}"
+section: "default"
+priority: "extra"
+provides:
+  - v2raya
+maintainer: "v2raya@v2raya.org"
+description: |
+  A web GUI client of Project V which supports VMess, VLESS, Shadowsocks, Trojan, TUIC, Juicity and AnyTLS.
+vendor: "v2rayA"
+homepage: "https://github.com/v2rayA/v2rayA"
+license: "AGPL-3.0-only + MPL 2.0"
+archlinux:
+  packager: "v2rayA <v2raya@v2raya.org>"
+scripts:
+  postinstall: ./install/nfpm/scripts/postinstall.sh
+  postremove: ./install/nfpm/scripts/postremove.sh
+contents:
+  - src: ./pkg/v2raya
+    dst: /usr/bin/v2raya
+    file_info:
+      mode: 0755
+  - src: ./pkg/v2raya_core
+    dst: /usr/bin/v2raya_core
+    file_info:
+      mode: 0755
+  - src: ./pkg/geoip.dat
+    dst: /usr/share/v2raya/geoip.dat
+  - src: ./pkg/geosite.dat
+    dst: /usr/share/v2raya/geosite.dat
+  - src: ./install/universal/v2raya.desktop
+    dst: /usr/share/applications/v2raya.desktop
+  - src: ./install/nfpm/desktop/v2raya/icons/16x16.png
+    dst: /usr/share/icons/hicolor/16x16/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/24x24.png
+    dst: /usr/share/icons/hicolor/24x24/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/32x32.png
+    dst: /usr/share/icons/hicolor/32x32/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/48x48.png
+    dst: /usr/share/icons/hicolor/48x48/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/64x64.png
+    dst: /usr/share/icons/hicolor/64x64/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/128x128.png
+    dst: /usr/share/icons/hicolor/128x128/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/256x256.png
+    dst: /usr/share/icons/hicolor/256x256/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/512x512.png
+    dst: /usr/share/icons/hicolor/512x512/apps/v2raya.png
+  - src: ./install/nfpm/desktop/v2raya/icons/1024x1024.png
+    dst: /usr/share/icons/hicolor/1024x1024/apps/v2raya.png
+  # The distributions that boot systemd.
+  - src: ./install/universal/v2raya.service
+    dst: /usr/lib/systemd/system/v2raya.service
+    packager: deb
+  - src: ./install/universal/v2raya.service
+    dst: /usr/lib/systemd/system/v2raya.service
+    packager: rpm
+  - src: ./install/universal/v2raya.service
+    dst: /usr/lib/systemd/system/v2raya.service
+    packager: archlinux
+  - src: ./install/universal/v2raya-lite.service
+    dst: /usr/lib/systemd/user/v2raya-lite.service
+    packager: deb
+  - src: ./install/universal/v2raya-lite.service
+    dst: /usr/lib/systemd/user/v2raya-lite.service
+    packager: rpm
+  - src: ./install/universal/v2raya-lite.service
+    dst: /usr/lib/systemd/user/v2raya-lite.service
+    packager: archlinux
+  - src: ./install/universal/v2raya.default
+    dst: /etc/default/v2raya
+    packager: deb
+  - src: ./install/universal/v2raya.default
+    dst: /etc/default/v2raya
+    packager: rpm
+  - src: ./install/universal/v2raya.default
+    dst: /etc/default/v2raya
+    packager: archlinux
+  # Alpine boots OpenRC, which takes the daemon options from /etc/conf.d.
+  - src: ./install/universal/v2raya.initd
+    dst: /etc/init.d/v2raya
+    packager: apk
+    file_info:
+      mode: 0755
+  - src: ./install/universal/v2raya.confd
+    dst: /etc/conf.d/v2raya
+    packager: apk
