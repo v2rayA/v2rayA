@@ -118,7 +118,7 @@ func (d xrayDialer) DialContext(ctx context.Context, network, addr string) (outb
 	}
 	// QUIC-based protocols assert the underlay conn to netproxy.PacketConn,
 	// whose ReadFrom/WriteTo signatures differ from net.PacketConn. xray's UDP
-	// dial returns *internet.PacketConnWrapper, so adapt it here. With outbound
+	// dial returns *xray_net.PacketConnWrapper, so adapt it here. With outbound
 	// traffic counters on, xray hands back a *stat.CounterConnection around it,
 	// which embeds net.Conn and therefore hides ReadFrom and WriteTo; unwrap it
 	// or the QUIC stack below never sees a packet conn.
