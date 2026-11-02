@@ -116,7 +116,24 @@ const secured = computed(
           dir="ltr"
         />
       </v-col>
+      <v-col cols="12" sm="6">
+        <v-text-field
+          v-model="model.pqv"
+          :label="t('configureServer.realityMldsa65Verify')"
+          :readonly="readonly"
+          dir="ltr"
+        />
+      </v-col>
     </template>
+    <v-col v-if="vless" cols="12">
+      <v-text-field
+        v-model="model.encryption"
+        :label="t('configureServer.vlessEncryption')"
+        placeholder="none"
+        :readonly="readonly"
+        dir="ltr"
+      />
+    </v-col>
     <template v-if="on">
       <v-col cols="12" sm="6">
         <v-text-field

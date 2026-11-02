@@ -378,6 +378,8 @@ export default {
     realityPublicKey: "공개 키 (pbk)",
     realityShortId: "짧은 ID (sid)",
     realitySpiderX: "Spider X (spx)",
+    realityMldsa65Verify: "ML-DSA-65 검증 키 (pqv)",
+    vlessEncryption: "암호화 (encryption)",
     method: "방식",
     plugin: "플러그인",
     pluginImpl: "구현",

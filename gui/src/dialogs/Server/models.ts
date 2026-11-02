@@ -20,6 +20,8 @@ export const v2rayModel = () => ({
   pbk: "",
   sid: "",
   spx: "",
+  pqv: "",
+  encryption: "none",
   alpn: "",
   scy: "auto",
   v: "",

@@ -292,6 +292,30 @@ func TestVlessRawTransportIsTCP(t *testing.T) {
 	}
 }
 
+func TestVlessEncryptionAndPqvReachConfigAndRoundTrip(t *testing.T) {
+	enc := "mlkem768x25519plus.native.0rtt.AAAA"
+	link := "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?type=tcp&security=reality&sni=example.com&pbk=key&pqv=VERIFY&fp=chrome&encryption=" + enc + "#n"
+	obj, err := NewFromLink("vless", link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := obj.Configuration(PriorInfo{Tag: "t"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vnext := c.CoreOutbound.Settings.Vnext.([]coreObj.Vnext)
+	if got := vnext[0].Users[0].Encryption; got != enc {
+		t.Fatalf("encryption = %q", got)
+	}
+	if got := c.CoreOutbound.StreamSettings.RealitySettings.Mldsa65Verify; got != "VERIFY" {
+		t.Fatalf("mldsa65Verify = %q", got)
+	}
+	again, err := ParseVlessURL(obj.ExportToURL())
+	if err != nil || again.Encryption != enc || again.Mldsa65Verify != "VERIFY" {
+		t.Fatalf("round trip: %+v err=%v", again, err)
+	}
+}
+
 func TestVmessNumericPortAndAid(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString([]byte(`{"add":"1.2.3.4","aid":0,"id":"93637105-bcea-4a68-b089-1bb6091f0b16","net":"tcp","port":27467,"ps":"n","tls":"none","type":"http","v":2}`))
 	obj, err := NewFromLink("vmess", "vmess://"+payload)

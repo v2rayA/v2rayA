@@ -23,6 +23,17 @@ describe("serverCodec keeps the editor's behaviour", () => {
     });
   }
 
+  test("vless encryption and reality pqv survive a round trip", () => {
+    const link =
+      "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=mlkem768x25519plus.native.0rtt.AAAA&security=reality&sni=example.com&fp=chrome&pbk=K&sid=ab&spx=%2F&pqv=VERIFY&type=tcp#n";
+    const form = parseShareLink(link)!;
+    expect(form.encryption).toBe("mlkem768x25519plus.native.0rtt.AAAA");
+    expect(form.pqv).toBe("VERIFY");
+    const back = generateShareLink(form)!;
+    expect(back).toContain("encryption=mlkem768x25519plus.native.0rtt.AAAA");
+    expect(back).toContain("pqv=VERIFY");
+  });
+
   test("an unknown scheme is null both ways", () => {
     expect(parseShareLink("gopher://x")).toBeNull();
     expect(generateShareLink({ protocol: "gopher" })).toBeNull();
