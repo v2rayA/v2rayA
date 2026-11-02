@@ -27,8 +27,6 @@ jobs:
       CGO_ENABLED: 0
       VERSION: ${{ inputs.version }}
       PACKAGE_VERSION: ${{ inputs.version }}
-      NAME: v2raya
-      DESC: "A web GUI client of Project V which supports VMess, VLESS, Shadowsocks, Trojan, TUIC, Juicity and AnyTLSs"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,90 +67,69 @@ jobs:
       - name: Show Artifacts
         run: |
           ls -l build/
+      - name: Install nfpm
+        env:
+          NFPM_VERSION: 2.48.0
+        run: |
+          curl -fsSL -o nfpm.tar.gz "https://github.com/goreleaser/nfpm/releases/download/v$NFPM_VERSION/nfpm_${NFPM_VERSION}_Linux_x86_64.tar.gz"
+          sudo tar -xzf nfpm.tar.gz -C /usr/local/bin nfpm
+          rm nfpm.tar.gz
+          nfpm --version
       - name: Build Packages
         run: |
-          sudo gem install fpm -v 1.15.1
-          sudo apt update
-          sudo apt-get install -y libarchive-tools rpm tar unzip
           sudo chmod 755 ./test/v2raya_linux_x64_$VERSION
           ./test/v2raya_linux_x64_$VERSION --report config | sed '1,6d' | fold -s -w 78 | sed -E 's/^([^#].+)/# \1/' >> install/universal/v2raya.default
+          mkdir -p pkg packages
+          cp ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }} pkg/v2raya
+          cp ./build/v2raya_core_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }} pkg/v2raya_core
+          cp ./v2ray-rules-dat/geoip.dat ./v2ray-rules-dat/geosite.dat pkg/
+          chmod 755 pkg/v2raya pkg/v2raya_core
+          chmod 644 pkg/geoip.dat pkg/geosite.dat
+          # nfpm maps the Go architecture onto the name each packager expects.
+          if [ "$GOARCH" = 'arm' ]; then
+            export PACKAGE_ARCH="arm$GOARM"
+          else
+            export PACKAGE_ARCH="$GOARCH"
+          fi
           if [ -n "$(echo $GOARCH | grep mips)" ]; then
             packages="deb rpm"
           else
-            packages="deb rpm pacman"
+            packages="deb rpm archlinux apk"
           fi
-          sudo chmod 755 ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}
-          sudo chmod 755 ./build/v2raya_core_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}
           for package_manager in $packages; do
-            if [ "$package_manager" == 'pacman' ];then
-              if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
-                package_arch='arm7hf'
-              elif [ "$GOARCH" == 'arm64' ];then
-                package_arch='aarch64'
-              else
-                package_arch="$GOARCH"
-              fi
-            elif [ "$package_manager" == 'rpm' ];then
-              if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
-                package_arch='armhfp'
-              elif [ "$GOARCH" == 'arm64' ];then
-                package_arch='aarch64'
-              elif [ "$GOARCH" == 'loong64' ];then
-                package_arch='loongson64'
-              else
-                package_arch="$GOARCH"
-              fi
-            elif [ "$package_manager" == 'deb' ];then
-              if [ "$GOARCH" == 'arm' ] && [ "$GOARM" == '7' ];then
-                package_arch='armhf'
-              elif [ "$GOARCH" == '386' ];then
-                package_arch='i386'
-              elif [ "$GOARCH" == 'mipsle' ];then
-                package_arch='mips32le'
-              else
-                package_arch="$GOARCH"
-              fi
-            fi
-              fpm -s dir -t "$package_manager" -a $package_arch --version "${{ inputs.version }}" \
-              --url 'https://github.com/v2rayA/v2rayA' --description "$DESC" \
-              --maintainer "v2raya@v2raya.org" --name v2raya --license 'AGPL' \
-              --package installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.$package_manager \
-              --after-install ./install/universal/after_install.sh \
-              --after-upgrade ./install/universal/after_upgrade.sh \
-              ./build/v2raya_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}=/usr/bin/v2raya \
-              ./build/v2raya_core_${{ steps.get_filename.outputs.BUILD_NAME }}_${{ inputs.version }}=/usr/bin/v2raya_core \
-              ./install/universal/v2raya.service=/usr/lib/systemd/system/v2raya.service \
-              ./install/universal/v2raya-lite.service=/usr/lib/systemd/user/v2raya-lite.service \
-              ./install/universal/v2raya.png=/usr/share/icons/hicolor/512x512/apps/v2raya.png \
-              ./install/universal/v2raya.desktop=/usr/share/applications/v2raya.desktop \
-              ./v2ray-rules-dat/geoip.dat=/usr/share/v2raya/geoip.dat \
-              ./v2ray-rules-dat/geosite.dat=/usr/share/v2raya/geosite.dat \
-              ./install/universal/v2raya.default=/etc/default/v2raya
+            case $package_manager in
+              deb) package_distro='debian'; package_ext='deb' ;;
+              rpm) package_distro='redhat'; package_ext='rpm' ;;
+              archlinux) package_distro='archlinux'; package_ext='pkg.tar.zst' ;;
+              apk) package_distro='alpine'; package_ext='apk' ;;
+            esac
+            nfpm package -f install/nfpm/v2raya.yaml -p "$package_manager" \
+              -t "packages/installer_${package_distro}_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.$package_ext"
           done
-          mkdir fpm_packages
-          [ -f installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.pacman ] && \
-          mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.pacman \
-             fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
-          mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.rpm \
-             fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
-          mv installer_linux_$GOARCH$GOAMD64$GOARM_${{ inputs.version }}.deb \
-             fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
+          ls -l packages/
       - name: Upload Arch Linux Package
         uses: actions/upload-artifact@v7
         with:
           if-no-files-found: ignore
           name: installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
           path: |
-            fpm_packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
+            packages/installer_archlinux_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.pkg.tar.zst
       - name: Upload Red Hat Package
         uses: actions/upload-artifact@v7
         with:
           name: installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
           path: |
-            fpm_packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
+            packages/installer_redhat_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.rpm
       - name: Upload Debian Package
         uses: actions/upload-artifact@v7
         with:
           name: installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
           path: |
-            fpm_packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
+            packages/installer_debian_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.deb
+      - name: Upload Alpine Package
+        uses: actions/upload-artifact@v7
+        with:
+          if-no-files-found: ignore
+          name: installer_alpine_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.apk
+          path: |
+            packages/installer_alpine_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.apk
