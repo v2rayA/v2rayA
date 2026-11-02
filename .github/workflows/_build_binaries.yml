@@ -20,10 +20,10 @@ jobs:
           # Linux, other architectures
           - { goos: linux, goarch: "386" }
           - { goos: linux, goarch: riscv64 }
-          - { goos: linux, goarch: mips64 }
-          - { goos: linux, goarch: mips64le }
-          - { goos: linux, goarch: mipsle }
-          - { goos: linux, goarch: mips }
+          # - { goos: linux, goarch: mips64 }
+          # - { goos: linux, goarch: mips64le }
+          # - { goos: linux, goarch: mipsle }
+          # - { goos: linux, goarch: mips }
           - { goos: linux, goarch: loong64 }
           # Linux armv7
           - { goos: linux, goarch: arm, goarm: "7" }
