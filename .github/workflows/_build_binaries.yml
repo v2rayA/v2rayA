@@ -61,7 +61,7 @@ jobs:
             core/go.sum
             service/go.mod
             service/go.sum
-          go-version: "1.26"
+          go-version: "1.27"
       - name: Install MIPS/Loong64 Cross Compilers
         if: ${{ matrix.goos == 'linux' && (startsWith(matrix.goarch, 'mips') || matrix.goarch == 'loong64') }}
         shell: bash
