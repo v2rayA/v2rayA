@@ -17,7 +17,7 @@
     "@material/material-color-utilities": "0.4.0",
     "@mdi/js": "^7.4.47",
     "@nuintun/qrcode": "^3.3.0",
-    "axios": "^0.33.0",
+    "axios": "^0.34.0",
     "dayjs": "^1.10.6",
     "js-base64": "^2.5.1",
     "nanoid": "^3.3.18",
