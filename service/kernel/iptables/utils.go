@@ -65,11 +65,24 @@ func IsIPv6Supported() bool {
 	return cmds.IsCommandValid("ip6tables") || cmds.IsCommandValid("ip6tables-nft")
 }
 
+var (
+	commandOutput = func(name string, args ...string) ([]byte, error) {
+		return exec.Command(name, args...).Output()
+	}
+	commandCombinedOutput = func(name string, args ...string) ([]byte, error) {
+		return exec.Command(name, args...).CombinedOutput()
+	}
+)
+
 func IsNftablesSupported() bool {
 	if runtime.GOOS != "linux" {
 		return false
 	}
-	switch conf.GetEnvironmentConfig().NftablesSupport {
+	return isNftablesSupported(conf.GetEnvironmentConfig().NftablesSupport, common.IsDocker())
+}
+
+func isNftablesSupported(nftablesSupport string, docker bool) bool {
+	switch nftablesSupport {
 	// Warning:
 	// This is an experimental feature for nftables support.
 	// The default value is "off" for now but may be changed to "auto" in the future
@@ -79,19 +92,38 @@ func IsNftablesSupported() bool {
 		return false
 	default:
 	}
-	if common.IsDocker() {
+	if docker {
 		return false
 	}
-	if !cmds.IsCommandValid("nft") {
+	if !commandAvailable("nft") {
 		// No nft.
 		return false
 	}
-	out, err := exec.Command("iptables", "--version").Output()
+	out, err := commandOutput("iptables", "--version")
 	if err != nil {
 		// No iptables.
 		return true
 	}
-	return strings.Contains(string(out), "nf_tables")
+	version := string(out)
+	if strings.Contains(version, "nf_tables") {
+		return true
+	}
+	if !strings.Contains(version, "(legacy)") {
+		return false
+	}
+
+	// Listing is read-only. Some kernels, notably PREEMPT_RT kernels built
+	// without NETFILTER_XTABLES_LEGACY, have a legacy iptables binary but no
+	// legacy mangle table. Only that specific failure justifies using nft;
+	// permission errors and other failures do not indicate missing support.
+	out, err = commandCombinedOutput("iptables", "-t", "mangle", "-L")
+	if err == nil {
+		return false
+	}
+	message := string(out)
+	return strings.Contains(message, "can't initialize iptables table") &&
+		strings.Contains(message, "mangle") &&
+		strings.Contains(message, "Table does not exist")
 }
 
 func GetWhiteListIPs() ([]string, []string, error) {
