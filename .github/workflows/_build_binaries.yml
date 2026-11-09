@@ -15,31 +15,34 @@ jobs:
       matrix:
         include:
           # Linux
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
+          - { goos: linux, goarch: amd64, CGO_ENABLED: 0 }
+          - { goos: linux, goarch: arm64, CGO_ENABLED: 0 }
           # Linux, other architectures
-          - { goos: linux, goarch: "386" }
-          - { goos: linux, goarch: riscv64 }
-          - { goos: linux, goarch: loong64 }
+          - { goos: linux, goarch: "386", CGO_ENABLED: 0 }
+          - { goos: linux, goarch: riscv64, CGO_ENABLED: 0 }
+          - { goos: linux, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-gnu", EXTRA_LDFLAGS: "-extldflags=-Wl,--strip-debug" }
           # Linux armv7
-          - { goos: linux, goarch: arm, goarm: "7" }
+          - { goos: linux, goarch: arm, goarm: "7", CGO_ENABLED: 0 }
           # Windows
-          - { goos: windows, goarch: amd64 }
-          - { goos: windows, goarch: arm64 }
+          - { goos: windows, goarch: amd64, CGO_ENABLED: 0 }
+          - { goos: windows, goarch: arm64, CGO_ENABLED: 0 }
           # macOS
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
+          - { goos: darwin, goarch: amd64, CGO_ENABLED: 0 }
+          - { goos: darwin, goarch: arm64, CGO_ENABLED: 0 }
           # FreeBSD (no TUN)
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
+          - { goos: freebsd, goarch: amd64, CGO_ENABLED: 0 }
+          - { goos: freebsd, goarch: arm64, CGO_ENABLED: 0 }
           # OpenBSD (no TUN)
-          - { goos: openbsd, goarch: amd64 }
-          - { goos: openbsd, goarch: arm64 }
+          - { goos: openbsd, goarch: amd64, CGO_ENABLED: 0 }
+          - { goos: openbsd, goarch: arm64, CGO_ENABLED: 0 }
     env:
-      CGO_ENABLED: 0
       VERSION: ${{ inputs.version }}
       NAME: v2raya
       DESC: "A web GUI client of Project V which supports VMess, VLESS, Shadowsocks, Trojan, TUIC, Juicity and AnyTLSs"
+      # Empty for every leg that does not need cgo; the build commands below are
+      # then exactly what they were before.
+      CC: ${{ matrix.CC }}
+      EXTRA_LDFLAGS: ${{ matrix.EXTRA_LDFLAGS }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -58,22 +61,31 @@ jobs:
             service/go.mod
             service/go.sum
           go-version: "1.27"
+      # Zig supplies a C compiler for the cgo legs, so no distro cross-gcc is
+      # needed; it is pinned because older releases do not target loongarch64.
+      - name: Install Zig
+        if: matrix.CGO_ENABLED == 1
+        env:
+          ZIG_VERSION: 0.17.0
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+          brew install zig
       - name: Build v2rayA Binary
         id: build_binary
         shell: bash
         run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
           mkdir -p v2raya_binaries
           key="${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}"
           filename=$(jq -r --arg key "$key" '.[$key].friendlyName' ./install/friendly-filenames.json)
           ext=""
           [ "${{ matrix.goos }}" = "windows" ] && ext=".exe"
-          cgo_enabled=0
+          cgo_enabled=${{ matrix.CGO_ENABLED }}
           cd service
-          GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" \
-            CGO_ENABLED="$cgo_enabled" \
+          GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" CGO_ENABLED="$cgo_enabled" \
             go build -trimpath \
             -o ../v2raya_binaries/v2raya_${filename}_${{ inputs.version }}${ext} \
-            -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${{ inputs.version }} -s -w" \
+            -ldflags="-X github.com/v2rayA/v2rayA/conf.Version=${{ inputs.version }} -s -w ${EXTRA_LDFLAGS}" \
             -trimpath
           echo "filename=v2raya_${filename}_${{ inputs.version }}${ext}" >> ${GITHUB_OUTPUT}
       - name: Build v2rayA Core Binary
@@ -86,10 +98,11 @@ jobs:
           ext=""
           [ "${{ matrix.goos }}" = "windows" ] && ext=".exe"
           cd core
-          GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" \
+          cgo_enabled=${{ matrix.CGO_ENABLED }}
+          GOOS="${{ matrix.goos }}" GOARCH="${{ matrix.goarch }}" GOARM="${{ matrix.goarm }}" CGO_ENABLED="$cgo_enabled" \
             go build -trimpath \
             -o ../v2raya_binaries/v2raya_core_${filename}_${{ inputs.version }}${ext} \
-            -ldflags="-X main.Version=${{ inputs.version }} -s -w" \
+            -ldflags="-X main.Version=${{ inputs.version }} -s -w ${EXTRA_LDFLAGS}" \
             -trimpath \
             ./main
           echo "filename=v2raya_core_${filename}_${{ inputs.version }}${ext}" >> ${GITHUB_OUTPUT}
