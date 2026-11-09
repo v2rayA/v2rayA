@@ -16,11 +16,16 @@ const { t } = useI18n();
 const notify = useNotify();
 
 // the old page sent the row with its servers emptied
-const form = reactive({ ...props.subscription, servers: [] });
+const form = reactive({
+  ...props.subscription,
+  servers: [],
+  nodeDns: props.subscription.nodeDns || "auto",
+});
 const saving = ref(false);
 
 async function save() {
   if (saving.value) return;
+  form.nodeDns = form.nodeDns.trim() || "auto";
   saving.value = true;
   try {
     await patchSubscription({ subscription: form });
@@ -53,6 +58,15 @@ async function save() {
         "
       />
       <v-text-field v-model="form.remarks" :label="t('subscription.remarks')" />
+      <v-text-field
+        v-model="form.nodeDns"
+        class="node-dns"
+        :label="t('subscription.nodeDns')"
+        :hint="t('subscription.nodeDnsHint')"
+        placeholder="auto"
+        persistent-hint
+        dir="ltr"
+      />
       <v-switch
         v-model="form.autoSelect"
         :label="t('subscription.autoSelect')"

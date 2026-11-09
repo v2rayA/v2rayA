@@ -123,6 +123,9 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    nodeDns: "Node DNS",
+    nodeDnsHint:
+      "auto keeps the existing order; otherwise enter a pure-IP UDP, TCP, TLS or HTTPS DNS. Applies only with DNS hijack on. DoH needs a URL with a path, such as https://1.1.1.1/dns-query. Latency tests and subscription downloads are unchanged.",
     settingsTitle: "Subscription updates",
     remarks: "Remarks",
     numberServers: "Number of Servers",
@@ -755,6 +758,10 @@ export default {
     LINK_MALFORMED: "Malformed {protocol} link: {detail}",
     SUBSCRIPTION_FETCH_FAILED:
       "Could not fetch the subscription from {host}: {detail}",
+    NODE_DNS_INVALID:
+      "Use a pure-IP UDP, TCP, TLS or HTTPS DNS endpoint that does not point to this service’s DNS listener.",
+    NODE_DNS_CONFLICT:
+      "Node domain {domain} uses different DNS endpoints in connected subscriptions. Choose the same endpoint for the shared domain.",
     SUBSCRIPTION_EMPTY: "The subscription contains no servers.",
     SUBSCRIPTION_NOT_FOUND:
       "Subscription #{id} does not exist. Reload the page.",

@@ -119,6 +119,9 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    nodeDns: "节点解析 DNS",
+    nodeDnsHint:
+      "auto 保持原有顺序；也可填写纯 IP 的 UDP、TCP、TLS 或 HTTPS DNS。仅在 DNS 劫持开启时生效。DoH 需填写包含路径的完整 URL，例如 https://1.1.1.1/dns-query。不影响测速和订阅下载。",
     settingsTitle: "订阅更新",
     remarks: "别名",
     numberServers: "节点数",
@@ -733,6 +736,10 @@ export default {
       "不支持的加密方式：{cipher}。请改用 aes-128-gcm、aes-256-gcm、chacha20-ietf-poly1305 或 2022-blake3 系列",
     LINK_MALFORMED: "格式错误的 {protocol} 链接：{detail}",
     SUBSCRIPTION_FETCH_FAILED: "无法从 {host} 获取订阅：{detail}",
+    NODE_DNS_INVALID:
+      "请使用不指向本服务 DNS 监听器的纯 IP UDP、TCP、TLS 或 HTTPS DNS 地址。",
+    NODE_DNS_CONFLICT:
+      "已连接订阅的节点域名 {domain} 配置了不同 DNS，请为共享域名选择相同地址。",
     SUBSCRIPTION_EMPTY: "订阅中没有节点。",
     SUBSCRIPTION_NOT_FOUND: "订阅 #{id} 不存在，请刷新页面。",
     SERVER_NOT_FOUND: "节点 #{id} 不存在（共有 {count} 个节点），请刷新页面。",
