@@ -21,6 +21,7 @@ const form = reactive({
   allowDirectRecovery: false,
   ...props.subscription,
   servers: [],
+  nodeDns: props.subscription.nodeDns || "auto",
 });
 const updateModes = computed(() => [
   { value: "disabled", title: t("subscription.updateModes.disabled") },
@@ -65,6 +66,7 @@ const intervalRule = (minimum: number) => (v: unknown) =>
 
 async function save() {
   if (saving.value) return;
+  form.nodeDns = form.nodeDns.trim() || "auto";
   if (!(await validation.value?.validate())?.valid) return;
   saving.value = true;
   try {
@@ -101,6 +103,15 @@ async function save() {
         <v-text-field
           v-model="form.remarks"
           :label="t('subscription.remarks')"
+        />
+        <v-text-field
+          v-model="form.nodeDns"
+          class="node-dns mb-4"
+          :label="t('subscription.nodeDns')"
+          :hint="t('subscription.nodeDnsHint')"
+          placeholder="auto"
+          persistent-hint
+          dir="ltr"
         />
         <v-select
           v-model="form.updateMode"

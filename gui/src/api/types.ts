@@ -44,6 +44,7 @@ export interface TouchSubscription {
   updateIntervalMinutes?: number;
   failureIntervalMinutes?: number;
   allowDirectRecovery?: boolean;
+  nodeDns?: string;
 }
 
 /** touch.Touch */
