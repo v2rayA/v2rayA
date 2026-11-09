@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/touch"
 )
 
@@ -80,5 +81,76 @@ func TestParseSubscriptionUserInfoHeader(t *testing.T) {
 	empty := parseSubscriptionUserInfo("")
 	if empty.Known() {
 		t.Fatal("an empty header must not count as known")
+	}
+}
+
+func TestModifySubscriptionNodeDNS(t *testing.T) {
+	index := configure.GetLenSubscriptions()
+	if err := configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
+		Address: "https://example.test/sub",
+		NodeDns: "tcp://1.1.1.1:53",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.RemoveSubscriptions([]int{index}) })
+	item := touch.Subscription{ID: index + 1, Address: "https://example.test/sub", Remarks: "old client"}
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetSubscription(index).NodeDns; got != "tcp://1.1.1.1:53" {
+		t.Fatalf("old client cleared node DNS: %q", got)
+	}
+	item.NodeDns = "tls://dns.example"
+	if err := ModifySubscriptionRemark(item); err == nil {
+		t.Fatal("accepted a domain node DNS")
+	}
+	if got := configure.GetSubscription(index).NodeDns; got != "tcp://1.1.1.1:53" {
+		t.Fatalf("rejected node DNS was persisted: %q", got)
+	}
+	item.NodeDns = "[2001:db8::1]:5353"
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetSubscription(index).NodeDns; got != "udp://[2001:db8::1]:5353" {
+		t.Fatalf("normalized node DNS = %q", got)
+	}
+	item.NodeDns = "auto"
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	if got := touch.GenerateTouch().Subscriptions[index].NodeDns; got != "auto" {
+		t.Fatalf("touch node DNS = %q", got)
+	}
+}
+
+func TestModifySubscriptionPreservesUnchangedInvalidNodeDNS(t *testing.T) {
+	for _, endpoint := range []string{"invalid", "udp://127.0.0.1:52353"} {
+		t.Run(endpoint, func(t *testing.T) {
+			index := configure.GetLenSubscriptions()
+			if err := configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
+				Address: "https://example.test/sub", NodeDns: endpoint,
+				UpdateMode:            configure.SubscriptionUpdateIntervalFailsafe,
+				UpdateIntervalMinutes: 15, FailureIntervalMinutes: 2, AllowDirectRecovery: true,
+			}}); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = configure.RemoveSubscriptions([]int{index}) })
+			before := configure.GetSubscription(index)
+			item := touch.Subscription{ID: index + 1, Address: before.Address, Remarks: "renamed", NodeDns: endpoint}
+			if err := ModifySubscriptionRemark(item); err != nil {
+				t.Fatal(err)
+			}
+			got := configure.GetSubscription(index)
+			if got.Remarks != "renamed" || got.NodeDns != endpoint || got.DatabaseID != before.DatabaseID || got.UpdateMode != before.UpdateMode || got.UpdateIntervalMinutes != 15 || got.FailureIntervalMinutes != 2 || !got.AllowDirectRecovery {
+				t.Fatalf("settings not preserved: %+v", got)
+			}
+			item.NodeDns = "different-invalid"
+			if err := ModifySubscriptionRemark(item); err == nil {
+				t.Fatal("accepted a changed invalid endpoint")
+			}
+			if got := configure.GetSubscription(index); got.NodeDns != endpoint {
+				t.Fatalf("changed invalid endpoint persisted: %+v", got)
+			}
+		})
 	}
 }

@@ -28,6 +28,7 @@ type Server struct {
 	PingLatency string              `json:"pingLatency"`
 }
 type Subscription struct {
+	NodeDns                string                            `json:"nodeDns,omitempty"`
 	UpdateMode             *configure.SubscriptionUpdateMode `json:"updateMode,omitempty"`
 	UpdateIntervalMinutes  *int                              `json:"updateIntervalMinutes"`
 	FailureIntervalMinutes *int                              `json:"failureIntervalMinutes"`
@@ -96,6 +97,7 @@ func GenerateTouch() (t Touch) {
 			}
 		}
 		t.Subscriptions[i] = Subscription{
+			NodeDns:                v.NodeDns,
 			Remarks:                v.Remarks,
 			UpdateMode:             &updateMode,
 			UpdateIntervalMinutes:  &v.UpdateIntervalMinutes,

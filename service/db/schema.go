@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
     auto_select INTEGER NOT NULL DEFAULT 0,
+    node_dns TEXT NOT NULL DEFAULT 'auto',
     update_mode TEXT NOT NULL DEFAULT 'disabled',
     update_interval_minutes INTEGER NOT NULL DEFAULT 0,
     failure_interval_minutes INTEGER NOT NULL DEFAULT 1,
@@ -94,6 +95,7 @@ func MigrateSchema(db *sql.DB) error {
 	}
 
 	columns := []struct{ name, definition string }{
+		{"node_dns", "TEXT NOT NULL DEFAULT 'auto'"},
 		{"auto_select", "INTEGER NOT NULL DEFAULT 0"},
 		{"update_mode", "TEXT NOT NULL DEFAULT 'disabled'"},
 		{"update_interval_minutes", "INTEGER NOT NULL DEFAULT 0"},
