@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -443,12 +444,32 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 	// 节点服务器域名必须直连解析：若命中默认（代理）上游，查询经 dispatcher
 	// 路由到代理出站，而代理出站连接节点又需要解析节点域名，形成死锁，
 	// 导致节点域名永远解析失败、代理通道完全不可用。
-	var nodeDomains []string
+	var nodeDomains, endpointOrder []string
+	endpointDomains := make(map[string][]string)
+	domainEndpoints := make(map[string]string)
 	for _, info := range serverInfos {
 		host := info.Info.GetHostname()
-		if host != "" && net.ParseIP(host) == nil {
-			nodeDomains = append(nodeDomains, host)
+		if host == "" || net.ParseIP(host) != nil {
+			continue
 		}
+		endpoint, err := NormalizeNodeDNS(info.NodeDns, setting)
+		if err != nil {
+			log.Warn("Saved node DNS %q for node %q is invalid in the current configuration; using auto: %v", info.NodeDns, host, err)
+			endpoint = "auto"
+		}
+		if endpoint == "auto" {
+			nodeDomains = append(nodeDomains, host)
+			continue
+		}
+		domainKey := strings.ToLower(strings.TrimSuffix(host, "."))
+		if previous, ok := domainEndpoints[domainKey]; ok && previous != endpoint {
+			return common.Coded("NODE_DNS_CONFLICT", fmt.Errorf("node domain %q is shared by subscriptions with different DNS endpoints", host), map[string]interface{}{"domain": host})
+		}
+		domainEndpoints[domainKey] = endpoint
+		if _, ok := endpointDomains[endpoint]; !ok {
+			endpointOrder = append(endpointOrder, endpoint)
+		}
+		endpointDomains[endpoint] = append(endpointDomains[endpoint], host)
 	}
 	nodeDomains = common.Deduplicate(nodeDomains)
 	if len(nodeDomains) > 0 {
@@ -480,6 +501,27 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 			"client_ip":     nil,
 		}}, rulesList...)
 	}
+
+	var subscriptionUpstreams, subscriptionRules []map[string]interface{}
+	for i, endpoint := range endpointOrder {
+		addr, protocol := nodeDNSUpstream(endpoint)
+		id := fmt.Sprintf("upstream-node-subscription-%d", i)
+		subscriptionUpstreams = append(subscriptionUpstreams, map[string]interface{}{
+			"id": id, "addr": addr, "protocol": protocol,
+			"proxy_tag": "direct", "bootstrap": false,
+		})
+		subscriptionRules = append(subscriptionRules, map[string]interface{}{
+			"id": fmt.Sprintf("rule-node-subscription-%d", i), "upstream": id,
+			"action": "route", "policy": "single",
+			"domain": common.Deduplicate(endpointDomains[endpoint]),
+		})
+	}
+	// Keep node upstreams before the ordinary default, and exact subscription
+	// rules before the historical auto suffix rule and user DNS rules. A host
+	// carrying both an explicit endpoint and auto therefore uses the explicit
+	// one, while the suffix rule still covers its subdomains.
+	upstreams = append(subscriptionUpstreams, upstreams...)
+	rulesList = append(subscriptionRules, rulesList...)
 
 	cfg["upstreams"] = upstreams
 	cfg["rules"] = rulesList
@@ -545,4 +587,118 @@ func probeListen(addr string) error {
 	}
 	l.Close()
 	return nil
+}
+
+// NormalizeNodeDNS accepts only IP endpoints, so resolving the upstream
+// cannot depend on the very node it is meant to resolve.
+func NormalizeNodeDNS(value string, setting *configure.Setting) (string, error) {
+	input := value
+	value = strings.TrimSpace(value)
+	if value == "" || value == "auto" {
+		return "auto", nil
+	}
+	invalid := func() (string, error) {
+		return "", common.Coded("NODE_DNS_INVALID", fmt.Errorf("invalid node DNS %q: use a pure-IP UDP, TCP, TLS or HTTPS endpoint other than this service's DNS listener", input), nil)
+	}
+	if !strings.Contains(value, "://") {
+		if ip := net.ParseIP(value); ip != nil {
+			value = net.JoinHostPort(ip.String(), "53")
+		}
+		value = "udp://" + value
+	}
+	u, err := url.Parse(value)
+	if err != nil || u.User != nil || u.Fragment != "" || u.Opaque != "" {
+		return invalid()
+	}
+	port := ""
+	switch u.Scheme {
+	case "udp", "tcp":
+		port = "53"
+	case "tls":
+		port = "853"
+	case "https":
+		port = "443"
+	default:
+		return invalid()
+	}
+	if u.Scheme != "https" && (u.Path != "" || u.RawQuery != "" || u.ForceQuery) {
+		return invalid()
+	}
+	ip := net.ParseIP(u.Hostname())
+	if ip == nil || ip.IsUnspecified() || ip.IsMulticast() ||
+		(ip.To4() == nil && !strings.HasPrefix(u.Host, "[")) {
+		return invalid()
+	}
+	if u.Port() != "" {
+		p, err := strconv.Atoi(u.Port())
+		if err != nil || p < 1 || p > 65535 {
+			return invalid()
+		}
+		port = strconv.Itoa(p)
+	} else if strings.HasSuffix(u.Host, ":") {
+		return invalid()
+	}
+	if setting == nil {
+		setting = configure.GetSettingNotNil()
+	}
+	if u.Scheme == "udp" || u.Scheme == "tcp" {
+		if nodeDNSIsListener(ip, port, setting) {
+			return invalid()
+		}
+	}
+
+	u.Host = net.JoinHostPort(ip.String(), port)
+	return u.String(), nil
+}
+
+func nodeDNSIsListener(ip net.IP, port string, setting *configure.Setting) bool {
+	// This is deliberately not dnsModuleExtraListenAddrs: that one probes for
+	// free ports, and the running core already owns the extra listeners, so
+	// probing here would miss the very addresses it is meant to reject.
+	listeners := []string{dnsModuleListenAddr(setting)}
+	if dnsInterceptionEnabled(setting) {
+		listeners = append(listeners, net.JoinHostPort("::1", dnsModulePort(setting)))
+		switch runtime.GOOS {
+		case "linux":
+			listeners = append(listeners, "127.2.0.17:53", net.JoinHostPort("127.2.0.17", dnsModulePort(setting)), net.JoinHostPort("127.0.0.1", dnsModulePort(setting)))
+		case "darwin":
+			if setting.TransparentType == configure.TransparentTun && IsTransparentOn(setting) {
+				listeners = append(listeners, "127.0.0.1:53")
+			}
+		}
+	}
+	for _, addr := range listeners {
+		host, listenPort, _ := net.SplitHostPort(addr)
+		if port != listenPort {
+			continue
+		}
+		listenIP := net.ParseIP(host)
+		if ip.Equal(listenIP) {
+			return true
+		}
+		if host == "" || listenIP.IsUnspecified() {
+			if ip.IsLoopback() {
+				return true
+			}
+			addrs, _ := net.InterfaceAddrs()
+			for _, addr := range addrs {
+				localIP, _, _ := net.ParseCIDR(addr.String())
+				if ip.Equal(localIP) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func nodeDNSUpstream(value string) (addr, protocol string) {
+	u, _ := url.Parse(value)
+	addr, protocol = u.Host, u.Scheme
+	if protocol == "https" {
+		addr = value
+	} else if protocol == "tls" {
+		protocol = "tcp-tls"
+	}
+	return
 }

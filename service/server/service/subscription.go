@@ -407,10 +407,24 @@ func ModifySubscriptionRemark(subscription touch.Subscription) (err error) {
 	if raw == nil {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d does not exist; reload the page", subscription.ID), map[string]interface{}{"id": subscription.ID})
 	}
+	previous := *raw
+	// Old clients omit the field, so empty means "keep the stored value".
+	if subscription.NodeDns != "" {
+		nodeDns, err := v2ray.NormalizeNodeDNS(subscription.NodeDns, configure.GetSettingNotNil())
+		if err != nil {
+			return err
+		}
+		raw.NodeDns = nodeDns
+	}
 	raw.Remarks = subscription.Remarks
 	raw.Address = subscription.Address
 	raw.AutoSelect = subscription.AutoSelect
-	return configure.SetSubscription(subscription.ID-1, raw)
+	if raw.NodeDns == previous.NodeDns {
+		return configure.SetSubscription(subscription.ID-1, raw)
+	}
+	return ApplyCoreConfig(func() func() error {
+		return func() error { return configure.SetSubscription(subscription.ID-1, &previous) }
+	}, func() error { return configure.SetSubscription(subscription.ID-1, raw) })
 }
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) (err error) {

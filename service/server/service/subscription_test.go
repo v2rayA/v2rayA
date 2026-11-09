@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/touch"
 )
 
 func TestSubscriptionBodyOverLimitIsRejected(t *testing.T) {
@@ -68,5 +71,44 @@ func TestParseSubscriptionUserInfoHeader(t *testing.T) {
 	empty := parseSubscriptionUserInfo("")
 	if empty.Known() {
 		t.Fatal("an empty header must not count as known")
+	}
+}
+
+func TestModifySubscriptionNodeDNS(t *testing.T) {
+	index := configure.GetLenSubscriptions()
+	if err := configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
+		Address: "https://example.test/sub",
+		NodeDns: "tcp://1.1.1.1:53",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.RemoveSubscriptions([]int{index}) })
+	item := touch.Subscription{ID: index + 1, Address: "https://example.test/sub", Remarks: "old client"}
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetSubscription(index).NodeDns; got != "tcp://1.1.1.1:53" {
+		t.Fatalf("old client cleared node DNS: %q", got)
+	}
+	item.NodeDns = "tls://dns.example"
+	if err := ModifySubscriptionRemark(item); err == nil {
+		t.Fatal("accepted a domain node DNS")
+	}
+	if got := configure.GetSubscription(index).NodeDns; got != "tcp://1.1.1.1:53" {
+		t.Fatalf("rejected node DNS was persisted: %q", got)
+	}
+	item.NodeDns = "[2001:db8::1]:5353"
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetSubscription(index).NodeDns; got != "udp://[2001:db8::1]:5353" {
+		t.Fatalf("normalized node DNS = %q", got)
+	}
+	item.NodeDns = "auto"
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	if got := touch.GenerateTouch().Subscriptions[index].NodeDns; got != "auto" {
+		t.Fatalf("touch node DNS = %q", got)
 	}
 }
