@@ -70,12 +70,12 @@ jobs:
         run: |
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
           brew install zig
-      - name: Build v2rayA Binary
+      - name: Build Binaries
         id: build_binary
         shell: bash
         run: |
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
-          mkdir -p v2raya_binaries
+          [ -d v2raya_binaries ] || mkdir -p v2raya_binaries
           key="${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}"
           filename=$(jq -r --arg key "$key" '.[$key].friendlyName' ./install/friendly-filenames.json)
           ext=""
@@ -92,7 +92,8 @@ jobs:
         id: build_core_binary
         shell: bash
         run: |
-          mkdir -p v2raya_binaries
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
+          [ -d v2raya_binaries ] || mkdir -p v2raya_binaries
           key="${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}"
           filename=$(jq -r --arg key "$key" '.[$key].friendlyName' ./install/friendly-filenames.json)
           ext=""
