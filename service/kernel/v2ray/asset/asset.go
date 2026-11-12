@@ -52,16 +52,29 @@ func GetV2rayLocationAssetOverride() string {
 }
 
 // runtimeAssetDir is where the core's asset links go when nothing names a
-// directory: v2raya's subdirectory of the XDG runtime directory. A service
-// user has no session, so /run/user/<uid> does not exist and cannot be
-// created by it; then the configuration directory, which the process owns,
-// holds the links instead of the start failing on the lookup.
+// directory: v2raya's subdirectory of the XDG runtime directory.
 func runtimeAssetDir() string {
-	dir := filepath.Join(xdg.RuntimeDir, "v2raya")
-	if err := os.MkdirAll(dir, 0700); err == nil {
-		return dir
+	return runtimeAssetDirIn(xdg.RuntimeDir, conf.GetEnvironmentConfig().Config)
+}
+
+// runtimeAssetDirIn uses runtimeDir only when it already exists. The runtime
+// directory belongs to the login manager: a service user has no session, so
+// /run/user/<uid> is missing, and a service running as root must not create
+// it either, because creating /run/user with mode 0700 locks every other
+// user out of their XDG runtime directory. Without it, the configuration
+// directory, which the process owns, holds the links.
+func runtimeAssetDirIn(runtimeDir, fallback string) string {
+	if fi, err := os.Stat(runtimeDir); err != nil || !fi.IsDir() {
+		return fallback
 	}
-	return conf.GetEnvironmentConfig().Config
+	dir := filepath.Join(runtimeDir, "v2raya")
+	if err := os.Mkdir(dir, 0700); err != nil && !errors.Is(err, fs.ErrExist) {
+		return fallback
+	}
+	if fi, err := os.Stat(dir); err != nil || !fi.IsDir() {
+		return fallback
+	}
+	return dir
 }
 
 func GetV2rayLocationAsset(filename string) (string, error) {
@@ -106,18 +119,26 @@ func GetV2rayLocationAsset(filename string) (string, error) {
 					return "", err
 				}
 			}
-			runtimepath := filepath.Join(runtimeAssetDir(), filename)
-			os.Remove(runtimepath)
-			err = os.Symlink(fullpath, runtimepath)
-			if err != nil {
-				return "", err
-			}
-			return fullpath, err
+			return linkAsset(fullpath, filepath.Join(runtimeAssetDir(), filename))
 		} else {
 			// fallback to the old behavior of using only config dir on windows
 			return filepath.Join(conf.GetEnvironmentConfig().Config, filename), nil
 		}
 	}
+}
+
+// linkAsset points link at source and returns the file to read. The asset
+// directory can be the configuration directory, where a regular file is one
+// the user put there: it is used as it is instead of being replaced.
+func linkAsset(source, link string) (string, error) {
+	if fi, err := os.Lstat(link); err == nil && fi.Mode().IsRegular() {
+		return link, nil
+	}
+	os.Remove(link)
+	if err := os.Symlink(source, link); err != nil {
+		return "", err
+	}
+	return source, nil
 }
 
 // coreAssets are the files v2raya_core itself loads by name; it is given
