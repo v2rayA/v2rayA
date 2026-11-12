@@ -18,6 +18,7 @@ import {
   rowKey,
   sameWhich,
   useNodes,
+  whichKey,
   whichOf,
   type Row,
 } from "../nodes/model";
@@ -47,7 +48,7 @@ export function useProxies() {
   const confirm = useConfirm();
   const { open } = useDialog();
   const query = ref("");
-  const source = ref("all");
+  const source = ref(localStorage.getItem("proxiesSource") ?? "all");
   const view = ref(
     localStorage.getItem("proxiesView") === "list" ? "list" : "cards",
   );
@@ -64,6 +65,17 @@ export function useProxies() {
   const members = computed(() =>
     groupMembers(nodes.touch.value, store.connectedServer, store.outboundName),
   );
+  /** each member's groups in the app bar's order, built once: a page re-render then hands every row the array it had */
+  const groupLists = computed(() => {
+    const lists = new Map<string, string[]>();
+    for (const [key, groups] of nodes.membership.value)
+      lists.set(
+        key,
+        store.outbounds.filter((group) => groups.has(group)),
+      );
+    return lists;
+  });
+  const noGroups: string[] = [];
   const sources = computed(() => [
     { value: "all", title: t("proxies.sources.all") },
     { value: "local", title: t("proxies.sources.local") },
@@ -84,8 +96,9 @@ export function useProxies() {
       query.value ?? "",
     ),
   );
+  const selectedSet = computed(() => new Set(selectedKeys.value));
   const selected = computed(() =>
-    listed.value.filter((row) => selectedKeys.value.includes(rowKey(row))),
+    listed.value.filter((row) => selectedSet.value.has(rowKey(row))),
   );
   const allSelected = computed(
     () =>
@@ -99,6 +112,7 @@ export function useProxies() {
   const preferred = computed(() => inUse(store.outboundName));
 
   watch(view, (value) => localStorage.setItem("proxiesView", value));
+  watch(source, (value) => localStorage.setItem("proxiesSource", value));
   watch(listed, (value) => {
     const keys = new Set(value.map(rowKey));
     selectedKeys.value = selectedKeys.value.filter((key) => keys.has(key));
@@ -109,8 +123,11 @@ export function useProxies() {
       selectedKeys.value = [];
     },
   );
-  watch(sources, (value) => {
-    if (!value.some((s) => s.value === source.value)) source.value = "all";
+  // the subscriptions arrive with the first sync: a saved source is dropped
+  // only once they are known and it is not among them
+  watch([sources, nodes.ready], ([value, ready]) => {
+    if (ready && !value.some((s) => s.value === source.value))
+      source.value = "all";
   });
 
   function isMember(row: Row) {
@@ -118,7 +135,10 @@ export function useProxies() {
   }
   /** the groups the row belongs to, in the order the app bar lists them */
   function memberGroups(row: Row) {
-    return store.outbounds.filter((group) => nodes.inGroup(row, group));
+    return groupLists.value.get(whichKey(whichOf(row))) ?? noGroups;
+  }
+  function isSelected(row: Row) {
+    return selectedSet.value.has(rowKey(row));
   }
   function inUse(group: string): Row | null {
     const connected = store.connectedServer.filter(
@@ -189,15 +209,17 @@ export function useProxies() {
       const touches: Which[] = store.connectedServer
         .filter((w) => (w.outbound ?? "proxy") === outbound)
         .map(({ id, _type, sub }) => ({ id, _type, sub }));
+      const chosen = selectedRows.map(whichOf);
+      const keys = new Set((add ? touches : chosen).map(whichKey));
       const next = add
         ? [...touches]
-        : touches.filter(
-            (w) => !selectedRows.some((row) => sameWhich(w, whichOf(row))),
-          );
+        : touches.filter((w) => !keys.has(whichKey(w)));
       if (add)
-        for (const row of selectedRows) {
-          const which = whichOf(row);
-          if (!next.some((w) => sameWhich(w, which))) next.push(which);
+        for (const which of chosen) {
+          const key = whichKey(which);
+          if (keys.has(key)) continue;
+          keys.add(key);
+          next.push(which);
         }
       nodes.apply(await putOutboundConnections({ outbound, touches: next }));
     });
@@ -374,6 +396,7 @@ export function useProxies() {
     preferred,
     isMember,
     memberGroups,
+    isSelected,
     inUse,
     sourceName,
     selectAll,

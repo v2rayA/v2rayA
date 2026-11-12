@@ -60,6 +60,7 @@ beforeEach(async () => {
 });
 afterEach(() => {
   wrapper.unmount();
+  vi.unstubAllGlobals();
   window.innerWidth = originalWidth;
   window.dispatchEvent(new Event("resize"));
   closeAllDialogs();
@@ -216,6 +217,69 @@ describe("unified proxies page", () => {
         { id: 1, _type: "server", sub: 0, outbound: "proxy" },
       ],
     });
+  });
+  test("mounts a long list a page at a time while select-all covers every listed node", async () => {
+    const response = fixture();
+    const feed = response.touch.subscriptions[0];
+    feed.servers = Array.from({ length: 150 }, (_, i) => ({
+      ...feed.servers[0],
+      id: i + 1,
+      name: `Node ${i}`,
+      address: `node-${i}.example:443`,
+    }));
+    // the sentinel's observer reports only when the test says it scrolled into view
+    let report: (visible: boolean) => void = () => {};
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(private callback: IntersectionObserverCallback) {}
+        observe(el: Element) {
+          if (!el.classList.contains("proxies__more")) return;
+          report = (visible) =>
+            this.callback(
+              [{ isIntersecting: visible } as IntersectionObserverEntry],
+              this as unknown as IntersectionObserver,
+            );
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    wrapper.unmount();
+    vi.mocked(getTouch).mockImplementation(async () =>
+      structuredClone(response),
+    );
+    wrapper = mountWithApp(ProxiesView);
+    await flushPromises();
+    const cards = () => wrapper.findAllComponents(NodeCard).length;
+    expect(cards()).toBe(60);
+    report(false);
+    await flushPromises();
+    expect(cards()).toBe(60);
+    const all = wrapper.get(".proxies__batch").getComponent(VCheckboxBtn);
+    await all.get("input").setValue(true);
+    expect(wrapper.get(".proxies__batch").text()).toContain("153 selected");
+    expect(all.props("indeterminate")).toBe(false);
+    report(true);
+    await flushPromises();
+    expect(cards()).toBe(120);
+    expect(
+      wrapper
+        .findAllComponents(NodeCard)
+        .every((card) => card.props("checked")),
+    ).toBe(true);
+    report(true);
+    await flushPromises();
+    expect(cards()).toBe(153);
+    expect(wrapper.find(".proxies__more").exists()).toBe(false);
+    await wrapper.get(".proxies__search input").setValue("node");
+    await flushPromises();
+    expect(cards()).toBe(60);
+    expect(wrapper.find(".proxies__more").exists()).toBe(true);
+  });
+  test("a short list mounts whole, with no sentinel", () => {
+    expect(wrapper.findAllComponents(NodeCard)).toHaveLength(4);
+    expect(wrapper.find(".proxies__more").exists()).toBe(false);
   });
   test("keeps a failed load distinct from empty results and retries", async () => {
     wrapper.unmount();

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import {
@@ -40,13 +40,23 @@ const {
   rows,
   listed,
   selected,
-  selectedKeys,
   allSelected,
   canDelete,
   preferred,
   sync,
 } = model;
 const disabled = computed(() => busy.value || loading.value);
+// A subscription can hold well over a thousand nodes, and mounting every card
+// at once freezes the page: a page of rows is mounted, and the
+// sentinel under the last one adds the next as it scrolls into view.
+// Selection, tests and batch actions still work on the whole listed set.
+const PAGE = 60;
+const limit = ref(PAGE);
+const shown = computed(() => listed.value.slice(0, limit.value));
+watch([query, source, view], () => (limit.value = PAGE));
+function more(visible: boolean) {
+  if (visible) limit.value += PAGE;
+}
 // Ctrl/Cmd+A selects every listed node, Escape clears (list view), "/" goes to the search
 useHotkeys((event) => {
   const ctrl = event.ctrlKey || event.metaKey;
@@ -312,7 +322,7 @@ onMounted(sync);
           </div>
           <div v-if="view === 'cards'" class="proxies__cards">
             <NodeCard
-              v-for="row in listed"
+              v-for="row in shown"
               :key="rowKey(row)"
               :row="row"
               :source="model.sourceName(row)"
@@ -320,7 +330,7 @@ onMounted(sync);
               :groups="store.outbounds"
               :member-groups="model.memberGroups(row)"
               :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
-              :checked="selectedKeys.includes(rowKey(row))"
+              :checked="model.isSelected(row)"
               :disabled="disabled"
               :testing="testing"
               @check="model.selectRow(row, $event)"
@@ -334,7 +344,7 @@ onMounted(sync);
             class="proxies__list"
           >
             <NodeListItem
-              v-for="row in listed"
+              v-for="row in shown"
               :key="rowKey(row)"
               :row="row"
               :source="model.sourceName(row)"
@@ -342,13 +352,24 @@ onMounted(sync);
               :groups="store.outbounds"
               :member-groups="model.memberGroups(row)"
               :in-use="!!preferred && rowKey(preferred) === rowKey(row)"
-              :checked="selectedKeys.includes(rowKey(row))"
+              :checked="model.isSelected(row)"
               :disabled="disabled"
               :testing="testing"
               @check="model.selectRow(row, $event)"
               @action="(action, group) => model.nodeAction(row, action, group)"
             />
           </v-list>
+          <!-- keyed by the limit: a new observer reports at once, so a
+               sentinel still in view after a page loads asks for the next -->
+          <div
+            v-if="shown.length < listed.length"
+            :key="limit"
+            v-intersect="{
+              handler: more,
+              options: { rootMargin: '0px 0px 480px' },
+            }"
+            class="proxies__more"
+          />
         </template>
       </section>
     </template>
@@ -390,6 +411,9 @@ onMounted(sync);
 }
 .proxies--expanded .proxies__cards {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.proxies__more {
+  height: 1px;
 }
 .proxies__batch {
   display: flex;
