@@ -11,7 +11,7 @@ Closes #
 
 The commands you ran, where you ran them, and what you observed. Say what you could not test.
 
-Submitted and answered for by: <!-- your GitHub username; an AI cannot answer for you -->
+Submitted and answered for by: <!-- required: your GitHub username, written by you; an AI cannot answer for you -->
 
 ---
 
