@@ -160,7 +160,6 @@ export default {
     exportSaved: "{file} 저장됨",
     moreActions: "추가 작업",
     helpManual: "도움말 및 설명서",
-    switchSite: "대체 사이트로 전환",
     addOutbound: "프록시 그룹 추가",
     add: "추가",
     close: "닫기",
@@ -436,6 +435,7 @@ export default {
     local: "모든 데이터는 이 컴퓨터에만 저장되며 클라우드로 전송되지 않습니다.",
     report: "사용 중 발견한 문제는 {discussions}에 제보할 수 있습니다.",
     discussions: "discussions",
+    website: "웹사이트",
   },
   axios: {
     messages: {
@@ -443,8 +443,8 @@ export default {
       noBackendFound:
         "{url}에서 v2rayA를 찾을 수 없습니다. 해당 주소에서 v2rayA가 실행 중인지 확인하세요.",
       cannotCommunicate: [
-        "통신할 수 없습니다. 서비스가 실행 중이고 포트가 올바르게 열려 있다면 현재 브라우저가 HTTPS 사이트의 HTTP 리소스 접근을 허용하지 않기 때문일 수 있습니다. Chrome을 사용하거나 대체 HTTP 사이트로 전환해 보세요.",
-        "통신할 수 없습니다. Firefox는 HTTPS 사이트의 HTTP 리소스 접근을 허용하지 않습니다. 대체 HTTP 사이트로 전환해 보세요.",
+        "통신할 수 없습니다. 서비스가 실행 중이고 포트가 열려 있다면 브라우저가 HTTPS 페이지의 HTTP 주소 접근을 막고 있을 수 있습니다. Chrome을 사용하거나 서비스 주소에서 HTTP로 GUI를 여세요.",
+        "통신할 수 없습니다. Firefox는 HTTPS 페이지의 HTTP 주소 접근을 허용하지 않습니다. 서비스 주소에서 HTTP로 GUI를 여세요(예: http://localhost:2017).",
       ],
     },
   },
