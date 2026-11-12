@@ -28,7 +28,7 @@ wget -O /usr/share/v2raya/geosite.dat https://raw.githubusercontent.com/mzz2017/
 wget -O /usr/share/v2raya/geoip.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geoip.dat
 cd "$current_dir" || exit
 rm -rf build
-apk add --no-cache iptables iptables-legacy nftables tzdata
+apk add --no-cache iproute2 iptables iptables-legacy nftables tzdata
 install ./iptables.sh /usr/local/bin/iptables
 install ./ip6tables.sh /usr/local/bin/ip6tables
 install ./iptables.sh /usr/local/bin/iptables-nft
