@@ -66,15 +66,15 @@ jobs:
       - name: Install Zig
         if: matrix.CGO_ENABLED == 1
         env:
-          ZIG_VERSION: 0.17.0
+          ZIG_VERSION: 0.17.1
         run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
-          brew install zig
-      - name: Build Binaries
+          wget https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz
+          sudo tar -xf zig-x86_64-linux-${ZIG_VERSION}.tar.xz -C /usr/local
+          sudo ln -s /usr/local/zig-x86_64-linux-${ZIG_VERSION}/zig /usr/local/bin/zig
+      - name: Build v2rayA Binary
         id: build_binary
         shell: bash
         run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
           [ -d v2raya_binaries ] || mkdir -p v2raya_binaries
           key="${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}"
           filename=$(jq -r --arg key "$key" '.[$key].friendlyName' ./install/friendly-filenames.json)
@@ -92,7 +92,6 @@ jobs:
         id: build_core_binary
         shell: bash
         run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
           [ -d v2raya_binaries ] || mkdir -p v2raya_binaries
           key="${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}"
           filename=$(jq -r --arg key "$key" '.[$key].friendlyName' ./install/friendly-filenames.json)

@@ -4,7 +4,7 @@
 #define MyAppName "v2rayA"
 #define MyAppVersion "TheRealVersion"
 #define MyAppPublisher "v2rayA Organization"
-#define MyAppURL "https://v2raya.org/"
+#define MyAppURL "https://github.com/v2rayA/v2rayA"
 #define MyAppExeName "v2raya.exe"
 
 [Setup]

@@ -13,16 +13,14 @@ platform: "linux"
 version: "${PACKAGE_VERSION}"
 section: "default"
 priority: "extra"
-provides:
-  - v2raya
-maintainer: "v2raya@v2raya.org"
+maintainer: "v2raya@daeuniverse.org"
 description: |
   A web GUI client of Project V which supports VMess, VLESS, Shadowsocks, Trojan, TUIC, Juicity and AnyTLS.
 vendor: "v2rayA"
 homepage: "https://github.com/v2rayA/v2rayA"
 license: "AGPL-3.0-only + MPL 2.0"
 archlinux:
-  packager: "v2rayA <v2raya@v2raya.org>"
+  packager: "v2rayA <v2raya@daeuniverse.org>"
 scripts:
   postinstall: ./install/nfpm/scripts/postinstall.sh
   postremove: ./install/nfpm/scripts/postremove.sh
