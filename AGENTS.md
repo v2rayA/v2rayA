@@ -10,6 +10,8 @@ Instructions for a coding assistant working in this repository. A human owns eve
 
 Read the code you are about to change and the code that calls it. Reuse the components and helpers that exist and follow the neighbouring file's conventions. Do not introduce a parallel implementation or a second convention.
 
+If you cannot tell whether existing behaviour is intentional, ask the human before you change it.
+
 ## What the change must satisfy
 
 ```sh
@@ -18,7 +20,7 @@ Read the code you are about to change and the code that calls it. Reuse the comp
 (cd core    && go build ./... && go vet ./...)
 ```
 
-Run them yourself, from the repository root, and then exercise the change: for the service, start `v2raya` and use the feature; for the interface, open the page and use what changed. A description of behaviour you did not observe is worth nothing to the review. `TestResolvHijackerConcurrentResetRemove` fails for a non-root user; that one is known.
+CI runs only the `gui` line and builds the binaries, so run all three yourself, from the repository root, and then exercise the change: for the service, start `v2raya` and use the feature; for the interface, open the page and use what changed. A description of behaviour you did not observe is worth nothing to the review. `TestResolvHijackerConcurrentResetRemove` fails for a non-root user; that one is known.
 
 Visible text lives in `gui/src/locales/`: update all six locales together. `yarn i18n-check` compares key sets, not whether a translation followed a wording change. The in-app documentation under `gui/src/docs/` has the same six.
 
@@ -32,6 +34,7 @@ Visible text lives in `gui/src/locales/`: update all six locales together. `yarn
 - Type comes from the scale in `gui/src/theme/typography.scss` (`md3-title-large` and the rest), which uses weights 400 and 500; do not add 700.
 - `core/` is a fork of xray-core. v2rayA's own code is `core/dns`, `core/hint` and `core/main`; leave the rest to upstream. After editing a `.proto` under `core/hint/proxy`, regenerate from the module root (`protoc --go_out=. --go_opt=paths=source_relative hint/proxy/<name>/config.proto`) so the descriptor keeps its path.
 - Read a command's exit code; do not infer success from the end of its output. `eslint` prints its errors above the summary line.
+- A check that ran nothing proves nothing: `no test files`, a `-run` pattern that matched no test, a search over no files. Say what ran.
 
 ## Code in this repository
 
@@ -44,4 +47,4 @@ Reach for what is already there before adding anything: a dependency the module 
 - Do not sign your work: no model `Co-Authored-By` trailer, no AI signature, no generated-by marker, in a comment, a commit message or pull request text.
 - Do not touch code the change does not require: no reformatting, no renaming, no regenerated lockfiles.
 - Do not present a guess as a result. If you did not run it, say so.
-- Do not open or comment on an issue or a pull request on your own, and do not fill in the field that names who answers for it. The human submits, and answers for what is submitted.
+- Do not open or comment on an issue or a pull request on your own. Leave the "Submitted and answered for by" line and the boxes about what the human did or understands as the template has them, and tell the human to fill them in before submitting. The human submits, and answers for what is submitted.
