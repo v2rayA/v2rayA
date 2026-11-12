@@ -316,6 +316,59 @@ func TestVlessEncryptionAndPqvReachConfigAndRoundTrip(t *testing.T) {
 	}
 }
 
+func TestVlessECHSurvivesImportStorageAndExport(t *testing.T) {
+	const ech = "AAH+/w=="
+	q := url.Values{"type": {"xhttp"}, "security": {"tls"}, "sni": {"example.com"}, "ech": {ech}}
+	obj, err := ParseVlessURL("vless://b831381d-6324-4d53-ad4f-8cda48b30811@example.com:443?" + q.Encode())
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored V2Ray
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := stored.Configuration(PriorInfo{Tag: "proxy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err = json.Marshal(cfg.CoreOutbound.StreamSettings.TLSSettings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var tls map[string]interface{}
+	if err := json.Unmarshal(raw, &tls); err != nil {
+		t.Fatal(err)
+	}
+	if tls["echConfigList"] != ech {
+		t.Errorf("generated echConfigList = %v, want %q", tls["echConfigList"], ech)
+	}
+	exported, err := url.Parse(stored.ExportToURL())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := exported.Query().Get("ech"); got != ech {
+		t.Errorf("exported ech = %q, want %q", got, ech)
+	}
+}
+
+// Links often carry the base64 list unescaped; a literal "+" is part of it,
+// not an encoded space.
+func TestVlessECHKeepsUnescapedPlus(t *testing.T) {
+	for _, ech := range []string{"AAH+/w==", "AAH%2B%2Fw%3D%3D"} {
+		obj, err := ParseVlessURL("vless://b831381d-6324-4d53-ad4f-8cda48b30811@example.com:443?security=tls&sni=example.com&ech=" + ech)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if obj.ECHConfigList != "AAH+/w==" {
+			t.Errorf("ech=%s parsed as %q, want %q", ech, obj.ECHConfigList, "AAH+/w==")
+		}
+	}
+}
+
 func TestVmessNumericPortAndAid(t *testing.T) {
 	payload := base64.StdEncoding.EncodeToString([]byte(`{"add":"1.2.3.4","aid":0,"id":"93637105-bcea-4a68-b089-1bb6091f0b16","net":"tcp","port":27467,"ps":"n","tls":"none","type":"http","v":2}`))
 	obj, err := NewFromLink("vmess", "vmess://"+payload)
