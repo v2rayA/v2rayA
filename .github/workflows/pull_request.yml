@@ -17,17 +17,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - { os: ubuntu-latest, goarch: amd64 }
-          - { os: ubuntu-latest, goarch: arm64 }
-          - { os: windows-latest, goarch: amd64 }
-          - { os: windows-latest, goarch: arm64 }
-          - { os: macos-latest, goarch: amd64 }
-          - { os: macos-latest, goarch: arm64 }
+          - { os: ubuntu-latest, goarch: amd64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, goarch: arm64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, goarch: riscv64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-gnu", EXTRA_LDFLAGS: "-extldflags=-Wl,--strip-debug" }
+          - { os: windows-latest, goarch: amd64, CGO_ENABLED: 0 }
+          - { os: windows-latest, goarch: arm64, CGO_ENABLED: 0 }
+          - { os: macos-latest, goarch: amd64, CGO_ENABLED: 0 }
+          - { os: macos-latest, goarch: arm64, CGO_ENABLED: 0 }
     needs: Build_v2rayA_Web
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Install Zig
+        if: matrix.CGO_ENABLED == 1
+        uses: ./.github/workflows/_install_zig.yml
       - name: Download Artifact
         uses: actions/download-artifact@v8
         with:
@@ -55,13 +60,13 @@ jobs:
             ubuntu-latest)  os="linux";   ext="" ;;
           esac
           cd "$CurrentDir"/service
-          GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath \
-            -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w" \
-            -o "$CurrentDir/v2raya_bin/v2raya_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}"
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED="${{ matrix.CGO_ENABLED }}" CC="${{ matrix.CC }}" EXTRA_LDFLAGS="${{ matrix.EXTRA_LDFLAGS }}" go build -trimpath \
+            -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w ${EXTRA_LDFLAGS}" \
+            -o "$CurrentDir/v2raya_bin/v2raya${ext}"
           cd "$CurrentDir"/core
-          GOARCH="${{ matrix.goarch }}" CGO_ENABLED=0 go build -trimpath \
-            -ldflags "-X main.Version=$version -s -w" \
-            -o "$CurrentDir/v2raya_bin/v2raya_core_pr_build_${os}_${{ matrix.goarch }}_${version}${ext}" ./main
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED="${{ matrix.CGO_ENABLED }}" CC="${{ matrix.CC }}" EXTRA_LDFLAGS="${{ matrix.EXTRA_LDFLAGS }}" go build -trimpath \
+            -ldflags "-X main.Version=$version -s -w ${EXTRA_LDFLAGS}" \
+            -o "$CurrentDir/v2raya_bin/v2raya_core${ext}" ./main
       - name: Upload v2rayA Binary
         uses: actions/upload-artifact@v7
         with:

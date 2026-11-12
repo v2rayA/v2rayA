@@ -65,12 +65,7 @@ jobs:
       # needed; it is pinned because older releases do not target loongarch64.
       - name: Install Zig
         if: matrix.CGO_ENABLED == 1
-        env:
-          ZIG_VERSION: 0.17.1
-        run: |
-          wget https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz
-          sudo tar -xf zig-x86_64-linux-${ZIG_VERSION}.tar.xz -C /usr/local
-          sudo ln -s /usr/local/zig-x86_64-linux-${ZIG_VERSION}/zig /usr/local/bin/zig
+        uses: ./.github/workflows/_install_zig.yml
       - name: Build v2rayA Binary
         id: build_binary
         shell: bash
