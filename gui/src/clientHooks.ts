@@ -54,10 +54,6 @@ export function installClientHooks(ui: { openAddressDialog(): void }): void {
           key: "backend",
           kind: "warning",
           text: t(`axios.messages.cannotCommunicate.${local && gecko ? 1 : 0}`),
-          action: {
-            label: t("operations.switchSite"),
-            onClick: () => window.open("http://v.v2raya.org", "_self"),
-          },
         });
       } else if (err.kind === "network") {
         informNotRunning(origin);

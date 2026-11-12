@@ -163,7 +163,6 @@ export default {
     exportSaved: "Exported {file}",
     moreActions: "More actions",
     helpManual: "Help & Manual",
-    switchSite: "Switch to alternate site",
     addOutbound: "Add a proxy group",
     add: "Add",
     close: "Close",
@@ -441,6 +440,7 @@ export default {
     local: "All data stays on this machine; nothing is sent to a cloud.",
     report: "Problems found during use can be reported in {discussions}.",
     discussions: "discussions",
+    website: "Website",
   },
   axios: {
     messages: {
@@ -448,8 +448,8 @@ export default {
       noBackendFound:
         "Cannot find v2rayA at {url}. Make sure v2rayA is running at this address.",
       cannotCommunicate: [
-        "Cannot communicate. If your service is running and ports open correctly, the reason may be that current browser does not allow https sites to access http resources, you can try using Chrome or switching to alternate http site.",
-        "Cannot communicate. Firefox does not allow https sites to access http resources, you can try switching to alternate http sites.",
+        "Cannot communicate. If your service is running and its port is open, the browser may be blocking this https page from reaching an http address. Try Chrome, or open the GUI over http at the service's own address.",
+        "Cannot communicate. Firefox blocks https pages from reaching http addresses. Open the GUI over http at the service's own address, such as http://localhost:2017.",
       ],
     },
   },

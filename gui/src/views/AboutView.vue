@@ -5,6 +5,7 @@ import {
   mdiBookOpenPageVariantOutline,
   mdiForumOutline,
   mdiGithub,
+  mdiWeb,
 } from "@mdi/js";
 import { useAppStore } from "@/stores/app";
 
@@ -12,6 +13,7 @@ defineOptions({ name: "AboutView" });
 const { t } = useI18n();
 const store = useAppStore();
 
+const website = "https://daeuniverse.org/";
 const repo = "https://github.com/v2rayA/v2rayA";
 </script>
 
@@ -30,6 +32,14 @@ const repo = "https://github.com/v2rayA/v2rayA";
         {{ t("about.report", { discussions: t("about.discussions") }) }}
       </p>
       <div class="d-flex flex-wrap ga-2 mt-6">
+        <v-btn
+          variant="tonal"
+          :href="website"
+          target="_blank"
+          rel="noreferrer"
+          :prepend-icon="mdiWeb"
+          >{{ t("about.website") }}</v-btn
+        >
         <v-btn
           variant="tonal"
           :href="repo"

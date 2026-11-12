@@ -158,7 +158,6 @@ export default {
     exportSaved: "已导出 {file}",
     moreActions: "更多操作",
     helpManual: "查看帮助",
-    switchSite: "切换至备用站点",
     addOutbound: "新增一个代理分组",
     add: "添加",
     close: "关闭",
@@ -428,14 +427,15 @@ export default {
     local: "所有数据均存储在本地，不上传云端。",
     report: "在使用中如果发现任何问题，欢迎到{discussions}反馈。",
     discussions: "讨论区",
+    website: "官网",
   },
   axios: {
     messages: {
       optimizeBackend: "是否修改 v2rayA 服务端地址？",
       noBackendFound: "未在 {url} 检测到v2rayA服务端，请确定v2rayA正常运行",
       cannotCommunicate: [
-        "无法通信。如果您的服务端已正常运行，且端口正常开放，原因可能是当前浏览器不允许https站点访问http资源，您可以尝试切换为http备用站点。",
-        "无法通信。火狐浏览器不允许https站点访问http资源，您可以换用Chrome浏览器或切换为http备用站点。",
+        "无法通信。如果服务端已正常运行且端口已开放，原因可能是当前浏览器不允许https页面访问http地址。可以换用Chrome，或直接用http打开服务端地址上的界面。",
+        "无法通信。火狐浏览器不允许https页面访问http地址，请直接用http打开服务端地址上的界面，例如http://localhost:2017。",
       ],
     },
   },
