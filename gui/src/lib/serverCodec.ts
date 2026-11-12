@@ -67,6 +67,7 @@ export function parseShareLink(url: string): ShareForm | null {
       spx: u.params.spx || "",
       pqv: u.params.pqv || "",
       encryption: u.params.encryption || "none",
+      echConfigList: u.params.ech || "",
       pinnedPeerCertSha256: u.params.pinnedPeerCertSha256 || "",
       verifyPeerCertByName: u.params.verifyPeerCertByName || "",
       key: u.params.key,
@@ -403,6 +404,9 @@ export function generateShareLink(srcObj: ShareForm): string | null {
       }
       if (srcObj.encryption && srcObj.encryption !== "none") {
         query.encryption = srcObj.encryption;
+      }
+      if (srcObj.tls === "tls" && srcObj.echConfigList) {
+        query.ech = srcObj.echConfigList;
       }
       if (srcObj.net === "ws") {
         if (srcObj.maxEarlyData) {

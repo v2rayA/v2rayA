@@ -40,6 +40,20 @@ describe("serverCodec keeps the editor's behaviour", () => {
   });
 });
 
+test("editing a VLESS node preserves the ECH parameter", () => {
+  const ech = "AAH+/w==";
+  const query = new URLSearchParams({
+    type: "xhttp",
+    security: "tls",
+    ech,
+  });
+  const link = `vless://b831381d-6324-4d53-ad4f-8cda48b30811@example.com:443?${query}`;
+  const form = parseShareLink(link)!;
+  form.ps = "renamed node";
+  const edited = new URL(generateShareLink(form)!);
+  expect(edited.searchParams.get("ech")).toBe(ech);
+});
+
 test("a vless xhttp link keeps the core's padding fields through parse and generate", () => {
   const link =
     "vless://b831381d-6324-4d53-ad4f-8cda48b30811@1.2.3.4:443?encryption=none&security=tls&sni=example.com&type=xhttp&path=%2Fx&xhttpMode=packet-up&xPaddingObfsMode=true&xPaddingKey=pk&xPaddingHeader=Referer&xPaddingPlacement=cookie&xPaddingMethod=tokenish";

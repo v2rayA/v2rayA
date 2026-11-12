@@ -50,6 +50,7 @@ type V2Ray struct {
 	Encryption             string `json:"encryption,omitempty"`
 	Flow                    string `json:"flow,omitempty"`
 	Alpn                   string `json:"alpn,omitempty"`
+	ECHConfigList          string `json:"echConfigList,omitempty"`
 	PinnedPeerCertSha256   string `json:"pinnedPeerCertSha256,omitempty"`
 	VerifyPeerCertByName   string `json:"verifyPeerCertByName,omitempty"`
 	Key                    string `json:"key,omitempty"`
@@ -247,6 +248,23 @@ func NewV2Ray(link string) (ServerObj, error) {
 	return nil, fmt.Errorf("%w: expected a link starting with vmess:// or vless://", ErrInvalidParameter)
 }
 
+// rawQueryValue returns the first value of key with a literal "+" kept.
+// An ECH config list is standard base64, and share links often carry it
+// unescaped; Query() would turn each "+" into a space.
+func rawQueryValue(rawQuery, key string) string {
+	for _, pair := range strings.Split(rawQuery, "&") {
+		k, v, _ := strings.Cut(pair, "=")
+		if k != key {
+			continue
+		}
+		if unescaped, err := url.PathUnescape(v); err == nil {
+			return unescaped
+		}
+		return v
+	}
+	return ""
+}
+
 func ParseVlessURL(vless string) (data *V2Ray, err error) {
 	u, err := url.Parse(vless)
 	if err != nil {
@@ -275,6 +293,7 @@ func ParseVlessURL(vless string) (data *V2Ray, err error) {
 		Encryption:           u.Query().Get("encryption"),
 		Flow:                  u.Query().Get("flow"),
 		Alpn:                 u.Query().Get("alpn"),
+		ECHConfigList:        rawQueryValue(u.RawQuery, "ech"),
 		PinnedPeerCertSha256: u.Query().Get("pinnedPeerCertSha256"),
 		VerifyPeerCertByName: u.Query().Get("verifyPeerCertByName"),
 		Key:                  u.Query().Get("key"),
@@ -793,6 +812,7 @@ func (v *V2Ray) Configuration(info PriorInfo) (c Configuration, err error) {
 			core.StreamSettings.TLSSettings = &coreObj.TLSSettings{
 				PinnedPeerCertSha256: pins,
 				VerifyPeerCertByName: v.VerifyPeerCertByName,
+				ECHConfigList:        v.ECHConfigList,
 			}
 			// SNI
 			if v.SNI != "" {
@@ -949,6 +969,9 @@ func (v *V2Ray) ExportToURL() string {
 			setValue(&query, "pinnedPeerCertSha256", v.PinnedPeerCertSha256)
 			setValue(&query, "verifyPeerCertByName", v.VerifyPeerCertByName)
 			setValue(&query, "fp", v.Fingerprint)
+			if strings.EqualFold(v.TLS, "tls") {
+				setValue(&query, "ech", v.ECHConfigList)
+			}
 			if v.TLS == "reality" {
 				setValue(&query, "pbk", v.PublicKey)
 				setValue(&query, "sid", v.ShortId)

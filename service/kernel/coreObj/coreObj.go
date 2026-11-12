@@ -234,6 +234,7 @@ type TLSSettings struct {
 	VerifyPeerCertByName string        `json:"verifyPeerCertByName,omitempty"`
 	Certificates         []Certificate `json:"certificates,omitempty"`
 	Fingerprint          string        `json:"fingerprint,omitempty"`
+	ECHConfigList        string        `json:"echConfigList,omitempty"`
 }
 type Certificate struct {
 	CertificateFile string `json:"certificateFile"`
