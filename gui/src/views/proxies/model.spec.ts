@@ -34,6 +34,16 @@ dayjs.extend(timezone);
 let response: TouchResponse;
 let wrapper: VueWrapper;
 let getModel = () => useProxies();
+const mountModel = () =>
+  mountWithApp(
+    defineComponent({
+      setup() {
+        const model = useProxies();
+        getModel = () => model;
+        return () => h("div");
+      },
+    }),
+  );
 beforeEach(async () => {
   localStorage.clear();
   vi.clearAllMocks();
@@ -60,15 +70,7 @@ beforeEach(async () => {
       { id: 1, _type: "subscriptionServer", sub: 0, pingLatency: "40ms" },
     ],
   });
-  wrapper = mountWithApp(
-    defineComponent({
-      setup() {
-        const model = useProxies();
-        getModel = () => model;
-        return () => h("div");
-      },
-    }),
-  );
+  wrapper = mountModel();
   getModel().store.outboundName = "media";
   await getModel().sync();
 });
@@ -104,6 +106,52 @@ describe("proxy node management", () => {
     model.source.value = "local";
     model.query.value = "";
     expect(model.listed.value.map((r) => r.name)).toEqual(["North", "South"]);
+  });
+  test("remembers the source, keeps it until the subscriptions load and drops it once its subscription is gone", async () => {
+    const feed = response.touch.subscriptions[1].address;
+    getModel().source.value = feed;
+    await nextTick();
+    expect(localStorage.getItem("proxiesSource")).toBe(feed);
+    wrapper.unmount();
+    let respond = () => {};
+    api.getTouch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          respond = () => resolve(structuredClone(response));
+        }),
+    );
+    wrapper = mountModel();
+    const model = getModel();
+    const loaded = model.sync();
+    await nextTick();
+    expect(model.sources.value.map((s) => s.value)).toEqual(["all", "local"]);
+    expect(model.source.value).toBe(feed);
+    respond();
+    await loaded;
+    await nextTick();
+    expect(model.source.value).toBe(feed);
+    expect(model.listed.value.map((r) => r.name)).toEqual(["East"]);
+    response.touch.subscriptions.pop();
+    response.touch.connectedServer = [];
+    await model.sync();
+    await nextTick();
+    expect(model.source.value).toBe("all");
+    expect(localStorage.getItem("proxiesSource")).toBe("all");
+  });
+  test("looks membership up per row and hands a row the same groups array each time", () => {
+    const model = getModel();
+    model.store.outbounds = ["proxy", "media", "other"];
+    const [north, south, west, east] = model.rows.value;
+    expect([north, south, west, east].map(model.isMember)).toEqual([
+      true,
+      false,
+      true,
+      false,
+    ]);
+    expect(model.memberGroups(north)).toEqual(["media"]);
+    expect(model.memberGroups(north)).toBe(model.memberGroups(north));
+    expect(model.memberGroups(south)).toEqual(["other"]);
+    expect(model.memberGroups(east)).toEqual(["proxy"]);
   });
   test("setMembership changes one row and leaves the other members and groups alone", async () => {
     const model = getModel();

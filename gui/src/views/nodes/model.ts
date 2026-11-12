@@ -40,6 +40,11 @@ export function sameWhich(a: Which, b: Which): boolean {
   );
 }
 
+/** whichKey is equal for two Whiches exactly when sameWhich holds, so it can key a Set or Map. */
+export function whichKey(w: Which): string {
+  return `${w._type}|${w.id}|${w._type === "subscriptionServer" ? w.sub : ""}`;
+}
+
 /** rowKey identifies a row across refreshes: a subscription update reorders nodes and reuses ids, so the key is what the row points at. */
 export function rowKey(row: Selectable): string {
   if (row._type === "subscription")
@@ -91,6 +96,16 @@ export function useNodes() {
   if (getCurrentScope()) onScopeDispose(() => (disposed = true));
 
   const connected = computed<Which[]>(() => touch.value.connectedServer ?? []);
+  /** the groups each node is a member of, by whichKey: a long list asks for every row */
+  const membership = computed(() => {
+    const groups = new Map<string, Set<string>>();
+    for (const c of connected.value) {
+      const key = whichKey(c);
+      if (!groups.has(key)) groups.set(key, new Set());
+      groups.get(key)!.add(c.outbound ?? "proxy");
+    }
+    return groups;
+  });
   /** the rows connected in the current outbound */
   const connectedRows = computed(() =>
     connected.value
@@ -147,10 +162,7 @@ export function useNodes() {
   }
 
   function inGroup(row: Row, group: string): boolean {
-    const w = whichOf(row);
-    return connected.value.some(
-      (c) => (c.outbound ?? "proxy") === group && sameWhich(c, w),
-    );
+    return membership.value.get(whichKey(whichOf(row)))?.has(group) ?? false;
   }
 
   /** toggleGroup adds the row to the group's members, or removes it. */
@@ -204,6 +216,7 @@ export function useNodes() {
     touch,
     ready,
     connectedRows,
+    membership,
     sync,
     inGroup,
     toggleGroup,
