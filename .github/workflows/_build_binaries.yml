@@ -62,10 +62,10 @@ jobs:
             service/go.sum
           go-version: "1.27"
       # Zig supplies a C compiler for the cgo legs, so no distro cross-gcc is
-      # needed; it is pinned because older releases do not target loongarch64.
+      # needed; the version pinned in the action is one that targets loongarch64.
       - name: Install Zig
         if: matrix.CGO_ENABLED == 1
-        uses: ./.github/workflows/_install_zig.yml
+        uses: ./.github/actions/install-zig
       - name: Build v2rayA Binary
         id: build_binary
         shell: bash

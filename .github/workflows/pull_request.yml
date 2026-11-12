@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
       - name: Install Zig
         if: matrix.CGO_ENABLED == 1
-        uses: ./.github/workflows/_install_zig.yml
+        uses: ./.github/actions/install-zig
       - name: Download Artifact
         uses: actions/download-artifact@v8
         with:

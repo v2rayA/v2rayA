@@ -1,0 +1,14 @@
+name: Install Zig
+description: Install a pinned Zig release and put zig on PATH
+
+runs:
+  using: composite
+  steps:
+    - name: Install Zig
+      shell: bash
+      env:
+        ZIG_VERSION: 0.17.1
+      run: |
+        wget https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz
+        sudo tar -xf zig-x86_64-linux-${ZIG_VERSION}.tar.xz -C /usr/local
+        sudo ln -s /usr/local/zig-x86_64-linux-${ZIG_VERSION}/zig /usr/local/bin/zig
