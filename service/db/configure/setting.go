@@ -67,7 +67,7 @@ func NewSetting() (setting *Setting) {
 		IpForward:                          ipforward.IsIpForwardOn(),
 		PortSharing:                        false,
 		TransparentType:                    TransparentRedirect,
-		TproxyExcludedInterfaces:           "docker*,veth*,wg*,ppp*,br-*",
+		TproxyExcludedInterfaces:           defaultTproxyExcludedInterfaces(common.IsOpenWrt()),
 		TunAutoRoute:                       true,
 		// 新 DNS 模块默认值
 		DnsListenAddr:    "0.0.0.0:52353",
@@ -78,6 +78,25 @@ func NewSetting() (setting *Setting) {
 		DnsPrefetch:      true,
 		DnsNegativeCache: true,
 	}
+}
+
+const legacyTproxyExcludedInterfaces = "docker*,veth*,wg*,ppp*,br-*"
+
+func defaultTproxyExcludedInterfaces(openwrt bool) string {
+	if openwrt {
+		return "docker*,veth*,wg*,ppp*"
+	}
+	return legacyTproxyExcludedInterfaces
+}
+
+// MigrateOpenWrtBridgeExclusion updates only the exact historical default.
+// Explicit custom interface lists are left untouched.
+func MigrateOpenWrtBridgeExclusion(setting *Setting, openwrt bool) bool {
+	if !openwrt || setting == nil || setting.TproxyExcludedInterfaces != legacyTproxyExcludedInterfaces {
+		return false
+	}
+	setting.TproxyExcludedInterfaces = defaultTproxyExcludedInterfaces(true)
+	return true
 }
 
 func (s *Setting) FillEmpty() {
