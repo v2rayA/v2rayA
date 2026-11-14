@@ -20,7 +20,7 @@ jobs:
           # Linux, other architectures
           - { goos: linux, goarch: "386", CGO_ENABLED: 0 }
           - { goos: linux, goarch: riscv64, CGO_ENABLED: 0 }
-          - { goos: linux, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-gnu", EXTRA_LDFLAGS: "-extldflags=-Wl,--strip-debug" }
+          - { goos: linux, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-musl", EXTRA_LDFLAGS: "-linkmode=external -extldflags '-static -Wl,--strip-debug'" }
           # Linux armv7
           - { goos: linux, goarch: arm, goarm: "7", CGO_ENABLED: 0 }
           # Windows
