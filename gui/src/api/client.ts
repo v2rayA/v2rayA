@@ -207,8 +207,13 @@ const busyRetries = [400, 800, 1600];
 export async function call<T>(
   config: AxiosRequestConfig & { url: string },
 ): Promise<T> {
+  // "httpLatency" starts with "http" but is a relative endpoint: the check
+  // must match a scheme, otherwise the apiRoot prefix is skipped and the
+  // call 404s.
   const url =
-    config.url.startsWith("http") || config.url.startsWith("/")
+    config.url.startsWith("http://") ||
+    config.url.startsWith("https://") ||
+    config.url.startsWith("/")
       ? config.url
       : `${apiRoot()}/${config.url}`;
   const isRead = (config.method ?? "get").toLowerCase() === "get";
