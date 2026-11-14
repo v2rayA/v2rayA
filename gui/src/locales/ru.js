@@ -123,6 +123,9 @@ export default {
     saveFailed: "Не удалось сохранить сервер: {message}",
   },
   subscription: {
+    nodeDns: "DNS узлов",
+    nodeDnsHint:
+      "auto сохраняет прежний порядок; либо укажите DNS по IP через UDP, TCP, TLS или HTTPS. Действует только при включённом перехвате DNS. Для DoH нужен URL с путём, например https://1.1.1.1/dns-query. Тесты задержки и загрузка подписок не меняются.",
     settingsTitle: "Обновление подписок",
     remarks: "Примечания",
     numberServers: "Количество серверов",
@@ -761,6 +764,10 @@ export default {
     LINK_MALFORMED: "Некорректная ссылка протокола {protocol}: {detail}",
     SUBSCRIPTION_FETCH_FAILED:
       "Не удалось получить подписку по адресу {host}: {detail}",
+    NODE_DNS_INVALID:
+      "Используйте IP-адрес DNS с UDP, TCP, TLS или HTTPS, не указывающий на DNS-слушатель этой службы.",
+    NODE_DNS_CONFLICT:
+      "Домен узла {domain} использует разные DNS в подключённых подписках. Выберите одинаковый адрес для общего домена.",
     SUBSCRIPTION_EMPTY: "Подписка не содержит серверов.",
     SUBSCRIPTION_NOT_FOUND:
       "Подписка №{id} не существует. Перезагрузите страницу.",

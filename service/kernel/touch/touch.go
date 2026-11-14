@@ -37,6 +37,7 @@ type Subscription struct {
 	Info       string              `json:"info"`
 	Servers    []Server            `json:"servers"`
 	AutoSelect bool                `json:"autoSelect"`
+	NodeDns    string              `json:"nodeDns,omitempty"`
 }
 
 // NewUpdateStatus stamps a subscription update. RFC 3339 carries the zone, so
@@ -99,6 +100,7 @@ func GenerateTouch() (t Touch) {
 			Servers:    serverRawsToServers(v.Servers),
 			Info:       v.Info,
 			AutoSelect: v.AutoSelect,
+			NodeDns:    v.NodeDns,
 		}
 	}
 	t.ConnectedServers = configure.GetConnectedServers().ToWhiches()

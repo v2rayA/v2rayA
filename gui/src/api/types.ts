@@ -40,6 +40,7 @@ export interface TouchSubscription {
   info: string;
   servers: TouchServer[];
   autoSelect: boolean;
+  nodeDns?: string;
 }
 
 /** touch.Touch */

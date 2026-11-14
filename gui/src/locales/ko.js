@@ -121,6 +121,9 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    nodeDns: "노드 DNS",
+    nodeDnsHint:
+      "auto는 기존 순서를 유지합니다. 또는 순수 IP 기반 UDP, TCP, TLS, HTTPS DNS를 입력하세요. DNS 하이재킹이 켜져 있을 때만 적용됩니다. DoH에는 https://1.1.1.1/dns-query처럼 경로가 포함된 URL이 필요합니다. 지연 시간 테스트와 구독 다운로드에는 영향이 없습니다.",
     settingsTitle: "구독 업데이트",
     remarks: "별칭",
     numberServers: "서버 수",
@@ -745,6 +748,10 @@ export default {
       "지원되지 않는 암호화 방식: {cipher}. aes-128-gcm, aes-256-gcm, chacha20-ietf-poly1305 또는 2022-blake3 방식을 사용하세요",
     LINK_MALFORMED: "잘못된 {protocol} 링크: {detail}",
     SUBSCRIPTION_FETCH_FAILED: "{host}에서 구독 가져오기 실패: {detail}",
+    NODE_DNS_INVALID:
+      "이 서비스의 DNS 리스너를 가리키지 않는 순수 IP 기반 UDP, TCP, TLS, HTTPS DNS 주소를 사용하세요.",
+    NODE_DNS_CONFLICT:
+      "연결된 구독에서 노드 도메인 {domain}에 서로 다른 DNS를 사용합니다. 공유 도메인에는 같은 주소를 선택하세요.",
     SUBSCRIPTION_EMPTY: "구독에 서버 없음.",
     SUBSCRIPTION_NOT_FOUND: "구독 #{id} 없음. 페이지를 새로 고치세요.",
     SERVER_NOT_FOUND:

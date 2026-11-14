@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
     auto_select INTEGER NOT NULL DEFAULT 0,
+    node_dns TEXT NOT NULL DEFAULT 'auto',
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -98,6 +99,17 @@ func MigrateSchema(db *sql.DB) error {
 		log.Info("Adding auto_select column to subscriptions table")
 		if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN auto_select INTEGER NOT NULL DEFAULT 0"); err != nil {
 			return fmt.Errorf("failed to add auto_select column: %w", err)
+		}
+	}
+
+	err = db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('subscriptions') WHERE name = 'node_dns'").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for node_dns column: %w", err)
+	}
+	if count == 0 {
+		log.Info("Adding node_dns column to subscriptions table")
+		if _, err := db.Exec("ALTER TABLE subscriptions ADD COLUMN node_dns TEXT NOT NULL DEFAULT 'auto'"); err != nil {
+			return fmt.Errorf("failed to add node_dns column: %w", err)
 		}
 	}
 

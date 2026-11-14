@@ -46,3 +46,32 @@ func tableExists(t *testing.T, database *sql.DB, name string) bool {
 	}
 	return count != 0
 }
+
+func TestMigrateSubscriptionNodeDNS(t *testing.T) {
+	database, err := sql.Open(sqliteDriverName, ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	database.SetMaxOpenConns(1)
+	if _, err := database.Exec(`CREATE TABLE subscriptions (address TEXT, remarks TEXT, auto_select INTEGER);
+		INSERT INTO subscriptions VALUES ('https://example.test/sub', 'old', 0);`); err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateSchema(database); err != nil {
+		t.Fatal(err)
+	}
+	var value string
+	if err := database.QueryRow("SELECT node_dns FROM subscriptions").Scan(&value); err != nil || value != "auto" {
+		t.Fatalf("migrated node DNS = %q, %v", value, err)
+	}
+	if _, err := database.Exec("UPDATE subscriptions SET node_dns = 'tls://1.1.1.1:853'"); err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateSchema(database); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.QueryRow("SELECT node_dns FROM subscriptions").Scan(&value); err != nil || value != "tls://1.1.1.1:853" {
+		t.Fatalf("second migration overwrote node DNS = %q, %v", value, err)
+	}
+}

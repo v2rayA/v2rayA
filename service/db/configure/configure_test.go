@@ -73,3 +73,28 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 		t.Fatalf("connections were not committed with subscription: %+v", got)
 	}
 }
+
+func TestSubscriptionNodeDNSRoundTrip(t *testing.T) {
+	index := GetLenSubscriptions()
+	if err := AppendSubscriptions([]*SubscriptionRaw{{
+		Address: "https://example.test/sub",
+		NodeDns: "tcp://1.1.1.1:53",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = RemoveSubscriptions([]int{index}) })
+	raw := GetSubscription(index)
+	if raw.NodeDns != "tcp://1.1.1.1:53" {
+		t.Fatalf("subscription node DNS = %q", raw.NodeDns)
+	}
+	raw.NodeDns = "https://[2001:db8::1]:443/dns-query?x=1"
+	if err := SetSubscription(index, raw); err != nil {
+		t.Fatal(err)
+	}
+	if got := GetSubscriptions()[index].NodeDns; got != raw.NodeDns {
+		t.Fatalf("all subscriptions node DNS = %q", got)
+	}
+	if got := GetSubscription(index).NodeDns; got != raw.NodeDns {
+		t.Fatalf("subscription node DNS = %q", got)
+	}
+}

@@ -333,9 +333,14 @@ func getConnectedServerObjs() ([]serverObj.ServerObj, []serverInfo, error) {
 		if err != nil {
 			return nil, nil, err
 		}
+		var nodeDns string
+		if cs.TYPE == configure.SubscriptionServerType {
+			nodeDns = loc.Subscriptions()[cs.Sub].NodeDns
+		}
 		serverInfos = append(serverInfos, serverInfo{
 			Info:         sr.ServerObj,
 			OutboundName: cs.Outbound,
+			NodeDns:      nodeDns,
 		})
 	}
 	serverInfos = applySelection(serverInfos, func(outbound string) string {

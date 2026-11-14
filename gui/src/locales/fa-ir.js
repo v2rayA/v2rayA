@@ -122,6 +122,9 @@ export default {
     saveFailed: "ذخیره سرور ناموفق بود: {message}",
   },
   subscription: {
+    nodeDns: "DNS گره",
+    nodeDnsHint:
+      "auto ترتیب فعلی را حفظ می‌کند؛ یا DNS با IP خالص از نوع UDP، TCP، TLS یا HTTPS وارد کنید. فقط با فعال بودن ربایش DNS اعمال می‌شود. DoH به URL دارای مسیر مانند https://1.1.1.1/dns-query نیاز دارد. تست تأخیر و دانلود اشتراک تغییری نمی‌کنند.",
     settingsTitle: "به‌روزرسانی اشتراک‌ها",
     remarks: "توضیحات",
     numberServers: "تعداد سرورها",
@@ -750,6 +753,10 @@ export default {
       "رمزنگاری پشتیبانی نمی‌شود: {cipher}؛ از aes-128-gcm، aes-256-gcm، chacha20-ietf-poly1305 یا روش‌های 2022-blake3 استفاده کنید",
     LINK_MALFORMED: "پیوند {protocol} ساختار نادرستی دارد: {detail}",
     SUBSCRIPTION_FETCH_FAILED: "دریافت اشتراک از {host} ناموفق بود: {detail}",
+    NODE_DNS_INVALID:
+      "از یک نشانی DNS با IP و UDP، TCP، TLS یا HTTPS استفاده کنید که به شنوندهٔ DNS این سرویس اشاره نکند.",
+    NODE_DNS_CONFLICT:
+      "دامنهٔ گره {domain} در اشتراک‌های متصل DNS متفاوتی دارد. برای دامنهٔ مشترک یک نشانی یکسان انتخاب کنید.",
     SUBSCRIPTION_EMPTY: "اشتراک شامل هیچ سروری نیست.",
     SUBSCRIPTION_NOT_FOUND:
       "اشتراک #{id} وجود ندارد. صفحه را دوباره بارگیری کنید.",

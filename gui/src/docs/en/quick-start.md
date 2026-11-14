@@ -22,6 +22,8 @@ VLESS links with TLS keep their `ech` parameter when imported, edited and shared
 
 Subscriptions have their own page, **Subscriptions** (on a phone the docs move to the app bar's menu to make room for it). They keep their nodes together and can be updated by hand or on a schedule (**Settings → Automatically Update Subscriptions**). The mode setting next to it decides whether the update goes through the proxy.
 
+**Node DNS** in a subscription's **Configure** dialog controls how the subscription's node hostnames are resolved by the built-in DNS module: `auto` keeps the existing order, or enter a pure-IP UDP, TCP, TLS or HTTPS endpoint. Shared active hostnames must use the same DNS. It applies when the system resolver is routed through the DNS module (DNS mode hijack); with the module off or in service mode, node resolution keeps using the system resolver. For DoH, enter a full URL with the endpoint path, for example `https://1.1.1.1/dns-query`. If a saved endpoint becomes invalid under the current settings, configuration generation logs a warning and temporarily uses `auto`; the saved value is kept.
+
 ## Groups
 
 Nodes are used through proxy groups. The group `proxy` always exists; more are created, renamed, configured and deleted from the group button in the app bar, the only place for that. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to proxy group**. A group with several connected members uses the one with the lowest measured latency (**Auto (lowest latency)**); the node menu on the dashboard pins one member so the group uses it alone, **Add or remove nodes** changes the members, and the group settings set the probe address and interval.

@@ -123,6 +123,9 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    nodeDns: "DNS dos nós",
+    nodeDnsHint:
+      "auto mantém a ordem atual; ou informe um DNS UDP, TCP, TLS ou HTTPS com IP puro. Só se aplica com o sequestro de DNS ativado. DoH precisa de uma URL com caminho, como https://1.1.1.1/dns-query. Testes de latência e downloads de assinaturas não mudam.",
     settingsTitle: "Atualização de assinaturas",
     remarks: "Observações",
     numberServers: "Número de servidores",
@@ -765,6 +768,10 @@ export default {
     LINK_MALFORMED: "Link {protocol} malformado: {detail}",
     SUBSCRIPTION_FETCH_FAILED:
       "Não foi possível obter a assinatura de {host}: {detail}",
+    NODE_DNS_INVALID:
+      "Use um endereço DNS com IP via UDP, TCP, TLS ou HTTPS que não aponte para o listener DNS deste serviço.",
+    NODE_DNS_CONFLICT:
+      "O domínio do nó {domain} usa DNS diferentes nas assinaturas conectadas. Escolha o mesmo endereço para o domínio compartilhado.",
     SUBSCRIPTION_EMPTY: "A assinatura não contém servidores.",
     SUBSCRIPTION_NOT_FOUND:
       "A assinatura #{id} não existe. Recarregue a página.",
