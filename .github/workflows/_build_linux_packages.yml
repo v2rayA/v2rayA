@@ -26,7 +26,6 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       CGO_ENABLED: 0
       VERSION: ${{ inputs.version }}
-      PACKAGE_VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -85,6 +84,14 @@ jobs:
           cp ./v2ray-rules-dat/geoip.dat ./v2ray-rules-dat/geosite.dat pkg/
           chmod 755 pkg/v2raya pkg/v2raya_core
           chmod 644 pkg/geoip.dat pkg/geosite.dat
+          # dpkg and pacman reject a version that does not start with a digit,
+          # so a development build such as unstable-20261114.r2341.eec29db8
+          # becomes the pre-release 0.0.0-unstable.20261114.r2341.eec29db8,
+          # which also sorts below every release.
+          case "$VERSION" in
+            [0-9]*) export PACKAGE_VERSION="$VERSION" ;;
+            *) export PACKAGE_VERSION="0.0.0-$(echo "$VERSION" | tr - .)" ;;
+          esac
           # nfpm maps the Go architecture onto the name each packager expects.
           if [ "$GOARCH" = 'arm' ]; then
             export PACKAGE_ARCH="arm$GOARM"
