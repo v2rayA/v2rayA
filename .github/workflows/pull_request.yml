@@ -60,12 +60,12 @@ jobs:
             ubuntu-latest)  os="linux";   ext="" ;;
           esac
           cd "$CurrentDir"/service
-          GOARCH="${{ matrix.goarch }}" CGO_ENABLED="${{ matrix.CGO_ENABLED }}" CC="${{ matrix.CC }}" EXTRA_LDFLAGS="${{ matrix.EXTRA_LDFLAGS }}" go build -trimpath \
-            -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w ${EXTRA_LDFLAGS}" \
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED="${{ matrix.CGO_ENABLED }}" CC="${{ matrix.CC }}" go build -trimpath \
+            -ldflags "-X github.com/v2rayA/v2rayA/conf.Version=$version -s -w ${{ matrix.EXTRA_LDFLAGS }}" \
             -o "$CurrentDir/v2raya_bin/v2raya${ext}"
           cd "$CurrentDir"/core
-          GOARCH="${{ matrix.goarch }}" CGO_ENABLED="${{ matrix.CGO_ENABLED }}" CC="${{ matrix.CC }}" EXTRA_LDFLAGS="${{ matrix.EXTRA_LDFLAGS }}" go build -trimpath \
-            -ldflags "-X main.Version=$version -s -w ${EXTRA_LDFLAGS}" \
+          GOARCH="${{ matrix.goarch }}" CGO_ENABLED="${{ matrix.CGO_ENABLED }}" CC="${{ matrix.CC }}" go build -trimpath \
+            -ldflags "-X main.Version=$version -s -w ${{ matrix.EXTRA_LDFLAGS }}" \
             -o "$CurrentDir/v2raya_bin/v2raya_core${ext}" ./main
       - name: Upload v2rayA Binary
         uses: actions/upload-artifact@v7
