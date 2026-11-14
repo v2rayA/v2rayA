@@ -10,6 +10,7 @@ on:
 
 jobs:
   Build_Linux_Packages:
+    name: ${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}
     runs-on: ubuntu-latest
     strategy:
       matrix:

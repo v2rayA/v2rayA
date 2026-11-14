@@ -37,6 +37,7 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_OUTPUT
 
   Build_v2rayA_Binaries:
+    name: Binaries
     needs: [Build_v2rayA_Web, Compute_Version]
     uses: ./.github/workflows/_build_binaries.yml
     with:
@@ -49,6 +50,7 @@ jobs:
       version: ${{ needs.Compute_Version.outputs.version }}
   
   Build_Linux_Packages:
+    name: Packages
     needs: [Build_v2rayA_Binaries, Compute_Version]
     uses: ./.github/workflows/_build_linux_packages.yml
     with:

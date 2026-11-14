@@ -13,18 +13,21 @@ jobs:
     uses: ./.github/workflows/_build_web.yml
 
   Build_v2rayA:
+    # Replaces the default "<job_id> (<every matrix value>)", which would spell
+    # out CC and EXTRA_LDFLAGS in the run's job list.
+    name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - { os: ubuntu-latest, goarch: amd64, CGO_ENABLED: 0 }
-          - { os: ubuntu-latest, goarch: arm64, CGO_ENABLED: 0 }
-          - { os: ubuntu-latest, goarch: riscv64, CGO_ENABLED: 0 }
-          - { os: ubuntu-latest, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-musl", EXTRA_LDFLAGS: "-linkmode=external -extldflags '-static -Wl,--strip-debug'" }
-          - { os: windows-latest, goarch: amd64, CGO_ENABLED: 0 }
-          - { os: windows-latest, goarch: arm64, CGO_ENABLED: 0 }
-          - { os: macos-latest, goarch: amd64, CGO_ENABLED: 0 }
-          - { os: macos-latest, goarch: arm64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, label: linux-amd64, goarch: amd64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, label: linux-arm64, goarch: arm64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, label: linux-riscv64, goarch: riscv64, CGO_ENABLED: 0 }
+          - { os: ubuntu-latest, label: linux-loong64, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-musl", EXTRA_LDFLAGS: "-linkmode=external -extldflags '-static -Wl,--strip-debug'" }
+          - { os: windows-latest, label: windows-amd64, goarch: amd64, CGO_ENABLED: 0 }
+          - { os: windows-latest, label: windows-arm64, goarch: arm64, CGO_ENABLED: 0 }
+          - { os: macos-latest, label: darwin-amd64, goarch: amd64, CGO_ENABLED: 0 }
+          - { os: macos-latest, label: darwin-arm64, goarch: arm64, CGO_ENABLED: 0 }
     needs: Build_v2rayA_Web
     steps:
       - uses: actions/checkout@v7

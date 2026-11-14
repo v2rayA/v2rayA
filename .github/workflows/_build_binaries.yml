@@ -10,6 +10,9 @@ on:
 
 jobs:
   Build_v2rayA_Binaries:
+    # An explicit name replaces the default "<job_id> (<every matrix value>)",
+    # which would spell out CC and EXTRA_LDFLAGS in the run's job list.
+    name: ${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
