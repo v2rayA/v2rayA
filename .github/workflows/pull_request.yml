@@ -20,7 +20,7 @@ jobs:
           - { os: ubuntu-latest, goarch: amd64, CGO_ENABLED: 0 }
           - { os: ubuntu-latest, goarch: arm64, CGO_ENABLED: 0 }
           - { os: ubuntu-latest, goarch: riscv64, CGO_ENABLED: 0 }
-          - { os: ubuntu-latest, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-gnu", EXTRA_LDFLAGS: "-extldflags=-Wl,--strip-debug" }
+          - { os: ubuntu-latest, goarch: loong64, CGO_ENABLED: 1, CC: "zig cc -target loongarch64-linux-musl", EXTRA_LDFLAGS: "-linkmode=external -extldflags '-static -Wl,--strip-debug'" }
           - { os: windows-latest, goarch: amd64, CGO_ENABLED: 0 }
           - { os: windows-latest, goarch: arm64, CGO_ENABLED: 0 }
           - { os: macos-latest, goarch: amd64, CGO_ENABLED: 0 }
