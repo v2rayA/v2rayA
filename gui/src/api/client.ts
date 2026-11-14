@@ -115,11 +115,9 @@ client.interceptors.request.use((config) => {
   // probes a user-typed URL with /api/version and that must go bare.
   const token = localStorage.getItem("token");
   if (token !== null && url.startsWith(apiRoot())) {
-    config.headers = {
-      ...config.headers,
-      Authorization: token,
-      "X-V2raya-Request-Id": nanoid(),
-    };
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = token;
+    config.headers["X-V2raya-Request-Id"] = nanoid();
   }
   // Every request gets the session's controller, so a reset aborts it; a
   // caller's own signal (the connect watcher) is joined to it.
