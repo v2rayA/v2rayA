@@ -107,6 +107,54 @@ jobs:
               -t "packages/installer_${package_distro}_${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}.$package_ext"
           done
           ls -l packages/
+      - name: Set up QEMU
+        if: matrix.goarch != 'amd64' && matrix.goarch != '386'
+        uses: docker/setup-qemu-action@v4
+      - name: Test Packages
+        # A package can build and still not install: the 2.5.14 apk carried
+        # "provides = v2raya", which apk reads as a second package conflicting
+        # with v2raya itself. Each package is installed in a container of its
+        # own architecture where the distribution publishes one.
+        env:
+          NAME: ${{ steps.get_filename.outputs.FRIENDLY_ARCH }}_${{ inputs.version }}
+        run: |
+          alpine=alpine:latest
+          debian=debian:stable
+          case "$GOARCH" in
+            amd64) platform=linux/amd64 ;;
+            arm64) platform=linux/arm64 ;;
+            arm) platform=linux/arm/v7 ;;
+            386) platform=linux/386 ;;
+            riscv64) platform=linux/riscv64 ;;
+            loong64)
+              platform=linux/loong64
+              # Docker's alpine image has no loong64 variant, so import
+              # Alpine's own loongarch64 minirootfs. No Debian image exists.
+              base=https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/loongarch64
+              curl -fsSL "$base/latest-releases.yaml" > releases.yaml
+              file=$(awk '/flavor: alpine-minirootfs/ {m=1} m && /file:/ {print $2; exit}' releases.yaml)
+              sum=$(awk '/flavor: alpine-minirootfs/ {m=1} m && /sha256:/ {print $2; exit}' releases.yaml)
+              curl -fsSLO "$base/$file"
+              echo "$sum  $file" | sha256sum -c -
+              docker import --platform "$platform" "$file" alpine-loong64
+              alpine=alpine-loong64
+              debian=
+              ;;
+            *) echo "No distribution image for $GOARCH; the packages are not installed"; exit 0 ;;
+          esac
+          check() {
+            docker run --rm --platform "$platform" -v "$PWD/packages:/packages:ro" -e NAME "$1" sh -euc "$2"
+          }
+          check "$alpine" 'apk add --allow-untrusted "/packages/installer_alpine_$NAME.apk" && v2raya --version'
+          if [ -n "$debian" ]; then
+            check "$debian" 'apt-get update -qq && apt-get install -y -qq "/packages/installer_debian_$NAME.deb" && v2raya --version'
+          fi
+          case "$GOARCH" in
+            amd64|arm64) check fedora:latest 'dnf install -y -q "/packages/installer_redhat_$NAME.rpm" && v2raya --version' ;;
+          esac
+          if [ "$GOARCH" = amd64 ]; then
+            check archlinux:latest 'pacman -U --noconfirm "/packages/installer_archlinux_$NAME.pkg.tar.zst" && v2raya --version'
+          fi
       - name: Upload Arch Linux Package
         uses: actions/upload-artifact@v7
         with:
