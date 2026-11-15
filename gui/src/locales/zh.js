@@ -4,7 +4,10 @@ export default {
     server: "连接服务器",
     proxy: "通过代理",
     url: "测试 URL",
-    hint: "所有节点检查使用同一模式。代理检查通过每个节点请求此 URL；失败不一定代表节点不可用。留空使用默认地址。",
+    title: "节点检查",
+    hint: "适用于仪表盘和节点列表。“连接服务器”检查与服务器的连接；“通过代理”通过每个节点请求网站。",
+    urlHint:
+      "留空使用 https://gstatic.com/generate_204。请求失败也可能是目标网站不可用。",
     invalidUrl: "请输入不含凭据的 HTTP(S) URL。",
   },
   onboarding: {

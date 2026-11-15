@@ -4,7 +4,10 @@ export default {
     server: "Até o servidor",
     proxy: "Pelo proxy",
     url: "URL de teste",
-    hint: "Um modo para todas as verificações. O teste pelo proxy solicita esta URL por cada nó; uma falha não significa necessariamente que o nó caiu. Deixe vazio para usar o padrão.",
+    title: "Verificação dos nós",
+    hint: "Vale para o painel e a lista de nós. Até o servidor verifica a conexão; Pelo proxy solicita um site por cada nó.",
+    urlHint:
+      "Deixe vazio para usar https://gstatic.com/generate_204. A falha também pode indicar que o site de destino está indisponível.",
     invalidUrl: "Insira uma URL HTTP(S) sem credenciais.",
   },
   onboarding: {

@@ -4,7 +4,10 @@ export default {
     server: "To server",
     proxy: "Through proxy",
     url: "Test URL",
-    hint: "One mode for all node checks. Proxy checks request this URL through each node; failure does not necessarily mean the node is down. Leave the URL empty to use the default.",
+    title: "Node checks",
+    hint: "Applies to the dashboard and node list. To server checks the connection to the server; Through proxy requests a website through each node.",
+    urlHint:
+      "Leave empty to use https://gstatic.com/generate_204. A failed request can also mean the target website is unavailable.",
     invalidUrl: "Enter an HTTP(S) URL without credentials.",
   },
   onboarding: {

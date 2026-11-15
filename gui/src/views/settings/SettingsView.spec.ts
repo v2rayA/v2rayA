@@ -158,6 +158,29 @@ describe("settings list", () => {
     );
   });
 
+  test("keeps the custom URL when switching modes and accepts the default", async () => {
+    await mountPage();
+    expect(wrapper.find('input[aria-label="Test URL"]').exists()).toBe(false);
+    await choose("Node check mode", "Through proxy");
+    await wrapper
+      .get('input[aria-label="Test URL"]')
+      .setValue("https://example.com/probe");
+    await choose("Node check mode", "To server");
+    expect(wrapper.find('input[aria-label="Test URL"]').exists()).toBe(false);
+    await choose("Node check mode", "Through proxy");
+    expect(
+      (wrapper.get('input[aria-label="Test URL"]').element as HTMLInputElement)
+        .value,
+    ).toBe("https://example.com/probe");
+    await wrapper.get('input[aria-label="Test URL"]').setValue("");
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).toHaveBeenCalledWith(
+      expect.objectContaining({ nodeProbeMode: "proxy", nodeProbeUrl: "" }),
+      expect.anything(),
+    );
+  });
+
   test("shows dependent rows and blocks saving invalid intervals", async () => {
     await mountPage();
     await choose("Sniffing", "Off");

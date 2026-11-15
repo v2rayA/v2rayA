@@ -374,28 +374,37 @@ defineExpose({ sync: () => settings.load() });
       </v-list>
 
       <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">
-        <v-list-subheader>{{ t("setting.sections.core") }}</v-list-subheader>
+        <v-list-subheader>{{ t("nodeProbe.title") }}</v-list-subheader>
+        <p class="px-4 pb-2 md3-body-medium text-on-surface-variant">
+          {{ t("nodeProbe.hint") }}
+        </p>
         <SettingChoice
           v-model="form.nodeProbeMode"
           :title="t('nodeProbe.mode')"
-          :hint="t('nodeProbe.hint')"
           :items="[
             { value: '', title: t('nodeProbe.server') },
             { value: 'proxy', title: t('nodeProbe.proxy') },
           ]"
         />
-        <SettingRow
-          v-if="form.nodeProbeMode === 'proxy'"
-          :title="t('nodeProbe.url')"
-        >
+        <div v-if="form.nodeProbeMode === 'proxy'" class="px-4 pb-4">
           <v-text-field
             v-model="form.nodeProbeUrl"
+            :label="t('nodeProbe.url')"
             :aria-label="t('nodeProbe.url')"
+            :hint="t('nodeProbe.urlHint')"
+            persistent-hint
             placeholder="https://gstatic.com/generate_204"
             :rules="[probeURLRule]"
-            hide-details="auto"
+            type="url"
+            dir="ltr"
+            autocomplete="off"
+            :spellcheck="false"
           />
-        </SettingRow>
+        </div>
+      </v-list>
+
+      <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">
+        <v-list-subheader>{{ t("setting.sections.core") }}</v-list-subheader>
         <SettingChoice
           v-model="form.logLevel"
           :title="t('setting.logLevel')"
