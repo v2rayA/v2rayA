@@ -27,8 +27,11 @@ export function useSubscriptions() {
     }
   }
 
-  async function update(subscription: TouchSubscription) {
-    await putSubscription(whichOf(subscription));
+  async function update(
+    subscription: TouchSubscription,
+    bypassProxy = false,
+  ) {
+    await putSubscription(whichOf(subscription), bypassProxy);
     await sync();
   }
 

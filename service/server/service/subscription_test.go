@@ -7,7 +7,19 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/v2rayA/v2rayA/common"
+	"github.com/v2rayA/v2rayA/kernel/touch"
 )
+
+func TestModifyMissingSubscriptionIncludesID(t *testing.T) {
+	resetSubscription(t)
+	err := ModifySubscriptionRemark(touch.Subscription{ID: 42})
+	var coded *common.CodedError
+	if !errors.As(err, &coded) || coded.Code != "SUBSCRIPTION_NOT_FOUND" || coded.Params["id"] != 42 {
+		t.Fatalf("error = %#v, want SUBSCRIPTION_NOT_FOUND with id=42", err)
+	}
+}
 
 func TestSubscriptionBodyOverLimitIsRejected(t *testing.T) {
 	client := &http.Client{Transport: updateTransport(func(*http.Request) (*http.Response, error) {
