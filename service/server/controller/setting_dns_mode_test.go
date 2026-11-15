@@ -33,15 +33,11 @@ func storedDnsMode(t *testing.T) (configure.DnsMode, configure.DefaultYesNo) {
 func resetSetting(t *testing.T) {
 	t.Helper()
 	t.Cleanup(func() { _ = configure.SetSetting(configure.NewSetting()) })
-	// A saved setting restarts the auto-update tickers, which only the
-	// service's own start creates.
+	// A saved setting restarts the GFWList ticker, which only the service's
+	// own start creates.
 	if conf.TickerUpdateGFWList == nil {
 		conf.TickerUpdateGFWList = time.NewTicker(time.Hour)
 		t.Cleanup(conf.TickerUpdateGFWList.Stop)
-	}
-	if conf.TickerUpdateSubscription == nil {
-		conf.TickerUpdateSubscription = time.NewTicker(time.Hour)
-		t.Cleanup(conf.TickerUpdateSubscription.Stop)
 	}
 }
 

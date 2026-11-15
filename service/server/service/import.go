@@ -10,7 +10,6 @@ import (
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 
 	"github.com/v2rayA/v2rayA/common"
-	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
@@ -40,6 +39,11 @@ func subscriptionHost(source string) string {
 // ImportServer or ImportSubscription instead; this wrapper only exists for
 // clients that predate the "kind" field of POST /api/import.
 func Import(url string, which *configure.NodeRef) (err error) {
+	return ImportWithOptions(url, which, SubscriptionFetchOptions{})
+}
+
+// ImportWithOptions imports a link and applies options if it is a subscription.
+func ImportWithOptions(url string, which *configure.NodeRef, options SubscriptionFetchOptions) (err error) {
 	log.Trace("Import: received url=%v, which=%+v", url, which)
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -64,7 +68,7 @@ func Import(url string, which *configure.NodeRef) (err error) {
 	if isBareHttpProxyLink(url) {
 		return ImportServer(url, which)
 	}
-	return ImportSubscription(url)
+	return ImportSubscriptionWithOptions(url, options)
 }
 
 // isBareHttpProxyLink recognises the one http(s) URL shape that cannot be a
@@ -182,6 +186,11 @@ func ImportServer(url string, which *configure.NodeRef) (err error) {
 // ImportSubscription fetches url (or the base64 payload of a sub:// link),
 // parses the server list it returns and stores it as a new subscription.
 func ImportSubscription(url string) (err error) {
+	return ImportSubscriptionWithOptions(url, SubscriptionFetchOptions{})
+}
+
+// ImportSubscriptionWithOptions imports a subscription with one-shot download options.
+func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions) (err error) {
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	{
@@ -207,13 +216,20 @@ func ImportSubscription(url string) (err error) {
 				source = u.String()
 			}
 		}
-		c := httpClient.GetHttpClientAutomatically()
+		client, e := subscriptionHTTPClientWithOptions(SubscriptionFetchOptions{
+			BypassProxy: options.BypassProxy,
+			Host:        subscriptionHost(source),
+		})
+		if e != nil {
+			return e
+		}
+		c := *client
 		c.Timeout = 90 * time.Second
 		// assign, do not redeclare: a shadowed err here made the
 		// AppendSubscriptions failure below vanish behind a nil return
 		var infos []serverObj.ServerObj
 		var status string
-		infos, status, err = ResolveSubscriptionWithClient(source, c)
+		infos, status, err = ResolveSubscriptionWithClient(source, &c)
 		if err != nil {
 			return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(source), err)
 		}

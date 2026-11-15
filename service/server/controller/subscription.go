@@ -42,14 +42,20 @@ func PutSubscription(ctx *gin.Context) {
 	}
 	defer release()
 
-	var data configure.NodeRef
+	var data struct {
+		configure.NodeRef
+		// BypassProxy selects a direct route for this one subscription fetch.
+		// It records the user's consent to go direct; the server does not
+		// check that the proxy route is actually unavailable.
+		BypassProxy bool `json:"bypassProxy"`
+	}
 	err := ctx.ShouldBindJSON(&data)
 	index := data.ID - 1
 	if err != nil || data.TYPE != configure.SubscriptionType || index < 0 || index >= configure.GetLenSubscriptions() {
 		common.ResponseError(ctx, badRequest("subscription", "request body must be a subscription item with _type \"subscription\" and an existing positive id"))
 		return
 	}
-	err = service.UpdateSubscription(index, false)
+	err = service.UpdateSubscriptionWithOptions(index, false, service.SubscriptionFetchOptions{BypassProxy: data.BypassProxy})
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
