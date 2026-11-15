@@ -33,6 +33,10 @@ O **Tipo** do grupo seleciona a estratégia nativa do Xray: `leastping`, `leastl
 
 As regras de roteamento usam os nomes dos grupos como saídas: `proxy` por padrão, e qualquer outro grupo pelo próprio nome assim que tiver um membro conectado.
 
+### Incluir todos os nós do catálogo
+
+Ative **Incluir todos os nós do catálogo** nas configurações do grupo para incluir os nós de todas as assinaturas salvas e todas as entradas avulsas. Importações, atualizações e exclusões alteram os membros automaticamente. Alterações manuais dos membros são rejeitadas enquanto a opção estiver ativa. Desative-a para manter os membros atuais e editá-los manualmente. Um grupo automático vazio bloqueia o tráfego; nunca usa uma conexão direta como alternativa.
+
 ## Iniciar o núcleo
 
 **Iniciar** no painel, ou o botão de estado no topo da página, inicia o `v2raya_core` com a configuração atual. As alterações na página Configurações entram em vigor com **Salvar e aplicar**: um núcleo em execução é reiniciado com elas, e um núcleo parado as adota na próxima inicialização.

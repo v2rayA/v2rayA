@@ -27,13 +27,16 @@ func StartV2ray() (err error) {
 			log.Warn("Connect: %v", e)
 		}
 	}
-	if css := configure.GetConnectedServers(); css.Len() == 0 {
+	if css := configure.GetConnectedServers(); css.Len() == 0 && !configure.HasAutomaticGroup() {
 		return common.Coded("NO_SERVER_SELECTED", fmt.Errorf("no server is selected; select at least one server first"), nil)
 	}
 	return v2ray.UpdateV2RayConfig()
 }
 
 func Disconnect(which configure.NodeRef, clearOutbound bool) (err error) {
+	if err := checkManualGroup(which.Outbound); err != nil {
+		return err
+	}
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to disconnect: %w", err)
@@ -96,6 +99,9 @@ func Connect(which *configure.NodeRef) (err error) {
 	if which == nil {
 		return fmt.Errorf("no server was given to connect to")
 	}
+	if err := checkManualGroup(which.Outbound); err != nil {
+		return err
+	}
 	// Reject a malformed or stale selection before it is stored: AddConnect
 	// below persists it, and a stored entry that cannot be located makes
 	// every later connect and core start fail with the same error.
@@ -148,6 +154,9 @@ func Connect(which *configure.NodeRef) (err error) {
 // ReplaceOutboundConnections atomically replaces members of one outbound group.
 // It updates v2ray config once after DB changes, and rolls back on failure.
 func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (err error) {
+	if err := checkManualGroup(outbound); err != nil {
+		return err
+	}
 	log.Trace("ReplaceOutboundConnections: begin")
 	defer log.Trace("ReplaceOutboundConnections: done")
 	defer func() {
@@ -219,5 +228,12 @@ func ReplaceOutboundConnections(outbound string, touches []configure.NodeRef) (e
 		}
 	}
 
+	return nil
+}
+
+func checkManualGroup(outbound string) error {
+	if configure.GetOutboundSetting(outbound).AutoAdd {
+		return common.Coded("AUTOMATIC_GROUP", fmt.Errorf("turn off automatic membership before editing the group's members"), nil)
+	}
 	return nil
 }

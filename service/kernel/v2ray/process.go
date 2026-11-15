@@ -383,7 +383,7 @@ func NewTemplateFromConnectedServers(setting *configure.Setting) (tmpl *Template
 	if err != nil {
 		return nil, err
 	}
-	if len(serverObjs) == 0 {
+	if len(serverObjs) == 0 && !configure.HasAutomaticGroup() {
 		return nil, NoConnectedServerErr
 	}
 	var pluginPorts map[int]int

@@ -646,6 +646,9 @@ export default {
     saveFailed: "Falha ao salvar o RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Incluir todos os nós do catálogo",
+    autoAddHelp:
+      "Inclui todos os nós das assinaturas e servidores avulsos. Desative para manter os membros atuais e editá-los manualmente.",
     addMessage: "Insira o nome do grupo de proxy que deseja adicionar:",
     deleteMessage:
       'Excluir o grupo de proxy "{outboundName}"? Os nós serão desconectados. Esta ação não pode ser desfeita.',

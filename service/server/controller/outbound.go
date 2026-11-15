@@ -3,18 +3,27 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
 func GetOutbounds(ctx *gin.Context) {
 	outbounds := configure.GetOutbounds()
+	automatic := []string{}
+	for _, name := range outbounds {
+		if configure.GetOutboundSetting(name).AutoAdd {
+			automatic = append(automatic, name)
+		}
+	}
 	common.ResponseSuccess(ctx, gin.H{
-		"outbounds": outbounds,
+		"outbounds":          outbounds,
+		"automaticOutbounds": automatic,
 	})
 }
 
@@ -52,22 +61,38 @@ func PutOutbound(ctx *gin.Context) {
 	}
 	defer release()
 	var data struct {
-		Outbound string                    `json:"outbound"`
-		Setting  configure.OutboundSetting `json:"setting"`
+		Outbound string `json:"outbound"`
+		Setting  struct {
+			configure.OutboundSetting
+			AutoAdd *bool `json:"autoAdd"`
+		} `json:"setting"`
 	}
 	if err := ctx.ShouldBindJSON(&data); err != nil || data.Outbound == "" {
 		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
-	if err := service.ValidateOutboundSetting(data.Setting); err != nil {
+	if !slices.Contains(configure.GetOutbounds(), data.Outbound) {
+		common.ResponseError(ctx, badRequest("outbound", "group does not exist"))
+		return
+	}
+	if err := service.ValidateOutboundSetting(data.Setting.OutboundSetting); err != nil {
 		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))
 		return
 	}
+	previous := configure.GetOutboundSetting(data.Outbound)
+	members := configure.GetConnectedServersByOutbound(data.Outbound)
+	if members == nil {
+		members = configure.NewNodeRefs(nil)
+	}
+	next := data.Setting.OutboundSetting
+	next.AutoAdd = previous.AutoAdd
+	if data.Setting.AutoAdd != nil {
+		next.AutoAdd = *data.Setting.AutoAdd
+	}
 	err := service.ApplyCoreConfig(func() func() error {
-		previous := configure.GetOutboundSetting(data.Outbound)
-		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }
+		return func() error { return configure.SetOutboundSettingAndMembers(data.Outbound, previous, members) }
 	}, func() error {
-		return configure.SetOutboundSetting(data.Outbound, data.Setting)
+		return configure.SetOutboundSettingAndMembers(data.Outbound, next, members)
 	})
 	if err != nil {
 		var failure *service.ApplyCoreConfigError
@@ -116,13 +141,25 @@ func DeleteOutbound(ctx *gin.Context) {
 		return
 	}
 
-	if w := configure.GetConnectedServersByOutbound(data.Outbound); w != nil {
-		if err := service.Disconnect(configure.NodeRef{Outbound: data.Outbound}, true); err != nil {
-			common.ResponseError(ctx, logError(err))
-			return
-		}
+	// Empty automatic groups still generate a blocking outbound.
+	previous := configure.GetOutboundSetting(data.Outbound)
+	members := configure.GetConnectedServersByOutbound(data.Outbound)
+	affected := previous.AutoAdd || members != nil && members.Len() > 0
+	store := func() error { return configure.RemoveOutbound(data.Outbound) }
+	var err error
+	if affected && v2ray.ProcessManager.Running() {
+		err = service.ApplyCoreConfig(func() func() error {
+			return func() error {
+				if err := configure.AddOutbound(data.Outbound); err != nil {
+					return err
+				}
+				return configure.SetOutboundSettingAndMembers(data.Outbound, previous, members)
+			}
+		}, store)
+	} else {
+		err = store()
 	}
-	if err := configure.RemoveOutbound(data.Outbound); err != nil {
+	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}

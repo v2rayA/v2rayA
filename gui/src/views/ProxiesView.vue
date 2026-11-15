@@ -249,6 +249,7 @@ onMounted(sync);
                     <v-list-item
                       v-for="g in store.outbounds"
                       :key="g"
+                      :disabled="store.automaticOutbounds.includes(g)"
                       :title="g.toUpperCase()"
                       class="ps-8"
                       @click="model.batchMembership(add, g)"
@@ -301,6 +302,7 @@ onMounted(sync);
                     <v-list-item
                       v-for="g in store.outbounds"
                       :key="g"
+                      :disabled="store.automaticOutbounds.includes(g)"
                       :title="g.toUpperCase()"
                       @click="model.batchMembership(add, g)"
                     />

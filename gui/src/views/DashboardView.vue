@@ -295,16 +295,22 @@ defineExpose({ sync });
             >
           </div>
           <div class="dashboard-actions d-flex justify-end">
-            <v-btn variant="text" @click="editGroup">{{
-              t("dashboard.editGroup")
-            }}</v-btn>
+            <v-btn
+              :disabled="store.automaticOutbounds.includes(store.outboundName)"
+              variant="text"
+              @click="editGroup"
+              >{{ t("dashboard.editGroup") }}</v-btn
+            >
           </div>
         </template>
         <template v-else>
           <p class="md3-body-medium mb-4">{{ t("dashboard.emptyGroup") }}</p>
-          <v-btn variant="text" @click="editGroup">{{
-            t("dashboard.editGroup")
-          }}</v-btn>
+          <v-btn
+            :disabled="store.automaticOutbounds.includes(store.outboundName)"
+            variant="text"
+            @click="editGroup"
+            >{{ t("dashboard.editGroup") }}</v-btn
+          >
         </template>
       </v-card>
 

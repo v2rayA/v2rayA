@@ -45,6 +45,7 @@ export const useAppStore = defineStore("app", {
     connectedServer: [] as Which[],
     outboundName: "proxy",
     outbounds: ["proxy"] as string[],
+    automaticOutbounds: [] as string[],
     /** the last observatory frame of each outbound group: what the core sees of its members */
     observatory: {} as Record<string, OutboundStatus[]>,
     version: null as VersionResponse | null,
@@ -98,8 +99,14 @@ export const useAppStore = defineStore("app", {
       this.running = running;
       this.networkPaused = networkPaused;
     },
-    setOutbounds(outbounds: unknown) {
+    setOutbounds(outbounds: unknown, automaticOutbounds: unknown = []) {
       this.outbounds = normalizeOutbounds(outbounds);
+      this.automaticOutbounds = Array.isArray(automaticOutbounds)
+        ? automaticOutbounds.filter(
+            (name): name is string =>
+              typeof name === "string" && this.outbounds.includes(name),
+          )
+        : [];
       if (!this.outbounds.includes(this.outboundName))
         this.outboundName = "proxy";
       // a deleted group's last frame would otherwise outlive it

@@ -638,6 +638,9 @@ export default {
     saveFailed: "Failed to save RoutingA: {message}",
   },
   outbound: {
+    autoAdd: "Include all catalog nodes",
+    autoAddHelp:
+      "Includes every node from all subscriptions and standalone entries. Turn off to keep the current members and edit them manually.",
     addMessage: "Please input the proxy group name you want to add:",
     deleteMessage:
       'Delete proxy group "{outboundName}"? Its nodes will be disconnected. This cannot be undone.',

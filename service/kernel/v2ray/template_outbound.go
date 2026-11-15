@@ -338,6 +338,17 @@ func (t *Template) resolveOutbounds(
 	for _, v := range outbounds {
 		t.Outbounds = append(t.Outbounds, v.outbound)
 	}
+	// An empty catalog must not make an automatic group fall through to direct.
+	for _, name := range configure.GetOutbounds() {
+		if configure.GetOutboundSetting(name).AutoAdd && len(serverData.OutboundName2ServerObjs[name]) == 0 {
+			blocked := coreObj.OutboundObject{Tag: name, Protocol: "blackhole"}
+			if name == configure.DefaultOutboundName {
+				t.Outbounds = append([]coreObj.OutboundObject{blocked}, t.Outbounds...)
+			} else {
+				t.Outbounds = append(t.Outbounds, blocked)
+			}
+		}
+	}
 	t.Outbounds = append(t.Outbounds, coreObj.OutboundObject{
 		Tag:      "direct",
 		Protocol: "freedom",
