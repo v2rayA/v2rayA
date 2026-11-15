@@ -115,12 +115,17 @@ func IsGFWListUpdate() (update bool, remoteTime time.Time, err error) {
 }
 
 func checkSha256(p string, sha256 string) (bool, string) {
-	if b, err := os.ReadFile(p); err == nil {
-		hash := libSha256.Sum256(b)
-		actual := hex.EncodeToString(hash[:])
-		return actual == sha256, actual
+	f, err := os.Open(p)
+	if err != nil {
+		return false, ""
 	}
-	return false, ""
+	defer f.Close()
+	hash := libSha256.New()
+	if _, err := io.Copy(hash, f); err != nil {
+		return false, ""
+	}
+	actual := hex.EncodeToString(hash.Sum(nil))
+	return actual == sha256, actual
 }
 
 var (
@@ -133,6 +138,7 @@ func httpGet(url string) (data string, err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
