@@ -1,4 +1,12 @@
 export default {
+  nodeProbe: {
+    mode: "节点检查模式",
+    server: "连接服务器",
+    proxy: "通过代理",
+    url: "测试 URL",
+    hint: "所有节点检查使用同一模式。代理检查通过每个节点请求此 URL；失败不一定代表节点不可用。留空使用默认地址。",
+    invalidUrl: "请输入不含凭据的 HTTP(S) URL。",
+  },
   onboarding: {
     title: "使用教程",
     importTitle: "导入节点",

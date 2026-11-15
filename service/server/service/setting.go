@@ -26,6 +26,9 @@ func GetSetting() *configure.Setting {
 }
 
 func UpdateSetting(setting *configure.Setting) (err error) {
+	if err := ValidateNodeProbe(setting.NodeProbeMode, setting.NodeProbeURL); err != nil {
+		return err
+	}
 	if setting.LogLevel == "" {
 		setting.LogLevel = conf.GetEnvironmentConfig().LogLevel
 	}

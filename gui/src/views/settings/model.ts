@@ -36,6 +36,8 @@ export const defaultForm = () => ({
   proxyModeWhenSubscribe: "direct",
   tcpFastOpen: "default",
   logLevel: "info",
+  nodeProbeMode: "",
+  nodeProbeUrl: "",
   inboundSniffing: "disable",
   routeOnly: false,
   muxOn: "no",

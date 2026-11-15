@@ -1,4 +1,12 @@
 export default {
+  nodeProbe: {
+    mode: "노드 검사 모드",
+    server: "서버 연결",
+    proxy: "프록시 경유",
+    url: "검사 URL",
+    hint: "모든 노드 검사에 적용됩니다. 프록시 검사는 각 노드를 통해 이 URL에 요청합니다. 실패가 반드시 노드 중단을 의미하지는 않습니다. 비워 두면 기본 주소를 사용합니다.",
+    invalidUrl: "인증 정보가 없는 HTTP(S) URL을 입력하세요.",
+  },
   onboarding: {
     title: "사용 안내",
     importTitle: "노드 가져오기",

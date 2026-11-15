@@ -1,4 +1,12 @@
 export default {
+  nodeProbe: {
+    mode: "Node check mode",
+    server: "To server",
+    proxy: "Through proxy",
+    url: "Test URL",
+    hint: "One mode for all node checks. Proxy checks request this URL through each node; failure does not necessarily mean the node is down. Leave the URL empty to use the default.",
+    invalidUrl: "Enter an HTTP(S) URL without credentials.",
+  },
   onboarding: {
     title: "Quick tutorial",
     importTitle: "Import nodes",

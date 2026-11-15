@@ -10,7 +10,15 @@ import (
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
+func GetNodeLatency(ctx *gin.Context) {
+	getNodeLatency(ctx, true)
+}
+
 func GetPingLatency(ctx *gin.Context) {
+	getNodeLatency(ctx, false)
+}
+
+func getNodeLatency(ctx *gin.Context, configured bool) {
 	release, ok := beginMutation(ctx)
 	if !ok {
 		return
@@ -23,7 +31,12 @@ func GetPingLatency(ctx *gin.Context) {
 		common.ResponseError(ctx, badRequest("whiches", "query parameter \"whiches\" must be a JSON array of server items"))
 		return
 	}
-	wt, err = service.Ping(wt, 1*time.Second)
+	setting := configure.GetSettingNotNil()
+	if configured && setting.NodeProbeMode == "proxy" {
+		wt, err = service.TestHttpLatency(ctx.Request.Context(), wt, 8*time.Second, 32, false, setting.NodeProbeURL)
+	} else {
+		wt, err = service.Ping(wt, time.Second)
+	}
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
@@ -46,7 +59,7 @@ func GetHttpLatency(ctx *gin.Context) {
 		common.ResponseError(ctx, badRequest("whiches", "query parameter \"whiches\" must be a JSON array of server items"))
 		return
 	}
-	wt, err = service.TestHttpLatency(wt, 8*time.Second, 32, false, ctx.Query("testUrl"))
+	wt, err = service.TestHttpLatency(ctx.Request.Context(), wt, 8*time.Second, 32, false, ctx.Query("testUrl"))
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

@@ -1,4 +1,12 @@
 export default {
+  nodeProbe: {
+    mode: "Modo de verificação dos nós",
+    server: "Até o servidor",
+    proxy: "Pelo proxy",
+    url: "URL de teste",
+    hint: "Um modo para todas as verificações. O teste pelo proxy solicita esta URL por cada nó; uma falha não significa necessariamente que o nó caiu. Deixe vazio para usar o padrão.",
+    invalidUrl: "Insira uma URL HTTP(S) sem credenciais.",
+  },
   onboarding: {
     title: "Tutorial rápido",
     importTitle: "Importar nós",

@@ -2,8 +2,7 @@
 import { computed, getCurrentScope, onScopeDispose, ref, watch } from "vue";
 import dayjs from "dayjs";
 import {
-  getHttpLatency,
-  getPingLatency,
+  getNodeLatency,
   getTouch,
   putOutboundConnections,
 } from "@/api";
@@ -191,7 +190,6 @@ export function useNodes() {
 
   async function testAll(
     rows: Row[],
-    http: boolean,
     testingText: string,
   ): Promise<void> {
     const whiches = rows.map(
@@ -199,9 +197,7 @@ export function useNodes() {
     );
     rows.forEach((r) => (r.pingLatency = testingText));
     try {
-      const res = await (http
-        ? getHttpLatency(whiches)
-        : getPingLatency(whiches));
+      const res = await getNodeLatency(whiches);
       for (const w of res.whiches) {
         const row = locate(touch.value, w);
         if (row) row.pingLatency = w.pingLatency ?? "";

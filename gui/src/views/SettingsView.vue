@@ -50,6 +50,22 @@ const {
   remoteGFWListVersion,
 } = settings;
 const saving = ref(false);
+function probeURLRule(value: string): true | string {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    if (
+      ["http:", "https:"].includes(url.protocol) &&
+      url.hostname &&
+      !url.username &&
+      !url.password
+    )
+      return true;
+  } catch {
+    /* invalid URL */
+  }
+  return t("nodeProbe.invalidUrl");
+}
 const formRef = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 
 onMounted(() => {
@@ -359,6 +375,27 @@ defineExpose({ sync: () => settings.load() });
 
       <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">
         <v-list-subheader>{{ t("setting.sections.core") }}</v-list-subheader>
+        <SettingChoice
+          v-model="form.nodeProbeMode"
+          :title="t('nodeProbe.mode')"
+          :hint="t('nodeProbe.hint')"
+          :items="[
+            { value: '', title: t('nodeProbe.server') },
+            { value: 'proxy', title: t('nodeProbe.proxy') },
+          ]"
+        />
+        <SettingRow
+          v-if="form.nodeProbeMode === 'proxy'"
+          :title="t('nodeProbe.url')"
+        >
+          <v-text-field
+            v-model="form.nodeProbeUrl"
+            :aria-label="t('nodeProbe.url')"
+            placeholder="https://gstatic.com/generate_204"
+            :rules="[probeURLRule]"
+            hide-details="auto"
+          />
+        </SettingRow>
         <SettingChoice
           v-model="form.logLevel"
           :title="t('setting.logLevel')"

@@ -14,7 +14,7 @@ import { fixture } from "./fixture";
 
 const api = vi.hoisted(() => ({
   getTouch: vi.fn(),
-  getPingLatency: vi.fn(),
+  getNodeLatency: vi.fn(),
   getHttpLatency: vi.fn(),
   putOutboundConnections: vi.fn(),
   getSharingAddress: vi.fn(),
@@ -60,7 +60,7 @@ beforeEach(async () => {
       return structuredClone(response);
     },
   );
-  api.getPingLatency.mockResolvedValue({
+  api.getNodeLatency.mockResolvedValue({
     whiches: [
       { id: 1, _type: "subscriptionServer", sub: 0, pingLatency: "20ms" },
     ],
@@ -250,7 +250,7 @@ describe("proxy node management", () => {
       ).map((r) => r.name),
     ).toEqual(["South"]);
   });
-  test("tests only listed rows over TCP and HTTP, exposing pending and returned latency", async () => {
+  test("tests only listed rows using the global probe policy, exposing pending and returned latency", async () => {
     const model = getModel();
     model.source.value = response.touch.subscriptions[0].address;
     model.query.value = "West";
@@ -258,16 +258,11 @@ describe("proxy node management", () => {
     expect(model.testing.value).toBe(true);
     expect(Number.parseFloat(model.listed.value[0].pingLatency)).toBeNaN();
     await pending;
-    expect(api.getPingLatency).toHaveBeenCalledWith([
+    expect(api.getNodeLatency).toHaveBeenCalledWith([
       { id: 1, _type: "subscriptionServer", sub: 0 },
     ]);
     expect(model.listed.value[0].pingLatency).toBe("20ms");
     expect(model.testing.value).toBe(false);
-    await model.testListed(true);
-    expect(api.getHttpLatency).toHaveBeenCalledWith([
-      { id: 1, _type: "subscriptionServer", sub: 0 },
-    ]);
-    expect(model.listed.value[0].pingLatency).toBe("40ms");
   });
   test("exports the selected nodes to the clipboard or to a timestamped TXT file", async () => {
     const model = getModel();

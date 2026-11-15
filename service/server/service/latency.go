@@ -1,19 +1,18 @@
 package service
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/common/httpClient"
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
@@ -103,12 +102,12 @@ func addHosts(tmpl *v2ray.Template, vms []serverObj.ServerObj) {
 	wg.Wait()
 }
 
-func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
-	if customTestUrl != "" {
-		testURL, err := url.Parse(customTestUrl)
-		if err != nil || (testURL.Scheme != "http" && testURL.Scheme != "https") || testURL.Hostname() == "" {
-			return nil, common.Coded("INVALID_TEST_URL", fmt.Errorf("test URL %q must be an HTTP or HTTPS URL with a host", customTestUrl), map[string]interface{}{"testUrl": customTestUrl})
-		}
+func TestHttpLatency(ctx context.Context, which []*configure.Which, timeout time.Duration, maxParallel int, showLog bool, customTestUrl string) ([]*configure.Which, error) {
+	if err := ValidateNodeProbe("proxy", customTestUrl); err != nil {
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	var whiches = configure.NewWhiches(which)
 	which = whiches.Get()
@@ -120,7 +119,6 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	if len(which) == 0 {
 		return which, nil
 	}
-	v2rayRunning := v2ray.ProcessManager.Running()
 	wg := new(sync.WaitGroup)
 	vms := make([]serverObj.ServerObj, len(which))
 	//init vmessInfos
@@ -134,42 +132,12 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		vms[i] = sr.ServerObj
 	}
-	//modify the template based on current configuration
-	var (
-		tmpl *v2ray.Template
-		err  error
-	)
-	if v2rayRunning {
-		tmpl, err = v2ray.NewTemplateFromConnectedServers(nil)
-		if err != nil {
-			if !errors.Is(err, v2ray.NoConnectedServerErr) {
-				log.Warn("NewTemplateFromConnectedServers: %v", err)
-			}
-		}
-	}
-	if tmpl == nil {
-		tmpl = v2ray.NewEmptyTemplate(&configure.Setting{
-			RulePortMode: configure.WhitelistMode,
-			TcpFastOpen:  configure.Default,
-			MuxOn:        configure.No,
-			Transparent:  configure.TransparentClose,
-		})
-		tmpl.SetAPI(nil)
-	}
-	// Until the process manager owns the template, its API producers are
-	// ours to stop on an early return.
-	handedOver := false
-	defer func() {
-		if !handedOver {
-			_ = tmpl.Close()
-		}
-	}()
+	setting := *configure.GetSettingNotNil()
+	setting.MuxOn = configure.No
+	tmpl := v2ray.NewEmptyTemplate(&setting)
+	defer tmpl.Close()
 	inboundPortMap := make([]string, len(vms))
-	pluginPortMap := make(map[int]int)
 	listenAddr := "127.0.0.1"
-	if tmpl.Setting != nil && tmpl.Setting.PortSharing {
-		listenAddr = "0.0.0.0"
-	}
 	var toClose []io.Closer
 	defer func() {
 		for _, l := range toClose {
@@ -218,7 +186,6 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 				}
 			}
 			pluginPort = port
-			pluginPortMap[i] = port
 		}
 		err := tmpl.InsertMappingOutbound(v, v2rayInboundPort, false, pluginPort, "socks")
 		if err != nil {
@@ -239,19 +206,19 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 	tmpl.Routing.DomainStrategy = "AsIs"
 	addHosts(tmpl, vms)
 	tmpl.SetOutboundSockopt()
-	v2ray.ProcessManager.SetLatencyTesting(true)
-	handedOver = true
-	if err := v2ray.ProcessManager.Start(tmpl); err != nil {
-		v2ray.ProcessManager.SetLatencyTesting(false)
-		if v2rayRunning && configure.GetConnectedServers() != nil {
-			if restoreErr := v2ray.UpdateV2RayConfig(); restoreErr != nil {
-				return nil, fmt.Errorf("%v; cannot restart v2ray-core: %w", err, restoreErr)
-			}
-		}
+	if len(tmpl.Inbounds) == 0 {
+		return which, nil
+	}
+	stop, err := startProbeCore(ctx, tmpl, inboundPortMap)
+	if err != nil {
 		return nil, err
 	}
+	defer stop()
 	//limit the concurrency
 	wg = new(sync.WaitGroup)
+	if maxParallel < 1 {
+		maxParallel = 1
+	}
 	cc := make(chan interface{}, maxParallel)
 	for i := range which {
 		if which[i].Latency != "" {
@@ -262,30 +229,29 @@ func TestHttpLatency(which []*configure.Which, timeout time.Duration, maxParalle
 		}
 		wg.Add(1)
 		go func(i int) {
-			cc <- nil
+			select {
+			case cc <- nil:
+			case <-ctx.Done():
+				wg.Done()
+				return
+			}
 			defer func() { <-cc; wg.Done() }()
-			httpLatency(which[i], inboundPortMap[i], timeout, customTestUrl)
+			httpLatency(ctx, which[i], inboundPortMap[i], timeout, customTestUrl)
 			if showLog {
 				log.Info("Test done[%v]%v: %v", i+1, which[i].Latency, which[i].Link)
 			}
 		}(i)
 	}
 	wg.Wait()
-	v2ray.ProcessManager.SetLatencyTesting(false)
-	if v2rayRunning && configure.GetConnectedServers() != nil {
-		err := v2ray.UpdateV2RayConfig()
-		if err != nil {
-			return which, fmt.Errorf("cannot restart v2ray-core: %w", err)
-		}
-	} else {
-		v2ray.ProcessManager.Stop(true)
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	if err := configure.NewWhiches(which).SaveLatencies(); err != nil {
 		return nil, fmt.Errorf("failed to save the latency test result: %v", err)
 	}
 	return which, nil
 }
-func httpLatency(which *configure.Which, port string, timeout time.Duration, customTestUrl string) {
+func httpLatency(ctx context.Context, which *configure.Which, port string, timeout time.Duration, customTestUrl string) {
 	c, err := httpClient.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
 	if err != nil {
 		which.Latency = "SYSTEM ERROR"
@@ -302,7 +268,7 @@ func httpLatency(which *configure.Which, port string, timeout time.Duration, cus
 	if len(customTestUrl) != 0 {
 		testUrl = customTestUrl
 	}
-	req, err := http.NewRequest("GET", testUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", testUrl, nil)
 	if err != nil {
 		which.Latency = "SYSTEM ERROR"
 		return
@@ -325,7 +291,7 @@ func setHTTPLatencyResult(which *configure.Which, resp *http.Response, err error
 		which.Latency = "SYSTEM ERROR"
 		return
 	}
-	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 400 {
+	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		if err != nil {
 			var netErr net.Error
 			if errors.As(err, &netErr) && netErr.Timeout() {
