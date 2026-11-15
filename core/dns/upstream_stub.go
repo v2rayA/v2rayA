@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -558,7 +559,7 @@ func (m *UpstreamManager) ExchangeRaw(upstream *UpstreamInstance, msg *dns.Msg) 
 // exchangeViaDispatcher sends a DNS query through xray-core's internal routing
 // dispatcher. It uses the RouteDispatcher to create a connection through
 // xray-core's routing engine (like xray-core's traditional DNS module does),
-// then performs DNS-over-TCP on that connection.
+// then uses the configured DNS transport on that connection.
 //
 // This replaces the external SOCKS5 proxy approach with v2raya-core's built-in
 // routing logic, supporting any outbound type (VMESS, VLESS, Trojan, etc.).
@@ -605,67 +606,94 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 		return m.finishDispatched(upstream, query, resp, rtt)
 	}
 
-	// Pack DNS query for TCP transport.
-	packed, err := msg.Pack()
-	if err != nil {
-		return nil, fmt.Errorf("dns pack: %w", err)
-	}
-
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	conn, err := dial(ctx, upstream.Addr)
-	if err != nil {
-		return nil, fmt.Errorf("dns upstream: dispatcher retry failed: %w", err)
+	network := "tcp"
+	if upstream.Protocol == "" || upstream.Protocol == "udp" {
+		network = "udp"
 	}
+	for {
+		resp, err := m.exchangeDispatched(ctx, upstream, msg, network)
+		if err != nil {
+			return nil, fmt.Errorf("dns upstream: %s via dispatcher: %w", network, err)
+		}
+		result, err := m.finishDispatched(upstream, query, resp, time.Since(start))
+		if err != nil {
+			return nil, err
+		}
+		if network == "udp" && resp.Truncated {
+			network = "tcp"
+			continue
+		}
+		return result, nil
+	}
+}
+
+// exchangeDispatched shares the timeout and routing tag across UDP and TCP fallback.
+func (m *UpstreamManager) exchangeDispatched(ctx context.Context, upstream *UpstreamInstance, msg *dns.Msg, network string) (*dns.Msg, error) {
+	conn, err := m.dispatcher.Dispatch(ctx, network, upstream.Addr, upstream.ProxyTag)
+	if err != nil {
+		timer := time.NewTimer(100 * time.Millisecond)
+		defer timer.Stop()
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+		conn, err = m.dispatcher.Dispatch(ctx, network, upstream.Addr, upstream.ProxyTag)
+	}
+	if err != nil {
+		return nil, err
+	}
+	rawConn := conn
 	if upstream.Protocol == "tcp-tls" {
 		serverName := upstream.ServerName
 		if serverName == "" {
 			serverName, _, _ = net.SplitHostPort(upstream.Addr)
 		}
-		if conn, err = tlsOver(ctx, conn, serverName); err != nil {
-			return nil, fmt.Errorf("dns upstream: tls via dispatcher: %w", err)
+		conn, err = tlsOver(ctx, conn, serverName)
+		if err != nil {
+			return nil, err
 		}
 	}
-	defer conn.Close()
-
-	// DNS over TCP: prepend 2-byte length prefix.
-	tcpMsg := make([]byte, 2+len(packed))
-	tcpMsg[0] = byte(len(packed) >> 8)
-	tcpMsg[1] = byte(len(packed))
-	copy(tcpMsg[2:], packed)
-
-	// Send DNS query.
-	conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-	if _, err := conn.Write(tcpMsg); err != nil {
-		return nil, fmt.Errorf("dns write via dispatcher: %w", err)
+	// Xray connections do not implement deadlines; cancellation must close the link.
+	closeConn := sync.OnceFunc(func() { rawConn.Close() })
+	defer closeConn()
+	stop := context.AfterFunc(ctx, closeConn)
+	defer stop()
+	var resp *dns.Msg
+	if network == "udp" {
+		packed, err := msg.Pack()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := conn.Write(packed); err != nil {
+			return nil, err
+		}
+		data := make([]byte, 65535)
+		n, err := conn.Read(data)
+		if err != nil {
+			return nil, err
+		}
+		resp = new(dns.Msg)
+		if err := resp.Unpack(data[:n]); err != nil {
+			return nil, err
+		}
+	} else {
+		client := &dns.Conn{Conn: conn}
+		if err := client.WriteMsg(msg); err != nil {
+			return nil, err
+		}
+		resp, err = client.ReadMsg()
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	// Read 2-byte length prefix.
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-	if _, err := io.ReadFull(conn, tcpMsg[:2]); err != nil {
-		return nil, fmt.Errorf("dns read length via dispatcher: %w", err)
+	if resp.Id != msg.Id {
+		return nil, dns.ErrId
 	}
-	respLen := int(tcpMsg[0])<<8 | int(tcpMsg[1])
-	if respLen < 0 || respLen > 65535 {
-		return nil, fmt.Errorf("dns invalid response length: %d", respLen)
-	}
-
-	// Read full DNS response.
-	respData := make([]byte, respLen)
-	if _, err := io.ReadFull(conn, respData); err != nil {
-		return nil, fmt.Errorf("dns read data via dispatcher: %w", err)
-	}
-
-	rtt := time.Since(start)
-
-	// Unpack DNS response.
-	dnsResp := new(dns.Msg)
-	if err := dnsResp.Unpack(respData); err != nil {
-		return nil, fmt.Errorf("dns unpack: %w", err)
-	}
-
-	return m.finishDispatched(upstream, query, dnsResp, rtt)
+	return resp, nil
 }
 
 // finishDispatched validates an answer that came back through the

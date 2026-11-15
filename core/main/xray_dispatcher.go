@@ -37,7 +37,7 @@ func newXrayDispatcherAdapter(srv *xcore.Instance) (*xrayDispatcherAdapter, erro
 }
 
 // Dispatch implements dns.RouteDispatcher.
-// It creates a TCP connection to addr through xray-core's routing engine.
+// It creates a TCP or UDP connection to addr through xray-core's routing engine.
 // The proxyTag is used to set the inbound tag on the context, which xray's
 // routing rules use to determine the outbound (like xray-core's DNS module).
 func (a *xrayDispatcherAdapter) Dispatch(ctx context.Context, network, addr, proxyTag string) (net.Conn, error) {
@@ -81,9 +81,13 @@ func (a *xrayDispatcherAdapter) Dispatch(ctx context.Context, network, addr, pro
 		return nil, fmt.Errorf("xray dispatch: %w", err)
 	}
 
-	// Wrap the transport link into a standard net.Conn.
+	// Preserve datagram boundaries when reading UDP replies.
+	output := cnc.ConnectionOutputMulti(link.Reader)
+	if dest.Network == xnet.Network_UDP {
+		output = cnc.ConnectionOutputMultiUDP(link.Reader)
+	}
 	return cnc.NewConnection(
 		cnc.ConnectionInputMulti(link.Writer),
-		cnc.ConnectionOutputMulti(link.Reader),
+		output,
 	), nil
 }

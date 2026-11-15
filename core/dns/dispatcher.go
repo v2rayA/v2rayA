@@ -20,6 +20,6 @@ type RouteDispatcher interface {
 	// decision (e.g., "proxy" routes through proxy outbound,
 	// "direct" routes directly). The implementation sets
 	// session.ContextWithInbound internally, like xray-core's DNS module.
-	// Returns a net.Conn for DNS-over-TCP exchange.
+	// Returns a net.Conn; UDP reads and writes must preserve datagram boundaries.
 	Dispatch(ctx context.Context, network, addr, proxyTag string) (net.Conn, error)
 }
