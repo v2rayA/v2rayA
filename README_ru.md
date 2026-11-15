@@ -112,10 +112,10 @@ sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```
 
-В Alpine возьмите `installer_alpine_linux_x64_${VERSION}.apk` со [страницы выпусков](https://github.com/v2rayA/v2rayA/releases), заменив часть имени с архитектурой на подходящую. В архиве лежат скрипт OpenRC и `/etc/conf.d/v2raya`; он не подписан ключом из доверенного хранилища Alpine, поэтому нужен `--allow-untrusted`:
+В Alpine возьмите `installer_alpine_x64_${VERSION}.apk` со [страницы выпусков](https://github.com/v2rayA/v2rayA/releases), заменив часть имени с архитектурой на подходящую. В архиве лежат скрипт OpenRC и `/etc/conf.d/v2raya`; он не подписан ключом из доверенного хранилища Alpine, поэтому нужен `--allow-untrusted`:
 
 ```sh
-sudo apk add --allow-untrusted ./installer_alpine_linux_x64_${VERSION}.apk
+sudo apk add --allow-untrusted ./installer_alpine_x64_${VERSION}.apk
 sudo rc-update add v2raya default
 sudo rc-service v2raya start
 ```

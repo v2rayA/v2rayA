@@ -1,6 +1,8 @@
 #!/bin/sh
-set -x
-current_dir=$(pwd)
+# The image installs the release's own Alpine package, so every release
+# installs its apk at least once before anyone else does. The release
+# workflow substitutes the version.
+set -ex
 case "$(arch)" in
     x86_64)
         v2raya_arch="x64"
@@ -15,20 +17,17 @@ case "$(arch)" in
         v2raya_arch="riscv64"
         ;;
     *)
+        echo "no Alpine package for $(arch)" >&2
+        exit 1
         ;;
 esac
-mkdir -p build && cd build || exit
-wget https://github.com/v2rayA/v2rayA/releases/download/vRealv2rayAVersion/v2raya_linux_"$v2raya_arch"_Realv2rayAVersion
-wget https://github.com/v2rayA/v2rayA/releases/download/vRealv2rayAVersion/v2raya_core_linux_"$v2raya_arch"_Realv2rayAVersion
-install ./v2raya_linux_"$v2raya_arch"_Realv2rayAVersion /usr/bin/v2raya
-install ./v2raya_core_linux_"$v2raya_arch"_Realv2rayAVersion /usr/bin/v2raya_core
-mkdir /usr/share/v2raya
-wget -O /usr/share/v2raya/LoyalsoldierSite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
-wget -O /usr/share/v2raya/geosite.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geosite.dat
-wget -O /usr/share/v2raya/geoip.dat https://raw.githubusercontent.com/mzz2017/dist-v2ray-rules-dat/master/geoip.dat
-cd "$current_dir" || exit
-rm -rf build
-apk add --no-cache iproute2 iptables iptables-legacy nftables tzdata
+package="installer_alpine_${v2raya_arch}_Realv2rayAVersion.apk"
+wget -O "/tmp/$package" "https://github.com/v2rayA/v2rayA/releases/download/vRealv2rayAVersion/$package"
+apk add --no-cache --allow-untrusted "/tmp/$package" iproute2 iptables iptables-legacy nftables tzdata
+rm "/tmp/$package"
+# GFWList mode reads LoyalsoldierSite.dat; the image has always shipped it as
+# a copy of geosite.dat, which the first GFWList update replaces.
+cp /usr/share/v2raya/geosite.dat /usr/share/v2raya/LoyalsoldierSite.dat
 install ./iptables.sh /usr/local/bin/iptables
 install ./ip6tables.sh /usr/local/bin/ip6tables
 install ./iptables.sh /usr/local/bin/iptables-nft
