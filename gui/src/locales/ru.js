@@ -60,7 +60,7 @@ export default {
     switchNode: "Сменить",
     proxyGroup: "Группа прокси",
     editGroup: "Добавить или удалить узлы",
-    autoFastest: "Авто (минимальная задержка)",
+    autoFastest: "Авто (стратегия группы)",
     emptyGroup: "В этой группе нет узлов",
     updateAll: "Обновить все",
     updatedAt: "Обновлено {time}",
@@ -641,6 +641,11 @@ export default {
     probeUrl: "URL проверки",
     probeInterval: "Интервал проверки",
     type: "Тип",
+    strategies: {
+      leastLoad: "Наименьшая нагрузка",
+      roundRobin: "По очереди",
+      random: "Случайно",
+    },
   },
   proxyGroup: {
     searchNodes: "Поиск узлов...",

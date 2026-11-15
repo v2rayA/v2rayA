@@ -60,7 +60,7 @@ export default {
     switchNode: "Trocar",
     proxyGroup: "Grupo de proxy",
     editGroup: "Adicionar ou remover nós",
-    autoFastest: "Automático (menor latência)",
+    autoFastest: "Automático (estratégia do grupo)",
     emptyGroup: "Este grupo não tem nós",
     updateAll: "Atualizar todas",
     updatedAt: "Atualizado {time}",
@@ -648,6 +648,11 @@ export default {
     probeUrl: "URL de sondagem",
     probeInterval: "Intervalo de sondagem",
     type: "Tipo",
+    strategies: {
+      leastLoad: "Menor carga",
+      roundRobin: "Rodízio",
+      random: "Aleatório",
+    },
   },
   proxyGroup: {
     searchNodes: "Pesquisar nós...",

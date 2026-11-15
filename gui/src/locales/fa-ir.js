@@ -59,7 +59,7 @@ export default {
     switchNode: "تغییر",
     proxyGroup: "گروه پروکسی",
     editGroup: "افزودن یا حذف گره‌ها",
-    autoFastest: "خودکار (کمترین تأخیر)",
+    autoFastest: "خودکار (راهبرد گروه)",
     emptyGroup: "این گروه گره‌ای ندارد",
     updateAll: "به‌روزرسانی همه",
     updatedAt: "به‌روزرسانی {time}",
@@ -633,6 +633,11 @@ export default {
     probeUrl: "نشانی آزمون",
     probeInterval: "فاصله آزمون",
     type: "نوع",
+    strategies: {
+      leastLoad: "کمترین بار",
+      roundRobin: "چرخشی",
+      random: "تصادفی",
+    },
   },
   proxyGroup: {
     searchNodes: "جست‌وجوی گره‌ها...",

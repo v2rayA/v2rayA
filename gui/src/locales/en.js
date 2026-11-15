@@ -60,7 +60,7 @@ export default {
     switchNode: "Switch",
     proxyGroup: "Proxy group",
     editGroup: "Add or remove nodes",
-    autoFastest: "Auto (lowest latency)",
+    autoFastest: "Auto (group strategy)",
     emptyGroup: "This group has no nodes",
     updateAll: "Update all",
     updatedAt: "Updated {time}",
@@ -639,6 +639,11 @@ export default {
     probeUrl: "Probe URL",
     probeInterval: "Probe Interval",
     type: "Type",
+    strategies: {
+      leastLoad: "Least load",
+      roundRobin: "Round robin",
+      random: "Random",
+    },
   },
   proxyGroup: {
     searchNodes: "Search nodes...",

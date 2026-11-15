@@ -58,7 +58,7 @@ export default {
     switchNode: "전환",
     proxyGroup: "프록시 그룹",
     editGroup: "노드 추가/삭제",
-    autoFastest: "자동 (최저 지연 시간)",
+    autoFastest: "자동 (그룹 전략)",
     emptyGroup: "이 그룹에 노드가 없습니다",
     updateAll: "모두 업데이트",
     updatedAt: "업데이트: {time}",
@@ -630,6 +630,11 @@ export default {
     probeUrl: "탐색 URL",
     probeInterval: "탐색 간격",
     type: "유형",
+    strategies: {
+      leastLoad: "최소 부하",
+      roundRobin: "순차 선택",
+      random: "무작위 선택",
+    },
   },
   proxyGroup: {
     searchNodes: "노드 검색...",

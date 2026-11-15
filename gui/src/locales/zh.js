@@ -56,7 +56,7 @@ export default {
     switchNode: "选择节点",
     proxyGroup: "代理组",
     editGroup: "增删节点",
-    autoFastest: "自动（延迟最低）",
+    autoFastest: "自动（分组策略）",
     emptyGroup: "此分组没有节点",
     updateAll: "全部更新",
     updatedAt: "更新于 {time}",
@@ -617,6 +617,11 @@ export default {
     probeUrl: "探测 URL",
     probeInterval: "探测间隔",
     type: "类型",
+    strategies: {
+      leastLoad: "最低负载",
+      roundRobin: "轮流选择",
+      random: "随机选择",
+    },
   },
   proxyGroup: {
     searchNodes: "搜索节点...",
