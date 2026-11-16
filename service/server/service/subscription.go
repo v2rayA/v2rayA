@@ -347,6 +347,30 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			fallbackClaims[mappedIDs[ref.ID]]++
 		}
 	}
+	previousSettings := map[string]configure.OutboundSetting{}
+	nextSettings := map[string]configure.OutboundSetting{}
+	// Connected NodeRefs may remap to a new subscription entry, while Selected
+	// stores the exact share URL. Migrate Selected only after an unambiguous remap,
+	// commit it with the subscription update, and restore it if the core reload fails.
+	// Ambiguous or unmatched nodes keep the existing selection unchanged.
+	migrateSelected := func(outbound, oldLink, newLink string) {
+		if oldLink == newLink {
+			return
+		}
+		current := configure.GetOutboundSetting(outbound)
+		setting := current
+		if pending, ok := nextSettings[outbound]; ok {
+			setting = pending
+		}
+		if setting.Selected != oldLink {
+			return
+		}
+		if _, ok := previousSettings[outbound]; !ok {
+			previousSettings[outbound] = current
+		}
+		setting.Selected = newLink
+		nextSettings[outbound] = setting
+	}
 	retainedIDs := map[int]int{}
 	for _, ref := range previousRefs {
 		copy := *ref
@@ -371,21 +395,24 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 					retainedIDs[ref.ID] = copy.ID
 				}
 			}
-			if copy.ID != ref.ID || next.Servers[copy.ID-1].ServerObj.ExportToURL() != raw.ServerObj.ExportToURL() {
+			oldLink := raw.ServerObj.ExportToURL()
+			newLink := next.Servers[copy.ID-1].ServerObj.ExportToURL()
+			migrateSelected(ref.Outbound, oldLink, newLink)
+			if copy.ID != ref.ID || newLink != oldLink {
 				affected = true
 			}
 		}
 		updated.Add(copy)
 	}
 	if !affected {
-		return configure.SetSubscriptionAndConnects(index, &next, updated)
+		return configure.SetSubscriptionAndConnects(index, &next, updated, nextSettings)
 	}
-	if err := configure.SetSubscriptionAndConnects(index, &next, updated); err != nil {
+	if err := configure.SetSubscriptionAndConnects(index, &next, updated, nextSettings); err != nil {
 		return err
 	}
 	if v2ray.ProcessManager.Running() {
 		if err := v2ray.UpdateV2RayConfig(); err != nil {
-			_ = configure.SetSubscriptionAndConnects(index, old, previous)
+			_ = configure.SetSubscriptionAndConnects(index, old, previous, previousSettings)
 			_ = v2ray.UpdateV2RayConfig()
 			return subscriptionCoreApplyError(err)
 		}
