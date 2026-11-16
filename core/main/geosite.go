@@ -16,14 +16,16 @@ import (
 )
 
 // geositeResolver implements dns.GeositeResolver using xray-core's geodata.
-// It loads geosite.dat from the standard asset directory and expands tags
-// (e.g. "cn") into domain/suffix patterns.
+// It expands a reference from the standard asset directory: a bare tag
+// (e.g. "cn") is read from geosite.dat, and "file.dat:tag" (from an
+// ext:"file.dat:tag" rule) is read from that file, so custom geosite
+// databases work the same way.
 //
-// The geosite.dat file uses a custom format: varint-length-delimited GeoSite
+// The .dat files use a custom format: varint-length-delimited GeoSite
 // protobuf messages concatenated together (NOT a single GeoSiteList message).
 // This function correctly parses that format.
-func geositeResolver(tag string) (domains, suffixes []string) {
-	// Determine geosite.dat location from environment.
+func geositeResolver(spec string) (domains, suffixes []string) {
+	// Determine the asset directory from the environment.
 	assetDir := os.Getenv("XRAY_LOCATION_ASSET")
 	if assetDir == "" {
 		assetDir = os.Getenv("V2RAY_LOCATION_ASSET")
@@ -33,7 +35,16 @@ func geositeResolver(tag string) (domains, suffixes []string) {
 		return nil, nil
 	}
 
-	geositePath := filepath.Join(assetDir, "geosite.dat")
+	file, tag := "geosite.dat", spec
+	if f, t, ok := strings.Cut(spec, ":"); ok {
+		file, tag = f, t
+	}
+	if filepath.Base(file) != file || file == "" || tag == "" {
+		log.Printf("[dns] geosite: invalid reference %q, skipping", spec)
+		return nil, nil
+	}
+
+	geositePath := filepath.Join(assetDir, file)
 	geosite, err := loadGeositeTag(geositePath, tag)
 	if err != nil {
 		log.Printf("[dns] geosite: cannot load tag %q from %s: %v", tag, geositePath, err)
@@ -57,7 +68,7 @@ func geositeResolver(tag string) (domains, suffixes []string) {
 	}
 
 	if len(domains) > 0 || len(suffixes) > 0 {
-		log.Printf("[dns] geosite: expanded %s → %d domains, %d suffixes", tag, len(domains), len(suffixes))
+		log.Printf("[dns] geosite: expanded %s → %d domains, %d suffixes", spec, len(domains), len(suffixes))
 	}
 	return domains, suffixes
 }
@@ -73,12 +84,13 @@ func init() {
 	geositeCache.data = make(map[string][]*geodata.Domain)
 }
 
-// loadGeositeTag reads geosite.dat and extracts the domains for a specific tag.
+// loadGeositeTag reads a geosite .dat file and extracts the domains for a
+// specific tag.
 //
-// The geosite.dat file uses a custom format where each entry is a
-// varint-length-delimited GeoSite protobuf message. This is NOT a single
-// GeoSiteList message — attempting proto.Unmarshal of the entire file as
-// GeoSiteList would only parse the first entry.
+// The file uses a custom format where each entry is a varint-length-delimited
+// GeoSite protobuf message. This is NOT a single GeoSiteList message —
+// attempting proto.Unmarshal of the entire file as GeoSiteList would only
+// parse the first entry.
 //
 // This function correctly reads the stream by:
 //  1. Reading the outer varint: frame tag (0x0a = field 1, wire type 2) + length

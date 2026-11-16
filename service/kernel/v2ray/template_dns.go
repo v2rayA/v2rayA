@@ -14,6 +14,7 @@ import (
 	"github.com/v2rayA/v2rayA/common/resolv"
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/iptables"
+	"github.com/v2rayA/v2rayA/kernel/v2ray/asset"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -362,6 +363,21 @@ func (t *Template) generateDnsModuleConfig(serverInfos []serverInfo) error {
 				}
 				if strings.HasPrefix(d, "domain:") {
 					suffixes = append(suffixes, strings.TrimPrefix(d, "domain:"))
+				} else if strings.HasPrefix(d, "ext:") {
+					// An external geosite file, the RoutingA form ext:"file.dat:tag".
+					// The quotes are optional here: the field takes one pattern
+					// per line, not RoutingA syntax. The core expands the tag
+					// from the file in the asset directory, so a missing file is
+					// rejected here rather than silently matching nothing.
+					ext := strings.Trim(strings.TrimPrefix(d, "ext:"), `"`)
+					datFilenameAndTag := strings.SplitN(ext, ":", 2)
+					if len(datFilenameAndTag) < 2 {
+						return fmt.Errorf("DNS rule ext value %q is missing its tag; expected ext:\"file.dat:tag\"", d)
+					}
+					if !asset.DoesV2rayAssetExist(datFilenameAndTag[0]) {
+						return fmt.Errorf("DNS rule ext file %q is not in the asset directory", datFilenameAndTag[0])
+					}
+					domains = append(domains, "ext:"+ext)
 				} else if strings.HasPrefix(d, "geosite:") || strings.HasPrefix(d, "keyword:") {
 					domains = append(domains, d)
 				} else {

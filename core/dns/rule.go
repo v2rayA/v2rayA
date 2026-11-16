@@ -7,9 +7,11 @@ import (
 	"strings"
 )
 
-// GeositeResolver resolves a geosite tag (e.g. "cn", "geolocation-!cn")
-// into domain and suffix patterns. Returns (domains, suffixes) where
-// domains are for exact/full matching and suffixes for suffix matching.
+// GeositeResolver resolves a geosite reference into domain and suffix
+// patterns. The reference is a bare tag ("cn", "geolocation-!cn") or an
+// external file and tag ("file.dat:tag", from an ext:"file.dat:tag" rule).
+// Returns (domains, suffixes) where domains are for exact/full matching and
+// suffixes for suffix matching.
 // Nil means the tag is not recognized/loaded.
 type GeositeResolver func(tag string) (domains, suffixes []string)
 
@@ -209,6 +211,37 @@ func parseCIDR(s string) (*net.IPNet, error) {
 	return cidr, nil
 }
 
+// geositeMatchers expands a geosite reference through the resolver and
+// returns the resulting domain matchers, all OR-ed with the rule's other
+// domain matchers. Without a resolver the reference is silently skipped.
+func geositeMatchers(resolver GeositeResolver, spec string) []RuleMatcher {
+	if resolver == nil {
+		return nil
+	}
+	doms, suffs := resolver(spec)
+	var matchers []RuleMatcher
+	for _, dom := range doms {
+		matchers = append(matchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
+	}
+	for _, suf := range suffs {
+		matchers = append(matchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
+	}
+	return matchers
+}
+
+// geositeSpec returns the resolver reference of a geosite: or ext: domain
+// pattern, and whether the pattern was one. For geosite: the reference is
+// the tag; for ext: it is "file.dat:tag".
+func geositeSpec(d string) (string, bool) {
+	if spec, ok := strings.CutPrefix(d, "geosite:"); ok {
+		return spec, true
+	}
+	if spec, ok := strings.CutPrefix(d, "ext:"); ok {
+		return spec, true
+	}
+	return "", false
+}
+
 // BuildMatchers constructs a list of RuleMatcher from a DnsRule configuration.
 //
 // Matching semantics: within each field group, matchers are OR-ed (any one match
@@ -216,8 +249,9 @@ func parseCIDR(s string) (*net.IPNet, error) {
 // must match). For example, a rule with domain=["geosite:cn"] and query_type=[A]
 // matches if the domain is in geosite:cn AND the query type is A.
 //
-// If a resolver is provided, geosite tags (e.g. "geosite:cn") are expanded into
-// individual domain matchers, all grouped into a single OR group.
+// If a resolver is provided, geosite references ("geosite:cn",
+// "ext:file.dat:tag") are expanded into individual domain matchers, all
+// grouped into a single OR group.
 func BuildMatchers(rule *DnsRule, resolver GeositeResolver) ([]RuleMatcher, error) {
 	// Collect matchers by field group. Each group uses OR logic internally.
 	var domainMatchers []RuleMatcher
@@ -228,33 +262,16 @@ func BuildMatchers(rule *DnsRule, resolver GeositeResolver) ([]RuleMatcher, erro
 	// ── Domain group (OR): exact + suffix + regex + geosite expansion ──
 
 	for _, d := range rule.Domain {
-		if strings.HasPrefix(d, "geosite:") {
-			if resolver != nil {
-				doms, suffs := resolver(strings.TrimPrefix(d, "geosite:"))
-				for _, dom := range doms {
-					domainMatchers = append(domainMatchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
-				}
-				for _, suf := range suffs {
-					domainMatchers = append(domainMatchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
-				}
-			}
-			// Without resolver, geosite tags are silently skipped (no matcher created).
+		if spec, ok := geositeSpec(d); ok {
+			domainMatchers = append(domainMatchers, geositeMatchers(resolver, spec)...)
 			continue
 		}
 		domainMatchers = append(domainMatchers, &DomainRule{Domain: d, IsSuffix: false, IsRegex: false})
 	}
 
 	for _, d := range rule.DomainSuffix {
-		if strings.HasPrefix(d, "geosite:") {
-			if resolver != nil {
-				doms, suffs := resolver(strings.TrimPrefix(d, "geosite:"))
-				for _, dom := range doms {
-					domainMatchers = append(domainMatchers, &DomainRule{Domain: dom, IsSuffix: false, IsRegex: false})
-				}
-				for _, suf := range suffs {
-					domainMatchers = append(domainMatchers, &DomainRule{Domain: suf, IsSuffix: true, IsRegex: false})
-				}
-			}
+		if spec, ok := geositeSpec(d); ok {
+			domainMatchers = append(domainMatchers, geositeMatchers(resolver, spec)...)
 			continue
 		}
 		domainMatchers = append(domainMatchers, &DomainRule{Domain: d, IsSuffix: true, IsRegex: false})
