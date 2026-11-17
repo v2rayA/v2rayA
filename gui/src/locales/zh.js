@@ -494,6 +494,7 @@ export default {
       global: "全部走代理，仅局域网直连",
       minimal: "只让常用海外服务走代理，其余直连",
       russia: "俄罗斯站点直连，例外及其余流量走代理",
+      iran: "伊朗站点直连，其余流量走代理",
       ads: "拦截广告域名",
       streaming:
         "流媒体走代理（Netflix、Disney、HBO、Prime Video、YouTube、Spotify、TikTok）",

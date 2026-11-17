@@ -19,6 +19,7 @@ describe("the rule templates", () => {
       "global",
       "minimal",
       "russia",
+      "iran",
     ]);
   });
   test("Russian proxy exceptions precede the direct category", () => {
@@ -28,5 +29,15 @@ describe("the rule templates", () => {
       rules.indexOf("geosite:category-ru"),
     );
     expect(rules).toContain("default: proxy");
+  });
+  test("the Iran rule set follows Russia in the menu and keeps the LAN direct", () => {
+    const keys = presets.map((p) => p.key);
+    expect(keys.indexOf("iran")).toBe(keys.indexOf("russia") + 1);
+    const rules = presets.find((p) => p.key === "iran")!.code;
+    expect(rules.startsWith("default: proxy\n")).toBe(true);
+    expect(rules).toContain("domain(geosite:private) -> direct");
+    expect(rules).toContain("ip(geoip:private) -> direct");
+    expect(rules).toContain("domain(geosite:category-ir) -> direct");
+    expect(rules).toContain("ip(geoip:ir) -> direct");
   });
 });

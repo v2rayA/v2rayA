@@ -48,6 +48,8 @@ The Russia template sends `geosite:category-ru` directly, except for its listed 
 
 Russian IP addresses (`geoip:ru`) and private hostnames and IP addresses (`geosite:private`, `geoip:private`) also go directly; the proxy exceptions take precedence.
 
+The Iran template sends private hostnames and IP addresses (`geosite:private`, `geoip:private`), Iranian domains (`geosite:category-ir`) and Iranian IP addresses (`geoip:ir`) directly; everything else uses the proxy. It requires a `geosite.dat` containing `category-ir`.
+
 Saving reloads a running core with the new rules; when the core rejects them, v2rayA puts the previous rules back and shows the core's error, which names the offending text. A stopped core takes the rules on its next start.
 
 ## Custom inbounds

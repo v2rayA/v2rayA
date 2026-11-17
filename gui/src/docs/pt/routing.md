@@ -48,6 +48,8 @@ O modelo para a Rússia encaminha `geosite:category-ru` diretamente, exceto pelo
 
 Os endereços IP russos (`geoip:ru`) e os nomes e endereços IP privados (`geosite:private`, `geoip:private`) também usam conexão direta; as exceções de proxy têm prioridade.
 
+O modelo para o Irã encaminha diretamente os nomes e endereços IP privados (`geosite:private`, `geoip:private`), os domínios iranianos (`geosite:category-ir`) e os endereços IP iranianos (`geoip:ir`); todo o restante usa o proxy. Ele requer um `geosite.dat` com `category-ir`.
+
 Salvar recarrega um núcleo em execução com as novas regras; quando o núcleo as rejeita, o v2rayA restaura as regras anteriores e mostra o erro do núcleo, que indica o texto problemático. Um núcleo parado adota as regras na próxima inicialização.
 
 ## Entradas personalizadas

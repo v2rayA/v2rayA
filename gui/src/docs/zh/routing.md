@@ -48,6 +48,8 @@ domain(domain: corp.example) -> office
 
 俄罗斯 IP 地址（`geoip:ru`）以及局域网域名和 IP 地址（`geosite:private`、`geoip:private`）也直连；代理例外规则优先。
 
+伊朗模板让局域网域名和 IP 地址（`geosite:private`、`geoip:private`）、伊朗域名（`geosite:category-ir`）以及伊朗 IP 地址（`geoip:ir`）直连；其余流量走代理。此模板需要包含 `category-ir` 的 `geosite.dat`。
+
 保存后运行中的内核以新规则重新加载；内核拒绝规则时 v2rayA 恢复原规则并显示内核的错误，错误信息指出出错的内容。已停止的内核在下次启动时读取新规则。
 
 ## 自定义入站

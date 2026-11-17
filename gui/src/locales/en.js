@@ -513,6 +513,7 @@ export default {
         "Only common foreign services through the proxy, everything else direct",
       russia:
         "Russian sites direct, listed exceptions and the rest through the proxy",
+      iran: "Iranian sites direct, everything else through the proxy",
       ads: "Block advertising domains",
       streaming:
         "Streaming through the proxy (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
