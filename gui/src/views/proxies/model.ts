@@ -18,7 +18,9 @@ import SubscriptionDialog from "@/dialogs/Subscription.vue";
 import SubscriptionSettings from "@/dialogs/SubscriptionSettings.vue";
 import { useAppStore } from "@/stores/app";
 import {
+  compareLatency,
   filterRows,
+  latencyFailed,
   locate,
   rowKey,
   sameWhich,
@@ -32,6 +34,8 @@ import { useSubscriptions } from "../subscriptions/model";
 export type NodeAction =
   "test" | "addToGroup" | "removeFromGroup" | "edit" | "share" | "delete";
 export type SubscriptionAction = "update" | "edit" | "share" | "delete";
+/** the order of the listed nodes: as the backend lists them, or by latency */
+export type NodeSort = "none" | "asc" | "desc";
 
 export function groupMembers(
   touch: Touch,
@@ -57,6 +61,10 @@ export function useProxies() {
   const source = ref(localStorage.getItem("proxiesSource") ?? "all");
   const view = ref(
     localStorage.getItem("proxiesView") === "list" ? "list" : "cards",
+  );
+  const savedSort = localStorage.getItem("proxiesSort");
+  const sort = ref<NodeSort>(
+    savedSort === "asc" || savedSort === "desc" ? savedSort : "none",
   );
   const loading = ref(true);
   const loadError = ref("");
@@ -90,8 +98,13 @@ export function useProxies() {
       title: s.remarks || s.host,
     })),
   ]);
-  const listed = computed(() =>
-    filterRows(
+  const sorts = computed(() => [
+    { value: "none", title: t("proxies.sorts.none") },
+    { value: "asc", title: t("proxies.sorts.asc") },
+    { value: "desc", title: t("proxies.sorts.desc") },
+  ]);
+  const listed = computed(() => {
+    const found = filterRows(
       rows.value.filter(
         (row) =>
           source.value === "all" ||
@@ -100,7 +113,14 @@ export function useProxies() {
             : subscriptions.value[row.sub ?? -1]?.address === source.value),
       ),
       query.value ?? "",
-    ),
+    );
+    if (sort.value === "none") return found;
+    const asc = sort.value === "asc";
+    return [...found].sort((a, b) => compareLatency(a, b, asc));
+  });
+  /** the listed nodes whose last latency test failed or timed out */
+  const failed = computed(() =>
+    listed.value.filter((row) => latencyFailed(row, t("latency.testing"))),
   );
   const selectedSet = computed(() => new Set(selectedKeys.value));
   const selected = computed(() =>
@@ -119,6 +139,7 @@ export function useProxies() {
 
   watch(view, (value) => localStorage.setItem("proxiesView", value));
   watch(source, (value) => localStorage.setItem("proxiesSource", value));
+  watch(sort, (value) => localStorage.setItem("proxiesSort", value));
   watch(listed, (value) => {
     const keys = new Set(value.map(rowKey));
     selectedKeys.value = selectedKeys.value.filter((key) => keys.has(key));
@@ -174,6 +195,9 @@ export function useProxies() {
   }
   function selectAll(value: boolean) {
     selectedKeys.value = value ? listed.value.map(rowKey) : [];
+  }
+  function selectFailed() {
+    selectedKeys.value = failed.value.map(rowKey);
   }
   function selectRow(row: Row, value: boolean) {
     const key = rowKey(row);
@@ -388,6 +412,8 @@ export function useProxies() {
     query,
     source,
     sources,
+    sort,
+    sorts,
     view,
     loading,
     loadError,
@@ -397,6 +423,7 @@ export function useProxies() {
     subscriptions,
     members,
     listed,
+    failed,
     selected,
     selectedKeys,
     allSelected,
@@ -408,6 +435,7 @@ export function useProxies() {
     inUse,
     sourceName,
     selectAll,
+    selectFailed,
     selectRow,
     sync,
     setMembership,

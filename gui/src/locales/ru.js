@@ -34,10 +34,17 @@ export default {
     sources: { all: "Все", local: "Локальные" },
     membersOnly: "Только участники",
     source: "Источник",
+    sort: "Сортировка",
+    sorts: {
+      none: "По умолчанию",
+      asc: "Сначала с меньшей задержкой",
+      desc: "Сначала с большей задержкой",
+    },
     inUse: "Используется",
     addToGroup: "Добавить в группу прокси",
     removeFromGroup: "Удалить из группы прокси",
     selectAll: "Выбрать все",
+    selectFailed: "Выбрать не прошедшие проверку",
     autoUpdate: "Автообновление",
     noSubscriptions: "Подписок пока нет",
     noSubscriptionsHint:

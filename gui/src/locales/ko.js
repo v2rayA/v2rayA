@@ -34,10 +34,17 @@ export default {
     sources: { all: "전체", local: "로컬" },
     membersOnly: "구성원만",
     source: "출처",
+    sort: "정렬",
+    sorts: {
+      none: "기본",
+      asc: "지연 시간 낮은 순",
+      desc: "지연 시간 높은 순",
+    },
     inUse: "사용 중",
     addToGroup: "프록시 그룹에 추가",
     removeFromGroup: "프록시 그룹에서 제거",
     selectAll: "전체 선택",
+    selectFailed: "실패한 노드 선택",
     autoUpdate: "자동 업데이트",
     noSubscriptions: "아직 구독이 없습니다",
     noSubscriptionsHint:
