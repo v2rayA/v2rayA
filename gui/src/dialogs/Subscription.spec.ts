@@ -28,6 +28,7 @@ const subscription = {
   remarks: "keep",
   servers: [],
   autoSelect: false,
+  allowDirectRecovery: false,
   updateMode: "disabled" as const,
   updateIntervalMinutes: 0,
   failureIntervalMinutes: 1,
@@ -90,6 +91,7 @@ test("offers four modes and only shows fields required by the mode", async () =>
       updateIntervalMinutes: 15,
       failureIntervalMinutes: 2,
       allowDirectRecovery: false,
+      nodeDns: "auto",
     },
   });
 });
@@ -172,3 +174,59 @@ test.each(["", "0", "0.5"])(
     expect(patchSubscription).not.toHaveBeenCalled();
   },
 );
+
+async function save() {
+  await wrapper
+    .findAll("button")
+    .find((b) => b.text() === "Save and Apply")!
+    .trigger("click");
+  await flushPromises();
+}
+
+test("old subscriptions default to auto without changing the incoming row", async () => {
+  wrapper = mountWithApp(Subscription, { props: { subscription } });
+  await save();
+  expect(patchSubscription).toHaveBeenCalledWith({
+    subscription: { ...subscription, nodeDns: "auto" },
+  });
+  expect(wrapper.emitted("close")).toEqual([[true]]);
+  expect(subscription).not.toHaveProperty("nodeDns");
+});
+
+test("edits an IPv6 node DNS endpoint", async () => {
+  const endpoint = "udp://[2001:db8::1]:5353";
+  wrapper = mountWithApp(Subscription, {
+    props: { subscription: { ...subscription, nodeDns: endpoint } },
+  });
+  const input = wrapper.get(".node-dns input");
+  expect((input.element as HTMLInputElement).value).toBe(endpoint);
+  expect(input.attributes("dir")).toBe("ltr");
+  await input.setValue(" tls://1.1.1.1:853 ");
+  await save();
+  expect(patchSubscription).toHaveBeenCalledWith({
+    subscription: { ...subscription, nodeDns: "tls://1.1.1.1:853" },
+  });
+});
+
+test("an empty node DNS resets the subscription to auto", async () => {
+  wrapper = mountWithApp(Subscription, {
+    props: { subscription: { ...subscription, nodeDns: "tcp://1.1.1.1:53" } },
+  });
+  await wrapper.get(".node-dns input").setValue(" ");
+  await save();
+  expect(patchSubscription).toHaveBeenCalledWith({
+    subscription: { ...subscription, nodeDns: "auto" },
+  });
+});
+
+test("a rejected node DNS leaves the dialog open and retryable", async () => {
+  wrapper = mountWithApp(Subscription, {
+    props: { subscription: { ...subscription, nodeDns: "tls://dns.example" } },
+  });
+  vi.mocked(patchSubscription).mockRejectedValueOnce(new Error("Invalid DNS"));
+  await save();
+  expect(wrapper.emitted("close")).toBeUndefined();
+  await wrapper.get(".node-dns input").setValue("auto");
+  await save();
+  expect(wrapper.emitted("close")).toEqual([[true]]);
+});

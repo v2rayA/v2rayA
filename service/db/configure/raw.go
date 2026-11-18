@@ -13,6 +13,7 @@ type ServerRaw struct {
 }
 
 type SubscriptionRaw struct {
+	NodeDns                string                 `json:"nodeDns"`
 	DatabaseID             int64                  `json:"databaseId"`
 	UpdateMode             SubscriptionUpdateMode `json:"updateMode"`
 	UpdateIntervalMinutes  int                    `json:"updateIntervalMinutes"`

@@ -438,6 +438,15 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 	if raw == nil {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d does not exist", subscription.ID), map[string]interface{}{"id": subscription.ID})
 	}
+	previous := *raw
+	// Old clients omit the field, so empty means "keep the stored value".
+	if subscription.NodeDns != "" && subscription.NodeDns != raw.NodeDns {
+		nodeDns, err := v2ray.NormalizeNodeDNS(subscription.NodeDns, configure.GetSettingNotNil())
+		if err != nil {
+			return err
+		}
+		raw.NodeDns = nodeDns
+	}
 	mode := raw.UpdateMode
 	if subscription.UpdateMode != nil {
 		mode = *subscription.UpdateMode
@@ -471,7 +480,12 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 	if subscription.AllowDirectRecovery != nil {
 		raw.AllowDirectRecovery = *subscription.AllowDirectRecovery
 	}
-	return configure.SetSubscription(subscription.ID-1, raw)
+	if raw.NodeDns == previous.NodeDns {
+		return configure.SetSubscription(subscription.ID-1, raw)
+	}
+	return ApplyCoreConfig(func() func() error {
+		return func() error { return configure.SetSubscription(subscription.ID-1, &previous) }
+	}, func() error { return configure.SetSubscription(subscription.ID-1, raw) })
 }
 
 func subscriptionHTTPClient() (*http.Client, error) {
