@@ -1,11 +1,7 @@
 // Shared node state and backend operations for the dashboard and proxies page.
 import { computed, getCurrentScope, onScopeDispose, ref, watch } from "vue";
 import dayjs from "dayjs";
-import {
-  getNodeLatency,
-  getTouch,
-  putOutboundConnections,
-} from "@/api";
+import { getNodeLatency, getTouch, putOutboundConnections } from "@/api";
 import type {
   Touch,
   TouchResponse,
@@ -98,7 +94,12 @@ export function useNodes() {
   // a response that lands after the page is gone must not overwrite what the
   // next page has since written to the store
   let disposed = false;
-  if (getCurrentScope()) onScopeDispose(() => (disposed = true));
+  const probes = new AbortController();
+  if (getCurrentScope())
+    onScopeDispose(() => {
+      disposed = true;
+      probes.abort();
+    });
 
   const connected = computed<Which[]>(() => touch.value.connectedServer ?? []);
   /** the groups each node is a member of, by whichKey: a long list asks for every row */
@@ -194,23 +195,27 @@ export function useNodes() {
     }
   }
 
-  async function testAll(
-    rows: Row[],
-    testingText: string,
-  ): Promise<void> {
+  async function testAll(rows: Row[], testingText: string): Promise<void> {
     const whiches = rows.map(
       (r) => ({ ...whichOf(r), sub: r.sub ?? null }) as Which,
     );
+    const previous = rows.map((r) => r.pingLatency);
     rows.forEach((r) => (r.pingLatency = testingText));
     try {
-      const res = await getNodeLatency(whiches);
+      const res = await getNodeLatency(whiches, probes.signal);
+      if (disposed) return;
       for (const w of res.whiches) {
         const row = locate(touch.value, w);
         if (row) row.pingLatency = w.pingLatency ?? "";
       }
     } catch (err) {
+      if (probes.signal.aborted) return;
       rows.forEach((r) => (r.pingLatency = ""));
       throw err;
+    } finally {
+      rows.forEach((r, i) => {
+        if (r.pingLatency === testingText) r.pingLatency = previous[i] ?? "";
+      });
     }
   }
 

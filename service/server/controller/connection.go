@@ -53,6 +53,11 @@ func DeleteConnection(ctx *gin.Context) {
 }
 
 func PostV2ray(ctx *gin.Context) {
+	finish, ok := interruptHTTPTests(ctx.Request.Context())
+	if !ok {
+		return
+	}
+	defer finish()
 	release, ok := beginMutation(ctx)
 	if !ok {
 		return
@@ -68,6 +73,11 @@ func PostV2ray(ctx *gin.Context) {
 }
 
 func DeleteV2ray(ctx *gin.Context) {
+	finish, ok := interruptHTTPTests(ctx.Request.Context())
+	if !ok {
+		return
+	}
+	defer finish()
 	release, ok := beginMutation(ctx)
 	if !ok {
 		return

@@ -258,9 +258,10 @@ describe("proxy node management", () => {
     expect(model.testing.value).toBe(true);
     expect(Number.parseFloat(model.listed.value[0].pingLatency)).toBeNaN();
     await pending;
-    expect(api.getNodeLatency).toHaveBeenCalledWith([
-      { id: 1, _type: "subscriptionServer", sub: 0 },
-    ]);
+    expect(api.getNodeLatency).toHaveBeenCalledWith(
+      [{ id: 1, _type: "subscriptionServer", sub: 0 }],
+      expect.any(AbortSignal),
+    );
     expect(model.listed.value[0].pingLatency).toBe("20ms");
     expect(model.testing.value).toBe(false);
   });

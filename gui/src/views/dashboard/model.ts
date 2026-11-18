@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, shallowRef } from "vue";
+import { computed, onMounted, onScopeDispose, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
 import "@/plugins/dayjs";
@@ -60,6 +60,8 @@ function parseMs(text: string): number | undefined {
 
 // The backend formats both quota values in GiB.
 export function useDashboard() {
+  const probes = new AbortController();
+  onScopeDispose(() => probes.abort());
   const store = useAppStore();
   const { t, locale } = useI18n();
   const notify = useNotify();
@@ -308,11 +310,11 @@ export function useDashboard() {
     if (!member || testing.value) return;
     testing.value = member.key;
     try {
-      const result = await getNodeLatency([member.which]);
+      const result = await getNodeLatency([member.which], probes.signal);
       const latency = result.whiches[0]?.pingLatency;
       if (latency) measured.value.set(member.key, latency);
     } catch (err) {
-      notify.warning(errorText(err));
+      if (!probes.signal.aborted) notify.warning(errorText(err));
     } finally {
       testing.value = undefined;
     }
@@ -323,14 +325,17 @@ export function useDashboard() {
     if (!members.value.length || testing.value) return;
     testing.value = "all";
     try {
-      const result = await getNodeLatency(members.value.map((m) => m.which));
+      const result = await getNodeLatency(
+        members.value.map((m) => m.which),
+        probes.signal,
+      );
       for (const which of result.whiches) {
         const member = members.value.find((m) => sameWhich(m.which, which));
         if (member && which.pingLatency)
           measured.value.set(member.key, which.pingLatency);
       }
     } catch (err) {
-      notify.warning(errorText(err));
+      if (!probes.signal.aborted) notify.warning(errorText(err));
     } finally {
       testing.value = undefined;
     }
@@ -339,9 +344,7 @@ export function useDashboard() {
   async function refreshSubscription(id: number, bypassProxy = false) {
     updating.value = id;
     try {
-      apply(
-        await putSubscription({ _type: "subscription", id }, bypassProxy),
-      );
+      apply(await putSubscription({ _type: "subscription", id }, bypassProxy));
       measured.value.clear();
     } catch (err) {
       notify.warning(errorText(err));

@@ -319,9 +319,10 @@ describe("dashboard", () => {
       .find((b) => b.text() === "Test latency")!
       .trigger("click");
     await flushPromises();
-    expect(getNodeLatency).toHaveBeenLastCalledWith([
-      { _type: "server", id: 1 },
-    ]);
+    expect(getNodeLatency).toHaveBeenLastCalledWith(
+      [{ _type: "server", id: 1 }],
+      expect.any(AbortSignal),
+    );
     expect(connection()).toContain("17ms");
   });
 
@@ -449,7 +450,8 @@ describe("dashboard", () => {
     expect(putSubscription).not.toHaveBeenCalled();
     expect(dialogState.stack).toHaveLength(1);
     expect(dialogState.stack[0].props).toMatchObject({
-      message: "The core is stopped. Update all subscriptions without the proxy?",
+      message:
+        "The core is stopped. Update all subscriptions without the proxy?",
     });
 
     closeDialog(dialogState.stack[0].id, true);
