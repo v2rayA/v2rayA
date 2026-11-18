@@ -243,13 +243,19 @@ func TestHttpLatency(ctx context.Context, which []*configure.Which, timeout time
 		}(i)
 	}
 	wg.Wait()
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctx.Err() != nil {
+		completed := make([]*configure.Which, 0, len(which))
+		for _, w := range which {
+			if w.Latency != "" {
+				completed = append(completed, w)
+			}
+		}
+		which = completed
 	}
 	if err := configure.NewWhiches(which).SaveLatencies(); err != nil {
 		return nil, fmt.Errorf("failed to save the latency test result: %v", err)
 	}
-	return which, nil
+	return which, ctx.Err()
 }
 func httpLatency(ctx context.Context, which *configure.Which, port string, timeout time.Duration, customTestUrl string) {
 	c, err := httpClient.GetHttpClientWithProxy("socks5://127.0.0.1:" + port)
@@ -280,6 +286,9 @@ func httpLatency(ctx context.Context, which *configure.Which, port string, timeo
 	req.Header.Set("Connection", "close")
 	req.Header.Set("User-Agent", "curl/7.70.0")
 	resp, err := c.Do(req)
+	if err != nil && ctx.Err() != nil {
+		return
+	}
 	setHTTPLatencyResult(which, resp, err, t)
 }
 

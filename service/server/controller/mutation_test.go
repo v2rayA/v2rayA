@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -116,6 +118,53 @@ func TestPatchSubscriptionWaitsForTheMutationTurn(t *testing.T) {
 	if _, errorCode := codeOf(t, recorder); errorCode != "REQUEST_IN_PROGRESS" {
 		t.Fatalf("held turn answered %s", recorder.Body.String())
 	}
+}
+
+func TestCoreControlCancelsQueuedHTTPTest(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		previous := mutation
+		mutation = make(chan struct{}, 1)
+		defer func() { mutation = previous }()
+		release, err := waitForMutation(t.Context())
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer release()
+
+		for _, cancelWithStop := range []bool{false, true} {
+			ctx, cancel := context.WithCancel(t.Context())
+			done := make(chan error, 1)
+			go func() {
+				// Parsing this URL would fail if the queued test acquires the turn.
+				_, err := runHTTPTest(ctx, nil, "%")
+				done <- err
+			}()
+			synctest.Wait()
+			select {
+			case <-done:
+				t.Error("probe returned before cancellation")
+				cancel()
+				continue
+			default:
+			}
+			if cancelWithStop {
+				finish, ok := interruptHTTPTests(t.Context())
+				if !ok {
+					t.Fatal("core control was cancelled")
+				}
+				defer finish()
+				if err := <-done; err != nil {
+					t.Errorf("queued probe cancelled by core control: %v", err)
+				}
+			} else {
+				cancel()
+				if err := <-done; err != context.Canceled {
+					t.Errorf("queued probe cancelled by client: %v", err)
+				}
+			}
+			cancel()
+		}
+	})
 }
 
 func testContext(t *testing.T) *gin.Context {

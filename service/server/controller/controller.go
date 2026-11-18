@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,20 +23,31 @@ var (
 // the request has been answered with REQUEST_IN_PROGRESS, or the client
 // went away.
 func beginMutation(ctx *gin.Context) (release func(), ok bool) {
+	release, err := waitForMutation(ctx.Request.Context())
+	if err == processingErr {
+		common.ResponseError(ctx, err)
+	}
+	return release, err == nil
+}
+
+func waitForMutation(ctx context.Context) (func(), error) {
 	timer := time.NewTimer(mutationWait)
 	defer timer.Stop()
 	select {
 	case mutation <- struct{}{}:
+		if err := ctx.Err(); err != nil {
+			<-mutation
+			return nil, err
+		}
 		service.CancelAutomation()
 		for !service.ConfigurationMu.TryLock() {
 			select {
 			case <-timer.C:
 				<-mutation
-				common.ResponseError(ctx, processingErr)
-				return nil, false
-			case <-ctx.Request.Context().Done():
+				return nil, processingErr
+			case <-ctx.Done():
 				<-mutation
-				return nil, false
+				return nil, ctx.Err()
 			case <-time.After(10 * time.Millisecond):
 			}
 		}
@@ -43,11 +55,10 @@ func beginMutation(ctx *gin.Context) (release func(), ok bool) {
 			service.ConfigurationMu.Unlock()
 			service.NotifyAutomation()
 			<-mutation
-		}, true
+		}, nil
 	case <-timer.C:
-		common.ResponseError(ctx, processingErr)
-		return nil, false
-	case <-ctx.Request.Context().Done():
-		return nil, false
+		return nil, processingErr
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 }

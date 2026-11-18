@@ -319,9 +319,10 @@ describe("dashboard", () => {
       .find((b) => b.text() === "Test latency")!
       .trigger("click");
     await flushPromises();
-    expect(getNodeLatency).toHaveBeenLastCalledWith([
-      { _type: "server", id: 1 },
-    ]);
+    expect(getNodeLatency).toHaveBeenLastCalledWith(
+      [{ _type: "server", id: 1 }],
+      expect.any(AbortSignal),
+    );
     expect(connection()).toContain("17ms");
   });
 
