@@ -79,31 +79,19 @@ type ObservatoryItem struct {
 	Settings Observatory `json:"settings"`
 }
 type Observatory struct {
-	SubjectSelector []string    `json:"subjectSelector"`
-	PingConfig      *PingConfig `json:"pingConfig,omitempty"`
-	ProbeURL        string      `json:"probeURL,omitempty"`
-	ProbeInterval   string      `json:"probeInterval,omitempty"`
+	SubjectSelector []string `json:"subjectSelector"`
+	ProbeURL        string   `json:"probeURL,omitempty"`
+	ProbeInterval   string   `json:"probeInterval,omitempty"`
 }
 
-type PingConfig struct {
-	Destination   string `json:"destination,omitempty"`
-	Connectivity  string `json:"connectivity,omitempty"`
-	Interval      string `json:"interval,omitempty"`
-	SamplingCount int    `json:"samplingCount,omitempty"`
-	Timeout       string `json:"timeout,omitempty"`
-	HTTPMethod    string `json:"httpMethod,omitempty"`
-}
 type Balancer struct {
-	Tag      string           `json:"tag"`
-	Selector []string         `json:"selector"`
-	Strategy BalancerStrategy `json:"strategy"`
+	Tag         string           `json:"tag"`
+	Selector    []string         `json:"selector"`
+	FallbackTag string           `json:"fallbackTag,omitempty"`
+	Strategy    BalancerStrategy `json:"strategy"`
 }
 type BalancerStrategy struct {
-	Type     string            `json:"type"`
-	Settings *StrategySettings `json:"settings,omitempty"`
-}
-type StrategySettings struct {
-	ObserverTag string `json:"observerTag"`
+	Type string `json:"type"`
 }
 type FakeDns struct {
 	IpPool   string `json:"ipPool"`

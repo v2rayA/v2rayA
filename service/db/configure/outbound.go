@@ -7,7 +7,10 @@ func (t ObservatoryType) String() string {
 }
 
 const (
-	LeastPing ObservatoryType = "leastping"
+	LeastPing  ObservatoryType = "leastping"
+	LeastLoad  ObservatoryType = "leastload"
+	RoundRobin ObservatoryType = "roundrobin"
+	Random     ObservatoryType = "random"
 )
 
 type OutboundSetting struct {

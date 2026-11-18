@@ -3,7 +3,6 @@ package v2ray
 import (
 	"net"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/go-leo/slicex"
@@ -41,7 +40,6 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 				continue
 			}
 
-			//TODO: random, leastload
 			strategy := serverData.OutboundName2Setting[outbound].Type
 			interval, err := time.ParseDuration(serverData.OutboundName2Setting[outbound].ProbeInterval)
 			if err != nil {
@@ -53,43 +51,39 @@ func (t *Template) SetAPI(serverData *ServerData) (port int, err error) {
 			for _, vi := range serverData.OutboundName2ServerObjs[outbound] {
 				selector = append(selector, GroupWrapper(vi.GetName()))
 			}
+			// Keep fallback inside this group, never the global default or direct.
+			fallback := "block"
+			if len(selector) > 0 {
+				fallback = selector[0]
+			}
 
 			t.Routing.Balancers = append(t.Routing.Balancers, coreObj.Balancer{
-				Tag:      outbound,
-				Selector: selector,
+				Tag:         outbound,
+				Selector:    selector,
+				FallbackTag: fallback,
 				Strategy: coreObj.BalancerStrategy{
 					Type: strategy.String(),
-					Settings: &coreObj.StrategySettings{
-						ObserverTag: outbound,
-					},
 				},
 			})
 
-			if strings.ToLower(strategy.String()) == "leastping" {
-				probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
-				if _, err := url.Parse(probeUrl); err != nil {
-					log.Warn("observatory: %v", err)
-					probeUrl = "https://gstatic.com/generate_204"
-				}
-
-				// v2raya_core always uses MultiObservatory: one observer per balancer group.
-				if t.MultiObservatory == nil {
-					t.MultiObservatory = &coreObj.MultiObservatory{}
-				}
-				t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
-					Tag: outbound,
-					Settings: coreObj.Observatory{
-						SubjectSelector: selector,
-						PingConfig: &coreObj.PingConfig{
-							Destination: probeUrl,
-							Interval:    interval.String(),
-						},
-						// the core's loader reads these flat fields too (core/hint/conf/loader.go)
-						ProbeURL:      probeUrl,
-						ProbeInterval: interval.String(),
-					},
-				})
+			probeUrl := serverData.OutboundName2Setting[outbound].ProbeURL
+			if _, err := url.Parse(probeUrl); err != nil {
+				log.Warn("observatory: %v", err)
+				probeUrl = "https://gstatic.com/generate_204"
 			}
+
+			// An explicit fallback enables health filtering for random and round-robin.
+			if t.MultiObservatory == nil {
+				t.MultiObservatory = &coreObj.MultiObservatory{}
+			}
+			t.MultiObservatory.Observers = append(t.MultiObservatory.Observers, coreObj.ObservatoryItem{
+				Tag: outbound,
+				Settings: coreObj.Observatory{
+					SubjectSelector: selector,
+					ProbeURL:        probeUrl,
+					ProbeInterval:   interval.String(),
+				},
+			})
 		}
 		if t.MultiObservatory != nil || t.Observatory != nil {
 			// v2raya_core supports ObservatoryService via the v2ray-compat gRPC path.
