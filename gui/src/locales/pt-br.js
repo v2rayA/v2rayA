@@ -518,6 +518,7 @@ export default {
       global: "Tudo pelo proxy, rede local direto",
       minimal: "Só os serviços estrangeiros comuns pelo proxy, o resto direto",
       russia: "Sites russos direto, exceções e o restante pelo proxy",
+      iran: "Sites iranianos direto, o restante pelo proxy",
       ads: "Bloquear domínios de publicidade",
       streaming:
         "Streaming pelo proxy (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",

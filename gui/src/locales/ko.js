@@ -505,6 +505,7 @@ export default {
       global: "모두 프록시, LAN은 직접 연결",
       minimal: "자주 쓰는 해외 서비스만 프록시, 나머지는 직접 연결",
       russia: "러시아 사이트는 직접 연결, 예외와 나머지는 프록시",
+      iran: "이란 사이트는 직접 연결, 나머지는 프록시",
       ads: "광고 도메인 차단",
       streaming:
         "스트리밍은 프록시 (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
