@@ -22,6 +22,8 @@ VLESS links with TLS keep their `ech` parameter when imported, edited and shared
 
 Subscriptions have their own page, **Subscriptions** (on a phone the docs move to the app bar's menu to make room for it). They keep their nodes together and can be updated by hand or on a schedule (**Settings → Automatically Update Subscriptions**). The mode setting next to it decides whether the update goes through the proxy.
 
+**Test latency** measures the listed nodes, and **Sort** orders them by the result, lowest or highest latency first; nodes not yet tested, still testing or failed stay at the end either way. **Select failed** selects the listed nodes whose last test failed or timed out, so you can review them and remove them with **Delete**. Subscription nodes cannot be deleted individually.
+
 ## Groups
 
 Nodes are used through proxy groups. The group `proxy` always exists; more are created, renamed, configured and deleted from the group button in the app bar, the only place for that. A node joins a group from its menu, or select several on the Proxies page and pick the group under **Add to proxy group**. A group with several connected members uses the one with the lowest measured latency (**Auto (lowest latency)**); the node menu on the dashboard pins one member so the group uses it alone, **Add or remove nodes** changes the members, and the group settings set the probe address and interval.

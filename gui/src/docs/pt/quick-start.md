@@ -22,6 +22,8 @@ Os links VLESS com TLS preservam o parâmetro `ech` ao importar, editar e compar
 
 As assinaturas têm sua própria página, **Assinaturas** (no celular, a documentação passa para o menu da barra superior para abrir espaço). Elas mantêm seus nós agrupados e podem ser atualizadas manualmente ou por agendamento (**Configurações → Atualizar assinaturas automaticamente**). A configuração de modo ao lado determina se a atualização passa pelo proxy.
 
+**Testar latência** mede os nós listados, e **Ordenar** os organiza pelo resultado, com a menor ou a maior latência primeiro; nós ainda não testados, em teste ou com falha ficam sempre no fim. **Selecionar os que falharam** seleciona os nós listados cujo último teste falhou ou esgotou o tempo, para você revisá-los e removê-los com **Excluir**. Nós de assinatura não podem ser excluídos individualmente.
+
 ## Grupos
 
 Os nós são usados por meio de grupos de proxy. O grupo `proxy` sempre existe; outros são criados, configurados e excluídos no botão de grupos da barra superior, o único lugar para isso. Um nó entra em um grupo pelo seu menu, ou selecione vários na página Proxies e escolha o grupo em **Adicionar ao grupo de proxy**. Um grupo com vários membros conectados usa o de menor latência medida (**Automático (menor latência)**); o menu do nó no painel fixa um membro para que o grupo use apenas ele, **Adicionar ou remover nós** altera os membros, e as configurações do grupo definem o endereço e o intervalo de sondagem.

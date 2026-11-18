@@ -34,10 +34,17 @@ export default {
     sources: { all: "همه", local: "محلی" },
     membersOnly: "فقط اعضا",
     source: "منبع",
+    sort: "مرتب‌سازی",
+    sorts: {
+      none: "پیش‌فرض",
+      asc: "کمترین تأخیر اول",
+      desc: "بیشترین تأخیر اول",
+    },
     inUse: "در حال استفاده",
     addToGroup: "افزودن به گروه پروکسی",
     removeFromGroup: "حذف از گروه پروکسی",
     selectAll: "انتخاب همه",
+    selectFailed: "انتخاب گره‌های ناموفق",
     autoUpdate: "به‌روزرسانی خودکار",
     noSubscriptions: "هنوز اشتراکی وجود ندارد",
     noSubscriptionsHint:

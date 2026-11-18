@@ -34,10 +34,17 @@ export default {
     sources: { all: "Todos", local: "Locais" },
     membersOnly: "Somente membros",
     source: "Origem",
+    sort: "Ordenar",
+    sorts: {
+      none: "Padrão",
+      asc: "Menor latência primeiro",
+      desc: "Maior latência primeiro",
+    },
     inUse: "Em uso",
     addToGroup: "Adicionar ao grupo de proxy",
     removeFromGroup: "Remover do grupo de proxy",
     selectAll: "Selecionar todos",
+    selectFailed: "Selecionar os que falharam",
     autoUpdate: "Atualização automática",
     noSubscriptions: "Nenhuma assinatura ainda",
     noSubscriptionsHint:

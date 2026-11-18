@@ -269,6 +269,42 @@ describe("proxy node management", () => {
     ]);
     expect(model.listed.value[0].pingLatency).toBe("40ms");
   });
+  test("sorts listed nodes by latency, keeping untested and failed ones last, and remembers the order", async () => {
+    const model = getModel();
+    const [north, south, west, east] = model.rows.value;
+    north.pingLatency = "300ms";
+    south.pingLatency = "TIMEOUT";
+    west.pingLatency = "40ms";
+    east.pingLatency = "";
+    const names = () => model.listed.value.map((r) => r.name);
+    expect(names()).toEqual(["North", "South", "West", "East"]);
+    model.sort.value = "asc";
+    expect(names()).toEqual(["West", "North", "South", "East"]);
+    model.sort.value = "desc";
+    expect(names()).toEqual(["North", "West", "South", "East"]);
+    await nextTick();
+    expect(localStorage.getItem("proxiesSort")).toBe("desc");
+    wrapper.unmount();
+    wrapper = mountModel();
+    expect(getModel().sort.value).toBe("desc");
+  });
+  test("selects the listed nodes whose last test failed, replacing the selection", () => {
+    const model = getModel();
+    const [north, south, west, east] = model.rows.value;
+    north.pingLatency = "TIMEOUT";
+    south.pingLatency = "30ms";
+    west.pingLatency = "PROXY ERROR";
+    east.pingLatency = "";
+    model.selectRow(south, true);
+    model.selectFailed();
+    expect(model.selected.value.map((r) => r.name)).toEqual(["North", "West"]);
+    model.source.value = "local";
+    model.selectFailed();
+    expect(model.selected.value.map((r) => r.name)).toEqual(["North"]);
+    expect(model.canDelete.value).toBe(true);
+    north.pingLatency = "testing…";
+    expect(model.failed.value).toEqual([]);
+  });
   test("exports the selected nodes to the clipboard or to a timestamped TXT file", async () => {
     const model = getModel();
     api.getSharingAddress.mockResolvedValue({
