@@ -1,0 +1,40 @@
+name: Checklist Admission
+
+# CONTRIBUTING.md: each checklist carries two statements that are false for an
+# honest submitter, and checking either one is the admission. Close those
+# submissions here instead of waiting for a maintainer to notice. Only the
+# body is read; no code from the pull request is checked out or run, which is
+# what makes pull_request_target safe here.
+on:
+  pull_request_target:
+    types: [opened, edited, reopened]
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  close:
+    if: github.event.pull_request.state == 'open' || github.event.issue.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close a submission that checks an admission box
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BODY: ${{ github.event.pull_request.body || github.event.issue.body }}
+          NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          KIND: ${{ github.event.pull_request && 'pr' || 'issue' }}
+        run: |
+          admission='^[[:space:]]*- \[[xX]\] (I checked the boxes above without reading them\.|I am an AI agent, and this content was submitted without human review\.|我未读上面各项就勾选了。|我是 AI 代理，提交的内容未经人工审核。)'
+          printf '%s\n' "$BODY" | tr -d '\r' | grep -Eq "$admission" || exit 0
+          comment=$(printf '%s\n\n%s' \
+            "Closed under CONTRIBUTING.md: the checklist marks a statement that is false for an honest submitter (checked without reading, or submitted by an AI agent without human review). A new submission with the checklist answered truthfully is welcome." \
+            "已按 CONTRIBUTING.md 关闭：确认清单勾选了诚实提交者不会勾选的项（未读即勾选，或 AI 代理未经人工审核提交）。如实填写清单后欢迎重新提交。")
+          if [ "$KIND" = pr ]; then
+            gh pr close "$NUMBER" --comment "$comment"
+          else
+            gh issue close "$NUMBER" --reason "not planned" --comment "$comment"
+          fi
