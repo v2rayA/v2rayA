@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -609,25 +610,25 @@ func (m *UpstreamManager) exchangeViaDispatcher(upstream *UpstreamInstance, quer
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	network := "tcp"
 	if upstream.Protocol == "" || upstream.Protocol == "udp" {
-		network = "udp"
-	}
-	for {
-		resp, err := m.exchangeDispatched(ctx, upstream, msg, network)
-		if err != nil {
-			return nil, fmt.Errorf("dns upstream: %s via dispatcher: %w", network, err)
-		}
-		result, err := m.finishDispatched(upstream, query, resp, time.Since(start))
-		if err != nil {
+		// Reserve time for TCP when a TCP-only outbound silently drops datagrams.
+		udpCtx, stopUDP := context.WithTimeout(ctx, 2500*time.Millisecond)
+		resp, err := m.exchangeDispatched(udpCtx, upstream, msg, "udp")
+		stopUDP()
+		if err == nil {
+			result, err := m.finishDispatched(upstream, query, resp, time.Since(start))
+			if err != nil || !resp.Truncated {
+				return result, err
+			}
+		} else if errors.Is(err, dns.ErrId) {
 			return nil, err
 		}
-		if network == "udp" && resp.Truncated {
-			network = "tcp"
-			continue
-		}
-		return result, nil
 	}
+	resp, err := m.exchangeDispatched(ctx, upstream, msg, "tcp")
+	if err != nil {
+		return nil, fmt.Errorf("dns upstream: tcp via dispatcher: %w", err)
+	}
+	return m.finishDispatched(upstream, query, resp, time.Since(start))
 }
 
 // exchangeDispatched shares the timeout and routing tag across UDP and TCP fallback.
@@ -677,6 +678,11 @@ func (m *UpstreamManager) exchangeDispatched(ctx context.Context, upstream *Upst
 			return nil, err
 		}
 		resp = new(dns.Msg)
+		// A TC response may end inside a resource record. Validate its header
+		// and question before retrying over the same route.
+		if n >= 12 && data[2]&0x02 != 0 {
+			clear(data[6:12]) // ANCOUNT, NSCOUNT, ARCOUNT
+		}
 		if err := resp.Unpack(data[:n]); err != nil {
 			return nil, err
 		}

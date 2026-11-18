@@ -20,9 +20,9 @@ func (f testRouteDispatcher) Dispatch(ctx context.Context, network, addr, tag st
 
 func TestDispatcherTransport(t *testing.T) {
 	for _, tc := range []struct {
-		name, protocol                          string
-		truncated, wrongID, wrongQuestion, fail bool
-		want                                    []string
+		name, protocol                                                   string
+		truncated, partial, wrongID, wrongQuestion, fail, udpOnlyFailure bool
+		want                                                             []string
 	}{
 		{name: "default UDP", want: []string{"udp"}},
 		{name: "explicit UDP", protocol: "udp", want: []string{"udp"}},
@@ -30,7 +30,9 @@ func TestDispatcherTransport(t *testing.T) {
 		{name: "truncated", truncated: true, want: []string{"udp", "tcp"}},
 		{name: "wrong ID", truncated: true, wrongID: true, want: []string{"udp"}},
 		{name: "wrong question", truncated: true, wrongQuestion: true, want: []string{"udp"}},
-		{name: "dispatch error", fail: true, want: []string{"udp", "udp"}},
+		{name: "incomplete truncated RR", truncated: true, partial: true, want: []string{"udp", "tcp"}},
+		{name: "TCP-only outbound", udpOnlyFailure: true, want: []string{"udp", "udp", "tcp"}},
+		{name: "dispatch error", fail: true, want: []string{"udp", "udp", "tcp", "tcp"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var networks []string
@@ -40,7 +42,7 @@ func TestDispatcherTransport(t *testing.T) {
 				if tag != "chosen-group" || addr != "192.0.2.1:53" {
 					t.Errorf("route = %s %s", tag, addr)
 				}
-				if tc.fail {
+				if tc.fail || (tc.udpOnlyFailure && network == "udp") {
 					return nil, errors.New("unavailable")
 				}
 				client, server := net.Pipe()
@@ -73,6 +75,10 @@ func TestDispatcherTransport(t *testing.T) {
 					}
 					if network == "udp" {
 						b, _ := r.Pack()
+						if tc.partial {
+							b[7] = 1
+							b = append(b, 0xc0)
+						}
 						server.Write(b)
 					} else {
 						(&dns.Conn{Conn: server}).WriteMsg(r)
