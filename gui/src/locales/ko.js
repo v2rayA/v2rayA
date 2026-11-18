@@ -1,4 +1,15 @@
 export default {
+  nodeProbe: {
+    mode: "노드 검사 모드",
+    server: "서버 연결",
+    proxy: "프록시 경유",
+    url: "검사 URL",
+    title: "노드 검사",
+    hint: "대시보드와 노드 목록에 적용됩니다. 서버 연결은 서버 접속을 확인하고, 프록시 경유는 각 노드를 통해 웹사이트를 요청합니다.",
+    urlHint:
+      "비워 두면 https://gstatic.com/generate_204를 사용합니다. 요청 실패는 대상 웹사이트의 문제일 수도 있습니다.",
+    invalidUrl: "인증 정보가 없는 HTTP(S) URL을 입력하세요.",
+  },
   onboarding: {
     title: "사용 안내",
     importTitle: "노드 가져오기",

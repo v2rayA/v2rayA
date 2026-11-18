@@ -280,6 +280,7 @@ func Run() error {
 		auth.DELETE("connection", controller.DeleteConnection)
 		auth.POST("v2ray", controller.PostV2ray)
 		auth.DELETE("v2ray", controller.DeleteV2ray)
+		auth.GET("nodeLatency", controller.GetNodeLatency)
 		auth.GET("pingLatency", controller.GetPingLatency)
 		auth.GET("httpLatency", controller.GetHttpLatency)
 		auth.GET("sharingAddress", controller.GetSharingAddress)

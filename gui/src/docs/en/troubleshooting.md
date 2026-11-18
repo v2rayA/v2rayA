@@ -29,3 +29,6 @@ A BoltDB database from an older release is migrated on the first start; the old 
 ## Reset the password
 
 Stop the service, run `v2raya --reset-password` as the account the service uses with the same `--config` and `--lite` flags (on Windows the service's directory is under `%ProgramData%\SYSTEM`, not the elevated user's), start it again and register.
+
+
+Node checks use the mode selected in Settings for both the dashboard and the node list. “To server” measures transport reachability; “Through proxy” requests the configured HTTP(S) URL through each tested node. An empty URL uses `https://gstatic.com/generate_204`. Only 2xx responses pass; redirects are not followed. A failed request can mean a problem with the target website, not necessarily a dead node. Checks run in a separate temporary core and do not change group membership or balancing.

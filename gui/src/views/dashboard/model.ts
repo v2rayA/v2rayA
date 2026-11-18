@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import "@/plugins/dayjs";
 import {
   deleteV2ray,
-  getPingLatency,
+  getNodeLatency,
   getTouch,
   postV2ray,
   putOutboundConnections,
@@ -308,7 +308,7 @@ export function useDashboard() {
     if (!member || testing.value) return;
     testing.value = member.key;
     try {
-      const result = await getPingLatency([member.which]);
+      const result = await getNodeLatency([member.which]);
       const latency = result.whiches[0]?.pingLatency;
       if (latency) measured.value.set(member.key, latency);
     } catch (err) {
@@ -323,7 +323,7 @@ export function useDashboard() {
     if (!members.value.length || testing.value) return;
     testing.value = "all";
     try {
-      const result = await getPingLatency(members.value.map((m) => m.which));
+      const result = await getNodeLatency(members.value.map((m) => m.which));
       for (const which of result.whiches) {
         const member = members.value.find((m) => sameWhich(m.which, which));
         if (member && which.pingLatency)

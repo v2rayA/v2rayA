@@ -12,7 +12,7 @@ import {
   putSetting,
   putOutboundConnections,
   putOutboundSelection,
-  getPingLatency,
+  getNodeLatency,
   putSubscription,
 } from "@/api";
 import { watchConnected } from "@/api/connect";
@@ -40,7 +40,7 @@ vi.mock("@/api", async (original) => ({
   putSetting: vi.fn(),
   putOutboundSelection: vi.fn(),
   putOutboundConnections: vi.fn(),
-  getPingLatency: vi.fn(),
+  getNodeLatency: vi.fn(),
   putSubscription: vi.fn(),
 }));
 vi.mock("@/api/connect", () => ({
@@ -113,7 +113,7 @@ beforeEach(() => {
   vi.mocked(putOutboundConnections).mockResolvedValue(response());
   // the tile pings the members once on arrival; a test that wants a
   // result arranges it after the mount
-  vi.mocked(getPingLatency).mockResolvedValue({ whiches: [] });
+  vi.mocked(getNodeLatency).mockResolvedValue({ whiches: [] });
   vi.mocked(getTouch).mockResolvedValue(response());
   vi.mocked(getSetting).mockResolvedValue({
     setting: {
@@ -310,7 +310,7 @@ describe("dashboard", () => {
     await flushPromises();
     expect(connection()).toContain("Standalone");
     // the latency tile tests every member, the node in use included
-    vi.mocked(getPingLatency).mockResolvedValueOnce({
+    vi.mocked(getNodeLatency).mockResolvedValueOnce({
       whiches: [{ _type: "server", id: 1, pingLatency: "17ms" }],
     });
     await wrapper
@@ -319,7 +319,7 @@ describe("dashboard", () => {
       .find((b) => b.text() === "Test latency")!
       .trigger("click");
     await flushPromises();
-    expect(getPingLatency).toHaveBeenLastCalledWith([
+    expect(getNodeLatency).toHaveBeenLastCalledWith([
       { _type: "server", id: 1 },
     ]);
     expect(connection()).toContain("17ms");

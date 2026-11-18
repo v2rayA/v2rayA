@@ -254,18 +254,18 @@ export function useProxies() {
       nodes.apply(await putOutboundConnections({ outbound, touches: next }));
     });
   }
-  async function testRows(targets: Row[], http = false) {
+  async function testRows(targets: Row[]) {
     if (testing.value || !targets.length) return;
     testing.value = true;
     try {
-      await nodes.testAll(targets, http, t("latency.testing"));
+      await nodes.testAll(targets, t("latency.testing"));
     } catch (err) {
       notify.warning(t("latency.failed", { message: errorText(err) }));
     } finally {
       testing.value = false;
     }
   }
-  const testListed = (http = false) => testRows(listed.value, http);
+  const testListed = () => testRows(listed.value);
   async function removeRows(targets: Row[]) {
     if (!targets.length || targets.some((r) => r._type !== "server")) return;
     await run(async () => {

@@ -50,6 +50,22 @@ const {
   remoteGFWListVersion,
 } = settings;
 const saving = ref(false);
+function probeURLRule(value: string): true | string {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    if (
+      ["http:", "https:"].includes(url.protocol) &&
+      url.hostname &&
+      !url.username &&
+      !url.password
+    )
+      return true;
+  } catch {
+    /* invalid URL */
+  }
+  return t("nodeProbe.invalidUrl");
+}
 const formRef = ref<{ validate(): Promise<{ valid: boolean }> } | null>(null);
 
 onMounted(() => {
@@ -355,6 +371,36 @@ defineExpose({ sync: () => settings.load() });
             </v-expand-transition>
           </div>
         </v-expand-transition>
+      </v-list>
+
+      <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">
+        <v-list-subheader>{{ t("nodeProbe.title") }}</v-list-subheader>
+        <p class="px-4 pb-2 md3-body-medium text-on-surface-variant">
+          {{ t("nodeProbe.hint") }}
+        </p>
+        <SettingChoice
+          v-model="form.nodeProbeMode"
+          :title="t('nodeProbe.mode')"
+          :items="[
+            { value: '', title: t('nodeProbe.server') },
+            { value: 'proxy', title: t('nodeProbe.proxy') },
+          ]"
+        />
+        <div v-if="form.nodeProbeMode === 'proxy'" class="px-4 pb-4">
+          <v-text-field
+            v-model="form.nodeProbeUrl"
+            :label="t('nodeProbe.url')"
+            :aria-label="t('nodeProbe.url')"
+            :hint="t('nodeProbe.urlHint')"
+            persistent-hint
+            placeholder="https://gstatic.com/generate_204"
+            :rules="[probeURLRule]"
+            type="url"
+            dir="ltr"
+            autocomplete="off"
+            :spellcheck="false"
+          />
+        </div>
       </v-list>
 
       <v-list class="mb-4" bg-color="surface-container-low" rounded="xl">

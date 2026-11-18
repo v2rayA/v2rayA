@@ -29,3 +29,6 @@ Um banco de dados BoltDB de uma versão anterior é migrado na primeira iniciali
 ## Redefinir a senha
 
 Pare o serviço, execute `v2raya --reset-password` com a conta usada pelo serviço e com as mesmas opções `--config` e `--lite` (no Windows, o diretório do serviço fica em `%ProgramData%\SYSTEM`, não no diretório do usuário com privilégios elevados), inicie-o novamente e registre-se.
+
+
+O modo de verificação nas configurações vale para o painel e a lista de nós. “Até o servidor” verifica a conectividade de transporte; “Pelo proxy” solicita a URL HTTP(S) por cada nó. Uma URL vazia usa `https://gstatic.com/generate_204`. Apenas respostas 2xx passam; redirecionamentos não são seguidos. A falha pode ser do site de destino. As verificações usam um núcleo temporário separado, sem alterar os grupos ou o balanceamento.

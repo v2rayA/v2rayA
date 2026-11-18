@@ -1,4 +1,15 @@
 export default {
+  nodeProbe: {
+    mode: "节点检查模式",
+    server: "连接服务器",
+    proxy: "通过代理",
+    url: "测试 URL",
+    title: "节点检查",
+    hint: "适用于仪表盘和节点列表。“连接服务器”检查与服务器的连接；“通过代理”通过每个节点请求网站。",
+    urlHint:
+      "留空使用 https://gstatic.com/generate_204。请求失败也可能是目标网站不可用。",
+    invalidUrl: "请输入不含凭据的 HTTP(S) URL。",
+  },
   onboarding: {
     title: "使用教程",
     importTitle: "导入节点",

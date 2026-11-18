@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -41,7 +42,7 @@ func TestHTTPLatencyClosesErrorResponseBody(t *testing.T) {
 
 func TestHttpLatencyRejectsInvalidTestURLBeforeStartingCore(t *testing.T) {
 	wasRunning := v2ray.ProcessManager.Running()
-	_, err := TestHttpLatency(nil, time.Second, 1, false, "%")
+	_, err := TestHttpLatency(context.Background(), nil, time.Second, 1, false, "%")
 	var coded *common.CodedError
 	if !errors.As(err, &coded) || coded.Code != "INVALID_TEST_URL" {
 		t.Fatalf("error = %v, want INVALID_TEST_URL", err)
@@ -64,7 +65,7 @@ func TestMain(m *testing.M) {
 
 func TestHttpLatencyDropsSubscriptions(t *testing.T) {
 	input := []*configure.Which{{NodeRef: configure.NodeRef{TYPE: configure.SubscriptionType, ID: 1}}}
-	got, err := TestHttpLatency(input, time.Second, 1, false, "")
+	got, err := TestHttpLatency(context.Background(), input, time.Second, 1, false, "")
 	if err != nil {
 		t.Fatal(err)
 	}

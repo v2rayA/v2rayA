@@ -10,6 +10,8 @@ import (
 )
 
 type Setting struct {
+	NodeProbeMode                      string          `json:"nodeProbeMode"`
+	NodeProbeURL                       string          `json:"nodeProbeUrl"`
 	LogLevel                           string          `json:"logLevel"`
 	RulePortMode                       RulePortMode    `json:"pacMode"`
 	ProxyModeWhenSubscribe             ProxyMode       `json:"proxyModeWhenSubscribe"`

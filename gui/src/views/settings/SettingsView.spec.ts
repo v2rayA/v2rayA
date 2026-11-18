@@ -46,6 +46,8 @@ const loaded: Setting = {
   proxyModeWhenSubscribe: "direct",
   tcpFastOpen: "default",
   logLevel: "info",
+  nodeProbeMode: "",
+  nodeProbeUrl: "",
   inboundSniffing: "http,tls",
   routeOnly: true,
   muxOn: "yes",
@@ -133,6 +135,49 @@ describe("settings list", () => {
         mux: 16,
       },
       { signal: expect.any(AbortSignal) },
+    );
+  });
+
+  test("saves a global proxy check URL and rejects invalid URLs", async () => {
+    await mountPage();
+    await choose("Node check mode", "Through proxy");
+    const input = wrapper.get('input[aria-label="Test URL"]');
+    await input.setValue("file:///tmp/test");
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).not.toHaveBeenCalled();
+    await input.setValue("https://example.com/probe");
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nodeProbeMode: "proxy",
+        nodeProbeUrl: "https://example.com/probe",
+      }),
+      expect.anything(),
+    );
+  });
+
+  test("keeps the custom URL when switching modes and accepts the default", async () => {
+    await mountPage();
+    expect(wrapper.find('input[aria-label="Test URL"]').exists()).toBe(false);
+    await choose("Node check mode", "Through proxy");
+    await wrapper
+      .get('input[aria-label="Test URL"]')
+      .setValue("https://example.com/probe");
+    await choose("Node check mode", "To server");
+    expect(wrapper.find('input[aria-label="Test URL"]').exists()).toBe(false);
+    await choose("Node check mode", "Through proxy");
+    expect(
+      (wrapper.get('input[aria-label="Test URL"]').element as HTMLInputElement)
+        .value,
+    ).toBe("https://example.com/probe");
+    await wrapper.get('input[aria-label="Test URL"]').setValue("");
+    await wrapper.get('button[type="submit"]').trigger("click");
+    await flushPromises();
+    expect(putSetting).toHaveBeenCalledWith(
+      expect.objectContaining({ nodeProbeMode: "proxy", nodeProbeUrl: "" }),
+      expect.anything(),
     );
   });
 
