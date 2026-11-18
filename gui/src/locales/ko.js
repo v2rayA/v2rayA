@@ -34,10 +34,17 @@ export default {
     sources: { all: "전체", local: "로컬" },
     membersOnly: "구성원만",
     source: "출처",
+    sort: "정렬",
+    sorts: {
+      none: "기본",
+      asc: "지연 시간 낮은 순",
+      desc: "지연 시간 높은 순",
+    },
     inUse: "사용 중",
     addToGroup: "프록시 그룹에 추가",
     removeFromGroup: "프록시 그룹에서 제거",
     selectAll: "전체 선택",
+    selectFailed: "실패한 노드 선택",
     autoUpdate: "자동 업데이트",
     noSubscriptions: "아직 구독이 없습니다",
     noSubscriptionsHint:
@@ -58,7 +65,7 @@ export default {
     switchNode: "전환",
     proxyGroup: "프록시 그룹",
     editGroup: "노드 추가/삭제",
-    autoFastest: "자동 (최저 지연 시간)",
+    autoFastest: "자동 (그룹 전략)",
     emptyGroup: "이 그룹에 노드가 없습니다",
     updateAll: "모두 업데이트",
     updatedAt: "업데이트: {time}",
@@ -508,6 +515,7 @@ export default {
       global: "모두 프록시, LAN은 직접 연결",
       minimal: "자주 쓰는 해외 서비스만 프록시, 나머지는 직접 연결",
       russia: "러시아 사이트는 직접 연결, 예외와 나머지는 프록시",
+      iran: "이란 사이트는 직접 연결, 나머지는 프록시",
       ads: "광고 도메인 차단",
       streaming:
         "스트리밍은 프록시 (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
@@ -633,6 +641,11 @@ export default {
     probeUrl: "탐색 URL",
     probeInterval: "탐색 간격",
     type: "유형",
+    strategies: {
+      leastLoad: "최소 부하",
+      roundRobin: "순차 선택",
+      random: "무작위 선택",
+    },
   },
   proxyGroup: {
     searchNodes: "노드 검색...",

@@ -32,6 +32,8 @@ const {
   query,
   source,
   sources,
+  sort,
+  sorts,
   view,
   loading,
   loadError,
@@ -39,6 +41,7 @@ const {
   testing,
   rows,
   listed,
+  failed,
   selected,
   allSelected,
   canDelete,
@@ -53,7 +56,7 @@ const disabled = computed(() => busy.value || loading.value);
 const PAGE = 60;
 const limit = ref(PAGE);
 const shown = computed(() => listed.value.slice(0, limit.value));
-watch([query, source, view], () => (limit.value = PAGE));
+watch([query, source, sort, view], () => (limit.value = PAGE));
 function more(visible: boolean) {
   if (visible) limit.value += PAGE;
 }
@@ -139,6 +142,15 @@ onMounted(sync);
             hide-details
             class="proxies__source"
           />
+          <v-select
+            v-model="sort"
+            :items="sorts"
+            :label="t('proxies.sort')"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="proxies__sort"
+          />
           <v-spacer />
           <v-btn
             variant="tonal"
@@ -197,6 +209,14 @@ onMounted(sync);
             <span class="md3-label-large">{{
               t("common.selectedCount", selected.length)
             }}</span>
+            <!-- on a phone with a selection it moves into the menu to keep the bar on screen -->
+            <v-btn
+              v-if="failed.length && !(compact && selected.length)"
+              variant="text"
+              :disabled="disabled"
+              @click="model.selectFailed()"
+              >{{ t("proxies.selectFailed") }}</v-btn
+            >
             <template v-if="selected.length">
               <v-btn
                 variant="text"
@@ -215,6 +235,13 @@ onMounted(sync);
                   >
                 </template>
                 <v-list density="compact" min-width="240">
+                  <template v-if="failed.length">
+                    <v-list-item
+                      :title="t('proxies.selectFailed')"
+                      @click="model.selectFailed()"
+                    />
+                    <v-divider class="my-1" />
+                  </template>
                   <template v-for="add in [true, false]" :key="String(add)">
                     <v-list-subheader>{{
                       t(add ? "proxies.addToGroup" : "proxies.removeFromGroup")
@@ -386,7 +413,8 @@ onMounted(sync);
 .proxies__label {
   min-width: 40px;
 }
-.proxies__source {
+.proxies__source,
+.proxies__sort {
   max-width: 220px;
   min-width: 160px;
 }

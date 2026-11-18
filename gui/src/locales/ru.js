@@ -34,10 +34,17 @@ export default {
     sources: { all: "Все", local: "Локальные" },
     membersOnly: "Только участники",
     source: "Источник",
+    sort: "Сортировка",
+    sorts: {
+      none: "По умолчанию",
+      asc: "Сначала с меньшей задержкой",
+      desc: "Сначала с большей задержкой",
+    },
     inUse: "Используется",
     addToGroup: "Добавить в группу прокси",
     removeFromGroup: "Удалить из группы прокси",
     selectAll: "Выбрать все",
+    selectFailed: "Выбрать не прошедшие проверку",
     autoUpdate: "Автообновление",
     noSubscriptions: "Подписок пока нет",
     noSubscriptionsHint:
@@ -60,7 +67,7 @@ export default {
     switchNode: "Сменить",
     proxyGroup: "Группа прокси",
     editGroup: "Добавить или удалить узлы",
-    autoFastest: "Авто (минимальная задержка)",
+    autoFastest: "Авто (стратегия группы)",
     emptyGroup: "В этой группе нет узлов",
     updateAll: "Обновить все",
     updatedAt: "Обновлено {time}",
@@ -516,6 +523,7 @@ export default {
       minimal:
         "Только распространённые зарубежные сервисы через прокси, остальное напрямую",
       russia: "Российские сайты напрямую, исключения и остальное через прокси",
+      iran: "Иранские сайты напрямую, остальное через прокси",
       ads: "Блокировать рекламные домены",
       streaming:
         "Стриминг через прокси (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
@@ -644,6 +652,11 @@ export default {
     probeUrl: "URL проверки",
     probeInterval: "Интервал проверки",
     type: "Тип",
+    strategies: {
+      leastLoad: "Наименьшая нагрузка",
+      roundRobin: "По очереди",
+      random: "Случайно",
+    },
   },
   proxyGroup: {
     searchNodes: "Поиск узлов...",

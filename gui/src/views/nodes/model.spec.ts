@@ -11,7 +11,13 @@ const api = vi.hoisted(() => ({
 }));
 vi.mock("@/api", () => api);
 
-import { filterRows, useNodes, type Row } from "./model";
+import {
+  compareLatency,
+  filterRows,
+  latencyFailed,
+  useNodes,
+  type Row,
+} from "./model";
 import { useAppStore } from "@/stores/app";
 
 function row(id: number, pingLatency = ""): Row {
@@ -132,5 +138,32 @@ describe("filterRows", () => {
     expect(filterRows(rows, "missing")).toEqual([]);
     expect(filterRows(rows, "")).toBe(rows);
     expect(rows.map((r) => r.id)).toEqual([1, 2]);
+  });
+});
+
+describe("latency order", () => {
+  const latencies = [
+    "120ms",
+    "",
+    "TIMEOUT",
+    "35ms",
+    "testing",
+    "PROXY ERROR",
+    "800ms",
+  ];
+  const rows = latencies.map((latency, i) => row(i + 1, latency));
+  const sorted = (asc: boolean) =>
+    [...rows]
+      .sort((a, b) => compareLatency(a, b, asc))
+      .map((r) => r.pingLatency);
+  test("sorts measured rows both ways and keeps untested, testing and failed rows last in their order", () => {
+    const rest = ["", "TIMEOUT", "testing", "PROXY ERROR"];
+    expect(sorted(true)).toEqual(["35ms", "120ms", "800ms", ...rest]);
+    expect(sorted(false)).toEqual(["800ms", "120ms", "35ms", ...rest]);
+  });
+  test("counts a finished test without a time as failed, not an untested or running one", () => {
+    expect(
+      rows.filter((r) => latencyFailed(r, "testing")).map((r) => r.pingLatency),
+    ).toEqual(["TIMEOUT", "PROXY ERROR"]);
   });
 });

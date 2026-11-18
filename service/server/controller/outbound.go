@@ -59,6 +59,10 @@ func PutOutbound(ctx *gin.Context) {
 		common.ResponseError(ctx, badRequest("outbound", "request body must be a JSON object with a non-empty \"outbound\" string"))
 		return
 	}
+	if err := service.ValidateOutboundSetting(data.Setting); err != nil {
+		common.ResponseError(ctx, badRequest("outbound setting", err.Error()))
+		return
+	}
 	err := service.ApplyCoreConfig(func() func() error {
 		previous := configure.GetOutboundSetting(data.Outbound)
 		return func() error { return configure.SetOutboundSetting(data.Outbound, previous) }

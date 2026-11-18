@@ -34,10 +34,17 @@ export default {
     sources: { all: "All", local: "Local" },
     membersOnly: "Members only",
     source: "Source",
+    sort: "Sort",
+    sorts: {
+      none: "Default",
+      asc: "Lowest latency first",
+      desc: "Highest latency first",
+    },
     inUse: "In use",
     addToGroup: "Add to proxy group",
     removeFromGroup: "Remove from proxy group",
     selectAll: "Select all",
+    selectFailed: "Select failed",
     autoUpdate: "Auto-update",
     noSubscriptions: "No subscriptions yet",
     noSubscriptionsHint:
@@ -60,7 +67,7 @@ export default {
     switchNode: "Switch",
     proxyGroup: "Proxy group",
     editGroup: "Add or remove nodes",
-    autoFastest: "Auto (lowest latency)",
+    autoFastest: "Auto (group strategy)",
     emptyGroup: "This group has no nodes",
     updateAll: "Update all",
     updatedAt: "Updated {time}",
@@ -516,6 +523,7 @@ export default {
         "Only common foreign services through the proxy, everything else direct",
       russia:
         "Russian sites direct, listed exceptions and the rest through the proxy",
+      iran: "Iranian sites direct, everything else through the proxy",
       ads: "Block advertising domains",
       streaming:
         "Streaming through the proxy (Netflix, Disney, HBO, Prime Video, YouTube, Spotify, TikTok)",
@@ -642,6 +650,11 @@ export default {
     probeUrl: "Probe URL",
     probeInterval: "Probe Interval",
     type: "Type",
+    strategies: {
+      leastLoad: "Least load",
+      roundRobin: "Round robin",
+      random: "Random",
+    },
   },
   proxyGroup: {
     searchNodes: "Search nodes...",

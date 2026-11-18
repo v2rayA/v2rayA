@@ -55,13 +55,19 @@ export function rowKey(row: Selectable): string {
 
 const latencyOf = (row: Row) => parseInt(row.pingLatency);
 
-/** compareLatency sorts numbers ascending and puts untested rows last, whatever the direction. */
+/** compareLatency sorts measured rows by latency and puts the rest (untested, testing, failed) last, whatever the direction; those compare equal, so a stable sort keeps their order. */
 export function compareLatency(a: Row, b: Row, asc = true): number {
   const x = latencyOf(a);
   const y = latencyOf(b);
-  if (isNaN(x)) return 1;
-  if (isNaN(y)) return -1;
+  if (isNaN(x) || isNaN(y)) return Number(isNaN(x)) - Number(isNaN(y));
   return asc ? x - y : y - x;
+}
+
+/** latencyFailed holds when the last test finished without a time: TIMEOUT or another error the backend returned. */
+export function latencyFailed(row: Row, testing: string): boolean {
+  return (
+    !!row.pingLatency && row.pingLatency !== testing && isNaN(latencyOf(row))
+  );
 }
 
 /** compareConnection puts connected rows first, then by latency. */

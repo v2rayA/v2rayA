@@ -1,5 +1,6 @@
 import { template } from "./template";
 import { russia } from "./russia";
+import { iran } from "./iran";
 
 // Rule sets for the Templates menu: one that starts with `default:` replaces
 // the rules, the others are inserted. Outbounds are only proxy, direct and
@@ -37,6 +38,7 @@ domain(geosite:category-social-media-!cn, geosite:category-ai-!cn)->proxy
 ${telegramRanges}`,
   },
   { key: "russia", code: russia },
+  { key: "iran", code: iran },
   { key: "ads", code: "domain(geosite:category-ads-all)->block" },
   {
     key: "streaming",

@@ -34,8 +34,10 @@ func NewServerData(serverInfos []serverInfo) (serverData *ServerData) {
 	copy(rawServerInfos, serverInfos)
 	link2ServerInfos := make(map[string][]*serverInfo)
 	link2ServerObj := make(map[string]serverObj.ServerObj)
+	links := make([]string, len(serverInfos))
 	for i, info := range serverInfos {
 		link := info.Info.ExportToURL()
+		links[i] = link
 		link2ServerObj[link] = info.Info
 		link2ServerInfos[link] = append(link2ServerInfos[link], &serverInfos[i])
 	}
@@ -58,10 +60,10 @@ func NewServerData(serverInfos []serverInfo) (serverData *ServerData) {
 	}
 
 	outboundName2ServerObjs := make(map[string][]serverObj.ServerObj)
-	for link, ois := range link2ServerInfosAfter {
-		for _, oi := range ois {
-			outboundName2ServerObjs[oi.OutboundName] = append(outboundName2ServerObjs[oi.OutboundName], link2ServerObj[link])
-		}
+	// Preserve per-group connection order, including nodes shared with other groups.
+	// Use the original links because making names unique can change exported URLs.
+	for i, info := range serverInfos {
+		outboundName2ServerObjs[info.OutboundName] = append(outboundName2ServerObjs[info.OutboundName], link2ServerObj[links[i]])
 	}
 
 	OutboundName2Setting := make(map[string]configure.OutboundSetting)
