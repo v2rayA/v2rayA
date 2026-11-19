@@ -44,7 +44,7 @@ func TestNftDNSRedirectWithoutIptables(t *testing.T) {
 					t.Fatalf("only local OUTPUT DNS should be redirected: %s", rules)
 				}
 				chain, _, _ = strings.Cut(chain, "\n    }")
-				if !strings.Contains(chain, "type nat hook output priority dstnat - 1") {
+				if !strings.Contains(chain, "type nat hook output priority -101") {
 					t.Fatalf("DNS needs NAT before the generic redirect: %s", chain)
 				}
 				bypass := strings.Index(chain, "meta mark & 0x80 == 0x80 return")
