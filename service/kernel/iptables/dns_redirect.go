@@ -11,9 +11,11 @@ func NftDNSRedirect(port string, ipv6 bool) Setter {
 	if ipv6 {
 		family = "{ ipv4, ipv6 }"
 	}
+	// Priority -101 is dstnat - 1, spelled out: nftables 1.0.2 (Ubuntu 22.04)
+	// rejects the dstnat keyword on the output hook.
 	rules := fmt.Sprintf(`table inet v2raya_dns {
     chain output {
-        type nat hook output priority dstnat - 1; policy accept;
+        type nat hook output priority -101; policy accept;
         meta mark & 0x80 == 0x80 return
         meta nfproto %s meta l4proto { tcp, udp } th dport 53 redirect to :%s
     }
