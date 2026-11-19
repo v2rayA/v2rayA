@@ -65,9 +65,10 @@ export const putSubscription = (which: Which, bypassProxy = false) =>
   });
 export const patchSubscription = (body: Record<string, unknown>) =>
   call<TouchResponse>({ url: "subscription", method: "patch", data: body });
-export const getNodeLatency = (whiches: Which[]) =>
+export const getNodeLatency = (whiches: Which[], signal?: AbortSignal) =>
   call<{ whiches: Which[] }>({
     url: "nodeLatency",
+    signal,
     method: "get",
     params: { whiches },
     timeout: timeouts.none,

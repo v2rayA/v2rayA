@@ -78,12 +78,41 @@ describe("latency testing", () => {
     const pending = nodes.testAll(rows, "Testing");
     expect(rows.map((r) => r.pingLatency)).toEqual(["Testing", "Testing"]);
     expect(untouched.pingLatency).toBe("");
-    expect(request).toHaveBeenCalledExactlyOnceWith([
-      { _type: "server", id: 2, sub: null },
-      { _type: "subscriptionServer", id: 1, sub: 0 },
-    ]);
+    expect(request).toHaveBeenCalledExactlyOnceWith(
+      [
+        { _type: "server", id: 2, sub: null },
+        { _type: "subscriptionServer", id: 1, sub: 0 },
+      ],
+      expect.any(AbortSignal),
+    );
     await pending;
     expect(rows.map((r) => r.pingLatency)).toEqual(["25ms", "8ms"]);
+  });
+
+  test("leaving the page aborts the HTTP check", async () => {
+    const nodes = createNodes();
+    const rows = nodes.touch.value.servers;
+    api.getNodeLatency.mockImplementation(
+      (_whiches, signal: AbortSignal) =>
+        new Promise((_resolve, reject) =>
+          signal.addEventListener("abort", () => reject(signal.reason)),
+        ),
+    );
+    const pending = nodes.testAll(rows, "Testing");
+    scope.stop();
+    await pending;
+    expect(rows.map((r) => r.pingLatency)).toEqual(["", ""]);
+  });
+
+  test("a partial HTTP result leaves the untested row at its previous latency", async () => {
+    const nodes = createNodes();
+    const rows = nodes.touch.value.servers;
+    rows[1]!.pingLatency = "14ms";
+    api.getNodeLatency.mockResolvedValue({
+      whiches: [{ _type: "server", id: 1, pingLatency: "25ms" }],
+    });
+    await nodes.testAll(rows, "Testing");
+    expect(rows.map((r) => r.pingLatency)).toEqual(["25ms", "14ms"]);
   });
 
   test("failed tests clear testing marks and propagate the error", async () => {
