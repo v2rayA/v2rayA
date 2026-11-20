@@ -88,6 +88,15 @@ describe("the client sends what the old components sent", () => {
     expect(sent[1].headers["X-V2raya-Request-Id"]).toBeUndefined();
   });
 
+  test("endpoint names that start with 'http' stay relative", async () => {
+    await call({ url: "httpLatency", method: "get" });
+    expect(sent[0].url).toBe(`${apiRoot()}/httpLatency`);
+    await call({ url: "http://elsewhere.test/api/version", method: "get" });
+    expect(sent[1].url).toBe("http://elsewhere.test/api/version");
+    await call({ url: "https://elsewhere.test/api/version", method: "get" });
+    expect(sent[2].url).toBe("https://elsewhere.test/api/version");
+  });
+
   test("object query parameters go as JSON text", async () => {
     await call({
       url: "sharingAddress",
