@@ -57,7 +57,7 @@ defineExpose({ sync });
     <div v-else-if="subscriptions.length" class="subs__cards">
       <SubscriptionCard
         v-for="subscription in subscriptions"
-        :key="subscription.address"
+        :key="subscription.databaseId ?? subscription.id"
         :subscription="subscription"
         :disabled="disabled"
         @action="model.subscriptionAction(subscription, $event)"

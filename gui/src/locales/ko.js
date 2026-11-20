@@ -139,6 +139,14 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    hwidOne: "이 구독에 HWID 보내기",
+    hwidInherited: "모든 구독에 대해 활성화됨",
+    hwidRecipient: "{host}에 HWID를 보낼까요?",
+    hwidRevoke: "기존 구독의 HWID 공유도 중지할까요?",
+    hwidRevokeHelp:
+      "관련 구독: {recipients}. 권한을 취소하면 업데이트가 실패할 수 있습니다. 유지하면 해당 운영자가 각 구독의 요청을 계속 연결할 수 있습니다.",
+    hwidClear: "예, 모두 취소",
+    hwidKeep: "아니요, 나열된 구독은 유지",
     hwidAll: "현재 및 앞으로 추가할 모든 구독에 HWID 보내기",
     hwidWarning:
       "구독 운영자는 이 구독에만 쓰이는 고정 난수 식별자를 받아 IP 주소가 바뀌어도 요청을 연결할 수 있습니다. 감시용 구독은 이를 이용해 사용자를 식별할 수 있습니다. 끄면 전송이 중단되지만 운영자는 이미 받은 데이터를 보관할 수 있습니다.",

@@ -14,6 +14,7 @@ type ServerRaw struct {
 
 type SubscriptionRaw struct {
 	HWID                   string                 `json:"hwid,omitempty"`
+	SendHWID               bool                   `json:"sendHWID"`
 	NodeDns                string                 `json:"nodeDns"`
 	DatabaseID             int64                  `json:"databaseId"`
 	UpdateMode             SubscriptionUpdateMode `json:"updateMode"`

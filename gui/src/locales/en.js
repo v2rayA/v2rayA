@@ -141,6 +141,14 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    hwidOne: "Send HWID to this subscription",
+    hwidInherited: "Enabled for all subscriptions",
+    hwidRecipient: "Send HWID to {host}?",
+    hwidRevoke: "Also stop sharing HWID with existing subscriptions?",
+    hwidRevokeHelp:
+      "Affected subscriptions: {recipients}. Revoking access may prevent updates. If you keep access, these operators can continue linking requests for these subscriptions.",
+    hwidClear: "Yes, revoke for all",
+    hwidKeep: "No, keep for those listed",
     hwidAll: "Send HWID to all current and future subscriptions",
     hwidWarning:
       "The subscription operator receives a random identifier unique to this subscription and can link your requests even after your IP changes. A surveillance subscription could use it to identify you. Turning this off stops future sharing. The operator can keep what it already received.",

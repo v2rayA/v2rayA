@@ -137,6 +137,14 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    hwidOne: "向此订阅发送 HWID",
+    hwidInherited: "已为所有订阅启用",
+    hwidRecipient: "允许向 {host} 发送 HWID 吗？",
+    hwidRevoke: "是否同时停止向现有订阅发送 HWID？",
+    hwidRevokeHelp:
+      "受影响的订阅：{recipients}。撤销权限可能导致更新失败。如果保留权限，这些运营者仍可关联每个订阅的请求。",
+    hwidClear: "是，全部撤销",
+    hwidKeep: "否，为列出的订阅保留",
     hwidAll: "向所有现有和未来的订阅发送 HWID",
     hwidWarning:
       "订阅运营者会收到此订阅独有的固定随机标识符，即使 IP 地址发生变化，也能关联你的请求。用于监控的订阅可能借此识别你的身份。关闭后将停止发送，但运营者仍可能保留已收到的数据。",

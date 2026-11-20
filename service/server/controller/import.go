@@ -26,6 +26,7 @@ func PostImport(ctx *gin.Context) {
 		// It records the user's consent to go direct; the server does not
 		// check that the proxy route is actually unavailable.
 		BypassProxy bool `json:"bypassProxy"`
+		SendHWID    bool `json:"sendHWID"`
 	}
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		common.ResponseError(ctx, badRequest("import", fmt.Sprintf("request body must be a JSON object with \"url\" (string) and optional \"kind\" and \"which\": %v", err)))
@@ -47,7 +48,7 @@ func PostImport(ctx *gin.Context) {
 	case "server":
 		err = service.ImportServer(body.URL, which)
 	case "subscription":
-		err = service.ImportSubscriptionWithOptions(body.URL, service.SubscriptionFetchOptions{BypassProxy: body.BypassProxy})
+		err = service.ImportSubscriptionWithOptions(body.URL, service.SubscriptionFetchOptions{BypassProxy: body.BypassProxy, SendHWID: body.SendHWID})
 	case "":
 		err = service.ImportWithOptions(body.URL, which, service.SubscriptionFetchOptions{BypassProxy: body.BypassProxy})
 	default:

@@ -47,6 +47,7 @@ export const postImport = (
     kind?: string;
     which?: Which | null;
     bypassProxy?: boolean;
+    sendHWID?: boolean;
   },
   timeout: number = timeouts.import,
 ) =>

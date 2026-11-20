@@ -31,6 +31,8 @@ export interface TouchServer {
 
 /** touch.Subscription */
 export interface TouchSubscription {
+  databaseId?: number;
+  sendHWID?: boolean;
   id: number;
   _type: TouchType;
   remarks?: string;

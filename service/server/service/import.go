@@ -230,7 +230,8 @@ func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions)
 		// AppendSubscriptions failure below vanish behind a nil return
 		var infos []serverObj.ServerObj
 		var status string
-		sub := &configure.SubscriptionRaw{Address: source, HWID: newSubscriptionHWID()}
+		sendHWID := options.SendHWID && source == url && strings.HasPrefix(strings.ToLower(source), "https://")
+		sub := &configure.SubscriptionRaw{Address: source, HWID: newSubscriptionHWID(), SendHWID: sendHWID}
 		infos, status, err = resolveSubscriptionWithContext(context.Background(), sub, &c)
 		if err != nil {
 			return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(source), err)

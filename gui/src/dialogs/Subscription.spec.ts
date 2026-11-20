@@ -11,6 +11,7 @@ import Subscription from "./Subscription.vue";
 vi.mock("@/api", async (original) => ({
   ...(await original<typeof Api>()),
   patchSubscription: vi.fn().mockResolvedValue(undefined),
+  getSetting: vi.fn().mockResolvedValue({ setting: { sendHWID: false } }),
 }));
 let wrapper: VueWrapper;
 afterEach(() => {
@@ -39,7 +40,9 @@ test("offers four modes and only shows fields required by the mode", async () =>
   const mode = wrapper.findComponent(VSelect);
   expect(mode.props("items")).toHaveLength(4);
   expect(wrapper.findAll('input[type="number"]')).toHaveLength(0);
-  expect(wrapper.findAllComponents(VSwitch)).toHaveLength(1);
+  expect(
+    wrapper.findAllComponents(VSwitch).map((s) => s.props("label")),
+  ).toContain("Send HWID to this subscription");
   expect(
     wrapper
       .findAllComponents(VSwitch)

@@ -6,6 +6,9 @@ import { useNotify } from "@/composables";
 import { useSettings } from "@/views/settings/model";
 import { updateProxyModes } from "@/views/settings/options";
 import HwidSwitch from "./HwidSwitch.vue";
+import { getTouch } from "@/api";
+import HwidWarning from "./HwidWarning.vue";
+import { openDialog } from "@/composables/useDialog";
 
 defineOptions({ name: "SubscriptionSettingsDialog" });
 const emit = defineEmits<{ close: [saved?: boolean] }>();
@@ -19,6 +22,40 @@ const validation = ref<{ validate(): Promise<{ valid: boolean }> } | null>(
 const saving = ref(false);
 const sendHWID = ref(false);
 const initialHWID = ref(false);
+let retainHWID: Record<number, string> = {};
+async function setHWID(value: boolean) {
+  if (!value && initialHWID.value) {
+    try {
+      const { touch } = await getTouch();
+      const current = touch.subscriptions.filter(
+        (s) => s.databaseId && /^https:\/\//i.test(s.address),
+      );
+      retainHWID = {};
+      if (current.length) {
+        const recipients = current
+          .map(
+            (s) =>
+              `#${s.id} ${s.remarks ? s.remarks + " (" + s.host + ")" : s.host}`,
+          )
+          .join(", ");
+        const choice = await openDialog<boolean>(
+          HwidWarning,
+          { recipients },
+          { width: 480 },
+        ).result;
+        if (choice === undefined) return;
+        if (!choice)
+          retainHWID = Object.fromEntries(
+            current.map((s) => [s.databaseId, s.address]),
+          );
+      }
+    } catch (err) {
+      notify.warning(errorText(err));
+      return;
+    }
+  }
+  sendHWID.value = value;
+}
 const loadError = ref("");
 const proxyModes = computed(() =>
   updateProxyModes(t, form.transparent === "close"),
@@ -41,7 +78,12 @@ async function save() {
   saving.value = true;
   try {
     await settings.save(
-      sendHWID.value === initialHWID.value ? {} : { sendHWID: sendHWID.value },
+      sendHWID.value === initialHWID.value
+        ? {}
+        : {
+            sendHWID: sendHWID.value,
+            ...(!sendHWID.value ? { retainHWID } : {}),
+          },
     );
     notify.success(t("setting.saved"));
     emit("close", true);
@@ -77,7 +119,7 @@ async function save() {
           :label="t('setting.preferModeWhenUpdate')"
           :items="proxyModes"
         />
-        <HwidSwitch v-model="sendHWID" />
+        <HwidSwitch :model-value="sendHWID" @update:model-value="setHWID" />
       </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

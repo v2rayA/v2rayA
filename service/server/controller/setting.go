@@ -41,7 +41,8 @@ func PutSetting(ctx *gin.Context) {
 	// Decode over the stored setting so fields the client does not send
 	// (older GUIs omit the DNS cache flags, for example) keep their value
 	// instead of being persisted as zero.
-	data := *configure.GetSettingNotNil()
+	current := configure.GetSettingNotNil()
+	data := *current
 	raw, err := ctx.GetRawData()
 	if err != nil {
 		common.ResponseError(ctx, badRequest("settings", fmt.Errorf("cannot read the request body: %v", err)))
@@ -80,7 +81,17 @@ func PutSetting(ctx *gin.Context) {
 	}
 	// 对 DNS 配置字段执行迁移，确保旧格式请求中的缺失字段被填充默认值
 	configure.MigrateSetting(&data)
-	err = service.UpdateSetting(&data)
+	var retained map[int64]string
+	if current.SendHWID && !data.SendHWID {
+		retained = map[int64]string{}
+		if list := gjson.GetBytes(raw, "retainHWID"); list.Exists() {
+			if err := json.Unmarshal([]byte(list.Raw), &retained); err != nil || retained == nil {
+				common.ResponseError(ctx, badRequest("retainHWID", "expected a mapping of subscription IDs to addresses"))
+				return
+			}
+		}
+	}
+	err = service.UpdateSetting(&data, retained)
 	if err != nil {
 		// UpdateSetting restores the previous setting and the core with it;
 		// stopping the core here would undo that and leave the user without

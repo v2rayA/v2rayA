@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Subscription refresh policy and the existing PROXY auto-selection option.
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
+import HwidSwitch from "./HwidSwitch.vue";
 import { useI18n } from "vue-i18n";
 import { patchSubscription } from "@/api";
 import { errorText } from "@/api/errors";
@@ -23,6 +24,14 @@ const form = reactive({
   servers: [],
   nodeDns: props.subscription.nodeDns || "auto",
 });
+const sendHWID = ref(!!props.subscription.sendHWID);
+watch(
+  () => form.address,
+  () => {
+    sendHWID.value = false;
+  },
+  { flush: "sync" },
+);
 const updateModes = computed(() => [
   { value: "disabled", title: t("subscription.updateModes.disabled") },
   { value: "on_start", title: t("subscription.updateModes.onStart") },
@@ -70,7 +79,13 @@ async function save() {
   if (!(await validation.value?.validate())?.valid) return;
   saving.value = true;
   try {
-    await patchSubscription({ subscription: form });
+    const { sendHWID: previous, ...subscription } = form;
+    await patchSubscription({
+      subscription: {
+        ...subscription,
+        ...(sendHWID.value !== !!previous ? { sendHWID: sendHWID.value } : {}),
+      },
+    });
     notify.success(t("subscription.saved"));
     emit("close", true);
   } catch (err) {
@@ -99,6 +114,11 @@ async function save() {
           @keydown.enter="
             (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && save()
           "
+        />
+        <HwidSwitch
+          v-model="sendHWID"
+          :address="form.address"
+          :disabled="form.address !== subscription.address"
         />
         <v-text-field
           v-model="form.remarks"

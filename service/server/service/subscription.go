@@ -219,7 +219,7 @@ func resolveSubscriptionWithContext(ctx context.Context, sub *configure.Subscrip
 		return nil, "", err
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
-	if req.URL.Scheme == "https" && sub.HWID != "" && configure.GetSettingNotNil().SendHWID {
+	if req.URL.Scheme == "https" && sub.HWID != "" && (sub.SendHWID || configure.GetSettingNotNil().SendHWID) {
 		attachSubscriptionHWID(&c, req, sub.HWID)
 	}
 	res, err := c.Do(req)
@@ -284,6 +284,7 @@ func getDataUsageStatus(bytesUsed, bytesRemaining uint64) (status string) {
 
 // SubscriptionFetchOptions controls routing for one subscription download.
 type SubscriptionFetchOptions struct {
+	SendHWID bool
 	// BypassProxy uses a direct client without changing the saved download route.
 	// It is a one-request user consent: callers must only set it after the user
 	// confirmed a direct download (the GUI asks when the proxy route is
@@ -442,7 +443,18 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 	if raw == nil {
 		return common.Coded("SUBSCRIPTION_NOT_FOUND", fmt.Errorf("subscription #%d does not exist", subscription.ID), map[string]interface{}{"id": subscription.ID})
 	}
+	if subscription.DatabaseID != 0 && subscription.DatabaseID != raw.DatabaseID {
+		return fmt.Errorf("subscription changed; reload before saving")
+	}
 	previous := *raw
+	if subscription.Address != raw.Address {
+		raw.SendHWID = false
+	} else if subscription.SendHWID != nil {
+		if *subscription.SendHWID && subscription.DatabaseID != raw.DatabaseID {
+			return fmt.Errorf("subscription identity required for HWID consent")
+		}
+		raw.SendHWID = *subscription.SendHWID
+	}
 	// Old clients omit the field, so empty means "keep the stored value".
 	if subscription.NodeDns != "" && subscription.NodeDns != raw.NodeDns {
 		nodeDns, err := v2ray.NormalizeNodeDNS(subscription.NodeDns, configure.GetSettingNotNil())

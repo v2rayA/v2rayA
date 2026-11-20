@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
+defineProps<{ host?: string; recipients?: string }>();
 const safeButton = useTemplateRef<{ $el: HTMLButtonElement }>("safeButton");
 onMounted(() => requestAnimationFrame(() => safeButton.value?.$el.focus()));
 const emit = defineEmits<{ close: [allowed: boolean] }>();
@@ -10,17 +11,27 @@ const { t } = useI18n();
 <template>
   <v-card>
     <v-card-title class="md3-title-large text-wrap">{{
-      t("subscription.hwidAll")
+      recipients
+        ? t("subscription.hwidRevoke")
+        : host
+          ? t("subscription.hwidRecipient", { host })
+          : t("subscription.hwidAll")
     }}</v-card-title>
-    <v-card-text>{{ t("subscription.hwidWarning") }}</v-card-text>
+    <v-card-text>{{
+      recipients
+        ? t("subscription.hwidRevokeHelp", { recipients })
+        : t("subscription.hwidWarning")
+    }}</v-card-text>
     <v-card-actions class="hwid-actions">
       <v-btn
         variant="text"
         size="small"
         height="auto"
         class="text-wrap my-1 px-1 md3-label-medium"
-        @click="emit('close', true)"
-        >{{ t("subscription.hwidAccept") }}</v-btn
+        @click="emit('close', !recipients)"
+        >{{
+          recipients ? t("subscription.hwidKeep") : t("subscription.hwidAccept")
+        }}</v-btn
       >
       <v-btn
         variant="flat"
@@ -30,8 +41,12 @@ const { t } = useI18n();
         ref="safeButton"
         height="auto"
         class="text-wrap align-self-stretch py-2"
-        @click="emit('close', false)"
-        >{{ t("subscription.hwidDecline") }}</v-btn
+        @click="emit('close', !!recipients)"
+        >{{
+          recipients
+            ? t("subscription.hwidClear")
+            : t("subscription.hwidDecline")
+        }}</v-btn
       >
     </v-card-actions>
   </v-card>

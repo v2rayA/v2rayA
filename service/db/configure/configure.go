@@ -142,6 +142,7 @@ func SetConfigure(cfg *Configure) error {
 	}
 	for _, sub := range cfg.Subscriptions {
 		if sub != nil {
+			sub.SendHWID = false
 			sub.HWID = ""
 		}
 	}

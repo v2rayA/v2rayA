@@ -25,7 +25,14 @@ func GetSetting() *configure.Setting {
 	return s
 }
 
-func UpdateSetting(setting *configure.Setting) (err error) {
+func UpdateSetting(setting *configure.Setting, retained map[int64]string) (err error) {
+	var previousGrants map[int64]string
+	if retained != nil {
+		previousGrants, err = configure.SubscriptionHWIDGrants()
+		if err != nil {
+			return err
+		}
+	}
 	if err := ValidateNodeProbe(setting.NodeProbeMode, setting.NodeProbeURL); err != nil {
 		return err
 	}
@@ -56,10 +63,10 @@ func UpdateSetting(setting *configure.Setting) (err error) {
 					log.Warn("UpdateSetting: failed to restore ip forwarding: %v", e)
 				}
 			}
-			return configure.SetSetting(previous)
+			return configure.SetSettingWithHWID(previous, previousGrants)
 		}
 	}, func() error {
-		if e := configure.SetSetting(setting); e != nil {
+		if e := configure.SetSettingWithHWID(setting, retained); e != nil {
 			return e
 		}
 		log.SetLogLevel(setting.LogLevel)

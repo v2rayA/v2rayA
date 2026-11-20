@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     update_interval_minutes INTEGER NOT NULL DEFAULT 0,
     failure_interval_minutes INTEGER NOT NULL DEFAULT 1,
     allow_direct_recovery INTEGER NOT NULL DEFAULT 0,
+    send_hwid INTEGER NOT NULL DEFAULT 0,
     hwid TEXT NOT NULL DEFAULT '',
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
@@ -102,6 +103,7 @@ func MigrateSchema(db *sql.DB) error {
 		{"update_interval_minutes", "INTEGER NOT NULL DEFAULT 0"},
 		{"failure_interval_minutes", "INTEGER NOT NULL DEFAULT 1"},
 		{"allow_direct_recovery", "INTEGER NOT NULL DEFAULT 0"},
+		{"send_hwid", "INTEGER NOT NULL DEFAULT 0"},
 		{"hwid", "TEXT NOT NULL DEFAULT ''"},
 	}
 	for _, column := range columns {

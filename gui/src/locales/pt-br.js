@@ -141,6 +141,14 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    hwidOne: "Enviar HWID a esta assinatura",
+    hwidInherited: "Ativado para todas as assinaturas",
+    hwidRecipient: "Permitir o envio de HWID a {host}?",
+    hwidRevoke: "Interromper também o envio às assinaturas existentes?",
+    hwidRevokeHelp:
+      "Assinaturas afetadas: {recipients}. Revogar o acesso pode impedir atualizações. Se mantiver o acesso, esses operadores poderão continuar associando os pedidos de cada assinatura.",
+    hwidClear: "Sim, revogar todas",
+    hwidKeep: "Não, manter para as listadas",
     hwidAll: "Enviar HWID a todas as assinaturas atuais e futuras",
     hwidWarning:
       "O operador da assinatura recebe um identificador aleatório exclusivo desta assinatura e pode associar suas solicitações mesmo após uma mudança de IP. Uma assinatura usada para vigilância pode ajudar a identificar você. Desativar interrompe os envios futuros. O operador pode manter os dados já recebidos.",

@@ -47,7 +47,7 @@ func tableExists(t *testing.T, database *sql.DB, name string) bool {
 	return count != 0
 }
 
-func TestMigrateSubscriptionNodeDNS(t *testing.T) {
+func TestMigrateSubscriptionNodeDNSAndHWID(t *testing.T) {
 	database, err := sql.Open(sqliteDriverName, ":memory:")
 	if err != nil {
 		t.Fatal(err)
@@ -62,6 +62,11 @@ func TestMigrateSubscriptionNodeDNS(t *testing.T) {
 	if err := MigrateSchema(database); err != nil {
 		t.Fatal(err)
 	}
+	var id, persisted string
+	var shared bool
+	if err := database.QueryRow("SELECT hwid, send_hwid FROM subscriptions").Scan(&id, &shared); err != nil || len(id) != 32 || shared {
+		t.Fatalf("existing subscription must get a random ID with sharing off: %v", err)
+	}
 	var value string
 	if err := database.QueryRow("SELECT node_dns FROM subscriptions").Scan(&value); err != nil || value != "auto" {
 		t.Fatalf("migrated node DNS = %q, %v", value, err)
@@ -71,6 +76,9 @@ func TestMigrateSubscriptionNodeDNS(t *testing.T) {
 	}
 	if err := MigrateSchema(database); err != nil {
 		t.Fatal(err)
+	}
+	if err := database.QueryRow("SELECT hwid FROM subscriptions").Scan(&persisted); err != nil || persisted != id {
+		t.Fatalf("migration changed the subscription identifier: %v", err)
 	}
 	if err := database.QueryRow("SELECT node_dns FROM subscriptions").Scan(&value); err != nil || value != "tls://1.1.1.1:853" {
 		t.Fatalf("second migration overwrote node DNS = %q, %v", value, err)

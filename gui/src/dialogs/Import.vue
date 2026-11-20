@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Import a node link, several (one per line), or a subscription address;
 // a QR code image can supply the link. Resolves true after an import.
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import HwidSwitch from "./HwidSwitch.vue";
 import { useI18n } from "vue-i18n";
 import { Decoder } from "@nuintun/qrcode";
 import { mdiQrcodeScan } from "@mdi/js";
@@ -24,6 +25,14 @@ const subscriptionBypass = useSubscriptionBypass();
 const kind = ref<"server" | "subscription">(props.kind ?? "server");
 const text = ref("");
 const importing = ref(false);
+const sendHWID = ref(false);
+watch(
+  [text, kind],
+  () => {
+    sendHWID.value = false;
+  },
+  { flush: "sync" },
+);
 const picker = ref<HTMLInputElement | null>(null);
 
 async function submit(url = text.value.trim()) {
@@ -37,6 +46,11 @@ async function submit(url = text.value.trim()) {
       url,
       kind: kind.value,
       ...(bypassProxy ? { bypassProxy: true } : {}),
+      ...(kind.value === "subscription" &&
+      sendHWID.value &&
+      url === text.value.trim()
+        ? { sendHWID: true }
+        : {}),
     });
     notify.success(t("import.success"));
     emit("close", true);
@@ -62,6 +76,7 @@ function onImage(event: Event) {
   reader.onload = async () => {
     try {
       const result = await new Decoder().scan(reader.result as string);
+      sendHWID.value = false;
       text.value = result.data;
       await submit(result.data);
     } catch {
@@ -114,6 +129,11 @@ function onImage(event: Event) {
         "
         @click:append-inner="picker?.click()"
         @keydown.ctrl.enter.prevent="submit()"
+      />
+      <HwidSwitch
+        v-if="kind === 'subscription'"
+        v-model="sendHWID"
+        :address="text.trim()"
       />
       <input
         ref="picker"
