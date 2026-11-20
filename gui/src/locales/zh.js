@@ -137,6 +137,11 @@ export default {
     saveFailed: "无法保存节点：{message}",
   },
   subscription: {
+    hwidAll: "向所有现有和未来的订阅发送 HWID",
+    hwidWarning:
+      "订阅运营者会收到此订阅独有的固定随机标识符，即使 IP 地址发生变化，也能关联你的请求。用于监控的订阅可能借此识别你的身份。关闭后将停止发送，但运营者仍可能保留已收到的数据。",
+    hwidDecline: "不启用",
+    hwidAccept: "我了解风险，仍要启用",
     updateMode: "自动更新订阅",
     updateModes: {
       disabled: "关闭",

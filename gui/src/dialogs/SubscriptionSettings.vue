@@ -5,6 +5,7 @@ import { errorText } from "@/api/errors";
 import { useNotify } from "@/composables";
 import { useSettings } from "@/views/settings/model";
 import { updateProxyModes } from "@/views/settings/options";
+import HwidSwitch from "./HwidSwitch.vue";
 
 defineOptions({ name: "SubscriptionSettingsDialog" });
 const emit = defineEmits<{ close: [saved?: boolean] }>();
@@ -16,6 +17,8 @@ const validation = ref<{ validate(): Promise<{ valid: boolean }> } | null>(
   null,
 );
 const saving = ref(false);
+const sendHWID = ref(false);
+const initialHWID = ref(false);
 const loadError = ref("");
 const proxyModes = computed(() =>
   updateProxyModes(t, form.transparent === "close"),
@@ -24,7 +27,8 @@ const proxyModes = computed(() =>
 async function load() {
   loadError.value = "";
   try {
-    await settings.load();
+    initialHWID.value = sendHWID.value =
+      (await settings.load()).sendHWID === true;
   } catch (err) {
     loadError.value = errorText(err);
     notify.warning(loadError.value);
@@ -36,7 +40,9 @@ async function save() {
   if (!(await validation.value?.validate())?.valid) return;
   saving.value = true;
   try {
-    await settings.save();
+    await settings.save(
+      sendHWID.value === initialHWID.value ? {} : { sendHWID: sendHWID.value },
+    );
     notify.success(t("setting.saved"));
     emit("close", true);
   } catch (err) {
@@ -71,6 +77,7 @@ async function save() {
           :label="t('setting.preferModeWhenUpdate')"
           :items="proxyModes"
         />
+        <HwidSwitch v-model="sendHWID" />
       </v-form>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">

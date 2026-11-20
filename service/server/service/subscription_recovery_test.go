@@ -228,7 +228,7 @@ func TestSubscriptionDownloadsRespectProxyMode(t *testing.T) {
 				if err := ImportSubscription(provider.URL); err == nil {
 					t.Fatal("import bypassed the failed proxy")
 				}
-				if _, _, err := fetchSubscriptionForAutomation(context.Background(), provider.URL, false); err == nil {
+				if _, _, err := fetchSubscriptionForAutomation(context.Background(), &configure.SubscriptionRaw{Address: provider.URL}, false); err == nil {
 					t.Fatal("scheduled update bypassed the failed proxy")
 				}
 				if got := directRequests.Load(); got != 0 {
@@ -293,7 +293,7 @@ func TestSubscriptionRecoveryFallbackKeepsTimeout(t *testing.T) {
 		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})}
 	directSubscriptionClient = func() *http.Client { return client }
-	servers, _, err := fetchSubscriptionForAutomation(context.Background(), "http://subscription.invalid", true)
+	servers, _, err := fetchSubscriptionForAutomation(context.Background(), &configure.SubscriptionRaw{Address: "http://subscription.invalid"}, true)
 	if err != nil || len(servers) != 1 || fallbackAttempts != 1 {
 		t.Fatalf("fallback failed: %v, %d servers, attempts %d", err, len(servers), fallbackAttempts)
 	}
@@ -302,7 +302,7 @@ func TestSubscriptionRecoveryFallbackKeepsTimeout(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, _, err := fetchSubscriptionForAutomation(ctx, "http://subscription.invalid", true); !errors.Is(err, context.Canceled) || fallbackAttempts != 1 {
+	if _, _, err := fetchSubscriptionForAutomation(ctx, &configure.SubscriptionRaw{Address: "http://subscription.invalid"}, true); !errors.Is(err, context.Canceled) || fallbackAttempts != 1 {
 		t.Fatalf("cancelled fetch retried: %v, attempts %d", err, fallbackAttempts)
 	}
 }

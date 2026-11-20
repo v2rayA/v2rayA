@@ -69,7 +69,7 @@ export function useSettings() {
   const localGeositeVersion = ref("");
   const remoteGFWListVersion = ref("");
 
-  async function load(): Promise<void> {
+  async function load() {
     const res = await getSetting();
     for (const key of Object.keys(form) as (keyof SettingForm)[]) {
       if (key in res.setting)
@@ -80,6 +80,7 @@ export function useSettings() {
     if (store.lite) form.transparentType = "system_proxy";
     saved.value = JSON.stringify(form);
     ready.value = true;
+    return res.setting;
   }
 
   async function loadRemoteVersion(): Promise<void> {
@@ -89,12 +90,15 @@ export function useSettings() {
   }
 
   /** save applies the settings; an invalid config stops the core, which the store then shows. */
-  async function save(): Promise<void> {
+  async function save(extra: Partial<Setting> = {}): Promise<void> {
     const loading = openLoading();
     const control = new AbortController();
     try {
       await watchConnected(
-        putSetting(toRequest(form), { signal: control.signal }),
+        putSetting(
+          { ...toRequest(form), ...extra },
+          { signal: control.signal },
+        ),
         () => control.abort(),
       );
       saved.value = JSON.stringify(form);

@@ -10,6 +10,7 @@ import (
 )
 
 type Setting struct {
+	SendHWID                           bool            `json:"sendHWID"`
 	NodeProbeMode                      string          `json:"nodeProbeMode"`
 	NodeProbeURL                       string          `json:"nodeProbeUrl"`
 	LogLevel                           string          `json:"logLevel"`

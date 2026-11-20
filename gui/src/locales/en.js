@@ -141,6 +141,11 @@ export default {
     saveFailed: "Failed to save server: {message}",
   },
   subscription: {
+    hwidAll: "Send HWID to all current and future subscriptions",
+    hwidWarning:
+      "The subscription operator receives a random identifier unique to this subscription and can link your requests even after your IP changes. A surveillance subscription could use it to identify you. Turning this off stops future sharing. The operator can keep what it already received.",
+    hwidDecline: "Keep off",
+    hwidAccept: "I understand the risks. Enable anyway",
     updateMode: "Automatic subscription update",
     updateModes: {
       disabled: "Disabled",

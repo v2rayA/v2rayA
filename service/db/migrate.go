@@ -351,8 +351,8 @@ func migrateSubscriptions(data []byte, tx *sql.Tx) error {
 	}
 
 	subStmt, err := tx.Prepare(`
-		INSERT INTO subscriptions (address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes, allow_direct_recovery, sort)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO subscriptions (address, remarks, status, info, auto_select, update_mode, update_interval_minutes, failure_interval_minutes, allow_direct_recovery, sort, hwid)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, lower(hex(randomblob(16))))
 	`)
 	if err != nil {
 		return err

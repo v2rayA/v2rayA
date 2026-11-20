@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
 import { VSelect } from "vuetify/components";
 import type * as Api from "@/api";
+import { closeDialog, dialogState } from "@/composables/useDialog";
 import { getSetting, putSetting } from "@/api";
 import { mountWithApp } from "@/test/mount";
 import { defaultForm } from "@/views/settings/model";
@@ -38,7 +39,30 @@ beforeEach(async () => {
   await flushPromises();
 });
 afterEach(() => wrapper.unmount());
-test("only configures download transport; schedules belong to individual subscriptions", async () => {
+test("requires explicit HWID consent and saves it only when the settings form is saved", async () => {
+  const input = wrapper.get<HTMLInputElement>('input[type="checkbox"]');
+  for (const allowed of [false, true]) {
+    input.element.click();
+    await flushPromises();
+    const warning = dialogState.stack.at(-1)!;
+    expect(warning).toBeDefined();
+    closeDialog(warning.id, allowed);
+    await flushPromises();
+    expect(input.element.checked).toBe(allowed);
+    expect(putSetting).not.toHaveBeenCalled();
+  }
+  await wrapper
+    .findAll("button")
+    .find((b) => b.text() === "Save")!
+    .trigger("click");
+  await flushPromises();
+  expect(putSetting).toHaveBeenCalledWith(
+    expect.objectContaining({ sendHWID: true }),
+    expect.anything(),
+  );
+});
+
+test("keeps the download transport and per-subscription schedules independent", async () => {
   const selects = wrapper.findAllComponents(VSelect);
   expect(selects).toHaveLength(1);
   expect(selects[0].props("modelValue")).toBe("pac");

@@ -141,6 +141,11 @@ export default {
     saveFailed: "Falha ao salvar o servidor: {message}",
   },
   subscription: {
+    hwidAll: "Enviar HWID a todas as assinaturas atuais e futuras",
+    hwidWarning:
+      "O operador da assinatura recebe um identificador aleatório exclusivo desta assinatura e pode associar suas solicitações mesmo após uma mudança de IP. Uma assinatura usada para vigilância pode ajudar a identificar você. Desativar interrompe os envios futuros. O operador pode manter os dados já recebidos.",
+    hwidDecline: "Manter desativado",
+    hwidAccept: "Entendo os riscos e quero ativar",
     updateMode: "Atualização automática da assinatura",
     updateModes: {
       disabled: "Desativada",

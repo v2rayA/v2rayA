@@ -192,10 +192,11 @@ func trapBOM(fileBytes []byte) []byte {
 	return trimmedBytes
 }
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
-	return resolveSubscriptionWithContext(context.Background(), source, client)
+	return resolveSubscriptionWithContext(context.Background(), &configure.SubscriptionRaw{Address: source, HWID: newSubscriptionHWID()}, client)
 }
 
-func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+func resolveSubscriptionWithContext(ctx context.Context, sub *configure.SubscriptionRaw, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+	source := sub.Address
 	defer func() {
 		if err != nil {
 			var coded *common.CodedError
@@ -218,6 +219,9 @@ func resolveSubscriptionWithContext(ctx context.Context, source string, client *
 		return nil, "", err
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
+	if req.URL.Scheme == "https" && sub.HWID != "" && configure.GetSettingNotNil().SendHWID {
+		attachSubscriptionHWID(&c, req, sub.HWID)
+	}
 	res, err := c.Do(req)
 	if err != nil {
 		return nil, "", err
@@ -313,7 +317,7 @@ func UpdateSubscriptionWithOptions(index int, disconnectIfNecessary bool, option
 		return err
 	}
 	resolv.CheckResolvConf()
-	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
+	subscriptionInfos, status, err := resolveSubscriptionWithContext(context.Background(), subscription, c)
 	if err != nil {
 		log.Warn("Subscription fetch failed: %v", err)
 		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)

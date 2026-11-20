@@ -140,6 +140,11 @@ func SetConfigure(cfg *Configure) error {
 	if err := AppendServers(cfg.Servers); err != nil {
 		return err
 	}
+	for _, sub := range cfg.Subscriptions {
+		if sub != nil {
+			sub.HWID = ""
+		}
+	}
 	if err := AppendSubscriptions(cfg.Subscriptions); err != nil {
 		return err
 	}
@@ -156,6 +161,10 @@ func SetConfigure(cfg *Configure) error {
 	}
 	if err := OverwriteConnects(NewNodeRefs(cfg.ConnectedServers)); err != nil {
 		return err
+	}
+	// A configuration import cannot authorize identification of this installation.
+	if cfg.Setting != nil {
+		cfg.Setting.SendHWID = false
 	}
 	if err := SetSetting(cfg.Setting); err != nil {
 		return err

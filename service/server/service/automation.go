@@ -45,7 +45,7 @@ type subscriptionSchedule struct {
 	warnedUnprobeable bool
 }
 
-type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, string, error)
+type subscriptionFetcher func(context.Context, *configure.SubscriptionRaw, bool) ([]serverObj.ServerObj, string, error)
 
 type automation struct {
 	subscriptions map[int64]*subscriptionSchedule
@@ -75,16 +75,16 @@ func subscriptionPolicySignature(sub *configure.SubscriptionRaw) string {
 	return string(b)
 }
 
-func fetchSubscriptionForAutomation(ctx context.Context, address string, allowDirectFallback bool) ([]serverObj.ServerObj, string, error) {
+func fetchSubscriptionForAutomation(ctx context.Context, sub *configure.SubscriptionRaw, allowDirectFallback bool) ([]serverObj.ServerObj, string, error) {
 	client, err := subscriptionHTTPClient()
 	var nodes []serverObj.ServerObj
 	var info string
 	if err == nil {
-		nodes, info, err = resolveSubscriptionWithContext(ctx, address, client)
+		nodes, info, err = resolveSubscriptionWithContext(ctx, sub, client)
 	}
 	if err != nil && allowDirectFallback && ctx.Err() == nil && configure.GetSettingNotNil().ProxyModeWhenSubscribe != configure.ProxyModeDirect {
-		log.Warn("[Subscriptions] Fail-safe recovery for %s: configured download route failed; retrying directly", subscriptionHost(address))
-		return resolveSubscriptionWithContext(ctx, address, directSubscriptionClient())
+		log.Warn("[Subscriptions] Fail-safe recovery for %s: configured download route failed; retrying directly", subscriptionHost(sub.Address))
+		return resolveSubscriptionWithContext(ctx, sub, directSubscriptionClient())
 	}
 	return nodes, info, err
 }
@@ -240,7 +240,7 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 			}
 		}()
 	}
-	nodes, info, err := a.fetch(ctx, sub.Address, retryDue && state.retryFromOutage && sub.AllowDirectRecovery)
+	nodes, info, err := a.fetch(ctx, sub, retryDue && state.retryFromOutage && sub.AllowDirectRecovery)
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

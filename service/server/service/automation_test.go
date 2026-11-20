@@ -25,7 +25,7 @@ func testAutomation(t *testing.T, mode configure.SubscriptionUpdateMode, regular
 	a.now = func() time.Time { return now }
 	requests := 0
 	healthy := true
-	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(context.Context, *configure.SubscriptionRaw, bool) ([]serverObj.ServerObj, string, error) {
 		requests++
 		return []serverObj.ServerObj{testServer(t, 10001)}, "", nil
 	}
@@ -109,8 +109,8 @@ func TestSubscriptionScheduleUsesDatabaseIDAndPolicyFieldsOnly(t *testing.T) {
 	now := time.Unix(1000, 0)
 	a.now = func() time.Time { return now }
 	requests := map[int]bool{}
-	a.fetch = func(_ context.Context, address string, _ bool) ([]serverObj.ServerObj, string, error) {
-		if address == second.Address {
+	a.fetch = func(_ context.Context, address *configure.SubscriptionRaw, _ bool) ([]serverObj.ServerObj, string, error) {
+		if address.Address == second.Address {
 			requests[2] = true
 		} else {
 			requests[1] = true
@@ -166,7 +166,7 @@ func TestDirectRecoveryRequiresOptInAndOutage(t *testing.T) {
 			a.now = func() time.Time { return now }
 			var permissions []bool
 			fetch := a.fetch
-			a.fetch = func(ctx context.Context, address string, allowDirect bool) ([]serverObj.ServerObj, string, error) {
+			a.fetch = func(ctx context.Context, address *configure.SubscriptionRaw, allowDirect bool) ([]serverObj.ServerObj, string, error) {
 				permissions = append(permissions, allowDirect)
 				return fetch(ctx, address, allowDirect)
 			}
@@ -221,7 +221,7 @@ func TestFailsafeProbeCannotMutateStoredNode(t *testing.T) {
 	}
 	want := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL()
 	a := newAutomation()
-	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(context.Context, *configure.SubscriptionRaw, bool) ([]serverObj.ServerObj, string, error) {
 		return []serverObj.ServerObj{node}, "", nil
 	}
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
@@ -253,7 +253,7 @@ func TestFailsafeCancellationKeepsDeadline(t *testing.T) {
 			*healthy = false
 			fetch, probe := a.fetch, a.probe
 			probeCalls := 0
-			a.fetch = func(ctx context.Context, address string, recovery bool) ([]serverObj.ServerObj, string, error) {
+			a.fetch = func(ctx context.Context, address *configure.SubscriptionRaw, recovery bool) ([]serverObj.ServerObj, string, error) {
 				if phase == "recovery-fetch" || phase == "regular-fetch" {
 					// Cancellation after a slow request must back off from completion.
 					now = now.Add(3 * time.Minute)
@@ -298,7 +298,7 @@ func TestFailsafeDoesNotTreatUnprobeableNodesAsAnOutage(t *testing.T) {
 				nodes = append(nodes, testServer(t, 10002))
 			}
 			requests := 0
-			a.fetch = func(_ context.Context, _ string, recovery bool) ([]serverObj.ServerObj, string, error) {
+			a.fetch = func(_ context.Context, _ *configure.SubscriptionRaw, recovery bool) ([]serverObj.ServerObj, string, error) {
 				requests++
 				if recovery {
 					t.Fatal("unprobeable candidates triggered recovery")
@@ -346,7 +346,7 @@ func TestCancelledRegularFetchDoesNotGainDirectPermission(t *testing.T) {
 	now := time.Unix(1000, 0)
 	a.now = func() time.Time { return now }
 	var direct []bool
-	a.fetch = func(_ context.Context, _ string, allow bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(_ context.Context, _ *configure.SubscriptionRaw, allow bool) ([]serverObj.ServerObj, string, error) {
 		direct = append(direct, allow)
 		return []serverObj.ServerObj{testServer(t, 10001)}, "", nil
 	}
@@ -395,12 +395,12 @@ func TestAutomationContinuesAfterSubscriptionPanic(t *testing.T) {
 				now := time.Unix(1000, 0)
 				a.now = func() time.Time { return now }
 				requests := 0
-				a.fetch = func(_ context.Context, address string, direct bool) ([]serverObj.ServerObj, string, error) {
+				a.fetch = func(_ context.Context, address *configure.SubscriptionRaw, direct bool) ([]serverObj.ServerObj, string, error) {
 					requests++
 					if direct {
 						t.Fatal("panic granted direct permission without a detected outage")
 					}
-					if address == first.Address {
+					if address.Address == first.Address {
 						now = now.Add(3 * time.Minute)
 						if phase == "fetch" {
 							panic("fetch failed")

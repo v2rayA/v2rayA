@@ -139,6 +139,11 @@ export default {
     saveFailed: "서버 저장 실패: {message}",
   },
   subscription: {
+    hwidAll: "현재 및 앞으로 추가할 모든 구독에 HWID 보내기",
+    hwidWarning:
+      "구독 운영자는 이 구독에만 쓰이는 고정 난수 식별자를 받아 IP 주소가 바뀌어도 요청을 연결할 수 있습니다. 감시용 구독은 이를 이용해 사용자를 식별할 수 있습니다. 끄면 전송이 중단되지만 운영자는 이미 받은 데이터를 보관할 수 있습니다.",
+    hwidDecline: "켜지 않기",
+    hwidAccept: "위험을 이해했으며 활성화합니다",
     updateMode: "구독 자동 업데이트",
     updateModes: {
       disabled: "사용 안 함",
