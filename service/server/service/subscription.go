@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -331,7 +332,13 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 	previous := configure.GetConnectedServers()
 	affected := false
 	updated := configure.NewNodeRefs(nil)
-	previousRefs := previous.Get()
+	// Automatic groups follow the catalog; only manual groups retain missing nodes.
+	previousRefs := make([]*configure.NodeRef, 0, previous.Len())
+	for _, ref := range previous.Get() {
+		if !configure.GetOutboundSetting(ref.Outbound).AutoAdd {
+			previousRefs = append(previousRefs, ref)
+		}
+	}
 	mappedIDs := map[int]int{}
 	exactMatches := map[int]bool{}
 	fallbackClaims := map[int]int{}
@@ -376,6 +383,14 @@ func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []
 			}
 		}
 		updated.Add(copy)
+	}
+	if configure.HasAutomaticGroup() {
+		affected = affected || !slices.EqualFunc(old.Servers, next.Servers, func(a, b configure.ServerRaw) bool {
+			if a.ServerObj == nil || b.ServerObj == nil {
+				return a.ServerObj == nil && b.ServerObj == nil
+			}
+			return a.ServerObj.ExportToURL() == b.ServerObj.ExportToURL()
+		})
 	}
 	if !affected {
 		return configure.SetSubscriptionAndConnects(index, &next, updated)
@@ -503,6 +518,9 @@ func subscriptionHTTPClient() (*http.Client, error) {
 
 func SelectServersFromSubscription(index int, shouldDisconnect bool) error {
 	const outbound = "proxy"
+	if configure.GetOutboundSetting(outbound).AutoAdd {
+		return nil
+	}
 	if shouldDisconnect {
 		connections := configure.GetConnectedServersByOutbound(outbound)
 		if connections == nil {

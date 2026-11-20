@@ -627,6 +627,9 @@ export default {
     saveFailed: "无法保存 RoutingA：{message}",
   },
   outbound: {
+    autoAdd: "包含目录中的所有节点",
+    autoAddHelp:
+      "包含所有订阅节点和独立服务器。关闭后保留当前成员，可手动编辑。",
     addMessage: "请输入你想要添加的代理分组名称：",
     deleteMessage:
       '确定删除代理分组 "{outboundName}"？其中的节点将断开，此操作不可撤销。',

@@ -13,6 +13,7 @@ import {
   mdiSitemapOutline,
 } from "@mdi/js";
 import { useDialog, useOutboundGroups } from "@/composables";
+import { getOutbounds } from "@/api";
 import OutboundGroupDialog from "@/dialogs/OutboundGroup.vue";
 import { useAppStore } from "@/stores/app";
 
@@ -26,9 +27,19 @@ const store = useAppStore();
 const { open: openDialog } = useDialog();
 const open = ref(false);
 
-function settings(outbound: string) {
+async function settings(outbound: string) {
   open.value = false;
-  openDialog(OutboundGroupDialog, { outbound }, { width: 440 });
+  const saved = await openDialog<boolean>(
+    OutboundGroupDialog,
+    { outbound },
+    { width: 440 },
+  ).result;
+  if (saved) {
+    const response = await getOutbounds().catch(() => null);
+    if (response)
+      store.setOutbounds(response.outbounds, response.automaticOutbounds);
+    emit("changed");
+  }
 }
 
 const groups = useOutboundGroups();

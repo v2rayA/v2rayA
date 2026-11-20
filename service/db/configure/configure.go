@@ -183,6 +183,9 @@ func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
 	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
 		outboundRefs := make(map[string][]*NodeRef)
+		for _, ref := range GetConnectedServers().Get() {
+			outboundRefs[ref.Outbound] = nil
+		}
 		for _, ref := range ws.Get() {
 			outboundRefs[ref.Outbound] = append(outboundRefs[ref.Outbound], ref)
 		}
@@ -372,6 +375,17 @@ func GetConnectedServersByOutbound(outbound string) *NodeRefs {
 	if outbound == "" {
 		outbound = "proxy"
 	}
+	if GetOutboundSetting(outbound).AutoAdd {
+		for i := range GetServers() {
+			r.Add(NodeRef{TYPE: ServerType, ID: i + 1, Outbound: outbound})
+		}
+		for sub, subscription := range GetSubscriptions() {
+			for i := range subscription.Servers {
+				r.Add(NodeRef{TYPE: SubscriptionServerType, Sub: sub, ID: i + 1, Outbound: outbound})
+			}
+		}
+		return r
+	}
 	bucket := fmt.Sprintf("outbound.%v", outbound)
 	if err := db.Get(bucket, "connectedServers", r); err != nil {
 		return nil
@@ -450,8 +464,14 @@ func (ws *NodeRefs) byOutbound() map[string]*NodeRefs {
 // RemoveNodes deletes subscriptions and servers by ordinal together with
 // the connected lists already renumbered for the deletion, atomically.
 func RemoveNodes(subscriptions, servers []int, connected *NodeRefs) error {
+	groups := connected.byOutbound()
+	for _, out := range GetOutbounds() {
+		if groups[out] == nil {
+			groups[out] = NewNodeRefs(nil)
+		}
+	}
 	return db.RemoveTx(subscriptions, servers, func(tx *sql.Tx) error {
-		for out, refs := range connected.byOutbound() {
+		for out, refs := range groups {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", out), "connectedServers", refs); err != nil {
 				return err
 			}
@@ -526,13 +546,29 @@ func AddOutbound(outbound string) (err error) {
 }
 
 func SetOutboundSetting(outbound string, setting OutboundSetting) (err error) {
+	return SetOutboundSettingAndMembers(outbound, setting, nil)
+}
+
+// A non-nil members list freezes the current catalog when automatic membership is disabled.
+func SetOutboundSettingAndMembers(outbound string, setting OutboundSetting, members *NodeRefs) error {
 	if _, err := time.ParseDuration(setting.ProbeInterval); err != nil {
 		return err
 	}
-	return db.Set(fmt.Sprintf("outbound.%v", outbound), "setting", setting)
+	bucket := fmt.Sprintf("outbound.%v", outbound)
+	return db.ReadModifyWrite(func(tx *sql.Tx) error {
+		if members != nil {
+			if err := db.SetTx(tx, bucket, "connectedServers", members); err != nil {
+				return err
+			}
+		}
+		return db.SetTx(tx, bucket, "setting", setting)
+	})
 }
 
 func GetOutboundSetting(outbound string) (setting OutboundSetting) {
+	if outbound == "" {
+		outbound = DefaultOutboundName
+	}
 	err := db.Get(fmt.Sprintf("outbound.%v", outbound), "setting", &setting)
 	if err != nil {
 		return DefaultOutboundSetting()

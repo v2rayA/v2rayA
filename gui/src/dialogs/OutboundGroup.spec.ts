@@ -1,33 +1,73 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, test, vi } from "vitest";
-import { flushPromises, type VueWrapper } from "@vue/test-utils";
+import { enableAutoUnmount, flushPromises } from "@vue/test-utils";
 import { VSelect } from "vuetify/components";
-import type * as Api from "@/api";
-import { getOutbound, putOutbound } from "@/api";
 import { mountWithApp } from "@/test/mount";
+import { closeAllNotices } from "@/composables/useNotify";
+import en from "@/locales/en";
 import OutboundGroup from "./OutboundGroup.vue";
 
-vi.mock("@/api", async (original) => ({
-  ...(await original<typeof Api>()),
-  getOutbound: vi.fn(),
-  putOutbound: vi.fn(),
-}));
+const api = vi.hoisted(() => ({ getOutbound: vi.fn(), putOutbound: vi.fn() }));
+vi.mock("@/api", () => api);
+enableAutoUnmount(afterEach);
+afterEach(closeAllNotices);
 
-let wrapper: VueWrapper;
-afterEach(() => wrapper?.unmount());
+test("saves all-catalog membership, reopens it, and can turn it off without changing probes", async () => {
+  let saved = {
+    autoAdd: false,
+    probeURL: "https://example.com/",
+    probeInterval: "60s",
+    type: "leastping",
+  };
+  api.getOutbound.mockImplementation(async () => ({ setting: { ...saved } }));
+  api.putOutbound.mockImplementation(async ({ setting }) => {
+    saved = { ...setting };
+  });
+  let wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
+  await flushPromises();
+  expect(wrapper.text()).toContain(en.outbound.autoAddHelp);
+  await wrapper.get('input[type="checkbox"]').setValue(true);
+  await wrapper
+    .findAll("button")
+    .find((b) => b.text() === en.operations.save)!
+    .trigger("click");
+  await flushPromises();
+  expect(saved).toEqual({
+    autoAdd: true,
+    probeURL: "https://example.com/",
+    probeInterval: "60s",
+    type: "leastping",
+  });
+  expect(wrapper.emitted("close")).toEqual([[true]]);
+  wrapper.unmount();
+  wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
+  await flushPromises();
+  expect(
+    (wrapper.get('input[type="checkbox"]').element as HTMLInputElement).checked,
+  ).toBe(true);
+  await wrapper.get('input[type="checkbox"]').setValue(false);
+  await wrapper
+    .findAll("button")
+    .find((b) => b.text() === en.operations.save)!
+    .trigger("click");
+  await flushPromises();
+  expect(saved.autoAdd).toBe(false);
+  expect(saved.probeInterval).toBe("60s");
+});
 
 test.each(["leastping", "leastload", "roundrobin", "random"])(
   "saves and restores the native %s strategy",
   async (strategy) => {
     vi.clearAllMocks();
     const setting = {
+      autoAdd: false,
       probeURL: "https://www.gstatic.com/generate_204",
       probeInterval: "60s",
       type: "leastping",
     };
-    vi.mocked(getOutbound).mockResolvedValue({ setting });
-    vi.mocked(putOutbound).mockResolvedValue(undefined);
-    wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
+    api.getOutbound.mockResolvedValue({ setting });
+    api.putOutbound.mockResolvedValue(undefined);
+    let wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });
     await flushPromises();
     const select = wrapper.getComponent(VSelect);
     expect(select.props("items")).toEqual(
@@ -39,14 +79,14 @@ test.each(["leastping", "leastload", "roundrobin", "random"])(
       .find((button) => button.text() === "Save")!
       .trigger("click");
     await flushPromises();
-    expect(putOutbound).toHaveBeenCalledWith({
+    expect(api.putOutbound).toHaveBeenCalledWith({
       outbound: "proxy",
       setting: { ...setting, type: strategy },
     });
     expect(wrapper.emitted("close")).toEqual([[true]]);
 
     wrapper.unmount();
-    vi.mocked(getOutbound).mockResolvedValue({
+    api.getOutbound.mockResolvedValue({
       setting: { ...setting, type: strategy },
     });
     wrapper = mountWithApp(OutboundGroup, { props: { outbound: "proxy" } });

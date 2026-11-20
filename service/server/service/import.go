@@ -95,6 +95,7 @@ func isBareHttpProxyLink(rawURL string) bool {
 // or a JSON config. A non-nil which with ID > 0 replaces that server instead
 // of appending.
 func ImportServer(url string, which *configure.NodeRef) (err error) {
+	defer func() { err = reloadAutomaticGroups(err) }()
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	if lines := strings.Split(url, "\n"); len(lines) >= 2 || strings.HasPrefix(url, "{") {
@@ -102,12 +103,11 @@ func ImportServer(url string, which *configure.NodeRef) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to resolve addresses: %w", err)
 		}
+		servers := make([]*configure.ServerRaw, len(infos))
 		for i, info := range infos {
-			if err = configure.AppendServers([]*configure.ServerRaw{{ServerObj: info}}); err != nil {
-				return fmt.Errorf("failed to import server %d/%d (%v): %w", i+1, len(infos), info.GetName(), err)
-			}
+			servers[i] = &configure.ServerRaw{ServerObj: info}
 		}
-		return nil
+		return configure.AppendServers(servers)
 	}
 	{
 		var obj serverObj.ServerObj
@@ -163,7 +163,7 @@ func ImportServer(url string, which *configure.NodeRef) (err error) {
 			}
 			log.Info("Import: modified %v %v", which.TYPE, which.ID)
 			css := configure.GetConnectedServers()
-			if css.Len() > 0 {
+			if css.Len() > 0 && !configure.HasAutomaticGroup() {
 				for _, cs := range css.Get() {
 					if which.TYPE == cs.TYPE && which.ID == cs.ID {
 						log.Info("Import: updating connected v2ray config")
@@ -191,6 +191,7 @@ func ImportSubscription(url string) (err error) {
 
 // ImportSubscriptionWithOptions imports a subscription with one-shot download options.
 func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions) (err error) {
+	defer func() { err = reloadAutomaticGroups(err) }()
 	resolv.CheckResolvConf()
 	url = strings.TrimSpace(url)
 	{
@@ -260,4 +261,13 @@ func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions)
 		}})
 	}
 	return
+}
+
+func reloadAutomaticGroups(err error) error {
+	if err == nil && configure.HasAutomaticGroup() && v2ray.ProcessManager.Running() {
+		if err = v2ray.UpdateV2RayConfig(); err != nil {
+			return fmt.Errorf("catalog saved, but the core could not apply it: %w", err)
+		}
+	}
+	return err
 }

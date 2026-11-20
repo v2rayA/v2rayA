@@ -33,6 +33,10 @@ The group **Type** selects Xray’s native `leastping`, `leastload`, `roundrobin
 
 The routing rules name groups as outbounds: `proxy` by default, and any other group by its name once it has a connected member.
 
+### Include all catalog nodes
+
+Enable **Include all catalog nodes** in the group settings to include every node from every saved subscription and all standalone entries. Imports, updates and deletions change its members automatically. Manual member edits are rejected while enabled. Turn it off to keep the current members and edit them manually. An empty automatic group blocks traffic; it never falls back to a direct connection.
+
 ## Start the core
 
 **Start** on the dashboard, or the status button at the top of the page, starts `v2raya_core` with the current configuration. Changes on the Settings page take effect with **Save and Apply**: a running core is restarted with them, a stopped core picks them up on the next start.

@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDisplay } from "vuetify";
 import { mdiChevronRight, mdiDotsVertical } from "@mdi/js";
+import { useAppStore } from "@/stores/app";
 import type { NodeAction } from "./model";
 defineOptions({ name: "NodeMenu" });
 defineProps<{
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 }>();
 const { t } = useI18n();
 const open = ref(false);
+const store = useAppStore();
 // a submenu has no room beside a phone-wide menu: the groups are listed under a heading instead
 const { width } = useDisplay();
 const compact = computed(() => width.value < 600);
@@ -61,7 +63,10 @@ function pick(action: NodeAction, group?: string) {
           :key="'add-' + group"
           :title="group.toUpperCase()"
           :active="memberGroups.includes(group)"
-          :disabled="memberGroups.includes(group)"
+          :disabled="
+            memberGroups.includes(group) ||
+            store.automaticOutbounds.includes(group)
+          "
           class="ps-8"
           @click="pick('addToGroup', group)"
         />
@@ -73,6 +78,7 @@ function pick(action: NodeAction, group?: string) {
             v-for="group in memberGroups"
             :key="'remove-' + group"
             :title="group.toUpperCase()"
+            :disabled="store.automaticOutbounds.includes(group)"
             class="ps-8"
             @click="pick('removeFromGroup', group)"
           />
@@ -86,7 +92,11 @@ function pick(action: NodeAction, group?: string) {
               v-bind="submenu"
               :title="t('proxies.addToGroup')"
               :append-icon="mdiChevronRight"
-              :disabled="!groups.length"
+              :disabled="
+                !groups.some(
+                  (group) => !store.automaticOutbounds.includes(group),
+                )
+              "
             />
           </template>
           <v-list density="compact" min-width="200">
@@ -95,7 +105,10 @@ function pick(action: NodeAction, group?: string) {
               :key="group"
               :title="group.toUpperCase()"
               :active="memberGroups.includes(group)"
-              :disabled="memberGroups.includes(group)"
+              :disabled="
+                memberGroups.includes(group) ||
+                store.automaticOutbounds.includes(group)
+              "
               @click="pick('addToGroup', group)"
             />
           </v-list>
@@ -106,7 +119,11 @@ function pick(action: NodeAction, group?: string) {
               v-bind="submenu"
               :title="t('proxies.removeFromGroup')"
               :append-icon="mdiChevronRight"
-              :disabled="!memberGroups.length"
+              :disabled="
+                !memberGroups.some(
+                  (group) => !store.automaticOutbounds.includes(group),
+                )
+              "
             />
           </template>
           <v-list density="compact" min-width="200">
@@ -114,6 +131,7 @@ function pick(action: NodeAction, group?: string) {
               v-for="group in memberGroups"
               :key="group"
               :title="group.toUpperCase()"
+              :disabled="store.automaticOutbounds.includes(group)"
               @click="pick('removeFromGroup', group)"
             />
           </v-list>

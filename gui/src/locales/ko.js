@@ -640,6 +640,9 @@ export default {
     saveFailed: "RoutingA 저장 실패: {message}",
   },
   outbound: {
+    autoAdd: "목록의 모든 노드 포함",
+    autoAddHelp:
+      "모든 구독 노드와 개별 서버를 포함합니다. 끄면 현재 구성원을 유지하고 수동으로 편집할 수 있습니다.",
     addMessage: "추가할 프록시 그룹 이름을 입력하세요:",
     deleteMessage:
       '프록시 그룹 "{outboundName}"을(를) 삭제하시겠습니까? 해당 그룹의 노드 연결이 해제됩니다. 이 작업은 취소할 수 없습니다.',

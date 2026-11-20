@@ -1,7 +1,9 @@
 package service
 
 import (
+	"github.com/v2rayA/v2rayA/db"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 )
 
 func DeleteWhich(ws []*configure.Which) (err error) {
@@ -32,10 +34,6 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 				cs := css[i]
 				if cs != nil && cs.TYPE == configure.SubscriptionServerType {
 					if ind == cs.Sub {
-						err = Disconnect(*cs, false)
-						if err != nil {
-							return
-						}
 						cssAfter = append(cssAfter[:i], cssAfter[i+1:]...)
 					} else if ind < cs.Sub {
 						cs.Sub--
@@ -51,10 +49,6 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 				cs := css[i]
 				if cs != nil && cs.TYPE == configure.ServerType {
 					if v.ID == cs.ID {
-						err = Disconnect(*cs, false)
-						if err != nil {
-							return
-						}
 						cssAfter = append(cssAfter[:i], cssAfter[i+1:]...)
 					} else if v.ID < cs.ID {
 						cs.ID--
@@ -73,5 +67,15 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 	if !bDeletedServer {
 		serversIndexes = nil
 	}
-	return configure.RemoveNodes(subscriptionsIndexes, serversIndexes, configure.NewNodeRefs(cssAfter))
+	store := func() error {
+		return configure.RemoveNodes(subscriptionsIndexes, serversIndexes, configure.NewNodeRefs(cssAfter))
+	}
+	if (configure.HasAutomaticGroup() || len(cssAfter) != cssRaw.Len()) && v2ray.ProcessManager.Running() {
+		restore, err := db.SnapshotCatalog()
+		if err != nil {
+			return err
+		}
+		return ApplyCoreConfig(func() func() error { return restore }, store)
+	}
+	return store()
 }

@@ -32,9 +32,14 @@ export function useOutboundGroups() {
       );
       if (res) {
         notify.success(t("outbound.added"));
-        store.setOutbounds((res as { outbounds: unknown }).outbounds);
+        const groups = res as {
+          outbounds: unknown;
+          automaticOutbounds?: unknown;
+        };
+        store.setOutbounds(groups.outbounds, groups.automaticOutbounds);
       } else {
-        store.setOutbounds((await getOutbounds()).outbounds);
+        const groups = await getOutbounds();
+        store.setOutbounds(groups.outbounds, groups.automaticOutbounds);
       }
       return true;
     } catch (err) {
@@ -54,9 +59,10 @@ export function useOutboundGroups() {
     try {
       const res = (await deleteOutbound({ outbound })) as {
         outbounds: unknown;
+        automaticOutbounds?: unknown;
       };
       notify.success(t("outbound.deleted"));
-      store.setOutbounds(res.outbounds);
+      store.setOutbounds(res.outbounds, res.automaticOutbounds);
       return true;
     } catch (err) {
       notify.warning(

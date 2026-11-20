@@ -256,7 +256,7 @@ async function startSession() {
   });
   void getOutbounds()
     .then((r) => {
-      store.setOutbounds(r.outbounds);
+      store.setOutbounds(r.outbounds, r.automaticOutbounds);
       if (shouldShowOnboarding())
         openDialog(OnboardingDialog, {}, { width: 560 });
     })

@@ -224,7 +224,8 @@ export function useDashboard() {
   }
   /** editGroup lets the user pick the group's members from every node; Save replaces the list. */
   async function editGroup() {
-    if (!touch.value) return;
+    if (!touch.value || store.automaticOutbounds.includes(store.outboundName))
+      return;
     const outbound = store.outboundName;
     const touches = await openDialog<Which[]>(
       GroupMembersDialog,
