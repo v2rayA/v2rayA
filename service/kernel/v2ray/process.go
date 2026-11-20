@@ -228,6 +228,7 @@ func (p *Process) WaitUntilExit(ctx context.Context) error {
 
 func RunWithLog(ctx context.Context, name string, argv []string, dir string, env []string) (*os.Process, error) {
 	cmd := exec.CommandContext(ctx, name)
+	setCoreParentDeathSignal(cmd)
 	cmd.Args = argv
 	cmd.Dir = dir
 	cmd.Env = env
