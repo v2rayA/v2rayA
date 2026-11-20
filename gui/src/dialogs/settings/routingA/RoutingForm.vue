@@ -10,6 +10,7 @@ import {
   mdiPencilOutline,
 } from "@mdi/js";
 import { useConfirm, useDialog } from "@/composables";
+import { useAppStore } from "@/stores/app";
 import { parse, serialize, type Entry } from "./rules";
 import RuleDialog from "./RuleDialog.vue";
 import OutboundDialog from "./OutboundDialog.vue";
@@ -20,6 +21,7 @@ const emit = defineEmits<{ "update:modelValue": [text: string] }>();
 const { t } = useI18n();
 const { open } = useDialog();
 const confirm = useConfirm();
+const store = useAppStore();
 const entries = ref<Entry[]>([]);
 watch(
   () => props.modelValue,
@@ -29,12 +31,17 @@ watch(
   { immediate: true },
 );
 const names = computed(() => [
-  "proxy",
-  "direct",
-  "block",
-  ...entries.value.flatMap((entry) =>
-    entry.kind === "outbound" ? [entry.name] : [],
-  ),
+  ...new Set([
+    "proxy",
+    "direct",
+    "block",
+    // the proxy groups are valid targets too: the service rewrites a rule's
+    // outbound tag into the group's balancer
+    ...store.outbounds,
+    ...entries.value.flatMap((entry) =>
+      entry.kind === "outbound" ? [entry.name] : [],
+    ),
+  ]),
 ]);
 const defaults = computed(() =>
   entries.value.find((entry) => entry.kind === "default"),
