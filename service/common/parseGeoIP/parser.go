@@ -24,13 +24,17 @@ type parserCacheKey struct {
 	countryCode string
 }
 
-var parserCache sync.Map
+var parserCache = make(map[parserCacheKey]parserResult)
+var parserCacheMu sync.Mutex
 
 func Parser(filename string, countryCode string) ([]string, []string, error) {
 	realpath, err := asset.GetV2rayLocationAsset(filename)
 	if err != nil {
 		return nil, nil, err
 	}
+	// Serialize misses, including stat, so a waiter cannot restore an old generation.
+	parserCacheMu.Lock()
+	defer parserCacheMu.Unlock()
 	info, err := os.Stat(realpath)
 	if err != nil {
 		return nil, nil, err
@@ -42,9 +46,13 @@ func Parser(filename string, countryCode string) ([]string, []string, error) {
 		modTime:     info.ModTime().UnixNano(),
 		countryCode: countryCode,
 	}
-	if cached, ok := parserCache.Load(cacheKey); ok {
-		result := cached.(parserResult)
+	if result, ok := parserCache[cacheKey]; ok {
 		return result.ipv4, result.ipv6, nil
+	}
+	for key := range parserCache {
+		if key.path == realpath && (key.size != cacheKey.size || key.modTime != cacheKey.modTime) {
+			delete(parserCache, key)
+		}
 	}
 
 	data, err := os.ReadFile(realpath)
@@ -57,7 +65,7 @@ func Parser(filename string, countryCode string) ([]string, []string, error) {
 		return ipv4List, ipv6List, err
 	}
 
-	parserCache.Store(cacheKey, parserResult{ipv4: ipv4List, ipv6: ipv6List})
+	parserCache[cacheKey] = parserResult{ipv4: ipv4List, ipv6: ipv6List}
 	return ipv4List, ipv6List, nil
 }
 
