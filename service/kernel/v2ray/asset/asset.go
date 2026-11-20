@@ -23,18 +23,31 @@ import (
 
 const maxAssetDownloadSize int64 = 256 << 20
 
-func readAssetBody(resp *http.Response) ([]byte, error) {
+func writeAssetBody(resp *http.Response, to string) error {
 	if resp.ContentLength > maxAssetDownloadSize {
-		return nil, fmt.Errorf("asset exceeds the 256 MiB download limit")
+		return fmt.Errorf("asset exceeds the 256 MiB download limit")
 	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, maxAssetDownloadSize+1))
+	// Keep the previous file intact until the entire response is on disk.
+	f, err := os.CreateTemp(filepath.Dir(to), ".asset-*")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if int64(len(b)) > maxAssetDownloadSize {
-		return nil, fmt.Errorf("asset exceeds the 256 MiB download limit")
+	defer os.Remove(f.Name())
+	defer f.Close()
+	n, err := io.Copy(f, io.LimitReader(resp.Body, maxAssetDownloadSize+1))
+	if err != nil {
+		return err
 	}
-	return b, nil
+	if n > maxAssetDownloadSize {
+		return fmt.Errorf("asset exceeds the 256 MiB download limit")
+	}
+	if err := f.Chmod(0644); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(f.Name(), to)
 }
 
 func GetV2rayLocationAssetOverride() string {
@@ -298,14 +311,7 @@ func download(c *http.Client, url string, to string) (err error) {
 	}
 	defer resp.Body.Close()
 	status = resp.Status
-	b, err := readAssetBody(resp)
-	if err != nil {
-		return common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
-			"host":   host,
-			"status": status,
-		})
-	}
-	if err = os.WriteFile(to, b, 0644); err != nil {
+	if err = writeAssetBody(resp, to); err != nil {
 		return common.Coded("ASSET_DOWNLOAD_FAILED", err, map[string]interface{}{
 			"host":   host,
 			"status": status,

@@ -13,20 +13,72 @@ type assetTransport func(*http.Request) (*http.Response, error)
 
 func (f assetTransport) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
-func TestAssetBodyOverLimitIsRejected(t *testing.T) {
-	client := &http.Client{Transport: assetTransport(func(*http.Request) (*http.Response, error) {
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Status:     "200 OK",
-			Body:       io.NopCloser(strings.NewReader(strings.Repeat("x", int(maxAssetDownloadSize+1)))),
-		}, nil
-	})}
-	target := filepath.Join(t.TempDir(), "asset.dat")
-	if err := download(client, "https://example.test/asset.dat", target); err == nil || !strings.Contains(err.Error(), "256 MiB") {
-		t.Fatalf("error = %v, want size limit", err)
+type repeatedAssetByte struct{}
+
+func (repeatedAssetByte) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'x'
 	}
-	if _, err := os.Stat(target); !os.IsNotExist(err) {
-		t.Fatalf("oversized asset created target: %v", err)
+	return len(p), nil
+}
+
+type brokenAssetBody struct{}
+
+func (brokenAssetBody) Read(p []byte) (int, error) {
+	return copy(p, "partial"), io.ErrUnexpectedEOF
+}
+
+func TestDownloadPreservesTargetOnFailure(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		body   io.Reader
+		length int64
+	}{
+		{"declared oversize", strings.NewReader(""), maxAssetDownloadSize + 1},
+		{"streamed oversize", io.LimitReader(repeatedAssetByte{}, maxAssetDownloadSize+1), -1},
+		{"interrupted", brokenAssetBody{}, -1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			target := filepath.Join(dir, "asset.dat")
+			if err := os.WriteFile(target, []byte("old"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			client := &http.Client{Transport: assetTransport(func(*http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: 200, Status: "200 OK", ContentLength: tc.length, Body: io.NopCloser(tc.body)}, nil
+			})}
+			if err := download(client, "https://example.test/asset.dat", target); err == nil {
+				t.Fatal("expected failure")
+			}
+			if got, err := os.ReadFile(target); err != nil || string(got) != "old" {
+				t.Fatalf("target = %q, %v", got, err)
+			}
+			entries, err := os.ReadDir(dir)
+			if err != nil || len(entries) != 1 {
+				t.Fatalf("temporary file left behind: %v, %v", entries, err)
+			}
+		})
+	}
+}
+
+func TestDownloadReplacesTarget(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "asset.dat")
+	if err := os.WriteFile(target, []byte("old"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	client := &http.Client{Transport: assetTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Status: "200 OK", Body: io.NopCloser(strings.NewReader("new"))}, nil
+	})}
+	if err := download(client, "https://example.test/asset.dat", target); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := os.ReadFile(target); err != nil || string(got) != "new" {
+		t.Fatalf("target = %q, %v", got, err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("temporary file left behind: %v, %v", entries, err)
 	}
 }
 
