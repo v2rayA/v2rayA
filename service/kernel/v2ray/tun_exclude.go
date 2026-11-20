@@ -295,6 +295,10 @@ func collectNodeIPs(tmpl *Template) []string {
 			}
 			mu.Lock()
 			for _, ip := range ips {
+				// A gateway route for loopback would break 127.0.0.1.
+				if parsed := net.ParseIP(ip); parsed == nil || parsed.IsLoopback() {
+					continue
+				}
 				if _, ok := seenIP[ip]; ok {
 					continue
 				}
