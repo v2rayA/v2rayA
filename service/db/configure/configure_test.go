@@ -50,13 +50,22 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 	if err := OverwriteConnects(initial); err != nil {
 		t.Fatal(err)
 	}
+	initialSetting := GetOutboundSetting(outbound)
+	initialSetting.Selected = "socks5://node-1.example.test:1080"
+	if err := SetOutboundSetting(outbound, initialSetting); err != nil {
+		t.Fatal(err)
+	}
+	replacementSetting := initialSetting
+	replacementSetting.Selected = "socks5://node-2.example.test:1080"
 	replacement := &NodeRefs{Touches: []*NodeRef{{
 		TYPE:     SubscriptionServerType,
 		ID:       2,
 		Sub:      index,
 		Outbound: outbound,
 	}}}
-	if err := SetSubscriptionAndConnects(index+1, subscription, replacement); err == nil {
+	if err := SetSubscriptionAndConnects(index+1, subscription, replacement, map[string]OutboundSetting{
+		outbound: replacementSetting,
+	}); err == nil {
 		t.Fatal("updating a missing subscription succeeded")
 	}
 
@@ -64,13 +73,21 @@ func TestSetSubscriptionAndConnectsRollsBackConnections(t *testing.T) {
 	if got == nil || got.Len() != 1 || *got.Get()[0] != *initial.Get()[0] {
 		t.Fatalf("connections changed after rollback: %+v", got)
 	}
+	if got := GetOutboundSetting(outbound); got != initialSetting {
+		t.Fatalf("outbound setting changed after rollback: %+v", got)
+	}
 
-	if err := SetSubscriptionAndConnects(index, subscription, replacement); err != nil {
+	if err := SetSubscriptionAndConnects(index, subscription, replacement, map[string]OutboundSetting{
+		outbound: replacementSetting,
+	}); err != nil {
 		t.Fatalf("replace subscription and connections: %v", err)
 	}
 	got = GetConnectedServersByOutbound(outbound)
 	if got == nil || got.Len() != 1 || *got.Get()[0] != *replacement.Get()[0] {
 		t.Fatalf("connections were not committed with subscription: %+v", got)
+	}
+	if got := GetOutboundSetting(outbound); got != replacementSetting {
+		t.Fatalf("outbound setting was not committed with subscription: %+v", got)
 	}
 }
 

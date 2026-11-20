@@ -18,6 +18,7 @@ import (
 
 	"github.com/v2rayA/v2rayA/db/configure"
 	"github.com/v2rayA/v2rayA/kernel/serverObj"
+	"github.com/v2rayA/v2rayA/kernel/touch"
 	"github.com/v2rayA/v2rayA/pkg/util/log"
 )
 
@@ -33,6 +34,15 @@ func testServer(t *testing.T, port int) serverObj.ServerObj {
 func namedTestServer(t *testing.T, port int, name string) serverObj.ServerObj {
 	t.Helper()
 	s, err := ResolveURL(fmt.Sprintf("http-proxy://127.0.0.1:%d#%s", port, name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+func vlessTestServer(t *testing.T, id, host string, port int, name string) serverObj.ServerObj {
+	t.Helper()
+	s, err := ResolveURL(fmt.Sprintf("vless://%s@%s:%d?type=raw&security=none#%s", id, host, port, name))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,6 +190,158 @@ func TestSubscriptionRemapsOneNodeInMultipleGroups(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSubscriptionUpdateMigratesPinnedSelectionAfterCredentialRotation(t *testing.T) {
+	old := resetSubscription(t)
+	oldNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000001", "node-1.example.test", 443, "node-1")
+	newNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000002", "node-1.example.test", 443, "node-1")
+	old.Servers = []configure.ServerRaw{{ServerObj: oldNode}}
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Selected = oldNode.ExportToURL()
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+
+	old = configure.GetSubscription(0)
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{newNode}, "", false); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetOutboundSetting("proxy").Selected; got != newNode.ExportToURL() {
+		t.Fatalf("pinned selection = %q, want rotated node %q", got, newNode.ExportToURL())
+	}
+	stored := configure.GetSubscription(0)
+	if got := stored.Servers[0].ServerObj.ExportToURL(); got != newNode.ExportToURL() {
+		t.Fatalf("stored node = %q, want rotated node %q", got, newNode.ExportToURL())
+	}
+	refs := configure.GetConnectedServersByOutbound("proxy").Get()
+	if len(refs) != 1 || refs[0].ID != 1 {
+		t.Fatalf("connected refs = %+v, want the remapped node", refs)
+	}
+	state := touch.GenerateTouch()
+	if len(state.ConnectedServers) != 1 || !state.ConnectedServers[0].Selected {
+		t.Fatalf("touch did not keep the rotated node pinned: %+v", state.ConnectedServers)
+	}
+}
+
+func TestSubscriptionUpdateMigratesPinnedSelectionInEveryGroup(t *testing.T) {
+	old := resetSubscription(t)
+	oldNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000011", "node-1.example.test", 443, "node-1")
+	newNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000012", "node-1.example.test", 443, "node-1")
+	old.Servers = []configure.ServerRaw{{ServerObj: oldNode}}
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	const secondGroup = "second"
+	if err := configure.AddOutbound(secondGroup); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.RemoveOutbound(secondGroup) })
+	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.SubscriptionServerType, Sub: 0, ID: 1, Outbound: secondGroup}); err != nil {
+		t.Fatal(err)
+	}
+	for _, group := range []string{"proxy", secondGroup} {
+		setting := configure.GetOutboundSetting(group)
+		setting.Selected = oldNode.ExportToURL()
+		if err := configure.SetOutboundSetting(group, setting); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	old = configure.GetSubscription(0)
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{newNode}, "", false); err != nil {
+		t.Fatal(err)
+	}
+	for _, group := range []string{"proxy", secondGroup} {
+		if got := configure.GetOutboundSetting(group).Selected; got != newNode.ExportToURL() {
+			t.Fatalf("%s pinned selection = %q, want %q", group, got, newNode.ExportToURL())
+		}
+	}
+}
+
+func TestSubscriptionUpdateMigratesPinnedSelectionByUniqueName(t *testing.T) {
+	old := resetSubscription(t)
+	oldNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000021", "node-a.example.test", 443, "node-1")
+	newNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000022", "node-b.example.test", 8443, "node-1")
+	old.Servers = []configure.ServerRaw{{ServerObj: oldNode}}
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Selected = oldNode.ExportToURL()
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+
+	old = configure.GetSubscription(0)
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{newNode}, "", false); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetOutboundSetting("proxy").Selected; got != newNode.ExportToURL() {
+		t.Fatalf("unique-name remap left stale pin %q, want %q", got, newNode.ExportToURL())
+	}
+}
+
+func TestSubscriptionUpdateDoesNotMovePinnedSelectionOnAmbiguousRemap(t *testing.T) {
+	old := resetSubscription(t)
+	oldNode := vlessTestServer(t, "00000000-0000-0000-0000-000000000031", "node-1.example.test", 443, "node-1")
+	newA := vlessTestServer(t, "00000000-0000-0000-0000-000000000032", "node-1.example.test", 443, "node-1")
+	newB := vlessTestServer(t, "00000000-0000-0000-0000-000000000033", "node-1.example.test", 443, "node-1")
+	old.Servers = []configure.ServerRaw{{ServerObj: oldNode}}
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Selected = oldNode.ExportToURL()
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+
+	old = configure.GetSubscription(0)
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{newA, newB}, "", false); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetOutboundSetting("proxy").Selected; got != oldNode.ExportToURL() {
+		t.Fatalf("ambiguous remap moved pin to %q; want stale selection preserved", got)
+	}
+	refs := configure.GetConnectedServersByOutbound("proxy").Get()
+	if len(refs) != 1 || refs[0].ID != 3 {
+		t.Fatalf("ambiguous remap refs = %+v, want retained old node appended as ID 3", refs)
+	}
+	stored := configure.GetSubscription(0)
+	if got := stored.Servers[refs[0].ID-1].ServerObj.ExportToURL(); got != oldNode.ExportToURL() {
+		t.Fatalf("ambiguous remap connected %q, want retained old node %q", got, oldNode.ExportToURL())
+	}
+}
+
+func TestSubscriptionUpdateLeavesAnotherPinnedMemberUnchanged(t *testing.T) {
+	old := resetSubscription(t)
+	oldNode1 := vlessTestServer(t, "00000000-0000-0000-0000-000000000041", "node-1.example.test", 443, "node-1")
+	newNode1 := vlessTestServer(t, "00000000-0000-0000-0000-000000000042", "node-1.example.test", 443, "node-1")
+	node2 := vlessTestServer(t, "00000000-0000-0000-0000-000000000043", "node-2.example.test", 443, "node-2")
+	old.Servers = []configure.ServerRaw{{ServerObj: oldNode1}, {ServerObj: node2}}
+	if err := configure.SetSubscription(0, old); err != nil {
+		t.Fatal(err)
+	}
+	if err := configure.AddConnect(configure.NodeRef{TYPE: configure.SubscriptionServerType, Sub: 0, ID: 2, Outbound: "proxy"}); err != nil {
+		t.Fatal(err)
+	}
+	setting := configure.GetOutboundSetting("proxy")
+	setting.Selected = node2.ExportToURL()
+	if err := configure.SetOutboundSetting("proxy", setting); err != nil {
+		t.Fatal(err)
+	}
+
+	old = configure.GetSubscription(0)
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{newNode1, node2}, "", false); err != nil {
+		t.Fatal(err)
+	}
+	if got := configure.GetOutboundSetting("proxy").Selected; got != node2.ExportToURL() {
+		t.Fatalf("unrelated pin changed to %q, want %q", got, node2.ExportToURL())
 	}
 }
 

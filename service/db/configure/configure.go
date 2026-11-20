@@ -180,7 +180,9 @@ func SetSubscription(index int, subscription *SubscriptionRaw) (err error) {
 	return db.SubscriptionsSet(index, subscription, nil)
 }
 
-func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs) error {
+// SetSubscriptionAndConnects stores one subscription, its connected references,
+// and optional outbound-setting changes in the same transaction.
+func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *NodeRefs, settings ...map[string]OutboundSetting) error {
 	return db.SubscriptionsSet(index, subscription, func(tx *sql.Tx) error {
 		outboundRefs := make(map[string][]*NodeRef)
 		for _, ref := range ws.Get() {
@@ -189,6 +191,13 @@ func SetSubscriptionAndConnects(index int, subscription *SubscriptionRaw, ws *No
 		for outbound, touches := range outboundRefs {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "connectedServers", &NodeRefs{Touches: touches}); err != nil {
 				return err
+			}
+		}
+		for _, changes := range settings {
+			for outbound, setting := range changes {
+				if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", outbound), "setting", setting); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
