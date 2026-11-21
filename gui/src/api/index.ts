@@ -37,8 +37,12 @@ export const getParams = () =>
 // ---- nodes and subscriptions ---------------------------------------------
 export const getTouch = (o: RequestOptions = {}) =>
   call<TouchResponse>({ url: "touch", method: "get", ...o });
-export const deleteTouch = (touches: Which[]) =>
-  call<TouchResponse>({ url: "touch", method: "delete", data: { touches } });
+export const deleteTouch = (touches: Which[], keepRoutingSourceId?: number) =>
+  call<TouchResponse>({
+    url: "touch",
+    method: "delete",
+    data: { touches, ...(keepRoutingSourceId ? { keepRoutingSourceId } : {}) },
+  });
 // The editor sends `which: null` for a new node, as the old page did; the
 // key stays in the body. Saving one node has no time limit, a batch has.
 export const postImport = (
@@ -152,11 +156,12 @@ export const postCustomInbound = (body: CustomInbound) =>
 export const deleteCustomInbound = (body: { tag: string }) =>
   call<unknown>({ url: "customInbound", method: "delete", data: body });
 export const getRoutingA = () =>
-  call<{ routingA: string; source: RoutingASource }>({
+  call<{ routingA: string; source: RoutingASource; revision: string }>({
     url: "routingA",
     method: "get",
   });
 export interface RoutingASource {
+  subscriptionId?: number;
   url: string;
   directUpdate: boolean;
   intervalHours: number;
@@ -170,7 +175,13 @@ export const importRoutingAFromURL = (source: RoutingASource) =>
 export const putRoutingA = (body: {
   routingA: string;
   source?: RoutingASource;
-}) => call<unknown>({ url: "routingA", method: "put", data: body });
+  preview?: { revision: string; subscriptionId: number };
+}) =>
+  call<{ warning?: string; running?: boolean } | null>({
+    url: "routingA",
+    method: "put",
+    data: body,
+  });
 export const getDnsRules = () =>
   call<DnsRulesResponse>({ url: "dnsRules", method: "get" });
 export const putDnsRules = (body: DnsRule[]) =>

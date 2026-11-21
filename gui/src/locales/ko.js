@@ -548,6 +548,31 @@ export default {
       title: "가져오기",
       confirm: "현재 규칙을 가져온 파일의 내용으로 바꾸시겠습니까?",
     },
+    offer: {
+      title: "구독의 라우팅 규칙을 사용할까요?",
+      prompt:
+        "{name} 구독에서 {host}의 규칙을 제공합니다. 이 규칙은 v2rayA 전체 트래픽에 적용됩니다.",
+      preview: "규칙 미리 보기",
+      skip: "서버만 추가",
+      invalid: "규칙 주소가 올바르지 않습니다. 서버는 사용할 수 있습니다.",
+      active: "이미 설정된 규칙 소스입니다.",
+      local: "현재 로컬 규칙",
+      replace: "저장하면 {previous}의 규칙을 {next}의 규칙으로 교체합니다.",
+      switchMode: "규칙 포트 모드를 {mode}에서 RoutingA로 변경합니다.",
+      router:
+        "투명 프록시가 규칙 포트를 따릅니다. 이 라우터를 사용하는 기기에도 적용됩니다.",
+      ports: "규칙 포트: {ports}.",
+      noPort: "규칙 포트가 꺼져 있습니다. 설정에서 활성화하세요.",
+      onStart: "규칙을 저장했습니다. 코어를 시작하면 적용됩니다.",
+      applied: "라우팅 규칙을 적용했습니다.",
+      enable: "RoutingA 활성화 및 적용",
+      apply: "규칙 적용",
+      remove:
+        "구독을 삭제하면 업데이트가 중지되고 마지막 규칙은 유지됩니다. URL을 수동 소스로 유지할까요?",
+      keep: "수동 소스로 유지",
+      detach: "업데이트 중지",
+      settings: "설정 열기",
+    },
     urlImport: {
       title: "URL에서 가져오기",
       url: "원본 규칙 파일 URL",

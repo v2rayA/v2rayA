@@ -192,10 +192,36 @@ func trapBOM(fileBytes []byte) []byte {
 	return trimmedBytes
 }
 func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
-	return resolveSubscriptionWithContext(context.Background(), source, client)
+	nodes, meta, err := resolveSubscriptionWithContext(context.Background(), source, client)
+	return nodes, meta.info, err
 }
 
-func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+type subscriptionMetadata struct {
+	info  string
+	offer *configure.RoutingOffer
+}
+
+func routingOffer(source string, response *http.Response) *configure.RoutingOffer {
+	values := response.Header.Values("X-V2RayA-RoutingA-URL")
+	if len(values) == 0 {
+		return nil
+	}
+	address := strings.TrimSpace(values[0])
+	u, err := url.Parse(address)
+	if len(values) != 1 || !strings.HasPrefix(strings.ToLower(source), "https://") ||
+		response.Request == nil || response.Request.URL.Scheme != "https" ||
+		err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.Fragment != "" ||
+		strings.ContainsAny(address, ", \t\r\n") {
+		return &configure.RoutingOffer{Invalid: true}
+	}
+	hours, err := strconv.Atoi(response.Header.Get("X-V2RayA-RoutingA-Interval-Hours"))
+	if err != nil || hours < 1 || hours > 8760 || len(response.Header.Values("X-V2RayA-RoutingA-Interval-Hours")) != 1 {
+		hours = 24
+	}
+	return &configure.RoutingOffer{URL: address, IntervalHours: hours}
+}
+
+func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, meta subscriptionMetadata, err error) {
 	defer func() {
 		if err != nil {
 			var coded *common.CodedError
@@ -215,43 +241,44 @@ func resolveSubscriptionWithContext(ctx context.Context, source string, client *
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
 	res, err := c.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
-		return nil, "", fmt.Errorf("subscription server answered %s", res.Status)
+		return nil, meta, fmt.Errorf("subscription server answered %s", res.Status)
 	}
 	b, err := readSubscriptionBody(res)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	// base64 decode. trapBOM due to https://github.com/v2rayA/v2rayA/issues/612
 	raw, err := common.Base64StdDecode(string(trapBOM(b)))
 	if err != nil {
 		raw, _ = common.Base64URLDecode(string(b))
 	}
-	infos, status, err = ResolveByLines(raw)
+	infos, meta.info, err = ResolveByLines(raw)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	if len(infos) == 0 {
 		// an update that replaced the list with nothing would drop every
 		// node; treat an unparseable or empty body as a failed fetch
-		return nil, "", common.Coded("SUBSCRIPTION_EMPTY", fmt.Errorf("no server found in the subscription response"), nil)
+		return nil, meta, common.Coded("SUBSCRIPTION_EMPTY", fmt.Errorf("no server found in the subscription response"), nil)
 	}
 	// The Subscription-Userinfo header is the standard form of the usage; a
 	// STATUS= line in the body is the provider's own prose for the same
 	// numbers. Showing both printed every figure twice in two formats.
 	sui := parseSubscriptionUserInfo(res.Header.Get("Subscription-Userinfo"))
 	if sui.Known() {
-		status = sui.String()
+		meta.info = sui.String()
 	}
-	return infos, status, nil
+	meta.offer = routingOffer(source, res)
+	return infos, meta, nil
 }
 
 func ResolveByLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
@@ -313,7 +340,7 @@ func UpdateSubscriptionWithOptions(index int, disconnectIfNecessary bool, option
 		return err
 	}
 	resolv.CheckResolvConf()
-	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
+	subscriptionInfos, status, err := resolveSubscriptionWithContext(context.Background(), addr, c)
 	if err != nil {
 		log.Warn("Subscription fetch failed: %v", err)
 		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)
@@ -321,13 +348,14 @@ func UpdateSubscriptionWithOptions(index int, disconnectIfNecessary bool, option
 	return storeSubscriptionUpdate(index, subscription, subscriptionInfos, status, disconnectIfNecessary)
 }
 
-func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []serverObj.ServerObj, info string, disconnect bool) error {
+func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []serverObj.ServerObj, meta subscriptionMetadata, disconnect bool) error {
 	next := *old
 	next.Servers = make([]configure.ServerRaw, len(nodes))
 	for i, node := range nodes {
 		next.Servers[i].ServerObj = node
 	}
-	next.Status, next.Info = string(touch.NewUpdateStatus()), info
+	next.Status, next.Info = string(touch.NewUpdateStatus()), meta.info
+	next.RoutingOffer = meta.offer
 	previous := configure.GetConnectedServers()
 	affected := false
 	updated := configure.NewNodeRefs(nil)

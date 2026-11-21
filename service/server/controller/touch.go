@@ -30,13 +30,16 @@ func DeleteTouch(ctx *gin.Context) {
 	}
 	defer release()
 
-	var ws configure.Whiches
+	var ws struct {
+		configure.Whiches
+		KeepSourceID int64 `json:"keepRoutingSourceId"`
+	}
 	err := ctx.ShouldBindJSON(&ws)
 	if err != nil {
 		common.ResponseError(ctx, badRequest("touches", "request body must be {\"touches\": [...]} of server or subscription items"))
 		return
 	}
-	err = service.DeleteWhich(ws.Get())
+	err = service.DeleteWhichWithRoutingSource(ws.Get(), ws.KeepSourceID)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return

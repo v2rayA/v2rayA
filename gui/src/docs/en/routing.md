@@ -2,6 +2,8 @@
 
 RoutingA is the rule language of v2rayA. **Settings → RoutingA** opens the editor; the rules apply to the rule port (`20172`) when its mode is RoutingA and to the transparent proxy when its policy is _Same as the rule port_. A custom inbound bound to RoutingA has its own rule text, see below.
 
+An HTTPS subscription can offer a raw HTTPS RoutingA file in X-V2RayA-RoutingA-URL and suggest an interval in X-V2RayA-RoutingA-Interval-Hours (1–8760 hours, default 24). Servers import first. Preview downloads the rules. Applying replaces the one instance-wide source and enables RoutingA. The offer is also available on the subscription card.
+
 ## Syntax
 
 One rule per line: conditions, joined with `&&`, then `->` and an outbound. Rules match from top to bottom and the first match wins; `default:` names the outbound for everything unmatched. A line starting with `#` is a comment. v2rayA puts a few rules of its own in front: the proxy servers' addresses and Apple's push service go direct, and an `inboundTag(...)` condition replaces the rule's usual inbound scope.

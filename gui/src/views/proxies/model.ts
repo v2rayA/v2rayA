@@ -1,6 +1,12 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { deleteTouch, getSharingAddress, putOutboundConnections } from "@/api";
+import RoutingADialog from "@/dialogs/settings/RoutingA.vue";
+import {
+  getRoutingA,
+  deleteTouch,
+  getSharingAddress,
+  putOutboundConnections,
+} from "@/api";
 import { errorText } from "@/api/errors";
 import { copyText } from "@/lib/clipboard";
 import { exportName, saveText } from "@/lib/download";
@@ -33,7 +39,8 @@ import { useSubscriptions } from "../subscriptions/model";
 
 export type NodeAction =
   "test" | "addToGroup" | "removeFromGroup" | "edit" | "share" | "delete";
-export type SubscriptionAction = "update" | "edit" | "share" | "delete";
+export type SubscriptionAction =
+  "routing" | "update" | "edit" | "share" | "delete";
 /** the order of the listed nodes: as the backend lists them, or by latency */
 export type NodeSort = "none" | "asc" | "desc";
 
@@ -362,6 +369,15 @@ export function useProxies() {
     action: SubscriptionAction,
   ) {
     await run(async () => {
+      if (action === "routing") {
+        const current = await getRoutingA();
+        if (current.source.url === subscription.routingOffer?.url) {
+          notify.success(t("routingA.offer.active"));
+          return;
+        }
+        await open(RoutingADialog, { subscription }, { width: 960 }).result;
+        return;
+      }
       if (action === "share") {
         const link = await subscriptionsModel.sharingLink(subscription);
         open(
@@ -401,7 +417,22 @@ export function useProxies() {
           }))
         )
           return;
-        await subscriptionsModel.remove(subscription);
+        let keepSource: number | undefined;
+        if (
+          subscription.databaseId &&
+          (await getRoutingA()).source.subscriptionId ===
+            subscription.databaseId
+        ) {
+          if (
+            await confirm({
+              message: t("routingA.offer.remove"),
+              confirmText: t("routingA.offer.keep"),
+              cancelText: t("routingA.offer.detach"),
+            })
+          )
+            keepSource = subscription.databaseId;
+        }
+        await subscriptionsModel.remove(subscription, keepSource);
       }
       await sync();
     });

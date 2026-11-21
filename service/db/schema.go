@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     update_mode TEXT NOT NULL DEFAULT 'disabled',
     update_interval_minutes INTEGER NOT NULL DEFAULT 0,
     failure_interval_minutes INTEGER NOT NULL DEFAULT 1,
+    routing_offer TEXT NOT NULL DEFAULT 'null',
     allow_direct_recovery INTEGER NOT NULL DEFAULT 0,
     filter TEXT DEFAULT '',
     group_id TEXT DEFAULT '',
@@ -100,6 +101,7 @@ func MigrateSchema(db *sql.DB) error {
 		{"update_mode", "TEXT NOT NULL DEFAULT 'disabled'"},
 		{"update_interval_minutes", "INTEGER NOT NULL DEFAULT 0"},
 		{"failure_interval_minutes", "INTEGER NOT NULL DEFAULT 1"},
+		{"routing_offer", "TEXT NOT NULL DEFAULT 'null'"},
 		{"allow_direct_recovery", "INTEGER NOT NULL DEFAULT 0"},
 	}
 	for _, column := range columns {

@@ -27,16 +27,13 @@ export function useSubscriptions() {
     }
   }
 
-  async function update(
-    subscription: TouchSubscription,
-    bypassProxy = false,
-  ) {
+  async function update(subscription: TouchSubscription, bypassProxy = false) {
     await putSubscription(whichOf(subscription), bypassProxy);
     await sync();
   }
 
-  async function remove(subscription: TouchSubscription) {
-    await deleteTouch([whichOf(subscription)]);
+  async function remove(subscription: TouchSubscription, keepSource?: number) {
+    await deleteTouch([whichOf(subscription)], keepSource);
     await sync();
   }
 

@@ -2,7 +2,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { flushPromises, type VueWrapper } from "@vue/test-utils";
 import type * as Api from "@/api";
-import { getSetting, postImport } from "@/api";
+import {
+  getSetting,
+  postImport,
+  getRoutingA,
+  importRoutingAFromURL,
+} from "@/api";
 import {
   closeAllDialogs,
   closeDialog,
@@ -16,6 +21,8 @@ import ImportDialog from "./Import.vue";
 vi.mock("@/api", async (original) => ({
   ...(await original<typeof Api>()),
   getSetting: vi.fn(),
+  getRoutingA: vi.fn(),
+  importRoutingAFromURL: vi.fn(),
   postImport: vi.fn(),
 }));
 
@@ -72,6 +79,35 @@ describe("subscription import with a stopped core", () => {
       kind: "subscription",
       bypassProxy: true,
     });
+    expect(wrapper.emitted("close")).toEqual([[true]]);
+  });
+
+  test("offers a subscription's rules without fetching them on dismissal", async () => {
+    useAppStore().setRunning("running");
+    vi.mocked(getRoutingA).mockResolvedValue({
+      routingA: "default: direct",
+      source: { url: "", directUpdate: false, intervalHours: 24 },
+      revision: "v1",
+    });
+    vi.mocked(postImport).mockResolvedValue({
+      touch: {
+        subscriptions: [
+          {
+            databaseId: 3,
+            host: "provider.test",
+            routingOffer: {
+              url: "https://rules.example/rules",
+              intervalHours: 12,
+            },
+          },
+        ],
+      },
+    } as never);
+    await submit();
+    expect(dialogState.stack.at(-1)?.props.message).toContain("rules.example");
+    closeDialog(dialogState.stack.at(-1)!.id, false);
+    await flushPromises();
+    expect(importRoutingAFromURL).not.toHaveBeenCalled();
     expect(wrapper.emitted("close")).toEqual([[true]]);
   });
 

@@ -45,7 +45,7 @@ type subscriptionSchedule struct {
 	warnedUnprobeable bool
 }
 
-type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, string, error)
+type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, subscriptionMetadata, error)
 
 type automation struct {
 	subscriptions map[int64]*subscriptionSchedule
@@ -75,10 +75,10 @@ func subscriptionPolicySignature(sub *configure.SubscriptionRaw) string {
 	return string(b)
 }
 
-func fetchSubscriptionForAutomation(ctx context.Context, address string, allowDirectFallback bool) ([]serverObj.ServerObj, string, error) {
+func fetchSubscriptionForAutomation(ctx context.Context, address string, allowDirectFallback bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 	client, err := subscriptionHTTPClient()
 	var nodes []serverObj.ServerObj
-	var info string
+	var info subscriptionMetadata
 	if err == nil {
 		nodes, info, err = resolveSubscriptionWithContext(ctx, address, client)
 	}
@@ -99,7 +99,7 @@ func findSubscriptionByDatabaseID(id int64) (int, *configure.SubscriptionRaw) {
 	return -1, nil
 }
 
-func (a *automation) applyUpdate(ctx context.Context, observed *configure.SubscriptionRaw, nodes []serverObj.ServerObj, info string) (*configure.SubscriptionRaw, error) {
+func (a *automation) applyUpdate(ctx context.Context, observed *configure.SubscriptionRaw, nodes []serverObj.ServerObj, info subscriptionMetadata) (*configure.SubscriptionRaw, error) {
 	ConfigurationMu.Lock()
 	defer ConfigurationMu.Unlock()
 	if err := ctx.Err(); err != nil {

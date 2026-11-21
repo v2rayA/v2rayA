@@ -77,6 +77,21 @@ const usage = computed(() => parseQuota(props.subscription.info));
       </template>
     </v-card-item>
     <v-card-text class="px-4 pb-4 pt-0">
+      <v-alert
+        v-if="subscription.routingOffer?.invalid"
+        class="mb-2"
+        type="warning"
+        variant="tonal"
+        >{{ t("routingA.offer.invalid") }}</v-alert
+      >
+      <v-btn
+        v-if="subscription.routingOffer?.url"
+        variant="tonal"
+        class="mb-2"
+        :disabled="disabled"
+        @click="emit('action', 'routing')"
+        >{{ t("routingA.offer.preview") }}</v-btn
+      >
       <template v-if="usage">
         <div
           class="d-flex flex-wrap justify-space-between ga-2 md3-body-medium mb-2"

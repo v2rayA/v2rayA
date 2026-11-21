@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	url2 "net/url"
 	"strings"
@@ -228,8 +229,8 @@ func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions)
 		// assign, do not redeclare: a shadowed err here made the
 		// AppendSubscriptions failure below vanish behind a nil return
 		var infos []serverObj.ServerObj
-		var status string
-		infos, status, err = ResolveSubscriptionWithClient(source, &c)
+		var meta subscriptionMetadata
+		infos, meta, err = resolveSubscriptionWithContext(context.Background(), source, &c)
 		if err != nil {
 			return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(source), err)
 		}
@@ -253,10 +254,11 @@ func ImportSubscriptionWithOptions(url string, options SubscriptionFetchOptions)
 			uniqueServers = append(uniqueServers, s)
 		}
 		err = configure.AppendSubscriptions([]*configure.SubscriptionRaw{{
-			Address: source,
-			Status:  string(touch.NewUpdateStatus()),
-			Servers: uniqueServers,
-			Info:    status,
+			Address:      source,
+			Status:       string(touch.NewUpdateStatus()),
+			Servers:      uniqueServers,
+			Info:         meta.info,
+			RoutingOffer: meta.offer,
 		}})
 	}
 	return

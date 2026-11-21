@@ -6,13 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/v2rayA/v2rayA/common"
 	"github.com/v2rayA/v2rayA/db/configure"
+	"github.com/v2rayA/v2rayA/kernel/v2ray"
 	"github.com/v2rayA/v2rayA/server/service"
 )
 
 func GetRoutingA(ctx *gin.Context) {
+	text, source, setting := configure.GetRoutingA(), configure.GetRoutingASource(), configure.GetSettingNotNil()
 	common.ResponseSuccess(ctx, gin.H{
-		"routingA": configure.GetRoutingA(),
-		"source":   configure.GetRoutingASource(),
+		"routingA": text, "source": source, "revision": service.RoutingARevision(text, source, setting),
 	})
 }
 func PostRoutingAImport(ctx *gin.Context) {
@@ -35,6 +36,7 @@ func PutRoutingA(ctx *gin.Context) {
 	}
 	defer release()
 	var data struct {
+		Preview  *service.RoutingPreview  `json:"preview"`
 		RoutingA string                   `json:"routingA"`
 		Source   configure.RoutingASource `json:"source"`
 	}
@@ -73,17 +75,21 @@ func PutRoutingA(ctx *gin.Context) {
 		}
 	}
 
-	err = service.SaveRoutingA(data.RoutingA, data.Source)
+	err = service.SaveRoutingA(data.RoutingA, data.Source, data.Preview)
 	if err != nil {
 		common.ResponseError(ctx, logError(err))
 		return
 	}
 
-	if hasInboundDef {
-		common.ResponseSuccess(ctx, gin.H{
-			"warning": "RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。",
-		})
-		return
+	var result gin.H
+	if data.Preview != nil {
+		result = gin.H{"running": v2ray.ProcessManager.Running()}
 	}
-	common.ResponseSuccess(ctx, nil)
+	if hasInboundDef {
+		if result == nil {
+			result = gin.H{}
+		}
+		result["warning"] = "RoutingA 中定义入站(inbound)的功能已弃用，生成的 JSON 配置将不会包含对应的入站端口。请使用自定义入站设置中的 RoutingA 规则功能替代。"
+	}
+	common.ResponseSuccess(ctx, result)
 }

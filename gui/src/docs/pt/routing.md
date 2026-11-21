@@ -2,6 +2,8 @@
 
 RoutingA é a linguagem de regras do v2rayA. **Configurações → RoutingA** abre o editor; as regras se aplicam à porta de regras (`20172`) quando seu modo é RoutingA e ao proxy transparente quando sua política é _Igual ao da porta de regras_. Uma entrada personalizada vinculada ao RoutingA tem seu próprio texto de regras, veja abaixo.
 
+Uma assinatura HTTPS pode oferecer um arquivo HTTPS pelo cabeçalho X-V2RayA-RoutingA-URL e sugerir o intervalo com X-V2RayA-RoutingA-Interval-Hours (1 a 8760 horas, padrão 24). Os servidores são importados primeiro. A prévia baixa as regras. Aplicar substitui a fonte global e ativa RoutingA. A oferta também está no cartão da assinatura.
+
 ## Sintaxe
 
 Uma regra por linha: condições, unidas por `&&`, seguidas de `->` e uma saída. As regras são avaliadas de cima para baixo e a primeira correspondência prevalece; `default:` indica a saída para tudo que não corresponder a nenhuma regra. Uma linha que começa com `#` é um comentário. O v2rayA coloca algumas regras próprias antes das demais: os endereços dos servidores proxy e o serviço de notificações push da Apple usam conexão direta, e uma condição `inboundTag(...)` substitui o escopo de entradas habitual da regra.
