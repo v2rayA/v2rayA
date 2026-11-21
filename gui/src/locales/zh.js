@@ -523,7 +523,8 @@ export default {
       telegram: "Telegram 走代理",
       ai: "AI 服务走代理",
       dev: "开发者服务走代理（GitHub、GitLab、Docker、npm、JetBrains、Hugging Face）",
-      cnServices: "Apple、Google、Microsoft、Steam 的中国区服务与 Bilibili 直连",
+      cnServices:
+        "Apple、Google、Microsoft、Steam 的中国区服务与 Bilibili 直连",
       appleMicrosoft: "Apple 与 Microsoft 直连",
       games: "游戏平台直连",
       speedtest: "测速站点直连",
@@ -535,6 +536,30 @@ export default {
     import: {
       title: "导入",
       confirm: "将当前规则替换为导入文件的内容？",
+    },
+    offer: {
+      title: "使用此订阅的路由规则？",
+      prompt:
+        "订阅 {name} 提供来自 {host} 的规则。这些规则会影响整个 v2rayA 实例的流量。",
+      preview: "预览路由规则",
+      skip: "仅添加节点",
+      invalid: "规则地址无效。订阅节点仍可使用。",
+      active: "已配置此规则源。",
+      local: "当前本地规则",
+      replace: "保存后将用 {next} 的规则替换 {previous} 的规则。",
+      switchMode: "规则端口模式将从 {mode} 切换为 RoutingA。",
+      router: "透明代理将跟随规则端口，包括通过此路由器的设备流量。",
+      ports: "规则端口：{ports}。",
+      noPort: "未启用规则端口。请在设置中启用。",
+      onStart: "规则已保存，将在内核启动时生效。",
+      applied: "路由规则已应用。",
+      enable: "启用 RoutingA 并应用",
+      apply: "应用规则",
+      remove:
+        "删除订阅将停止规则更新并保留最后的规则。是否将 URL 保留为手动来源？",
+      keep: "保留为手动来源",
+      detach: "停止更新",
+      settings: "打开设置",
     },
     urlImport: {
       title: "从 URL 导入",

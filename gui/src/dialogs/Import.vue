@@ -5,7 +5,9 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Decoder } from "@nuintun/qrcode";
 import { mdiQrcodeScan } from "@mdi/js";
-import { postImport } from "@/api";
+import { getRoutingA, postImport } from "@/api";
+import { useConfirm, useDialog } from "@/composables";
+import RoutingADialog from "./settings/RoutingA.vue";
 import { ApiError } from "@/api/client";
 import { errorText } from "@/api/errors";
 import { useNotify } from "@/composables/useNotify";
@@ -19,6 +21,8 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [imported?: boolean] }>();
 const { t } = useI18n();
 const notify = useNotify();
+const confirm = useConfirm();
+const { open } = useDialog();
 const subscriptionBypass = useSubscriptionBypass();
 
 const kind = ref<"server" | "subscription">(props.kind ?? "server");
@@ -33,12 +37,40 @@ async function submit(url = text.value.trim()) {
     const bypassProxy =
       kind.value === "subscription" ? await subscriptionBypass() : false;
     if (bypassProxy === null) return;
-    await postImport({
+    const result = await postImport({
       url,
       kind: kind.value,
       ...(bypassProxy ? { bypassProxy: true } : {}),
     });
     notify.success(t("import.success"));
+    const added =
+      kind.value === "subscription"
+        ? result.touch?.subscriptions.at(-1)
+        : undefined;
+    if (added?.routingOffer?.url) {
+      try {
+        const origin = new URL(added.routingOffer.url).host;
+        const current = await getRoutingA();
+        if (current.source.url === added.routingOffer.url)
+          notify.success(t("routingA.offer.active"));
+        else if (
+          await confirm({
+            title: t("routingA.offer.title"),
+            message: t("routingA.offer.prompt", {
+              name: added.remarks || added.host,
+              host: origin,
+            }),
+            confirmText: t("routingA.offer.preview"),
+            cancelText: t("routingA.offer.skip"),
+          })
+        ) {
+          await open(RoutingADialog, { subscription: added }, { width: 960 })
+            .result;
+        }
+      } catch (err) {
+        notify.warning(errorText(err));
+      }
+    }
     emit("close", true);
   } catch (err) {
     if (err instanceof ApiError && err.kind === "timeout")

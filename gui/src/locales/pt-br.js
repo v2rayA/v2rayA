@@ -562,6 +562,34 @@ export default {
       confirm:
         "Substituir as regras atuais pelo conteúdo do arquivo importado?",
     },
+    offer: {
+      title: "Usar as regras de roteamento da assinatura?",
+      prompt:
+        "A assinatura {name} oferece regras de {host}. Elas afetam todo o tráfego desta instância do v2rayA.",
+      preview: "Visualizar regras",
+      skip: "Adicionar apenas servidores",
+      invalid:
+        "Endereço de regras inválido. Os servidores continuam disponíveis.",
+      active: "Esta fonte de regras já está configurada.",
+      local: "regras locais atuais",
+      replace:
+        "Ao salvar, as regras de {previous} serão substituídas pelas de {next}.",
+      switchMode: "O modo da porta de regras mudará de {mode} para RoutingA.",
+      router:
+        "O proxy transparente seguirá a porta de regras, inclusive para os dispositivos que usam este roteador.",
+      ports: "Portas com regras: {ports}.",
+      noPort:
+        "Nenhuma porta de regras está ativa. Ative uma nas configurações.",
+      onStart: "Regras salvas para a próxima inicialização do núcleo.",
+      applied: "Regras de roteamento aplicadas.",
+      enable: "Ativar RoutingA e aplicar",
+      apply: "Aplicar regras",
+      remove:
+        "Excluir a assinatura interrompe as atualizações e mantém as últimas regras. Manter a URL como fonte manual?",
+      keep: "Manter como fonte manual",
+      detach: "Parar atualizações",
+      settings: "Abrir configurações",
+    },
     urlImport: {
       title: "Importar de URL",
       url: "URL do arquivo bruto de regras",

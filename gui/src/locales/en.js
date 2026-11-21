@@ -556,6 +556,33 @@ export default {
       title: "Import",
       confirm: "Replace the current rules with the imported file?",
     },
+    offer: {
+      title: "Use this subscription’s routing rules?",
+      prompt:
+        "{name} offers rules from {host}. These rules affect traffic for the whole v2rayA instance.",
+      preview: "Preview routing rules",
+      skip: "Add servers only",
+      invalid: "Invalid routing offer. The servers are still available.",
+      active: "This routing source is already configured.",
+      local: "current local rules",
+      replace:
+        "Saving replaces the rules from {previous} with those from {next}.",
+      switchMode: "Rule port mode will change from {mode} to RoutingA.",
+      router:
+        "The transparent proxy will follow the rule port, including traffic from devices using this router.",
+      ports: "Rule ports: {ports}.",
+      noPort:
+        "No rule port is enabled. Enable one in Settings to use the rules.",
+      onStart: "Rules saved for the next core start.",
+      applied: "Routing rules applied.",
+      enable: "Enable RoutingA and apply",
+      apply: "Apply rules",
+      remove:
+        "Deleting this subscription stops its routing updates and keeps the last rules. Keep the URL as a manually managed source?",
+      keep: "Keep as manual source",
+      detach: "Stop updates",
+      settings: "Open settings",
+    },
     urlImport: {
       title: "Import from URL",
       url: "Raw rules URL",

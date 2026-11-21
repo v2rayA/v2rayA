@@ -30,7 +30,15 @@ export interface TouchServer {
 }
 
 /** touch.Subscription */
+export interface RoutingOffer {
+  url?: string;
+  intervalHours?: number;
+  invalid?: boolean;
+}
+
 export interface TouchSubscription {
+  databaseId?: number;
+  routingOffer?: RoutingOffer;
   id: number;
   _type: TouchType;
   remarks?: string;

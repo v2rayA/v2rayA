@@ -5,6 +5,12 @@ import (
 )
 
 func DeleteWhich(ws []*configure.Which) (err error) {
+	return DeleteWhichWithRoutingSource(ws, 0)
+}
+
+func DeleteWhichWithRoutingSource(ws []*configure.Which, keepSourceID int64) (err error) {
+	routingAUpdate.Lock()
+	defer routingAUpdate.Unlock()
 	var data *configure.Whiches
 	// Deduplicate touches to delete
 	data = configure.NewWhiches(ws)
@@ -73,5 +79,5 @@ func DeleteWhich(ws []*configure.Which) (err error) {
 	if !bDeletedServer {
 		serversIndexes = nil
 	}
-	return configure.RemoveNodes(subscriptionsIndexes, serversIndexes, configure.NewNodeRefs(cssAfter))
+	return configure.RemoveNodes(subscriptionsIndexes, serversIndexes, configure.NewNodeRefs(cssAfter), keepSourceID)
 }

@@ -13,10 +13,15 @@ import {
 } from "@mdi/js";
 import {
   getRoutingA,
+  getSetting,
+  getPorts,
+  getTouch,
   importRoutingAFromURL,
   putRoutingA,
   type RoutingASource,
 } from "@/api";
+import { useAppStore } from "@/stores/app";
+import type { TouchSubscription } from "@/api/types";
 import { errorText } from "@/api/errors";
 import { useConfirm, useNotify, useUnsavedGuard } from "@/composables";
 import RoutingEditor from "./routingA/RoutingEditor.vue";
@@ -26,6 +31,13 @@ import { template } from "./routingA/template";
 import { presets } from "./routingA/presets";
 
 defineOptions({ name: "RoutingADialog" });
+const store = useAppStore();
+const props = defineProps<{ subscription?: TouchSubscription }>();
+const revision = ref("");
+const modeNotice = ref("");
+const previousLabel = ref("");
+const enableMode = ref(false);
+const needsPort = ref(false);
 const emit = defineEmits<{ close: [saved?: boolean] }>();
 const { t } = useI18n();
 const templateGroups = computed(() => [
@@ -59,11 +71,12 @@ const source = computed<RoutingASource>(() => ({
   directUpdate: directUpdate.value,
   intervalHours: Number(intervalHours.value),
 }));
-useUnsavedGuard(
-  () =>
-    routingA.value !== original.value ||
-    JSON.stringify(source.value) !== JSON.stringify(originalSource.value),
-);
+const hasChanges = () =>
+  routingA.value !== original.value ||
+  source.value.url !== originalSource.value.url ||
+  source.value.directUpdate !== originalSource.value.directUpdate ||
+  source.value.intervalHours !== originalSource.value.intervalHours;
+useUnsavedGuard(hasChanges);
 const loading = ref(true);
 const saving = ref(false);
 const confirming = ref(false);
@@ -167,6 +180,7 @@ async function importRules(event: Event) {
 async function importFromURL() {
   if (busy.value || !url.value.trim()) return;
   importing.value = true;
+  validatedURL.value = "";
   backendError.value = "";
   try {
     const result = await importRoutingAFromURL(source.value);
@@ -200,6 +214,60 @@ onMounted(async () => {
     directUpdate.value = saved.directUpdate;
     intervalHours.value = saved.intervalHours;
     if (saved.url) view.value = "url";
+    const sub = props.subscription;
+    if (sub?.routingOffer?.url) {
+      const [settings, ports, state] = await Promise.all([
+        getSetting(),
+        getPorts(),
+        getTouch(),
+      ]);
+      const { pacMode, transparent } = settings.setting;
+      const owner = state.touch.subscriptions.find(
+        (s) => s.databaseId === saved.subscriptionId,
+      );
+      previousLabel.value =
+        owner?.remarks ||
+        owner?.host ||
+        (saved.url ? new URL(saved.url).host : t("routingA.offer.local"));
+      revision.value = res.revision;
+      enableMode.value =
+        pacMode !== "routingA" ||
+        (transparent !== "close" && transparent !== "pac");
+      modeNotice.value =
+        (pacMode !== "routingA"
+          ? t("routingA.offer.switchMode", { mode: pacMode }) + " "
+          : "") +
+        (transparent !== "close" && transparent !== "pac"
+          ? t("routingA.offer.router")
+          : "");
+      const portList = [
+        ports.httpWithPac && "HTTP " + ports.httpWithPac,
+        ports.socks5WithPac && "SOCKS " + ports.socks5WithPac,
+      ]
+        .filter(Boolean)
+        .join(", ");
+      needsPort.value = transparent === "close" && !portList;
+      if (transparent === "close")
+        modeNotice.value +=
+          " " +
+          (portList
+            ? t("routingA.offer.ports", { ports: portList })
+            : t("routingA.offer.noPort"));
+      view.value = "url";
+      url.value = sub.routingOffer.url;
+      validatedURL.value = "";
+      directUpdate.value = saved.url === url.value && saved.directUpdate;
+      intervalHours.value =
+        saved.url === url.value
+          ? saved.intervalHours
+          : (sub.routingOffer.intervalHours ?? 24);
+      loading.value = false;
+      if (directUpdate.value || (state.running && ports.httpWithPac)) {
+        await importFromURL();
+      } else {
+        modeNotice.value += " " + t("routingA.urlImport.directHelp");
+      }
+    }
   } catch (err) {
     notify.warning(errorText(err));
     emit("close");
@@ -212,9 +280,7 @@ async function close() {
   confirming.value = true;
   try {
     if (
-      (routingA.value !== original.value ||
-        JSON.stringify(source.value) !==
-          JSON.stringify(originalSource.value)) &&
+      hasChanges() &&
       !(await confirm({
         message: t("routingA.discard"),
         confirmText: t("operations.confirm"),
@@ -223,9 +289,13 @@ async function close() {
     )
       return;
     emit("close");
+    return true;
   } finally {
     confirming.value = false;
   }
+}
+async function openSettings() {
+  if (await close()) store.view = "settings";
 }
 async function reset() {
   if (busy.value) return;
@@ -267,14 +337,32 @@ async function save() {
     )
       return;
     const res = await putRoutingA(
-      view.value === "url" || originalSource.value.url
-        ? { routingA: routingA.value, source: source.value }
-        : { routingA: routingA.value },
+      props.subscription?.databaseId
+        ? {
+            routingA: routingA.value,
+            source: source.value,
+            preview: {
+              revision: revision.value,
+              subscriptionId: props.subscription.databaseId,
+            },
+          }
+        : view.value === "url" || originalSource.value.url
+          ? { routingA: routingA.value, source: source.value }
+          : { routingA: routingA.value },
     );
     if (res && typeof res === "object" && "warning" in res && res.warning) {
       notify.warning(t("routingA.savedWithWarning", { warning: res.warning }), {
         timeout: 8000,
       });
+    }
+    if (props.subscription) {
+      notify.success(
+        !res?.running
+          ? t("routingA.offer.onStart")
+          : needsPort.value
+            ? t("routingA.offer.noPort")
+            : t("routingA.offer.applied"),
+      );
     }
     emit("close", true);
   } catch (err) {
@@ -294,6 +382,7 @@ async function save() {
       }}</v-card-title>
       <template #append>
         <v-btn-toggle
+          v-if="!subscription"
           v-model="view"
           mandatory
           variant="text"
@@ -318,7 +407,7 @@ async function save() {
             t("routingA.urlImport.title")
           }}</v-btn>
         </v-btn-toggle>
-        <v-menu>
+        <v-menu v-if="!subscription">
           <template #activator="{ props: menu }">
             <v-btn
               v-bind="menu"
@@ -363,10 +452,28 @@ async function save() {
       </template>
     </v-card-item>
     <v-card-text class="px-6">
+      <v-alert
+        v-if="subscription && previousLabel"
+        type="info"
+        variant="tonal"
+        class="mb-3"
+      >
+        {{
+          t("routingA.offer.replace", {
+            previous: previousLabel,
+            next: subscription.remarks || subscription.host,
+          })
+        }}
+        {{ modeNotice }}
+        <v-btn v-if="needsPort" variant="text" @click="openSettings">{{
+          t("routingA.offer.settings")
+        }}</v-btn>
+      </v-alert>
       <template v-if="view === 'url'">
         <div class="routing-url-row mb-3">
           <v-text-field
             v-model="url"
+            :readonly="!!subscription"
             type="url"
             variant="outlined"
             density="comfortable"
@@ -486,15 +593,23 @@ async function save() {
         hidden
         @change="importRules"
       />
-      <v-btn variant="text" :disabled="busy" @click="picker?.click()">{{
-        t("routingA.import.title")
-      }}</v-btn>
+      <v-btn
+        v-if="!subscription"
+        variant="text"
+        :disabled="busy"
+        @click="picker?.click()"
+        >{{ t("routingA.import.title") }}</v-btn
+      >
       <v-btn variant="text" :disabled="loading" @click="exportRules">{{
         t("routingA.export")
       }}</v-btn>
-      <v-btn variant="text" :disabled="busy" @click="reset">{{
-        t("routingA.resetDefault")
-      }}</v-btn>
+      <v-btn
+        v-if="!subscription"
+        variant="text"
+        :disabled="busy"
+        @click="reset"
+        >{{ t("routingA.resetDefault") }}</v-btn
+      >
       <v-btn
         variant="text"
         :append-icon="mdiOpenInNew"
@@ -518,7 +633,11 @@ async function save() {
           (view === 'url' && url.trim() !== validatedURL)
         "
         @click="save"
-        >{{ t("operations.save") }}</v-btn
+        >{{
+          subscription
+            ? t(enableMode ? "routingA.offer.enable" : "routingA.offer.apply")
+            : t("operations.save")
+        }}</v-btn
       >
     </v-card-actions>
     <v-dialog v-model="instructions" max-width="520">

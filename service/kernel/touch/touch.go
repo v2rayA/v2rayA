@@ -28,6 +28,8 @@ type Server struct {
 	PingLatency string              `json:"pingLatency"`
 }
 type Subscription struct {
+	DatabaseID             int64                             `json:"databaseId"`
+	RoutingOffer           *configure.RoutingOffer           `json:"routingOffer,omitempty"`
 	NodeDns                string                            `json:"nodeDns,omitempty"`
 	UpdateMode             *configure.SubscriptionUpdateMode `json:"updateMode,omitempty"`
 	UpdateIntervalMinutes  *int                              `json:"updateIntervalMinutes"`
@@ -97,6 +99,7 @@ func GenerateTouch() (t Touch) {
 			}
 		}
 		t.Subscriptions[i] = Subscription{
+			DatabaseID: v.DatabaseID, RoutingOffer: v.RoutingOffer,
 			NodeDns:                v.NodeDns,
 			Remarks:                v.Remarks,
 			UpdateMode:             &updateMode,

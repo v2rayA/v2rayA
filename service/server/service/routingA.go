@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
@@ -56,7 +58,8 @@ func routingAClient(direct bool) (*http.Client, error) {
 	}
 	client.Timeout = 30 * time.Second
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		if len(via) >= 5 || (req.URL.Scheme != "https" && req.URL.Scheme != "http") {
+		downgrade := via[0].URL.Scheme == "https" && req.URL.Scheme == "http"
+		if len(via) >= 5 || downgrade || req.URL.User != nil || (req.URL.Scheme != "https" && req.URL.Scheme != "http") {
 			return fmt.Errorf("invalid redirect from RoutingA URL")
 		}
 		return nil
@@ -133,29 +136,45 @@ func FetchRoutingA(source configure.RoutingASource) (string, error) {
 	return text, nil
 }
 
-func SaveRoutingA(text string, source configure.RoutingASource) error {
+type RoutingPreview struct {
+	Revision       string `json:"revision"`
+	SubscriptionID int64  `json:"subscriptionId"`
+}
+
+func RoutingARevision(text string, source configure.RoutingASource, setting *configure.Setting) string {
+	b, _ := json.Marshal([]any{text, source, setting.RulePortMode, setting.Transparent})
+	return fmt.Sprintf("%x", sha256.Sum256(b))
+}
+
+func SaveRoutingA(text string, source configure.RoutingASource, preview *RoutingPreview) error {
 	routingAUpdate.Lock()
 	defer routingAUpdate.Unlock()
-	var previous string
+	previous := configure.GetRoutingA()
+	previousSource := configure.GetRoutingASource()
+	var before, after *configure.Setting
+	source.SubscriptionID = 0
+	if preview != nil {
+		before = configure.GetSettingNotNil()
+		if preview.Revision != RoutingARevision(previous, previousSource, before) {
+			return fmt.Errorf("routing settings changed; reopen the preview")
+		}
+		_, sub := findSubscriptionByDatabaseID(preview.SubscriptionID)
+		if sub == nil || sub.RoutingOffer == nil || sub.RoutingOffer.Invalid || sub.RoutingOffer.URL == "" || sub.RoutingOffer.URL != source.URL {
+			return fmt.Errorf("subscription routing offer changed; reopen the preview")
+		}
+		source.SubscriptionID = sub.DatabaseID
+		setting := *before
+		setting.RulePortMode = configure.RoutingAMode
+		if setting.Transparent != configure.TransparentClose {
+			setting.Transparent = configure.TransparentFollowRule
+		}
+		after = &setting
+	} else if source.URL == previousSource.URL {
+		source.SubscriptionID = previousSource.SubscriptionID
+	}
 	return ApplyCoreConfig(func() func() error {
-		previous = configure.GetRoutingA()
-		previousSource := configure.GetRoutingASource()
-		return func() error {
-			if err := configure.SetRoutingA(&previous); err != nil {
-				return err
-			}
-			return configure.SetRoutingASource(previousSource)
-		}
-	}, func() error {
-		if err := configure.SetRoutingA(&text); err != nil {
-			return err
-		}
-		if err := configure.SetRoutingASource(source); err != nil {
-			_ = configure.SetRoutingA(&previous)
-			return err
-		}
-		return nil
-	})
+		return func() error { return configure.SetRoutingAConfig(previous, previousSource, before) }
+	}, func() error { return configure.SetRoutingAConfig(text, source, after) })
 }
 
 func UpdateRoutingAFromSource() error {

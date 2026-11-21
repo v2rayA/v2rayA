@@ -449,8 +449,29 @@ func (ws *NodeRefs) byOutbound() map[string]*NodeRefs {
 
 // RemoveNodes deletes subscriptions and servers by ordinal together with
 // the connected lists already renumbered for the deletion, atomically.
-func RemoveNodes(subscriptions, servers []int, connected *NodeRefs) error {
+func RemoveNodes(subscriptions, servers []int, connected *NodeRefs, keepSourceID int64) error {
+	source := GetRoutingASource()
+	var detached *RoutingASource
+	if source.SubscriptionID != 0 {
+		for _, index := range subscriptions {
+			sub := GetSubscription(index)
+			if sub != nil && sub.DatabaseID == source.SubscriptionID {
+				if source.SubscriptionID == keepSourceID {
+					source.SubscriptionID = 0
+				} else {
+					source = RoutingASource{IntervalHours: 24}
+				}
+				detached = &source
+				break
+			}
+		}
+	}
 	return db.RemoveTx(subscriptions, servers, func(tx *sql.Tx) error {
+		if detached != nil {
+			if err := db.SetTx(tx, "system", "routingASource", detached); err != nil {
+				return err
+			}
+		}
 		for out, refs := range connected.byOutbound() {
 			if err := db.SetTx(tx, fmt.Sprintf("outbound.%v", out), "connectedServers", refs); err != nil {
 				return err

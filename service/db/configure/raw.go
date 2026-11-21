@@ -12,7 +12,14 @@ type ServerRaw struct {
 	Latency   string              `json:"latency"`
 }
 
+type RoutingOffer struct {
+	URL           string `json:"url,omitempty"`
+	IntervalHours int    `json:"intervalHours,omitempty"`
+	Invalid       bool   `json:"invalid,omitempty"`
+}
+
 type SubscriptionRaw struct {
+	RoutingOffer           *RoutingOffer          `json:"routingOffer,omitempty"`
 	NodeDns                string                 `json:"nodeDns"`
 	DatabaseID             int64                  `json:"databaseId"`
 	UpdateMode             SubscriptionUpdateMode `json:"updateMode"`
