@@ -289,13 +289,13 @@ func (t *nftTproxy) GetSetupCommands(dnsHijack bool) Setter {
     chain tp_pre {
         iifname "lo" mark & 0xc0 != 0x40 return
         meta l4proto { tcp, udp } fib saddr type != local fib daddr type != local jump tp_rule
-` + nftDnsTproxyToModule(dnsHijack) + `
+` + nftTproxyDNSBypass(dnsHijack) + `
         # 通用 TPROXY 规则
         meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip to 127.0.0.1:52345
         meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip6 to [::1]:52345
     }
 
-` + nftDnsMarkChain(dnsHijack) + `
+` + nftTproxyDNSChains(dnsHijack) + `
     chain output {
         type route hook output priority mangle - 5; policy accept;
 ` + nftDnsMarkHooks(dnsHijack) + `
@@ -344,10 +344,9 @@ func (t *nftTproxy) GetSetupCommands(dnsHijack bool) Setter {
     }
 }
 `
-	// Port 53 is marked for the DNS module while interception is on. With the
-	// opt-out it is already returned at the start of tp_rule, before a stale
-	// conntrack mark can reach the generic TPROXY rule.
-	dnsPortRule := "        meta l4proto { tcp, udp } th dport 53 jump tp_mark\n"
+	// Mark the DNS request only. Saving the proxy mark on the connection
+	// would route the module's reply back through the transparent proxy.
+	dnsPortRule := "        meta l4proto { tcp, udp } th dport 53 jump dns_mark\n"
 	if !dnsHijack {
 		dnsPortRule = ""
 	}

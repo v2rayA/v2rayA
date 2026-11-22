@@ -203,12 +203,24 @@ func TestNftTproxyInterceptsDNSByDefault(t *testing.T) {
 	for _, want := range []string{
 		"chain dns_mark",
 		"meta l4proto { tcp, udp } th dport 53 jump dns_mark",
-		"mark & 0xc0 == 0x40 th dport 53 tproxy ip to 127.2.0.17:52353",
-		"meta l4proto { tcp, udp } th dport 53 jump tp_mark",
+		"type nat hook prerouting priority dstnat - 5",
+		"meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 redirect to :52353",
 	} {
 		if !strings.Contains(table, want) {
 			t.Fatalf("DNS interception is missing %q:\n%s", want, table)
 		}
+	}
+	_, pre, _ := strings.Cut(table, "chain tp_pre {")
+	pre, _, _ = strings.Cut(pre, "\n    }")
+	bypass := strings.Index(pre, "th dport 53 return")
+	proxy := strings.Index(pre, "tproxy ip to 127.0.0.1:52345")
+	if bypass < 0 || proxy < bypass {
+		t.Fatal("incoming DNS must bypass the generic TPROXY before prerouting NAT")
+	}
+	_, tpRule, _ := strings.Cut(table, "chain tp_rule {")
+	tpRule, _, _ = strings.Cut(tpRule, "\n    }")
+	if !strings.Contains(tpRule, "th dport 53 jump dns_mark") {
+		t.Fatal("forwarded DNS must use a packet mark without marking the reply")
 	}
 	start := strings.Index(table, "chain dns_mark {")
 	if start < 0 {
@@ -219,8 +231,11 @@ func TestNftTproxyInterceptsDNSByDefault(t *testing.T) {
 		t.Fatalf("could not isolate the DNS marking chain:\n%s", table)
 	}
 	markChain := table[start : start+end]
+	if strings.Contains(markChain, "ct mark set") {
+		t.Fatal("DNS interception must not save the packet mark on the connection")
+	}
 	if !strings.Contains(markChain, "meta mark set mark | 0x40\n        return") || strings.Contains(markChain, "accept") {
-		t.Fatalf("DNS marking must return to the base chain so forwarded queries reach the DNS TPROXY rule:\n%s", table)
+		t.Fatalf("DNS marking must return to the base chain:\n%s", table)
 	}
 }
 

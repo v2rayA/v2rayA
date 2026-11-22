@@ -105,13 +105,18 @@ func nftDnsEarlyBypass(dnsHijack bool) string {
 `
 }
 
-// nftDnsMarkChain is the chain the output and prerouting hooks jump into to
-// mark port 53 for the TPROXY rules.
-func nftDnsMarkChain(dnsHijack bool) string {
+// The DNS module uses ordinary sockets. Redirect marked incoming queries so
+// conntrack also gives replies the address and port requested by the client.
+func nftTproxyDNSChains(dnsHijack bool) string {
 	if !dnsHijack {
 		return ""
 	}
-	return `    chain dns_mark {
+	return `    chain dns_prerouting {
+        type nat hook prerouting priority dstnat - 5; policy accept;
+        meta nfproto { ipv4, ipv6 } meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 redirect to :52353
+    }
+
+    chain dns_mark {
         meta mark & 0x80 == 0x80 return
         meta mark set mark | 0x40
         return
@@ -131,17 +136,13 @@ func nftDnsMarkHooks(dnsHijack bool) string {
 `
 }
 
-// nftDnsTproxyToModule hands marked port-53 traffic to the DNS module, ahead
-// of the generic TPROXY rules.
-func nftDnsTproxyToModule(dnsHijack bool) string {
+// Let incoming queries reach prerouting NAT and locally redirected queries
+// reach the DNS listener without assigning them to the transparent socket.
+func nftTproxyDNSBypass(dnsHijack bool) string {
 	if !dnsHijack {
 		return ""
 	}
-	return `        # 本机 DNS 查询在 nat OUTPUT 已被 REDIRECT 改写端口（53→52353），经 lo 重入时
-        # 带着 0x40 标记但端口不再是 53，必须放行，否则命中通用 TPROXY 规则被劫持到 52345
-        meta l4proto { tcp, udp } th dport 52353 return
-        # DNS 流量重定向到新 DNS 模块端口 52353（必须在通用 TPROXY 规则之前）
-        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 tproxy ip to 127.2.0.17:52353
-        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 th dport 53 tproxy ip6 to [::1]:52353
+	return `        meta l4proto { tcp, udp } th dport 52353 return
+        meta l4proto { tcp, udp } th dport 53 return
 `
 }
