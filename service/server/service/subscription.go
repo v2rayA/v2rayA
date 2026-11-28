@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/v2rayA/v2rayA/common"
@@ -191,11 +193,33 @@ func trapBOM(fileBytes []byte) []byte {
 	trimmedBytes := bytes.Trim(fileBytes, "\xef\xbb\xbf")
 	return trimmedBytes
 }
-func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
-	return resolveSubscriptionWithContext(context.Background(), source, client)
+
+type subscriptionMetadata struct {
+	info         string
+	profileTitle string
 }
 
-func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+func parseProfileTitle(value string) string {
+	value = strings.TrimSpace(value)
+	if encoded, ok := strings.CutPrefix(value, "base64:"); ok {
+		decoded, err := common.Base64StdDecode(encoded)
+		if err != nil {
+			return ""
+		}
+		value = strings.TrimSpace(decoded)
+	}
+	if !utf8.ValidString(value) || strings.IndexFunc(value, unicode.IsControl) >= 0 {
+		return ""
+	}
+	return value
+}
+
+func ResolveSubscriptionWithClient(source string, client *http.Client) (infos []serverObj.ServerObj, status string, err error) {
+	nodes, meta, err := resolveSubscriptionWithContext(context.Background(), source, client)
+	return nodes, meta.info, err
+}
+
+func resolveSubscriptionWithContext(ctx context.Context, source string, client *http.Client) (infos []serverObj.ServerObj, meta subscriptionMetadata, err error) {
 	defer func() {
 		if err != nil {
 			var coded *common.CodedError
@@ -215,34 +239,34 @@ func resolveSubscriptionWithContext(ctx context.Context, source string, client *
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("v2rayA/%s WebRequestHelper", conf.Version))
 	res, err := c.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
-		return nil, "", fmt.Errorf("subscription server answered %s", res.Status)
+		return nil, meta, fmt.Errorf("subscription server answered %s", res.Status)
 	}
 	b, err := readSubscriptionBody(res)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	// base64 decode. trapBOM due to https://github.com/v2rayA/v2rayA/issues/612
 	raw, err := common.Base64StdDecode(string(trapBOM(b)))
 	if err != nil {
 		raw, _ = common.Base64URLDecode(string(b))
 	}
-	infos, status, err = ResolveByLines(raw)
+	infos, status, err := ResolveByLines(raw)
 	if err != nil {
-		return nil, "", err
+		return nil, meta, err
 	}
 	if len(infos) == 0 {
 		// an update that replaced the list with nothing would drop every
 		// node; treat an unparseable or empty body as a failed fetch
-		return nil, "", common.Coded("SUBSCRIPTION_EMPTY", fmt.Errorf("no server found in the subscription response"), nil)
+		return nil, meta, common.Coded("SUBSCRIPTION_EMPTY", fmt.Errorf("no server found in the subscription response"), nil)
 	}
 	// The Subscription-Userinfo header is the standard form of the usage; a
 	// STATUS= line in the body is the provider's own prose for the same
@@ -251,7 +275,7 @@ func resolveSubscriptionWithContext(ctx context.Context, source string, client *
 	if sui.Known() {
 		status = sui.String()
 	}
-	return infos, status, nil
+	return infos, subscriptionMetadata{info: status, profileTitle: parseProfileTitle(res.Header.Get("Profile-Title"))}, nil
 }
 
 func ResolveByLines(raw string) (infos []serverObj.ServerObj, status string, err error) {
@@ -313,21 +337,22 @@ func UpdateSubscriptionWithOptions(index int, disconnectIfNecessary bool, option
 		return err
 	}
 	resolv.CheckResolvConf()
-	subscriptionInfos, status, err := ResolveSubscriptionWithClient(addr, c)
+	subscriptionInfos, meta, err := resolveSubscriptionWithContext(context.Background(), addr, c)
 	if err != nil {
 		log.Warn("Subscription fetch failed: %v", err)
 		return fmt.Errorf("could not fetch subscription from %s: %w", subscriptionHost(addr), err)
 	}
-	return storeSubscriptionUpdate(index, subscription, subscriptionInfos, status, disconnectIfNecessary)
+	return storeSubscriptionUpdate(index, subscription, subscriptionInfos, meta, disconnectIfNecessary)
 }
 
-func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []serverObj.ServerObj, info string, disconnect bool) error {
+func storeSubscriptionUpdate(index int, old *configure.SubscriptionRaw, nodes []serverObj.ServerObj, meta subscriptionMetadata, disconnect bool) error {
 	next := *old
 	next.Servers = make([]configure.ServerRaw, len(nodes))
 	for i, node := range nodes {
 		next.Servers[i].ServerObj = node
 	}
-	next.Status, next.Info = string(touch.NewUpdateStatus()), info
+	next.Status, next.Info = string(touch.NewUpdateStatus()), meta.info
+	next.ProfileTitle = meta.profileTitle
 	previous := configure.GetConnectedServers()
 	affected := false
 	updated := configure.NewNodeRefs(nil)
@@ -473,6 +498,9 @@ func ModifySubscriptionRemark(subscription touch.Subscription) error {
 		}
 	default:
 		return fmt.Errorf("unknown subscription update mode %q", mode)
+	}
+	if raw.Address != subscription.Address {
+		raw.ProfileTitle = ""
 	}
 	raw.Remarks, raw.Address = subscription.Remarks, subscription.Address
 	raw.AutoSelect = subscription.AutoSelect

@@ -34,6 +34,7 @@ export interface TouchSubscription {
   id: number;
   _type: TouchType;
   remarks?: string;
+  profileTitle?: string;
   host: string;
   address: string;
   status: string;

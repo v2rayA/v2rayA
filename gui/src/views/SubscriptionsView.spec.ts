@@ -51,6 +51,27 @@ describe("subscriptions page", () => {
         .some((p) => p.props("modelValue") === 25),
     ).toBe(true);
   });
+  test.each([
+    ["Provider name", "", "Provider name", true],
+    ["Provider name", "My name", "My name", true],
+    ["", "", "feed-0.example", false],
+    ["feed-0.example", "", "feed-0.example", false],
+  ] as const)(
+    "renders profile %j and remark %j",
+    async (profileTitle, remarks, heading, showHost) => {
+      wrapper.unmount();
+      const data = fixture();
+      Object.assign(data.touch.subscriptions[0], { profileTitle, remarks });
+      vi.mocked(getTouch).mockResolvedValue(data);
+      wrapper = mountWithApp(SubscriptionsView);
+      await flushPromises();
+      const card = wrapper.findComponent(SubscriptionCard);
+      expect(card.get(".v-card-title").text()).toBe(heading);
+      const host = card.find(".v-card-subtitle");
+      expect(host.exists()).toBe(showHost);
+      if (showHost) expect(host.text()).toBe("feed-0.example");
+    },
+  );
   test("its buttons open the settings and the import dialogs", async () => {
     await button("Auto-update").trigger("click");
     expect(dialogState.stack.at(-1)?.component).toBe(SubscriptionSettings);

@@ -20,6 +20,7 @@ type SubscriptionRaw struct {
 	FailureIntervalMinutes int                    `json:"failureIntervalMinutes"`
 	AllowDirectRecovery    bool                   `json:"allowDirectRecovery"`
 	Remarks                string                 `json:"remarks,omitempty"`
+	ProfileTitle           string                 `json:"profileTitle,omitempty"`
 	Address                string                 `json:"address"`
 	Status                 string                 `json:"status"` //update time, error info, etc.
 	Servers                []ServerRaw            `json:"servers"`

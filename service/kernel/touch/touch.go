@@ -35,6 +35,7 @@ type Subscription struct {
 	AllowDirectRecovery    *bool                             `json:"allowDirectRecovery,omitempty"`
 	AutoSelect             bool                              `json:"autoSelect"`
 	Remarks                string                            `json:"remarks,omitempty"`
+	ProfileTitle           string                            `json:"profileTitle,omitempty"`
 	ID                     int                               `json:"id"`
 	TYPE                   configure.TouchType               `json:"_type"`
 	Host                   string                            `json:"host"`
@@ -99,6 +100,7 @@ func GenerateTouch() (t Touch) {
 		t.Subscriptions[i] = Subscription{
 			NodeDns:                v.NodeDns,
 			Remarks:                v.Remarks,
+			ProfileTitle:           v.ProfileTitle,
 			UpdateMode:             &updateMode,
 			UpdateIntervalMinutes:  &v.UpdateIntervalMinutes,
 			FailureIntervalMinutes: &v.FailureIntervalMinutes,

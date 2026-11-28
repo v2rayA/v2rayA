@@ -25,9 +25,9 @@ func testAutomation(t *testing.T, mode configure.SubscriptionUpdateMode, regular
 	a.now = func() time.Time { return now }
 	requests := 0
 	healthy := true
-	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 		requests++
-		return []serverObj.ServerObj{testServer(t, 10001)}, "", nil
+		return []serverObj.ServerObj{testServer(t, 10001)}, subscriptionMetadata{}, nil
 	}
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
 		results := make([]subscriptionProbeResult, len(nodes))
@@ -109,13 +109,13 @@ func TestSubscriptionScheduleUsesDatabaseIDAndPolicyFieldsOnly(t *testing.T) {
 	now := time.Unix(1000, 0)
 	a.now = func() time.Time { return now }
 	requests := map[int]bool{}
-	a.fetch = func(_ context.Context, address string, _ bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(_ context.Context, address string, _ bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 		if address == second.Address {
 			requests[2] = true
 		} else {
 			requests[1] = true
 		}
-		return []serverObj.ServerObj{testServer(t, 10003)}, "", nil
+		return []serverObj.ServerObj{testServer(t, 10003)}, subscriptionMetadata{}, nil
 	}
 	a.step(context.Background())
 	delete(requests, 2)
@@ -166,7 +166,7 @@ func TestDirectRecoveryRequiresOptInAndOutage(t *testing.T) {
 			a.now = func() time.Time { return now }
 			var permissions []bool
 			fetch := a.fetch
-			a.fetch = func(ctx context.Context, address string, allowDirect bool) ([]serverObj.ServerObj, string, error) {
+			a.fetch = func(ctx context.Context, address string, allowDirect bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 				permissions = append(permissions, allowDirect)
 				return fetch(ctx, address, allowDirect)
 			}
@@ -221,8 +221,8 @@ func TestFailsafeProbeCannotMutateStoredNode(t *testing.T) {
 	}
 	want := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL()
 	a := newAutomation()
-	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, string, error) {
-		return []serverObj.ServerObj{node}, "", nil
+	a.fetch = func(context.Context, string, bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
+		return []serverObj.ServerObj{node}, subscriptionMetadata{}, nil
 	}
 	a.probe = func(_ context.Context, nodes []serverObj.ServerObj, _ string) []subscriptionProbeResult {
 		if v, ok := nodes[0].(*serverObj.V2Ray); ok {
@@ -253,12 +253,12 @@ func TestFailsafeCancellationKeepsDeadline(t *testing.T) {
 			*healthy = false
 			fetch, probe := a.fetch, a.probe
 			probeCalls := 0
-			a.fetch = func(ctx context.Context, address string, recovery bool) ([]serverObj.ServerObj, string, error) {
+			a.fetch = func(ctx context.Context, address string, recovery bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 				if phase == "recovery-fetch" || phase == "regular-fetch" {
 					// Cancellation after a slow request must back off from completion.
 					now = now.Add(3 * time.Minute)
 					CancelAutomation()
-					return nil, "", ctx.Err()
+					return nil, subscriptionMetadata{}, ctx.Err()
 				}
 				return fetch(ctx, address, recovery)
 			}
@@ -298,12 +298,12 @@ func TestFailsafeDoesNotTreatUnprobeableNodesAsAnOutage(t *testing.T) {
 				nodes = append(nodes, testServer(t, 10002))
 			}
 			requests := 0
-			a.fetch = func(_ context.Context, _ string, recovery bool) ([]serverObj.ServerObj, string, error) {
+			a.fetch = func(_ context.Context, _ string, recovery bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 				requests++
 				if recovery {
 					t.Fatal("unprobeable candidates triggered recovery")
 				}
-				return nodes, "", nil
+				return nodes, subscriptionMetadata{}, nil
 			}
 			a.probe = func(context.Context, []serverObj.ServerObj, string) []subscriptionProbeResult {
 				t.Fatal("unprobeable subscription started candidate cores")
@@ -346,9 +346,9 @@ func TestCancelledRegularFetchDoesNotGainDirectPermission(t *testing.T) {
 	now := time.Unix(1000, 0)
 	a.now = func() time.Time { return now }
 	var direct []bool
-	a.fetch = func(_ context.Context, _ string, allow bool) ([]serverObj.ServerObj, string, error) {
+	a.fetch = func(_ context.Context, _ string, allow bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 		direct = append(direct, allow)
-		return []serverObj.ServerObj{testServer(t, 10001)}, "", nil
+		return []serverObj.ServerObj{testServer(t, 10001)}, subscriptionMetadata{}, nil
 	}
 	// A dashboard mutation cancels the regular fetch mid-flight, like
 	// CancelAutomation does for a latency test.
@@ -395,7 +395,7 @@ func TestAutomationContinuesAfterSubscriptionPanic(t *testing.T) {
 				now := time.Unix(1000, 0)
 				a.now = func() time.Time { return now }
 				requests := 0
-				a.fetch = func(_ context.Context, address string, direct bool) ([]serverObj.ServerObj, string, error) {
+				a.fetch = func(_ context.Context, address string, direct bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 					requests++
 					if direct {
 						t.Fatal("panic granted direct permission without a detected outage")
@@ -405,12 +405,12 @@ func TestAutomationContinuesAfterSubscriptionPanic(t *testing.T) {
 						if phase == "fetch" {
 							panic("fetch failed")
 						}
-						return []serverObj.ServerObj{panickingSubscriptionNode{}}, "", nil
+						return []serverObj.ServerObj{panickingSubscriptionNode{}}, subscriptionMetadata{}, nil
 					}
-					return []serverObj.ServerObj{testServer(t, 10003)}, "updated", nil
+					return []serverObj.ServerObj{testServer(t, 10003)}, subscriptionMetadata{info: "updated", profileTitle: "Updated profile"}, nil
 				}
 				next := a.step(context.Background())
-				if requests != 2 || configure.GetSubscription(1).Info != "updated" {
+				if requests != 2 || configure.GetSubscription(1).Info != "updated" || configure.GetSubscription(1).ProfileTitle != "Updated profile" {
 					t.Fatal("panic stopped the next subscription's update")
 				}
 				if got := configure.GetSubscription(0).Servers[0].ServerObj.ExportToURL(); got != first.Servers[0].ServerObj.ExportToURL() {
