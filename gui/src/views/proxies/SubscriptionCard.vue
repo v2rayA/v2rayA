@@ -11,6 +11,7 @@ import {
 } from "@mdi/js";
 import type { TouchSubscription } from "@/api/types";
 import { parseQuota } from "@/lib/quota";
+import { subscriptionName } from "../subscriptions/model";
 import type { SubscriptionAction } from "./model";
 defineOptions({ name: "SubscriptionCard" });
 const props = defineProps<{
@@ -19,12 +20,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ action: [action: SubscriptionAction] }>();
 const { t } = useI18n();
-const title = computed(
-  () =>
-    props.subscription.remarks ||
-    props.subscription.profileTitle ||
-    props.subscription.host,
-);
+const title = computed(() => subscriptionName(props.subscription));
 const usage = computed(() => parseQuota(props.subscription.info));
 </script>
 <template>

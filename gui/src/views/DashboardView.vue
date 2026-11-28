@@ -541,7 +541,16 @@ defineExpose({ sync });
             class="px-0 py-2"
           >
             <p class="md3-title-small mb-1 dashboard-wrap" dir="auto">
-              {{ subscription.remarks || subscription.host }}
+              {{ subscription.name }}
+            </p>
+            <p
+              v-if="
+                subscription.host && subscription.name !== subscription.host
+              "
+              class="md3-body-small text-on-surface-variant mb-1 dashboard-wrap"
+              dir="ltr"
+            >
+              {{ subscription.host }}
             </p>
             <p
               class="md3-body-small text-on-surface-variant mb-2 dashboard-wrap"
@@ -569,7 +578,7 @@ defineExpose({ sync });
                     :icon="mdiDotsVertical"
                     size="40"
                     variant="text"
-                    :aria-label="`${t('common.menu')}: ${subscription.remarks || subscription.host}`"
+                    :aria-label="`${t('common.menu')}: ${subscription.name}`"
                     :loading="updating === subscription.id"
                     :disabled="subscriptionsBusy"
                   >

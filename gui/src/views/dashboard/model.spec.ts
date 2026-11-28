@@ -134,6 +134,20 @@ afterEach(() => {
 });
 
 describe("dashboard", () => {
+  test("shows the subscription name above its host and names the menu", async () => {
+    const data = response();
+    data.touch.subscriptions[0].profileTitle = "Provider title";
+    vi.mocked(getTouch).mockResolvedValue(data);
+    wrapper = mountWithApp(DashboardView);
+    await flushPromises();
+    const row = wrapper.get(".dashboard-subscriptions .v-list-item");
+    expect(row.get("p").text()).toBe("Provider title");
+    expect(row.get("p + p").text()).toBe("subscription.example");
+    expect(row.get("button").attributes("aria-label")).toContain(
+      "Provider title",
+    );
+  });
+
   test("shows the current group node, then starts and stops the core", async () => {
     wrapper = mountWithApp(DashboardView);
     await flushPromises();

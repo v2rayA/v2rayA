@@ -14,7 +14,7 @@ defineOptions({ name: "SharingDialog" });
 const props = defineProps<{
   title: string;
   link: string;
-  /** what the code is for: the name of the node or the subscription's host */
+  /** Display name of the shared node or subscription. */
   name: string;
   type: TouchType;
 }>();
@@ -51,7 +51,9 @@ async function copy() {
   <v-card>
     <v-card-item class="px-6 pt-6 pb-2">
       <v-card-title class="md3-headline-small pa-0">{{ title }}</v-card-title>
-      <v-card-subtitle class="pa-0">{{ name }}</v-card-subtitle>
+      <v-card-subtitle class="pa-0 text-wrap" dir="auto">{{
+        name
+      }}</v-card-subtitle>
     </v-card-item>
     <v-card-text class="px-6">
       <v-sheet

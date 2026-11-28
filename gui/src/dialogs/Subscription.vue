@@ -6,6 +6,7 @@ import { patchSubscription } from "@/api";
 import { errorText } from "@/api/errors";
 import type { TouchSubscription } from "@/api/types";
 import { useNotify } from "@/composables/useNotify";
+import { subscriptionName } from "@/views/subscriptions/model";
 
 defineOptions({ name: "SubscriptionDialog" });
 const props = defineProps<{ subscription: TouchSubscription }>();
@@ -87,6 +88,9 @@ async function save() {
       <v-card-title class="md3-headline-small pa-0">
         {{ t("configureSubscription.title") }}
       </v-card-title>
+      <v-card-subtitle class="text-wrap" dir="auto">{{
+        subscriptionName(subscription)
+      }}</v-card-subtitle>
     </v-card-item>
     <v-card-text class="px-6">
       <v-form ref="validation" @submit.prevent="save">
