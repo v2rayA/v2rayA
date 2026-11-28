@@ -11,6 +11,7 @@ import {
 } from "@mdi/js";
 import type { TouchSubscription } from "@/api/types";
 import { parseQuota } from "@/lib/quota";
+import { subscriptionName } from "../subscriptions/model";
 import type { SubscriptionAction } from "./model";
 defineOptions({ name: "SubscriptionCard" });
 const props = defineProps<{
@@ -19,6 +20,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ action: [action: SubscriptionAction] }>();
 const { t } = useI18n();
+const title = computed(() => subscriptionName(props.subscription));
 const usage = computed(() => parseQuota(props.subscription.info));
 </script>
 <template>
@@ -31,8 +33,14 @@ const usage = computed(() => parseQuota(props.subscription.info));
   >
     <v-card-item class="pa-4">
       <v-card-title class="md3-title-medium text-wrap" dir="auto">{{
-        subscription.remarks || subscription.host
+        title
       }}</v-card-title>
+      <v-card-subtitle
+        v-if="subscription.host && title !== subscription.host"
+        class="md3-body-small text-wrap"
+        dir="ltr"
+        >{{ subscription.host }}</v-card-subtitle
+      >
       <template #append>
         <v-menu>
           <template #activator="{ props: menu }">

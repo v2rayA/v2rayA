@@ -29,7 +29,7 @@ import {
   whichOf,
   type Row,
 } from "../nodes/model";
-import { useSubscriptions } from "../subscriptions/model";
+import { subscriptionName, useSubscriptions } from "../subscriptions/model";
 
 export type NodeAction =
   "test" | "addToGroup" | "removeFromGroup" | "edit" | "share" | "delete";
@@ -93,10 +93,14 @@ export function useProxies() {
   const sources = computed(() => [
     { value: "all", title: t("proxies.sources.all") },
     { value: "local", title: t("proxies.sources.local") },
-    ...subscriptions.value.map((s) => ({
-      value: s.address,
-      title: s.remarks || s.host,
-    })),
+    ...subscriptions.value.map((s) => {
+      const title = subscriptionName(s);
+      return {
+        value: s.address,
+        title,
+        props: { subtitle: title !== s.host ? s.host : undefined },
+      };
+    }),
   ]);
   const sorts = computed(() => [
     { value: "none", title: t("proxies.sorts.none") },
@@ -191,7 +195,7 @@ export function useProxies() {
     const subscription = subscriptions.value[row.sub ?? -1];
     return row._type === "server"
       ? t("proxies.sources.local")
-      : subscription?.remarks || subscription?.host || "";
+      : subscriptionName(subscription);
   }
   function selectAll(value: boolean) {
     selectedKeys.value = value ? listed.value.map(rowKey) : [];
@@ -369,7 +373,7 @@ export function useProxies() {
           {
             title: t("sharing.subscriptionTitle"),
             link,
-            name: subscription.remarks || subscription.host,
+            name: subscriptionName(subscription),
             type: subscription._type,
           },
           { width: 420 },

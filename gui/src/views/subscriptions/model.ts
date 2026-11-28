@@ -9,6 +9,15 @@ import { errorText } from "@/api/errors";
 import type { TouchSubscription } from "@/api/types";
 import { whichOf } from "../nodes/model";
 
+export function subscriptionName(subscription?: TouchSubscription): string {
+  return (
+    subscription?.remarks ||
+    subscription?.profileTitle ||
+    subscription?.host ||
+    ""
+  );
+}
+
 export function useSubscriptions() {
   const subscriptions = ref<TouchSubscription[]>([]);
   const loading = ref(true);

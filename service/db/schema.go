@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     address TEXT NOT NULL DEFAULT '',
     remarks TEXT NOT NULL DEFAULT '',
+    profile_title TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT '',
     info TEXT DEFAULT '',
     auto_select INTEGER NOT NULL DEFAULT 0,
@@ -95,6 +96,7 @@ func MigrateSchema(db *sql.DB) error {
 	}
 
 	columns := []struct{ name, definition string }{
+		{"profile_title", "TEXT NOT NULL DEFAULT ''"},
 		{"node_dns", "TEXT NOT NULL DEFAULT 'auto'"},
 		{"auto_select", "INTEGER NOT NULL DEFAULT 0"},
 		{"update_mode", "TEXT NOT NULL DEFAULT 'disabled'"},

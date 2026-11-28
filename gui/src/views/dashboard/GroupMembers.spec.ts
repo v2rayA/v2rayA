@@ -29,6 +29,7 @@ const touch: Touch = {
       id: 2,
       _type: "subscription",
       host: "b",
+      profileTitle: "Second feed",
       address: "https://b",
       status: "",
       info: "",
@@ -58,6 +59,7 @@ test("a member of the second subscription is shown checked and saved with its su
     .map((item) => item.text());
   expect(checked).toHaveLength(1);
   expect(checked[0]).toContain("b2");
+  expect(checked[0]).toContain("Second feed");
   await wrapper.findAll(".v-list-item")[0].trigger("click");
   await wrapper
     .find(".v-btn[color=primary], .v-btn--variant-flat")

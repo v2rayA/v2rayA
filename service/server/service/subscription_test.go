@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/base64"
 	"errors"
 	"io"
 	"net/http"
@@ -42,6 +43,71 @@ func TestSubscriptionCoreApplyErrorWrapsCause(t *testing.T) {
 	if !errors.Is(err, cause) || !strings.HasPrefix(err.Error(), "subscription stored, but the core could not apply it:") {
 		t.Fatalf("error = %v", err)
 	}
+}
+
+func TestParseProfileTitle(t *testing.T) {
+	for _, tc := range []struct{ header, want string }{
+		{"", ""},
+		{"  Example Network  ", "Example Network"},
+		{"base64:" + base64.StdEncoding.EncodeToString([]byte("Сеть 🌐")), "Сеть 🌐"},
+		{"base64:" + base64.RawStdEncoding.EncodeToString([]byte("日本語!")), "日本語!"},
+		{"base64:???", ""},
+		{"base64:/w==", ""},
+		{"base64:YQpi", ""},
+	} {
+		if got := parseProfileTitle(tc.header); got != tc.want {
+			t.Errorf("parseProfileTitle(%q) = %q, want %q", tc.header, got, tc.want)
+		}
+	}
+}
+
+func TestSubscriptionProfileTitleLifecycle(t *testing.T) {
+	const address = "https://example.test/sub"
+	title, body := "Example", "http-proxy://127.0.0.1:1234#node"
+	client := &http.Client{Transport: updateTransport(func(*http.Request) (*http.Response, error) {
+		header := make(http.Header)
+		header.Set("Profile-Title", title)
+		return &http.Response{
+			StatusCode: http.StatusOK, Header: header,
+			Body: io.NopCloser(strings.NewReader(body)),
+		}, nil
+	})}
+	oldClient := directSubscriptionClient
+	directSubscriptionClient = func() *http.Client { return client }
+	t.Cleanup(func() { directSubscriptionClient = oldClient })
+	options := SubscriptionFetchOptions{BypassProxy: true}
+	index := configure.GetLenSubscriptions()
+	if err := ImportSubscriptionWithOptions(address, options); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = configure.RemoveSubscriptions([]int{index}) })
+	check := func(wantTitle, wantRemark string) {
+		t.Helper()
+		sub := touch.GenerateTouch().Subscriptions[index]
+		if sub.ProfileTitle != wantTitle || sub.Remarks != wantRemark {
+			t.Fatalf("title %q, remark %q; want %q, %q", sub.ProfileTitle, sub.Remarks, wantTitle, wantRemark)
+		}
+	}
+	check("Example", "")
+	item := touch.Subscription{ID: index + 1, Address: address, Remarks: "Local"}
+	if err := ModifySubscriptionRemark(item); err != nil {
+		t.Fatal(err)
+	}
+	title = "base64:" + base64.StdEncoding.EncodeToString([]byte("Новая сеть"))
+	if err := UpdateSubscriptionWithOptions(index, false, options); err != nil {
+		t.Fatal(err)
+	}
+	check("Новая сеть", "Local")
+	title, body = "", ""
+	if err := UpdateSubscriptionWithOptions(index, false, options); err == nil {
+		t.Fatal("empty subscription accepted")
+	}
+	check("Новая сеть", "Local")
+	body = "http-proxy://127.0.0.1:1234#node"
+	if err := UpdateSubscriptionWithOptions(index, false, options); err != nil {
+		t.Fatal(err)
+	}
+	check("", "Local")
 }
 
 func TestSubscriptionUserInfoString(t *testing.T) {

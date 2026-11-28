@@ -137,7 +137,7 @@ func TestSubscriptionNameFallbackDoesNotCollapseTwoSelections(t *testing.T) {
 		}
 	}
 	old = configure.GetSubscription(0)
-	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{namedTestServer(t, 10003, "same")}, "", false); err != nil {
+	if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{namedTestServer(t, 10003, "same")}, subscriptionMetadata{}, false); err != nil {
 		t.Fatal(err)
 	}
 	refs := configure.GetConnectedServersByOutbound("proxy").Get()
@@ -163,7 +163,7 @@ func TestSubscriptionRemapsOneNodeInMultipleGroups(t *testing.T) {
 				name = old.Servers[0].ServerObj.GetName()
 			}
 			replacement := namedTestServer(t, 10002, name)
-			if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{replacement}, "", false); err != nil {
+			if err := storeSubscriptionUpdate(0, old, []serverObj.ServerObj{replacement}, subscriptionMetadata{}, false); err != nil {
 				t.Fatal(err)
 			}
 			wantID, wantNodes := 2, 2

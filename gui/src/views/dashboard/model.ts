@@ -38,7 +38,10 @@ import { locate, runningOf, sameWhich } from "@/views/nodes/model";
 import { parseQuota } from "@/lib/quota";
 import { useSettings, type SettingForm } from "@/views/settings/model";
 import type { SubscriptionAction } from "@/views/proxies/model";
-import { useSubscriptions } from "@/views/subscriptions/model";
+import {
+  subscriptionName,
+  useSubscriptions,
+} from "@/views/subscriptions/model";
 
 export interface DashboardMember {
   key: string;
@@ -142,6 +145,7 @@ export function useDashboard() {
             : locale.value;
       return {
         ...subscription,
+        name: subscriptionName(subscription),
         usage: quota,
         summary: quota
           ? [
@@ -371,7 +375,7 @@ export function useDashboard() {
           {
             title: t("sharing.subscriptionTitle"),
             link,
-            name: subscription.remarks || subscription.host,
+            name: subscriptionName(subscription),
             type: subscription._type,
           },
           { width: 420 },

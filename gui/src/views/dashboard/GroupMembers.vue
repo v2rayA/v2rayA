@@ -6,6 +6,7 @@ import { useI18n } from "vue-i18n";
 import { mdiMagnify } from "@mdi/js";
 import type { Touch, TouchServer, Which } from "@/api/types";
 import { filterRows, rowKey, whichOf } from "@/views/nodes/model";
+import { subscriptionName } from "@/views/subscriptions/model";
 
 defineOptions({ name: "GroupMembersDialog" });
 const props = defineProps<{
@@ -35,9 +36,7 @@ const rows = computed<TouchServer[]>(() =>
 const sourceOf = (row: TouchServer) =>
   row._type === "server"
     ? t("proxies.sources.local")
-    : props.touch.subscriptions[row.sub ?? -1]?.remarks ||
-      props.touch.subscriptions[row.sub ?? -1]?.host ||
-      "";
+    : subscriptionName(props.touch.subscriptions[row.sub ?? -1]);
 const keyOf = (row: TouchServer) => keyOfWhich(whichOf(row));
 const isChosen = (row: TouchServer) => chosen.value.has(keyOf(row));
 function toggle(row: TouchServer) {

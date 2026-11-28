@@ -45,7 +45,7 @@ type subscriptionSchedule struct {
 	warnedUnprobeable bool
 }
 
-type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, string, error)
+type subscriptionFetcher func(context.Context, string, bool) ([]serverObj.ServerObj, subscriptionMetadata, error)
 
 type automation struct {
 	subscriptions map[int64]*subscriptionSchedule
@@ -75,18 +75,18 @@ func subscriptionPolicySignature(sub *configure.SubscriptionRaw) string {
 	return string(b)
 }
 
-func fetchSubscriptionForAutomation(ctx context.Context, address string, allowDirectFallback bool) ([]serverObj.ServerObj, string, error) {
+func fetchSubscriptionForAutomation(ctx context.Context, address string, allowDirectFallback bool) ([]serverObj.ServerObj, subscriptionMetadata, error) {
 	client, err := subscriptionHTTPClient()
 	var nodes []serverObj.ServerObj
-	var info string
+	var meta subscriptionMetadata
 	if err == nil {
-		nodes, info, err = resolveSubscriptionWithContext(ctx, address, client)
+		nodes, meta, err = resolveSubscriptionWithContext(ctx, address, client)
 	}
 	if err != nil && allowDirectFallback && ctx.Err() == nil && configure.GetSettingNotNil().ProxyModeWhenSubscribe != configure.ProxyModeDirect {
 		log.Warn("[Subscriptions] Fail-safe recovery for %s: configured download route failed; retrying directly", subscriptionHost(address))
 		return resolveSubscriptionWithContext(ctx, address, directSubscriptionClient())
 	}
-	return nodes, info, err
+	return nodes, meta, err
 }
 
 func findSubscriptionByDatabaseID(id int64) (int, *configure.SubscriptionRaw) {
@@ -99,7 +99,7 @@ func findSubscriptionByDatabaseID(id int64) (int, *configure.SubscriptionRaw) {
 	return -1, nil
 }
 
-func (a *automation) applyUpdate(ctx context.Context, observed *configure.SubscriptionRaw, nodes []serverObj.ServerObj, info string) (*configure.SubscriptionRaw, error) {
+func (a *automation) applyUpdate(ctx context.Context, observed *configure.SubscriptionRaw, nodes []serverObj.ServerObj, meta subscriptionMetadata) (*configure.SubscriptionRaw, error) {
 	ConfigurationMu.Lock()
 	defer ConfigurationMu.Unlock()
 	if err := ctx.Err(); err != nil {
@@ -114,7 +114,7 @@ func (a *automation) applyUpdate(ctx context.Context, observed *configure.Subscr
 			return nil, err
 		}
 	}
-	if err := storeSubscriptionUpdate(index, current, nodes, info, false); err != nil {
+	if err := storeSubscriptionUpdate(index, current, nodes, meta, false); err != nil {
 		if current.AutoSelect {
 			_ = SelectServersFromSubscription(index, false)
 		}
@@ -240,12 +240,12 @@ func (a *automation) process(ctx context.Context, sub *configure.SubscriptionRaw
 			}
 		}()
 	}
-	nodes, info, err := a.fetch(ctx, sub.Address, retryDue && state.retryFromOutage && sub.AllowDirectRecovery)
+	nodes, meta, err := a.fetch(ctx, sub.Address, retryDue && state.retryFromOutage && sub.AllowDirectRecovery)
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 	if err == nil {
-		updated, applyErr := a.applyUpdate(ctx, sub, nodes, info)
+		updated, applyErr := a.applyUpdate(ctx, sub, nodes, meta)
 		if applyErr == nil {
 			sub = updated
 			v2ray.ApiFeed.ProductMessage("catalog_changed", nil)
